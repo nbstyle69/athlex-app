@@ -37,6 +37,7 @@ Une ligne par capacité, avec la date du lot qui l'a fermée.
 | La clôture d'un tournoi (web et mobile) est une seule opération serveur, tous formats : classement, historique ELO, profils et statut écrits ensemble ou pas du tout ; une seconde clôture est refusée par son nom ; l'écran ne calcule ni n'écrit plus d'ELO | 4 septembre 2026 |
 | L'historique ELO survit à la suppression de son événement : les sept clés d'historique (`elo_history.wod_id`, `box_elo_history.wod_id`, `tournament_elo_history.tournament_id`, `tournament_match_elo_history.match_id`, `tournament_wod_elo_history.tournament_wod_id`, `daily_tournament_elo_history.tournament_id`, `inter_elo_history.competition_id`) passent d'`ON DELETE CASCADE` à `ON DELETE SET NULL` ; l'écran d'historique affiche « Tournoi supprimé » / « WOD supprimé » / « Mini-tournoi supprimé » ; suite `elo` : supprimer un tournoi clôturé laisse l'historique, `profiles.elo` inchangé, égalité profil = dernier `elo_after` vraie. `profiles.losses` est déclarée **colonne morte** (jamais incrémentée par aucune fonction ni aucun écran ; commentaire SQL posé) : les défaites affichées restent `total_matches − wins`, la colonne ne doit plus être lue | 5 septembre 2026 |
 | Réalignement des deux profils dont l'historique avait été supprimé par notre purge : JCVD 1039 → 1064 (compteurs 12 → 8, 5 → 4), in the bar 1057 → 1032, en une transaction gardée ; Samir intact (historique jamais écrit → le profil est le seul témoin) ; relecture : les six profils à historique ont `profiles.elo` = dernier `elo_after` | 4 septembre 2026 |
+| La courbe d'historique ELO intègre les matchs de bracket : l'écran lit aussi `tournament_match_elo_history` (écrite par `trg_bracket_match_elo`), une ligne « Tournoi · vs adversaire » par match, « Match supprimé » si le match a disparu ; pour un joueur de bracket, le dernier point de la courbe retombe sur l'ELO du profil, ce qui n'était pas le cas avant. Test unitaire `eloHistoryBracketMatches` | 6 septembre 2026 |
 | Le classement affiché suit exactement l'ordre du serveur : secondes, sens du tri, scores au time cap, ex aequo signalés | 23 août 2026 |
 | Le vainqueur d'un match de bracket est calculé par une seule règle, partagée avec le reste de l'app | 23 août 2026 |
 | Preuve vidéo disponible sur tous les formats de tournoi | 16 août 2026 |
@@ -322,6 +323,23 @@ des 6 onglets de la barre gérant était tronqué ; libellé seulement, via i18n
 (`tabs.boTracking` : « Suivi » / « Tracking »), route `BODashboard` et écran `Dashboard`
 inchangés. Les cinq autres libellés restent en dur comme avant. Test `boTabTrackingLabel.test.ts`
 (mutation inverse : `tabBarLabel: 'Dashboard'` rétabli est rouge).
+
+
+**Historique unifié « Mes entraînements » (`WodHistory`), à merger après la soumission
+Apple.** Recon : l'écran ne lisait que `generated_wods` + `generated_wod_scores` ; les scores
+saisis sur les WOD de box (`wod_scores`) et les WOD marqués « réalisés » par le bouton du
+bloc (`wod_completions`) n'y étaient pas. Désormais trois lectures (toutes `member_id` /
+`user_id` = soi), fusionnées côté client (`src/lib/wodHistoryEntries.ts`) en une seule liste
+chronologique : une ligne de box ouvre `WODDetail`, porte le score ou la mention « Réalisé,
+sans score » ; un score sur un WOD déjà marqué réalisé remplace la ligne « réalisé » (le
+détail supprime d'ailleurs la completion à la saisie du score). Les filtres Favoris /
+Benchmark restent propres aux WOD générés. Limite assumée : les policies serveur
+(`box_members_see_scores`, `box_member_see_completions`) ne rendent lisibles que les lignes
+des box dont on est encore membre actif. **Séances du minuteur : rien n'est persisté**
+(`TimerRunScreen` ne garde que les options d'affichage en AsyncStorage, aucune table) ;
+les inclure demande une table + RLS, chantier à part, non fait ici. Test
+`wodHistoryUnified.test.ts` : un WOD réalisé sans score apparaît ; mutation inverse (sans
+`wod_completions`) il disparaît.
 
 **Analyse de PDF de plus de 100 pages.** Cause établie le 24 août : le prestataire d'IA
 refuse au-delà de 100 pages, et le message affiché dit « service indisponible » alors que le
