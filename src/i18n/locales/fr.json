@@ -1023,7 +1023,9 @@
       "title": "Abonnement AthleX",
       "solo": "Formule Solo",
       "multi": "Formule Multi · {{n}} box",
-      "manage": "Gérer"
+      "manage": "Gérer",
+      "none": "Aucun abonnement actif",
+      "subscribe": "S'abonner"
     },
     "myTrainings": "Mes entraînements"
   },
