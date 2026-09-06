@@ -722,7 +722,10 @@
   "eloHistory": {
     "deletedWod": "Deleted WOD",
     "deletedTournament": "Deleted tournament",
-    "deletedDaily": "Deleted mini-tournament"
+    "deletedDaily": "Deleted mini-tournament",
+    "deletedMatch": "Deleted match",
+    "unknownOpponent": "unknown opponent",
+    "versus": "vs {{opponent}}"
   },
   "common": {
     "save": "Save",
@@ -1105,7 +1108,10 @@
     "rxTag": "(RX)",
     "scaledTag": "(Scaled)",
     "myScores": "My scores ({{count}})",
-    "deleteConfirmTitle": "Delete this WOD?"
+    "deleteConfirmTitle": "Delete this WOD?",
+    "boxTag": "BOX",
+    "boxWodFallback": "Box WOD",
+    "completedNoScore": "Completed, no score"
   },
   "whiteboard": {
     "title": "My Box",
