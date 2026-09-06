@@ -318,6 +318,14 @@ prouve les deux sens : la carte absente à `false`, présente à `true` à sa pl
 et qu'aucun autre fichier (Explorer, recherche, deep link, notifications) ne mène à la route.
 Le premier générateur (« Générateur WOD — For Time · AMRAP · Tabata ») reste.
 
+**Onglet gérant « Dashboard » → « Suivi », à merger après la soumission Apple.** Le premier
+des 6 onglets de la barre gérant était tronqué ; libellé seulement, via i18n
+(`tabs.boTracking` : « Suivi » / « Tracking »), route `BODashboard` et écran `Dashboard`
+inchangés. Les cinq autres libellés restent en dur comme avant. Test `boTabTrackingLabel.test.ts`
+(mutation inverse : `tabBarLabel: 'Dashboard'` rétabli est rouge).
+
+
+
 **Bloc « Abonnement AthleX » du profil gérant (#241), à merger après la soumission Apple.**
 Chemin : barre gérant → onglet **Profil** → onglet interne **Compte** (4e) → carte après
 « Mes amis », avant « Mes entraînements ». Il n'apparaissait que sous
