@@ -325,6 +325,19 @@ inchangés. Les cinq autres libellés restent en dur comme avant. Test `boTabTra
 (mutation inverse : `tabBarLabel: 'Dashboard'` rétabli est rouge).
 
 
+
+**Bloc « Abonnement AthleX » du profil gérant (#241), à merger après la soumission Apple.**
+Chemin : barre gérant → onglet **Profil** → onglet interne **Compte** (4e) → carte après
+« Mes amis », avant « Mes entraînements ». Il n'apparaissait que sous
+`isOwnerAdmin && currentBox`, et la lecture de `owner_subscriptions` exigeait aussi une box
+courante : un gérant sans box courante ne le voyait pas. Désormais visible pour tout gérant
+(`boxRole === 'owner'` ou `role === 'box_owner'`) ; avec abonnement (box ou Multi actif) :
+formule + statut + « Gérer » ; sans : « Aucun abonnement actif » + « S'abonner ». Les deux
+états ouvrent `BOSubscription`. Test `profileAthlexSubscriptionBlock.test.ts` (position,
+condition, deux états ; mutation inverse : le `&& currentBox` rétabli est rouge). Non fait :
+un compte `admin`/`super_admin` voit `AdminScreen` à la place du Profil (`navigation/index.tsx`),
+donc jamais ce bloc — dit, non changé.
+
 **Historique unifié « Mes entraînements » (`WodHistory`), à merger après la soumission
 Apple.** Recon : l'écran ne lisait que `generated_wods` + `generated_wod_scores` ; les scores
 saisis sur les WOD de box (`wod_scores`) et les WOD marqués « réalisés » par le bouton du
