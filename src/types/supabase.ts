@@ -1486,6 +1486,9 @@ export type Database = {
           rounds: number | null
           scheduled_date: string
           sort_order: number
+          source_pdf_url: string | null
+          source_page: number | null
+          source_profile: string | null
           source_programming_id: string | null
           source_programming_wod_id: string | null
           tabata_rest_seconds: number | null
@@ -1511,6 +1514,9 @@ export type Database = {
           rounds?: number | null
           scheduled_date: string
           sort_order?: number
+          source_pdf_url?: string | null
+          source_page?: number | null
+          source_profile?: string | null
           source_programming_id?: string | null
           source_programming_wod_id?: string | null
           tabata_rest_seconds?: number | null
@@ -1536,6 +1542,9 @@ export type Database = {
           rounds?: number | null
           scheduled_date?: string
           sort_order?: number
+          source_pdf_url?: string | null
+          source_page?: number | null
+          source_profile?: string | null
           source_programming_id?: string | null
           source_programming_wod_id?: string | null
           tabata_rest_seconds?: number | null

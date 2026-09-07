@@ -359,6 +359,14 @@ refuse au-delà de 100 pages, et le message affiché dit « service indisponible
 service a répondu. Le correctif (compter les pages avant l'envoi, dire la vraie cause) est
 écrit nulle part encore — chantier séparé, non planifié dans la fournée.
 
+**Importateur PDF de programmation par profil de source (TheHub).** Le socle base est posé
+par la migration `20261203_box_wods_source_pdf.sql` : trois colonnes nullables sur
+`box_wods` (`source_pdf_url`, `source_page`, `source_profile`) et un bucket privé
+`wod-sources` (PDF rangé par box, lecture et écriture réservées au staff de la box par
+`is_box_staff`). Aucun écran ne les lit encore ; l'app n'est pas concernée. Le cœur
+d'analyse (profil « K+ Perf » puis profil générique par IA), la preview et l'insertion en
+lot arrivent dans une PR TheHub séparée, à merger après celle-ci.
+
 ---
 
 ## À venir, dans l'ordre
