@@ -395,6 +395,7 @@ précise ; le faire avant casse quelque chose. Le détail technique est dans
 | Bouton d'offre payante resté en français dans l'interface anglaise (« S'abonner — 59.00 €/month ») | Le prochain lot web qui touche la page publique de box. Un bouton mi-français mi-anglais sur une page de vente se corrige vite, mais pas en urgence. |
 | WOD GEN retiré de l'app (flag), à retravailler | Quand le contenu des « 3 séances adaptées à ton profil » sera revu : remettre `FEATURES.wodGen` à `true` suffit, l'écran et la route n'ont pas bougé. |
 | Soumission automatique sur Google Play | Quand une clé de compte de service Google Play est fournie. Aujourd'hui le fichier Android est produit signé, et téléversé à la main. |
+| Aligner les 18 routes Stripe du web encore épinglées sur l'API `2023-10-16` (Connect, checkouts, portail, dunning…) sur la version du compte (`2026-03-25.dahlia`, déjà en place sur le webhook plateforme et `verify-subscription` depuis AthleX-Manager #315) | Après la PR `billing_source` du cycle de vie des abonnements. Changer la version change la forme des réponses `retrieve`/`list` (période désormais portée par `items.data[]`) : une passe dédiée avec tests, pas au fil des correctifs. |
 
 ---
 
