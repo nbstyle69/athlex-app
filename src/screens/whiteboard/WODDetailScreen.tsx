@@ -25,6 +25,7 @@ import { incrementCounter, logMovementReps } from '../../services/gamification';
 import { formatScoreValue, normalizeScore, mapForTimeScore, formatCap } from '../../utils/scoreFormat';
 import { computeCompletedMovements } from '../../utils/movementParser';
 import { annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
+import { annotateCardioLines } from '../../utils/cardioBlock';
 import { buildStrengthGrid, logStrengthSets, StrengthSetDraft } from '../../services/strengthSets';
 import StrengthSetGrid from '../../components/wod/StrengthSetGrid';
 import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
@@ -325,7 +326,7 @@ export default function WODDetailScreen() {
     if (wod.description) {
       const lines = wod.description.split('\n').filter(Boolean);
       const wodFormat = wod.wod_type === 'for-time' ? 'For Time' : wod.wod_type === 'amrap' ? 'AMRAP' : wod.wod_type === 'emom' ? 'EMOM' : wod.wod_type ?? 'For Time';
-      const completed = computeCompletedMovements(lines, wodFormat, value, scoreType);
+      const completed = computeCompletedMovements(lines, wodFormat, value, scoreType, { gender: user.gender });
       logMovementReps(user.id, completed, 'whiteboard', wod.id).catch(e => captureError(e, { action: 'logMovementReps' }));
     }
 
@@ -546,7 +547,7 @@ export default function WODDetailScreen() {
           </Text>
 
           {wod.description && (
-            <Text style={S.wodDesc}>{annotateStrengthLoads(wod.description, oneRepMaxFor)}</Text>
+            <Text style={S.wodDesc}>{annotateCardioLines(annotateStrengthLoads(wod.description, oneRepMaxFor))}</Text>
           )}
           {wod.notes && (
             <View style={S.notesBox}>

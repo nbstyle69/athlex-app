@@ -21,17 +21,14 @@ describe('parseMovementLine', () => {
       expect(result!.weight_kg).toBe(52.5);
     });
 
-    it('parses distance-based line as 1 rep', () => {
+    it('parses distance-based line as meters', () => {
       const result = parseMovementLine('400m Course');
-      expect(result).not.toBeNull();
-      expect(result!.reps).toBe(1);
-      expect(result!.name).toBe('Course');
+      expect(result).toEqual({ name: 'Course', reps: 400, unit: 'm' });
     });
 
     it('parses 50m movement', () => {
       const result = parseMovementLine('50m Farmer Carry');
-      expect(result!.reps).toBe(1);
-      expect(result!.name).toBe('Farmer Carry');
+      expect(result).toEqual({ name: 'Farmer Carry', reps: 50, unit: 'm' });
     });
 
     it('strips parenthetical scale info from name', () => {
@@ -172,5 +169,42 @@ describe('computeCompletedMovements', () => {
       expect(result.find((m) => m.name === 'Pull-ups')!.reps).toBe(15);
       expect(result.find((m) => m.name === 'Push-ups')!.reps).toBe(30);
     });
+  });
+});
+
+describe('lignes cardio (m / cal) et split ♂/♀', () => {
+  it('lit les calories et les mètres comme unité de crédit', () => {
+    expect(parseMovementLine('20 cal Row')).toEqual({ name: 'Row', reps: 20, unit: 'cal' });
+    expect(parseMovementLine('15 Cal Assault Bike')).toEqual({ name: 'Assault Bike', reps: 15, unit: 'cal' });
+    expect(parseMovementLine('500 m Run (RPE 7)')).toEqual({ name: 'Run', reps: 500, unit: 'm' });
+    expect(parseMovementLine('500m Run')).toEqual({ name: 'Run', reps: 500, unit: 'm' });
+  });
+
+  it('choisit la valeur ♀ du split quand le profil est féminin, ♂ sinon', () => {
+    expect(parseMovementLine('20/15 cal Row')).toMatchObject({ reps: 20, unit: 'cal' });
+    expect(parseMovementLine('20/15 cal Row', { gender: 'male' })).toMatchObject({ reps: 20 });
+    expect(parseMovementLine('20/15 cal Row', { gender: 'female' })).toMatchObject({ reps: 15 });
+    expect(parseMovementLine('20/15 cal Row', { gender: null })).toMatchObject({ reps: 20 });
+    expect(parseMovementLine('21/15 Pull-ups', { gender: 'female' })).toMatchObject({ name: 'Pull-ups', reps: 15 });
+    expect(parseMovementLine('21/15 Pull-ups', { gender: 'female' })).not.toHaveProperty('unit', 'cal');
+  });
+
+  it('choisit la charge ♀ d’un split de kg', () => {
+    expect(parseMovementLine('10 Thrusters (43/30 kg)', { gender: 'female' })).toEqual({ name: 'Thrusters', reps: 10, weight_kg: 30 });
+    expect(parseMovementLine('10 Thrusters (43/30 kg)')).toEqual({ name: 'Thrusters', reps: 10, weight_kg: 43 });
+    expect(parseMovementLine('7 reps — Sumo Deadlift @ 42.5/30 kg', { gender: 'female' })).toEqual({ name: 'Sumo Deadlift', reps: 7, weight_kg: 30 });
+  });
+
+  it('une ligne historique sans unité reste des reps (forme inchangée)', () => {
+    expect(parseMovementLine('15 Burpees')).toEqual({ name: 'Burpees', reps: 15, weight_kg: undefined });
+    expect(parseMovementLine('15 Burpees')).not.toHaveProperty('unit');
+  });
+
+  it('multiplie les lignes cardio par les rounds comme les autres lignes', () => {
+    const lines = ['3 Rounds For Time :', '20/15 cal Row', '10 Burpees'];
+    expect(computeCompletedMovements(lines, 'For Time', 600, 'time', { gender: 'female' })).toEqual([
+      { name: 'Row', reps: 45, unit: 'cal' },
+      { name: 'Burpees', reps: 30, weight_kg: undefined },
+    ]);
   });
 });

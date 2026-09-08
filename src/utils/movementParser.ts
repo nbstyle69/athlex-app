@@ -1,16 +1,48 @@
-import { MovementEntry } from '../services/gamification';
+import { MovementEntry, MovementUnit } from '../services/gamification';
+import { parseCardioLine, cardioToMovementEntry } from './cardioBlock';
+
+export type AthleteGender = 'male' | 'female';
+
+export interface ParseOptions {
+  /** Genre de l'athlète : choisit la valeur ♀ d'un split `20/15` ; ♂ par défaut. */
+  gender?: AthleteGender | null;
+}
+
+/**
+ * Quantité `20` ou split `20/15` (♂/♀) : rend la valeur du genre demandé.
+ * Une seule valeur vaut pour tout le monde.
+ */
+function pickQuantity(men: string, women: string | undefined, gender?: AthleteGender | null): number {
+  const m = parseInt(men, 10);
+  if (gender === 'female' && women != null) return parseInt(women, 10);
+  return m;
+}
+
+/** `m` / `cal` (et leurs graphies usuelles) → unité de crédit. */
+function normalizeUnit(raw: string): MovementUnit {
+  const u = raw.toLowerCase();
+  if (u === 'm') return 'm';
+  return 'cal';
+}
 
 /**
  * Parse a formatted movement line from generated WODs.
  * Examples:
  *   "12 Thrusters (43 kg)"  → { name: "Thrusters", reps: 12, weight_kg: 43 }
- *   "15 Cal Assault Bike"   → { name: "Cal Assault Bike", reps: 15 }
- *   "400m Course"           → { name: "Course", reps: 1 }  (distance-based = 1 rep)
+ *   "20 cal Row"            → { name: "Row", reps: 20, unit: "cal" }
+ *   "20/15 cal Row"         → reps 20 (♂) ou 15 (♀ via `options.gender`)
+ *   "500 m Run (RPE 7)"     → { name: "Run", reps: 500, unit: "m" }
+ *   "400m Course"           → { name: "Course", reps: 400, unit: "m" }
  *   "21-15-9 :"             → null  (header)
  *   "5 Rounds For Time :"   → null  (header)
+ *   "Row ~ 2 × 500 m"       → null  (bloc cardio, cf. cardioBlock.ts)
+ *
+ * `reps` porte la quantité dans `unit` (`reps` par défaut) ; le nom est celui
+ * de la ligne, sans unité, pour que `normalizeMovement` résolve `Row`.
  */
-export function parseMovementLine(line: string): MovementEntry | null {
+export function parseMovementLine(line: string, options?: ParseOptions): MovementEntry | null {
   const trimmed = line.trim();
+  const gender = options?.gender;
 
   // Skip headers & labels
   if (!trimmed) return null;
@@ -21,26 +53,30 @@ export function parseMovementLine(line: string): MovementEntry | null {
   if (trimmed.startsWith('⚡') || trimmed.startsWith('──')) return null;
   if (/⟨.*⟩/.test(trimmed)) return null; // team format labels
 
-  // Distance-based: "400m Course" or "50m Bear Crawl"
-  const distMatch = trimmed.match(/^(\d+)m\s+(.+)/);
-  if (distMatch) {
-    return { name: distMatch[2].replace(/\s*\(.*\)/, '').trim(), reps: 1 };
+  // Cardio: "20 cal Row", "20/15 cal Row", "500 m Run (RPE 7)", "400m Course".
+  // Sans espace ("400m") l'ancien parseur comptait 1 rep : la distance vaut
+  // désormais des mètres, la seule lecture qui alimente un compteur cardio.
+  const cardioMatch = trimmed.match(/^(\d+)(?:\s*\/\s*(\d+))?\s*(m|cals?|kcal)\b\.?\s+(.+)$/i);
+  if (cardioMatch) {
+    const reps = pickQuantity(cardioMatch[1], cardioMatch[2], gender);
+    const name = cardioMatch[4].replace(/\s*\([^)]*\)/g, '').replace(/\s*@.*$/, '').trim();
+    if (isNaN(reps) || reps <= 0 || !name) return null;
+    return { name, reps, unit: normalizeUnit(cardioMatch[3]) };
   }
 
-  // Standard: "12 Thrusters (43 kg)", "15 Cal Assault Bike",
+  // Standard: "12 Thrusters (43 kg)", "15 Cal Assault Bike", "21/15 Pull-ups",
   // and tolerant of "7 reps — Sumo Deadlift @ 42.5/30 kg" (leading "reps"/"—", "@ kg").
-  const stdMatch = trimmed.match(/^(\d+)\s*(?:reps?|x)?\s*[—–\-:]?\s*(.+)/i);
+  const stdMatch = trimmed.match(/^(\d+)(?:\s*\/\s*(\d+))?\s*(?:reps?|x)?\s*[—–\-:]?\s*(.+)/i);
   if (stdMatch) {
-    const reps = parseInt(stdMatch[1], 10);
-    let rest = stdMatch[2];
-    // Extract weight: "(43 kg)" / "(43/30 kg)" or "@ 42.5" / "@ 42.5/30 kg" (take the first/men number)
+    const reps = pickQuantity(stdMatch[1], stdMatch[2], gender);
+    let rest = stdMatch[3];
+    // Extract weight: "(43 kg)" / "(43/30 kg)" or "@ 42.5" / "@ 42.5/30 kg" — ♂ first, ♀ second.
     let weight_kg: number | undefined;
-    const weightParen = rest.match(/\((\d+(?:\.\d+)?)(?:\s*\/\s*\d+(?:\.\d+)?)?\s*kg\)/i);
-    const weightAt = rest.match(/@\s*(\d+(?:\.\d+)?)/);
-    if (weightParen) {
-      weight_kg = parseFloat(weightParen[1]);
-    } else if (weightAt) {
-      weight_kg = parseFloat(weightAt[1]);
+    const weightParen = rest.match(/\((\d+(?:\.\d+)?)(?:\s*\/\s*(\d+(?:\.\d+)?))?\s*kg\)/i);
+    const weightAt = rest.match(/@\s*(\d+(?:\.\d+)?)(?:\s*\/\s*(\d+(?:\.\d+)?))?/);
+    const w = weightParen ?? weightAt;
+    if (w) {
+      weight_kg = parseFloat(gender === 'female' && w[2] != null ? w[2] : w[1]);
     }
     // Remove parenthetical info (weight/scale) and trailing "@ ..." load
     rest = rest.replace(/\s*\([^)]*\)/g, '').replace(/\s*@.*$/, '').trim();
@@ -49,6 +85,20 @@ export function parseMovementLine(line: string): MovementEntry | null {
   }
 
   return null;
+}
+
+/**
+ * Séries cardio structurées d'une description (`Row ~ 2 × 500 m ~ 250 W`).
+ * Un bloc n'est ni multiplié par les rounds ni par le score : la prescription
+ * est la quantité réalisée, comme un bloc de force est la charge réalisée.
+ */
+export function parseCardioBlocks(lines: string[]): MovementEntry[] {
+  const out: MovementEntry[] = [];
+  for (const line of lines) {
+    const e = parseCardioLine(line);
+    if (e) out.push(cardioToMovementEntry(e));
+  }
+  return out;
 }
 
 /**
@@ -65,8 +115,21 @@ export function computeCompletedMovements(
   wodType: string,
   scoreValue: number,
   scoreType: string,
+  options?: ParseOptions,
 ): MovementEntry[] {
-  const parsed = movements.map(parseMovementLine).filter(Boolean) as MovementEntry[];
+  const cardio = parseCardioBlocks(movements);
+  const metcon = computeMetconMovements(movements, wodType, scoreValue, scoreType, options);
+  return [...metcon, ...cardio];
+}
+
+function computeMetconMovements(
+  movements: string[],
+  wodType: string,
+  scoreValue: number,
+  scoreType: string,
+  options?: ParseOptions,
+): MovementEntry[] {
+  const parsed = movements.map(l => parseMovementLine(l, options)).filter(Boolean) as MovementEntry[];
   if (parsed.length === 0) return [];
 
   // Extract rounds from header if present (e.g. "5 Rounds For Time :")

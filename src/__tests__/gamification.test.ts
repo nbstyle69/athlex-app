@@ -55,6 +55,8 @@ import {
   getBadgesCatalog,
   getEarnedBadges,
   movementBadgesCrossed,
+  badgePrefixFor,
+  logMovementReps,
   type BadgeQueueItem,
 } from '../services/gamification';
 
@@ -374,5 +376,98 @@ describe('getEarnedBadges', () => {
     );
     const result = await getEarnedBadges('user-1');
     expect(result).toEqual([]);
+  });
+});
+
+// ── Compteurs par unité (reps · m · cal) ──────────────────────────────────────
+
+describe('badgePrefixFor', () => {
+  it('sépare les paliers calories et mètres des mouvements cardio', () => {
+    expect(badgePrefixFor('row', 'cal')).toBe('mv_row');
+    expect(badgePrefixFor('row', 'm')).toBe('mv_row_m');
+    expect(badgePrefixFor('bike', 'cal')).toBe('mv_bike');
+    expect(badgePrefixFor('bike', 'm')).toBe('mv_bike_m');
+    expect(badgePrefixFor('ski_erg', 'cal')).toBe('mv_ski');
+    expect(badgePrefixFor('ski_erg', 'm')).toBe('mv_ski_m');
+    expect(badgePrefixFor('run', 'm')).toBe('mv_run');
+  });
+
+  it('une rep de cardio ou des calories de thruster ne donnent rien', () => {
+    expect(badgePrefixFor('row', 'reps')).toBeUndefined();
+    expect(badgePrefixFor('row')).toBeUndefined();
+    expect(badgePrefixFor('run', 'cal')).toBeUndefined();
+    expect(badgePrefixFor('thruster', 'cal')).toBeUndefined();
+    expect(badgePrefixFor('thruster')).toBe('mv_thrusters');
+  });
+});
+
+describe('movementBadgesCrossed par unité', () => {
+  const { supabase } = require('../lib/supabase');
+  const CATALOG = [
+    { badge_key: 'mv_row_500',    title: 'Rameur 500',  icon: '🥉' },
+    { badge_key: 'mv_row_m_10000', title: 'Rameur 10K', icon: '🥉' },
+    { badge_key: 'mv_row_m_42195', title: 'Rameur Marathon', icon: '🥈' },
+  ];
+  beforeEach(() => {
+    supabase.from.mockImplementation(() => makeChain({
+      eq: jest.fn().mockResolvedValue({ data: CATALOG, error: null }),
+    }));
+  });
+
+  it('les calories franchissent les paliers historiques, les mètres les nouveaux', async () => {
+    expect((await movementBadgesCrossed('row', 0, 600, 'cal')).map(b => b.badge_key)).toEqual(['mv_row_500']);
+    expect((await movementBadgesCrossed('row', 9000, 50000, 'm')).map(b => b.badge_key)).toEqual(['mv_row_m_10000', 'mv_row_m_42195']);
+    expect(await movementBadgesCrossed('row', 0, 99999)).toEqual([]);
+  });
+});
+
+describe('logMovementReps par unité', () => {
+  const { supabase } = require('../lib/supabase');
+  const STATS = [
+    { movement: 'row',      unit: 'cal',  total_reps: 600 },
+    { movement: 'row',      unit: 'm',    total_reps: 12000 },
+    { movement: 'thruster', unit: 'reps', total_reps: 150 },
+  ];
+  const CATALOG = [
+    { badge_key: 'mv_row_500' }, { badge_key: 'mv_row_m_10000' }, { badge_key: 'mv_thrusters_100' },
+  ];
+  let inserted: any[] = [];
+  let awarded: string[] = [];
+
+  beforeEach(() => {
+    inserted = []; awarded = [];
+    supabase.rpc.mockReset();
+    supabase.rpc.mockResolvedValue({ data: null, error: null });
+    supabase.auth.getSession.mockResolvedValue({ data: { session: { user: { id: 'owner-1' } } } });
+    supabase.from.mockImplementation((table: string) => {
+      if (table === 'movement_logs') return makeChain({ insert: jest.fn(async (rows: any[]) => { inserted = rows; return { data: null, error: null }; }) });
+      if (table === 'user_movement_stats') return makeChain({ eq: jest.fn().mockResolvedValue({ data: STATS, error: null }) });
+      if (table === 'badges_catalog') return makeChain({ eq: jest.fn().mockResolvedValue({ data: CATALOG, error: null }) });
+      if (table === 'athlete_badges') return makeChain({ insert: jest.fn(async (row: any) => { awarded.push(row.badge_key); return { data: null, error: null }; }) });
+      return makeChain();
+    });
+  });
+
+  it('journalise et incrémente avec l’unité, reps par défaut', async () => {
+    await logMovementReps('user-1', [
+      { name: 'Row', reps: 20, unit: 'cal' },
+      { name: 'Row', reps: 1000, unit: 'm' },
+      { name: 'Thrusters', reps: 10, weight_kg: 43 },
+    ], 'wod', 'wod-1');
+
+    expect(inserted.map(r => [r.movement, r.unit, r.total_reps])).toEqual([
+      ['row', 'cal', 20], ['row', 'm', 1000], ['thruster', 'reps', 10],
+    ]);
+    const rpcUnits = supabase.rpc.mock.calls
+      .filter((c: any[]) => c[0] === 'increment_movement_stats')
+      .map((c: any[]) => [c[1].p_movement, c[1].p_unit, c[1].p_reps]);
+    expect(rpcUnits).toEqual([['row', 'cal', 20], ['row', 'm', 1000], ['thruster', 'reps', 10]]);
+  });
+
+  it('attribue les paliers par unité et garde les méta-badges sur les reps seuls', async () => {
+    await logMovementReps('user-1', [{ name: 'Row', reps: 20, unit: 'cal' }]);
+    expect(awarded.sort()).toEqual(['mv_row_500', 'mv_row_m_10000', 'mv_thrusters_100']);
+    // 12 600 « reps » de Row en cal + m n'atteignent pas mv_total_10k : seules les 150 reps comptent.
+    expect(awarded).not.toContain('mv_total_10k');
   });
 });

@@ -11,6 +11,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { WODScore } from '../../types';
 import { formatCap, formatScoreValue } from '../../utils/scoreFormat';
 import { annotateStrengthLoads } from '../../utils/strengthBlock';
+import { annotateCardioLines } from '../../utils/cardioBlock';
 import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
 import { listProgramWods, ProgramWod } from '../../services/programContent';
 import GlassBackground from '../../components/glass/GlassBackground';
@@ -256,7 +257,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
 
             <Text style={S.sectionLabel}>SÉANCE</Text>
             <Text style={S.detailDesc}>
-              {annotateStrengthLoads(selected?.description ?? '', oneRepMaxFor)}
+              {annotateCardioLines(annotateStrengthLoads(selected?.description ?? '', oneRepMaxFor))}
             </Text>
 
             {!!selected?.notes && (

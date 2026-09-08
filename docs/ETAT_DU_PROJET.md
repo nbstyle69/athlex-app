@@ -383,6 +383,21 @@ wrapper vers `reps`, l'app en place ne change pas de comportement. Les badges
 PR app (parseurs avec unité et choix ♂/♀, bloc `~` cardio, badges par unité, méta-badges sur
 `reps` seulement), puis PR TheHub (catalogue `unit`, bloc Cardio, charge libre des lignes force).
 
+**Cardio — étape 2, l'app lit et crédite par unité.** `parseMovementLine` porte désormais
+l'unité : `20 cal Row` → 20 cal, `500 m Run` / `400m Course` → des mètres (plus « 1 rep »),
+une ligne sans unité reste des reps à l'identique. Les splits `20/15 cal Row`, `21/15 Pull-ups`
+et `(43/30 kg)` choisissent la valeur ♀ quand le profil est féminin (`user.gender` passé par
+tous les écrans qui créditent ; le back-office, qui ne lit pas le genre d'un autre athlète,
+crédite en ♂). Nouveau bloc cardio `src/utils/cardioBlock.ts` (`Row ~ 2 × 500 m ~ 250 W ~
+repos 2:00`, cible watts OU allure, RPE), crédité `séries × qté` sans multiplication par les
+rounds, affiché réécrit dans le détail de WOD / programme. `logMovementReps` écrit `unit` dans
+`movement_logs`, appelle la surcharge `increment_movement_stats(…, p_unit)` et cumule les
+badges par `(mouvement, unité)` : `mv_row/bike/ski` = calories, `mv_row_m/bike_m/ski_m/run`
+= mètres, une rep de Row ne donne rien ; `mv_polyvalent_*` et `mv_total_*` ne lisent que
+`reps`. Lignes force : segment libre `charge <texte>` (`RPE 8`, `RM du jour`) sérialisé,
+relu, affiché, et jamais pris pour un mouvement metcon. Dépend de la migration étape 1
+(colonne `unit`, surcharge RPC) — à merger après elle. Suite : PR TheHub.
+
 ---
 
 ## À venir, dans l'ordre
