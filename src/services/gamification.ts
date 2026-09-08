@@ -95,7 +95,7 @@ export interface StreakInfo {
 // terminé côté athlète. Une clé absente d'ici ne donne aucun badge.
 export const MOVEMENT_BADGE_PREFIX: Record<string, string> = {
   air_squat: 'mv_air_squat',        bar_muscle_up: 'mv_bmu',
-  bike: 'mv_bike',                  box_jump: 'mv_box_jump',
+  box_jump: 'mv_box_jump',
   burpee: 'mv_burpee',              burpee_box_jump: 'mv_burpee_bj',
   chest_to_bar: 'mv_c2b',           clean: 'mv_clean',
   clean_and_jerk: 'mv_cj',          db_cj: 'mv_db_cj',
@@ -112,14 +112,45 @@ export const MOVEMENT_BADGE_PREFIX: Record<string, string> = {
   pull_over: 'mv_pullover',         pull_up: 'mv_pullup',
   push_up: 'mv_pushup',             ring_dip: 'mv_ring_dip',
   ring_muscle_up: 'mv_ring_mu',     ring_row: 'mv_ring_row',
-  row: 'mv_row',                    sdlhp: 'mv_sdlhp',
+  sdlhp: 'mv_sdlhp',
   single_under: 'mv_su',            sit_up: 'mv_situp',
-  ski_erg: 'mv_ski',                snatch: 'mv_snatch',
+  snatch: 'mv_snatch',
   squat: 'mv_squat',                thruster: 'mv_thrusters',
   toes_to_bar: 'mv_t2b',            turkish_get_up: 'mv_turkish_gu',
   v_up: 'mv_vup',                   wall_ball: 'mv_wallball',
   wall_walk: 'mv_wallwalk',
 };
+
+export type MovementUnit = 'reps' | 'm' | 'cal';
+
+/**
+ * Mouvements cardio : un préfixe par unité. Les paliers `mv_row_*`,
+ * `mv_bike_*`, `mv_ski_*` comptent des calories (leurs descriptions l'ont
+ * toujours dit) ; les mètres ont leur propre préfixe `_m`, la course n'existe
+ * qu'en mètres. Une rep de Row (ligne sans unité) ne donne aucun badge.
+ */
+export const CARDIO_BADGE_PREFIX: Record<string, Partial<Record<MovementUnit, string>>> = {
+  row:     { cal: 'mv_row',  m: 'mv_row_m' },
+  bike:    { cal: 'mv_bike', m: 'mv_bike_m' },
+  ski_erg: { cal: 'mv_ski',  m: 'mv_ski_m' },
+  run:     { m: 'mv_run' },
+};
+
+/** Préfixe de badge d'un `(mouvement, unité)`, ou `undefined` s'il n'en a pas. */
+export function badgePrefixFor(movementKey: string, unit: MovementUnit = 'reps'): string | undefined {
+  const cardio = CARDIO_BADGE_PREFIX[movementKey];
+  if (cardio) return cardio[unit];
+  if (unit !== 'reps') return undefined;
+  return MOVEMENT_BADGE_PREFIX[movementKey];
+}
+
+function allBadgePrefixes(): Set<string> {
+  const all = new Set(Object.values(MOVEMENT_BADGE_PREFIX));
+  for (const byUnit of Object.values(CARDIO_BADGE_PREFIX)) {
+    for (const p of Object.values(byUnit)) if (p) all.add(p);
+  }
+  return all;
+}
 
 /**
  * Badges qui totalisent plusieurs mouvements en plus du leur : les burpees box
@@ -141,7 +172,7 @@ export async function movementBadgeThresholds(): Promise<Map<string, number[]>> 
   if (error) captureError(error, { service: 'gamification', action: 'movementBadgeThresholds' });
 
   const byPrefix = new Map<string, number[]>();
-  for (const prefix of new Set(Object.values(MOVEMENT_BADGE_PREFIX))) {
+  for (const prefix of allBadgePrefixes()) {
     const thresholds = (data ?? [])
       .filter(b => b.badge_key.startsWith(`${prefix}_`) && /^\d+$/.test(b.badge_key.slice(prefix.length + 1)))
       .map(b => parseInt(b.badge_key.slice(prefix.length + 1), 10))
@@ -167,11 +198,12 @@ export async function movementBadgesCrossed(
   movementKey: string,
   prevTotal: number,
   newTotal: number,
+  unit: MovementUnit = 'reps',
 ): Promise<MovementBadgeTier[]> {
   // Le back-office écrit tantôt le singulier tantôt le pluriel selon la
   // ligne de WOD saisie ("10 Thruster" / "10 Thrusters").
-  const prefix = MOVEMENT_BADGE_PREFIX[movementKey]
-    ?? MOVEMENT_BADGE_PREFIX[movementKey.replace(/s$/, '')];
+  const prefix = badgePrefixFor(movementKey, unit)
+    ?? badgePrefixFor(movementKey.replace(/s$/, ''), unit);
   if (!prefix || newTotal <= prevTotal) return [];
 
   const { data, error } = await supabase
@@ -490,8 +522,11 @@ function checkStreakBadges(streak: number): string[] {
 
 export interface MovementEntry {
   name: string;
+  /** Quantité dans `unit` : des reps, des mètres ou des calories. */
   reps: number;
   weight_kg?: number;
+  /** `reps` si absent. */
+  unit?: MovementUnit;
 }
 
 /**
@@ -515,7 +550,7 @@ export async function logMovementReps(
   // compteurs dont aucun badge ne lisait le premier. Les lignes qui ne se
   // résolvent pas en mouvement connu ne sont pas comptées.
   const counted = movements
-    .map(m => ({ ...m, key: normalizeMovement(m.name).key }))
+    .map(m => ({ ...m, key: normalizeMovement(m.name).key, unit: m.unit ?? ('reps' as MovementUnit) }))
     .filter(m => isKnownMovementKey(m.key));
   if (!counted.length) return [];
 
@@ -523,6 +558,7 @@ export async function logMovementReps(
   const logs = counted.map(m => ({
     user_id: userId,
     movement: m.key,
+    unit: m.unit,
     total_reps: m.reps,
     weight_kg: m.weight_kg ?? null,
     source_type: sourceType,
@@ -537,7 +573,8 @@ export async function logMovementReps(
         p_user_id: userId,
         p_movement: m.key,
         p_reps: m.reps,
-        p_weight: m.weight_kg ?? undefined,
+        p_weight: m.weight_kg ?? null,
+        p_unit: m.unit,
       });
     } catch (e) { captureError(e, { service: 'gamification', action: 'incrementMovementStats', movement: m.key }); }
   }
@@ -545,7 +582,7 @@ export async function logMovementReps(
   // 3. Check movement badges
   const { data: stats } = await supabase
     .from('user_movement_stats')
-    .select('movement, total_reps')
+    .select('movement, unit, total_reps')
     .eq('user_id', userId);
 
   if (stats) {
@@ -553,23 +590,25 @@ export async function logMovementReps(
     // « work_hsw », « wod_du_jour_ou_hyrox »…) restent en base mais ne
     // comptent plus : elles gonflaient les badges de polyvalence et de total
     // de reps avec des lignes de format de WOD.
+    // Les méta-badges (polyvalence, total) ne lisent que les reps : des mètres
+    // de Row ne sont pas des répétitions.
     const statsMap = new Map<string, number>();
+    const perPrefix = new Map<string, number>();
     let totalAllReps = 0;
     for (const s of stats) {
       if (!isKnownMovementKey(s.movement)) continue;
-      statsMap.set(s.movement, (statsMap.get(s.movement) ?? 0) + s.total_reps);
-      totalAllReps += s.total_reps;
-    }
-
-    // Un total par préfixe de badge. La clé canonique est la seule jonction
-    // avec le catalogue (MOVEMENT_BADGE_PREFIX) : avant, ce bloc listait des
-    // clés à la main ("pull_ups", "thrusters", "hspu_stricts") qu'aucune
-    // écriture ne produisait — les badges de mouvement de l'athlète étaient
-    // donc inatteignables.
-    const perPrefix = new Map<string, number>();
-    for (const [key, reps] of statsMap) {
-      const prefix = MOVEMENT_BADGE_PREFIX[key];
-      if (prefix) perPrefix.set(prefix, (perPrefix.get(prefix) ?? 0) + reps);
+      const unit = (s.unit ?? 'reps') as MovementUnit;
+      if (unit === 'reps') {
+        statsMap.set(s.movement, (statsMap.get(s.movement) ?? 0) + s.total_reps);
+        totalAllReps += s.total_reps;
+      }
+      // Un total par préfixe de badge. La clé canonique est la seule jonction
+      // avec le catalogue (MOVEMENT_BADGE_PREFIX / CARDIO_BADGE_PREFIX) : avant,
+      // ce bloc listait des clés à la main ("pull_ups", "thrusters",
+      // "hspu_stricts") qu'aucune écriture ne produisait — les badges de
+      // mouvement de l'athlète étaient donc inatteignables.
+      const prefix = badgePrefixFor(s.movement, unit);
+      if (prefix) perPrefix.set(prefix, (perPrefix.get(prefix) ?? 0) + s.total_reps);
     }
     for (const [prefix, keys] of Object.entries(MOVEMENT_BADGE_ROLLUP)) {
       const extra = keys.reduce((sum, k) => sum + (statsMap.get(k) ?? 0), 0);

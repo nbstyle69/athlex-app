@@ -231,9 +231,10 @@ export default function BOTournamentScreen() {
           const reps = entry.reps;
           if (!reps || reps <= 0) continue;
           const { key, label } = normalizeMovement(entry.name);
+          const unit = entry.unit ?? 'reps';
 
           const { data: existing } = await supabase.from('movement_rep_counts')
-            .select('id, total_reps').eq('athlete_id', score.athlete_id).eq('movement_key', key).maybeSingle();
+            .select('id, total_reps').eq('athlete_id', score.athlete_id).eq('movement_key', key).eq('unit', unit).maybeSingle();
 
           const newTotal = (existing?.total_reps ?? 0) + reps;
           if (existing) {
@@ -241,9 +242,9 @@ export default function BOTournamentScreen() {
               .update({ total_reps: newTotal, last_updated: new Date().toISOString() }).eq('id', existing.id);
           } else {
             await supabase.from('movement_rep_counts')
-              .insert({ athlete_id: score.athlete_id, movement_key: key, movement_label: label, total_reps: newTotal });
+              .insert({ athlete_id: score.athlete_id, movement_key: key, movement_label: label, unit, total_reps: newTotal });
           }
-          const crossed = await movementBadgesCrossed(key, existing?.total_reps ?? 0, newTotal);
+          const crossed = await movementBadgesCrossed(key, existing?.total_reps ?? 0, newTotal, unit);
           for (const badge of crossed) {
             const { error: badgeErr } = await supabase.from('athlete_badges')
               .upsert({ athlete_id: score.athlete_id, badge_key: badge.badge_key }, { onConflict: 'athlete_id,badge_key', ignoreDuplicates: true });

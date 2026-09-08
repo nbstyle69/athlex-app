@@ -25,6 +25,12 @@ export interface StrengthEntry {
   unit: StrengthLoadUnit;
   restSec: number | null;
   tempo: string | null;
+  /**
+   * Charge non numérique (« RPE 8 », « RM du jour », « +2,5 kg »), segment
+   * `charge …`. Une ligne sans `load` mais avec `charge` reste un bloc de
+   * force : elle commence par le nom, donc jamais créditée comme metcon.
+   */
+  loadNote?: string | null;
 }
 
 const SEP = ' — ';
@@ -58,6 +64,8 @@ export function serializeStrength(e: StrengthEntry): string {
   const reps = Math.max(1, Math.round(e.reps));
   let out = `${name}${SEP}${sets} × ${reps}`;
   if (e.load != null && e.load > 0) out += ` @ ${e.load} ${e.unit}`;
+  const loadNote = (e.loadNote ?? '').trim().replace(/\s+[—–-]\s+/g, ' ');
+  if (loadNote) out += `${SEP}charge ${loadNote}`;
   if (e.restSec != null && e.restSec > 0) out += `${SEP}repos ${formatRest(e.restSec)}`;
   const tempo = (e.tempo ?? '').trim();
   if (tempo) out += `${SEP}tempo ${tempo}`;
@@ -80,11 +88,14 @@ export function parseStrengthLine(line: string): StrengthEntry | null {
 
   let restSec: number | null = null;
   let tempo: string | null = null;
+  let loadNote: string | null = null;
   for (const tail of parts.slice(2)) {
     const rest = tail.match(/^repos\s+(.+)$/i);
     if (rest) { restSec = parseRest(rest[1]); continue; }
     const tp = tail.match(/^tempo\s+(.+)$/i);
-    if (tp) tempo = tp[1].trim();
+    if (tp) { tempo = tp[1].trim(); continue; }
+    const ch = tail.match(/^charge\s+(.+)$/i);
+    if (ch) loadNote = ch[1].trim();
   }
 
   return {
@@ -95,6 +106,7 @@ export function parseStrengthLine(line: string): StrengthEntry | null {
     unit: load == null ? 'kg' : unit,
     restSec,
     tempo,
+    ...(loadNote ? { loadNote } : {}),
   };
 }
 
@@ -156,11 +168,13 @@ export function formatStrengthPrescription(
   oneRepMaxKg?: number | null,
 ): string {
   let out = `${e.sets} × ${e.reps}`;
-  if (e.load == null || e.load <= 0) return out;
+  const note = (e.loadNote ?? '').trim();
+  if (e.load == null || e.load <= 0) return note ? `${out} · charge ${note}` : out;
   out += ` @ ${e.load} ${e.unit}`;
   if (e.unit === '%1RM') {
     const kg = resolveStrengthLoadKg(e, oneRepMaxKg);
     if (kg != null) out += ` (≈ ${kg} kg)`;
   }
+  if (note) out += ` · charge ${note}`;
   return out;
 }

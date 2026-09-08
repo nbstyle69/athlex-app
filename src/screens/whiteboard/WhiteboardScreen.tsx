@@ -663,7 +663,7 @@ export default function WhiteboardScreen() {
             : doneWod.wod_type === 'emom' ? 'EMOM'
             : doneWod.wod_type === 'tabata' ? 'Tabata'
             : 'For Time';
-          const completed = computeCompletedMovements(lines, wodFormat, 0, 'reps');
+          const completed = computeCompletedMovements(lines, wodFormat, 0, 'reps', { gender: user.gender });
           logMovementReps(user.id, completed, 'whiteboard', wodId)
             .catch(e => captureError(e, { screen: 'Whiteboard', action: 'logMovementReps' }));
         }
