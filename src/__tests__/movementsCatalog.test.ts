@@ -78,7 +78,7 @@ describe('catalogue haltéro élargi (12 mouvements, en reps)', () => {
     const keys: Record<string, string> = {
       'Snatch Balance': 'snatch_balance', 'Snatch High Pull': 'snatch_high_pull',
       'Clean Pull': 'clean_pull', 'Tall Clean': 'clean', 'Power Jerk': 'press',
-      'Split Jerk': 'press', 'Back Rack Split Jerk': 'press', 'Strict Press': 'press',
+      'Split Jerk': 'press', 'Back Rack Split Jerk': 'press', 'Strict Press': 'strict_press',
       'DB Strict Press': 'db_strict_press', 'Bench Press': 'bench_press',
       'Zercher Squat': 'squat', 'Wall Walk': 'wall_walk',
     };
@@ -91,7 +91,10 @@ describe('catalogue haltéro élargi (12 mouvements, en reps)', () => {
   it('alias usuels', () => {
     expect(normalizeMovement('bench').key).toBe('bench_press');
     expect(normalizeMovement('5 Bench Press').key).toBe('bench_press');
-    expect(normalizeMovement('shoulder press').key).toBe('press');
+    expect(normalizeMovement('shoulder press').key).toBe('strict_press');
+    expect(normalizeMovement('Military Press').key).toBe('strict_press');
+    expect(normalizeMovement('push press').key).toBe('press');
+    expect(MOVEMENT_BADGE_PREFIX.strict_press).toBe('mv_strict_press');
     expect(normalizeMovement('WW').key).toBe('wall_walk');
     expect(normalizeMovement('Wall Walks').key).toBe('wall_walk');
     expect(normalizeMovement('jerk').key).toBe('press');
