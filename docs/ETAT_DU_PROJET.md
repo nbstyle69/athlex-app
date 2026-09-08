@@ -419,6 +419,12 @@ existant (100/500/1000/5000 barre, 100/500/1000 DB), aucun palier nouveau. Migra
 Bike 25K / Centurion / Légende » (mise à jour sur place, pas de nouveau seed) et ajoute
 les 19 badges ci-dessus. Miroir catalogue + synonymes d'import PDF côté TheHub.
 
+**Strict Press, clé propre.** `strict press` / `shoulder press` / `military press` ne créditent
+plus la famille `press` (Push Press / Push Jerk / S2OH) mais une clé `strict_press` avec ses
+badges `mv_strict_press_100/500/1000/5000` (schéma barre, migration
+`20261206_badges_strict_press.sql`). Wall Walk reste sa propre clé (`mv_wallwalk`) ; Tall
+Clean → Clean, Jerks → famille `press` (où vit `push jerk`), Zercher → Squat, validés.
+
 ---
 
 ## À venir, dans l'ordre

@@ -103,6 +103,7 @@ export const MOVEMENT_BADGE_PREFIX: Record<string, string> = {
   clean_and_jerk: 'mv_cj',          db_cj: 'mv_db_cj',
   db_push_press: 'mv_db_push_press', db_snatch: 'mv_db_snatch',
   db_strict_press: 'mv_db_strict_press',
+  strict_press: 'mv_strict_press',
   db_thruster: 'mv_db_thruster',    deadlift: 'mv_deadlifts',
   devil_press: 'mv_devil_press',    double_under: 'mv_du',
   goblet_squat: 'mv_goblet_squat',  hollow_rock: 'mv_hollow',
