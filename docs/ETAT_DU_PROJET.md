@@ -406,6 +406,19 @@ mêmes cas de test côté TheHub (#322). La validation d'un score au back-office
 (`BOTournamentScreen`) lit le genre de l'athlète via `get_athlete_private_profile` et crédite
 la valeur ♀ ou ♂ du split ; genre absent → ♂ avec mention explicite dans l'alerte.
 
+**Catalogue haltéro élargi + libellés Assault Bike.** Douze mouvements ajoutés au
+`MOVEMENT_CATALOG` en `unit: 'reps'` (Snatch Balance, Snatch High Pull, Clean Pull, Tall
+Clean, Power Jerk, Split Jerk, Back Rack Split Jerk, Strict Press, DB Strict Press, Bench
+Press, Zercher Squat, Wall Walk), avec clés canoniques et alias dans `normalizeMovement`
+(`bench`, `shoulder press`, `WW`, `jerk`, `snatch pull`…). Les variantes d'une famille
+existante créditent les compteurs et badges de la famille (`mv_clean`, `mv_press`,
+`mv_squat`, `mv_wallwalk`) ; cinq nouvelles clés (`bench_press`, `snatch_balance`,
+`snatch_high_pull`, `clean_pull`, `db_strict_press`) reçoivent les paliers du schéma
+existant (100/500/1000/5000 barre, 100/500/1000 DB), aucun palier nouveau. Migration
+`20261205_badges_haltero_catalogue.sql` : renomme les badges mètres du bike en « Assault
+Bike 25K / Centurion / Légende » (mise à jour sur place, pas de nouveau seed) et ajoute
+les 19 badges ci-dessus. Miroir catalogue + synonymes d'import PDF côté TheHub.
+
 ---
 
 ## À venir, dans l'ordre
