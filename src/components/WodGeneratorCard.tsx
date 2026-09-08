@@ -1538,7 +1538,7 @@ export default function WodGeneratorCard({ navigation: navProp }: { navigation?:
     // Log movement reps for badges
     if (wod) {
       const lines = wod.movements.split('\n').filter(Boolean);
-      const completed = computeCompletedMovements(lines, wod.type, value, scoreType);
+      const completed = computeCompletedMovements(lines, wod.type, value, scoreType, { gender: user.gender });
       logMovementReps(user.id, completed, 'wod', savedWodId ?? undefined).catch(e => captureError(e, { action: 'logMovementReps' }));
     }
     hapticSuccess();

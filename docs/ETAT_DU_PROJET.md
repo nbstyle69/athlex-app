@@ -383,6 +383,29 @@ wrapper vers `reps`, l'app en place ne change pas de comportement. Les badges
 PR app (parseurs avec unité et choix ♂/♀, bloc `~` cardio, badges par unité, méta-badges sur
 `reps` seulement), puis PR TheHub (catalogue `unit`, bloc Cardio, charge libre des lignes force).
 
+**Cardio — étape 2, l'app lit et crédite par unité.** `parseMovementLine` porte désormais
+l'unité : `20 cal Row` → 20 cal, `500 m Run` / `400m Course` → des mètres (plus « 1 rep »),
+une ligne sans unité reste des reps à l'identique. Les splits `20/15 cal Row`, `21/15 Pull-ups`
+et `(43/30 kg)` choisissent la valeur ♀ quand le profil est féminin (`user.gender` passé par
+tous les écrans qui créditent ; le back-office, qui ne lit pas le genre d'un autre athlète,
+crédite en ♂). Nouveau bloc cardio `src/utils/cardioBlock.ts` (`Row ~ 2 × 500 m ~ 250 W ~
+repos 2:00`, cible watts OU allure, RPE), crédité `séries × qté` sans multiplication par les
+rounds, affiché réécrit dans le détail de WOD / programme. `logMovementReps` écrit `unit` dans
+`movement_logs`, appelle la surcharge `increment_movement_stats(…, p_unit)` et cumule les
+badges par `(mouvement, unité)` : `mv_row/bike/ski` = calories, `mv_row_m/bike_m/ski_m/run`
+= mètres, une rep de Row ne donne rien ; `mv_polyvalent_*` et `mv_total_*` ne lisent que
+`reps`. Lignes force : segment libre `charge <texte>` (`RPE 8`, `RM du jour`) sérialisé,
+relu, affiché, et jamais pris pour un mouvement metcon. Dépend de la migration étape 1
+(colonne `unit`, surcharge RPC) — à merger après elle. Suite : PR TheHub.
+
+**Cardio — étape 2 bis, défaut d'unité et genre côté owner.** Une ligne sans unité sur un
+mouvement cardio prend l'unité par défaut du catalogue (`MOVEMENT_CATALOG.unit`, résolu via
+la clé `normalizeMovement` : `20 Row` / `20 rameur` → 20 cal, `800 Run` / `400 Course` →
+800 / 400 m, `500m Ski` = `500 m Ski`) ; tout autre mouvement reste en reps. Même règle et
+mêmes cas de test côté TheHub (#322). La validation d'un score au back-office
+(`BOTournamentScreen`) lit le genre de l'athlète via `get_athlete_private_profile` et crédite
+la valeur ♀ ou ♂ du split ; genre absent → ♂ avec mention explicite dans l'alerte.
+
 ---
 
 ## À venir, dans l'ordre

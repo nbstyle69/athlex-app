@@ -348,7 +348,7 @@ export default function DailyTournamentDetailScreen() {
     if (tournament?.movements) {
       const lines = tournament.movements.split('\n').filter(Boolean);
       const sType = tournament.score_mode === 'time' ? 'time' : 'reps';
-      const completed = computeCompletedMovements(lines, tournament.wod_type, value, sType);
+      const completed = computeCompletedMovements(lines, tournament.wod_type, value, sType, { gender: user.gender });
       logMovementReps(user.id, completed, 'daily', tournamentId).catch(e => captureError(e, { action: 'logMovementReps' }));
     }
 

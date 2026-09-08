@@ -106,3 +106,25 @@ describe('résolution de la charge', () => {
     expect(formatStrengthPrescription({ ...base, load: null }, 190)).toBe('5 × 3');
   });
 });
+
+describe('charge libre (« charge <texte> »)', () => {
+  it('sérialise et relit une note de charge non numérique', () => {
+    const e = { ...base, load: null, restSec: null, tempo: null, loadNote: 'RPE 8' };
+    expect(serializeStrength(e)).toBe('Back Squat — 5 × 3 — charge RPE 8');
+    expect(parseStrengthLine(serializeStrength(e))).toEqual({
+      name: 'Back Squat', sets: 5, reps: 3, load: null, unit: 'kg', restSec: null, tempo: null, loadNote: 'RPE 8',
+    });
+  });
+
+  it('cohabite avec une charge numérique et le repos', () => {
+    const e = { ...base, loadNote: '+2,5 kg vs S36' };
+    expect(parseStrengthLine(serializeStrength(e))).toMatchObject({ load: 80, unit: '%1RM', restSec: 120, loadNote: '+2,5 kg vs S36' });
+  });
+
+  it('une ligne avec charge libre reste une ligne force, jamais un mouvement metcon', () => {
+    for (const line of ['Back Squat — 5 × 3 — charge RM du jour', 'Deadlift - 3x5 - charge -12 % de la précédente']) {
+      expect(isStrengthLine(line)).toBe(true);
+      expect(parseMovementLine(line)).toBeNull();
+    }
+  });
+});

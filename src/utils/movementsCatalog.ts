@@ -2,7 +2,11 @@
 // movement editor (box WOD back-office). Mirrors TheHub's `lib/movements.ts`
 // so the serialized lines are identical and reliably parsed for badge credit.
 
-export interface CatalogMovement { name: string; weighted: boolean; cardio?: boolean; }
+import { normalizeMovement } from './tournamentUtils';
+
+export type MovementUnit = 'reps' | 'm' | 'cal';
+
+export interface CatalogMovement { name: string; weighted: boolean; cardio?: boolean; unit?: MovementUnit; }
 
 export const MOVEMENT_CATALOG: CatalogMovement[] = [
   { name: 'Thruster', weighted: true },
@@ -48,16 +52,33 @@ export const MOVEMENT_CATALOG: CatalogMovement[] = [
   { name: 'Push-ups', weighted: false },
   { name: 'Sit-ups', weighted: false },
   { name: 'Air Squats', weighted: false },
-  { name: 'Row', weighted: false, cardio: true },
-  { name: 'Bike Erg', weighted: false, cardio: true },
-  { name: 'Echo Bike', weighted: false, cardio: true },
-  { name: 'SkiErg', weighted: false, cardio: true },
-  { name: 'Run', weighted: false, cardio: true },
+  { name: 'Row', weighted: false, cardio: true, unit: 'cal' },
+  { name: 'Bike Erg', weighted: false, cardio: true, unit: 'cal' },
+  { name: 'Echo Bike', weighted: false, cardio: true, unit: 'cal' },
+  { name: 'SkiErg', weighted: false, cardio: true, unit: 'cal' },
+  { name: 'Run', weighted: false, cardio: true, unit: 'm' },
   { name: 'Double-unders', weighted: false },
   { name: 'Lunges', weighted: false },
   { name: 'V-ups', weighted: false },
   { name: 'Hollow Rocks', weighted: false },
 ];
+
+/**
+ * Unité par défaut d'une ligne sans unité : `20 Row` → 20 cal, `800 Run` →
+ * 800 m, tout le reste en reps. Résolue via la clé `normalizeMovement`, donc
+ * `rameur`, `Assault Bike`, `Ski`, `Course`… héritent du défaut de leur machine.
+ */
+const DEFAULT_UNIT_BY_KEY: Record<string, MovementUnit> = {
+  row: 'cal', bike: 'cal', ski_erg: 'cal', run: 'm',
+};
+
+export function defaultUnitFor(name: string): MovementUnit {
+  const n = name.toLowerCase().trim();
+  if (!n) return 'reps';
+  const cat = MOVEMENT_CATALOG.find(m => m.name.toLowerCase() === n);
+  if (cat?.unit) return cat.unit;
+  return DEFAULT_UNIT_BY_KEY[normalizeMovement(name).key] ?? 'reps';
+}
 
 export function isWeightedMovement(name: string): boolean {
   const found = MOVEMENT_CATALOG.find(m => m.name.toLowerCase() === name.toLowerCase().trim());
