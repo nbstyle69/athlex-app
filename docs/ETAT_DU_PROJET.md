@@ -367,6 +367,22 @@ par la migration `20261203_box_wods_source_pdf.sql` : trois colonnes nullables s
 d'analyse (profil « K+ Perf » puis profil générique par IA), la preview et l'insertion en
 lot arrivent dans une PR TheHub séparée, à merger après celle-ci.
 
+**Cardio dans « Créer un WOD » — étape 1, compteurs par unité.** Recon : le crédit de badges
+est calculé entièrement côté app (`parseMovementLine` → `logMovementReps` → RPC
+`increment_movement_stats`), sans trigger ni edge function, et les trois tables de compteurs
+(`movement_logs`, `user_movement_stats`, `movement_rep_counts`) portaient un seul entier par
+mouvement : un « 20 cal Row » s'ajoutait aux reps, un « 500m Run » valait 1. La migration
+`20261204_movement_stats_unit.sql` ajoute `unit` (`reps` par défaut, `m`, `cal`) aux trois
+tables, étend PK / UNIQUE avec l'unité, regroupe la vue `movement_totals` par unité et
+ajoute une surcharge `increment_movement_stats(…, p_unit)` — l'ancienne signature reste en
+wrapper vers `reps`, l'app en place ne change pas de comportement. Les badges
+`mv_row/bike/ski_*` existants sont requalifiés en calories (clés et libellés conservés) ;
+`20261204_badges_cardio_paliers.sql` ajoute les paliers en mètres (`mv_row_m_*`,
+`mv_bike_m_*`, `mv_ski_m_*`), les compléments en calories et le nouveau préfixe `mv_run_*`
+(42 195 m = « Marathon »). Compteurs cardio à zéro en prod : aucune donnée à migrer. Suite :
+PR app (parseurs avec unité et choix ♂/♀, bloc `~` cardio, badges par unité, méta-badges sur
+`reps` seulement), puis PR TheHub (catalogue `unit`, bloc Cardio, charge libre des lignes force).
+
 ---
 
 ## À venir, dans l'ordre

@@ -4574,6 +4574,7 @@ export type Database = {
           source_id: string | null
           source_type: string
           total_reps: number
+          unit: string
           user_id: string | null
           weight_kg: number | null
         }
@@ -4584,6 +4585,7 @@ export type Database = {
           source_id?: string | null
           source_type?: string
           total_reps?: number
+          unit?: string
           user_id?: string | null
           weight_kg?: number | null
         }
@@ -4594,6 +4596,7 @@ export type Database = {
           source_id?: string | null
           source_type?: string
           total_reps?: number
+          unit?: string
           user_id?: string | null
           weight_kg?: number | null
         }
@@ -4622,6 +4625,7 @@ export type Database = {
           movement_key: string
           movement_label: string
           total_reps: number
+          unit: string
         }
         Insert: {
           athlete_id: string
@@ -4630,6 +4634,7 @@ export type Database = {
           movement_key: string
           movement_label: string
           total_reps?: number
+          unit?: string
         }
         Update: {
           athlete_id?: string
@@ -4638,6 +4643,7 @@ export type Database = {
           movement_key?: string
           movement_label?: string
           total_reps?: number
+          unit?: string
         }
         Relationships: [
           {
@@ -6895,6 +6901,7 @@ export type Database = {
           best_weight: number | null
           movement: string
           total_reps: number
+          unit: string
           updated_at: string
           user_id: string
         }
@@ -6902,6 +6909,7 @@ export type Database = {
           best_weight?: number | null
           movement: string
           total_reps?: number
+          unit?: string
           updated_at?: string
           user_id: string
         }
@@ -6909,6 +6917,7 @@ export type Database = {
           best_weight?: number | null
           movement?: string
           total_reps?: number
+          unit?: string
           updated_at?: string
           user_id?: string
         }
@@ -7340,6 +7349,7 @@ export type Database = {
         Row: {
           lifetime_reps: number | null
           movement: string | null
+          unit: string | null
           user_id: string | null
         }
         Relationships: [
@@ -7972,15 +7982,26 @@ export type Database = {
           trials: number
         }[]
       }
-      increment_movement_stats: {
-        Args: {
-          p_movement: string
-          p_reps: number
-          p_user_id: string
-          p_weight?: number
-        }
-        Returns: undefined
-      }
+      increment_movement_stats:
+        | {
+            Args: {
+              p_movement: string
+              p_reps: number
+              p_user_id: string
+              p_weight?: number
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_movement: string
+              p_reps: number
+              p_unit: string
+              p_user_id: string
+              p_weight: number | null
+            }
+            Returns: undefined
+          }
       invitation_target_blocker: {
         Args: { p_box_id: string; p_email: string }
         Returns: string
