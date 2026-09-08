@@ -1,3 +1,4 @@
+import { defaultUnitFor } from '../utils/movementsCatalog';
 import { parseMovementLine, computeCompletedMovements } from '../utils/movementParser';
 
 // ── parseMovementLine ────────────────────────────────────────────────────────
@@ -193,6 +194,23 @@ describe('lignes cardio (m / cal) et split ♂/♀', () => {
     expect(parseMovementLine('10 Thrusters (43/30 kg)', { gender: 'female' })).toEqual({ name: 'Thrusters', reps: 10, weight_kg: 30 });
     expect(parseMovementLine('10 Thrusters (43/30 kg)')).toEqual({ name: 'Thrusters', reps: 10, weight_kg: 43 });
     expect(parseMovementLine('7 reps — Sumo Deadlift @ 42.5/30 kg', { gender: 'female' })).toEqual({ name: 'Sumo Deadlift', reps: 7, weight_kg: 30 });
+  });
+
+  it('une ligne sans unité sur un mouvement cardio prend l’unité par défaut du catalogue', () => {
+    expect(parseMovementLine('20 Row')).toEqual({ name: 'Row', reps: 20, unit: 'cal' });
+    expect(parseMovementLine('20/15 Bike Erg', { gender: 'female' })).toEqual({ name: 'Bike Erg', reps: 15, unit: 'cal' });
+    expect(parseMovementLine('15 Echo Bike')).toEqual({ name: 'Echo Bike', reps: 15, unit: 'cal' });
+    expect(parseMovementLine('20 SkiErg')).toEqual({ name: 'SkiErg', reps: 20, unit: 'cal' });
+    expect(parseMovementLine('800 Run')).toEqual({ name: 'Run', reps: 800, unit: 'm' });
+    // Synonymes résolus par normalizeMovement : même défaut que la machine.
+    expect(parseMovementLine('20 rameur')).toMatchObject({ unit: 'cal' });
+    expect(parseMovementLine('400 Course')).toMatchObject({ unit: 'm' });
+    // Unité explicite : prioritaire sur le défaut, avec ou sans espace.
+    expect(parseMovementLine('500m Ski')).toEqual({ name: 'Ski', reps: 500, unit: 'm' });
+    expect(parseMovementLine('500 m Row')).toEqual({ name: 'Row', reps: 500, unit: 'm' });
+    expect(defaultUnitFor('Row')).toBe('cal');
+    expect(defaultUnitFor('Run')).toBe('m');
+    expect(defaultUnitFor('Thruster')).toBe('reps');
   });
 
   it('une ligne historique sans unité reste des reps (forme inchangée)', () => {

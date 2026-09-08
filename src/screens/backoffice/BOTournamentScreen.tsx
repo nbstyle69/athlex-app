@@ -25,7 +25,7 @@ import {
   rankWodScores, cfPoints, parseScoreToNumber, formatScoreDisplay,
   normalizeMovement, formatDateTime,
 } from '../../utils/tournamentUtils';
-import { computeCompletedMovements } from '../../utils/movementParser';
+import { computeCompletedMovements, AthleteGender } from '../../utils/movementParser';
 import GlassBackground from '../../components/glass/GlassBackground';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -200,6 +200,13 @@ export default function BOTournamentScreen() {
     }
   }
 
+  async function loadAthleteGender(athleteId: string): Promise<AthleteGender | null> {
+    const { data, error } = await supabase.rpc('get_athlete_private_profile', { p_user_id: athleteId });
+    if (error) { captureError(error, { screen: 'BOTournament', action: 'loadAthleteGender' }); return null; }
+    const g = (Array.isArray(data) ? data[0] : data)?.gender;
+    return g === 'male' || g === 'female' ? g : null;
+  }
+
   // ── Validate score ────────────────────────────────────────────────────────
   async function handleValidate(score: TournamentScore) {
     // Règle du tournoi : si la preuve vidéo est exigée, un score sans vidéo ne peut pas
@@ -225,7 +232,10 @@ export default function BOTournamentScreen() {
         const wodType: string = (score.tw as any)?.type ?? '';
         const scoreNumeric = parseScoreToNumber(score.score_value, wodType);
         const scoreType = wodType === 'For Time' ? 'time' : 'reps';
-        const completed = computeCompletedMovements(movements, wodType, scoreNumeric, scoreType);
+        // Split ♂/♀ (`20/15 cal Row`, `43/30 kg`) : le genre vient du profil
+        // de l'athlète via le lecteur staff ; inconnu → ♂, dit à l'écran.
+        const gender = await loadAthleteGender(score.athlete_id);
+        const completed = computeCompletedMovements(movements, wodType, scoreNumeric, scoreType, { gender });
         const newBadges: string[] = [];
         for (const entry of completed) {
           const reps = entry.reps;
@@ -257,7 +267,10 @@ export default function BOTournamentScreen() {
         const msg = newBadges.length > 0
           ? '\n\n' + t('bo.tournament.newBadge', { username: score.profile?.username, badges: newBadges.join('\n') })
           : '';
-        Alert.alert(t('bo.tournament.scoreValidated'), t('bo.tournament.scoreValidatedMsg', { username: score.profile?.username }) + msg);
+        const genderNote = completed.length > 0
+          ? '\n' + t(gender === 'female' ? 'bo.tournament.creditedFemale' : gender === 'male' ? 'bo.tournament.creditedMale' : 'bo.tournament.creditedUnknownGender')
+          : '';
+        Alert.alert(t('bo.tournament.scoreValidated'), t('bo.tournament.scoreValidatedMsg', { username: score.profile?.username }) + genderNote + msg);
         loadData();
       }},
     ]);

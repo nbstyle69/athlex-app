@@ -1,5 +1,6 @@
 import { MovementEntry, MovementUnit } from '../services/gamification';
 import { parseCardioLine, cardioToMovementEntry } from './cardioBlock';
+import { defaultUnitFor } from './movementsCatalog';
 
 export type AthleteGender = 'male' | 'female';
 
@@ -33,6 +34,7 @@ function normalizeUnit(raw: string): MovementUnit {
  *   "20/15 cal Row"         → reps 20 (♂) ou 15 (♀ via `options.gender`)
  *   "500 m Run (RPE 7)"     → { name: "Run", reps: 500, unit: "m" }
  *   "400m Course"           → { name: "Course", reps: 400, unit: "m" }
+ *   "20 Row" / "800 Run"    → unité par défaut du catalogue (cal / m)
  *   "21-15-9 :"             → null  (header)
  *   "5 Rounds For Time :"   → null  (header)
  *   "Row ~ 2 × 500 m"       → null  (bloc cardio, cf. cardioBlock.ts)
@@ -81,7 +83,8 @@ export function parseMovementLine(line: string, options?: ParseOptions): Movemen
     // Remove parenthetical info (weight/scale) and trailing "@ ..." load
     rest = rest.replace(/\s*\([^)]*\)/g, '').replace(/\s*@.*$/, '').trim();
     if (isNaN(reps) || reps <= 0 || !rest) return null;
-    return { name: rest, reps, weight_kg };
+    const unit = defaultUnitFor(rest);
+    return unit === 'reps' ? { name: rest, reps, weight_kg } : { name: rest, reps, unit };
   }
 
   return null;

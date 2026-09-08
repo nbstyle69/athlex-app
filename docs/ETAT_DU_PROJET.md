@@ -398,6 +398,14 @@ badges par `(mouvement, unité)` : `mv_row/bike/ski` = calories, `mv_row_m/bike_
 relu, affiché, et jamais pris pour un mouvement metcon. Dépend de la migration étape 1
 (colonne `unit`, surcharge RPC) — à merger après elle. Suite : PR TheHub.
 
+**Cardio — étape 2 bis, défaut d'unité et genre côté owner.** Une ligne sans unité sur un
+mouvement cardio prend l'unité par défaut du catalogue (`MOVEMENT_CATALOG.unit`, résolu via
+la clé `normalizeMovement` : `20 Row` / `20 rameur` → 20 cal, `800 Run` / `400 Course` →
+800 / 400 m, `500m Ski` = `500 m Ski`) ; tout autre mouvement reste en reps. Même règle et
+mêmes cas de test côté TheHub (#322). La validation d'un score au back-office
+(`BOTournamentScreen`) lit le genre de l'athlète via `get_athlete_private_profile` et crédite
+la valeur ♀ ou ♂ du split ; genre absent → ♂ avec mention explicite dans l'alerte.
+
 ---
 
 ## À venir, dans l'ordre
