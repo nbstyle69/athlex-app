@@ -39,6 +39,8 @@ import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import ReportMenu from '../../components/ReportMenu';
 import { readRows } from '../../lib/db';
 
+const DAY_LABELS_LONG = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+
 type Nav   = NativeStackNavigationProp<WhiteboardStackParamList>;
 type Route = RouteProp<WhiteboardStackParamList, 'WODDetail'>;
 
@@ -162,7 +164,7 @@ export default function WODDetailScreen() {
       }
 
       // ELO: compute lazily after WOD closes (past midnight), then load deltas
-      const wodExpired = new Date() >= (() => { const d = new Date(w.scheduled_date + 'T00:00:00'); d.setDate(d.getDate() + 1); return d; })();
+      const wodExpired = !!w.scheduled_date && new Date() >= (() => { const d = new Date(w.scheduled_date + 'T00:00:00'); d.setDate(d.getDate() + 1); return d; })();
       const { data: eloHist } = await supabase
         .from('elo_history')
         .select('member_id, elo_delta')
@@ -201,7 +203,8 @@ export default function WODDetailScreen() {
   }, [scrollToLeaderboard, loading, scores.length]);
 
   // Midnight cutoff: disable score submission after the WOD's scheduled date
-  const isExpired = wod ? new Date() >= new Date(wod.scheduled_date + 'T00:00:00') && new Date() >= (() => {
+  // Une séance de programme (sans date) ne ferme jamais : l'athlète la fait le jour où elle tombe pour lui.
+  const isExpired = wod?.scheduled_date ? new Date() >= new Date(wod.scheduled_date + 'T00:00:00') && new Date() >= (() => {
     const d = new Date(wod.scheduled_date + 'T00:00:00');
     d.setDate(d.getDate() + 1);
     return d;
@@ -543,7 +546,9 @@ export default function WODDetailScreen() {
           </View>
 
           <Text style={S.wodDate}>
-            {new Date(wod.scheduled_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            {wod.scheduled_date
+              ? new Date(wod.scheduled_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+              : `Programme · semaine ${wod.program_week ?? '?'} · ${DAY_LABELS_LONG[(wod.program_day ?? 1) - 1] ?? ''}`}
           </Text>
 
           {wod.description && (
@@ -894,7 +899,7 @@ export default function WODDetailScreen() {
                       username={user?.username ?? 'Athlète'}
                       avatarUrl={user?.avatar_url}
                       boxName={currentBox?.name ?? 'Ma Box'}
-                      date={wod.scheduled_date}
+                      date={wod.scheduled_date ?? new Date().toISOString().slice(0, 10)}
                     />
                   </ViewShot>
                 </View>

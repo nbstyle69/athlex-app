@@ -14,6 +14,7 @@ import { annotateStrengthLoads } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
 import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
 import { listProgramWods, ProgramWod } from '../../services/programContent';
+import { groupProgramWeeks, programWeekAt, weekGroupSessionsOn } from '../../utils/programSchedule';
 import GlassBackground from '../../components/glass/GlassBackground';
 
 const WOD_TYPE_COLORS: Record<string, string> = {
@@ -94,41 +95,31 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
   useEffect(() => { load(); }, [load]);
 
   // Les semaines existantes viennent du contenu réellement publié, pas d'un
-  // compteur théorique : une semaine sans séance ne s'invente pas.
-  const semaines = useMemo(() => {
-    const parLundi = new Map<string, ProgramWod[]>();
-    for (const w of wods) {
-      const lundi = lundiDe(w.scheduled_date);
-      const liste = parLundi.get(lundi);
-      if (liste) liste.push(w); else parLundi.set(lundi, [w]);
-    }
-    return [...parLundi.entries()]
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([lundi, liste]) => ({ lundi, wods: liste }));
-  }, [wods]);
+  // compteur théorique : une semaine sans séance ne s'invente pas. Semaines
+  // relatives (S1, S2…) d'abord, semaines datées ensuite.
+  const semaines = useMemo(() => groupProgramWeeks(wods), [wods]);
 
   const [weekIdx, setWeekIdx] = useState(0);
+
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const lundiAujourdhui = lundiDe(aujourdhui);
+  const semaineCourante = programWeekAt(startDate, aujourdhui);
+  const estSemaineEnCours = (s: (typeof semaines)[number]) =>
+    s.week != null ? s.week === semaineCourante : s.monday === lundiAujourdhui;
 
   // On ouvre sur la semaine en cours si le programme en a une, sinon sur la
   // première publiée — un athlète qui achète après le début tombe sur du
   // contenu, jamais sur du vide.
   useEffect(() => {
     if (semaines.length === 0) return;
-    const lundiAujourdhui = lundiDe(new Date().toISOString().slice(0, 10));
-    const idx = semaines.findIndex(s => s.lundi >= lundiAujourdhui);
+    const idx = semaines.findIndex(s =>
+      s.week != null ? s.week >= semaineCourante : (s.monday ?? '') >= lundiAujourdhui);
     setWeekIdx(idx >= 0 ? idx : semaines.length - 1);
-  }, [semaines]);
+  }, [semaines, semaineCourante, lundiAujourdhui]);
 
   const semaine = semaines[weekIdx];
-  const lundiAujourdhui = lundiDe(new Date().toISOString().slice(0, 10));
 
-  const wodsDuJour = (offset: number) => {
-    if (!semaine) return [];
-    const d = new Date(semaine.lundi + 'T00:00:00');
-    d.setDate(d.getDate() + offset);
-    const iso = d.toISOString().slice(0, 10);
-    return semaine.wods.filter(w => w.scheduled_date === iso);
-  };
+  const wodsDuJour = (offset: number) => (semaine ? weekGroupSessionsOn(semaine, offset + 1) : []);
 
   const doneCount = Object.keys(scores).length;
 
@@ -156,9 +147,11 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
           </TouchableOpacity>
           <View style={{ alignItems: 'center' }}>
             <Text style={S.weekLabel}>
-              Semaine {weekIdx + 1} / {semaines.length} · {libelleSemaine(semaine.lundi)}
+              {semaine.week != null
+                ? `Semaine ${semaine.week}${durationWeeks ? ` / ${durationWeeks}` : ''}`
+                : `Semaine ${weekIdx + 1} / ${semaines.length} · ${libelleSemaine(semaine.monday ?? lundiAujourdhui)}`}
             </Text>
-            {semaine.lundi === lundiAujourdhui && <Text style={S.weekNow}>Semaine en cours</Text>}
+            {estSemaineEnCours(semaine) && <Text style={S.weekNow}>Semaine en cours</Text>}
           </View>
           <TouchableOpacity
             onPress={() => setWeekIdx(w => Math.min(semaines.length - 1, w + 1))}

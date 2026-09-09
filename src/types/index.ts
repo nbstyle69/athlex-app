@@ -157,7 +157,10 @@ export interface BoxWOD {
   title: string;
   description?: string;
   wod_type?: BoxWODType;
-  scheduled_date: string;
+  /** Null pour une séance de programme athlète (ancrée en `program_week` × `program_day`). */
+  scheduled_date: string | null;
+  program_week?: number | null;
+  program_day?: number | null;
   time_cap_seconds?: number;
   rounds?: number;
   notes?: string;

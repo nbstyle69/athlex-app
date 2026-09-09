@@ -20,6 +20,7 @@ import { recordActivity, logMovementReps } from '../../services/gamification';
 import { computeCompletedMovements } from '../../utils/movementParser';
 import { formatCap } from '../../utils/scoreFormat';
 import { listProgramWodsByProgram } from '../../services/programContent';
+import { programSessionsOn, programWeekAt } from '../../utils/programSchedule';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { BoxWOD } from '../../types';
@@ -555,8 +556,11 @@ export default function WhiteboardScreen() {
         if (!memberships || memberships.length === 0) { setProgramWods([]); return; }
 
         const entries: ProgWodEntry[] = [];
-        // Le contenu vendu vit dans `box_wods`, rattaché par `wod_program_access` :
-        // un seul chemin, daté au calendrier, pour les deux types de programme.
+        // Le contenu vendu vit dans `box_wods`, rattaché par `wod_program_access`.
+        // Une séance relative (semaine × jour) tombe sur la date que donne la
+        // date de début de l'athlète ; un WOD daté rattaché au programme tombe
+        // sur sa date. Aucune des deux ne passe par la requête Whiteboard
+        // ci-dessus autrement que par sa propre date.
         const parProgramme = await listProgramWodsByProgram(
           (memberships as any[]).map(m => m.program_id),
         );
@@ -564,16 +568,10 @@ export default function WhiteboardScreen() {
         for (const m of memberships as any[]) {
           const prog = m.programs;
           if (!prog) continue;
-          const duJour = (parProgramme[prog.id] ?? []).filter(w => w.scheduled_date === selectedDate);
+          const duJour = programSessionsOn(parProgramme[prog.id] ?? [], m.start_date, selectedDate);
           if (duJour.length === 0) continue;
 
-          // Semaine relative à l'inscription de l'athlète, quand elle est connue.
-          let weekNumber = 0;
-          if (m.start_date) {
-            const debut = new Date(m.start_date + 'T00:00:00');
-            const jours = Math.floor((new Date(selectedDate + 'T00:00:00').getTime() - debut.getTime()) / 86400000);
-            weekNumber = jours >= 0 ? Math.floor(jours / 7) + 1 : 0;
-          }
+          const weekNumber = programWeekAt(m.start_date, selectedDate);
 
           for (const w of duJour) {
             entries.push({

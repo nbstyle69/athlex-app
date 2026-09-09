@@ -7,12 +7,14 @@ import { supabase } from '../lib/supabase';
  * quoi (policies `member_see_published` et `program_member_see_wods`), et non
  * plus un filtre d'écran.
  *
- * Conséquence de forme assumée : le contenu est daté au calendrier
- * (`scheduled_date`), pas numéroté en « jour 1..N » relatif à la date d'achat.
- * `program_wods` portait les deux (`day_number` OU `scheduled_date`) et n'a
- * jamais reçu une seule ligne : il n'y a donc aucun contenu relatif à
- * convertir. Le lecteur athlète affiche le numéro de semaine relatif à SA date
- * de début, mais le contenu, lui, est celui du calendrier.
+ * Deux ancrages, exclusifs (CHECK `box_wods_ancrage_check`, migration
+ * 20261207) :
+ * - daté (`scheduled_date`) : un WOD du Whiteboard de la box restreint à un
+ *   programme ; il reste sur le Whiteboard ;
+ * - relatif (`program_week` × `program_day`, `scheduled_date` null) : une
+ *   séance écrite depuis la page « Séances » du programme. Elle n'entre dans
+ *   aucune lecture datée, donc jamais sur un Whiteboard ; l'athlète la reçoit
+ *   à la date que donne SA date de début (`utils/programSchedule`).
  */
 
 export type ProgramWod = {
@@ -22,13 +24,15 @@ export type ProgramWod = {
   wod_type: string | null;
   time_cap_seconds: number | null;
   notes: string | null;
-  scheduled_date: string;
+  scheduled_date: string | null;
+  program_week: number | null;
+  program_day: number | null;
   sort_order: number;
   is_published: boolean | null;
 };
 
 const COLONNES =
-  'id, title, description, wod_type, time_cap_seconds, notes, scheduled_date, sort_order, is_published';
+  'id, title, description, wod_type, time_cap_seconds, notes, scheduled_date, program_week, program_day, sort_order, is_published';
 
 export type ProgramWodInput = {
   title: string;
@@ -36,9 +40,17 @@ export type ProgramWodInput = {
   wod_type: string;
   time_cap_seconds: number | null;
   notes: string | null;
-  scheduled_date: string;
   sort_order?: number;
-};
+} & (
+  | { scheduled_date: string; program_week?: null; program_day?: null }
+  | { scheduled_date: null; program_week: number; program_day: number }
+);
+
+function ancrage(input: ProgramWodInput) {
+  return input.scheduled_date
+    ? { scheduled_date: input.scheduled_date, program_week: null, program_day: null }
+    : { scheduled_date: null, program_week: input.program_week, program_day: input.program_day };
+}
 
 /** Les WOD d'un programme, du plus ancien au plus récent. */
 export async function listProgramWods(programId: string): Promise<ProgramWod[]> {
@@ -55,6 +67,8 @@ export async function listProgramWods(programId: string): Promise<ProgramWod[]> 
     .from('box_wods')
     .select(COLONNES)
     .in('id', ids)
+    .order('program_week', { ascending: true, nullsFirst: false })
+    .order('program_day', { ascending: true, nullsFirst: false })
     .order('scheduled_date', { ascending: true })
     .order('sort_order', { ascending: true });
   if (error) throw error;
@@ -80,6 +94,8 @@ export async function listProgramWodsByProgram(
     .from('box_wods')
     .select(COLONNES)
     .in('id', ids)
+    .order('program_week', { ascending: true, nullsFirst: false })
+    .order('program_day', { ascending: true, nullsFirst: false })
     .order('scheduled_date', { ascending: true })
     .order('sort_order', { ascending: true });
   if (error) throw error;
@@ -115,7 +131,7 @@ export async function createProgramWod(
       wod_type: input.wod_type,
       time_cap_seconds: input.time_cap_seconds,
       notes: input.notes,
-      scheduled_date: input.scheduled_date,
+      ...ancrage(input),
       sort_order: input.sort_order ?? 0,
       is_published: true,
     })
@@ -146,7 +162,7 @@ export async function updateProgramWod(
       wod_type: input.wod_type,
       time_cap_seconds: input.time_cap_seconds,
       notes: input.notes,
-      scheduled_date: input.scheduled_date,
+      ...ancrage(input),
       ...(input.sort_order != null ? { sort_order: input.sort_order } : {}),
     })
     .eq('id', wodId);
@@ -167,18 +183,36 @@ export async function duplicateProgramWeek(
 ): Promise<number> {
   let copies = 0;
   for (const w of wods) {
-    const cible = new Date(w.scheduled_date + 'T00:00:00');
-    cible.setDate(cible.getDate() + 7);
+    const cible = semaineSuivante(w);
+    if (!cible) continue;
     await createProgramWod(programId, boxId, {
       title: w.title,
       description: w.description ?? '',
       wod_type: w.wod_type ?? 'custom',
       time_cap_seconds: w.time_cap_seconds,
       notes: w.notes,
-      scheduled_date: cible.toISOString().slice(0, 10),
       sort_order: w.sort_order,
+      ...cible,
     });
     copies += 1;
   }
   return copies;
+}
+
+/** L'ancrage de la copie : +7 jours pour un WOD daté, semaine +1 pour une séance relative. */
+export function semaineSuivante(
+  w: Pick<ProgramWod, 'scheduled_date' | 'program_week' | 'program_day'>,
+):
+  | { scheduled_date: string; program_week: null; program_day: null }
+  | { scheduled_date: null; program_week: number; program_day: number }
+  | null {
+  if (w.scheduled_date) {
+    const cible = new Date(w.scheduled_date + 'T00:00:00');
+    cible.setDate(cible.getDate() + 7);
+    return { scheduled_date: cible.toISOString().slice(0, 10), program_week: null, program_day: null };
+  }
+  if (w.program_week != null && w.program_day != null) {
+    return { scheduled_date: null, program_week: w.program_week + 1, program_day: w.program_day };
+  }
+  return null;
 }

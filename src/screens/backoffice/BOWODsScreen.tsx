@@ -147,7 +147,7 @@ export default function BOWODsScreen({ navigation }: any) {
     setMovements(split.wod);
     setStrengthLines(split.strength);
     setWodType(wod.wod_type ?? 'amrap');
-    setDate(wod.scheduled_date);
+    setDate(wod.scheduled_date ?? toISO(new Date()));
     setTimeCap(formatCap(wod.time_cap_seconds));
     setRounds(wod.rounds ? String(wod.rounds) : '');
     setNotes(wod.notes ?? '');

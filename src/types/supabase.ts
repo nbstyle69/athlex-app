@@ -1482,9 +1482,11 @@ export type Database = {
           is_published: boolean | null
           leaderboard_enabled: boolean
           notes: string | null
+          program_day: number | null
+          program_week: number | null
           publish_at: string | null
           rounds: number | null
-          scheduled_date: string
+          scheduled_date: string | null
           sort_order: number
           source_pdf_url: string | null
           source_page: number | null
@@ -1510,9 +1512,11 @@ export type Database = {
           is_published?: boolean | null
           leaderboard_enabled?: boolean
           notes?: string | null
+          program_day?: number | null
+          program_week?: number | null
           publish_at?: string | null
           rounds?: number | null
-          scheduled_date: string
+          scheduled_date?: string | null
           sort_order?: number
           source_pdf_url?: string | null
           source_page?: number | null
@@ -1538,9 +1542,11 @@ export type Database = {
           is_published?: boolean | null
           leaderboard_enabled?: boolean
           notes?: string | null
+          program_day?: number | null
+          program_week?: number | null
           publish_at?: string | null
           rounds?: number | null
-          scheduled_date?: string
+          scheduled_date?: string | null
           sort_order?: number
           source_pdf_url?: string | null
           source_page?: number | null
