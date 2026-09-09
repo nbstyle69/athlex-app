@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { toLocalIso } from '../utils/programSchedule';
 
 /**
  * Le contenu d'un programme n'a plus de table à lui : c'est un WOD de box
@@ -209,7 +210,7 @@ export function semaineSuivante(
   if (w.scheduled_date) {
     const cible = new Date(w.scheduled_date + 'T00:00:00');
     cible.setDate(cible.getDate() + 7);
-    return { scheduled_date: cible.toISOString().slice(0, 10), program_week: null, program_day: null };
+    return { scheduled_date: toLocalIso(cible), program_week: null, program_day: null };
   }
   if (w.program_week != null && w.program_day != null) {
     return { scheduled_date: null, program_week: w.program_week + 1, program_day: w.program_day };

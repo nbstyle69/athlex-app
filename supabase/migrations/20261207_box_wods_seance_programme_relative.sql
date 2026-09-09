@@ -22,6 +22,15 @@
 -- visible des acheteurs. Rien à convertir : 0 séance relative n'existe.
 BEGIN;
 
+-- Garde AVANT tout changement de schéma : la colonne est encore NOT NULL,
+-- toute ligne sans date serait un état inconnu qu'on refuse de relire.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.box_wods WHERE scheduled_date IS NULL) THEN
+    RAISE EXCEPTION 'box_wods : des lignes sans scheduled_date existent avant la migration';
+  END IF;
+END $$;
+
 ALTER TABLE public.box_wods
   ALTER COLUMN scheduled_date DROP NOT NULL;
 
@@ -39,13 +48,6 @@ ALTER TABLE public.box_wods ADD CONSTRAINT box_wods_ancrage_check CHECK (
 );
 -- Les `IS NOT NULL` explicites comptent : sans eux, une ligne sans date NI
 -- semaine évalue le CHECK à NULL, que Postgres accepte.
-
-DO $$
-BEGIN
-  IF EXISTS (SELECT 1 FROM public.box_wods WHERE scheduled_date IS NULL) THEN
-    RAISE EXCEPTION 'box_wods : des lignes sans scheduled_date existent avant la migration';
-  END IF;
-END $$;
 
 COMMENT ON COLUMN public.box_wods.program_week IS
   'Séance de programme athlète : semaine relative (1..durée), exclusive de scheduled_date.';

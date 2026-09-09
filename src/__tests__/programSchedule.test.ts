@@ -1,8 +1,11 @@
+// Le fuseau Europe/Paris est imposé par jest.globalSetup.js : minuit local est
+// la veille en UTC, c'est là que `toISOString()` faisait glisser un lundi au dimanche.
 import {
   groupProgramWeeks,
   isoDayOf,
   isProgramSession,
   mondayOf,
+  toLocalIso,
   programSessionsOn,
   programWeekAt,
   weekGroupSessionsOn,
@@ -26,6 +29,14 @@ describe('calendrier relatif', () => {
   it('isoDayOf : lundi = 1, dimanche = 7', () => {
     expect(isoDayOf('2026-04-13')).toBe(1);
     expect(isoDayOf('2026-04-19')).toBe(7);
+  });
+
+  it('Europe/Paris : un lundi reste un lundi (pas de glissement UTC)', () => {
+    expect(new Date('2026-04-13T00:00:00').getTimezoneOffset()).toBe(-120);
+    expect(mondayOf('2026-04-13')).toBe('2026-04-13');
+    expect(mondayOf('2026-01-05')).toBe('2026-01-05');
+    expect(toLocalIso(new Date('2026-04-13T00:00:00'))).toBe('2026-04-13');
+    expect(new Date('2026-04-13T00:00:00').toISOString().slice(0, 10)).toBe('2026-04-12');
   });
 
   it('mondayOf ramène au lundi de la semaine', () => {

@@ -15,6 +15,18 @@ export interface RelativeAnchored {
   program_day: number | null;
 }
 
+/**
+ * `AAAA-MM-JJ` en heure LOCALE. `toISOString()` rend la date UTC : à
+ * `Europe/Paris`, minuit local est 22:00 ou 23:00 UTC la veille, et un lundi
+ * deviendrait un dimanche.
+ */
+export function toLocalIso(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const j = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${j}`;
+}
+
 /** Jour ISO d'une date `AAAA-MM-JJ` : 1 = lundi … 7 = dimanche. */
 export function isoDayOf(dateIso: string): number {
   const d = new Date(dateIso + 'T00:00:00');
@@ -26,7 +38,7 @@ export function isoDayOf(dateIso: string): number {
 export function mondayOf(dateIso: string): string {
   const d = new Date(dateIso + 'T00:00:00');
   d.setDate(d.getDate() - (isoDayOf(dateIso) - 1));
-  return d.toISOString().slice(0, 10);
+  return toLocalIso(d);
 }
 
 /**
@@ -105,7 +117,7 @@ export function weekGroupSessionsOn<T extends RelativeAnchored>(group: ProgramWe
   if (!group.monday) return [];
   const d = new Date(group.monday + 'T00:00:00');
   d.setDate(d.getDate() + day - 1);
-  const iso = d.toISOString().slice(0, 10);
+  const iso = toLocalIso(d);
   return group.wods.filter(w => w.scheduled_date === iso);
 }
 
