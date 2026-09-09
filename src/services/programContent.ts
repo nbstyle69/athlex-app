@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { toLocalIso } from '../utils/programSchedule';
+import { isMonday, RestDay, toLocalIso } from '../utils/programSchedule';
 
 /**
  * Le contenu d'un programme n'a plus de table à lui : c'est un WOD de box
@@ -51,6 +51,51 @@ function ancrage(input: ProgramWodInput) {
   return input.scheduled_date
     ? { scheduled_date: input.scheduled_date, program_week: null, program_day: null }
     : { scheduled_date: null, program_week: input.program_week, program_day: input.program_day };
+}
+
+/**
+ * Les jours marqués « Repos » par le coach (`program_rest_days`). Un jour sans
+ * séance et sans cette marque est un jour vide, pas un repos.
+ */
+export async function listProgramRestDays(programId: string): Promise<RestDay[]> {
+  const { data, error } = await supabase
+    .from('program_rest_days')
+    .select('program_week, program_day')
+    .eq('program_id', programId);
+  if (error) throw error;
+  return (data ?? []) as RestDay[];
+}
+
+/** Idem pour plusieurs programmes, indexés par programme. */
+export async function listProgramRestDaysByProgram(
+  programIds: string[],
+): Promise<Record<string, RestDay[]>> {
+  if (programIds.length === 0) return {};
+  const { data, error } = await supabase
+    .from('program_rest_days')
+    .select('program_id, program_week, program_day')
+    .in('program_id', programIds);
+  if (error) throw error;
+  const out: Record<string, RestDay[]> = {};
+  for (const r of data ?? []) {
+    (out[r.program_id] ??= []).push({ program_week: r.program_week, program_day: r.program_day });
+  }
+  return out;
+}
+
+/**
+ * L'athlète choisit (ou change) son lundi de début. Le serveur exige un lundi
+ * et refuse dès qu'une séance du programme a été scorée : ce garde-fou vit en
+ * base (`set_program_start_date`), l'écran ne fait que le refléter.
+ */
+export async function setProgramStartDate(programId: string, mondayIso: string): Promise<string> {
+  if (!isMonday(mondayIso)) throw new Error('La date de début doit être un lundi');
+  const { data, error } = await supabase.rpc('set_program_start_date', {
+    p_program_id: programId,
+    p_start_date: mondayIso,
+  });
+  if (error) throw error;
+  return data as string;
 }
 
 /** Les WOD d'un programme, du plus ancien au plus récent. */

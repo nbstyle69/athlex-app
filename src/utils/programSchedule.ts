@@ -59,6 +59,46 @@ export function isProgramSession(w: RelativeAnchored): boolean {
 }
 
 /**
+ * Le classement et l'ELO sont une affaire de Whiteboard : deux athlètes d'une
+ * même box, le même jour. Une séance relative est faite par chacun à sa propre
+ * date — aucune comparaison n'a de sens, donc aucun classement, aucun ELO.
+ * Les badges de mouvement et les PR, eux, restent crédités.
+ */
+export function leaderboardAvailable(w: Pick<RelativeAnchored, 'scheduled_date'> & { leaderboard_enabled?: boolean | null }): boolean {
+  return w.scheduled_date != null && w.leaderboard_enabled !== false;
+}
+
+export function isMonday(dateIso: string): boolean {
+  return isoDayOf(dateIso) === 1;
+}
+
+/**
+ * Les lundis proposés comme date de début : celui de la semaine en cours
+ * (un athlète qui achète un mercredi peut vouloir rattraper la semaine),
+ * puis les `count - 1` suivants.
+ */
+export function upcomingMondays(todayIso: string, count = 8): string[] {
+  const premier = mondayOf(todayIso);
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const d = new Date(premier + 'T00:00:00');
+    d.setDate(d.getDate() + i * 7);
+    out.push(toLocalIso(d));
+  }
+  return out;
+}
+
+export interface RestDay {
+  program_week: number;
+  program_day: number;
+}
+
+/** Un jour est « Repos » parce que le coach l'a dit, pas parce qu'il est vide. */
+export function isRestDay(restDays: readonly RestDay[], week: number, day: number): boolean {
+  return restDays.some(r => r.program_week === week && r.program_day === day);
+}
+
+/**
  * Séances d'un programme à afficher pour un athlète à une date donnée :
  * les séances relatives dont (semaine, jour) tombe sur cette date depuis son
  * début, plus — compatibilité lot 5-C — les WOD datés rattachés au programme

@@ -19,8 +19,8 @@ import { hapticSuccess } from '../../lib/haptics';
 import { recordActivity, logMovementReps } from '../../services/gamification';
 import { computeCompletedMovements } from '../../utils/movementParser';
 import { formatCap } from '../../utils/scoreFormat';
-import { listProgramWodsByProgram } from '../../services/programContent';
-import { programSessionsOn, programWeekAt } from '../../utils/programSchedule';
+import { listProgramWodsByProgram, listProgramRestDaysByProgram } from '../../services/programContent';
+import { programSessionsOn, programWeekAt, isRestDay, isoDayOf } from '../../utils/programSchedule';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { BoxWOD } from '../../types';
@@ -104,6 +104,11 @@ export default function WhiteboardScreen() {
   // Program WODs
   interface ProgWodEntry { programTitle: string; weekNumber: number; dayLabel: string; wod: { id: string; title: string; description: string; wod_type: string; time_cap_seconds?: number } }
   const [programWods, setProgramWods] = useState<ProgWodEntry[]>([]);
+  // Un programme acheté sans date de début n'a pas de « jour courant » : on le
+  // dit à l'athlète, jamais du vide silencieux. Et un jour marqué Repos par le
+  // coach s'affiche comme tel, même sans séance.
+  type ProgAvis = { programId: string; programTitle: string; progType: string; durationWeeks?: number; daysPerWeek?: number; kind: 'sans_date' | 'repos'; weekNumber: number };
+  const [programAvis, setProgramAvis] = useState<ProgAvis[]>([]);
 
   // Join box state
   const [joinModal, setJoinModal] = useState(false);
@@ -553,25 +558,36 @@ export default function WhiteboardScreen() {
           .select('program_id, start_date, programs:program_id(id, title, type, duration_weeks, days_per_week)')
           .eq('user_id', user.id)
           .eq('status', 'active');
-        if (!memberships || memberships.length === 0) { setProgramWods([]); return; }
+        if (!memberships || memberships.length === 0) { setProgramWods([]); setProgramAvis([]); return; }
 
         const entries: ProgWodEntry[] = [];
+        const avis: ProgAvis[] = [];
         // Le contenu vendu vit dans `box_wods`, rattaché par `wod_program_access`.
         // Une séance relative (semaine × jour) tombe sur la date que donne la
         // date de début de l'athlète ; un WOD daté rattaché au programme tombe
         // sur sa date. Aucune des deux ne passe par la requête Whiteboard
         // ci-dessus autrement que par sa propre date.
-        const parProgramme = await listProgramWodsByProgram(
-          (memberships as any[]).map(m => m.program_id),
-        );
+        const idsProgrammes = (memberships as any[]).map(m => m.program_id);
+        const [parProgramme, reposParProgramme] = await Promise.all([
+          listProgramWodsByProgram(idsProgrammes),
+          listProgramRestDaysByProgram(idsProgrammes),
+        ]);
 
         for (const m of memberships as any[]) {
           const prog = m.programs;
           if (!prog) continue;
+          const fiche = { programId: prog.id, programTitle: prog.title, progType: prog.type, durationWeeks: prog.duration_weeks ?? undefined, daysPerWeek: prog.days_per_week ?? undefined };
+          if (!m.start_date) {
+            avis.push({ ...fiche, kind: 'sans_date', weekNumber: 0 });
+            continue;
+          }
+          const weekNumber = programWeekAt(m.start_date, selectedDate);
+          if (weekNumber > 0 && isRestDay(reposParProgramme[prog.id] ?? [], weekNumber, isoDayOf(selectedDate))) {
+            avis.push({ ...fiche, kind: 'repos', weekNumber });
+            continue;
+          }
           const duJour = programSessionsOn(parProgramme[prog.id] ?? [], m.start_date, selectedDate);
           if (duJour.length === 0) continue;
-
-          const weekNumber = programWeekAt(m.start_date, selectedDate);
 
           for (const w of duJour) {
             entries.push({
@@ -589,9 +605,11 @@ export default function WhiteboardScreen() {
           }
         }
         setProgramWods(entries);
+        setProgramAvis(avis);
       } catch (e) {
         captureError(e, { screen: 'Whiteboard', action: 'fetchProgramWods' });
         setProgramWods([]);
+        setProgramAvis([]);
       }
     })();
   }, [user, selectedDate]);
@@ -1163,6 +1181,29 @@ export default function WhiteboardScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
+          {/* ── Programmes : date de début à choisir / jour de repos ── */}
+          {programAvis.map(a => (
+            <TouchableOpacity
+              key={`${a.kind}-${a.programId}`}
+              style={[S.wodCard, { marginTop: 20, borderLeftWidth: 3, borderLeftColor: theme.accent, flexDirection: 'row', alignItems: 'center', gap: 10 }]}
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('ProgramDetail', {
+                programId: a.programId, programTitle: a.programTitle, startDate: null,
+                progType: a.progType, durationWeeks: a.durationWeeks, daysPerWeek: a.daysPerWeek,
+              })}
+              disabled={a.kind === 'repos'}
+            >
+              <BookOpen color={theme.accent} size={16} />
+              <View style={{ flex: 1 }}>
+                <Text style={S.wodTitle}>{a.programTitle}</Text>
+                <Text style={S.wodDesc}>
+                  {a.kind === 'sans_date' ? t('whiteboard.programChooseStart') : t('whiteboard.programRest', { week: a.weekNumber })}
+                </Text>
+              </View>
+              {a.kind === 'sans_date' && <ChevronRight color={theme.textMuted} size={16} />}
+            </TouchableOpacity>
+          ))}
 
           {/* ── Programme WODs ─────────────────────── */}
           {programWodsHorsBox.length > 0 && programWodsHorsBox.reduce<{ title: string; wods: ProgWodEntry[] }[]>((acc, entry) => {

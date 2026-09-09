@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Modal, ActivityIndicator, RefreshControl,
 } from 'react-native';
-import { ChevronLeft, ChevronRight, Check, Clock, StickyNote } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Check, Clock, StickyNote, CalendarDays, Lock } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
@@ -13,8 +13,13 @@ import { formatCap, formatScoreValue } from '../../utils/scoreFormat';
 import { annotateStrengthLoads } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
 import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
-import { listProgramWods, ProgramWod } from '../../services/programContent';
-import { groupProgramWeeks, programWeekAt, weekGroupSessionsOn } from '../../utils/programSchedule';
+import {
+  listProgramWods, listProgramRestDays, setProgramStartDate, ProgramWod,
+} from '../../services/programContent';
+import {
+  groupProgramWeeks, programWeekAt, weekGroupSessionsOn, toLocalIso, mondayOf,
+  upcomingMondays, isRestDay, RestDay,
+} from '../../utils/programSchedule';
 import GlassBackground from '../../components/glass/GlassBackground';
 
 const WOD_TYPE_COLORS: Record<string, string> = {
@@ -27,12 +32,8 @@ const WOD_TYPE_COLORS: Record<string, string> = {
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
-/** Lundi (ISO) de la semaine d'une date `YYYY-MM-DD`, au même format. */
-function lundiDe(iso: string): string {
-  const d = new Date(iso + 'T00:00:00');
-  const jour = (d.getDay() + 6) % 7;
-  d.setDate(d.getDate() - jour);
-  return d.toISOString().slice(0, 10);
+function libelleDate(iso: string): string {
+  return iso.split('-').reverse().join('/');
 }
 
 function libelleSemaine(lundi: string): string {
@@ -44,8 +45,15 @@ function libelleSemaine(lundi: string): string {
 }
 
 export default function ProgramDetailScreen({ navigation, route }: any) {
-  const { programId, programTitle, startDate, progType, durationWeeks, daysPerWeek } = route.params;
+  const { programId, programTitle, progType, durationWeeks, daysPerWeek } = route.params;
   const { user } = useAuth();
+  // La date de début est celle de l'athlète, choisie après l'achat : elle
+  // arrive par la navigation puis vit ici, puisqu'on peut la (re)choisir.
+  const [startDate, setStartDate] = useState<string | null>(route.params.startDate ?? null);
+  const [choixDate, setChoixDate] = useState(false);
+  const [dateEnCours, setDateEnCours] = useState<string | null>(null);
+  const [erreurDate, setErreurDate] = useState<string | null>(null);
+  const [restDays, setRestDays] = useState<RestDay[]>([]);
   const { theme } = useTheme();
   const S = createStyles(theme);
   const oneRepMaxFor = useMyOneRepMax();
@@ -65,8 +73,12 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
   const load = useCallback(async () => {
     setErreur(null);
     try {
-      const list = await listProgramWods(programId);
+      const [list, repos] = await Promise.all([
+        listProgramWods(programId),
+        listProgramRestDays(programId),
+      ]);
       setWods(list);
+      setRestDays(repos);
 
       if (user && list.length > 0) {
         const { data: scoreData, error } = await supabase
@@ -101,9 +113,26 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
 
   const [weekIdx, setWeekIdx] = useState(0);
 
-  const aujourdhui = new Date().toISOString().slice(0, 10);
-  const lundiAujourdhui = lundiDe(aujourdhui);
+  const aujourdhui = toLocalIso(new Date());
+  const lundiAujourdhui = mondayOf(aujourdhui);
   const semaineCourante = programWeekAt(startDate, aujourdhui);
+  // Tant qu'aucune séance n'est scorée, la semaine 1 n'a pas encore eu lieu
+  // pour l'athlète : il peut déplacer son départ. Le serveur pose le même verrou.
+  const dateVerrouillee = Object.keys(scores).length > 0;
+  const lundisProposes = useMemo(() => upcomingMondays(aujourdhui), [aujourdhui]);
+
+  const validerDate = async () => {
+    if (!dateEnCours) return;
+    setErreurDate(null);
+    try {
+      const d = await setProgramStartDate(programId, dateEnCours);
+      setStartDate(d);
+      setChoixDate(false);
+    } catch (e) {
+      captureError(e, { screen: 'ProgramDetail', action: 'setStartDate' });
+      setErreurDate(e instanceof Error ? e.message : String(e));
+    }
+  };
   const estSemaineEnCours = (s: (typeof semaines)[number]) =>
     s.week != null ? s.week === semaineCourante : s.monday === lundiAujourdhui;
 
@@ -134,13 +163,25 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
           <Text style={S.headerTitle} numberOfLines={1}>{programTitle}</Text>
           <Text style={S.headerSub}>
             {progType === 'fixed' ? `${durationWeeks ?? semaines.length} semaines · ${dpw}j/sem` : `Ongoing · ${dpw}j/sem`}
-            {startDate ? ` · depuis le ${startDate.split('-').reverse().join('/')}` : ''}
+            {startDate ? ` · depuis le ${libelleDate(startDate)}` : ''}
             {doneCount > 0 ? ` · ${doneCount} WOD${doneCount > 1 ? 's' : ''} fait${doneCount > 1 ? 's' : ''}` : ''}
           </Text>
         </View>
+        {startDate && !loading && (
+          <TouchableOpacity
+            style={S.dateBtn}
+            disabled={dateVerrouillee}
+            onPress={() => { setDateEnCours(startDate); setChoixDate(true); }}
+            accessibilityLabel={dateVerrouillee ? 'Date de début verrouillée' : 'Modifier ma date de début'}
+          >
+            {dateVerrouillee
+              ? <Lock color={theme.textMuted} size={16} />
+              : <CalendarDays color={theme.accent} size={18} />}
+          </TouchableOpacity>
+        )}
       </View>
 
-      {semaines.length > 0 && (
+      {startDate && semaines.length > 0 && (
         <View style={S.weekNav}>
           <TouchableOpacity onPress={() => setWeekIdx(w => Math.max(0, w - 1))} style={S.weekArrow} disabled={weekIdx === 0}>
             <ChevronLeft color={weekIdx === 0 ? theme.textMuted : theme.text} size={20} />
@@ -173,6 +214,18 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
             <Text style={S.retryText}>Réessayer</Text>
           </TouchableOpacity>
         </View>
+      ) : !startDate ? (
+        <View style={S.emptyBlock}>
+          <CalendarDays color={theme.accent} size={32} />
+          <Text style={S.emptyTitle}>Choisir ma date de début</Text>
+          <Text style={S.emptyText}>
+            Ton programme démarre un lundi : la semaine 1 fait sept jours pleins. Choisis le lundi
+            qui te convient, tu pourras le changer tant que tu n'as pas enregistré de résultat.
+          </Text>
+          <TouchableOpacity style={S.logBtn} onPress={() => { setDateEnCours(lundisProposes[0] ?? null); setChoixDate(true); }}>
+            <Text style={S.logBtnText}>Choisir ma date de début</Text>
+          </TouchableOpacity>
+        </View>
       ) : semaines.length === 0 ? (
         <View style={S.emptyBlock}>
           <Text style={S.emptyTitle}>Aucune séance publiée</Text>
@@ -188,9 +241,11 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
         >
           {DAY_LABELS.map((label, i) => {
             const dayWods = wodsDuJour(i);
-            const isRest = dayWods.length === 0;
+            // Le repos est une décision du coach (`program_rest_days`), pas la
+            // simple absence de séance : un jour vide reste un jour vide.
+            const isRest = semaine.week != null && isRestDay(restDays, semaine.week, i + 1);
             return (
-              <View key={label} style={S.dayBlock}>
+              <View key={label} style={[S.dayBlock, isRest && S.dayBlockRest]}>
                 <View style={S.dayHeader}>
                   <Text style={S.dayLabel}>{label}</Text>
                   {isRest && <Text style={S.restBadge}>Repos</Text>}
@@ -224,6 +279,47 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
           })}
         </ScrollView>
       )}
+
+      <Modal visible={choixDate} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setChoixDate(false)}>
+        <View style={S.modalContainer}>
+          <View style={S.modalHeader}>
+            <Text style={S.modalTitle}>Ma date de début</Text>
+            <TouchableOpacity onPress={() => setChoixDate(false)}>
+              <Text style={S.modalCancel}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={S.modalBody}>
+            <Text style={S.emptyText}>Un lundi, pour que la semaine 1 fasse sept jours pleins.</Text>
+            <View style={{ marginTop: 16, gap: 8 }}>
+              {lundisProposes.map(lundi => {
+                const actif = lundi === dateEnCours;
+                return (
+                  <TouchableOpacity
+                    key={lundi}
+                    style={[S.lundiRow, actif && S.lundiRowActif]}
+                    onPress={() => setDateEnCours(lundi)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: actif }}
+                  >
+                    <Text style={[S.lundiTxt, actif && { color: theme.accent }]}>
+                      Lundi {libelleDate(lundi)}{lundi === lundiAujourdhui ? ' · cette semaine' : ''}
+                    </Text>
+                    {actif && <Check color={theme.accent} size={16} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            {erreurDate && <Text style={S.erreurTxt}>{erreurDate}</Text>}
+            <TouchableOpacity
+              style={[S.logBtn, !dateEnCours && { opacity: 0.5 }]}
+              disabled={!dateEnCours}
+              onPress={validerDate}
+            >
+              <Text style={S.logBtnText}>Valider</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+      </Modal>
 
       <Modal visible={!!selected} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSelected(null)}>
         <View style={S.modalContainer}>
@@ -307,6 +403,11 @@ function createStyles(t: AppTheme) {
     back: { padding: 6 },
     headerTitle: { fontSize: 17, fontWeight: '800', color: t.text },
     headerSub: { fontSize: 12, color: t.textMuted, marginTop: 2 },
+    dateBtn: { padding: 8 },
+    lundiRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: t.border, backgroundColor: t.card },
+    lundiRowActif: { borderColor: t.accent },
+    lundiTxt: { fontSize: 15, fontWeight: '600', color: t.text },
+    erreurTxt: { color: t.error, fontSize: 13, marginTop: 12 },
 
     weekNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: t.border },
     weekArrow: { padding: 8 },
@@ -320,6 +421,7 @@ function createStyles(t: AppTheme) {
     retryText: { color: t.text, fontWeight: '700', fontSize: 14 },
 
     dayBlock: { paddingHorizontal: 16, paddingTop: 16 },
+    dayBlockRest: { opacity: 0.6 },
     dayHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
     dayLabel: { fontSize: 13, fontWeight: '800', color: t.textSecondary, letterSpacing: 0.3 },
     restBadge: { fontSize: 11, color: t.textMuted, fontWeight: '600' },

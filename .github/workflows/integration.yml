@@ -230,6 +230,13 @@ jobs:
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'elo' }}
         run: ./scripts/test-finalize-elo-mutation.sh
 
+      # Séances de programme relatives (scheduled_date NULL) : leaderboard forcé
+      # à false par CHECK, historiques ELO fermés par trigger, start_date NULL
+      # puis lundi, program_rest_days. Mutation inverse intégrée (trigger off).
+      - name: Suite — Séances de programme relatives (ELO fermé, start_date, repos)
+        if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'elo' }}
+        run: ./scripts/test-programme-relatif.sh
+
       # Messagerie de groupe : group_messages.sender_id → profiles ON DELETE SET NULL.
       # Suppression d'un compte par delete_user_account → ses messages restent,
       # sender_id NULL. La mutation inverse retire la clé : la suite doit rougir.

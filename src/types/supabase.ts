@@ -5209,7 +5209,7 @@ export type Database = {
           program_id: string
           provenance: string
           purchased_at: string | null
-          start_date: string
+          start_date: string | null
           status: string | null
           stripe_checkout_session_id: string | null
           stripe_payment_intent: string | null
@@ -5223,7 +5223,7 @@ export type Database = {
           program_id: string
           provenance: string
           purchased_at?: string | null
-          start_date: string
+          start_date?: string | null
           status?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent?: string | null
@@ -5237,7 +5237,7 @@ export type Database = {
           program_id?: string
           provenance?: string
           purchased_at?: string | null
-          start_date?: string
+          start_date?: string | null
           status?: string | null
           stripe_checkout_session_id?: string | null
           stripe_payment_intent?: string | null
@@ -5247,6 +5247,35 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "program_members_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      program_rest_days: {
+        Row: {
+          created_at: string
+          program_day: number
+          program_id: string
+          program_week: number
+        }
+        Insert: {
+          created_at?: string
+          program_day: number
+          program_id: string
+          program_week: number
+        }
+        Update: {
+          created_at?: string
+          program_day?: number
+          program_id?: string
+          program_week?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_rest_days_program_id_fkey"
             columns: ["program_id"]
             isOneToOne: false
             referencedRelation: "programs"
@@ -8183,6 +8212,10 @@ export type Database = {
           p_scoring_type?: string
         }
         Returns: undefined
+      }
+      set_program_start_date: {
+        Args: { p_program_id: string; p_start_date: string }
+        Returns: string
       }
       resolve_program_week_source: {
         Args: { p_source_id: string; p_source_kind: string; p_week: number }

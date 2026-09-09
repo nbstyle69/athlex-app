@@ -33,6 +33,7 @@ import GymDeclarationSection from '../../components/wod/GymDeclarationSection';
 import StrengthHistory from '../../components/profile/StrengthHistory';
 import { fetchMyStrengthSets, groupStrengthSessions } from '../../services/strengthSets';
 import { inkOn } from '../../theme/ink';
+import { programWeekAt, toLocalIso } from '../../utils/programSchedule';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Profile'>;
 
@@ -173,7 +174,7 @@ export default function ProfileScreen() {
   const [progModal, setProgModal]   = useState(false);
   const [progCode, setProgCode]     = useState('');
   const [joiningProg, setJoiningProg] = useState(false);
-  const [myPrograms, setMyPrograms] = useState<(Program & { start_date: string; status: string })[]>([]);
+  const [myPrograms, setMyPrograms] = useState<(Program & { start_date: string | null; status: string })[]>([]);
 
   // ── Edit profile
   const [editing, setEditing]       = useState(false);
@@ -1034,10 +1035,7 @@ export default function ProfileScreen() {
               {myPrograms.length > 0 ? (
                 <>
                   {myPrograms.map(prog => {
-                    const startDate = new Date(prog.start_date + 'T00:00:00');
-                    const now = new Date();
-                    const daysSinceStart = Math.floor((now.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-                    const currentWeek = Math.floor(daysSinceStart / 7) + 1;
+                    const currentWeek = programWeekAt(prog.start_date, toLocalIso(new Date()));
                     return (
                       <TouchableOpacity
                         key={prog.id}
@@ -1056,7 +1054,9 @@ export default function ProfileScreen() {
                         <View style={{ flex: 1, marginLeft: 10 }}>
                           <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>{prog.title}</Text>
                           <Text style={{ fontSize: 11, color: theme.textSecondary }}>
-                            {prog.type === 'fixed'
+                            {!prog.start_date
+                              ? t('profile.account.progChooseStart')
+                              : prog.type === 'fixed'
                               ? t('profile.account.progFixed', { week: currentWeek, total: prog.duration_weeks, days: prog.days_per_week })
                               : t('profile.account.progOngoing', { days: prog.days_per_week })}
                           </Text>

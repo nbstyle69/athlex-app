@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { hapticSuccess } from '../../lib/haptics';
 import { computeAndSaveElo, sortScoresRxFirst } from '../../services/eloCompute';
+import { leaderboardAvailable } from '../../utils/programSchedule';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { spacing, borderRadius, typography, shadows } from '../../theme/designTokens';
@@ -170,7 +171,7 @@ export default function WODDetailScreen() {
         .select('member_id, elo_delta')
         .eq('wod_id', w.id);
 
-      if (wodExpired && (eloHist ?? []).length === 0 && list.length >= 2 && w.leaderboard_enabled !== false && currentBox) {
+      if (wodExpired && (eloHist ?? []).length === 0 && list.length >= 2 && leaderboardAvailable(w) && currentBox) {
         await computeAndSaveElo(w.id, currentBox.id, list, w.wod_type === 'for-time');
         const { data: freshHist } = await supabase
           .from('elo_history')
@@ -592,7 +593,7 @@ export default function WODDetailScreen() {
                 <Text style={S.myScoreLabel}>Mon score</Text>
                 <Text style={S.myScoreValue}>{formatScore(myScore)}</Text>
                 <Text style={S.myScoreRx}>{myScore.rx ? 'RX' : 'Scaled'}</Text>
-                {wod.leaderboard_enabled !== false && myRank && (
+                {leaderboardAvailable(wod) && myRank && (
                   <View style={S.myRankBadge}>
                     <Trophy color={myRank <= 3 ? theme.gold : theme.textMuted} size={14} />
                     <Text style={[S.myRankText, myRank <= 3 && { color: theme.gold }]}>#{myRank}</Text>
@@ -636,7 +637,7 @@ export default function WODDetailScreen() {
         </View>
 
         {/* Leaderboard */}
-        {scores.length > 0 && wod.leaderboard_enabled !== false && (
+        {scores.length > 0 && leaderboardAvailable(wod) && (
           <View
             style={S.section}
             onLayout={e => { leaderboardY.current = e.nativeEvent.layout.y; }}

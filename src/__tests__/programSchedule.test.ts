@@ -10,6 +10,10 @@ import {
   programWeekAt,
   weekGroupSessionsOn,
   whiteboardWodsOn,
+  isMonday,
+  upcomingMondays,
+  leaderboardAvailable,
+  isRestDay,
 } from '../utils/programSchedule';
 import { semaineSuivante } from '../services/programContent';
 
@@ -127,5 +131,47 @@ describe('duplication de semaine', () => {
     expect(semaineSuivante(relative('x', 3, 5))).toEqual({ scheduled_date: null, program_week: 4, program_day: 5 });
     expect(semaineSuivante(dated('x', '2026-04-13'))).toEqual({ scheduled_date: '2026-04-20', program_week: null, program_day: null });
     expect(semaineSuivante({ scheduled_date: null, program_week: null, program_day: null })).toBeNull();
+  });
+});
+
+describe('date de début choisie par l’athlète (lundi, après achat)', () => {
+  it('start_date NULL : pas de semaine courante, jamais de séance du jour', () => {
+    expect(programWeekAt(null, '2026-04-15')).toBe(0);
+    expect(programSessionsOn([relative('a', 1, 3)], null, '2026-04-15')).toEqual([]);
+  });
+
+  it('seuls les lundis sont acceptés', () => {
+    expect(isMonday('2026-04-13')).toBe(true);
+    expect(isMonday('2026-04-14')).toBe(false);
+    expect(isMonday('2026-04-19')).toBe(false);
+  });
+
+  it('propose les lundis à venir, lundi courant inclus (Europe/Paris)', () => {
+    expect(upcomingMondays('2026-04-13', 3)).toEqual(['2026-04-13', '2026-04-20', '2026-04-27']);
+    expect(upcomingMondays('2026-04-15', 2)).toEqual(['2026-04-13', '2026-04-20']);
+    expect(upcomingMondays('2026-04-19', 2)).toEqual(['2026-04-13', '2026-04-20']);
+    expect(upcomingMondays('2026-03-28', 2)).toEqual(['2026-03-23', '2026-03-30']);
+  });
+});
+
+describe('leaderboard / ELO fermés sur une séance relative', () => {
+  it('une séance relative n’a jamais de leaderboard, même flag oublié', () => {
+    expect(leaderboardAvailable({ scheduled_date: null, leaderboard_enabled: true })).toBe(false);
+    expect(leaderboardAvailable({ scheduled_date: null, leaderboard_enabled: null })).toBe(false);
+  });
+  it('un WOD Whiteboard daté garde son leaderboard sauf s’il est désactivé', () => {
+    expect(leaderboardAvailable({ scheduled_date: '2026-04-13', leaderboard_enabled: true })).toBe(true);
+    expect(leaderboardAvailable({ scheduled_date: '2026-04-13', leaderboard_enabled: null })).toBe(true);
+    expect(leaderboardAvailable({ scheduled_date: '2026-04-13', leaderboard_enabled: false })).toBe(false);
+  });
+});
+
+describe('jours de repos explicites (program_rest_days)', () => {
+  const repos = [{ program_week: 1, program_day: 3 }, { program_week: 2, program_day: 7 }];
+  it('un repos est une marque du coach par semaine × jour, pas l’absence de séance', () => {
+    expect(isRestDay(repos, 1, 3)).toBe(true);
+    expect(isRestDay(repos, 2, 3)).toBe(false);
+    expect(isRestDay(repos, 1, 7)).toBe(false);
+    expect(isRestDay([], 1, 6)).toBe(false);
   });
 });
