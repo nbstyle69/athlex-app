@@ -114,7 +114,7 @@ export default function BOProgramEditorScreen({ navigation, route }: any) {
     setFType(w.wod_type ?? 'custom');
     setFTimeCap(formatCap(w.time_cap_seconds));
     setFNotes(w.notes ?? '');
-    setFDate(w.scheduled_date);
+    setFDate(w.scheduled_date ?? new Date().toISOString().slice(0, 10));
     setModalOpen(true);
   }
 
@@ -128,13 +128,16 @@ export default function BOProgramEditorScreen({ navigation, route }: any) {
       wod_type: fType,
       time_cap_seconds: parseCap(fTimeCap),
       notes: fNotes.trim() || null,
-      scheduled_date: fDate,
     };
     try {
       if (editWod) {
-        await updateProgramWod(editWod.id, { ...input, sort_order: editWod.sort_order });
+        // Une séance relative (écrite depuis le Manager) garde son ancrage semaine × jour.
+        const ancre = editWod.scheduled_date == null && editWod.program_week != null && editWod.program_day != null
+          ? { scheduled_date: null as null, program_week: editWod.program_week, program_day: editWod.program_day }
+          : { scheduled_date: fDate };
+        await updateProgramWod(editWod.id, { ...input, ...ancre, sort_order: editWod.sort_order });
       } else {
-        await createProgramWod(programId, boxId, { ...input, sort_order: wodsForDate(fDate).length });
+        await createProgramWod(programId, boxId, { ...input, scheduled_date: fDate, sort_order: wodsForDate(fDate).length });
       }
       setModalOpen(false);
       load();

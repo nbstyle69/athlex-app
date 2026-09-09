@@ -1,6 +1,6 @@
 # État du projet AthleX
 
-Dernière mise à jour : **5 septembre 2026**.
+Dernière mise à jour : **9 septembre 2026**.
 
 Ce fichier est écrit pour être lu en deux minutes, sans être développeur. Il dit ce qui
 marche aujourd'hui, ce qui est en train de se faire, ce qui vient ensuite, et ce qui est
@@ -193,6 +193,18 @@ Supabase/Resend.
 ---
 
 ## En cours
+
+**Séances de programme athlète relatives (semaine × jour) — lot a/c.** Une séance de
+programme payant (« Prog Muscu — 13 semaines · 5j/sem ») n'a plus de date : elle a une
+position (`program_week`, `program_day`) sur `box_wods`, exclusive de `scheduled_date` par
+contrainte de base. Le Whiteboard de la box lit toujours par date : une séance de programme
+n'y entre jamais, et un WOD de box n'est jamais requalifié en séance de programme (13 tests
+`programSchedule`). L'athlète abonné la reçoit le jour où elle tombe pour lui, à partir de
+SA date de début, en plus des blocs de la box. **Migration `20261207` non appliquée en
+prod** (dump logique à faire avant) ; la page « Séances » du Manager et l'import PDF qui
+écrivent ce format arrivent dans deux PR séparées côté `AthleX-Manager`. **Rien n'est
+constaté à l'écran** : la ligne ne monte qu'après validation de Nab sur la preview et une
+séance réelle vue dans l'app.
 
 **Offre Essai (tunnel d'acquisition de prospects).** Le socle serveur est en production
 depuis le 24 août, et il y est constaté sur la vraie base : le type d'offre « Essai » est

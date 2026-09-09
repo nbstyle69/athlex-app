@@ -15,6 +15,7 @@ import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { hapticSuccess } from '../../lib/haptics';
 import { computeAndSaveElo, sortScoresRxFirst } from '../../services/eloCompute';
+import { leaderboardAvailable } from '../../utils/programSchedule';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { spacing, borderRadius, typography, shadows } from '../../theme/designTokens';
@@ -38,6 +39,8 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import ReportMenu from '../../components/ReportMenu';
 import { readRows } from '../../lib/db';
+
+const DAY_LABELS_LONG = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
 type Nav   = NativeStackNavigationProp<WhiteboardStackParamList>;
 type Route = RouteProp<WhiteboardStackParamList, 'WODDetail'>;
@@ -162,13 +165,13 @@ export default function WODDetailScreen() {
       }
 
       // ELO: compute lazily after WOD closes (past midnight), then load deltas
-      const wodExpired = new Date() >= (() => { const d = new Date(w.scheduled_date + 'T00:00:00'); d.setDate(d.getDate() + 1); return d; })();
+      const wodExpired = !!w.scheduled_date && new Date() >= (() => { const d = new Date(w.scheduled_date + 'T00:00:00'); d.setDate(d.getDate() + 1); return d; })();
       const { data: eloHist } = await supabase
         .from('elo_history')
         .select('member_id, elo_delta')
         .eq('wod_id', w.id);
 
-      if (wodExpired && (eloHist ?? []).length === 0 && list.length >= 2 && w.leaderboard_enabled !== false && currentBox) {
+      if (wodExpired && (eloHist ?? []).length === 0 && list.length >= 2 && leaderboardAvailable(w) && currentBox) {
         await computeAndSaveElo(w.id, currentBox.id, list, w.wod_type === 'for-time');
         const { data: freshHist } = await supabase
           .from('elo_history')
@@ -201,7 +204,8 @@ export default function WODDetailScreen() {
   }, [scrollToLeaderboard, loading, scores.length]);
 
   // Midnight cutoff: disable score submission after the WOD's scheduled date
-  const isExpired = wod ? new Date() >= new Date(wod.scheduled_date + 'T00:00:00') && new Date() >= (() => {
+  // Une séance de programme (sans date) ne ferme jamais : l'athlète la fait le jour où elle tombe pour lui.
+  const isExpired = wod?.scheduled_date ? new Date() >= new Date(wod.scheduled_date + 'T00:00:00') && new Date() >= (() => {
     const d = new Date(wod.scheduled_date + 'T00:00:00');
     d.setDate(d.getDate() + 1);
     return d;
@@ -543,7 +547,9 @@ export default function WODDetailScreen() {
           </View>
 
           <Text style={S.wodDate}>
-            {new Date(wod.scheduled_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            {wod.scheduled_date
+              ? new Date(wod.scheduled_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+              : `Programme · semaine ${wod.program_week ?? '?'} · ${DAY_LABELS_LONG[(wod.program_day ?? 1) - 1] ?? ''}`}
           </Text>
 
           {wod.description && (
@@ -587,7 +593,7 @@ export default function WODDetailScreen() {
                 <Text style={S.myScoreLabel}>Mon score</Text>
                 <Text style={S.myScoreValue}>{formatScore(myScore)}</Text>
                 <Text style={S.myScoreRx}>{myScore.rx ? 'RX' : 'Scaled'}</Text>
-                {wod.leaderboard_enabled !== false && myRank && (
+                {leaderboardAvailable(wod) && myRank && (
                   <View style={S.myRankBadge}>
                     <Trophy color={myRank <= 3 ? theme.gold : theme.textMuted} size={14} />
                     <Text style={[S.myRankText, myRank <= 3 && { color: theme.gold }]}>#{myRank}</Text>
@@ -631,7 +637,7 @@ export default function WODDetailScreen() {
         </View>
 
         {/* Leaderboard */}
-        {scores.length > 0 && wod.leaderboard_enabled !== false && (
+        {scores.length > 0 && leaderboardAvailable(wod) && (
           <View
             style={S.section}
             onLayout={e => { leaderboardY.current = e.nativeEvent.layout.y; }}
@@ -894,7 +900,7 @@ export default function WODDetailScreen() {
                       username={user?.username ?? 'Athlète'}
                       avatarUrl={user?.avatar_url}
                       boxName={currentBox?.name ?? 'Ma Box'}
-                      date={wod.scheduled_date}
+                      date={wod.scheduled_date ?? new Date().toISOString().slice(0, 10)}
                     />
                   </ViewShot>
                 </View>

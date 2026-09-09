@@ -162,7 +162,8 @@ export type CoachTabParamList = {
 export type ProgramDetailParams = {
   programId: string;
   programTitle: string;
-  startDate?: string;
+  /** Lundi choisi par l'athlète ; null tant qu'il n'a pas choisi. */
+  startDate?: string | null;
   progType: string;
   durationWeeks?: number;
   daysPerWeek?: number;
@@ -435,6 +436,7 @@ export type CompetitionStackParamList = {
 export type WhiteboardStackParamList = {
   WhiteboardMain: undefined;
   WODDetail: { wodId: string; scrollToLeaderboard?: boolean };
+  ProgramDetail: ProgramDetailParams;
   BoxRanking: undefined;
   PublicProfile: { userId: string };
   Messages: undefined;
@@ -570,6 +572,7 @@ function WhiteboardNavigator() {
     <WhiteboardStack.Navigator screenOptions={shell}>
       <WhiteboardStack.Screen name="WhiteboardMain" component={WhiteboardScreen} />
       <WhiteboardStack.Screen name="WODDetail"      component={WODDetailScreen} />
+      <WhiteboardStack.Screen name="ProgramDetail"  component={ProgramDetailScreen} />
       <WhiteboardStack.Screen name="BoxRanking"     component={BoxRankingScreen} />
       <WhiteboardStack.Screen name="PublicProfile"  component={PublicProfileScreen} />
       <WhiteboardStack.Screen name="Messages"       component={MessagesScreen} />
