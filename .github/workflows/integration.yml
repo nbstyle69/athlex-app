@@ -51,6 +51,7 @@ on:
           - comptoir-programmes
           - abonnement-programmation
           - marketplace-whiteboard
+          - desabonnement-programmation
           - espace-coach
           - heures
           - essai
@@ -194,6 +195,14 @@ jobs:
       - name: Suite — Marketplace ↔ Whiteboard (audience, ancrage, cron, verrou)
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'marketplace-whiteboard' }}
         run: node scripts/test-marketplace-whiteboard.mjs ${{ steps.flags.outputs.extra_flag }}
+
+      # Désabonnement d'une programmation : seul le gérant/co-gérant de la box
+      # abonnée résilie, le passé et la semaine en cours restent, les cartes
+      # futures partent uniquement si demandé ; payant = demande mémorisée,
+      # conclue par le backend (webhook Stripe) à la fin de période.
+      - name: Suite — Désabonnement programmation (garde, passé conservé, futures)
+        if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'desabonnement-programmation' }}
+        run: node scripts/test-desabonnement-programmation.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # L'espace coach : le coach programme (semaines types, grille de créneaux)
       # mais ne lit pas « qui paie quoi », ne publie pas et ne fixe pas de prix.
