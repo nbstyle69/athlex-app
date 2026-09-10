@@ -157,7 +157,7 @@ try {
 
   const applied = await coach.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: tplId, p_week: 1,
-    p_target_monday: mondayOf(1), p_replace: false,
+    p_target_monday: mondayOf(1), p_audience: 'all', p_replace: false,
   });
   check('coach APPLIQUE une semaine type au calendrier', applied.error == null, true);
   if (applied.error) note('erreur', applied.error.message);

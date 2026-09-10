@@ -36,6 +36,8 @@ const db = serviceClient();
 const stamp = Date.now();
 const PASSWORD = 'TestWodAccess1234!';
 const TODAY = new Date().toISOString().slice(0, 10);
+// `program_members.start_date` doit être un lundi (20261208) : le lundi de la semaine courante.
+const MONDAY = (() => { const d = new Date(); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); })();
 
 let passed = 0;
 let failed = 0;
@@ -112,7 +114,7 @@ async function main() {
     // La provenance `stripe` exige une référence de paiement (garde du lot 0-bis).
     const { error } = await db.from('program_members').insert({
       program_id: program.id, user_id: user, status, provenance: 'stripe',
-      start_date: TODAY, stripe_checkout_session_id: `cs_test_zzwa_${stamp}_${status}`,
+      start_date: MONDAY, stripe_checkout_session_id: `cs_test_zzwa_${stamp}_${status}`,
     });
     if (error) throw new Error(`décor program_members ${status} : ${error.message}`);
   }
