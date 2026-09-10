@@ -194,6 +194,18 @@ Supabase/Resend.
 
 ## En cours
 
+**Désabonnement d'une programmation Marketplace (`athlex-app`, migration `20261210`).**
+Aucun désabonnement n'existait. RPC `unsubscribe_programming(p_subscription_id,
+p_remove_future)` SECURITY DEFINER, gardée par `is_box_owner_admin` de la box abonnée :
+gratuit → statut `canceled` immédiat (ignoré par `materialize_box_programming`), `color`
+conservée pour un réabonnement (`subscribe_free_programming` réactive la même ligne) ;
+payant → demande mémorisée (`cancel_requested_at`, `remove_future_on_cancel`), conclue par
+le backend au webhook Stripe de fin de période. Les cartes reçues futures ne partent qu'à
+partir du lundi suivant (Paris) et seulement si demandé ; le passé et la semaine en cours
+restent toujours (scores, ELO). Suite `desabonnement-programmation` (31 assertions, JWT
+réels, garde validée par mutation inverse). **Migration non appliquée en prod** (dump avant).
+Le Manager (#329) suit : lien « Se désabonner », confirmation, `cancel_at_period_end`.
+
 **Marketplace ↔ Whiteboard — PR 1/2 (`athlex-app`, migration `20261209`).** Constat de
 recon : l'offre publiée « ATHX BLOC 2 Building » (RAW) comptait 0 WOD, le contenu était
 dans une semaine type privée, et le cron du dimanche visait toujours la semaine 2 — le
