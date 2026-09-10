@@ -194,6 +194,24 @@ Supabase/Resend.
 
 ## En cours
 
+**Marketplace ↔ Whiteboard — PR 1/2 (`athlex-app`, migration `20261209`).** Constat de
+recon : l'offre publiée « ATHX BLOC 2 Building » (RAW) comptait 0 WOD, le contenu était
+dans une semaine type privée, et le cron du dimanche visait toujours la semaine 2 — le
+Whiteboard de NBS2 restait vide. Le serveur porte maintenant : une visibilité explicite
+`box_wods.audience` (`all` / `groups` / `none`, défaut `all` pour ne pas imposer de build
+store au back-office mobile ; triggers de cohérence avec `wod_group_access` ; la branche
+programme de `wod_access_allowed` est conservée) ; un ancrage d'abonnement déterministe
+(lundi suivant au gratuit, recalé par la pose manuelle) ; une pose automatique gardée à
+18 h Paris et journalisée (`box_programming_runs`, `empty_week` quand l'offre est vide) ;
+les cartes reçues d'une autre box verrouillées en contenu mais déplaçables et supprimables ;
+le remplissage d'une offre depuis le Whiteboard ou une semaine type (`sync_wod_to_offer`,
+`copy_week_to_offer`, provenance `origin_box_wod_id`, propagation des retouches maison sans
+toucher aux snapshots des abonnés) ; `publish_programming` refuse une offre sans objectif,
+sans public ou avec une semaine vide. Suite `marketplace-whiteboard` (71 assertions, JWT
+réels). **Migration non appliquée en prod** (dump logique à faire avant ; elle recale
+l'ancrage NBS2 au 14 septembre, voulu). Le choix explicite d'audience côté back-office
+mobile ira dans le prochain build store. PR 2 (`AthleX-Manager`) suit.
+
 **Séances de programme athlète relatives (semaine × jour) — lot a/c.** Une séance de
 programme payant (« Prog Muscu — 13 semaines · 5j/sem ») n'a plus de date : elle a une
 position (`program_week`, `program_day`) sur `box_wods`, exclusive de `scheduled_date` par

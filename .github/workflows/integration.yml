@@ -50,6 +50,7 @@ on:
           - programs-box
           - comptoir-programmes
           - abonnement-programmation
+          - marketplace-whiteboard
           - espace-coach
           - heures
           - essai
@@ -184,6 +185,15 @@ jobs:
       - name: Suite — Abonnement à une programmation (payant, gratuit, prix)
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'abonnement-programmation' }}
         run: node scripts/test-abonnement-programmation.mjs ${{ steps.flags.outputs.extra_flag }}
+
+      # Marketplace ↔ Whiteboard (20261209) : visibilité explicite `audience`,
+      # ancrage au lundi suivant, pose manuelle/auto avec journal, verrou des
+      # cartes reçues, remplissage et publication d'une offre jamais vide.
+      # Contrôles positifs : l'inscrit d'un programme garde scores/classement
+      # d'une séance `none`, une copie de semaine type reste modifiable.
+      - name: Suite — Marketplace ↔ Whiteboard (audience, ancrage, cron, verrou)
+        if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'marketplace-whiteboard' }}
+        run: node scripts/test-marketplace-whiteboard.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # L'espace coach : le coach programme (semaines types, grille de créneaux)
       # mais ne lit pas « qui paie quoi », ne publie pas et ne fixe pas de prix.

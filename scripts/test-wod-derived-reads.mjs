@@ -38,6 +38,8 @@ const db = serviceClient();
 const stamp = Date.now();
 const PASSWORD = 'TestWodDerived1234!';
 const TODAY = new Date().toISOString().slice(0, 10);
+// `program_members.start_date` doit être un lundi (20261208) : le lundi de la semaine courante.
+const MONDAY = (() => { const d = new Date(); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); })();
 
 let passed = 0;
 let failed = 0;
@@ -104,7 +106,7 @@ async function main() {
   for (const user of [buyer, author]) {
     const { error } = await db.from('program_members').insert({
       program_id: program.id, user_id: user, status: 'active', provenance: 'stripe',
-      start_date: TODAY, stripe_checkout_session_id: `cs_test_zzwd_${stamp}_${user.slice(0, 8)}`,
+      start_date: MONDAY, stripe_checkout_session_id: `cs_test_zzwd_${stamp}_${user.slice(0, 8)}`,
     });
     if (error) throw new Error(`décor program_members : ${error.message}`);
   }

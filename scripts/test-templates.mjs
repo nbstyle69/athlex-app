@@ -155,7 +155,7 @@ async function main() {
 
   const { error: bApplyErr } = await B.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: templateId, p_week: 1,
-    p_target_monday: mondayIn(3), p_group_ids: null, p_replace: false,
+    p_target_monday: mondayIn(3), p_audience: 'all', p_group_ids: null, p_replace: false,
   });
   assertRefused('une autre box ne peut pas appliquer la semaine type de A', bApplyErr);
 
@@ -172,7 +172,7 @@ async function main() {
   const t1 = mondayIn(3);
   const { data: applied, error: applyErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: templateId, p_week: 1,
-    p_target_monday: t1, p_group_ids: null, p_replace: false,
+    p_target_monday: t1, p_audience: 'all', p_group_ids: null, p_replace: false,
   });
   assert('la source « template » est disponible', !applyErr, applyErr?.message);
   assertEq('3 WOD posés, rien remplacé, rien conservé',
@@ -221,7 +221,7 @@ async function main() {
 
   const { error: refuseErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: templateId, p_week: 1,
-    p_target_monday: t2, p_group_ids: null, p_replace: false,
+    p_target_monday: t2, p_audience: 'all', p_group_ids: null, p_replace: false,
   });
   assertRefused('appliquer sans remplacement refuse quand un jour est occupé', refuseErr);
 
@@ -241,7 +241,7 @@ async function main() {
 
   const { data: replaced, error: replaceErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: templateId, p_week: 1,
-    p_target_monday: t2, p_group_ids: null, p_replace: true,
+    p_target_monday: t2, p_audience: 'all', p_group_ids: null, p_replace: true,
   });
   assert('le remplacement passe', !replaceErr, replaceErr?.message);
   assertEq('rien n\'est supprimé, le WOD scoré est conservé et compté',
@@ -269,7 +269,7 @@ async function main() {
 
   const { data: mixed, error: mixedErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: templateId, p_week: 1,
-    p_target_monday: t3, p_group_ids: null, p_replace: true,
+    p_target_monday: t3, p_audience: 'all', p_group_ids: null, p_replace: true,
   });
   assert('le remplacement mixte passe', !mixedErr, mixedErr?.message);
   assertEq('le WOD vierge est remplacé, le WOD marqué fait est conservé',
@@ -282,7 +282,7 @@ async function main() {
   console.log('\n── 6. Réapplication : pas de doublon, pas de perte ──────────────');
   const { data: again, error: againErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: templateId, p_week: 1,
-    p_target_monday: t1, p_group_ids: null, p_replace: true,
+    p_target_monday: t1, p_audience: 'all', p_group_ids: null, p_replace: true,
   });
   assert('réappliquer la même semaine passe', !againErr, againErr?.message);
   assertEq('3 remplacés, 3 reposés', [again?.replaced, again?.inserted], [3, 3]);
@@ -301,7 +301,7 @@ async function main() {
   });
   const { data: third, error: thirdErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: templateId, p_week: 1,
-    p_target_monday: t1, p_group_ids: null, p_replace: true,
+    p_target_monday: t1, p_audience: 'all', p_group_ids: null, p_replace: true,
   });
   assert('troisième application passe', !thirdErr, thirdErr?.message);
   assertEq('le WOD scoré issu de la semaine type est conservé, non dupliqué',
@@ -340,7 +340,7 @@ async function main() {
 
   const { data: subApplied, error: subApplyErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'subscription', p_source_id: sub.id, p_week: 1,
-    p_target_monday: t4, p_group_ids: null, p_replace: true,
+    p_target_monday: t4, p_audience: 'all', p_group_ids: null, p_replace: true,
   });
   assert('appliquer une programmation souscrite passe', !subApplyErr, subApplyErr?.message);
   assertEq('la souscription non plus n\'efface pas un WOD scoré',
@@ -351,25 +351,25 @@ async function main() {
   console.log('\n── 8. Gardes d\'appel ───────────────────────────────────────────');
   const { error: dowErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: templateId, p_week: 1,
-    p_target_monday: plusDays(t1, 2), p_group_ids: null, p_replace: false,
+    p_target_monday: plusDays(t1, 2), p_audience: 'all', p_group_ids: null, p_replace: false,
   });
   assertRefused('une cible qui n\'est pas un lundi est refusée', dowErr);
 
   const { error: weekErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: templateId, p_week: 4,
-    p_target_monday: mondayIn(7), p_group_ids: null, p_replace: false,
+    p_target_monday: mondayIn(7), p_audience: 'all', p_group_ids: null, p_replace: false,
   });
   assertRefused('une semaine hors de la semaine type est refusée', weekErr);
 
   const { error: groupErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'template', p_source_id: templateId, p_week: 1,
-    p_target_monday: mondayIn(8), p_group_ids: [boxB], p_replace: false,
+    p_target_monday: mondayIn(8), p_audience: 'groups', p_group_ids: [boxB], p_replace: false,
   });
   assertRefused('un groupe hors de la box cible est refusé', groupErr);
 
   const { error: unknownErr } = await A.client.rpc('apply_program_week', {
     p_source_kind: 'zz_inconnu', p_source_id: templateId, p_week: 1,
-    p_target_monday: mondayIn(8), p_group_ids: null, p_replace: false,
+    p_target_monday: mondayIn(8), p_audience: 'all', p_group_ids: null, p_replace: false,
   });
   assertRefused('une source inconnue est refusée', unknownErr);
 
