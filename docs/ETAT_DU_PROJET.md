@@ -203,7 +203,7 @@ payant → demande mémorisée (`cancel_requested_at`, `remove_future_on_cancel`
 le backend au webhook Stripe de fin de période. Les cartes reçues futures ne partent qu'à
 partir du lundi suivant (Paris) et seulement si demandé ; le passé et la semaine en cours
 restent toujours (scores, ELO). Suite `desabonnement-programmation` (31 assertions, JWT
-réels, garde validée par mutation inverse). **Migration non appliquée en prod** (dump avant).
+réels, garde validée par mutation inverse). **Migration appliquée en prod** (10/09/2026, dump avant).
 Le Manager (#329) suit : lien « Se désabonner », confirmation, `cancel_at_period_end`.
 
 **Marketplace ↔ Whiteboard — PR 1/2 (`athlex-app`, migration `20261209`).** Constat de
