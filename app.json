@@ -48,7 +48,7 @@
         "android.permission.FOREGROUND_SERVICE_MICROPHONE"
       ],
       "package": "com.athlex.app",
-      "versionCode": 66,
+      "versionCode": 67,
       "intentFilters": [
         {
           "action": "VIEW",
