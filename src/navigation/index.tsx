@@ -60,12 +60,8 @@ import TimerScreen from '../screens/timer/TimerScreen';
 import TimerRunScreen from '../screens/timer/TimerRunScreen';
 import VideoPlaybackScreen from '../screens/timer/VideoPlaybackScreen';
 import WODScreen from '../screens/wod/WODScreen';
-import WODGeneratorScreen from '../screens/wod/WODGeneratorScreen';
-import WODGenProScreen from '../screens/wod/WODGenProScreen';
-import type { CFParams } from '../utils/wod/engineCrossFit';
-import type { HyroxParams } from '../utils/wod/engineHyrox';
-import WODSuggestionsScreen from '../screens/wod/WODSuggestionsScreen';
-import HomeWODGeneratorScreen from '../components/WodGeneratorCard';
+import WodGeneratorScreen from '../screens/wod/WodGeneratorScreen';
+import WodResultScreen, { WodResultParams } from '../screens/wod/WodResultScreen';
 import OneRMCalculatorScreen from '../screens/home/OneRMCalculatorScreen';
 import CompetitionScreen from '../screens/competition/CompetitionScreen';
 import PhysicalCompetitionScreen from '../screens/competition/PhysicalCompetitionScreen';
@@ -226,18 +222,6 @@ export type ExplorerStackParamList = {
   BoxPrograms: undefined;
 };
 
-/** Générateur personnalisé : paramètres passés au ranker (3 suggestions).
- *  goal/avoidZones : valeurs COURANTES de l'UI, passées en direct pour que la
- *  génération ne dépende pas du timing des écritures Supabase (sinon un objectif
- *  ou une zone tout juste choisis pouvaient être ignorés — course write/read). */
-export type WODSuggestionsParams = {
-  sport: 'functional' | 'hybrid';
-  cfParams?: CFParams;
-  hyroxParams?: HyroxParams;
-  goal?: 'balanced' | 'progress' | 'race';
-  avoidZones?: import('../utils/wod/movementZones').BodyZone[];
-};
-
 export type TimerType = 'for-time' | 'amrap' | 'emom' | 'tabata' | 'ywyr' | 'splits' | 'libre';
 export type BlockType = Exclude<TimerType, 'libre' | 'splits'>;
 export type SeqBlock = {
@@ -275,10 +259,9 @@ export type HomeStackParamList = {
   HomeList: undefined;
   BoxInfo: undefined;
   Changelog: undefined;
-  WODGenerator: undefined;
-  WODGenPro: undefined;
-  WODSuggestions: WODSuggestionsParams;
-  WodHistory: undefined;
+  WodGenerator: undefined;
+  WodResult: WodResultParams;
+  WodHistory: { filter?: 'favorites' } | undefined;
   NotificationSettings: undefined;
   BlockedUsers: undefined;
   DailyTournaments: undefined;
@@ -323,10 +306,9 @@ export type HomeStackParamList = {
 
 export type WODStackParamList = {
   WODList: undefined;
-  WODGenerator: undefined;
-  WODGenPro: undefined;
-  WODSuggestions: WODSuggestionsParams;
-  WodHistory: undefined;
+  WodGenerator: undefined;
+  WodResult: WodResultParams;
+  WodHistory: { filter?: 'favorites' } | undefined;
   TimerRun: {
     timerType: TimerType;
     countdown: number;
@@ -526,9 +508,8 @@ function HomeNavigator() {
       <HomeStack.Screen name="HomeList" component={HomeScreen} />
       <HomeStack.Screen name="BoxInfo" component={BoxInfoScreen} />
       <HomeStack.Screen name="Changelog" component={ChangelogScreen} />
-      <HomeStack.Screen name="WODGenerator" component={HomeWODGeneratorScreen} />
-      <HomeStack.Screen name="WODGenPro" component={WODGenProScreen} />
-      <HomeStack.Screen name="WODSuggestions" component={WODSuggestionsScreen} />
+      <HomeStack.Screen name="WodGenerator" component={WodGeneratorScreen} />
+      <HomeStack.Screen name="WodResult" component={WodResultScreen} />
       <HomeStack.Screen name="OneRMCalculator" component={OneRMCalculatorScreen} />
       <HomeStack.Screen name="Timer" component={TimerScreen} />
       <HomeStack.Screen name="TimerRun" component={TimerRunScreen} />
@@ -556,9 +537,8 @@ function WODNavigator() {
   return (
     <WODStack.Navigator screenOptions={shell}>
       <WODStack.Screen name="WODList" component={WODScreen} />
-      <WODStack.Screen name="WODGenerator" component={WODGeneratorScreen} />
-      <WODStack.Screen name="WODGenPro" component={WODGenProScreen} />
-      <WODStack.Screen name="WODSuggestions" component={WODSuggestionsScreen} />
+      <WODStack.Screen name="WodGenerator" component={WodGeneratorScreen} />
+      <WODStack.Screen name="WodResult" component={WodResultScreen} />
       <WODStack.Screen name="WodHistory"   component={WodHistoryScreen} />
       <WODStack.Screen name="TimerRun"     component={TimerRunScreen} />
       <WODStack.Screen name="VideoPlayback" component={VideoPlaybackScreen} />

@@ -80,7 +80,7 @@ export default function WODScreen() {
           </View>
           <TouchableOpacity
             style={S.generateButton}
-            onPress={() => navigation.navigate('WODGenerator')}
+            onPress={() => navigation.navigate('WodGenerator')}
             activeOpacity={0.8}
           >
             <Sparkles color="#fff" size={18} />

@@ -1,14 +1,14 @@
 /**
  * Historique d'entraînement — deux points d'entrée vers `WodHistory` :
  * l'entrée « Mes entraînements » du Profil et le lien « Voir mon historique »
- * affiché après l'enregistrement d'un score (WodGeneratorCard).
+ * affiché après l'enregistrement d'un score (WodResultScreen).
  */
 import fs from 'fs';
 import path from 'path';
 
 const read = (p: string) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8');
 const profile = read('screens/profile/ProfileScreen.tsx');
-const card = read('components/WodGeneratorCard.tsx');
+const card = read('screens/wod/WodResultScreen.tsx');
 const nav = read('navigation/index.tsx');
 const fr = JSON.parse(read('i18n/locales/fr.json'));
 const en = JSON.parse(read('i18n/locales/en.json'));
@@ -31,8 +31,8 @@ describe('Profil → « Mes entraînements » → WodHistory', () => {
 });
 
 describe('Après un score → « Voir mon historique » → WodHistory', () => {
-  it('la confirmation de submitScore propose le lien vers WodHistory', () => {
-    const fn = card.slice(card.indexOf('async function submitScore()'), card.indexOf('function openScoreModal('));
+  it('la confirmation de onSubmitScore propose le lien vers WodHistory', () => {
+    const fn = card.slice(card.indexOf('async function onSubmitScore()'), card.indexOf('return ('));
     expect(fn).toContain("i18n.t('wodGenerator.scoreSavedTitle')");
     expect(fn).toMatch(/text: i18n\.t\('wodGenerator\.seeMyHistory'\), onPress: \(\) => navigation\.navigate\('WodHistory'\)/);
     expect(fr.wodGenerator.seeMyHistory).toBe('Voir mon historique');
