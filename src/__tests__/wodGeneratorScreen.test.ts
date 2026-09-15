@@ -63,10 +63,16 @@ describe('options du formulaire', () => {
 });
 
 describe('page résultat', () => {
-  it('Re-tirer (nouvelle graine, mêmes paramètres), Enregistrer, Favori, Saisir mon score, Copier', () => {
+  it('Re-tirer (nouvelle graine, mêmes paramètres), Enregistrer, Favori, Minuteur, Whiteboard, Saisir mon score ; Copier dans le menu ⋯', () => {
     expect(result).toContain('redraw(user, currentBox?.id, screen)');
-    for (const label of ['Re-tirer', 'Favori', 'Saisir mon score', 'Copier']) expect(result).toContain(`>${label}</Text>`);
+    for (const label of ['Re-tirer', 'Favori', 'Minuteur', 'Plus', 'Copier le WOD']) expect(result).toContain(`>${label}</Text>`);
     expect(result).toContain("savedId ? 'Enregistré' : 'Enregistrer'");
+    expect(result).toContain("boxWodId ? 'Sur le Whiteboard' : 'Ajouter au Whiteboard'");
+    expect(result).toContain("submittedScore ? 'Modifier mon score' : 'Saisir mon score'");
+    expect(result).toContain('<TimerLaunchModal');
+    expect(result).toContain('<WodTypeBadge type="generated" label="Généré"');
+    expect(result).toContain("navigation.navigate('Profile', { editLevel: true })");
+    expect(result).not.toContain('theme.textMuted, marginTop');
     expect(result).toContain('Catégorie réalisée');
     expect(result).toMatch(/Share\.share\(\{ message: `\$\{wod\.title\}\\n\$\{wod\.description\}` \}\)/);
     expect(result).not.toContain('wod.description}</Text>');

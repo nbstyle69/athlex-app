@@ -270,7 +270,9 @@ export default function WODDetailScreen() {
   }
 
   async function submitScore() {
-    if (!wod || !user || !currentBox) return;
+    if (!wod || !user) return;
+    const scoreBoxId = wod.box_id == null ? null : currentBox?.id ?? null;
+    if (wod.box_id != null && !scoreBoxId) return;
     let value = 0;
     let capped = false;
     if (scoreType === 'time' && dnf) {
@@ -297,7 +299,7 @@ export default function WODDetailScreen() {
     const { error } = await supabase.from('wod_scores').upsert({
       wod_id: wod.id,
       member_id: user.id,
-      box_id: currentBox.id,
+      box_id: scoreBoxId,
       score_type: scoreType,
       score_value: value,
       capped,
@@ -626,7 +628,7 @@ export default function WODDetailScreen() {
             </View>
           ) : (
             <EmeraldCTAButton
-              icon={<Plus color="#fff" size={18} />}
+              icon={<Plus color={theme.ctaText} size={18} />}
               size="md"
               onPress={() => { prefillStrengthLoads(); setModalOpen(true); }}
               style={{ marginTop: 4 }}
@@ -907,7 +909,7 @@ export default function WODDetailScreen() {
 
                 <EmeraldCTAButton
                   loading={sharing}
-                  icon={<Share2 color="#fff" size={18} />}
+                  icon={<Share2 color={theme.ctaText} size={18} />}
                   onPress={handleShare}
                   style={{ marginHorizontal: 20 }}
                 >

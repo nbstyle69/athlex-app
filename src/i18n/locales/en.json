@@ -960,6 +960,8 @@
       "progOngoing": "Ongoing · {{days}}d/wk",
       "progChooseStart": "Choose my start date",
       "usernameLabel": "Username",
+      "levelLabel": "Level",
+      "levelHint": "Used as the default category by the WOD generator. It is also updated automatically from your ELO.",
       "nameLabel": "Name",
       "firstName": "First name",
       "lastName": "Last name",

@@ -36,6 +36,8 @@ export interface AppTheme {
   // Mode-aware: silver in light, emerald in dark.
   ctaBg: string;
   ctaBorder: string;
+  /** Encre du bouton plein (`EmeraldCTAButton`) : gris foncé en clair, blanc en sombre. */
+  ctaText: string;
   secondary: string;
   text: string;
   textPrimary: string;
@@ -76,6 +78,7 @@ export const lightTheme: AppTheme = {
   accentText: '#475569',
   ctaBg: 'rgba(148,163,184,0.25)',
   ctaBorder: 'rgba(148,163,184,0.85)',
+  ctaText: '#374151',
   secondary: '#6b7280',
   text: '#111827',
   textPrimary: '#111827',
@@ -123,6 +126,7 @@ export const darkTheme: AppTheme = {
   accentText: '#34d399',
   ctaBg: 'rgba(16,185,129,0.25)',
   ctaBorder: 'rgba(16,185,129,0.8)',
+  ctaText: '#ffffff',
   secondary: '#9ca3af',
   text: '#f9fafb',
   textPrimary: '#f9fafb',

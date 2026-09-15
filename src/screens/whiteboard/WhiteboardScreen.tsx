@@ -7,7 +7,7 @@ import {
   Modal, TextInput, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
-import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, X, MessageCircle, FileText, Trophy, Upload, Sparkles, Newspaper, Play, BookOpen, Check, Timer as TimerIcon, Camera, CameraOff } from 'lucide-react-native';
+import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, X, MessageCircle, FileText, Trophy, Upload, Sparkles, Newspaper, Play, BookOpen, Check, Timer as TimerIcon, Pencil } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -24,14 +24,10 @@ import { programSessionsOn, programWeekAt, isRestDay, isoDayOf } from '../../uti
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { BoxWOD } from '../../types';
-import { WhiteboardStackParamList, SeqBlock } from '../../navigation';
-import {
-  blockDurationSec,
-  buildFullSeqBlockFromWOD,
-  buildTimerRunParamsFromBlock,
-  formatBlockPreconfig,
-  TIMER_BLOCK_TYPES,
-} from '../../utils/wodToTimer';
+import { WhiteboardStackParamList } from '../../navigation';
+import { buildFullSeqBlockFromWOD } from '../../utils/wodToTimer';
+import WodTypeBadge, { getTypeColors } from '../../components/wod/WodTypeBadge';
+import TimerLaunchModal, { TimerRunParams } from '../../components/wod/TimerLaunchModal';
 import WeekDayPicker from '../../components/WeekDayPicker';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
@@ -44,18 +40,6 @@ function toISO(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-// Couleurs WOD types adaptées au thème
-function getTypeColors(theme: AppTheme): Record<string, string> {
-  return {
-    'for-time': theme.error,      // Rouge
-    amrap: '#3B82F6',             // Bleu
-    emom: '#8B5CF6',             // Violet
-    tabata: theme.warning,        // Orange
-    strength: theme.success,      // Vert
-    custom: theme.textMuted,      // Gris
-  };
-}
-
 type Nav = NativeStackNavigationProp<WhiteboardStackParamList>;
 
 interface BoxMember {
@@ -64,22 +48,6 @@ interface BoxMember {
   level: string;
   elo: number;
   avatar_url?: string | null;
-}
-
-const TYPE_STYLES = StyleSheet.create({
-  typeBadge: { borderRadius: 6, paddingHorizontal: 10, paddingVertical: 4 },
-  typeBadgeText: { fontSize: 11, fontWeight: '800' as const, letterSpacing: 0.5 },
-});
-
-function WodTypeBadge({ type }: { type?: string }) {
-  const { theme } = useTheme();
-  const colors = getTypeColors(theme);
-  const color = colors[type ?? 'custom'] ?? theme.textMuted;
-  return (
-    <View style={[TYPE_STYLES.typeBadge, { backgroundColor: theme.mode === 'dark' ? `${color}25` : `${color}15` }]}>
-      <Text style={[TYPE_STYLES.typeBadgeText, { color }]}>{(type ?? 'custom').toUpperCase()}</Text>
-    </View>
-  );
 }
 
 export default function WhiteboardScreen() {
@@ -121,282 +89,30 @@ export default function WhiteboardScreen() {
 
   // Timer-launch modal (preconfigured from a WOD card, mode editable)
   const [timerModalWod, setTimerModalWod] = useState<BoxWOD | null>(null);
-  const [timerCountdown, setTimerCountdown] = useState<number>(3);
-  const [timerBlock, setTimerBlock] = useState<SeqBlock | null>(null);
+  const timerBlock = useMemo(() => (timerModalWod ? buildFullSeqBlockFromWOD(timerModalWod) : null), [timerModalWod]);
 
   // Personal WODs (when user has no box)
   const [personalWODs, setPersonalWODs] = useState<BoxWOD[]>([]);
 
   function openTimerModal(wod: BoxWOD) {
-    setTimerCountdown(3);
-    // Fully-seeded block so every mode keeps sensible defaults when switching
-    setTimerBlock(buildFullSeqBlockFromWOD(wod));
     setTimerModalWod(wod);
   }
 
-  function updateTimerBlock(patch: Partial<SeqBlock>) {
-    setTimerBlock(b => (b ? { ...b, ...patch } : b));
-  }
-
-  function launchTimerFromWod(wod: BoxWOD, withCamera: boolean) {
-    if (!timerBlock) return;
-    const params = buildTimerRunParamsFromBlock(timerBlock, wod.title ?? '', {
-      withCamera,
-      countdown: timerCountdown,
-    });
+  function launchTimer(params: TimerRunParams) {
     setTimerModalWod(null);
     navigation.navigate('TimerRun', params);
   }
 
-  // Mode selector + per-mode configuration for the timer launcher.
-  function renderTimerConfig() {
-    const blk = timerBlock;
-    if (!blk) return null;
+  const timerModal = (
+    <TimerLaunchModal
+      visible={!!timerModalWod}
+      title={timerModalWod?.title ?? ''}
+      initialBlock={timerBlock}
+      onClose={() => setTimerModalWod(null)}
+      onLaunch={launchTimer}
+    />
+  );
 
-    return (
-      <View style={{ marginBottom: 4 }}>
-        <Text style={S.timerModalLabel}>{t('whiteboard.timerMode')}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            {TIMER_BLOCK_TYPES.map(mt => (
-              <TouchableOpacity
-                key={mt.key}
-                onPress={() => updateTimerBlock({ type: mt.key })}
-                style={[S.timerModeChip, blk.type === mt.key && S.timerModeChipActive]}
-                activeOpacity={0.7}
-              >
-                <Text style={[S.timerModeChipText, blk.type === mt.key && S.timerModeChipTextActive]}>
-                  {mt.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </ScrollView>
-
-        {(blk.type === 'amrap' || blk.type === 'for-time') && (
-          <>
-            <Text style={S.timerModalLabel}>
-              {blk.type === 'amrap' ? t('whiteboard.duration') : t('whiteboard.capMax')}
-            </Text>
-            {(() => {
-              // Le cap se règle en minutes ET en secondes : un pas d'une minute
-              // conserve les secondes du WOD, donc lancer sans y toucher ne
-              // réécrit pas un 12:30 en 13:00.
-              const durSec = blockDurationSec(blk);
-              const setDur = (sec: number) => updateTimerBlock({ durationSec: Math.max(0, sec), durationMin: Math.floor(Math.max(0, sec) / 60) });
-              return (
-                <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <View style={S.emomStepRow}>
-                    <TouchableOpacity style={S.emomStepBtn} onPress={() => setDur(durSec - 60)}>
-                      <Text style={S.emomStepBtnText}>−</Text>
-                    </TouchableOpacity>
-                    <Text style={S.emomStepValue}>{Math.floor(durSec / 60)}<Text style={S.emomStepUnit}> {t('whiteboard.minUnit')}</Text></Text>
-                    <TouchableOpacity style={S.emomStepBtn} onPress={() => setDur(durSec + 60)}>
-                      <Text style={S.emomStepBtnText}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={S.emomStepRow}>
-                    <TouchableOpacity style={S.emomStepBtn} onPress={() => setDur(durSec % 5 === 0 ? durSec - 5 : Math.floor(durSec / 5) * 5)}>
-                      <Text style={S.emomStepBtnText}>−</Text>
-                    </TouchableOpacity>
-                    <Text style={S.emomStepValue}>{durSec % 60}<Text style={S.emomStepUnit}> {t('whiteboard.secUnit')}</Text></Text>
-                    <TouchableOpacity style={S.emomStepBtn} onPress={() => setDur(durSec % 5 === 0 ? durSec + 5 : Math.ceil(durSec / 5) * 5)}>
-                      <Text style={S.emomStepBtnText}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })()}
-          </>
-        )}
-
-        {blk.type === 'emom' && (() => {
-          const isPerso = blk.emomInterval === 0;
-          const customSec = blk.emomCustomSec ?? 90;
-          const customMin = Math.floor(customSec / 60);
-          const customSs = customSec % 60;
-          const intervalSec = isPerso ? customSec : blk.emomInterval * 60;
-          const totalSec = intervalSec * blk.emomRounds;
-          const totalMm = Math.floor(totalSec / 60);
-          const totalSs = totalSec % 60;
-          return (
-            <>
-              <Text style={S.timerModalLabel}>{t('whiteboard.interval')}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  {[1, 2, 3, 4, 5].map(iv => (
-                    <TouchableOpacity
-                      key={iv}
-                      onPress={() => {
-                        const prevIvSec = isPerso ? customSec : blk.emomInterval * 60;
-                        const totalMinPrev = (prevIvSec * blk.emomRounds) / 60;
-                        const newRounds = Math.max(1, Math.round(totalMinPrev / iv));
-                        updateTimerBlock({ emomInterval: iv, emomRounds: newRounds });
-                      }}
-                      style={[S.timerModeChip, blk.emomInterval === iv && S.timerModeChipActive]}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[S.timerModeChipText, blk.emomInterval === iv && S.timerModeChipTextActive]}>
-                        {iv === 1 ? 'EMOM' : `E${iv}MOM`}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                  <TouchableOpacity
-                    onPress={() => updateTimerBlock({ emomInterval: 0 })}
-                    style={[S.timerModeChip, isPerso && S.timerModeChipActive]}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[S.timerModeChipText, isPerso && S.timerModeChipTextActive]}>{t('whiteboard.emomPerso')}</Text>
-                  </TouchableOpacity>
-                </View>
-              </ScrollView>
-
-              {isPerso && (
-                <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
-                  <View style={S.emomStepRow}>
-                    <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ emomCustomSec: Math.max(1, customSec - 60) })}>
-                      <Text style={S.emomStepBtnText}>−</Text>
-                    </TouchableOpacity>
-                    <Text style={S.emomStepValue}>{customMin}<Text style={S.emomStepUnit}> {t('whiteboard.minUnit')}</Text></Text>
-                    <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ emomCustomSec: customSec + 60 })}>
-                      <Text style={S.emomStepBtnText}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={S.emomStepRow}>
-                    <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ emomCustomSec: Math.max(1, customSec % 5 === 0 ? customSec - 5 : Math.floor(customSec / 5) * 5) })}>
-                      <Text style={S.emomStepBtnText}>−</Text>
-                    </TouchableOpacity>
-                    <Text style={S.emomStepValue}>{customSs}<Text style={S.emomStepUnit}> {t('whiteboard.secUnit')}</Text></Text>
-                    <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ emomCustomSec: customSec % 5 === 0 ? customSec + 5 : Math.ceil(customSec / 5) * 5 })}>
-                      <Text style={S.emomStepBtnText}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              )}
-
-              <Text style={S.timerModalLabel}>{t('whiteboard.rounds')}</Text>
-              <View style={S.emomStepRow}>
-                <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ emomRounds: Math.max(1, blk.emomRounds - 1) })}>
-                  <Text style={S.emomStepBtnText}>−</Text>
-                </TouchableOpacity>
-                <Text style={S.emomStepValue}>{blk.emomRounds}<Text style={S.emomStepUnit}> {t('whiteboard.roundsUnit')}</Text></Text>
-                <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ emomRounds: blk.emomRounds + 1 })}>
-                  <Text style={S.emomStepBtnText}>+</Text>
-                </TouchableOpacity>
-              </View>
-              <Text style={S.emomTotalHint}>
-                {t('whiteboard.emomTotal', { total: `${totalMm} min${totalSs ? ` ${totalSs}s` : ''}` })}
-              </Text>
-            </>
-          );
-        })()}
-
-        {blk.type === 'tabata' && (
-          <>
-            <Text style={S.timerModalLabel}>{t('whiteboard.work')}</Text>
-            <View style={S.emomStepRow}>
-              <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ workSec: Math.max(5, blk.workSec - 5) })}>
-                <Text style={S.emomStepBtnText}>−</Text>
-              </TouchableOpacity>
-              <Text style={S.emomStepValue}>{blk.workSec}<Text style={S.emomStepUnit}> {t('whiteboard.secUnit')}</Text></Text>
-              <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ workSec: blk.workSec + 5 })}>
-                <Text style={S.emomStepBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={S.timerModalLabel}>{t('whiteboard.rest')}</Text>
-            <View style={S.emomStepRow}>
-              <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ restSec: Math.max(0, blk.restSec - 5) })}>
-                <Text style={S.emomStepBtnText}>−</Text>
-              </TouchableOpacity>
-              <Text style={S.emomStepValue}>{blk.restSec}<Text style={S.emomStepUnit}> {t('whiteboard.secUnit')}</Text></Text>
-              <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ restSec: blk.restSec + 5 })}>
-                <Text style={S.emomStepBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={S.timerModalLabel}>{t('whiteboard.rounds')}</Text>
-            <View style={S.emomStepRow}>
-              <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ tabRounds: Math.max(1, blk.tabRounds - 1) })}>
-                <Text style={S.emomStepBtnText}>−</Text>
-              </TouchableOpacity>
-              <Text style={S.emomStepValue}>{blk.tabRounds}<Text style={S.emomStepUnit}> {t('whiteboard.roundsUnit')}</Text></Text>
-              <TouchableOpacity style={S.emomStepBtn} onPress={() => updateTimerBlock({ tabRounds: blk.tabRounds + 1 })}>
-                <Text style={S.emomStepBtnText}>+</Text>
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-
-        {blk.type === 'ywyr' && (
-          <Text style={S.emomTotalHint}>{t('whiteboard.ywyrHint')}</Text>
-        )}
-      </View>
-    );
-  }
-
-  // Renders the shared timer-launch modal body (mode picker + countdown + actions).
-  function renderTimerModalBody() {
-    return (
-      <View style={S.timerModalBackdrop}>
-        <View style={S.timerModalCard}>
-          <View style={S.timerModalHeader}>
-            <View style={{ flex: 1 }}>
-              <Text style={S.timerModalTitle}>{t('whiteboard.launchTimer')}</Text>
-              {timerModalWod && (
-                <Text style={S.timerModalSubtitle} numberOfLines={1}>{timerModalWod.title}</Text>
-              )}
-            </View>
-            <TouchableOpacity onPress={() => setTimerModalWod(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <X color={theme.textSecondary} size={20} />
-            </TouchableOpacity>
-          </View>
-
-          {timerBlock && (
-            <View style={S.timerModalPreview}>
-              <TimerIcon color={theme.accent} size={18} />
-              <Text style={S.timerModalPreviewText}>{formatBlockPreconfig(timerBlock)}</Text>
-            </View>
-          )}
-
-          {renderTimerConfig()}
-
-          <Text style={S.timerModalLabel}>{t('whiteboard.countdown')}</Text>
-          <View style={S.timerModalCountdownRow}>
-            {[0, 3, 5, 10].map(v => (
-              <TouchableOpacity
-                key={v}
-                onPress={() => setTimerCountdown(v)}
-                style={[S.timerModalCdChip, timerCountdown === v && S.timerModalCdChipActive]}
-                activeOpacity={0.7}
-              >
-                <Text style={[S.timerModalCdChipText, timerCountdown === v && S.timerModalCdChipTextActive]}>
-                  {v === 0 ? '—' : `${v}s`}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={S.timerModalActions}>
-            <TouchableOpacity
-              onPress={() => timerModalWod && launchTimerFromWod(timerModalWod, false)}
-              style={[S.timerModalBtn, S.timerModalBtnSecondary]}
-              activeOpacity={0.85}
-            >
-              <CameraOff color={theme.text} size={18} />
-              <Text style={S.timerModalBtnSecondaryText}>{t('whiteboard.withoutCamera')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => timerModalWod && launchTimerFromWod(timerModalWod, true)}
-              style={[S.timerModalBtn, S.timerModalBtnPrimary]}
-              activeOpacity={0.85}
-            >
-              <Camera color="#fff" size={18} />
-              <Text style={S.timerModalBtnPrimaryText}>{t('whiteboard.withCamera')}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    );
-  }
 
   useFocusEffect(useCallback(() => {
     if (!user || !currentBox) return;
@@ -788,7 +504,7 @@ export default function WhiteboardScreen() {
                   <TouchableOpacity
                     key={wod.id}
                     style={S.wodCard}
-                    onPress={() => navigation.navigate('PersonalWODForm', { wodId: wod.id, date: selectedDate })}
+                    onPress={() => navigation.navigate('WODDetail', { wodId: wod.id })}
                     activeOpacity={0.8}
                   >
                     <View style={S.wodCardTop}>
@@ -804,19 +520,31 @@ export default function WhiteboardScreen() {
                     {wod.description ? <Text style={S.wodDesc} numberOfLines={3}>{wod.description}</Text> : null}
                     <View style={S.wodCardFooter}>
                       <View style={S.wodCardAction}>
-                        <Text style={S.wodCardActionText}>{t('whiteboard.edit')}</Text>
+                        <Text style={S.wodCardActionText}>{t('whiteboard.seeDetails')}</Text>
                         <ChevronRight color={theme.accent} size={14} />
                       </View>
-                      <TouchableOpacity
-                        onPress={(e) => { e.stopPropagation(); openTimerModal(wod); }}
-                        style={S.timerBtn}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        activeOpacity={0.8}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('whiteboard.launchTimer')}
-                      >
-                        <TimerIcon color={theme.accent} size={16} />
-                      </TouchableOpacity>
+                      <View style={S.wodCardBtns}>
+                        <TouchableOpacity
+                          onPress={(e) => { e.stopPropagation(); navigation.navigate('PersonalWODForm', { wodId: wod.id, date: selectedDate }); }}
+                          style={S.timerBtn}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('whiteboard.edit')}
+                        >
+                          <Pencil color={theme.accent} size={16} />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          onPress={(e) => { e.stopPropagation(); openTimerModal(wod); }}
+                          style={S.timerBtn}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          activeOpacity={0.8}
+                          accessibilityRole="button"
+                          accessibilityLabel={t('whiteboard.launchTimer')}
+                        >
+                          <TimerIcon color={theme.accent} size={16} />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -834,7 +562,7 @@ export default function WhiteboardScreen() {
                 <Text style={S.noWodEmoji}>📋</Text>
                 <Text style={S.noWodText}>{t('whiteboard.noWod')}</Text>
                 <EmeraldCTAButton
-                  icon={<Sparkles size={16} color="#fff" />}
+                  icon={<Sparkles size={16} color={theme.ctaText} />}
                   size="md"
                   onPress={() => navigation.navigate('PersonalWODForm', { date: selectedDate })}
                   style={{ marginTop: 14 }}
@@ -847,15 +575,7 @@ export default function WhiteboardScreen() {
 
         </ScrollView>
 
-        {/* Launch Timer Modal (réutilisé pour WODs perso) */}
-        <Modal
-          visible={!!timerModalWod}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setTimerModalWod(null)}
-        >
-          {renderTimerModalBody()}
-        </Modal>
+        {timerModal}
 
         <Modal visible={joinModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setJoinModal(false)}>
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={S.modalOverlay}>
@@ -990,7 +710,7 @@ export default function WhiteboardScreen() {
         return (
           <View style={S.quickActions}>
             <EmeraldCTAButton
-              icon={<Sparkles size={20} color="#fff" />}
+              icon={<Sparkles size={20} color={theme.ctaText} />}
               onPress={() => navigation.navigate('WODDetail', { wodId: mainWod.id })}
               textStyle={{ fontSize: 17 }}
             >
@@ -1141,7 +861,7 @@ export default function WhiteboardScreen() {
                 <TouchableOpacity
                   key={wod.id}
                   style={[S.wodCard, { borderLeftWidth: 3, borderLeftColor: `${theme.accent}80` }]}
-                  onPress={() => navigation.navigate('PersonalWODForm', { wodId: wod.id, date: selectedDate })}
+                  onPress={() => navigation.navigate('WODDetail', { wodId: wod.id })}
                   activeOpacity={0.8}
                 >
                   <View style={S.wodCardTop}>
@@ -1157,17 +877,29 @@ export default function WhiteboardScreen() {
                   {wod.description ? <Text style={S.wodDesc} numberOfLines={2}>{wod.description}</Text> : null}
                   <View style={S.wodCardFooter}>
                     <View style={S.wodCardAction}>
-                      <Text style={S.wodCardActionText}>{t('whiteboard.edit')}</Text>
+                      <Text style={S.wodCardActionText}>{t('whiteboard.seeDetails')}</Text>
                       <ChevronRight color={theme.accent} size={14} />
                     </View>
-                    <TouchableOpacity
-                      onPress={(e) => { e.stopPropagation(); openTimerModal(wod); }}
-                      style={S.timerBtn}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      activeOpacity={0.8}
-                    >
-                      <TimerIcon color={theme.accent} size={16} />
-                    </TouchableOpacity>
+                    <View style={S.wodCardBtns}>
+                      <TouchableOpacity
+                        onPress={(e) => { e.stopPropagation(); navigation.navigate('PersonalWODForm', { wodId: wod.id, date: selectedDate }); }}
+                        style={S.timerBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('whiteboard.edit')}
+                      >
+                        <Pencil color={theme.accent} size={16} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={(e) => { e.stopPropagation(); openTimerModal(wod); }}
+                        style={S.timerBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        activeOpacity={0.8}
+                      >
+                        <TimerIcon color={theme.accent} size={16} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </TouchableOpacity>
               ))}
@@ -1244,15 +976,7 @@ export default function WhiteboardScreen() {
         </View>
       </ScrollView>
 
-      {/* Launch Timer Modal */}
-      <Modal
-        visible={!!timerModalWod}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setTimerModalWod(null)}
-      >
-        {renderTimerModalBody()}
-      </Modal>
+      {timerModal}
 
       {/* Members Modal */}
       <Modal visible={membersModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setMembersModal(false)}>
@@ -1378,73 +1102,13 @@ function createStyles(theme: AppTheme) {
   wodCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
   wodCardAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   wodCardActionText: { fontSize: 12, fontWeight: '700', color: theme.accent },
+  wodCardBtns: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   timerBtn: {
     width: 34, height: 34, borderRadius: 10,
     alignItems: 'center', justifyContent: 'center',
     backgroundColor: `${theme.accent}18`,
     borderWidth: 1, borderColor: `${theme.accent}35`,
   },
-  timerModalBackdrop: {
-    flex: 1, backgroundColor: theme.modalBackdrop,
-    justifyContent: 'center', alignItems: 'center', padding: 20,
-  },
-  timerModalCard: {
-    width: '100%', maxWidth: 420,
-    backgroundColor: theme.modalCard, borderRadius: 20, padding: 20, gap: 14,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-  },
-  timerModalHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  timerModalTitle: { fontSize: 17, fontWeight: '800', color: theme.text },
-  timerModalSubtitle: { fontSize: 12, color: theme.textSecondary, marginTop: 2 },
-  timerModalPreview: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: `${theme.accent}14`, borderRadius: 12, padding: 12,
-    borderWidth: 1, borderColor: `${theme.accent}30`,
-  },
-  timerModalPreviewText: { fontSize: 14, fontWeight: '700', color: theme.accent, letterSpacing: 0.3 },
-  timerModalLabel: { fontSize: 11, fontWeight: '700', color: theme.textMuted, letterSpacing: 0.6, marginTop: 8, marginBottom: 6 },
-  emomStepRow: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: theme.surface, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 8,
-    borderWidth: 1, borderColor: theme.border, marginBottom: 4,
-  },
-  emomStepBtn: {
-    width: 36, height: 36, borderRadius: 8, backgroundColor: theme.card,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: theme.border,
-  },
-  emomStepBtnText: { fontSize: 18, fontWeight: '900', color: theme.text },
-  emomStepValue: { fontSize: 22, fontWeight: '900', color: theme.text },
-  emomStepUnit: { fontSize: 12, fontWeight: '700', color: theme.textMuted },
-  emomTotalHint: { fontSize: 11, fontWeight: '600', color: theme.textMuted, textAlign: 'center', marginTop: 6 },
-  timerModeChip: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
-    backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  timerModeChipActive: { backgroundColor: `${theme.accent}22`, borderColor: theme.accent },
-  timerModeChipText: { fontSize: 12, fontWeight: '800', color: theme.textSecondary, letterSpacing: 0.4 },
-  timerModeChipTextActive: { color: theme.accent },
-  timerModalCountdownRow: { flexDirection: 'row', gap: 8 },
-  timerModalCdChip: {
-    flex: 1, paddingVertical: 10, borderRadius: 10,
-    backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-    alignItems: 'center',
-  },
-  timerModalCdChipActive: { backgroundColor: `${theme.accent}22`, borderColor: theme.accent },
-  timerModalCdChipText: { fontSize: 13, fontWeight: '700', color: theme.textSecondary },
-  timerModalCdChipTextActive: { color: theme.accent },
-  timerModalActions: { flexDirection: 'row', gap: 10, marginTop: 4 },
-  timerModalBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 14, borderRadius: 12,
-  },
-  timerModalBtnSecondary: {
-    backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-  },
-  timerModalBtnSecondaryText: { fontSize: 14, fontWeight: '700', color: theme.text },
-  timerModalBtnPrimary: { backgroundColor: theme.accent },
-  timerModalBtnPrimaryText: { fontSize: 14, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
   checkboxRow: {
     marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingVertical: 2, paddingHorizontal: 2,

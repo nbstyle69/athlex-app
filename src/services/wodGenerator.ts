@@ -6,7 +6,7 @@
  */
 import { supabase } from '../lib/supabase';
 import { Json } from '../types/supabase';
-import { User } from '../types';
+import { BoxWOD, User } from '../types';
 import { incrementCounter, logMovementReps } from './gamification';
 import { cancelTodayScoreReminder } from './notifications';
 import { computeCompletedMovements } from '../utils/movementParser';
@@ -228,6 +228,96 @@ const PARSER_WOD_TYPE: Record<GeneratedWod['wod_type'], string> = {
 };
 
 const RX_OR_ABOVE: ReadonlySet<Category> = new Set<Category>(['rx', 'rxplus', 'elite', 'pro', 'men', 'women', 'men_pro', 'women_pro']);
+
+/** Colonnes éditeur du WOD généré au format attendu par `wodToTimer` / `box_wods` (null → undefined). */
+/**
+ * `rounds` au sens de l'éditeur / du minuteur : en EMOM c'est le nombre d'intervalles
+ * (cap ÷ intervalle), pas le nombre de passages sur les stations que porte le moteur.
+ */
+export function editorRoundsOf(wod: GeneratedWod): number | null {
+  if (wod.wod_type === 'emom') {
+    const interval = wod.emom_interval_minutes && wod.emom_interval_minutes > 0 ? wod.emom_interval_minutes : 1;
+    const cap = wod.time_cap_seconds ?? wod.budget_min * 60;
+    return Math.max(1, Math.round(cap / 60 / interval));
+  }
+  return wod.rounds ?? null;
+}
+
+export function editorFieldsOf(wod: GeneratedWod): Pick<
+  BoxWOD,
+  'wod_type' | 'time_cap_seconds' | 'rounds' | 'emom_interval_minutes' | 'tabata_work_seconds' | 'tabata_rest_seconds'
+> {
+  return {
+    wod_type: wod.wod_type,
+    time_cap_seconds: wod.time_cap_seconds ?? undefined,
+    rounds: editorRoundsOf(wod) ?? undefined,
+    emom_interval_minutes: wod.emom_interval_minutes ?? undefined,
+    tabata_work_seconds: wod.tabata_work_seconds ?? undefined,
+    tabata_rest_seconds: wod.tabata_rest_seconds ?? undefined,
+  };
+}
+
+/**
+ * Ajoute le WOD généré au Whiteboard de l'athlète : WOD perso dans `box_wods`
+ * (`box_id` null, `created_by` = athlète, `scheduled_date` = aujourd'hui,
+ * `description` = rendu texte). Le JSON structuré reste dans
+ * `generated_wods.wod_json`, complété de `box_wod_id` pour lier les deux.
+ * Un score déjà saisi depuis la page résultat est recopié dans `wod_scores`
+ * sur ce WOD (flux normal du Whiteboard), pas dupliqué côté `generated_wod_scores`.
+ */
+export async function addToWhiteboard(
+  userId: string,
+  wod: GeneratedWod,
+  generatedId: string,
+  existingScore: ScoreSubmission | null,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from('box_wods')
+    .insert({
+      box_id: null,
+      created_by: userId,
+      title: wod.title,
+      description: wod.description,
+      wod_type: wod.wod_type,
+      scheduled_date: todayISO(),
+      time_cap_seconds: wod.time_cap_seconds,
+      rounds: editorRoundsOf(wod),
+      emom_interval_minutes: wod.emom_interval_minutes,
+      tabata_work_seconds: wod.tabata_work_seconds,
+      tabata_rest_seconds: wod.tabata_rest_seconds,
+      notes: wod.stimulus.note,
+      is_published: true,
+      leaderboard_enabled: false,
+      sort_order: 0,
+    })
+    .select('id')
+    .single();
+  if (error) throw error;
+  const boxWodId = data.id;
+
+  const { error: linkError } = await supabase
+    .from('generated_wods')
+    .update({ wod_json: { ...wod, box_wod_id: boxWodId } as unknown as Json })
+    .eq('id', generatedId);
+  if (linkError) captureError(linkError, { action: 'linkBoxWod' });
+
+  if (existingScore) {
+    const rx = RX_OR_ABOVE.has(existingScore.category);
+    const { error: scoreError } = await supabase.from('wod_scores').upsert({
+      wod_id: boxWodId,
+      member_id: userId,
+      box_id: null,
+      score_type: existingScore.scoreType,
+      score_value: existingScore.value,
+      capped: false,
+      rx,
+      scaled: !rx,
+      notes: [`Catégorie : ${CATEGORY_LABEL[existingScore.category]}`, existingScore.notes.trim()].filter(Boolean).join('\n'),
+    }, { onConflict: 'wod_id,member_id' });
+    if (scoreError) throw scoreError;
+  }
+  return boxWodId;
+}
 
 /** Score + compteurs + crédit de badges par mouvement (grammaire du rendu texte). */
 export async function submitGeneratedScore(

@@ -50,6 +50,10 @@ describe.each(THEMES)('contraste — thème %s', (mode, t) => {
     expect(contrast(t.text, t.ctaBg, t.background)).toBeGreaterThanOrEqual(TEXT_MIN);
   });
 
+  it('l\'encre du bouton plein (EmeraldCTAButton) est lisible sur sa surface', () => {
+    expect(contrast(t.ctaText, t.ctaBg, t.background)).toBeGreaterThanOrEqual(TEXT_MIN);
+  });
+
   const hueNames = Object.keys(HUES) as HueName[];
   it.each(hueNames)('la couleur de domaine « %s » est lisible en texte', (name) => {
     expect(onCard(hue(mode, name))).toBeGreaterThanOrEqual(TEXT_MIN);

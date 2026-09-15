@@ -8,7 +8,7 @@ import {
 import { Trophy, Zap, TrendingUp, Award, LogOut, Star, Flame, ChevronRight, Hash, Building2, Edit3, Check, X, Camera, Copy, Share2, Bell, BookOpen, Search, ExternalLink, Lock, CreditCard } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
@@ -24,7 +24,7 @@ import { spacing, borderRadius, typography, shadows } from '../../theme/designTo
 import { getBadgesCatalog, getEarnedBadges, getStreak, isBadgeUnobtainable, BadgeDef, EarnedBadge, StreakInfo } from '../../services/gamification';
 import { fetchMyProfile, fetchMyPersonalRecords } from '../../services/myProfile';
 import { HomeStackParamList } from '../../navigation';
-import { Program, Gender } from '../../types';
+import { Program, Gender, AthleteLevel } from '../../types';
 import { Json } from '../../types/supabase';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
@@ -106,6 +106,8 @@ const BADGE_CATEGORY_MAP: Record<string, string> = {
 };
 const CATEGORY_ORDER = ['activity', 'tournament', 'wod', 'elo', 'Classement', 'social'];
 
+const ATHLETE_LEVELS: readonly AthleteLevel[] = ['scaled', 'inter', 'rx', 'rx+', 'elite', 'pro'];
+
 export default function ProfileScreen() {
   const { t } = useTranslation();
   const { user, signOut, deleteAccount, currentBox, joinBox, leaveBox, updateUser, myBoxes, switchBox, boxRole, boxSubscription, daysLeftTrial } = useAuth();
@@ -185,7 +187,14 @@ export default function ProfileScreen() {
   const [avatarUrl, setAvatarUrl]   = useState(user?.avatar_url ?? '');
   const [editBio, setEditBio]       = useState(user?.bio ?? '');
   const [editGender, setEditGender] = useState<Gender | null>(user?.gender ?? null);
+  const [editLevel, setEditLevel]   = useState<AthleteLevel | null>(user?.level ?? null);
   const [saving, setSaving]         = useState(false);
+
+  // Ouverture directe du formulaire (lien « modifier » de la page résultat du générateur)
+  const route = useRoute<RouteProp<{ Profile: { editLevel?: boolean } | undefined }, 'Profile'>>();
+  useEffect(() => {
+    if (route.params?.editLevel) setEditing(true);
+  }, [route.params?.editLevel]);
 
   // ── Changement de mot de passe (3E)
   const [pwdModal, setPwdModal]     = useState(false);
@@ -485,6 +494,7 @@ export default function ProfileScreen() {
         username: editUsername.trim(),
         gender: editGender,
       };
+      if (editLevel) updates.level = editLevel;
 
       // Upload avatar to Supabase Storage if it's a local file URI
       let finalAvatarUrl = avatarUrl.trim();
@@ -520,6 +530,7 @@ export default function ProfileScreen() {
         avatar_url: avatarUrl.trim() || user.avatar_url,
         username: editUsername.trim(),
         gender: editGender ?? undefined,
+        level: editLevel ?? user.level,
       });
       setEditing(false);
 
@@ -1100,6 +1111,7 @@ export default function ProfileScreen() {
                   <InfoRow label={t('profile.account.usernameLabel')} value={user?.username ?? ''} S={S} />
                   <InfoRow label={t('profile.account.nameLabel')} value={user?.full_name || '—'} S={S} />
                   <InfoRow label={t('profile.account.emailLabel')} value={user?.email ?? ''} S={S} />
+                  <InfoRow label={t('profile.account.levelLabel')} value={user?.level ? user.level.toUpperCase() : '—'} S={S} />
                   <InfoRow label={t('profile.account.bioLabel')} value={user?.bio || t('profile.account.bioEmpty')} S={S} />
                   <InfoRow label={t('profile.account.photoLabel')} value={user?.avatar_url ? t('profile.account.photoSet') : t('profile.account.photoUnset')} S={S} />
                   {/* Rôle */}
@@ -1172,6 +1184,26 @@ export default function ProfileScreen() {
                       </TouchableOpacity>
                     ))}
                   </View>
+
+                  <Text style={S.editLabel}>{t('profile.account.levelLabel')}</Text>
+                  <View style={S.levelRow} testID="profile-level-selector">
+                    {ATHLETE_LEVELS.map(l => {
+                      const c = LevelColors[l];
+                      const active = editLevel === l;
+                      return (
+                        <TouchableOpacity
+                          key={l}
+                          style={[S.levelChip, active && { borderColor: c, backgroundColor: `${c}18` }]}
+                          onPress={() => setEditLevel(l)}
+                          activeOpacity={0.8}
+                          testID={`profile-level-${l}`}
+                        >
+                          <Text style={[S.levelChipText, active && { color: c }]}>{l.toUpperCase()}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                  <Text style={S.levelHint}>{t('profile.account.levelHint')}</Text>
 
                   <Text style={S.editLabel}>{t('profile.account.emailLabel')}</Text>
                   <TextInput style={S.editInput} value={editEmail} onChangeText={setEditEmail} keyboardType="email-address" autoCapitalize="none" placeholder={t('profile.account.emailLabel')} placeholderTextColor={theme.textMuted} />
@@ -1742,6 +1774,13 @@ function createStyles(t: AppTheme) {
   genderCardActive: { borderColor: t.accent, backgroundColor: t.surface },
   genderLabel: { fontSize: 12, fontWeight: '600', color: t.textMuted },
   genderLabelActive: { color: t.text },
+  levelRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  levelChip: {
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: t.border,
+    backgroundColor: isDark ? t.card : t.background,
+  },
+  levelChipText: { fontSize: 12, fontWeight: '700', color: t.textSecondary, letterSpacing: 0.4 },
+  levelHint: { fontSize: 11, color: t.textSecondary, marginTop: 6 },
 
   pwdBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,

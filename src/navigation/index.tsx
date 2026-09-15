@@ -269,7 +269,7 @@ export type HomeStackParamList = {
   OneRMCalculator: undefined;
   Timer: undefined;
   Leaderboard: undefined;
-  Profile: undefined;
+  Profile: { editLevel?: boolean } | undefined;
   EloHistory: undefined;
   WODDetail: { wodId: string; scrollToLeaderboard?: boolean };
   Legal: undefined;

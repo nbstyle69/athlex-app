@@ -960,6 +960,8 @@
       "progOngoing": "Ongoing · {{days}}j/sem",
       "progChooseStart": "Choisir ma date de début",
       "usernameLabel": "Pseudo",
+      "levelLabel": "Niveau",
+      "levelHint": "Sert de catégorie par défaut au générateur de WOD. Il est aussi mis à jour automatiquement par ton ELO.",
       "nameLabel": "Nom",
       "firstName": "Prénom",
       "lastName": "Nom",

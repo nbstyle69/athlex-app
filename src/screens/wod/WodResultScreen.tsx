@@ -1,36 +1,45 @@
 /**
  * AthleX — Résultat du générateur (brief §8, page résultat)
- * Affiche un `GeneratedWod` structuré : titre, format, cap, mouvements avec
- * charges / substitutions / variantes pour toutes les catégories, durée estimée
- * et cible pour la catégorie du profil, stimulus. Actions : Re-tirer (nouvelle
- * graine, mêmes paramètres), Enregistrer, Favori, Saisir mon score (catégorie
- * demandée), Copier (seul accès au rendu texte).
+ * Reprend les composants du Whiteboard : carte WOD (badge GÉNÉRÉ, titre, sous-titre,
+ * « Voir détails & score », bouton minuteur), liste de mouvements dépliables (charges /
+ * substitutions de toutes les catégories), durée estimée compacte + stimulus, et une barre
+ * d'actions fixe au-dessus de la tab bar : Re-tirer, Enregistrer, Favori, Minuteur,
+ * Ajouter au Whiteboard, Saisir mon score, menu ⋯ (Copier / Partager).
  */
 
 import React, { useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Share,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, Pressable,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronLeft, RefreshCw, Bookmark, Heart, Check, Copy, Trophy, X } from 'lucide-react-native';
+import {
+  ChevronLeft, ChevronRight, ChevronDown, ChevronUp, RefreshCw, Bookmark, Heart, Check, Copy, Trophy, X,
+  Timer as TimerIcon, Clock, MoreHorizontal, Share2, ClipboardList,
+} from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import GlassCard from '../../components/glass/GlassCard';
+import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
+import WodTypeBadge from '../../components/wod/WodTypeBadge';
+import TimerLaunchModal, { TimerRunParams } from '../../components/wod/TimerLaunchModal';
 import i18n from '../../i18n';
 import { captureError } from '../../lib/sentry';
 import { hapticSuccess } from '../../lib/haptics';
+import { spacing, typography } from '../../theme/designTokens';
 import { maskTimeInput, timeStringToSeconds } from '../../utils/tournamentUtils';
+import { buildFullSeqBlockFromWOD } from '../../utils/wodToTimer';
 import {
   CATEGORY_LABEL, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES,
 } from '../../../packages/wod-engine/src';
 import type { Category, GeneratedMovement, GeneratedWod } from '../../../packages/wod-engine/src';
 import {
-  GenerateResult, ScoreInputType, ScreenParams, redraw, saveGeneratedWod, scoreInputTypeFor, setFavorite,
-  submitGeneratedScore,
+  GenerateResult, ScoreInputType, ScoreSubmission, ScreenParams, addToWhiteboard, editorFieldsOf, redraw,
+  saveGeneratedWod, scoreInputTypeFor, setFavorite, submitGeneratedScore,
 } from '../../services/wodGenerator';
 import { HYBRID_ORANGE } from './wodGeneratorOptions';
 
@@ -61,14 +70,36 @@ export function loadFor(m: GeneratedMovement, c: Category): string | null {
   return `${v.map(fmtNum).join('/')} ${m.load_unit}`;
 }
 
+/** Ligne secondaire d'un mouvement pour une catégorie : charge · → substitution · (variante). */
+export function categoryLine(m: GeneratedMovement, c: Category, withLabel: boolean): string | null {
+  const load = loadFor(m, c);
+  const sub = m.substitutions_by_category[c];
+  const variant = m.variant_by_category[c];
+  const parts = [load && (withLabel ? `${CATEGORY_LABEL[c]} ${load}` : load), sub && `→ ${sub}`, variant && `(${variant})`]
+    .filter(Boolean);
+  return parts.length ? parts.join(' · ') : null;
+}
+
+/** « Affiché pour : Inter · d'après ton profil » / « RX · niveau non renseigné ». */
+export function displayedForText(category: Category, hasLevel: boolean): { text: string; link: string } {
+  return hasLevel
+    ? { text: `Affiché pour : ${CATEGORY_LABEL[category]} · d'après ton profil`, link: 'modifier' }
+    : { text: `Affiché pour : ${CATEGORY_LABEL[category]} · niveau non renseigné`, link: 'choisir' };
+}
+
 const SCORE_TYPES: { key: ScoreInputType; label: string }[] = [
   { key: 'time', label: 'Temps' }, { key: 'rounds', label: 'Rounds' }, { key: 'reps', label: 'Reps' }, { key: 'weight', label: 'Charge' },
 ];
+
+function useTabBarHeight(): number {
+  try { return useBottomTabBarHeight(); } catch { return 0; }
+}
 
 export default function WodResultScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<Route>();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useTabBarHeight();
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
   const S = createStyles(theme);
@@ -83,7 +114,18 @@ export default function WodResultScreen() {
   const [savedId, setSavedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [favorite, setFav] = useState(false);
-  const [detail, setDetail] = useState<number | null>(null);
+  const [openRows, setOpenRows] = useState<ReadonlySet<number>>(() => new Set());
+  const toggleRow = (i: number) =>
+    setOpenRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
+  const [allCategories, setAllCategories] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const [timerOpen, setTimerOpen] = useState(false);
+  const [boxWodId, setBoxWodId] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const [scoreModal, setScoreModal] = useState(false);
   const [scoreType, setScoreType] = useState<ScoreInputType>(scoreInputTypeFor(wod));
@@ -91,21 +133,31 @@ export default function WodResultScreen() {
   const [scoreCategory, setScoreCategory] = useState<Category>(category);
   const [scoreNotes, setScoreNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submittedScore, setSubmittedScore] = useState<ScoreSubmission | null>(null);
 
   const block = wod.blocks[0];
   const headerLine = useMemo(() => wod.description.split('\n')[0] ?? '', [wod.description]);
   const estimate = wod.estimate.by_category[category];
+  const displayedFor = displayedForText(category, !!user?.level);
+  const timerBlock = useMemo(() => buildFullSeqBlockFromWOD(editorFieldsOf(wod)), [wod]);
+
+  function resetFor(next: GenerateResult) {
+    setResult(next);
+    setSavedId(null);
+    setFav(false);
+    setOpenRows(new Set());
+    setAllCategories(false);
+    setBoxWodId(null);
+    setSubmittedScore(null);
+    setScoreType(scoreInputTypeFor(next.wod));
+    setScoreCategory(next.category);
+  }
 
   async function onRedraw() {
     if (!user) return;
     setRedrawing(true);
     try {
-      const next = await redraw(user, currentBox?.id, screen);
-      setResult(next);
-      setSavedId(null);
-      setFav(false);
-      setDetail(null);
-      setScoreType(scoreInputTypeFor(next.wod));
+      resetFor(await redraw(user, currentBox?.id, screen));
     } catch (e) {
       Alert.alert('Aucun WOD valide', 'Réessaie ou change les paramètres.');
     } finally {
@@ -139,11 +191,51 @@ export default function WodResultScreen() {
   }
 
   function onCopy() {
+    setMenu(false);
     try {
       const { Clipboard: RNClipboard } = require('react-native');
       RNClipboard?.setString?.(wod.description);
     } catch (_) { /* presse-papier indisponible : la feuille de partage suffit */ }
     Share.share({ message: `${wod.title}\n${wod.description}` }).catch(() => {});
+  }
+
+  function onShare() {
+    setMenu(false);
+    Share.share({ message: `${wod.title}\n${wod.description}` }).catch(() => {});
+  }
+
+  function onTimerLaunch(params: TimerRunParams) {
+    setTimerOpen(false);
+    navigation.navigate('TimerRun', params);
+  }
+
+  async function onAddToWhiteboard() {
+    if (!user) return;
+    if (boxWodId) {
+      navigation.navigate('Whiteboard', { screen: 'WhiteboardMain' });
+      return;
+    }
+    const id = await onSave();
+    if (!id) return;
+    setAdding(true);
+    try {
+      const created = await addToWhiteboard(user.id, wod, id, submittedScore);
+      setBoxWodId(created);
+      hapticSuccess();
+      Alert.alert(
+        'Ajouté au Whiteboard',
+        submittedScore ? 'Le WOD et ton score sont dans « Mes WODs perso ».' : 'Le WOD est dans « Mes WODs perso » pour aujourd\'hui.',
+        [
+          { text: i18n.t('common.ok'), style: 'cancel' },
+          { text: 'Voir le Whiteboard', onPress: () => navigation.navigate('Whiteboard', { screen: 'WhiteboardMain' }) },
+        ],
+      );
+    } catch (e) {
+      captureError(e, { screen: 'WodResult', action: 'addToWhiteboard' });
+      Alert.alert('Erreur', "Impossible d'ajouter ce WOD au Whiteboard.");
+    } finally {
+      setAdding(false);
+    }
   }
 
   async function onSubmitScore() {
@@ -154,7 +246,9 @@ export default function WodResultScreen() {
     if (!id) return;
     setSubmitting(true);
     try {
-      await submitGeneratedScore(user, currentBox?.id, wod, { wodId: id, scoreType, value, category: scoreCategory, notes: scoreNotes });
+      const submission: ScoreSubmission = { wodId: id, scoreType, value, category: scoreCategory, notes: scoreNotes };
+      await submitGeneratedScore(user, currentBox?.id, wod, submission);
+      setSubmittedScore(submission);
       hapticSuccess();
       setScoreModal(false);
       setScoreInput('');
@@ -175,6 +269,8 @@ export default function WodResultScreen() {
     }
   }
 
+  const bottomBarPadding = tabBarHeight > 0 ? tabBarHeight : insets.bottom;
+
   return (
     <View style={S.container}>
       <GlassBackground />
@@ -182,108 +278,216 @@ export default function WodResultScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <ChevronLeft color={theme.textSecondary} size={24} />
         </TouchableOpacity>
-        <Text style={S.headerTitle} testID="wodresult-title">{wod.title}</Text>
-        <Text style={[S.headerFormat, { color: accent }]}>{headerLine}</Text>
-        <View style={S.metaRow}>
-          {block.timecap != null && <Meta S={S} label="Cap" value={mmss(block.timecap)} />}
-          <Meta S={S} label="Budget" value={`${wod.budget_min} min`} />
-          {block.rounds != null && block.rounds > 1 && <Meta S={S} label="Rounds" value={String(block.rounds)} />}
-          {wod.vest && wod.vest.mode !== 'none' && (
-            <Meta S={S} label="Gilet" value={`${wod.vest.mode === 'optional' ? 'optionnel · ' : ''}${wod.vest.load_kg_by_category[category] ?? ''} kg`} />
-          )}
-        </View>
+        <Text style={S.headerLabel}>Ton WOD</Text>
       </View>
 
-      <ScrollView contentContainerStyle={[S.content, { paddingBottom: insets.bottom + 120 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[S.content, { paddingBottom: bottomBarPadding + 150 }]} showsVerticalScrollIndicator={false}>
+        {/* Carte WOD (Whiteboard) */}
+        <GlassCard radius={16} style={S.wodCard} testID="wodresult-card">
+          <View style={S.wodCardInner}>
+          <View style={S.wodCardTop}>
+            <WodTypeBadge type="generated" label="Généré" color={accent} />
+            {wod.time_cap_seconds != null && (
+              <View style={S.timeCap}>
+                <Clock color={theme.textMuted} size={12} />
+                <Text style={S.timeCapText}>Cap {mmss(wod.time_cap_seconds)}</Text>
+              </View>
+            )}
+            {wod.vest && wod.vest.mode !== 'none' && (
+              <Text style={S.timeCapText}>
+                Gilet {wod.vest.mode === 'optional' ? 'optionnel ' : ''}{wod.vest.load_kg_by_category[category] ?? ''} kg
+              </Text>
+            )}
+          </View>
+          <Text style={S.wodTitle} testID="wodresult-title">{wod.title.toUpperCase()}</Text>
+          <Text style={S.wodDesc}>{headerLine}</Text>
+          <View style={S.wodCardFooter}>
+            <TouchableOpacity
+              style={S.wodCardAction}
+              onPress={() => setScoreModal(true)}
+              activeOpacity={0.7}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              testID="wodresult-see-details"
+            >
+              <Text style={[S.wodCardActionText, { color: accent }]}>{i18n.t('whiteboard.seeDetails')}</Text>
+              <ChevronRight color={accent} size={14} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setTimerOpen(true)}
+              style={[S.timerBtn, { backgroundColor: `${accent}18`, borderColor: `${accent}35` }]}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={i18n.t('whiteboard.launchTimer')}
+              testID="wodresult-timer"
+            >
+              <TimerIcon color={accent} size={16} />
+            </TouchableOpacity>
+          </View>
+          </View>
+        </GlassCard>
+
+        {/* Catégorie affichée */}
+        <View style={S.displayedFor}>
+          <Text style={S.displayedForText} testID="wodresult-displayed-for">
+            {displayedFor.text}
+            {' — '}
+            <Text
+              style={[S.displayedForLink, { color: accent }]}
+              onPress={() => navigation.navigate('Profile', { editLevel: true })}
+              testID="wodresult-edit-level"
+            >
+              {displayedFor.link}
+            </Text>
+          </Text>
+        </View>
+
         {/* Mouvements */}
         <GlassCard radius={16} style={S.card}>
+          <View style={S.cardInner}>
           {block.movements.map((m, i) => {
-            const open = detail === i;
-            const load = loadFor(m, category);
-            const sub = m.substitutions_by_category[category];
-            const variant = m.variant_by_category[category];
+            const open = openRows.has(i);
+            const line = categoryLine(m, category, true);
             return (
-              <View key={`${m.id}-${i}`} style={[S.moveRow, i > 0 && S.moveRowBorder]}>
-                <TouchableOpacity style={S.moveHead} onPress={() => setDetail(open ? null : i)} activeOpacity={0.8} testID={`wodresult-move-${i}`}>
+              <View
+                key={`${m.id}-${i}`}
+                style={[S.moveRow, i === 0 && S.moveRowFirst, i === block.movements.length - 1 && S.moveRowLast, i > 0 && S.moveRowBorder]}
+              >
+                <TouchableOpacity style={S.moveHead} onPress={() => toggleRow(i)} activeOpacity={0.8} testID={`wodresult-move-${i}`}>
                   <View style={{ flex: 1 }}>
                     <Text style={S.moveText}>
                       {m.round != null ? <Text style={S.moveRound}>R{m.round} · </Text> : null}
                       <Text style={[S.moveQty, { color: accent }]}>{qtyText(m)}</Text> {m.name}
                     </Text>
-                    <Text style={S.moveSub}>
-                      {[load && `${CATEGORY_LABEL[category]} ${load}`, sub && `→ ${sub}`, variant && `(${variant})`].filter(Boolean).join(' · ') || 'Toutes catégories'}
-                    </Text>
+                    <Text style={S.moveSub}>{line ?? 'Toutes catégories'}</Text>
                   </View>
-                  <Text style={S.moveMore}>{open ? '−' : '+'}</Text>
+                  {open
+                    ? <ChevronUp color={theme.textSecondary} size={18} />
+                    : <ChevronDown color={theme.textSecondary} size={18} />}
                 </TouchableOpacity>
                 {open && (
                   <View style={S.catTable}>
-                    {categories.map((c) => {
-                      const l = loadFor(m, c);
-                      const s = m.substitutions_by_category[c];
-                      const v = m.variant_by_category[c];
-                      return (
-                        <View key={c} style={S.catRow}>
-                          <Text style={[S.catName, c === category && { color: accent, fontWeight: '900' }]}>{CATEGORY_LABEL[c]}</Text>
-                          <Text style={S.catVal}>{[l, s ? `→ ${s}` : null, v ? `(${v})` : null].filter(Boolean).join(' · ') || '—'}</Text>
-                        </View>
-                      );
-                    })}
+                    {categories.map((c) => (
+                      <View key={c} style={S.catRow}>
+                        <Text style={[S.catName, c === category && { color: accent, fontWeight: '800' }]}>{CATEGORY_LABEL[c]}</Text>
+                        <Text style={S.catVal}>{categoryLine(m, c, false) ?? '—'}</Text>
+                      </View>
+                    ))}
                   </View>
                 )}
               </View>
             );
           })}
+          </View>
         </GlassCard>
 
-        {/* Estimation */}
+        {/* Durée estimée */}
         <GlassCard radius={16} style={S.card}>
-          <Text style={S.blockTitle}>Durée estimée</Text>
+          <View style={S.cardInner}>
           <View style={S.estRow}>
-            <Text style={S.estBig}>{estimate ? minutesText(estimate.minutes) : minutesText(wod.estimate.reference_minutes)}</Text>
-            <Text style={S.estCat}>{CATEGORY_LABEL[category]} · cible {estimate?.target ?? '—'}</Text>
+            <Text style={S.estBig} testID="wodresult-estimate">
+              {estimate ? minutesText(estimate.minutes) : minutesText(wod.estimate.reference_minutes)}
+            </Text>
+            <View style={{ flex: 1 }}>
+              <Text style={S.estLabel}>Durée estimée · {CATEGORY_LABEL[category]}</Text>
+              <Text style={S.estTarget}>cible {estimate?.target ?? '—'}</Text>
+            </View>
           </View>
-          <View style={S.catTable}>
-            {categories.filter((c) => c !== category).map((c) => {
-              const e = wod.estimate.by_category[c];
-              return e ? (
-                <View key={c} style={S.catRow}>
-                  <Text style={S.catName}>{CATEGORY_LABEL[c]}</Text>
-                  <Text style={S.catVal}>{minutesText(e.minutes)} · {e.target}</Text>
-                </View>
-              ) : null;
-            })}
-          </View>
+          <TouchableOpacity style={S.estLink} onPress={() => setAllCategories((v) => !v)} activeOpacity={0.7} testID="wodresult-all-categories">
+            <Text style={[S.estLinkText, { color: accent }]}>{allCategories ? 'Masquer les catégories' : 'Voir toutes les catégories'}</Text>
+            {allCategories ? <ChevronUp color={accent} size={14} /> : <ChevronDown color={accent} size={14} />}
+          </TouchableOpacity>
+          {allCategories && (
+            <View style={S.catTable}>
+              {categories.map((c) => {
+                const e = wod.estimate.by_category[c];
+                return e ? (
+                  <View key={c} style={S.catRow}>
+                    <Text style={[S.catName, c === category && { color: accent, fontWeight: '800' }]}>{CATEGORY_LABEL[c]}</Text>
+                    <Text style={S.catVal}>{minutesText(e.minutes)} · {e.target}</Text>
+                  </View>
+                ) : null;
+              })}
+            </View>
+          )}
           <Text style={S.stimulus}>Stimulus · RPE {fmtNum(wod.stimulus.rpe)} — {wod.stimulus.note}</Text>
           {wod.after_class && (wod.after_class.excluded_patterns.length > 0 || wod.after_class.excluded_families.length > 0) && (
             <Text style={S.afterClass}>Complément : évite {[...wod.after_class.excluded_patterns, ...wod.after_class.excluded_families].join(', ')}.</Text>
           )}
+          </View>
         </GlassCard>
+      </ScrollView>
 
-        {/* Actions */}
-        <View style={S.actions}>
-          <TouchableOpacity style={[S.actionBtn, { borderColor: accent }]} onPress={onRedraw} disabled={redrawing} activeOpacity={0.8} testID="wodresult-redraw">
-            {redrawing ? <ActivityIndicator color={accent} /> : <RefreshCw size={16} color={accent} />}
-            <Text style={S.actionText}>Re-tirer</Text>
+      {/* Barre d'actions fixe au-dessus de la tab bar */}
+      <GlassCard radius={0} style={S.bottomBar} testID="wodresult-actions">
+        <View style={[S.bottomBarInner, { paddingBottom: bottomBarPadding + ROW_PAD }]}>
+        <View style={S.iconRow}>
+          <TouchableOpacity style={S.iconBtn} onPress={onRedraw} disabled={redrawing} activeOpacity={0.8} testID="wodresult-redraw">
+            {redrawing ? <ActivityIndicator color={accent} size="small" /> : <RefreshCw size={18} color={accent} />}
+            <Text style={S.iconText}>Re-tirer</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[S.actionBtn, savedId && { backgroundColor: `${accent}18` }]} onPress={onSave} disabled={saving || !!savedId} activeOpacity={0.8} testID="wodresult-save">
-            {saving ? <ActivityIndicator color={theme.text} /> : savedId ? <Check size={16} color={accent} /> : <Bookmark size={16} color={theme.text} />}
-            <Text style={S.actionText}>{savedId ? 'Enregistré' : 'Enregistrer'}</Text>
+          <TouchableOpacity style={S.iconBtn} onPress={onSave} disabled={saving || !!savedId} activeOpacity={0.8} testID="wodresult-save">
+            {saving ? <ActivityIndicator color={theme.text} size="small" /> : savedId ? <Check size={18} color={accent} /> : <Bookmark size={18} color={theme.text} />}
+            <Text style={S.iconText}>{savedId ? 'Enregistré' : 'Enregistrer'}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={S.actionBtn} onPress={onFavorite} activeOpacity={0.8} testID="wodresult-favorite">
-            <Heart size={16} color={theme.error} fill={favorite ? theme.error : 'transparent'} />
-            <Text style={S.actionText}>Favori</Text>
+          <TouchableOpacity style={S.iconBtn} onPress={onFavorite} activeOpacity={0.8} testID="wodresult-favorite">
+            <Heart size={18} color={theme.error} fill={favorite ? theme.error : 'transparent'} />
+            <Text style={S.iconText}>Favori</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={S.actionBtn} onPress={onCopy} activeOpacity={0.8} testID="wodresult-copy">
-            <Copy size={16} color={theme.text} />
-            <Text style={S.actionText}>Copier</Text>
+          <TouchableOpacity style={S.iconBtn} onPress={() => setTimerOpen(true)} activeOpacity={0.8} testID="wodresult-timer-bar">
+            <TimerIcon size={18} color={theme.text} />
+            <Text style={S.iconText}>Minuteur</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={S.iconBtn} onPress={() => setMenu(true)} activeOpacity={0.8} testID="wodresult-more">
+            <MoreHorizontal size={18} color={theme.text} />
+            <Text style={S.iconText}>Plus</Text>
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={[S.scoreBtn, { backgroundColor: accent }]} onPress={() => setScoreModal(true)} activeOpacity={0.9} testID="wodresult-score">
-          <Trophy size={18} color={theme.background} />
-          <Text style={[S.scoreBtnText, { color: theme.background }]}>Saisir mon score</Text>
-        </TouchableOpacity>
-      </ScrollView>
+        <View style={S.ctaRow}>
+          <EmeraldCTAButton
+            size="md"
+            style={{ flex: 1 }}
+            icon={boxWodId ? <Check size={16} color={theme.ctaText} /> : <ClipboardList size={16} color={theme.ctaText} />}
+            onPress={onAddToWhiteboard}
+            loading={adding}
+          >
+            {boxWodId ? 'Sur le Whiteboard' : 'Ajouter au Whiteboard'}
+          </EmeraldCTAButton>
+          <EmeraldCTAButton
+            size="md"
+            style={{ flex: 1 }}
+            icon={<Trophy size={16} color={theme.ctaText} />}
+            onPress={() => setScoreModal(true)}
+          >
+            {submittedScore ? 'Modifier mon score' : 'Saisir mon score'}
+          </EmeraldCTAButton>
+        </View>
+        </View>
+      </GlassCard>
+
+      <TimerLaunchModal
+        visible={timerOpen}
+        title={wod.title}
+        initialBlock={timerBlock}
+        onClose={() => setTimerOpen(false)}
+        onLaunch={onTimerLaunch}
+      />
+
+      {/* Menu ⋯ */}
+      <Modal visible={menu} transparent animationType="fade" onRequestClose={() => setMenu(false)}>
+        <Pressable style={S.modalBg} onPress={() => setMenu(false)}>
+          <Pressable style={[S.menuSheet, { paddingBottom: insets.bottom + 16 }]} onPress={() => {}}>
+            <TouchableOpacity style={S.menuItem} onPress={onCopy} activeOpacity={0.7} testID="wodresult-copy">
+              <Copy size={18} color={theme.text} />
+              <Text style={S.menuItemText}>Copier le WOD</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={S.menuItem} onPress={onShare} activeOpacity={0.7} testID="wodresult-share">
+              <Share2 size={18} color={theme.text} />
+              <Text style={S.menuItemText}>Partager</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       {/* Saisie du score : catégorie demandée */}
       <Modal visible={scoreModal} transparent animationType="slide" onRequestClose={() => setScoreModal(false)}>
@@ -325,9 +529,15 @@ export default function WodResultScreen() {
               value={scoreNotes}
               onChangeText={setScoreNotes}
             />
-            <TouchableOpacity style={[S.scoreBtn, { backgroundColor: accent, opacity: submitting ? 0.6 : 1 }]} onPress={onSubmitScore} disabled={submitting} activeOpacity={0.9} testID="wodresult-score-submit">
-              {submitting ? <ActivityIndicator color={theme.background} /> : <Text style={[S.scoreBtnText, { color: theme.background }]}>Enregistrer mon score</Text>}
-            </TouchableOpacity>
+            <EmeraldCTAButton
+              onPress={onSubmitScore}
+              loading={submitting}
+              disabled={submitting}
+              icon={<Trophy size={18} color={theme.ctaText} />}
+              style={{ marginTop: 16 }}
+            >
+              Enregistrer mon score
+            </EmeraldCTAButton>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -335,69 +545,85 @@ export default function WodResultScreen() {
   );
 }
 
-function Meta({ S, label, value }: { S: ReturnType<typeof createStyles>; label: string; value: string }) {
-  return (
-    <View style={S.meta}>
-      <Text style={S.metaLabel}>{label}</Text>
-      <Text style={S.metaValue}>{value}</Text>
-    </View>
-  );
+/** Padding intérieur des cartes et de la barre d'actions (tuiles Outils de l'Accueil). */
+const CARD_PAD = 20;
+/** Espace vertical entre deux lignes de mouvement. */
+const ROW_PAD = 14;
+
+function createStyles(theme: AppTheme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.background },
+    header: { paddingHorizontal: 20, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 },
+    headerLabel: { fontSize: 17, fontWeight: '800', color: theme.text },
+    content: { padding: 16 },
+
+    wodCard: { marginBottom: 0 },
+    wodCardInner: { padding: CARD_PAD, gap: 10 },
+    wodCardTop: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+    timeCap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    timeCapText: { fontSize: 11, color: theme.textMuted },
+    wodTitle: { fontSize: 17, fontWeight: '700', color: theme.text },
+    wodDesc: { fontSize: 13, color: theme.textSecondary, lineHeight: 19 },
+    wodCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
+    wodCardAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+    wodCardActionText: { fontSize: 12, fontWeight: '700' },
+    timerBtn: {
+      width: 34, height: 34, borderRadius: 10,
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: 1,
+    },
+
+    displayedFor: { paddingHorizontal: CARD_PAD, paddingVertical: 14 },
+    displayedForText: { ...typography.bodySmall, color: theme.textSecondary },
+    displayedForLink: { fontWeight: '700', textDecorationLine: 'underline' },
+
+    card: { marginBottom: 14 },
+    cardInner: { padding: CARD_PAD },
+
+    moveRow: { paddingVertical: ROW_PAD },
+    moveRowFirst: { paddingTop: 0 },
+    moveRowLast: { paddingBottom: 0 },
+    moveRowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
+    moveHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+    moveText: { fontSize: 15, fontWeight: '700', color: theme.text, lineHeight: 21 },
+    moveRound: { fontSize: 12, color: theme.textSecondary, fontWeight: '700' },
+    moveQty: { fontWeight: '900' },
+    moveSub: { ...typography.bodySmall, color: theme.textSecondary, marginTop: spacing.xxs },
+    catTable: { marginTop: spacing.sm, gap: spacing.xs },
+    catRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, paddingVertical: spacing.xxs },
+    catName: { ...typography.bodySmall, fontWeight: '600', color: theme.textSecondary, width: 84 },
+    catVal: { ...typography.bodySmall, color: theme.textSecondary, flex: 1, textAlign: 'right' },
+
+    estRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    estBig: { fontSize: 30, fontWeight: '900', color: theme.text, letterSpacing: -0.5 },
+    estLabel: { ...typography.bodySmall, fontWeight: '600', color: theme.text },
+    estTarget: { ...typography.bodySmall, color: theme.textSecondary, marginTop: spacing.xxs },
+    estLink: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: spacing.sm, alignSelf: 'flex-start' },
+    estLinkText: { fontSize: 12, fontWeight: '700' },
+    stimulus: { ...typography.bodySmall, color: theme.text, marginTop: ROW_PAD },
+    afterClass: { ...typography.caption, color: theme.textSecondary, marginTop: spacing.xs },
+
+    bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+    bottomBarInner: { paddingHorizontal: CARD_PAD, paddingTop: ROW_PAD, gap: 12 },
+    iconRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    iconBtn: { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 4 },
+    iconText: { fontSize: 10, fontWeight: '700', color: theme.textSecondary },
+    ctaRow: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
+
+    modalBg: { flex: 1, backgroundColor: theme.modalBackdrop, justifyContent: 'flex-end' },
+    menuSheet: { backgroundColor: theme.modalCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16 },
+    menuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 8 },
+    menuItemText: { fontSize: 15, fontWeight: '600', color: theme.text },
+    modalSheet: { backgroundColor: theme.modalCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
+    modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+    modalTitle: { fontSize: 18, fontWeight: '900', color: theme.text },
+    modalLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textSecondary, marginTop: 12, marginBottom: 8 },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card },
+    chipText: { fontSize: 13, color: theme.text, fontWeight: '600' },
+    input: {
+      borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface,
+      borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: theme.text, fontSize: 14, marginTop: 12,
+    },
+  });
 }
-
-function createStyles(theme: AppTheme) { return StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.background },
-  header: { paddingHorizontal: 20, paddingBottom: 12 },
-  headerTitle: { fontSize: 22, fontWeight: '900', color: theme.text, marginTop: 12 },
-  headerFormat: { fontSize: 13, fontWeight: '800', marginTop: 4 },
-  metaRow: { flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' },
-  meta: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, backgroundColor: theme.card, borderWidth: 1, borderColor: theme.border },
-  metaLabel: { fontSize: 9, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textMuted },
-  metaValue: { fontSize: 13, fontWeight: '800', color: theme.text },
-  content: { padding: 16 },
-  card: { padding: 14, marginBottom: 14 },
-  blockTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textSecondary, marginBottom: 8 },
-
-  moveRow: { paddingVertical: 10 },
-  moveRowBorder: { borderTopWidth: 1, borderTopColor: theme.border },
-  moveHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  moveText: { fontSize: 15, fontWeight: '700', color: theme.text },
-  moveRound: { fontSize: 12, color: theme.textMuted, fontWeight: '700' },
-  moveQty: { fontWeight: '900' },
-  moveSub: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-  moveMore: { fontSize: 18, fontWeight: '800', color: theme.textSecondary, width: 20, textAlign: 'center' },
-  catTable: { marginTop: 8, borderRadius: 10, backgroundColor: theme.surface, padding: 8, gap: 4 },
-  catRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
-  catName: { fontSize: 12, fontWeight: '700', color: theme.textSecondary, width: 84 },
-  catVal: { fontSize: 12, color: theme.text, flex: 1, textAlign: 'right' },
-
-  estRow: { flexDirection: 'row', alignItems: 'baseline', gap: 10, marginBottom: 8 },
-  estBig: { fontSize: 28, fontWeight: '900', color: theme.text },
-  estCat: { fontSize: 12, color: theme.textSecondary, flex: 1 },
-  stimulus: { fontSize: 13, color: theme.text, marginTop: 10, lineHeight: 18 },
-  afterClass: { fontSize: 12, color: theme.textMuted, marginTop: 6 },
-
-  actions: { flexDirection: 'row', gap: 8, marginTop: 4 },
-  actionBtn: {
-    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 12,
-    borderRadius: 14, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
-  },
-  actionText: { fontSize: 11, fontWeight: '800', color: theme.text },
-  scoreBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    marginTop: 14, padding: 16, borderRadius: 16,
-  },
-  scoreBtnText: { fontSize: 15, fontWeight: '900' },
-
-  modalBg: { flex: 1, backgroundColor: theme.modalBackdrop, justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: theme.modalCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
-  modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  modalTitle: { fontSize: 18, fontWeight: '900', color: theme.text },
-  modalLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textSecondary, marginTop: 12, marginBottom: 8 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card },
-  chipText: { fontSize: 13, color: theme.text, fontWeight: '600' },
-  input: {
-    borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface,
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: theme.text, fontSize: 14, marginTop: 12,
-  },
-}); }
