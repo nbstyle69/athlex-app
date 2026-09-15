@@ -1,0 +1,14 @@
+{
+  "name": "@athlex/wod-engine",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Générateur de WOD déterministe (bloc C) — TypeScript pur, aucune dépendance runtime.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "import-catalog": "node scripts/import-catalog.cjs",
+    "samples": "npx tsx scripts/samples.ts > samples.md",
+    "stress": "npx tsx scripts/stress.ts",
+    "one-per-skeleton": "npx tsx scripts/one_per_skeleton.ts"
+  }
+}
