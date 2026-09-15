@@ -222,6 +222,24 @@ lecture `authenticated` seulement, écriture `service_role` ; `src/services/wodE
 les charge avec le catalogue et retombe indépendamment sur les snapshots embarqués
 (hors ligne). **Migration non appliquée en prod** (dump avant). La PR 3 (Manager) suit.
 
+**Générateur de WOD v1 — page résultat `WodResult` (`athlex-app`, sans migration).** Après
+les tests réels du moteur, la page résultat est remise au niveau de l'app : en tête la carte WOD
+du Whiteboard (badge `GÉNÉRÉ`, titre en capitales, minuteur rond), ligne « Affiché pour : Inter ·
+d'après ton profil — modifier », mouvements en liste aérée repliée par défaut (chevron → charges
+et substitutions de toutes les catégories), durée en ligne compacte + tableau dépliable,
+texte secondaire au contraste des tuiles Outils, barre d'actions fixe au-dessus de la tab bar.
+Deux actions nouvelles : **Minuteur** (le minuteur vidéo existant, préconfiguré depuis le
+format du WOD — EMOM 15 → 1'/15, AMRAP 12 → 12', For time → chrono + cap ; `WodTypeBadge` et
+`TimerLaunchModal` sont sortis du Whiteboard en composants partagés) et **Ajouter au
+Whiteboard** (WOD perso `box_wods` avec `box_id` null, `created_by` l'athlète, date du jour,
+rendu texte en `description`, lien structuré dans `generated_wods.wod_json.box_wod_id` ; un
+score déjà saisi est rattaché, pas dupliqué). Les cartes perso du Whiteboard ouvrent désormais
+`WODDetail` et un WOD sans box accepte un score (`wod_scores.box_id` null, policy
+`member_own_scores`) : badges, historique et compteurs comme un WOD de box, sans ELO ni
+classement. `profiles.level` n'était modifiable nulle part : sélecteur « Niveau » (Scaled → Pro)
+ajouté dans Profil → Modifier, cible du lien « modifier » ; la synchro par l'ELO reste. Copier
+passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest/lint verts.
+
 **Désabonnement d'une programmation Marketplace (`athlex-app`, migration `20261210`).**
 Aucun désabonnement n'existait. RPC `unsubscribe_programming(p_subscription_id,
 p_remove_future)` SECURITY DEFINER, gardée par `is_box_owner_admin` de la box abonnée :
