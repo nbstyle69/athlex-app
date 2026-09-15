@@ -575,7 +575,7 @@ function createStyles(theme: AppTheme) {
     catTable: { marginTop: spacing.sm, gap: spacing.xs },
     catRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, paddingVertical: spacing.xxs },
     catName: { ...typography.bodySmall, fontWeight: '600', color: theme.textSecondary, width: 84 },
-    catVal: { ...typography.bodySmall, color: theme.text, flex: 1, textAlign: 'right' },
+    catVal: { ...typography.bodySmall, color: theme.textSecondary, flex: 1, textAlign: 'right' },
 
     estRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: spacing.sm },
     estBig: { fontSize: 30, fontWeight: '900', color: theme.text, letterSpacing: -0.5 },
@@ -589,7 +589,7 @@ function createStyles(theme: AppTheme) {
     bottomBar: {
       position: 'absolute', left: 0, right: 0, bottom: 0,
       paddingHorizontal: 16, paddingTop: 10, gap: 10,
-      backgroundColor: theme.card,
+      backgroundColor: theme.background,
       borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border,
     },
     iconRow: { flexDirection: 'row', justifyContent: 'space-between' },
