@@ -78,7 +78,7 @@ const MOVEMENT_MAP: Record<string, string> = {
   row: 'row', 'cal row': 'row', aviron: 'row', rameur: 'row', 'cal rameur': 'row',
   'assault bike': 'bike', 'echo bike': 'bike', 'cal assault bike': 'bike',
   'cal bike': 'bike', 'bike erg': 'bike',
-  'ski erg': 'ski_erg', 'cal ski erg': 'ski_erg', ski: 'ski_erg',
+  'ski erg': 'ski_erg', 'cal ski erg': 'ski_erg', ski: 'ski_erg', skierg: 'ski_erg',
   run: 'run', course: 'run',
   // Formes accolées héritées de l'ancien normaliseur du site (pullup, wallball…) :
   // elles existent dans les données et dans les saisies libres.

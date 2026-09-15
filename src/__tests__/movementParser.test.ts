@@ -32,6 +32,21 @@ describe('parseMovementLine', () => {
       expect(result).toEqual({ name: 'Farmer Carry', reps: 50, unit: 'm' });
     });
 
+    it('reads "(60/50 cm)" as a box height, not a load', () => {
+      const result = parseMovementLine('12 Box Jumps (60/50 cm)');
+      expect(result).toEqual({ name: 'Box Jumps', reps: 12, weight_kg: undefined });
+      expect(parseMovementLine('12 Box Jumps @ 60/50 cm')!.weight_kg).toBeUndefined();
+    });
+
+    it('ignores timed holds: "30 s Plank Hold" credits nothing', () => {
+      expect(parseMovementLine('30 s Plank Hold')).toBeNull();
+      expect(parseMovementLine('45/30 s Hollow Hold')).toBeNull();
+      expect(parseMovementLine('30 sec Plank Hold')).toBeNull();
+      // « s » n'est pas un préfixe de mouvement : les lignes normales restent lues.
+      expect(parseMovementLine('30 Sit-ups')).toEqual({ name: 'Sit-ups', reps: 30, weight_kg: undefined });
+      expect(parseMovementLine('30 Squats')).toEqual({ name: 'Squats', reps: 30, weight_kg: undefined });
+    });
+
     it('strips parenthetical scale info from name', () => {
       const result = parseMovementLine('21 KB Swings (Russian)');
       expect(result!.name).toBe('KB Swings');

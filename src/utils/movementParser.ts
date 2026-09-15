@@ -35,6 +35,8 @@ function normalizeUnit(raw: string): MovementUnit {
  *   "500 m Run (RPE 7)"     → { name: "Run", reps: 500, unit: "m" }
  *   "400m Course"           → { name: "Course", reps: 400, unit: "m" }
  *   "20 Row" / "800 Run"    → unité par défaut du catalogue (cal / m)
+ *   "30 s Plank Hold"       → null  (tenue en secondes : aucun crédit)
+ *   "12 Box Jumps (60/50 cm)" → { name: "Box Jumps", reps: 12 }  (hauteur, pas de weight_kg)
  *   "21-15-9 :"             → null  (header)
  *   "5 Rounds For Time :"   → null  (header)
  *   "Row ~ 2 × 500 m"       → null  (bloc cardio, cf. cardioBlock.ts)
@@ -55,6 +57,11 @@ export function parseMovementLine(line: string, options?: ParseOptions): Movemen
   if (trimmed.startsWith('⚡') || trimmed.startsWith('──')) return null;
   if (/⟨.*⟩/.test(trimmed)) return null; // team format labels
 
+  // Durées : "30 s Plank Hold", "45/30 s Hollow Hold" — une tenue ne crédite
+  // aucun compteur (pas de badge en secondes) et ne doit surtout pas être lue
+  // comme « 30 reps de "s Plank Hold" ».
+  if (/^\d+(?:\s*\/\s*\d+)?\s*(?:s|sec|secs|sec\.|")\s+\S/i.test(trimmed)) return null;
+
   // Cardio: "20 cal Row", "20/15 cal Row", "500 m Run (RPE 7)", "400m Course".
   // Sans espace ("400m") l'ancien parseur comptait 1 rep : la distance vaut
   // désormais des mètres, la seule lecture qui alimente un compteur cardio.
@@ -73,10 +80,11 @@ export function parseMovementLine(line: string, options?: ParseOptions): Movemen
     const reps = pickQuantity(stdMatch[1], stdMatch[2], gender);
     let rest = stdMatch[3];
     // Extract weight: "(43 kg)" / "(43/30 kg)" or "@ 42.5" / "@ 42.5/30 kg" — ♂ first, ♀ second.
+    // "(60/50 cm)" est une hauteur de box, jamais une charge.
     let weight_kg: number | undefined;
     const weightParen = rest.match(/\((\d+(?:\.\d+)?)(?:\s*\/\s*(\d+(?:\.\d+)?))?\s*kg\)/i);
-    const weightAt = rest.match(/@\s*(\d+(?:\.\d+)?)(?:\s*\/\s*(\d+(?:\.\d+)?))?/);
-    const w = weightParen ?? weightAt;
+    const weightAt = rest.match(/@\s*(\d+(?:\.\d+)?)(?:\s*\/\s*(\d+(?:\.\d+)?))?\s*(cm\b)?/);
+    const w = weightParen ?? (weightAt && !weightAt[3] ? weightAt : null);
     if (w) {
       weight_kg = parseFloat(gender === 'female' && w[2] != null ? w[2] : w[1]);
     }
