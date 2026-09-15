@@ -2,7 +2,7 @@
 import type { Catalog } from '../types';
 
 export const CATALOG_SNAPSHOT: Catalog = {
-  "version": 1,
+  "version": 2,
   "movements": [
     {
       "id": "thruster",
@@ -155,7 +155,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_thrusters",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "bench 21-15-9 = Fran"
     },
     {
@@ -309,7 +309,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_snatch",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -463,7 +463,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -617,7 +617,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_snatch",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -770,7 +770,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_ohs",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -924,7 +924,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_clean",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -1078,7 +1078,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_clean",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -1232,7 +1232,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_clean",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -1386,7 +1386,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_cj",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "bench 30 for time = Grace"
     },
     {
@@ -1539,7 +1539,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_press",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -1692,7 +1692,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_press",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -1845,7 +1845,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_press",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -1998,7 +1998,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_squat",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -2152,7 +2152,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_squat",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -2305,7 +2305,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_deadlifts",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "bench 21-15-9 = Diane"
     },
     {
@@ -2459,7 +2459,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_sdlhp",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -2613,7 +2613,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_bench_press",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -2766,7 +2766,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "reps = pas au total"
     },
     {
@@ -2835,7 +2835,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_burpee",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -2988,7 +2988,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_kb_swing",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -3141,7 +3141,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -3294,7 +3294,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_goblet_squat",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -3448,7 +3448,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "alterné, reps au total"
     },
     {
@@ -3602,7 +3602,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_db_thruster",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "2 DB"
     },
     {
@@ -3756,7 +3756,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_db_cj",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "2 DB"
     },
     {
@@ -3910,7 +3910,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -4063,7 +4063,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_lunge",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "reps = pas au total"
     },
     {
@@ -4218,7 +4218,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_devil_press",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -4372,7 +4372,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "charge par main"
     },
     {
@@ -4526,7 +4526,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_wallball",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "cible 3.05 m H / 2.75 m F ; Hyrox 100 reps race"
     },
     {
@@ -4551,22 +4551,22 @@ export const CATALOG_SNAPSHOT: Catalog = {
       ],
       "cadence": {
         "scaled": {
-          "m": 1.17
+          "m": 2.6
         },
         "inter": {
-          "m": 1.03
+          "m": 2.3
         },
         "rx": {
-          "m": 0.9
+          "m": 2
         },
         "rxplus": {
-          "m": 0.83
+          "m": 1.84
         },
         "elite": {
-          "m": 0.77
+          "m": 1.7
         },
         "pro": {
-          "m": 0.72
+          "m": 1.6
         }
       },
       "loads": {
@@ -4679,7 +4679,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "Hyrox 100 m race"
     },
     {
@@ -4704,22 +4704,22 @@ export const CATALOG_SNAPSHOT: Catalog = {
       ],
       "cadence": {
         "scaled": {
-          "m": 0.78
+          "m": 0.91
         },
         "inter": {
-          "m": 0.69
+          "m": 0.8
         },
         "rx": {
-          "m": 0.6
+          "m": 0.7
         },
         "rxplus": {
-          "m": 0.55
+          "m": 0.64
         },
         "elite": {
-          "m": 0.51
+          "m": 0.59
         },
         "pro": {
-          "m": 0.48
+          "m": 0.56
         }
       },
       "loads": {
@@ -4832,7 +4832,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -4985,7 +4985,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -5138,7 +5138,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -5164,22 +5164,22 @@ export const CATALOG_SNAPSHOT: Catalog = {
       ],
       "cadence": {
         "scaled": {
-          "m": 1.56
+          "m": 2.86
         },
         "inter": {
-          "m": 1.38
+          "m": 2.53
         },
         "rx": {
-          "m": 1.2
+          "m": 2.2
         },
         "rxplus": {
-          "m": 1.1
+          "m": 2.02
         },
         "elite": {
-          "m": 1.02
+          "m": 1.87
         },
         "pro": {
-          "m": 0.96
+          "m": 1.76
         }
       },
       "loads": {
@@ -5292,7 +5292,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "charge sled incluse ; Hyrox 50 m race"
     },
     {
@@ -5319,22 +5319,22 @@ export const CATALOG_SNAPSHOT: Catalog = {
       ],
       "cadence": {
         "scaled": {
-          "m": 1.82
+          "m": 3.38
         },
         "inter": {
-          "m": 1.61
+          "m": 2.99
         },
         "rx": {
-          "m": 1.4
+          "m": 2.6
         },
         "rxplus": {
-          "m": 1.29
+          "m": 2.39
         },
         "elite": {
-          "m": 1.19
+          "m": 2.21
         },
         "pro": {
-          "m": 1.12
+          "m": 2.08
         }
       },
       "loads": {
@@ -5447,7 +5447,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "Hyrox 50 m race"
     },
     {
@@ -5541,7 +5541,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_row",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "cal ; 1 cal ≈ 18 m ; Hyrox 1000 m race"
     },
     {
@@ -5634,7 +5634,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_bike",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -5702,7 +5702,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_bike",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "cal F ≈ 0.8 × cal H, à gérer dans le rendu"
     },
     {
@@ -5797,7 +5797,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_ski",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "Hyrox 1000 m race"
     },
     {
@@ -5863,7 +5863,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_run",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "0.27 s/m = 4'30/km RX"
     },
     {
@@ -5929,7 +5929,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "aller-retour 10 ou 25 m"
     },
     {
@@ -6000,7 +6000,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": "chest_to_bar",
       "badge_key": "mv_pullup",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6071,7 +6071,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": "bar_muscle_up",
       "badge_key": "mv_c2b",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6143,7 +6143,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_t2b",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6216,7 +6216,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_bmu",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6289,7 +6289,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_ring_mu",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6360,7 +6360,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": "strict_handstand_push_up",
       "badge_key": "mv_hspu",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6432,7 +6432,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_hspu",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6504,7 +6504,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_wallwalk",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6530,22 +6530,22 @@ export const CATALOG_SNAPSHOT: Catalog = {
       ],
       "cadence": {
         "scaled": {
-          "m": 2.6
+          "m": 3.9
         },
         "inter": {
-          "m": 2.3
+          "m": 3.45
         },
         "rx": {
-          "m": 2
+          "m": 3
         },
         "rxplus": {
-          "m": 1.84
+          "m": 2.76
         },
         "elite": {
-          "m": 1.7
+          "m": 2.55
         },
         "pro": {
-          "m": 1.6
+          "m": 2.4
         }
       },
       "loads": null,
@@ -6576,7 +6576,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6647,7 +6647,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_ring_dip",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6715,7 +6715,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_ring_row",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6783,7 +6783,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_pushup",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6852,7 +6852,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_pistol",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "alterné, reps au total"
     },
     {
@@ -6923,7 +6923,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": "legless_rope_climb",
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -6994,7 +6994,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -7060,7 +7060,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_situp",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -7126,7 +7126,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_hollow",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -7192,7 +7192,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -7259,7 +7259,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_burpee",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -7413,7 +7413,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_burpee_bj",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -7437,22 +7437,22 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "equipment": [],
       "cadence": {
         "scaled": {
-          "m": 2.08
+          "m": 3.38
         },
         "inter": {
-          "m": 1.84
+          "m": 2.99
         },
         "rx": {
-          "m": 1.6
+          "m": 2.6
         },
         "rxplus": {
-          "m": 1.47
+          "m": 2.39
         },
         "elite": {
-          "m": 1.36
+          "m": 2.21
         },
         "pro": {
-          "m": 1.28
+          "m": 2.08
         }
       },
       "loads": null,
@@ -7480,7 +7480,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "Hyrox 80 m race"
     },
     {
@@ -7636,7 +7636,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_box_jump",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -7792,7 +7792,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_box_jump",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -7945,7 +7945,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_box_jump",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -8016,7 +8016,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_du",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -8084,7 +8084,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_su",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -8150,7 +8150,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_air_squat",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -8216,7 +8216,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_lunge",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -8371,7 +8371,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "squat clean + thruster"
     },
     {
@@ -8525,7 +8525,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_cj",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -8679,7 +8679,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_kb_snatch",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "alterné, reps au total"
     },
     {
@@ -8832,7 +8832,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "alterné, reps au total"
     },
     {
@@ -8985,7 +8985,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "2 KB, charge par main"
     },
     {
@@ -9139,7 +9139,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_kb_cj",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "2 KB ou alterné 1 KB"
     },
     {
@@ -9292,7 +9292,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "2 KB, charge par main"
     },
     {
@@ -9448,7 +9448,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -9602,7 +9602,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_burpee_bj",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": null
     },
     {
@@ -9671,7 +9671,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": "mv_burpee",
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "latéral"
     },
     {
@@ -9740,7 +9740,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution"
     },
     {
@@ -9809,7 +9809,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution"
     },
     {
@@ -9877,7 +9877,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "variante haute"
     },
     {
@@ -9946,7 +9946,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution"
     },
     {
@@ -10014,7 +10014,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution"
     },
     {
@@ -10082,7 +10082,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution"
     },
     {
@@ -10151,7 +10151,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution"
     },
     {
@@ -10219,7 +10219,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution HSPU"
     },
     {
@@ -10285,7 +10285,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution"
     },
     {
@@ -10352,7 +10352,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution HS walk"
     },
     {
@@ -10419,7 +10419,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution wall walk"
     },
     {
@@ -10488,7 +10488,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution HS walk"
     },
     {
@@ -10641,7 +10641,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution BJO"
     },
     {
@@ -10709,7 +10709,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution rope climb"
     },
     {
@@ -10777,7 +10777,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "variant_up": null,
       "badge_key": null,
       "active": true,
-      "version": 1,
+      "version": 2,
       "notes": "substitution ring dip"
     },
     {

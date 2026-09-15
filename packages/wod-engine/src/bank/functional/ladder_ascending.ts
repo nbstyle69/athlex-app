@@ -7,7 +7,7 @@ export const ladder_ascending: Skeleton = {
   durations: [10, 15],
   intentions: ['mixed', 'gym'],
   band_by_intention: { mixed: 'medium', gym: 'light' },
-  scheme: [3, 6, 9, 12, 15, 18, 21],
+  scheme: [3, 6, 9],
   rounds: 'scheme',
   slots: [
     { pick: { family: ['barbell', 'dumbbell'], pattern_any: ['squat', 'push_v', 'hinge'] }, qty: 'scheme' },

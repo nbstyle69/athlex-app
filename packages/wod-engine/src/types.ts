@@ -116,6 +116,8 @@ export interface Slot {
   fixed_by_id?: Record<string, number>;
   /** plage de reps imposée par le squelette (prime sur rep_ranges) */
   reps_range?: [number, number];
+  /** plafond de quantité pour ce slot (ex. run ≤ 800 m dans un chipper) */
+  qty_max?: number;
   /** slot facultatif : conservé seulement si le nombre de stations le demande */
   optional?: boolean;
   /** libellé de rôle (buy-in, station…) */
@@ -177,11 +179,27 @@ export interface SkeletonVariant {
   scheme?: number[];
 }
 
+/**
+ * Plafond de volume total par WOD pour une classe de mouvements (§5.4), à la
+ * référence RX ; multiplié par `VOLUME_CAP_FACTOR[cat]` pour les autres catégories.
+ * `ids` ou `family` (+ `band` pour la barre) désignent la classe.
+ */
+export interface MovementCap {
+  label: string;
+  ids?: string[];
+  family?: Family;
+  band?: Band;
+  unit: Unit;
+  rx: number;
+}
+
 export interface SkeletonBank {
   version: number;
   skeletons: Skeleton[];
   /** plafond de volume total par mouvement (qty × rounds), par catégorie et unité */
   volume_caps: Record<Discipline, Partial<Record<Category, Partial<Record<Unit, number>>>>>;
+  /** plafonds par classe de mouvements (§5.4), table RX */
+  movement_caps: MovementCap[];
 }
 
 // ─── Paramètres et sortie ────────────────────────────────────────────────────
@@ -237,6 +255,8 @@ export interface GeneratedBlock {
   /** cap en secondes ; null quand le format est borné par le temps */
   timecap: number | null;
   scheme?: number[];
+  /** ladder ouverte : paliers `start, start+step, …` jusqu'au temps ; `scheme` = paliers attendus pour la référence */
+  ladder?: { start: number; step: number };
   rest?: { work_s?: number; rest_s?: number; every_s?: number; transition_s?: number };
   stations?: number;
   movements: GeneratedMovement[];

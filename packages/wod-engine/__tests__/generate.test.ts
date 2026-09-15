@@ -1,9 +1,10 @@
 import {
   generateBlocC, estimateDuration, signature, CATALOG_SNAPSHOT, BANK_V1, NoValidWod, movementById,
   profileCategory, VEST_LOAD_KG, HYBRID_CATEGORIES, FUNCTIONAL_CATEGORIES, movementLines,
+  cadenceFor, movementCapFor, forceBand, isSlowSkill, carriesIntention, EQUIPMENT_FALLBACK, render,
 } from '../src';
 import type { GenerateParams, GeneratedWod } from '../src';
-import { conformityGrid, violations } from './conformity';
+import { conformityGrid, violations, countByCause, CAUSES } from './conformity';
 import { parseMovementLine } from '../../../src/utils/movementParser';
 import { normalizeMovement } from '../../../src/utils/tournamentUtils';
 
@@ -50,6 +51,8 @@ describe('generateBlocC — conformité §5 sur toutes les combinaisons', () => 
 
   it(`aucun NoValidWod et aucune violation sur ${grid.length} combinaisons × ${SEEDS} seeds`, () => {
     const failures: string[] = [];
+    const byCause = countByCause([]);
+    let generated = 0;
     for (const p of grid) {
       for (let seed = 1; seed <= SEEDS; seed++) {
         let w: GeneratedWod;
@@ -57,11 +60,17 @@ describe('generateBlocC — conformité §5 sur toutes les combinaisons', () => 
           failures.push(`${JSON.stringify(p)} seed ${seed} : ${e instanceof NoValidWod ? JSON.stringify(e.reasons) : String(e)}`);
           continue;
         }
+        generated++;
         const v = violations(w, p);
-        if (v.length) failures.push(`${JSON.stringify(p)} seed ${seed} (${w.generator.skeleton_id}) : ${v.join(' ; ')}`);
-        if (failures.length > 20) break;
+        const c = countByCause(v);
+        for (const k of CAUSES) byCause[k] += c[k];
+        if (v.length && failures.length <= 20) failures.push(`${JSON.stringify(p)} seed ${seed} (${w.generator.skeleton_id}) : ${v.join(' ; ')}`);
       }
     }
+    // compteur par cause (A–H) de la relecture des samples : tout doit être à zéro
+    // eslint-disable-next-line no-console
+    console.log(`conformité : ${generated} WODs · violations par cause ${CAUSES.map((k) => `${k}=${byCause[k]}`).join(' ')}`);
+    expect(byCause).toEqual(countByCause([]));
     expect(failures).toEqual([]);
   }, 600_000);
 
@@ -242,5 +251,99 @@ describe('rendu texte ↔ parser app', () => {
       const head = w.description.split('\n')[0];
       expect(parseMovementLine(head)).toBeNull();
     }
+  });
+});
+
+describe('corrections A–H de la relecture des samples', () => {
+  const every = (pred: (w: GeneratedWod) => boolean, params: GenerateParams, seeds = 40) => {
+    for (let seed = 1; seed <= seeds; seed++) expect({ seed, ok: pred(gen(params, seed)) }).toEqual({ seed, ok: true });
+  };
+  const m = (id: string) => movementById(CATALOG_SNAPSHOT, id)!;
+
+  it('A — un for time à schéma garde 21-15-9 (ou 9-7-5 en lourd), jamais gonflé', () => {
+    every((w) => {
+      const b = w.blocks[0];
+      if (b.format !== 'for_time' || !b.scheme) return true;
+      return ['21,15,9', '9,7,5'].includes(b.scheme.join(','));
+    }, { ...F, budget_min: 8, format: 'for_time' });
+  });
+
+  it('B — plafonds §5.4 : table RX, × 0,7 Scaled/Inter, × 1,3 Elite/Pro, barre par bande', () => {
+    expect(movementCapFor(BANK_V1, m('toes_to_bar'), 'light', 'reps', 'rx')).toBe(60);
+    expect(movementCapFor(BANK_V1, m('toes_to_bar'), 'light', 'reps', 'scaled')).toBe(42);
+    expect(movementCapFor(BANK_V1, m('toes_to_bar'), 'light', 'reps', 'pro')).toBe(78);
+    expect(movementCapFor(BANK_V1, m('handstand_walk'), 'light', 'm', 'rx')).toBe(60);
+    expect(movementCapFor(BANK_V1, m('deadlift'), 'heavy', 'reps', 'rx')).toBe(25);
+    expect(movementCapFor(BANK_V1, m('deadlift'), 'medium', 'reps', 'rx')).toBe(60);
+    expect(movementCapFor(BANK_V1, m('deadlift'), 'light', 'reps', 'rx')).toBe(90);
+    expect(movementCapFor(BANK_V1, m('bar_facing_burpee'), 'light', 'reps', 'rx')).toBe(60);
+    expect(movementCapFor(BANK_V1, m('row'), 'light', 'cal', 'rx')).toBeNull();
+  });
+
+  it('C — Force porte une charge lourde, Gym un slot G hors GHD, Core un pattern core, Cardio aucun skill lent', () => {
+    expect(forceBand({ budget_min: 12, entry: 'express' })).toBe('heavy');
+    expect(carriesIntention({ intention: 'gym', budget_min: 12, entry: 'express' }, m('ghd_sit_up'), 'light')).toBe(false);
+    expect(carriesIntention({ intention: 'gym', budget_min: 12, entry: 'express' }, m('toes_to_bar'), 'light')).toBe(true);
+    for (const id of ['ring_muscle_up', 'rope_climb', 'wall_walk', 'handstand_walk']) expect({ id, slow: isSlowSkill(m(id)) }).toEqual({ id, slow: true });
+    expect(isSlowSkill(m('wall_ball'))).toBe(false);
+    for (const format of ['chipper', 'stations', 'amrap'] as const) {
+      every((w) => w.blocks[0].movements.some((gm) => carriesIntention({ intention: 'force', budget_min: 12, entry: 'express' }, m(gm.id), gm.load_band ?? 'light')), { ...F, intention: 'force', format }, 20);
+      every((w) => w.blocks[0].movements.some((gm) => carriesIntention({ intention: 'gym', budget_min: 12, entry: 'express' }, m(gm.id), 'light')), { ...F, intention: 'gym', format }, 20);
+      every((w) => w.blocks[0].movements.every((gm) => !isSlowSkill(m(gm.id))), { ...F, intention: 'cardio', format }, 20);
+    }
+    every((w) => w.blocks[0].movements.some((gm) => m(gm.id).pattern.includes('core')), { ...H, intention: 'core', budget_min: 30 }, 20);
+  });
+
+  it('D — un chipper est un seul passage, run ≤ 800 m, rendu sans « rounds »', () => {
+    every((w) => {
+      const b = w.blocks[0];
+      if (b.format !== 'chipper') return true;
+      const runOk = b.movements.every((gm) => m(gm.id).family !== 'run' || gm.unit !== 'm' || gm.qty <= 800);
+      return b.rounds === null && runOk && !/rounds .*chipper/.test(render(w).description);
+    }, { ...F, budget_min: 30, format: 'chipper' });
+  });
+
+  it('E — ladder ouverte : paliers start/step, palier différent entre Scaled et Pro', () => {
+    let seen = 0;
+    for (let seed = 1; seed <= 60; seed++) {
+      const w = gen({ ...F, budget_min: 10, format: 'for_time' }, seed);
+      const b = w.blocks[0];
+      if (b.format !== 'ladder') continue;
+      seen++;
+      expect(b.ladder).toEqual({ start: 3, step: 3 });
+      expect(b.scheme![b.scheme!.length - 1]).toBeGreaterThan(9);
+      expect(w.estimate.by_category.scaled!.target).not.toBe(w.estimate.by_category.pro!.target);
+    }
+    expect(seen).toBeGreaterThan(0);
+  });
+
+  it('F — rounds × intervalle ≤ budget pour interval, EMOM, stations', () => {
+    for (const format of ['interval', 'emom', 'stations'] as const) {
+      every((w) => {
+        const b = w.blocks[0];
+        const rounds = b.rounds ?? 1;
+        const budgetS = w.budget_min * 60;
+        if (b.rest?.every_s) return rounds * b.rest.every_s * (b.format === 'emom' ? b.movements.length : 1) <= budgetS;
+        if (b.format === 'stations') return rounds * b.movements.length * ((b.rest?.work_s ?? 0) + (b.rest?.rest_s ?? 0)) <= budgetS;
+        return true;
+      }, { ...F, budget_min: 20, format }, 30);
+    }
+  });
+
+  it('G — matériel exclu ⇒ version sans matériel (Bar Facing Burpees → Burpees), jamais conservé', () => {
+    expect(EQUIPMENT_FALLBACK.bar_facing_burpee).toBe('burpee');
+    const p: GenerateParams = { entry: 'after_class', discipline: 'functional', budget_min: 15, intention: 'mixed', format: 'surprise', after_class: { day_movements: ['Back Squat', 'Thrusters'] } };
+    every((w) => w.blocks[0].movements.every((gm) => !m(gm.id).equipment.some((e) => e.toLowerCase() === 'barbell')), p, 60);
+    every((w) => w.blocks[0].movements.every((gm) => !m(gm.id).equipment.some((e) => e.toLowerCase() === 'barbell')), { ...F, exclude: ['barbell'] }, 60);
+  });
+
+  it('H — cadences RX du catalogue v2 (version 2)', () => {
+    expect(CATALOG_SNAPSHOT.version).toBe(2);
+    expect(cadenceFor(m('sled_push'), 'rx', 'm')).toBe(2.2);
+    expect(cadenceFor(m('sled_pull'), 'rx', 'm')).toBe(2.6);
+    expect(cadenceFor(m('sandbag_lunge'), 'rx', 'm')).toBe(2.0);
+    expect(cadenceFor(m('burpee_broad_jump'), 'rx', 'm')).toBe(2.6);
+    expect(cadenceFor(m('sandbag_carry'), 'rx', 'm')).toBe(0.7);
+    expect(cadenceFor(m('handstand_walk'), 'rx', 'm')).toBe(3.0);
   });
 });

@@ -6,9 +6,12 @@ export {
 } from './catalog';
 export type { CatalogRow } from './catalog';
 export { CATALOG_SNAPSHOT } from './catalog/snapshot';
-export { BANK_V1, BANK_VERSION, FUNCTIONAL_SKELETONS, HYBRID_SKELETONS } from './bank';
-export { generateBlocC, ENGINE_VERSION, MAX_ATTEMPTS, TOLERANCE, VEST_LOAD_KG, AFTER_CLASS_DURATIONS, afterClassFilter } from './generate';
-export { estimateDuration, estimateAll, estimateBlock, TIME_BOUNDED } from './estimate';
+export { BANK_V1, BANK_VERSION, FUNCTIONAL_SKELETONS, HYBRID_SKELETONS, MOVEMENT_CAPS, VOLUME_CAP_FACTOR } from './bank';
+export {
+  generateBlocC, ENGINE_VERSION, MAX_ATTEMPTS, TOLERANCE, VEST_LOAD_KG, AFTER_CLASS_DURATIONS, afterClassFilter,
+  EQUIPMENT_FALLBACK, CARDIO_MAX_CADENCE_S, forceBand, isSlowSkill, carriesIntention, movementCapFor,
+} from './generate';
+export { estimateDuration, estimateAll, estimateBlock, TIME_BOUNDED, ladderStep, deathByMinute, roundSeconds } from './estimate';
 export { signature } from './signature';
 export { render, movementLine, movementLines, CATEGORY_LABEL } from './render';
 export { profileCategory } from './profile';

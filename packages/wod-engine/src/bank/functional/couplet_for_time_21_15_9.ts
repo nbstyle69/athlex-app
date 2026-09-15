@@ -8,8 +8,7 @@ export const couplet_for_time_21_15_9: Skeleton = {
   intentions: ['mixed', 'gym', 'force'],
   band_by_intention: { mixed: 'medium', force: 'heavy', gym: 'light' },
   scheme: [21, 15, 9],
-  scheme_by_band: { heavy: [15, 12, 9] },
-  scheme_alternatives: [[15, 12, 9], [21, 15, 9], [27, 21, 15], [30, 20, 10], [33, 27, 21]],
+  scheme_by_band: { heavy: [9, 7, 5] },
   rounds: 'scheme',
   slots: [
     { pick: { family: ['barbell', 'dumbbell'], pattern_any: ['squat', 'hinge', 'push_v'] }, qty: 'scheme' },

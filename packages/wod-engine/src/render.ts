@@ -109,8 +109,10 @@ function header(wod: GeneratedWod, b: GeneratedBlock): string[] {
     case 'amrap': return [`AMRAP ${wod.budget_min}`];
     case 'for_time': return [b.scheme ? `For time · ${schemeText(b)}${cap}` : `For time${cap}`];
     case 'rounds_for_time': return [`${rounds} rounds for time${cap}`];
-    case 'chipper': return [rounds > 1 ? `${rounds} rounds for time · chipper${cap}` : `Chipper · for time${cap}`];
-    case 'ladder': return [`Ladder ${schemeText(b)} · AMRAP ${wod.budget_min}`, 'Monter les paliers dans le temps imparti, score = reps totales'];
+    case 'chipper': return [`Chipper · for time${cap}`];
+    case 'ladder': return b.ladder
+      ? [`Ladder ${b.ladder.start}-${b.ladder.start + b.ladder.step}-${b.ladder.start + 2 * b.ladder.step}… · AMRAP ${wod.budget_min}`, `Monter les paliers (+${b.ladder.step} à chaque palier) jusqu'au temps, score = reps totales`]
+      : [`Ladder ${schemeText(b)} · AMRAP ${wod.budget_min}`, 'Monter les paliers dans le temps imparti, score = reps totales'];
     case 'emom': return [`EMOM ${wod.budget_min}${b.rest?.every_s && b.rest.every_s !== 60 ? ` · every ${mmss(b.rest.every_s)}` : ''} · ${b.movements.length} stations en alternance`];
     case 'death_by': return [`EMOM ${wod.budget_min} · Death by : +1 rep par minute jusqu'à l'échec`];
     case 'tabata': return [`Tabata × 2 blocs · 8 × 20 s / 10 s${b.rest?.transition_s ? `, transition ${b.rest.transition_s} s` : ''}`];

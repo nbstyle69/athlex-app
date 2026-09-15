@@ -8,11 +8,12 @@ import {
   resolveMovement, substitutionFor, weightFor,
 } from './catalog';
 import { RNG } from './rng';
-import { estimateAll, estimateBlock, referenceCategory, roundSeconds, fixedWorkSeconds, TIME_BOUNDED, movementSeconds, TRANSITION_S } from './estimate';
+import { estimateAll, estimateBlock, referenceCategory, roundSeconds, fixedWorkSeconds, TIME_BOUNDED, movementSeconds, TRANSITION_S, ladderStep, deathByMinute } from './estimate';
+import { VOLUME_CAP_FACTOR } from './bank';
 import { signature } from './signature';
 import { render } from './render';
 
-export const ENGINE_VERSION = '1.0.0';
+export const ENGINE_VERSION = '1.1.0';
 export const MAX_ATTEMPTS = 200;
 export const TOLERANCE = 0.10;
 
@@ -42,6 +43,20 @@ const EQUIPMENT_FAMILIES: ReadonlySet<Family> = new Set<Family>([
 /** Patterns jamais exclus après la classe : ils sont le socle de tout complément. */
 const NEVER_EXCLUDED: ReadonlySet<Pattern> = new Set<Pattern>(['core', 'mono']);
 
+/** Version « sans matériel » d'un mouvement dont l'équipement est exclu (§5.12 : on remplace, on ne garde pas). */
+export const EQUIPMENT_FALLBACK: Readonly<Record<string, string>> = {
+  bar_facing_burpee: 'burpee',
+  burpee_over_the_bar: 'burpee',
+  burpee_box_jump_over: 'burpee',
+  burpee_box_jump: 'burpee',
+};
+
+/** Familles chargées qui portent l'intention Force. */
+const FORCE_FAMILIES: ReadonlySet<Family> = new Set<Family>(['barbell', 'kettlebell', 'dumbbell', 'sandbag', 'sled']);
+/** Cadence RX au-delà de laquelle un mouvement est un « skill » lent, exclu de l'intention Cardio. */
+export const CARDIO_MAX_CADENCE_S = 3.5;
+const CARDIO_EXCLUDED_IDS: ReadonlySet<string> = new Set(['handstand_walk']);
+
 export const VEST_LOAD_KG: Record<Category, number> = {
   scaled: 6, inter: 6, rx: 9, rxplus: 9, elite: 9, pro: 9,
   women: 6, men: 9, women_pro: 6, men_pro: 9,
@@ -51,7 +66,7 @@ export const AFTER_CLASS_DURATIONS = [10, 15, 20];
 
 // ─── Contexte de tirage ──────────────────────────────────────────────────────
 
-interface AfterClassFilter { patterns: Set<Pattern>; families: Set<Family> }
+interface AfterClassFilter { patterns: Set<Pattern>; families: Set<Family>; equipment: Set<string> }
 
 interface Ctx {
   params: GenerateParams;
@@ -97,15 +112,19 @@ function stripLine(line: string): string {
 export function afterClassFilter(catalog: Catalog, dayMovements: string[]): AfterClassFilter {
   const patterns = new Set<Pattern>();
   const families = new Set<Family>();
+  const equipment = new Set<string>();
   for (const raw of dayMovements) {
     const m = resolveMovement(catalog, raw) ?? resolveMovement(catalog, stripLine(raw));
     if (!m) continue;
     for (const p of m.pattern) if (!NEVER_EXCLUDED.has(p)) patterns.add(p);
-    if (EQUIPMENT_FAMILIES.has(m.family)) families.add(m.family);
+    if (EQUIPMENT_FAMILIES.has(m.family)) {
+      families.add(m.family);
+      for (const e of m.equipment) equipment.add(norm(e));
+    }
   }
   if (patterns.has('squat')) patterns.add('lunge');
   if (patterns.has('lunge')) patterns.add('squat');
-  return { patterns, families };
+  return { patterns, families, equipment };
 }
 
 function substitutionOnlyIds(catalog: Catalog, discipline: GenerateParams['discipline']): Set<string> {
@@ -119,10 +138,18 @@ function substitutionOnlyIds(catalog: Catalog, discipline: GenerateParams['disci
   return out;
 }
 
+/** Exclu par son nom, son id ou sa famille (exclusion utilisateur). */
 function isExcluded(ctx: Ctx, m: CatalogMovement): boolean {
   if (ctx.exclude.size === 0) return false;
-  if (ctx.exclude.has(m.id) || ctx.exclude.has(norm(m.name)) || ctx.exclude.has(m.family)) return true;
-  for (const e of m.equipment) if (ctx.exclude.has(norm(e))) return true;
+  return ctx.exclude.has(m.id) || ctx.exclude.has(norm(m.name)) || ctx.exclude.has(m.family);
+}
+
+/** Exclu par son matériel (exclusion utilisateur ou matériel du WOD du jour) : remplaçable par `EQUIPMENT_FALLBACK`. */
+function equipmentExcluded(ctx: Ctx, m: CatalogMovement): boolean {
+  for (const e of m.equipment) {
+    const k = norm(e);
+    if (ctx.exclude.has(k) || (ctx.afterClass?.equipment.has(k) ?? false)) return true;
+  }
   return false;
 }
 
@@ -132,6 +159,32 @@ function constrainBand(band: Band, params: GenerateParams): Band {
   if (params.intention === 'force' && band === 'light') band = 'medium';
   if (band === 'heavy' && params.budget_min > 15) band = 'medium';
   return band;
+}
+
+/** Bande que doit porter le slot chargé d'un WOD Force : heavy, ou medium quand heavy est interdit (> 15'). */
+export function forceBand(params: Pick<GenerateParams, 'budget_min' | 'entry'>): Band {
+  if (params.entry === 'after_class') return 'light';
+  return params.budget_min > 15 ? 'medium' : 'heavy';
+}
+
+/** Mouvement trop lent pour l'intention Cardio (skill : muscle-ups, rope climb, wall walk, HS walk…). */
+export function isSlowSkill(m: CatalogMovement): boolean {
+  if (CARDIO_EXCLUDED_IDS.has(m.id)) return true;
+  const c = cadenceFor(m, 'rx', 'reps');
+  return c !== undefined && c > CARDIO_MAX_CADENCE_S;
+}
+
+/** Intentions qui exigent qu'un slot les porte (Force, Gym, Core). */
+const SLOT_INTENTIONS: ReadonlySet<Intention> = new Set<Intention>(['force', 'gym', 'core']);
+
+/** Le mouvement (avec sa bande) porte-t-il l'intention ? Toujours `true` pour les intentions sans exigence de slot. */
+export function carriesIntention(params: Pick<GenerateParams, 'intention' | 'budget_min' | 'entry'>, m: CatalogMovement, band: Band): boolean {
+  switch (params.intention) {
+    case 'force': return FORCE_FAMILIES.has(m.family) && m.loads !== null && band === forceBand(params);
+    case 'gym': return m.modality === 'G' && m.id !== 'ghd_sit_up';
+    case 'core': return m.pattern.includes('core');
+    default: return true;
+  }
 }
 
 function effectiveBand(sk: Skeleton, params: GenerateParams): Band {
@@ -145,7 +198,12 @@ function formatsFor(choice: FormatChoice | undefined): SkeletonFormat[] | null {
   return FORMAT_CHOICES[choice];
 }
 
-/** Paliers de squelettes candidats, du tirage exact aux relâchements successifs (format, durée ±5, intention). */
+/**
+ * Paliers de squelettes candidats, du tirage exact aux relâchements successifs :
+ * format, durée ±5, puis squelettes non étiquetés pour l'intention (`skeleton`).
+ * L'intention elle-même n'est jamais relâchée : bande et composition (`checkComposition`)
+ * restent celles de l'intention demandée quel que soit le palier.
+ */
 function candidateTiers(params: GenerateParams, bank: SkeletonBank): Array<{ list: Skeleton[]; relaxations: string[] }> {
   const base = bank.skeletons.filter((s) => s.discipline === params.discipline && s.intentions.includes(params.intention));
   const formats = formatsFor(params.format);
@@ -156,8 +214,8 @@ function candidateTiers(params: GenerateParams, bank: SkeletonBank): Array<{ lis
     [[], base, (s) => s.durations.includes(params.budget_min) && (!formats || formats.includes(s.format)) && acDur(s)],
     [['format'], base, (s) => s.durations.includes(params.budget_min) && acDur(s)],
     [['format', 'duration±5'], base, (s) => s.durations.some(near) && acDur(s)],
-    [['format', 'intention'], all, (s) => s.durations.includes(params.budget_min) && acDur(s)],
-    [['format', 'intention', 'duration±5'], all, (s) => s.durations.some(near) && acDur(s)],
+    [['format', 'skeleton'], all, (s) => s.durations.includes(params.budget_min) && acDur(s)],
+    [['format', 'skeleton', 'duration±5'], all, (s) => s.durations.some(near) && acDur(s)],
   ];
   const tiers: Array<{ list: Skeleton[]; relaxations: string[] }> = [];
   for (const [relaxations, pool, keep] of steps) {
@@ -190,6 +248,8 @@ function matchesPick(ctx: Ctx, slot: Slot, m: CatalogMovement, picked: Picked[],
   if (p.pattern_any && !m.pattern.some((x) => p.pattern_any!.includes(x))) return 'pattern_any';
   if (p.pattern_not && m.pattern.some((x) => p.pattern_not!.includes(x))) return 'pattern_not';
   if (isExcluded(ctx, m)) return 'excluded';
+  if (equipmentExcluded(ctx, m)) return 'equipment_excluded';
+  if (ctx.params.intention === 'cardio' && isSlowSkill(m)) return 'cardio_slow_skill';
   if (pickUnit(slot, m) === null) return 'unit';
   if (!m.rep_ranges) return 'no_ranges';
   if (ctx.afterClass) {
@@ -217,16 +277,43 @@ function matchesPick(ctx: Ctx, slot: Slot, m: CatalogMovement, picked: Picked[],
   return null;
 }
 
-function drawMovement(ctx: Ctx, slot: Slot, index: number, picked: Picked[], format: SkeletonFormat, functionalSmall: boolean): CatalogMovement {
+/**
+ * Tire un mouvement pour le slot. Un mouvement dont le matériel est exclu reste tirable
+ * s'il a une version sans matériel (`EQUIPMENT_FALLBACK`) : c'est elle qui est retenue.
+ * `need` restreint le tirage aux mouvements qui satisfont l'intention (dernier slot libre).
+ */
+function drawMovement(
+  ctx: Ctx, slot: Slot, index: number, picked: Picked[], format: SkeletonFormat, functionalSmall: boolean,
+  need?: (m: CatalogMovement) => boolean,
+): CatalogMovement {
   const reasons: Record<string, number> = {};
-  const pool = ctx.catalog.movements.filter((m) => {
+  const resolve = (m: CatalogMovement): CatalogMovement | null => {
     const r = matchesPick(ctx, slot, m, picked, format, functionalSmall);
-    if (r) reasons[r] = (reasons[r] ?? 0) + 1;
-    return r === null;
-  });
-  const m = ctx.rng.pickWeighted(pool, (x) => weightFor(x, ctx.params.discipline));
-  if (!m) throw new Reject(`slot_${index}_empty:${Object.keys(reasons).sort().join(',')}`);
-  return m;
+    if (r === null) return m;
+    if (r === 'equipment_excluded' && EQUIPMENT_FALLBACK[m.id]) {
+      const fb = movementById(ctx.catalog, EQUIPMENT_FALLBACK[m.id]);
+      if (fb && matchesPick(ctx, slot, fb, picked, format, functionalSmall) === null) return fb;
+    }
+    reasons[r] = (reasons[r] ?? 0) + 1;
+    return null;
+  };
+  const pool: Array<{ drawn: CatalogMovement; use: CatalogMovement }> = [];
+  for (const m of ctx.catalog.movements) {
+    const use = resolve(m);
+    if (!use) continue;
+    if (need && !need(use)) { reasons.intention = (reasons.intention ?? 0) + 1; continue; }
+    pool.push({ drawn: m, use });
+  }
+  const hit = ctx.rng.pickWeighted(pool, (x) => weightFor(x.drawn, ctx.params.discipline));
+  if (!hit) throw new Reject(`slot_${index}_empty:${Object.keys(reasons).sort().join(',')}`);
+  return hit.use;
+}
+
+/** Pas d'arrondi de `roundQty` autour d'une quantité. */
+function stepQty(q: number, unit: Unit): number {
+  if (unit === 'm') return q > 1000 ? 100 : q > 200 ? 50 : q > 50 ? 10 : 5;
+  if (unit === 'cal' || unit === 's') return q > 20 ? 5 : 1;
+  return 1;
 }
 
 function roundQty(q: number, unit: Unit): number {
@@ -239,9 +326,9 @@ function roundQty(q: number, unit: Unit): number {
 }
 
 function rangeFor(slot: Slot, m: CatalogMovement, unit: Unit, format: SkeletonFormat): [number, number] {
-  if (slot.reps_range) return slot.reps_range;
-  const r = m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]];
+  const r = slot.reps_range ?? m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]];
   if (!r) throw new Reject(`no_range:${m.id}:${unit}`);
+  if (slot.qty_max !== undefined && slot.qty_max < r[1]) return [Math.min(r[0], slot.qty_max), slot.qty_max];
   return r;
 }
 
@@ -264,6 +351,7 @@ interface Draft {
   picked: Picked[];
   rounds: number | null;
   scheme?: number[];
+  ladder?: GeneratedBlock['ladder'];
   rest?: GeneratedBlock['rest'];
   stations?: number;
 }
@@ -336,6 +424,7 @@ function blockOf(ctx: Ctx, d: Draft): GeneratedBlock {
     rounds: d.rounds,
     timecap: null,
     ...(d.scheme ? { scheme: d.scheme } : {}),
+    ...(d.ladder ? { ladder: d.ladder } : {}),
     ...(d.rest ? { rest: d.rest } : {}),
     ...(d.stations ? { stations: d.stations } : {}),
     movements: d.picked.map((p) => toGenerated(ctx, d, p)),
@@ -363,7 +452,7 @@ function refBlock(ctx: Ctx, d: Draft): GeneratedBlock { return blockOf(ctx, d); 
 function fitFixedVolume(ctx: Ctx, d: Draft, roundsCandidates: number[]): void {
   const budgetS = ctx.params.budget_min * 60;
   for (const rounds of roundsCandidates) {
-    d.rounds = rounds || null;
+    d.rounds = rounds > 1 ? rounds : null;
     for (let iter = 0; iter < 4; iter++) {
       const est = fixedWorkSeconds(refBlock(ctx, d), ctx.ref);
       if (within(est / 60, ctx.params.budget_min)) return;
@@ -373,19 +462,19 @@ function fitFixedVolume(ctx: Ctx, d: Draft, roundsCandidates: number[]): void {
   throw new Reject('duration_fixed');
 }
 
-/** For time à schéma : essaie les schémas alternatifs (du plus court au plus long) jusqu'à tomber dans ±10 %. */
-function fitScheme(ctx: Ctx, d: Draft, alternatives: number[][]): void {
+/**
+ * Chipper à schéma descendant : les quantités par station sont l'un des schémas de la
+ * banque (du plus court au plus long), un seul passage. Les for time à schéma (21-15-9,
+ * 9-7-5) ne passent pas ici : leur schéma est fixe, un budget qui ne colle pas rejette le squelette.
+ */
+function fitChipperScheme(ctx: Ctx, d: Draft, alternatives: number[][]): void {
   const sum = (s: number[]) => s.reduce((a, b) => a + b, 0);
   const ordered = [...new Set([d.scheme!, ...alternatives].map((s) => JSON.stringify(s)))]
     .map((s) => JSON.parse(s) as number[])
     .sort((a, b) => sum(a) - sum(b));
+  d.rounds = null;
   for (const scheme of ordered) {
-    d.scheme = scheme;
-    d.rounds = d.sk.format === 'chipper' ? null : scheme.length;
-    for (const p of d.picked) {
-      if (d.sk.format === 'chipper') p.qty = scheme[p.index] ?? scheme[scheme.length - 1];
-      else if (p.scheme) { p.scheme = scheme; p.qty = sum(scheme); }
-    }
+    for (const p of d.picked) p.qty = scheme[p.index] ?? scheme[scheme.length - 1];
     const est = fixedWorkSeconds(refBlock(ctx, d), ctx.ref);
     if (within(est / 60, ctx.params.budget_min)) return;
   }
@@ -393,6 +482,7 @@ function fitScheme(ctx: Ctx, d: Draft, alternatives: number[][]): void {
 }
 
 function fitInterval(ctx: Ctx, d: Draft, roundsCandidates: number[]): void {
+  const budgetS = ctx.params.budget_min * 60;
   const rest = d.sk.rest ?? {};
   const variantRest = d.variantId ? d.sk.variants?.find((v) => v.id === d.variantId)?.rest : undefined;
   const r = { ...rest, ...variantRest };
@@ -403,11 +493,12 @@ function fitInterval(ctx: Ctx, d: Draft, roundsCandidates: number[]): void {
       for (const rounds of roundsCandidates) {
         d.rounds = rounds;
         d.rest = { every_s: every };
+        const total = every * rounds;
+        if (total > budgetS || !within(total / 60, ctx.params.budget_min)) continue;
         const targetWork = every * frac * 0.85;
         for (let iter = 0; iter < 4; iter++) {
           const work = roundSeconds(refBlock(ctx, d), ctx.ref);
-          const total = every * (rounds - 1) + work;
-          if (work <= every * frac && within(total / 60, ctx.params.budget_min)) return;
+          if (work <= every * frac) return;
           if (work > every * frac || iter === 0) { if (!scaleRanges(d, targetWork / work)) break; } else break;
         }
       }
@@ -420,7 +511,7 @@ function fitInterval(ctx: Ctx, d: Draft, roundsCandidates: number[]): void {
     d.rest = { rest_s: restS };
     const work = roundSeconds(refBlock(ctx, d), ctx.ref);
     const total = rounds * work + restS * (rounds - 1);
-    if (within(total / 60, ctx.params.budget_min)) return;
+    if (total <= budgetS && within(total / 60, ctx.params.budget_min)) return;
   }
   throw new Reject('duration_interval_rest');
 }
@@ -467,14 +558,18 @@ function fitStations(ctx: Ctx, d: Draft): void {
   for (const rounds of roundsList) for (const w of works) for (const r of rests) combos.push([rounds, w, r]);
   for (const [rounds, w, r] of ctx.rng.shuffle(combos)) {
     const total = (rounds * n * (w + r)) / 60;
-    if (within(total, ctx.params.budget_min)) {
+    if (total <= ctx.params.budget_min && within(total, ctx.params.budget_min)) {
       d.rounds = rounds;
       d.rest = { work_s: w, rest_s: r };
       d.stations = n;
       for (const p of d.picked) {
         const cad = cadenceFor(p.m, ctx.ref, p.unit);
         if (!cad) throw new Reject(`no_cadence:${p.m.id}`);
-        p.qty = roundQty(w / cad, p.unit);
+        // cible tenable dans le temps de travail : on arrondit, puis on redescend d'un cran si ça déborde
+        let q = roundQty((w * 0.9) / cad, p.unit);
+        while (q * cad > w && q > 1) q = roundQty(q - stepQty(q, p.unit), p.unit);
+        if (q * cad > w) throw new Reject(`station_target:${p.m.id}`);
+        p.qty = q;
       }
       return;
     }
@@ -488,21 +583,32 @@ function seq(a: number, b: number, step: number): number[] {
   return out;
 }
 
+/**
+ * Ladder ouverte : les paliers montent de `step` jusqu'au temps. `scheme` porte les
+ * paliers attendus pour la référence (volume, signature) ; chaque catégorie s'arrête
+ * à son propre palier (`ladderStep`), qui doit différer entre la plus basse et la plus haute.
+ */
 function fitLadder(ctx: Ctx, d: Draft): void {
-  const scheme = d.sk.scheme ?? [];
-  const budgetS = ctx.params.budget_min * 60;
-  let acc = 0;
-  let steps = 0;
-  for (let i = 0; i < scheme.length; i++) {
-    const stepS = d.picked.reduce((s, p) => s + scheme[i] * (cadenceFor(p.m, ctx.ref, p.unit) ?? 0) + TRANSITION_S, 0);
-    acc += stepS;
-    steps = i + 1;
-    if (acc > budgetS) break;
-  }
-  if (steps < 3) throw new Reject('ladder_too_short');
-  d.scheme = scheme.slice(0, Math.min(scheme.length, steps + 1));
+  const base = d.sk.scheme ?? [];
+  if (base.length < 2) throw new Reject('ladder_scheme_missing');
+  const start = base[0];
+  const step = base[1] - base[0];
+  d.ladder = { start, step };
   d.rounds = null;
-  for (const p of d.picked) { p.scheme = d.scheme; p.qty = d.scheme.reduce((s, q) => s + q, 0); }
+  d.scheme = [start, start + step];
+  for (const p of d.picked) { p.scheme = d.scheme; p.qty = start * 2 + step; }
+  const budgetS = ctx.params.budget_min * 60;
+  const block = refBlock(ctx, d);
+  const refStep = ladderStep(block, ctx.ref, budgetS);
+  if (refStep < start + 2 * step) throw new Reject('ladder_too_short');
+  const cats = categoriesFor(ctx.params.discipline);
+  const lo = ladderStep(block, cats[0], budgetS);
+  const hi = ladderStep(block, cats[cats.length - 1], budgetS);
+  if (lo >= hi) throw new Reject('ladder_same_step_all_categories');
+  d.scheme = [];
+  for (let q = start; q <= refStep; q += step) d.scheme.push(q);
+  const total = d.scheme.reduce((s, q) => s + q, 0);
+  for (const p of d.picked) { p.scheme = d.scheme; p.qty = total; }
 }
 
 function fitDeathBy(ctx: Ctx, d: Draft): void {
@@ -526,11 +632,11 @@ function fitContinuous(ctx: Ctx, d: Draft): void {
 }
 
 function fitTabata(ctx: Ctx, d: Draft): void {
-  const transition = ctx.params.budget_min >= 10 ? 60 : 30;
+  const transition = ctx.params.budget_min >= 10 ? 60 : 0;
   d.rest = { work_s: 20, rest_s: 10, transition_s: transition };
   d.rounds = 8;
   const total = (2 * 8 * 30 + transition) / 60;
-  if (!within(total, ctx.params.budget_min)) throw new Reject('duration_tabata');
+  if (total > ctx.params.budget_min || !within(total, ctx.params.budget_min)) throw new Reject('duration_tabata');
   for (const p of d.picked) p.qty = 0;
 }
 
@@ -547,10 +653,15 @@ function buildDraft(ctx: Ctx, sk: Skeleton): Draft {
   const roundsCandidates = pickRounds(ctx, sk, variant, band);
   const rounds = roundsCandidates[0] || null;
 
+  const intentionMet = () => !SLOT_INTENTIONS.has(ctx.params.intention) || d.picked.some((p) => carriesIntention(ctx.params, p.m, p.band));
   slots.forEach((slot, index) => {
-    const m = drawMovement(ctx, slot, index, d.picked, format, functionalSmall);
-    const unit = pickUnit(slot, m)!;
     const slotBand = slot.pick.band ? constrainBand(slot.pick.band, ctx.params) : band;
+    // dernier slot : il doit porter l'intention si aucun autre ne le fait encore
+    const need = index === slots.length - 1 && !intentionMet()
+      ? (m: CatalogMovement) => carriesIntention(ctx.params, m, slotBand)
+      : undefined;
+    const m = drawMovement(ctx, slot, index, d.picked, format, functionalSmall, need);
+    const unit = pickUnit(slot, m)!;
     const base: Picked = { slot, index, m, unit, band: slotBand, qty: 0 };
     switch (slot.qty) {
       case 'range': {
@@ -603,12 +714,14 @@ function buildDraft(ctx: Ctx, sk: Skeleton): Draft {
       break;
     }
     case 'chipper':
-      if (scheme && d.sk.scheme_alternatives?.length) { d.scheme = scheme; fitScheme(ctx, d, d.sk.scheme_alternatives); d.scheme = undefined; d.rounds = null; }
-      else fitFixedVolume(ctx, d, roundsCandidates);
+      // un seul passage : jamais de rounds
+      if (scheme && d.sk.scheme_alternatives?.length) { d.scheme = scheme; fitChipperScheme(ctx, d, d.sk.scheme_alternatives); d.scheme = undefined; }
+      else fitFixedVolume(ctx, d, [1]);
+      d.rounds = null;
       break;
     default:
-      if (d.scheme && d.sk.scheme_alternatives?.length) fitScheme(ctx, d, d.sk.scheme_alternatives);
-      else fitFixedVolume(ctx, d, d.scheme ? [d.scheme.length] : [0]);
+      // for time à schéma fixe : pas d'alternative, le budget colle ou le squelette est rejeté
+      fitFixedVolume(ctx, d, d.scheme ? [d.scheme.length] : [0]);
       d.rounds = null;
   }
   applyVolumeCaps(ctx, d);
@@ -616,35 +729,94 @@ function buildDraft(ctx: Ctx, sk: Skeleton): Draft {
   return d;
 }
 
-/** §5 : un Hybrid contient un erg ou de la course ; un Functional contient de l'haltéro (W) ou de la gym (G). */
+/**
+ * §5.6 : un Hybrid contient un erg ou de la course ; un Functional contient de l'haltéro (W) ou de la gym (G).
+ * Intention toujours honorée, quel que soit le format ou le palier de relâchement :
+ * Force ⇒ un slot barre/KB/DB/sandbag/sled en bande lourde (`forceBand`) ; Gym ⇒ un slot G (GHD exclu) ;
+ * Core ⇒ un slot pattern core ; Cardio ⇒ aucun skill lent (> 3,5 s/rep) ; Cardio Functional ⇒ un mono.
+ */
 function checkComposition(ctx: Ctx, d: Draft): void {
-  if (ctx.params.discipline === 'hybrid') {
+  const { intention, discipline } = ctx.params;
+  if (discipline === 'hybrid') {
     if (!d.picked.some((p) => p.m.family === 'erg' || p.m.family === 'run')) throw new Reject('hybrid_without_erg_or_run');
   } else {
     const has = (mod: Modality) => d.picked.some((p) => p.m.modality === mod);
     if (!has('W') && !has('G')) throw new Reject('functional_without_W_or_G');
-    const need = INTENTION_MODALITY[ctx.params.intention];
-    if (need && !has(need)) throw new Reject(`intention_without_${need}`);
+    if (intention === 'cardio' && !has('M')) throw new Reject('intention_without_M');
+  }
+  if (intention === 'cardio' && d.picked.some((p) => isSlowSkill(p.m))) throw new Reject('cardio_slow_skill');
+  if (SLOT_INTENTIONS.has(intention) && !d.picked.some((p) => carriesIntention(ctx.params, p.m, p.band))) {
+    throw new Reject(`intention_${intention}_unmet`);
   }
 }
 
-/** L'intention Functional exige la modalité qui la nomme : Force ⇒ une charge, Gym ⇒ un gymnastique, Cardio ⇒ un mono. */
-const INTENTION_MODALITY: Partial<Record<Intention, Modality>> = { force: 'W', gym: 'G', cardio: 'M' };
-
-function applyVolumeCaps(ctx: Ctx, d: Draft): void {
-  const caps = ctx.bank.volume_caps[ctx.params.discipline][ctx.ref] ?? {};
-  const mult = d.sk.format === 'rounds_for_time' ? (d.rounds ?? 1) : 1;
-  for (const p of d.picked) {
-    const cap = caps[p.unit];
-    if (cap === undefined) continue;
-    const perRound = p.round !== undefined ? 1 : mult;
-    if (p.qty * perRound > cap) throw new Reject(`volume_cap:${p.m.id}`);
+/** Multiplicateur du volume d'un slot sur l'ensemble du WOD pour la catégorie de référence. */
+function volumeMultiplier(ctx: Ctx, d: Draft, p: Picked): number {
+  if (p.round !== undefined) return 1;
+  const budgetS = ctx.params.budget_min * 60;
+  switch (d.sk.format) {
+    case 'rounds_for_time': case 'interval': case 'stations': case 'emom': return d.rounds ?? 1;
+    case 'amrap': return Math.ceil(budgetS / roundSeconds(refBlock(ctx, d), ctx.ref));
+    case 'continuous': return Math.ceil(budgetS / roundSeconds(refBlock(ctx, d), ctx.ref));
+    case 'death_by': {
+      const n = deathByMinute(refBlock(ctx, d), ctx.ref, ctx.params.budget_min);
+      return p.slot.qty === 'minute' ? (n * (n + 1)) / 2 : n;
+    }
+    case 'tabata': return 0;
+    default: return 1;
   }
+}
+
+/** Plafond §5.4 applicable à un slot (classe de mouvement × facteur de catégorie), ou `null`. */
+export function movementCapFor(bank: SkeletonBank, m: CatalogMovement, band: Band, unit: Unit, category: Category): number | null {
+  for (const c of bank.movement_caps) {
+    if (c.unit !== unit) continue;
+    const hit = c.ids ? c.ids.includes(m.id) : c.family === m.family && (!c.band || c.band === band);
+    if (hit) return Math.floor(c.rx * VOLUME_CAP_FACTOR[category]);
+  }
+  return null;
+}
+
+/**
+ * §5.4 : volume total par mouvement borné. Plafond générique par unité, puis plafonds
+ * par classe (`movement_caps`). Un dépassement réduit d'abord la quantité dans sa plage
+ * (formats à quantité libre), sinon rejette le squelette. La durée est revérifiée dans `finalize`.
+ */
+function applyVolumeCaps(ctx: Ctx, d: Draft): void {
+  // réduire un slot raccourcit le round (AMRAP, continu) et relève le multiplicateur des autres : on itère jusqu'à stabilité
+  for (let pass = 0; pass < 4; pass++) if (!capPass(ctx, d)) return;
+  if (capPass(ctx, d)) throw new Reject('volume_cap_unstable');
+}
+
+/** Une passe de plafonnement ; retourne `true` si une quantité a été réduite. */
+function capPass(ctx: Ctx, d: Draft): boolean {
+  const caps = ctx.bank.volume_caps[ctx.params.discipline][ctx.ref] ?? {};
+  const tabata = d.sk.format === 'tabata';
+  let changed = false;
+  for (const p of d.picked) {
+    const mult = volumeMultiplier(ctx, d, p);
+    const perWod = tabata ? (16 * 20) / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
+    const generic = caps[p.unit];
+    const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
+    const cap = Math.min(generic ?? Infinity, specific ?? Infinity);
+    if (cap === Infinity || perWod <= cap) continue;
+    if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
+    const next = roundQty(Math.floor(cap / mult), p.unit);
+    if (next < p.range[0] || next >= p.qty) throw new Reject(`volume_cap:${p.m.id}`);
+    p.qty = next;
+    changed = true;
+  }
+  return changed;
 }
 
 function finalize(ctx: Ctx, d: Draft, relaxations: string[], attempts: number, seed: number): GeneratedWod {
   const block = blockOf(ctx, d);
   const refEst = estimateBlock(block, ctx.ref, ctx.params.budget_min);
+  if (!TIME_BOUNDED.has(d.sk.format) && !within(refEst.minutes, ctx.params.budget_min)) throw new Reject('duration_final');
+  if (d.sk.format === 'amrap') {
+    const rounds = (ctx.params.budget_min * 60) / roundSeconds(block, ctx.ref);
+    if (rounds < 3 || rounds > 10) throw new Reject('amrap_round_length');
+  }
   const timeBounded = TIME_BOUNDED.has(d.sk.format) || d.sk.format === 'interval' || d.sk.score_type !== 'time';
   block.timecap = timeBounded ? null : Math.ceil((refEst.minutes * d.sk.cap_factor) / 0.5) * 30;
   const vest = ctx.params.discipline === 'hybrid' && ctx.params.vest && ctx.params.vest !== 'none'

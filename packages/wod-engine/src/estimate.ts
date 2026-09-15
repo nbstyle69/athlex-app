@@ -55,6 +55,46 @@ export function fixedWorkSeconds(block: GeneratedBlock, category: Category): num
   return total * degradation(rounds);
 }
 
+/**
+ * Ladder ouverte : dernier palier complet dans `budgetS` pour la catégorie
+ * (paliers `start, start+step, …` ; à défaut de `block.ladder`, les paliers de `scheme`).
+ */
+export function ladderStep(block: GeneratedBlock, category: Category, budgetS: number): number {
+  return ladderProgress(block, category, budgetS).step;
+}
+
+/** Ladder : dernier palier complet et fraction du palier suivant entamée dans `budgetS`. */
+export function ladderProgress(block: GeneratedBlock, category: Category, budgetS: number): { step: number; partial: number } {
+  const stepSeconds = (q: number) => block.movements.reduce((s, m) => s + movementSeconds(m, category, q) + TRANSITION_S, 0);
+  const steps: number[] = [];
+  if (block.ladder) for (let q = block.ladder.start, i = 0; i < 200; q += block.ladder.step, i++) steps.push(q);
+  else steps.push(...(block.scheme ?? []));
+  let acc = 0;
+  let step = 0;
+  for (const q of steps) {
+    const s = stepSeconds(q);
+    if (acc + s > budgetS) return { step, partial: Math.max(0, Math.min(0.99, (budgetS - acc) / s)) };
+    acc += s;
+    step = q;
+  }
+  return { step, partial: 0 };
+}
+
+/** Death by : dernière minute tenue pour la catégorie (buy-in + n reps ≤ 60 s), bornée au budget. */
+export function deathByMinute(block: GeneratedBlock, category: Category, budgetMin: number): number {
+  const buyIn = block.movements.filter((m) => m.round === undefined && m.qty > 0 && !m.per_minute);
+  const main = block.movements.find((m) => m.per_minute);
+  const buyS = buyIn.reduce((s, m) => s + movementSeconds(m, category) + TRANSITION_S, 0);
+  let minute = 0;
+  if (main) {
+    for (let n = 1; n <= budgetMin; n++) {
+      if (buyS + movementSeconds(main, category, n) > 60) break;
+      minute = n;
+    }
+  }
+  return minute;
+}
+
 function fmtTime(s: number): string {
   const m = Math.floor(s / 60);
   const sec = Math.round(s % 60);
@@ -72,28 +112,13 @@ export function estimateBlock(block: GeneratedBlock, category: Category, budgetM
       return { minutes: budgetMin, target: `≈ ${Math.floor(rounds)} rounds` };
     }
     case 'ladder': {
-      const scheme = block.scheme ?? [];
-      let acc = 0;
-      let step = 0;
-      for (let i = 0; i < scheme.length; i++) {
-        const stepS = block.movements.reduce((s, m) => s + movementSeconds(m, category, scheme[i]) + TRANSITION_S, 0);
-        if (acc + stepS > budgetS) break;
-        acc += stepS;
-        step = scheme[i];
-      }
-      return { minutes: budgetMin, target: step ? `palier ${step}` : 'palier 1 partiel' };
+      const { step, partial } = ladderProgress(block, category, budgetS);
+      const next = block.ladder ? step + block.ladder.step : step;
+      const pct = Math.round(partial * 100);
+      return { minutes: budgetMin, target: step ? (pct >= 5 ? `palier ${step} + ${pct} % du palier ${next}` : `palier ${step}`) : 'palier 1 partiel' };
     }
     case 'death_by': {
-      const buyIn = block.movements.filter((m) => m.round === undefined && m.qty > 0 && !m.per_minute);
-      const main = block.movements.find((m) => m.per_minute);
-      const buyS = buyIn.reduce((s, m) => s + movementSeconds(m, category) + TRANSITION_S, 0);
-      let minute = 0;
-      if (main) {
-        for (let n = 1; n <= budgetMin; n++) {
-          if (buyS + movementSeconds(main, category, n) > 60) break;
-          minute = n;
-        }
-      }
+      const minute = deathByMinute(block, category, budgetMin);
       return { minutes: budgetMin, target: minute >= budgetMin ? `minute ${budgetMin} complétée` : `minute ${minute}` };
     }
     case 'emom': {
@@ -123,7 +148,7 @@ export function estimateBlock(block: GeneratedBlock, category: Category, budgetM
       const rounds = block.rounds ?? 1;
       const workPer = roundSeconds(block, category);
       if (block.rest?.every_s) {
-        const total = block.rest.every_s * (rounds - 1) + workPer;
+        const total = block.rest.every_s * rounds;
         return { minutes: total / 60, target: `travail ≈ ${fmtTime(workPer)} par intervalle` };
       }
       const rest = block.rest?.rest_s ?? 0;
