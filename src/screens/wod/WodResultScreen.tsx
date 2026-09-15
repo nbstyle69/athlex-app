@@ -336,6 +336,7 @@ export default function WodResultScreen() {
 
         {/* Mouvements */}
         <GlassCard radius={16} style={S.card}>
+          <View style={S.cardInner}>
           {block.movements.map((m, i) => {
             const open = detail === i;
             const line = categoryLine(m, category, true);
@@ -369,10 +370,12 @@ export default function WodResultScreen() {
               </View>
             );
           })}
+          </View>
         </GlassCard>
 
         {/* Durée estimée */}
         <GlassCard radius={16} style={S.card}>
+          <View style={S.cardInner}>
           <View style={S.estRow}>
             <Text style={S.estBig} testID="wodresult-estimate">
               {estimate ? minutesText(estimate.minutes) : minutesText(wod.estimate.reference_minutes)}
@@ -403,6 +406,7 @@ export default function WodResultScreen() {
           {wod.after_class && (wod.after_class.excluded_patterns.length > 0 || wod.after_class.excluded_families.length > 0) && (
             <Text style={S.afterClass}>Complément : évite {[...wod.after_class.excluded_patterns, ...wod.after_class.excluded_families].join(', ')}.</Text>
           )}
+          </View>
         </GlassCard>
       </ScrollView>
 
@@ -571,7 +575,8 @@ function createStyles(theme: AppTheme) {
     displayedForText: { ...typography.bodySmall, color: theme.textSecondary },
     displayedForLink: { fontWeight: '700', textDecorationLine: 'underline' },
 
-    card: { padding: CARD_PAD, marginBottom: 14 },
+    card: { marginBottom: 14 },
+    cardInner: { padding: CARD_PAD },
 
     moveRow: { paddingVertical: ROW_PAD },
     moveRowFirst: { paddingTop: 0 },
