@@ -628,7 +628,7 @@ export default function WODDetailScreen() {
             </View>
           ) : (
             <EmeraldCTAButton
-              icon={<Plus color="#fff" size={18} />}
+              icon={<Plus color={theme.ctaSolidText} size={18} />}
               size="md"
               onPress={() => { prefillStrengthLoads(); setModalOpen(true); }}
               style={{ marginTop: 4 }}
@@ -909,7 +909,7 @@ export default function WODDetailScreen() {
 
                 <EmeraldCTAButton
                   loading={sharing}
-                  icon={<Share2 color="#fff" size={18} />}
+                  icon={<Share2 color={theme.ctaSolidText} size={18} />}
                   onPress={handleShare}
                   style={{ marginHorizontal: 20 }}
                 >

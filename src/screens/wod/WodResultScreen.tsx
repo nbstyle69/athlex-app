@@ -340,7 +340,10 @@ export default function WodResultScreen() {
             const open = detail === i;
             const line = categoryLine(m, category, true);
             return (
-              <View key={`${m.id}-${i}`} style={[S.moveRow, i > 0 && S.moveRowBorder]}>
+              <View
+                key={`${m.id}-${i}`}
+                style={[S.moveRow, i === 0 && S.moveRowFirst, i === block.movements.length - 1 && S.moveRowLast, i > 0 && S.moveRowBorder]}
+              >
                 <TouchableOpacity style={S.moveHead} onPress={() => setDetail(open ? null : i)} activeOpacity={0.8} testID={`wodresult-move-${i}`}>
                   <View style={{ flex: 1 }}>
                     <Text style={S.moveText}>
@@ -404,7 +407,7 @@ export default function WodResultScreen() {
       </ScrollView>
 
       {/* Barre d'actions fixe au-dessus de la tab bar */}
-      <View style={[S.bottomBar, { paddingBottom: bottomBarPadding + 10 }]} testID="wodresult-actions">
+      <View style={[S.bottomBar, { paddingBottom: bottomBarPadding + ROW_PAD }]} testID="wodresult-actions">
         <View style={S.iconRow}>
           <TouchableOpacity style={S.iconBtn} onPress={onRedraw} disabled={redrawing} activeOpacity={0.8} testID="wodresult-redraw">
             {redrawing ? <ActivityIndicator color={accent} size="small" /> : <RefreshCw size={18} color={accent} />}
@@ -431,7 +434,7 @@ export default function WodResultScreen() {
           <EmeraldCTAButton
             size="md"
             style={{ flex: 1 }}
-            icon={boxWodId ? <Check size={16} color="#fff" /> : <ClipboardList size={16} color="#fff" />}
+            icon={boxWodId ? <Check size={16} color={theme.ctaSolidText} /> : <ClipboardList size={16} color={theme.ctaSolidText} />}
             onPress={onAddToWhiteboard}
             loading={adding}
           >
@@ -440,7 +443,7 @@ export default function WodResultScreen() {
           <EmeraldCTAButton
             size="md"
             style={{ flex: 1 }}
-            icon={<Trophy size={16} color="#fff" />}
+            icon={<Trophy size={16} color={theme.ctaSolidText} />}
             onPress={() => setScoreModal(true)}
           >
             {submittedScore ? 'Modifier mon score' : 'Saisir mon score'}
@@ -516,7 +519,7 @@ export default function WodResultScreen() {
               onPress={onSubmitScore}
               loading={submitting}
               disabled={submitting}
-              icon={<Trophy size={18} color="#fff" />}
+              icon={<Trophy size={18} color={theme.ctaSolidText} />}
               style={{ marginTop: 16 }}
             >
               Enregistrer mon score
@@ -527,6 +530,11 @@ export default function WodResultScreen() {
     </View>
   );
 }
+
+/** Padding intérieur des cartes et de la barre d'actions (tuiles Outils de l'Accueil). */
+const CARD_PAD = 20;
+/** Espace vertical entre deux lignes de mouvement. */
+const ROW_PAD = 14;
 
 function createStyles(theme: AppTheme) {
   const isDark = theme.mode === 'dark';
@@ -541,7 +549,7 @@ function createStyles(theme: AppTheme) {
     content: { padding: 16 },
 
     wodCard: {
-      backgroundColor: theme.card, borderRadius: 16, padding: 16,
+      backgroundColor: theme.card, borderRadius: 16, padding: CARD_PAD,
       borderWidth: 1, borderColor: theme.border, gap: 10,
       ...cardShadow,
     },
@@ -559,13 +567,15 @@ function createStyles(theme: AppTheme) {
       borderWidth: 1,
     },
 
-    displayedFor: { paddingHorizontal: 4, paddingVertical: 12 },
+    displayedFor: { paddingHorizontal: CARD_PAD, paddingVertical: 14 },
     displayedForText: { ...typography.bodySmall, color: theme.textSecondary },
     displayedForLink: { fontWeight: '700', textDecorationLine: 'underline' },
 
-    card: { paddingHorizontal: spacing.lg, paddingVertical: spacing.xs, marginBottom: 14 },
+    card: { padding: CARD_PAD, marginBottom: 14 },
 
-    moveRow: { paddingVertical: spacing.md },
+    moveRow: { paddingVertical: ROW_PAD },
+    moveRowFirst: { paddingTop: 0 },
+    moveRowLast: { paddingBottom: 0 },
     moveRowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
     moveHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
     moveText: { fontSize: 15, fontWeight: '700', color: theme.text, lineHeight: 21 },
@@ -577,18 +587,18 @@ function createStyles(theme: AppTheme) {
     catName: { ...typography.bodySmall, fontWeight: '600', color: theme.textSecondary, width: 84 },
     catVal: { ...typography.bodySmall, color: theme.textSecondary, flex: 1, textAlign: 'right' },
 
-    estRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: spacing.sm },
+    estRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     estBig: { fontSize: 30, fontWeight: '900', color: theme.text, letterSpacing: -0.5 },
     estLabel: { ...typography.bodySmall, fontWeight: '600', color: theme.text },
     estTarget: { ...typography.bodySmall, color: theme.textSecondary, marginTop: spacing.xxs },
     estLink: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: spacing.sm, alignSelf: 'flex-start' },
     estLinkText: { fontSize: 12, fontWeight: '700' },
-    stimulus: { ...typography.bodySmall, color: theme.text, marginTop: spacing.md, paddingBottom: spacing.sm },
-    afterClass: { ...typography.caption, color: theme.textSecondary, paddingBottom: spacing.sm },
+    stimulus: { ...typography.bodySmall, color: theme.text, marginTop: ROW_PAD },
+    afterClass: { ...typography.caption, color: theme.textSecondary, marginTop: spacing.xs },
 
     bottomBar: {
       position: 'absolute', left: 0, right: 0, bottom: 0,
-      paddingHorizontal: 16, paddingTop: 10, gap: 10,
+      paddingHorizontal: CARD_PAD, paddingTop: ROW_PAD, gap: 12,
       backgroundColor: theme.background,
       borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border,
     },

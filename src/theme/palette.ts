@@ -36,6 +36,14 @@ export interface AppTheme {
   // Mode-aware: silver in light, emerald in dark.
   ctaBg: string;
   ctaBorder: string;
+  /**
+   * Bouton plein (`EmeraldCTAButton`) : fond, bordure et encre. En clair le
+   * fond est le vert de marque en aplat avec une encre sombre — une encre
+   * blanche sur la surface argentée `ctaBg` tombait sous 2:1.
+   */
+  ctaSolidBg: string;
+  ctaSolidBorder: string;
+  ctaSolidText: string;
   secondary: string;
   text: string;
   textPrimary: string;
@@ -76,6 +84,9 @@ export const lightTheme: AppTheme = {
   accentText: '#475569',
   ctaBg: 'rgba(148,163,184,0.25)',
   ctaBorder: 'rgba(148,163,184,0.85)',
+  ctaSolidBg: '#10b981',
+  ctaSolidBorder: '#059669',
+  ctaSolidText: '#0a0a0a',
   secondary: '#6b7280',
   text: '#111827',
   textPrimary: '#111827',
@@ -123,6 +134,9 @@ export const darkTheme: AppTheme = {
   accentText: '#34d399',
   ctaBg: 'rgba(16,185,129,0.25)',
   ctaBorder: 'rgba(16,185,129,0.8)',
+  ctaSolidBg: 'rgba(16,185,129,0.25)',
+  ctaSolidBorder: 'rgba(16,185,129,0.8)',
+  ctaSolidText: '#ffffff',
   secondary: '#9ca3af',
   text: '#f9fafb',
   textPrimary: '#f9fafb',
