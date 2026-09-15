@@ -608,7 +608,7 @@ function createStyles(theme: AppTheme) {
     iconRow: { flexDirection: 'row', justifyContent: 'space-between' },
     iconBtn: { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 4 },
     iconText: { fontSize: 10, fontWeight: '700', color: theme.textSecondary },
-    ctaRow: { flexDirection: 'row', gap: 10 },
+    ctaRow: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
 
     modalBg: { flex: 1, backgroundColor: theme.modalBackdrop, justifyContent: 'flex-end' },
     menuSheet: { backgroundColor: theme.modalCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16 },

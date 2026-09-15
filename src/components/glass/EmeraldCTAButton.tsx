@@ -57,15 +57,18 @@ export default function EmeraldCTAButton({
           shadowRadius: 12,
           elevation: 6,
           opacity: disabled ? 0.5 : 1,
+          justifyContent: 'center',
         },
         style,
       ]}
     >
       <View
         style={{
+          flexGrow: 1,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
+          alignSelf: 'stretch',
           paddingVertical: padV,
           paddingHorizontal: padH,
           borderRadius: radius,
@@ -77,7 +80,12 @@ export default function EmeraldCTAButton({
         ) : (
           <>
             {icon}
-            <Text style={[{ color: theme.ctaText, fontSize, fontWeight: '900', letterSpacing: 0.5 }, textStyle]}>
+            <Text
+              style={[
+                { color: theme.ctaText, fontSize, fontWeight: '900', letterSpacing: 0.5, textAlign: 'center', flexShrink: 1 },
+                textStyle,
+              ]}
+            >
               {children}
             </Text>
           </>
