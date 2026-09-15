@@ -114,7 +114,13 @@ export default function WodResultScreen() {
   const [savedId, setSavedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [favorite, setFav] = useState(false);
-  const [detail, setDetail] = useState<number | null>(null);
+  const [openRows, setOpenRows] = useState<ReadonlySet<number>>(() => new Set());
+  const toggleRow = (i: number) =>
+    setOpenRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(i)) next.delete(i); else next.add(i);
+      return next;
+    });
   const [allCategories, setAllCategories] = useState(false);
   const [menu, setMenu] = useState(false);
   const [timerOpen, setTimerOpen] = useState(false);
@@ -139,7 +145,7 @@ export default function WodResultScreen() {
     setResult(next);
     setSavedId(null);
     setFav(false);
-    setDetail(null);
+    setOpenRows(new Set());
     setAllCategories(false);
     setBoxWodId(null);
     setSubmittedScore(null);
@@ -340,14 +346,14 @@ export default function WodResultScreen() {
         <GlassCard radius={16} style={S.card}>
           <View style={S.cardInner}>
           {block.movements.map((m, i) => {
-            const open = detail === i;
+            const open = openRows.has(i);
             const line = categoryLine(m, category, true);
             return (
               <View
                 key={`${m.id}-${i}`}
                 style={[S.moveRow, i === 0 && S.moveRowFirst, i === block.movements.length - 1 && S.moveRowLast, i > 0 && S.moveRowBorder]}
               >
-                <TouchableOpacity style={S.moveHead} onPress={() => setDetail(open ? null : i)} activeOpacity={0.8} testID={`wodresult-move-${i}`}>
+                <TouchableOpacity style={S.moveHead} onPress={() => toggleRow(i)} activeOpacity={0.8} testID={`wodresult-move-${i}`}>
                   <View style={{ flex: 1 }}>
                     <Text style={S.moveText}>
                       {m.round != null ? <Text style={S.moveRound}>R{m.round} · </Text> : null}
