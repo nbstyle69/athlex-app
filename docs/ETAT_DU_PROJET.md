@@ -204,8 +204,9 @@ historiques de l'app en `active = false`, lecture `authenticated` seulement) et
 lit les 10 dernières signatures de l'athlète). Deux disciplines (Functional, Hybrid), deux
 entrées (express, après-classe), 15 + 10 squelettes, charges par catégorie, gilet lesté en
 paramètre, `s` et `cm` acceptés par `movementParser` sans créditer de badge ni de charge.
-Tests §9 : conformité sur 587 combinaisons × 200 graines. **Migration non appliquée en
-prod** (dump avant). Aucun écran ne change : la PR 2 (écran) attend la relecture de
+Tests §9 : conformité sur 587 combinaisons × 200 graines. **Migration appliquée en prod : oui**
+(15/09/2026, `pg_dump` `20260915T125815Z` déposé avant dans le bucket privé `db-dumps` ;
+109 lignes importées). Aucun écran ne change : la PR 2 (écran) attend la relecture de
 `packages/wod-engine/samples.md`, la PR 3 (Manager) suit.
 
 **Générateur de WOD v1 — PR 2/3 (`athlex-app`, migration `20261212`).** L'écran
@@ -220,7 +221,8 @@ Enregistrer / Favori / Saisir mon score (catégorie demandée) conservent `gener
 squelettes (`wod_skeletons`, 25 lignes) et la table §5.4 (`wod_volume_caps`, 19 lignes),
 lecture `authenticated` seulement, écriture `service_role` ; `src/services/wodEngineData.ts`
 les charge avec le catalogue et retombe indépendamment sur les snapshots embarqués
-(hors ligne). **Migration non appliquée en prod** (dump avant). La PR 3 (Manager) suit.
+(hors ligne). **Migration appliquée en prod : oui** (15/09/2026, même dump `20260915T125815Z` ;
+25 squelettes, 19 plafonds). La PR 3 (Manager) suit.
 
 **Générateur de WOD v1 — page résultat `WodResult` (`athlex-app`, sans migration).** Après
 les tests réels du moteur, la page résultat est remise au niveau de l'app : en tête la carte WOD
@@ -239,6 +241,16 @@ score déjà saisi est rattaché, pas dupliqué). Les cartes perso du Whiteboard
 classement. `profiles.level` n'était modifiable nulle part : sélecteur « Niveau » (Scaled → Pro)
 ajouté dans Profil → Modifier, cible du lien « modifier » ; la synchro par l'ELO reste. Copier
 passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest/lint verts.
+
+**Générateur de WOD v1 — PR 3 (`AthleX-Manager` + migration `20261213` ici).** Le Manager lit
+`movement_catalog` à la place de son tableau statique `lib/movements.ts` (snapshot embarqué en
+repli, les 14 mouvements `active = false` restent proposés aux coachs, seul le générateur les
+ignore) ; l'admin Mouvements gagne un onglet Catalogue (édition, réactivation, création) et une
+page sœur `/admin/volume-caps` (19 plafonds éditables, squelettes en lecture seule), écriture
+par routes serveur `service_role` gardées par le rôle admin. `box_wods.wod_json jsonb`
+(migration `20261213`, **non appliquée en prod**, dump avant) reçoit le WOD structuré à chaque
+création / modification depuis l'éditeur, derrière un garde `42703` / `PGRST204` tant que la
+colonne n'est pas en prod ; `description` reste la source de vérité côté athlète.
 
 **Désabonnement d'une programmation Marketplace (`athlex-app`, migration `20261210`).**
 Aucun désabonnement n'existait. RPC `unsubscribe_programming(p_subscription_id,

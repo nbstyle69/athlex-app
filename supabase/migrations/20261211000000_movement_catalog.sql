@@ -5,7 +5,7 @@
 -- packages/wod-engine/catalog/catalogue-v1.csv (DDL : scripts/movement_catalog.ddl.sql).
 -- Ne pas éditer à la main : relancer le script.
 --
--- Appliquée en prod : NON (dump avant toute application).
+-- Appliquée en prod : OUI (15/09/2026, dump `20260915T125815Z` dans le bucket privé `db-dumps`).
 --
 -- Additif et rejouable :
 --   1. `movement_catalog` — un mouvement par ligne, la source du tirage ET

@@ -5,7 +5,7 @@
 -- packages/wod-engine/src/bank (DDL : scripts/wod_bank.ddl.sql).
 -- Ne pas éditer à la main : relancer le script.
 --
--- Appliquée en prod : NON (dump avant toute application).
+-- Appliquée en prod : OUI (15/09/2026, dump `20260915T125815Z` dans le bucket privé `db-dumps`).
 --
 -- Additif et rejouable :
 --   1. `wod_skeletons` — un squelette par ligne, la définition complète
