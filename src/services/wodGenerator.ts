@@ -230,6 +230,19 @@ const PARSER_WOD_TYPE: Record<GeneratedWod['wod_type'], string> = {
 const RX_OR_ABOVE: ReadonlySet<Category> = new Set<Category>(['rx', 'rxplus', 'elite', 'pro', 'men', 'women', 'men_pro', 'women_pro']);
 
 /** Colonnes éditeur du WOD généré au format attendu par `wodToTimer` / `box_wods` (null → undefined). */
+/**
+ * `rounds` au sens de l'éditeur / du minuteur : en EMOM c'est le nombre d'intervalles
+ * (cap ÷ intervalle), pas le nombre de passages sur les stations que porte le moteur.
+ */
+export function editorRoundsOf(wod: GeneratedWod): number | null {
+  if (wod.wod_type === 'emom') {
+    const interval = wod.emom_interval_minutes && wod.emom_interval_minutes > 0 ? wod.emom_interval_minutes : 1;
+    const cap = wod.time_cap_seconds ?? wod.budget_min * 60;
+    return Math.max(1, Math.round(cap / 60 / interval));
+  }
+  return wod.rounds ?? null;
+}
+
 export function editorFieldsOf(wod: GeneratedWod): Pick<
   BoxWOD,
   'wod_type' | 'time_cap_seconds' | 'rounds' | 'emom_interval_minutes' | 'tabata_work_seconds' | 'tabata_rest_seconds'
@@ -237,7 +250,7 @@ export function editorFieldsOf(wod: GeneratedWod): Pick<
   return {
     wod_type: wod.wod_type,
     time_cap_seconds: wod.time_cap_seconds ?? undefined,
-    rounds: wod.rounds ?? undefined,
+    rounds: editorRoundsOf(wod) ?? undefined,
     emom_interval_minutes: wod.emom_interval_minutes ?? undefined,
     tabata_work_seconds: wod.tabata_work_seconds ?? undefined,
     tabata_rest_seconds: wod.tabata_rest_seconds ?? undefined,
@@ -268,7 +281,7 @@ export async function addToWhiteboard(
       wod_type: wod.wod_type,
       scheduled_date: todayISO(),
       time_cap_seconds: wod.time_cap_seconds,
-      rounds: wod.rounds,
+      rounds: editorRoundsOf(wod),
       emom_interval_minutes: wod.emom_interval_minutes,
       tabata_work_seconds: wod.tabata_work_seconds,
       tabata_rest_seconds: wod.tabata_rest_seconds,
