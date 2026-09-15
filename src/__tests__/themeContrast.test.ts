@@ -50,8 +50,8 @@ describe.each(THEMES)('contraste — thème %s', (mode, t) => {
     expect(contrast(t.text, t.ctaBg, t.background)).toBeGreaterThanOrEqual(TEXT_MIN);
   });
 
-  it('l\'encre du bouton plein (EmeraldCTAButton) est lisible sur son fond', () => {
-    expect(contrast(t.ctaSolidText, t.ctaSolidBg, t.background)).toBeGreaterThanOrEqual(TEXT_MIN);
+  it('l\'encre du bouton plein (EmeraldCTAButton) est lisible sur sa surface', () => {
+    expect(contrast(t.ctaText, t.ctaBg, t.background)).toBeGreaterThanOrEqual(TEXT_MIN);
   });
 
   const hueNames = Object.keys(HUES) as HueName[];
@@ -72,10 +72,6 @@ describe('contraste — le contrôle sait échouer', () => {
 
   it('mesure le défaut historique : #fff sur la surface du CTA clair', () => {
     expect(contrast('#ffffff', lightTheme.ctaBg, lightTheme.background)).toBeLessThan(2);
-  });
-
-  it('mesure le défaut historique : #fff sur le vert du bouton plein clair', () => {
-    expect(contrast('#ffffff', lightTheme.ctaSolidBg, lightTheme.background)).toBeLessThan(TEXT_MIN);
   });
 
   it('le CTA n\'est pas un aplat d\'accent : onAccent y disparaît en sombre', () => {

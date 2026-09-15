@@ -9,50 +9,45 @@ interface Props {
   children?: React.ReactNode;
   /** "default" = white-ish glass, "emerald" = tinted emerald glass */
   variant?: 'default' | 'emerald';
-  /** Override blur intensity (0-100). Default 40. */
+  /** Override blur intensity (0-100). Default 40 in light, 20 in dark. */
   intensity?: number;
-  /** Override border radius. Default 24. */
+  /** Override border radius. Default 16. */
   radius?: number;
+  testID?: string;
 }
 
+/** Bordure 1 px à 15 % de blanc, commune aux deux thèmes. */
+const GLASS_BORDER = 'rgba(255,255,255,0.15)';
+
 /**
- * Glassmorphism card: blurred translucent background + subtle border + top-half reflection.
- * Adapts automatically to dark/light theme.
+ * Glassmorphism card: blurred translucent background + 1 px white border + top-half reflection.
+ * Adapts automatically to dark/light theme. On Android (no BlurView) the card falls back to
+ * an opaque-ish fill (70 %) so it stays crisp without the blur cost.
  */
-export default function GlassCard({ style, children, variant = 'default', intensity = 40, radius = 24 }: Props) {
+export default function GlassCard({ style, children, variant = 'default', intensity, radius = 16, testID }: Props) {
   const { theme } = useTheme();
   const isDark = theme.mode === 'dark';
 
   const tint = isDark ? 'dark' : 'light';
+  const blur = intensity ?? (isDark ? 20 : 40);
   const overlayColor =
     variant === 'emerald'
       ? (isDark ? 'rgba(16,185,129,0.15)' : 'rgba(148,163,184,0.14)')
       : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.45)');
-  const borderColor =
-    variant === 'emerald'
-      ? (isDark ? 'rgba(16,185,129,0.30)' : 'rgba(148,163,184,0.28)')
-      : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.55)');
   const reflectionColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.55)';
 
-  // ── Android : solid themed card with opaque fill for crisp, clearly visible cards ──
-  // theme.card is too translucent (rgba ~0.55) over the emerald gradient which makes
-  // cards look washed out when a bright blob sits behind them. We use a more opaque
-  // value to guarantee strong contrast, matching the "solid white card" look seen
-  // on ExplorerScreen where content density makes cards pop.
+  // ── Android : repli sans flou, fond à 70 % d'opacité ──
   if (Platform.OS === 'android') {
     const bg =
       variant === 'emerald'
-        ? (isDark ? 'rgba(16,185,129,0.12)' : 'rgba(241,245,249,0.92)')
-        : (isDark ? 'rgba(22,28,26,0.82)' : 'rgba(255,255,255,0.92)');
-    const brd =
-      variant === 'emerald'
-        ? (isDark ? 'rgba(16,185,129,0.30)' : 'rgba(148,163,184,0.28)')
-        : theme.border;
+        ? (isDark ? 'rgba(16,40,32,0.70)' : 'rgba(241,245,249,0.70)')
+        : (isDark ? 'rgba(22,28,26,0.70)' : 'rgba(255,255,255,0.70)');
     return (
       <View
+        testID={testID}
         style={[
           styles.shadowAndroid,
-          { borderRadius: radius, backgroundColor: bg, borderColor: brd, borderWidth: 1, overflow: 'hidden' },
+          { borderRadius: radius, backgroundColor: bg, borderColor: GLASS_BORDER, borderWidth: 1, overflow: 'hidden' },
           style,
         ]}
       >
@@ -61,17 +56,18 @@ export default function GlassCard({ style, children, variant = 'default', intens
     );
   }
 
-  // ── iOS : full glass with blur + top reflection ──
+  // ── iOS / web : verre complet, flou + reflet ──
   return (
     <View
+      testID={testID}
       style={[
         styles.shadow,
         { borderRadius: radius, shadowOpacity: isDark ? 0.3 : 0.08 },
         style,
       ]}
     >
-      <View style={[styles.clip, { borderRadius: radius, borderColor, borderWidth: 1, flex: 1 }]}>
-        <BlurView intensity={intensity} tint={tint} style={StyleSheet.absoluteFill} />
+      <View style={[styles.clip, { borderRadius: radius, borderColor: GLASS_BORDER, borderWidth: 1, flex: 1 }]}>
+        <BlurView intensity={blur} tint={tint} style={StyleSheet.absoluteFill} />
         <View style={[StyleSheet.absoluteFill, { backgroundColor: overlayColor }]} />
         {/* Top-half reflection */}
         <LinearGradient

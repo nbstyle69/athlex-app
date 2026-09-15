@@ -48,10 +48,10 @@ export default function EmeraldCTAButton({
           borderRadius: radius,
           overflow: 'hidden',
           // Glassmorphism style
-          backgroundColor: theme.ctaSolidBg,
+          backgroundColor: theme.ctaBg,
           borderWidth: 2,
-          borderColor: theme.ctaSolidBorder,
-          shadowColor: theme.ctaSolidBorder,
+          borderColor: theme.ctaBorder,
+          shadowColor: theme.accent,
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: dark ? 0.3 : 0.2,
           shadowRadius: 12,
@@ -73,11 +73,11 @@ export default function EmeraldCTAButton({
         }}
       >
         {loading ? (
-          <ActivityIndicator color={theme.ctaSolidText} />
+          <ActivityIndicator color={theme.ctaText} />
         ) : (
           <>
             {icon}
-            <Text style={[{ color: theme.ctaSolidText, fontSize, fontWeight: '900', letterSpacing: 0.5 }, textStyle]}>
+            <Text style={[{ color: theme.ctaText, fontSize, fontWeight: '900', letterSpacing: 0.5 }, textStyle]}>
               {children}
             </Text>
           </>

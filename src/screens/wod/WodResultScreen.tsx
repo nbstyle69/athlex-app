@@ -277,7 +277,8 @@ export default function WodResultScreen() {
 
       <ScrollView contentContainerStyle={[S.content, { paddingBottom: bottomBarPadding + 150 }]} showsVerticalScrollIndicator={false}>
         {/* Carte WOD (Whiteboard) */}
-        <View style={S.wodCard} testID="wodresult-card">
+        <GlassCard radius={16} style={S.wodCard} testID="wodresult-card">
+          <View style={S.wodCardInner}>
           <View style={S.wodCardTop}>
             <WodTypeBadge type="generated" label="Généré" color={accent} />
             {wod.time_cap_seconds != null && (
@@ -317,7 +318,8 @@ export default function WodResultScreen() {
               <TimerIcon color={accent} size={16} />
             </TouchableOpacity>
           </View>
-        </View>
+          </View>
+        </GlassCard>
 
         {/* Catégorie affichée */}
         <View style={S.displayedFor}>
@@ -411,7 +413,8 @@ export default function WodResultScreen() {
       </ScrollView>
 
       {/* Barre d'actions fixe au-dessus de la tab bar */}
-      <View style={[S.bottomBar, { paddingBottom: bottomBarPadding + ROW_PAD }]} testID="wodresult-actions">
+      <GlassCard radius={0} style={S.bottomBar} testID="wodresult-actions">
+        <View style={[S.bottomBarInner, { paddingBottom: bottomBarPadding + ROW_PAD }]}>
         <View style={S.iconRow}>
           <TouchableOpacity style={S.iconBtn} onPress={onRedraw} disabled={redrawing} activeOpacity={0.8} testID="wodresult-redraw">
             {redrawing ? <ActivityIndicator color={accent} size="small" /> : <RefreshCw size={18} color={accent} />}
@@ -438,7 +441,7 @@ export default function WodResultScreen() {
           <EmeraldCTAButton
             size="md"
             style={{ flex: 1 }}
-            icon={boxWodId ? <Check size={16} color={theme.ctaSolidText} /> : <ClipboardList size={16} color={theme.ctaSolidText} />}
+            icon={boxWodId ? <Check size={16} color={theme.ctaText} /> : <ClipboardList size={16} color={theme.ctaText} />}
             onPress={onAddToWhiteboard}
             loading={adding}
           >
@@ -447,13 +450,14 @@ export default function WodResultScreen() {
           <EmeraldCTAButton
             size="md"
             style={{ flex: 1 }}
-            icon={<Trophy size={16} color={theme.ctaSolidText} />}
+            icon={<Trophy size={16} color={theme.ctaText} />}
             onPress={() => setScoreModal(true)}
           >
             {submittedScore ? 'Modifier mon score' : 'Saisir mon score'}
           </EmeraldCTAButton>
         </View>
-      </View>
+        </View>
+      </GlassCard>
 
       <TimerLaunchModal
         visible={timerOpen}
@@ -523,7 +527,7 @@ export default function WodResultScreen() {
               onPress={onSubmitScore}
               loading={submitting}
               disabled={submitting}
-              icon={<Trophy size={18} color={theme.ctaSolidText} />}
+              icon={<Trophy size={18} color={theme.ctaText} />}
               style={{ marginTop: 16 }}
             >
               Enregistrer mon score
@@ -541,22 +545,14 @@ const CARD_PAD = 20;
 const ROW_PAD = 14;
 
 function createStyles(theme: AppTheme) {
-  const isDark = theme.mode === 'dark';
-  const cardShadow = isDark ? {} : {
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
-  };
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.background },
     header: { paddingHorizontal: 20, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 },
     headerLabel: { fontSize: 17, fontWeight: '800', color: theme.text },
     content: { padding: 16 },
 
-    wodCard: {
-      backgroundColor: theme.card, borderRadius: 16, padding: CARD_PAD,
-      borderWidth: 1, borderColor: theme.border, gap: 10,
-      ...cardShadow,
-    },
+    wodCard: { marginBottom: 0 },
+    wodCardInner: { padding: CARD_PAD, gap: 10 },
     wodCardTop: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
     timeCap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     timeCapText: { fontSize: 11, color: theme.textMuted },
@@ -601,12 +597,8 @@ function createStyles(theme: AppTheme) {
     stimulus: { ...typography.bodySmall, color: theme.text, marginTop: ROW_PAD },
     afterClass: { ...typography.caption, color: theme.textSecondary, marginTop: spacing.xs },
 
-    bottomBar: {
-      position: 'absolute', left: 0, right: 0, bottom: 0,
-      paddingHorizontal: CARD_PAD, paddingTop: ROW_PAD, gap: 12,
-      backgroundColor: theme.background,
-      borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border,
-    },
+    bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+    bottomBarInner: { paddingHorizontal: CARD_PAD, paddingTop: ROW_PAD, gap: 12 },
     iconRow: { flexDirection: 'row', justifyContent: 'space-between' },
     iconBtn: { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 4 },
     iconText: { fontSize: 10, fontWeight: '700', color: theme.textSecondary },

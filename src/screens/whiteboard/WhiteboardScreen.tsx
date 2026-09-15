@@ -562,7 +562,7 @@ export default function WhiteboardScreen() {
                 <Text style={S.noWodEmoji}>📋</Text>
                 <Text style={S.noWodText}>{t('whiteboard.noWod')}</Text>
                 <EmeraldCTAButton
-                  icon={<Sparkles size={16} color={theme.ctaSolidText} />}
+                  icon={<Sparkles size={16} color={theme.ctaText} />}
                   size="md"
                   onPress={() => navigation.navigate('PersonalWODForm', { date: selectedDate })}
                   style={{ marginTop: 14 }}
@@ -710,7 +710,7 @@ export default function WhiteboardScreen() {
         return (
           <View style={S.quickActions}>
             <EmeraldCTAButton
-              icon={<Sparkles size={20} color={theme.ctaSolidText} />}
+              icon={<Sparkles size={20} color={theme.ctaText} />}
               onPress={() => navigation.navigate('WODDetail', { wodId: mainWod.id })}
               textStyle={{ fontSize: 17 }}
             >
