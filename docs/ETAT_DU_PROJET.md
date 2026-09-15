@@ -1,6 +1,6 @@
 # État du projet AthleX
 
-Dernière mise à jour : **9 septembre 2026**.
+Dernière mise à jour : **15 septembre 2026**.
 
 Ce fichier est écrit pour être lu en deux minutes, sans être développeur. Il dit ce qui
 marche aujourd'hui, ce qui est en train de se faire, ce qui vient ensuite, et ce qui est
@@ -193,6 +193,19 @@ Supabase/Resend.
 ---
 
 ## En cours
+
+**Générateur de WOD v1 — PR 1/3 (`athlex-app`, migration `20261211`).** Le générateur est
+refait de zéro en moteur déterministe (`packages/wod-engine`, TypeScript pur, aucune IA ni
+réseau à l'exécution) ; on garde seulement le RNG à graine et la signature anti-répétition.
+Le serveur porte `movement_catalog` (95 mouvements actifs tirés du CSV validé + 14 mouvements
+historiques de l'app en `active = false`, lecture `authenticated` seulement) et
+`generated_wods.wod_json` (le WOD structuré, rounds et signature compris ; l'anti-répétition
+lit les 10 dernières signatures de l'athlète). Deux disciplines (Functional, Hybrid), deux
+entrées (express, après-classe), 15 + 10 squelettes, charges par catégorie, gilet lesté en
+paramètre, `s` et `cm` acceptés par `movementParser` sans créditer de badge ni de charge.
+Tests §9 : conformité sur 587 combinaisons × 200 graines. **Migration non appliquée en
+prod** (dump avant). Aucun écran ne change : la PR 2 (écran) attend la relecture de
+`packages/wod-engine/samples.md`, la PR 3 (Manager) suit.
 
 **Désabonnement d'une programmation Marketplace (`athlex-app`, migration `20261210`).**
 Aucun désabonnement n'existait. RPC `unsubscribe_programming(p_subscription_id,
