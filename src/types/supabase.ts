@@ -2667,6 +2667,7 @@ export type Database = {
           sport: string
           team_note: string | null
           user_id: string
+          wod_json: Json | null
           wod_name: string
           wod_type: string
         }
@@ -2685,6 +2686,7 @@ export type Database = {
           sport?: string
           team_note?: string | null
           user_id: string
+          wod_json?: Json | null
           wod_name: string
           wod_type: string
         }
@@ -2703,6 +2705,7 @@ export type Database = {
           sport?: string
           team_note?: string | null
           user_id?: string
+          wod_json?: Json | null
           wod_name?: string
           wod_type?: string
         }
@@ -4571,6 +4574,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      movement_catalog: {
+        Row: {
+          active: boolean
+          badge_key: string | null
+          cadence: Json | null
+          created_at: string
+          equipment: string[]
+          family: string
+          grip: string
+          id: string
+          load_unit: string | null
+          loads: Json | null
+          modality: string
+          name: string
+          notes: string | null
+          pattern: string[]
+          rep_ranges: Json | null
+          shoulder_load: string
+          substitutions: Json | null
+          unit_default: string
+          units_allowed: string[]
+          updated_at: string
+          variant_up: string | null
+          version: number
+          weight_functional: number
+          weight_hybrid: number
+        }
+        Insert: {
+          active?: boolean
+          badge_key?: string | null
+          cadence?: Json | null
+          created_at?: string
+          equipment?: string[]
+          family: string
+          grip: string
+          id: string
+          load_unit?: string | null
+          loads?: Json | null
+          modality: string
+          name: string
+          notes?: string | null
+          pattern?: string[]
+          rep_ranges?: Json | null
+          shoulder_load: string
+          substitutions?: Json | null
+          unit_default: string
+          units_allowed?: string[]
+          updated_at?: string
+          variant_up?: string | null
+          version?: number
+          weight_functional?: number
+          weight_hybrid?: number
+        }
+        Update: {
+          active?: boolean
+          badge_key?: string | null
+          cadence?: Json | null
+          created_at?: string
+          equipment?: string[]
+          family?: string
+          grip?: string
+          id?: string
+          load_unit?: string | null
+          loads?: Json | null
+          modality?: string
+          name?: string
+          notes?: string | null
+          pattern?: string[]
+          rep_ranges?: Json | null
+          shoulder_load?: string
+          substitutions?: Json | null
+          unit_default?: string
+          units_allowed?: string[]
+          updated_at?: string
+          variant_up?: string | null
+          version?: number
+          weight_functional?: number
+          weight_hybrid?: number
+        }
+        Relationships: []
       }
       movement_logs: {
         Row: {
@@ -7176,6 +7260,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      wod_skeletons: {
+        Row: {
+          active: boolean
+          created_at: string
+          definition: Json
+          discipline: string
+          format: string
+          id: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          definition: Json
+          discipline: string
+          format: string
+          id: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          definition?: Json
+          discipline?: string
+          format?: string
+          id?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
+      wod_volume_caps: {
+        Row: {
+          active: boolean
+          band: string | null
+          created_at: string
+          family: string | null
+          ids: string[] | null
+          label: string
+          rx_total: number
+          unit: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          active?: boolean
+          band?: string | null
+          created_at?: string
+          family?: string | null
+          ids?: string[] | null
+          label: string
+          rx_total: number
+          unit: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          active?: boolean
+          band?: string | null
+          created_at?: string
+          family?: string | null
+          ids?: string[] | null
+          label?: string
+          rx_total?: number
+          unit?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
       }
       wod_scores: {
         Row: {

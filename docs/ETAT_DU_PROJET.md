@@ -207,6 +207,20 @@ Tests §9 : conformité sur 587 combinaisons × 200 graines. **Migration non app
 prod** (dump avant). Aucun écran ne change : la PR 2 (écran) attend la relecture de
 `packages/wod-engine/samples.md`, la PR 3 (Manager) suit.
 
+**Générateur de WOD v1 — PR 2/3 (`athlex-app`, migration `20261212`).** L'écran
+« Générateur de WOD » (`WodGenerator`) et la page résultat (`WodResult`) remplacent l'ancien
+générateur, supprimé et non masqué (`WODGeneratorScreen`, `WODGenProScreen`,
+`WODSuggestionsScreen`, `engineCrossFit`, `engineHyrox`, `ranker`, `adapter`, flag
+`wodGenV2`). Pas de ligne Catégorie : la catégorie du profil (`rx+ → rxplus`, `gender` null ⇒
+Men) ne sert qu'à l'estimation, le WOD affiche toutes les catégories ; le texte n'est rendu
+que par « Copier ». Exclusions persistées dans `user_generation_settings.last_params`.
+Enregistrer / Favori / Saisir mon score (catégorie demandée) conservent `generated_wods`
+(+ `wod_json`), `generated_wod_scores` et le crédit de badges. Le serveur porte la banque de
+squelettes (`wod_skeletons`, 25 lignes) et la table §5.4 (`wod_volume_caps`, 19 lignes),
+lecture `authenticated` seulement, écriture `service_role` ; `src/services/wodEngineData.ts`
+les charge avec le catalogue et retombe indépendamment sur les snapshots embarqués
+(hors ligne). **Migration non appliquée en prod** (dump avant). La PR 3 (Manager) suit.
+
 **Désabonnement d'une programmation Marketplace (`athlex-app`, migration `20261210`).**
 Aucun désabonnement n'existait. RPC `unsubscribe_programming(p_subscription_id,
 p_remove_future)` SECURITY DEFINER, gardée par `is_box_owner_admin` de la box abonnée :

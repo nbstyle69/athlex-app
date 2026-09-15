@@ -9,6 +9,7 @@
     "import-catalog": "node scripts/import-catalog.cjs",
     "samples": "npx tsx scripts/samples.ts > samples.md",
     "stress": "npx tsx scripts/stress.ts",
-    "one-per-skeleton": "npx tsx scripts/one_per_skeleton.ts"
+    "one-per-skeleton": "npx tsx scripts/one_per_skeleton.ts",
+    "export-bank": "npx tsx scripts/export-bank.ts"
   }
 }

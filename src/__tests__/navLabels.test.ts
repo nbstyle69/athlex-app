@@ -72,7 +72,7 @@ describe('libellés côté athlète', () => {
   });
 
   it('les boutons du générateur de WOD qui y mènent portent le même nom', () => {
-    expect(read('src', 'components', 'WodGeneratorCard.tsx')).not.toContain(
+    expect(read('src', 'screens', 'wod', 'WodGeneratorScreen.tsx')).not.toContain(
       '>Programmation</Text>',
     );
     for (const lang of ['fr', 'en'] as const) {

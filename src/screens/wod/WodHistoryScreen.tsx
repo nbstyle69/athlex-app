@@ -4,7 +4,7 @@ import {
   ActivityIndicator, Alert,
 } from 'react-native';
 import { ArrowLeft, Heart, Clock, Zap, Trash2, ChevronDown, ChevronUp, CheckCircle2, ChevronRight } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -75,6 +75,7 @@ function formatDateShort(iso: string): string {
 
 export default function WodHistoryScreen() {
   const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteProp<{ WodHistory: { filter?: 'favorites' } | undefined }, 'WodHistory'>>();
   const { user } = useAuth();
   const { theme } = useTheme();
   const { t } = useTranslation();
@@ -83,7 +84,7 @@ export default function WodHistoryScreen() {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [filter, setFilter] = useState<FilterType>(route.params?.filter === 'favorites' ? 'favorites' : 'all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 

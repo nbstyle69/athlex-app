@@ -1,0 +1,394 @@
+/**
+ * AthleX — « Générateur de WOD » (brief §8)
+ * ==========================================
+ * Formulaire unique branché sur `packages/wod-engine` (hors ligne, déterministe) :
+ * entrée (WOD express / Après ma classe) → discipline → durée → format (express)
+ * → intention → gilet (Hybrid) → Exclure (matériel + mouvements, persisté).
+ * Pas de ligne Catégorie : la catégorie du profil sert à l'estimation.
+ * Le résultat s'ouvre sur `WodResult`.
+ */
+
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  ChevronLeft, ChevronDown, ChevronUp, Sparkles, X, History, Heart, BookOpen, Zap, GraduationCap,
+} from 'lucide-react-native';
+
+import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import GlassBackground from '../../components/glass/GlassBackground';
+import GlassCard from '../../components/glass/GlassCard';
+import i18n from '../../i18n';
+import type { Catalog, Discipline, Entry, FormatChoice, Intention, Vest } from '../../../packages/wod-engine/src';
+import {
+  HYBRID_ORANGE, DURATIONS, FORMATS, INTENTIONS, VESTS, PATTERN_LABEL, FAMILY_LABEL, avoidedText, equipmentOptions, coerceDuration,
+} from './wodGeneratorOptions';
+import { loadEngineData } from '../../services/wodEngineData';
+import {
+  DayClass, ScreenParams, generateForUser, loadExcludes, saveExcludes, todayClass,
+} from '../../services/wodGenerator';
+
+export default function WodGeneratorScreen() {
+  const navigation = useNavigation<any>();
+  const insets = useSafeAreaInsets();
+  const { user, currentBox } = useAuth();
+  const { theme } = useTheme();
+  const S = createStyles(theme);
+
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [entry, setEntry] = useState<Entry>('express');
+  const [discipline, setDiscipline] = useState<Discipline>('functional');
+  const [duration, setDuration] = useState(15);
+  const [format, setFormat] = useState<FormatChoice>('surprise');
+  const [intention, setIntention] = useState<Intention>('mixed');
+  const [vest, setVest] = useState<Vest>('none');
+  const [exclude, setExclude] = useState<string[]>([]);
+  const [advanced, setAdvanced] = useState(false);
+  const [search, setSearch] = useState('');
+  const [dayClass, setDayClass] = useState<DayClass | null>(null);
+  const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    loadEngineData().then((d) => { if (alive) setCatalog(d.catalog); });
+    if (user?.id) loadExcludes(user.id).then((ex) => { if (alive) setExclude(ex); });
+    return () => { alive = false; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    let alive = true;
+    if (entry === 'after_class') todayClass(currentBox?.id).then((c) => { if (alive) setDayClass(c); });
+    return () => { alive = false; };
+  }, [entry, currentBox?.id]);
+
+  const chooseEntry = (e: Entry) => { setEntry(e); setDuration((d) => coerceDuration(e, discipline, d)); };
+  const chooseDiscipline = (d: Discipline) => {
+    setDiscipline(d);
+    setIntention(INTENTIONS[d][0].key);
+    setDuration((cur) => coerceDuration(entry, d, cur));
+    if (d === 'functional') setVest('none');
+  };
+
+  const toggleExclude = useCallback((key: string) => {
+    setExclude((prev) => {
+      const next = prev.includes(key) ? prev.filter((x) => x !== key) : [...prev, key];
+      if (user?.id) saveExcludes(user.id, next);
+      return next;
+    });
+  }, [user?.id]);
+
+  const equipment = useMemo(() => (catalog ? equipmentOptions(catalog) : []), [catalog]);
+  const movementHits = useMemo(() => {
+    if (!catalog || search.trim().length < 2) return [];
+    const q = search.trim().toLowerCase();
+    return catalog.movements
+      .filter((m) => m.active && !exclude.includes(m.id) && m.name.toLowerCase().includes(q))
+      .slice(0, 8);
+  }, [catalog, search, exclude]);
+  const excludedMovements = useMemo(
+    () => exclude.filter((k) => !equipment.includes(k)).map((id) => ({ id, name: catalog?.movements.find((m) => m.id === id)?.name ?? id })),
+    [exclude, equipment, catalog],
+  );
+
+  async function generate() {
+    if (!user) return;
+    setGenerating(true);
+    const screen: ScreenParams = {
+      entry, discipline, budget_min: duration, intention, exclude,
+      format: entry === 'express' ? format : 'surprise',
+      vest: discipline === 'hybrid' ? vest : 'none',
+    };
+    try {
+      const result = await generateForUser(user, currentBox?.id, screen);
+      navigation.navigate('WodResult', { screen, result });
+    } catch (e) {
+      Alert.alert('Aucun WOD valide', 'Essaie une autre durée, un autre format ou moins d\'exclusions.');
+    } finally {
+      setGenerating(false);
+    }
+  }
+
+  const accent = discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;
+
+  const Chip = ({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) => (
+    <TouchableOpacity
+      style={[S.chip, selected && { backgroundColor: `${accent}25`, borderColor: accent }]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <Text style={[S.chipText, selected && { fontWeight: '800' }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+
+  const ChipScroll = ({ children }: { children: React.ReactNode }) => (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={S.chipScroll} style={S.chipScrollOuter}>
+      {children}
+    </ScrollView>
+  );
+
+  return (
+    <View style={S.container}>
+      <GlassBackground />
+      <View style={[S.header, { paddingTop: insets.top + 12 }]}>
+        <View style={S.headerRow}>
+          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+            <ChevronLeft color={theme.textSecondary} size={24} />
+          </TouchableOpacity>
+          <View style={S.menu}>
+            <TouchableOpacity style={S.menuBtn} onPress={() => navigation.navigate('WodHistory')} activeOpacity={0.8} testID="wodgen-menu-history">
+              <History color={theme.text} size={15} />
+              <Text style={S.menuText}>{i18n.t('wodGenerator.history')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={S.menuBtn} onPress={() => navigation.navigate('WodHistory', { filter: 'favorites' })} activeOpacity={0.8} testID="wodgen-menu-favorites">
+              <Heart color={theme.error} size={15} />
+              <Text style={S.menuText}>{i18n.t('wodGenerator.favorites')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={S.menuBtn} onPress={() => navigation.navigate('Explorer', { screen: 'Programmation' })} activeOpacity={0.8} testID="wodgen-menu-programs">
+              <BookOpen color={theme.text} size={15} />
+              <Text style={S.menuText}>{i18n.t('wodGenerator.programming')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <Text style={S.headerTitle}>
+          Générateur de WOD{discipline === 'hybrid' ? <Text style={{ color: HYBRID_ORANGE }}> · Hybrid</Text> : null}
+        </Text>
+      </View>
+
+      <ScrollView contentContainerStyle={[S.content, { paddingBottom: insets.bottom + 120 }]} showsVerticalScrollIndicator={false}>
+        {/* Entrée */}
+        <View style={S.cardRow}>
+          {([
+            { key: 'express', label: 'WOD express', sub: 'Une séance complète', Icon: Zap },
+            { key: 'after_class', label: 'Après ma classe', sub: 'Un complément', Icon: GraduationCap },
+          ] as { key: Entry; label: string; sub: string; Icon: typeof Zap }[]).map(({ key, label, sub, Icon }) => (
+            <TouchableOpacity
+              key={key}
+              style={[S.entryCard, entry === key && { borderColor: accent, backgroundColor: `${accent}10` }]}
+              onPress={() => chooseEntry(key)}
+              activeOpacity={0.85}
+              testID={`wodgen-entry-${key}`}
+            >
+              <Icon size={20} color={entry === key ? accent : theme.textSecondary} />
+              <Text style={S.entryLabel}>{label}</Text>
+              <Text style={S.entrySub}>{sub}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Discipline */}
+        <View style={S.cardRow}>
+          {(['functional', 'hybrid'] as Discipline[]).map((d) => {
+            const color = d === 'hybrid' ? HYBRID_ORANGE : theme.accent;
+            return (
+              <TouchableOpacity
+                key={d}
+                style={[S.sportCard, discipline === d && { borderColor: color, backgroundColor: `${color}10` }]}
+                onPress={() => chooseDiscipline(d)}
+                activeOpacity={0.85}
+                testID={`wodgen-discipline-${d}`}
+              >
+                <Text style={S.sportEmoji}>{d === 'functional' ? '🏋️' : '🏁'}</Text>
+                <Text style={[S.sportLabel, discipline === d && { color }]}>{d === 'functional' ? 'Functional' : 'Hybrid'}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Classe du jour (Après ma classe) */}
+        {entry === 'after_class' && dayClass && currentBox && (
+          <GlassCard radius={14} style={S.classCard}>
+            <Text style={S.classTitle}>Classe du jour · {currentBox.name}</Text>
+            <Text style={S.classWod}>{dayClass.title}</Text>
+            <Text style={S.classSub}>{catalog ? avoidedText(catalog, dayClass.movements) : ''}</Text>
+          </GlassCard>
+        )}
+
+        <Section title="Durée" S={S}>
+          <ChipScroll>
+            {DURATIONS[entry][discipline].map((d) => (
+              <Chip key={d} label={`${d} min`} selected={duration === d} onPress={() => setDuration(d)} />
+            ))}
+          </ChipScroll>
+        </Section>
+
+        {entry === 'express' && (
+          <Section title="Format" S={S}>
+            <ChipScroll>
+              {FORMATS.map((f) => (
+                <Chip key={f.key} label={f.label} selected={format === f.key} onPress={() => setFormat(f.key)} />
+              ))}
+            </ChipScroll>
+          </Section>
+        )}
+
+        <Section title="Intention" S={S}>
+          <ChipScroll>
+            {INTENTIONS[discipline].map((i) => (
+              <Chip key={i.key} label={i.label} selected={intention === i.key} onPress={() => setIntention(i.key)} />
+            ))}
+          </ChipScroll>
+        </Section>
+
+        {discipline === 'hybrid' && (
+          <Section title="Gilet lesté" S={S}>
+            <ChipScroll>
+              {VESTS.map((v) => (
+                <Chip key={v.key} label={v.label} selected={vest === v.key} onPress={() => setVest(v.key)} />
+              ))}
+            </ChipScroll>
+          </Section>
+        )}
+
+        {/* Options avancées : une seule ligne Exclure */}
+        <TouchableOpacity style={S.advToggle} onPress={() => setAdvanced((v) => !v)} activeOpacity={0.8} testID="wodgen-advanced">
+          <Text style={S.advToggleText}>Options avancées{exclude.length ? ` · ${exclude.length} exclu${exclude.length > 1 ? 's' : ''}` : ''}</Text>
+          {advanced ? <ChevronUp size={18} color={theme.textSecondary} /> : <ChevronDown size={18} color={theme.textSecondary} />}
+        </TouchableOpacity>
+        {advanced && (
+          <View style={S.advBox}>
+            <Text style={S.advLabel}>Exclure</Text>
+            {!catalog ? <ActivityIndicator color={accent} /> : (
+              <ChipScroll>
+                {excludedMovements.map((m) => (
+                  <TouchableOpacity key={m.id} style={S.exclChip} onPress={() => toggleExclude(m.id)} activeOpacity={0.8}>
+                    <Text style={S.exclChipText}>{m.name}</Text>
+                    <X size={12} color={theme.error} />
+                  </TouchableOpacity>
+                ))}
+                {equipment.map((e) => (
+                  <TouchableOpacity
+                    key={e}
+                    style={[S.chip, exclude.includes(e) && S.exclChip]}
+                    onPress={() => toggleExclude(e)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[S.chipText, exclude.includes(e) && S.exclChipText]}>{e}</Text>
+                    {exclude.includes(e) && <X size={12} color={theme.error} />}
+                  </TouchableOpacity>
+                ))}
+              </ChipScroll>
+            )}
+            <TextInput
+              style={S.input}
+              placeholder="Exclure un mouvement…"
+              placeholderTextColor={theme.textMuted}
+              value={search}
+              onChangeText={setSearch}
+              autoCapitalize="none"
+              testID="wodgen-exclude-search"
+            />
+            {movementHits.length > 0 && (
+              <View style={S.chipRow}>
+                {movementHits.map((m) => (
+                  <TouchableOpacity key={m.id} style={S.chip} onPress={() => { toggleExclude(m.id); setSearch(''); }} activeOpacity={0.8}>
+                    <Text style={S.chipText}>+ {m.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+
+        <GlassCard radius={16} variant={discipline === 'hybrid' ? 'default' : 'emerald'} style={S.generateCard}>
+          <TouchableOpacity
+            style={[S.generateBtn, { borderColor: accent, backgroundColor: `${accent}1A` }]}
+            onPress={generate}
+            disabled={generating || !user}
+            activeOpacity={0.9}
+            testID="wodgen-generate"
+          >
+            {generating ? <ActivityIndicator color={accent} /> : <Sparkles size={18} color={accent} />}
+            <Text style={S.generateText}>{entry === 'express' ? 'Générer mon WOD' : 'Générer mon complément'}</Text>
+          </TouchableOpacity>
+        </GlassCard>
+      </ScrollView>
+    </View>
+  );
+}
+
+function Section({ title, children, S }: { title: string; children: React.ReactNode; S: ReturnType<typeof createStyles> }) {
+  return (
+    <View style={S.section}>
+      <Text style={S.sectionTitle}>{title}</Text>
+      {children}
+    </View>
+  );
+}
+
+function createStyles(theme: AppTheme) { return StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.background },
+  header: { paddingHorizontal: 20, paddingBottom: 12 },
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerTitle: { fontSize: 24, fontWeight: '900', color: theme.text, marginTop: 12 },
+  menu: { flexDirection: 'row', gap: 6 },
+  menuBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 10, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
+  },
+  menuText: { fontSize: 12, fontWeight: '700', color: theme.text },
+  content: { padding: 16 },
+
+  cardRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  entryCard: {
+    flex: 1, borderRadius: 16, padding: 14, gap: 4,
+    backgroundColor: theme.card, borderWidth: 2, borderColor: theme.border,
+  },
+  entryLabel: { fontSize: 14, fontWeight: '800', color: theme.text, marginTop: 4 },
+  entrySub: { fontSize: 11, color: theme.textMuted },
+  sportCard: {
+    flex: 1, borderRadius: 16, padding: 12, alignItems: 'center', gap: 4,
+    backgroundColor: theme.card, borderWidth: 2, borderColor: theme.border,
+  },
+  sportEmoji: { fontSize: 22 },
+  sportLabel: { fontSize: 13, fontWeight: '800', color: theme.textSecondary },
+
+  classCard: { padding: 14, marginBottom: 16 },
+  classTitle: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textSecondary },
+  classWod: { fontSize: 15, fontWeight: '800', color: theme.text, marginTop: 4 },
+  classSub: { fontSize: 11, color: theme.textMuted, marginTop: 4 },
+
+  section: { marginBottom: 18 },
+  sectionTitle: { fontSize: 13, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', color: theme.textSecondary, marginBottom: 10 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
+  chipScrollOuter: { marginHorizontal: -16, marginBottom: 8 },
+  chipScroll: { flexDirection: 'row', gap: 8, paddingHorizontal: 16 },
+  chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12,
+    borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
+  },
+  chipText: { fontSize: 13, color: theme.text, fontWeight: '600' },
+  exclChip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12,
+    borderWidth: 1, borderColor: theme.error, backgroundColor: `${theme.error}12`,
+  },
+  exclChipText: { fontSize: 13, fontWeight: '700', color: theme.text },
+
+  advToggle: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14,
+    borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
+  },
+  advToggleText: { fontSize: 14, fontWeight: '800', color: theme.text },
+  advBox: {
+    marginTop: 12, padding: 16, borderRadius: 14,
+    borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface,
+  },
+  advLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textSecondary, marginBottom: 10 },
+  input: {
+    borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
+    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, color: theme.text, fontSize: 14, marginTop: 6,
+  },
+
+  generateCard: { marginTop: 24, overflow: 'hidden' },
+  generateBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    borderRadius: 16, borderWidth: 1, padding: 18,
+  },
+  generateText: { fontSize: 16, fontWeight: '900', letterSpacing: 0.6, color: theme.text },
+}); }
