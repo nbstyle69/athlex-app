@@ -1,6 +1,6 @@
 # Échantillon générateur — 10 WODs par intention × discipline
 
-Moteur 1.1.0 · catalogue v2 · banque v2. Sortie texte telle que l'athlète la lirait (`title` + `description`), suivie de l'estimation par catégorie et des métadonnées du tirage. Tout est régénérable à l'identique depuis la seed.
+Moteur 1.1.0 · catalogue v2 · banque v3. Sortie texte telle que l'athlète la lirait (`title` + `description`), suivie de l'estimation par catégorie et des métadonnées du tirage. Tout est régénérable à l'identique depuis la seed.
 
 ## Functional
 
@@ -77,28 +77,25 @@ Estimation : Scaled 20.0' (5 passages, travail 23-52 s / 60 s) · Inter 20.0' (5
 
 _Squelette `emom_alternating` · seed 1021 · tirage 1 · signature `functional|emom_alternating|emom|5|front_rack_lunge:reps,ring_dip:reps,bike_erg:10cal,burpee:reps`_
 
-#### 5. Chipper · SkiErg / Box Jump-overs / Devils Press
+#### 5. Stations · Bike Erg / Sled Pull / SkiErg
 
 **Entrées** : Express · Functional · 30' · intention mixed · format Chipper
 
 ```
-Chipper · for time (cap 41')
-100 cal SkiErg
-90 Box Jump-overs (60/50 cm)
+4 rounds × 4 stations · 75 s on / 30 s off
+Station 1 · Bike Erg (max cal, cible 20 cal)
+Station 2 · Sled Pull (100/75 kg) (max m, cible 25 m)
+Scaled 50/40 · Inter 75/50 · RX+ 125/100 · Elite 150/125 · Pro 150/125 kg
+Station 3 · SkiErg (max cal, cible 18 cal)
+Station 4 · Box Jump-overs (60/50 cm) (max reps, cible 15)
 Scaled 50/40 · Inter 60/50 · RX+ 60/50 · Elite 75/60 · Pro 75/60 cm
 Scaled : Box Step Over
-80 Devils Press (22.5/15 kg)
-Scaled 15/10 · Inter 20/12.5 · RX+ 30/20 · Elite 35/22.5 · Pro 40/25 kg
-70 Thruster (43/30 kg)
-Scaled 30/20 · Inter 35/25 · RX+ 50/35 · Elite 55/40 · Pro 60/43 kg
-60 Burpee Box Jump Over (60/50 cm)
-Scaled 50/40 · Inter 60/50 · RX+ 60/50 · Elite 75/60 · Pro 75/60 cm
-Stimulus : RPE 7.5 — Gestion, pas de sprint avant le dernier tiers. Cible RX : ≈ 29:14, cap 41'.
+Stimulus : RPE 8 — Max effort sur chaque station, repos incomplet voulu. Cible RX : 4 tours × 4 stations, 75 s on / 30 s off.
 ```
 
-Estimation : Scaled 37.8' (≈ 37:48) · Inter 33.5' (≈ 33:31) · RX 29.2' (≈ 29:14) · RX+ 26.9' (≈ 26:57) · Elite 24.9' (≈ 24:57) · Pro 23.5' (≈ 23:31) · cap 41:00
+Estimation : Scaled 28.0' (4 tours × 4 stations, 75 s on / 30 s off) · Inter 28.0' (4 tours × 4 stations, 75 s on / 30 s off) · RX 28.0' (4 tours × 4 stations, 75 s on / 30 s off) · RX+ 28.0' (4 tours × 4 stations, 75 s on / 30 s off) · Elite 28.0' (4 tours × 4 stations, 75 s on / 30 s off) · Pro 28.0' (4 tours × 4 stations, 75 s on / 30 s off)
 
-_Squelette `chipper_descending` · seed 1028 · tirage 27 · signature `functional|chipper_descending|chipper|-|ski_erg:100cal,box_jump_over:reps,devil_press:reps,thruster:reps,burpee_box_jump_over:reps`_
+_Squelette `stations_rotation` · seed 1028 · tirage 51 · relâché : format · signature `functional|stations_rotation|stations|4|bike_erg:20cal,sled_pull:25m,ski_erg:18cal,box_jump_over:reps`_
 
 #### 6. AMRAP 8 · Sumo Deadlift High Pull / Pistols
 
@@ -186,21 +183,23 @@ _Squelette `triplet_amrap_mid` · seed 1063 · tirage 2 · signature `functional
 
 ### Functional · cardio
 
-#### 11. AMRAP 8 · Back Squat / Bike Erg
+#### 11. AMRAP 8 · Power Snatch / Box Jump Over Step Down
 
 **Entrées** : Express · Functional · 8' · intention cardio · format Surprise
 
 ```
 AMRAP 8
-9 Back Squat (60/43 kg)
-Scaled 40/30 · Inter 50/35 · RX+ 70/50 · Elite 80/55 · Pro 90/60 kg
-16 cal Bike Erg
+11 Power Snatch (30/20 kg)
+Scaled 20/15 · Inter 25/20 · RX+ 35/25 · Elite 40/30 · Pro 43/30 kg
+12 Box Jump Over Step Down (60/50 cm)
+Scaled 50/40 · Inter 60/50 · RX+ 60/50 · Elite 75/60 · Pro 75/60 cm
+Scaled : Box Step Over
 Stimulus : RPE 8 — Allure constante, pas de set cassé avant la mi-temps. Cible RX : ≈ 5 rounds.
 ```
 
 Estimation : Scaled 8.0' (≈ 4 rounds) · Inter 8.0' (≈ 4 rounds) · RX 8.0' (≈ 5 rounds) · RX+ 8.0' (≈ 5 rounds) · Elite 8.0' (≈ 5 rounds) · Pro 8.0' (≈ 6 rounds)
 
-_Squelette `couplet_amrap_short` · seed 1070 · tirage 5 · signature `functional|couplet_amrap_short|amrap|-|back_squat:reps,bike_erg:16cal`_
+_Squelette `couplet_amrap_short` · seed 1070 · tirage 3 · signature `functional|couplet_amrap_short|amrap|-|power_snatch:reps,box_jump_over_step_down:reps`_
 
 #### 12. AMRAP 12 · Echo Bike / Push Press / Toes-to-Bar
 
@@ -414,39 +413,37 @@ _Squelette `heavy_couplet` · seed 1154 · tirage 2 · signature `functional|hea
 
 ```
 EMOM 20 · 4 stations en alternance
-Min 1 · 8 Deadlift (100/70 kg)
-Scaled 60/40 · Inter 80/55 · RX+ 120/80 · Elite 140/95 · Pro 160/110 kg
+Min 1 · 5 Deadlift (140/95 kg)
+Scaled 80/55 · Inter 100/70 · RX+ 160/110 · Elite 180/120 · Pro 200/140 kg
 Min 2 · 8 Handstand Push-ups
 Scaled : Push-ups · Inter : Pike Push-Ups · Elite/Pro : Strict Handstand Push-Ups
 Min 3 · 9 cal Row
 Min 4 · 6 Burpees
-Stimulus : RPE 7 — Chaque station ≤ 40 s de travail, le repos est la consigne. Cible RX : 5 passages, travail 20-32 s / 60 s.
+Stimulus : RPE 7 — Chaque station ≤ 40 s de travail, le repos est la consigne. Cible RX : 5 passages, travail 13-32 s / 60 s.
 ```
 
-Estimation : Scaled 20.0' (5 passages, travail 26-42 s / 60 s) · Inter 20.0' (5 passages, travail 23-37 s / 60 s) · RX 20.0' (5 passages, travail 20-32 s / 60 s) · RX+ 20.0' (5 passages, travail 18-30 s / 60 s) · Elite 20.0' (5 passages, travail 17-28 s / 60 s) · Pro 20.0' (5 passages, travail 16-26 s / 60 s)
+Estimation : Scaled 20.0' (5 passages, travail 16-42 s / 60 s) · Inter 20.0' (5 passages, travail 14-37 s / 60 s) · RX 20.0' (5 passages, travail 13-32 s / 60 s) · RX+ 20.0' (5 passages, travail 12-30 s / 60 s) · Elite 20.0' (5 passages, travail 11-28 s / 60 s) · Pro 20.0' (5 passages, travail 10-26 s / 60 s)
 
 _Squelette `emom_alternating` · seed 1161 · tirage 1 · signature `functional|emom_alternating|emom|5|deadlift:reps,handstand_push_up:reps,row:9cal,burpee:reps`_
 
-#### 25. Stations · SkiErg / Box Step-ups / Bike Erg
+#### 25. Stations · Row / KB Front Squat / Bike Erg
 
 **Entrées** : Express · Functional · 30' · intention force · format Chipper
 
 ```
-4 rounds × 5 stations · 60 s on / 30 s off
-Station 1 · SkiErg (max cal, cible 14 cal)
-Station 2 · Box Step-ups (60/50 cm) (max reps, cible 25)
-Scaled 50/40 · Inter 60/50 · RX+ 60/50 · Elite 75/60 · Pro 75/60 cm
-Station 3 · Bike Erg (max cal, cible 16 cal)
-Station 4 · Sled Pull (100/75 kg) (max m, cible 20 m)
-Scaled 50/40 · Inter 75/50 · RX+ 125/100 · Elite 150/125 · Pro 150/125 kg
-Station 5 · Push-ups (max reps, cible 25)
-Scaled : Knee Push-Ups
-Stimulus : RPE 8 — Max effort sur chaque station, repos incomplet voulu. Cible RX : 4 tours × 5 stations, 60 s on / 30 s off.
+4 rounds × 4 stations · 90 s on / 15 s off
+Station 1 · Row (max cal, cible 25 cal)
+Station 2 · KB Front Squat (32/24 kg) (max reps, cible 25)
+Scaled 20/16 · Inter 24/16 · RX+ 32/24 · Elite 40/28 · Pro 40/28 kg
+Station 3 · Bike Erg (max cal, cible 25 cal)
+Station 4 · Devils Press (30/20 kg) (max reps, cible 7)
+Scaled 20/12.5 · Inter 22.5/15 · RX+ 35/22.5 · Elite 40/25 · Pro 50/30 kg
+Stimulus : RPE 8 — Max effort sur chaque station, repos incomplet voulu. Cible RX : 4 tours × 4 stations, 90 s on / 15 s off.
 ```
 
-Estimation : Scaled 30.0' (4 tours × 5 stations, 60 s on / 30 s off) · Inter 30.0' (4 tours × 5 stations, 60 s on / 30 s off) · RX 30.0' (4 tours × 5 stations, 60 s on / 30 s off) · RX+ 30.0' (4 tours × 5 stations, 60 s on / 30 s off) · Elite 30.0' (4 tours × 5 stations, 60 s on / 30 s off) · Pro 30.0' (4 tours × 5 stations, 60 s on / 30 s off)
+Estimation : Scaled 28.0' (4 tours × 4 stations, 90 s on / 15 s off) · Inter 28.0' (4 tours × 4 stations, 90 s on / 15 s off) · RX 28.0' (4 tours × 4 stations, 90 s on / 15 s off) · RX+ 28.0' (4 tours × 4 stations, 90 s on / 15 s off) · Elite 28.0' (4 tours × 4 stations, 90 s on / 15 s off) · Pro 28.0' (4 tours × 4 stations, 90 s on / 15 s off)
 
-_Squelette `stations_rotation` · seed 1168 · tirage 3 · relâché : format, skeleton · signature `functional|stations_rotation|stations|4|ski_erg:14cal,box_step_up:reps,bike_erg:16cal,sled_pull:20m,push_up:reps`_
+_Squelette `stations_rotation` · seed 1168 · tirage 3 · relâché : format, skeleton · signature `functional|stations_rotation|stations|4|row:25cal,kb_front_squat:reps,bike_erg:25cal,devil_press:reps`_
 
 #### 26. 3 rounds · Hang Power Snatch / Box Jump-overs / Handstand Walk
 
@@ -610,23 +607,26 @@ Estimation : Scaled 20.0' (5 passages, travail 20-40 s / 60 s) · Inter 20.0' (5
 
 _Squelette `emom_alternating` · seed 1231 · tirage 1 · signature `functional|emom_alternating|emom|5|front_squat:reps,rope_climb:reps,ski_erg:8cal,plank_hold:s`_
 
-#### 35. AMRAP 30 · Shuttle Run / Plank Hold / DB Thruster
+#### 35. Stations · Run / Devils Press / Row
 
 **Entrées** : Express · Functional · 30' · intention gym · format Chipper
 
 ```
-AMRAP 30
-170 m Shuttle Run
-35 s Plank Hold
-10 DB Thruster (15/10 kg)
+4 rounds × 5 stations · 60 s on / 30 s off
+Station 1 · Run (max m, cible 200 m)
+Station 2 · Devils Press (15/10 kg) (max reps, cible 7)
 Scaled 10/7.5 · Inter 12.5/10 · RX+ 20/12.5 · Elite 22.5/15 · Pro 22.5/15 kg
-10 cal Row
-Stimulus : RPE 6.5 — Zone 3, respiration contrôlée du début à la fin. Cible RX : ≈ 9 rounds.
+Station 3 · Row (max cal, cible 15 cal)
+Station 4 · DB Lunges (15/10 kg) (max reps, cible 25)
+Scaled 10/7.5 · Inter 12.5/10 · RX+ 20/12.5 · Elite 22.5/15 · Pro 22.5/15 kg
+Station 5 · Bar Muscle-ups (max reps, cible 5)
+Scaled : Banded Pull-Ups · Inter/RX : Chest-to-Bar
+Stimulus : RPE 8 — Max effort sur chaque station, repos incomplet voulu. Cible RX : 4 tours × 5 stations, 60 s on / 30 s off.
 ```
 
-Estimation : Scaled 30.0' (≈ 7 rounds) · Inter 30.0' (≈ 8 rounds) · RX 30.0' (≈ 9 rounds) · RX+ 30.0' (≈ 10 rounds) · Elite 30.0' (≈ 10 rounds) · Pro 30.0' (≈ 11 rounds)
+Estimation : Scaled 30.0' (4 tours × 5 stations, 60 s on / 30 s off) · Inter 30.0' (4 tours × 5 stations, 60 s on / 30 s off) · RX 30.0' (4 tours × 5 stations, 60 s on / 30 s off) · RX+ 30.0' (4 tours × 5 stations, 60 s on / 30 s off) · Elite 30.0' (4 tours × 5 stations, 60 s on / 30 s off) · Pro 30.0' (4 tours × 5 stations, 60 s on / 30 s off)
 
-_Squelette `engine_long_amrap` · seed 1238 · tirage 2 · relâché : format, skeleton · signature `functional|engine_long_amrap|amrap|-|shuttle_run:170m,plank_hold:s,db_thruster:reps,row:10cal`_
+_Squelette `stations_rotation` · seed 1238 · tirage 23 · relâché : format, skeleton · signature `functional|stations_rotation|stations|4|run:200m,devil_press:reps,row:15cal,db_lunge:reps,bar_muscle_up:reps`_
 
 #### 36. 21-15-9 · Devils Press / Ring Dips
 
@@ -698,26 +698,21 @@ Estimation : Scaled 10.0' (≈ 2 rounds) · Inter 10.0' (≈ 3 rounds) · RX 10.
 
 _Squelette `triplet_amrap_mid` · seed 1266 · tirage 153 · relâché : format, skeleton, duration±5 · signature `functional|triplet_amrap_mid|amrap|-|echo_bike:19cal,kb_swing_russian:reps,plank_hold:s`_
 
-#### 40. Stations · Row / KB Swings Russian / Echo Bike
+#### 40. EMOM 15 · Pull-ups / Hollow Rocks
 
 **Entrées** : Après la classe · Functional · 15' · intention gym · format Surprise · WOD du jour : Back Squat, Thruster, Pull-ups
 
 ```
-2 rounds × 5 stations · 75 s on / 15 s off
-Station 1 · Row (max cal, cible 19 cal)
-Station 2 · KB Swings Russian (20/16 kg) (max reps, cible 38)
-Scaled 12/8 · Inter 16/12 · RX+ 24/16 · Elite 24/20 · Pro 28/20 kg
-Station 3 · Echo Bike (max cal, cible 19 cal)
-Station 4 · Sled Pull (75/50 kg) (max m, cible 25 m)
-Scaled 40/30 · Inter 50/40 · RX+ 100/75 · Elite 100/75 · Pro 125/100 kg
-Station 5 · Push-ups (max reps, cible 38)
-Scaled : Knee Push-Ups
-Stimulus : RPE 8 — Max effort sur chaque station, repos incomplet voulu. Cible RX : 2 tours × 5 stations, 75 s on / 15 s off.
+EMOM 15 · every 1:30 · 2 stations en alternance
+Min 1 · 12 Pull-ups
+Scaled : Ring Rows · Inter : Banded Pull-Ups · Elite/Pro : Chest-to-Bar
+Min 2 · 20 Hollow Rocks
+Stimulus : RPE 6.5 — Technique, aucun échec musculaire. Cible RX : 5 passages, travail 22-24 s / 90 s.
 ```
 
-Estimation : Scaled 15.0' (2 tours × 5 stations, 75 s on / 15 s off) · Inter 15.0' (2 tours × 5 stations, 75 s on / 15 s off) · RX 15.0' (2 tours × 5 stations, 75 s on / 15 s off) · RX+ 15.0' (2 tours × 5 stations, 75 s on / 15 s off) · Elite 15.0' (2 tours × 5 stations, 75 s on / 15 s off) · Pro 15.0' (2 tours × 5 stations, 75 s on / 15 s off)
+Estimation : Scaled 15.0' (5 passages, travail 28-31 s / 90 s) · Inter 15.0' (5 passages, travail 25-28 s / 90 s) · RX 15.0' (5 passages, travail 22-24 s / 90 s) · RX+ 15.0' (5 passages, travail 20-22 s / 90 s) · Elite 15.0' (5 passages, travail 18-20 s / 90 s) · Pro 15.0' (5 passages, travail 17-19 s / 90 s)
 
-_Squelette `stations_rotation` · seed 1273 · tirage 163 · relâché : format, skeleton, duration±5 · signature `functional|stations_rotation|stations|2|row:19cal,kb_swing_russian:reps,echo_bike:19cal,sled_pull:25m,push_up:reps`_
+_Squelette `gym_density` · seed 1273 · tirage 9 · relâché : after_class_pattern · signature `functional|gym_density|emom|5|pull_up:reps,hollow_rock:reps`_
 
 ## Hybrid
 
@@ -1108,17 +1103,17 @@ _Squelette `run_into_station` · seed 1399 · tirage 3 · signature `hybrid|run_
 **Entrées** : Après la classe · Hybrid · 10' · intention engine · format Surprise · sans gilet · WOD du jour : Back Squat, Thruster, Pull-ups
 
 ```
-3 rounds for time (cap 12')
+3 rounds for time (cap 13:30)
 70 m Sandbag Carry (30/20 kg)
 Pro 40/30 kg
-28 GHD Sit-Ups
-10 cal Row
-Stimulus : RPE 6 — Posture et gainage, jamais à l'échec. Cible Men : ≈ 9:23, cap 12'.
+13 GHD Sit-Ups
+25 cal Row
+Stimulus : RPE 6 — Posture et gainage, jamais à l'échec. Cible Men : ≈ 10:32, cap 13:30.
 ```
 
-Estimation : Women 9.4' (≈ 9:23) · Men 9.4' (≈ 9:23) · Women Pro 8.7' (≈ 8:43) · Men Pro 8.7' (≈ 8:43) · cap 12:00
+Estimation : Women 10.5' (≈ 10:32) · Men 10.5' (≈ 10:32) · Women Pro 9.8' (≈ 9:47) · Men Pro 9.8' (≈ 9:47) · cap 13:30
 
-_Squelette `core_carry_finisher` · seed 1406 · tirage 52 · relâché : format, skeleton · signature `hybrid|core_carry_finisher|rounds_for_time|3|sandbag_carry:70m,ghd_sit_up:reps,row:10cal`_
+_Squelette `core_carry_finisher` · seed 1406 · tirage 52 · relâché : format, skeleton · signature `hybrid|core_carry_finisher|rounds_for_time|3|sandbag_carry:70m,ghd_sit_up:reps,row:25cal`_
 
 #### 60. 4 rounds · Run / Row
 
@@ -1459,22 +1454,22 @@ Estimation : Women 40.9' (≈ 40:56) · Men 40.9' (≈ 40:56) · Women Pro 37.9'
 
 _Squelette `run_into_station` · seed 1539 · tirage 4 · signature `hybrid|run_into_station|rounds_for_time|6|run:550m,wall_ball:reps,row:1000m,db_farmer_carry:200m,ski_erg:1000m,burpee_broad_jump:60m,sled_pull:45m`_
 
-#### 79. 4 rounds · Sandbag Carry / Hollow Rocks / Shuttle Run
+#### 79. 3 rounds · Farmer Carry / Sit-ups / Run
 
 **Entrées** : Après la classe · Hybrid · 10' · intention run · format Surprise · sans gilet · WOD du jour : Back Squat, Thruster, Pull-ups
 
 ```
-4 rounds for time (cap 12')
-50 m Sandbag Carry (30/20 kg)
-Pro 40/30 kg
-25 Hollow Rocks
-100 m Shuttle Run
-Stimulus : RPE 6 — Posture et gainage, jamais à l'échec. Cible Men : ≈ 9:17, cap 12'.
+3 rounds for time (cap 12')
+80 m Farmer Carry (20/16 kg)
+Pro 24/16 kg
+15 Sit-ups
+200 m Run
+Stimulus : RPE 6 — Posture et gainage, jamais à l'échec. Cible Men : ≈ 9:21, cap 12'.
 ```
 
-Estimation : Women 9.3' (≈ 9:17) · Men 9.3' (≈ 9:17) · Women Pro 8.6' (≈ 8:38) · Men Pro 8.6' (≈ 8:38) · cap 12:00
+Estimation : Women 9.3' (≈ 9:21) · Men 9.3' (≈ 9:21) · Women Pro 8.7' (≈ 8:43) · Men Pro 8.7' (≈ 8:43) · cap 12:00
 
-_Squelette `core_carry_finisher` · seed 1546 · tirage 59 · relâché : format, skeleton · signature `hybrid|core_carry_finisher|rounds_for_time|4|sandbag_carry:50m,hollow_rock:reps,shuttle_run:100m`_
+_Squelette `core_carry_finisher` · seed 1546 · tirage 56 · relâché : format, skeleton · signature `hybrid|core_carry_finisher|rounds_for_time|3|db_farmer_carry:80m,sit_up:reps,run:200m`_
 
 #### 80. Intervalles · Shuttle Run
 

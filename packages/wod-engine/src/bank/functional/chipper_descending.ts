@@ -4,13 +4,10 @@ export const chipper_descending: Skeleton = {
   id: 'chipper_descending',
   discipline: 'functional',
   format: 'chipper',
-  durations: [20, 30],
+  durations: [15, 20],
   intentions: ['mixed', 'cardio'],
   band_by_intention: { mixed: 'medium', cardio: 'light' },
   scheme: [50, 40, 30, 20, 10],
-  scheme_alternatives: [
-    [50, 40, 30, 20, 10], [60, 50, 40, 30, 20], [80, 60, 50, 40, 30], [100, 80, 60, 40, 20], [100, 80, 60, 50, 40], [100, 90, 80, 70, 60],
-  ],
   rounds: 'scheme',
   barbell_low_scheme: true,
   slots: [

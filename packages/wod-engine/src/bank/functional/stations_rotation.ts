@@ -16,7 +16,7 @@ export const stations_rotation: Skeleton = {
     { pick: { family: ['kettlebell', 'dumbbell', 'wallball', 'sandbag', 'sled', 'box'] }, qty: 'range' },
     { pick: { family: ['erg', 'run'] }, qty: 'range', role: 'erg différent du (1)' },
     { pick: { family: ['kettlebell', 'dumbbell', 'wallball', 'sandbag', 'sled', 'box'], pattern_not_of_slot: 1 }, qty: 'range' },
-    { pick: { family: ['kettlebell', 'dumbbell', 'wallball', 'sandbag', 'sled', 'box', 'bodyweight'], pattern_not_of_slot: 3 }, qty: 'range', optional: true },
+    { pick: { family: ['kettlebell', 'dumbbell', 'wallball', 'sandbag', 'sled', 'box', 'bodyweight', 'gym'], pattern_not_of_slot: 3 }, qty: 'range', optional: true },
   ],
   score_type: 'reps_total',
   cap_factor: 1.0,

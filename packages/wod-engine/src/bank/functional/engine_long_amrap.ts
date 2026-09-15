@@ -10,7 +10,7 @@ export const engine_long_amrap: Skeleton = {
   rounds: 'amrap',
   slots: [
     { pick: { family: ['erg', 'run'] }, qty: 'range' },
-    { pick: { family: ['bodyweight'], pattern_any: ['mono', 'core'] }, qty: 'range' },
+    { pick: { family: ['bodyweight', 'gym'], pattern_any: ['mono', 'core', 'pull_v', 'push_v'] }, qty: 'range' },
     { pick: { family: ['kettlebell', 'wallball', 'dumbbell'], band: 'light' }, qty: 'range' },
     { pick: { family: ['erg', 'run'] }, qty: 'range', role: 'erg différent du (1) ou run' },
   ],

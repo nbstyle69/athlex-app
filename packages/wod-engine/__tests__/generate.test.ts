@@ -2,6 +2,7 @@ import {
   generateBlocC, estimateDuration, signature, CATALOG_SNAPSHOT, BANK_V1, NoValidWod, movementById,
   profileCategory, VEST_LOAD_KG, HYBRID_CATEGORIES, FUNCTIONAL_CATEGORIES, movementLines,
   cadenceFor, movementCapFor, forceBand, isSlowSkill, carriesIntention, EQUIPMENT_FALLBACK, render,
+  heavyAllowed, rackAllowed, engineShare, CARDIO_EXCLUDED_IDS, RACK_ONLY_IDS, ENGINE_MIN_SHARE, RUN_MIN_M,
 } from '../src';
 import type { GenerateParams, GeneratedWod } from '../src';
 import { conformityGrid, violations, countByCause, CAUSES } from './conformity';
@@ -67,7 +68,7 @@ describe('generateBlocC — conformité §5 sur toutes les combinaisons', () => 
         if (v.length && failures.length <= 20) failures.push(`${JSON.stringify(p)} seed ${seed} (${w.generator.skeleton_id}) : ${v.join(' ; ')}`);
       }
     }
-    // compteur par cause (A–H) de la relecture des samples : tout doit être à zéro
+    // compteur par cause (A–K) de la relecture des samples : tout doit être à zéro
     // eslint-disable-next-line no-console
     console.log(`conformité : ${generated} WODs · violations par cause ${CAUSES.map((k) => `${k}=${byCause[k]}`).join(' ')}`);
     expect(byCause).toEqual(countByCause([]));
@@ -254,7 +255,7 @@ describe('rendu texte ↔ parser app', () => {
   });
 });
 
-describe('corrections A–H de la relecture des samples', () => {
+describe('corrections A–K des relectures des samples', () => {
   const every = (pred: (w: GeneratedWod) => boolean, params: GenerateParams, seeds = 40) => {
     for (let seed = 1; seed <= seeds; seed++) expect({ seed, ok: pred(gen(params, seed)) }).toEqual({ seed, ok: true });
   };
@@ -280,18 +281,89 @@ describe('corrections A–H de la relecture des samples', () => {
     expect(movementCapFor(BANK_V1, m('row'), 'light', 'cal', 'rx')).toBeNull();
   });
 
-  it('C — Force porte une charge lourde, Gym un slot G hors GHD, Core un pattern core, Cardio aucun skill lent', () => {
-    expect(forceBand({ budget_min: 12, entry: 'express' })).toBe('heavy');
-    expect(carriesIntention({ intention: 'gym', budget_min: 12, entry: 'express' }, m('ghd_sit_up'), 'light')).toBe(false);
-    expect(carriesIntention({ intention: 'gym', budget_min: 12, entry: 'express' }, m('toes_to_bar'), 'light')).toBe(true);
-    for (const id of ['ring_muscle_up', 'rope_climb', 'wall_walk', 'handstand_walk']) expect({ id, slow: isSlowSkill(m(id)) }).toEqual({ id, slow: true });
-    expect(isSlowSkill(m('wall_ball'))).toBe(false);
+  const skOf = (w: GeneratedWod) => ({ id: w.generator.skeleton_id.split(':')[0], format: w.blocks[0].format });
+  const amrap = { id: 'couplet_amrap_short', format: 'amrap' as const };
+  const emom = { id: 'emom_alternating', format: 'emom' as const };
+
+  it('C — Force porte une charge lourde, Core un pattern core, Cardio aucun skill de la liste', () => {
+    expect(forceBand({ budget_min: 12, entry: 'express' }, amrap)).toBe('heavy');
     for (const format of ['chipper', 'stations', 'amrap'] as const) {
-      every((w) => w.blocks[0].movements.some((gm) => carriesIntention({ intention: 'force', budget_min: 12, entry: 'express' }, m(gm.id), gm.load_band ?? 'light')), { ...F, intention: 'force', format }, 20);
-      every((w) => w.blocks[0].movements.some((gm) => carriesIntention({ intention: 'gym', budget_min: 12, entry: 'express' }, m(gm.id), 'light')), { ...F, intention: 'gym', format }, 20);
+      every((w) => w.blocks[0].movements.some((gm) => carriesIntention({ intention: 'force', budget_min: 12, entry: 'express' }, m(gm.id), gm.load_band ?? 'light', skOf(w))), { ...F, intention: 'force', format }, 20);
       every((w) => w.blocks[0].movements.every((gm) => !isSlowSkill(m(gm.id))), { ...F, intention: 'cardio', format }, 20);
     }
     every((w) => w.blocks[0].movements.some((gm) => m(gm.id).pattern.includes('core')), { ...H, intention: 'core', budget_min: 30 }, 20);
+  });
+
+  it('Cardio — liste d\'exclusion fermée, pas de seuil de cadence', () => {
+    const excluded = ['bar_muscle_up', 'ring_muscle_up', 'rope_climb', 'legless_rope_climb', 'wall_walk', 'handstand_walk', 'strict_handstand_push_up', 'squat_snatch', 'squat_clean', 'cluster'];
+    expect([...CARDIO_EXCLUDED_IDS].sort()).toEqual([...excluded].sort());
+    for (const id of excluded) expect({ id, slow: isSlowSkill(m(id)) }).toEqual({ id, slow: true });
+    for (const id of ['burpee', 'devil_press', 'handstand_push_up', 'wall_ball']) expect({ id, slow: isSlowSkill(m(id)) }).toEqual({ id, slow: false });
+  });
+
+  it('Force > 15\' — heavy interdit seulement en format continu ; EMOM, intervalles, stations, heavy_couplet gardent heavy', () => {
+    expect(heavyAllowed(amrap, 20)).toBe(false);
+    expect(heavyAllowed({ id: 'chipper_descending', format: 'chipper' }, 20)).toBe(false);
+    expect(heavyAllowed({ id: 'ladder_ascending', format: 'ladder' }, 20)).toBe(false);
+    expect(heavyAllowed(amrap, 15)).toBe(true);
+    expect(heavyAllowed(emom, 30)).toBe(true);
+    expect(heavyAllowed({ id: 'interval_work_rest', format: 'interval' }, 30)).toBe(true);
+    expect(heavyAllowed({ id: 'stations_rotation', format: 'stations' }, 30)).toBe(true);
+    expect(heavyAllowed({ id: 'heavy_couplet', format: 'rounds_for_time' }, 20)).toBe(true);
+    expect(forceBand({ budget_min: 20, entry: 'express' }, amrap)).toBe('medium');
+    expect(forceBand({ budget_min: 20, entry: 'express' }, emom)).toBe('heavy');
+    for (const format of ['emom', 'stations', 'interval'] as const) {
+      every((w) => w.blocks[0].movements.some((gm) => gm.load_band === 'heavy'), { ...F, intention: 'force', budget_min: 20, format }, 20);
+    }
+    // aucun squelette Force continu à 20' : le format se relâche vers EMOM/intervalles (heavy légitime) ;
+    // si un format continu sort malgré tout, il ne porte jamais de heavy
+    every((w) => heavyAllowed(skOf(w), 20) || w.blocks[0].movements.every((gm) => gm.load_band !== 'heavy'), { ...F, intention: 'force', budget_min: 20, format: 'amrap' }, 20);
+    every((w) => heavyAllowed(skOf(w), 30) || w.blocks[0].movements.every((gm) => gm.load_band !== 'heavy'), { ...F, intention: 'force', budget_min: 30 }, 20);
+  });
+
+  it('I — chipper à schéma fixe 50-40-30-20-10, 15/20 min seulement, plafonds devil press / BBJO / BJO / DB snatch', () => {
+    const cd = BANK_V1.skeletons.find((s) => s.id === 'chipper_descending')!;
+    expect(cd.durations).toEqual([15, 20]);
+    expect(cd.scheme).toEqual([50, 40, 30, 20, 10]);
+    every((w) => {
+      const b = w.blocks[0];
+      if (skOf(w).id !== 'chipper_descending') return true;
+      return b.movements.map((gm) => gm.qty).join(',') === '50,40,30,20,10';
+    }, { ...F, budget_min: 20, format: 'chipper' });
+    every((w) => skOf(w).id !== 'chipper_descending', { ...F, budget_min: 30, format: 'chipper' });
+    expect(movementCapFor(BANK_V1, m('devil_press'), 'light', 'reps', 'rx')).toBe(30);
+    expect(movementCapFor(BANK_V1, m('burpee_box_jump_over'), 'light', 'reps', 'rx')).toBe(40);
+    expect(movementCapFor(BANK_V1, m('box_jump_over'), 'light', 'reps', 'rx')).toBe(60);
+    expect(movementCapFor(BANK_V1, m('db_snatch'), 'light', 'reps', 'rx')).toBe(60);
+  });
+
+  it('J — Gym = famille gym pull_v/push_v ; Engine ≥ 40 % du temps ; Run ≥ 200 m par round', () => {
+    const gym = { intention: 'gym' as const, budget_min: 12, entry: 'express' as const };
+    for (const id of ['ghd_sit_up', 'plank_hold', 'push_up', 'burpee']) expect({ id, gym: carriesIntention(gym, m(id), 'light', amrap) }).toEqual({ id, gym: false });
+    for (const id of ['toes_to_bar', 'pull_up', 'handstand_push_up', 'ring_dip']) expect({ id, gym: carriesIntention(gym, m(id), 'light', amrap) }).toEqual({ id, gym: true });
+    const isGym = (w: GeneratedWod) => w.blocks[0].movements.some((gm) => m(gm.id).family === 'gym' && m(gm.id).pattern.some((p) => p === 'pull_v' || p === 'push_v'));
+    for (const format of ['amrap', 'stations', 'chipper'] as const) every(isGym, { ...F, intention: 'gym', budget_min: 30, format }, 20);
+    every(isGym, { entry: 'after_class', discipline: 'functional', budget_min: 10, intention: 'gym', format: 'surprise', after_class: { day_movements: ['Back Squat'] } }, 20);
+    for (const budget of [15, 30, 45]) every((w) => engineShare(CATALOG_SNAPSHOT, w.blocks[0], 'men') >= ENGINE_MIN_SHARE, { ...H, intention: 'engine', budget_min: budget }, 20);
+    every((w) => engineShare(CATALOG_SNAPSHOT, w.blocks[0], 'men') >= ENGINE_MIN_SHARE, { entry: 'after_class', discipline: 'hybrid', budget_min: 10, intention: 'engine', format: 'surprise', after_class: { day_movements: ['Thrusters'] } }, 20);
+    const hasRun = (w: GeneratedWod) => w.blocks[0].movements.some((gm) => m(gm.id).family === 'run' && gm.unit === 'm' && gm.qty >= RUN_MIN_M);
+    for (const budget of [15, 30, 45]) every(hasRun, { ...H, intention: 'run', budget_min: budget }, 20);
+    every(hasRun, { entry: 'after_class', discipline: 'hybrid', budget_min: 10, intention: 'run', format: 'surprise', after_class: { day_movements: ['Thrusters'] } }, 20);
+  });
+
+  it('K — back squat / bench press seulement en EMOM, intervalles, stations, heavy_couplet', () => {
+    expect([...RACK_ONLY_IDS].sort()).toEqual(['back_squat', 'bench_press']);
+    expect(rackAllowed(amrap)).toBe(false);
+    expect(rackAllowed({ id: 'couplet_for_time_21_15_9', format: 'for_time' })).toBe(false);
+    expect(rackAllowed({ id: 'chipper_descending', format: 'chipper' })).toBe(false);
+    expect(rackAllowed(emom)).toBe(true);
+    expect(rackAllowed({ id: 'interval_work_rest', format: 'interval' })).toBe(true);
+    expect(rackAllowed({ id: 'heavy_couplet', format: 'rounds_for_time' })).toBe(true);
+    for (const format of ['amrap', 'for_time', 'chipper'] as const) {
+      for (const intention of ['cardio', 'force', 'mixed'] as const) {
+        every((w) => rackAllowed(skOf(w)) || w.blocks[0].movements.every((gm) => !RACK_ONLY_IDS.has(gm.id)), { ...F, intention, format }, 20);
+      }
+    }
   });
 
   it('D — un chipper est un seul passage, run ≤ 800 m, rendu sans « rounds »', () => {

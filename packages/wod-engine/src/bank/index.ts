@@ -25,7 +25,7 @@ import { engine_continuous } from './hybrid/engine_continuous';
 import { core_carry_finisher } from './hybrid/core_carry_finisher';
 import { run_intervals } from './hybrid/run_intervals';
 
-export const BANK_VERSION = 2;
+export const BANK_VERSION = 3;
 
 export const FUNCTIONAL_SKELETONS = [
   couplet_for_time_21_15_9, couplet_amrap_short, triplet_amrap_mid, triplet_rounds_for_time, chipper_descending,
@@ -77,7 +77,11 @@ export const MOVEMENT_CAPS: MovementCap[] = [
   { label: 'barre medium', family: 'barbell', band: 'medium', unit: 'reps', rx: 60 },
   { label: 'barre light', family: 'barbell', band: 'light', unit: 'reps', rx: 90 },
   { label: 'wall balls', ids: ['wall_ball'], unit: 'reps', rx: 150 },
-  { label: 'burpees', ids: ['burpee', 'bar_facing_burpee', 'burpee_over_the_bar', 'burpee_box_jump_over', 'burpee_box_jump'], unit: 'reps', rx: 60 },
+  { label: 'devil press', ids: ['devil_press'], unit: 'reps', rx: 30 },
+  { label: 'burpee box jump over', ids: ['burpee_box_jump_over'], unit: 'reps', rx: 40 },
+  { label: 'box jump over', ids: ['box_jump_over'], unit: 'reps', rx: 60 },
+  { label: 'DB snatch', ids: ['db_snatch'], unit: 'reps', rx: 60 },
+  { label: 'burpees', ids: ['burpee', 'bar_facing_burpee', 'burpee_over_the_bar', 'burpee_box_jump'], unit: 'reps', rx: 60 },
 ];
 
 export const VOLUME_CAP_FACTOR: Record<Category, number> = {

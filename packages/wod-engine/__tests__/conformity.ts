@@ -1,17 +1,19 @@
 import {
   CATALOG_SNAPSHOT, BANK_V1, movementById, primaryPattern, isFunctionalCategory, categoriesFor, cadenceFor,
   carriesIntention, isSlowSkill, movementCapFor, ladderStep, deathByMinute, roundSeconds, afterClassFilter,
+  heavyAllowed, rackAllowed, engineShare, RACK_ONLY_IDS, ENGINE_MIN_SHARE, RUN_MIN_M,
 } from '../src';
+import type { SkeletonRef } from '../src';
 import type { GeneratedWod, GenerateParams, FormatChoice, Intention, Category } from '../src';
 
-/** Causes de la relecture des 90 samples (A à H) : chaque violation ci-dessous est préfixée `[X]`. */
-export const CAUSES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] as const;
+/** Causes des relectures des samples (A à K) : chaque violation ci-dessous est préfixée `[X]`. */
+export const CAUSES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K'] as const;
 export type Cause = (typeof CAUSES)[number];
 
 export function countByCause(violations: string[]): Record<Cause, number> {
   const out = Object.fromEntries(CAUSES.map((c) => [c, 0])) as Record<Cause, number>;
   for (const v of violations) {
-    const m = /^\[([A-H])\]/.exec(v);
+    const m = /^\[([A-K])\]/.exec(v);
     if (m) out[m[1] as Cause]++;
   }
   return out;
@@ -61,10 +63,12 @@ export function violations(wod: GeneratedWod, params: GenerateParams): string[] 
   }
   // 5-6 : bandes
   const loaded = rows.filter((r) => r.gm.load_band && r.m.loads);
-  if (params.budget_min > 15 && loaded.some((r) => r.gm.load_band === 'heavy')) out.push('bande heavy au-delà de 15 min');
+  const sk = skeletonRef(wod);
+  if (!heavyAllowed(sk, params.budget_min) && loaded.some((r) => r.gm.load_band === 'heavy')) out.push('bande heavy au-delà de 15 min en format continu');
   if (params.intention === 'force' && params.entry === 'express' && loaded.some((r) => r.gm.load_band === 'light')) out.push('bande light en Force');
-  const needMod = { force: 'W', gym: 'G', cardio: 'M' }[params.intention as string];
+  const needMod = { force: 'W', cardio: 'M' }[params.intention as string];
   if (params.discipline === 'functional' && needMod && !rows.some((r) => r.m.modality === needMod)) out.push(`intention ${params.intention} sans modalité ${needMod}`);
+  if (params.discipline === 'functional' && params.intention === 'gym' && !rows.some((r) => r.m.family === 'gym' && r.m.pattern.some((p) => p === 'pull_v' || p === 'push_v'))) out.push('intention gym sans slot family gym pull_v/push_v');
   if (params.entry === 'after_class' && loaded.some((r) => r.gm.load_band !== 'light')) out.push('après-classe : bande non light');
   // 7-8 : composition par discipline
   if (params.discipline === 'hybrid' && !rows.some((r) => r.m.family === 'erg' || r.m.family === 'run')) out.push('Hybrid sans erg ni run');
@@ -90,9 +94,12 @@ export function violations(wod: GeneratedWod, params: GenerateParams): string[] 
   if (params.entry === 'after_class' && wod.after_class) {
     const pats = new Set(wod.after_class.excluded_patterns);
     const fams = new Set(wod.after_class.excluded_families);
+    // le slot porteur de l'intention est exempté du filtre pattern quand le WOD du jour couvre tous ses patterns (relâchement tracé)
+    const exempt = wod.generator.relaxations.includes('after_class_pattern');
     for (const r of rows) {
-      if (r.m.pattern.some((p) => pats.has(p))) out.push(`après-classe : pattern exclu ${r.m.id}`);
-      if (fams.has(r.m.family)) out.push(`après-classe : famille exclue ${r.m.id}`);
+      const carrier = exempt && carriesIntention(params, r.m, 'light', sk);
+      if (!carrier && r.m.pattern.some((p) => pats.has(p))) out.push(`après-classe : pattern exclu ${r.m.id}`);
+      if (!carrier && fams.has(r.m.family)) out.push(`après-classe : famille exclue ${r.m.id}`);
     }
   }
   // 14 : exclusions
@@ -135,8 +142,12 @@ function totalVolume(wod: GeneratedWod, ref: Category, i: number): number {
   }
 }
 
+function skeletonRef(wod: GeneratedWod): SkeletonRef {
+  return { id: wod.generator.skeleton_id.split(':')[0], format: wod.blocks[0].format };
+}
+
 /**
- * Corrections A–H de la relecture des samples. Chaque violation est préfixée par sa cause
+ * Corrections A–K des relectures des samples. Chaque violation est préfixée par sa cause
  * pour le compteur (`countByCause`) : toutes doivent être à zéro.
  */
 export function causeViolations(wod: GeneratedWod, params: GenerateParams): string[] {
@@ -145,6 +156,8 @@ export function causeViolations(wod: GeneratedWod, params: GenerateParams): stri
   const ref: Category = params.discipline === 'functional' ? 'rx' : 'men';
   const rows = b.movements.map((gm) => ({ gm, m: movementById(CATALOG_SNAPSHOT, gm.id)! }));
   const budgetS = params.budget_min * 60;
+  const sk = skeletonRef(wod);
+  const bankSk = BANK_V1.skeletons.find((s) => s.id === sk.id);
 
   // A — scheme fixe : un for time à schéma est 21-15-9 / 9-7-5 (≤ 45 reps), jamais gonflé
   if (b.format === 'for_time' && b.scheme && rows.some((r) => r.gm.unit === 'reps' && r.gm.scheme)) {
@@ -159,11 +172,11 @@ export function causeViolations(wod: GeneratedWod, params: GenerateParams): stri
     if (total > cap + 1e-9) out.push(`[B] ${r.gm.id} ${Math.round(total)} ${r.gm.unit} > plafond ${cap}`);
   });
   // C — intention honorée quel que soit le format
-  if (params.intention === 'force' || params.intention === 'gym' || params.intention === 'core') {
-    if (!rows.some((r) => carriesIntention(params, r.m, r.gm.load_band ?? 'light'))) out.push(`[C] intention ${params.intention} non portée`);
+  if (params.intention === 'force' || params.intention === 'core') {
+    if (!rows.some((r) => carriesIntention(params, r.m, r.gm.load_band ?? 'light', sk))) out.push(`[C] intention ${params.intention} non portée`);
   }
   if (params.intention === 'cardio') {
-    for (const r of rows) if (isSlowSkill(r.m)) out.push(`[C] cardio avec skill lent ${r.gm.id} (${cadenceFor(r.m, 'rx', 'reps') ?? '-'} s/rep)`);
+    for (const r of rows) if (isSlowSkill(r.m)) out.push(`[C] cardio avec skill exclu ${r.gm.id} (${cadenceFor(r.m, 'rx', 'reps') ?? '-'} s/rep)`);
   }
   // D — chipper : un seul passage, run ≤ 800 m
   if (b.format === 'chipper') {
@@ -206,6 +219,29 @@ export function causeViolations(wod: GeneratedWod, params: GenerateParams): stri
       const need = r.gm.qty * r.gm.cadence_by_category[ref]!;
       if (need > b.rest.work_s * 1.05) out.push(`[H] ${r.gm.id} ${r.gm.qty} ${r.gm.unit} = ${Math.round(need)} s > ${b.rest.work_s} s`);
     }
+  }
+  // I — chipper : schéma fixe (celui de la banque, jamais gonflé), durée parmi celles du squelette
+  if (b.format === 'chipper' && bankSk) {
+    if (bankSk.scheme) {
+      const got = rows.filter((r) => r.gm.round === undefined).map((r) => r.gm.qty);
+      if (got.some((q, i) => q !== bankSk.scheme![i])) out.push(`[I] chipper ${got.join('-')} ≠ schéma ${bankSk.scheme.join('-')}`);
+    }
+    if (!bankSk.durations.includes(params.budget_min)) out.push(`[I] ${sk.id} tiré à ${params.budget_min} min (${bankSk.durations.join('/')})`);
+  }
+  // J — Gym = famille gym pull_v / push_v ; Engine ≥ 40 % du temps ; Run ≥ 200 m par round
+  if (params.intention === 'gym' && !rows.some((r) => r.m.family === 'gym' && r.m.pattern.some((p) => p === 'pull_v' || p === 'push_v'))) {
+    out.push('[J] intention gym sans mouvement famille gym pull_v/push_v');
+  }
+  if (params.intention === 'engine') {
+    const share = engineShare(CATALOG_SNAPSHOT, b, ref);
+    if (share < ENGINE_MIN_SHARE - 1e-9) out.push(`[J] engine : ergs/course ${Math.round(share * 100)} % < 40 %`);
+  }
+  if (params.intention === 'run' && !rows.some((r) => r.m.family === 'run' && r.gm.unit === 'm' && r.gm.qty >= RUN_MIN_M)) {
+    out.push('[J] run sans segment ≥ 200 m par round');
+  }
+  // K — back squat / bench press : rack ⇒ EMOM, intervalles, stations, heavy_couplet seulement
+  if (!rackAllowed(sk)) {
+    for (const r of rows) if (RACK_ONLY_IDS.has(r.gm.id)) out.push(`[K] ${r.gm.id} en ${b.format}`);
   }
   return out;
 }

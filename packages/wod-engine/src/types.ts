@@ -148,8 +148,6 @@ export interface Skeleton {
   scheme?: number[];
   /** scheme alternatif par bande (ex. force → 15-12-9) */
   scheme_by_band?: Partial<Record<Band, number[]>>;
-  /** Schémas de repli pour caler la durée (for_time à schéma). */
-  scheme_alternatives?: number[][];
   /** plafond de rounds par bande (ex. force → rounds ≤ 4) */
   max_rounds_by_band?: Partial<Record<Band, number>>;
   rest?: SkeletonRest;

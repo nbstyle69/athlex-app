@@ -14,7 +14,7 @@ export const chipper_stations_erg: Skeleton = {
     { pick: { family: ['erg'], unit: 'cal' }, qty: 'range', role: 'erg différent du (1)' },
     { pick: { family: ['kettlebell', 'dumbbell', 'wallball'] }, qty: 'range' },
     { pick: { family: ['run'], unit: 'm' }, qty: 'range', qty_max: 800 },
-    { pick: { family: ['bodyweight'], pattern_any: ['core'] }, qty: 'range' },
+    { pick: { family: ['bodyweight', 'gym'], pattern_any: ['core', 'pull_v', 'push_v'] }, qty: 'range' },
   ],
   score_type: 'time',
   cap_factor: 1.4,

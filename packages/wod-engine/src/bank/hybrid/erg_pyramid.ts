@@ -8,7 +8,6 @@ export const erg_pyramid: Skeleton = {
   intentions: ['engine', 'aerobic'],
   band_by_intention: { engine: 'light', aerobic: 'light' },
   scheme: [250, 500, 750, 500, 250],
-  scheme_alternatives: [[250, 500, 750, 500, 250], [500, 750, 1000, 750, 500], [250, 500, 750, 1000, 750, 500, 250], [500, 750, 1000, 1250, 1000, 750, 500]],
   rounds: 'scheme',
   slots: [
     { pick: { ids: ['row', 'ski_erg', 'bike_erg'], unit: 'm' }, qty: 'scheme' },
