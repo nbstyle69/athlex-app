@@ -270,7 +270,9 @@ export default function WODDetailScreen() {
   }
 
   async function submitScore() {
-    if (!wod || !user || !currentBox) return;
+    if (!wod || !user) return;
+    const scoreBoxId = wod.box_id == null ? null : currentBox?.id ?? null;
+    if (wod.box_id != null && !scoreBoxId) return;
     let value = 0;
     let capped = false;
     if (scoreType === 'time' && dnf) {
@@ -297,7 +299,7 @@ export default function WODDetailScreen() {
     const { error } = await supabase.from('wod_scores').upsert({
       wod_id: wod.id,
       member_id: user.id,
-      box_id: currentBox.id,
+      box_id: scoreBoxId,
       score_type: scoreType,
       score_value: value,
       capped,
