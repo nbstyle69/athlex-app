@@ -16,6 +16,25 @@ export const SESSION_ENGINE_VERSION = '1.0.0';
 export const SESSION_TOLERANCE = 0.10;
 /** minute de transition entre deux blocs */
 export const TRANSITION_MIN = 1;
+/** durée des étapes A et B d'un skill (secondes) */
+export const SKILL_STEP_S = 180;
+export const B_RETRY_MAX = 12;
+/** préfixe des finishers dans le journal `signatures` (anti-répétition 4 semaines) */
+export const FINISHER_SIGNATURE_PREFIX = 'finisher:';
+
+export function finisherSignature(id: string): string {
+  return `${FINISHER_SIGNATURE_PREFIX}${id}`;
+}
+
+export function splitSignatures(all: readonly string[]): { c: string[]; finishers: string[] } {
+  const c: string[] = [];
+  const finishers: string[] = [];
+  for (const s of all) {
+    if (s.startsWith(FINISHER_SIGNATURE_PREFIX)) finishers.push(s.slice(FINISHER_SIGNATURE_PREFIX.length));
+    else c.push(s);
+  }
+  return { c, finishers };
+}
 /** plafonds gym hebdomadaires RX (brief J1 §5.5) */
 export const WEEKLY_GYM_CAPS = { pull: 150, hspu: 80 } as const;
 export const WEEKLY_PULL_IDS: ReadonlySet<string> = new Set(['chest_to_bar', 'pull_up', 'toes_to_bar']);
@@ -114,8 +133,8 @@ function blockALines(catalog: Catalog, opt: SessionBlockAOption, weeks: 'even' |
   } else if (opt.skill) {
     const sk = opt.skill;
     lines.push(`Skill — ${name} : progression en 3 étapes`);
-    lines.push(`Étape A : positions et tension (hollow / arch, scap, kip) — ${fmtEvery(180)}`);
-    lines.push(`Étape B : la répétition partielle ou assistée — ${fmtEvery(180)}`);
+    lines.push(`Étape A : ${sk.progression.a} — ${fmtEvery(SKILL_STEP_S)}`);
+    lines.push(`Étape B : ${sk.progression.b} — ${fmtEvery(SKILL_STEP_S)}`);
     lines.push(`Étape C : Every ${fmtEvery(sk.every_s)} × ${sk.rounds}`);
     lines.push(`${sk.reps} ${name}`);
     const subs = Object.entries(sk.substitutions).map(([c, s]) => `${CAT_LABEL[c] ?? c} : ${s}`);
@@ -124,8 +143,12 @@ function blockALines(catalog: Catalog, opt: SessionBlockAOption, weeks: 'even' |
   return lines;
 }
 
+function nameOfB(catalog: Catalog, opt: SessionBlockBOption): string {
+  return opt.name ?? nameOf(catalog, opt.movement);
+}
+
 function blockBLines(catalog: Catalog, opt: SessionBlockBOption): string[] {
-  const name = nameOf(catalog, opt.movement);
+  const name = nameOfB(catalog, opt);
   const lines = [`Building — ${name} tempo ${opt.tempo ?? ''}`.trim()];
   for (const st of opt.steps) lines.push(stepLine(name, st, opt.tempo));
   return lines;
@@ -134,7 +157,7 @@ function blockBLines(catalog: Catalog, opt: SessionBlockBOption): string[] {
 function finisherLines(catalog: Catalog, opt: SessionFinisherOption): string[] {
   const lines = [`Finisher — ${opt.rounds} rounds, rythme continu :`];
   for (const m of opt.movements) {
-    const name = nameOf(catalog, m.id);
+    const name = m.name ?? nameOf(catalog, m.id);
     lines.push(m.unit === 's' ? `${m.qty} s ${name}` : m.unit === 'm' ? `${m.qty} m ${name}` : `${m.qty} ${name}`);
   }
   return lines;
@@ -249,8 +272,29 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
   }
   const movA = optA ? movementById(catalog, optA.movement) : undefined;
   const heavy = optA && optA.kind !== 'skill' ? heavyPatternOf(movA) : null;
-  const optB = sk.block_b ? rng.pick(sk.block_b) : null;
-  const optF = sk.finisher ? rng.pick(sk.finisher) : null;
+  const { c: recentC, finishers: journalFinishers } = splitSignatures(params.recent_signatures ?? []);
+
+  // Bloc B : exercice ≠ A (et hors complexe), pattern ≠ pattern lourd de A, jamais deux fois le même B dans la semaine
+  let optB: SessionBlockBOption | null = null;
+  if (sk.block_b) {
+    const aIds = new Set([optA?.movement, ...(optA?.complex ?? [])].filter((x): x is string => !!x));
+    const sameAsA = (id: string) => aIds.has(id) || aIds.has(id.replace(/^strict_/, ''));
+    const base = sk.block_b.filter((o) => !sameAsA(o.movement) && (!heavy || o.pattern !== heavy));
+    const weekB = new Set(params.week_b_movements ?? []);
+    const fresh = base.filter((o) => !weekB.has(o.movement));
+    if (fresh.length) optB = rng.pick(fresh);
+    else if (base.length) { optB = rng.pick(base); relax.add('b_repeat_week'); }
+    else { optB = null; relax.add('b_none'); }
+  }
+
+  // Finisher : jamais deux fois le même dans la semaine ni sur les 4 dernières semaines (journal)
+  let optF: SessionFinisherOption | null = null;
+  if (sk.finisher) {
+    const used = new Set([...journalFinishers, ...(params.recent_finishers ?? [])]);
+    const fresh = sk.finisher.filter((o) => !used.has(o.id));
+    if (fresh.length) optF = rng.pick(fresh);
+    else { optF = rng.pick(sk.finisher); relax.add('finisher_repeat'); }
+  }
 
   // Bloc C : durée choisie pour tenir 60' avec / sans B et finisher
   const fixed = sk.warmup.minutes + (optA?.minutes ?? 0);
@@ -308,7 +352,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
         intention: a.intention,
         format: a.format,
         exclude,
-        recent_signatures: params.recent_signatures ?? [],
+        recent_signatures: recentC,
         pattern_not: a.patternNot.length ? a.patternNot : undefined,
         skeleton_not: skeletonNot,
       }, catalog, bank, idx === 0 ? cSeed : hashSeed(cSeed, a.tag ?? '', idx));
@@ -352,7 +396,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     for (const st of optB.steps) bReps[optB.movement] = (bReps[optB.movement] ?? 0) + st.sets * st.reps;
     addReps(gym, gymReps(catalog, bReps));
     blocks.push(editor(
-      `Building · ${nameOf(catalog, optB.movement)}`,
+      `Building · ${nameOfB(catalog, optB)}`,
       blockBLines(catalog, optB).join('\n'),
       'strength', 'building', sort++, optB.minutes,
       structured('building', optB.id, { movement: optB.movement, steps: optB.steps, gym_reps_rx: gymReps(catalog, bReps) }),
@@ -408,6 +452,8 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     bloc_c: blocC,
     gym_reps_rx: gym,
     signature: blocC.signature,
+    block_b_movement: choice.b && optB ? optB.movement : null,
+    finisher_id: choice.f && optF ? optF.id : null,
   };
 }
 
@@ -422,15 +468,36 @@ export function generateWeek(params: WeekParams, catalog: Catalog, bank: Skeleto
   const relax = new Set<string>();
   const recent = [...(params.recent_signatures ?? [])];
   const sessions: GeneratedSession[] = [];
-  const gen = (day: SessionDay, patternNot?: Pattern[]) => generateSession({
+  const once = (day: SessionDay, salt: number, patternNot?: Pattern[]) => generateSession({
     day, iso_year: params.iso_year, iso_week: params.iso_week,
     recent_signatures: [...recent, ...sessions.filter((s) => s.day !== day).map((s) => s.signature)],
+    week_b_movements: sessions.filter((s) => s.day !== day).flatMap((s) => (s.block_b_movement ? [s.block_b_movement] : [])),
+    recent_finishers: sessions.filter((s) => s.day !== day).flatMap((s) => (s.finisher_id ? [s.finisher_id] : [])),
     previous_c_skeleton: sessions.find((s) => s.day === day - 1)?.bloc_c.generator.skeleton_id ?? null,
     next_c_skeleton: sessions.find((s) => s.day === day + 1)?.bloc_c.generator.skeleton_id ?? null,
     pattern_not: patternNot,
     exclude: params.exclude,
-  }, catalog, bank, (seed + day * 7919) >>> 0);
-  for (const day of [1, 2, 3, 4, 5, 6] as SessionDay[]) sessions.push(gen(day));
+  }, catalog, bank, (seed + day * 7919 + salt * 104729) >>> 0);
+  const repeatsB = (s: GeneratedSession) => s.generator.relaxations.includes('b_repeat_week');
+  // bloc B unique dans la semaine : si le jour n'a plus d'option fraîche, on retire un jour
+  // précédent (graine salée, de la veille au lundi) puis les jours suivants, jusqu'à B_RETRY_MAX
+  // graines par jour ; à défaut le relâchement `b_repeat_week` reste tracé
+  const gen = (day: SessionDay, patternNot?: Pattern[]) => once(day, 0, patternNot);
+  for (const day of [1, 2, 3, 4, 5, 6] as SessionDay[]) {
+    sessions.push(gen(day));
+    if (!repeatsB(sessions[sessions.length - 1])) continue;
+    const saved = [...sessions];
+    let solved = false;
+    for (let back = 1; back < day && !solved; back++) {
+      for (let salt = 1; salt <= B_RETRY_MAX && !solved; salt++) {
+        sessions.splice(day - 1 - back);
+        sessions.push(once((day - back) as SessionDay, salt));
+        for (let d = day - back + 1; d <= day; d++) sessions.push(once(d as SessionDay, 0));
+        solved = sessions.slice(day - 1 - back).every((s) => !repeatsB(s));
+      }
+    }
+    if (!solved) sessions.splice(0, sessions.length, ...saved);
+  }
 
   for (const day of [6, 3, 5, 4, 1, 2] as SessionDay[]) {
     const vol = weeklyGymVolume(sessions);
@@ -445,7 +512,10 @@ export function generateWeek(params: WeekParams, catalog: Catalog, bank: Skeleto
   const gym_volume = weeklyGymVolume(sessions);
   if (gym_volume.pull > WEEKLY_GYM_CAPS.pull || gym_volume.hspu > WEEKLY_GYM_CAPS.hspu) relax.add('weekly_gym_cap_exceeded');
 
-  return { track: 'functional', iso_year: params.iso_year, iso_week: params.iso_week, seed, sessions, gym_volume, relaxations: [...relax].sort() };
+  return {
+    track: 'functional', iso_year: params.iso_year, iso_week: params.iso_week, seed, sessions, gym_volume, relaxations: [...relax].sort(),
+    signatures: [...sessions.map((s) => s.signature), ...sessions.flatMap((s) => (s.finisher_id ? [finisherSignature(s.finisher_id)] : []))],
+  };
 }
 
 // ─── Semaine Musculation ─────────────────────────────────────────────────────

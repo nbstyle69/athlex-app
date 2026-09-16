@@ -28,7 +28,7 @@ import { MUSCU_SKELETONS } from './muscu';
 import { SESSION_SKELETONS } from './session';
 
 export { MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, TARGET_MUSCLES } from './muscu';
-export { SESSION_SKELETONS, SESSION_BANK_VERSION } from './session';
+export { SESSION_SKELETONS, SESSION_BANK_VERSION, FINISHERS, S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long } from './session';
 
 export const BANK_VERSION = 3;
 /** version des squelettes Musculation (lignes `discipline = musculation`, migration 20261215) */

@@ -22,11 +22,12 @@ export { profileCategory } from './profile';
 export { MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, MUSCU_BANK_VERSION, TARGET_MUSCLES } from './bank';
 export { muscuSkeletonToRow, isMuscuSkeletonRow, sessionSkeletonToRow, isSessionSkeletonRow } from './bank/rows';
 export type { MuscuSkeletonRow, SessionSkeletonRow, AnySkeletonRow } from './bank/rows';
-export { SESSION_SKELETONS, SESSION_BANK_VERSION } from './bank';
+export { SESSION_SKELETONS, SESSION_BANK_VERSION, FINISHERS, S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long } from './bank';
 export {
   generateSession, generateWeek, generateMuscuWeek, hashSeed, isoWeek, isoWeekMonday, muscuObjectiveForWeek, blocCRepsRx,
   weeklyGymVolume, stepLine, InvalidSessionParams, SESSION_ENGINE_VERSION, SESSION_TOLERANCE, TRANSITION_MIN, WEEKLY_GYM_CAPS,
   WEEKLY_PULL_IDS, WEEKLY_HSPU_IDS, MUSCU_WEEKLY_CAP_SETS, MUSCU_WEEK_DAYS, MUSCU_OBJECTIVE_CYCLE, DAY_LABEL,
+  SKILL_STEP_S, FINISHER_SIGNATURE_PREFIX, finisherSignature, splitSignatures,
 } from './session';
 export {
   generateMuscu, targetAvailable, availableTargets, renderMuscu, exerciseLine, loadText, muscuSignature, afterClassMuscles, muscuLevelFor, percentForReps, sessionSeconds,

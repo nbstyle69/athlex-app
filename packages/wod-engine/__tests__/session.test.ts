@@ -9,6 +9,8 @@ import {
 } from '../src';
 import type { AnySkeletonRow } from '../src';
 import type { GeneratedSession, GeneratedWeek, GeneratedMuscuWeek, SessionDay, Pattern } from '../src';
+import { countSessionByCause, sessionViolations, SESSION_CAUSES } from './conformity-session';
+import { FINISHERS, S3_gym, splitSignatures } from '../src';
 import { parseMovementLine } from '../../../src/utils/movementParser';
 import { parseStrengthLine } from '../../../src/utils/strengthBlock';
 
@@ -19,12 +21,12 @@ const DAYS: SessionDay[] = [1, 2, 3, 4, 5, 6];
 const weeks: GeneratedWeek[] = [];
 const muscuWeeks: GeneratedMuscuWeek[] = [];
 beforeAll(() => {
-  const recent: string[] = [];
+  const journal: string[][] = [];
   for (let w = 1; w <= WEEKS; w++) {
     const seed = hashSeed('box-test', 'crossfit', YEAR, w, 0);
-    const week = generateWeek({ iso_year: YEAR, iso_week: w, recent_signatures: recent.slice(-24) }, CATALOG_SNAPSHOT, BANK_V1, seed);
+    const week = generateWeek({ iso_year: YEAR, iso_week: w, recent_signatures: journal.slice(-4).flat() }, CATALOG_SNAPSHOT, BANK_V1, seed);
     weeks.push(week);
-    recent.push(...week.sessions.map((s) => s.signature));
+    journal.push(week.signatures);
     muscuWeeks.push(generateMuscuWeek({ iso_year: YEAR, iso_week: w }, CATALOG_SNAPSHOT, BANK_V1, hashSeed('box-test', 'musculation', YEAR, w, 0)));
   }
 });
@@ -142,6 +144,52 @@ describe('séance Functional / Hybrid (52 semaines)', () => {
         seen.push(s.signature);
       }
     }
+  });
+
+  it(`compteurs P1–P3 à zéro sur ${WEEKS} semaines (bloc B, finishers, progressions skill)`, () => {
+    const all: string[] = [];
+    for (const [i, w] of weeks.entries()) all.push(...sessionViolations(w, weeks.slice(0, i)));
+    const counts = countSessionByCause(all);
+    console.log(`session P1–P3 : ${weeks.length} semaines`, counts, all.slice(0, 20));
+    for (const c of SESSION_CAUSES) expect(counts[c]).toBe(0);
+  });
+
+  it('P1 · options de B par squelette (brief) et B tiré dans les options du squelette du jour', () => {
+    const byDay: Record<number, string[]> = {
+      1: ['overhead_squat', 'snatch_balance', 'strict_pull_up'],
+      2: ['push_press', 'strict_press', 'ring_dip', 'strict_pull_up'],
+      3: ['ring_dip', 'strict_handstand_push_up', 'strict_pull_up'],
+      4: ['front_squat', 'push_press', 'strict_pull_up'],
+      5: ['front_rack_lunge', 'strict_press', 'ghd_sit_up'],
+    };
+    for (const sk of SESSION_SKELETONS) {
+      if (sk.block_b) expect(sk.block_b.map((o) => o.movement).sort()).toEqual([...byDay[sk.day]].sort());
+    }
+    for (const w of weeks) for (const s of w.sessions) {
+      if (s.block_b_movement) expect(byDay[s.day]).toContain(s.block_b_movement);
+    }
+    // sur 52 semaines, l'OHS ne monopolise pas le lundi et le RDL n'apparaît plus en B
+    const mondays = weeks.map((w) => w.sessions[0].block_b_movement).filter(Boolean);
+    expect(new Set(mondays).size).toBeGreaterThan(1);
+    expect(weeks.flatMap((w) => w.sessions.map((s) => s.block_b_movement))).not.toContain('romanian_deadlift');
+  });
+
+  it('P2 · banque ≥ 10 finishers couvrant tronc, carries, épaules, fessiers, mollets, respiratoire ; journal `finisher:<id>` relu', () => {
+    expect(FINISHERS.length).toBeGreaterThanOrEqual(10);
+    expect(new Set(FINISHERS.map((f) => f.id)).size).toBe(FINISHERS.length);
+    expect(new Set(FINISHERS.map((f) => f.family))).toEqual(new Set(['core', 'carry', 'shoulders', 'glutes', 'calves', 'breathing']));
+    const used = new Set(weeks.flatMap((w) => w.sessions.map((s) => s.finisher_id).filter(Boolean)));
+    expect(used.size).toBeGreaterThanOrEqual(20);
+    const { c, finishers } = splitSignatures(weeks[0].signatures);
+    expect(c).toEqual(weeks[0].sessions.map((s) => s.signature));
+    expect(finishers).toEqual(weeks[0].sessions.map((s) => s.finisher_id).filter(Boolean));
+  });
+
+  it('P3 · sept skills en S3 (C2B, HSPU, BMU, RMU, rope climb, wall walk, HS walk), progression A/B distincte par skill', () => {
+    const ids = (S3_gym.block_a ?? []).map((o) => o.movement).sort();
+    expect(ids).toEqual(['bar_muscle_up', 'chest_to_bar', 'handstand_push_up', 'handstand_walk', 'ring_muscle_up', 'rope_climb', 'wall_walk']);
+    const steps = (S3_gym.block_a ?? []).flatMap((o) => [o.skill!.progression.a, o.skill!.progression.b]);
+    expect(new Set(steps).size).toBe(steps.length);
   });
 
   it('plafonds gym hebdo (RX) : pull ≤ 150, HSPU ≤ 80, le volume est celui des blocs C', () => {

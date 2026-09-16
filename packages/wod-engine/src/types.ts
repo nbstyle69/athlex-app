@@ -276,14 +276,24 @@ export interface SessionBlockAOption {
   /** pas de progression (weightlifting / strength) */
   steps?: StrengthStep[];
   tempo?: string | null;
-  /** skill : reps RX par tour, tours et intervalle */
-  skill?: { reps: number; rounds: number; every_s: number; substitutions: Partial<Record<FunctionalCategory, string>> };
+  /** skill : reps RX par tour, tours et intervalle ; `progression` = étapes A et B propres au skill */
+  skill?: {
+    reps: number;
+    rounds: number;
+    every_s: number;
+    progression: { a: string; b: string };
+    substitutions: Partial<Record<FunctionalCategory, string>>;
+  };
   minutes: number;
 }
 
 export interface SessionBlockBOption {
   id: string;
   movement: string;
+  /** nom affiché quand le mouvement n'est pas dans le catalogue Functional */
+  name?: string;
+  /** pattern du mouvement de B (≠ pattern lourd de A) */
+  pattern: Pattern;
   steps: StrengthStep[];
   tempo?: string | null;
   minutes: number;
@@ -293,7 +303,8 @@ export interface SessionFinisherOption {
   id: string;
   /** rounds × lignes « qty mouvement » (ids catalogue) */
   rounds: number;
-  movements: Array<{ id: string; qty: number; unit: Unit }>;
+  family: 'core' | 'carry' | 'shoulders' | 'glutes' | 'calves' | 'breathing';
+  movements: Array<{ id: string; name?: string; qty: number; unit: Unit }>;
   minutes: number;
 }
 
@@ -334,6 +345,10 @@ export interface SessionParams {
   next_c_skeleton?: string | null;
   /** patterns gym à écarter du bloc C (plafond hebdo dépassé) */
   pattern_not?: Pattern[];
+  /** mouvements de bloc B déjà tirés cette semaine (jamais deux fois le même B) */
+  week_b_movements?: string[];
+  /** finishers de la semaine courante et des 4 dernières (journal `finisher:<id>`) */
+  recent_finishers?: string[];
   exclude?: string[];
 }
 
@@ -377,6 +392,10 @@ export interface GeneratedSession {
   gym_reps_rx: Record<string, number>;
   /** signature du bloc C (anti-répétition 4 semaines) */
   signature: string;
+  /** mouvement du bloc B retenu (null sans B) */
+  block_b_movement: string | null;
+  /** id du finisher retenu (null sans finisher) */
+  finisher_id: string | null;
 }
 
 export interface WeekParams {
@@ -395,6 +414,8 @@ export interface GeneratedWeek {
   /** total RX sur la semaine : `pull` = C2B + pull-ups + T2B, `hspu` */
   gym_volume: { pull: number; hspu: number };
   relaxations: string[];
+  /** journal à persister : signatures des blocs C + `finisher:<id>` (anti-répétition 4 semaines) */
+  signatures: string[];
 }
 
 export interface MuscuWeekParams {

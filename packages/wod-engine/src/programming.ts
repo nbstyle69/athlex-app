@@ -266,7 +266,7 @@ export async function runWeekGeneration(
         if (track === 'functional') {
           const week = generateWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
           rows = functionalWeekRows(week, ctx);
-          signatures = week.sessions.map((s) => s.signature);
+          signatures = week.signatures;
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];
         } else {
           const week = generateMuscuWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
