@@ -1,4 +1,4 @@
-import type { Band, Discipline, Family, MovementCap, MuscuSkeleton, Skeleton, SkeletonBank, SkeletonFormat, Unit } from '../types';
+import type { Band, Discipline, Family, MovementCap, MuscuSkeleton, SessionSkeleton, Skeleton, SkeletonBank, SkeletonFormat, Unit } from '../types';
 import { BANK_V1 } from './index';
 
 /** Ligne de `public.wod_skeletons` : la définition complète du squelette en jsonb. */
@@ -21,14 +21,32 @@ export interface MuscuSkeletonRow {
   version: number;
 }
 
-export type AnySkeletonRow = SkeletonRow | MuscuSkeletonRow;
+/** Ligne `discipline = 'session'` de `public.wod_skeletons` (J1). */
+export interface SessionSkeletonRow {
+  id: string;
+  discipline: 'session';
+  format: 'session';
+  definition: SessionSkeleton;
+  active: boolean;
+  version: number;
+}
+
+export type AnySkeletonRow = SkeletonRow | MuscuSkeletonRow | SessionSkeletonRow;
 
 export function isMuscuSkeletonRow(r: AnySkeletonRow): r is MuscuSkeletonRow {
   return r.discipline === 'musculation';
 }
 
+export function isSessionSkeletonRow(r: AnySkeletonRow): r is SessionSkeletonRow {
+  return r.discipline === 'session';
+}
+
 export function muscuSkeletonToRow(sk: MuscuSkeleton, version: number): MuscuSkeletonRow {
   return { id: sk.id, discipline: 'musculation', format: 'strength_session', definition: sk, active: true, version };
+}
+
+export function sessionSkeletonToRow(sk: SessionSkeleton, version: number): SessionSkeletonRow {
+  return { id: sk.id, discipline: 'session', format: 'session', definition: sk, active: true, version };
 }
 
 /** Ligne de `public.wod_volume_caps` : la table §5.4 (total par WOD à la référence RX). */
@@ -75,8 +93,9 @@ export function movementCapFromRow(r: VolumeCapRow): MovementCap {
  * retombe alors sur `BANK_V1`.
  */
 export function bankFromRows(skeletons: AnySkeletonRow[], caps: VolumeCapRow[]): SkeletonBank {
-  const metcon = skeletons.filter((r): r is SkeletonRow => r.active && !isMuscuSkeletonRow(r));
+  const metcon = skeletons.filter((r): r is SkeletonRow => r.active && !isMuscuSkeletonRow(r) && !isSessionSkeletonRow(r));
   const muscu = skeletons.filter((r): r is MuscuSkeletonRow => r.active && isMuscuSkeletonRow(r));
+  const session = skeletons.filter((r): r is SessionSkeletonRow => r.active && isSessionSkeletonRow(r));
   const activeCaps = caps.filter((r) => r.active);
   if (metcon.length === 0 || activeCaps.length === 0) {
     throw new Error('wod_skeletons / wod_volume_caps vides');
@@ -91,5 +110,8 @@ export function bankFromRows(skeletons: AnySkeletonRow[], caps: VolumeCapRow[]):
     muscu_skeletons: muscu.length
       ? muscu.map((r) => ({ ...r.definition, id: r.id, discipline: 'musculation' as const, format: 'strength_session' as const }))
       : BANK_V1.muscu_skeletons,
+    session_skeletons: session.length
+      ? session.map((r) => ({ ...r.definition, id: r.id, discipline: 'session' as const, format: 'session' as const }))
+      : BANK_V1.session_skeletons,
   };
 }

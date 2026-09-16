@@ -242,6 +242,28 @@ classement. `profiles.level` n'était modifiable nulle part : sélecteur « Nive
 ajouté dans Profil → Modifier, cible du lien « modifier » ; la synchro par l'ELO reste. Copier
 passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest/lint verts.
 
+**Programmation automatique AthleX Fitness — PR J1 (`athlex-app`, migrations `20261216` + `20261217`).**
+Une box `auto_programming` reçoit chaque semaine ISO suivante, par piste (`auto_programming_tracks`
+⊆ {`crossfit`, `musculation`}), ses séances posées dans `box_wods` (`source = 'auto'`, `audience = 'all'`,
+`publish_at` dimanche 18:00 Paris). Piste CrossFit / Hyrox : `generateSession` (`packages/wod-engine/src/session.ts`)
+assemble six séances lundi → samedi autour de 60 min depuis six squelettes de séance
+(`S1_snatch` … `S6_long`, exportés dans `wod_skeletons` en `discipline = 'session'`) : Block A haltéro /
+force (%1RM, tempo), Block C tiré par `generateBlocC` avec le pattern lourd du jour interdit
+(jamais relâché), squelette du jour précédent évité, plafonds Gym hebdo (150 tractions / 80 HSPU)
+avec remplacement tracé `weekly_gym_cap`. Piste Musculation : `generateMuscuWeek` réutilise
+`generateMuscu` (M1) sur cinq jours, objectif par cycle de six semaines ISO (hypertrophie →
+endurance → force), ≤ 16 séries hebdo par muscle, `leaderboard_enabled = false`. Orchestration
+pure dans `programming.ts` (`runWeekGeneration`) : seed = `box + piste + année + semaine +
+regen_counter`, idempotence sur `box_auto_programming_runs` (`box_id, track, iso_year, iso_week`),
+régénération qui garde les jours édités (`box_wods.edited_at`, trigger) ou scorés. Edge Function
+`generate-box-week` (bundle ESM commité, `CRON_SECRET` fail-closed, catalogue et banque lus en
+base avec snapshot en repli), **cron désactivé par défaut** (`docs/RUNBOOK_CRONS.md`). Flags de box
+réservés admin / backend par trigger (message « Accès refusé : programmation automatique réservée à
+un administrateur »), journal en lecture propriétaire seule. Tests §8 : `session.test.ts`,
+`programming.test.ts`, `edge-bundle.test.ts`, suite serveur `scripts/test-auto-programming.mjs`
+(27 contrôles, mutation inverse). **Migrations appliquées en prod : non.** Ni Manager ni écran :
+J2 / J3 attendent la relecture de `packages/wod-engine/samples-programmation.md`.
+
 **Générateur Musculation V1 — PR M1 (`athlex-app`, migrations `20261214` + `20261215`).**
 Troisième discipline du moteur (`packages/wod-engine/src/muscu.ts`, `generateMuscu`, RNG à
 graine, aucun réseau) : 13 cibles × 3 objectifs (hypertrophie / force / endurance) = 39

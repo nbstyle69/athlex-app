@@ -402,6 +402,9 @@ function loadFor(ctx: Ctx, l: Line): MuscuLoad {
   if (mu.load_mode === '1rm' && mu.rm_reference) {
     const rm = params.one_rep_max?.[mu.rm_reference];
     const percent = l.demoted ? Math.min(percentForReps(l.reps), DEMOTED_PERCENT_MAX) : percentForReps(l.reps);
+    if (params.box_wod && params.level !== 'debutant') {
+      return { mode: 'percent', percent, rpe: scheme.rpe, rm_reference: mu.rm_reference };
+    }
     if (rm && rm > 0 && params.level !== 'debutant') {
       return { mode: '1rm', kg: roundLoad(rm * (mu.rm_factor ?? 1) * (percent / 100)), percent, rm_reference: mu.rm_reference };
     }
@@ -781,7 +784,7 @@ function stimulusFor(params: MuscuParams, exercises: MuscuExercise[]): { rpe: nu
     const main = exercises.find((e) => e.role === 'main_compound');
     if (main) parts.push(`Montée en charge sur ${main.name} : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail`);
   }
-  if (exercises.some((e) => e.load.mode === 'rpe' && e.load.rm_reference)) {
+  if (!params.box_wod && exercises.some((e) => e.load.mode === 'rpe' && e.load.rm_reference)) {
     parts.push('Renseigne tes 1RM dans le calculateur pour avoir des charges en kg');
   }
   return { rpe: scheme.rpe, note: parts.join('. ') };
@@ -799,6 +802,7 @@ export function loadText(e: MuscuExercise): string {
   const l = e.load;
   switch (l.mode) {
     case '1rm': return `${l.kg} kg (${l.percent} %)`;
+    case 'percent': return `${l.percent} % 1RM`;
     case 'weighted': return l.kg ? `lesté ${l.kg} kg, RPE ${l.rpe}` : `lesté léger, RPE ${l.rpe}`;
     case 'bodyweight': return e.reps_unit === 'reps' ? 'poids du corps' : '—';
     default: return l.percent ? `RPE ${l.rpe} (≈ ${l.percent} % du 1RM)` : `RPE ${l.rpe}`;
@@ -813,6 +817,8 @@ export function exerciseLine(e: MuscuExercise): string {
   const l = e.load;
   if (l.mode === '1rm' && l.kg) {
     out += ` @ ${l.kg} kg — charge ${l.percent} % 1RM`;
+  } else if (l.mode === 'percent') {
+    out += ` @ ${l.percent} %1RM — charge sans 1RM connu : RPE ${l.rpe}`;
   } else if (l.mode === 'weighted') {
     out += l.kg ? ` — lesté ${l.kg} kg (10 % du poids de corps), RPE ${l.rpe}` : ` — lesté léger, RPE ${l.rpe}`;
   } else if (l.mode === 'rpe') {

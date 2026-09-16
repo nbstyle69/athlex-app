@@ -18,6 +18,28 @@ pas ces jobs**. La liste ci-dessous est la référence pour les remonter.
 | `tournament_activation_sweep` | toutes les 15 min | `SELECT sync_tournament_activation()` |
 | `tournament-notifications-sweep` | min. 5, 20, 35, 50 | edge `tournament-notifications-cron` |
 | `weekly-owner-digest-monday` | lundi 07:00 UTC | edge `weekly-owner-digest` |
+| `generate-box-week-saturday` | **non créé** (désactivé par défaut) | edge `generate-box-week` |
+
+## `generate-box-week` (programmation automatique, J1)
+
+Volontairement **absent** de `cron.job` : la fonction ne fait rien tant que le job n'existe
+pas, et aucune box n'a `auto_programming = true` avant le lot J2 (admin). Quand on l'activera,
+un seul passage par semaine suffit, avant la révélation du dimanche 18:00 Paris ; la fonction
+génère la semaine ISO **suivante**, est idempotente (`box_auto_programming_runs`) et refuse
+tout appel sans `x-cron-secret` valide.
+
+```sql
+SELECT cron.schedule(
+  'generate-box-week-saturday', '0 6 * * 6',   -- samedi 06:00 UTC
+  $$SELECT net.http_post(
+      url     := 'https://<ref>.supabase.co/functions/v1/generate-box-week',
+      headers := '{"Content-Type":"application/json","apikey":"<anon>","x-cron-secret":"<CRON_SECRET>"}'::jsonb,
+      body    := '{}'::jsonb)$$);
+```
+
+Régénérer une semaine à la main (les jours édités ou scorés sont conservés) :
+`POST {"regen":{"box_id":"…","track":"crossfit"}, "iso_year":2026, "iso_week":41}` avec le même
+en-tête. Désactiver : `SELECT cron.unschedule('generate-box-week-saturday');`.
 
 ## `tournament-notifications-sweep`
 

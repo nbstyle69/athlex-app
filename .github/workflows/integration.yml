@@ -288,6 +288,12 @@ jobs:
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'auth-links' }}
         run: node scripts/test-auth-links.mjs
 
+      # Programmation automatique (J1) : flags réservés admin/backend (mutation
+      # inverse), journal des runs, edited_at, publish_at.
+      - name: Suite — Programmation automatique (flags, journal, publish_at)
+        if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'auto-programming' }}
+        run: node scripts/test-auto-programming.mjs
+
       # Contrôle de catalogue : ce que la base accorde réellement, pas ce que
       # les migrations avaient l'intention d'accorder.
       - name: Suite — Grants EXECUTE (schéma public)
