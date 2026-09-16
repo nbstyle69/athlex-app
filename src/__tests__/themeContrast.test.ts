@@ -1,6 +1,7 @@
 import { lightTheme, darkTheme, AppTheme, ThemeMode } from '../theme/palette';
 import { HUES, HueName, hue } from '../theme/hues';
 import { contrast } from '../theme/contrast';
+import { MUSCU_BLUE, MUSCU_BLUE_DARK } from '../screens/wod/muscuOptions';
 
 /**
  * Un écran « thémé » peut être illisible : les jetons se composent, et rien ne
@@ -57,6 +58,16 @@ describe.each(THEMES)('contraste — thème %s', (mode, t) => {
   const hueNames = Object.keys(HUES) as HueName[];
   it.each(hueNames)('la couleur de domaine « %s » est lisible en texte', (name) => {
     expect(onCard(hue(mode, name))).toBeGreaterThanOrEqual(TEXT_MIN);
+  });
+});
+
+describe('contraste — bouton « Série suivante » (MuscuSessionCard)', () => {
+  it('l\'encre blanche est lisible sur le fond du bouton, dans les deux thèmes (fond opaque)', () => {
+    expect(contrast('#ffffff', MUSCU_BLUE_DARK)).toBeGreaterThanOrEqual(TEXT_MIN);
+  });
+
+  it('mesure le défaut historique : #fff sur l\'accent Musculation', () => {
+    expect(contrast('#ffffff', MUSCU_BLUE)).toBeLessThan(TEXT_MIN);
   });
 });
 

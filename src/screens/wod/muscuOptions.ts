@@ -9,6 +9,11 @@ import type {
 import { readPr } from '../profile/prStorage';
 
 export const MUSCU_BLUE = '#3B82F6';
+/**
+ * Fond du bouton « Série suivante » (MuscuSessionCard), seul usage : le blanc sur MUSCU_BLUE
+ * fait 3,7:1, sous le seuil 4,5 des textes ; sur ce bleu il fait 5,2:1 (src/__tests__/themeContrast).
+ */
+export const MUSCU_BLUE_DARK = '#2563EB';
 
 export const MUSCU_OBJECTIVES: { key: MuscuObjective; label: string }[] = (
   ['hypertrophie', 'force', 'endurance'] as MuscuObjective[]
