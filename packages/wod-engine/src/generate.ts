@@ -686,7 +686,7 @@ function lastCarrierSlot(ctx: Ctx, sk: Skeleton, slots: Slot[], band: Band): num
     const p = slots[i].pick;
     const slotBand = p.band ? constrainBand(p.band, ctx.params, sk) : band;
     const ok = ctx.catalog.movements.some((m) =>
-      m.active
+      m.active && weightFor(m, ctx.params.discipline) > 0
       && (!p.ids || p.ids.includes(m.id))
       && (!p.family || p.family.includes(m.family))
       && (!p.modality || p.modality.includes(m.modality))
@@ -949,7 +949,7 @@ export function generateBlocC(params: GenerateParams, catalog: Catalog, bank: Sk
   };
   if (ctx.afterClass && SLOT_INTENTIONS.has(params.intention)) {
     const probe: SkeletonRef = { id: 'probe', format: 'emom' };
-    const reachable = catalog.movements.some((m) => m.active && !ctx.subOnly.has(m.id)
+    const reachable = catalog.movements.some((m) => m.active && weightFor(m, params.discipline) > 0 && !ctx.subOnly.has(m.id)
       && carriesIntention(params, m, 'light', probe)
       && !equipmentExcluded(ctx, m)
       && !m.pattern.some((x) => ctx.afterClass!.patterns.has(x))

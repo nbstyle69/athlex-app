@@ -10,7 +10,7 @@ import {
   BANK_V1, CATALOG_SNAPSHOT, bankFromRows, catalogFromRows,
 } from '../../packages/wod-engine/src';
 import type {
-  Catalog, CatalogRow, Skeleton, SkeletonBank, SkeletonRow, VolumeCapRow,
+  AnySkeletonRow, Catalog, CatalogRow, Skeleton, SkeletonBank, SkeletonRow, VolumeCapRow,
 } from '../../packages/wod-engine/src';
 
 export type EngineDataSource = 'supabase' | 'snapshot';
@@ -50,14 +50,14 @@ async function fetchBank(): Promise<SkeletonBank | null> {
     supabase.from('wod_volume_caps').select('*').eq('active', true),
   ]);
   if (sk.error || caps.error || !sk.data?.length || !caps.data?.length) return null;
-  const skeletonRows: SkeletonRow[] = sk.data.map((r) => ({
+  const skeletonRows = sk.data.map((r) => ({
     id: r.id,
     discipline: r.discipline as SkeletonRow['discipline'],
     format: r.format as SkeletonRow['format'],
     definition: r.definition as unknown as Skeleton,
     active: r.active,
     version: r.version,
-  }));
+  })) as AnySkeletonRow[];
   const capRows: VolumeCapRow[] = caps.data.map((r) => ({
     label: r.label,
     ids: r.ids,

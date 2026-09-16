@@ -242,15 +242,38 @@ classement. `profiles.level` n'était modifiable nulle part : sélecteur « Nive
 ajouté dans Profil → Modifier, cible du lien « modifier » ; la synchro par l'ELO reste. Copier
 passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest/lint verts.
 
+**Générateur Musculation V1 — PR M1 (`athlex-app`, migrations `20261214` + `20261215`).**
+Troisième discipline du moteur (`packages/wod-engine/src/muscu.ts`, `generateMuscu`, RNG à
+graine, aucun réseau) : 13 cibles × 3 objectifs (hypertrophie / force / endurance) = 39
+squelettes `strength_session` embarqués et exportés dans `wod_skeletons`
+(`discipline = 'musculation'`, repli hors ligne comme le metcon). Le catalogue reçoit les 173
+exercices du CSV Musculation v1 en colonnes sur `movement_catalog` (familles `machine` /
+`cable`, muscles, `level_min`, `load_mode`, `rm_reference` / `rm_factor`, cadences, plages par
+objectif, poids `none` / `box` / `gym`) : 18 exercices déjà présents (13 annoncés + 5 alignés
+par nom, écart signalé) gardent leur ligne, 155 sont créés avec poids metcon à 0, les 14
+legacy inactifs le restent. Charges : 1RM du calculateur (`profiles.personal_records`, passés
+en paramètre) × facteur × % de l'objectif arrondi à 2,5 kg, sinon RPE 7 / 8 ; Après ma classe
+exclut les muscles du WOD du jour et interdit Force ; débutant sans unilatéral ni lesté, 4
+exercices max ; jamais deux exercices consécutifs sur le même muscle ; durée ±10 % (slots
+optionnels → séries → squelette) ; signature `musculation|<squelette>|<exercices>` sur les 10
+dernières. Grammaire `strength` étendue (`s`, `m`, `/ jambe`, `/ bras`, `/ côté`) rétro-compatible.
+Tests §7 : 1 152 combinaisons × 200 graines (230 400 séances) sans échec, 1RM connu / inconnu, fixture
+Back Squat + Thrusters. **Migrations appliquées en prod : non** (à appliquer après le build
+embarquant M1 : l'app 1.0.53 charge toutes les lignes actives de `wod_skeletons`, le filtre par
+discipline arrive avec ce lot). Aucun écran : M2 attend la relecture de
+`packages/wod-engine/samples-musculation.md`.
+
 **Générateur de WOD v1 — PR 3 (`AthleX-Manager` + migration `20261213` ici).** Le Manager lit
 `movement_catalog` à la place de son tableau statique `lib/movements.ts` (snapshot embarqué en
 repli, les 14 mouvements `active = false` restent proposés aux coachs, seul le générateur les
 ignore) ; l'admin Mouvements gagne un onglet Catalogue (édition, réactivation, création) et une
 page sœur `/admin/volume-caps` (19 plafonds éditables, squelettes en lecture seule), écriture
 par routes serveur `service_role` gardées par le rôle admin. `box_wods.wod_json jsonb`
-(migration `20261213`, **non appliquée en prod**, dump avant) reçoit le WOD structuré à chaque
-création / modification depuis l'éditeur, derrière un garde `42703` / `PGRST204` tant que la
-colonne n'est pas en prod ; `description` reste la source de vérité côté athlète.
+(migration `20261213`, **appliquée en prod : oui**, 15/09/2026, `pg_dump` `20260915T230607Z`
+déposé avant dans `db-dumps`, 886 WODs intacts, écriture par le Manager déployé vérifiée sur
+AthleX Fitness) reçoit le WOD structuré à chaque création / modification depuis l'éditeur,
+derrière un garde `42703` / `PGRST204` à retirer dans un lot ultérieur ; `description` reste
+la source de vérité côté athlète.
 
 **Désabonnement d'une programmation Marketplace (`athlex-app`, migration `20261210`).**
 Aucun désabonnement n'existait. RPC `unsubscribe_programming(p_subscription_id,

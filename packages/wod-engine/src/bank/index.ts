@@ -24,8 +24,13 @@ import { half_sim } from './hybrid/half_sim';
 import { engine_continuous } from './hybrid/engine_continuous';
 import { core_carry_finisher } from './hybrid/core_carry_finisher';
 import { run_intervals } from './hybrid/run_intervals';
+import { MUSCU_SKELETONS } from './muscu';
+
+export { MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, TARGET_MUSCLES } from './muscu';
 
 export const BANK_VERSION = 3;
+/** version des squelettes Musculation (lignes `discipline = musculation`, migration 20261215) */
+export const MUSCU_BANK_VERSION = 1;
 
 export const FUNCTIONAL_SKELETONS = [
   couplet_for_time_21_15_9, couplet_amrap_short, triplet_amrap_mid, triplet_rounds_for_time, chipper_descending,
@@ -94,4 +99,5 @@ export const BANK_V1: SkeletonBank = {
   skeletons: [...FUNCTIONAL_SKELETONS, ...HYBRID_SKELETONS],
   volume_caps: { functional: FUNCTIONAL_CAPS, hybrid: HYBRID_CAPS },
   movement_caps: MOVEMENT_CAPS,
+  muscu_skeletons: MUSCU_SKELETONS,
 };

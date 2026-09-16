@@ -1,6 +1,6 @@
 import {
   Band, Catalog, CatalogMovement, Category, Discipline, FunctionalCategory, HybridCategory,
-  FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES, Pattern, Unit,
+  FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES, MuscuFields, Pattern, Unit,
 } from './types';
 
 /** Ligne `movement_catalog` telle que servie par Supabase (jsonb déjà décodé ou en texte). */
@@ -27,12 +27,52 @@ export interface CatalogRow {
   active: boolean;
   version: number;
   notes: string | null;
+  /** colonnes Musculation (migration 20261214) ; absentes sur une base antérieure */
+  discipline_muscu?: boolean | null;
+  muscle_primary?: string | null;
+  muscle_secondary?: string[] | null;
+  compound?: boolean | null;
+  unilateral?: boolean | null;
+  level_min?: string | null;
+  load_mode?: string | null;
+  rm_reference?: string | null;
+  rm_factor?: number | string | null;
+  seconds_per_rep?: number | string | null;
+  setup_s?: number | null;
+  objectives?: string[] | null;
+  rep_ranges_muscu?: unknown;
+  weight_bodyweight?: number | null;
+  weight_box?: number | null;
+  weight_gym?: number | null;
+  muscu_unit?: string | null;
 }
 
 function json<T>(v: unknown): T | null {
   if (v == null || v === '') return null;
   if (typeof v === 'string') return JSON.parse(v) as T;
   return v as T;
+}
+
+function muscuFromRow(r: CatalogRow): MuscuFields | null {
+  if (!r.discipline_muscu || !r.muscle_primary) return null;
+  return {
+    muscle_primary: r.muscle_primary as MuscuFields['muscle_primary'],
+    muscle_secondary: r.muscle_secondary ?? [],
+    compound: !!r.compound,
+    unilateral: !!r.unilateral,
+    level_min: (r.level_min ?? 'debutant') as MuscuFields['level_min'],
+    load_mode: (r.load_mode ?? 'rpe') as MuscuFields['load_mode'],
+    rm_reference: (r.rm_reference ?? null) as MuscuFields['rm_reference'],
+    rm_factor: r.rm_factor == null ? null : Number(r.rm_factor),
+    seconds_per_rep: Number(r.seconds_per_rep ?? 3),
+    setup_s: Number(r.setup_s ?? 0),
+    objectives: (r.objectives ?? []) as MuscuFields['objectives'],
+    rep_ranges: json<MuscuFields['rep_ranges']>(r.rep_ranges_muscu) ?? {},
+    weight_bodyweight: Number(r.weight_bodyweight ?? 0),
+    weight_box: Number(r.weight_box ?? 0),
+    weight_gym: Number(r.weight_gym ?? 0),
+    unit: (r.muscu_unit ?? 'reps') as MuscuFields['unit'],
+  };
 }
 
 export function movementFromRow(r: CatalogRow): CatalogMovement {
@@ -59,6 +99,7 @@ export function movementFromRow(r: CatalogRow): CatalogMovement {
     active: r.active,
     version: r.version,
     notes: r.notes ?? null,
+    muscu: muscuFromRow(r),
   };
 }
 

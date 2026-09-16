@@ -19,3 +19,12 @@ export { estimateDuration, estimateAll, estimateBlock, TIME_BOUNDED, ladderStep,
 export { signature } from './signature';
 export { render, movementLine, movementLines, CATEGORY_LABEL } from './render';
 export { profileCategory } from './profile';
+export { MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, MUSCU_BANK_VERSION, TARGET_MUSCLES } from './bank';
+export { muscuSkeletonToRow, isMuscuSkeletonRow } from './bank/rows';
+export type { MuscuSkeletonRow, AnySkeletonRow } from './bank/rows';
+export {
+  generateMuscu, targetAvailable, availableTargets, renderMuscu, exerciseLine, loadText, muscuSignature, afterClassMuscles, muscuLevelFor, percentForReps, sessionSeconds,
+  sideLabel, InvalidMuscuParams, MUSCU_ENGINE_VERSION, MUSCU_MAX_ATTEMPTS, MUSCU_TOLERANCE, MUSCU_DURATIONS, BEGINNER_MAX_EXERCISES,
+  VOLUME_CAP_SETS, WEIGHTED_IDS, UNIT_RANGES, SCHEMES, TARGET_LABEL, OBJECTIVE_LABEL, EQUIPMENT_LABEL, LEVEL_LABEL,
+} from './muscu';
+export type { AfterClassMuscles } from './muscu';

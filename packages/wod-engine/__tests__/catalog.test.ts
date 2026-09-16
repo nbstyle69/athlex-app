@@ -4,13 +4,15 @@ import { MOVEMENT_CATALOG } from '../../../src/utils/movementsCatalog';
 import { badgePrefixFor } from '../../../src/utils/movementBadgeKeys';
 import { normalizeMovement } from '../../../src/utils/tournamentUtils';
 
-const active = CATALOG_SNAPSHOT.movements.filter((m) => m.active);
+// Mouvements tirables en metcon : actifs avec un poids Functional ou Hybrid (les exercices
+// musculation seule — M1 — sont actifs mais à poids metcon 0).
+const active = CATALOG_SNAPSHOT.movements.filter((m) => m.active && (m.weight_functional > 0 || m.weight_hybrid > 0));
 const BANDS: Band[] = ['light', 'medium', 'heavy'];
 
 describe('catalogue embarqué (catalogue-v1.csv)', () => {
-  it('compte 95 mouvements actifs + les mouvements legacy inactifs', () => {
+  it('compte 95 mouvements metcon actifs + les mouvements legacy inactifs (+ 155 exercices musculation seule)', () => {
     expect(active).toHaveLength(95);
-    expect(CATALOG_SNAPSHOT.movements.length).toBeGreaterThan(95);
+    expect(CATALOG_SNAPSHOT.movements.length).toBe(109 + 155);
     expect(CATALOG_SNAPSHOT.movements.filter((m) => !m.active).every((m) => m.weight_functional === 0 && m.weight_hybrid === 0)).toBe(true);
   });
 
