@@ -28,7 +28,7 @@ import { Program, Gender, AthleteLevel } from '../../types';
 import { Json } from '../../types/supabase';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
-import { prKey, normalizePrRecords, PrCategorySlug, WEIGHTLIFTING_PR_MOVEMENTS } from './prStorage';
+import { prKey, normalizePrRecords, PrCategorySlug, WEIGHTLIFTING_PR_MOVEMENTS, BODYWEIGHT_KEY, readBodyweightKg } from './prStorage';
 import GymDeclarationSection from '../../components/wod/GymDeclarationSection';
 import StrengthHistory from '../../components/profile/StrengthHistory';
 import { fetchMyStrengthSets, groupStrengthSessions } from '../../services/strengthSets';
@@ -188,6 +188,7 @@ export default function ProfileScreen() {
   const [editBio, setEditBio]       = useState(user?.bio ?? '');
   const [editGender, setEditGender] = useState<Gender | null>(user?.gender ?? null);
   const [editLevel, setEditLevel]   = useState<AthleteLevel | null>(user?.level ?? null);
+  const [editBodyweight, setEditBodyweight] = useState('');
   const [saving, setSaving]         = useState(false);
 
   // Ouverture directe du formulaire (lien « modifier » de la page résultat du générateur)
@@ -313,6 +314,8 @@ export default function ProfileScreen() {
     if (profileData.prValues && typeof profileData.prValues === 'object') {
       const prs = profileData.prValues as Record<string, unknown>;
       setPrValues(prev => ({ ...prev, ...normalizePrRecords(prs) }));
+      const bw = readBodyweightKg(prs);
+      setEditBodyweight(bw != null ? String(bw) : '');
       const legacyFeatured = Array.isArray(prs._featured_badges) ? (prs._featured_badges as string[]) : null;
       setFeaturedColumn(profileData.featuredColumnAvailable);
       if (profileData.featuredColumnAvailable) {
@@ -353,7 +356,10 @@ export default function ProfileScreen() {
 
     const remote = (profile.personal_records ?? {}) as Record<string, Json>;
     const merged: Record<string, Json> = { ...remote };
-    for (const key of changedKeys) merged[key] = updated[key];
+    for (const key of changedKeys) {
+      if (updated[key] === '' || updated[key] == null) delete merged[key];
+      else merged[key] = updated[key];
+    }
     // Post-migration: PRs and featured badges live in separate storage. Pre-migration:
     // keep persisting the featured badges alongside the PRs so we don't drop them.
     if (!featuredColumn) merged._featured_badges = featuredBadges;
@@ -523,8 +529,18 @@ export default function ProfileScreen() {
       }
 
       const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
+      if (error) { setSaving(false); Alert.alert(t('common.error'), error.message); return; }
+      const bwText = editBodyweight.trim().replace(',', '.');
+      const bwParsed = bwText ? parseFloat(bwText) : NaN;
+      const bwStored = readBodyweightKg(prValues);
+      if (!bwText && bwStored != null) {
+        await savePRs({ [BODYWEIGHT_KEY]: '' }, [BODYWEIGHT_KEY]);
+        setPrValues(prev => { const next = { ...prev }; delete next[BODYWEIGHT_KEY]; return next; });
+      } else if (Number.isFinite(bwParsed) && bwParsed !== bwStored) {
+        await savePRs({ [BODYWEIGHT_KEY]: String(bwParsed) }, [BODYWEIGHT_KEY]);
+        setPrValues(prev => ({ ...prev, [BODYWEIGHT_KEY]: String(bwParsed) }));
+      }
       setSaving(false);
-      if (error) { Alert.alert(t('common.error'), error.message); return; }
       updateUser({
         full_name: fullName,
         avatar_url: avatarUrl.trim() || user.avatar_url,
@@ -1204,6 +1220,18 @@ export default function ProfileScreen() {
                     })}
                   </View>
                   <Text style={S.levelHint}>{t('profile.account.levelHint')}</Text>
+
+                  <Text style={S.editLabel}>{t('profile.account.bodyweightLabel')}</Text>
+                  <TextInput
+                    style={S.editInput}
+                    value={editBodyweight}
+                    onChangeText={setEditBodyweight}
+                    keyboardType="decimal-pad"
+                    placeholder="kg"
+                    placeholderTextColor={theme.textMuted}
+                    testID="profile-bodyweight"
+                  />
+                  <Text style={S.levelHint}>{t('profile.account.bodyweightHint')}</Text>
 
                   <Text style={S.editLabel}>{t('profile.account.emailLabel')}</Text>
                   <TextInput style={S.editInput} value={editEmail} onChangeText={setEditEmail} keyboardType="email-address" autoCapitalize="none" placeholder={t('profile.account.emailLabel')} placeholderTextColor={theme.textMuted} />

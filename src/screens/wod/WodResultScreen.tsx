@@ -36,12 +36,15 @@ import { buildFullSeqBlockFromWOD } from '../../utils/wodToTimer';
 import {
   CATEGORY_LABEL, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES,
 } from '../../../packages/wod-engine/src';
-import type { Category, GeneratedMovement, GeneratedWod } from '../../../packages/wod-engine/src';
+import type { Category, GeneratedMovement, GeneratedWod, MuscuWod } from '../../../packages/wod-engine/src';
 import {
-  GenerateResult, ScoreInputType, ScoreSubmission, ScreenParams, addToWhiteboard, editorFieldsOf, redraw,
-  saveGeneratedWod, scoreInputTypeFor, setFavorite, submitGeneratedScore,
+  GenerateResult, PerformedExercise, ScoreInputType, ScoreSubmission, ScreenParams, addToWhiteboard, editorFieldsOf,
+  isMuscuWod, redraw, saveGeneratedWod, scoreInputTypeFor, setFavorite, submitGeneratedScore, submitMuscuScore,
+  totalTonnage,
 } from '../../services/wodGenerator';
 import { HYBRID_ORANGE } from './wodGeneratorOptions';
+import { MUSCU_BLUE, muscuDisplayedFor } from './muscuOptions';
+import MuscuSessionCard, { initialPerformed } from './MuscuSessionCard';
 
 export type WodResultParams = { screen: ScreenParams; result: GenerateResult };
 type Route = RouteProp<{ WodResult: WodResultParams }, 'WodResult'>;
@@ -87,6 +90,11 @@ export function displayedForText(category: Category, hasLevel: boolean): { text:
     : { text: `Affiché pour : ${CATEGORY_LABEL[category]} · niveau non renseigné`, link: 'choisir' };
 }
 
+/** Minuteur libre pour une séance de séries (pas de Split en M2) : durée estimée en compte à rebours. */
+function muscuTimerFields(wod: MuscuWod): Parameters<typeof buildFullSeqBlockFromWOD>[0] {
+  return { wod_type: 'custom', time_cap_seconds: Math.max(60, Math.round(wod.estimate.seconds)) };
+}
+
 const SCORE_TYPES: { key: ScoreInputType; label: string }[] = [
   { key: 'time', label: 'Temps' }, { key: 'rounds', label: 'Rounds' }, { key: 'reps', label: 'Reps' }, { key: 'weight', label: 'Charge' },
 ];
@@ -107,7 +115,9 @@ export default function WodResultScreen() {
   const [result, setResult] = useState<GenerateResult>(route.params.result);
   const { wod, category } = result;
   const screen = route.params.screen;
-  const accent = wod.discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;
+  const muscu: MuscuWod | null = isMuscuWod(wod) ? wod : null;
+  const metcon: GeneratedWod | null = isMuscuWod(wod) ? null : wod;
+  const accent = muscu ? MUSCU_BLUE : wod.discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;
   const categories: readonly Category[] = wod.discipline === 'hybrid' ? HYBRID_CATEGORIES : FUNCTIONAL_CATEGORIES;
 
   const [redrawing, setRedrawing] = useState(false);
@@ -128,18 +138,21 @@ export default function WodResultScreen() {
   const [adding, setAdding] = useState(false);
 
   const [scoreModal, setScoreModal] = useState(false);
-  const [scoreType, setScoreType] = useState<ScoreInputType>(scoreInputTypeFor(wod));
+  const [scoreType, setScoreType] = useState<ScoreInputType>(metcon ? scoreInputTypeFor(metcon) : 'weight');
   const [scoreInput, setScoreInput] = useState('');
   const [scoreCategory, setScoreCategory] = useState<Category>(category);
   const [scoreNotes, setScoreNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submittedScore, setSubmittedScore] = useState<ScoreSubmission | null>(null);
+  const [performed, setPerformed] = useState<PerformedExercise[]>(() => (muscu ? initialPerformed(muscu) : []));
 
-  const block = wod.blocks[0];
   const headerLine = useMemo(() => wod.description.split('\n')[0] ?? '', [wod.description]);
-  const estimate = wod.estimate.by_category[category];
-  const displayedFor = displayedForText(category, !!user?.level);
-  const timerBlock = useMemo(() => buildFullSeqBlockFromWOD(editorFieldsOf(wod)), [wod]);
+  const estimate = metcon ? metcon.estimate.by_category[category] : null;
+  const displayedFor = muscu ? muscuDisplayedFor(user?.level ?? null) : displayedForText(category, !!user?.level);
+  const timerBlock = useMemo(
+    () => buildFullSeqBlockFromWOD(isMuscuWod(wod) ? muscuTimerFields(wod) : editorFieldsOf(wod)),
+    [wod],
+  );
 
   function resetFor(next: GenerateResult) {
     setResult(next);
@@ -149,8 +162,9 @@ export default function WodResultScreen() {
     setAllCategories(false);
     setBoxWodId(null);
     setSubmittedScore(null);
-    setScoreType(scoreInputTypeFor(next.wod));
+    setScoreType(isMuscuWod(next.wod) ? 'weight' : scoreInputTypeFor(next.wod));
     setScoreCategory(next.category);
+    setPerformed(isMuscuWod(next.wod) ? initialPerformed(next.wod) : []);
   }
 
   async function onRedraw() {
@@ -240,6 +254,8 @@ export default function WodResultScreen() {
 
   async function onSubmitScore() {
     if (!user) return;
+    if (muscu) { await onSubmitMuscuScore(muscu); return; }
+    if (!metcon) return;
     const value = scoreType === 'time' ? timeStringToSeconds(scoreInput) : parseFloat(scoreInput);
     if (isNaN(value) || value <= 0) { Alert.alert('Score invalide'); return; }
     const id = await onSave();
@@ -247,8 +263,39 @@ export default function WodResultScreen() {
     setSubmitting(true);
     try {
       const submission: ScoreSubmission = { wodId: id, scoreType, value, category: scoreCategory, notes: scoreNotes };
-      await submitGeneratedScore(user, currentBox?.id, wod, submission);
+      await submitGeneratedScore(user, currentBox?.id, metcon, submission);
       setSubmittedScore(submission);
+      hapticSuccess();
+      setScoreModal(false);
+      setScoreInput('');
+      setScoreNotes('');
+      Alert.alert(
+        i18n.t('wodGenerator.scoreSavedTitle'),
+        i18n.t('wodGenerator.scoreSavedBody'),
+        [
+          { text: i18n.t('common.ok'), style: 'cancel' },
+          { text: i18n.t('wodGenerator.seeMyHistory'), onPress: () => navigation.navigate('WodHistory') },
+        ],
+      );
+    } catch (e) {
+      captureError(e, { screen: 'WodResult', action: 'submitScore' });
+      Alert.alert('Erreur', "Impossible d'enregistrer le score.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  /** Musculation : tonnage des séries saisies (charge × reps), badges d'après les reps réelles. */
+  async function onSubmitMuscuScore(m: MuscuWod) {
+    if (!user) return;
+    const tonnage = totalTonnage(performed);
+    if (tonnage <= 0) { Alert.alert('Aucune série chargée', 'Renseigne les reps et la charge de tes séries dans la carte Séance.'); return; }
+    const id = await onSave();
+    if (!id) return;
+    setSubmitting(true);
+    try {
+      await submitMuscuScore(user, currentBox?.id, m, { wodId: id, performed, notes: scoreNotes });
+      setSubmittedScore({ wodId: id, scoreType: 'weight', value: tonnage, category: 'rx', notes: scoreNotes });
       hapticSuccess();
       setScoreModal(false);
       setScoreInput('');
@@ -293,9 +340,9 @@ export default function WodResultScreen() {
                 <Text style={S.timeCapText}>Cap {mmss(wod.time_cap_seconds)}</Text>
               </View>
             )}
-            {wod.vest && wod.vest.mode !== 'none' && (
+            {metcon?.vest && metcon.vest.mode !== 'none' && (
               <Text style={S.timeCapText}>
-                Gilet {wod.vest.mode === 'optional' ? 'optionnel ' : ''}{wod.vest.load_kg_by_category[category] ?? ''} kg
+                Gilet {metcon.vest.mode === 'optional' ? 'optionnel ' : ''}{metcon.vest.load_kg_by_category[category] ?? ''} kg
               </Text>
             )}
           </View>
@@ -342,16 +389,38 @@ export default function WodResultScreen() {
           </Text>
         </View>
 
+        {muscu && (
+          <>
+            <MuscuSessionCard wod={muscu} accent={accent} performed={performed} onPerformedChange={setPerformed} />
+            <GlassCard radius={16} style={S.card}>
+              <View style={S.cardInner}>
+              <View style={S.estRow}>
+                <Text style={S.estBig} testID="wodresult-estimate">{minutesText(muscu.estimate.minutes)}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={S.estLabel}>Durée estimée · {muscu.budget_min}' demandées</Text>
+                  <Text style={S.estTarget}>{muscu.blocks[0].exercises.length} exercices · repos compris</Text>
+                </View>
+              </View>
+              <Text style={S.stimulus}>Stimulus · RPE {fmtNum(muscu.stimulus.rpe)} — {muscu.stimulus.note}</Text>
+              {muscu.after_class && muscu.after_class.excluded_muscles.length > 0 && (
+                <Text style={S.afterClass}>Après ma classe : muscles évités {muscu.after_class.excluded_muscles.join(', ')}.</Text>
+              )}
+              </View>
+            </GlassCard>
+          </>
+        )}
+
         {/* Mouvements */}
+        {metcon && (<>
         <GlassCard radius={16} style={S.card}>
           <View style={S.cardInner}>
-          {block.movements.map((m, i) => {
+          {metcon.blocks[0].movements.map((m, i) => {
             const open = openRows.has(i);
             const line = categoryLine(m, category, true);
             return (
               <View
                 key={`${m.id}-${i}`}
-                style={[S.moveRow, i === 0 && S.moveRowFirst, i === block.movements.length - 1 && S.moveRowLast, i > 0 && S.moveRowBorder]}
+                style={[S.moveRow, i === 0 && S.moveRowFirst, i === metcon.blocks[0].movements.length - 1 && S.moveRowLast, i > 0 && S.moveRowBorder]}
               >
                 <TouchableOpacity style={S.moveHead} onPress={() => toggleRow(i)} activeOpacity={0.8} testID={`wodresult-move-${i}`}>
                   <View style={{ flex: 1 }}>
@@ -386,7 +455,7 @@ export default function WodResultScreen() {
           <View style={S.cardInner}>
           <View style={S.estRow}>
             <Text style={S.estBig} testID="wodresult-estimate">
-              {estimate ? minutesText(estimate.minutes) : minutesText(wod.estimate.reference_minutes)}
+              {estimate ? minutesText(estimate.minutes) : minutesText(metcon.estimate.reference_minutes)}
             </Text>
             <View style={{ flex: 1 }}>
               <Text style={S.estLabel}>Durée estimée · {CATEGORY_LABEL[category]}</Text>
@@ -400,7 +469,7 @@ export default function WodResultScreen() {
           {allCategories && (
             <View style={S.catTable}>
               {categories.map((c) => {
-                const e = wod.estimate.by_category[c];
+                const e = metcon.estimate.by_category[c];
                 return e ? (
                   <View key={c} style={S.catRow}>
                     <Text style={[S.catName, c === category && { color: accent, fontWeight: '800' }]}>{CATEGORY_LABEL[c]}</Text>
@@ -411,11 +480,12 @@ export default function WodResultScreen() {
             </View>
           )}
           <Text style={S.stimulus}>Stimulus · RPE {fmtNum(wod.stimulus.rpe)} — {wod.stimulus.note}</Text>
-          {wod.after_class && (wod.after_class.excluded_patterns.length > 0 || wod.after_class.excluded_families.length > 0) && (
-            <Text style={S.afterClass}>Complément : évite {[...wod.after_class.excluded_patterns, ...wod.after_class.excluded_families].join(', ')}.</Text>
+          {metcon.after_class && (metcon.after_class.excluded_patterns.length > 0 || metcon.after_class.excluded_families.length > 0) && (
+            <Text style={S.afterClass}>Complément : évite {[...metcon.after_class.excluded_patterns, ...metcon.after_class.excluded_families].join(', ')}.</Text>
           )}
           </View>
         </GlassCard>
+        </>)}
       </ScrollView>
 
       {/* Barre d'actions fixe au-dessus de la tab bar */}
@@ -497,6 +567,13 @@ export default function WodResultScreen() {
               <Text style={S.modalTitle}>Mon score</Text>
               <TouchableOpacity onPress={() => setScoreModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><X size={20} color={theme.textSecondary} /></TouchableOpacity>
             </View>
+            {muscu ? (
+              <>
+                <Text style={S.modalLabel}>Tonnage des séries saisies</Text>
+                <Text style={S.estBig} testID="wodresult-muscu-tonnage">{fmtNum(totalTonnage(performed))} kg</Text>
+                <Text style={S.estTarget}>charge × reps, d'après la carte Séance — les badges comptent les reps réellement faites.</Text>
+              </>
+            ) : (<>
             <Text style={S.modalLabel}>Catégorie réalisée</Text>
             <View style={S.chipRow}>
               {categories.map((c) => (
@@ -522,6 +599,7 @@ export default function WodResultScreen() {
               onChangeText={(v) => setScoreInput(scoreType === 'time' ? maskTimeInput(v) : v)}
               testID="wodresult-score-input"
             />
+            </>)}
             <TextInput
               style={S.input}
               placeholder="Notes (optionnel)"

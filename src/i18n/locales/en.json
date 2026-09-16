@@ -961,6 +961,8 @@
       "progChooseStart": "Choose my start date",
       "usernameLabel": "Username",
       "levelLabel": "Level",
+      "bodyweightLabel": "Body weight (kg)",
+      "bodyweightHint": "Used by the Strength generator to size weighted bodyweight exercises.",
       "levelHint": "Used as the default category by the WOD generator. It is also updated automatically from your ELO.",
       "nameLabel": "Name",
       "firstName": "First name",
