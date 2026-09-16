@@ -63,6 +63,7 @@ Une ligne par capacité, avec la date du lot qui l'a fermée.
 | Import d'une programmation depuis un fichier CSV, JSON ou PDF | 18 août 2026 |
 | Un seul éditeur de WOD pour deux contextes (Whiteboard et programmation) | 18 août 2026 |
 | Libellés « Functional » / « Hybrid » partout où le gérant voyait « CrossFit » / « Hyrox » comme catégorie ou filtre (catalogue de programmation mobile `BOProgrammingScreen` et web `programming/page.tsx`, annuaire des box `BoxDirectory*`) — libellés seuls, les valeurs internes `crossfit`/`hyrox`/`functional`/`hybrid` et les noms de box sont inchangés ; test `disciplineLabels.test.ts` dans chaque dépôt | 5 septembre 2026 |
+| Marques côté utilisateur (règle transverse) : piste et groupe de programmation « Functional / Hybrid » (clé interne `functional`), squelettes de séance et fonction `generate-box-week` nettoyés, test `packages/wod-engine/__tests__/brands.test.ts` qui échoue si « CrossFit » ou « Hyrox » sort d’un `title`, d’une `description`, d’un libellé de piste, d’un nom de groupe ou d’un `samples*.md` | 16 septembre 2026 |
 
 ### Adhérents, argent et programmes
 
@@ -248,6 +249,30 @@ lot 5e : le volume de répétitions de tous les athlètes se lisait à la clé a
 propriétaire. `security_invoker = true` (chaque lecteur ne voit que ses `movement_logs`), `anon`
 révoqué, `authenticated` en SELECT seul. `test-grants` 31/31 (T1 / T2 / T8 rouges avant, mutation
 inverse vérifiée). **Appliquée en prod : oui** (dump horodaté dans la description de la PR).
+
+**Programmation automatique AthleX Fitness — PR J1 (`athlex-app`, migrations `20261216` + `20261217`).**
+Une box `auto_programming` reçoit chaque semaine ISO suivante, par piste (`auto_programming_tracks`
+⊆ {`functional`, `musculation`}), ses séances posées dans `box_wods` (`source = 'auto'`, `audience = 'all'`,
+`publish_at` dimanche 18:00 Paris). Piste Functional / Hybrid (clé interne `functional`, seed figé sur l’ancienne clé) : `generateSession` (`packages/wod-engine/src/session.ts`)
+assemble six séances lundi → samedi autour de 60 min depuis six squelettes de séance
+(`S1_snatch` … `S6_long`, exportés dans `wod_skeletons` en `discipline = 'session'`) : Block A haltéro /
+force (%1RM, tempo), Block C tiré par `generateBlocC` avec le pattern lourd du jour interdit
+(jamais relâché), squelette du jour précédent évité, plafonds Gym hebdo (150 tractions / 80 HSPU)
+avec remplacement tracé `weekly_gym_cap`. Piste Musculation : `generateMuscuWeek` réutilise
+`generateMuscu` (M1) sur cinq jours, objectif par cycle de six semaines ISO (Prise de muscle →
+Tonification → Force, Tronc jamais en Force), bloc B par squelette (≠ A, pattern ≠ lourd de A, unique dans la
+semaine), 26 finishers anti-répétition semaine + 4 semaines, progressions propres aux 7 skills S3, compteurs
+P1–P3 et M1–M10 à zéro, ≤ 16 séries hebdo par muscle, `leaderboard_enabled = false`. Orchestration
+pure dans `programming.ts` (`runWeekGeneration`) : seed = `box + piste + année + semaine +
+regen_counter`, idempotence sur `box_auto_programming_runs` (`box_id, track, iso_year, iso_week`),
+régénération qui garde les jours édités (`box_wods.edited_at`, trigger) ou scorés. Edge Function
+`generate-box-week` (bundle ESM commité, `CRON_SECRET` fail-closed, catalogue et banque lus en
+base avec snapshot en repli), **cron désactivé par défaut** (`docs/RUNBOOK_CRONS.md`). Flags de box
+réservés admin / backend par trigger (message « Accès refusé : programmation automatique réservée à
+un administrateur »), journal en lecture propriétaire seule. Tests §8 : `session.test.ts`,
+`programming.test.ts`, `edge-bundle.test.ts`, suite serveur `scripts/test-auto-programming.mjs`
+(27 contrôles, mutation inverse). **Migrations appliquées en prod : non.** Ni Manager ni écran :
+J2 / J3 attendent la relecture de `packages/wod-engine/samples-programmation.md`.
 
 **Générateur Musculation V1 — PR M1 (`athlex-app`, migrations `20261214` + `20261215`).**
 Troisième discipline du moteur (`packages/wod-engine/src/muscu.ts`, `generateMuscu`, RNG à
