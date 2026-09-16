@@ -10,6 +10,7 @@ import { movementById, primaryPattern } from './catalog';
 import { generateBlocC } from './generate';
 import { deathByMinute, ladderProgress, roundSeconds } from './estimate';
 import { generateMuscu, renderMuscu, sessionSeconds, SCHEMES } from './muscu';
+import { TARGET_MUSCLES } from './bank/muscu';
 
 export const SESSION_ENGINE_VERSION = '1.0.0';
 /** ± 10 % autour de 60' (brief J1 §5.1) */
@@ -548,18 +549,24 @@ export function generateMuscuWeek(params: MuscuWeekParams, catalog: Catalog, ban
   const relax = new Set<string>();
   const recent = [...(params.recent_signatures ?? [])];
   const days: MuscuWeekDay[] = [];
-  for (const d of MUSCU_WEEK_DAYS) {
+  // plafond hebdo en amont : les cibles les plus étroites (fessiers-ischios, tronc) se composent d'abord, les cibles
+  // larges (jambes, push, pull) se composent ensuite avec la place restante par muscle — jamais raccourcies après coup
+  const order = [...MUSCU_WEEK_DAYS].sort((a, b) => TARGET_MUSCLES[a.target].length - TARGET_MUSCLES[b.target].length || a.day - b.day);
+  for (const d of order) {
     // M8 : pas d'objectif Force en Tronc → le samedi tronc d'une semaine Force passe en Prise de muscle
     const dayObjective = d.target === 'tronc' && objective === 'force' ? 'hypertrophie' : objective;
+    const weekly_room: Partial<Record<Muscle, number>> = {};
+    for (const [mu, n] of setsByMuscle(days)) weekly_room[mu] = Math.max(0, MUSCU_WEEKLY_CAP_SETS - n);
     const wod = generateMuscu({
       entry: 'express', target: d.target, objective: dayObjective, budget_min: d.budget_min, equipment, level,
-      exclude: params.exclude, recent_signatures: [...recent, ...days.map((x) => x.wod.signature)], box_wod: true,
+      exclude: params.exclude, recent_signatures: [...recent, ...days.map((x) => x.wod.signature)], box_wod: true, weekly_room,
     }, catalog, bank, (seed + d.day * 7919) >>> 0);
     for (const r of wod.generator.relaxations) relax.add(`${d.target}:${r}`);
     days.push({ day: d.day, target: d.target, budget_min: d.budget_min, wod });
   }
+  days.sort((a, b) => a.day - b.day);
 
-  // plafond hebdo : retirer une série à la fois, du dernier jour vers le premier, sans passer sous le minimum du scheme
+  // garde-fou : si le plafond est malgré tout dépassé, retirer une série à la fois, du dernier jour vers le premier
   const minSets = SCHEMES[objective].sets_min;
   const touched = new Set<MuscuWod>();
   for (let guard = 0; guard < 200; guard++) {

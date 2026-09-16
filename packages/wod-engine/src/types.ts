@@ -620,6 +620,8 @@ export interface MuscuParams {
   after_class?: AfterClassContext | null;
   /** WOD de box : charges en `%1RM` (jamais de kg individuel), RPE sans référence */
   box_wod?: boolean;
+  /** Séries encore disponibles par muscle avant le plafond hebdomadaire (piste box) : la séance se compose autour, sans raccourcir. */
+  weekly_room?: Partial<Record<Muscle, number>> | null;
 }
 
 export interface MuscuLoad {

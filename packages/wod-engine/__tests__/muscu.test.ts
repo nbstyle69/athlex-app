@@ -1,8 +1,8 @@
 import {
-  generateMuscu, targetAvailable, availableTargets, afterClassMuscles, renderMuscu, exerciseLine, muscuSignature, percentForReps,
+  generateMuscu, targetAvailable, availableTargets, availableDurations, afterClassMuscles, renderMuscu, exerciseLine, muscuSignature, percentForReps,
   InvalidMuscuParams, CATALOG_SNAPSHOT, BANK_V1, MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, MUSCU_DURATIONS, TARGET_MUSCLES,
   VOLUME_CAP_SETS, BEGINNER_MAX_EXERCISES, BEGINNER_MAX_EXERCISES_LONG, BEGINNER_LONG_BUDGET_MIN, WEIGHTED_IDS, MUSCU_TOLERANCE, bankFromRows, muscuSkeletonToRow, skeletonToRow, movementCapToRow,
-  BANK_VERSION, MUSCU_BANK_VERSION, MOVEMENT_GROUPS,
+  BANK_VERSION, MUSCU_BANK_VERSION, MOVEMENT_GROUPS, CORE_MAX_OUTSIDE_TRONC, BONUS_EXCLUDED_IDS,
 } from '../src';
 import type { MuscuEquipment, MuscuLevel, MuscuParams, MuscuWod, Muscle } from '../src';
 import { parseStrengthLine, isStrengthLine } from '../../../src/utils/strengthBlock';
@@ -22,7 +22,8 @@ function* grid(): Generator<MuscuParams> {
   for (const target of MUSCU_TARGETS) for (const objective of MUSCU_OBJECTIVES) for (const equipment of EQ) for (const level of LV) {
     if (objective === 'force' && (equipment === 'none' || target === 'tronc')) continue;
     if (!targetAvailable(CATALOG_SNAPSHOT, target, equipment, level)) continue;
-    for (const budget_min of target === 'tronc' ? MUSCU_DURATIONS.tronc : MUSCU_DURATIONS.express) yield { entry: 'express', target, objective, equipment, level, budget_min };
+    // seules les durées proposées à l'écran (celles que le catalogue peut remplir) sont tirées
+    for (const budget_min of availableDurations(CATALOG_SNAPSHOT, BANK_V1, { entry: 'express', target, objective, equipment, level })) yield { entry: 'express', target, objective, equipment, level, budget_min };
   }
 }
 
@@ -214,6 +215,58 @@ describe('generateMuscu — conformité (cible × objectif × durée × matérie
       }
     }
     expect(tempo).toBeGreaterThan(0);
+  });
+
+  it('bonus (M2) : au plus un exercice de tronc hors cible Tronc ; jamais Mountain Climbers / Vacuum / Russian Twist en Prise de muscle / Force ; isolation d’un muscle secondaire avant le gainage', () => {
+    const tronc = TARGET_MUSCLES.tronc as string[];
+    let secondaryIso = 0;
+    for (const p of grid()) {
+      if (p.target === 'tronc') continue;
+      for (let seed = 1; seed <= 10; seed++) {
+        const w = gen(p, seed);
+        const ex = w.blocks[0].exercises;
+        const core = ex.filter((e) => tronc.includes(e.muscle_primary));
+        expect({ p, core: core.map((e) => e.name) }).toMatchObject({ core: expect.any(Array) });
+        expect(core.length).toBeLessThanOrEqual(CORE_MAX_OUTSIDE_TRONC);
+        if (p.objective !== 'endurance') for (const e of ex) expect(BONUS_EXCLUDED_IDS).not.toContain(e.id);
+        // un bonus hors muscles de la cible est une isolation (jamais un compound d'un autre muscle) ou le seul gainage
+        for (const e of ex.filter((x) => x.optional && !(TARGET_MUSCLES[p.target] as string[]).includes(x.muscle_primary))) {
+          const m = CATALOG_SNAPSHOT.movements.find((x) => x.id === e.id)!.muscu!;
+          if (tronc.includes(e.muscle_primary)) continue;
+          expect({ p, e: e.name, compound: m.compound }).toMatchObject({ compound: false });
+          secondaryIso++;
+        }
+      }
+    }
+    expect(secondaryIso).toBeGreaterThan(0);
+    // #124 Épaules Prise de muscle (box, inter, 45') : plus de Russian Twist + Mountain Climbers ; #157 Pecs Force : pas de Vacuum ; #148 Bras : pas de Vacuum
+    for (let seed = 1; seed <= 40; seed++) {
+      for (const p of [{ target: 'epaules', objective: 'hypertrophie' }, { target: 'pecs', objective: 'force' }, { target: 'bras', objective: 'hypertrophie' }] as const) {
+        const ex = gen({ ...base, ...p, equipment: 'box', level: 'inter', budget_min: 45 }, seed).blocks[0].exercises;
+        expect(ex.map((e) => e.id)).not.toEqual(expect.arrayContaining(['russian_twist']));
+        expect(ex.map((e) => e.id)).not.toEqual(expect.arrayContaining(['vacuum']));
+        expect(ex.map((e) => e.id)).not.toEqual(expect.arrayContaining(['mountain_climber']));
+      }
+    }
+  });
+
+  it('durées proposées : celles que le catalogue remplit ; Pecs sans matériel n’offre pas 45 ni 60, Push salle offre tout', () => {
+    expect(availableDurations(CATALOG_SNAPSHOT, BANK_V1, { entry: 'express', target: 'push', objective: 'hypertrophie', equipment: 'gym', level: 'inter' })).toEqual([...MUSCU_DURATIONS.express]);
+    const pecsNone = availableDurations(CATALOG_SNAPSHOT, BANK_V1, { entry: 'express', target: 'pecs', objective: 'hypertrophie', equipment: 'none', level: 'inter' });
+    expect(pecsNone).toEqual([20, 30]);
+    expect(availableDurations(CATALOG_SNAPSHOT, BANK_V1, { entry: 'express', target: 'tronc', objective: 'hypertrophie', equipment: 'box', level: 'inter' })).toEqual([...MUSCU_DURATIONS.tronc]);
+    expect(availableDurations(CATALOG_SNAPSHOT, BANK_V1, { entry: 'after_class', target: 'haut', objective: 'endurance', equipment: 'box', level: 'inter', after_class: { day_movements: [] } })).toEqual([...MUSCU_DURATIONS.after_class]);
+  });
+
+  it('plafond hebdo (weekly_room) : un muscle plein sort du pool, la séance garde sa durée avec les autres muscles de la cible', () => {
+    const p: MuscuParams = { ...base, target: 'jambes', objective: 'hypertrophie', equipment: 'box', level: 'inter', budget_min: 45, box_wod: true, weekly_room: { quadriceps: 0 } };
+    for (let seed = 1; seed <= 20; seed++) {
+      const w = gen(p, seed);
+      expect(w.blocks[0].exercises.some((e) => e.muscle_primary === 'quadriceps')).toBe(false);
+      expect(w.generator.relaxations).toContain('weekly_cap');
+      expect(w.generator.relaxations).not.toContain('budget_short');
+      expect(Math.abs(w.estimate.seconds - 45 * 60) / (45 * 60)).toBeLessThanOrEqual(MUSCU_TOLERANCE + 1e-9);
+    }
   });
 
   it('déterministe, et anti-répétition sur les 10 dernières signatures', () => {
@@ -409,8 +462,17 @@ describe('cibles et muscles', () => {
         const m = CATALOG_SNAPSHOT.movements.find((x) => x.id === e.id)!;
         const inTarget = TARGET_MUSCLES[target].includes(e.muscle_primary);
         // rattrapage de budget : un exercice optionnel peut viser la cible par un muscle secondaire
-        const viaSecondary = e.optional && (m.muscu!.muscle_secondary as Muscle[]).some((mu) => TARGET_MUSCLES[target].includes(mu));
-        expect(inTarget || viaSecondary || e.role === 'core' || e.role === 'calves').toBe(true);
+        // ou, en bonus, une isolation d'un muscle secondaire de la cible (muscle secondaire d'un exercice de la séance ou du pool de la cible)
+        const secondaryOfTarget = new Set(
+          CATALOG_SNAPSHOT.movements
+            .filter((x) => x.muscu && TARGET_MUSCLES[target].includes(x.muscu.muscle_primary))
+            .flatMap((x) => x.muscu!.muscle_secondary as Muscle[]),
+        );
+        const viaSecondary = e.optional && (
+          (m.muscu!.muscle_secondary as Muscle[]).some((mu) => TARGET_MUSCLES[target].includes(mu))
+          || (!m.muscu!.compound && secondaryOfTarget.has(e.muscle_primary))
+        );
+        expect({ target, e: e.name, ok: inTarget || viaSecondary || e.role === 'core' || e.role === 'calves' }).toMatchObject({ ok: true });
       }
     }
   });

@@ -37,7 +37,10 @@ export const DEMOTED_PERCENT_MAX = 75;
 export const REST_EXTRA_MAX = 15;
 /** Poids du corps en Box / Salle (inter, avancé) : au plus un exercice hors tronc quand le muscle a des exercices chargés (M5). */
 export const BODYWEIGHT_MAX_LOADED = 1;
-export const BONUS_CORE_MAX = 2;
+/** Hors cible Tronc : au plus un exercice de gainage par séance (squelette ou bonus confondus). */
+export const CORE_MAX_OUTSIDE_TRONC = 1;
+/** Jamais en bonus d'une séance Prise de muscle / Force. */
+export const BONUS_EXCLUDED_IDS: readonly string[] = ['mountain_climber', 'vacuum', 'russian_twist'];
 /** M7 : jamais « 5 × 20 » pour remplir — à partir de 5 séries, les reps restent sous 20. */
 /** M7 : à partir de 5 séries, jamais plus de 15 reps (le « 5 × 20 » de remplissage est proscrit). */
 export const HIGH_REP_SETS_MAX = 5;
@@ -203,27 +206,61 @@ function basePool(ctx: Ctx): Mv[] {
   const noSquat = NO_SQUAT_TARGETS.includes(params.target);
   const noBwPullUp = params.objective === 'endurance' && params.level !== 'avance';
   const troncMuscles = TARGET_MUSCLES.tronc;
+  const minSets = SCHEMES[params.objective].sets_min;
   return (ctx.catalog.movements.filter((m) => m.muscu) as Mv[]).filter((m) =>
     equipmentWeight(m, params.equipment) > 0
     && levelOk(m, params.level)
     && !isExcluded(ctx, m)
     && !ctx.excludedMuscles.has(m.muscu.muscle_primary)
+    && weeklyRoomOk(ctx, m.muscu.muscle_primary, minSets)
     && !(noSquat && SQUAT_IDS.includes(m.id))
     && !(noBwPullUp && BODYWEIGHT_PULL_UP_IDS.includes(m.id))
     && !(params.target === 'tronc' && m.muscu.compound && !troncMuscles.includes(m.muscu.muscle_primary)));
 }
 
-function isBodyweightNonCore(m: Mv): boolean {
-  return m.muscu.load_mode === 'bodyweight' && !TARGET_MUSCLES.tronc.includes(m.muscu.muscle_primary) && m.muscu.muscle_primary !== 'mollets';
+function isCoreMuscle(mu: Muscle): boolean {
+  return TARGET_MUSCLES.tronc.includes(mu);
 }
 
-/** M5 : en Box / Salle (inter, avancé), un seul exercice poids du corps hors tronc quand le muscle a des exercices chargés. */
+function isBodyweightNonCore(m: Mv): boolean {
+  return m.muscu.load_mode === 'bodyweight' && !isCoreMuscle(m.muscu.muscle_primary);
+}
+
+/**
+ * M5 : en Box / Salle (inter, avancé), un seul exercice poids du corps hors tronc quand le muscle a des
+ * exercices chargés (compound ou isolation confondus : un Glute Bridge ne passe pas parce que la box n'a pas de
+ * machine à fessiers, elle a des barres pour le Hip Thrust). Un muscle sans aucune option chargée (mollets en box)
+ * reste libre.
+ */
 function bodyweightAllowed(ctx: Ctx, m: Mv, picked: ReadonlyArray<{ m: Mv }>): boolean {
   if (!isBodyweightNonCore(m)) return true;
   if (ctx.params.equipment === 'none' || ctx.params.level === 'debutant') return true;
-  const loadedExists = ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== 'bodyweight' && x.muscu.compound === m.muscu.compound);
+  const loadedExists = ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== 'bodyweight');
   if (!loadedExists) return true;
-  return picked.filter((p) => isBodyweightNonCore(p.m)).length < BODYWEIGHT_MAX_LOADED;
+  return picked.filter((p) => isBodyweightNonCore(p.m) && loadedFor(ctx, p.m)).length < BODYWEIGHT_MAX_LOADED;
+}
+
+function loadedFor(ctx: Ctx, m: Mv): boolean {
+  return ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== 'bodyweight');
+}
+
+/** Hors cible Tronc, un seul exercice de gainage par séance. */
+function coreAllowed(ctx: Ctx, m: Mv, picked: ReadonlyArray<{ m: Mv }>): boolean {
+  if (ctx.params.target === 'tronc' || !isCoreMuscle(m.muscu.muscle_primary)) return true;
+  return picked.filter((p) => isCoreMuscle(p.m.muscu.muscle_primary)).length < CORE_MAX_OUTSIDE_TRONC;
+}
+
+/** Muscle plein pour la semaine : hors du pool, tracé `weekly_cap` (la cible se rabat sur ses autres muscles). */
+function weeklyRoomOk(ctx: Ctx, mu: Muscle, minSets: number): boolean {
+  if (muscleCap(ctx, mu) >= minSets) return true;
+  ctx.relax.add('weekly_cap');
+  return false;
+}
+
+/** Plafond de séries d'un muscle sur la séance : plafond par objectif, borné par la place restante dans la semaine (piste box). */
+function muscleCap(ctx: Ctx, mu: Muscle): number {
+  const room = ctx.params.weekly_room?.[mu];
+  return room === undefined ? VOLUME_CAP_SETS[ctx.params.objective] : Math.min(VOLUME_CAP_SETS[ctx.params.objective], room);
 }
 
 /**
@@ -282,6 +319,7 @@ function candidates(ctx: Ctx, slot: MuscuSlot, f: Filter, picked: Picked[], prev
     if (slot.role === 'main_compound' && ctx.params.objective === 'force' && !(f.ids && slot.groups) && mainMuscles.has(m.muscu.muscle_primary)) return false;
     if (!groupAllowed(ctx, m, slot, picked)) return false;
     if (!bodyweightAllowed(ctx, m, picked)) return false;
+    if (!coreAllowed(ctx, m, picked)) return false;
     return true;
   });
 }
@@ -426,12 +464,11 @@ function volumeByMuscle(lines: Line[]): Map<Muscle, number> {
 }
 
 function applyVolumeCaps(ctx: Ctx, lines: Line[]): Line[] {
-  const cap = VOLUME_CAP_SETS[ctx.params.objective];
   const out: Line[] = [];
   const v = new Map<Muscle, number>();
   for (const l of lines) {
     const mu = l.m.muscu.muscle_primary;
-    const room = cap - (v.get(mu) ?? 0);
+    const room = muscleCap(ctx, mu) - (v.get(mu) ?? 0);
     if (room < 2) { ctx.relax.add('volume_cap'); continue; }
     if (l.sets > room) { l.sets = room; ctx.relax.add('volume_cap'); }
     v.set(mu, (v.get(mu) ?? 0) + l.sets);
@@ -477,35 +514,50 @@ function bonusIndex(lines: Line[], muscle: Muscle): number {
   return -1;
 }
 
+/**
+ * Exercice bonus (rattrapage du budget, M7) : d'abord une isolation d'un muscle de la cible qui a encore de la place,
+ * puis une isolation dont un muscle secondaire appartient à la cible, enfin du gainage — jamais plus d'un exercice de
+ * tronc hors cible Tronc, et jamais Mountain Climbers / Vacuum / Russian Twist en Prise de muscle / Force.
+ */
 function bonusExercise(ctx: Ctx, lines: Line[], target: MuscuTarget): Line | null {
   const used = new Set(lines.map((l) => l.m.id));
-  const cap = VOLUME_CAP_SETS[ctx.params.objective];
   const vol = volumeByMuscle(lines);
   const minSets = SCHEMES[ctx.params.objective].sets_min;
-  const muscles = TARGET_MUSCLES[target].filter((mu) => !ctx.excludedMuscles.has(mu) && (vol.get(mu) ?? 0) + minSets <= cap);
-  const bonusSlot: MuscuSlot = { role: 'isolation', muscle: TARGET_MUSCLES[target], optional: true };
+  const room = (mu: Muscle) => muscleCap(ctx, mu) - (vol.get(mu) ?? 0);
+  const muscles = TARGET_MUSCLES[target].filter((mu) => !ctx.excludedMuscles.has(mu) && room(mu) >= minSets);
+  // `pair` : une isolation peut compléter le compound du même geste déjà tiré (Hip Thrust + Glute Bridge), toléré par M2
+  const bonusSlot: MuscuSlot = { role: 'isolation', muscle: TARGET_MUSCLES[target], optional: true, pair: true };
   // le gainage bonus n'a pas à servir l'objectif (une planche n'a qu'une plage) : il prend le schéma disponible
   const eligible = (m: Mv, anyObjective = false) => !used.has(m.id) && bonusIndex(lines, m.muscu.muscle_primary) >= 0 && !ctx.excludedMuscles.has(m.muscu.muscle_primary)
-    && (vol.get(m.muscu.muscle_primary) ?? 0) + minSets <= cap && (anyObjective || objectiveFor(m, ctx.params.objective))
-    && groupAllowed(ctx, m, { ...bonusSlot, role: m.muscu.compound ? 'secondary_compound' : TARGET_MUSCLES.tronc.includes(m.muscu.muscle_primary) ? 'core' : 'isolation' }, lines)
-    && bodyweightAllowed(ctx, m, lines);
+    && room(m.muscu.muscle_primary) >= minSets && (anyObjective || objectiveFor(m, ctx.params.objective))
+    && !(ctx.params.objective !== 'endurance' && BONUS_EXCLUDED_IDS.includes(m.id))
+    && groupAllowed(ctx, m, { ...bonusSlot, role: m.muscu.compound ? 'secondary_compound' : isCoreMuscle(m.muscu.muscle_primary) ? 'core' : 'isolation' }, lines)
+    && bodyweightAllowed(ctx, m, lines)
+    && coreAllowed(ctx, m, lines);
   const targetMuscles = TARGET_MUSCLES[target];
   const primary = ctx.pool.filter((m) => eligible(m) && muscles.includes(m.muscu.muscle_primary));
-  // repli : isolation dont un muscle secondaire appartient à la cible (jamais un compound d'un autre muscle : pas de squat en Tronc)
-  const secondary = primary.length ? [] : ctx.pool.filter((m) => eligible(m) && !m.muscu.compound && (m.muscu.muscle_secondary as Muscle[]).some((mu) => targetMuscles.includes(mu)));
-  // dernier repli : gainage (hors groupe), au plus deux lignes core ajoutées par ce chemin
-  const coreMuscles = TARGET_MUSCLES.tronc;
-  const tertiary = primary.length || secondary.length || lines.filter((l) => l.role === 'core' && l.slotIndex === 99).length >= BONUS_CORE_MAX ? []
-    : ctx.pool.filter((m) => eligible(m, true) && coreMuscles.includes(m.muscu.muscle_primary) && (!m.muscu.compound || m.muscu.movement_group === 'carry'));
+  // repli : isolation d'un muscle secondaire de la cible — muscles secondaires des exercices déjà tirés (puis de tout le pool
+  // de la cible), ou isolation dont un muscle secondaire appartient à la cible. Jamais un compound d'un autre muscle (pas de squat en Tronc).
+  const secondaryOf = (ms: ReadonlyArray<Mv>): Set<Muscle> => new Set(ms.flatMap((m) => m.muscu.muscle_secondary as Muscle[]).filter((mu) => !isCoreMuscle(mu)));
+  // muscles secondaires des exercices de la cible déjà tirés (pas ceux d'un bonus précédent : pas de dérive en chaîne)
+  const fromLines = secondaryOf(lines.map((l) => l.m).filter((m) => targetMuscles.includes(m.muscu.muscle_primary)));
+  const fromPool = secondaryOf(ctx.pool.filter((m) => targetMuscles.includes(m.muscu.muscle_primary)));
+  const isSecondaryIso = (m: Mv, set: Set<Muscle>) => eligible(m) && !m.muscu.compound && !isCoreMuscle(m.muscu.muscle_primary)
+    && (set.has(m.muscu.muscle_primary) || (m.muscu.muscle_secondary as Muscle[]).some((mu) => targetMuscles.includes(mu)));
+  let secondary: Mv[] = primary.length ? [] : ctx.pool.filter((m) => isSecondaryIso(m, fromLines));
+  if (!primary.length && !secondary.length) secondary = ctx.pool.filter((m) => isSecondaryIso(m, fromPool));
+  // dernier repli : gainage (hors groupe)
+  const tertiary = primary.length || secondary.length ? []
+    : ctx.pool.filter((m) => eligible(m, true) && isCoreMuscle(m.muscu.muscle_primary) && (!m.muscu.compound || m.muscu.movement_group === 'carry'));
   const base = primary.length ? primary : secondary.length ? secondary : tertiary;
   const iso = base.filter((m) => !m.muscu.compound);
   const m = ctx.rng.pickWeighted(iso.length ? iso : base, (x) => equipmentWeight(x, ctx.params.equipment));
   if (!m) return null;
-  const role: MuscuSlotRole = coreMuscles.includes(m.muscu.muscle_primary) ? 'core' : m.muscu.compound ? 'secondary_compound' : 'isolation';
+  const role: MuscuSlotRole = isCoreMuscle(m.muscu.muscle_primary) ? 'core' : m.muscu.compound ? 'secondary_compound' : 'isolation';
   const p: Picked = { m, role, objective: objectiveFor(m, ctx.params.objective) ?? (m.muscu.objectives.includes('hypertrophie') ? 'hypertrophie' : m.muscu.objectives[0] ?? 'hypertrophie'), optional: true, slotIndex: 99 };
   if (ctx.params.objective === 'force' && p.objective === 'force') p.objective = 'hypertrophie';
   const line = lineFor(ctx, p);
-  line.sets = Math.min(line.sets, cap - (vol.get(m.muscu.muscle_primary) ?? 0));
+  line.sets = Math.min(line.sets, room(m.muscu.muscle_primary));
   return line;
 }
 
@@ -559,9 +611,8 @@ function fitBudget(ctx: Ctx, input: Line[], target: MuscuTarget): Line[] {
         if (total([...lines, bonus]) <= hi) { lines.splice(at, 0, bonus); ctx.relax.add('bonus_slot'); continue; }
       }
     }
-    const cap = VOLUME_CAP_SETS[ctx.params.objective];
     const vol = volumeByMuscle(lines);
-    const addable = lines.filter((l) => l.sets < SCHEMES[l.objective].sets_max && (vol.get(l.m.muscu.muscle_primary) ?? 0) < cap)
+    const addable = lines.filter((l) => l.sets < SCHEMES[l.objective].sets_max && (vol.get(l.m.muscu.muscle_primary) ?? 0) < muscleCap(ctx, l.m.muscu.muscle_primary))
       .sort((a, b) => a.sets - b.sets || a.slotIndex - b.slotIndex);
     // une 5e série à 20 reps serait du remplissage (M7) : on redistribue le volume, 5 séries plus courtes
     const fits = (l: Line) => {
@@ -683,6 +734,27 @@ export function targetAvailable(catalog: Catalog, target: MuscuTarget, equipment
 /** Cibles proposables pour un matériel et un niveau — pour l'écran M2. */
 export function availableTargets(catalog: Catalog, equipment: MuscuEquipment, level: MuscuLevel): MuscuTarget[] {
   return MUSCU_TARGETS.filter((t) => targetAvailable(catalog, t, equipment, level));
+}
+
+/** Seeds sondées par `availableDurations` : une durée n'est proposée que si aucune ne sort `budget_short`. */
+export const DURATION_PROBE_SEEDS = 5;
+
+/**
+ * Durées proposables pour une cible × objectif × matériel × niveau — pour l'écran M2. Une durée que le catalogue ne
+ * peut pas remplir (Pecs 60' sans matériel : trois gestes, pas plus) est retirée plutôt qu'annoncée puis raccourcie.
+ */
+export function availableDurations(
+  catalog: Catalog, bank: SkeletonBank, params: Omit<MuscuParams, 'budget_min'>,
+): number[] {
+  const all = params.target === 'tronc' ? MUSCU_DURATIONS.tronc : params.entry === 'after_class' ? MUSCU_DURATIONS.after_class : MUSCU_DURATIONS.express;
+  return all.filter((budget_min) => {
+    for (let seed = 1; seed <= DURATION_PROBE_SEEDS; seed++) {
+      try {
+        if (generateMuscu({ ...params, budget_min }, catalog, bank, seed).generator.relaxations.includes('budget_short')) return false;
+      } catch { return false; }
+    }
+    return true;
+  });
 }
 
 export function generateMuscu(params: MuscuParams, catalog: Catalog, bank: SkeletonBank, seed: number): MuscuWod {
