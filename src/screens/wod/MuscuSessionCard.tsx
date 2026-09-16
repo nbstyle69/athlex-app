@@ -16,6 +16,7 @@ import { spacing, typography } from '../../theme/designTokens';
 import { loadText, sideLabel } from '../../../packages/wod-engine/src';
 import type { MuscuExercise, MuscuWod } from '../../../packages/wod-engine/src';
 import { PerformedExercise, PerformedSet, plannedSets, setTonnage, totalTonnage } from '../../services/wodGenerator';
+import { MUSCU_BLUE_DARK } from './muscuOptions';
 
 export function initialPerformed(wod: MuscuWod): PerformedExercise[] {
   return wod.blocks[0].exercises.map((e) => ({ exercise_id: e.id, name: e.name, sets: plannedSets(e) }));
@@ -197,7 +198,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
           </View>
         )}
         {current ? (
-          <TouchableOpacity style={[S.nextBtn, { backgroundColor: accent }]} onPress={nextSet} activeOpacity={0.85} testID="muscu-next-set">
+          <TouchableOpacity style={[S.nextBtn, { backgroundColor: MUSCU_BLUE_DARK }]} onPress={nextSet} activeOpacity={0.85} testID="muscu-next-set">
             <Check size={16} color="#fff" />
             <Text style={S.nextText}>Série suivante</Text>
           </TouchableOpacity>
