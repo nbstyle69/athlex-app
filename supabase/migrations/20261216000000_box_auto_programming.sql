@@ -1,7 +1,7 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Programmation automatique de box — J1 : flags, journal, colonnes `box_wods`.
 --
--- Appliquée en prod : NON (dump avant toute application).
+-- Appliquée en prod : OUI (16/09/2026 19:41 UTC, dump `20260916T194119Z` dans le bucket privé `db-dumps`).
 --
 -- Additif et rejouable. Ce lot pose le socle serveur de la fonction edge
 -- `generate-box-week` (dimanche 18:00 Europe/Paris, cron DÉSACTIVÉ par défaut,
