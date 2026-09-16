@@ -22997,7 +22997,7 @@ var SESSION_SKELETONS = [S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long];
 
 // packages/wod-engine/src/bank/index.ts
 var BANK_VERSION = 3;
-var MUSCU_BANK_VERSION = 1;
+var MUSCU_BANK_VERSION = 2;
 var FUNCTIONAL_SKELETONS = [
   couplet_for_time_21_15_9,
   couplet_amrap_short,
@@ -25267,6 +25267,14 @@ function stepLine(name, st, tempo) {
   return out;
 }
 var CAT_LABEL = { scaled: "Scaled", inter: "Inter", rx: "RX", rxplus: "RX+", elite: "Elite", pro: "Pro" };
+function withSkillProgression(opt) {
+  if (!opt.skill || opt.skill.progression) return opt;
+  const snapshot = SESSION_SKELETONS.flatMap((s) => s.block_a ?? []).find((o) => o.id === opt.id)?.skill?.progression;
+  if (!snapshot) {
+    throw new Error(`Skill \xAB ${opt.id} \xBB (${opt.movement}) sans progression A/B : absente de la banque charg\xE9e et du snapshot embarqu\xE9`);
+  }
+  return { ...opt, skill: { ...opt.skill, progression: snapshot } };
+}
 function blockALines(catalog, opt, weeks) {
   const name = nameOf(catalog, opt.movement);
   const lines = [];
@@ -25428,7 +25436,7 @@ function generateSession(params, catalog, bank, seed) {
   let optA = null;
   if (sk.block_a) {
     const eligible = sk.block_a.filter((o) => !o.weeks || o.weeks === weeks);
-    optA = rng.pick(eligible.length ? eligible : sk.block_a);
+    optA = withSkillProgression(rng.pick(eligible.length ? eligible : sk.block_a));
   }
   const movA = optA ? movementById(catalog, optA.movement) : void 0;
   const heavy = optA && optA.kind !== "skill" ? heavyPatternOf(movA) : null;

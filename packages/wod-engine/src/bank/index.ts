@@ -31,8 +31,8 @@ export { MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, TARGET_MUSCLES } from
 export { SESSION_SKELETONS, SESSION_BANK_VERSION, FINISHERS, S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long } from './session';
 
 export const BANK_VERSION = 3;
-/** version des squelettes Musculation (lignes `discipline = musculation`, migration 20261215) */
-export const MUSCU_BANK_VERSION = 1;
+/** version des squelettes Musculation (lignes `discipline = musculation`) : 1 = seed 20261215, 2 = resynchronisation 20261220 (règles M1–M10 et M2) */
+export const MUSCU_BANK_VERSION = 2;
 
 export const FUNCTIONAL_SKELETONS = [
   couplet_for_time_21_15_9, couplet_amrap_short, triplet_amrap_mid, triplet_rounds_for_time, chipper_descending,
