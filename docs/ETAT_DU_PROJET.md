@@ -242,6 +242,13 @@ classement. `profiles.level` n'était modifiable nulle part : sélecteur « Nive
 ajouté dans Profil → Modifier, cible du lien « modifier » ; la synchro par l'ELO reste. Copier
 passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest/lint verts.
 
+**`movement_totals` refermée (migration `20261218`).** La vue recréée par `20261204` (un total par
+unité) était repartie avec `GRANT ALL TO anon / authenticated` et sans `security_invoker`, annulant le
+lot 5e : le volume de répétitions de tous les athlètes se lisait à la clé anon avec les droits du
+propriétaire. `security_invoker = true` (chaque lecteur ne voit que ses `movement_logs`), `anon`
+révoqué, `authenticated` en SELECT seul. `test-grants` 31/31 (T1 / T2 / T8 rouges avant, mutation
+inverse vérifiée). **Appliquée en prod : oui** (dump horodaté dans la description de la PR).
+
 **Générateur Musculation V1 — PR M1 (`athlex-app`, migrations `20261214` + `20261215`).**
 Troisième discipline du moteur (`packages/wod-engine/src/muscu.ts`, `generateMuscu`, RNG à
 graine, aucun réseau) : 13 cibles × 3 objectifs (hypertrophie / force / endurance) = 39
@@ -256,7 +263,7 @@ legacy inactifs le restent. Charges : 1RM du calculateur (`profiles.personal_rec
 en paramètre) × facteur × % de l'objectif arrondi à 2,5 kg, sinon RPE 7 / 8 ; lest des tractions /
 dips en Force = 10 % de `bodyweight_kg` arrondi à 2,5 kg, sinon « lesté léger » ; Après ma classe
 exclut les muscles du WOD du jour et interdit Force ; débutant sans unilatéral ni lesté, 4
-exercices max ; jamais deux exercices consécutifs sur le même muscle ; durée ±10 % (trop long :
+exercices max ; jamais deux exercices consécutifs sur le même muscle ; règles M1–M10 de relecture : `priority` (1-5) et `movement_group` au catalogue, exercice principal par priorité, un seul exercice par geste, ≤ 2 lourds en Force (3e compound rétrogradé 70-75 % × 6-8), Pull / Dos avec tirage vertical + horizontal, ≤ 1 poids du corps hors tronc en box / salle, tractions remplacées en Tonification, remplissage sans repos ni 5 × 20, Tronc sans Force ni compound jambes (15 · 20 · 30'), libellés Prise de muscle / Force / Tonification et « RPE 7 (≈ 52 % du 1RM) », Hip Thrust obligatoire en Fessiers + ischios ; compteurs M1–M10 à zéro en conformité ; durée ±10 % (trop long :
 slots optionnels → séries → squelette ; trop court : reps → une série de plus (≤ 5) → exercice
 optionnel sur un muscle secondaire de la cible → tempo 3-1-1 compté dans la durée → repos → 5e
 exercice optionnel en débutant, `budget_short` tracé sur 0,17 % des tirages, tous débutant 60') ; signature `musculation|<squelette>|<exercices>` sur les 10
