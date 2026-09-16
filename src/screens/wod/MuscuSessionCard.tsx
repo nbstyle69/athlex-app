@@ -123,7 +123,8 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
   const current = cursor ? exercises[cursor.exercise] : null;
 
   return (
-    <GlassCard style={S.card}>
+    <GlassCard radius={16} style={S.card}>
+      <View style={S.cardInner}>
       <Text style={S.section}>Séance</Text>
       {exercises.map((e, i) => {
         const isOpen = open.has(i);
@@ -144,7 +145,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
                   {[restText(e.rest_s), `${Math.min(done, e.sets)}/${e.sets} séries`].filter(Boolean).join(' · ')}
                 </Text>
               </View>
-              {isOpen ? <ChevronUp size={18} color={theme.textMuted} /> : <ChevronDown size={18} color={theme.textMuted} />}
+              {isOpen ? <ChevronUp size={18} color={theme.textSecondary} /> : <ChevronDown size={18} color={theme.textSecondary} />}
             </TouchableOpacity>
             {isOpen && (
               <View style={S.detail}>
@@ -204,36 +205,44 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
           <Text style={[S.restText, { color: theme.success }]}>Séance terminée</Text>
         )}
       </View>
+      </View>
     </GlassCard>
   );
 }
 
+/** Padding intérieur des cartes et espace entre deux lignes : mêmes valeurs que WodResultScreen (vue metcon). */
+const CARD_PAD = 20;
+const ROW_PAD = 14;
+
 const styles = (t: AppTheme) => StyleSheet.create({
-  card: { marginHorizontal: spacing.lg, marginTop: spacing.md, padding: 20 },
-  section: { ...typography.caption, color: t.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
-  row: { paddingVertical: 14 },
+  // Le padding va dans un conteneur intérieur : GlassCard applique `style` à son enveloppe,
+  // hors de la bordure verre (comme S.card / S.cardInner de WodResultScreen).
+  card: { marginBottom: ROW_PAD },
+  cardInner: { padding: CARD_PAD },
+  section: { ...typography.caption, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+  row: { paddingVertical: ROW_PAD },
   rowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.border },
-  rowHead: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  rowHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  name: { ...typography.body, color: t.text, fontWeight: '600' },
-  optional: { ...typography.caption, color: t.textMuted, fontWeight: '400' },
-  scheme: { ...typography.bodySmall, color: t.textSecondary, marginTop: 2 },
-  meta: { ...typography.caption, color: t.textMuted, marginTop: 2 },
+  name: { fontSize: 15, fontWeight: '700', color: t.text, lineHeight: 21 },
+  optional: { ...typography.caption, color: t.textSecondary, fontWeight: '400' },
+  scheme: { ...typography.bodySmall, color: t.textSecondary, marginTop: spacing.xxs },
+  meta: { ...typography.caption, color: t.textSecondary, marginTop: spacing.xxs },
   detail: { marginTop: 10, marginLeft: 22, gap: 8 },
   notes: { ...typography.bodySmall, color: t.textSecondary, fontStyle: 'italic' },
   setRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  setLabel: { ...typography.bodySmall, color: t.textMuted, width: 64 },
+  setLabel: { ...typography.bodySmall, color: t.textSecondary, width: 64 },
   input: {
     width: 64, height: 36, borderRadius: 8, borderWidth: 1, borderColor: t.border, color: t.text,
     paddingHorizontal: 8, textAlign: 'center', ...typography.body,
   },
-  unit: { ...typography.bodySmall, color: t.textMuted },
+  unit: { ...typography.bodySmall, color: t.textSecondary },
   tonnage: { ...typography.bodySmall, color: t.textSecondary, marginLeft: 'auto' },
   footer: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 14, paddingTop: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: ROW_PAD, paddingTop: ROW_PAD,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.border,
   },
-  footerLabel: { ...typography.caption, color: t.textMuted },
+  footerLabel: { ...typography.caption, color: t.textSecondary },
   footerValue: { ...typography.body, color: t.text, fontWeight: '700' },
   rest: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   restText: { ...typography.bodySmall, fontWeight: '600', fontVariant: ['tabular-nums'] },
