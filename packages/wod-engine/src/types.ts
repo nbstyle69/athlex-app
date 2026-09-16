@@ -244,6 +244,206 @@ export interface SkeletonBank {
   movement_caps: MovementCap[];
   /** squelettes Musculation (M1), lignes `discipline = 'musculation'` de `wod_skeletons` */
   muscu_skeletons: MuscuSkeleton[];
+  /** squelettes de séance Functional / Hybrid (J1), lignes `discipline = 'session'` de `wod_skeletons` */
+  session_skeletons: SessionSkeleton[];
+}
+
+// ─── Séances de box (J1) ─────────────────────────────────────────────────────
+
+/** Jour ISO : 1 = lundi … 6 = samedi. */
+export type SessionDay = 1 | 2 | 3 | 4 | 5 | 6;
+export type SessionBlockName = 'strength' | 'skill' | 'building' | 'wod' | 'finisher';
+
+/** Un pas de progression : série × reps à un % du 1RM (bloc A haltéro / force). */
+export interface StrengthStep {
+  sets: number;
+  reps: number;
+  /** % 1RM ; null = charge « propre » (montée technique) */
+  percent: number | null;
+  rest_s: number;
+  note?: string;
+}
+
+export interface SessionBlockAOption {
+  id: string;
+  kind: 'weightlifting' | 'strength' | 'skill';
+  /** mouvement de référence (id catalogue) : nom du 1RM, pattern lourd */
+  movement: string;
+  /** mouvements du complexe (ids catalogue), dans l'ordre ; vide en force / skill */
+  complex?: string[];
+  /** semaines paires / impaires (variante) ; absent = toujours éligible */
+  weeks?: 'even' | 'odd';
+  /** pas de progression (weightlifting / strength) */
+  steps?: StrengthStep[];
+  tempo?: string | null;
+  /** skill : reps RX par tour, tours et intervalle ; `progression` = étapes A et B propres au skill */
+  skill?: {
+    reps: number;
+    rounds: number;
+    every_s: number;
+    progression: { a: string; b: string };
+    substitutions: Partial<Record<FunctionalCategory, string>>;
+  };
+  minutes: number;
+}
+
+export interface SessionBlockBOption {
+  id: string;
+  movement: string;
+  /** nom affiché quand le mouvement n'est pas dans le catalogue Functional */
+  name?: string;
+  /** pattern du mouvement de B (≠ pattern lourd de A) */
+  pattern: Pattern;
+  steps: StrengthStep[];
+  tempo?: string | null;
+  minutes: number;
+}
+
+export interface SessionFinisherOption {
+  id: string;
+  /** rounds × lignes « qty mouvement » (ids catalogue) */
+  rounds: number;
+  family: 'core' | 'carry' | 'shoulders' | 'glutes' | 'calves' | 'breathing';
+  movements: Array<{ id: string; name?: string; qty: number; unit: Unit }>;
+  minutes: number;
+}
+
+/** Filtre du bloc C : ce que reçoit `generateBlocC`. */
+export interface SessionBlocCFilter {
+  intentions: FunctionalIntention[];
+  durations: number[];
+  formats?: FormatChoice[];
+  /** pattern lourd du bloc A exclu du bloc C ; `heavy_pattern` = déduit du mouvement A */
+  pattern_not: Pattern[] | 'heavy_pattern';
+  /** aucun mouvement de ces familles (S2 : pas de squat lourd = pas de barre en squat) */
+  exclude?: string[];
+}
+
+export interface SessionSkeleton {
+  id: string;
+  discipline: 'session';
+  format: 'session';
+  day: SessionDay;
+  label: string;
+  budget_min: number;
+  warmup: { minutes: number; lines: string[] };
+  block_a: SessionBlockAOption[] | null;
+  block_b: SessionBlockBOption[] | null;
+  block_c: SessionBlocCFilter;
+  finisher: SessionFinisherOption[] | null;
+}
+
+export interface SessionParams {
+  day: SessionDay;
+  iso_year: number;
+  iso_week: number;
+  /** signatures des blocs C des 4 dernières semaines (journal) */
+  recent_signatures?: string[];
+  /** squelette du bloc C de la veille (règle 2 : jamais deux fois le même) */
+  previous_c_skeleton?: string | null;
+  /** squelette du bloc C du lendemain, quand le jour est retiré après coup (plafond gym) */
+  next_c_skeleton?: string | null;
+  /** patterns gym à écarter du bloc C (plafond hebdo dépassé) */
+  pattern_not?: Pattern[];
+  /** mouvements de bloc B déjà tirés cette semaine (jamais deux fois le même B) */
+  week_b_movements?: string[];
+  /** finishers de la semaine courante et des 4 dernières (journal `finisher:<id>`) */
+  recent_finishers?: string[];
+  exclude?: string[];
+}
+
+export interface SessionBlock extends Omit<EditorColumns, 'block_name'> {
+  block_name: SessionBlockName;
+  sort_order: number;
+  minutes: number;
+  /** contenu structuré : bloc A/B/finisher = objet ci-dessous, bloc C = `GeneratedWod` */
+  wod_json: GeneratedWod | SessionStructuredBlock;
+}
+
+export interface SessionStructuredBlock {
+  source: 'generator';
+  discipline: 'session';
+  kind: 'weightlifting' | 'strength' | 'skill' | 'building' | 'finisher';
+  option_id: string;
+  movement: string | null;
+  heavy_pattern: Pattern | null;
+  steps: StrengthStep[] | null;
+  complex: string[] | null;
+  skill: SessionBlockAOption['skill'] | null;
+  finisher: SessionFinisherOption | null;
+  /** reps RX comptées pour les plafonds gym de la semaine, par id */
+  gym_reps_rx: Record<string, number>;
+}
+
+export interface GeneratedSession {
+  source: 'generator';
+  discipline: 'session';
+  generator: { version: string; skeleton_id: string; seed: number; catalog_version: number; bank_version: number; relaxations: string[] };
+  day: SessionDay;
+  iso_year: number;
+  iso_week: number;
+  label: string;
+  budget_min: number;
+  total_minutes: number;
+  heavy_pattern: Pattern | null;
+  blocks: SessionBlock[];
+  bloc_c: GeneratedWod;
+  /** reps RX par id gym sur toute la séance (A + B + C + finisher) */
+  gym_reps_rx: Record<string, number>;
+  /** signature du bloc C (anti-répétition 4 semaines) */
+  signature: string;
+  /** mouvement du bloc B retenu (null sans B) */
+  block_b_movement: string | null;
+  /** id du finisher retenu (null sans finisher) */
+  finisher_id: string | null;
+}
+
+export interface WeekParams {
+  iso_year: number;
+  iso_week: number;
+  recent_signatures?: string[];
+  exclude?: string[];
+}
+
+export interface GeneratedWeek {
+  track: 'functional';
+  iso_year: number;
+  iso_week: number;
+  seed: number;
+  sessions: GeneratedSession[];
+  /** total RX sur la semaine : `pull` = C2B + pull-ups + T2B, `hspu` */
+  gym_volume: { pull: number; hspu: number };
+  relaxations: string[];
+  /** journal à persister : signatures des blocs C + `finisher:<id>` (anti-répétition 4 semaines) */
+  signatures: string[];
+}
+
+export interface MuscuWeekParams {
+  iso_year: number;
+  iso_week: number;
+  equipment?: MuscuEquipment;
+  level?: MuscuLevel;
+  recent_signatures?: string[];
+  exclude?: string[];
+}
+
+export interface MuscuWeekDay {
+  day: SessionDay;
+  target: MuscuTarget;
+  budget_min: number;
+  wod: MuscuWod;
+}
+
+export interface GeneratedMuscuWeek {
+  track: 'musculation';
+  iso_year: number;
+  iso_week: number;
+  seed: number;
+  objective: MuscuObjective;
+  days: MuscuWeekDay[];
+  /** séries par muscle principal sur la semaine */
+  sets_by_muscle: Partial<Record<Muscle, number>>;
+  relaxations: string[];
 }
 
 // ─── Paramètres et sortie ────────────────────────────────────────────────────
@@ -268,6 +468,10 @@ export interface GenerateParams {
   /** catégorie du profil (cible d'estimation) ; `rx` / `men` par défaut */
   profile_category?: Category | null;
   after_class?: AfterClassContext | null;
+  /** patterns interdits à tous les mouvements (séance : pattern lourd du bloc A) */
+  pattern_not?: Pattern[];
+  /** squelettes interdits (séance : squelette du bloc C de la veille) */
+  skeleton_not?: string[];
 }
 
 export interface GeneratedMovement {
@@ -414,10 +618,13 @@ export interface MuscuParams {
   one_rep_max?: Partial<Record<RmReference, number>> | null;
   bodyweight_kg?: number | null;
   after_class?: AfterClassContext | null;
+  /** WOD de box : charges en `%1RM` (jamais de kg individuel), RPE sans référence */
+  box_wod?: boolean;
 }
 
 export interface MuscuLoad {
-  mode: LoadMode | 'weighted';
+  /** `percent` : %1RM sans kg (WOD de box) */
+  mode: LoadMode | 'weighted' | 'percent';
   kg?: number;
   percent?: number;
   rpe?: number;

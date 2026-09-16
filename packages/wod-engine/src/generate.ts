@@ -252,11 +252,12 @@ function formatsFor(choice: FormatChoice | undefined): SkeletonFormat[] | null {
  * restent celles de l'intention demandée quel que soit le palier.
  */
 function candidateTiers(params: GenerateParams, bank: SkeletonBank): Array<{ list: Skeleton[]; relaxations: string[] }> {
-  const base = bank.skeletons.filter((s) => s.discipline === params.discipline && s.intentions.includes(params.intention));
+  const banned = new Set(params.skeleton_not ?? []);
+  const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id));
+  const base = all.filter((s) => s.intentions.includes(params.intention));
   const formats = formatsFor(params.format);
   const near = (d: number) => Math.abs(d - params.budget_min) <= 5;
   const acDur = (s: Skeleton) => params.entry !== 'after_class' || s.durations.some((d) => AFTER_CLASS_DURATIONS.includes(d));
-  const all = bank.skeletons.filter((s) => s.discipline === params.discipline);
   const steps: Array<[string[], Skeleton[], (s: Skeleton) => boolean]> = [
     [[], base, (s) => s.durations.includes(params.budget_min) && (!formats || formats.includes(s.format)) && acDur(s)],
     [['format'], base, (s) => s.durations.includes(params.budget_min) && acDur(s)],
@@ -296,6 +297,7 @@ function matchesPick(ctx: Ctx, slot: Slot, m: CatalogMovement, picked: Picked[],
   if (p.modality && !p.modality.includes(m.modality)) return 'modality';
   if (p.pattern_any && !m.pattern.some((x) => p.pattern_any!.includes(x))) return 'pattern_any';
   if (p.pattern_not && m.pattern.some((x) => p.pattern_not!.includes(x))) return 'pattern_not';
+  if (ctx.params.pattern_not && m.pattern.some((x) => ctx.params.pattern_not!.includes(x))) return 'session_pattern_not';
   if (isExcluded(ctx, m)) return 'excluded';
   if (equipmentExcluded(ctx, m)) return 'equipment_excluded';
   if (ctx.params.intention === 'cardio' && isSlowSkill(m)) return 'cardio_slow_skill';

@@ -25,8 +25,10 @@ import { engine_continuous } from './hybrid/engine_continuous';
 import { core_carry_finisher } from './hybrid/core_carry_finisher';
 import { run_intervals } from './hybrid/run_intervals';
 import { MUSCU_SKELETONS } from './muscu';
+import { SESSION_SKELETONS } from './session';
 
 export { MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, TARGET_MUSCLES } from './muscu';
+export { SESSION_SKELETONS, SESSION_BANK_VERSION, FINISHERS, S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long } from './session';
 
 export const BANK_VERSION = 3;
 /** version des squelettes Musculation (lignes `discipline = musculation`, migration 20261215) */
@@ -100,4 +102,5 @@ export const BANK_V1: SkeletonBank = {
   volume_caps: { functional: FUNCTIONAL_CAPS, hybrid: HYBRID_CAPS },
   movement_caps: MOVEMENT_CAPS,
   muscu_skeletons: MUSCU_SKELETONS,
+  session_skeletons: SESSION_SKELETONS,
 };

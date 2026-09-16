@@ -9,12 +9,16 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { BANK_V1, BANK_VERSION, MUSCU_BANK_VERSION, skeletonToRow, movementCapToRow, muscuSkeletonToRow } from '../src';
-import type { MuscuSkeletonRow, SkeletonRow, VolumeCapRow } from '../src';
+import {
+  BANK_V1, BANK_VERSION, MUSCU_BANK_VERSION, SESSION_BANK_VERSION,
+  skeletonToRow, movementCapToRow, muscuSkeletonToRow, sessionSkeletonToRow,
+} from '../src';
+import type { MuscuSkeletonRow, SessionSkeletonRow, SkeletonRow, VolumeCapRow } from '../src';
 
 const PKG = path.resolve(__dirname, '..');
 const MIGRATION = path.resolve(PKG, '../../supabase/migrations/20261212000000_wod_skeletons_volume_caps.sql');
 const MUSCU_MIGRATION = path.resolve(PKG, '../../supabase/migrations/20261215000000_wod_skeletons_musculation.sql');
+const SESSION_MIGRATION = path.resolve(PKG, '../../supabase/migrations/20261217000000_wod_skeletons_session.sql');
 
 const lit = (s: string) => `'${s.replace(/'/g, "''")}'`;
 const litOrNull = (s: string | null) => (s === null ? 'NULL' : lit(s));
@@ -64,3 +68,18 @@ ON CONFLICT (id) DO UPDATE SET
   active = EXCLUDED.active, version = EXCLUDED.version, updated_at = now();
 `);
 console.log(`${path.relative(process.cwd(), MUSCU_MIGRATION)} : ${muscuRows.length} squelettes musculation (v${MUSCU_BANK_VERSION})`);
+
+const sessionRows: SessionSkeletonRow[] = BANK_V1.session_skeletons.map((sk) => sessionSkeletonToRow(sk, SESSION_BANK_VERSION));
+const sessionValues = sessionRows.map((r) =>
+  `  (${lit(r.id)}, ${lit(r.discipline)}, ${lit(r.format)}, ${json(r.definition)}, ${r.active}, ${r.version})`);
+const sessionDdl = fs.readFileSync(path.join(__dirname, 'wod_skeletons_session.ddl.sql'), 'utf8');
+fs.writeFileSync(SESSION_MIGRATION, `${sessionDdl}
+-- ── Seed : squelettes de séance v${SESSION_BANK_VERSION} (${sessionRows.length} squelettes, généré par packages/wod-engine/scripts/export-bank.ts) ──
+INSERT INTO public.wod_skeletons (id, discipline, format, definition, active, version)
+VALUES
+${sessionValues.join(',\n')}
+ON CONFLICT (id) DO UPDATE SET
+  discipline = EXCLUDED.discipline, format = EXCLUDED.format, definition = EXCLUDED.definition,
+  active = EXCLUDED.active, version = EXCLUDED.version, updated_at = now();
+`);
+console.log(`${path.relative(process.cwd(), SESSION_MIGRATION)} : ${sessionRows.length} squelettes de séance (v${SESSION_BANK_VERSION})`);
