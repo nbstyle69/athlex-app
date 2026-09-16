@@ -13,7 +13,7 @@ import type {
   AnySkeletonRow, Catalog, CatalogRow, Skeleton, SkeletonBank, SkeletonRow, VolumeCapRow,
 } from '../../packages/wod-engine/src';
 
-export type EngineDataSource = 'supabase' | 'snapshot';
+export type EngineDataSource = 'supabase' | 'snapshot' | 'supabase+snapshot_muscu';
 
 export interface EngineData {
   catalog: Catalog;
@@ -75,6 +75,25 @@ async function fetchBank(): Promise<SkeletonBank | null> {
   }
 }
 
+/**
+ * Base antérieure à la migration 20261214 : `movement_catalog` n'a pas les
+ * colonnes muscu, tous les mouvements distants arrivent avec `muscu: null`. La
+ * part Musculation vient alors du snapshot embarqué (métadonnées greffées sur
+ * les mouvements partagés, exercices muscu seuls ajoutés), la part
+ * Functional / Hybrid reste celle de Supabase. Les squelettes suivent la même
+ * logique dans `bankFromRows`.
+ */
+export function withSnapshotMuscu(catalog: Catalog): { catalog: Catalog; patched: boolean } {
+  if (catalog.movements.some((m) => m.muscu && m.active)) return { catalog, patched: false };
+  const byId = new Map(catalog.movements.map((m) => [m.id, m]));
+  for (const snap of SNAPSHOT.catalog.movements) {
+    if (!snap.muscu) continue;
+    const remote = byId.get(snap.id);
+    byId.set(snap.id, remote ? { ...remote, muscu: snap.muscu } : snap);
+  }
+  return { catalog: { ...catalog, movements: Array.from(byId.values()) }, patched: true };
+}
+
 /** Snapshots embarqués, sans réseau (tests, hors ligne assumé). */
 export function engineSnapshot(): EngineData {
   return SNAPSHOT;
@@ -92,10 +111,14 @@ export async function loadEngineData(force = false): Promise<EngineData> {
       fetchCatalog().catch(() => null),
       fetchBank().catch(() => null),
     ]);
+    const cat = catalog ? withSnapshotMuscu(catalog) : null;
     const data: EngineData = {
-      catalog: catalog ?? SNAPSHOT.catalog,
+      catalog: cat?.catalog ?? SNAPSHOT.catalog,
       bank: bank ?? SNAPSHOT.bank,
-      source: { catalog: catalog ? 'supabase' : 'snapshot', bank: bank ? 'supabase' : 'snapshot' },
+      source: {
+        catalog: !cat ? 'snapshot' : cat.patched ? 'supabase+snapshot_muscu' : 'supabase',
+        bank: bank ? 'supabase' : 'snapshot',
+      },
     };
     cache = data;
     inflight = null;
