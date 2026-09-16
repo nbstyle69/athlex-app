@@ -243,6 +243,13 @@ classement. `profiles.level` n'était modifiable nulle part : sélecteur « Nive
 ajouté dans Profil → Modifier, cible du lien « modifier » ; la synchro par l'ELO reste. Copier
 passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest/lint verts.
 
+**`movement_totals` refermée (migration `20261218`).** La vue recréée par `20261204` (un total par
+unité) était repartie avec `GRANT ALL TO anon / authenticated` et sans `security_invoker`, annulant le
+lot 5e : le volume de répétitions de tous les athlètes se lisait à la clé anon avec les droits du
+propriétaire. `security_invoker = true` (chaque lecteur ne voit que ses `movement_logs`), `anon`
+révoqué, `authenticated` en SELECT seul. `test-grants` 31/31 (T1 / T2 / T8 rouges avant, mutation
+inverse vérifiée). **Appliquée en prod : oui** (dump horodaté dans la description de la PR).
+
 **Programmation automatique AthleX Fitness — PR J1 (`athlex-app`, migrations `20261216` + `20261217`).**
 Une box `auto_programming` reçoit chaque semaine ISO suivante, par piste (`auto_programming_tracks`
 ⊆ {`functional`, `musculation`}), ses séances posées dans `box_wods` (`source = 'auto'`, `audience = 'all'`,
@@ -252,8 +259,10 @@ assemble six séances lundi → samedi autour de 60 min depuis six squelettes de
 force (%1RM, tempo), Block C tiré par `generateBlocC` avec le pattern lourd du jour interdit
 (jamais relâché), squelette du jour précédent évité, plafonds Gym hebdo (150 tractions / 80 HSPU)
 avec remplacement tracé `weekly_gym_cap`. Piste Musculation : `generateMuscuWeek` réutilise
-`generateMuscu` (M1) sur cinq jours, objectif par cycle de six semaines ISO (hypertrophie →
-endurance → force), ≤ 16 séries hebdo par muscle, `leaderboard_enabled = false`. Orchestration
+`generateMuscu` (M1) sur cinq jours, objectif par cycle de six semaines ISO (Prise de muscle →
+Tonification → Force, Tronc jamais en Force), bloc B par squelette (≠ A, pattern ≠ lourd de A, unique dans la
+semaine), 26 finishers anti-répétition semaine + 4 semaines, progressions propres aux 7 skills S3, compteurs
+P1–P3 et M1–M10 à zéro, ≤ 16 séries hebdo par muscle, `leaderboard_enabled = false`. Orchestration
 pure dans `programming.ts` (`runWeekGeneration`) : seed = `box + piste + année + semaine +
 regen_counter`, idempotence sur `box_auto_programming_runs` (`box_id, track, iso_year, iso_week`),
 régénération qui garde les jours édités (`box_wods.edited_at`, trigger) ou scorés. Edge Function
@@ -279,7 +288,7 @@ legacy inactifs le restent. Charges : 1RM du calculateur (`profiles.personal_rec
 en paramètre) × facteur × % de l'objectif arrondi à 2,5 kg, sinon RPE 7 / 8 ; lest des tractions /
 dips en Force = 10 % de `bodyweight_kg` arrondi à 2,5 kg, sinon « lesté léger » ; Après ma classe
 exclut les muscles du WOD du jour et interdit Force ; débutant sans unilatéral ni lesté, 4
-exercices max ; jamais deux exercices consécutifs sur le même muscle ; durée ±10 % (trop long :
+exercices max ; jamais deux exercices consécutifs sur le même muscle ; règles M1–M10 de relecture : `priority` (1-5) et `movement_group` au catalogue, exercice principal par priorité, un seul exercice par geste, ≤ 2 lourds en Force (3e compound rétrogradé 70-75 % × 6-8), Pull / Dos avec tirage vertical + horizontal, ≤ 1 poids du corps hors tronc en box / salle, tractions remplacées en Tonification, remplissage sans repos ni 5 × 20, Tronc sans Force ni compound jambes (15 · 20 · 30'), libellés Prise de muscle / Force / Tonification et « RPE 7 (≈ 52 % du 1RM) », Hip Thrust obligatoire en Fessiers + ischios ; compteurs M1–M10 à zéro en conformité ; durée ±10 % (trop long :
 slots optionnels → séries → squelette ; trop court : reps → une série de plus (≤ 5) → exercice
 optionnel sur un muscle secondaire de la cible → tempo 3-1-1 compté dans la durée → repos → 5e
 exercice optionnel en débutant, `budget_short` tracé sur 0,17 % des tirages, tous débutant 60') ; signature `musculation|<squelette>|<exercices>` sur les 10
