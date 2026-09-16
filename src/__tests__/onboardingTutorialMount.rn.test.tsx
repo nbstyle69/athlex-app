@@ -67,7 +67,8 @@ describe('présentation : premier montage', () => {
       expect(JSON.stringify(r.toJSON())).toContain('Bienvenue');
       expect(consoleErrors.filter(e => !e.includes('not wrapped in act'))).toEqual([]);
       r.unmount();
-    });
+    // iOS passe en premier et paie la compilation à froid du preset react-native (3 à 5 s en CI) : 20 s au lieu des 5 s par défaut.
+    }, os === 'ios' ? 20_000 : undefined);
   }
 });
 
