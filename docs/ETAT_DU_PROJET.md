@@ -303,7 +303,7 @@ base avec snapshot en repli), **cron désactivé par défaut** (`docs/RUNBOOK_CR
 réservés admin / backend par trigger (message « Accès refusé : programmation automatique réservée à
 un administrateur »), journal en lecture propriétaire seule. Tests §8 : `session.test.ts`,
 `programming.test.ts`, `edge-bundle.test.ts`, suite serveur `scripts/test-auto-programming.mjs`
-(27 contrôles, mutation inverse). **Migrations `20261216` + `20261217` appliquées en prod : oui** (16/09/2026 19:41 UTC, dump `20260916T194119Z` dans `db-dumps` ; `boxes.auto_programming` à `false` partout, `box_auto_programming_runs` vide, 887 `box_wods` toutes `manual`). Ni Manager ni écran :
+(27 contrôles, mutation inverse). **Migrations `20261216` + `20261217` appliquées en prod : oui** (16/09/2026 19:41 UTC, dump `20260916T194119Z` dans `db-dumps` ; `boxes.auto_programming` à `false` partout, `box_auto_programming_runs` vide, 887 `box_wods` toutes `manual`). **Premier appel prod (16/09/2026 20:26 UTC, AthleX Fitness, semaine 39) : piste musculation `done` (5 cartes), piste functional en `TypeError`** : le seed `20261217` datait d'avant les progressions A / B des skills S3 (a265d33), la prod lisait des options skill sans `progression`. Correctif : migration `20261219` (UPDATE des 6 squelettes `session` = snapshot, version 2, **appliquée en prod : non**), `withSkillProgression` (repli sur le snapshot, erreur nommant le skill sinon), test `seed-sync.test.ts` qui rejoue les seeds SQL et les compare au snapshot pour séance, musculation, metcon et plafonds. Ni Manager ni écran :
 J2 / J3 attendent la relecture de `packages/wod-engine/samples-programmation.md`.
 
 **Générateur Musculation V1 — PR M1 (`athlex-app`, migrations `20261214` + `20261215`).**
@@ -329,7 +329,7 @@ Tests §7 : 1 152 combinaisons × 200 graines (230 400 séances) sans échec, 1R
 Back Squat + Thrusters. **Migrations `20261214` + `20261215` appliquées en prod : oui** (16/09/2026
 19:41 UTC, après « 1.0.54 installé », dump `20260916T194119Z` dans `db-dumps` : `movement_catalog`
 269 lignes dont 179 `discipline_muscu`, `wod_skeletons` 15 / 10 / 39 / 6, générateur Functional,
-Hybrid et Musculation vérifié par Nab dans l'app 1.0.54). Aucun écran : M2 attend la relecture de
+Hybrid et Musculation vérifié par Nab dans l'app 1.0.54). **Écart révélé par `seed-sync.test.ts` le 16/09/2026 : le seed `20261215` (c2f88b1) est antérieur aux règles M1–M10 (91b3854 : `groups`, `pair`, listes `ids`) et à M2, la prod lisait donc 39 squelettes musculation jamais testés** ; migration `20261220` (UPDATE des 39 squelettes = snapshot, `MUSCU_BANK_VERSION` 2, **appliquée en prod : non**). Aucun écran : M2 attend la relecture de
 `packages/wod-engine/samples-musculation.md`. Dépendances tranchées pour M2 : badges
 Musculation crédités depuis les séries réalisées saisies par l'athlète (`logMovementReps`,
 reps × séries par mouvement, verrou `strengthJournalSeparation`, jamais depuis

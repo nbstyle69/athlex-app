@@ -11,6 +11,7 @@ import { generateBlocC } from './generate';
 import { deathByMinute, ladderProgress, roundSeconds } from './estimate';
 import { generateMuscu, renderMuscu, sessionSeconds, SCHEMES } from './muscu';
 import { TARGET_MUSCLES } from './bank/muscu';
+import { SESSION_SKELETONS } from './bank/session';
 
 export const SESSION_ENGINE_VERSION = '1.0.0';
 /** ± 10 % autour de 60' (brief J1 §5.1) */
@@ -118,6 +119,20 @@ export function stepLine(name: string, st: StrengthStep, tempo?: string | null):
 }
 
 const CAT_LABEL: Record<string, string> = { scaled: 'Scaled', inter: 'Inter', rx: 'RX', rxplus: 'RX+', elite: 'Elite', pro: 'Pro' };
+
+/**
+ * Un skill lu depuis `wod_skeletons` peut venir d'un seed antérieur aux progressions
+ * (prod du 16/09/2026, seed 20261217) : on complète alors depuis le snapshot embarqué,
+ * et on refuse explicitement un skill inconnu plutôt que de laisser un TypeError.
+ */
+export function withSkillProgression(opt: SessionBlockAOption): SessionBlockAOption {
+  if (!opt.skill || opt.skill.progression) return opt;
+  const snapshot = SESSION_SKELETONS.flatMap((s) => s.block_a ?? []).find((o) => o.id === opt.id)?.skill?.progression;
+  if (!snapshot) {
+    throw new Error(`Skill « ${opt.id} » (${opt.movement}) sans progression A/B : absente de la banque chargée et du snapshot embarqué`);
+  }
+  return { ...opt, skill: { ...opt.skill, progression: snapshot } };
+}
 
 function blockALines(catalog: Catalog, opt: SessionBlockAOption, weeks: 'even' | 'odd'): string[] {
   const name = nameOf(catalog, opt.movement);
@@ -269,7 +284,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
   let optA: SessionBlockAOption | null = null;
   if (sk.block_a) {
     const eligible = sk.block_a.filter((o) => !o.weeks || o.weeks === weeks);
-    optA = rng.pick(eligible.length ? eligible : sk.block_a);
+    optA = withSkillProgression(rng.pick(eligible.length ? eligible : sk.block_a));
   }
   const movA = optA ? movementById(catalog, optA.movement) : undefined;
   const heavy = optA && optA.kind !== 'skill' ? heavyPatternOf(movA) : null;
