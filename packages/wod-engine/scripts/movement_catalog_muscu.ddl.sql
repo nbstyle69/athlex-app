@@ -43,7 +43,12 @@ ALTER TABLE public.movement_catalog
   ADD COLUMN IF NOT EXISTS weight_bodyweight smallint NOT NULL DEFAULT 0 CHECK (weight_bodyweight BETWEEN 0 AND 10),
   ADD COLUMN IF NOT EXISTS weight_box        smallint NOT NULL DEFAULT 0 CHECK (weight_box BETWEEN 0 AND 10),
   ADD COLUMN IF NOT EXISTS weight_gym        smallint NOT NULL DEFAULT 0 CHECK (weight_gym BETWEEN 0 AND 10),
-  ADD COLUMN IF NOT EXISTS muscu_unit        text NOT NULL DEFAULT 'reps' CHECK (muscu_unit IN ('reps','s','m'));
+  ADD COLUMN IF NOT EXISTS muscu_unit        text NOT NULL DEFAULT 'reps' CHECK (muscu_unit IN ('reps','s','m')),
+  -- 1 = meilleur exercice principal pour le muscle (slot main_compound), 5 = dernier recours
+  ADD COLUMN IF NOT EXISTS priority          smallint CHECK (priority IS NULL OR priority BETWEEN 1 AND 5),
+  -- geste : un seul exercice par groupe et par séance (sauf Full body, sauf paire compound + isolation explicite)
+  ADD COLUMN IF NOT EXISTS movement_group    text
+    CHECK (movement_group IS NULL OR movement_group IN ('press_h','press_v','pull_v','row','squat','hinge','lunge','hip_ext','curl','triceps_ext','fly','raise','shrug','core_flex','core_anti','carry'));
 
 ALTER TABLE public.movement_catalog DROP CONSTRAINT IF EXISTS movement_catalog_muscu_coherent;
 ALTER TABLE public.movement_catalog ADD CONSTRAINT movement_catalog_muscu_coherent CHECK (
@@ -53,6 +58,7 @@ ALTER TABLE public.movement_catalog ADD CONSTRAINT movement_catalog_muscu_cohere
     AND cardinality(objectives) > 0 AND rep_ranges_muscu IS NOT NULL
     AND (load_mode <> '1rm' OR (rm_reference IS NOT NULL AND rm_factor IS NOT NULL))
     AND (weight_bodyweight + weight_box + weight_gym) > 0
+    AND priority IS NOT NULL AND movement_group IS NOT NULL
   )
 );
 

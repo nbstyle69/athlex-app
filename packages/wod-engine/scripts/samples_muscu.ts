@@ -61,7 +61,15 @@ for (const target of MUSCU_TARGETS) {
       const level = LV[k];
       if (objective === 'force' && equipment === 'none') equipment = 'box';
       if (!targetAvailable(CATALOG_SNAPSHOT, target, equipment, level)) equipment = 'box';
-      const budget_min = MUSCU_DURATIONS.express[(k + MUSCU_TARGETS.indexOf(target)) % MUSCU_DURATIONS.express.length];
+      if (target === 'tronc' && objective === 'force') {
+        // M8 : Force grisée en Tronc — numéro (et graine) réservés pour ne pas décaler les entrées suivantes
+        idx++;
+        p(`### #${idx} — ${TARGET_LABEL[target]} · ${OBJECTIVE_LABEL[objective]} — indisponible (M8 : pas d’objectif Force en Tronc)`);
+        p();
+        continue;
+      }
+      const durations = target === 'tronc' ? MUSCU_DURATIONS.tronc : MUSCU_DURATIONS.express;
+      const budget_min = durations[(k + MUSCU_TARGETS.indexOf(target)) % durations.length];
       const params: MuscuParams = { entry: 'express', target, objective, equipment, level, budget_min, one_rep_max: level === 'debutant' ? null : RM[k], bodyweight_kg: level === 'debutant' ? null : BW[k] };
       const seed = 1000 + idx;
       block(params, seed, generateMuscu(params, CATALOG_SNAPSHOT, BANK_V1, seed));

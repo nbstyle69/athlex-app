@@ -1,8 +1,8 @@
 // Exercices de catalogue-musculation-v1.csv déjà présents dans le catalogue
 // metcon (recon M1, E1) : ils reçoivent les colonnes musculation sur la ligne
 // existante, pas une seconde ligne. Clé = id CSV, valeur = id movement_catalog.
-// 14 lignes marquées « même mouvement » en note + 4 présentes par nom
-// (Front Squat, Lunges, Ring Rows, Box Step-ups) ; Bench Press et Strict Press
+// 14 lignes marquées « même mouvement » en note + 5 présentes par nom
+// (Front Squat, Lunges, Ring Rows, Box Step-ups, Banded Pull-Ups) ; Bench Press et Strict Press
 // portent déjà l'id du catalogue.
 module.exports = {
   push_up_m: 'push_up',
@@ -21,6 +21,7 @@ module.exports = {
   bodyweight_lunge: 'walking_lunge',
   pistol_m: 'pistol',
   inverted_row: 'ring_row',
+  banded_pull_up_m: 'pull_up_banded',
   bench_press: 'bench_press',
   strict_press: 'strict_press',
 };

@@ -45,6 +45,8 @@ export interface CatalogRow {
   weight_box?: number | null;
   weight_gym?: number | null;
   muscu_unit?: string | null;
+  priority?: number | null;
+  movement_group?: string | null;
 }
 
 function json<T>(v: unknown): T | null {
@@ -72,6 +74,8 @@ function muscuFromRow(r: CatalogRow): MuscuFields | null {
     weight_box: Number(r.weight_box ?? 0),
     weight_gym: Number(r.weight_gym ?? 0),
     unit: (r.muscu_unit ?? 'reps') as MuscuFields['unit'],
+    priority: Number(r.priority ?? 3),
+    movement_group: (r.movement_group ?? 'carry') as MuscuFields['movement_group'],
   };
 }
 

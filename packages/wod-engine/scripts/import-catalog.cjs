@@ -173,6 +173,7 @@ const MUSCLE_PATTERN = {
   tronc: 'core', trapezes: 'pull_v', avant_bras: 'carry', obliques: 'core', coiffe: 'pull_h',
 };
 const WEIGHTED_FAMILIES = new Set(['barbell', 'dumbbell', 'kettlebell', 'machine', 'cable', 'carry', 'other']);
+const MOVEMENT_GROUPS = ['press_h', 'press_v', 'pull_v', 'row', 'squat', 'hinge', 'lunge', 'hip_ext', 'curl', 'triceps_ext', 'fly', 'raise', 'shrug', 'core_flex', 'core_anti', 'carry'];
 const muscuRows = parseCsv(fs.readFileSync(MUSCU_CSV_PATH, 'utf8'));
 const muscuMapping = [];
 const muscuIds = new Set();
@@ -185,6 +186,9 @@ for (const r of muscuRows) {
   if (!objectives.length || objectives.some((o) => !MUSCU_OBJECTIVES.includes(o))) throw new Error(`${r.id}: objectives invalides`);
   for (const o of objectives) if (!Array.isArray(ranges[o]) || ranges[o].length !== 2) throw new Error(`${r.id}: rep_ranges sans plage ${o}`);
   if (r.load_mode === '1rm' && (!r.rm_reference || !r.rm_factor)) throw new Error(`${r.id}: 1rm sans référence`);
+  const priority = Number(r.priority);
+  if (!Number.isInteger(priority) || priority < 1 || priority > 5) throw new Error(`${r.id}: priority hors 1-5`);
+  if (!MOVEMENT_GROUPS.includes(r.movement_group)) throw new Error(`${r.id}: movement_group inconnu ${r.movement_group}`);
   const unit = /unité secondes/i.test(r.notes) ? 's' : /unité mètres/i.test(r.notes) ? 'm' : 'reps';
   const muscu = {
     muscle_primary: r.muscle_primary,
@@ -203,6 +207,8 @@ for (const r of muscuRows) {
     weight_box: Number(r.weight_box || 0),
     weight_gym: Number(r.weight_gym || 0),
     unit,
+    priority,
+    movement_group: r.movement_group,
   };
   if (muscu.weight_bodyweight + muscu.weight_box + muscu.weight_gym === 0) throw new Error(`${r.id}: aucun poids de tirage`);
   const sharedId = MUSCU_ALIGNMENT[r.id];
@@ -329,6 +335,7 @@ const muscuValues = muscuMovements.map((m) => `  (${[
   'true', q(m.muscu.muscle_primary), arr(m.muscu.muscle_secondary), m.muscu.compound, m.muscu.unilateral, q(m.muscu.level_min),
   q(m.muscu.load_mode), q(m.muscu.rm_reference), m.muscu.rm_factor ?? 'NULL', m.muscu.seconds_per_rep, m.muscu.setup_s,
   arr(m.muscu.objectives), jb(m.muscu.rep_ranges), m.muscu.weight_bodyweight, m.muscu.weight_box, m.muscu.weight_gym, q(m.muscu.unit),
+  m.muscu.priority, q(m.muscu.movement_group),
 ].join(', ')})`).join(',\n');
 const muscuDdl = fs.readFileSync(path.join(__dirname, 'movement_catalog_muscu.ddl.sql'), 'utf8');
 const shared = muscuMovements.filter((m) => metconMovements.includes(m)).length;
@@ -341,7 +348,8 @@ INSERT INTO public.movement_catalog
    load_unit, weight_functional, weight_hybrid, equipment, badge_key, active, version, notes,
    discipline_muscu, muscle_primary, muscle_secondary, compound, unilateral, level_min,
    load_mode, rm_reference, rm_factor, seconds_per_rep, setup_s,
-   objectives, rep_ranges_muscu, weight_bodyweight, weight_box, weight_gym, muscu_unit)
+   objectives, rep_ranges_muscu, weight_bodyweight, weight_box, weight_gym, muscu_unit,
+   priority, movement_group)
 VALUES
 ${muscuValues}
 ON CONFLICT (id) DO UPDATE SET
@@ -351,7 +359,8 @@ ON CONFLICT (id) DO UPDATE SET
   rm_factor = EXCLUDED.rm_factor, seconds_per_rep = EXCLUDED.seconds_per_rep, setup_s = EXCLUDED.setup_s,
   objectives = EXCLUDED.objectives, rep_ranges_muscu = EXCLUDED.rep_ranges_muscu,
   weight_bodyweight = EXCLUDED.weight_bodyweight, weight_box = EXCLUDED.weight_box, weight_gym = EXCLUDED.weight_gym,
-  muscu_unit = EXCLUDED.muscu_unit, updated_at = now();
+  muscu_unit = EXCLUDED.muscu_unit, priority = EXCLUDED.priority, movement_group = EXCLUDED.movement_group,
+  updated_at = now();
 `);
 
 console.log(`${metconMovements.length} mouvements metcon (${metconMovements.filter((m) => m.active).length} actifs) — version ${version}`);

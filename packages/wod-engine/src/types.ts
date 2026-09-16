@@ -87,6 +87,14 @@ export type MuscuLevel = 'debutant' | 'inter' | 'avance';
 export type LoadMode = '1rm' | 'rpe' | 'bodyweight';
 export type RmReference = 'back_squat' | 'deadlift' | 'bench' | 'press' | 'hip_thrust';
 export type MuscuUnit = 'reps' | 's' | 'm';
+/** Geste : un seul exercice par groupe et par séance (M2), sauf Full body et paire compound + isolation explicite. */
+export type MovementGroup =
+  | 'press_h' | 'press_v' | 'pull_v' | 'row' | 'squat' | 'hinge' | 'lunge' | 'hip_ext'
+  | 'curl' | 'triceps_ext' | 'fly' | 'raise' | 'shrug' | 'core_flex' | 'core_anti' | 'carry';
+export const MOVEMENT_GROUPS: readonly MovementGroup[] = [
+  'press_h', 'press_v', 'pull_v', 'row', 'squat', 'hinge', 'lunge', 'hip_ext',
+  'curl', 'triceps_ext', 'fly', 'raise', 'shrug', 'core_flex', 'core_anti', 'carry',
+];
 
 export interface MuscuFields {
   muscle_primary: Muscle;
@@ -106,6 +114,9 @@ export interface MuscuFields {
   weight_gym: number;
   /** unité des « reps » : secondes (gainage) ou mètres (carry) */
   unit: MuscuUnit;
+  /** 1 = meilleur exercice principal pour le muscle (slot main_compound), 5 = dernier recours */
+  priority: number;
+  movement_group: MovementGroup;
 }
 
 export interface Catalog {
@@ -373,6 +384,10 @@ export interface MuscuSlot {
   unilateral?: boolean;
   /** ids jamais tirés sur ce slot (ex. back squat sur la cible Fessiers) */
   exclude_ids?: string[];
+  /** groupes de geste admis sur ce slot (ex. tirage vertical) */
+  groups?: MovementGroup[];
+  /** isolation autorisée dans le groupe d'un compound déjà tiré (paire compound + isolation explicite, M2) */
+  pair?: boolean;
 }
 
 export interface MuscuSkeleton {
@@ -414,6 +429,8 @@ export interface MuscuExercise {
   name: string;
   role: MuscuSlotRole;
   muscle_primary: Muscle;
+  movement_group: MovementGroup;
+  priority: number;
   sets: number;
   reps: number;
   reps_unit: MuscuUnit;

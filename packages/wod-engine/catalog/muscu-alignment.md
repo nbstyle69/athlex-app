@@ -182,5 +182,6 @@ Généré par `scripts/import-catalog.cjs`. Les lignes « partagé » reçoivent
 | `bird_dog` | Bird Dog | `bird_dog` | Bird Dog | nouveau (metcon 0/0) |
 | `bodyweight_reverse_lunge` | Reverse Lunge | `bodyweight_reverse_lunge` | Reverse Lunge | nouveau (metcon 0/0) |
 | `squat_hold` | Squat Hold | `squat_hold` | Squat Hold | nouveau (metcon 0/0) |
+| `banded_pull_up_m` | Banded Pull-Ups | `pull_up_banded` | Banded Pull-Ups | partagé (colonnes ajoutées) |
 
-Total : 178 exercices — 18 partagés, 160 nouveaux.
+Total : 179 exercices — 19 partagés, 160 nouveaux.

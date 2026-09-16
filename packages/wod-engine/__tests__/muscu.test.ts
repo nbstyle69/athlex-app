@@ -1,12 +1,13 @@
 import {
   generateMuscu, targetAvailable, availableTargets, afterClassMuscles, renderMuscu, exerciseLine, muscuSignature, percentForReps,
   InvalidMuscuParams, CATALOG_SNAPSHOT, BANK_V1, MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, MUSCU_DURATIONS, TARGET_MUSCLES,
-  VOLUME_CAP_SETS, BEGINNER_MAX_EXERCISES, WEIGHTED_IDS, MUSCU_TOLERANCE, bankFromRows, muscuSkeletonToRow, skeletonToRow, movementCapToRow,
-  BANK_VERSION, MUSCU_BANK_VERSION,
+  VOLUME_CAP_SETS, BEGINNER_MAX_EXERCISES, BEGINNER_MAX_EXERCISES_LONG, BEGINNER_LONG_BUDGET_MIN, WEIGHTED_IDS, MUSCU_TOLERANCE, bankFromRows, muscuSkeletonToRow, skeletonToRow, movementCapToRow,
+  BANK_VERSION, MUSCU_BANK_VERSION, MOVEMENT_GROUPS,
 } from '../src';
 import type { MuscuEquipment, MuscuLevel, MuscuParams, MuscuWod, Muscle } from '../src';
 import { parseStrengthLine, isStrengthLine } from '../../../src/utils/strengthBlock';
 import MUSCU_ALIGNMENT from '../catalog/muscu-alignment.cjs';
+import { muscuConformityGrid, muscuViolations, countMuscuByCause, MUSCU_CAUSES } from './conformity-muscu';
 import { readFileSync } from 'fs';
 import path from 'path';
 
@@ -19,20 +20,20 @@ const muscuRows = CATALOG_SNAPSHOT.movements.filter((m) => m.muscu);
 
 function* grid(): Generator<MuscuParams> {
   for (const target of MUSCU_TARGETS) for (const objective of MUSCU_OBJECTIVES) for (const equipment of EQ) for (const level of LV) {
-    if (objective === 'force' && equipment === 'none') continue;
+    if (objective === 'force' && (equipment === 'none' || target === 'tronc')) continue;
     if (!targetAvailable(CATALOG_SNAPSHOT, target, equipment, level)) continue;
-    for (const budget_min of MUSCU_DURATIONS.express) yield { entry: 'express', target, objective, equipment, level, budget_min };
+    for (const budget_min of target === 'tronc' ? MUSCU_DURATIONS.tronc : MUSCU_DURATIONS.express) yield { entry: 'express', target, objective, equipment, level, budget_min };
   }
 }
 
 describe('catalogue musculation (import CSV v1)', () => {
-  it('178 exercices (173 du CSV + 5 variantes faciles sans matériel), 18 partagés avec le catalogue metcon (13 annoncés par le brief + 5 alignés par nom), 160 nouveaux', () => {
-    expect(muscuRows).toHaveLength(178);
+  it('179 exercices (173 du CSV + 5 variantes faciles sans matériel + Banded Pull-Ups), 19 partagés avec le catalogue metcon (13 annoncés par le brief + 6 alignés par nom), 160 nouveaux', () => {
+    expect(muscuRows).toHaveLength(179);
     const shared = Object.keys(MUSCU_ALIGNMENT);
-    expect(shared).toHaveLength(18);
+    expect(shared).toHaveLength(19);
     const sharedIds = new Set(Object.values(MUSCU_ALIGNMENT) as string[]);
     const sharedRows = muscuRows.filter((m) => sharedIds.has(m.id));
-    expect(sharedRows).toHaveLength(18);
+    expect(sharedRows).toHaveLength(19);
     // partagé = ligne metcon existante (poids metcon renseignés ou ligne legacy inactive), jamais une seconde ligne
     for (const m of sharedRows) expect(m.notes ?? '').not.toMatch(/^Musculation/);
     expect(muscuRows.filter((m) => !sharedIds.has(m.id))).toHaveLength(160);
@@ -64,12 +65,24 @@ describe('catalogue musculation (import CSV v1)', () => {
     }
   });
 
-  it('les familles machine / cable sont dans la migration et les 178 lignes dans le seed', () => {
+  it('chaque exercice porte priority 1-5 et un movement_group du référentiel', () => {
+    for (const m of muscuRows) {
+      expect(Number.isInteger(m.muscu!.priority)).toBe(true);
+      expect(m.muscu!.priority).toBeGreaterThanOrEqual(1);
+      expect(m.muscu!.priority).toBeLessThanOrEqual(5);
+      expect(MOVEMENT_GROUPS).toContain(m.muscu!.movement_group);
+    }
+    expect(CATALOG_SNAPSHOT.movements.find((m) => m.id === 'yates_row')!.muscu!.muscle_primary).toBe('trapezes');
+  });
+
+  it('les familles machine / cable sont dans la migration et les 179 lignes dans le seed', () => {
     const sql = readFileSync(path.join(__dirname, '../../../supabase/migrations/20261214000000_movement_catalog_musculation.sql'), 'utf8');
     expect(sql).toMatch(/'machine','cable'/);
     expect(sql).toMatch(/Appliquée en prod : NON/);
-    expect((sql.match(/^\s+\('/gm) ?? []).length).toBe(178);
+    expect((sql.match(/^\s+\('/gm) ?? []).length).toBe(179);
     expect(sql).toMatch(/ON CONFLICT \(id\) DO UPDATE SET\n\s+discipline_muscu/);
+    expect(sql).toMatch(/priority = EXCLUDED.priority/);
+    expect(sql).toMatch(/movement_group = EXCLUDED.movement_group/);
     expect(sql).not.toMatch(/DO UPDATE SET[^;]*\bactive\b/);
     const metcon = readFileSync(path.join(__dirname, '../../../supabase/migrations/20261211000000_movement_catalog.sql'), 'utf8');
     expect((metcon.match(/^\s+\('/gm) ?? []).length).toBe(109);
@@ -156,7 +169,8 @@ describe('generateMuscu — conformité (cible × objectif × durée × matérie
           expect(e.sets).toBeGreaterThanOrEqual(2);
           expect(e.reps).toBeGreaterThan(0);
         }
-        if (p.level === 'debutant') expect(ex.length).toBeLessThanOrEqual(BEGINNER_MAX_EXERCISES + (w.generator.relaxations.includes('beginner_fifth') ? 1 : 0));
+        if (p.level === 'debutant') expect(ex.length).toBeLessThanOrEqual(p.budget_min >= BEGINNER_LONG_BUDGET_MIN ? BEGINNER_MAX_EXERCISES_LONG : BEGINNER_MAX_EXERCISES);
+        expect(w.generator.relaxations).not.toContain('rest_extended');
         expect(w.signature).toBe(muscuSignature(w.generator.skeleton_id, ex));
         expect(w.description).toContain(ex[0].name);
       }
@@ -164,8 +178,22 @@ describe('generateMuscu — conformité (cible × objectif × durée × matérie
     expect(n).toBeGreaterThan(0);
     // eslint-disable-next-line no-console
     console.log(`muscu conformité : ${n} séances, relâchements`, relax);
-    // séance annoncée trop longue : < 1 % des tirages, et seulement après reps → séries → optionnel → tempo → repos → 5e exercice débutant
+    // séance annoncée trop longue : < 1 % des tirages, et seulement après exercice → série → tempo → reps → repos + 15 s
     expect((relax.budget_short ?? 0) / n).toBeLessThan(0.01);
+  });
+
+  it(`compteurs M1–M10 à zéro sur la grille (${Math.min(SEEDS, 40)} seeds)`, () => {
+    const all: string[] = [];
+    let n = 0;
+    for (const p of muscuConformityGrid()) for (let seed = 1; seed <= Math.min(SEEDS, 40); seed++) {
+      const w = gen(p, seed);
+      n++;
+      for (const v of muscuViolations(w, p)) all.push(`${v} ← ${p.target}/${p.objective}/${p.equipment}/${p.level}/${p.budget_min}#${seed}`);
+    }
+    const counts = countMuscuByCause(all);
+    // eslint-disable-next-line no-console
+    console.log(`muscu M1–M10 : ${n} séances`, counts, all.filter((l) => !l.startsWith('[M7]')).slice(0, 40), all.filter((l) => l.startsWith('[M7]')).slice(0, 10));
+    for (const c of MUSCU_CAUSES) expect(counts[c]).toBe(0);
   });
 
   it('rattrapage de budget : séries ≤ 5 en hypertrophie / endurance, tempo 3-1-1 rendu, variantes faciles sans matériel présentes', () => {
@@ -178,7 +206,7 @@ describe('generateMuscu — conformité (cible × objectif × durée × matérie
     let tempo = 0;
     for (const target of MUSCU_TARGETS) for (let seed = 1; seed <= 20; seed++) {
       if (!targetAvailable(CATALOG_SNAPSHOT, target, 'none', 'debutant')) continue;
-      const w = gen({ ...base, target, objective: 'hypertrophie', equipment: 'none', level: 'debutant', budget_min: 60 }, seed);
+      const w = gen({ ...base, target, objective: 'hypertrophie', equipment: 'none', level: 'debutant', budget_min: target === 'tronc' ? 30 : 60 }, seed);
       for (const e of w.blocks[0].exercises) expect(e.sets).toBeLessThanOrEqual(5);
       if (w.generator.relaxations.includes('tempo_311')) {
         tempo++;
@@ -198,8 +226,11 @@ describe('generateMuscu — conformité (cible × objectif × durée × matérie
     }
   });
 
-  it('cible indisponible (sans matériel : pull, dos) et Force sans matériel / Après ma classe → erreur explicite', () => {
+  it('cible indisponible (sans matériel : pull, dos), Force sans matériel / Après ma classe / Tronc, durée Tronc hors 15-20-30 → erreur explicite', () => {
     expect(() => gen({ ...base, equipment: 'none', target: 'pull' }, 1)).toThrow(InvalidMuscuParams);
+    expect(() => gen({ ...base, target: 'tronc', objective: 'force', budget_min: 20 }, 1)).toThrow(/Tronc/);
+    expect(() => gen({ ...base, target: 'tronc', budget_min: 45 }, 1)).toThrow(/15, 20 ou 30/);
+    expect(gen({ ...base, target: 'tronc', budget_min: 30 }, 1).blocks[0].exercises.length).toBeGreaterThanOrEqual(2);
     expect(() => gen({ ...base, equipment: 'none', objective: 'force', target: 'push' }, 1)).toThrow(/Force/);
     expect(() => gen({ ...base, entry: 'after_class', objective: 'force', after_class: { day_movements: [] } }, 1)).toThrow(/Force/);
     expect(availableTargets(CATALOG_SNAPSHOT, 'gym', 'debutant')).toEqual(MUSCU_TARGETS);
@@ -231,9 +262,13 @@ describe('charges', () => {
     }
   });
 
-  it('1RM inconnu : RPE (7 endurance, 8 hypertrophie / force) ; débutant jamais en 1RM', () => {
+  it('1RM inconnu : RPE (7 endurance, 8 hypertrophie / force) rendu « RPE 8 (≈ 72 % du 1RM) » ; débutant jamais en 1RM', () => {
     const hyp = gen({ ...base, one_rep_max: null }, 3);
-    for (const e of hyp.blocks[0].exercises) if (e.load.mode === 'rpe') expect(e.load.rpe).toBe(8);
+    for (const e of hyp.blocks[0].exercises) if (e.load.mode === 'rpe') {
+      expect(e.load.rpe).toBe(8);
+      if (e.load.rm_reference) expect(exerciseLine(e)).toMatch(/RPE 8 \(≈ \d+ % du 1RM\)/);
+    }
+    expect(hyp.description).not.toMatch(/sans 1RM connu|%1RM/);
     const end = gen({ ...base, objective: 'endurance', one_rep_max: null }, 3);
     for (const e of end.blocks[0].exercises) if (e.load.mode === 'rpe') expect(e.load.rpe).toBe(7);
     const deb = gen({ ...P, level: 'debutant', one_rep_max: { bench: 100 } }, 3);
@@ -327,7 +362,7 @@ describe('exclusions', () => {
 
 describe('rendu texte (grammaire strength)', () => {
   it('chaque ligne d’exercice est reconnue et relue par parseStrengthLine (nom, séries, reps, unité, côté, kg)', () => {
-    for (const p of [base, { ...base, objective: 'endurance' as const, target: 'tronc' as const }, { ...base, target: 'jambes' as const, level: 'avance' as const, one_rep_max: { back_squat: 120, deadlift: 160 } }]) {
+    for (const p of [base, { ...base, objective: 'endurance' as const, target: 'tronc' as const, budget_min: 30 }, { ...base, target: 'jambes' as const, level: 'avance' as const, one_rep_max: { back_squat: 120, deadlift: 160 } }]) {
       for (let seed = 1; seed <= 10; seed++) {
         const w = gen(p, seed);
         for (const e of w.blocks[0].exercises) {
@@ -344,6 +379,8 @@ describe('rendu texte (grammaire strength)', () => {
         }
         expect(renderMuscu(w)).toBe(w.description);
         expect(w.description.split('\n')[0]).toMatch(/^Musculation · /);
+        expect(w.description).not.toMatch(/Hypertrophie|Endurance musculaire/);
+        expect(w.description).toMatch(/Prise de muscle|Force|Tonification/);
         expect(w.description).toContain(`Durée estimée ${w.estimate.minutes}'`);
       }
     }
@@ -367,7 +404,7 @@ describe('rendu texte (grammaire strength)', () => {
 describe('cibles et muscles', () => {
   it('chaque exercice tiré appartient aux muscles de la cible (ou à un slot core / mollets)', () => {
     for (const target of MUSCU_TARGETS) for (let seed = 1; seed <= 10; seed++) {
-      const w = gen({ ...base, target, objective: 'hypertrophie', level: 'avance' }, seed);
+      const w = gen({ ...base, target, objective: 'hypertrophie', level: 'avance', budget_min: target === 'tronc' ? 30 : 45 }, seed);
       for (const e of w.blocks[0].exercises) {
         const m = CATALOG_SNAPSHOT.movements.find((x) => x.id === e.id)!;
         const inTarget = TARGET_MUSCLES[target].includes(e.muscle_primary);
