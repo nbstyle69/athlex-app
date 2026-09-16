@@ -3,6 +3,24 @@
 // packages/wod-engine/src/types.ts
 var FUNCTIONAL_CATEGORIES = ["scaled", "inter", "rx", "rxplus", "elite", "pro"];
 var HYBRID_CATEGORIES = ["women", "men", "women_pro", "men_pro"];
+var MOVEMENT_GROUPS = [
+  "press_h",
+  "press_v",
+  "pull_v",
+  "row",
+  "squat",
+  "hinge",
+  "lunge",
+  "hip_ext",
+  "curl",
+  "triceps_ext",
+  "fly",
+  "raise",
+  "shrug",
+  "core_flex",
+  "core_anti",
+  "carry"
+];
 var NoValidWod = class extends Error {
   reasons;
   constructor(message, reasons) {
@@ -87,7 +105,9 @@ function muscuFromRow(r) {
     weight_bodyweight: Number(r.weight_bodyweight ?? 0),
     weight_box: Number(r.weight_box ?? 0),
     weight_gym: Number(r.weight_gym ?? 0),
-    unit: r.muscu_unit ?? "reps"
+    unit: r.muscu_unit ?? "reps",
+    priority: Number(r.priority ?? 3),
+    movement_group: r.movement_group ?? "carry"
   };
 }
 function movementFromRow(r) {
@@ -2214,7 +2234,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "squat"
       }
     },
     {
@@ -2406,7 +2428,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "squat"
       }
     },
     {
@@ -2593,7 +2617,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "hinge"
       }
     },
     {
@@ -2940,7 +2966,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "press_h"
       }
     },
     {
@@ -3657,7 +3685,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "squat"
       }
     },
     {
@@ -4462,7 +4492,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
       }
     },
     {
@@ -4800,7 +4832,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "m"
+        "unit": "m",
+        "priority": 3,
+        "movement_group": "carry"
       }
     },
     {
@@ -6838,7 +6872,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_v"
       }
     },
     {
@@ -7228,9 +7264,11 @@ var CATALOG_SNAPSHOT = {
           ]
         },
         "weight_bodyweight": 0,
-        "weight_box": 0,
+        "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "row"
       }
     },
     {
@@ -7331,7 +7369,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_h"
       }
     },
     {
@@ -7427,7 +7467,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "squat"
       }
     },
     {
@@ -7796,7 +7838,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "s"
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "core_anti"
       }
     },
     {
@@ -8581,7 +8625,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
       }
     },
     {
@@ -8815,7 +8861,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "squat"
       }
     },
     {
@@ -8908,7 +8956,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
       }
     },
     {
@@ -10444,7 +10494,40 @@ var CATALOG_SNAPSHOT = {
       "active": true,
       "version": 2,
       "notes": "substitution",
-      "muscu": null
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            12,
+            15
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 4,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
+      }
     },
     {
       "id": "hanging_knee_raise",
@@ -10539,7 +10622,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -10986,7 +11071,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_v"
       }
     },
     {
@@ -11933,7 +12020,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "press_v"
       }
     },
     {
@@ -12089,7 +12178,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "press_h"
       }
     },
     {
@@ -12153,7 +12244,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_h"
       }
     },
     {
@@ -12217,7 +12310,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_h"
       }
     },
     {
@@ -12279,7 +12374,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_h"
       }
     },
     {
@@ -12339,7 +12436,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -12399,7 +12498,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -12460,7 +12561,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -12528,7 +12631,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_h"
       }
     },
     {
@@ -12591,7 +12696,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "press_v"
       }
     },
     {
@@ -12649,7 +12756,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_v"
       }
     },
     {
@@ -12709,7 +12818,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
       }
     },
     {
@@ -12769,7 +12880,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
       }
     },
     {
@@ -12831,7 +12944,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -12893,7 +13008,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -12953,7 +13070,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
       }
     },
     {
@@ -13012,7 +13131,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_v"
       }
     },
     {
@@ -13072,7 +13193,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -13132,7 +13255,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -13188,7 +13313,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -13252,7 +13379,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "press_h"
       }
     },
     {
@@ -13312,7 +13441,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_h"
       }
     },
     {
@@ -13380,7 +13511,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "row"
       }
     },
     {
@@ -13442,7 +13575,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "row"
       }
     },
     {
@@ -13505,7 +13640,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "row"
       }
     },
     {
@@ -13567,7 +13704,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -13630,7 +13769,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "row"
       }
     },
     {
@@ -13694,7 +13835,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "row"
       }
     },
     {
@@ -13757,7 +13900,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "row"
       }
     },
     {
@@ -13819,7 +13964,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "row"
       }
     },
     {
@@ -13886,7 +14033,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -13948,7 +14097,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -14008,7 +14159,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -14067,7 +14220,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "hinge"
       }
     },
     {
@@ -14130,7 +14285,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hinge"
       }
     },
     {
@@ -14190,7 +14347,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -14250,7 +14409,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -14312,7 +14473,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -14368,7 +14531,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -14428,7 +14593,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -14483,7 +14650,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -14550,7 +14719,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "squat"
       }
     },
     {
@@ -14612,7 +14783,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "squat"
       }
     },
     {
@@ -14675,7 +14848,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
       }
     },
     {
@@ -14743,7 +14918,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "hinge"
       }
     },
     {
@@ -14805,7 +14982,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hinge"
       }
     },
     {
@@ -14865,7 +15044,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "squat"
       }
     },
     {
@@ -14925,7 +15106,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "curl"
       }
     },
     {
@@ -14993,7 +15176,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -15053,7 +15238,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -15111,7 +15298,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "hinge"
       }
     },
     {
@@ -15174,7 +15363,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "hinge"
       }
     },
     {
@@ -15235,7 +15426,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
       }
     },
     {
@@ -15295,7 +15488,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
       }
     },
     {
@@ -15350,7 +15545,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "curl"
       }
     },
     {
@@ -15412,7 +15609,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -15472,7 +15671,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -15534,7 +15735,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_anti"
       }
     },
     {
@@ -15590,7 +15793,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_anti"
       }
     },
     {
@@ -15643,7 +15848,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_anti"
       }
     },
     {
@@ -15696,7 +15903,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "s"
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "core_anti"
       }
     },
     {
@@ -15754,7 +15963,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -15812,7 +16023,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "m"
+        "unit": "m",
+        "priority": 3,
+        "movement_group": "carry"
       }
     },
     {
@@ -15876,7 +16089,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_h"
       }
     },
     {
@@ -15934,7 +16149,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_h"
       }
     },
     {
@@ -15997,7 +16214,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_h"
       }
     },
     {
@@ -16056,7 +16275,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -16118,7 +16339,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -16174,7 +16397,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -16236,7 +16461,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -16296,7 +16523,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_h"
       }
     },
     {
@@ -16359,7 +16588,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_h"
       }
     },
     {
@@ -16421,7 +16652,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_v"
       }
     },
     {
@@ -16479,7 +16712,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_v"
       }
     },
     {
@@ -16542,7 +16777,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "raise"
       }
     },
     {
@@ -16604,7 +16841,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -16660,7 +16899,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
       }
     },
     {
@@ -16722,7 +16963,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -16782,7 +17025,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
       }
     },
     {
@@ -16842,7 +17087,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
       }
     },
     {
@@ -16899,7 +17146,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -16955,7 +17204,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
       }
     },
     {
@@ -17018,7 +17269,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "row"
       }
     },
     {
@@ -17076,7 +17329,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "row"
       }
     },
     {
@@ -17138,7 +17393,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "row"
       }
     },
     {
@@ -17200,7 +17457,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "row"
       }
     },
     {
@@ -17260,7 +17519,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "shrug"
       }
     },
     {
@@ -17320,7 +17581,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "shrug"
       }
     },
     {
@@ -17381,7 +17644,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "shrug"
       }
     },
     {
@@ -17441,7 +17706,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "shrug"
       }
     },
     {
@@ -17503,7 +17770,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -17570,7 +17839,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -17632,7 +17903,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -17694,7 +17967,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -17756,7 +18031,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -17818,7 +18095,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -17880,7 +18159,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -17942,7 +18223,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
       }
     },
     {
@@ -17998,7 +18281,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18060,7 +18345,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_h"
       }
     },
     {
@@ -18122,7 +18409,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "press_h"
       }
     },
     {
@@ -18175,7 +18464,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18235,7 +18526,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18290,7 +18583,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18350,7 +18645,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18410,7 +18707,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_h"
       }
     },
     {
@@ -18466,7 +18765,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18526,7 +18827,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18586,7 +18889,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18646,7 +18951,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18707,7 +19014,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18767,7 +19076,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
       }
     },
     {
@@ -18823,7 +19134,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -18885,7 +19198,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -18941,7 +19256,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -18998,7 +19315,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -19060,7 +19379,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -19120,7 +19441,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -19176,7 +19499,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -19239,7 +19564,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
       }
     },
     {
@@ -19301,7 +19628,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "carry"
       }
     },
     {
@@ -19363,7 +19692,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "carry"
       }
     },
     {
@@ -19418,7 +19749,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "s"
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "carry"
       }
     },
     {
@@ -19473,7 +19806,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -19526,7 +19861,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -19586,7 +19923,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -19646,7 +19985,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -19706,7 +20047,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -19759,7 +20102,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -19816,7 +20161,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -19871,7 +20218,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -19924,7 +20273,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "s"
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "core_anti"
       }
     },
     {
@@ -19977,7 +20328,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -20032,7 +20385,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -20087,7 +20442,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -20142,7 +20499,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -20199,7 +20558,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -20254,7 +20615,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "s"
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "squat"
       }
     },
     {
@@ -20314,7 +20677,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -20370,7 +20735,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "hinge"
       }
     },
     {
@@ -20423,7 +20790,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
       }
     },
     {
@@ -20478,7 +20847,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "s"
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "core_anti"
       }
     },
     {
@@ -20531,7 +20902,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "s"
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "core_anti"
       }
     },
     {
@@ -20586,7 +20959,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
       }
     },
     {
@@ -20648,7 +21023,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -20708,7 +21085,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -20768,7 +21147,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -20823,7 +21204,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -20883,7 +21266,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -20947,7 +21332,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "squat"
       }
     },
     {
@@ -21000,7 +21387,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -21063,7 +21452,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -21125,7 +21516,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -21187,7 +21580,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
       }
     },
     {
@@ -21245,7 +21640,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 8,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
       }
     },
     {
@@ -21312,7 +21709,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 0,
         "weight_box": 0,
         "weight_gym": 8,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "hip_ext"
       }
     },
     {
@@ -21373,7 +21772,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 8,
         "weight_box": 6,
         "weight_gym": 4,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_h"
       }
     },
     {
@@ -21430,7 +21831,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 2,
         "weight_gym": 2,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_h"
       }
     },
     {
@@ -21486,7 +21889,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_anti"
       }
     },
     {
@@ -21546,7 +21951,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 8,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "reps"
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
       }
     },
     {
@@ -21601,7 +22008,9 @@ var CATALOG_SNAPSHOT = {
         "weight_bodyweight": 6,
         "weight_box": 6,
         "weight_gym": 6,
-        "unit": "s"
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "squat"
       }
     }
   ]
@@ -22176,7 +22585,8 @@ var iso = (m, o) => slot("isolation", m, o);
 var core = (m, o) => slot("core", m, o);
 var calves = (o) => slot("calves", "mollets", o);
 var OPT = { optional: true };
-var HIP_THRUST = ["hip_thrust", "db_hip_thrust", "hip_thrust_machine", "single_leg_hip_thrust", "glute_bridge", "single_leg_glute_bridge"];
+var PAIR = { pair: true };
+var HIP_THRUST_LOADED = ["hip_thrust", "db_hip_thrust", "hip_thrust_machine"];
 var RDL = ["romanian_deadlift", "db_rdl", "good_morning", "bodyweight_single_leg_rdl"];
 var ABDUCTION = ["hip_abduction_machine", "cable_hip_abduction", "banded_hip_abduction"];
 var KICKBACK = ["glute_kickback", "cable_pull_through", "frog_pump"];
@@ -22184,28 +22594,35 @@ var LEG_CURL = ["leg_curl", "nordic_curl", "bodyweight_single_leg_rdl"];
 var ANTI_ROTATION = ["pallof_press", "dead_bug", "plank_hold", "hollow_hold", "ab_wheel", "vacuum"];
 var LATERAL = ["side_plank", "db_side_bend", "oblique_crunch", "hanging_oblique_raise", "oblique_bench_raise", "rotation_machine", "crunch_with_rotation", "standing_rotation"];
 var CARRY = ["db_farmer_carry", "suitcase_carry"];
-var VERTICAL_PULL = ["strict_pull_up", "chin_up", "wide_grip_pull_up", "neutral_grip_pull_up", "close_grip_pull_up", "lat_pulldown", "converging_pulldown", "close_grip_pulldown", "supinated_pulldown", "one_arm_pulldown"];
 var TRICEPS_COMPOUND = ["close_grip_bench", "close_grip_dips", "machine_dips", "diamond_push_up", "dips"];
+var PULL_V = { groups: ["pull_v"] };
+var ROW = { groups: ["row"] };
+var LUNGE = { unilateral: true, groups: ["lunge"] };
+var FLY = { groups: ["fly"] };
+var RAISE = { groups: ["raise"] };
+var SHRUG = { groups: ["shrug"] };
+var TRI_EXT = { groups: ["triceps_ext"] };
+var PULLOVER = { groups: ["pull_v"] };
 var T = {
   push: {
-    hypertrophie: [main("pecs"), sec("epaules"), iso("pecs"), iso("epaules"), iso("triceps"), iso("triceps", OPT)],
-    force: [main("pecs"), main("epaules"), sec("triceps", { ids: TRICEPS_COMPOUND }), iso("epaules_post", OPT), iso("triceps", OPT)],
-    endurance: [sec("pecs"), sec("epaules"), iso("pecs"), iso("triceps"), iso("epaules", OPT)]
+    hypertrophie: [main("pecs"), sec("epaules"), iso("pecs", FLY), iso("epaules", RAISE), iso("triceps", TRI_EXT), core("tronc", OPT)],
+    force: [main("pecs"), main("epaules"), iso("triceps", TRI_EXT), iso("epaules_post", { ...OPT, ...FLY }), iso("epaules", { ...OPT, ...RAISE })],
+    endurance: [sec("pecs"), sec("epaules"), iso("pecs", FLY), iso("triceps", TRI_EXT), iso("epaules", { ...OPT, ...RAISE })]
   },
   pull: {
-    hypertrophie: [main("dos"), sec("dos", { ids: VERTICAL_PULL }), iso("epaules_post"), iso("biceps"), iso("biceps", OPT), iso("trapezes", OPT)],
-    force: [main("dos"), main("dos", { ids: VERTICAL_PULL }), sec("trapezes", OPT), iso("biceps"), iso("epaules_post", OPT)],
-    endurance: [sec("dos"), sec("dos", { ids: VERTICAL_PULL }), iso("epaules_post"), iso("biceps"), core(["tronc", "lombaires"], OPT)]
+    hypertrophie: [main("dos", PULL_V), sec("dos", ROW), iso("epaules_post", FLY), iso("biceps"), iso("trapezes", { ...OPT, ...SHRUG }), core(["tronc", "lombaires"], OPT)],
+    force: [main("dos", PULL_V), sec("dos", ROW), iso("biceps"), iso("trapezes", { ...OPT, ...SHRUG }), iso("epaules_post", { ...OPT, ...FLY })],
+    endurance: [sec("dos", PULL_V), sec("dos", ROW), iso("epaules_post", FLY), iso("biceps"), core(["tronc", "lombaires"], OPT)]
   },
   jambes: {
-    hypertrophie: [main("quadriceps"), sec("ischios"), sec(["quadriceps", "fessiers"]), iso("quadriceps"), iso("ischios"), calves()],
-    force: [main("quadriceps"), main(["ischios", "fessiers"]), sec("quadriceps", OPT), iso("ischios", OPT), calves(OPT)],
-    endurance: [sec("quadriceps"), sec(["ischios", "fessiers"]), iso(["quadriceps", "fessiers"]), calves(), core("tronc", OPT)]
+    hypertrophie: [main("quadriceps"), sec("ischios", { ids: RDL }), sec(["quadriceps", "fessiers"], LUNGE), iso("quadriceps", PAIR), iso("ischios", { ids: LEG_CURL }), calves()],
+    force: [main("quadriceps"), main(["ischios", "fessiers"]), sec("quadriceps", { ...OPT, ...LUNGE }), iso("ischios", { ...OPT, ids: LEG_CURL }), calves(OPT)],
+    endurance: [sec("quadriceps"), sec(["ischios", "fessiers"]), iso(["quadriceps", "fessiers"], PAIR), calves(), core("tronc", OPT)]
   },
   bas: {
-    hypertrophie: [main("quadriceps"), sec("fessiers"), sec("ischios"), iso(["quadriceps", "fessiers"]), iso("ischios", OPT), core(["tronc", "lombaires"], OPT)],
-    force: [main("quadriceps"), sec("ischios"), sec("fessiers", OPT), iso(["quadriceps", "fessiers"]), core(["lombaires", "tronc"], OPT)],
-    endurance: [sec("quadriceps"), sec("fessiers"), iso(["ischios", "fessiers"]), core("tronc"), calves(OPT)]
+    hypertrophie: [main("quadriceps"), sec("fessiers", { ids: HIP_THRUST_LOADED }), sec("ischios", { ids: RDL }), iso(["quadriceps", "fessiers"], PAIR), iso("ischios", { ...OPT, ids: LEG_CURL }), core(["tronc", "lombaires"], OPT)],
+    force: [main("quadriceps"), sec("ischios", { ids: RDL }), sec("fessiers", { ...OPT, ids: HIP_THRUST_LOADED }), iso(["quadriceps", "fessiers"], PAIR), core(["lombaires", "tronc"], OPT)],
+    endurance: [sec("quadriceps"), sec("fessiers"), iso(["ischios", "fessiers"], PAIR), core("tronc"), calves(OPT)]
   },
   full_body: {
     hypertrophie: [main("quadriceps"), main("pecs"), sec("dos"), sec(["ischios", "fessiers"]), iso("epaules", OPT), core("tronc", OPT)],
@@ -22214,50 +22631,51 @@ var T = {
   },
   tronc: {
     hypertrophie: [core("tronc"), core(["obliques", "tronc"]), core("lombaires"), core("tronc", OPT)],
+    // Force indisponible sur le Tronc (M8) : squelette conservé pour la table, refusé par le moteur (`force_tronc`)
     force: [core("tronc"), core("obliques"), core("lombaires"), core("tronc", OPT)],
     endurance: [core("tronc", { ids: ANTI_ROTATION }), core(["obliques", "tronc"], { ids: LATERAL }), core("tronc", { ids: CARRY }), core("lombaires")]
   },
   haut: {
-    hypertrophie: [main("pecs"), main("dos"), sec("epaules"), iso("biceps"), iso("triceps"), iso("epaules_post", OPT)],
-    force: [main("pecs"), main("epaules"), main("dos"), sec("triceps", { ...OPT, ids: TRICEPS_COMPOUND }), iso("epaules_post", OPT)],
-    endurance: [sec("pecs"), sec("dos"), sec("epaules"), iso(["biceps", "triceps"]), core("tronc", OPT)]
+    hypertrophie: [main("pecs"), main("dos", PULL_V), sec("epaules"), iso("biceps"), iso("triceps", TRI_EXT), iso("epaules_post", { ...OPT, ...FLY })],
+    force: [main("pecs"), main("epaules"), main("dos", PULL_V), iso("triceps", { ...OPT, ...TRI_EXT }), iso("epaules_post", { ...OPT, ...FLY })],
+    endurance: [sec("pecs"), sec("dos", PULL_V), sec("epaules"), iso(["biceps", "triceps"]), core("tronc", OPT)]
   },
   dos: {
-    hypertrophie: [main("dos"), sec("dos", { ids: VERTICAL_PULL }), sec("dos", OPT), iso("epaules_post"), iso("trapezes", OPT), iso("lombaires", OPT)],
-    force: [main("dos"), main("dos", { ids: VERTICAL_PULL }), sec("trapezes", OPT), iso("epaules_post", OPT), iso("lombaires", OPT)],
-    endurance: [sec("dos"), sec("dos", { ids: VERTICAL_PULL }), iso("epaules_post"), iso("lombaires"), iso("trapezes", OPT)]
+    hypertrophie: [main("dos", PULL_V), sec("dos", ROW), iso("dos", { ...OPT, ...PAIR }), iso("epaules_post", FLY), iso("trapezes", { ...OPT, ...SHRUG }), iso("lombaires", OPT)],
+    force: [main("dos", PULL_V), sec("dos", ROW), iso("trapezes", SHRUG), iso("epaules_post", { ...OPT, ...FLY }), iso("lombaires", OPT)],
+    endurance: [sec("dos", PULL_V), sec("dos", ROW), iso("epaules_post", FLY), iso("lombaires"), iso("trapezes", { ...OPT, ...SHRUG })]
   },
   epaules: {
-    hypertrophie: [main("epaules"), iso("epaules"), iso("epaules_post"), iso("epaules_ant", OPT), iso("trapezes", OPT)],
-    force: [main("epaules"), sec("epaules", OPT), iso("epaules_post"), iso("epaules", OPT), iso("trapezes", OPT)],
-    endurance: [sec("epaules"), iso("epaules"), iso("epaules_post"), iso("epaules_ant", OPT)]
+    hypertrophie: [main("epaules"), iso("epaules", RAISE), iso("epaules_post", FLY), iso("trapezes", { ...OPT, ...SHRUG })],
+    force: [main("epaules"), iso("epaules", RAISE), iso("epaules_post", FLY), iso("trapezes", { ...OPT, ...SHRUG })],
+    endurance: [sec("epaules"), iso("epaules", RAISE), iso("epaules_post", FLY), iso("trapezes", { ...OPT, ...SHRUG })]
   },
   bras: {
-    hypertrophie: [sec("triceps", { ids: TRICEPS_COMPOUND }), iso("biceps"), iso("triceps"), iso("biceps"), iso("triceps", OPT), iso("avant_bras", OPT)],
-    force: [main("triceps", { ids: TRICEPS_COMPOUND }), iso("biceps"), iso("triceps"), iso("biceps", OPT), iso("avant_bras", OPT)],
-    endurance: [iso("triceps"), iso("biceps"), iso("triceps"), iso("biceps"), iso("avant_bras", OPT)]
+    hypertrophie: [sec("triceps", { ids: TRICEPS_COMPOUND }), iso("biceps"), iso("triceps", TRI_EXT), iso("avant_bras", { ...OPT, groups: ["carry"] })],
+    force: [main("triceps", { ids: TRICEPS_COMPOUND }), iso("biceps"), iso("triceps", TRI_EXT)],
+    endurance: [sec("triceps", { ids: TRICEPS_COMPOUND }), iso("biceps"), iso("triceps", TRI_EXT)]
   },
   pecs: {
-    hypertrophie: [main("pecs"), sec("pecs"), iso("pecs"), iso("triceps"), iso("pecs", OPT)],
-    force: [main("pecs"), sec("pecs", OPT), sec("triceps", { ids: TRICEPS_COMPOUND }), iso("pecs", OPT)],
-    endurance: [sec("pecs"), sec("pecs"), iso("pecs"), iso("triceps", OPT)]
+    hypertrophie: [main("pecs"), iso("pecs", FLY), iso("pecs", PULLOVER), iso("triceps", TRI_EXT), core("tronc", OPT)],
+    force: [main("pecs"), iso("pecs", FLY), iso("triceps", TRI_EXT), iso("pecs", { ...OPT, ...PULLOVER })],
+    endurance: [sec("pecs"), iso("pecs", FLY), iso("triceps", TRI_EXT), iso("pecs", { ...OPT, ...PULLOVER })]
   },
   fessiers: {
     hypertrophie: [
-      main("fessiers", { ids: HIP_THRUST, exclude_ids: ["back_squat"] }),
+      main("fessiers", { ids: HIP_THRUST_LOADED }),
       sec("ischios", { ids: RDL }),
-      sec("fessiers", { unilateral: true }),
-      iso(["fessiers", "ischios"], { ids: [...KICKBACK, ...LEG_CURL] }),
-      iso("fessiers", { ids: ABDUCTION }),
-      iso("fessiers", { ...OPT, ids: KICKBACK })
+      sec("fessiers", LUNGE),
+      iso("ischios", { ids: LEG_CURL }),
+      iso("fessiers", { ...PAIR, ids: [...KICKBACK, ...ABDUCTION] }),
+      core("lombaires", OPT)
     ],
-    force: [main("fessiers", { exclude_ids: ["back_squat"] }), main("ischios", { ids: RDL }), sec("fessiers", { ...OPT, unilateral: true }), iso("fessiers", OPT), core("lombaires", OPT)],
-    endurance: [sec("fessiers", { exclude_ids: ["back_squat"] }), sec("ischios"), iso("fessiers"), iso(["ischios", "fessiers"]), core("lombaires", OPT)]
+    force: [main("fessiers", { ids: HIP_THRUST_LOADED }), main("ischios", { ids: RDL }), sec("fessiers", { ...OPT, ...LUNGE }), iso("ischios", { ...OPT, ids: LEG_CURL }), core("lombaires", OPT)],
+    endurance: [sec("fessiers", { ids: HIP_THRUST_LOADED }), sec("ischios", { ids: RDL }), sec("fessiers", LUNGE), iso("fessiers", { ...PAIR, ids: [...KICKBACK, ...ABDUCTION] }), iso("ischios", { ...OPT, ids: LEG_CURL }), core("lombaires", OPT)]
   },
   fessiers_ischios: {
-    hypertrophie: [main("ischios", { ids: RDL }), main("fessiers", { ids: HIP_THRUST }), sec(["fessiers", "ischios"], { unilateral: true }), iso("ischios", { ids: LEG_CURL }), iso("fessiers", { ids: ABDUCTION })],
-    force: [main("ischios", { ids: RDL }), main("fessiers", { exclude_ids: ["back_squat"] }), sec(["fessiers", "ischios"], OPT), iso("ischios", OPT), core("lombaires", OPT)],
-    endurance: [sec("ischios"), sec("fessiers"), iso("fessiers"), iso("ischios"), core("lombaires", OPT)]
+    hypertrophie: [main("ischios", { ids: RDL }), main("fessiers", { ids: HIP_THRUST_LOADED }), sec(["fessiers", "ischios"], LUNGE), iso("ischios", { ids: LEG_CURL }), iso("fessiers", { ...PAIR, ids: [...KICKBACK, ...ABDUCTION] }), core("lombaires", OPT)],
+    force: [main("ischios", { ids: RDL }), main("fessiers", { ids: HIP_THRUST_LOADED }), sec(["fessiers", "ischios"], { ...OPT, ...LUNGE }), iso("ischios", { ...OPT, ids: LEG_CURL }), core("lombaires", OPT)],
+    endurance: [sec("ischios", { ids: RDL }), sec("fessiers", { ids: HIP_THRUST_LOADED }), sec(["fessiers", "ischios"], LUNGE), iso("ischios", { ids: LEG_CURL }), iso("fessiers", { ...PAIR, ids: [...KICKBACK, ...ABDUCTION] }), core("lombaires", OPT)]
   }
 };
 var MUSCU_TARGETS = Object.keys(T);
@@ -22287,7 +22705,7 @@ var TARGET_MUSCLES = {
 };
 
 // packages/wod-engine/src/bank/session.ts
-var SESSION_BANK_VERSION = 1;
+var SESSION_BANK_VERSION = 2;
 var WL_STEPS = [
   { sets: 2, reps: 2, percent: 30, rest_s: 60, note: "mont\xE9e" },
   { sets: 2, reps: 2, percent: 50, rest_s: 60, note: "mont\xE9e" },
@@ -22301,13 +22719,25 @@ var STRENGTH_RAMP = [
 ];
 var FIVE_BY_FIVE = [...STRENGTH_RAMP, { sets: 5, reps: 5, percent: 75, rest_s: 150 }];
 var FIVE_BY_THREE = [...STRENGTH_RAMP, { sets: 5, reps: 3, percent: 82, rest_s: 180, note: "80-85 %" }];
-var building = (id, movement, tempo, percent = 55) => ({
+var building = (id, movement, pattern, tempo, percent = 55, name) => ({
   id,
   movement,
+  pattern,
   tempo,
   minutes: 8,
+  ...name ? { name } : {},
   steps: [{ sets: 3, reps: 5, percent, rest_s: 90, note: percent === null ? "strict, qualit\xE9 avant quantit\xE9" : "building tempo" }]
 });
+var B_OHS = building("b_ohs_tempo", "overhead_squat", "squat", "3-1-1-1");
+var B_SNATCH_BALANCE = building("b_snatch_balance", "snatch_balance", "squat", "2-0-X-1", 50, "Snatch Balance");
+var B_STRICT_PULL_UP = building("b_strict_pull_up", "strict_pull_up", "pull_v", "2-1-2-1", null);
+var B_PUSH_PRESS = building("b_push_press_tempo", "push_press", "push_v", "2-0-1-2");
+var B_STRICT_PRESS = building("b_strict_press_tempo", "strict_press", "push_v", "3-0-1-1");
+var B_RING_DIP = building("b_ring_dip", "ring_dip", "push_v", "2-1-2-1", null);
+var B_STRICT_HSPU = building("b_strict_hspu", "strict_handstand_push_up", "push_v", "2-1-2-1", null);
+var B_FRONT_SQUAT = building("b_front_squat_pause", "front_squat", "squat", "2-2-X-1");
+var B_FRONT_RACK_LUNGE = building("b_front_rack_lunge", "front_rack_lunge", "lunge", "2-1-1-1");
+var B_GHD = building("b_ghd_sit_up", "ghd_sit_up", "core", "2-1-1-1", null);
 var S1_A = [
   {
     id: "snatch_complex_a",
@@ -22363,46 +22793,128 @@ var S3_A = [
     kind: "skill",
     movement: "chest_to_bar",
     minutes: 15,
-    skill: { reps: 5, rounds: 4, every_s: 90, substitutions: { scaled: "Banded Pull-Ups", inter: "Pull-ups", rxplus: "Chest-to-Bar", elite: "Bar Muscle-ups", pro: "Bar Muscle-ups" } }
+    skill: {
+      reps: 5,
+      rounds: 4,
+      every_s: 90,
+      progression: { a: "Kip Swings amples + Scap Pull-Ups (3 \xD7 8), fermeture des hanches vers la barre", b: "Chest-to-Bar assist\xE9s \xE9lastique ou Jumping C2B avec pause poitrine \xE0 la barre (3 \xD7 5)" },
+      substitutions: { scaled: "Banded Pull-Ups", inter: "Pull-ups", rxplus: "Chest-to-Bar", elite: "Bar Muscle-ups", pro: "Bar Muscle-ups" }
+    }
   },
   {
     id: "skill_hspu",
     kind: "skill",
     movement: "handstand_push_up",
     minutes: 15,
-    skill: { reps: 6, rounds: 4, every_s: 90, substitutions: { scaled: "Pike Push-Ups", inter: "Half Wall Walks", rxplus: "Strict Handstand Push-Ups", elite: "Strict Handstand Push-Ups", pro: "Strict Handstand Push-Ups" } }
+    skill: {
+      reps: 6,
+      rounds: 4,
+      every_s: 90,
+      progression: { a: "Handstand Hold face au mur (3 \xD7 30 s), gainage et coudes verrouill\xE9s", b: "Descentes n\xE9gatives 5 s en Handstand Push-Up ou Pike Push-Ups pieds sur box (3 \xD7 5)" },
+      substitutions: { scaled: "Pike Push-Ups", inter: "Half Wall Walks", rxplus: "Strict Handstand Push-Ups", elite: "Strict Handstand Push-Ups", pro: "Strict Handstand Push-Ups" }
+    }
   },
   {
     id: "skill_bmu",
     kind: "skill",
     movement: "bar_muscle_up",
     minutes: 15,
-    skill: { reps: 3, rounds: 4, every_s: 90, substitutions: { scaled: "Banded Pull-Ups", inter: "Chest-to-Bar", rxplus: "Bar Muscle-ups", elite: "Ring Muscle-ups", pro: "Ring Muscle-ups" } }
+    skill: {
+      reps: 3,
+      rounds: 4,
+      every_s: 90,
+      progression: { a: "Kip Swings avec hanches hautes + Chest-to-Bar explosifs (3 \xD7 5), trajet vers la barre", b: "Bar Muscle-Ups \xE9lastique ou saut\xE9s depuis une box basse, transition et dip (3 \xD7 3)" },
+      substitutions: { scaled: "Banded Pull-Ups", inter: "Chest-to-Bar", rxplus: "Bar Muscle-ups", elite: "Ring Muscle-ups", pro: "Ring Muscle-ups" }
+    }
+  },
+  {
+    id: "skill_rmu",
+    kind: "skill",
+    movement: "ring_muscle_up",
+    minutes: 15,
+    skill: {
+      reps: 3,
+      rounds: 4,
+      every_s: 90,
+      progression: { a: "False grip Hang + Ring Rows en false grip (3 \xD7 8), anneaux vers le sternum", b: "Transitions pieds au sol sur anneaux bas puis Ring Dips profonds (3 \xD7 4)" },
+      substitutions: { scaled: "Ring Rows false grip", inter: "Chest-to-Bar", rxplus: "Bar Muscle-ups", elite: "Ring Muscle-ups", pro: "Ring Muscle-ups" }
+    }
   },
   {
     id: "skill_rope",
     kind: "skill",
     movement: "rope_climb",
     minutes: 15,
-    skill: { reps: 2, rounds: 4, every_s: 90, substitutions: { scaled: "Rope Pulls From Floor", inter: "Rope Climbs", rxplus: "Rope Climbs", elite: "Legless Rope Climbs", pro: "Legless Rope Climbs" } }
+    skill: {
+      reps: 2,
+      rounds: 4,
+      every_s: 90,
+      progression: { a: "Verrouillage de pieds au sol (J-hook / S-wrap) et Rope Pulls assis \u2192 debout (3 \xD7 5)", b: "Mont\xE9es basses en 3 accroches avec pause \xE0 chaque verrouillage (3 \xD7 2)" },
+      substitutions: { scaled: "Rope Pulls From Floor", inter: "Rope Climbs", rxplus: "Rope Climbs", elite: "Legless Rope Climbs", pro: "Legless Rope Climbs" }
+    }
+  },
+  {
+    id: "skill_wall_walk",
+    kind: "skill",
+    movement: "wall_walk",
+    minutes: 15,
+    skill: {
+      reps: 4,
+      rounds: 4,
+      every_s: 90,
+      progression: { a: "Plank Hold pieds au mur + Bear Crawl (3 \xD7 20 s), bassin rentr\xE9", b: "Half Wall Walks avec pause 3 s en haut (3 \xD7 3)" },
+      substitutions: { scaled: "Half Wall Walks", inter: "Wall Walks", rxplus: "Wall Walks", elite: "Wall Walks + 5 Shoulder Taps", pro: "Wall Walks + 5 Shoulder Taps" }
+    }
   },
   {
     id: "skill_hs_walk",
     kind: "skill",
     movement: "handstand_walk",
     minutes: 15,
-    skill: { reps: 10, rounds: 4, every_s: 90, substitutions: { scaled: "Handstand Shoulder Taps", inter: "Half Wall Walks", rxplus: "Handstand Walk", elite: "Handstand Walk", pro: "Handstand Walk" } }
+    skill: {
+      reps: 10,
+      rounds: 4,
+      every_s: 90,
+      progression: { a: "Handstand Hold dos au mur (3 \xD7 30 s) puis Shoulder Taps (3 \xD7 10), doigts qui agrippent le sol", b: "D\xE9collages du mur : Handstand Walk 2-3 pas puis retour (3 \xD7 4 tentatives)" },
+      substitutions: { scaled: "Handstand Shoulder Taps", inter: "Half Wall Walks", rxplus: "Handstand Walk", elite: "Handstand Walk", pro: "Handstand Walk" }
+    }
   }
 ];
-var CORE_FINISHERS = [
-  { id: "core_hollow_plank", rounds: 3, minutes: 5, movements: [{ id: "hollow_rock", qty: 15, unit: "reps" }, { id: "plank_hold", qty: 30, unit: "s" }] },
-  { id: "core_sit_up_superman", rounds: 3, minutes: 5, movements: [{ id: "sit_up", qty: 20, unit: "reps" }, { id: "superman", qty: 20, unit: "s" }] },
-  { id: "core_ghd_hollow", rounds: 3, minutes: 5, movements: [{ id: "ghd_sit_up", qty: 12, unit: "reps" }, { id: "hollow_hold", qty: 30, unit: "s" }] }
-];
-var ACCESSORY_FINISHERS = [
-  { id: "acc_carry_lunge", rounds: 3, minutes: 5, movements: [{ id: "db_farmer_carry", qty: 50, unit: "m" }, { id: "walking_lunge", qty: 20, unit: "reps" }] },
-  { id: "acc_ring_row_pushup", rounds: 3, minutes: 5, movements: [{ id: "ring_row", qty: 12, unit: "reps" }, { id: "push_up", qty: 12, unit: "reps" }] },
-  ...CORE_FINISHERS
+var fin = (id, family, movements, rounds = 3) => ({ id, family, rounds, minutes: 5, movements });
+var mv = (id, qty, unit = "reps", name) => ({ id, qty, unit, ...name ? { name } : {} });
+var FINISHERS = [
+  // Tronc
+  fin("core_hollow_plank", "core", [mv("hollow_rock", 15), mv("plank_hold", 30, "s")]),
+  fin("core_sit_up_superman", "core", [mv("sit_up", 20), mv("superman", 20, "s")]),
+  fin("core_ghd_hollow", "core", [mv("ghd_sit_up", 12), mv("hollow_hold", 30, "s")]),
+  fin("core_dead_bug_side_plank", "core", [mv("dead_bug", 10, "reps", "Dead Bug (par c\xF4t\xE9)"), mv("side_plank", 20, "s", "Side Plank (par c\xF4t\xE9)")]),
+  fin("core_t2b_l_sit", "core", [mv("toes_to_bar", 8), mv("l_sit", 15, "s", "L-Sit sur parallettes")]),
+  fin("core_knee_raise_russian", "core", [mv("hanging_knee_raise", 12), mv("russian_twist", 20)]),
+  fin("core_bear_crawl_hollow", "core", [mv("bear_crawl", 15, "m"), mv("hollow_hold", 20, "s")]),
+  fin("core_ab_wheel_plank", "core", [mv("ab_wheel", 8), mv("plank_hold", 40, "s")]),
+  // Carries
+  fin("carry_farmer_lunge", "carry", [mv("db_farmer_carry", 50, "m"), mv("walking_lunge", 20)]),
+  fin("carry_sandbag_bear_hug", "carry", [mv("sandbag_carry", 50, "m", "Sandbag Bear Hug Carry"), mv("air_squat", 10)]),
+  fin("carry_suitcase_plank", "carry", [mv("suitcase_carry", 40, "m", "Suitcase Carry (par c\xF4t\xE9)"), mv("side_plank", 20, "s", "Side Plank (par c\xF4t\xE9)")]),
+  fin("carry_overhead_kb", "carry", [mv("kb_overhead_carry", 30, "m", "KB Overhead Carry (par bras)"), mv("hollow_rock", 10)]),
+  fin("carry_front_rack_db", "carry", [mv("db_front_rack_carry", 50, "m", "DB Front Rack Carry"), mv("sit_up", 15)]),
+  // Épaules
+  fin("shoulders_face_pull_raise", "shoulders", [mv("face_pull", 15, "reps", "Face Pull \xE9lastique"), mv("lateral_raise", 12, "reps", "Lateral Raise l\xE9ger")]),
+  fin("shoulders_band_pull_apart_y", "shoulders", [mv("band_pull_apart", 20, "reps", "Band Pull-Aparts"), mv("db_y_raise", 10, "reps", "DB Y-Raise")]),
+  fin("shoulders_ring_row_pushup", "shoulders", [mv("ring_row", 12), mv("push_up", 12)]),
+  fin("shoulders_cuban_press_hold", "shoulders", [mv("cuban_press", 10, "reps", "Cuban Press l\xE9ger"), mv("handstand_shoulder_tap", 10)]),
+  // Fessiers
+  fin("glutes_bridge_clam", "glutes", [mv("glute_bridge", 15), mv("banded_clamshell", 15, "reps", "Banded Clamshells (par c\xF4t\xE9)")]),
+  fin("glutes_hip_thrust_monster", "glutes", [mv("db_hip_thrust", 12), mv("monster_walk", 20, "m", "Monster Walk \xE9lastique")]),
+  fin("glutes_kickback_swing", "glutes", [mv("glute_kickback", 12, "reps", "Glute Kickback \xE9lastique (par c\xF4t\xE9)"), mv("kb_swing_russian", 15)]),
+  fin("glutes_single_leg_bridge_step_up", "glutes", [mv("single_leg_glute_bridge", 10, "reps", "Single-Leg Glute Bridge (par c\xF4t\xE9)"), mv("box_step_up", 16)]),
+  // Mollets
+  fin("calves_raise_jump", "calves", [mv("bodyweight_calf_raise", 20, "reps", "Calf Raises sur marche"), mv("double_under", 40)]),
+  fin("calves_single_leg_hold", "calves", [mv("single_leg_calf_raise", 12, "reps", "Single-Leg Calf Raise (par c\xF4t\xE9)"), mv("calf_raise_hold", 20, "s", "Calf Raise Hold en haut")]),
+  // Respiratoire
+  fin("breathing_row_nasal", "breathing", [mv("row", 250, "m", "Row respiration nasale"), mv("box_breathing", 60, "s", "Box Breathing 4-4-4-4")], 2),
+  fin("breathing_bike_exhale", "breathing", [mv("bike_erg", 300, "m", "Bike Erg facile"), mv("slow_exhale", 60, "s", "Respiration 4 s inspir / 8 s expir")], 2),
+  fin("breathing_walk_breath_hold", "breathing", [mv("shuttle_run", 100, "m", "Marche rapide"), mv("breath_hold_walk", 20, "s", "Marche en apn\xE9e expiratoire")], 2)
 ];
 var S1_snatch = {
   id: "S1_snatch",
@@ -22413,9 +22925,9 @@ var S1_snatch = {
   budget_min: 60,
   warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 mobilit\xE9 \xE9paules et hanches, barre \xE0 vide : Snatch Deadlift, Muscle Snatch, Overhead Squat, Snatch Balance en s\xE9rie de 5."] },
   block_a: S1_A,
-  block_b: [building("b_ohs_tempo", "overhead_squat", "3-1-1-1"), building("b_push_press_tempo_s1", "push_press", "2-0-1-2")],
+  block_b: [B_OHS, B_SNATCH_BALANCE, B_STRICT_PULL_UP],
   block_c: { intentions: ["mixed", "gym"], durations: [12, 15, 20], pattern_not: "heavy_pattern" },
-  finisher: CORE_FINISHERS
+  finisher: FINISHERS
 };
 var S2_squat = {
   id: "S2_squat",
@@ -22426,9 +22938,9 @@ var S2_squat = {
   budget_min: 60,
   warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 v\xE9lo ou rameur facile, mobilit\xE9 chevilles et hanches, Air Squats, Goblet Squats l\xE9gers, activation fessiers."] },
   block_a: S2_A,
-  block_b: [building("b_front_squat_tempo", "front_squat", "3-1-1-1"), building("b_ohs_pause", "overhead_squat", "3-2-1-1")],
+  block_b: [B_PUSH_PRESS, B_STRICT_PRESS, B_RING_DIP, B_STRICT_PULL_UP],
   block_c: { intentions: ["cardio"], durations: [15, 20], pattern_not: "heavy_pattern" },
-  finisher: CORE_FINISHERS
+  finisher: FINISHERS
 };
 var S3_gym = {
   id: "S3_gym",
@@ -22439,9 +22951,9 @@ var S3_gym = {
   budget_min: 60,
   warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 mobilit\xE9 \xE9paules et poignets, Scap Pull-Ups, Kip Swings, Hollow / Arch, marche en HS contre le mur."] },
   block_a: S3_A,
-  block_b: [building("b_strict_pull_up", "strict_pull_up", "2-1-2-1", null), building("b_ring_dip", "ring_dip", "2-1-2-1", null), building("b_strict_hspu", "strict_handstand_push_up", "2-1-2-1", null)],
+  block_b: [B_RING_DIP, B_STRICT_HSPU, B_STRICT_PULL_UP],
   block_c: { intentions: ["gym", "mixed"], durations: [12, 15], formats: ["for_time", "amrap", "emom"], pattern_not: [] },
-  finisher: ACCESSORY_FINISHERS
+  finisher: FINISHERS
 };
 var S4_cj = {
   id: "S4_cj",
@@ -22452,9 +22964,9 @@ var S4_cj = {
   budget_min: 60,
   warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 mobilit\xE9 poignets et hanches, barre \xE0 vide : Clean Deadlift, Muscle Clean, Front Squat, Push Press, Push Jerk en s\xE9rie de 5."] },
   block_a: S4_A,
-  block_b: [building("b_front_squat_pause", "front_squat", "2-2-X-1"), building("b_push_press_tempo", "push_press", "2-0-1-2")],
+  block_b: [B_FRONT_SQUAT, B_PUSH_PRESS, B_STRICT_PULL_UP],
   block_c: { intentions: ["mixed"], durations: [15, 20], pattern_not: "heavy_pattern" },
-  finisher: CORE_FINISHERS
+  finisher: FINISHERS
 };
 var S5_hinge = {
   id: "S5_hinge",
@@ -22465,7 +22977,7 @@ var S5_hinge = {
   budget_min: 60,
   warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 rameur facile, mobilit\xE9 ischios et hanches, Good Mornings barre \xE0 vide, Glute Bridges, Kettlebell Swings l\xE9gers."] },
   block_a: S5_A,
-  block_b: [building("b_rdl_tempo", "romanian_deadlift", "3-1-1-1"), building("b_hip_thrust", "hip_thrust", "2-2-X-1")],
+  block_b: [B_FRONT_RACK_LUNGE, B_STRICT_PRESS, B_GHD],
   block_c: { intentions: ["mixed", "cardio"], durations: [20, 30], formats: ["chipper", "stations"], pattern_not: "heavy_pattern" },
   finisher: null
 };
@@ -22480,7 +22992,7 @@ var S6_long = {
   block_a: null,
   block_b: null,
   block_c: { intentions: ["cardio", "mixed"], durations: [25, 30], pattern_not: [] },
-  finisher: CORE_FINISHERS
+  finisher: FINISHERS
 };
 var SESSION_SKELETONS = [S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long];
 
@@ -23903,8 +24415,24 @@ function profileCategory(discipline, level, gender) {
 var MUSCU_ENGINE_VERSION = "1.0.0";
 var MUSCU_MAX_ATTEMPTS = 40;
 var MUSCU_TOLERANCE = 0.1;
-var MUSCU_DURATIONS = { express: [20, 30, 45, 60], after_class: [15, 20, 30] };
+var MUSCU_DURATIONS = { express: [20, 30, 45, 60], after_class: [15, 20, 30], tronc: [15, 20, 30] };
 var BEGINNER_MAX_EXERCISES = 4;
+var BEGINNER_MAX_EXERCISES_LONG = 6;
+var BEGINNER_LONG_BUDGET_MIN = 45;
+var MAX_EXERCISES = 6;
+var HEAVY_MAX = 2;
+var HEAVY_PERCENT = 80;
+var DEMOTED_RANGE = [6, 8];
+var DEMOTED_PERCENT_MAX = 75;
+var REST_EXTRA_MAX = 15;
+var BODYWEIGHT_MAX_LOADED = 1;
+var BONUS_CORE_MAX = 2;
+var HIGH_REP_SETS_MAX = 5;
+var HIGH_REP_SETS_REPS_MAX = 15;
+var PULL_UP_ENDURANCE_RANGE = [8, 12];
+var BODYWEIGHT_PULL_UP_IDS = ["strict_pull_up", "chin_up", "wide_grip_pull_up", "neutral_grip_pull_up", "close_grip_pull_up"];
+var NO_SQUAT_TARGETS = ["fessiers", "fessiers_ischios"];
+var SQUAT_IDS = ["back_squat_m", "front_squat_m"];
 var VOLUME_CAP_SETS = { hypertrophie: 12, force: 10, endurance: 9 };
 var WEIGHTED_IDS = ["dips", "strict_pull_up", "chin_up", "wide_grip_pull_up", "neutral_grip_pull_up", "close_grip_pull_up", "close_grip_dips"];
 var UNIT_RANGES = { s: [30, 60], m: [30, 50] };
@@ -23912,11 +24440,10 @@ var LOAD_STEP_KG = 2.5;
 var WEIGHTED_BODYWEIGHT_RATIO = 0.1;
 var TEMPO_311 = "3-1-1";
 var TEMPO_311_SECONDS_PER_REP = 5;
-var CORE_REST_MAX = 90;
 var SCHEMES = {
-  hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rest_max: 120, rpe: 8, rir: "derni\xE8re s\xE9rie \xE0 1-2 reps de l'\xE9chec" },
-  force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rest_max: 180, rpe: 8, rir: "RIR 2, derni\xE8re s\xE9rie RPE 9" },
-  endurance: { sets: { main: 3, other: 3 }, sets_min: 2, sets_max: 5, rest: { main: 40, other: 40 }, rest_max: 75, rpe: 7, rir: "rythme continu, aucune s\xE9rie \xE0 l'\xE9chec" }
+  hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rpe: 8, rir: "derni\xE8re s\xE9rie \xE0 1-2 reps de l'\xE9chec" },
+  force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rpe: 8, rir: "RIR 2, derni\xE8re s\xE9rie RPE 9" },
+  endurance: { sets: { main: 3, other: 3 }, sets_min: 2, sets_max: 5, rest: { main: 40, other: 40 }, rpe: 7, rir: "rythme continu, aucune s\xE9rie \xE0 l'\xE9chec" }
 };
 var PCT_ANCHORS = [[3, 88], [4, 85], [5, 82], [6, 79], [8, 72], [10, 68], [12, 65], [15, 60], [18, 55], [20, 52]];
 function percentForReps(reps) {
@@ -23943,7 +24470,7 @@ var TARGET_LABEL = {
   pull: "Pull",
   jambes: "Jambes"
 };
-var OBJECTIVE_LABEL = { hypertrophie: "Hypertrophie", force: "Force", endurance: "Endurance musculaire" };
+var OBJECTIVE_LABEL = { hypertrophie: "Prise de muscle", force: "Force", endurance: "Tonification" };
 var EQUIPMENT_LABEL = { none: "Sans mat\xE9riel", box: "Box", gym: "Salle" };
 var LEVEL_LABEL = { debutant: "D\xE9butant", inter: "Interm\xE9diaire", avance: "Avanc\xE9" };
 var LEVEL_RANK = { debutant: 0, inter: 1, avance: 2 };
@@ -24010,7 +24537,26 @@ function objectiveFor(m, objective) {
 }
 function basePool(ctx) {
   const { params } = ctx;
-  return ctx.catalog.movements.filter((m) => m.muscu).filter((m) => equipmentWeight(m, params.equipment) > 0 && levelOk(m, params.level) && !isExcluded2(ctx, m) && !ctx.excludedMuscles.has(m.muscu.muscle_primary));
+  const noSquat = NO_SQUAT_TARGETS.includes(params.target);
+  const noBwPullUp = params.objective === "endurance" && params.level !== "avance";
+  const troncMuscles = TARGET_MUSCLES.tronc;
+  return ctx.catalog.movements.filter((m) => m.muscu).filter((m) => equipmentWeight(m, params.equipment) > 0 && levelOk(m, params.level) && !isExcluded2(ctx, m) && !ctx.excludedMuscles.has(m.muscu.muscle_primary) && !(noSquat && SQUAT_IDS.includes(m.id)) && !(noBwPullUp && BODYWEIGHT_PULL_UP_IDS.includes(m.id)) && !(params.target === "tronc" && m.muscu.compound && !troncMuscles.includes(m.muscu.muscle_primary)));
+}
+function isBodyweightNonCore(m) {
+  return m.muscu.load_mode === "bodyweight" && !TARGET_MUSCLES.tronc.includes(m.muscu.muscle_primary) && m.muscu.muscle_primary !== "mollets";
+}
+function bodyweightAllowed(ctx, m, picked) {
+  if (!isBodyweightNonCore(m)) return true;
+  if (ctx.params.equipment === "none" || ctx.params.level === "debutant") return true;
+  const loadedExists = ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== "bodyweight" && x.muscu.compound === m.muscu.compound);
+  if (!loadedExists) return true;
+  return picked.filter((p) => isBodyweightNonCore(p.m)).length < BODYWEIGHT_MAX_LOADED;
+}
+function groupAllowed(ctx, m, slot2, picked) {
+  if (ctx.params.target === "full_body" || slot2.role === "core") return true;
+  const same = picked.filter((p) => p.role !== "core" && p.m.muscu.movement_group === m.muscu.movement_group);
+  if (!same.length) return true;
+  return !!slot2.pair && !m.muscu.compound && same.length === 1 && same[0].m.muscu.compound;
 }
 var COMPOUND_ROLES = /* @__PURE__ */ new Set(["main_compound", "secondary_compound"]);
 function roleOk(m, role) {
@@ -24024,22 +24570,35 @@ function candidates(ctx, slot2, f, picked, prevMuscle) {
   return ctx.pool.filter((m) => {
     if (used.has(m.id)) return false;
     if (!f.muscles.includes(m.muscu.muscle_primary)) return false;
-    if (prevMuscle && m.muscu.muscle_primary === prevMuscle) return false;
+    if (prevMuscle && !(f.ids && slot2.groups) && m.muscu.muscle_primary === prevMuscle) return false;
     if (slot2.exclude_ids?.includes(m.id)) return false;
     if (f.ids && slot2.ids && !slot2.ids.includes(m.id)) return false;
+    if (f.ids && slot2.groups && !slot2.groups.includes(m.muscu.movement_group)) return false;
     if (requireUnilateral && !m.muscu.unilateral) return false;
     if (f.role && !roleOk(m, slot2.role)) return false;
     if (f.objective && !objectiveFor(m, ctx.params.objective)) return false;
-    if (slot2.role === "main_compound" && ctx.params.objective === "force" && mainMuscles.has(m.muscu.muscle_primary)) return false;
+    if (slot2.role === "main_compound" && ctx.params.objective === "force" && !(f.ids && slot2.groups) && mainMuscles.has(m.muscu.muscle_primary)) return false;
+    if (!groupAllowed(ctx, m, slot2, picked)) return false;
+    if (!bodyweightAllowed(ctx, m, picked)) return false;
     return true;
   });
+}
+function choose(ctx, list, role) {
+  if (role === "main_compound") {
+    const best = Math.min(...list.map((m) => m.muscu.priority));
+    list = list.filter((m) => m.muscu.priority === best);
+  }
+  return ctx.rng.pickWeighted(list, (x) => equipmentWeight(x, ctx.params.equipment));
 }
 function pickSlot(ctx, slot2, index, picked, target) {
   const slotMuscles = Array.isArray(slot2.muscle) ? slot2.muscle : [slot2.muscle];
   const prev = picked.length ? picked[picked.length - 1].m.muscu.muscle_primary : null;
   const steps = [
     [null, { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles }],
-    [slot2.ids ? "slot_ids" : null, { ids: false, unilateral: true, role: true, objective: true, muscles: slotMuscles }],
+    // geste imposé (M4) : on garde le groupe avant de lâcher l'objectif ou le rôle
+    [slot2.groups ? "slot_objective" : null, { ids: true, unilateral: true, role: true, objective: false, muscles: slotMuscles }],
+    [slot2.groups ? "slot_role" : null, { ids: true, unilateral: true, role: false, objective: false, muscles: slotMuscles }],
+    [slot2.ids || slot2.groups ? "slot_ids" : null, { ids: false, unilateral: true, role: true, objective: true, muscles: slotMuscles }],
     [slot2.unilateral ? "slot_unilateral" : null, { ids: false, unilateral: false, role: true, objective: true, muscles: slotMuscles }],
     ["slot_role", { ids: false, unilateral: false, role: false, objective: true, muscles: slotMuscles }],
     ["slot_objective", { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles }]
@@ -24053,25 +24612,43 @@ function pickSlot(ctx, slot2, index, picked, target) {
     if (i > 0 && relax === null) continue;
     const list = candidates(ctx, slot2, f, picked, prev);
     if (!list.length) continue;
-    const m = ctx.rng.pickWeighted(list, (x) => equipmentWeight(x, ctx.params.equipment));
+    const m = choose(ctx, list, slot2.role);
     if (relax) ctx.relax.add(relax);
-    return { m, role: slot2.role, objective: objectiveFor(m, ctx.params.objective) ?? "hypertrophie", optional: !!slot2.optional, slotIndex: index };
+    const required = !!slot2.groups && f.ids && !slot2.optional;
+    return { m, role: slot2.role, objective: objectiveFor(m, ctx.params.objective) ?? "hypertrophie", optional: !!slot2.optional, slotIndex: index, ...required ? { required } : {} };
   }
   return null;
 }
+function applyHeavyCap(ctx, picked) {
+  if (ctx.params.objective !== "force") return;
+  let heavy = 0;
+  for (const p of picked) {
+    if (p.objective !== "force") continue;
+    heavy++;
+    if (heavy <= HEAVY_MAX) continue;
+    if (heavy === HEAVY_MAX + 1) {
+      p.demoted = true;
+      ctx.relax.add("heavy_cap");
+      continue;
+    }
+    p.objective = "hypertrophie";
+    ctx.relax.add("heavy_cap");
+  }
+}
 function repRange(m, objective) {
   if (m.muscu.unit !== "reps") return UNIT_RANGES[m.muscu.unit];
+  if (objective === "endurance" && BODYWEIGHT_PULL_UP_IDS.includes(m.id)) return [...PULL_UP_ENDURANCE_RANGE];
   const r = m.muscu.rep_ranges[objective] ?? m.muscu.rep_ranges.hypertrophie ?? Object.values(m.muscu.rep_ranges)[0];
   return r ? [r[0], r[1]] : [8, 12];
 }
 function lineFor(ctx, p) {
   const scheme = SCHEMES[p.objective];
-  const kind = p.role === "main_compound" ? "main" : "other";
-  const range = repRange(p.m, p.objective);
+  const kind = p.role === "main_compound" && !p.demoted ? "main" : "other";
+  const range = p.demoted ? DEMOTED_RANGE : repRange(p.m, p.objective);
   const sets = p.role === "core" || p.role === "calves" ? Math.min(scheme.sets.other, 3) : scheme.sets[kind];
   const rest = p.role === "core" ? Math.min(scheme.rest.other, p.objective === "endurance" ? 30 : 60) : p.role === "calves" ? Math.min(scheme.rest.other, 45) : scheme.rest[kind];
   const tempo = ctx.params.equipment === "none" && ctx.params.objective === "hypertrophie" && p.m.muscu.load_mode === "bodyweight" && p.m.muscu.unit === "reps" && p.m.muscu.compound ? TEMPO_311 : void 0;
-  return { ...p, sets, reps: Math.round((range[0] + range[1]) / 2), range, rest, ...tempo ? { tempo } : {} };
+  return { ...p, sets, reps: Math.round((range[0] + range[1]) / 2), range, rest, rest0: rest, ...tempo ? { tempo } : {} };
 }
 function sessionSeconds(lines) {
   return lines.reduce((acc, l) => {
@@ -24095,14 +24672,14 @@ function loadFor(ctx, l) {
   }
   if (mu.load_mode === "1rm" && mu.rm_reference) {
     const rm = params.one_rep_max?.[mu.rm_reference];
-    const percent = percentForReps(l.reps);
+    const percent = l.demoted ? Math.min(percentForReps(l.reps), DEMOTED_PERCENT_MAX) : percentForReps(l.reps);
     if (params.box_wod && params.level !== "debutant") {
       return { mode: "percent", percent, rpe: scheme.rpe, rm_reference: mu.rm_reference };
     }
     if (rm && rm > 0 && params.level !== "debutant") {
       return { mode: "1rm", kg: roundLoad(rm * (mu.rm_factor ?? 1) * (percent / 100)), percent, rm_reference: mu.rm_reference };
     }
-    return { mode: "rpe", rpe: params.level === "debutant" ? 7 : scheme.rpe, rm_reference: mu.rm_reference };
+    return { mode: "rpe", rpe: params.level === "debutant" ? 7 : scheme.rpe, percent, rm_reference: mu.rm_reference };
   }
   return { mode: "rpe", rpe: scheme.rpe };
 }
@@ -24146,7 +24723,9 @@ function breakAdjacency(ctx, lines) {
   const out = [...lines];
   for (let i = 1; i < out.length; i++) {
     if (out[i].m.muscu.muscle_primary !== out[i - 1].m.muscu.muscle_primary) continue;
-    const j = out.findIndex((l, k) => k > i && l.m.muscu.muscle_primary !== out[i - 1].m.muscu.muscle_primary && (k + 1 >= out.length || out[k + 1].m.muscu.muscle_primary !== out[i].m.muscu.muscle_primary) && l.role === out[i].role);
+    const swappable = (l, k) => k > i && l.m.muscu.muscle_primary !== out[i - 1].m.muscu.muscle_primary && (k + 1 >= out.length || out[k + 1].m.muscu.muscle_primary !== out[i].m.muscu.muscle_primary);
+    let j = out.findIndex((l, k) => swappable(l, k) && l.role === out[i].role);
+    if (j < 0) j = out.findIndex((l, k) => swappable(l, k) && l.role !== "core");
     if (j > 0) {
       [out[i], out[j]] = [out[j], out[i]];
       continue;
@@ -24157,22 +24736,34 @@ function breakAdjacency(ctx, lines) {
   }
   return out;
 }
+function bonusIndex(lines, muscle) {
+  for (let i = lines.length; i >= 1; i--) {
+    if (lines[i - 1].m.muscu.muscle_primary === muscle) continue;
+    if (i < lines.length && lines[i].m.muscu.muscle_primary === muscle) continue;
+    return i;
+  }
+  return -1;
+}
 function bonusExercise(ctx, lines, target) {
   const used = new Set(lines.map((l) => l.m.id));
-  const last = lines[lines.length - 1]?.m.muscu.muscle_primary ?? null;
   const cap = VOLUME_CAP_SETS[ctx.params.objective];
   const vol = volumeByMuscle(lines);
   const minSets = SCHEMES[ctx.params.objective].sets_min;
   const muscles = TARGET_MUSCLES[target].filter((mu) => !ctx.excludedMuscles.has(mu) && (vol.get(mu) ?? 0) + minSets <= cap);
-  const eligible = (m2) => !used.has(m2.id) && m2.muscu.muscle_primary !== last && !ctx.excludedMuscles.has(m2.muscu.muscle_primary) && (vol.get(m2.muscu.muscle_primary) ?? 0) + minSets <= cap && objectiveFor(m2, ctx.params.objective);
+  const bonusSlot = { role: "isolation", muscle: TARGET_MUSCLES[target], optional: true };
+  const eligible = (m2, anyObjective = false) => !used.has(m2.id) && bonusIndex(lines, m2.muscu.muscle_primary) >= 0 && !ctx.excludedMuscles.has(m2.muscu.muscle_primary) && (vol.get(m2.muscu.muscle_primary) ?? 0) + minSets <= cap && (anyObjective || objectiveFor(m2, ctx.params.objective)) && groupAllowed(ctx, m2, { ...bonusSlot, role: m2.muscu.compound ? "secondary_compound" : TARGET_MUSCLES.tronc.includes(m2.muscu.muscle_primary) ? "core" : "isolation" }, lines) && bodyweightAllowed(ctx, m2, lines);
   const targetMuscles = TARGET_MUSCLES[target];
   const primary = ctx.pool.filter((m2) => eligible(m2) && muscles.includes(m2.muscu.muscle_primary));
-  const secondary = primary.length ? [] : ctx.pool.filter((m2) => eligible(m2) && m2.muscu.muscle_secondary.some((mu) => targetMuscles.includes(mu)));
-  const base = primary.length ? primary : secondary;
+  const secondary = primary.length ? [] : ctx.pool.filter((m2) => eligible(m2) && !m2.muscu.compound && m2.muscu.muscle_secondary.some((mu) => targetMuscles.includes(mu)));
+  const coreMuscles = TARGET_MUSCLES.tronc;
+  const tertiary = primary.length || secondary.length || lines.filter((l) => l.role === "core" && l.slotIndex === 99).length >= BONUS_CORE_MAX ? [] : ctx.pool.filter((m2) => eligible(m2, true) && coreMuscles.includes(m2.muscu.muscle_primary) && (!m2.muscu.compound || m2.muscu.movement_group === "carry"));
+  const base = primary.length ? primary : secondary.length ? secondary : tertiary;
   const iso2 = base.filter((m2) => !m2.muscu.compound);
   const m = ctx.rng.pickWeighted(iso2.length ? iso2 : base, (x) => equipmentWeight(x, ctx.params.equipment));
   if (!m) return null;
-  const p = { m, role: m.muscu.compound ? "secondary_compound" : "isolation", objective: objectiveFor(m, ctx.params.objective), optional: true, slotIndex: 99 };
+  const role = coreMuscles.includes(m.muscu.muscle_primary) ? "core" : m.muscu.compound ? "secondary_compound" : "isolation";
+  const p = { m, role, objective: objectiveFor(m, ctx.params.objective) ?? (m.muscu.objectives.includes("hypertrophie") ? "hypertrophie" : m.muscu.objectives[0] ?? "hypertrophie"), optional: true, slotIndex: 99 };
+  if (ctx.params.objective === "force" && p.objective === "force") p.objective = "hypertrophie";
   const line = lineFor(ctx, p);
   line.sets = Math.min(line.sets, cap - (vol.get(m.muscu.muscle_primary) ?? 0));
   return line;
@@ -24181,16 +24772,34 @@ function fitBudget(ctx, input, target) {
   const budget = ctx.params.budget_min * 60;
   const lo = budget * (1 - MUSCU_TOLERANCE);
   const hi = budget * (1 + MUSCU_TOLERANCE);
-  const maxEx = ctx.params.level === "debutant" ? BEGINNER_MAX_EXERCISES : Infinity;
+  const maxEx = ctx.params.level === "debutant" ? ctx.params.budget_min >= BEGINNER_LONG_BUDGET_MIN ? BEGINNER_MAX_EXERCISES_LONG : BEGINNER_MAX_EXERCISES : MAX_EXERCISES;
   let lines = [...input];
+  const joins = (i) => i > 0 && i + 1 < lines.length && lines[i - 1].m.muscu.muscle_primary === lines[i + 1].m.muscu.muscle_primary;
   const dropOptional = () => {
+    for (let i = lines.length - 1; i >= 0; i--) if (lines[i].optional && !joins(i)) {
+      lines.splice(i, 1);
+      return true;
+    }
     for (let i = lines.length - 1; i >= 0; i--) if (lines[i].optional) {
       lines.splice(i, 1);
       return true;
     }
     return false;
   };
-  while (lines.length > maxEx && (dropOptional() || lines.length > 2 && lines.splice(lines.length - 1, 1).length)) ctx.relax.add("beginner_max");
+  const dropLast = () => {
+    if (lines.length <= 2) return false;
+    for (let i = lines.length - 1; i > 0; i--) if (!lines[i].required && !joins(i)) {
+      lines.splice(i, 1);
+      return true;
+    }
+    for (let i = lines.length - 1; i > 0; i--) if (!lines[i].required) {
+      lines.splice(i, 1);
+      return true;
+    }
+    lines.splice(lines.length - 1, 1);
+    return true;
+  };
+  while (lines.length > maxEx && (dropOptional() || dropLast())) ctx.relax.add("beginner_max");
   while (total(lines) > hi) {
     if (dropOptional()) continue;
     const overReps = lines.filter((l) => l.reps > l.range[0]);
@@ -24203,49 +24812,46 @@ function fitBudget(ctx, input, target) {
       reducible[0].sets--;
       continue;
     }
-    if (lines.length > 2) {
-      lines.splice(lines.length - 1, 1);
+    if (dropLast()) {
       ctx.relax.add("slots_dropped");
       continue;
     }
     ctx.relax.add("budget_long");
     break;
   }
-  const MAX_EXERCISES = 6;
   let guard = 0;
   while (total(lines) < lo && guard++ < 40) {
-    const underReps = lines.filter((l) => l.reps < l.range[1]);
-    if (underReps.length) {
-      for (const l of underReps) l.reps = Math.min(l.range[1], l.reps + (l.range[1] - l.range[0] >= 4 ? 2 : 1));
-      continue;
-    }
-    const cap = VOLUME_CAP_SETS[ctx.params.objective];
-    const vol = volumeByMuscle(lines);
-    const addable = lines.filter((l) => l.sets < SCHEMES[l.objective].sets_max && (vol.get(l.m.muscu.muscle_primary) ?? 0) < cap).sort((a, b) => a.sets - b.sets || a.slotIndex - b.slotIndex);
-    const fits = (l) => {
-      l.sets++;
-      if (total(lines) <= hi) return true;
-      l.sets--;
-      return false;
-    };
-    if (addable.some(fits)) continue;
-    if (lines.length < Math.min(maxEx, MAX_EXERCISES)) {
+    if (lines.length < maxEx) {
       const bonus = bonusExercise(ctx, lines, target);
       if (bonus) {
+        const at = bonusIndex(lines, bonus.m.muscu.muscle_primary);
         if (total([...lines, bonus]) <= hi) {
-          lines.push(bonus);
+          lines.splice(at, 0, bonus);
           ctx.relax.add("bonus_slot");
           continue;
         }
         bonus.reps = bonus.range[0];
         if (total([...lines, bonus]) <= hi) {
-          lines.push(bonus);
+          lines.splice(at, 0, bonus);
           ctx.relax.add("bonus_slot");
           continue;
         }
       }
     }
-    const tempoable = lines.filter((l) => !l.tempo && l.m.muscu.unit === "reps" && l.m.muscu.seconds_per_rep < TEMPO_311_SECONDS_PER_REP).sort((a, b) => a.slotIndex - b.slotIndex);
+    const cap = VOLUME_CAP_SETS[ctx.params.objective];
+    const vol = volumeByMuscle(lines);
+    const addable = lines.filter((l) => l.sets < SCHEMES[l.objective].sets_max && (vol.get(l.m.muscu.muscle_primary) ?? 0) < cap).sort((a, b) => a.sets - b.sets || a.slotIndex - b.slotIndex);
+    const fits = (l) => {
+      const reps = l.reps;
+      l.sets++;
+      if (l.sets >= HIGH_REP_SETS_MAX && l.m.muscu.unit === "reps") l.reps = Math.min(l.reps, Math.max(l.range[0], HIGH_REP_SETS_REPS_MAX));
+      if (total(lines) <= hi) return true;
+      l.sets--;
+      l.reps = reps;
+      return false;
+    };
+    if (addable.some(fits)) continue;
+    const tempoable = lines.filter((l) => !l.tempo && !l.demoted && l.objective !== "force" && l.m.muscu.unit === "reps" && l.m.muscu.seconds_per_rep < TEMPO_311_SECONDS_PER_REP).sort((a, b) => a.slotIndex - b.slotIndex);
     const slow = (l) => {
       l.tempo = TEMPO_311;
       if (total(lines) <= hi) return true;
@@ -24256,27 +24862,23 @@ function fitBudget(ctx, input, target) {
       ctx.relax.add("tempo_311");
       continue;
     }
-    const restMax = (l) => l.role === "core" || l.role === "calves" ? Math.min(CORE_REST_MAX, SCHEMES[l.objective].rest_max) : SCHEMES[l.objective].rest_max;
-    const mainRestable = lines.filter((l) => l.role !== "core" && l.role !== "calves" && l.rest < restMax(l));
-    const restable = mainRestable.length ? mainRestable : lines.filter((l) => l.rest < restMax(l));
+    const maxReps = (l) => l.sets >= HIGH_REP_SETS_MAX && l.m.muscu.unit === "reps" ? Math.min(l.range[1], Math.max(l.range[0], HIGH_REP_SETS_REPS_MAX)) : l.range[1];
+    const underReps = lines.filter((l) => l.reps < maxReps(l));
+    if (underReps.length) {
+      for (const l of underReps) l.reps = Math.min(maxReps(l), l.reps + (l.range[1] - l.range[0] >= 4 ? 2 : 1));
+      continue;
+    }
+    const restable = lines.filter((l) => l.rest < l.rest0 + REST_EXTRA_MAX);
     if (restable.length) {
       const before = restable.map((l) => l.rest);
-      for (const l of restable) l.rest = Math.min(restMax(l), l.rest + 15);
+      for (const l of restable) l.rest = l.rest0 + REST_EXTRA_MAX;
       if (total(lines) <= hi) {
-        ctx.relax.add("rest_extended");
+        ctx.relax.add("rest_plus_15");
         continue;
       }
       restable.forEach((l, i) => {
         l.rest = before[i];
       });
-    }
-    if (ctx.params.level === "debutant" && lines.length <= BEGINNER_MAX_EXERCISES) {
-      const bonus = bonusExercise(ctx, lines, target);
-      if (bonus && total([...lines, bonus]) <= hi) {
-        lines.push(bonus);
-        ctx.relax.add("beginner_fifth");
-        continue;
-      }
     }
     ctx.relax.add("budget_short");
     break;
@@ -24305,7 +24907,8 @@ function notesFor(ctx, l, load) {
   const parts = [];
   if (ctx.params.objective === "force" && l.objective !== "force") parts.push("sch\xE9ma hypertrophie");
   if (load.mode === "rpe" && load.rm_reference && ctx.params.level === "debutant") parts.push("monter jusqu'\xE0 une charge propre");
-  if (load.mode === "bodyweight" && ctx.params.level === "debutant" && /pull_up|chin_up/.test(l.m.id)) parts.push("D\xE9butant : banded");
+  if (l.demoted) parts.push("3e compound : 70-75 % \xD7 6-8");
+  if (load.mode === "bodyweight" && ctx.params.level === "debutant" && /pull_up|chin_up/.test(l.m.id) && !/banded/.test(l.m.id)) parts.push("D\xE9butant : banded");
   if (l.tempo) parts.push(`tempo ${l.tempo}`);
   return parts.join(" \xB7 ");
 }
@@ -24316,6 +24919,8 @@ function toExercise(ctx, l) {
     name: l.m.name,
     role: l.role,
     muscle_primary: l.m.muscu.muscle_primary,
+    movement_group: l.m.muscu.movement_group,
+    priority: l.m.muscu.priority,
     sets: l.sets,
     reps: l.reps,
     reps_unit: l.m.muscu.unit,
@@ -24339,6 +24944,7 @@ function buildOnce(ctx, sk) {
     if (p) picked.push(p);
     else ctx.relax.add(slot2.optional ? "optional_slot_empty" : "slot_dropped");
   });
+  applyHeavyCap(ctx, picked);
   let lines = picked.map((p) => lineFor(ctx, p));
   lines = breakAdjacency(ctx, lines);
   lines = applyVolumeCaps2(ctx, lines);
@@ -24370,6 +24976,12 @@ function generateMuscu(params, catalog, bank, seed) {
   }
   if (params.objective === "force" && params.equipment === "none") {
     throw new InvalidMuscuParams("force_without_equipment", "Sans mat\xE9riel : la Force est indisponible");
+  }
+  if (params.target === "tronc" && params.objective === "force") {
+    throw new InvalidMuscuParams("force_tronc", "Tronc : la Force n'est pas propos\xE9e (Prise de muscle ou Tonification)");
+  }
+  if (params.target === "tronc" && !MUSCU_DURATIONS.tronc.includes(params.budget_min)) {
+    throw new InvalidMuscuParams("tronc_duration", "Tronc : dur\xE9es 15, 20 ou 30 minutes");
   }
   const sk = findSkeleton(bank, params.target, params.objective);
   const ac = params.entry === "after_class" && params.after_class ? afterClassMuscles(catalog, params.after_class) : null;
@@ -24499,7 +25111,7 @@ function loadText2(e) {
     case "bodyweight":
       return e.reps_unit === "reps" ? "poids du corps" : "\u2014";
     default:
-      return `RPE ${l.rpe}`;
+      return l.percent ? `RPE ${l.rpe} (\u2248 ${l.percent} % du 1RM)` : `RPE ${l.rpe}`;
   }
 }
 function exerciseLine(e) {
@@ -24510,11 +25122,11 @@ function exerciseLine(e) {
   if (l.mode === "1rm" && l.kg) {
     out += ` @ ${l.kg} kg \u2014 charge ${l.percent} % 1RM`;
   } else if (l.mode === "percent") {
-    out += ` @ ${l.percent} %1RM \u2014 charge sans 1RM connu : RPE ${l.rpe}`;
+    out += ` \u2014 RPE ${l.rpe} (\u2248 ${l.percent} % du 1RM)`;
   } else if (l.mode === "weighted") {
     out += l.kg ? ` \u2014 lest\xE9 ${l.kg} kg (10 % du poids de corps), RPE ${l.rpe}` : ` \u2014 lest\xE9 l\xE9ger, RPE ${l.rpe}`;
   } else if (l.mode === "rpe") {
-    out += ` \u2014 charge RPE ${l.rpe}`;
+    out += l.percent ? ` \u2014 charge RPE ${l.rpe} (\u2248 ${l.percent} % du 1RM)` : ` \u2014 charge RPE ${l.rpe}`;
   } else if (e.reps_unit === "reps") {
     out += " \u2014 charge poids du corps";
   }
@@ -24542,6 +25154,21 @@ function renderMuscu(wod) {
 var SESSION_ENGINE_VERSION = "1.0.0";
 var SESSION_TOLERANCE = 0.1;
 var TRANSITION_MIN = 1;
+var SKILL_STEP_S = 180;
+var B_RETRY_MAX = 12;
+var FINISHER_SIGNATURE_PREFIX = "finisher:";
+function finisherSignature(id) {
+  return `${FINISHER_SIGNATURE_PREFIX}${id}`;
+}
+function splitSignatures(all) {
+  const c = [];
+  const finishers = [];
+  for (const s of all) {
+    if (s.startsWith(FINISHER_SIGNATURE_PREFIX)) finishers.push(s.slice(FINISHER_SIGNATURE_PREFIX.length));
+    else c.push(s);
+  }
+  return { c, finishers };
+}
 var WEEKLY_GYM_CAPS = { pull: 150, hspu: 80 };
 var WEEKLY_PULL_IDS = /* @__PURE__ */ new Set(["chest_to_bar", "pull_up", "toes_to_bar"]);
 var WEEKLY_HSPU_IDS = /* @__PURE__ */ new Set(["handstand_push_up", "strict_handstand_push_up"]);
@@ -24618,8 +25245,8 @@ function blockALines(catalog, opt, weeks) {
   } else if (opt.skill) {
     const sk = opt.skill;
     lines.push(`Skill \u2014 ${name} : progression en 3 \xE9tapes`);
-    lines.push(`\xC9tape A : positions et tension (hollow / arch, scap, kip) \u2014 ${fmtEvery(180)}`);
-    lines.push(`\xC9tape B : la r\xE9p\xE9tition partielle ou assist\xE9e \u2014 ${fmtEvery(180)}`);
+    lines.push(`\xC9tape A : ${sk.progression.a} \u2014 ${fmtEvery(SKILL_STEP_S)}`);
+    lines.push(`\xC9tape B : ${sk.progression.b} \u2014 ${fmtEvery(SKILL_STEP_S)}`);
     lines.push(`\xC9tape C : Every ${fmtEvery(sk.every_s)} \xD7 ${sk.rounds}`);
     lines.push(`${sk.reps} ${name}`);
     const subs = Object.entries(sk.substitutions).map(([c, s]) => `${CAT_LABEL[c] ?? c} : ${s}`);
@@ -24627,8 +25254,11 @@ function blockALines(catalog, opt, weeks) {
   }
   return lines;
 }
+function nameOfB(catalog, opt) {
+  return opt.name ?? nameOf(catalog, opt.movement);
+}
 function blockBLines(catalog, opt) {
-  const name = nameOf(catalog, opt.movement);
+  const name = nameOfB(catalog, opt);
   const lines = [`Building \u2014 ${name} tempo ${opt.tempo ?? ""}`.trim()];
   for (const st of opt.steps) lines.push(stepLine(name, st, opt.tempo));
   return lines;
@@ -24636,7 +25266,7 @@ function blockBLines(catalog, opt) {
 function finisherLines(catalog, opt) {
   const lines = [`Finisher \u2014 ${opt.rounds} rounds, rythme continu :`];
   for (const m of opt.movements) {
-    const name = nameOf(catalog, m.id);
+    const name = m.name ?? nameOf(catalog, m.id);
     lines.push(m.unit === "s" ? `${m.qty} s ${name}` : m.unit === "m" ? `${m.qty} m ${name}` : `${m.qty} ${name}`);
   }
   return lines;
@@ -24765,8 +25395,33 @@ function generateSession(params, catalog, bank, seed) {
   }
   const movA = optA ? movementById(catalog, optA.movement) : void 0;
   const heavy = optA && optA.kind !== "skill" ? heavyPatternOf(movA) : null;
-  const optB = sk.block_b ? rng.pick(sk.block_b) : null;
-  const optF = sk.finisher ? rng.pick(sk.finisher) : null;
+  const { c: recentC, finishers: journalFinishers } = splitSignatures(params.recent_signatures ?? []);
+  let optB = null;
+  if (sk.block_b) {
+    const aIds = new Set([optA?.movement, ...optA?.complex ?? []].filter((x) => !!x));
+    const sameAsA = (id) => aIds.has(id) || aIds.has(id.replace(/^strict_/, ""));
+    const base = sk.block_b.filter((o) => !sameAsA(o.movement) && (!heavy || o.pattern !== heavy));
+    const weekB = new Set(params.week_b_movements ?? []);
+    const fresh = base.filter((o) => !weekB.has(o.movement));
+    if (fresh.length) optB = rng.pick(fresh);
+    else if (base.length) {
+      optB = rng.pick(base);
+      relax.add("b_repeat_week");
+    } else {
+      optB = null;
+      relax.add("b_none");
+    }
+  }
+  let optF = null;
+  if (sk.finisher) {
+    const used = /* @__PURE__ */ new Set([...journalFinishers, ...params.recent_finishers ?? []]);
+    const fresh = sk.finisher.filter((o) => !used.has(o.id));
+    if (fresh.length) optF = rng.pick(fresh);
+    else {
+      optF = rng.pick(sk.finisher);
+      relax.add("finisher_repeat");
+    }
+  }
   const fixed = sk.warmup.minutes + (optA?.minutes ?? 0);
   const lo = sk.budget_min * (1 - SESSION_TOLERANCE);
   const hi = sk.budget_min * (1 + SESSION_TOLERANCE);
@@ -24818,7 +25473,7 @@ function generateSession(params, catalog, bank, seed) {
         intention: a.intention,
         format: a.format,
         exclude,
-        recent_signatures: params.recent_signatures ?? [],
+        recent_signatures: recentC,
         pattern_not: a.patternNot.length ? a.patternNot : void 0,
         skeleton_not: skeletonNot
       }, catalog, bank, idx === 0 ? cSeed : hashSeed(cSeed, a.tag ?? "", idx));
@@ -24865,7 +25520,7 @@ function generateSession(params, catalog, bank, seed) {
     for (const st of optB.steps) bReps[optB.movement] = (bReps[optB.movement] ?? 0) + st.sets * st.reps;
     addReps(gym, gymReps(catalog, bReps));
     blocks.push(editor(
-      `Building \xB7 ${nameOf(catalog, optB.movement)}`,
+      `Building \xB7 ${nameOfB(catalog, optB)}`,
       blockBLines(catalog, optB).join("\n"),
       "strength",
       "building",
@@ -24931,24 +25586,44 @@ function generateSession(params, catalog, bank, seed) {
     blocks,
     bloc_c: blocC,
     gym_reps_rx: gym,
-    signature: blocC.signature
+    signature: blocC.signature,
+    block_b_movement: choice.b && optB ? optB.movement : null,
+    finisher_id: choice.f && optF ? optF.id : null
   };
 }
 function generateWeek(params, catalog, bank, seed) {
   const relax = /* @__PURE__ */ new Set();
   const recent = [...params.recent_signatures ?? []];
   const sessions = [];
-  const gen = (day, patternNot) => generateSession({
+  const once = (day, salt, patternNot) => generateSession({
     day,
     iso_year: params.iso_year,
     iso_week: params.iso_week,
     recent_signatures: [...recent, ...sessions.filter((s) => s.day !== day).map((s) => s.signature)],
+    week_b_movements: sessions.filter((s) => s.day !== day).flatMap((s) => s.block_b_movement ? [s.block_b_movement] : []),
+    recent_finishers: sessions.filter((s) => s.day !== day).flatMap((s) => s.finisher_id ? [s.finisher_id] : []),
     previous_c_skeleton: sessions.find((s) => s.day === day - 1)?.bloc_c.generator.skeleton_id ?? null,
     next_c_skeleton: sessions.find((s) => s.day === day + 1)?.bloc_c.generator.skeleton_id ?? null,
     pattern_not: patternNot,
     exclude: params.exclude
-  }, catalog, bank, seed + day * 7919 >>> 0);
-  for (const day of [1, 2, 3, 4, 5, 6]) sessions.push(gen(day));
+  }, catalog, bank, seed + day * 7919 + salt * 104729 >>> 0);
+  const repeatsB = (s) => s.generator.relaxations.includes("b_repeat_week");
+  const gen = (day, patternNot) => once(day, 0, patternNot);
+  for (const day of [1, 2, 3, 4, 5, 6]) {
+    sessions.push(gen(day));
+    if (!repeatsB(sessions[sessions.length - 1])) continue;
+    const saved = [...sessions];
+    let solved = false;
+    for (let back = 1; back < day && !solved; back++) {
+      for (let salt = 1; salt <= B_RETRY_MAX && !solved; salt++) {
+        sessions.splice(day - 1 - back);
+        sessions.push(once(day - back, salt));
+        for (let d = day - back + 1; d <= day; d++) sessions.push(once(d, 0));
+        solved = sessions.slice(day - 1 - back).every((s) => !repeatsB(s));
+      }
+    }
+    if (!solved) sessions.splice(0, sessions.length, ...saved);
+  }
   for (const day of [6, 3, 5, 4, 1, 2]) {
     const vol = weeklyGymVolume(sessions);
     if (vol.pull <= WEEKLY_GYM_CAPS.pull && vol.hspu <= WEEKLY_GYM_CAPS.hspu) break;
@@ -24961,7 +25636,16 @@ function generateWeek(params, catalog, bank, seed) {
   }
   const gym_volume = weeklyGymVolume(sessions);
   if (gym_volume.pull > WEEKLY_GYM_CAPS.pull || gym_volume.hspu > WEEKLY_GYM_CAPS.hspu) relax.add("weekly_gym_cap_exceeded");
-  return { track: "functional", iso_year: params.iso_year, iso_week: params.iso_week, seed, sessions, gym_volume, relaxations: [...relax].sort() };
+  return {
+    track: "functional",
+    iso_year: params.iso_year,
+    iso_week: params.iso_week,
+    seed,
+    sessions,
+    gym_volume,
+    relaxations: [...relax].sort(),
+    signatures: [...sessions.map((s) => s.signature), ...sessions.flatMap((s) => s.finisher_id ? [finisherSignature(s.finisher_id)] : [])]
+  };
 }
 function setsByMuscle(days) {
   const v = /* @__PURE__ */ new Map();
@@ -24985,10 +25669,11 @@ function generateMuscuWeek(params, catalog, bank, seed) {
   const recent = [...params.recent_signatures ?? []];
   const days = [];
   for (const d of MUSCU_WEEK_DAYS) {
+    const dayObjective = d.target === "tronc" && objective === "force" ? "hypertrophie" : objective;
     const wod = generateMuscu({
       entry: "express",
       target: d.target,
-      objective,
+      objective: dayObjective,
       budget_min: d.budget_min,
       equipment,
       level,
@@ -25174,7 +25859,7 @@ async function runWeekGeneration(db, catalog, bank, opts) {
         if (track === "functional") {
           const week = generateWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
           rows = functionalWeekRows(week, ctx);
-          signatures = week.sessions.map((s) => s.signature);
+          signatures = week.signatures;
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];
         } else {
           const week = generateMuscuWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
@@ -25204,24 +25889,38 @@ export {
   AFTER_CLASS_DURATIONS,
   BANK_V1,
   BANK_VERSION,
+  BEGINNER_LONG_BUDGET_MIN,
   BEGINNER_MAX_EXERCISES,
+  BEGINNER_MAX_EXERCISES_LONG,
+  BODYWEIGHT_MAX_LOADED,
+  BODYWEIGHT_PULL_UP_IDS,
   CARDIO_EXCLUDED_IDS,
   CATALOG_SNAPSHOT,
   CATEGORY_LABEL,
   DAY_LABEL,
+  DEMOTED_PERCENT_MAX,
+  DEMOTED_RANGE,
   ENGINE_MIN_SHARE,
   ENGINE_VERSION,
   EQUIPMENT_FALLBACK,
   EQUIPMENT_LABEL,
+  FINISHERS,
+  FINISHER_SIGNATURE_PREFIX,
   FUNCTIONAL_CATEGORIES,
   FUNCTIONAL_SKELETONS,
+  HEAVY_MAX,
+  HEAVY_PERCENT,
+  HIGH_REP_SETS_MAX,
+  HIGH_REP_SETS_REPS_MAX,
   HYBRID_CATEGORIES,
   HYBRID_SKELETONS,
   InvalidMuscuParams,
   InvalidSessionParams,
   LEVEL_LABEL,
   MAX_ATTEMPTS,
+  MAX_EXERCISES,
   MOVEMENT_CAPS,
+  MOVEMENT_GROUPS,
   MUSCU_BANK_VERSION,
   MUSCU_DURATIONS,
   MUSCU_ENGINE_VERSION,
@@ -25233,19 +25932,29 @@ export {
   MUSCU_TOLERANCE,
   MUSCU_WEEKLY_CAP_SETS,
   MUSCU_WEEK_DAYS,
+  NO_SQUAT_TARGETS,
   NoValidWod,
   OBJECTIVE_LABEL,
   PROGRAMMING_VERSION,
   RACK_ONLY_IDS,
   RECENT_WEEKS,
+  REST_EXTRA_MAX,
   REVEAL_HOUR_PARIS,
   RNG,
   RUN_MIN_M,
+  S1_snatch,
+  S2_squat,
+  S3_gym,
+  S4_cj,
+  S5_hinge,
+  S6_long,
   SCHEMES,
   SESSION_BANK_VERSION,
   SESSION_ENGINE_VERSION,
   SESSION_SKELETONS,
   SESSION_TOLERANCE,
+  SKILL_STEP_S,
+  SQUAT_IDS,
   TARGET_LABEL,
   TARGET_MUSCLES,
   TIME_BOUNDED,
@@ -25278,6 +25987,7 @@ export {
   estimateBlock,
   estimateDuration,
   exerciseLine,
+  finisherSignature,
   forceBand,
   functionalRef,
   functionalWeekRows,
@@ -25328,6 +26038,7 @@ export {
   sideLabel,
   signature,
   skeletonToRow,
+  splitSignatures,
   stepLine,
   substitutionFor,
   targetAvailable,

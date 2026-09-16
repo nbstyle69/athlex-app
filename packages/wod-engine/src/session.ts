@@ -549,8 +549,10 @@ export function generateMuscuWeek(params: MuscuWeekParams, catalog: Catalog, ban
   const recent = [...(params.recent_signatures ?? [])];
   const days: MuscuWeekDay[] = [];
   for (const d of MUSCU_WEEK_DAYS) {
+    // M8 : pas d'objectif Force en Tronc → le samedi tronc d'une semaine Force passe en Prise de muscle
+    const dayObjective = d.target === 'tronc' && objective === 'force' ? 'hypertrophie' : objective;
     const wod = generateMuscu({
-      entry: 'express', target: d.target, objective, budget_min: d.budget_min, equipment, level,
+      entry: 'express', target: d.target, objective: dayObjective, budget_min: d.budget_min, equipment, level,
       exclude: params.exclude, recent_signatures: [...recent, ...days.map((x) => x.wod.signature)], box_wod: true,
     }, catalog, bank, (seed + d.day * 7919) >>> 0);
     for (const r of wod.generator.relaxations) relax.add(`${d.target}:${r}`);

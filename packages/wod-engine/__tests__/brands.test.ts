@@ -45,7 +45,8 @@ describe('marques : jamais « CrossFit » ni « Hyrox » côté utilisateur', ()
 
   it('séances Musculation', () => {
     for (const target of MUSCU_TARGETS) for (const objective of MUSCU_OBJECTIVES) {
-      const p: MuscuParams = { entry: 'express', target, objective, budget_min: 45, equipment: 'gym', level: 'inter' };
+      if (target === 'tronc' && objective === 'force') continue; // M8
+      const p: MuscuParams = { entry: 'express', target, objective, budget_min: target === 'tronc' ? 20 : 45, equipment: 'gym', level: 'inter' };
       const w = generateMuscu(p, CATALOG_SNAPSHOT, BANK_V1, 7);
       expectClean(`${target}/${objective}.title`, w.title);
       expectClean(`${target}/${objective}.description`, renderMuscu(w));

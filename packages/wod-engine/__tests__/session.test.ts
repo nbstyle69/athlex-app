@@ -10,6 +10,7 @@ import {
 import type { AnySkeletonRow } from '../src';
 import type { GeneratedSession, GeneratedWeek, GeneratedMuscuWeek, SessionDay, Pattern } from '../src';
 import { countSessionByCause, sessionViolations, SESSION_CAUSES } from './conformity-session';
+import { countMuscuByCause, muscuViolations, MUSCU_CAUSES } from './conformity-muscu';
 import { FINISHERS, S3_gym, splitSignatures } from '../src';
 import { parseMovementLine } from '../../../src/utils/movementParser';
 import { parseStrengthLine } from '../../../src/utils/strengthBlock';
@@ -237,9 +238,21 @@ describe('semaine Musculation (52 semaines)', () => {
       for (const d of w.days) {
         expect(d.wod.leaderboard_enabled).toBe(false);
         expect(d.wod.discipline).toBe('musculation');
-        expect(d.wod.objective).toBe(w.objective);
+        // M8 : pas de Force en Tronc → le samedi tronc d'une semaine Force passe en Prise de muscle
+        expect(d.wod.objective).toBe(d.target === 'tronc' && w.objective === 'force' ? 'hypertrophie' : w.objective);
       }
     }
+  });
+
+  it('compteurs M1–M10 à zéro sur les 52 semaines de la piste box', () => {
+    const violations: string[] = [];
+    for (const w of muscuWeeks) for (const d of w.days) {
+      const v = muscuViolations(d.wod, { entry: 'express', target: d.target, objective: d.wod.objective, budget_min: d.budget_min, equipment: 'box', level: 'inter' });
+      violations.push(...v.map((x) => `${x} ← semaine ${w.iso_week} jour ${d.day}`));
+    }
+    const counts = countMuscuByCause(violations);
+    console.log('piste Musculation M1–M10 :', muscuWeeks.length * 5, 'séances', counts, violations.slice(0, 10));
+    for (const c of MUSCU_CAUSES) expect({ cause: c, n: counts[c] }).toEqual({ cause: c, n: 0 });
   });
 
   it('objectif par cycle : 1-2 hypertrophie, 3-4 endurance, 5-6 force, puis rebouclage', () => {

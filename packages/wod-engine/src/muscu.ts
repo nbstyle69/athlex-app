@@ -818,7 +818,7 @@ export function exerciseLine(e: MuscuExercise): string {
   if (l.mode === '1rm' && l.kg) {
     out += ` @ ${l.kg} kg — charge ${l.percent} % 1RM`;
   } else if (l.mode === 'percent') {
-    out += ` @ ${l.percent} %1RM — charge sans 1RM connu : RPE ${l.rpe}`;
+    out += ` — RPE ${l.rpe} (≈ ${l.percent} % du 1RM)`;
   } else if (l.mode === 'weighted') {
     out += l.kg ? ` — lesté ${l.kg} kg (10 % du poids de corps), RPE ${l.rpe}` : ` — lesté léger, RPE ${l.rpe}`;
   } else if (l.mode === 'rpe') {
