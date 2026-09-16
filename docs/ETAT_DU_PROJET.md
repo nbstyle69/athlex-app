@@ -249,15 +249,48 @@ propriétaire. `security_invoker = true` (chaque lecteur ne voit que ses `moveme
 révoqué, `authenticated` en SELECT seul. `test-grants` 31/31 (T1 / T2 / T8 rouges avant, mutation
 inverse vérifiée). **Appliquée en prod : oui** (dump horodaté dans la description de la PR).
 
+**Générateur Musculation V1 — PR M1 (`athlex-app`, migrations `20261214` + `20261215`).**
+Troisième discipline du moteur (`packages/wod-engine/src/muscu.ts`, `generateMuscu`, RNG à
+graine, aucun réseau) : 13 cibles × 3 objectifs (hypertrophie / force / endurance) = 39
+squelettes `strength_session` embarqués et exportés dans `wod_skeletons`
+(`discipline = 'musculation'`, repli hors ligne comme le metcon). Le catalogue reçoit les 178
+exercices du CSV Musculation v1 (173 + 5 variantes faciles sans matériel : Incline / Wall
+Push-Ups, Bird Dog, Reverse Lunge sans charge, Squat Hold ; Glute Bridge ouvert à l'hypertrophie) en colonnes sur `movement_catalog` (familles `machine` /
+`cable`, muscles, `level_min`, `load_mode`, `rm_reference` / `rm_factor`, cadences, plages par
+objectif, poids `none` / `box` / `gym`) : 18 exercices déjà présents (13 annoncés + 5 alignés
+par nom, écart signalé) gardent leur ligne, 160 sont créés avec poids metcon à 0, les 14
+legacy inactifs le restent. Charges : 1RM du calculateur (`profiles.personal_records`, passés
+en paramètre) × facteur × % de l'objectif arrondi à 2,5 kg, sinon RPE 7 / 8 ; lest des tractions /
+dips en Force = 10 % de `bodyweight_kg` arrondi à 2,5 kg, sinon « lesté léger » ; Après ma classe
+exclut les muscles du WOD du jour et interdit Force ; débutant sans unilatéral ni lesté, 4
+exercices max ; jamais deux exercices consécutifs sur le même muscle ; règles M1–M10 de relecture : `priority` (1-5) et `movement_group` au catalogue, exercice principal par priorité, un seul exercice par geste, ≤ 2 lourds en Force (3e compound rétrogradé 70-75 % × 6-8), Pull / Dos avec tirage vertical + horizontal, ≤ 1 poids du corps hors tronc en box / salle, tractions remplacées en Tonification, remplissage sans repos ni 5 × 20, Tronc sans Force ni compound jambes (15 · 20 · 30'), libellés Prise de muscle / Force / Tonification et « RPE 7 (≈ 52 % du 1RM) », Hip Thrust obligatoire en Fessiers + ischios ; compteurs M1–M10 à zéro en conformité ; durée ±10 % (trop long :
+slots optionnels → séries → squelette ; trop court : reps → une série de plus (≤ 5) → exercice
+optionnel sur un muscle secondaire de la cible → tempo 3-1-1 compté dans la durée → repos → 5e
+exercice optionnel en débutant, `budget_short` tracé sur 0,17 % des tirages, tous débutant 60') ; signature `musculation|<squelette>|<exercices>` sur les 10
+dernières. Grammaire `strength` étendue (`s`, `m`, `/ jambe`, `/ bras`, `/ côté`) rétro-compatible.
+Tests §7 : 1 152 combinaisons × 200 graines (230 400 séances) sans échec, 1RM connu / inconnu, fixture
+Back Squat + Thrusters. **Migrations appliquées en prod : non** (à appliquer après le build
+embarquant M1 : l'app 1.0.53 charge toutes les lignes actives de `wod_skeletons`, le filtre par
+discipline arrive avec ce lot). Aucun écran : M2 attend la relecture de
+`packages/wod-engine/samples-musculation.md`. Dépendances tranchées pour M2 : badges
+Musculation crédités depuis les séries réalisées saisies par l'athlète (`logMovementReps`,
+reps × séries par mouvement, verrou `strengthJournalSeparation`, jamais depuis
+`strength_set_logs`) ; mode Split du minuteur vidéo (`SeqBlock.type = 'split'`, chrono global,
+« Série terminée » → split + compte à rebours `rest_s`, exercice suivant quand ses séries sont
+faites, liste des splits en fin de séance, réutilisable pour splitter un metcon par round ;
+`wod_json` porte déjà `sets` et `rest_s`) ; `bodyweight_kg`, genre et niveau en champs de profil.
+
 **Générateur de WOD v1 — PR 3 (`AthleX-Manager` + migration `20261213` ici).** Le Manager lit
 `movement_catalog` à la place de son tableau statique `lib/movements.ts` (snapshot embarqué en
 repli, les 14 mouvements `active = false` restent proposés aux coachs, seul le générateur les
 ignore) ; l'admin Mouvements gagne un onglet Catalogue (édition, réactivation, création) et une
 page sœur `/admin/volume-caps` (19 plafonds éditables, squelettes en lecture seule), écriture
 par routes serveur `service_role` gardées par le rôle admin. `box_wods.wod_json jsonb`
-(migration `20261213`, **non appliquée en prod**, dump avant) reçoit le WOD structuré à chaque
-création / modification depuis l'éditeur, derrière un garde `42703` / `PGRST204` tant que la
-colonne n'est pas en prod ; `description` reste la source de vérité côté athlète.
+(migration `20261213`, **appliquée en prod : oui**, 15/09/2026, `pg_dump` `20260915T230607Z`
+déposé avant dans `db-dumps`, 886 WODs intacts, écriture par le Manager déployé vérifiée sur
+AthleX Fitness) reçoit le WOD structuré à chaque création / modification depuis l'éditeur,
+derrière un garde `42703` / `PGRST204` à retirer dans un lot ultérieur ; `description` reste
+la source de vérité côté athlète.
 
 **Désabonnement d'une programmation Marketplace (`athlex-app`, migration `20261210`).**
 Aucun désabonnement n'existait. RPC `unsubscribe_programming(p_subscription_id,

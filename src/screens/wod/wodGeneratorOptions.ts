@@ -39,7 +39,7 @@ export const PATTERN_LABEL: Record<Pattern, string> = {
 
 export const FAMILY_LABEL: Record<Family, string> = {
   barbell: 'barre', dumbbell: 'haltères', kettlebell: 'kettlebell', gym: 'gym', bodyweight: 'poids du corps', erg: 'erg',
-  run: 'course', sled: 'sled', carry: 'porté', sandbag: 'sandbag', wallball: 'wall ball', jump_rope: 'corde', box: 'box', other: 'autre',
+  run: 'course', sled: 'sled', carry: 'porté', sandbag: 'sandbag', wallball: 'wall ball', jump_rope: 'corde', box: 'box', machine: 'machine', cable: 'poulie', other: 'autre',
 };
 
 /** « Patterns évités : squat, fente · barre » — ce que le complément écartera. */
@@ -54,7 +54,7 @@ export function avoidedText(catalog: Catalog, dayMovements: string[]): string {
 /** Matériel proposé dans « Exclure » : union du champ `equipment` des mouvements actifs. */
 export function equipmentOptions(catalog: Catalog): string[] {
   const set = new Set<string>();
-  for (const m of catalog.movements) if (m.active) m.equipment.forEach((e) => set.add(e));
+  for (const m of catalog.movements) if (m.active && (m.weight_functional > 0 || m.weight_hybrid > 0)) m.equipment.forEach((e) => set.add(e));
   return [...set].sort((a, b) => a.localeCompare(b));
 }
 

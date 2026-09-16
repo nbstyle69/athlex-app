@@ -15,11 +15,18 @@
  */
 
 export type StrengthLoadUnit = 'kg' | '%1RM';
+/** Unité des « reps » : répétitions (défaut), secondes (gainage) ou mètres (carry). */
+export type StrengthRepsUnit = 'reps' | 's' | 'm';
+export type StrengthSide = 'jambe' | 'bras' | 'côté';
 
 export interface StrengthEntry {
   name: string;
   sets: number;
   reps: number;
+  /** `s` → « 3 × 30 s », `m` → « 3 × 40 m » ; absent = répétitions. */
+  repsUnit?: StrengthRepsUnit;
+  /** Exercice unilatéral : « 3 × 8 / jambe ». */
+  perSide?: StrengthSide | null;
   /** Charge prescrite, dans `unit`. `null` = à l'appréciation de l'athlète. */
   load: number | null;
   unit: StrengthLoadUnit;
@@ -63,6 +70,8 @@ export function serializeStrength(e: StrengthEntry): string {
   const sets = Math.max(1, Math.round(e.sets));
   const reps = Math.max(1, Math.round(e.reps));
   let out = `${name}${SEP}${sets} × ${reps}`;
+  if (e.repsUnit && e.repsUnit !== 'reps') out += ` ${e.repsUnit}`;
+  if (e.perSide) out += ` / ${e.perSide}`;
   if (e.load != null && e.load > 0) out += ` @ ${e.load} ${e.unit}`;
   const loadNote = (e.loadNote ?? '').trim().replace(/\s+[—–-]\s+/g, ' ');
   if (loadNote) out += `${SEP}charge ${loadNote}`;
@@ -80,11 +89,13 @@ export function parseStrengthLine(line: string): StrengthEntry | null {
   const name = parts[0].trim();
   if (!name) return null;
 
-  const m = parts[1].match(/^(\d+)\s*[x×]\s*(\d+)(?:\s*@\s*(\d+(?:[.,]\d+)?)\s*(kg|%\s*1rm|%))?$/i);
+  const m = parts[1].match(/^(\d+)\s*[x×]\s*(\d+)(?:\s*(s|m)\b)?(?:\s*\/\s*(jambe|bras|c[oô]t[eé]))?(?:\s*@\s*(\d+(?:[.,]\d+)?)\s*(kg|%\s*1rm|%))?$/i);
   if (!m) return null;
 
-  const load = m[3] != null ? parseFloat(m[3].replace(',', '.')) : null;
-  const unit: StrengthLoadUnit = m[4] != null && m[4].toLowerCase().startsWith('kg') ? 'kg' : '%1RM';
+  const repsUnit = (m[3]?.toLowerCase() ?? null) as StrengthRepsUnit | null;
+  const perSide: StrengthSide | null = m[4] ? (/^jambe/i.test(m[4]) ? 'jambe' : /^bras/i.test(m[4]) ? 'bras' : 'côté') : null;
+  const load = m[5] != null ? parseFloat(m[5].replace(',', '.')) : null;
+  const unit: StrengthLoadUnit = m[6] != null && m[6].toLowerCase().startsWith('kg') ? 'kg' : '%1RM';
 
   let restSec: number | null = null;
   let tempo: string | null = null;
@@ -107,6 +118,8 @@ export function parseStrengthLine(line: string): StrengthEntry | null {
     restSec,
     tempo,
     ...(loadNote ? { loadNote } : {}),
+    ...(repsUnit ? { repsUnit } : {}),
+    ...(perSide ? { perSide } : {}),
   };
 }
 
@@ -168,6 +181,8 @@ export function formatStrengthPrescription(
   oneRepMaxKg?: number | null,
 ): string {
   let out = `${e.sets} × ${e.reps}`;
+  if (e.repsUnit && e.repsUnit !== 'reps') out += ` ${e.repsUnit}`;
+  if (e.perSide) out += ` / ${e.perSide}`;
   const note = (e.loadNote ?? '').trim();
   if (e.load == null || e.load <= 0) return note ? `${out} · charge ${note}` : out;
   out += ` @ ${e.load} ${e.unit}`;

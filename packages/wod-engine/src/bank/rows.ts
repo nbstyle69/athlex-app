@@ -1,4 +1,4 @@
-import type { Band, Discipline, Family, MovementCap, Skeleton, SkeletonBank, SkeletonFormat, Unit } from '../types';
+import type { Band, Discipline, Family, MovementCap, MuscuSkeleton, Skeleton, SkeletonBank, SkeletonFormat, Unit } from '../types';
 import { BANK_V1 } from './index';
 
 /** Ligne de `public.wod_skeletons` : la définition complète du squelette en jsonb. */
@@ -9,6 +9,26 @@ export interface SkeletonRow {
   definition: Skeleton;
   active: boolean;
   version: number;
+}
+
+/** Ligne `discipline = 'musculation'` de `public.wod_skeletons` (M1). */
+export interface MuscuSkeletonRow {
+  id: string;
+  discipline: 'musculation';
+  format: 'strength_session';
+  definition: MuscuSkeleton;
+  active: boolean;
+  version: number;
+}
+
+export type AnySkeletonRow = SkeletonRow | MuscuSkeletonRow;
+
+export function isMuscuSkeletonRow(r: AnySkeletonRow): r is MuscuSkeletonRow {
+  return r.discipline === 'musculation';
+}
+
+export function muscuSkeletonToRow(sk: MuscuSkeleton, version: number): MuscuSkeletonRow {
+  return { id: sk.id, discipline: 'musculation', format: 'strength_session', definition: sk, active: true, version };
 }
 
 /** Ligne de `public.wod_volume_caps` : la table §5.4 (total par WOD à la référence RX). */
@@ -54,17 +74,22 @@ export function movementCapFromRow(r: VolumeCapRow): MovementCap {
  * snapshot embarqué. Lève si l'une des deux listes est vide : l'appelant
  * retombe alors sur `BANK_V1`.
  */
-export function bankFromRows(skeletons: SkeletonRow[], caps: VolumeCapRow[]): SkeletonBank {
-  const active = skeletons.filter((r) => r.active);
+export function bankFromRows(skeletons: AnySkeletonRow[], caps: VolumeCapRow[]): SkeletonBank {
+  const metcon = skeletons.filter((r): r is SkeletonRow => r.active && !isMuscuSkeletonRow(r));
+  const muscu = skeletons.filter((r): r is MuscuSkeletonRow => r.active && isMuscuSkeletonRow(r));
   const activeCaps = caps.filter((r) => r.active);
-  if (active.length === 0 || activeCaps.length === 0) {
+  if (metcon.length === 0 || activeCaps.length === 0) {
     throw new Error('wod_skeletons / wod_volume_caps vides');
   }
-  const version = Math.max(...active.map((r) => r.version), ...activeCaps.map((r) => r.version));
+  const version = Math.max(...metcon.map((r) => r.version), ...activeCaps.map((r) => r.version));
   return {
     version,
-    skeletons: active.map((r) => ({ ...r.definition, id: r.id, discipline: r.discipline, format: r.format })),
+    skeletons: metcon.map((r) => ({ ...r.definition, id: r.id, discipline: r.discipline, format: r.format })),
     volume_caps: BANK_V1.volume_caps,
     movement_caps: activeCaps.map(movementCapFromRow),
+    // base antérieure à la migration 20261215 (aucune ligne musculation) → snapshot embarqué
+    muscu_skeletons: muscu.length
+      ? muscu.map((r) => ({ ...r.definition, id: r.id, discipline: 'musculation' as const, format: 'strength_session' as const }))
+      : BANK_V1.muscu_skeletons,
   };
 }

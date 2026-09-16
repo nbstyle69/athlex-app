@@ -33,7 +33,7 @@ export type LoadUnit = 'kg' | 'cm';
 
 export type Family =
   | 'barbell' | 'dumbbell' | 'kettlebell' | 'gym' | 'bodyweight' | 'erg' | 'run' | 'sled'
-  | 'carry' | 'sandbag' | 'wallball' | 'jump_rope' | 'box' | 'other';
+  | 'carry' | 'sandbag' | 'wallball' | 'jump_rope' | 'box' | 'machine' | 'cable' | 'other';
 export type Pattern =
   | 'squat' | 'hinge' | 'push_v' | 'push_h' | 'pull_v' | 'pull_h' | 'carry' | 'lunge' | 'core' | 'mono';
 export type Modality = 'W' | 'G' | 'M';
@@ -73,6 +73,50 @@ export interface CatalogMovement {
   active: boolean;
   version: number;
   notes: string | null;
+  /** colonnes Musculation (`discipline_muscu`) ; null = jamais tiré en musculation */
+  muscu: MuscuFields | null;
+}
+
+// ─── Musculation (catalogue) ─────────────────────────────────────────────────
+
+export type Muscle =
+  | 'pecs' | 'epaules' | 'epaules_ant' | 'epaules_post' | 'triceps' | 'dos' | 'lombaires' | 'biceps'
+  | 'quadriceps' | 'ischios' | 'fessiers' | 'mollets' | 'tronc' | 'trapezes' | 'avant_bras' | 'obliques' | 'coiffe';
+export type MuscuObjective = 'hypertrophie' | 'force' | 'endurance';
+export type MuscuLevel = 'debutant' | 'inter' | 'avance';
+export type LoadMode = '1rm' | 'rpe' | 'bodyweight';
+export type RmReference = 'back_squat' | 'deadlift' | 'bench' | 'press' | 'hip_thrust';
+export type MuscuUnit = 'reps' | 's' | 'm';
+/** Geste : un seul exercice par groupe et par séance (M2), sauf Full body et paire compound + isolation explicite. */
+export type MovementGroup =
+  | 'press_h' | 'press_v' | 'pull_v' | 'row' | 'squat' | 'hinge' | 'lunge' | 'hip_ext'
+  | 'curl' | 'triceps_ext' | 'fly' | 'raise' | 'shrug' | 'core_flex' | 'core_anti' | 'carry';
+export const MOVEMENT_GROUPS: readonly MovementGroup[] = [
+  'press_h', 'press_v', 'pull_v', 'row', 'squat', 'hinge', 'lunge', 'hip_ext',
+  'curl', 'triceps_ext', 'fly', 'raise', 'shrug', 'core_flex', 'core_anti', 'carry',
+];
+
+export interface MuscuFields {
+  muscle_primary: Muscle;
+  muscle_secondary: string[];
+  compound: boolean;
+  unilateral: boolean;
+  level_min: MuscuLevel;
+  load_mode: LoadMode;
+  rm_reference: RmReference | null;
+  rm_factor: number | null;
+  seconds_per_rep: number;
+  setup_s: number;
+  objectives: MuscuObjective[];
+  rep_ranges: Partial<Record<MuscuObjective, [number, number]>>;
+  weight_bodyweight: number;
+  weight_box: number;
+  weight_gym: number;
+  /** unité des « reps » : secondes (gainage) ou mètres (carry) */
+  unit: MuscuUnit;
+  /** 1 = meilleur exercice principal pour le muscle (slot main_compound), 5 = dernier recours */
+  priority: number;
+  movement_group: MovementGroup;
 }
 
 export interface Catalog {
@@ -198,6 +242,8 @@ export interface SkeletonBank {
   volume_caps: Record<Discipline, Partial<Record<Category, Partial<Record<Unit, number>>>>>;
   /** plafonds par classe de mouvements (§5.4), table RX */
   movement_caps: MovementCap[];
+  /** squelettes Musculation (M1), lignes `discipline = 'musculation'` de `wod_skeletons` */
+  muscu_skeletons: MuscuSkeleton[];
 }
 
 // ─── Paramètres et sortie ────────────────────────────────────────────────────
@@ -315,6 +361,108 @@ export interface GeneratedWod extends EditorColumns {
   stimulus: { rpe: number; note: string };
   score_type: ScoreType;
   after_class: { excluded_patterns: Pattern[]; excluded_families: Family[] } | null;
+  signature: string;
+}
+
+// ─── Musculation (squelettes, paramètres, sortie) ────────────────────────────
+
+export type MuscuTarget =
+  | 'fessiers' | 'fessiers_ischios' | 'bas' | 'full_body' | 'tronc' | 'haut' | 'dos' | 'epaules' | 'bras'
+  | 'pecs' | 'push' | 'pull' | 'jambes';
+export type MuscuEquipment = 'none' | 'box' | 'gym';
+export type MuscuSlotRole = 'main_compound' | 'secondary_compound' | 'isolation' | 'core' | 'calves';
+
+export interface MuscuSlot {
+  role: MuscuSlotRole;
+  /** muscle principal attendu (un ou plusieurs) */
+  muscle: Muscle | Muscle[];
+  /** retiré en premier si le budget est court */
+  optional?: boolean;
+  /** liste fermée d'exercices préférés (relâchée si aucun n'est disponible) */
+  ids?: string[];
+  /** exercice unilatéral exigé (split squat, reverse lunge, step-up…) */
+  unilateral?: boolean;
+  /** ids jamais tirés sur ce slot (ex. back squat sur la cible Fessiers) */
+  exclude_ids?: string[];
+  /** groupes de geste admis sur ce slot (ex. tirage vertical) */
+  groups?: MovementGroup[];
+  /** isolation autorisée dans le groupe d'un compound déjà tiré (paire compound + isolation explicite, M2) */
+  pair?: boolean;
+}
+
+export interface MuscuSkeleton {
+  id: string;
+  discipline: 'musculation';
+  format: 'strength_session';
+  target: MuscuTarget;
+  objective: MuscuObjective;
+  slots: MuscuSlot[];
+}
+
+export interface MuscuParams {
+  entry: Entry;
+  target: MuscuTarget;
+  objective: MuscuObjective;
+  /** Séance 20 · 30 · 45 · 60 ; Après ma classe 15 · 20 · 30 */
+  budget_min: number;
+  equipment: MuscuEquipment;
+  level: MuscuLevel;
+  /** matériel (`barbell`, `cable`, `leg_press`…), ids ou noms d'exercices exclus */
+  exclude?: string[];
+  recent_signatures?: string[];
+  /** 1RM connus (kg) par référence */
+  one_rep_max?: Partial<Record<RmReference, number>> | null;
+  bodyweight_kg?: number | null;
+  after_class?: AfterClassContext | null;
+}
+
+export interface MuscuLoad {
+  mode: LoadMode | 'weighted';
+  kg?: number;
+  percent?: number;
+  rpe?: number;
+  rm_reference?: RmReference;
+}
+
+export interface MuscuExercise {
+  id: string;
+  name: string;
+  role: MuscuSlotRole;
+  muscle_primary: Muscle;
+  movement_group: MovementGroup;
+  priority: number;
+  sets: number;
+  reps: number;
+  reps_unit: MuscuUnit;
+  per_side: boolean;
+  load: MuscuLoad;
+  rest_s: number;
+  notes: string;
+  badge_key: string | null;
+  /** Exercice ajouté par le rattrapage de budget (slot `optional` ou bonus sur un muscle secondaire). */
+  optional: boolean;
+}
+
+export interface StrengthSessionBlock {
+  kind: 'strength_session';
+  exercises: MuscuExercise[];
+}
+
+export interface MuscuWod extends EditorColumns {
+  source: 'generator';
+  generator: GeneratedWod['generator'];
+  discipline: 'musculation';
+  entry: Entry;
+  target: MuscuTarget;
+  objective: MuscuObjective;
+  equipment: MuscuEquipment;
+  level: MuscuLevel;
+  budget_min: number;
+  blocks: [StrengthSessionBlock];
+  estimate: { minutes: number; seconds: number };
+  stimulus: { rpe: number; note: string };
+  score_type: 'tonnage';
+  after_class: { excluded_muscles: Muscle[]; suggested_target: MuscuTarget | null } | null;
   signature: string;
 }
 

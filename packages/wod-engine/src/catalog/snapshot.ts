@@ -156,7 +156,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_thrusters",
       "active": true,
       "version": 2,
-      "notes": "bench 21-15-9 = Fran"
+      "notes": "bench 21-15-9 = Fran",
+      "muscu": null
     },
     {
       "id": "power_snatch",
@@ -310,7 +311,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_snatch",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "hang_power_snatch",
@@ -464,7 +466,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "squat_snatch",
@@ -618,7 +621,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_snatch",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "overhead_squat",
@@ -771,7 +775,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_ohs",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "power_clean",
@@ -925,7 +930,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_clean",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "hang_power_clean",
@@ -1079,7 +1085,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_clean",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "squat_clean",
@@ -1233,7 +1240,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_clean",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "clean_and_jerk",
@@ -1387,7 +1395,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_cj",
       "active": true,
       "version": 2,
-      "notes": "bench 30 for time = Grace"
+      "notes": "bench 30 for time = Grace",
+      "muscu": null
     },
     {
       "id": "push_press",
@@ -1540,7 +1549,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_press",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "push_jerk",
@@ -1693,7 +1703,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_press",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "shoulder_to_overhead",
@@ -1846,7 +1857,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_press",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "front_squat",
@@ -1999,7 +2011,42 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_squat",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "tronc",
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "1rm",
+        "rm_reference": "back_squat",
+        "rm_factor": 0.85,
+        "seconds_per_rep": 4,
+        "setup_s": 60,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "squat"
+      }
     },
     {
       "id": "back_squat",
@@ -2153,7 +2200,47 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_squat",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers",
+          "tronc"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "1rm",
+        "rm_reference": "back_squat",
+        "rm_factor": 1,
+        "seconds_per_rep": 4,
+        "setup_s": 60,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "squat"
+      }
     },
     {
       "id": "deadlift",
@@ -2306,7 +2393,43 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_deadlifts",
       "active": true,
       "version": 2,
-      "notes": "bench 21-15-9 = Diane"
+      "notes": "bench 21-15-9 = Diane",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "ischios",
+          "fessiers",
+          "tronc"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "1rm",
+        "rm_reference": "deadlift",
+        "rm_factor": 1,
+        "seconds_per_rep": 3,
+        "setup_s": 45,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "hinge"
+      }
     },
     {
       "id": "sumo_deadlift_high_pull",
@@ -2460,7 +2583,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_sdlhp",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "bench_press",
@@ -2614,7 +2738,47 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_bench_press",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps",
+          "epaules_ant"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "1rm",
+        "rm_reference": "bench",
+        "rm_factor": 1,
+        "seconds_per_rep": 3,
+        "setup_s": 45,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "press_h"
+      }
     },
     {
       "id": "front_rack_lunge",
@@ -2767,7 +2931,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "reps = pas au total"
+      "notes": "reps = pas au total",
+      "muscu": null
     },
     {
       "id": "bar_facing_burpee",
@@ -2836,7 +3001,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_burpee",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "kb_swing_american",
@@ -2989,7 +3155,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_kb_swing",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "kb_swing_russian",
@@ -3142,7 +3309,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "kb_goblet_squat",
@@ -3295,7 +3463,41 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_goblet_squat",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "squat"
+      }
     },
     {
       "id": "db_snatch",
@@ -3449,7 +3651,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "alterné, reps au total"
+      "notes": "alterné, reps au total",
+      "muscu": null
     },
     {
       "id": "db_thruster",
@@ -3603,7 +3806,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_db_thruster",
       "active": true,
       "version": 2,
-      "notes": "2 DB"
+      "notes": "2 DB",
+      "muscu": null
     },
     {
       "id": "db_clean_and_jerk",
@@ -3757,7 +3961,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_db_cj",
       "active": true,
       "version": 2,
-      "notes": "2 DB"
+      "notes": "2 DB",
+      "muscu": null
     },
     {
       "id": "db_box_step_over",
@@ -3911,7 +4116,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "db_lunge",
@@ -4064,7 +4270,41 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_lunge",
       "active": true,
       "version": 2,
-      "notes": "reps = pas au total"
+      "notes": "reps = pas au total",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
+      }
     },
     {
       "id": "devil_press",
@@ -4219,7 +4459,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_devil_press",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "db_farmer_carry",
@@ -4373,7 +4614,37 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "charge par main"
+      "notes": "charge par main",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "avant_bras",
+          "trapezes"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 20,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "m",
+        "priority": 3,
+        "movement_group": "carry"
+      }
     },
     {
       "id": "wall_ball",
@@ -4527,7 +4798,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_wallball",
       "active": true,
       "version": 2,
-      "notes": "cible 3.05 m H / 2.75 m F ; Hyrox 100 reps race"
+      "notes": "cible 3.05 m H / 2.75 m F ; Hyrox 100 reps race",
+      "muscu": null
     },
     {
       "id": "sandbag_lunge",
@@ -4680,7 +4952,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "Hyrox 100 m race"
+      "notes": "Hyrox 100 m race",
+      "muscu": null
     },
     {
       "id": "sandbag_carry",
@@ -4833,7 +5106,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "sandbag_clean",
@@ -4986,7 +5260,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "sandbag_over_shoulder",
@@ -5139,7 +5414,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "sled_push",
@@ -5293,7 +5569,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "charge sled incluse ; Hyrox 50 m race"
+      "notes": "charge sled incluse ; Hyrox 50 m race",
+      "muscu": null
     },
     {
       "id": "sled_pull",
@@ -5448,7 +5725,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "Hyrox 50 m race"
+      "notes": "Hyrox 50 m race",
+      "muscu": null
     },
     {
       "id": "row",
@@ -5542,7 +5820,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_row",
       "active": true,
       "version": 2,
-      "notes": "cal ; 1 cal ≈ 18 m ; Hyrox 1000 m race"
+      "notes": "cal ; 1 cal ≈ 18 m ; Hyrox 1000 m race",
+      "muscu": null
     },
     {
       "id": "bike_erg",
@@ -5635,7 +5914,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_bike",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "echo_bike",
@@ -5703,7 +5983,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_bike",
       "active": true,
       "version": 2,
-      "notes": "cal F ≈ 0.8 × cal H, à gérer dans le rendu"
+      "notes": "cal F ≈ 0.8 × cal H, à gérer dans le rendu",
+      "muscu": null
     },
     {
       "id": "ski_erg",
@@ -5798,7 +6079,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_ski",
       "active": true,
       "version": 2,
-      "notes": "Hyrox 1000 m race"
+      "notes": "Hyrox 1000 m race",
+      "muscu": null
     },
     {
       "id": "run",
@@ -5864,7 +6146,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_run",
       "active": true,
       "version": 2,
-      "notes": "0.27 s/m = 4'30/km RX"
+      "notes": "0.27 s/m = 4'30/km RX",
+      "muscu": null
     },
     {
       "id": "shuttle_run",
@@ -5930,7 +6213,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "aller-retour 10 ou 25 m"
+      "notes": "aller-retour 10 ou 25 m",
+      "muscu": null
     },
     {
       "id": "pull_up",
@@ -6001,7 +6285,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_pullup",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "chest_to_bar",
@@ -6072,7 +6357,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_c2b",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "toes_to_bar",
@@ -6144,7 +6430,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_t2b",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "bar_muscle_up",
@@ -6217,7 +6504,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_bmu",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "ring_muscle_up",
@@ -6290,7 +6578,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_ring_mu",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "handstand_push_up",
@@ -6361,7 +6650,41 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_hspu",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "avance",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_v"
+      }
     },
     {
       "id": "strict_handstand_push_up",
@@ -6433,7 +6756,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_hspu",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "wall_walk",
@@ -6505,7 +6829,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_wallwalk",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "handstand_walk",
@@ -6577,7 +6902,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "ring_dip",
@@ -6648,7 +6974,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_ring_dip",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "ring_row",
@@ -6716,7 +7043,42 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_ring_row",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps",
+          "trapezes"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "row"
+      }
     },
     {
       "id": "push_up",
@@ -6784,7 +7146,42 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_pushup",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps",
+          "tronc"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_h"
+      }
     },
     {
       "id": "pistol",
@@ -6853,7 +7250,36 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_pistol",
       "active": true,
       "version": 2,
-      "notes": "alterné, reps au total"
+      "notes": "alterné, reps au total",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "avance",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "squat"
+      }
     },
     {
       "id": "rope_climb",
@@ -6924,7 +7350,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "ghd_sit_up",
@@ -6995,7 +7422,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "sit_up",
@@ -7061,7 +7489,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_situp",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "hollow_rock",
@@ -7127,7 +7556,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_hollow",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "plank_hold",
@@ -7193,7 +7623,34 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "core_anti"
+      }
     },
     {
       "id": "burpee",
@@ -7260,7 +7717,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_burpee",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "burpee_box_jump_over",
@@ -7414,7 +7872,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_burpee_bj",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "burpee_broad_jump",
@@ -7481,7 +7940,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "Hyrox 80 m race"
+      "notes": "Hyrox 80 m race",
+      "muscu": null
     },
     {
       "id": "box_jump",
@@ -7637,7 +8097,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_box_jump",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "box_jump_over",
@@ -7793,7 +8254,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_box_jump",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "box_step_up",
@@ -7946,7 +8408,36 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_box_jump",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
+      }
     },
     {
       "id": "double_under",
@@ -8017,7 +8508,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_du",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "single_under",
@@ -8085,7 +8577,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_su",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "air_squat",
@@ -8151,7 +8644,36 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_air_squat",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "squat"
+      }
     },
     {
       "id": "walking_lunge",
@@ -8217,7 +8739,36 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_lunge",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
+      }
     },
     {
       "id": "cluster",
@@ -8372,7 +8923,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "squat clean + thruster"
+      "notes": "squat clean + thruster",
+      "muscu": null
     },
     {
       "id": "hang_clean_and_jerk",
@@ -8526,7 +9078,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_cj",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "kb_snatch",
@@ -8680,7 +9233,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_kb_snatch",
       "active": true,
       "version": 2,
-      "notes": "alterné, reps au total"
+      "notes": "alterné, reps au total",
+      "muscu": null
     },
     {
       "id": "kb_clean",
@@ -8833,7 +9387,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "alterné, reps au total"
+      "notes": "alterné, reps au total",
+      "muscu": null
     },
     {
       "id": "kb_front_squat",
@@ -8986,7 +9541,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "2 KB, charge par main"
+      "notes": "2 KB, charge par main",
+      "muscu": null
     },
     {
       "id": "kb_clean_and_jerk",
@@ -9140,7 +9696,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_kb_cj",
       "active": true,
       "version": 2,
-      "notes": "2 KB ou alterné 1 KB"
+      "notes": "2 KB ou alterné 1 KB",
+      "muscu": null
     },
     {
       "id": "kb_deadlift",
@@ -9293,7 +9850,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "2 KB, charge par main"
+      "notes": "2 KB, charge par main",
+      "muscu": null
     },
     {
       "id": "box_jump_over_step_down",
@@ -9449,7 +10007,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "burpee_box_jump",
@@ -9603,7 +10162,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_burpee_bj",
       "active": true,
       "version": 2,
-      "notes": null
+      "notes": null,
+      "muscu": null
     },
     {
       "id": "burpee_over_the_bar",
@@ -9672,7 +10232,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_burpee",
       "active": true,
       "version": 2,
-      "notes": "latéral"
+      "notes": "latéral",
+      "muscu": null
     },
     {
       "id": "pull_up_banded",
@@ -9741,7 +10302,41 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution"
+      "notes": "substitution",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            12,
+            15
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 4,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
+      }
     },
     {
       "id": "hanging_knee_raise",
@@ -9810,7 +10405,36 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution"
+      "notes": "substitution",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "hip_flexors"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
     },
     {
       "id": "legless_rope_climb",
@@ -9878,7 +10502,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "variante haute"
+      "notes": "variante haute",
+      "muscu": null
     },
     {
       "id": "ring_dip_banded",
@@ -9947,7 +10572,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution"
+      "notes": "substitution",
+      "muscu": null
     },
     {
       "id": "box_pistol",
@@ -10015,7 +10641,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution"
+      "notes": "substitution",
+      "muscu": null
     },
     {
       "id": "pistol_to_box",
@@ -10083,7 +10710,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution"
+      "notes": "substitution",
+      "muscu": null
     },
     {
       "id": "half_wall_walk",
@@ -10152,7 +10780,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution"
+      "notes": "substitution",
+      "muscu": null
     },
     {
       "id": "pike_push_up",
@@ -10220,7 +10849,41 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution HSPU"
+      "notes": "substitution HSPU",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_v"
+      }
     },
     {
       "id": "knee_push_up",
@@ -10286,7 +10949,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution"
+      "notes": "substitution",
+      "muscu": null
     },
     {
       "id": "bear_crawl",
@@ -10353,7 +11017,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution HS walk"
+      "notes": "substitution HS walk",
+      "muscu": null
     },
     {
       "id": "inchworm",
@@ -10420,7 +11085,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution wall walk"
+      "notes": "substitution wall walk",
+      "muscu": null
     },
     {
       "id": "handstand_shoulder_tap",
@@ -10489,7 +11155,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution HS walk"
+      "notes": "substitution HS walk",
+      "muscu": null
     },
     {
       "id": "box_step_over",
@@ -10642,7 +11309,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution BJO"
+      "notes": "substitution BJO",
+      "muscu": null
     },
     {
       "id": "rope_pull_from_floor",
@@ -10710,7 +11378,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution rope climb"
+      "notes": "substitution rope climb",
+      "muscu": null
     },
     {
       "id": "box_dip",
@@ -10778,7 +11447,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 2,
-      "notes": "substitution ring dip"
+      "notes": "substitution ring dip",
+      "muscu": null
     },
     {
       "id": "back_rack_split_jerk",
@@ -10808,7 +11478,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_press",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "clean_pull",
@@ -10838,7 +11509,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_clean_pull",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "db_deadlift",
@@ -10868,7 +11540,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "db_push_press",
@@ -10898,7 +11571,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_db_push_press",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "db_strict_press",
@@ -10928,7 +11602,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_db_strict_press",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "power_jerk",
@@ -10958,7 +11633,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_press",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "snatch_balance",
@@ -10989,7 +11665,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_snatch_balance",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "snatch_high_pull",
@@ -11020,7 +11697,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_snatch_hp",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "split_jerk",
@@ -11050,7 +11728,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_press",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "squat_clean_and_jerk",
@@ -11082,7 +11761,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "strict_press",
@@ -11112,7 +11792,47 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_strict_press",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "triceps",
+          "tronc"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "1rm",
+        "rm_reference": "press",
+        "rm_factor": 1,
+        "seconds_per_rep": 3,
+        "setup_s": 45,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "press_v"
+      }
     },
     {
       "id": "tall_clean",
@@ -11142,7 +11862,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_clean",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "v_ups",
@@ -11170,7 +11891,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_vup",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
     },
     {
       "id": "zercher_squat",
@@ -11200,7 +11922,9905 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": "mv_squat",
       "active": false,
       "version": 1,
-      "notes": "Ancien catalogue app — badges / back-office uniquement"
+      "notes": "Ancien catalogue app — badges / back-office uniquement",
+      "muscu": null
+    },
+    {
+      "id": "incline_bench_press",
+      "name": "Incline Bench Press",
+      "family": "barbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "bench_incline",
+        "rack"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "epaules_ant",
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "1rm",
+        "rm_reference": "bench",
+        "rm_factor": 0.8,
+        "seconds_per_rep": 3,
+        "setup_s": 45,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "db_bench_press",
+      "name": "DB Bench Press",
+      "family": "dumbbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps",
+          "epaules_ant"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "incline_db_press",
+      "name": "Incline DB Press",
+      "family": "dumbbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench_incline"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "epaules_ant",
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "machine_chest_press",
+      "name": "Machine Chest Press",
+      "family": "machine",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "chest_press_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "cable_fly",
+      "name": "Cable Fly",
+      "family": "cable",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "pec_deck",
+      "name": "Pec Deck",
+      "family": "machine",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "pec_deck"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "db_fly",
+      "name": "DB Fly",
+      "family": "dumbbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "dips",
+      "name": "Dips",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dip_station"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — lesté possible en force",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps",
+          "epaules_ant"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "db_shoulder_press",
+      "name": "DB Shoulder Press",
+      "family": "dumbbell",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": "mv_db_strict_press",
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "press_v"
+      }
+    },
+    {
+      "id": "arnold_press",
+      "name": "Arnold Press",
+      "family": "dumbbell",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_v"
+      }
+    },
+    {
+      "id": "lateral_raise",
+      "name": "Lateral Raise",
+      "family": "dumbbell",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "cable_lateral_raise",
+      "name": "Cable Lateral Raise",
+      "family": "cable",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "rear_delt_fly",
+      "name": "Rear Delt Fly",
+      "family": "dumbbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules_post",
+        "muscle_secondary": [
+          "haut_dos"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "face_pull",
+      "name": "Face Pull",
+      "family": "cable",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules_post",
+        "muscle_secondary": [
+          "haut_dos"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "front_raise",
+      "name": "Front Raise",
+      "family": "dumbbell",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules_ant",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "landmine_press",
+      "name": "Landmine Press",
+      "family": "barbell",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "landmine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "pecs",
+          "tronc"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_v"
+      }
+    },
+    {
+      "id": "cable_triceps_pushdown",
+      "name": "Triceps Pushdown",
+      "family": "cable",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "overhead_triceps_extension",
+      "name": "Overhead Triceps Extension",
+      "family": "dumbbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "skull_crusher",
+      "name": "Skull Crushers",
+      "family": "barbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "close_grip_bench",
+      "name": "Close Grip Bench Press",
+      "family": "barbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "bench",
+        "rack"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [
+          "pecs"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "1rm",
+        "rm_reference": "bench",
+        "rm_factor": 0.85,
+        "seconds_per_rep": 3,
+        "setup_s": 45,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "bench_dip",
+      "name": "Bench Dips",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "barbell_row",
+      "name": "Barbell Row",
+      "family": "barbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps",
+          "epaules_post"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "1rm",
+        "rm_reference": "deadlift",
+        "rm_factor": 0.5,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "pendlay_row",
+      "name": "Pendlay Row",
+      "family": "barbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "1rm",
+        "rm_reference": "deadlift",
+        "rm_factor": 0.5,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "db_row",
+      "name": "DB Row",
+      "family": "dumbbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "lat_pulldown",
+      "name": "Lat Pulldown",
+      "family": "machine",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "lat_pulldown"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "seated_cable_row",
+      "name": "Seated Cable Row",
+      "family": "cable",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable_row"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps",
+          "epaules_post"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "chest_supported_row",
+      "name": "Chest Supported Row",
+      "family": "dumbbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench_incline"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps",
+          "epaules_post"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 25,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "t_bar_row",
+      "name": "T-Bar Row",
+      "family": "barbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "landmine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "machine_row",
+      "name": "Machine Row",
+      "family": "machine",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "row_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "strict_pull_up",
+      "name": "Strict Pull-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "rig"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": "mv_pullup",
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — lesté possible en force ; sub débutant : lat pulldown ou banded",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "chin_up",
+      "name": "Chin-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "rig"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "straight_arm_pulldown",
+      "name": "Straight Arm Pulldown",
+      "family": "cable",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "rack_pull",
+      "name": "Rack Pull",
+      "family": "barbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "rack"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "ischios",
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "1rm",
+        "rm_reference": "deadlift",
+        "rm_factor": 1.1,
+        "seconds_per_rep": 3,
+        "setup_s": 60,
+        "objectives": [
+          "force"
+        ],
+        "rep_ranges": {
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "hinge"
+      }
+    },
+    {
+      "id": "back_extension",
+      "name": "Back Extension",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "ghd"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "lombaires",
+        "muscle_secondary": [
+          "fessiers",
+          "ischios"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hinge"
+      }
+    },
+    {
+      "id": "barbell_curl",
+      "name": "Barbell Curl",
+      "family": "barbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "db_curl",
+      "name": "DB Curl",
+      "family": "dumbbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "hammer_curl",
+      "name": "Hammer Curl",
+      "family": "dumbbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [
+          "avant_bras"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "incline_db_curl",
+      "name": "Incline DB Curl",
+      "family": "dumbbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench_incline"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "cable_curl",
+      "name": "Cable Curl",
+      "family": "cable",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "preacher_curl",
+      "name": "Preacher Curl",
+      "family": "machine",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "preacher_bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "leg_press",
+      "name": "Leg Press",
+      "family": "machine",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "leg_press"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 40,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "squat"
+      }
+    },
+    {
+      "id": "hack_squat",
+      "name": "Hack Squat",
+      "family": "machine",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "hack_squat"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 40,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "squat"
+      }
+    },
+    {
+      "id": "bulgarian_split_squat",
+      "name": "Bulgarian Split Squat",
+      "family": "dumbbell",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
+      }
+    },
+    {
+      "id": "romanian_deadlift",
+      "name": "Romanian Deadlift",
+      "family": "barbell",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "ischios",
+        "muscle_secondary": [
+          "fessiers",
+          "lombaires"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "1rm",
+        "rm_reference": "deadlift",
+        "rm_factor": 0.7,
+        "seconds_per_rep": 4,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "hinge"
+      }
+    },
+    {
+      "id": "db_rdl",
+      "name": "DB Romanian Deadlift",
+      "family": "dumbbell",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "ischios",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hinge"
+      }
+    },
+    {
+      "id": "leg_extension",
+      "name": "Leg Extension",
+      "family": "machine",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "leg_extension"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "squat"
+      }
+    },
+    {
+      "id": "leg_curl",
+      "name": "Leg Curl",
+      "family": "machine",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "leg_curl"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "ischios",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "hip_thrust",
+      "name": "Hip Thrust",
+      "family": "barbell",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "ischios"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "1rm",
+        "rm_reference": "hip_thrust",
+        "rm_factor": 1,
+        "seconds_per_rep": 3,
+        "setup_s": 60,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "glute_bridge",
+      "name": "Glute Bridge",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — à deux jambes ; variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "ischios"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "good_morning",
+      "name": "Good Morning",
+      "family": "barbell",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "rack"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "ischios",
+        "muscle_secondary": [
+          "lombaires"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "hinge"
+      }
+    },
+    {
+      "id": "sumo_deadlift",
+      "name": "Sumo Deadlift",
+      "family": "barbell",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "ischios",
+          "quadriceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "1rm",
+        "rm_reference": "deadlift",
+        "rm_factor": 1,
+        "seconds_per_rep": 3,
+        "setup_s": 45,
+        "objectives": [
+          "force",
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "hinge"
+      }
+    },
+    {
+      "id": "standing_calf_raise",
+      "name": "Standing Calf Raise",
+      "family": "machine",
+      "pattern": [
+        "mono"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "calf_machine",
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "mollets",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "seated_calf_raise",
+      "name": "Seated Calf Raise",
+      "family": "machine",
+      "pattern": [
+        "mono"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "calf_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "mollets",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "nordic_curl",
+      "name": "Nordic Curl",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "rig"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "ischios",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "avance",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 5,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "hanging_leg_raise",
+      "name": "Hanging Leg Raise",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "rig"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "hip_flexors"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "cable_crunch",
+      "name": "Cable Crunch",
+      "family": "cable",
+      "pattern": [
+        "core"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "ab_wheel",
+      "name": "Ab Wheel Rollout",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "ab_wheel"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "lats"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "pallof_press",
+      "name": "Pallof Press",
+      "family": "cable",
+      "pattern": [
+        "core"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable",
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "dead_bug",
+      "name": "Dead Bug",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "side_plank",
+      "name": "Side Plank",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — unité secondes",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "russian_twist",
+      "name": "Russian Twist",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "wallball",
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "obliques"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 10,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "suitcase_carry",
+      "name": "Suitcase Carry",
+      "family": "carry",
+      "pattern": [
+        "core"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "m",
+      "units_allowed": [
+        "m"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "kettlebell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — unité mètres",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "obliques"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 20,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "m",
+        "priority": 3,
+        "movement_group": "carry"
+      }
+    },
+    {
+      "id": "decline_bench_press",
+      "name": "Decline Bench Press",
+      "family": "barbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "bench_decline",
+        "rack"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "1rm",
+        "rm_reference": "bench",
+        "rm_factor": 1.05,
+        "seconds_per_rep": 3,
+        "setup_s": 45,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "decline_db_press",
+      "name": "Decline DB Press",
+      "family": "dumbbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench_decline"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "machine_incline_press",
+      "name": "Machine Incline Press",
+      "family": "machine",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "chest_press_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "epaules_ant",
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "db_pullover",
+      "name": "DB Pullover",
+      "family": "dumbbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "dos",
+          "triceps"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "cable_pullover",
+      "name": "Cable Pullover",
+      "family": "cable",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "dos"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "incline_db_fly",
+      "name": "Incline DB Fly",
+      "family": "dumbbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench_incline"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "low_cable_fly",
+      "name": "Low To High Cable Fly",
+      "family": "cable",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "epaules_ant"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "wide_push_up",
+      "name": "Wide Push-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "decline_push_up",
+      "name": "Decline Push-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "box"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "epaules_ant",
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "machine_shoulder_press",
+      "name": "Machine Shoulder Press",
+      "family": "machine",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "shoulder_press_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_v"
+      }
+    },
+    {
+      "id": "behind_neck_press",
+      "name": "Behind The Neck Press",
+      "family": "barbell",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "rack"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "avance",
+        "load_mode": "1rm",
+        "rm_reference": "press",
+        "rm_factor": 0.85,
+        "seconds_per_rep": 3,
+        "setup_s": 45,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_v"
+      }
+    },
+    {
+      "id": "upright_row",
+      "name": "Upright Row",
+      "family": "barbell",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "trapezes"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "bent_over_lateral_raise",
+      "name": "Bent Over Lateral Raise",
+      "family": "dumbbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules_post",
+        "muscle_secondary": [
+          "haut_dos"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "one_arm_incline_lateral_raise",
+      "name": "Incline One-Arm Lateral Raise",
+      "family": "dumbbell",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench_incline"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "avance",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "rear_delt_machine",
+      "name": "Rear Delt Machine",
+      "family": "machine",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "pec_deck"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules_post",
+        "muscle_secondary": [
+          "haut_dos"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "barbell_front_raise",
+      "name": "Barbell Front Raise",
+      "family": "barbell",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules_ant",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "cable_front_raise",
+      "name": "Cable Front Raise",
+      "family": "cable",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "epaules_ant",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "external_rotation",
+      "name": "External Rotation (L-Fly)",
+      "family": "cable",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable",
+        "band",
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "coiffe",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "internal_rotation",
+      "name": "Internal Rotation",
+      "family": "cable",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable",
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "coiffe",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "fly"
+      }
+    },
+    {
+      "id": "yates_row",
+      "name": "Yates Row",
+      "family": "barbell",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "trapezes",
+        "muscle_secondary": [
+          "dos",
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "1rm",
+        "rm_reference": "deadlift",
+        "rm_factor": 0.5,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "supinated_barbell_row",
+      "name": "Supinated Barbell Row",
+      "family": "barbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps",
+          "trapezes"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "1rm",
+        "rm_reference": "deadlift",
+        "rm_factor": 0.45,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "one_arm_machine_row",
+      "name": "One-Arm Machine Row",
+      "family": "machine",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "row_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "one_arm_cable_row",
+      "name": "One-Arm Cable Row",
+      "family": "cable",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable_row"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "barbell_shrug",
+      "name": "Barbell Shrug",
+      "family": "barbell",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "trapezes",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "1rm",
+        "rm_reference": "deadlift",
+        "rm_factor": 0.6,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "shrug"
+      }
+    },
+    {
+      "id": "db_shrug",
+      "name": "DB Shrug",
+      "family": "dumbbell",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "trapezes",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "shrug"
+      }
+    },
+    {
+      "id": "machine_shrug",
+      "name": "Machine Shrug",
+      "family": "machine",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "shrug_machine",
+        "calf_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "trapezes",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "shrug"
+      }
+    },
+    {
+      "id": "cable_shrug",
+      "name": "Cable Shrug",
+      "family": "cable",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "trapezes",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "shrug"
+      }
+    },
+    {
+      "id": "wide_grip_pull_up",
+      "name": "Wide Grip Pull-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "rig"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "neutral_grip_pull_up",
+      "name": "Neutral Grip Pull-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "rig"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "close_grip_pull_up",
+      "name": "Close Grip Pull-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "rig"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "machine_pullover",
+      "name": "Machine Pullover",
+      "family": "machine",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "pullover_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "pecs"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "converging_pulldown",
+      "name": "Converging Machine Pulldown",
+      "family": "machine",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "lat_pulldown"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "one_arm_pulldown",
+      "name": "One-Arm Lat Pulldown",
+      "family": "cable",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "close_grip_pulldown",
+      "name": "Close Grip Lat Pulldown",
+      "family": "machine",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "lat_pulldown"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "supinated_pulldown",
+      "name": "Supinated Lat Pulldown",
+      "family": "machine",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "lat_pulldown"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "low_cable_skull_crusher",
+      "name": "Lying Cable Triceps Extension",
+      "family": "cable",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 25,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "machine_dips",
+      "name": "Machine Dips",
+      "family": "machine",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dip_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [
+          "pecs"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "close_grip_dips",
+      "name": "Close Grip Dips",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dip_station"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [
+          "pecs"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "wall_triceps_extension",
+      "name": "Wall Triceps Extension",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "cable_overhead_extension",
+      "name": "Cable Overhead Triceps Extension",
+      "family": "cable",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "one_arm_overhead_extension",
+      "name": "One-Arm Overhead Triceps Extension",
+      "family": "dumbbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "machine_triceps_extension",
+      "name": "Machine Triceps Extension",
+      "family": "machine",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "triceps_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "diamond_push_up",
+      "name": "Diamond Push-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [
+          "pecs"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 4,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "tate_press",
+      "name": "Tate Press",
+      "family": "dumbbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "avance",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "rope_pushdown",
+      "name": "Rope Triceps Pushdown",
+      "family": "cable",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "one_arm_pushdown",
+      "name": "One-Arm Triceps Pushdown",
+      "family": "cable",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "reverse_grip_pushdown",
+      "name": "Reverse Grip Pushdown",
+      "family": "cable",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "db_kickback",
+      "name": "DB Kickback",
+      "family": "dumbbell",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "cable_kickback",
+      "name": "Cable Kickback",
+      "family": "cable",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "preacher_barbell_curl",
+      "name": "Preacher Barbell Curl",
+      "family": "barbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "preacher_bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "cross_body_hammer_curl",
+      "name": "Cross-Body Hammer Curl",
+      "family": "dumbbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [
+          "avant_bras"
+        ],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "lying_cable_curl",
+      "name": "Lying Cable Curl",
+      "family": "cable",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 25,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "spider_curl",
+      "name": "Spider Curl",
+      "family": "barbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "bench_incline"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "rope_hammer_curl",
+      "name": "Rope Hammer Curl",
+      "family": "cable",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [
+          "avant_bras"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "machine_preacher_curl",
+      "name": "Machine Preacher Curl",
+      "family": "machine",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "preacher_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "concentration_curl",
+      "name": "Concentration Curl",
+      "family": "dumbbell",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "reverse_curl",
+      "name": "Reverse Curl",
+      "family": "barbell",
+      "pattern": [
+        "carry"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "avant_bras",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "wrist_curl",
+      "name": "Wrist Curl",
+      "family": "barbell",
+      "pattern": [
+        "carry"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "avant_bras",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "carry"
+      }
+    },
+    {
+      "id": "wrist_extension",
+      "name": "Wrist Extension",
+      "family": "barbell",
+      "pattern": [
+        "carry"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "barbell",
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "avant_bras",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "carry"
+      }
+    },
+    {
+      "id": "wrist_roller",
+      "name": "Wrist Roller",
+      "family": "other",
+      "pattern": [
+        "carry"
+      ],
+      "modality": "W",
+      "grip": "high",
+      "shoulder_load": "none",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "wrist_roller"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — unité secondes",
+      "muscu": {
+        "muscle_primary": "avant_bras",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 20,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "carry"
+      }
+    },
+    {
+      "id": "abmat_crunch",
+      "name": "AbMat Crunch",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "abmat"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "floor_crunch",
+      "name": "Crunch",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "reverse_crunch",
+      "name": "Reverse Crunch",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "hip_flexors"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "machine_crunch",
+      "name": "Machine Crunch",
+      "family": "machine",
+      "pattern": [
+        "core"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "ab_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "swiss_ball_crunch",
+      "name": "Swiss Ball Crunch",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "swiss_ball"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "oblique_crunch",
+      "name": "Oblique Crunch",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "obliques",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "hanging_oblique_raise",
+      "name": "Hanging Oblique Knee Raise",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "rig"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "obliques",
+        "muscle_secondary": [
+          "hip_flexors"
+        ],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "rotation_machine",
+      "name": "Torso Rotation Machine",
+      "family": "machine",
+      "pattern": [
+        "core"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "rotation_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "obliques",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "vacuum",
+      "name": "Stomach Vacuum",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — unité secondes",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "crunch_with_rotation",
+      "name": "Crunch With Rotation",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "obliques",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "dragon_flag",
+      "name": "Dragon Flag",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "avance",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 5,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "db_side_bend",
+      "name": "DB Side Bend",
+      "family": "dumbbell",
+      "pattern": [
+        "core"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "obliques",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "standing_rotation",
+      "name": "Standing Broomstick Rotation",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "pvc"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "obliques",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "oblique_bench_raise",
+      "name": "Oblique Raise On Roman Chair",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "ghd"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "obliques",
+        "muscle_secondary": [
+          "lombaires"
+        ],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "wall_sit",
+      "name": "Wall Sit",
+      "family": "bodyweight",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "wall"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — unité secondes",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "squat"
+      }
+    },
+    {
+      "id": "single_leg_glute_bridge",
+      "name": "Single-Leg Glute Bridge",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "ischios"
+        ],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "bodyweight_single_leg_rdl",
+      "name": "Single-Leg RDL (bodyweight)",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "ischios",
+        "muscle_secondary": [
+          "fessiers",
+          "tronc"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "hinge"
+      }
+    },
+    {
+      "id": "bodyweight_calf_raise",
+      "name": "Calf Raise (bodyweight)",
+      "family": "bodyweight",
+      "pattern": [
+        "mono"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "mollets",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "superman",
+      "name": "Superman Hold",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — unité secondes",
+      "muscu": {
+        "muscle_primary": "lombaires",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "hollow_hold",
+      "name": "Hollow Hold",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — unité secondes",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "mountain_climber",
+      "name": "Mountain Climbers",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": "mv_mtclimber",
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "hip_flexors"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "cable_pull_through",
+      "name": "Cable Pull-Through",
+      "family": "cable",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "ischios"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "hip_abduction_machine",
+      "name": "Hip Abduction Machine",
+      "family": "machine",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "abduction_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "cable_hip_abduction",
+      "name": "Cable Hip Abduction",
+      "family": "cable",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "banded_hip_abduction",
+      "name": "Banded Hip Abduction",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "glute_kickback",
+      "name": "Glute Kickback (câble)",
+      "family": "cable",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "cable"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "db_sumo_squat",
+      "name": "DB Sumo Squat",
+      "family": "dumbbell",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "kettlebell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "quadriceps",
+          "adducteurs"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "squat"
+      }
+    },
+    {
+      "id": "frog_pump",
+      "name": "Frog Pump",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "db_hip_thrust",
+      "name": "DB Hip Thrust",
+      "family": "dumbbell",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell",
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "ischios"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "single_leg_hip_thrust",
+      "name": "Single-Leg Hip Thrust",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "bench"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "ischios"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "reverse_lunge",
+      "name": "DB Reverse Lunge",
+      "family": "dumbbell",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "quadriceps"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
+      }
+    },
+    {
+      "id": "step_up_high",
+      "name": "High Box Step-Up",
+      "family": "dumbbell",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "box",
+        "dumbbell"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "quadriceps"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
+      }
+    },
+    {
+      "id": "hip_thrust_machine",
+      "name": "Hip Thrust Machine",
+      "family": "machine",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "W",
+      "grip": "low",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": "kg",
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "hip_thrust_machine"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "ischios"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "rpe",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 30,
+        "objectives": [
+          "hypertrophie",
+          "force",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            3,
+            5
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 0,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "movement_group": "hip_ext"
+      }
+    },
+    {
+      "id": "incline_push_up",
+      "name": "Incline Push-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — mains sur box / banc / marche ; variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps",
+          "epaules_ant"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 6,
+        "weight_gym": 4,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "wall_push_up",
+      "name": "Wall Push-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "wall"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 2,
+        "weight_gym": 2,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "bird_dog",
+      "name": "Bird Dog",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — reps alternées ; variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "lombaires",
+          "fessiers"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            10,
+            16
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "bodyweight_reverse_lunge",
+      "name": "Reverse Lunge",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — sans charge ; reps alternées ; variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "quadriceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            16
+          ],
+          "endurance": [
+            16,
+            24
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 5,
+        "movement_group": "lunge"
+      }
+    },
+    {
+      "id": "squat_hold",
+      "name": "Squat Hold",
+      "family": "bodyweight",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — unité secondes ; variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "s",
+        "priority": 3,
+        "movement_group": "squat"
+      }
     }
   ]
 } as Catalog;
