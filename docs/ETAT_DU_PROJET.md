@@ -272,6 +272,15 @@ hors cible Tronc et sans Mountain Climber / Vacuum / Russian Twist en Prise de m
 (respiratoires sur rameur / vélo seulement). Samples inchangés. **Appliquée en prod : sans objet**
 (aucune migration).
 
+**Repli Musculation avant M1 en prod — PR M2b (`athlex-app`, aucune migration).** Tant que la
+migration `20261214` n'est pas appliquée, `movement_catalog` en prod n'a pas les colonnes muscu :
+`loadEngineData()` acceptait ce catalogue (Functional / Hybrid valide) et l'écran Musculation
+tournait sur un catalogue sans aucun exercice muscu. `withSnapshotMuscu()` greffe alors la part
+Musculation du snapshot embarqué sur le catalogue distant (métadonnées muscu sur les mouvements
+partagés, exercices muscu seuls ajoutés), source tracée `supabase+snapshot_muscu` ; les squelettes
+suivaient déjà cette logique dans `bankFromRows`. Devient sans effet une fois M1 appliquée.
+**Appliquée en prod : sans objet** (aucune migration).
+
 **Programmation automatique AthleX Fitness — PR J1 (`athlex-app`, migrations `20261216` + `20261217`).**
 Une box `auto_programming` reçoit chaque semaine ISO suivante, par piste (`auto_programming_tracks`
 ⊆ {`functional`, `musculation`}), ses séances posées dans `box_wods` (`source = 'auto'`, `audience = 'all'`,

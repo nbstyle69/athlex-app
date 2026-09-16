@@ -181,5 +181,10 @@ describe('tonnage et badges', () => {
     expect(reps[0][2]).toBe('wod');
     expect(inserted.some((i) => i.table === 'strength_set_logs')).toBe(false);
     expect(performedMovementEntries([{ exercise_id: 'x', name: 'X', sets: [{ reps: 0, load_kg: 50 }] }])).toEqual([]);
+    // une série laissée à 0 rep (charge préremplie non touchée) ne compte pas dans la charge max
+    expect(performedMovementEntries([{
+      exercise_id: 'x', name: 'X',
+      sets: [{ reps: 7, load_kg: 20 }, { reps: 5, load_kg: 18 }, { reps: 0, load_kg: 87.5 }],
+    }])).toEqual([{ name: 'X', reps: 12, unit: 'reps', weight_kg: 20 }]);
   });
 });

@@ -484,7 +484,7 @@ export function performedMovementEntries(performed: readonly PerformedExercise[]
   for (const ex of performed) {
     const reps = ex.sets.reduce((acc, s) => acc + Math.max(0, Math.floor(s.reps)), 0);
     if (reps <= 0) continue;
-    const weight = Math.max(0, ...ex.sets.map((s) => s.load_kg));
+    const weight = Math.max(0, ...ex.sets.filter((s) => s.reps > 0).map((s) => s.load_kg));
     out.push({ name: ex.name, reps, unit: 'reps', ...(weight > 0 ? { weight_kg: weight } : {}) });
   }
   return out;
