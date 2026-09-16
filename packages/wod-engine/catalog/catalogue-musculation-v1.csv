@@ -53,7 +53,7 @@ db_rdl,DB Romanian Deadlift,dumbbell,ischios,fessiers,true,dumbbell,false,debuta
 leg_extension,Leg Extension,machine,quadriceps,,false,leg_extension,false,debutant,rpe,,,3,20,hypertrophie|endurance,"{""hypertrophie"": [8, 12], ""endurance"": [15, 20]}",0,6,0,
 leg_curl,Leg Curl,machine,ischios,,false,leg_curl,false,debutant,rpe,,,3,20,hypertrophie|endurance,"{""hypertrophie"": [8, 12], ""endurance"": [15, 20]}",0,6,0,
 hip_thrust,Hip Thrust,barbell,fessiers,ischios,true,barbell|bench,false,debutant,1rm,hip_thrust,1.0,3,60,hypertrophie|force|endurance,"{""hypertrophie"": [8, 12], ""force"": [3, 5], ""endurance"": [15, 20]}",8,8,0,
-glute_bridge,Glute Bridge,bodyweight,fessiers,ischios,false,,false,debutant,bodyweight,,,3,10,endurance,"{""endurance"": [15, 20]}",6,6,6,
+glute_bridge,Glute Bridge,bodyweight,fessiers,ischios,false,,false,debutant,bodyweight,,,3,10,hypertrophie|endurance,"{""hypertrophie"": [10, 15], ""endurance"": [15, 20]}",6,6,6,à deux jambes ; variante facile sans matériel
 goblet_squat_m,Goblet Squats,kettlebell,quadriceps,fessiers,true,kettlebell|dumbbell,false,debutant,rpe,,,3,15,hypertrophie|endurance,"{""hypertrophie"": [8, 12], ""endurance"": [15, 20]}",8,8,0,même mouvement que le catalogue metcon
 db_walking_lunge,DB Lunges,dumbbell,quadriceps,fessiers,true,dumbbell,true,debutant,rpe,,,2,15,hypertrophie|endurance,"{""hypertrophie"": [8, 12], ""endurance"": [15, 20]}",8,8,0,même mouvement que le catalogue metcon
 step_up_m,Box Step-Ups,dumbbell,quadriceps,fessiers,true,box|dumbbell,true,debutant,rpe,,,2,15,endurance,"{""endurance"": [15, 20]}",8,8,0,
@@ -172,3 +172,8 @@ single_leg_hip_thrust,Single-Leg Hip Thrust,bodyweight,fessiers,ischios,true,ben
 reverse_lunge,DB Reverse Lunge,dumbbell,fessiers,quadriceps,true,dumbbell,true,debutant,rpe,,,2,15,hypertrophie|endurance,"{""hypertrophie"": [8, 12], ""endurance"": [15, 20]}",8,8,0,
 step_up_high,High Box Step-Up,dumbbell,fessiers,quadriceps,true,box|dumbbell,true,inter,rpe,,,3,20,hypertrophie,"{""hypertrophie"": [8, 12]}",8,8,0,
 hip_thrust_machine,Hip Thrust Machine,machine,fessiers,ischios,true,hip_thrust_machine,false,debutant,rpe,,,3,30,hypertrophie|force|endurance,"{""hypertrophie"": [8, 12], ""force"": [3, 5], ""endurance"": [15, 20]}",0,8,0,
+incline_push_up,Incline Push-Ups,bodyweight,pecs,triceps|epaules_ant,true,,false,debutant,bodyweight,,,2,10,hypertrophie|endurance,"{""hypertrophie"": [8, 12], ""endurance"": [15, 20]}",6,4,8,mains sur box / banc / marche ; variante facile sans matériel
+wall_push_up,Wall Push-Ups,bodyweight,pecs,triceps,true,wall,false,debutant,bodyweight,,,2,5,endurance,"{""endurance"": [15, 20]}",2,2,6,variante facile sans matériel
+bird_dog,Bird Dog,bodyweight,tronc,lombaires|fessiers,false,,false,debutant,bodyweight,,,3,5,endurance,"{""endurance"": [10, 16]}",6,6,6,reps alternées ; variante facile sans matériel
+bodyweight_reverse_lunge,Reverse Lunge,bodyweight,fessiers,quadriceps,true,,false,debutant,bodyweight,,,2,10,hypertrophie|endurance,"{""hypertrophie"": [10, 16], ""endurance"": [16, 24]}",6,6,8,sans charge ; reps alternées ; variante facile sans matériel
+squat_hold,Squat Hold,bodyweight,quadriceps,fessiers,false,,false,debutant,bodyweight,,,1,5,endurance,"{""endurance"": [15, 20]}",6,6,6,unité secondes ; variante facile sans matériel

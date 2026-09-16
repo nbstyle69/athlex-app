@@ -14851,7 +14851,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
       "badge_key": null,
       "active": true,
       "version": 1,
-      "notes": "Musculation (M1) — jamais tiré en metcon",
+      "notes": "Musculation — à deux jambes ; variante facile sans matériel",
       "muscu": {
         "muscle_primary": "fessiers",
         "muscle_secondary": [
@@ -14866,9 +14866,14 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "seconds_per_rep": 3,
         "setup_s": 10,
         "objectives": [
+          "hypertrophie",
           "endurance"
         ],
         "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
           "endurance": [
             15,
             20
@@ -21137,6 +21142,295 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 0,
         "weight_gym": 8,
         "unit": "reps"
+      }
+    },
+    {
+      "id": "incline_push_up",
+      "name": "Incline Push-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — mains sur box / banc / marche ; variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps",
+          "epaules_ant"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 6,
+        "weight_gym": 4,
+        "unit": "reps"
+      }
+    },
+    {
+      "id": "wall_push_up",
+      "name": "Wall Push-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "wall"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 2,
+        "weight_gym": 2,
+        "unit": "reps"
+      }
+    },
+    {
+      "id": "bird_dog",
+      "name": "Bird Dog",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — reps alternées ; variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "lombaires",
+          "fessiers"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            10,
+            16
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps"
+      }
+    },
+    {
+      "id": "bodyweight_reverse_lunge",
+      "name": "Reverse Lunge",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — sans charge ; reps alternées ; variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "quadriceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            16
+          ],
+          "endurance": [
+            16,
+            24
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps"
+      }
+    },
+    {
+      "id": "squat_hold",
+      "name": "Squat Hold",
+      "family": "bodyweight",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation — unité secondes ; variante facile sans matériel",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "s"
       }
     }
   ]

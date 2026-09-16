@@ -246,22 +246,32 @@ passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest
 Troisième discipline du moteur (`packages/wod-engine/src/muscu.ts`, `generateMuscu`, RNG à
 graine, aucun réseau) : 13 cibles × 3 objectifs (hypertrophie / force / endurance) = 39
 squelettes `strength_session` embarqués et exportés dans `wod_skeletons`
-(`discipline = 'musculation'`, repli hors ligne comme le metcon). Le catalogue reçoit les 173
-exercices du CSV Musculation v1 en colonnes sur `movement_catalog` (familles `machine` /
+(`discipline = 'musculation'`, repli hors ligne comme le metcon). Le catalogue reçoit les 178
+exercices du CSV Musculation v1 (173 + 5 variantes faciles sans matériel : Incline / Wall
+Push-Ups, Bird Dog, Reverse Lunge sans charge, Squat Hold ; Glute Bridge ouvert à l'hypertrophie) en colonnes sur `movement_catalog` (familles `machine` /
 `cable`, muscles, `level_min`, `load_mode`, `rm_reference` / `rm_factor`, cadences, plages par
 objectif, poids `none` / `box` / `gym`) : 18 exercices déjà présents (13 annoncés + 5 alignés
-par nom, écart signalé) gardent leur ligne, 155 sont créés avec poids metcon à 0, les 14
+par nom, écart signalé) gardent leur ligne, 160 sont créés avec poids metcon à 0, les 14
 legacy inactifs le restent. Charges : 1RM du calculateur (`profiles.personal_records`, passés
-en paramètre) × facteur × % de l'objectif arrondi à 2,5 kg, sinon RPE 7 / 8 ; Après ma classe
+en paramètre) × facteur × % de l'objectif arrondi à 2,5 kg, sinon RPE 7 / 8 ; lest des tractions /
+dips en Force = 10 % de `bodyweight_kg` arrondi à 2,5 kg, sinon « lesté léger » ; Après ma classe
 exclut les muscles du WOD du jour et interdit Force ; débutant sans unilatéral ni lesté, 4
-exercices max ; jamais deux exercices consécutifs sur le même muscle ; durée ±10 % (slots
-optionnels → séries → squelette) ; signature `musculation|<squelette>|<exercices>` sur les 10
+exercices max ; jamais deux exercices consécutifs sur le même muscle ; durée ±10 % (trop long :
+slots optionnels → séries → squelette ; trop court : reps → une série de plus (≤ 5) → exercice
+optionnel sur un muscle secondaire de la cible → tempo 3-1-1 compté dans la durée → repos → 5e
+exercice optionnel en débutant, `budget_short` tracé sur 0,17 % des tirages, tous débutant 60') ; signature `musculation|<squelette>|<exercices>` sur les 10
 dernières. Grammaire `strength` étendue (`s`, `m`, `/ jambe`, `/ bras`, `/ côté`) rétro-compatible.
 Tests §7 : 1 152 combinaisons × 200 graines (230 400 séances) sans échec, 1RM connu / inconnu, fixture
 Back Squat + Thrusters. **Migrations appliquées en prod : non** (à appliquer après le build
 embarquant M1 : l'app 1.0.53 charge toutes les lignes actives de `wod_skeletons`, le filtre par
 discipline arrive avec ce lot). Aucun écran : M2 attend la relecture de
-`packages/wod-engine/samples-musculation.md`.
+`packages/wod-engine/samples-musculation.md`. Dépendances tranchées pour M2 : badges
+Musculation crédités depuis les séries réalisées saisies par l'athlète (`logMovementReps`,
+reps × séries par mouvement, verrou `strengthJournalSeparation`, jamais depuis
+`strength_set_logs`) ; mode Split du minuteur vidéo (`SeqBlock.type = 'split'`, chrono global,
+« Série terminée » → split + compte à rebours `rest_s`, exercice suivant quand ses séries sont
+faites, liste des splits en fin de séance, réutilisable pour splitter un metcon par round ;
+`wod_json` porte déjà `sets` et `rest_s`) ; `bodyweight_kg`, genre et niveau en champs de profil.
 
 **Générateur de WOD v1 — PR 3 (`AthleX-Manager` + migration `20261213` ici).** Le Manager lit
 `movement_catalog` à la place de son tableau statique `lib/movements.ts` (snapshot embarqué en

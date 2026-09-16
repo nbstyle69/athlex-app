@@ -1,7 +1,7 @@
 # Échantillons — Générateur Musculation V1 (M1)
 
-Moteur `1.0.0` · banque musculation v1 · catalogue v2 (173 exercices).
-5 séances par cible × objectif (matériel, niveau et durée variés, 1RM connus sur la 1re et la 5e), puis 10 « Après ma classe ».
+Moteur `1.0.0` · banque musculation v1 · catalogue v2 (178 exercices).
+5 séances par cible × objectif (matériel, niveau et durée variés, 1RM et poids de corps connus sur la 1re et la 5e), puis 10 « Après ma classe ».
 Une combinaison absente est une cible indisponible avec ce matériel (sans matériel : Pull, Dos, Épaules, Bras — trop peu d’exercices poids du corps sur deux muscles distincts ; Force sans matériel exclue par le brief).
 
 Cibles disponibles par matériel × niveau :
@@ -20,7 +20,7 @@ Cibles disponibles par matériel × niveau :
 
 ### #1 — Push · Hypertrophie · 20' · Salle · Intermédiaire
 
-seed `1000` · squelette `push_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : optional_slot_empty, slots_dropped
+seed `1000` · squelette `push_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : optional_slot_empty, slots_dropped
 
 ```
 Musculation · Push · Hypertrophie · 20' · Salle
@@ -52,42 +52,46 @@ Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le c
 
 ### #3 — Push · Hypertrophie · 45' · Sans matériel · Débutant
 
-seed `1002` · squelette `push_hypertrophie` · 1RM inconnus · relâchements : optional_slot_empty, rest_extended, slot_dropped, slot_muscle, slot_role
+seed `1002` · squelette `push_hypertrophie` · 1RM inconnus · relâchements : beginner_max, optional_slot_empty, slot_muscle, slot_role
 
 ```
 Musculation · Push · Hypertrophie · 45' · Sans matériel
 
-Push-ups — 5 × 12 — charge poids du corps — repos 1:45
-  tempo 3-1-1
-Pike Push-Ups — 5 × 12 — charge poids du corps — repos 1:30
-  tempo 3-1-1
 Wide Push-Ups — 5 × 12 — charge poids du corps — repos 1:30
   tempo 3-1-1
-Wall Triceps Extension — 5 × 20 — charge poids du corps — repos 1:30
+Pike Push-Ups — 5 × 12 — charge poids du corps — repos 1:15
+  tempo 3-1-1
+Push-ups — 4 × 12 — charge poids du corps — repos 1:15
+  tempo 3-1-1
+Wall Triceps Extension — 4 × 20 — charge poids du corps — repos 1:15
 
-Durée estimée 44'
+Durée estimée 42'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
 ### #4 — Push · Hypertrophie · 60' · Salle · Débutant
 
-seed `1003` · squelette `push_hypertrophie` · 1RM inconnus · relâchements : beginner_max, budget_short, optional_slot_empty, rest_extended
+seed `1003` · squelette `push_hypertrophie` · 1RM inconnus · relâchements : beginner_max, optional_slot_empty, rest_extended, tempo_311
 
 ```
 Musculation · Push · Hypertrophie · 60' · Salle
 
 DB Bench Press — 5 × 12 — charge RPE 8 — repos 2:00
-Pike Push-Ups — 5 × 12 — charge poids du corps — repos 2:00
-Low To High Cable Fly — 5 × 12 — charge RPE 8 — repos 2:00
-Lateral Raise — 5 × 12 — charge RPE 8 — repos 2:00
+  tempo 3-1-1
+Pike Push-Ups — 5 × 12 — charge poids du corps — repos 1:45
+  tempo 3-1-1
+Low To High Cable Fly — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
+Lateral Raise — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
 
-Durée estimée 52'
+Durée estimée 58'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
 ### #5 — Push · Hypertrophie · 20' · Box · Intermédiaire
 
-seed `1004` · squelette `push_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : optional_slot_empty, slots_dropped
+seed `1004` · squelette `push_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : optional_slot_empty, slots_dropped
 
 ```
 Musculation · Push · Hypertrophie · 20' · Box
@@ -103,7 +107,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #6 — Push · Force · 20' · Salle · Intermédiaire
 
-seed `1005` · squelette `push_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slots_dropped
+seed `1005` · squelette `push_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slots_dropped
 
 ```
 Musculation · Push · Force · 20' · Salle
@@ -124,7 +128,7 @@ Musculation · Push · Force · 30' · Box
 
 Incline Bench Press — 4 × 3 — charge RPE 8 — repos 2:30
 Strict Press — 4 × 3 — charge RPE 8 — repos 2:30
-Close Grip Dips — 4 × 3 — charge lestée, RPE 8 — repos 2:00
+Close Grip Dips — 4 × 3 — lesté léger, RPE 8 — repos 2:00
 
 Durée estimée 32'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Incline Bench Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
@@ -152,32 +156,32 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Bench Press : 5 
 
 ### #9 — Push · Force · 60' · Salle · Débutant
 
-seed `1008` · squelette `push_force` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_role
+seed `1008` · squelette `push_force` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_role, tempo_311
 
 ```
 Musculation · Push · Force · 60' · Salle
 
-Bench Press — 5 × 5 — charge RPE 7 — repos 3:00
-  monter jusqu'à une charge propre
-Strict Press — 5 × 5 — charge RPE 7 — repos 3:00
-  monter jusqu'à une charge propre
-Cable Overhead Triceps Extension — 5 × 12 — charge RPE 8 — repos 1:45
-  schéma hypertrophie
-Rear Delt Machine — 5 × 12 — charge RPE 8 — repos 1:45
-  schéma hypertrophie
+Bench Press — 5 × 5 — charge RPE 7 — repos 2:45
+  monter jusqu'à une charge propre · tempo 3-1-1
+Strict Press — 5 × 5 — charge RPE 7 — repos 2:45
+  monter jusqu'à une charge propre · tempo 3-1-1
+Cable Overhead Triceps Extension — 5 × 12 — charge RPE 8 — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
+Rear Delt Machine — 5 × 12 — charge RPE 8 — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
 
-Durée estimée 57'
+Durée estimée 59'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Bench Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #10 — Push · Force · 20' · Box · Intermédiaire
 
-seed `1009` · squelette `push_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slots_dropped
+seed `1009` · squelette `push_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slots_dropped
 
 ```
 Musculation · Push · Force · 20' · Box
 
-Dips — 4 × 5 — charge lestée, RPE 8 — repos 2:30
+Dips — 4 × 5 — lesté 10 kg (10 % du poids de corps), RPE 8 — repos 2:30
 Strict Press — 3 × 5 @ 52.5 kg — charge 82 % 1RM — repos 2:30
 
 Durée estimée 20'
@@ -186,12 +190,12 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Dips : 5 @ 50 % 
 
 ### #11 — Push · Endurance musculaire · 20' · Salle · Intermédiaire
 
-seed `1010` · squelette `push_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150)
+seed `1010` · squelette `push_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Push · Endurance musculaire · 20' · Salle
 
-Incline DB Press — 3 × 18 — charge RPE 7 — repos 40s
+Machine Chest Press — 3 × 18 — charge RPE 7 — repos 40s
 Upright Row — 3 × 18 — charge RPE 7 — repos 40s
 Low To High Cable Fly — 3 × 18 — charge RPE 7 — repos 40s
 Wall Triceps Extension — 3 × 18 — charge poids du corps — repos 40s
@@ -202,58 +206,63 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #12 — Push · Endurance musculaire · 30' · Box · Avancé
 
-seed `1011` · squelette `push_endurance` · 1RM inconnus · relâchements : bonus_slot
+seed `1011` · squelette `push_endurance` · 1RM inconnus
 
 ```
 Musculation · Push · Endurance musculaire · 30' · Box
 
-Decline Push-Ups — 3 × 20 — charge poids du corps — repos 40s
-DB Shoulder Press — 3 × 20 — charge RPE 7 — repos 40s
+Wall Push-Ups — 4 × 20 — charge poids du corps — repos 40s
+DB Shoulder Press — 4 × 20 — charge RPE 7 — repos 40s
 DB Fly — 3 × 20 — charge RPE 7 — repos 40s
 DB Kickback — 3 × 20 / bras — charge RPE 7 — repos 40s
 Lateral Raise — 3 × 20 — charge RPE 7 — repos 40s
-Bench Dips — 3 × 18 — charge poids du corps — repos 40s
 
-Durée estimée 29'
+Durée estimée 28'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #13 — Push · Endurance musculaire · 45' · Sans matériel · Débutant
 
-seed `1012` · squelette `push_endurance` · 1RM inconnus · relâchements : budget_short, optional_slot_empty, rest_extended, slot_role
+seed `1012` · squelette `push_endurance` · 1RM inconnus · relâchements : optional_slot_empty, slot_role, tempo_311
 
 ```
 Musculation · Push · Endurance musculaire · 45' · Sans matériel
 
-Push-ups — 5 × 20 — charge poids du corps — repos 1:15
-Pike Push-Ups — 5 × 20 — charge poids du corps — repos 1:15
-Wide Push-Ups — 4 × 20 — charge poids du corps — repos 1:15
-Wall Triceps Extension — 5 × 20 — charge poids du corps — repos 1:15
+Wide Push-Ups — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Pike Push-Ups — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Incline Push-Ups — 4 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Wall Triceps Extension — 5 × 20 — charge poids du corps — repos 40s
 
-Durée estimée 40'
+Durée estimée 42'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #14 — Push · Endurance musculaire · 60' · Salle · Débutant
 
-seed `1013` · squelette `push_endurance` · 1RM inconnus · relâchements : beginner_max, budget_short, rest_extended
+seed `1013` · squelette `push_endurance` · 1RM inconnus · relâchements : beginner_max, rest_extended, tempo_311
 
 ```
 Musculation · Push · Endurance musculaire · 60' · Salle
 
-Bench Press — 5 × 20 — charge RPE 7 — repos 1:15
-  monter jusqu'à une charge propre
-Pike Push-Ups — 5 × 20 — charge poids du corps — repos 1:15
-DB Fly — 4 × 20 — charge RPE 7 — repos 1:15
-Rope Triceps Pushdown — 5 × 20 — charge RPE 7 — repos 1:15
+Bench Press — 5 × 20 — charge RPE 7 — repos 1:10
+  monter jusqu'à une charge propre · tempo 3-1-1
+Pike Push-Ups — 5 × 20 — charge poids du corps — repos 1:10
+  tempo 3-1-1
+DB Fly — 4 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
+Rope Triceps Pushdown — 5 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
 
-Durée estimée 43'
+Durée estimée 55'
 Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #15 — Push · Endurance musculaire · 20' · Box · Intermédiaire
 
-seed `1014` · squelette `push_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190)
+seed `1014` · squelette `push_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg
 
 ```
 Musculation · Push · Endurance musculaire · 20' · Box
@@ -271,7 +280,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #16 — Pull · Hypertrophie · 30' · Salle · Intermédiaire
 
-seed `1015` · squelette `pull_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : optional_slot_empty, slot_muscle
+seed `1015` · squelette `pull_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : optional_slot_empty, slot_muscle
 
 ```
 Musculation · Pull · Hypertrophie · 30' · Salle
@@ -288,17 +297,16 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #17 — Pull · Hypertrophie · 45' · Box · Avancé
 
-seed `1016` · squelette `pull_hypertrophie` · 1RM inconnus · relâchements : bonus_slot, optional_slot_empty, slot_muscle
+seed `1016` · squelette `pull_hypertrophie` · 1RM inconnus · relâchements : optional_slot_empty, slot_muscle
 
 ```
 Musculation · Pull · Hypertrophie · 45' · Box
 
-Close Grip Pull-Ups — 4 × 12 — charge poids du corps — repos 1:30
+Close Grip Pull-Ups — 5 × 12 — charge poids du corps — repos 1:30
 Yates Row — 4 × 12 — charge RPE 8 — repos 1:15
-Rear Delt Fly — 3 × 12 — charge RPE 8 — repos 1:15
-DB Curl — 3 × 12 / bras — charge RPE 8 — repos 1:15
-Barbell Shrug — 3 × 12 — charge RPE 8 — repos 1:15
-Concentration Curl — 3 × 12 / bras — charge RPE 8 — repos 1:15
+Rear Delt Fly — 4 × 12 — charge RPE 8 — repos 1:15
+DB Curl — 4 × 12 / bras — charge RPE 8 — repos 1:15
+Barbell Shrug — 4 × 12 — charge RPE 8 — repos 1:15
 
 Durée estimée 42'
 Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
@@ -306,18 +314,21 @@ Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le c
 
 ### #18 — Pull · Hypertrophie · 60' · Box · Débutant
 
-seed `1017` · squelette `pull_hypertrophie` · 1RM inconnus · relâchements : beginner_max, budget_short, optional_slot_empty, rest_extended, slot_muscle
+seed `1017` · squelette `pull_hypertrophie` · 1RM inconnus · relâchements : beginner_max, optional_slot_empty, rest_extended, slot_muscle, tempo_311
 
 ```
 Musculation · Pull · Hypertrophie · 60' · Box
 
 Deadlift — 5 × 12 — charge RPE 7 — repos 2:00
-  monter jusqu'à une charge propre
-Barbell Curl — 5 × 12 — charge RPE 8 — repos 2:00
-Rear Delt Fly — 5 × 12 — charge RPE 8 — repos 2:00
-Hammer Curl — 5 × 12 — charge RPE 8 — repos 2:00
+  monter jusqu'à une charge propre · tempo 3-1-1
+Barbell Curl — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
+Rear Delt Fly — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
+Hammer Curl — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
 
-Durée estimée 53'
+Durée estimée 58'
 Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
@@ -339,7 +350,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #20 — Pull · Hypertrophie · 30' · Box · Intermédiaire
 
-seed `1019` · squelette `pull_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : optional_slot_empty, slot_muscle
+seed `1019` · squelette `pull_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : optional_slot_empty, slot_muscle
 
 ```
 Musculation · Pull · Hypertrophie · 30' · Box
@@ -356,7 +367,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #21 — Pull · Force · 30' · Salle · Intermédiaire
 
-seed `1020` · squelette `pull_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : optional_slot_empty, slot_muscle
+seed `1020` · squelette `pull_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : optional_slot_empty, slot_muscle
 
 ```
 Musculation · Pull · Force · 30' · Salle
@@ -377,7 +388,7 @@ seed `1021` · squelette `pull_force` · 1RM inconnus · relâchements : optiona
 ```
 Musculation · Pull · Force · 45' · Box
 
-Neutral Grip Pull-Ups — 5 × 5 — charge lestée, RPE 8 — repos 2:30
+Neutral Grip Pull-Ups — 5 × 5 — lesté léger, RPE 8 — repos 2:30
 Yates Row — 5 × 5 — charge RPE 8 — repos 2:30
 DB Curl — 3 × 12 / bras — charge RPE 8 — repos 1:15
   schéma hypertrophie
@@ -390,19 +401,19 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Neutral Grip Pul
 
 ### #23 — Pull · Force · 60' · Box · Débutant
 
-seed `1022` · squelette `pull_force` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle, slot_role
+seed `1022` · squelette `pull_force` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle, slot_role, tempo_311
 
 ```
 Musculation · Pull · Force · 60' · Box
 
-Barbell Row — 5 × 5 — charge RPE 7 — repos 3:00
-  monter jusqu'à une charge propre
-Hammer Curl — 5 × 12 — charge RPE 8 — repos 2:00
-  schéma hypertrophie
-DB Shrug — 5 × 12 — charge RPE 8 — repos 2:00
-  schéma hypertrophie
-Barbell Curl — 5 × 12 — charge RPE 8 — repos 2:00
-  schéma hypertrophie
+Barbell Row — 5 × 5 — charge RPE 7 — repos 2:45
+  monter jusqu'à une charge propre · tempo 3-1-1
+Hammer Curl — 5 × 12 — charge RPE 8 — repos 1:45
+  schéma hypertrophie · tempo 3-1-1
+DB Shrug — 5 × 12 — charge RPE 8 — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
+Barbell Curl — 5 × 12 — charge RPE 8 — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
 
 Durée estimée 56'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Barbell Row : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
@@ -426,7 +437,7 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Barbell Row : 5 
 
 ### #25 — Pull · Force · 30' · Box · Intermédiaire
 
-seed `1024` · squelette `pull_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : optional_slot_empty, slot_muscle
+seed `1024` · squelette `pull_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : optional_slot_empty, slot_muscle
 
 ```
 Musculation · Pull · Force · 30' · Box
@@ -442,19 +453,18 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Pendlay Row : 5 
 
 ### #26 — Pull · Endurance musculaire · 30' · Salle · Intermédiaire
 
-seed `1025` · squelette `pull_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, slot_muscle
+seed `1025` · squelette `pull_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_muscle
 
 ```
 Musculation · Pull · Endurance musculaire · 30' · Salle
 
-Supinated Lat Pulldown — 3 × 20 — charge RPE 7 — repos 40s
+Supinated Lat Pulldown — 4 × 20 — charge RPE 7 — repos 40s
 DB Shrug — 3 × 20 — charge RPE 7 — repos 40s
 Face Pull — 3 × 20 — charge RPE 7 — repos 40s
 Cross-Body Hammer Curl — 3 × 20 / bras — charge RPE 7 — repos 40s
 Plank Hold — 3 × 60 s — repos 30s
-Hammer Curl — 3 × 18 — charge RPE 7 — repos 40s
 
-Durée estimée 32'
+Durée estimée 28'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -467,29 +477,32 @@ Musculation · Pull · Endurance musculaire · 45' · Box
 
 DB Row — 5 × 20 / bras — charge RPE 7 — repos 40s
 Barbell Shrug — 5 × 20 — charge RPE 7 — repos 40s
-Bent Over Lateral Raise — 4 × 20 — charge RPE 7 — repos 40s
-Hammer Curl — 4 × 20 — charge RPE 7 — repos 40s
-Farmer Carry — 4 × 50 m — charge RPE 7 — repos 30s
-Rear Delt Fly — 4 × 20 — charge RPE 7 — repos 40s
+Bent Over Lateral Raise — 5 × 20 — charge RPE 7 — repos 40s
+Hammer Curl — 5 × 20 — charge RPE 7 — repos 40s
+Farmer Carry — 5 × 50 m — charge RPE 7 — repos 30s
+Rear Delt Fly — 3 × 18 — charge RPE 7 — repos 40s
 
-Durée estimée 41'
+Durée estimée 44'
 Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #28 — Pull · Endurance musculaire · 60' · Box · Débutant
 
-seed `1027` · squelette `pull_endurance` · 1RM inconnus · relâchements : beginner_max, budget_short, rest_extended, slot_muscle
+seed `1027` · squelette `pull_endurance` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle, tempo_311
 
 ```
 Musculation · Pull · Endurance musculaire · 60' · Box
 
-Barbell Row — 5 × 20 — charge RPE 7 — repos 1:15
-  monter jusqu'à une charge propre
-DB Shrug — 5 × 20 — charge RPE 7 — repos 1:15
-Rear Delt Fly — 5 × 20 — charge RPE 7 — repos 1:15
-Hammer Curl — 5 × 20 — charge RPE 7 — repos 1:15
+Barbell Row — 5 × 20 — charge RPE 7 — repos 1:10
+  monter jusqu'à une charge propre · tempo 3-1-1
+DB Shrug — 5 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
+Rear Delt Fly — 5 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
+Hammer Curl — 5 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
 
-Durée estimée 43'
+Durée estimée 58'
 Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
@@ -511,19 +524,18 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #30 — Pull · Endurance musculaire · 30' · Box · Intermédiaire
 
-seed `1029` · squelette `pull_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, slot_muscle
+seed `1029` · squelette `pull_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_muscle
 
 ```
 Musculation · Pull · Endurance musculaire · 30' · Box
 
-Barbell Row — 3 × 20 @ 47.5 kg — charge 52 % 1RM — repos 40s
-Incline DB Curl — 3 × 12 — charge RPE 8 — repos 1:15
+Barbell Row — 4 × 20 @ 47.5 kg — charge 52 % 1RM — repos 40s
+Incline DB Curl — 4 × 12 — charge RPE 8 — repos 1:15
 Bent Over Lateral Raise — 3 × 20 — charge RPE 7 — repos 40s
 Hammer Curl — 3 × 20 — charge RPE 7 — repos 40s
-Mountain Climbers — 3 × 20 — charge poids du corps — repos 30s
-Cross-Body Hammer Curl — 3 × 18 / bras — charge RPE 7 — repos 40s
+Bird Dog — 3 × 16 — charge poids du corps — repos 30s
 
-Durée estimée 31'
+Durée estimée 28'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -531,14 +543,14 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #31 — Jambes · Hypertrophie · 45' · Salle · Intermédiaire
 
-seed `1030` · squelette `jambes_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150)
+seed `1030` · squelette `jambes_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Jambes · Hypertrophie · 45' · Salle
 
 Leg Press — 4 × 12 — charge RPE 8 — repos 1:30
 Romanian Deadlift — 4 × 12 @ 62.5 kg — charge 65 % 1RM — repos 1:15
-Hip Thrust Machine — 4 × 12 — charge RPE 8 — repos 1:15
+Reverse Lunge — 4 × 16 — charge poids du corps — repos 1:15
 Leg Extension — 3 × 12 — charge RPE 8 — repos 1:15
 Leg Curl — 3 × 12 — charge RPE 8 — repos 1:15
 Seated Calf Raise — 3 × 12 — charge RPE 8 — repos 45s
@@ -567,18 +579,18 @@ Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le c
 
 ### #33 — Jambes · Hypertrophie · 20' · Sans matériel · Débutant
 
-seed `1032` · squelette `jambes_hypertrophie` · 1RM inconnus · relâchements : beginner_max, slot_muscle, slot_objective
+seed `1032` · squelette `jambes_hypertrophie` · 1RM inconnus · relâchements : beginner_max, slot_muscle, slot_objective, slots_dropped
 
 ```
 Musculation · Jambes · Hypertrophie · 20' · Sans matériel
 
-Wall Sit — 3 × 30 s — repos 1:30
-Banded Hip Abduction — 3 × 15 — charge poids du corps — repos 1:15
+Squat Hold — 3 × 30 s — repos 1:30
+Reverse Lunge — 3 × 10 — charge poids du corps — repos 1:15
+  tempo 3-1-1
 Air Squats — 3 × 15 — charge poids du corps — repos 1:15
   tempo 3-1-1
-Frog Pump — 3 × 15 — charge poids du corps — repos 1:15
 
-Durée estimée 21'
+Durée estimée 20'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
@@ -590,35 +602,35 @@ seed `1033` · squelette `jambes_hypertrophie` · 1RM inconnus · relâchements 
 Musculation · Jambes · Hypertrophie · 30' · Salle
 
 Leg Press — 4 × 12 — charge RPE 8 — repos 1:30
-DB Romanian Deadlift — 3 × 12 — charge RPE 8 — repos 1:15
-Hip Thrust Machine — 3 × 12 — charge RPE 8 — repos 1:15
+DB Romanian Deadlift — 4 × 12 — charge RPE 8 — repos 1:15
+Reverse Lunge — 3 × 16 — charge poids du corps — repos 1:15
 Leg Extension — 3 × 12 — charge RPE 8 — repos 1:15
 
-Durée estimée 27'
+Durée estimée 29'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
 ### #35 — Jambes · Hypertrophie · 45' · Box · Intermédiaire
 
-seed `1034` · squelette `jambes_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slot_objective, slot_role
+seed `1034` · squelette `jambes_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_objective, slot_role
 
 ```
 Musculation · Jambes · Hypertrophie · 45' · Box
 
 DB Lunges — 4 × 12 / jambe — charge RPE 8 — repos 1:30
 Good Morning — 3 × 12 — charge RPE 8 — repos 1:15
-Single-Leg Hip Thrust — 3 × 12 / jambe — charge poids du corps — repos 1:15
+DB Reverse Lunge — 3 × 12 / jambe — charge RPE 8 — repos 1:15
 Bulgarian Split Squat — 3 × 12 / jambe — charge RPE 8 — repos 1:15
 DB Romanian Deadlift — 3 × 12 — charge RPE 8 — repos 1:15
 Calf Raise (bodyweight) — 3 × 20 — charge poids du corps — repos 45s
 
-Durée estimée 42'
+Durée estimée 41'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
 ### #36 — Jambes · Force · 45' · Salle · Intermédiaire
 
-seed `1035` · squelette `jambes_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150)
+seed `1035` · squelette `jambes_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Jambes · Force · 45' · Salle
@@ -637,7 +649,7 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Leg Press : 5 @ 
 
 ### #37 — Jambes · Force · 60' · Box · Avancé
 
-seed `1036` · squelette `jambes_force` · 1RM inconnus · relâchements : bonus_slot, slot_objective
+seed `1036` · squelette `jambes_force` · 1RM inconnus · relâchements : slot_objective
 
 ```
 Musculation · Jambes · Force · 60' · Box
@@ -645,14 +657,12 @@ Musculation · Jambes · Force · 60' · Box
 Back Squat — 5 × 5 — charge RPE 8 — repos 2:30
 Sumo Deadlift — 5 × 5 — charge RPE 8 — repos 2:30
 Front Squat — 4 × 5 — charge RPE 8 — repos 2:00
-Nordic Curl — 3 × 12 — charge poids du corps — repos 1:15
+Nordic Curl — 4 × 12 — charge poids du corps — repos 1:15
   schéma hypertrophie
-Calf Raise (bodyweight) — 3 × 20 — charge poids du corps — repos 45s
-  schéma hypertrophie
-Single-Leg Glute Bridge — 3 × 10 / jambe — charge poids du corps — repos 1:15
+Calf Raise (bodyweight) — 4 × 20 — charge poids du corps — repos 45s
   schéma hypertrophie
 
-Durée estimée 58'
+Durée estimée 55'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Back Squat : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
@@ -690,7 +700,7 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Back Squat : 5 @
 
 ### #40 — Jambes · Force · 45' · Box · Intermédiaire
 
-seed `1039` · squelette `jambes_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slot_objective, slot_role
+seed `1039` · squelette `jambes_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_objective, slot_role
 
 ```
 Musculation · Jambes · Force · 45' · Box
@@ -706,19 +716,18 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Back Squat : 5 @
 
 ### #41 — Jambes · Endurance musculaire · 45' · Salle · Intermédiaire
 
-seed `1040` · squelette `jambes_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot
+seed `1040` · squelette `jambes_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Jambes · Endurance musculaire · 45' · Salle
 
-Back Squat — 4 × 20 @ 57.5 kg — charge 52 % 1RM — repos 40s
-DB Hip Thrust — 4 × 20 — charge RPE 7 — repos 40s
+Back Squat — 5 × 20 @ 57.5 kg — charge 52 % 1RM — repos 40s
+Single-Leg Hip Thrust — 5 × 20 / jambe — charge poids du corps — repos 40s
 Leg Extension — 4 × 20 — charge RPE 7 — repos 40s
 Standing Calf Raise — 4 × 20 — charge RPE 7 — repos 40s
-Hollow Hold — 4 × 60 s — repos 30s
-Leg Curl — 4 × 20 — charge RPE 7 — repos 40s
+Mountain Climbers — 4 × 20 — charge poids du corps — repos 30s
 
-Durée estimée 42'
+Durée estimée 41'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -731,25 +740,25 @@ Musculation · Jambes · Endurance musculaire · 60' · Box
 
 Box Step-ups — 5 × 20 / jambe — charge RPE 7 — repos 40s
 Single-Leg RDL (bodyweight) — 5 × 20 / jambe — charge poids du corps — repos 40s
-Single-Leg Glute Bridge — 5 × 20 / jambe — charge poids du corps — repos 40s
-Calf Raise (bodyweight) — 4 × 20 — charge poids du corps — repos 40s
-Plank Hold — 4 × 60 s — repos 30s
-Frog Pump — 4 × 20 — charge poids du corps — repos 40s
+Banded Hip Abduction — 5 × 20 — charge poids du corps — repos 40s
+Calf Raise (bodyweight) — 5 × 20 — charge poids du corps — repos 40s
+Plank Hold — 5 × 60 s — repos 30s
+Squat Hold — 4 × 60 s — repos 40s
 
-Durée estimée 56'
+Durée estimée 55'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #43 — Jambes · Endurance musculaire · 20' · Sans matériel · Débutant
 
-seed `1042` · squelette `jambes_endurance` · 1RM inconnus · relâchements : beginner_max, slot_role
+seed `1042` · squelette `jambes_endurance` · 1RM inconnus · relâchements : beginner_max
 
 ```
 Musculation · Jambes · Endurance musculaire · 20' · Sans matériel
 
 Air Squats — 4 × 20 — charge poids du corps — repos 40s
-Banded Hip Abduction — 3 × 20 — charge poids du corps — repos 40s
-Wall Sit — 3 × 60 s — repos 40s
+Reverse Lunge — 3 × 24 — charge poids du corps — repos 40s
+Squat Hold — 3 × 60 s — repos 40s
 Calf Raise (bodyweight) — 3 × 20 — charge poids du corps — repos 40s
 
 Durée estimée 19'
@@ -764,8 +773,8 @@ seed `1043` · squelette `jambes_endurance` · 1RM inconnus · relâchements : b
 Musculation · Jambes · Endurance musculaire · 30' · Salle
 
 Goblet Squat — 5 × 20 — charge RPE 7 — repos 40s
-DB Sumo Squat — 4 × 20 — charge RPE 7 — repos 40s
-Wall Sit — 4 × 60 s — repos 40s
+DB Hip Thrust — 4 × 20 — charge RPE 7 — repos 40s
+Squat Hold — 4 × 60 s — repos 40s
 Seated Calf Raise — 4 × 20 — charge RPE 7 — repos 40s
 
 Durée estimée 28'
@@ -774,17 +783,16 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #45 — Jambes · Endurance musculaire · 45' · Box · Intermédiaire
 
-seed `1044` · squelette `jambes_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot
+seed `1044` · squelette `jambes_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg
 
 ```
 Musculation · Jambes · Endurance musculaire · 45' · Box
 
-DB Lunges — 4 × 20 / jambe — charge RPE 7 — repos 40s
-DB Romanian Deadlift — 4 × 20 — charge RPE 7 — repos 40s
-Glute Bridge — 4 × 20 — charge poids du corps — repos 40s
-Calf Raise (bodyweight) — 4 × 20 — charge poids du corps — repos 40s
-Crunch — 3 × 20 — charge poids du corps — repos 30s
-Single-Leg Glute Bridge — 3 × 20 / jambe — charge poids du corps — repos 40s
+DB Lunges — 5 × 20 / jambe — charge RPE 7 — repos 40s
+DB Romanian Deadlift — 5 × 20 — charge RPE 7 — repos 40s
+Glute Bridge — 5 × 20 — charge poids du corps — repos 40s
+Calf Raise (bodyweight) — 5 × 20 — charge poids du corps — repos 40s
+Reverse Crunch — 4 × 20 — charge poids du corps — repos 30s
 
 Durée estimée 41'
 Stimulus : Rythme continu, aucune série à l'échec
@@ -794,7 +802,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #46 — Bas du corps · Hypertrophie · 60' · Salle · Intermédiaire
 
-seed `1045` · squelette `bas_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150)
+seed `1045` · squelette `bas_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Bas du corps · Hypertrophie · 60' · Salle
@@ -832,10 +840,11 @@ seed `1047` · squelette `bas_hypertrophie` · 1RM inconnus · relâchements : b
 ```
 Musculation · Bas du corps · Hypertrophie · 30' · Sans matériel
 
-Wall Sit — 4 × 60 s — repos 1:30
-Frog Pump — 4 × 20 — charge poids du corps — repos 1:15
-Calf Raise (bodyweight) — 3 × 20 — charge poids du corps — repos 1:15
-Banded Hip Abduction — 3 × 20 — charge poids du corps — repos 1:15
+Wall Sit — 4 × 45 s — repos 1:30
+Reverse Lunge — 3 × 13 — charge poids du corps — repos 1:15
+  tempo 3-1-1
+Superman Hold — 3 × 45 s — repos 1:15
+Glute Bridge — 3 × 13 — charge poids du corps — repos 1:15
 
 Durée estimée 28'
 Stimulus : Dernière série à 1-2 reps de l'échec
@@ -860,7 +869,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le c
 
 ### #50 — Bas du corps · Hypertrophie · 60' · Box · Intermédiaire
 
-seed `1049` · squelette `bas_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slot_role
+seed `1049` · squelette `bas_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_role
 
 ```
 Musculation · Bas du corps · Hypertrophie · 60' · Box
@@ -878,22 +887,20 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #51 — Bas du corps · Force · 60' · Salle · Intermédiaire
 
-seed `1050` · squelette `bas_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot
+seed `1050` · squelette `bas_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Bas du corps · Force · 60' · Salle
 
 Leg Press — 5 × 5 — charge RPE 8 — repos 2:30
-Romanian Deadlift — 4 × 5 @ 80 kg — charge 82 % 1RM — repos 2:00
-Sumo Deadlift — 4 × 5 @ 115 kg — charge 82 % 1RM — repos 2:00
-Leg Extension — 4 × 12 — charge RPE 8 — repos 1:15
+Romanian Deadlift — 5 × 5 @ 80 kg — charge 82 % 1RM — repos 2:00
+Sumo Deadlift — 5 × 5 @ 115 kg — charge 82 % 1RM — repos 2:00
+Leg Extension — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
 Back Extension — 4 × 12 — charge poids du corps — repos 1:00
   schéma hypertrophie
-Leg Curl — 3 × 12 — charge RPE 8 — repos 1:15
-  schéma hypertrophie
 
-Durée estimée 54'
+Durée estimée 55'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Leg Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 ```
 
@@ -922,7 +929,7 @@ Back Squat — 5 × 4 — charge RPE 7 — repos 2:30
   monter jusqu'à une charge propre
 Romanian Deadlift — 4 × 4 — charge RPE 7 — repos 2:00
   monter jusqu'à une charge propre
-Goblet Squat — 3 × 10 — charge RPE 8 — repos 1:15
+Air Squats — 3 × 18 — charge poids du corps — repos 1:15
   schéma hypertrophie
 
 Durée estimée 30'
@@ -950,39 +957,39 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Back Squat : 5 @
 
 ### #55 — Bas du corps · Force · 60' · Box · Intermédiaire
 
-seed `1054` · squelette `bas_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, slot_role
+seed `1054` · squelette `bas_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_role
 
 ```
 Musculation · Bas du corps · Force · 60' · Box
 
 Back Squat — 5 × 5 @ 115 kg — charge 82 % 1RM — repos 2:30
-Romanian Deadlift — 4 × 5 @ 102.5 kg — charge 82 % 1RM — repos 2:00
+Romanian Deadlift — 5 × 5 @ 102.5 kg — charge 82 % 1RM — repos 2:00
 Sumo Deadlift — 4 × 5 @ 147.5 kg — charge 82 % 1RM — repos 2:00
 Front Squat — 4 × 5 @ 97.5 kg — charge 82 % 1RM — repos 2:00
-Back Extension — 3 × 12 — charge poids du corps — repos 1:00
-  schéma hypertrophie
-Single-Leg Glute Bridge — 3 × 10 / jambe — charge poids du corps — repos 1:15
+Back Extension — 4 × 12 — charge poids du corps — repos 1:00
   schéma hypertrophie
 
-Durée estimée 57'
+Durée estimée 54'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Back Squat : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 ```
 
 ### #56 — Bas du corps · Endurance musculaire · 60' · Salle · Intermédiaire
 
-seed `1055` · squelette `bas_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, rest_extended
+seed `1055` · squelette `bas_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : bonus_slot, tempo_311
 
 ```
 Musculation · Bas du corps · Endurance musculaire · 60' · Salle
 
-Goblet Squat — 5 × 20 — charge RPE 7 — repos 55s
-Hip Thrust — 5 × 20 @ 77.5 kg — charge 52 % 1RM — repos 55s
-Leg Curl — 5 × 20 — charge RPE 7 — repos 55s
+Goblet Squat — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Hip Thrust — 5 × 20 @ 77.5 kg — charge 52 % 1RM — repos 40s
+  tempo 3-1-1
+Leg Curl — 5 × 20 — charge RPE 7 — repos 40s
 Dead Bug — 5 × 20 — charge poids du corps — repos 30s
 Calf Raise (bodyweight) — 5 × 20 — charge poids du corps — repos 40s
-Superman Hold — 5 × 60 s — repos 55s
+Superman Hold — 5 × 60 s — repos 40s
 
-Durée estimée 54'
+Durée estimée 56'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -994,7 +1001,7 @@ seed `1056` · squelette `bas_endurance` · 1RM inconnus · relâchements : slot
 Musculation · Bas du corps · Endurance musculaire · 20' · Box
 
 Lunges — 3 × 18 / jambe — charge poids du corps — repos 40s
-DB Sumo Squat — 3 × 18 — charge RPE 7 — repos 40s
+DB Hip Thrust — 3 × 18 — charge RPE 7 — repos 40s
 DB Romanian Deadlift — 3 × 18 — charge RPE 7 — repos 40s
 Crunch — 3 × 18 — charge poids du corps — repos 30s
 
@@ -1004,39 +1011,43 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #58 — Bas du corps · Endurance musculaire · 30' · Sans matériel · Débutant
 
-seed `1057` · squelette `bas_endurance` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle, slot_role
+seed `1057` · squelette `bas_endurance` · 1RM inconnus · relâchements : beginner_max, slot_muscle, tempo_311
 
 ```
 Musculation · Bas du corps · Endurance musculaire · 30' · Sans matériel
 
-Air Squats — 5 × 20 — charge poids du corps — repos 55s
-Frog Pump — 5 × 20 — charge poids du corps — repos 55s
-Superman Hold — 5 × 60 s — repos 55s
+Air Squats — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Reverse Lunge — 5 × 24 — charge poids du corps — repos 40s
+Squat Hold — 4 × 60 s — repos 40s
 AbMat Crunch — 5 × 20 — charge poids du corps — repos 30s
 
-Durée estimée 30'
+Durée estimée 32'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #59 — Bas du corps · Endurance musculaire · 45' · Salle · Débutant
 
-seed `1058` · squelette `bas_endurance` · 1RM inconnus · relâchements : beginner_max, budget_short, rest_extended
+seed `1058` · squelette `bas_endurance` · 1RM inconnus · relâchements : beginner_max, tempo_311
 
 ```
 Musculation · Bas du corps · Endurance musculaire · 45' · Salle
 
-Air Squats — 5 × 20 — charge poids du corps — repos 1:15
-Hip Thrust Machine — 5 × 20 — charge RPE 7 — repos 1:15
-Leg Curl — 5 × 20 — charge RPE 7 — repos 1:15
-Reverse Crunch — 5 × 20 — charge poids du corps — repos 30s
+Air Squats — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Hip Thrust Machine — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Leg Curl — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Machine Crunch — 5 × 20 — charge RPE 7 — repos 30s
 
-Durée estimée 39'
+Durée estimée 42'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #60 — Bas du corps · Endurance musculaire · 60' · Box · Intermédiaire
 
-seed `1059` · squelette `bas_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, slot_role
+seed `1059` · squelette `bas_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : bonus_slot, slot_role
 
 ```
 Musculation · Bas du corps · Endurance musculaire · 60' · Box
@@ -1044,9 +1055,9 @@ Musculation · Bas du corps · Endurance musculaire · 60' · Box
 Box Step-ups — 5 × 20 / jambe — charge RPE 7 — repos 40s
 DB Sumo Squat — 5 × 20 — charge RPE 7 — repos 40s
 Single-Leg RDL (bodyweight) — 5 × 20 / jambe — charge poids du corps — repos 40s
-Stomach Vacuum — 5 × 60 s — repos 30s
+Hollow Hold — 5 × 60 s — repos 30s
 Calf Raise (bodyweight) — 5 × 20 — charge poids du corps — repos 40s
-Frog Pump — 4 × 20 — charge poids du corps — repos 40s
+Squat Hold — 3 × 45 s — repos 40s
 
 Durée estimée 54'
 Stimulus : Rythme continu, aucune série à l'échec
@@ -1056,7 +1067,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #61 — Full body · Hypertrophie · 20' · Salle · Intermédiaire
 
-seed `1060` · squelette `full_body_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slots_dropped
+seed `1060` · squelette `full_body_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slots_dropped
 
 ```
 Musculation · Full body · Hypertrophie · 20' · Salle
@@ -1077,7 +1088,7 @@ seed `1061` · squelette `full_body_hypertrophie` · 1RM inconnus
 Musculation · Full body · Hypertrophie · 30' · Box
 
 Pistols — 4 × 10 / jambe — charge poids du corps — repos 1:30
-Wide Push-Ups — 4 × 10 — charge poids du corps — repos 1:30
+Decline Push-Ups — 4 × 10 — charge poids du corps — repos 1:30
 Supinated Barbell Row — 3 × 10 — charge RPE 8 — repos 1:15
 Romanian Deadlift — 3 × 10 — charge RPE 8 — repos 1:15
 
@@ -1087,42 +1098,46 @@ Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le c
 
 ### #63 — Full body · Hypertrophie · 45' · Sans matériel · Débutant
 
-seed `1062` · squelette `full_body_hypertrophie` · 1RM inconnus · relâchements : beginner_max, optional_slot_empty, rest_extended, slot_muscle, slot_objective
+seed `1062` · squelette `full_body_hypertrophie` · 1RM inconnus · relâchements : beginner_max, slot_muscle, slot_objective, slot_role
 
 ```
 Musculation · Full body · Hypertrophie · 45' · Sans matériel
 
-Wall Sit — 5 × 60 s — repos 1:45
-Push-ups — 5 × 12 — charge poids du corps — repos 1:45
+Squat Hold — 5 × 60 s — repos 1:30
+Wide Push-Ups — 4 × 12 — charge poids du corps — repos 1:30
   tempo 3-1-1
-Pike Push-Ups — 5 × 12 — charge poids du corps — repos 1:30
+Reverse Lunge — 4 × 16 — charge poids du corps — repos 1:15
   tempo 3-1-1
-Frog Pump — 5 × 20 — charge poids du corps — repos 1:30
+Incline Push-Ups — 4 × 12 — charge poids du corps — repos 1:15
+  tempo 3-1-1
 
-Durée estimée 45'
+Durée estimée 42'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
 ### #64 — Full body · Hypertrophie · 60' · Salle · Débutant
 
-seed `1063` · squelette `full_body_hypertrophie` · 1RM inconnus · relâchements : beginner_max, rest_extended
+seed `1063` · squelette `full_body_hypertrophie` · 1RM inconnus · relâchements : beginner_max, rest_extended, tempo_311
 
 ```
 Musculation · Full body · Hypertrophie · 60' · Salle
 
-Back Squat — 5 × 12 — charge RPE 7 — repos 2:00
-  monter jusqu'à une charge propre
-Incline DB Press — 5 × 12 — charge RPE 8 — repos 2:00
-Chest Supported Row — 5 × 12 — charge RPE 8 — repos 2:00
-Hip Thrust Machine — 5 × 12 — charge RPE 8 — repos 2:00
+Back Squat — 5 × 12 — charge RPE 7 — repos 1:45
+  monter jusqu'à une charge propre · tempo 3-1-1
+Machine Chest Press — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
+Chest Supported Row — 5 × 12 — charge RPE 8 — repos 1:30
+  tempo 3-1-1
+Reverse Lunge — 5 × 16 — charge poids du corps — repos 1:30
+  tempo 3-1-1
 
-Durée estimée 55'
+Durée estimée 56'
 Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #65 — Full body · Hypertrophie · 20' · Box · Intermédiaire
 
-seed `1064` · squelette `full_body_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slots_dropped
+seed `1064` · squelette `full_body_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slots_dropped
 
 ```
 Musculation · Full body · Hypertrophie · 20' · Box
@@ -1137,7 +1152,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #66 — Full body · Force · 20' · Salle · Intermédiaire
 
-seed `1065` · squelette `full_body_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slots_dropped
+seed `1065` · squelette `full_body_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slots_dropped
 
 ```
 Musculation · Full body · Force · 20' · Salle
@@ -1204,7 +1219,7 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Back Squat : 5 @
 
 ### #70 — Full body · Force · 20' · Box · Intermédiaire
 
-seed `1069` · squelette `full_body_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slots_dropped
+seed `1069` · squelette `full_body_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slots_dropped
 
 ```
 Musculation · Full body · Force · 20' · Box
@@ -1218,74 +1233,79 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Back Squat : 5 @
 
 ### #71 — Full body · Endurance musculaire · 20' · Salle · Intermédiaire
 
-seed `1070` · squelette `full_body_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150)
+seed `1070` · squelette `full_body_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Full body · Endurance musculaire · 20' · Salle
 
-Single-Leg Hip Thrust — 3 × 15 / jambe — charge poids du corps — repos 40s
+DB Reverse Lunge — 3 × 15 / jambe — charge RPE 7 — repos 40s
 DB Bench Press — 3 × 15 — charge RPE 7 — repos 40s
 Strict Pull-Ups — 3 × 15 — charge poids du corps — repos 40s
 Romanian Deadlift — 3 × 15 @ 60 kg — charge 60 % 1RM — repos 40s
 
-Durée estimée 21'
+Durée estimée 20'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #72 — Full body · Endurance musculaire · 30' · Box · Avancé
 
-seed `1071` · squelette `full_body_endurance` · 1RM inconnus · relâchements : bonus_slot
+seed `1071` · squelette `full_body_endurance` · 1RM inconnus
 
 ```
 Musculation · Full body · Endurance musculaire · 30' · Box
 
-DB Sumo Squat — 3 × 20 — charge RPE 7 — repos 40s
-Incline DB Press — 3 × 20 — charge RPE 7 — repos 40s
-Barbell Row — 3 × 20 — charge RPE 7 — repos 40s
-Hip Thrust — 3 × 20 — charge RPE 7 — repos 40s
-Mountain Climbers — 3 × 20 — charge poids du corps — repos 30s
-Single-Leg Glute Bridge — 3 × 18 / jambe — charge poids du corps — repos 40s
+DB Sumo Squat — 3 × 18 — charge RPE 7 — repos 40s
+Incline DB Press — 3 × 18 — charge RPE 7 — repos 40s
+Barbell Row — 3 × 18 — charge RPE 7 — repos 40s
+Single-Leg RDL (bodyweight) — 3 × 18 / jambe — charge poids du corps — repos 40s
+Bird Dog — 3 × 13 — charge poids du corps — repos 30s
 
-Durée estimée 32'
+Durée estimée 28'
 Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #73 — Full body · Endurance musculaire · 45' · Sans matériel · Débutant
 
-seed `1072` · squelette `full_body_endurance` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle, slot_role
+seed `1072` · squelette `full_body_endurance` · 1RM inconnus · relâchements : beginner_max, slot_muscle, tempo_311
 
 ```
 Musculation · Full body · Endurance musculaire · 45' · Sans matériel
 
-Air Squats — 5 × 20 — charge poids du corps — repos 1:15
-Push-ups — 5 × 20 — charge poids du corps — repos 1:15
-Pike Push-Ups — 5 × 20 — charge poids du corps — repos 1:15
-Banded Hip Abduction — 5 × 20 — charge poids du corps — repos 1:15
+Air Squats — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Push-ups — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Reverse Lunge — 5 × 24 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Incline Push-Ups — 4 × 20 — charge poids du corps — repos 40s
 
-Durée estimée 41'
+Durée estimée 43'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #74 — Full body · Endurance musculaire · 60' · Salle · Débutant
 
-seed `1073` · squelette `full_body_endurance` · 1RM inconnus · relâchements : beginner_max, budget_short, rest_extended
+seed `1073` · squelette `full_body_endurance` · 1RM inconnus · relâchements : beginner_max, rest_extended, tempo_311
 
 ```
 Musculation · Full body · Endurance musculaire · 60' · Salle
 
-Hip Thrust — 5 × 20 — charge RPE 7 — repos 1:15
-  monter jusqu'à une charge propre
-Push-ups — 5 × 20 — charge poids du corps — repos 1:15
-Ring Rows — 5 × 20 — charge poids du corps — repos 1:15
-DB Hip Thrust — 4 × 20 — charge RPE 7 — repos 1:15
+Hip Thrust — 5 × 20 — charge RPE 7 — repos 1:10
+  monter jusqu'à une charge propre · tempo 3-1-1
+DB Bench Press — 5 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
+Ring Rows — 5 × 20 — charge poids du corps — repos 1:10
+  tempo 3-1-1
+DB Hip Thrust — 4 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
 
-Durée estimée 43'
+Durée estimée 56'
 Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #75 — Full body · Endurance musculaire · 20' · Box · Intermédiaire
 
-seed `1074` · squelette `full_body_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190)
+seed `1074` · squelette `full_body_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg
 
 ```
 Musculation · Full body · Endurance musculaire · 20' · Box
@@ -1303,7 +1323,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #76 — Tronc · Hypertrophie · 30' · Salle · Intermédiaire
 
-seed `1075` · squelette `tronc_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slot_objective
+seed `1075` · squelette `tronc_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_objective
 
 ```
 Musculation · Tronc · Hypertrophie · 30' · Salle
@@ -1319,7 +1339,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #77 — Tronc · Hypertrophie · 45' · Box · Avancé
 
-seed `1076` · squelette `tronc_hypertrophie` · 1RM inconnus · relâchements : budget_short, slot_objective
+seed `1076` · squelette `tronc_hypertrophie` · 1RM inconnus · relâchements : bonus_slot, slot_objective
 
 ```
 Musculation · Tronc · Hypertrophie · 45' · Box
@@ -1328,24 +1348,28 @@ Ab Wheel Rollout — 5 × 12 — charge poids du corps — repos 1:00
 Hanging Oblique Knee Raise — 5 × 20 / côté — charge poids du corps — repos 1:00
 Back Extension — 5 × 12 — charge poids du corps — repos 1:00
 Hanging Leg Raise — 5 × 12 — charge poids du corps — repos 1:00
+Back Squat — 3 × 10 — charge RPE 8 — repos 1:15
 
-Durée estimée 38'
-Stimulus : Dernière série à 1-2 reps de l'échec
+Durée estimée 44'
+Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #78 — Tronc · Hypertrophie · 60' · Sans matériel · Débutant
 
-seed `1077` · squelette `tronc_hypertrophie` · 1RM inconnus · relâchements : budget_short, slot_objective
+seed `1077` · squelette `tronc_hypertrophie` · 1RM inconnus · relâchements : rest_extended, slot_objective, tempo_311
 
 ```
 Musculation · Tronc · Hypertrophie · 60' · Sans matériel
 
-Reverse Crunch — 5 × 12 — charge poids du corps — repos 1:00
-Standing Broomstick Rotation — 5 × 20 — charge poids du corps — repos 1:00
-Superman Hold — 5 × 60 s — repos 1:00
-AbMat Crunch — 5 × 20 — charge poids du corps — repos 1:00
+Reverse Crunch — 5 × 12 — charge poids du corps — repos 1:30
+  tempo 3-1-1
+Standing Broomstick Rotation — 5 × 20 — charge poids du corps — repos 1:30
+  tempo 3-1-1
+Superman Hold — 5 × 60 s — repos 1:30
+AbMat Crunch — 5 × 20 — charge poids du corps — repos 1:30
+  tempo 3-1-1
 
-Durée estimée 32'
+Durée estimée 57'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
@@ -1367,7 +1391,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #80 — Tronc · Hypertrophie · 30' · Box · Intermédiaire
 
-seed `1079` · squelette `tronc_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slot_objective
+seed `1079` · squelette `tronc_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_objective
 
 ```
 Musculation · Tronc · Hypertrophie · 30' · Box
@@ -1383,7 +1407,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #81 — Tronc · Force · 30' · Salle · Intermédiaire
 
-seed `1080` · squelette `tronc_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slot_objective
+seed `1080` · squelette `tronc_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_objective
 
 ```
 Musculation · Tronc · Force · 30' · Salle
@@ -1403,7 +1427,7 @@ Stimulus : RIR 2, dernière série RPE 9
 
 ### #82 — Tronc · Force · 45' · Box · Avancé
 
-seed `1081` · squelette `tronc_force` · 1RM inconnus · relâchements : budget_short, slot_objective
+seed `1081` · squelette `tronc_force` · 1RM inconnus · relâchements : bonus_slot, slot_objective
 
 ```
 Musculation · Tronc · Force · 45' · Box
@@ -1416,28 +1440,29 @@ Back Extension — 5 × 12 — charge poids du corps — repos 1:00
   schéma hypertrophie
 Ab Wheel Rollout — 5 × 12 — charge poids du corps — repos 1:00
   schéma hypertrophie
+Back Squat — 4 × 4 — charge RPE 8 — repos 2:00
 
-Durée estimée 38'
-Stimulus : RIR 2, dernière série RPE 9
+Durée estimée 48'
+Stimulus : RIR 2, dernière série RPE 9. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #83 — Tronc · Force · 60' · Box · Débutant
 
-seed `1082` · squelette `tronc_force` · 1RM inconnus · relâchements : budget_short, slot_objective
+seed `1082` · squelette `tronc_force` · 1RM inconnus · relâchements : rest_extended, slot_objective, tempo_311
 
 ```
 Musculation · Tronc · Force · 60' · Box
 
-Reverse Crunch — 5 × 12 — charge poids du corps — repos 1:00
-  schéma hypertrophie
-Crunch With Rotation — 5 × 20 — charge poids du corps — repos 1:00
-  schéma hypertrophie
-Back Extension — 5 × 12 — charge poids du corps — repos 1:00
-  schéma hypertrophie
-Crunch — 5 × 20 — charge poids du corps — repos 1:00
-  schéma hypertrophie
+Reverse Crunch — 5 × 12 — charge poids du corps — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
+Crunch With Rotation — 5 × 20 — charge poids du corps — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
+Back Extension — 5 × 12 — charge poids du corps — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
+Crunch — 5 × 20 — charge poids du corps — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
 
-Durée estimée 32'
+Durée estimée 57'
 Stimulus : RIR 2, dernière série RPE 9
 ```
 
@@ -1463,7 +1488,7 @@ Stimulus : RIR 2, dernière série RPE 9
 
 ### #85 — Tronc · Force · 30' · Box · Intermédiaire
 
-seed `1084` · squelette `tronc_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slot_objective
+seed `1084` · squelette `tronc_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_objective
 
 ```
 Musculation · Tronc · Force · 30' · Box
@@ -1483,16 +1508,15 @@ Stimulus : RIR 2, dernière série RPE 9
 
 ### #86 — Tronc · Endurance musculaire · 30' · Salle · Intermédiaire
 
-seed `1085` · squelette `tronc_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot
+seed `1085` · squelette `tronc_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Tronc · Endurance musculaire · 30' · Salle
 
-Pallof Press — 3 × 20 / côté — charge RPE 7 — repos 30s
-Crunch With Rotation — 3 × 20 — charge poids du corps — repos 30s
-Suitcase Carry — 3 × 50 m / côté — charge RPE 7 — repos 30s
+Pallof Press — 4 × 20 / côté — charge RPE 7 — repos 30s
+Crunch With Rotation — 4 × 20 — charge poids du corps — repos 30s
+Suitcase Carry — 4 × 50 m / côté — charge RPE 7 — repos 30s
 Back Extension — 3 × 20 — charge poids du corps — repos 30s
-Torso Rotation Machine — 3 × 18 / côté — charge RPE 7 — repos 40s
 
 Durée estimée 29'
 Stimulus : Rythme continu, aucune série à l'échec
@@ -1500,35 +1524,38 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #87 — Tronc · Endurance musculaire · 45' · Box · Avancé
 
-seed `1086` · squelette `tronc_endurance` · 1RM inconnus · relâchements : bonus_slot, budget_short, rest_extended
+seed `1086` · squelette `tronc_endurance` · 1RM inconnus · relâchements : bonus_slot
 
 ```
 Musculation · Tronc · Endurance musculaire · 45' · Box
 
-Ab Wheel Rollout — 3 × 20 — charge poids du corps — repos 30s
+Ab Wheel Rollout — 5 × 20 — charge poids du corps — repos 30s
 Crunch With Rotation — 5 × 20 — charge poids du corps — repos 30s
-Farmer Carry — 3 × 50 m — charge RPE 7 — repos 30s
+Farmer Carry — 4 × 50 m — charge RPE 7 — repos 30s
 Back Extension — 5 × 20 — charge poids du corps — repos 30s
-Reverse Crunch — 3 × 20 — charge poids du corps — repos 1:15
-Superman Hold — 4 × 60 s — repos 1:15
+Hanging Oblique Knee Raise — 4 × 20 / côté — charge poids du corps — repos 40s
+Superman Hold — 3 × 45 s — repos 40s
 
-Durée estimée 39'
+Durée estimée 41'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #88 — Tronc · Endurance musculaire · 60' · Sans matériel · Débutant
 
-seed `1087` · squelette `tronc_endurance` · 1RM inconnus · relâchements : budget_short, slot_ids
+seed `1087` · squelette `tronc_endurance` · 1RM inconnus · relâchements : beginner_fifth, rest_extended, slot_ids, tempo_311
 
 ```
 Musculation · Tronc · Endurance musculaire · 60' · Sans matériel
 
-Stomach Vacuum — 5 × 60 s — repos 30s
-Standing Broomstick Rotation — 5 × 20 — charge poids du corps — repos 30s
-Crunch — 4 × 20 — charge poids du corps — repos 30s
-Superman Hold — 5 × 60 s — repos 30s
+Stomach Vacuum — 5 × 60 s — repos 1:15
+Standing Broomstick Rotation — 5 × 20 — charge poids du corps — repos 1:15
+  tempo 3-1-1
+Reverse Crunch — 4 × 20 — charge poids du corps — repos 1:15
+  tempo 3-1-1
+Superman Hold — 5 × 60 s — repos 1:15
+Crunch With Rotation — 4 × 20 — charge poids du corps — repos 40s
 
-Durée estimée 24'
+Durée estimée 55'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -1550,18 +1577,17 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #90 — Tronc · Endurance musculaire · 30' · Box · Intermédiaire
 
-seed `1089` · squelette `tronc_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot
+seed `1089` · squelette `tronc_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg
 
 ```
 Musculation · Tronc · Endurance musculaire · 30' · Box
 
-Ab Wheel Rollout — 3 × 20 — charge poids du corps — repos 30s
-Hanging Oblique Knee Raise — 3 × 20 / côté — charge poids du corps — repos 30s
-Suitcase Carry — 3 × 50 m / côté — charge RPE 7 — repos 30s
+Ab Wheel Rollout — 4 × 20 — charge poids du corps — repos 30s
+Hanging Oblique Knee Raise — 4 × 20 / côté — charge poids du corps — repos 30s
+Suitcase Carry — 4 × 50 m / côté — charge RPE 7 — repos 30s
 Superman Hold — 3 × 60 s — repos 30s
-Oblique Raise On Roman Chair — 3 × 18 / côté — charge poids du corps — repos 40s
 
-Durée estimée 30'
+Durée estimée 29'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -1569,7 +1595,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #91 — Haut du corps · Hypertrophie · 45' · Salle · Intermédiaire
 
-seed `1090` · squelette `haut_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150)
+seed `1090` · squelette `haut_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Haut du corps · Hypertrophie · 45' · Salle
@@ -1605,16 +1631,16 @@ Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le c
 
 ### #93 — Haut du corps · Hypertrophie · 20' · Sans matériel · Débutant
 
-seed `1092` · squelette `haut_hypertrophie` · 1RM inconnus · relâchements : optional_slot_empty, slot_dropped, slot_muscle, slots_dropped
+seed `1092` · squelette `haut_hypertrophie` · 1RM inconnus · relâchements : beginner_max, optional_slot_empty, slot_muscle, slots_dropped
 
 ```
 Musculation · Haut du corps · Hypertrophie · 20' · Sans matériel
 
-Wide Push-Ups — 4 × 12 — charge poids du corps — repos 1:30
+Wide Push-Ups — 3 × 8 — charge poids du corps — repos 1:30
   tempo 3-1-1
-Pike Push-Ups — 3 × 12 — charge poids du corps — repos 1:30
+Pike Push-Ups — 3 × 8 — charge poids du corps — repos 1:30
   tempo 3-1-1
-Push-ups — 3 × 12 — charge poids du corps — repos 1:15
+Push-ups — 3 × 8 — charge poids du corps — repos 1:15
   tempo 3-1-1
 
 Durée estimée 19'
@@ -1639,32 +1665,32 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #95 — Haut du corps · Hypertrophie · 45' · Box · Intermédiaire
 
-seed `1094` · squelette `haut_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190)
+seed `1094` · squelette `haut_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg
 
 ```
 Musculation · Haut du corps · Hypertrophie · 45' · Box
 
-Push-ups — 4 × 12 — charge poids du corps — repos 1:30
+Incline Bench Press — 4 × 12 @ 55 kg — charge 65 % 1RM — repos 1:30
 Chin-Ups — 4 × 12 — charge poids du corps — repos 1:30
 Strict Press — 3 × 12 @ 42.5 kg — charge 65 % 1RM — repos 1:15
 Hammer Curl — 3 × 12 — charge RPE 8 — repos 1:15
 One-Arm Overhead Triceps Extension — 3 × 12 / bras — charge RPE 8 — repos 1:15
 Rear Delt Fly — 3 × 12 — charge RPE 8 — repos 1:15
 
-Durée estimée 41'
+Durée estimée 43'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
 ### #96 — Haut du corps · Force · 45' · Salle · Intermédiaire
 
-seed `1095` · squelette `haut_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150)
+seed `1095` · squelette `haut_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Haut du corps · Force · 45' · Salle
 
-Dips — 5 × 4 — charge lestée, RPE 8 — repos 2:30
+Dips — 5 × 4 — lesté 7.5 kg (10 % du poids de corps), RPE 8 — repos 2:30
 Strict Press — 5 × 4 @ 47.5 kg — charge 85 % 1RM — repos 2:30
-Neutral Grip Pull-Ups — 5 × 4 — charge lestée, RPE 8 — repos 2:30
+Neutral Grip Pull-Ups — 5 × 4 — lesté 7.5 kg (10 % du poids de corps), RPE 8 — repos 2:30
 
 Durée estimée 42'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Dips : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
@@ -1679,8 +1705,8 @@ Musculation · Haut du corps · Force · 60' · Box
 
 Incline Bench Press — 5 × 4 — charge RPE 8 — repos 2:30
 Strict Press — 5 × 4 — charge RPE 8 — repos 2:30
-Wide Grip Pull-Ups — 5 × 4 — charge lestée, RPE 8 — repos 2:30
-Close Grip Dips — 4 × 4 — charge lestée, RPE 8 — repos 2:00
+Wide Grip Pull-Ups — 5 × 4 — lesté léger, RPE 8 — repos 2:30
+Close Grip Dips — 4 × 4 — lesté léger, RPE 8 — repos 2:00
 Rear Delt Fly — 3 × 10 — charge RPE 8 — repos 1:15
   schéma hypertrophie
 
@@ -1724,14 +1750,14 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Bench Press : 5 
 
 ### #100 — Haut du corps · Force · 45' · Box · Intermédiaire
 
-seed `1099` · squelette `haut_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190)
+seed `1099` · squelette `haut_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg
 
 ```
 Musculation · Haut du corps · Force · 45' · Box
 
 Incline Bench Press — 5 × 4 @ 72.5 kg — charge 85 % 1RM — repos 2:30
 Strict Press — 5 × 4 @ 55 kg — charge 85 % 1RM — repos 2:30
-Wide Grip Pull-Ups — 5 × 4 — charge lestée, RPE 8 — repos 2:30
+Wide Grip Pull-Ups — 5 × 4 — lesté 10 kg (10 % du poids de corps), RPE 8 — repos 2:30
 
 Durée estimée 42'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Incline Bench Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
@@ -1739,17 +1765,16 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Incline Bench Pr
 
 ### #101 — Haut du corps · Endurance musculaire · 45' · Salle · Intermédiaire
 
-seed `1100` · squelette `haut_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot
+seed `1100` · squelette `haut_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Haut du corps · Endurance musculaire · 45' · Salle
 
-Machine Incline Press — 4 × 20 — charge RPE 7 — repos 40s
-Converging Machine Pulldown — 4 × 20 — charge RPE 7 — repos 40s
-Machine Shoulder Press — 4 × 20 — charge RPE 7 — repos 40s
-Triceps Pushdown — 4 × 20 — charge RPE 7 — repos 40s
-Dead Bug — 4 × 20 — charge poids du corps — repos 30s
-Cable Kickback — 4 × 20 / bras — charge RPE 7 — repos 40s
+Wide Push-Ups — 5 × 20 — charge poids du corps — repos 40s
+Converging Machine Pulldown — 5 × 20 — charge RPE 7 — repos 40s
+Machine Shoulder Press — 5 × 20 — charge RPE 7 — repos 40s
+Triceps Pushdown — 5 × 20 — charge RPE 7 — repos 40s
+Side Plank — 4 × 60 s / côté — repos 30s
 
 Durée estimée 41'
 Stimulus : Rythme continu, aucune série à l'échec
@@ -1766,7 +1791,7 @@ DB Bench Press — 5 × 20 — charge RPE 7 — repos 40s
 Neutral Grip Pull-Ups — 5 × 20 — charge poids du corps — repos 40s
 DB Shoulder Press — 5 × 20 — charge RPE 7 — repos 40s
 Cross-Body Hammer Curl — 5 × 20 / bras — charge RPE 7 — repos 40s
-Crunch — 5 × 20 — charge poids du corps — repos 30s
+Reverse Crunch — 5 × 20 — charge poids du corps — repos 30s
 DB Kickback — 5 × 20 / bras — charge RPE 7 — repos 40s
 
 Durée estimée 56'
@@ -1780,9 +1805,9 @@ seed `1102` · squelette `haut_endurance` · 1RM inconnus · relâchements : beg
 ```
 Musculation · Haut du corps · Endurance musculaire · 20' · Sans matériel
 
-Push-ups — 3 × 20 — charge poids du corps — repos 40s
-Pike Push-Ups — 3 × 20 — charge poids du corps — repos 40s
 Wide Push-Ups — 3 × 20 — charge poids du corps — repos 40s
+Pike Push-Ups — 3 × 20 — charge poids du corps — repos 40s
+Wall Push-Ups — 3 × 20 — charge poids du corps — repos 40s
 Wall Triceps Extension — 3 × 20 — charge poids du corps — repos 40s
 
 Durée estimée 19'
@@ -1796,7 +1821,7 @@ seed `1103` · squelette `haut_endurance` · 1RM inconnus · relâchements : beg
 ```
 Musculation · Haut du corps · Endurance musculaire · 30' · Salle
 
-Machine Chest Press — 5 × 20 — charge RPE 7 — repos 40s
+Machine Incline Press — 5 × 20 — charge RPE 7 — repos 40s
 Barbell Row — 4 × 20 — charge RPE 7 — repos 40s
   monter jusqu'à une charge propre
 Pike Push-Ups — 4 × 20 — charge poids du corps — repos 40s
@@ -1808,19 +1833,18 @@ Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le 
 
 ### #105 — Haut du corps · Endurance musculaire · 45' · Box · Intermédiaire
 
-seed `1104` · squelette `haut_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot
+seed `1104` · squelette `haut_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg
 
 ```
 Musculation · Haut du corps · Endurance musculaire · 45' · Box
 
 Bench Press — 5 × 20 @ 55 kg — charge 52 % 1RM — repos 40s
-Barbell Row — 4 × 20 @ 47.5 kg — charge 52 % 1RM — repos 40s
-Strict Press — 4 × 20 @ 35 kg — charge 52 % 1RM — repos 40s
-Barbell Curl — 4 × 20 — charge RPE 7 — repos 40s
-Hanging Knee Raises — 4 × 20 — charge poids du corps — repos 30s
-Rear Delt Fly — 4 × 20 — charge RPE 7 — repos 40s
+Barbell Row — 5 × 20 @ 47.5 kg — charge 52 % 1RM — repos 40s
+Strict Press — 5 × 20 @ 35 kg — charge 52 % 1RM — repos 40s
+Barbell Curl — 5 × 20 — charge RPE 7 — repos 40s
+Hanging Leg Raise — 4 × 20 — charge poids du corps — repos 30s
 
-Durée estimée 41'
+Durée estimée 42'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -1828,7 +1852,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #106 — Dos · Hypertrophie · 60' · Salle · Intermédiaire
 
-seed `1105` · squelette `dos_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slot_muscle
+seed `1105` · squelette `dos_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_muscle
 
 ```
 Musculation · Dos · Hypertrophie · 60' · Salle
@@ -1879,23 +1903,24 @@ Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le c
 
 ### #109 — Dos · Hypertrophie · 45' · Salle · Débutant
 
-seed `1108` · squelette `dos_hypertrophie` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle, slot_objective
+seed `1108` · squelette `dos_hypertrophie` · 1RM inconnus · relâchements : beginner_max, slot_muscle, slot_objective, tempo_311
 
 ```
 Musculation · Dos · Hypertrophie · 45' · Salle
 
-Supinated Lat Pulldown — 5 × 12 — charge RPE 8 — repos 1:45
-Back Extension — 5 × 12 — charge poids du corps — repos 1:30
-Machine Row — 5 × 12 — charge RPE 8 — repos 1:30
-Rear Delt Machine — 5 × 12 — charge RPE 8 — repos 1:30
+Supinated Lat Pulldown — 5 × 12 — charge RPE 8 — repos 1:30
+  tempo 3-1-1
+Back Extension — 5 × 12 — charge poids du corps — repos 1:15
+Machine Row — 5 × 12 — charge RPE 8 — repos 1:15
+Rear Delt Machine — 5 × 12 — charge RPE 8 — repos 1:15
 
-Durée estimée 44'
+Durée estimée 41'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
 ### #110 — Dos · Hypertrophie · 60' · Box · Intermédiaire
 
-seed `1109` · squelette `dos_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slot_muscle
+seed `1109` · squelette `dos_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_muscle
 
 ```
 Musculation · Dos · Hypertrophie · 60' · Box
@@ -1913,20 +1938,18 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #111 — Dos · Force · 60' · Salle · Intermédiaire
 
-seed `1110` · squelette `dos_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, optional_slot_empty, slot_muscle
+seed `1110` · squelette `dos_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : bonus_slot, optional_slot_empty, slot_muscle
 
 ```
 Musculation · Dos · Force · 60' · Salle
 
-Wide Grip Pull-Ups — 5 × 5 — charge lestée, RPE 8 — repos 2:30
+Wide Grip Pull-Ups — 5 × 5 — lesté 7.5 kg (10 % du poids de corps), RPE 8 — repos 2:30
 Yates Row — 5 × 5 @ 57.5 kg — charge 82 % 1RM — repos 2:30
-Face Pull — 4 × 12 — charge RPE 8 — repos 1:15
+Face Pull — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
-Back Extension — 4 × 12 — charge poids du corps — repos 1:15
+Back Extension — 5 × 12 — charge poids du corps — repos 1:15
   schéma hypertrophie
-Rear Delt Machine — 4 × 12 — charge RPE 8 — repos 1:15
-  schéma hypertrophie
-Barbell Shrug — 3 × 12 @ 55 kg — charge 65 % 1RM — repos 1:15
+Rear Delt Machine — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
 
 Durée estimée 55'
@@ -1940,7 +1963,7 @@ seed `1111` · squelette `dos_force` · 1RM inconnus · relâchements : optional
 ```
 Musculation · Dos · Force · 20' · Box
 
-Wide Grip Pull-Ups — 4 × 3 — charge lestée, RPE 8 — repos 2:30
+Wide Grip Pull-Ups — 4 × 3 — lesté léger, RPE 8 — repos 2:30
 Yates Row — 4 × 3 — charge RPE 8 — repos 2:30
 
 Durée estimée 22'
@@ -1987,20 +2010,18 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Barbell Row : 5 
 
 ### #115 — Dos · Force · 60' · Box · Intermédiaire
 
-seed `1114` · squelette `dos_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, optional_slot_empty, slot_muscle
+seed `1114` · squelette `dos_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : bonus_slot, optional_slot_empty, slot_muscle
 
 ```
 Musculation · Dos · Force · 60' · Box
 
 T-Bar Row — 5 × 5 — charge RPE 8 — repos 2:30
 Yates Row — 5 × 5 @ 75 kg — charge 82 % 1RM — repos 2:30
-Bent Over Lateral Raise — 4 × 12 — charge RPE 8 — repos 1:15
+Bent Over Lateral Raise — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
-Back Extension — 4 × 12 — charge poids du corps — repos 1:15
+Back Extension — 5 × 12 — charge poids du corps — repos 1:15
   schéma hypertrophie
-Rear Delt Fly — 4 × 12 — charge RPE 8 — repos 1:15
-  schéma hypertrophie
-Barbell Shrug — 3 × 12 @ 70 kg — charge 65 % 1RM — repos 1:15
+Rear Delt Fly — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
 
 Durée estimée 55'
@@ -2009,17 +2030,20 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur T-Bar Row : 5 @ 
 
 ### #116 — Dos · Endurance musculaire · 60' · Salle · Intermédiaire
 
-seed `1115` · squelette `dos_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, rest_extended, slot_muscle
+seed `1115` · squelette `dos_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : bonus_slot, slot_muscle, tempo_311
 
 ```
 Musculation · Dos · Endurance musculaire · 60' · Salle
 
-Chin-Ups — 5 × 20 — charge poids du corps — repos 1:10
-DB Shrug — 5 × 20 — charge RPE 7 — repos 1:10
-Rear Delt Fly — 5 × 20 — charge RPE 7 — repos 1:10
-Back Extension — 5 × 20 — charge poids du corps — repos 1:10
-Cable Shrug — 4 × 20 — charge RPE 7 — repos 1:10
-Face Pull — 4 × 20 — charge RPE 7 — repos 1:10
+Chin-Ups — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+DB Shrug — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Rear Delt Fly — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Back Extension — 5 × 20 — charge poids du corps — repos 40s
+Cable Shrug — 4 × 20 — charge RPE 7 — repos 40s
+Face Pull — 4 × 20 — charge RPE 7 — repos 40s
 
 Durée estimée 56'
 Stimulus : Rythme continu, aucune série à l'échec
@@ -2059,36 +2083,41 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #119 — Dos · Endurance musculaire · 45' · Salle · Débutant
 
-seed `1118` · squelette `dos_endurance` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle
+seed `1118` · squelette `dos_endurance` · 1RM inconnus · relâchements : beginner_max, slot_muscle, tempo_311
 
 ```
 Musculation · Dos · Endurance musculaire · 45' · Salle
 
-Seated Cable Row — 5 × 20 — charge RPE 7 — repos 1:10
-Rear Delt Machine — 5 × 20 — charge RPE 7 — repos 1:10
-Barbell Shrug — 5 × 20 — charge RPE 7 — repos 1:10
-  monter jusqu'à une charge propre
-Superman Hold — 5 × 60 s — repos 1:10
+Seated Cable Row — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Rear Delt Machine — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Barbell Shrug — 5 × 20 — charge RPE 7 — repos 40s
+  monter jusqu'à une charge propre · tempo 3-1-1
+Superman Hold — 5 × 60 s — repos 40s
 
-Durée estimée 41'
+Durée estimée 44'
 Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #120 — Dos · Endurance musculaire · 60' · Box · Intermédiaire
 
-seed `1119` · squelette `dos_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, rest_extended, slot_muscle
+seed `1119` · squelette `dos_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : bonus_slot, slot_muscle, tempo_311
 
 ```
 Musculation · Dos · Endurance musculaire · 60' · Box
 
-Neutral Grip Pull-Ups — 5 × 20 — charge poids du corps — repos 1:10
-Yates Row — 5 × 12 @ 57.5 kg — charge 65 % 1RM — repos 1:45
-Rear Delt Fly — 5 × 20 — charge RPE 7 — repos 1:10
-Superman Hold — 5 × 60 s — repos 1:10
-Barbell Shrug — 4 × 20 @ 55 kg — charge 52 % 1RM — repos 1:10
-Bent Over Lateral Raise — 4 × 20 — charge RPE 7 — repos 1:10
+Neutral Grip Pull-Ups — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Yates Row — 5 × 12 @ 57.5 kg — charge 65 % 1RM — repos 1:15
+  tempo 3-1-1
+Rear Delt Fly — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Superman Hold — 5 × 60 s — repos 40s
+Barbell Shrug — 4 × 20 @ 55 kg — charge 52 % 1RM — repos 40s
+Bent Over Lateral Raise — 4 × 20 — charge RPE 7 — repos 40s
 
-Durée estimée 59'
+Durée estimée 55'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -2096,7 +2125,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #121 — Épaules · Hypertrophie · 20' · Salle · Intermédiaire
 
-seed `1120` · squelette `epaules_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slot_muscle
+seed `1120` · squelette `epaules_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_muscle
 
 ```
 Musculation · Épaules · Hypertrophie · 20' · Salle
@@ -2111,33 +2140,33 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #122 — Épaules · Hypertrophie · 30' · Box · Avancé
 
-seed `1121` · squelette `epaules_hypertrophie` · 1RM inconnus · relâchements : bonus_slot, optional_slot_empty, slot_muscle
+seed `1121` · squelette `epaules_hypertrophie` · 1RM inconnus · relâchements : optional_slot_empty, slot_muscle
 
 ```
 Musculation · Épaules · Hypertrophie · 30' · Box
 
 Strict Press — 4 × 12 — charge RPE 8 — repos 1:30
-Bent Over Lateral Raise — 3 × 12 — charge RPE 8 — repos 1:15
-Barbell Front Raise — 3 × 12 — charge RPE 8 — repos 1:15
+Bent Over Lateral Raise — 4 × 12 — charge RPE 8 — repos 1:15
+Barbell Front Raise — 4 × 12 — charge RPE 8 — repos 1:15
 Barbell Shrug — 3 × 12 — charge RPE 8 — repos 1:15
-Rear Delt Fly — 3 × 10 — charge RPE 8 — repos 1:15
 
-Durée estimée 30'
+Durée estimée 28'
 Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #123 — Épaules · Hypertrophie · 45' · Box · Débutant
 
-seed `1122` · squelette `epaules_hypertrophie` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle
+seed `1122` · squelette `epaules_hypertrophie` · 1RM inconnus · relâchements : beginner_max, slot_muscle, tempo_311
 
 ```
 Musculation · Épaules · Hypertrophie · 45' · Box
 
-Strict Press — 5 × 12 — charge RPE 7 — repos 1:45
-  monter jusqu'à une charge propre
-Barbell Front Raise — 5 × 12 — charge RPE 8 — repos 1:30
-Rear Delt Fly — 5 × 12 — charge RPE 8 — repos 1:30
-Front Raise — 5 × 12 — charge RPE 8 — repos 1:30
+Strict Press — 5 × 12 — charge RPE 7 — repos 1:30
+  monter jusqu'à une charge propre · tempo 3-1-1
+Barbell Front Raise — 5 × 12 — charge RPE 8 — repos 1:15
+  tempo 3-1-1
+Rear Delt Fly — 5 × 12 — charge RPE 8 — repos 1:15
+Front Raise — 5 × 12 — charge RPE 8 — repos 1:15
 
 Durée estimée 42'
 Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
@@ -2145,24 +2174,27 @@ Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le c
 
 ### #124 — Épaules · Hypertrophie · 60' · Salle · Débutant
 
-seed `1123` · squelette `epaules_hypertrophie` · 1RM inconnus · relâchements : beginner_max, budget_short, rest_extended, slot_muscle
+seed `1123` · squelette `epaules_hypertrophie` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle, tempo_311
 
 ```
 Musculation · Épaules · Hypertrophie · 60' · Salle
 
 Pike Push-Ups — 5 × 12 — charge poids du corps — repos 2:00
-Rear Delt Fly — 5 × 12 — charge RPE 8 — repos 2:00
-Barbell Shrug — 5 × 12 — charge RPE 7 — repos 2:00
-  monter jusqu'à une charge propre
-Front Raise — 5 × 12 — charge RPE 8 — repos 2:00
+  tempo 3-1-1
+Rear Delt Fly — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
+Barbell Shrug — 5 × 12 — charge RPE 7 — repos 1:45
+  monter jusqu'à une charge propre · tempo 3-1-1
+Front Raise — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
 
-Durée estimée 50'
+Durée estimée 57'
 Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #125 — Épaules · Hypertrophie · 20' · Box · Intermédiaire
 
-seed `1124` · squelette `epaules_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slot_muscle
+seed `1124` · squelette `epaules_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_muscle
 
 ```
 Musculation · Épaules · Hypertrophie · 20' · Box
@@ -2177,7 +2209,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #126 — Épaules · Force · 20' · Salle · Intermédiaire
 
-seed `1125` · squelette `epaules_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : optional_slot_empty
+seed `1125` · squelette `epaules_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : optional_slot_empty
 
 ```
 Musculation · Épaules · Force · 20' · Salle
@@ -2211,47 +2243,47 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Strict Press : 5
 
 ### #128 — Épaules · Force · 45' · Box · Débutant
 
-seed `1127` · squelette `epaules_force` · 1RM inconnus · relâchements : optional_slot_empty, rest_extended
+seed `1127` · squelette `epaules_force` · 1RM inconnus · relâchements : optional_slot_empty, tempo_311
 
 ```
 Musculation · Épaules · Force · 45' · Box
 
-Strict Press — 5 × 5 — charge RPE 7 — repos 2:45
-  monter jusqu'à une charge propre
-Rear Delt Fly — 5 × 12 — charge RPE 8 — repos 1:30
+Strict Press — 5 × 5 — charge RPE 7 — repos 2:30
+  monter jusqu'à une charge propre · tempo 3-1-1
+Rear Delt Fly — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
-Lateral Raise — 5 × 12 — charge RPE 8 — repos 1:30
+Lateral Raise — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
-DB Shrug — 5 × 12 — charge RPE 8 — repos 1:30
+DB Shrug — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
 
-Durée estimée 45'
+Durée estimée 41'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Strict Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #129 — Épaules · Force · 60' · Salle · Débutant
 
-seed `1128` · squelette `epaules_force` · 1RM inconnus · relâchements : budget_short, optional_slot_empty, rest_extended
+seed `1128` · squelette `epaules_force` · 1RM inconnus · relâchements : optional_slot_empty, rest_extended, tempo_311
 
 ```
 Musculation · Épaules · Force · 60' · Salle
 
-Strict Press — 5 × 5 — charge RPE 7 — repos 3:00
-  monter jusqu'à une charge propre
-Bent Over Lateral Raise — 5 × 12 — charge RPE 8 — repos 2:00
-  schéma hypertrophie
-Lateral Raise — 5 × 12 — charge RPE 8 — repos 2:00
-  schéma hypertrophie
-Cable Shrug — 5 × 12 — charge RPE 8 — repos 2:00
-  schéma hypertrophie
+Strict Press — 5 × 5 — charge RPE 7 — repos 2:45
+  monter jusqu'à une charge propre · tempo 3-1-1
+Bent Over Lateral Raise — 5 × 12 — charge RPE 8 — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
+Lateral Raise — 5 × 12 — charge RPE 8 — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
+Cable Shrug — 5 × 12 — charge RPE 8 — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
 
-Durée estimée 54'
+Durée estimée 55'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Strict Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #130 — Épaules · Force · 20' · Box · Intermédiaire
 
-seed `1129` · squelette `epaules_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : optional_slot_empty
+seed `1129` · squelette `epaules_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : optional_slot_empty
 
 ```
 Musculation · Épaules · Force · 20' · Box
@@ -2266,7 +2298,7 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Strict Press : 5
 
 ### #131 — Épaules · Endurance musculaire · 20' · Salle · Intermédiaire
 
-seed `1130` · squelette `epaules_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slot_muscle
+seed `1130` · squelette `epaules_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_muscle
 
 ```
 Musculation · Épaules · Endurance musculaire · 20' · Salle
@@ -2282,66 +2314,69 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #132 — Épaules · Endurance musculaire · 30' · Box · Avancé
 
-seed `1131` · squelette `epaules_endurance` · 1RM inconnus · relâchements : bonus_slot, slot_muscle
+seed `1131` · squelette `epaules_endurance` · 1RM inconnus · relâchements : slot_muscle
 
 ```
 Musculation · Épaules · Endurance musculaire · 30' · Box
 
-DB Shoulder Press — 4 × 20 — charge RPE 7 — repos 40s
-Rear Delt Fly — 3 × 20 — charge RPE 7 — repos 40s
-Barbell Shrug — 3 × 20 — charge RPE 7 — repos 40s
-Front Raise — 3 × 20 — charge RPE 7 — repos 40s
-Lateral Raise — 3 × 20 — charge RPE 7 — repos 40s
-Barbell Front Raise — 3 × 20 — charge RPE 7 — repos 40s
+DB Shoulder Press — 5 × 20 — charge RPE 7 — repos 40s
+Rear Delt Fly — 5 × 20 — charge RPE 7 — repos 40s
+Barbell Shrug — 4 × 20 — charge RPE 7 — repos 40s
+Front Raise — 4 × 20 — charge RPE 7 — repos 40s
 
-Durée estimée 29'
+Durée estimée 27'
 Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #133 — Épaules · Endurance musculaire · 45' · Box · Débutant
 
-seed `1132` · squelette `epaules_endurance` · 1RM inconnus · relâchements : budget_short, rest_extended, slot_muscle
+seed `1132` · squelette `epaules_endurance` · 1RM inconnus · relâchements : slot_muscle, tempo_311
 
 ```
 Musculation · Épaules · Endurance musculaire · 45' · Box
 
-DB Shoulder Press — 5 × 20 — charge RPE 7 — repos 1:15
-Barbell Front Raise — 5 × 20 — charge RPE 7 — repos 1:15
-Rear Delt Fly — 5 × 20 — charge RPE 7 — repos 1:15
-Front Raise — 4 × 20 — charge RPE 7 — repos 1:15
+DB Shoulder Press — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Barbell Front Raise — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Rear Delt Fly — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Front Raise — 4 × 20 — charge RPE 7 — repos 40s
 
-Durée estimée 39'
+Durée estimée 42'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #134 — Épaules · Endurance musculaire · 60' · Salle · Débutant
 
-seed `1133` · squelette `epaules_endurance` · 1RM inconnus · relâchements : budget_short, rest_extended, slot_muscle
+seed `1133` · squelette `epaules_endurance` · 1RM inconnus · relâchements : rest_extended, slot_muscle, tempo_311
 
 ```
 Musculation · Épaules · Endurance musculaire · 60' · Salle
 
-Strict Press — 5 × 20 — charge RPE 7 — repos 1:15
-  monter jusqu'à une charge propre
-Barbell Front Raise — 5 × 20 — charge RPE 7 — repos 1:15
-Rear Delt Machine — 5 × 20 — charge RPE 7 — repos 1:15
-Cable Front Raise — 4 × 20 — charge RPE 7 — repos 1:15
+Strict Press — 5 × 20 — charge RPE 7 — repos 1:10
+  monter jusqu'à une charge propre · tempo 3-1-1
+Barbell Front Raise — 5 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
+Rear Delt Machine — 5 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
+Cable Front Raise — 4 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
 
-Durée estimée 40'
+Durée estimée 56'
 Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #135 — Épaules · Endurance musculaire · 20' · Box · Intermédiaire
 
-seed `1134` · squelette `epaules_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, optional_slot_empty, slot_muscle
+seed `1134` · squelette `epaules_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : optional_slot_empty, slot_muscle
 
 ```
 Musculation · Épaules · Endurance musculaire · 20' · Box
 
-DB Shoulder Press — 3 × 20 — charge RPE 7 — repos 40s
-Rear Delt Fly — 3 × 20 — charge RPE 7 — repos 40s
-Barbell Front Raise — 3 × 20 — charge RPE 7 — repos 40s
-DB Shrug — 3 × 18 — charge RPE 7 — repos 40s
+DB Shoulder Press — 4 × 20 — charge RPE 7 — repos 40s
+Rear Delt Fly — 4 × 20 — charge RPE 7 — repos 40s
+Barbell Front Raise — 4 × 20 — charge RPE 7 — repos 40s
 
 Durée estimée 18'
 Stimulus : Rythme continu, aucune série à l'échec
@@ -2351,7 +2386,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #136 — Bras · Hypertrophie · 30' · Salle · Intermédiaire
 
-seed `1135` · squelette `bras_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150)
+seed `1135` · squelette `bras_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Bras · Hypertrophie · 30' · Salle
@@ -2386,17 +2421,21 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #138 — Bras · Hypertrophie · 60' · Box · Débutant
 
-seed `1137` · squelette `bras_hypertrophie` · 1RM inconnus · relâchements : beginner_max, budget_short, rest_extended, slot_objective, slot_role
+seed `1137` · squelette `bras_hypertrophie` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_objective, slot_role, tempo_311
 
 ```
 Musculation · Bras · Hypertrophie · 60' · Box
 
-Bench Dips — 5 × 12 — charge poids du corps — repos 2:00
-Hammer Curl — 5 × 12 — charge RPE 8 — repos 2:00
-Overhead Triceps Extension — 5 × 12 — charge RPE 8 — repos 2:00
-Barbell Curl — 5 × 12 — charge RPE 8 — repos 2:00
+Bench Dips — 5 × 12 — charge poids du corps — repos 1:45
+  tempo 3-1-1
+Hammer Curl — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
+Overhead Triceps Extension — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
+Barbell Curl — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
 
-Durée estimée 52'
+Durée estimée 56'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
@@ -2418,7 +2457,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #140 — Bras · Hypertrophie · 30' · Box · Intermédiaire
 
-seed `1139` · squelette `bras_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190)
+seed `1139` · squelette `bras_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg
 
 ```
 Musculation · Bras · Hypertrophie · 30' · Box
@@ -2435,7 +2474,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #141 — Bras · Force · 30' · Salle · Intermédiaire
 
-seed `1140` · squelette `bras_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150)
+seed `1140` · squelette `bras_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Bras · Force · 30' · Salle
@@ -2454,13 +2493,13 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Close Grip Bench
 
 ### #142 — Bras · Force · 45' · Box · Avancé
 
-seed `1141` · squelette `bras_force` · 1RM inconnus · relâchements : bonus_slot
+seed `1141` · squelette `bras_force` · 1RM inconnus
 
 ```
 Musculation · Bras · Force · 45' · Box
 
 Close Grip Bench Press — 5 × 5 — charge RPE 8 — repos 2:30
-DB Curl — 3 × 12 / bras — charge RPE 8 — repos 1:15
+DB Curl — 4 × 12 / bras — charge RPE 8 — repos 1:15
   schéma hypertrophie
 Bench Dips — 3 × 12 — charge poids du corps — repos 1:15
   schéma hypertrophie
@@ -2468,30 +2507,28 @@ Concentration Curl — 3 × 12 / bras — charge RPE 8 — repos 1:15
   schéma hypertrophie
 Wrist Extension — 3 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
-Incline DB Curl — 3 × 10 — charge RPE 8 — repos 1:15
-  schéma hypertrophie
 
-Durée estimée 46'
+Durée estimée 42'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Close Grip Bench Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #143 — Bras · Force · 60' · Box · Débutant
 
-seed `1142` · squelette `bras_force` · 1RM inconnus · relâchements : beginner_max, budget_short, rest_extended, slot_role
+seed `1142` · squelette `bras_force` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_role, tempo_311
 
 ```
 Musculation · Bras · Force · 60' · Box
 
 Overhead Triceps Extension — 5 × 12 — charge RPE 8 — repos 2:00
-  schéma hypertrophie
-Hammer Curl — 5 × 12 — charge RPE 8 — repos 2:00
-  schéma hypertrophie
-Bench Dips — 5 × 12 — charge poids du corps — repos 2:00
-  schéma hypertrophie
-Barbell Curl — 5 × 12 — charge RPE 8 — repos 2:00
-  schéma hypertrophie
+  schéma hypertrophie · tempo 3-1-1
+Hammer Curl — 5 × 12 — charge RPE 8 — repos 1:45
+  schéma hypertrophie · tempo 3-1-1
+Bench Dips — 5 × 12 — charge poids du corps — repos 1:45
+  schéma hypertrophie · tempo 3-1-1
+Barbell Curl — 5 × 12 — charge RPE 8 — repos 1:45
+  schéma hypertrophie · tempo 3-1-1
 
-Durée estimée 52'
+Durée estimée 57'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Overhead Triceps Extension : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 ```
 
@@ -2515,12 +2552,12 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Overhead Triceps
 
 ### #145 — Bras · Force · 30' · Box · Intermédiaire
 
-seed `1144` · squelette `bras_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190)
+seed `1144` · squelette `bras_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg
 
 ```
 Musculation · Bras · Force · 30' · Box
 
-Close Grip Dips — 5 × 5 — charge lestée, RPE 8 — repos 2:30
+Close Grip Dips — 5 × 5 — lesté 10 kg (10 % du poids de corps), RPE 8 — repos 2:30
 Barbell Curl — 3 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
 One-Arm Overhead Triceps Extension — 3 × 12 / bras — charge RPE 8 — repos 1:15
@@ -2532,35 +2569,33 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Close Grip Dips 
 
 ### #146 — Bras · Endurance musculaire · 30' · Salle · Intermédiaire
 
-seed `1145` · squelette `bras_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot
+seed `1145` · squelette `bras_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg
 
 ```
 Musculation · Bras · Endurance musculaire · 30' · Salle
 
-One-Arm Triceps Pushdown — 3 × 20 / bras — charge RPE 7 — repos 40s
+One-Arm Triceps Pushdown — 4 × 20 / bras — charge RPE 7 — repos 40s
 Barbell Curl — 3 × 20 — charge RPE 7 — repos 40s
 Bench Dips — 3 × 20 — charge poids du corps — repos 40s
 Rope Hammer Curl — 3 × 20 — charge RPE 7 — repos 40s
 Wrist Extension — 3 × 20 — charge RPE 7 — repos 40s
-DB Kickback — 3 × 18 / bras — charge RPE 7 — repos 40s
 
-Durée estimée 31'
+Durée estimée 27'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #147 — Bras · Endurance musculaire · 45' · Box · Avancé
 
-seed `1146` · squelette `bras_endurance` · 1RM inconnus · relâchements : bonus_slot
+seed `1146` · squelette `bras_endurance` · 1RM inconnus
 
 ```
 Musculation · Bras · Endurance musculaire · 45' · Box
 
-DB Kickback — 3 × 20 / bras — charge RPE 7 — repos 40s
+DB Kickback — 5 × 20 / bras — charge RPE 7 — repos 40s
 Hammer Curl — 5 × 20 — charge RPE 7 — repos 40s
-Bench Dips — 3 × 20 — charge poids du corps — repos 40s
+Bench Dips — 4 × 20 — charge poids du corps — repos 40s
 Cross-Body Hammer Curl — 4 × 20 / bras — charge RPE 7 — repos 40s
 Wrist Curl — 4 × 20 — charge RPE 7 — repos 40s
-Wall Triceps Extension — 3 × 20 — charge poids du corps — repos 40s
 
 Durée estimée 41'
 Stimulus : Rythme continu, aucune série à l'échec
@@ -2568,17 +2603,22 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #148 — Bras · Endurance musculaire · 60' · Box · Débutant
 
-seed `1147` · squelette `bras_endurance` · 1RM inconnus · relâchements : beginner_max, budget_short, rest_extended
+seed `1147` · squelette `bras_endurance` · 1RM inconnus · relâchements : beginner_fifth, beginner_max, rest_extended, tempo_311
 
 ```
 Musculation · Bras · Endurance musculaire · 60' · Box
 
 Wall Triceps Extension — 5 × 20 — charge poids du corps — repos 1:15
+  tempo 3-1-1
 Hammer Curl — 5 × 20 — charge RPE 7 — repos 1:15
+  tempo 3-1-1
 Overhead Triceps Extension — 4 × 20 — charge RPE 7 — repos 1:15
+  tempo 3-1-1
 Barbell Curl — 4 × 20 — charge RPE 7 — repos 1:15
+  tempo 3-1-1
+Wrist Curl — 3 × 18 — charge RPE 7 — repos 40s
 
-Durée estimée 41'
+Durée estimée 57'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -2600,7 +2640,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #150 — Bras · Endurance musculaire · 30' · Box · Intermédiaire
 
-seed `1149` · squelette `bras_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190)
+seed `1149` · squelette `bras_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg
 
 ```
 Musculation · Bras · Endurance musculaire · 30' · Box
@@ -2619,17 +2659,16 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #151 — Pectoraux · Hypertrophie · 45' · Salle · Intermédiaire
 
-seed `1150` · squelette `pecs_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, slot_muscle
+seed `1150` · squelette `pecs_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_muscle
 
 ```
 Musculation · Pectoraux · Hypertrophie · 45' · Salle
 
 Push-ups — 4 × 12 — charge poids du corps — repos 1:30
-Close Grip Bench Press — 4 × 12 @ 47.5 kg — charge 65 % 1RM — repos 1:15
-Pec Deck — 3 × 12 — charge RPE 8 — repos 1:15
-Lying Cable Triceps Extension — 3 × 12 — charge RPE 8 — repos 1:15
-Low To High Cable Fly — 3 × 12 — charge RPE 8 — repos 1:15
-One-Arm Overhead Triceps Extension — 3 × 12 / bras — charge RPE 8 — repos 1:15
+Close Grip Bench Press — 5 × 12 @ 47.5 kg — charge 65 % 1RM — repos 1:15
+Pec Deck — 4 × 12 — charge RPE 8 — repos 1:15
+Lying Cable Triceps Extension — 4 × 12 — charge RPE 8 — repos 1:15
+Low To High Cable Fly — 4 × 12 — charge RPE 8 — repos 1:15
 
 Durée estimée 41'
 Stimulus : Dernière série à 1-2 reps de l'échec
@@ -2637,19 +2676,20 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #152 — Pectoraux · Hypertrophie · 60' · Box · Avancé
 
-seed `1151` · squelette `pecs_hypertrophie` · 1RM inconnus · relâchements : bonus_slot, rest_extended, slot_muscle
+seed `1151` · squelette `pecs_hypertrophie` · 1RM inconnus · relâchements : bonus_slot, slot_muscle, tempo_311
 
 ```
 Musculation · Pectoraux · Hypertrophie · 60' · Box
 
-Dips — 4 × 12 — charge poids du corps — repos 2:00
-Close Grip Bench Press — 4 × 12 — charge RPE 8 — repos 1:45
-Incline DB Fly — 4 × 12 — charge RPE 8 — repos 1:45
-Bench Dips — 4 × 12 — charge poids du corps — repos 1:45
-DB Pullover — 4 × 12 — charge RPE 8 — repos 1:45
-Overhead Triceps Extension — 4 × 12 — charge RPE 8 — repos 1:45
+Dips — 4 × 12 — charge poids du corps — repos 1:30
+  tempo 3-1-1
+Close Grip Bench Press — 5 × 12 — charge RPE 8 — repos 1:15
+Incline DB Fly — 4 × 12 — charge RPE 8 — repos 1:15
+Bench Dips — 5 × 12 — charge poids du corps — repos 1:15
+DB Pullover — 4 × 12 — charge RPE 8 — repos 1:15
+Strict Press — 5 × 12 — charge RPE 8 — repos 1:15
 
-Durée estimée 59'
+Durée estimée 54'
 Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
@@ -2660,13 +2700,13 @@ seed `1152` · squelette `pecs_hypertrophie` · 1RM inconnus · relâchements : 
 ```
 Musculation · Pectoraux · Hypertrophie · 20' · Sans matériel
 
-Push-ups — 4 × 10 — charge poids du corps — repos 1:30
+Wide Push-Ups — 4 × 8 — charge poids du corps — repos 1:30
   tempo 3-1-1
-Wall Triceps Extension — 3 × 18 — charge poids du corps — repos 1:15
-Wide Push-Ups — 3 × 10 — charge poids du corps — repos 1:15
+Wall Triceps Extension — 3 × 15 — charge poids du corps — repos 1:15
+Push-ups — 3 × 8 — charge poids du corps — repos 1:15
   tempo 3-1-1
 
-Durée estimée 19'
+Durée estimée 21'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
@@ -2677,7 +2717,7 @@ seed `1153` · squelette `pecs_hypertrophie` · 1RM inconnus · relâchements : 
 ```
 Musculation · Pectoraux · Hypertrophie · 30' · Salle
 
-Wide Push-Ups — 4 × 12 — charge poids du corps — repos 1:30
+Incline Push-Ups — 4 × 12 — charge poids du corps — repos 1:30
 Machine Dips — 4 × 12 — charge RPE 8 — repos 1:15
 Cable Fly — 3 × 12 — charge RPE 8 — repos 1:15
 Overhead Triceps Extension — 3 × 12 — charge RPE 8 — repos 1:15
@@ -2688,17 +2728,16 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #155 — Pectoraux · Hypertrophie · 45' · Box · Intermédiaire
 
-seed `1154` · squelette `pecs_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, slot_muscle
+seed `1154` · squelette `pecs_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_muscle
 
 ```
 Musculation · Pectoraux · Hypertrophie · 45' · Box
 
 DB Bench Press — 4 × 12 — charge RPE 8 — repos 1:30
-Close Grip Dips — 4 × 12 — charge poids du corps — repos 1:15
-DB Pullover — 3 × 12 — charge RPE 8 — repos 1:15
-Bench Dips — 3 × 12 — charge poids du corps — repos 1:15
-DB Fly — 3 × 12 — charge RPE 8 — repos 1:15
-One-Arm Overhead Triceps Extension — 3 × 12 / bras — charge RPE 8 — repos 1:15
+Close Grip Dips — 5 × 12 — charge poids du corps — repos 1:15
+DB Pullover — 4 × 12 — charge RPE 8 — repos 1:15
+Bench Dips — 4 × 12 — charge poids du corps — repos 1:15
+DB Fly — 4 × 12 — charge RPE 8 — repos 1:15
 
 Durée estimée 41'
 Stimulus : Dernière série à 1-2 reps de l'échec
@@ -2706,37 +2745,38 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #156 — Pectoraux · Force · 45' · Salle · Intermédiaire
 
-seed `1155` · squelette `pecs_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, optional_slot_empty
+seed `1155` · squelette `pecs_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : bonus_slot, optional_slot_empty
 
 ```
 Musculation · Pectoraux · Force · 45' · Salle
 
-Dips — 5 × 5 — charge lestée, RPE 8 — repos 2:30
-Close Grip Bench Press — 4 × 5 @ 60 kg — charge 82 % 1RM — repos 2:00
-Cable Fly — 4 × 12 — charge RPE 8 — repos 1:15
+Dips — 5 × 5 — lesté 7.5 kg (10 % du poids de corps), RPE 8 — repos 2:30
+Close Grip Bench Press — 5 × 5 @ 60 kg — charge 82 % 1RM — repos 2:00
+Cable Fly — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
-One-Arm Overhead Triceps Extension — 4 × 12 / bras — charge RPE 8 — repos 1:15
+One-Arm Overhead Triceps Extension — 3 × 10 / bras — charge RPE 8 — repos 1:15
   schéma hypertrophie
 
-Durée estimée 42'
+Durée estimée 43'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Dips : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 ```
 
 ### #157 — Pectoraux · Force · 60' · Box · Avancé
 
-seed `1156` · squelette `pecs_force` · 1RM inconnus · relâchements : bonus_slot, optional_slot_empty, rest_extended
+seed `1156` · squelette `pecs_force` · 1RM inconnus · relâchements : bonus_slot, optional_slot_empty
 
 ```
 Musculation · Pectoraux · Force · 60' · Box
 
-Incline Bench Press — 5 × 5 — charge RPE 8 — repos 3:00
-Close Grip Bench Press — 5 × 5 — charge RPE 8 — repos 2:30
-DB Pullover — 5 × 12 — charge RPE 8 — repos 1:45
+Incline Bench Press — 5 × 5 — charge RPE 8 — repos 2:30
+Close Grip Bench Press — 5 × 5 — charge RPE 8 — repos 2:00
+DB Pullover — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
-DB Kickback — 5 × 12 / bras — charge RPE 8 — repos 1:45
+DB Kickback — 5 × 12 / bras — charge RPE 8 — repos 1:15
   schéma hypertrophie
+Strict Press — 4 × 4 — charge RPE 8 — repos 2:00
 
-Durée estimée 57'
+Durée estimée 56'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Incline Bench Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
@@ -2758,36 +2798,34 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Bench Press : 5 
 
 ### #159 — Pectoraux · Force · 30' · Salle · Débutant
 
-seed `1158` · squelette `pecs_force` · 1RM inconnus · relâchements : bonus_slot, optional_slot_empty, slot_role
+seed `1158` · squelette `pecs_force` · 1RM inconnus · relâchements : optional_slot_empty, slot_role
 
 ```
 Musculation · Pectoraux · Force · 30' · Salle
 
 Bench Press — 5 × 5 — charge RPE 7 — repos 2:30
   monter jusqu'à une charge propre
-Triceps Pushdown — 3 × 12 — charge RPE 8 — repos 1:15
+Triceps Pushdown — 4 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
 DB Fly — 3 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
-Cable Overhead Triceps Extension — 3 × 10 — charge RPE 8 — repos 1:15
-  schéma hypertrophie
 
-Durée estimée 31'
+Durée estimée 27'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Bench Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #160 — Pectoraux · Force · 45' · Box · Intermédiaire
 
-seed `1159` · squelette `pecs_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, optional_slot_empty
+seed `1159` · squelette `pecs_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : bonus_slot, optional_slot_empty
 
 ```
 Musculation · Pectoraux · Force · 45' · Box
 
 Incline Bench Press — 5 × 5 @ 70 kg — charge 82 % 1RM — repos 2:30
 Close Grip Bench Press — 5 × 5 @ 72.5 kg — charge 82 % 1RM — repos 2:00
-DB Pullover — 4 × 12 — charge RPE 8 — repos 1:15
+DB Pullover — 5 × 12 — charge RPE 8 — repos 1:15
   schéma hypertrophie
-Skull Crushers — 4 × 12 — charge RPE 8 — repos 1:15
+Skull Crushers — 3 × 10 — charge RPE 8 — repos 1:15
   schéma hypertrophie
 
 Durée estimée 42'
@@ -2796,38 +2834,42 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Incline Bench Pr
 
 ### #161 — Pectoraux · Endurance musculaire · 45' · Salle · Intermédiaire
 
-seed `1160` · squelette `pecs_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, rest_extended, slot_muscle
+seed `1160` · squelette `pecs_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : bonus_slot, slot_muscle
 
 ```
 Musculation · Pectoraux · Endurance musculaire · 45' · Salle
 
-Machine Chest Press — 3 × 20 — charge RPE 7 — repos 1:15
-Diamond Push-Ups — 3 × 20 — charge poids du corps — repos 1:15
-DB Fly — 3 × 20 — charge RPE 7 — repos 1:15
-Cable Overhead Triceps Extension — 3 × 20 — charge RPE 7 — repos 1:15
-Cable Pullover — 3 × 20 — charge RPE 7 — repos 1:15
-Rope Triceps Pushdown — 3 × 20 — charge RPE 7 — repos 1:15
+Machine Chest Press — 5 × 20 — charge RPE 7 — repos 40s
+Diamond Push-Ups — 5 × 20 — charge poids du corps — repos 40s
+DB Fly — 4 × 20 — charge RPE 7 — repos 40s
+Cable Overhead Triceps Extension — 4 × 20 — charge RPE 7 — repos 40s
+Machine Pullover — 5 × 20 — charge RPE 7 — repos 40s
+DB Shoulder Press — 3 × 18 — charge RPE 7 — repos 40s
 
-Durée estimée 41'
+Durée estimée 44'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #162 — Pectoraux · Endurance musculaire · 60' · Box · Avancé
 
-seed `1161` · squelette `pecs_endurance` · 1RM inconnus · relâchements : bonus_slot, budget_short, rest_extended, slot_muscle
+seed `1161` · squelette `pecs_endurance` · 1RM inconnus · relâchements : bonus_slot, slot_muscle, tempo_311
 
 ```
 Musculation · Pectoraux · Endurance musculaire · 60' · Box
 
-Incline DB Press — 3 × 20 — charge RPE 7 — repos 1:15
-Diamond Push-Ups — 3 × 20 — charge poids du corps — repos 1:15
-DB Fly — 3 × 20 — charge RPE 7 — repos 1:15
-Overhead Triceps Extension — 3 × 20 — charge RPE 7 — repos 1:15
-Bench Press — 3 × 20 — charge RPE 7 — repos 1:15
-Bench Dips — 3 × 20 — charge poids du corps — repos 1:15
+Dips — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Diamond Push-Ups — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+DB Fly — 4 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Overhead Triceps Extension — 4 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Pike Push-Ups — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
 
-Durée estimée 41'
-Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
+Durée estimée 55'
+Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #163 — Pectoraux · Endurance musculaire · 20' · Sans matériel · Débutant
@@ -2837,9 +2879,9 @@ seed `1162` · squelette `pecs_endurance` · 1RM inconnus · relâchements : opt
 ```
 Musculation · Pectoraux · Endurance musculaire · 20' · Sans matériel
 
-Wide Push-Ups — 5 × 20 — charge poids du corps — repos 40s
+Incline Push-Ups — 5 × 20 — charge poids du corps — repos 40s
 Wall Triceps Extension — 4 × 20 — charge poids du corps — repos 40s
-Push-ups — 4 × 20 — charge poids du corps — repos 40s
+Wall Push-Ups — 4 × 20 — charge poids du corps — repos 40s
 
 Durée estimée 19'
 Stimulus : Rythme continu, aucune série à l'échec
@@ -2863,19 +2905,20 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #165 — Pectoraux · Endurance musculaire · 45' · Box · Intermédiaire
 
-seed `1164` · squelette `pecs_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, budget_short, rest_extended, slot_muscle
+seed `1164` · squelette `pecs_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : bonus_slot, slot_muscle, tempo_311
 
 ```
 Musculation · Pectoraux · Endurance musculaire · 45' · Box
 
-Incline DB Press — 3 × 20 — charge RPE 7 — repos 1:15
-Diamond Push-Ups — 3 × 20 — charge poids du corps — repos 1:15
-DB Fly — 3 × 20 — charge RPE 7 — repos 1:15
-Bench Dips — 3 × 20 — charge poids du corps — repos 1:15
-Decline Push-Ups — 3 × 20 — charge poids du corps — repos 1:15
-Overhead Triceps Extension — 3 × 20 — charge RPE 7 — repos 1:15
+Dips — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Diamond Push-Ups — 5 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+DB Fly — 4 × 20 — charge RPE 7 — repos 40s
+Bench Dips — 4 × 20 — charge poids du corps — repos 40s
+DB Shoulder Press — 5 × 20 — charge RPE 7 — repos 40s
 
-Durée estimée 39'
+Durée estimée 45'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -2883,7 +2926,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #166 — Fessiers · Hypertrophie · 60' · Salle · Intermédiaire
 
-seed `1165` · squelette `fessiers_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, optional_slot_empty
+seed `1165` · squelette `fessiers_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : bonus_slot, optional_slot_empty
 
 ```
 Musculation · Fessiers · Hypertrophie · 60' · Salle
@@ -2891,9 +2934,9 @@ Musculation · Fessiers · Hypertrophie · 60' · Salle
 Hip Thrust — 4 × 12 @ 97.5 kg — charge 65 % 1RM — repos 1:30
 DB Romanian Deadlift — 5 × 12 — charge RPE 8 — repos 1:15
 High Box Step-Up — 4 × 12 / jambe — charge RPE 8 — repos 1:15
-Leg Curl — 4 × 12 — charge RPE 8 — repos 1:15
+Leg Curl — 5 × 12 — charge RPE 8 — repos 1:15
 Cable Hip Abduction — 4 × 12 / jambe — charge RPE 8 — repos 1:15
-Back Extension — 4 × 12 — charge poids du corps — repos 1:15
+Back Extension — 3 × 12 — charge poids du corps — repos 1:15
 
 Durée estimée 54'
 Stimulus : Dernière série à 1-2 reps de l'échec
@@ -2916,16 +2959,17 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #168 — Fessiers · Hypertrophie · 30' · Sans matériel · Débutant
 
-seed `1167` · squelette `fessiers_hypertrophie` · 1RM inconnus · relâchements : optional_slot_empty, slot_dropped, slot_muscle, slot_objective
+seed `1167` · squelette `fessiers_hypertrophie` · 1RM inconnus · relâchements : optional_slot_empty, slot_dropped, slot_ids, slot_muscle, slot_role
 
 ```
 Musculation · Fessiers · Hypertrophie · 30' · Sans matériel
 
-Frog Pump — 5 × 20 — charge poids du corps — repos 1:30
+Reverse Lunge — 4 × 16 — charge poids du corps — repos 1:30
+  tempo 3-1-1
 Superman Hold — 4 × 60 s — repos 1:15
-Glute Bridge — 4 × 20 — charge poids du corps — repos 1:15
+Glute Bridge — 4 × 15 — charge poids du corps — repos 1:15
 
-Durée estimée 28'
+Durée estimée 29'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
@@ -2948,25 +2992,25 @@ Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le c
 
 ### #170 — Fessiers · Hypertrophie · 60' · Box · Intermédiaire
 
-seed `1169` · squelette `fessiers_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, optional_slot_empty, slot_ids, slot_role
+seed `1169` · squelette `fessiers_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : bonus_slot, optional_slot_empty, slot_ids, slot_role
 
 ```
 Musculation · Fessiers · Hypertrophie · 60' · Box
 
 Hip Thrust — 4 × 12 @ 122.5 kg — charge 65 % 1RM — repos 1:30
-DB Romanian Deadlift — 4 × 12 — charge RPE 8 — repos 1:15
+DB Romanian Deadlift — 5 × 12 — charge RPE 8 — repos 1:15
 Single-Leg Hip Thrust — 4 × 12 / jambe — charge poids du corps — repos 1:15
-Romanian Deadlift — 4 × 12 @ 82.5 kg — charge 65 % 1RM — repos 1:15
+Romanian Deadlift — 5 × 12 @ 82.5 kg — charge 65 % 1RM — repos 1:15
 Single-Leg Glute Bridge — 4 × 12 / jambe — charge poids du corps — repos 1:15
-Back Extension — 4 × 12 — charge poids du corps — repos 1:15
+Back Extension — 3 × 10 — charge poids du corps — repos 1:15
 
-Durée estimée 54'
+Durée estimée 56'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
 ### #171 — Fessiers · Force · 60' · Salle · Intermédiaire
 
-seed `1170` · squelette `fessiers_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, optional_slot_empty, slot_unilateral
+seed `1170` · squelette `fessiers_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : bonus_slot, optional_slot_empty, slot_unilateral
 
 ```
 Musculation · Fessiers · Force · 60' · Salle
@@ -2974,12 +3018,12 @@ Musculation · Fessiers · Force · 60' · Salle
 Sumo Deadlift — 5 × 5 @ 115 kg — charge 82 % 1RM — repos 2:30
 Romanian Deadlift — 5 × 5 @ 80 kg — charge 82 % 1RM — repos 2:30
 Hip Thrust — 5 × 5 @ 122.5 kg — charge 82 % 1RM — repos 2:00
-Back Extension — 4 × 12 — charge poids du corps — repos 1:00
+Back Extension — 5 × 12 — charge poids du corps — repos 1:00
   schéma hypertrophie
-Leg Curl — 4 × 12 — charge RPE 8 — repos 1:15
+Leg Curl — 3 × 10 — charge RPE 8 — repos 1:15
   schéma hypertrophie
 
-Durée estimée 56'
+Durée estimée 55'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Sumo Deadlift : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 ```
 
@@ -2999,7 +3043,7 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Sumo Deadlift : 
 
 ### #173 — Fessiers · Force · 30' · Box · Débutant
 
-seed `1172` · squelette `fessiers_force` · 1RM inconnus · relâchements : optional_slot_empty, slot_objective
+seed `1172` · squelette `fessiers_force` · 1RM inconnus · relâchements : optional_slot_empty, slot_role
 
 ```
 Musculation · Fessiers · Force · 30' · Box
@@ -3034,36 +3078,38 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Hip Thrust Machi
 
 ### #175 — Fessiers · Force · 60' · Box · Intermédiaire
 
-seed `1174` · squelette `fessiers_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : optional_slot_empty, rest_extended, slot_unilateral
+seed `1174` · squelette `fessiers_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : bonus_slot, optional_slot_empty, slot_unilateral
 
 ```
 Musculation · Fessiers · Force · 60' · Box
 
-Hip Thrust — 5 × 5 @ 155 kg — charge 82 % 1RM — repos 3:00
-Romanian Deadlift — 5 × 5 @ 102.5 kg — charge 82 % 1RM — repos 3:00
-Sumo Deadlift — 5 × 5 @ 147.5 kg — charge 82 % 1RM — repos 2:30
+Hip Thrust — 5 × 5 @ 155 kg — charge 82 % 1RM — repos 2:30
+Romanian Deadlift — 5 × 5 @ 102.5 kg — charge 82 % 1RM — repos 2:30
+Sumo Deadlift — 5 × 5 @ 147.5 kg — charge 82 % 1RM — repos 2:00
 Back Extension — 5 × 12 — charge poids du corps — repos 1:00
   schéma hypertrophie
+Front Squat — 4 × 4 @ 100 kg — charge 85 % 1RM — repos 2:00
 
-Durée estimée 57'
+Durée estimée 60'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Hip Thrust : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 ```
 
 ### #176 — Fessiers · Endurance musculaire · 60' · Salle · Intermédiaire
 
-seed `1175` · squelette `fessiers_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, rest_extended
+seed `1175` · squelette `fessiers_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : bonus_slot, tempo_311
 
 ```
 Musculation · Fessiers · Endurance musculaire · 60' · Salle
 
-Single-Leg Hip Thrust — 3 × 20 / jambe — charge poids du corps — repos 1:15
-Romanian Deadlift — 5 × 20 @ 50 kg — charge 52 % 1RM — repos 1:15
-Glute Bridge — 3 × 20 — charge poids du corps — repos 1:15
-Leg Curl — 4 × 20 — charge RPE 7 — repos 1:15
+Single-Leg Hip Thrust — 5 × 20 / jambe — charge poids du corps — repos 40s
+  tempo 3-1-1
+Romanian Deadlift — 5 × 20 @ 50 kg — charge 52 % 1RM — repos 40s
+Glute Bridge — 4 × 20 — charge poids du corps — repos 40s
+Leg Curl — 4 × 20 — charge RPE 7 — repos 40s
 Superman Hold — 5 × 60 s — repos 30s
-Cable Hip Abduction — 3 × 20 / jambe — charge RPE 7 — repos 1:15
+Bird Dog — 5 × 16 — charge poids du corps — repos 40s
 
-Durée estimée 55'
+Durée estimée 60'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -3085,51 +3131,54 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #178 — Fessiers · Endurance musculaire · 30' · Sans matériel · Débutant
 
-seed `1177` · squelette `fessiers_endurance` · 1RM inconnus · relâchements : optional_slot_empty, rest_extended, slot_dropped, slot_muscle, slot_role
+seed `1177` · squelette `fessiers_endurance` · 1RM inconnus · relâchements : bonus_slot, optional_slot_empty, slot_dropped, slot_muscle
 
 ```
 Musculation · Fessiers · Endurance musculaire · 30' · Sans matériel
 
-Glute Bridge — 5 × 20 — charge poids du corps — repos 1:10
-Superman Hold — 5 × 60 s — repos 1:10
-Banded Hip Abduction — 4 × 20 — charge poids du corps — repos 1:10
+Reverse Lunge — 5 × 24 — charge poids du corps — repos 40s
+Superman Hold — 5 × 60 s — repos 40s
+Glute Bridge — 4 × 20 — charge poids du corps — repos 40s
+Squat Hold — 3 × 45 s — repos 40s
 
-Durée estimée 29'
+Durée estimée 27'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #179 — Fessiers · Endurance musculaire · 45' · Salle · Débutant
 
-seed `1178` · squelette `fessiers_endurance` · 1RM inconnus · relâchements : beginner_max, rest_extended
+seed `1178` · squelette `fessiers_endurance` · 1RM inconnus · relâchements : beginner_max, tempo_311
 
 ```
 Musculation · Fessiers · Endurance musculaire · 45' · Salle
 
-Hip Thrust — 5 × 20 — charge RPE 7 — repos 1:10
-  monter jusqu'à une charge propre
-DB Romanian Deadlift — 5 × 20 — charge RPE 7 — repos 1:10
-Cable Pull-Through — 4 × 20 — charge RPE 7 — repos 1:10
-Leg Curl — 4 × 20 — charge RPE 7 — repos 1:10
+Hip Thrust — 5 × 20 — charge RPE 7 — repos 40s
+  monter jusqu'à une charge propre · tempo 3-1-1
+DB Romanian Deadlift — 5 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Cable Pull-Through — 4 × 20 — charge RPE 7 — repos 40s
+  tempo 3-1-1
+Leg Curl — 4 × 20 — charge RPE 7 — repos 40s
 
-Durée estimée 43'
+Durée estimée 41'
 Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #180 — Fessiers · Endurance musculaire · 60' · Box · Intermédiaire
 
-seed `1179` · squelette `fessiers_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : bonus_slot, rest_extended, slot_role
+seed `1179` · squelette `fessiers_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : bonus_slot, slot_role
 
 ```
 Musculation · Fessiers · Endurance musculaire · 60' · Box
 
-Hip Thrust — 3 × 20 @ 100 kg — charge 52 % 1RM — repos 1:10
-Single-Leg RDL (bodyweight) — 5 × 20 / jambe — charge poids du corps — repos 1:10
-Banded Hip Abduction — 3 × 20 — charge poids du corps — repos 1:10
-Romanian Deadlift — 4 × 20 @ 65 kg — charge 52 % 1RM — repos 1:10
+Hip Thrust — 5 × 20 @ 100 kg — charge 52 % 1RM — repos 40s
+Single-Leg RDL (bodyweight) — 5 × 20 / jambe — charge poids du corps — repos 40s
+Banded Hip Abduction — 4 × 20 — charge poids du corps — repos 40s
+Romanian Deadlift — 4 × 20 @ 65 kg — charge 52 % 1RM — repos 40s
 Back Extension — 5 × 20 — charge poids du corps — repos 30s
-Glute Bridge — 3 × 20 — charge poids du corps — repos 1:10
+Oblique Raise On Roman Chair — 3 × 18 / côté — charge poids du corps — repos 40s
 
-Durée estimée 57'
+Durée estimée 55'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -3137,7 +3186,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #181 — Fessiers & ischios · Hypertrophie · 20' · Salle · Intermédiaire
 
-seed `1180` · squelette `fessiers_ischios_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slot_muscle, slot_unilateral, slots_dropped
+seed `1180` · squelette `fessiers_ischios_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_muscle, slot_unilateral, slots_dropped
 
 ```
 Musculation · Fessiers & ischios · Hypertrophie · 20' · Salle
@@ -3169,39 +3218,44 @@ Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le c
 
 ### #183 — Fessiers & ischios · Hypertrophie · 45' · Sans matériel · Débutant
 
-seed `1182` · squelette `fessiers_ischios_hypertrophie` · 1RM inconnus · relâchements : rest_extended, slot_dropped, slot_muscle, slot_objective
+seed `1182` · squelette `fessiers_ischios_hypertrophie` · 1RM inconnus · relâchements : rest_extended, slot_dropped, slot_muscle, slot_role, tempo_311
 
 ```
 Musculation · Fessiers & ischios · Hypertrophie · 45' · Sans matériel
 
-Banded Hip Abduction — 5 × 20 — charge poids du corps — repos 2:00
-Superman Hold — 5 × 60 s — repos 2:00
-Glute Bridge — 5 × 20 — charge poids du corps — repos 1:45
+Reverse Lunge — 5 × 16 — charge poids du corps — repos 1:45
+  tempo 3-1-1
+Superman Hold — 5 × 60 s — repos 1:45
+Glute Bridge — 5 × 15 — charge poids du corps — repos 1:30
+  tempo 3-1-1
 
-Durée estimée 42'
+Durée estimée 43'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
 ### #184 — Fessiers & ischios · Hypertrophie · 60' · Salle · Débutant
 
-seed `1183` · squelette `fessiers_ischios_hypertrophie` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle
+seed `1183` · squelette `fessiers_ischios_hypertrophie` · 1RM inconnus · relâchements : beginner_max, rest_extended, slot_muscle, tempo_311
 
 ```
 Musculation · Fessiers & ischios · Hypertrophie · 60' · Salle
 
-DB Romanian Deadlift — 5 × 12 — charge RPE 8 — repos 2:00
-Hip Thrust Machine — 5 × 12 — charge RPE 8 — repos 2:00
-Romanian Deadlift — 5 × 12 — charge RPE 7 — repos 2:00
-  monter jusqu'à une charge propre
-Back Extension — 5 × 12 — charge poids du corps — repos 2:00
+DB Romanian Deadlift — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
+Hip Thrust Machine — 5 × 12 — charge RPE 8 — repos 1:45
+  tempo 3-1-1
+Romanian Deadlift — 5 × 12 — charge RPE 7 — repos 1:30
+  monter jusqu'à une charge propre · tempo 3-1-1
+Glute Bridge — 5 × 15 — charge poids du corps — repos 1:30
+  tempo 3-1-1
 
-Durée estimée 56'
+Durée estimée 55'
 Stimulus : Dernière série à 1-2 reps de l'échec. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #185 — Fessiers & ischios · Hypertrophie · 20' · Box · Intermédiaire
 
-seed `1184` · squelette `fessiers_ischios_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slot_ids, slot_muscle, slot_unilateral, slots_dropped
+seed `1184` · squelette `fessiers_ischios_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_ids, slot_muscle, slot_unilateral, slots_dropped
 
 ```
 Musculation · Fessiers & ischios · Hypertrophie · 20' · Box
@@ -3216,7 +3270,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #186 — Fessiers & ischios · Force · 20' · Salle · Intermédiaire
 
-seed `1185` · squelette `fessiers_ischios_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : optional_slot_empty, slot_role
+seed `1185` · squelette `fessiers_ischios_force` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : optional_slot_empty, slot_role
 
 ```
 Musculation · Fessiers & ischios · Force · 20' · Salle
@@ -3264,26 +3318,27 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Romanian Deadlif
 
 ### #189 — Fessiers & ischios · Force · 60' · Salle · Débutant
 
-seed `1188` · squelette `fessiers_ischios_force` · 1RM inconnus · relâchements : optional_slot_empty, rest_extended, slot_role
+seed `1188` · squelette `fessiers_ischios_force` · 1RM inconnus · relâchements : optional_slot_empty, rest_extended, slot_role, tempo_311
 
 ```
 Musculation · Fessiers & ischios · Force · 60' · Salle
 
-Romanian Deadlift — 5 × 5 — charge RPE 7 — repos 3:00
-  monter jusqu'à une charge propre
-Hip Thrust Machine — 5 × 5 — charge RPE 8 — repos 3:00
-Leg Curl — 5 × 12 — charge RPE 8 — repos 1:45
-  schéma hypertrophie
+Romanian Deadlift — 5 × 5 — charge RPE 7 — repos 2:45
+  monter jusqu'à une charge propre · tempo 3-1-1
+Hip Thrust Machine — 5 × 5 — charge RPE 8 — repos 2:45
+  tempo 3-1-1
+Leg Curl — 5 × 12 — charge RPE 8 — repos 1:30
+  schéma hypertrophie · tempo 3-1-1
 Back Extension — 5 × 12 — charge poids du corps — repos 1:00
-  schéma hypertrophie
+  schéma hypertrophie · tempo 3-1-1
 
-Durée estimée 54'
+Durée estimée 56'
 Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Romanian Deadlift : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail. Renseigne tes 1RM dans le calculateur pour avoir des charges en kg
 ```
 
 ### #190 — Fessiers & ischios · Force · 20' · Box · Intermédiaire
 
-seed `1189` · squelette `fessiers_ischios_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : optional_slot_empty, slot_objective
+seed `1189` · squelette `fessiers_ischios_force` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : optional_slot_empty, slot_objective
 
 ```
 Musculation · Fessiers & ischios · Force · 20' · Box
@@ -3297,7 +3352,7 @@ Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Romanian Deadlif
 
 ### #191 — Fessiers & ischios · Endurance musculaire · 20' · Salle · Intermédiaire
 
-seed `1190` · squelette `fessiers_ischios_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slot_muscle
+seed `1190` · squelette `fessiers_ischios_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_muscle
 
 ```
 Musculation · Fessiers & ischios · Endurance musculaire · 20' · Salle
@@ -3330,48 +3385,56 @@ Stimulus : Rythme continu, aucune série à l'échec. Renseigne tes 1RM dans le 
 
 ### #193 — Fessiers & ischios · Endurance musculaire · 45' · Sans matériel · Débutant
 
-seed `1192` · squelette `fessiers_ischios_endurance` · 1RM inconnus · relâchements : budget_short, optional_slot_empty, rest_extended, slot_dropped, slot_muscle
+seed `1192` · squelette `fessiers_ischios_endurance` · 1RM inconnus · relâchements : bonus_slot, optional_slot_empty, slot_dropped, slot_muscle, tempo_311
 
 ```
 Musculation · Fessiers & ischios · Endurance musculaire · 45' · Sans matériel
 
-Glute Bridge — 5 × 20 — charge poids du corps — repos 1:15
-Superman Hold — 5 × 60 s — repos 1:15
-Banded Hip Abduction — 4 × 20 — charge poids du corps — repos 1:15
+Reverse Lunge — 5 × 24 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Superman Hold — 5 × 60 s — repos 40s
+Glute Bridge — 4 × 20 — charge poids du corps — repos 40s
+  tempo 3-1-1
+Bird Dog — 5 × 16 — charge poids du corps — repos 40s
+  tempo 3-1-1
 
-Durée estimée 31'
+Durée estimée 42'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #194 — Fessiers & ischios · Endurance musculaire · 60' · Salle · Débutant
 
-seed `1193` · squelette `fessiers_ischios_endurance` · 1RM inconnus · relâchements : budget_short, optional_slot_empty, rest_extended, slot_muscle
+seed `1193` · squelette `fessiers_ischios_endurance` · 1RM inconnus · relâchements : optional_slot_empty, rest_extended, slot_muscle, tempo_311
 
 ```
 Musculation · Fessiers & ischios · Endurance musculaire · 60' · Salle
 
-DB Romanian Deadlift — 5 × 20 — charge RPE 7 — repos 1:15
-Hip Thrust Machine — 5 × 20 — charge RPE 7 — repos 1:15
-Leg Curl — 4 × 20 — charge RPE 7 — repos 1:15
-Back Extension — 5 × 20 — charge poids du corps — repos 1:15
+DB Romanian Deadlift — 5 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
+Reverse Lunge — 5 × 24 — charge poids du corps — repos 1:10
+  tempo 3-1-1
+Leg Curl — 4 × 20 — charge RPE 7 — repos 1:10
+  tempo 3-1-1
+Back Extension — 5 × 20 — charge poids du corps — repos 1:10
+  tempo 3-1-1
 
-Durée estimée 46'
+Durée estimée 57'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #195 — Fessiers & ischios · Endurance musculaire · 20' · Box · Intermédiaire
 
-seed `1194` · squelette `fessiers_ischios_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slot_muscle, slot_role
+seed `1194` · squelette `fessiers_ischios_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_muscle, slot_role
 
 ```
 Musculation · Fessiers & ischios · Endurance musculaire · 20' · Box
 
-Single-Leg RDL (bodyweight) — 2 × 15 / jambe — charge poids du corps — repos 40s
-DB Reverse Lunge — 3 × 15 / jambe — charge RPE 7 — repos 40s
+Single-Leg RDL (bodyweight) — 3 × 15 / jambe — charge poids du corps — repos 40s
+Reverse Lunge — 3 × 16 — charge poids du corps — repos 40s
 Back Extension — 3 × 15 — charge poids du corps — repos 40s
 DB Romanian Deadlift — 3 × 15 — charge RPE 7 — repos 40s
 
-Durée estimée 21'
+Durée estimée 22'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
@@ -3379,7 +3442,7 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #196 — Tronc · Hypertrophie · 15' · Salle · Intermédiaire · après « Back Squat + Thruster »
 
-seed `2000` · squelette `tronc_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : slot_objective · muscles exclus : quadriceps, fessiers, epaules · cible suggérée : Tronc
+seed `2000` · squelette `tronc_hypertrophie` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_objective · muscles exclus : quadriceps, fessiers, epaules · cible suggérée : Tronc
 
 ```
 Musculation · Tronc · Hypertrophie · 15' · Salle
@@ -3412,16 +3475,17 @@ Après ma classe : muscles évités dos, biceps, pecs, triceps, epaules
 
 ### #198 — Tronc · Hypertrophie · 30' · Box · Débutant · après « Deadlift + Box Jumps + Run 400 m »
 
-seed `2002` · squelette `tronc_hypertrophie` · 1RM inconnus · relâchements : budget_short, optional_slot_empty, slot_muscle, slot_objective · muscles exclus : ischios, lombaires, dos, quadriceps, fessiers · cible suggérée : aucune (Tronc par défaut)
+seed `2002` · squelette `tronc_hypertrophie` · 1RM inconnus · relâchements : bonus_slot, optional_slot_empty, slot_muscle, slot_objective · muscles exclus : ischios, lombaires, dos, quadriceps, fessiers · cible suggérée : aucune (Tronc par défaut)
 
 ```
 Musculation · Tronc · Hypertrophie · 30' · Box
 
 Reverse Crunch — 5 × 12 — charge poids du corps — repos 1:00
 Crunch With Rotation — 5 × 20 — charge poids du corps — repos 1:00
-Hollow Hold — 5 × 60 s — repos 1:00
+Mountain Climbers — 5 × 20 — charge poids du corps — repos 1:00
+Push-ups — 3 × 10 — charge poids du corps — repos 1:15
 
-Durée estimée 26'
+Durée estimée 27'
 Stimulus : Dernière série à 1-2 reps de l'échec
 Après ma classe : muscles évités ischios, lombaires, dos, quadriceps, fessiers
 ```
@@ -3445,7 +3509,7 @@ Après ma classe : muscles évités quadriceps, fessiers, epaules, dos
 
 ### #200 — Bas du corps · Hypertrophie · 20' · Box · Intermédiaire · après « Bench Press + Toes-to-Bar »
 
-seed `2004` · squelette `bas_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · relâchements : slot_role, slots_dropped · muscles exclus : pecs, triceps, dos, biceps · cible suggérée : Bas du corps
+seed `2004` · squelette `bas_hypertrophie` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · relâchements : slot_role, slots_dropped · muscles exclus : pecs, triceps, dos, biceps · cible suggérée : Bas du corps
 
 ```
 Musculation · Bas du corps · Hypertrophie · 20' · Box
@@ -3461,19 +3525,17 @@ Après ma classe : muscles évités pecs, triceps, dos, biceps
 
 ### #201 — Tronc · Endurance musculaire · 30' · Box · Intermédiaire · après « Clean & Jerk + Double-Unders »
 
-seed `2005` · squelette `tronc_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · relâchements : bonus_slot, slot_muscle · muscles exclus : ischios, lombaires, epaules · cible suggérée : aucune (Tronc par défaut)
+seed `2005` · squelette `tronc_endurance` · 1RM connus (back_squat 110, deadlift 140, bench 85, press 55, hip_thrust 150) · PdC 72 kg · relâchements : slot_muscle · muscles exclus : ischios, lombaires, epaules · cible suggérée : aucune (Tronc par défaut)
 
 ```
 Musculation · Tronc · Endurance musculaire · 30' · Box
 
-Dead Bug — 3 × 20 — charge poids du corps — repos 30s
-Hanging Oblique Knee Raise — 3 × 20 / côté — charge poids du corps — repos 30s
-Suitcase Carry — 3 × 50 m / côté — charge RPE 7 — repos 30s
+Dead Bug — 4 × 20 — charge poids du corps — repos 30s
+Hanging Oblique Knee Raise — 4 × 20 / côté — charge poids du corps — repos 30s
+Suitcase Carry — 4 × 50 m / côté — charge RPE 7 — repos 30s
 Oblique Crunch — 3 × 20 / côté — charge poids du corps — repos 30s
-Reverse Crunch — 3 × 20 — charge poids du corps — repos 40s
-DB Side Bend — 3 × 18 / côté — charge RPE 7 — repos 40s
 
-Durée estimée 33'
+Durée estimée 28'
 Stimulus : Rythme continu, aucune série à l'échec
 Après ma classe : muscles évités ischios, lombaires, epaules
 ```
@@ -3530,7 +3592,7 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #205 — Bas du corps · Endurance musculaire · 15' · Salle · Intermédiaire · après « Snatch + Bar Muscle-ups »
 
-seed `2009` · squelette `bas_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · muscles exclus : dos, biceps, epaules · cible suggérée : Bas du corps
+seed `2009` · squelette `bas_endurance` · 1RM connus (back_squat 140, deadlift 180, bench 105, press 65, hip_thrust 190) · PdC 88 kg · muscles exclus : dos, biceps, epaules · cible suggérée : Bas du corps
 
 ```
 Musculation · Bas du corps · Endurance musculaire · 15' · Salle
@@ -3538,7 +3600,7 @@ Musculation · Bas du corps · Endurance musculaire · 15' · Salle
 Goblet Squat — 2 × 15 — charge RPE 7 — repos 40s
 Hip Thrust — 3 × 15 @ 115 kg — charge 60 % 1RM — repos 40s
 Leg Curl — 3 × 15 — charge RPE 7 — repos 40s
-Swiss Ball Crunch — 3 × 15 — charge poids du corps — repos 30s
+Stomach Vacuum — 3 × 30 s — repos 30s
 
 Durée estimée 16'
 Stimulus : Rythme continu, aucune série à l'échec

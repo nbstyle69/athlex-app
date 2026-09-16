@@ -422,6 +422,8 @@ export interface MuscuExercise {
   rest_s: number;
   notes: string;
   badge_key: string | null;
+  /** Exercice ajouté par le rattrapage de budget (slot `optional` ou bonus sur un muscle secondaire). */
+  optional: boolean;
 }
 
 export interface StrengthSessionBlock {

@@ -26,8 +26,8 @@ function* grid(): Generator<MuscuParams> {
 }
 
 describe('catalogue musculation (import CSV v1)', () => {
-  it('173 exercices, 18 partagés avec le catalogue metcon (13 annoncés par le brief + 5 alignés par nom), 155 nouveaux', () => {
-    expect(muscuRows).toHaveLength(173);
+  it('178 exercices (173 du CSV + 5 variantes faciles sans matériel), 18 partagés avec le catalogue metcon (13 annoncés par le brief + 5 alignés par nom), 160 nouveaux', () => {
+    expect(muscuRows).toHaveLength(178);
     const shared = Object.keys(MUSCU_ALIGNMENT);
     expect(shared).toHaveLength(18);
     const sharedIds = new Set(Object.values(MUSCU_ALIGNMENT) as string[]);
@@ -35,7 +35,7 @@ describe('catalogue musculation (import CSV v1)', () => {
     expect(sharedRows).toHaveLength(18);
     // partagé = ligne metcon existante (poids metcon renseignés ou ligne legacy inactive), jamais une seconde ligne
     for (const m of sharedRows) expect(m.notes ?? '').not.toMatch(/^Musculation/);
-    expect(muscuRows.filter((m) => !sharedIds.has(m.id))).toHaveLength(155);
+    expect(muscuRows.filter((m) => !sharedIds.has(m.id))).toHaveLength(160);
     const names = CATALOG_SNAPSHOT.movements.map((m) => m.name.toLowerCase());
     expect(new Set(names).size).toBe(names.length);
   });
@@ -64,11 +64,11 @@ describe('catalogue musculation (import CSV v1)', () => {
     }
   });
 
-  it('les familles machine / cable sont dans la migration et les 173 lignes dans le seed', () => {
+  it('les familles machine / cable sont dans la migration et les 178 lignes dans le seed', () => {
     const sql = readFileSync(path.join(__dirname, '../../../supabase/migrations/20261214000000_movement_catalog_musculation.sql'), 'utf8');
     expect(sql).toMatch(/'machine','cable'/);
     expect(sql).toMatch(/Appliquée en prod : NON/);
-    expect((sql.match(/^\s+\('/gm) ?? []).length).toBe(173);
+    expect((sql.match(/^\s+\('/gm) ?? []).length).toBe(178);
     expect(sql).toMatch(/ON CONFLICT \(id\) DO UPDATE SET\n\s+discipline_muscu/);
     expect(sql).not.toMatch(/DO UPDATE SET[^;]*\bactive\b/);
     const metcon = readFileSync(path.join(__dirname, '../../../supabase/migrations/20261211000000_movement_catalog.sql'), 'utf8');
@@ -156,7 +156,7 @@ describe('generateMuscu — conformité (cible × objectif × durée × matérie
           expect(e.sets).toBeGreaterThanOrEqual(2);
           expect(e.reps).toBeGreaterThan(0);
         }
-        if (p.level === 'debutant') expect(ex.length).toBeLessThanOrEqual(BEGINNER_MAX_EXERCISES);
+        if (p.level === 'debutant') expect(ex.length).toBeLessThanOrEqual(BEGINNER_MAX_EXERCISES + (w.generator.relaxations.includes('beginner_fifth') ? 1 : 0));
         expect(w.signature).toBe(muscuSignature(w.generator.skeleton_id, ex));
         expect(w.description).toContain(ex[0].name);
       }
@@ -164,6 +164,28 @@ describe('generateMuscu — conformité (cible × objectif × durée × matérie
     expect(n).toBeGreaterThan(0);
     // eslint-disable-next-line no-console
     console.log(`muscu conformité : ${n} séances, relâchements`, relax);
+    // séance annoncée trop longue : < 1 % des tirages, et seulement après reps → séries → optionnel → tempo → repos → 5e exercice débutant
+    expect((relax.budget_short ?? 0) / n).toBeLessThan(0.01);
+  });
+
+  it('rattrapage de budget : séries ≤ 5 en hypertrophie / endurance, tempo 3-1-1 rendu, variantes faciles sans matériel présentes', () => {
+    const easy = ['incline_push_up', 'wall_push_up', 'glute_bridge', 'bird_dog', 'bodyweight_reverse_lunge', 'squat_hold'];
+    for (const id of easy) {
+      const m = CATALOG_SNAPSHOT.movements.find((x) => x.id === id)!;
+      expect(m.muscu!.weight_bodyweight).toBeGreaterThan(0);
+      expect(m.muscu!.level_min).toBe('debutant');
+    }
+    let tempo = 0;
+    for (const target of MUSCU_TARGETS) for (let seed = 1; seed <= 20; seed++) {
+      if (!targetAvailable(CATALOG_SNAPSHOT, target, 'none', 'debutant')) continue;
+      const w = gen({ ...base, target, objective: 'hypertrophie', equipment: 'none', level: 'debutant', budget_min: 60 }, seed);
+      for (const e of w.blocks[0].exercises) expect(e.sets).toBeLessThanOrEqual(5);
+      if (w.generator.relaxations.includes('tempo_311')) {
+        tempo++;
+        expect(w.blocks[0].exercises.some((e) => e.notes.includes('tempo 3-1-1'))).toBe(true);
+      }
+    }
+    expect(tempo).toBeGreaterThan(0);
   });
 
   it('déterministe, et anti-répétition sur les 10 dernières signatures', () => {
@@ -216,6 +238,30 @@ describe('charges', () => {
     for (const e of end.blocks[0].exercises) if (e.load.mode === 'rpe') expect(e.load.rpe).toBe(7);
     const deb = gen({ ...P, level: 'debutant', one_rep_max: { bench: 100 } }, 3);
     for (const e of deb.blocks[0].exercises) expect(e.load.mode).not.toBe('1rm');
+  });
+
+  it('lest : 10 % du poids de corps arrondi à 2,5 kg quand bodyweight_kg est fourni, sinon « lesté léger »', () => {
+    const cases: Array<[number, number]> = [[82, 7.5], [77, 7.5], [90, 10], [100, 10], [60, 5], [68.9, 7.5], [71.3, 7.5]];
+    let seen = 0;
+    for (const [bw, kg] of cases) for (let seed = 1; seed <= 30; seed++) {
+      const w = gen({ ...base, target: 'pull', objective: 'force', level: 'avance', equipment: 'box', bodyweight_kg: bw }, seed);
+      for (const e of w.blocks[0].exercises) if (e.load.mode === 'weighted') {
+        seen++;
+        expect(e.load.kg).toBe(kg);
+        expect(exerciseLine(e)).toContain(`lesté ${kg} kg (10 % du poids de corps)`);
+      }
+    }
+    expect(seen).toBeGreaterThan(0);
+    let light = 0;
+    for (let seed = 1; seed <= 30; seed++) {
+      const w = gen({ ...base, target: 'pull', objective: 'force', level: 'avance', equipment: 'box' }, seed);
+      for (const e of w.blocks[0].exercises) if (e.load.mode === 'weighted') {
+        light++;
+        expect(e.load.kg).toBeUndefined();
+        expect(exerciseLine(e)).toContain('lesté léger');
+      }
+    }
+    expect(light).toBeGreaterThan(0);
   });
 
   it('poids du corps : dips / tractions lestés en Force intermédiaire +, jamais en débutant ni hors Force', () => {
@@ -323,8 +369,11 @@ describe('cibles et muscles', () => {
     for (const target of MUSCU_TARGETS) for (let seed = 1; seed <= 10; seed++) {
       const w = gen({ ...base, target, objective: 'hypertrophie', level: 'avance' }, seed);
       for (const e of w.blocks[0].exercises) {
-        const ok = TARGET_MUSCLES[target].includes(e.muscle_primary) || e.role === 'core' || e.role === 'calves';
-        expect(ok).toBe(true);
+        const m = CATALOG_SNAPSHOT.movements.find((x) => x.id === e.id)!;
+        const inTarget = TARGET_MUSCLES[target].includes(e.muscle_primary);
+        // rattrapage de budget : un exercice optionnel peut viser la cible par un muscle secondaire
+        const viaSecondary = e.optional && (m.muscu!.muscle_secondary as Muscle[]).some((mu) => TARGET_MUSCLES[target].includes(mu));
+        expect(inTarget || viaSecondary || e.role === 'core' || e.role === 'calves').toBe(true);
       }
     }
   });

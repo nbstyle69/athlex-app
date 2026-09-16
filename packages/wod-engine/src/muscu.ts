@@ -35,6 +35,13 @@ export const WEIGHTED_IDS = ['dips', 'strict_pull_up', 'chin_up', 'wide_grip_pul
  */
 export const UNIT_RANGES: Record<Exclude<MuscuUnit, 'reps'>, [number, number]> = { s: [30, 60], m: [30, 50] };
 export const LOAD_STEP_KG = 2.5;
+/** Lest des tractions / dips en Force : 10 % du poids de corps, arrondi au pas de 2,5 kg. */
+export const WEIGHTED_BODYWEIGHT_RATIO = 0.10;
+/** Tempo 3-1-1 : durée d'une répétition quand la séance reste sous le budget. */
+export const TEMPO_311 = '3-1-1';
+export const TEMPO_311_SECONDS_PER_REP = 5;
+/** Repos maximal des lignes gainage / mollets quand elles sont les seules à pouvoir absorber le budget (cible Tronc). */
+export const CORE_REST_MAX = 90;
 
 interface Scheme {
   sets: Record<'main' | 'other', number>;
@@ -254,6 +261,7 @@ interface Line extends Picked {
   reps: number;
   range: [number, number];
   rest: number;
+  tempo?: string;
 }
 
 function repRange(m: Mv, objective: MuscuObjective): [number, number] {
@@ -269,17 +277,17 @@ function lineFor(ctx: Ctx, p: Picked): Line {
   const sets = p.role === 'core' || p.role === 'calves' ? Math.min(scheme.sets.other, 3) : scheme.sets[kind];
   const rest = p.role === 'core' ? Math.min(scheme.rest.other, p.objective === 'endurance' ? 30 : 60)
     : p.role === 'calves' ? Math.min(scheme.rest.other, 45) : scheme.rest[kind];
-  return { ...p, sets, reps: Math.round((range[0] + range[1]) / 2), range, rest };
+  // sans matériel en Prise de muscle : les polyarticulaires poids du corps se font au tempo 3-1-1 (brief §5), compté dans la durée
+  const tempo = ctx.params.equipment === 'none' && ctx.params.objective === 'hypertrophie' && p.m.muscu.load_mode === 'bodyweight' && p.m.muscu.unit === 'reps' && p.m.muscu.compound
+    ? TEMPO_311 : undefined;
+  return { ...p, sets, reps: Math.round((range[0] + range[1]) / 2), range, rest, ...(tempo ? { tempo } : {}) };
 }
 
-function lineSeconds(l: Line): number {
-  const sides = l.m.muscu.unilateral ? 2 : 1;
-  const work = l.reps * l.m.muscu.seconds_per_rep * sides;
-  return l.m.muscu.setup_s + l.sets * (work + l.rest);
-}
-
-export function sessionSeconds(lines: Array<{ sets: number; reps: number; rest: number; m: { muscu: Pick<MuscuFields, 'unilateral' | 'seconds_per_rep' | 'setup_s'> } }>): number {
-  return lines.reduce((acc, l) => acc + l.m.muscu.setup_s + l.sets * (l.reps * l.m.muscu.seconds_per_rep * (l.m.muscu.unilateral ? 2 : 1) + l.rest), 0);
+export function sessionSeconds(lines: Array<{ sets: number; reps: number; rest: number; tempo?: string; m: { muscu: Pick<MuscuFields, 'unilateral' | 'seconds_per_rep' | 'setup_s'> } }>): number {
+  return lines.reduce((acc, l) => {
+    const spr = l.tempo ? Math.max(l.m.muscu.seconds_per_rep, TEMPO_311_SECONDS_PER_REP) : l.m.muscu.seconds_per_rep;
+    return acc + l.m.muscu.setup_s + l.sets * (l.reps * spr * (l.m.muscu.unilateral ? 2 : 1) + l.rest);
+  }, 0);
 }
 
 function roundLoad(kg: number): number {
@@ -292,7 +300,10 @@ function loadFor(ctx: Ctx, l: Line): MuscuLoad {
   const scheme = SCHEMES[l.objective];
   if (mu.load_mode === 'bodyweight') {
     if (params.objective === 'force' && params.level !== 'debutant' && WEIGHTED_IDS.includes(l.m.id) && l.objective === 'force') {
-      return { mode: 'weighted', rpe: scheme.rpe };
+      const bw = params.bodyweight_kg;
+      return bw && bw > 0
+        ? { mode: 'weighted', kg: roundLoad(bw * WEIGHTED_BODYWEIGHT_RATIO), rpe: scheme.rpe }
+        : { mode: 'weighted', rpe: scheme.rpe };
     }
     return { mode: 'bodyweight' };
   }
@@ -365,14 +376,22 @@ function bonusExercise(ctx: Ctx, lines: Line[], target: MuscuTarget): Line | nul
   const last = lines[lines.length - 1]?.m.muscu.muscle_primary ?? null;
   const cap = VOLUME_CAP_SETS[ctx.params.objective];
   const vol = volumeByMuscle(lines);
-  const muscles = TARGET_MUSCLES[target].filter((mu) => !ctx.excludedMuscles.has(mu) && (vol.get(mu) ?? 0) + 3 <= cap);
-  const base = ctx.pool.filter((m) => !used.has(m.id) && muscles.includes(m.muscu.muscle_primary)
-    && m.muscu.muscle_primary !== last && objectiveFor(m, ctx.params.objective));
+  const minSets = SCHEMES[ctx.params.objective].sets_min;
+  const muscles = TARGET_MUSCLES[target].filter((mu) => !ctx.excludedMuscles.has(mu) && (vol.get(mu) ?? 0) + minSets <= cap);
+  const eligible = (m: Mv) => !used.has(m.id) && m.muscu.muscle_primary !== last && !ctx.excludedMuscles.has(m.muscu.muscle_primary)
+    && (vol.get(m.muscu.muscle_primary) ?? 0) + minSets <= cap && objectiveFor(m, ctx.params.objective);
+  const targetMuscles = TARGET_MUSCLES[target];
+  const primary = ctx.pool.filter((m) => eligible(m) && muscles.includes(m.muscu.muscle_primary));
+  // repli : exercice dont un muscle secondaire appartient à la cible (Air Squats → fessiers, Push-Ups → tronc…)
+  const secondary = primary.length ? [] : ctx.pool.filter((m) => eligible(m) && (m.muscu.muscle_secondary as Muscle[]).some((mu) => targetMuscles.includes(mu)));
+  const base = primary.length ? primary : secondary;
   const iso = base.filter((m) => !m.muscu.compound);
   const m = ctx.rng.pickWeighted(iso.length ? iso : base, (x) => equipmentWeight(x, ctx.params.equipment));
   if (!m) return null;
   const p: Picked = { m, role: m.muscu.compound ? 'secondary_compound' : 'isolation', objective: objectiveFor(m, ctx.params.objective)!, optional: true, slotIndex: 99 };
-  return lineFor(ctx, p);
+  const line = lineFor(ctx, p);
+  line.sets = Math.min(line.sets, cap - (vol.get(m.muscu.muscle_primary) ?? 0));
+  return line;
 }
 
 function fitBudget(ctx: Ctx, input: Line[], target: MuscuTarget): Line[] {
@@ -400,7 +419,8 @@ function fitBudget(ctx: Ctx, input: Line[], target: MuscuTarget): Line[] {
     break;
   }
 
-  // trop court : reps maxi → exercices bonus → une série de plus → repos allongé
+  // trop court : reps maxi → une série de plus (jusqu'à sets_max) → exercice optionnel sur un
+  // muscle secondaire de la cible → tempo 3-1-1 → repos allongé → budget_short tracé
   const MAX_EXERCISES = 6;
   let guard = 0;
   while (total(lines) < lo && guard++ < 40) {
@@ -409,6 +429,12 @@ function fitBudget(ctx: Ctx, input: Line[], target: MuscuTarget): Line[] {
       for (const l of underReps) l.reps = Math.min(l.range[1], l.reps + (l.range[1] - l.range[0] >= 4 ? 2 : 1));
       continue;
     }
+    const cap = VOLUME_CAP_SETS[ctx.params.objective];
+    const vol = volumeByMuscle(lines);
+    const addable = lines.filter((l) => l.sets < SCHEMES[l.objective].sets_max && (vol.get(l.m.muscu.muscle_primary) ?? 0) < cap)
+      .sort((a, b) => a.sets - b.sets || a.slotIndex - b.slotIndex);
+    const fits = (l: Line) => { l.sets++; if (total(lines) <= hi) return true; l.sets--; return false; };
+    if (addable.some(fits)) continue;
     if (lines.length < Math.min(maxEx, MAX_EXERCISES)) {
       const bonus = bonusExercise(ctx, lines, target);
       if (bonus) {
@@ -417,18 +443,22 @@ function fitBudget(ctx: Ctx, input: Line[], target: MuscuTarget): Line[] {
         if (total([...lines, bonus]) <= hi) { lines.push(bonus); ctx.relax.add('bonus_slot'); continue; }
       }
     }
-    const cap = VOLUME_CAP_SETS[ctx.params.objective];
-    const vol = volumeByMuscle(lines);
-    const addable = lines.filter((l) => l.sets < SCHEMES[l.objective].sets_max && (vol.get(l.m.muscu.muscle_primary) ?? 0) < cap)
-      .sort((a, b) => a.sets - b.sets || a.slotIndex - b.slotIndex);
-    const fits = (l: Line) => { l.sets++; if (total(lines) <= hi) return true; l.sets--; return false; };
-    if (addable.some(fits)) continue;
-    const restable = lines.filter((l) => l.role !== 'core' && l.role !== 'calves' && l.rest < SCHEMES[l.objective].rest_max);
+    const tempoable = lines.filter((l) => !l.tempo && l.m.muscu.unit === 'reps' && l.m.muscu.seconds_per_rep < TEMPO_311_SECONDS_PER_REP)
+      .sort((a, b) => a.slotIndex - b.slotIndex);
+    const slow = (l: Line) => { l.tempo = TEMPO_311; if (total(lines) <= hi) return true; delete l.tempo; return false; };
+    if (tempoable.some(slow)) { ctx.relax.add('tempo_311'); continue; }
+    const restMax = (l: Line) => (l.role === 'core' || l.role === 'calves' ? Math.min(CORE_REST_MAX, SCHEMES[l.objective].rest_max) : SCHEMES[l.objective].rest_max);
+    const mainRestable = lines.filter((l) => l.role !== 'core' && l.role !== 'calves' && l.rest < restMax(l));
+    const restable = mainRestable.length ? mainRestable : lines.filter((l) => l.rest < restMax(l));
     if (restable.length) {
       const before = restable.map((l) => l.rest);
-      for (const l of restable) l.rest = Math.min(SCHEMES[l.objective].rest_max, l.rest + 15);
+      for (const l of restable) l.rest = Math.min(restMax(l), l.rest + 15);
       if (total(lines) <= hi) { ctx.relax.add('rest_extended'); continue; }
       restable.forEach((l, i) => { l.rest = before[i]; });
+    }
+    if (ctx.params.level === 'debutant' && lines.length <= BEGINNER_MAX_EXERCISES) {
+      const bonus = bonusExercise(ctx, lines, target);
+      if (bonus && total([...lines, bonus]) <= hi) { lines.push(bonus); ctx.relax.add('beginner_fifth'); continue; }
     }
     ctx.relax.add('budget_short');
     break;
@@ -451,7 +481,7 @@ function notesFor(ctx: Ctx, l: Line, load: MuscuLoad): string {
   if (ctx.params.objective === 'force' && l.objective !== 'force') parts.push('schéma hypertrophie');
   if (load.mode === 'rpe' && load.rm_reference && ctx.params.level === 'debutant') parts.push('monter jusqu\'à une charge propre');
   if (load.mode === 'bodyweight' && ctx.params.level === 'debutant' && /pull_up|chin_up/.test(l.m.id)) parts.push('Débutant : banded');
-  if (load.mode === 'bodyweight' && ctx.params.equipment === 'none' && ctx.params.objective === 'hypertrophie' && l.m.muscu.unit === 'reps' && l.m.muscu.compound) parts.push('tempo 3-1-1');
+  if (l.tempo) parts.push(`tempo ${l.tempo}`);
   return parts.join(' · ');
 }
 
@@ -470,6 +500,7 @@ function toExercise(ctx: Ctx, l: Line): MuscuExercise {
     rest_s: l.rest,
     notes: notesFor(ctx, l, load),
     badge_key: l.m.badge_key,
+    optional: l.optional,
   };
 }
 
@@ -632,7 +663,7 @@ export function loadText(e: MuscuExercise): string {
   const l = e.load;
   switch (l.mode) {
     case '1rm': return `${l.kg} kg (${l.percent} %)`;
-    case 'weighted': return `lestée, RPE ${l.rpe}`;
+    case 'weighted': return l.kg ? `lesté ${l.kg} kg, RPE ${l.rpe}` : `lesté léger, RPE ${l.rpe}`;
     case 'bodyweight': return e.reps_unit === 'reps' ? 'poids du corps' : '—';
     default: return `RPE ${l.rpe}`;
   }
@@ -647,7 +678,7 @@ export function exerciseLine(e: MuscuExercise): string {
   if (l.mode === '1rm' && l.kg) {
     out += ` @ ${l.kg} kg — charge ${l.percent} % 1RM`;
   } else if (l.mode === 'weighted') {
-    out += ` — charge lestée, RPE ${l.rpe}`;
+    out += l.kg ? ` — lesté ${l.kg} kg (10 % du poids de corps), RPE ${l.rpe}` : ` — lesté léger, RPE ${l.rpe}`;
   } else if (l.mode === 'rpe') {
     out += ` — charge RPE ${l.rpe}`;
   } else if (e.reps_unit === 'reps') {

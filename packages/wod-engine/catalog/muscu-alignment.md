@@ -177,5 +177,10 @@ Généré par `scripts/import-catalog.cjs`. Les lignes « partagé » reçoivent
 | `reverse_lunge` | DB Reverse Lunge | `reverse_lunge` | DB Reverse Lunge | nouveau (metcon 0/0) |
 | `step_up_high` | High Box Step-Up | `step_up_high` | High Box Step-Up | nouveau (metcon 0/0) |
 | `hip_thrust_machine` | Hip Thrust Machine | `hip_thrust_machine` | Hip Thrust Machine | nouveau (metcon 0/0) |
+| `incline_push_up` | Incline Push-Ups | `incline_push_up` | Incline Push-Ups | nouveau (metcon 0/0) |
+| `wall_push_up` | Wall Push-Ups | `wall_push_up` | Wall Push-Ups | nouveau (metcon 0/0) |
+| `bird_dog` | Bird Dog | `bird_dog` | Bird Dog | nouveau (metcon 0/0) |
+| `bodyweight_reverse_lunge` | Reverse Lunge | `bodyweight_reverse_lunge` | Reverse Lunge | nouveau (metcon 0/0) |
+| `squat_hold` | Squat Hold | `squat_hold` | Squat Hold | nouveau (metcon 0/0) |
 
-Total : 173 exercices — 18 partagés, 155 nouveaux.
+Total : 178 exercices — 18 partagés, 160 nouveaux.
