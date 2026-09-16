@@ -82,12 +82,12 @@ async function main() {
   // ── 1. Flags de box ────────────────────────────────────────────────────────
   const flagsAvant = psql(`select auto_programming::text || '|' || array_to_string(auto_programming_tracks, ',') from boxes where id='${boxA}'`);
   const gerantFlag = await gerant.from('boxes').update({ auto_programming: true }).eq('id', boxA).select('id');
-  const gerantTracks = await gerant.from('boxes').update({ auto_programming_tracks: ['crossfit'] }).eq('id', boxA).select('id');
+  const gerantTracks = await gerant.from('boxes').update({ auto_programming_tracks: ['functional'] }).eq('id', boxA).select('id');
   const flagsApres = psql(`select auto_programming::text || '|' || array_to_string(auto_programming_tracks, ',') from boxes where id='${boxA}'`);
   const gerantNom = await gerant.from('boxes').update({ name: `[TEST] Box ap-a-${stamp} renommée` }).eq('id', boxA).select('name').single();
-  const admFlag = await adm.from('boxes').update({ auto_programming: true, auto_programming_tracks: ['crossfit', 'musculation'] }).eq('id', boxA).select('auto_programming, auto_programming_tracks');
+  const admFlag = await adm.from('boxes').update({ auto_programming: true, auto_programming_tracks: ['functional', 'musculation'] }).eq('id', boxA).select('auto_programming, auto_programming_tracks');
   const flagsAdmin = psql(`select auto_programming::text || '|' || array_to_string(auto_programming_tracks, ',') from boxes where id='${boxA}'`);
-  const admOwnFlag = await adm.from('boxes').update({ auto_programming: true, auto_programming_tracks: ['crossfit', 'musculation'] }).eq('id', boxC).select('auto_programming');
+  const admOwnFlag = await adm.from('boxes').update({ auto_programming: true, auto_programming_tracks: ['functional', 'musculation'] }).eq('id', boxC).select('auto_programming');
   const flagsAdminOwn = psql(`select auto_programming::text || '|' || array_to_string(auto_programming_tracks, ',') from boxes where id='${boxC}'`);
   const svcFlag = await db.from('boxes').update({ auto_programming: true, auto_programming_tracks: ['musculation'] }).eq('id', boxB).select('auto_programming').single();
   const badTrack = await db.from('boxes').update({ auto_programming_tracks: ['yoga'] }).eq('id', boxB).select('id');
@@ -101,15 +101,15 @@ async function main() {
 
   // ── 3. Journal des runs ────────────────────────────────────────────────────
   const runIns = await db.from('box_auto_programming_runs').insert({
-    box_id: boxA, track: 'crossfit', iso_year: 2027, iso_week: 11, generator_version: '1.0.0', seed: 42, status: 'done',
+    box_id: boxA, track: 'functional', iso_year: 2027, iso_week: 11, generator_version: '1.0.0', seed: 42, status: 'done',
   }).select('id').single();
   if (runIns.error) throw new Error(`run : ${runIns.error.message}`);
   const runId = runIns.data.id;
   const runDup = await db.from('box_auto_programming_runs').insert({
-    box_id: boxA, track: 'crossfit', iso_year: 2027, iso_week: 11, generator_version: '1.0.0', seed: 43,
+    box_id: boxA, track: 'functional', iso_year: 2027, iso_week: 11, generator_version: '1.0.0', seed: 43,
   }).select('id');
   const runUpsert = await db.from('box_auto_programming_runs').upsert({
-    box_id: boxA, track: 'crossfit', iso_year: 2027, iso_week: 11, generator_version: '1.0.0', seed: 99, regen_counter: 1, status: 'running',
+    box_id: boxA, track: 'functional', iso_year: 2027, iso_week: 11, generator_version: '1.0.0', seed: 99, regen_counter: 1, status: 'running',
   }, { onConflict: 'box_id,track,iso_year,iso_week' }).select('id, seed, regen_counter').single();
   const runVuGerant = await gerant.from('box_auto_programming_runs').select('id').eq('box_id', boxA);
   const runVuAutre = await gerantB.from('box_auto_programming_runs').select('id').eq('box_id', boxA);
@@ -150,7 +150,7 @@ async function main() {
     ['gérant : les flags n’ont pas bougé (invariant avant/après)', () => flagsAvant === flagsApres && flagsAvant === 'false|', () => `${flagsAvant} → ${flagsApres}`],
     ['gérant : renomme encore sa box (contrôle positif, le trigger ne bloque que les flags)', () => !gerantNom.error && /renommée/.test(gerantNom.data?.name ?? ''), () => msg(gerantNom)],
     ['profil admin sur une box qu’il ne possède pas : 0 ligne (RLS boxes = propriétaire), flags intacts', () => !admFlag.error && (admFlag.data ?? []).length === 0 && flagsAdmin === 'false|', () => `${msg(admFlag)} · ${(admFlag.data ?? []).length} ligne(s) · base=${flagsAdmin}`],
-    ['profil admin sur sa propre box : le trigger le laisse poser les deux flags', () => !admOwnFlag.error && flagsAdminOwn === 'true|crossfit,musculation', () => `${msg(admOwnFlag)} · base=${flagsAdminOwn}`],
+    ['profil admin sur sa propre box : le trigger le laisse poser les deux flags', () => !admOwnFlag.error && flagsAdminOwn === 'true|functional,musculation', () => `${msg(admOwnFlag)} · base=${flagsAdminOwn}`],
     ['service_role (fonction edge / backend) : passe', () => !svcFlag.error && svcFlag.data?.auto_programming === true, () => msg(svcFlag)],
     ['CHECK tracks : « yoga » refusé', () => !!badTrack.error && /boxes_auto_programming_tracks_check/.test(badTrack.error.message), () => msg(badTrack)],
     ['MUTATION INVERSE : trigger retiré → le gérant passe (rouge nommé)', () => !sabote.error && sabote.data?.auto_programming === false, () => msg(sabote)],

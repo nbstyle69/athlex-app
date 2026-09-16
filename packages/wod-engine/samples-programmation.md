@@ -2,11 +2,11 @@
 
 Moteur séance `1.0.0` · banque séance v1 · catalogue v2. Box fictive `00000000-0000-4000-8000-00000000f17e`, seed = hash(box, piste, année ISO, semaine ISO, regen 0) — exactement ce que `generate-box-week` poserait dans `box_wods` (source `auto`, audience `all`).
 
-Deux semaines consécutives CrossFit / Hyrox (la seconde reçoit les signatures de la première en anti-répétition), puis deux semaines Musculation sur deux objectifs du cycle. Les relâchements sont imprimés tels que journalisés dans `box_auto_programming_runs.relaxations`.
+Deux semaines consécutives Functional / Hybrid (la seconde reçoit les signatures de la première en anti-répétition), puis deux semaines Musculation sur deux objectifs du cycle. Les relâchements sont imprimés tels que journalisés dans `box_auto_programming_runs.relaxations`.
 
 Cycle Musculation par semaine ISO : W1 Hypertrophie · W2 Hypertrophie · W3 Endurance musculaire · W4 Endurance musculaire · W5 Force · W6 Force · W7 Hypertrophie
 
-## CrossFit / Hyrox — 2026-W40 (lundi 2026-09-28)
+## Functional / Hybrid — 2026-W40 (lundi 2026-09-28)
 
 seed `371985941` · publication `publish_at = 2026-09-27T16:00:00.000Z` (dimanche 18:00 Paris) · volume gym RX de la semaine : pull 100/150, HSPU 0/80 · aucun relâchement semaine
 
@@ -267,7 +267,7 @@ Finisher — 3 rounds, rythme continu :
 30 s Hollow Hold
 ```
 
-## CrossFit / Hyrox — 2026-W41 (lundi 2026-10-05)
+## Functional / Hybrid — 2026-W41 (lundi 2026-10-05)
 
 seed `2812823762` · publication `publish_at = 2026-10-04T16:00:00.000Z` (dimanche 18:00 Paris) · volume gym RX de la semaine : pull 110/150, HSPU 0/80 · aucun relâchement semaine
 
@@ -526,9 +526,9 @@ Finisher — 3 rounds, rythme continu :
 
 ## Musculation — 2026-W40 (lundi 2026-09-28) · objectif **Endurance musculaire**
 
-seed `2189133668` · publication `publish_at = 2026-09-27T16:00:00.000Z` · leaderboard désactivé sur les 5 séances · séries hebdo par muscle principal (plafond 16) : tronc 15, fessiers 14, pecs 9, epaules_post 9, quadriceps 9, biceps 9, lombaires 9, epaules 8, ischios 6, dos 5, triceps 4, mollets 4, obliques 3 · **relâchements semaine : fessiers_ischios:bonus_slot, fessiers_ischios:slot_muscle, fessiers_ischios:slot_role, jambes:bonus_slot, jambes:slot_role, pull:bonus_slot, pull:slot_muscle, push:bonus_slot**
+seed `2189133668` · publication `publish_at = 2026-09-27T16:00:00.000Z` · leaderboard désactivé sur les 5 séances · séries hebdo par muscle principal (plafond 16) : tronc 15, fessiers 12, lombaires 10, pecs 9, epaules 9, quadriceps 9, biceps 8, ischios 8, epaules_post 7, triceps 5, mollets 5, dos 5, obliques 3 · **relâchements semaine : fessiers_ischios:slot_muscle, fessiers_ischios:slot_role, jambes:bonus_slot, pull:slot_muscle, push:bonus_slot**
 
-### #1 — Lundi 2026-09-28 · Push · Endurance musculaire · 41' (budget 45')
+### #1 — Lundi 2026-09-28 · Push · Endurance musculaire · 43' (budget 45')
 
 squelette `push_endurance` · signature `musculation|push_endurance|db_bench_press,strict_press,db_fly,overhead_triceps_extension,lateral_raise,bent_over_lateral_raise` · **relâchements : bonus_slot**
 
@@ -536,47 +536,46 @@ squelette `push_endurance` · signature `musculation|push_endurance|db_bench_pre
 Musculation · Push · Endurance musculaire · 45' · Box
 
 DB Bench Press — 5 × 20 — charge RPE 7 — repos 40s
-Strict Press — 4 × 20 @ 52 %1RM — charge sans 1RM connu : RPE 7 — repos 40s
+Strict Press — 5 × 20 @ 52 %1RM — charge sans 1RM connu : RPE 7 — repos 40s
 DB Fly — 4 × 20 — charge RPE 7 — repos 40s
-Overhead Triceps Extension — 4 × 20 — charge RPE 7 — repos 40s
+Overhead Triceps Extension — 5 × 20 — charge RPE 7 — repos 40s
 Lateral Raise — 4 × 20 — charge RPE 7 — repos 40s
-Bent Over Lateral Raise — 4 × 20 — charge RPE 7 — repos 40s
+Bent Over Lateral Raise — 3 × 18 — charge RPE 7 — repos 40s
 
-Durée estimée 41'
+Durée estimée 43'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
-### #2 — Mardi 2026-09-29 · Jambes · Endurance musculaire · 42' (budget 45')
+### #2 — Mardi 2026-09-29 · Jambes · Endurance musculaire · 41' (budget 45')
 
-squelette `jambes_endurance` · signature `musculation|jambes_endurance|air_squat,reverse_lunge,db_lunge,bodyweight_calf_raise,vacuum,glute_bridge` · **relâchements : bonus_slot, slot_role**
+squelette `jambes_endurance` · signature `musculation|jambes_endurance|air_squat,bodyweight_reverse_lunge,squat_hold,bodyweight_calf_raise,hollow_hold,glute_bridge` · **relâchements : bonus_slot**
 
 ```
 Musculation · Jambes · Endurance musculaire · 45' · Box
 
 Air Squats — 5 × 20 — charge poids du corps — repos 40s
-DB Reverse Lunge — 4 × 20 / jambe — charge RPE 7 — repos 40s
-DB Lunges — 4 × 20 / jambe — charge RPE 7 — repos 40s
-Calf Raise (bodyweight) — 4 × 20 — charge poids du corps — repos 40s
-Stomach Vacuum — 4 × 60 s — repos 30s
-Glute Bridge — 4 × 20 — charge poids du corps — repos 40s
+Reverse Lunge — 5 × 24 — charge poids du corps — repos 40s
+Squat Hold — 4 × 60 s — repos 40s
+Calf Raise (bodyweight) — 5 × 20 — charge poids du corps — repos 40s
+Hollow Hold — 5 × 60 s — repos 30s
+Glute Bridge — 3 × 20 — charge poids du corps — repos 40s
 
-Durée estimée 42'
+Durée estimée 41'
 Stimulus : Rythme continu, aucune série à l'échec
 ```
 
 ### #3 — Jeudi 2026-10-01 · Pull · Endurance musculaire · 42' (budget 45')
 
-squelette `pull_endurance` · signature `musculation|pull_endurance|neutral_grip_pull_up,barbell_curl,rear_delt_fly,cross_body_hammer_curl,dead_bug,hammer_curl` · **relâchements : bonus_slot, slot_muscle**
+squelette `pull_endurance` · signature `musculation|pull_endurance|neutral_grip_pull_up,barbell_curl,rear_delt_fly,cross_body_hammer_curl,side_plank` · **relâchements : slot_muscle**
 
 ```
 Musculation · Pull · Endurance musculaire · 45' · Box
 
 Neutral Grip Pull-Ups — 5 × 20 — charge poids du corps — repos 40s
-Barbell Curl — 3 × 20 — charge RPE 7 — repos 40s
-Rear Delt Fly — 5 × 20 — charge RPE 7 — repos 40s
-Cross-Body Hammer Curl — 3 × 20 / bras — charge RPE 7 — repos 40s
-Dead Bug — 5 × 20 — charge poids du corps — repos 30s
-Hammer Curl — 3 × 20 — charge RPE 7 — repos 40s
+Barbell Curl — 4 × 20 — charge RPE 7 — repos 40s
+Rear Delt Fly — 4 × 20 — charge RPE 7 — repos 40s
+Cross-Body Hammer Curl — 4 × 20 / bras — charge RPE 7 — repos 40s
+Side Plank — 4 × 60 s / côté — repos 30s
 
 Durée estimée 42'
 Stimulus : Rythme continu, aucune série à l'échec
@@ -584,17 +583,16 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ### #4 — Vendredi 2026-10-02 · Fessiers & ischios · Endurance musculaire · 42' (budget 45')
 
-squelette `fessiers_ischios_endurance` · signature `musculation|fessiers_ischios_endurance|romanian_deadlift,single_leg_hip_thrust,back_extension,bodyweight_single_leg_rdl,superman,single_leg_glute_bridge` · **relâchements : bonus_slot, slot_muscle, slot_role**
+squelette `fessiers_ischios_endurance` · signature `musculation|fessiers_ischios_endurance|romanian_deadlift,reverse_lunge,back_extension,bodyweight_single_leg_rdl,superman` · **relâchements : slot_muscle, slot_role**
 
 ```
 Musculation · Fessiers & ischios · Endurance musculaire · 45' · Box
 
-Romanian Deadlift — 3 × 20 @ 52 %1RM — charge sans 1RM connu : RPE 7 — repos 40s
-Single-Leg Hip Thrust — 3 × 20 / jambe — charge poids du corps — repos 40s
-Back Extension — 3 × 20 — charge poids du corps — repos 40s
-Single-Leg RDL (bodyweight) — 3 × 20 / jambe — charge poids du corps — repos 40s
+Romanian Deadlift — 4 × 20 @ 52 %1RM — charge sans 1RM connu : RPE 7 — repos 40s
+DB Reverse Lunge — 4 × 20 / jambe — charge RPE 7 — repos 40s
+Back Extension — 4 × 20 — charge poids du corps — repos 40s
+Single-Leg RDL (bodyweight) — 4 × 20 / jambe — charge poids du corps — repos 40s
 Superman Hold — 3 × 60 s — repos 30s
-Single-Leg Glute Bridge — 3 × 18 / jambe — charge poids du corps — repos 40s
 
 Durée estimée 42'
 Stimulus : Rythme continu, aucune série à l'échec
@@ -618,23 +616,22 @@ Stimulus : Rythme continu, aucune série à l'échec
 
 ## Musculation — 2026-W43 (lundi 2026-10-19) · objectif **Hypertrophie**
 
-seed `3189392821` · publication `publish_at = 2026-10-18T16:00:00.000Z` · leaderboard désactivé sur les 5 séances · séries hebdo par muscle principal (plafond 16) : ischios 16, pecs 11, fessiers 10, epaules 7, quadriceps 7, trapezes 7, biceps 6, lombaires 6, tronc 6, dos 4, triceps 3, mollets 3, epaules_post 3, obliques 3 · **relâchements semaine : fessiers_ischios:bonus_slot, fessiers_ischios:slot_ids, fessiers_ischios:slot_muscle, fessiers_ischios:slot_unilateral, jambes:slot_objective, jambes:slot_role, pull:bonus_slot, pull:optional_slot_empty, pull:slot_muscle, push:bonus_slot, push:optional_slot_empty, tronc:slot_objective, weekly_cap:ischios**
+seed `3189392821` · publication `publish_at = 2026-10-18T16:00:00.000Z` · leaderboard désactivé sur les 5 séances · séries hebdo par muscle principal (plafond 16) : ischios 15, fessiers 11, pecs 9, epaules 9, trapezes 8, quadriceps 7, lombaires 6, tronc 6, triceps 4, dos 4, epaules_post 4, biceps 4, mollets 3, obliques 3 · **relâchements semaine : fessiers_ischios:slot_muscle, fessiers_ischios:slot_unilateral, jambes:slot_objective, jambes:slot_role, pull:optional_slot_empty, pull:slot_muscle, push:optional_slot_empty, tronc:slot_objective**
 
-### #6 — Lundi 2026-10-19 · Push · Hypertrophie · 41' (budget 45')
+### #6 — Lundi 2026-10-19 · Push · Hypertrophie · 42' (budget 45')
 
-squelette `push_hypertrophie` · signature `musculation|push_hypertrophie|wide_push_up,strict_press,db_pullover,lateral_raise,overhead_triceps_extension,incline_db_fly` · **relâchements : bonus_slot, optional_slot_empty**
+squelette `push_hypertrophie` · signature `musculation|push_hypertrophie|decline_push_up,strict_press,db_pullover,lateral_raise,overhead_triceps_extension` · **relâchements : optional_slot_empty**
 
 ```
 Musculation · Push · Hypertrophie · 45' · Box
 
-Wide Push-Ups — 4 × 12 — charge poids du corps — repos 1:30
-Strict Press — 4 × 12 @ 65 %1RM — charge sans 1RM connu : RPE 8 — repos 1:15
+Decline Push-Ups — 5 × 12 — charge poids du corps — repos 1:30
+Strict Press — 5 × 12 @ 65 %1RM — charge sans 1RM connu : RPE 8 — repos 1:15
 DB Pullover — 4 × 12 — charge RPE 8 — repos 1:15
-Lateral Raise — 3 × 12 — charge RPE 8 — repos 1:15
-Overhead Triceps Extension — 3 × 12 — charge RPE 8 — repos 1:15
-Incline DB Fly — 3 × 12 — charge RPE 8 — repos 1:15
+Lateral Raise — 4 × 12 — charge RPE 8 — repos 1:15
+Overhead Triceps Extension — 4 × 12 — charge RPE 8 — repos 1:15
 
-Durée estimée 41'
+Durée estimée 42'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
@@ -658,37 +655,35 @@ Stimulus : Dernière série à 1-2 reps de l'échec
 
 ### #8 — Jeudi 2026-10-22 · Pull · Hypertrophie · 41' (budget 45')
 
-squelette `pull_hypertrophie` · signature `musculation|pull_hypertrophie|db_row,yates_row,bent_over_lateral_raise,concentration_curl,db_shrug,spider_curl` · **relâchements : bonus_slot, optional_slot_empty, slot_muscle**
+squelette `pull_hypertrophie` · signature `musculation|pull_hypertrophie|db_row,yates_row,bent_over_lateral_raise,concentration_curl,db_shrug` · **relâchements : optional_slot_empty, slot_muscle**
 
 ```
 Musculation · Pull · Hypertrophie · 45' · Box
 
 DB Row — 4 × 12 / bras — charge RPE 8 — repos 1:30
 Yates Row — 4 × 12 @ 65 %1RM — charge sans 1RM connu : RPE 8 — repos 1:15
-Bent Over Lateral Raise — 3 × 12 — charge RPE 8 — repos 1:15
-Concentration Curl — 3 × 12 / bras — charge RPE 8 — repos 1:15
-DB Shrug — 3 × 12 — charge RPE 8 — repos 1:15
-Spider Curl — 3 × 12 — charge RPE 8 — repos 1:15
+Bent Over Lateral Raise — 4 × 12 — charge RPE 8 — repos 1:15
+Concentration Curl — 4 × 12 / bras — charge RPE 8 — repos 1:15
+DB Shrug — 4 × 12 — charge RPE 8 — repos 1:15
 
 Durée estimée 41'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 
-### #9 — Vendredi 2026-10-23 · Fessiers & ischios · Hypertrophie · 42' (budget 45')
+### #9 — Vendredi 2026-10-23 · Fessiers & ischios · Hypertrophie · 41' (budget 45')
 
-squelette `fessiers_ischios_hypertrophie` · signature `musculation|fessiers_ischios_hypertrophie|db_rdl,db_hip_thrust,good_morning,back_extension,single_leg_glute_bridge,romanian_deadlift` · **relâchements : bonus_slot, slot_ids, slot_muscle, slot_unilateral, weekly_cap**
+squelette `fessiers_ischios_hypertrophie` · signature `musculation|fessiers_ischios_hypertrophie|db_rdl,db_hip_thrust,good_morning,glute_bridge,back_extension` · **relâchements : slot_muscle, slot_unilateral**
 
 ```
 Musculation · Fessiers & ischios · Hypertrophie · 45' · Box
 
-DB Romanian Deadlift — 3 × 12 — charge RPE 8 — repos 1:30
+DB Romanian Deadlift — 4 × 12 — charge RPE 8 — repos 1:30
 DB Hip Thrust — 4 × 12 — charge RPE 8 — repos 1:30
-Good Morning — 3 × 12 — charge RPE 8 — repos 1:15
+Good Morning — 4 × 12 — charge RPE 8 — repos 1:15
+Glute Bridge — 4 × 15 — charge poids du corps — repos 1:15
 Back Extension — 3 × 12 — charge poids du corps — repos 1:15
-Single-Leg Glute Bridge — 3 × 12 / jambe — charge poids du corps — repos 1:15
-Romanian Deadlift — 3 × 10 @ 68 %1RM — charge sans 1RM connu : RPE 8 — repos 1:15
 
-Durée estimée 42'
+Durée estimée 41'
 Stimulus : Dernière série à 1-2 reps de l'échec
 ```
 

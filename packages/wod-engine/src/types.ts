@@ -244,7 +244,7 @@ export interface SkeletonBank {
   movement_caps: MovementCap[];
   /** squelettes Musculation (M1), lignes `discipline = 'musculation'` de `wod_skeletons` */
   muscu_skeletons: MuscuSkeleton[];
-  /** squelettes de séance CrossFit / Hyrox (J1), lignes `discipline = 'session'` de `wod_skeletons` */
+  /** squelettes de séance Functional / Hybrid (J1), lignes `discipline = 'session'` de `wod_skeletons` */
   session_skeletons: SessionSkeleton[];
 }
 
@@ -387,7 +387,7 @@ export interface WeekParams {
 }
 
 export interface GeneratedWeek {
-  track: 'crossfit';
+  track: 'functional';
   iso_year: number;
   iso_week: number;
   seed: number;

@@ -1,7 +1,7 @@
 import type { SessionBlockAOption, SessionBlockBOption, SessionFinisherOption, SessionSkeleton, StrengthStep } from '../types';
 
 /**
- * Squelettes de séance CrossFit / Hyrox (brief J1 §3-§4) : un par jour, lundi → samedi.
+ * Squelettes de séance Functional / Hybrid (brief J1 §3-§4) : un par jour, lundi → samedi.
  * Bloc A en grammaire `strength` (% du 1RM, jamais de kg), bloc C tiré dans la banque
  * Functional existante avec `pattern_not` = pattern lourd du bloc A.
  */

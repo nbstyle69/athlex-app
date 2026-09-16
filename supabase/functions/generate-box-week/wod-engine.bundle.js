@@ -15022,7 +15022,7 @@ var CATALOG_SNAPSHOT = {
       "badge_key": null,
       "active": true,
       "version": 1,
-      "notes": "Musculation (M1) \u2014 jamais tir\xE9 en metcon",
+      "notes": "Musculation \u2014 \xE0 deux jambes ; variante facile sans mat\xE9riel",
       "muscu": {
         "muscle_primary": "fessiers",
         "muscle_secondary": [
@@ -15037,9 +15037,14 @@ var CATALOG_SNAPSHOT = {
         "seconds_per_rep": 3,
         "setup_s": 10,
         "objectives": [
+          "hypertrophie",
           "endurance"
         ],
         "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
           "endurance": [
             15,
             20
@@ -21309,6 +21314,295 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps"
       }
+    },
+    {
+      "id": "incline_push_up",
+      "name": "Incline Push-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation \u2014 mains sur box / banc / marche ; variante facile sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps",
+          "epaules_ant"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 6,
+        "weight_gym": 4,
+        "unit": "reps"
+      }
+    },
+    {
+      "id": "wall_push_up",
+      "name": "Wall Push-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "wall"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation \u2014 variante facile sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 2,
+        "weight_gym": 2,
+        "unit": "reps"
+      }
+    },
+    {
+      "id": "bird_dog",
+      "name": "Bird Dog",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation \u2014 reps altern\xE9es ; variante facile sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "lombaires",
+          "fessiers"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            10,
+            16
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps"
+      }
+    },
+    {
+      "id": "bodyweight_reverse_lunge",
+      "name": "Reverse Lunge",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation \u2014 sans charge ; reps altern\xE9es ; variante facile sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "quadriceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            16
+          ],
+          "endurance": [
+            16,
+            24
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps"
+      }
+    },
+    {
+      "id": "squat_hold",
+      "name": "Squat Hold",
+      "family": "bodyweight",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "none",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "Musculation \u2014 unit\xE9 secondes ; variante facile sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 5,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "s"
+      }
     }
   ]
 };
@@ -23615,6 +23909,10 @@ var VOLUME_CAP_SETS = { hypertrophie: 12, force: 10, endurance: 9 };
 var WEIGHTED_IDS = ["dips", "strict_pull_up", "chin_up", "wide_grip_pull_up", "neutral_grip_pull_up", "close_grip_pull_up", "close_grip_dips"];
 var UNIT_RANGES = { s: [30, 60], m: [30, 50] };
 var LOAD_STEP_KG = 2.5;
+var WEIGHTED_BODYWEIGHT_RATIO = 0.1;
+var TEMPO_311 = "3-1-1";
+var TEMPO_311_SECONDS_PER_REP = 5;
+var CORE_REST_MAX = 90;
 var SCHEMES = {
   hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rest_max: 120, rpe: 8, rir: "derni\xE8re s\xE9rie \xE0 1-2 reps de l'\xE9chec" },
   force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rest_max: 180, rpe: 8, rir: "RIR 2, derni\xE8re s\xE9rie RPE 9" },
@@ -23772,10 +24070,14 @@ function lineFor(ctx, p) {
   const range = repRange(p.m, p.objective);
   const sets = p.role === "core" || p.role === "calves" ? Math.min(scheme.sets.other, 3) : scheme.sets[kind];
   const rest = p.role === "core" ? Math.min(scheme.rest.other, p.objective === "endurance" ? 30 : 60) : p.role === "calves" ? Math.min(scheme.rest.other, 45) : scheme.rest[kind];
-  return { ...p, sets, reps: Math.round((range[0] + range[1]) / 2), range, rest };
+  const tempo = ctx.params.equipment === "none" && ctx.params.objective === "hypertrophie" && p.m.muscu.load_mode === "bodyweight" && p.m.muscu.unit === "reps" && p.m.muscu.compound ? TEMPO_311 : void 0;
+  return { ...p, sets, reps: Math.round((range[0] + range[1]) / 2), range, rest, ...tempo ? { tempo } : {} };
 }
 function sessionSeconds(lines) {
-  return lines.reduce((acc, l) => acc + l.m.muscu.setup_s + l.sets * (l.reps * l.m.muscu.seconds_per_rep * (l.m.muscu.unilateral ? 2 : 1) + l.rest), 0);
+  return lines.reduce((acc, l) => {
+    const spr = l.tempo ? Math.max(l.m.muscu.seconds_per_rep, TEMPO_311_SECONDS_PER_REP) : l.m.muscu.seconds_per_rep;
+    return acc + l.m.muscu.setup_s + l.sets * (l.reps * spr * (l.m.muscu.unilateral ? 2 : 1) + l.rest);
+  }, 0);
 }
 function roundLoad(kg) {
   return Math.round(kg / LOAD_STEP_KG) * LOAD_STEP_KG;
@@ -23786,7 +24088,8 @@ function loadFor(ctx, l) {
   const scheme = SCHEMES[l.objective];
   if (mu.load_mode === "bodyweight") {
     if (params.objective === "force" && params.level !== "debutant" && WEIGHTED_IDS.includes(l.m.id) && l.objective === "force") {
-      return { mode: "weighted", rpe: scheme.rpe };
+      const bw = params.bodyweight_kg;
+      return bw && bw > 0 ? { mode: "weighted", kg: roundLoad(bw * WEIGHTED_BODYWEIGHT_RATIO), rpe: scheme.rpe } : { mode: "weighted", rpe: scheme.rpe };
     }
     return { mode: "bodyweight" };
   }
@@ -23859,13 +24162,20 @@ function bonusExercise(ctx, lines, target) {
   const last = lines[lines.length - 1]?.m.muscu.muscle_primary ?? null;
   const cap = VOLUME_CAP_SETS[ctx.params.objective];
   const vol = volumeByMuscle(lines);
-  const muscles = TARGET_MUSCLES[target].filter((mu) => !ctx.excludedMuscles.has(mu) && (vol.get(mu) ?? 0) + 3 <= cap);
-  const base = ctx.pool.filter((m2) => !used.has(m2.id) && muscles.includes(m2.muscu.muscle_primary) && m2.muscu.muscle_primary !== last && objectiveFor(m2, ctx.params.objective));
+  const minSets = SCHEMES[ctx.params.objective].sets_min;
+  const muscles = TARGET_MUSCLES[target].filter((mu) => !ctx.excludedMuscles.has(mu) && (vol.get(mu) ?? 0) + minSets <= cap);
+  const eligible = (m2) => !used.has(m2.id) && m2.muscu.muscle_primary !== last && !ctx.excludedMuscles.has(m2.muscu.muscle_primary) && (vol.get(m2.muscu.muscle_primary) ?? 0) + minSets <= cap && objectiveFor(m2, ctx.params.objective);
+  const targetMuscles = TARGET_MUSCLES[target];
+  const primary = ctx.pool.filter((m2) => eligible(m2) && muscles.includes(m2.muscu.muscle_primary));
+  const secondary = primary.length ? [] : ctx.pool.filter((m2) => eligible(m2) && m2.muscu.muscle_secondary.some((mu) => targetMuscles.includes(mu)));
+  const base = primary.length ? primary : secondary;
   const iso2 = base.filter((m2) => !m2.muscu.compound);
   const m = ctx.rng.pickWeighted(iso2.length ? iso2 : base, (x) => equipmentWeight(x, ctx.params.equipment));
   if (!m) return null;
   const p = { m, role: m.muscu.compound ? "secondary_compound" : "isolation", objective: objectiveFor(m, ctx.params.objective), optional: true, slotIndex: 99 };
-  return lineFor(ctx, p);
+  const line = lineFor(ctx, p);
+  line.sets = Math.min(line.sets, cap - (vol.get(m.muscu.muscle_primary) ?? 0));
+  return line;
 }
 function fitBudget(ctx, input, target) {
   const budget = ctx.params.budget_min * 60;
@@ -23909,6 +24219,16 @@ function fitBudget(ctx, input, target) {
       for (const l of underReps) l.reps = Math.min(l.range[1], l.reps + (l.range[1] - l.range[0] >= 4 ? 2 : 1));
       continue;
     }
+    const cap = VOLUME_CAP_SETS[ctx.params.objective];
+    const vol = volumeByMuscle(lines);
+    const addable = lines.filter((l) => l.sets < SCHEMES[l.objective].sets_max && (vol.get(l.m.muscu.muscle_primary) ?? 0) < cap).sort((a, b) => a.sets - b.sets || a.slotIndex - b.slotIndex);
+    const fits = (l) => {
+      l.sets++;
+      if (total(lines) <= hi) return true;
+      l.sets--;
+      return false;
+    };
+    if (addable.some(fits)) continue;
     if (lines.length < Math.min(maxEx, MAX_EXERCISES)) {
       const bonus = bonusExercise(ctx, lines, target);
       if (bonus) {
@@ -23925,20 +24245,23 @@ function fitBudget(ctx, input, target) {
         }
       }
     }
-    const cap = VOLUME_CAP_SETS[ctx.params.objective];
-    const vol = volumeByMuscle(lines);
-    const addable = lines.filter((l) => l.sets < SCHEMES[l.objective].sets_max && (vol.get(l.m.muscu.muscle_primary) ?? 0) < cap).sort((a, b) => a.sets - b.sets || a.slotIndex - b.slotIndex);
-    const fits = (l) => {
-      l.sets++;
+    const tempoable = lines.filter((l) => !l.tempo && l.m.muscu.unit === "reps" && l.m.muscu.seconds_per_rep < TEMPO_311_SECONDS_PER_REP).sort((a, b) => a.slotIndex - b.slotIndex);
+    const slow = (l) => {
+      l.tempo = TEMPO_311;
       if (total(lines) <= hi) return true;
-      l.sets--;
+      delete l.tempo;
       return false;
     };
-    if (addable.some(fits)) continue;
-    const restable = lines.filter((l) => l.role !== "core" && l.role !== "calves" && l.rest < SCHEMES[l.objective].rest_max);
+    if (tempoable.some(slow)) {
+      ctx.relax.add("tempo_311");
+      continue;
+    }
+    const restMax = (l) => l.role === "core" || l.role === "calves" ? Math.min(CORE_REST_MAX, SCHEMES[l.objective].rest_max) : SCHEMES[l.objective].rest_max;
+    const mainRestable = lines.filter((l) => l.role !== "core" && l.role !== "calves" && l.rest < restMax(l));
+    const restable = mainRestable.length ? mainRestable : lines.filter((l) => l.rest < restMax(l));
     if (restable.length) {
       const before = restable.map((l) => l.rest);
-      for (const l of restable) l.rest = Math.min(SCHEMES[l.objective].rest_max, l.rest + 15);
+      for (const l of restable) l.rest = Math.min(restMax(l), l.rest + 15);
       if (total(lines) <= hi) {
         ctx.relax.add("rest_extended");
         continue;
@@ -23946,6 +24269,14 @@ function fitBudget(ctx, input, target) {
       restable.forEach((l, i) => {
         l.rest = before[i];
       });
+    }
+    if (ctx.params.level === "debutant" && lines.length <= BEGINNER_MAX_EXERCISES) {
+      const bonus = bonusExercise(ctx, lines, target);
+      if (bonus && total([...lines, bonus]) <= hi) {
+        lines.push(bonus);
+        ctx.relax.add("beginner_fifth");
+        continue;
+      }
     }
     ctx.relax.add("budget_short");
     break;
@@ -23975,7 +24306,7 @@ function notesFor(ctx, l, load) {
   if (ctx.params.objective === "force" && l.objective !== "force") parts.push("sch\xE9ma hypertrophie");
   if (load.mode === "rpe" && load.rm_reference && ctx.params.level === "debutant") parts.push("monter jusqu'\xE0 une charge propre");
   if (load.mode === "bodyweight" && ctx.params.level === "debutant" && /pull_up|chin_up/.test(l.m.id)) parts.push("D\xE9butant : banded");
-  if (load.mode === "bodyweight" && ctx.params.equipment === "none" && ctx.params.objective === "hypertrophie" && l.m.muscu.unit === "reps" && l.m.muscu.compound) parts.push("tempo 3-1-1");
+  if (l.tempo) parts.push(`tempo ${l.tempo}`);
   return parts.join(" \xB7 ");
 }
 function toExercise(ctx, l) {
@@ -23992,7 +24323,8 @@ function toExercise(ctx, l) {
     load,
     rest_s: l.rest,
     notes: notesFor(ctx, l, load),
-    badge_key: l.m.badge_key
+    badge_key: l.m.badge_key,
+    optional: l.optional
   };
 }
 function muscuSignature(skeletonId, exercises) {
@@ -24163,7 +24495,7 @@ function loadText2(e) {
     case "percent":
       return `${l.percent} % 1RM`;
     case "weighted":
-      return `lest\xE9e, RPE ${l.rpe}`;
+      return l.kg ? `lest\xE9 ${l.kg} kg, RPE ${l.rpe}` : `lest\xE9 l\xE9ger, RPE ${l.rpe}`;
     case "bodyweight":
       return e.reps_unit === "reps" ? "poids du corps" : "\u2014";
     default:
@@ -24180,7 +24512,7 @@ function exerciseLine(e) {
   } else if (l.mode === "percent") {
     out += ` @ ${l.percent} %1RM \u2014 charge sans 1RM connu : RPE ${l.rpe}`;
   } else if (l.mode === "weighted") {
-    out += ` \u2014 charge lest\xE9e, RPE ${l.rpe}`;
+    out += l.kg ? ` \u2014 lest\xE9 ${l.kg} kg (10 % du poids de corps), RPE ${l.rpe}` : ` \u2014 lest\xE9 l\xE9ger, RPE ${l.rpe}`;
   } else if (l.mode === "rpe") {
     out += ` \u2014 charge RPE ${l.rpe}`;
   } else if (e.reps_unit === "reps") {
@@ -24629,7 +24961,7 @@ function generateWeek(params, catalog, bank, seed) {
   }
   const gym_volume = weeklyGymVolume(sessions);
   if (gym_volume.pull > WEEKLY_GYM_CAPS.pull || gym_volume.hspu > WEEKLY_GYM_CAPS.hspu) relax.add("weekly_gym_cap_exceeded");
-  return { track: "crossfit", iso_year: params.iso_year, iso_week: params.iso_week, seed, sessions, gym_volume, relaxations: [...relax].sort() };
+  return { track: "functional", iso_year: params.iso_year, iso_week: params.iso_week, seed, sessions, gym_volume, relaxations: [...relax].sort() };
 }
 function setsByMuscle(days) {
   const v = /* @__PURE__ */ new Map();
@@ -24710,9 +25042,10 @@ function generateMuscuWeek(params, catalog, bank, seed) {
 }
 
 // packages/wod-engine/src/programming.ts
-var TRACKS = ["crossfit", "musculation"];
-var TRACK_LABEL = { crossfit: "CrossFit / Hyrox", musculation: "Musculation" };
-var TRACK_GROUP_NAME = { crossfit: "CrossFit / Hyrox", musculation: "Musculation" };
+var TRACKS = ["functional", "musculation"];
+var TRACK_LABEL = { functional: "Functional / Hybrid", musculation: "Musculation" };
+var TRACK_GROUP_NAME = { functional: "Functional / Hybrid", musculation: "Musculation" };
+var TRACK_SEED_KEY = { functional: "crossfit", musculation: "musculation" };
 var PROGRAMMING_VERSION = SESSION_ENGINE_VERSION;
 var REVEAL_HOUR_PARIS = 18;
 var RECENT_WEEKS = 4;
@@ -24741,9 +25074,9 @@ function revealAt(iso_year, iso_week) {
   return t.toISOString();
 }
 function weekSeed(box_id, track, iso_year, iso_week, regen_counter) {
-  return hashSeed(box_id, track, iso_year, iso_week, regen_counter);
+  return hashSeed(box_id, TRACK_SEED_KEY[track], iso_year, iso_week, regen_counter);
 }
-function crossfitWeekRows(week, ctx) {
+function functionalWeekRows(week, ctx) {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
   const publish_at = revealAt(ctx.iso_year, ctx.iso_week);
   const rows = [];
@@ -24838,9 +25171,9 @@ async function runWeekGeneration(db, catalog, bank, opts) {
         let rows;
         let signatures;
         let relaxations;
-        if (track === "crossfit") {
+        if (track === "functional") {
           const week = generateWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
-          rows = crossfitWeekRows(week, ctx);
+          rows = functionalWeekRows(week, ctx);
           signatures = week.sessions.map((s) => s.signature);
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];
         } else {
@@ -24920,6 +25253,7 @@ export {
   TRACKS,
   TRACK_GROUP_NAME,
   TRACK_LABEL,
+  TRACK_SEED_KEY,
   TRANSITION_MIN,
   UNIT_RANGES,
   VEST_LOAD_KG,
@@ -24938,7 +25272,6 @@ export {
   carriesIntention,
   catalogFromRows,
   categoriesFor,
-  crossfitWeekRows,
   deathByMinute,
   engineShare,
   estimateAll,
@@ -24947,6 +25280,7 @@ export {
   exerciseLine,
   forceBand,
   functionalRef,
+  functionalWeekRows,
   generateBlocC,
   generateMuscu,
   generateMuscuWeek,

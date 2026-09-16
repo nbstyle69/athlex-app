@@ -14,7 +14,7 @@
 //   POST {}                                  → semaine suivante, toutes les box
 //   POST { "box_id": "…" }                   → une box seulement
 //   POST { "iso_year": 2026, "iso_week": 40 } → semaine cible explicite
-//   POST { "regen": { "box_id": "…", "track": "crossfit" } }
+//   POST { "regen": { "box_id": "…", "track": "functional" } }
 //         → régénère (regen_counter + 1) ; les jours édités ou scorés restent.
 //
 // Le cron est DÉSACTIVÉ par défaut : voir docs/RUNBOOK_CRONS.md.

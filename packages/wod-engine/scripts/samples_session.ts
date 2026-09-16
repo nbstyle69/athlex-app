@@ -1,4 +1,4 @@
-// Génère samples-programmation.md : 2 semaines complètes CrossFit / Hyrox (12 séances)
+// Génère samples-programmation.md : 2 semaines complètes Functional / Hybrid (12 séances)
 // et 2 semaines complètes Musculation (10 séances), telles que la fonction edge
 // `generate-box-week` les poserait dans `box_wods` pour une box fictive.
 // Usage : npx tsx packages/wod-engine/scripts/samples_session.ts > packages/wod-engine/samples-programmation.md
@@ -40,7 +40,7 @@ function session(s: GeneratedSession, date: string, idx: number) {
 
 function cfWeek(w: GeneratedWeek, idx: { n: number }) {
   const dates = weekDates(w.iso_year, w.iso_week);
-  p(`## ${TRACK_LABEL.crossfit} — ${w.iso_year}-W${String(w.iso_week).padStart(2, '0')} (lundi ${dates[0]})`);
+  p(`## ${TRACK_LABEL.functional} — ${w.iso_year}-W${String(w.iso_week).padStart(2, '0')} (lundi ${dates[0]})`);
   p();
   p(`seed \`${w.seed}\` · publication \`publish_at = ${revealAt(w.iso_year, w.iso_week)}\` (dimanche 18:00 Paris) · volume gym RX de la semaine : pull ${w.gym_volume.pull}/${WEEKLY_GYM_CAPS.pull}, HSPU ${w.gym_volume.hspu}/${WEEKLY_GYM_CAPS.hspu}` +
     (w.relaxations.length ? ` · **relâchements semaine : ${w.relaxations.join(', ')}**` : ' · aucun relâchement semaine'));
@@ -74,7 +74,7 @@ p('# Échantillons — Programmation automatique AthleX Fitness (J1)');
 p();
 p(`Moteur séance \`${SESSION_ENGINE_VERSION}\` · banque séance v${SESSION_BANK_VERSION} · catalogue v${CATALOG_SNAPSHOT.version}. Box fictive \`${BOX_ID}\`, seed = hash(box, piste, année ISO, semaine ISO, regen 0) — exactement ce que \`generate-box-week\` poserait dans \`box_wods\` (source \`auto\`, audience \`all\`).`);
 p();
-p('Deux semaines consécutives CrossFit / Hyrox (la seconde reçoit les signatures de la première en anti-répétition), puis deux semaines Musculation sur deux objectifs du cycle. Les relâchements sont imprimés tels que journalisés dans `box_auto_programming_runs.relaxations`.');
+p('Deux semaines consécutives Functional / Hybrid (la seconde reçoit les signatures de la première en anti-répétition), puis deux semaines Musculation sur deux objectifs du cycle. Les relâchements sont imprimés tels que journalisés dans `box_auto_programming_runs.relaxations`.');
 p();
 p('Cycle Musculation par semaine ISO : ' + [1, 2, 3, 4, 5, 6, 7].map((w) => `W${w} ${OBJECTIVE_LABEL[muscuObjectiveForWeek(w)]}`).join(' · '));
 p();
@@ -82,7 +82,7 @@ p();
 const idx = { n: 0 };
 let recent: string[] = [];
 for (const wk of CF_WEEKS) {
-  const w = generateWeek({ iso_year: YEAR, iso_week: wk, recent_signatures: recent }, CATALOG_SNAPSHOT, BANK_V1, weekSeed(BOX_ID, 'crossfit', YEAR, wk, 0));
+  const w = generateWeek({ iso_year: YEAR, iso_week: wk, recent_signatures: recent }, CATALOG_SNAPSHOT, BANK_V1, weekSeed(BOX_ID, 'functional', YEAR, wk, 0));
   cfWeek(w, idx);
   recent = [...recent, ...w.sessions.map((s) => s.signature)];
 }

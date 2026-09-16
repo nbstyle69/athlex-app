@@ -13,11 +13,13 @@ import type {
 import { generateMuscuWeek, generateWeek, hashSeed, isoWeek, isoWeekMonday, DAY_LABEL, SESSION_ENGINE_VERSION } from './session';
 import { renderMuscu } from './muscu';
 
-export type Track = 'crossfit' | 'musculation';
-export const TRACKS: readonly Track[] = ['crossfit', 'musculation'];
-export const TRACK_LABEL: Record<Track, string> = { crossfit: 'CrossFit / Hyrox', musculation: 'Musculation' };
+export type Track = 'functional' | 'musculation';
+export const TRACKS: readonly Track[] = ['functional', 'musculation'];
+export const TRACK_LABEL: Record<Track, string> = { functional: 'Functional / Hybrid', musculation: 'Musculation' };
 /** Groupes créés dans la box (si absents) pour un futur ciblage par piste (J3). */
-export const TRACK_GROUP_NAME: Record<Track, string> = { crossfit: 'CrossFit / Hyrox', musculation: 'Musculation' };
+export const TRACK_GROUP_NAME: Record<Track, string> = { functional: 'Functional / Hybrid', musculation: 'Musculation' };
+/** Clé de piste entrant dans le seed (figée : la piste `functional` s'appelait `crossfit`, les seeds des samples relus en dépendent). */
+export const TRACK_SEED_KEY: Record<Track, string> = { functional: 'crossfit', musculation: 'musculation' };
 export const PROGRAMMING_VERSION = SESSION_ENGINE_VERSION;
 /** Lisibilité du Whiteboard : révélation dimanche 18:00 Paris, comme la Marketplace. */
 export const REVEAL_HOUR_PARIS = 18;
@@ -128,7 +130,7 @@ export function revealAt(iso_year: number, iso_week: number): string {
 }
 
 export function weekSeed(box_id: string, track: Track, iso_year: number, iso_week: number, regen_counter: number): number {
-  return hashSeed(box_id, track, iso_year, iso_week, regen_counter);
+  return hashSeed(box_id, TRACK_SEED_KEY[track], iso_year, iso_week, regen_counter);
 }
 
 export interface WeekContext {
@@ -139,7 +141,7 @@ export interface WeekContext {
   iso_week: number;
 }
 
-export function crossfitWeekRows(week: GeneratedWeek, ctx: WeekContext): BoxWodInsert[] {
+export function functionalWeekRows(week: GeneratedWeek, ctx: WeekContext): BoxWodInsert[] {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
   const publish_at = revealAt(ctx.iso_year, ctx.iso_week);
   const rows: BoxWodInsert[] = [];
@@ -261,9 +263,9 @@ export async function runWeekGeneration(
         let rows: BoxWodInsert[];
         let signatures: string[];
         let relaxations: string[];
-        if (track === 'crossfit') {
+        if (track === 'functional') {
           const week = generateWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
-          rows = crossfitWeekRows(week, ctx);
+          rows = functionalWeekRows(week, ctx);
           signatures = week.sessions.map((s) => s.signature);
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];
         } else {

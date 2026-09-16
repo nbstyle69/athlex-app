@@ -36,7 +36,7 @@ export {
 } from './muscu';
 export type { AfterClassMuscles } from './muscu';
 export {
-  runWeekGeneration, crossfitWeekRows, muscuWeekRows, weekDates, nextIsoWeek, revealAt, weekSeed, parisOffsetMinutes,
+  runWeekGeneration, functionalWeekRows, TRACK_SEED_KEY, muscuWeekRows, weekDates, nextIsoWeek, revealAt, weekSeed, parisOffsetMinutes,
   TRACKS, TRACK_LABEL, TRACK_GROUP_NAME, PROGRAMMING_VERSION, REVEAL_HOUR_PARIS, RECENT_WEEKS,
 } from './programming';
 export type {

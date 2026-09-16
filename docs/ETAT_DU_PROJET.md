@@ -63,6 +63,7 @@ Une ligne par capacité, avec la date du lot qui l'a fermée.
 | Import d'une programmation depuis un fichier CSV, JSON ou PDF | 18 août 2026 |
 | Un seul éditeur de WOD pour deux contextes (Whiteboard et programmation) | 18 août 2026 |
 | Libellés « Functional » / « Hybrid » partout où le gérant voyait « CrossFit » / « Hyrox » comme catégorie ou filtre (catalogue de programmation mobile `BOProgrammingScreen` et web `programming/page.tsx`, annuaire des box `BoxDirectory*`) — libellés seuls, les valeurs internes `crossfit`/`hyrox`/`functional`/`hybrid` et les noms de box sont inchangés ; test `disciplineLabels.test.ts` dans chaque dépôt | 5 septembre 2026 |
+| Marques côté utilisateur (règle transverse) : piste et groupe de programmation « Functional / Hybrid » (clé interne `functional`), squelettes de séance et fonction `generate-box-week` nettoyés, test `packages/wod-engine/__tests__/brands.test.ts` qui échoue si « CrossFit » ou « Hyrox » sort d’un `title`, d’une `description`, d’un libellé de piste, d’un nom de groupe ou d’un `samples*.md` | 16 septembre 2026 |
 
 ### Adhérents, argent et programmes
 
@@ -244,8 +245,8 @@ passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest
 
 **Programmation automatique AthleX Fitness — PR J1 (`athlex-app`, migrations `20261216` + `20261217`).**
 Une box `auto_programming` reçoit chaque semaine ISO suivante, par piste (`auto_programming_tracks`
-⊆ {`crossfit`, `musculation`}), ses séances posées dans `box_wods` (`source = 'auto'`, `audience = 'all'`,
-`publish_at` dimanche 18:00 Paris). Piste CrossFit / Hyrox : `generateSession` (`packages/wod-engine/src/session.ts`)
+⊆ {`functional`, `musculation`}), ses séances posées dans `box_wods` (`source = 'auto'`, `audience = 'all'`,
+`publish_at` dimanche 18:00 Paris). Piste Functional / Hybrid (clé interne `functional`, seed figé sur l’ancienne clé) : `generateSession` (`packages/wod-engine/src/session.ts`)
 assemble six séances lundi → samedi autour de 60 min depuis six squelettes de séance
 (`S1_snatch` … `S6_long`, exportés dans `wod_skeletons` en `discipline = 'session'`) : Block A haltéro /
 force (%1RM, tempo), Block C tiré par `generateBlocC` avec le pattern lourd du jour interdit

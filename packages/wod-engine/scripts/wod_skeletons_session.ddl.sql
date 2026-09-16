@@ -9,7 +9,7 @@
 --
 -- Additif et rejouable : élargit les CHECK de `wod_skeletons` (discipline
 -- `session`, format `session`) et insère les 6 squelettes de séance
--- CrossFit / Hyrox (lundi → samedi : S1_snatch … S6_long). `definition` =
+-- Functional / Hybrid (lundi → samedi : S1_snatch … S6_long). `definition` =
 -- `SessionSkeleton` du package (échauffement, bloc A, bloc B optionnel, filtre
 -- du bloc C, finishers). Le moteur lit les lignes `active` et retombe sur le
 -- snapshot embarqué (`SESSION_SKELETONS`) hors ligne ou sur une base sans ces

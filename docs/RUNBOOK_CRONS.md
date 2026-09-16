@@ -38,7 +38,7 @@ SELECT cron.schedule(
 ```
 
 Régénérer une semaine à la main (les jours édités ou scorés sont conservés) :
-`POST {"regen":{"box_id":"…","track":"crossfit"}, "iso_year":2026, "iso_week":41}` avec le même
+`POST {"regen":{"box_id":"…","track":"functional"}, "iso_year":2026, "iso_week":41}` avec le même
 en-tête. Désactiver : `SELECT cron.unschedule('generate-box-week-saturday');`.
 
 ## `tournament-notifications-sweep`

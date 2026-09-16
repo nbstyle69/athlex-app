@@ -4,7 +4,7 @@
  * ou scorés (mardi scoré), `publish_at` dimanche 18:00 Paris, seeds.
  */
 import {
-  runWeekGeneration, weekSeed, revealAt, weekDates, nextIsoWeek, crossfitWeekRows, muscuWeekRows,
+  runWeekGeneration, weekSeed, revealAt, weekDates, nextIsoWeek, functionalWeekRows, muscuWeekRows,
   generateWeek, generateMuscuWeek, CATALOG_SNAPSHOT, BANK_V1, TRACK_GROUP_NAME, PROGRAMMING_VERSION,
 } from '../src';
 import type { ProgrammingDb, ProgrammingBox, RunRow, BoxWodInsert, ExistingAutoRow, Track } from '../src';
@@ -59,7 +59,7 @@ const OWNER = 'owner-test';
 const NOW = new Date('2027-03-14T17:00:00Z'); // dimanche 14/03/2027 → cible 2027-W11
 const TARGET = { iso_year: 2027, iso_week: 11 };
 
-function fresh(tracks: Track[] = ['crossfit', 'musculation']): MemoryDb {
+function fresh(tracks: Track[] = ['functional', 'musculation']): MemoryDb {
   const db = new MemoryDb();
   db.boxes = [{ id: BOX, owner_id: OWNER, tracks }];
   return db;
@@ -79,16 +79,16 @@ describe('semaine cible, seed, publish_at', () => {
   });
 
   it('seed déterministe : box × piste × année × semaine × regen_counter', () => {
-    expect(weekSeed(BOX, 'crossfit', 2027, 11, 0)).toBe(weekSeed(BOX, 'crossfit', 2027, 11, 0));
-    expect(weekSeed(BOX, 'crossfit', 2027, 11, 0)).not.toBe(weekSeed(BOX, 'crossfit', 2027, 11, 1));
-    expect(weekSeed(BOX, 'crossfit', 2027, 11, 0)).not.toBe(weekSeed(BOX, 'musculation', 2027, 11, 0));
-    expect(weekSeed(BOX, 'crossfit', 2027, 11, 0)).not.toBe(weekSeed('autre-box', 'crossfit', 2027, 11, 0));
+    expect(weekSeed(BOX, 'functional', 2027, 11, 0)).toBe(weekSeed(BOX, 'functional', 2027, 11, 0));
+    expect(weekSeed(BOX, 'functional', 2027, 11, 0)).not.toBe(weekSeed(BOX, 'functional', 2027, 11, 1));
+    expect(weekSeed(BOX, 'functional', 2027, 11, 0)).not.toBe(weekSeed(BOX, 'musculation', 2027, 11, 0));
+    expect(weekSeed(BOX, 'functional', 2027, 11, 0)).not.toBe(weekSeed('autre-box', 'functional', 2027, 11, 0));
   });
 
   it('lignes box_wods : audience all, publish_at dimanche, source auto, leaderboard sur le seul bloc C / jamais en muscu', () => {
     const ctx = { box_id: BOX, created_by: OWNER, run_id: 'run-x', ...TARGET };
     const week = generateWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7);
-    const rows = crossfitWeekRows(week, ctx);
+    const rows = functionalWeekRows(week, ctx);
     expect(rows.every((r) => r.audience === 'all' && r.publish_at === revealAt(2027, 11) && r.source === 'auto' && r.is_published && r.auto_run_id === 'run-x')).toBe(true);
     expect(rows.filter((r) => r.leaderboard_enabled).every((r) => r.block_name === 'wod')).toBe(true);
     expect(new Set(rows.map((r) => r.scheduled_date)).size).toBe(6);
@@ -99,10 +99,10 @@ describe('semaine cible, seed, publish_at', () => {
 });
 
 describe('runWeekGeneration (base en mémoire)', () => {
-  it('première passe : une run done par piste, 6 jours CrossFit + 5 jours Muscu, groupes créés, relâchements journalisés', async () => {
+  it('première passe : une run done par piste, 6 jours Functional + 5 jours Muscu, groupes créés, relâchements journalisés', async () => {
     const db = fresh();
     const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
-    expect(out.map((o) => [o.track, o.status, o.regen_counter])).toEqual([['crossfit', 'done', 0], ['musculation', 'done', 0]]);
+    expect(out.map((o) => [o.track, o.status, o.regen_counter])).toEqual([['functional', 'done', 0], ['musculation', 'done', 0]]);
     expect(db.runs).toHaveLength(2);
     for (const r of db.runs) {
       expect(r.status).toBe('done');
@@ -119,21 +119,21 @@ describe('runWeekGeneration (base en mémoire)', () => {
   });
 
   it('idempotent : deuxième invocation → kept, rien réécrit ; même seed → mêmes lignes', async () => {
-    const db = fresh(['crossfit']);
+    const db = fresh(['functional']);
     await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
     const snapshot = JSON.stringify(db.wods);
     const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
     expect(out[0].status).toBe('kept');
     expect(JSON.stringify(db.wods)).toBe(snapshot);
 
-    const db2 = fresh(['crossfit']);
+    const db2 = fresh(['functional']);
     await runWeekGeneration(db2, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
     const strip = (w: StoredWod) => ({ ...w, id: '', auto_run_id: '' });
     expect(db2.wods.map(strip)).toEqual(db.wods.map(strip));
   });
 
   it('régénération avec mardi scoré et vendredi édité : ces jours sont conservés, les autres remplacés, regen_counter + 1, run id stable', async () => {
-    const db = fresh(['crossfit']);
+    const db = fresh(['functional']);
     await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
     const run0 = { ...db.runs[0] };
     const tuesday = db.wods.filter((w) => w.scheduled_date === '2027-03-16');
@@ -142,13 +142,13 @@ describe('runWeekGeneration (base en mémoire)', () => {
     friday[0].edited_at = '2027-03-18T10:00:00Z';
     const before = db.wods.map((w) => w.id);
 
-    const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW, regen: { box_id: BOX, track: 'crossfit' } });
+    const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW, regen: { box_id: BOX, track: 'functional' } });
     expect(out[0]).toMatchObject({ status: 'done', regen_counter: 1, kept_dates: ['2027-03-16', '2027-03-19'] });
     expect(out[0].deleted).toBe(before.length - tuesday.length - friday.length);
     expect(db.runs).toHaveLength(1);
     expect(db.runs[0].id).toBe(run0.id);
     expect(db.runs[0].regen_counter).toBe(1);
-    expect(db.runs[0].seed).toBe(weekSeed(BOX, 'crossfit', 2027, 11, 1));
+    expect(db.runs[0].seed).toBe(weekSeed(BOX, 'functional', 2027, 11, 1));
     expect(db.runs[0].seed).not.toBe(run0.seed);
 
     // Tous les blocs du mardi et du vendredi sont là, à l'identique.
@@ -164,7 +164,7 @@ describe('runWeekGeneration (base en mémoire)', () => {
   });
 
   it('erreur moteur → run error journalisée, pas de ligne insérée, puis reprise sans regen', async () => {
-    const db = fresh(['crossfit']);
+    const db = fresh(['functional']);
     const broken = { ...BANK_V1, session_skeletons: [] };
     const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, broken, { now: NOW });
     expect(out[0].status).toBe('error');
@@ -177,8 +177,8 @@ describe('runWeekGeneration (base en mémoire)', () => {
   });
 
   it('signatures des 4 semaines précédentes reprises du journal ; only_box_id et cible explicite', async () => {
-    const db = fresh(['crossfit']);
-    db.boxes.push({ id: 'autre', owner_id: null, tracks: ['crossfit'] });
+    const db = fresh(['functional']);
+    db.boxes.push({ id: 'autre', owner_id: null, tracks: ['functional'] });
     for (let w = 7; w <= 11; w++) {
       const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW, target: { iso_year: 2027, iso_week: w }, only_box_id: BOX });
       expect(out).toHaveLength(1);

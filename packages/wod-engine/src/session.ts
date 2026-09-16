@@ -412,7 +412,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
 }
 
 /**
- * Semaine CrossFit / Hyrox : 6 séances lundi → samedi, graine dérivée par jour,
+ * Semaine Functional / Hybrid : 6 séances lundi → samedi, graine dérivée par jour,
  * squelette C ≠ veille, signatures C jamais répétées (journal + semaine courante),
  * plafonds gym hebdo : samedi puis mercredi (brief §5.5) retirés au bloc C gym (pull_v / push_v)
  * si dépassement, puis vendredi, jeudi, lundi, mardi tant que le plafond tient encore — chaque
@@ -445,7 +445,7 @@ export function generateWeek(params: WeekParams, catalog: Catalog, bank: Skeleto
   const gym_volume = weeklyGymVolume(sessions);
   if (gym_volume.pull > WEEKLY_GYM_CAPS.pull || gym_volume.hspu > WEEKLY_GYM_CAPS.hspu) relax.add('weekly_gym_cap_exceeded');
 
-  return { track: 'crossfit', iso_year: params.iso_year, iso_week: params.iso_week, seed, sessions, gym_volume, relaxations: [...relax].sort() };
+  return { track: 'functional', iso_year: params.iso_year, iso_week: params.iso_week, seed, sessions, gym_volume, relaxations: [...relax].sort() };
 }
 
 // ─── Semaine Musculation ─────────────────────────────────────────────────────

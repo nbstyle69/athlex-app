@@ -8,7 +8,7 @@
 -- voir docs/RUNBOOK_CRONS.md) :
 --
 --   boxes.auto_programming          bool   default false  — opt-in par box
---   boxes.auto_programming_tracks   text[] default {}     — 'crossfit' | 'musculation'
+--   boxes.auto_programming_tracks   text[] default {}     — 'functional' | 'musculation'
 --   box_wods.source                 text   default 'manual' — 'auto' pour les lignes
 --                                                            posées par la fonction
 --   box_wods.edited_at              timestamptz — posé par trigger dès qu'un
@@ -32,12 +32,12 @@ ALTER TABLE public.boxes
 
 ALTER TABLE public.boxes DROP CONSTRAINT IF EXISTS boxes_auto_programming_tracks_check;
 ALTER TABLE public.boxes ADD CONSTRAINT boxes_auto_programming_tracks_check
-  CHECK (auto_programming_tracks <@ ARRAY['crossfit','musculation']::text[]);
+  CHECK (auto_programming_tracks <@ ARRAY['functional','musculation']::text[]);
 
 COMMENT ON COLUMN public.boxes.auto_programming IS
   'Programmation automatique hebdomadaire (fonction edge generate-box-week). false = rien n''est généré pour cette box.';
 COMMENT ON COLUMN public.boxes.auto_programming_tracks IS
-  'Pistes générées quand auto_programming est vrai : crossfit (séance A/B/C 60 min, lun→sam) et/ou musculation (5 séances, lun/mar/jeu/ven/sam).';
+  'Pistes générées quand auto_programming est vrai : functional (séance A/B/C 60 min, lun→sam) et/ou musculation (5 séances, lun/mar/jeu/ven/sam).';
 
 -- L'interrupteur est réservé à l'administration de la plateforme (J2, Manager
 -- super-admin) et au backend : un gérant ou co-gérant, qui peut par ailleurs
@@ -75,7 +75,7 @@ CREATE TRIGGER boxes_auto_programming_guard
 CREATE TABLE IF NOT EXISTS public.box_auto_programming_runs (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   box_id            uuid NOT NULL REFERENCES public.boxes(id) ON DELETE CASCADE,
-  track             text NOT NULL CHECK (track IN ('crossfit','musculation')),
+  track             text NOT NULL CHECK (track IN ('functional','musculation')),
   iso_year          integer NOT NULL,
   iso_week          integer NOT NULL CHECK (iso_week BETWEEN 1 AND 53),
   generator_version text NOT NULL,

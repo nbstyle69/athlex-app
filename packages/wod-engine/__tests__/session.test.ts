@@ -1,5 +1,5 @@
 /**
- * J1 — séances CrossFit / Hyrox (A/B/C 60') et semaines Musculation (§8 du brief).
+ * J1 — séances Functional / Hybrid (A/B/C 60') et semaines Musculation (§8 du brief).
  * 52 semaines par piste, seeds dérivés comme la fonction edge (`hashSeed`).
  */
 import {
@@ -47,7 +47,7 @@ describe('squelettes de séance', () => {
   });
 });
 
-describe('séance CrossFit / Hyrox (52 semaines)', () => {
+describe('séance Functional / Hybrid (52 semaines)', () => {
   it('déterministe : même seed → même séance', () => {
     const a = generateSession({ day: 1, iso_year: YEAR, iso_week: 3 }, CATALOG_SNAPSHOT, BANK_V1, 42);
     const b = generateSession({ day: 1, iso_year: YEAR, iso_week: 3 }, CATALOG_SNAPSHOT, BANK_V1, 42);
