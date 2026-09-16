@@ -5,7 +5,7 @@
 -- packages/wod-engine/src/bank/session.ts (DDL : scripts/wod_skeletons_session.ddl.sql).
 -- Ne pas éditer à la main : relancer le script.
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI (16/09/2026 19:41 UTC, dump `20260916T194119Z` dans le bucket privé `db-dumps`).
 --
 -- Additif et rejouable : élargit les CHECK de `wod_skeletons` (discipline
 -- `session`, format `session`) et insère les 6 squelettes de séance

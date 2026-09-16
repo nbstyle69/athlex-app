@@ -79,7 +79,7 @@ describe('catalogue musculation (import CSV v1)', () => {
   it('les familles machine / cable sont dans la migration et les 179 lignes dans le seed', () => {
     const sql = readFileSync(path.join(__dirname, '../../../supabase/migrations/20261214000000_movement_catalog_musculation.sql'), 'utf8');
     expect(sql).toMatch(/'machine','cable'/);
-    expect(sql).toMatch(/Appliquée en prod : NON/);
+    expect(sql).toMatch(/Appliquée en prod : OUI \(16\/09\/2026/);
     expect((sql.match(/^\s+\('/gm) ?? []).length).toBe(179);
     expect(sql).toMatch(/ON CONFLICT \(id\) DO UPDATE SET\n\s+discipline_muscu/);
     expect(sql).toMatch(/priority = EXCLUDED.priority/);
@@ -120,7 +120,7 @@ describe('squelettes musculation', () => {
     expect(bankFromRows(metcon, caps).muscu_skeletons).toEqual(MUSCU_SKELETONS);
     const sql = readFileSync(path.join(__dirname, '../../../supabase/migrations/20261215000000_wod_skeletons_musculation.sql'), 'utf8');
     expect((sql.match(/^\s+\('[a-z_]+', 'musculation', 'strength_session'/gm) ?? []).length).toBe(39);
-    expect(sql).toMatch(/Appliquée en prod : NON/);
+    expect(sql).toMatch(/Appliquée en prod : OUI \(16\/09\/2026/);
   });
 });
 

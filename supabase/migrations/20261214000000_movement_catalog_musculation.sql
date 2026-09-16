@@ -5,7 +5,7 @@
 -- packages/wod-engine/catalog/catalogue-musculation-v1.csv
 -- (DDL : scripts/movement_catalog_muscu.ddl.sql). Ne pas éditer à la main.
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI (16/09/2026 19:41 UTC, dump `20260916T194119Z` dans le bucket privé `db-dumps`).
 --
 -- Additif et rejouable :
 --   1. `movement_catalog` — familles `machine` / `cable` autorisées, colonnes
