@@ -242,6 +242,13 @@ classement. `profiles.level` n'était modifiable nulle part : sélecteur « Nive
 ajouté dans Profil → Modifier, cible du lien « modifier » ; la synchro par l'ELO reste. Copier
 passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest/lint verts.
 
+**`movement_totals` refermée (migration `20261218`).** La vue recréée par `20261204` (un total par
+unité) était repartie avec `GRANT ALL TO anon / authenticated` et sans `security_invoker`, annulant le
+lot 5e : le volume de répétitions de tous les athlètes se lisait à la clé anon avec les droits du
+propriétaire. `security_invoker = true` (chaque lecteur ne voit que ses `movement_logs`), `anon`
+révoqué, `authenticated` en SELECT seul. `test-grants` 31/31 (T1 / T2 / T8 rouges avant, mutation
+inverse vérifiée). **Appliquée en prod : oui** (dump horodaté dans la description de la PR).
+
 **Générateur de WOD v1 — PR 3 (`AthleX-Manager` + migration `20261213` ici).** Le Manager lit
 `movement_catalog` à la place de son tableau statique `lib/movements.ts` (snapshot embarqué en
 repli, les 14 mouvements `active = false` restent proposés aux coachs, seul le générateur les
