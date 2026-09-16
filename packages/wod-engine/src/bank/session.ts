@@ -99,7 +99,8 @@ const mv = (id: string, qty: number, unit: FMove['unit'] = 'reps', name?: string
 
 /**
  * Banque de finishers (P2) : partagée par tous les squelettes, jamais deux fois le même dans la semaine,
- * anti-répétition sur 4 semaines via le journal `finisher:<id>`. 5 finishers par semaine × 5 semaines = 25 < 26 options.
+ * anti-répétition sur 4 semaines via le journal `finisher:<id>`. 5 finishers par semaine × 5 semaines = 25 ≤ 25 options.
+ * Les finishers respiratoires se font sur rameur ou vélo uniquement (jamais en marchant).
  */
 export const FINISHERS: SessionFinisherOption[] = [
   // Tronc
@@ -133,7 +134,6 @@ export const FINISHERS: SessionFinisherOption[] = [
   // Respiratoire
   fin('breathing_row_nasal', 'breathing', [mv('row', 250, 'm', 'Row respiration nasale'), mv('box_breathing', 60, 's', 'Box Breathing 4-4-4-4')], 2),
   fin('breathing_bike_exhale', 'breathing', [mv('bike_erg', 300, 'm', 'Bike Erg facile'), mv('slow_exhale', 60, 's', 'Respiration 4 s inspir / 8 s expir')], 2),
-  fin('breathing_walk_breath_hold', 'breathing', [mv('shuttle_run', 100, 'm', 'Marche rapide'), mv('breath_hold_walk', 20, 's', 'Marche en apnée expiratoire')], 2),
 ];
 
 export const S1_snatch: SessionSkeleton = {

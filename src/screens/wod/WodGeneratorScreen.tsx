@@ -4,7 +4,9 @@
  * Formulaire unique branché sur `packages/wod-engine` (hors ligne, déterministe) :
  * entrée (WOD express / Après ma classe) → discipline → durée → format (express)
  * → intention → gilet (Hybrid) → Exclure (matériel + mouvements, persisté).
- * Pas de ligne Catégorie : la catégorie du profil sert à l'estimation.
+ * Troisième carte « Musculation » (PR M2) : objectif → cible (ordre selon le genre)
+ * → durée filtrée par `availableDurations` → matériel (persisté) → ligne 1RM.
+ * Pas de ligne Catégorie : la catégorie / le niveau du profil servent à l'estimation.
  * Le résultat s'ouvre sur `WodResult`.
  */
 
@@ -15,7 +17,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ChevronLeft, ChevronDown, ChevronUp, Sparkles, X, History, Heart, BookOpen, Zap, GraduationCap,
+  ChevronLeft, ChevronDown, ChevronUp, Sparkles, X, History, Heart, BookOpen, Zap, GraduationCap, Dumbbell,
 } from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
@@ -23,14 +25,25 @@ import { useAuth } from '../../context/AuthContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import GlassCard from '../../components/glass/GlassCard';
 import i18n from '../../i18n';
-import type { Catalog, Discipline, Entry, FormatChoice, Intention, Vest } from '../../../packages/wod-engine/src';
+import type {
+  Catalog, Discipline, Entry, FormatChoice, Intention, MuscuEquipment, MuscuObjective, MuscuTarget, SkeletonBank, Vest,
+} from '../../../packages/wod-engine/src';
+import { availableDurations, availableTargets, muscuLevelFor } from '../../../packages/wod-engine/src';
 import {
-  HYBRID_ORANGE, DURATIONS, FORMATS, INTENTIONS, VESTS, PATTERN_LABEL, FAMILY_LABEL, avoidedText, equipmentOptions, coerceDuration,
+  HYBRID_ORANGE, DURATIONS, FORMATS, INTENTIONS, VESTS, avoidedText, equipmentOptions, coerceDuration,
 } from './wodGeneratorOptions';
-import { loadEngineData } from '../../services/wodEngineData';
 import {
-  DayClass, ScreenParams, generateForUser, loadExcludes, saveExcludes, todayClass,
+  MUSCU_BLUE, MUSCU_EQUIPMENTS, MUSCU_OBJECTIVES, candidateDurations, coerceMuscuDuration, muscuEquipmentOptions,
+  muscuOneRepMax, objectiveDisabled, oneRepMaxLine, targetLabel, targetOrderFor, targetOrderHint,
+} from './muscuOptions';
+import { readBodyweightKg } from '../profile/prStorage';
+import { loadEngineData } from '../../services/wodEngineData';
+import { fetchMyPersonalRecords } from '../../services/myProfile';
+import {
+  DayClass, ScreenParams, generateForUser, loadExcludes, loadMuscuEquipment, saveExcludes, saveMuscuEquipment, todayClass,
 } from '../../services/wodGenerator';
+
+type Sport = Discipline | 'musculation';
 
 export default function WodGeneratorScreen() {
   const navigation = useNavigation<any>();
@@ -40,8 +53,16 @@ export default function WodGeneratorScreen() {
   const S = createStyles(theme);
 
   const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [bank, setBank] = useState<SkeletonBank | null>(null);
   const [entry, setEntry] = useState<Entry>('express');
-  const [discipline, setDiscipline] = useState<Discipline>('functional');
+  const [sport, setSport] = useState<Sport>('functional');
+  const discipline: Discipline = sport === 'hybrid' ? 'hybrid' : 'functional';
+  const isMuscu = sport === 'musculation';
+  const [target, setTarget] = useState<MuscuTarget>('full_body');
+  const [objective, setObjective] = useState<MuscuObjective>('hypertrophie');
+  const [muscuEquipment, setMuscuEquipment] = useState<MuscuEquipment>('box');
+  const [muscuDuration, setMuscuDuration] = useState(30);
+  const [records, setRecords] = useState<Record<string, unknown>>({});
   const [duration, setDuration] = useState(15);
   const [format, setFormat] = useState<FormatChoice>('surprise');
   const [intention, setIntention] = useState<Intention>('mixed');
@@ -54,10 +75,19 @@ export default function WodGeneratorScreen() {
 
   useEffect(() => {
     let alive = true;
-    loadEngineData().then((d) => { if (alive) setCatalog(d.catalog); });
-    if (user?.id) loadExcludes(user.id).then((ex) => { if (alive) setExclude(ex); });
+    loadEngineData().then((d) => { if (alive) { setCatalog(d.catalog); setBank(d.bank); } });
+    if (user?.id) {
+      loadExcludes(user.id).then((ex) => { if (alive) setExclude(ex); });
+      loadMuscuEquipment(user.id).then((eq) => { if (alive) setMuscuEquipment(eq); });
+      fetchMyPersonalRecords().then((r) => { if (alive) setRecords(r); }).catch(() => {});
+    }
     return () => { alive = false; };
   }, [user?.id]);
+
+  useEffect(() => {
+    if (!isMuscu) return;
+    setTarget(targetOrderFor(user?.gender)[0]);
+  }, [isMuscu, user?.gender]);
 
   useEffect(() => {
     let alive = true;
@@ -66,12 +96,41 @@ export default function WodGeneratorScreen() {
   }, [entry, currentBox?.id]);
 
   const chooseEntry = (e: Entry) => { setEntry(e); setDuration((d) => coerceDuration(e, discipline, d)); };
-  const chooseDiscipline = (d: Discipline) => {
-    setDiscipline(d);
-    setIntention(INTENTIONS[d][0].key);
-    setDuration((cur) => coerceDuration(entry, d, cur));
-    if (d === 'functional') setVest('none');
+  const chooseSport = (s: Sport) => {
+    setSport(s);
+    if (s === 'musculation') return;
+    setIntention(INTENTIONS[s][0].key);
+    setDuration((cur) => coerceDuration(entry, s, cur));
+    if (s === 'functional') setVest('none');
   };
+  const chooseMuscuEquipment = (eq: MuscuEquipment) => {
+    setMuscuEquipment(eq);
+    if (user?.id) saveMuscuEquipment(user.id, eq);
+  };
+
+  const muscuLevel = muscuLevelFor(user?.level ?? null);
+  const oneRepMax = useMemo(() => muscuOneRepMax(records), [records]);
+  const bodyweightKg = useMemo(() => readBodyweightKg(records), [records]);
+  const targets = useMemo(() => {
+    const order = targetOrderFor(user?.gender);
+    if (!catalog) return order;
+    const ok = new Set(availableTargets(catalog, muscuEquipment, muscuLevel));
+    return order.filter((t) => ok.has(t));
+  }, [catalog, muscuEquipment, muscuLevel, user?.gender]);
+  const effectiveObjective: MuscuObjective =
+    objectiveDisabled(objective, entry, target, muscuEquipment) ? 'hypertrophie' : objective;
+  const muscuDurations = useMemo(() => {
+    const candidates = candidateDurations(entry, target);
+    if (!catalog || !bank || !isMuscu) return candidates;
+    return availableDurations(catalog, bank, {
+      entry, target, objective: effectiveObjective, equipment: muscuEquipment, level: muscuLevel, exclude,
+      one_rep_max: oneRepMax, bodyweight_kg: bodyweightKg,
+    });
+  }, [catalog, bank, isMuscu, entry, target, effectiveObjective, muscuEquipment, muscuLevel, exclude, oneRepMax, bodyweightKg]);
+  useEffect(() => { setMuscuDuration((cur) => coerceMuscuDuration(muscuDurations, cur)); }, [muscuDurations]);
+  useEffect(() => { if (targets.length && !targets.includes(target)) setTarget(targets[0]); }, [targets, target]);
+  const rmLine = oneRepMaxLine(oneRepMax);
+  const targetHint = targetOrderHint(user?.gender);
 
   const toggleExclude = useCallback((key: string) => {
     setExclude((prev) => {
@@ -81,12 +140,15 @@ export default function WodGeneratorScreen() {
     });
   }, [user?.id]);
 
-  const equipment = useMemo(() => (catalog ? equipmentOptions(catalog) : []), [catalog]);
+  const equipment = useMemo(
+    () => (catalog ? (isMuscu ? muscuEquipmentOptions(catalog, muscuEquipment) : equipmentOptions(catalog)) : []),
+    [catalog, isMuscu, muscuEquipment],
+  );
   const movementHits = useMemo(() => {
     if (!catalog || search.trim().length < 2) return [];
     const q = search.trim().toLowerCase();
     return catalog.movements
-      .filter((m) => m.active && !exclude.includes(m.id) && m.name.toLowerCase().includes(q))
+      .filter((m) => m.active && (isMuscu ? !!m.muscu : true) && !exclude.includes(m.id) && m.name.toLowerCase().includes(q))
       .slice(0, 8);
   }, [catalog, search, exclude]);
   const excludedMovements = useMemo(
@@ -97,30 +159,42 @@ export default function WodGeneratorScreen() {
   async function generate() {
     if (!user) return;
     setGenerating(true);
-    const screen: ScreenParams = {
-      entry, discipline, budget_min: duration, intention, exclude,
-      format: entry === 'express' ? format : 'surprise',
-      vest: discipline === 'hybrid' ? vest : 'none',
-    };
+    const screen: ScreenParams = isMuscu
+      ? {
+        discipline: 'musculation', entry, target, objective: effectiveObjective, budget_min: muscuDuration,
+        equipment: muscuEquipment, exclude,
+      }
+      : {
+        entry, discipline, budget_min: duration, intention, exclude,
+        format: entry === 'express' ? format : 'surprise',
+        vest: discipline === 'hybrid' ? vest : 'none',
+      };
     try {
       const result = await generateForUser(user, currentBox?.id, screen);
       navigation.navigate('WodResult', { screen, result });
     } catch (e) {
-      Alert.alert('Aucun WOD valide', 'Essaie une autre durée, un autre format ou moins d\'exclusions.');
+      Alert.alert(
+        isMuscu ? 'Aucune séance valide' : 'Aucun WOD valide',
+        isMuscu ? 'Essaie une autre durée, une autre cible ou moins d\'exclusions.' : 'Essaie une autre durée, un autre format ou moins d\'exclusions.',
+      );
     } finally {
       setGenerating(false);
     }
   }
 
-  const accent = discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;
+  const accent = isMuscu ? MUSCU_BLUE : discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;
 
-  const Chip = ({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) => (
+  const Chip = ({ label, selected, onPress, disabled, testID }: {
+    label: string; selected: boolean; onPress: () => void; disabled?: boolean; testID?: string;
+  }) => (
     <TouchableOpacity
-      style={[S.chip, selected && { backgroundColor: `${accent}25`, borderColor: accent }]}
+      style={[S.chip, selected && { backgroundColor: `${accent}25`, borderColor: accent }, disabled && S.chipDisabled]}
       onPress={onPress}
+      disabled={disabled}
       activeOpacity={0.8}
+      testID={testID}
     >
-      <Text style={[S.chipText, selected && { fontWeight: '800' }]}>{label}</Text>
+      <Text style={[S.chipText, selected && { fontWeight: '800' }, disabled && S.chipTextDisabled]}>{label}</Text>
     </TouchableOpacity>
   );
 
@@ -154,7 +228,9 @@ export default function WodGeneratorScreen() {
           </View>
         </View>
         <Text style={S.headerTitle}>
-          Générateur de WOD{discipline === 'hybrid' ? <Text style={{ color: HYBRID_ORANGE }}> · Hybrid</Text> : null}
+          Générateur de WOD
+          {sport === 'hybrid' ? <Text style={{ color: HYBRID_ORANGE }}> · Hybrid</Text> : null}
+          {isMuscu ? <Text style={{ color: MUSCU_BLUE }}> · Musculation</Text> : null}
         </Text>
       </View>
 
@@ -162,7 +238,7 @@ export default function WodGeneratorScreen() {
         {/* Entrée */}
         <View style={S.cardRow}>
           {([
-            { key: 'express', label: 'WOD express', sub: 'Une séance complète', Icon: Zap },
+            { key: 'express', label: isMuscu ? 'Séance' : 'WOD express', sub: 'Une séance complète', Icon: Zap },
             { key: 'after_class', label: 'Après ma classe', sub: 'Un complément', Icon: GraduationCap },
           ] as { key: Entry; label: string; sub: string; Icon: typeof Zap }[]).map(({ key, label, sub, Icon }) => (
             <TouchableOpacity
@@ -181,18 +257,23 @@ export default function WodGeneratorScreen() {
 
         {/* Discipline */}
         <View style={S.cardRow}>
-          {(['functional', 'hybrid'] as Discipline[]).map((d) => {
-            const color = d === 'hybrid' ? HYBRID_ORANGE : theme.accent;
+          {(['functional', 'hybrid', 'musculation'] as Sport[]).map((d) => {
+            const color = d === 'hybrid' ? HYBRID_ORANGE : d === 'musculation' ? MUSCU_BLUE : theme.accent;
+            const selected = sport === d;
             return (
               <TouchableOpacity
                 key={d}
-                style={[S.sportCard, discipline === d && { borderColor: color, backgroundColor: `${color}10` }]}
-                onPress={() => chooseDiscipline(d)}
+                style={[S.sportCard, selected && { borderColor: color, backgroundColor: `${color}10` }]}
+                onPress={() => chooseSport(d)}
                 activeOpacity={0.85}
                 testID={`wodgen-discipline-${d}`}
               >
-                <Text style={S.sportEmoji}>{d === 'functional' ? '🏋️' : '🏁'}</Text>
-                <Text style={[S.sportLabel, discipline === d && { color }]}>{d === 'functional' ? 'Functional' : 'Hybrid'}</Text>
+                {d === 'musculation'
+                  ? <View style={S.sportIcon}><Dumbbell size={22} color={selected ? MUSCU_BLUE : theme.textSecondary} /></View>
+                  : <Text style={S.sportEmoji}>{d === 'functional' ? '🏋️' : '🏁'}</Text>}
+                <Text style={[S.sportLabel, selected && { color }]}>
+                  {d === 'functional' ? 'Functional' : d === 'hybrid' ? 'Hybrid' : 'Musculation'}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -207,6 +288,65 @@ export default function WodGeneratorScreen() {
           </GlassCard>
         )}
 
+        {isMuscu && (
+          <>
+            <Section title="Objectif" S={S}>
+              <ChipScroll>
+                {MUSCU_OBJECTIVES.map((o) => (
+                  <Chip
+                    key={o.key}
+                    label={o.label}
+                    selected={effectiveObjective === o.key}
+                    disabled={objectiveDisabled(o.key, entry, target, muscuEquipment)}
+                    onPress={() => setObjective(o.key)}
+                    testID={`wodgen-objective-${o.key}`}
+                  />
+                ))}
+              </ChipScroll>
+            </Section>
+
+            <Section title="Cible" S={S}>
+              <ChipScroll>
+                {targets.map((t) => (
+                  <Chip key={t} label={targetLabel(t)} selected={target === t} onPress={() => setTarget(t)} testID={`wodgen-target-${t}`} />
+                ))}
+              </ChipScroll>
+              <Text style={S.hint} testID="wodgen-target-hint">
+                {targetHint.text} ·{' '}
+                <Text style={[S.hintLink, { color: accent }]} onPress={() => navigation.navigate('Profile', { editLevel: true })}>
+                  {targetHint.link}
+                </Text>
+              </Text>
+            </Section>
+
+            <Section title="Durée" S={S}>
+              <ChipScroll>
+                {(muscuDurations.length ? muscuDurations : candidateDurations(entry, target)).map((d) => (
+                  <Chip key={d} label={`${d} min`} selected={muscuDuration === d} onPress={() => setMuscuDuration(d)} testID={`wodgen-muscu-duration-${d}`} />
+                ))}
+              </ChipScroll>
+            </Section>
+
+            <Section title="Matériel" S={S}>
+              <ChipScroll>
+                {MUSCU_EQUIPMENTS.map((e) => (
+                  <Chip key={e.key} label={e.label} selected={muscuEquipment === e.key} onPress={() => chooseMuscuEquipment(e.key)} testID={`wodgen-equipment-${e.key}`} />
+                ))}
+              </ChipScroll>
+              <Text style={S.hint} testID="wodgen-rm-line">
+                {rmLine.text} ·{' '}
+                <Text
+                  style={[S.hintLink, { color: accent }]}
+                  onPress={() => navigation.navigate(rmLine.known ? 'Profile' : 'OneRMCalculator')}
+                >
+                  {rmLine.link}
+                </Text>
+              </Text>
+            </Section>
+          </>
+        )}
+
+        {!isMuscu && (
         <Section title="Durée" S={S}>
           <ChipScroll>
             {DURATIONS[entry][discipline].map((d) => (
@@ -214,8 +354,9 @@ export default function WodGeneratorScreen() {
             ))}
           </ChipScroll>
         </Section>
+        )}
 
-        {entry === 'express' && (
+        {!isMuscu && entry === 'express' && (
           <Section title="Format" S={S}>
             <ChipScroll>
               {FORMATS.map((f) => (
@@ -225,6 +366,7 @@ export default function WodGeneratorScreen() {
           </Section>
         )}
 
+        {!isMuscu && (
         <Section title="Intention" S={S}>
           <ChipScroll>
             {INTENTIONS[discipline].map((i) => (
@@ -232,8 +374,9 @@ export default function WodGeneratorScreen() {
             ))}
           </ChipScroll>
         </Section>
+        )}
 
-        {discipline === 'hybrid' && (
+        {sport === 'hybrid' && (
           <Section title="Gilet lesté" S={S}>
             <ChipScroll>
               {VESTS.map((v) => (
@@ -293,7 +436,7 @@ export default function WodGeneratorScreen() {
           </View>
         )}
 
-        <GlassCard radius={16} variant={discipline === 'hybrid' ? 'default' : 'emerald'} style={S.generateCard}>
+        <GlassCard radius={16} variant={sport === 'functional' ? 'emerald' : 'default'} style={S.generateCard}>
           <TouchableOpacity
             style={[S.generateBtn, { borderColor: accent, backgroundColor: `${accent}1A` }]}
             onPress={generate}
@@ -302,7 +445,9 @@ export default function WodGeneratorScreen() {
             testID="wodgen-generate"
           >
             {generating ? <ActivityIndicator color={accent} /> : <Sparkles size={18} color={accent} />}
-            <Text style={S.generateText}>{entry === 'express' ? 'Générer mon WOD' : 'Générer mon complément'}</Text>
+            <Text style={S.generateText}>
+              {entry === 'express' ? (isMuscu ? 'Générer ma séance' : 'Générer mon WOD') : 'Générer mon complément'}
+            </Text>
           </TouchableOpacity>
         </GlassCard>
       </ScrollView>
@@ -344,7 +489,10 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
     backgroundColor: theme.card, borderWidth: 2, borderColor: theme.border,
   },
   sportEmoji: { fontSize: 22 },
+  sportIcon: { height: 30, justifyContent: 'center' },
   sportLabel: { fontSize: 13, fontWeight: '800', color: theme.textSecondary },
+  hint: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
+  hintLink: { fontWeight: '800' },
 
   classCard: { padding: 14, marginBottom: 16 },
   classTitle: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textSecondary },
@@ -362,6 +510,8 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
     borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
   },
   chipText: { fontSize: 13, color: theme.text, fontWeight: '600' },
+  chipDisabled: { opacity: 0.4 },
+  chipTextDisabled: { color: theme.textMuted },
   exclChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12,

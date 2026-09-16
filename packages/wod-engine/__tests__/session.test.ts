@@ -4,7 +4,7 @@
  */
 import {
   generateSession, generateWeek, generateMuscuWeek, hashSeed, isoWeek, isoWeekMonday, muscuObjectiveForWeek,
-  weeklyGymVolume, stepLine, SESSION_SKELETONS, SESSION_TOLERANCE, WEEKLY_GYM_CAPS, MUSCU_WEEKLY_CAP_SETS, MUSCU_WEEK_DAYS,
+  weeklyGymVolume, stepLine, SESSION_SKELETONS, SESSION_TOLERANCE, WEEKLY_GYM_CAPS, MUSCU_WEEKLY_CAP_SETS, MUSCU_WEEK_DAYS, MUSCU_TOLERANCE, BODYWEIGHT_MAX_LOADED, TARGET_MUSCLES,
   CATALOG_SNAPSHOT, BANK_V1, BANK_VERSION, bankFromRows, skeletonToRow, movementCapToRow, sessionSkeletonToRow, isSessionSkeletonRow, SESSION_BANK_VERSION,
 } from '../src';
 import type { AnySkeletonRow } from '../src';
@@ -179,6 +179,12 @@ describe('séance Functional / Hybrid (52 semaines)', () => {
     expect(FINISHERS.length).toBeGreaterThanOrEqual(10);
     expect(new Set(FINISHERS.map((f) => f.id)).size).toBe(FINISHERS.length);
     expect(new Set(FINISHERS.map((f) => f.family))).toEqual(new Set(['core', 'carry', 'shoulders', 'glutes', 'calves', 'breathing']));
+    // M2 : plus de « Marche rapide » ni « Marche en apnée expiratoire » ; respiratoires sur rameur ou vélo uniquement
+    for (const f of FINISHERS) for (const m of f.movements) {
+      expect(m.name ?? '').not.toMatch(/^marche/i);
+      expect(['shuttle_run', 'breath_hold_walk']).not.toContain(m.id);
+    }
+    for (const f of FINISHERS.filter((x) => x.family === 'breathing')) expect(['row', 'bike_erg']).toContain(f.movements[0].id);
     const used = new Set(weeks.flatMap((w) => w.sessions.map((s) => s.finisher_id).filter(Boolean)));
     expect(used.size).toBeGreaterThanOrEqual(20);
     const { c, finishers } = splitSignatures(weeks[0].signatures);
@@ -266,6 +272,28 @@ describe('semaine Musculation (52 semaines)', () => {
     for (const w of muscuWeeks) {
       for (const [m, n] of Object.entries(w.sets_by_muscle)) expect({ week: w.iso_week, m, n }).toMatchObject({ n: expect.any(Number) });
       expect(Math.max(...Object.values(w.sets_by_muscle).map((n) => n ?? 0))).toBeLessThanOrEqual(MUSCU_WEEKLY_CAP_SETS);
+    }
+  });
+
+  it('plafond hebdo : la séance se compose autour (isolation d’un autre muscle), jamais raccourcie — durée ± 10 % sur les 5 jours', () => {
+    for (const w of muscuWeeks) for (const d of w.days) {
+      const dev = Math.abs(d.wod.estimate.seconds - d.budget_min * 60) / (d.budget_min * 60);
+      expect({ week: w.iso_week, day: d.day, minutes: d.wod.estimate.minutes, dev }).toMatchObject({ dev: expect.any(Number) });
+      expect(dev).toBeLessThanOrEqual(MUSCU_TOLERANCE + 1e-9);
+      expect(d.wod.generator.relaxations).not.toContain('budget_short');
+    }
+    expect(muscuWeeks.every((w) => !w.relaxations.some((r) => r.startsWith('weekly_cap_exceeded')))).toBe(true);
+  });
+
+  it('piste box = niveau intermédiaire : M5 s’applique, au plus un poids du corps hors tronc par séance quand le muscle a du chargé', () => {
+    for (const w of muscuWeeks) for (const d of w.days) {
+      expect(d.wod.level).toBe('inter');
+      expect(d.wod.equipment).toBe('box');
+      // seuls comptent les muscles qui ont une option chargée en box (les mollets n'en ont pas : leur élévation reste libre)
+      const loadedInBox = (mu: string) => CATALOG_SNAPSHOT.movements.some((m) => m.muscu && m.muscu.muscle_primary === mu && m.muscu.load_mode !== 'bodyweight' && m.muscu.weight_box > 0);
+      const bw = d.wod.blocks[0].exercises.filter((e) => e.load.mode === 'bodyweight' && !(TARGET_MUSCLES.tronc as string[]).includes(e.muscle_primary) && loadedInBox(e.muscle_primary));
+      expect({ week: w.iso_week, day: d.day, bw: bw.map((e) => e.name) }).toMatchObject({ bw: expect.any(Array) });
+      expect(bw.length).toBeLessThanOrEqual(BODYWEIGHT_MAX_LOADED);
     }
   });
 

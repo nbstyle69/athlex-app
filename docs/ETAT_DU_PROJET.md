@@ -250,6 +250,28 @@ propriétaire. `security_invoker = true` (chaque lecteur ne voit que ses `moveme
 révoqué, `authenticated` en SELECT seul. `test-grants` 31/31 (T1 / T2 / T8 rouges avant, mutation
 inverse vérifiée). **Appliquée en prod : oui** (dump horodaté dans la description de la PR).
 
+**Écran Musculation — PR M2 (`athlex-app`, aucune migration).** Troisième discipline du
+générateur (haltère, bleu `#3B82F6`) : Séance / Après ma classe, objectif Prise de muscle · Force ·
+Tonification (Force grisée en Tronc, Après ma classe et Sans matériel), cibles ordonnées d'après le
+genre du profil (Full body en tête sans genre, lien « modifier »), durées filtrées par
+`availableDurations` (jamais de `budget_short` proposé), matériel Sans matériel · Box · Salle
+persisté dans `user_generation_settings.last_params.muscu_equipment`, exclusions réutilisées, niveau
+déduit de `profiles.level` (`muscuLevelFor` : Scaled → Débutant, Inter / RX → Intermédiaire, RX+ et
+au-delà → Avancé), ligne 1RM (`personal_records`, clés `weightlifting_<Label>`) ou renvoi au
+calculateur. Service `generateForUser` sur une union discriminée `ScreenParams` → `generateMuscu`
+(1RM, poids du corps `personal_records._bodyweight_kg` — champ de profil temporaire, éditable dans
+Profil → Modifier —, classe du jour). Page résultat : `MuscuSessionCard` (une ligne par exercice,
+séries × reps, charge kg ou « RPE 7 (≈ 52 % du 1RM) », repos, note dépliable), durée estimée sans
+plafond, minuteur libre (compte à rebours de la durée estimée, **pas de mode Split**), repos +
+« Série suivante », saisie reps / kg réalisés → tonnage = Σ charge × reps en `score_type = 'weight'`,
+badges crédités depuis les reps réalisées via `logMovementReps` (verrou `strengthJournalSeparation`,
+jamais `strength_set_logs`). Quatre retouches moteur sans régénération des samples : bonus ≤ 1 tronc
+hors cible Tronc et sans Mountain Climber / Vacuum / Russian Twist en Prise de muscle / Force
+(isolation d'un muscle secondaire d'abord) ; piste box au niveau intermédiaire pour M5 ;
+`weekly_cap` → isolation d'un autre muscle au lieu de raccourcir ; finishers « Marche » retirés
+(respiratoires sur rameur / vélo seulement). Samples inchangés. **Appliquée en prod : sans objet**
+(aucune migration).
+
 **Programmation automatique AthleX Fitness — PR J1 (`athlex-app`, migrations `20261216` + `20261217`).**
 Une box `auto_programming` reçoit chaque semaine ISO suivante, par piste (`auto_programming_tracks`
 ⊆ {`functional`, `musculation`}), ses séances posées dans `box_wods` (`source = 'auto'`, `audience = 'all'`,

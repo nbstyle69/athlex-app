@@ -58,7 +58,7 @@ describe('options du formulaire', () => {
     expect(screen).toContain("navigation.navigate('WodHistory')");
     expect(screen).toContain("navigation.navigate('WodHistory', { filter: 'favorites' })");
     expect(screen).toContain("navigation.navigate('Explorer', { screen: 'Programmation' })");
-    expect(screen).toContain("entry === 'express' ? 'Générer mon WOD' : 'Générer mon complément'");
+    expect(screen).toContain("entry === 'express' ? (isMuscu ? 'Générer ma séance' : 'Générer mon WOD') : 'Générer mon complément'");
   });
 });
 

@@ -8,17 +8,42 @@ import { supabase } from '../lib/supabase';
 import { Json } from '../types/supabase';
 import { BoxWOD, User } from '../types';
 import { incrementCounter, logMovementReps } from './gamification';
+import type { MovementEntry } from './gamification';
 import { cancelTodayScoreReminder } from './notifications';
 import { computeCompletedMovements } from '../utils/movementParser';
 import { captureError } from '../lib/sentry';
-import { generateBlocC, profileCategory, CATEGORY_LABEL } from '../../packages/wod-engine/src';
-import type { Category, GenerateParams, GeneratedWod } from '../../packages/wod-engine/src';
+import {
+  generateBlocC, generateMuscu, profileCategory, muscuLevelFor, renderMuscu, CATEGORY_LABEL,
+} from '../../packages/wod-engine/src';
+import type {
+  Category, GenerateParams, GeneratedWod, MuscuExercise, MuscuEquipment, MuscuParams, MuscuWod,
+} from '../../packages/wod-engine/src';
 import { loadEngineData } from './wodEngineData';
+import { fetchMyPersonalRecords } from './myProfile';
+import { readBodyweightKg } from '../screens/profile/prStorage';
+import { muscuOneRepMax } from '../screens/wod/muscuOptions';
 
 export const SIGNATURE_WINDOW = 10;
 
-/** Paramètres choisis à l'écran ; le service complète signatures, catégorie et classe du jour. */
-export type ScreenParams = Pick<GenerateParams, 'entry' | 'discipline' | 'budget_min' | 'format' | 'intention' | 'vest' | 'exclude'>;
+/** Paramètres Functional / Hybrid choisis à l'écran ; le service complète signatures, catégorie et classe du jour. */
+export type MetconScreenParams = Pick<GenerateParams, 'entry' | 'discipline' | 'budget_min' | 'format' | 'intention' | 'vest' | 'exclude'>;
+
+/** Paramètres Musculation ; le service complète niveau, 1RM, poids de corps, signatures et classe du jour. */
+export type MuscuScreenParams = Pick<MuscuParams, 'entry' | 'target' | 'objective' | 'budget_min' | 'equipment' | 'exclude'> & {
+  discipline: 'musculation';
+};
+
+export type ScreenParams = MetconScreenParams | MuscuScreenParams;
+
+export function isMuscuScreen(screen: ScreenParams): screen is MuscuScreenParams {
+  return screen.discipline === 'musculation';
+}
+
+export type AnyWod = GeneratedWod | MuscuWod;
+
+export function isMuscuWod(wod: AnyWod): wod is MuscuWod {
+  return wod.discipline === 'musculation';
+}
 
 export interface DayClass {
   title: string;
@@ -79,7 +104,45 @@ export async function todayClass(boxId: string | null | undefined): Promise<DayC
 
 // ── Exclusions persistées dans le profil (user_generation_settings.last_params) ──
 
-type LastParams = { exclude?: unknown } & Record<string, unknown>;
+type LastParams = { exclude?: unknown; muscu_equipment?: unknown } & Record<string, unknown>;
+
+const MUSCU_EQUIPMENTS: readonly MuscuEquipment[] = ['none', 'box', 'gym'];
+
+async function readLastParams(userId: string): Promise<LastParams | null> {
+  const { data, error } = await supabase
+    .from('user_generation_settings')
+    .select('last_params')
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.last_params ?? null) as LastParams | null;
+}
+
+async function patchLastParams(userId: string, patch: Record<string, Json>, action: string): Promise<void> {
+  try {
+    const prev = (await readLastParams(userId)) ?? {};
+    const last_params = { ...prev, ...patch } as Json;
+    await supabase
+      .from('user_generation_settings')
+      .upsert({ user_id: userId, last_params, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+  } catch (e) {
+    captureError(e, { action });
+  }
+}
+
+/** Dernier matériel Musculation choisi (`last_params.muscu_equipment`), `box` par défaut. */
+export async function loadMuscuEquipment(userId: string): Promise<MuscuEquipment> {
+  try {
+    const eq = (await readLastParams(userId))?.muscu_equipment;
+    return MUSCU_EQUIPMENTS.find((e) => e === eq) ?? 'box';
+  } catch {
+    return 'box';
+  }
+}
+
+export function saveMuscuEquipment(userId: string, equipment: MuscuEquipment): Promise<void> {
+  return patchLastParams(userId, { muscu_equipment: equipment }, 'saveMuscuEquipment');
+}
 
 export async function loadExcludes(userId: string): Promise<string[]> {
   const { data, error } = await supabase
@@ -93,30 +156,28 @@ export async function loadExcludes(userId: string): Promise<string[]> {
   return Array.isArray(ex) ? ex.filter((v): v is string => typeof v === 'string') : [];
 }
 
-export async function saveExcludes(userId: string, exclude: string[]): Promise<void> {
-  try {
-    const { data, error } = await supabase
-      .from('user_generation_settings')
-      .select('last_params')
-      .eq('user_id', userId)
-      .maybeSingle();
-    if (error) throw error;
-    const prev = ((data?.last_params ?? {}) as LastParams);
-    const last_params = { ...prev, exclude } as Json;
-    await supabase
-      .from('user_generation_settings')
-      .upsert({ user_id: userId, last_params, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-  } catch (e) {
-    captureError(e, { action: 'saveExcludes' });
-  }
+export function saveExcludes(userId: string, exclude: string[]): Promise<void> {
+  return patchLastParams(userId, { exclude }, 'saveExcludes');
 }
 
 // ── Tirage ───────────────────────────────────────────────────────────────────
 
-export interface GenerateResult {
+export interface MetconResult {
   wod: GeneratedWod;
   params: GenerateParams;
   category: Category;
+}
+
+export interface MuscuResult {
+  wod: MuscuWod;
+  params: MuscuParams;
+  category: Category;
+}
+
+export type GenerateResult = MetconResult | MuscuResult;
+
+export function isMuscuResult(r: GenerateResult): r is MuscuResult {
+  return r.wod.discipline === 'musculation';
 }
 
 export function categoryFor(user: Pick<User, 'level' | 'gender'> | null, discipline: GenerateParams['discipline']): Category {
@@ -131,9 +192,28 @@ export function categoryFor(user: Pick<User, 'level' | 'gender'> | null, discipl
 export async function generateForUser(
   user: Pick<User, 'id' | 'level' | 'gender'>,
   boxId: string | null | undefined,
+  screen: MetconScreenParams,
+  seed?: number,
+): Promise<MetconResult>;
+export async function generateForUser(
+  user: Pick<User, 'id' | 'level' | 'gender'>,
+  boxId: string | null | undefined,
+  screen: MuscuScreenParams,
+  seed?: number,
+): Promise<MuscuResult>;
+export async function generateForUser(
+  user: Pick<User, 'id' | 'level' | 'gender'>,
+  boxId: string | null | undefined,
+  screen: ScreenParams,
+  seed?: number,
+): Promise<GenerateResult>;
+export async function generateForUser(
+  user: Pick<User, 'id' | 'level' | 'gender'>,
+  boxId: string | null | undefined,
   screen: ScreenParams,
   seed: number = newSeed(),
 ): Promise<GenerateResult> {
+  if (isMuscuScreen(screen)) return generateMuscuForUser(user, boxId, screen, seed);
   const [{ catalog, bank }, signatures, dayClass] = await Promise.all([
     loadEngineData(),
     recentSignatures(user.id),
@@ -150,6 +230,43 @@ export async function generateForUser(
   };
   const wod = generateBlocC(params, catalog, bank, seed);
   return { wod, params, category };
+}
+
+/**
+ * Musculation : niveau du profil (Scaled → débutant, Inter / RX → intermédiaire,
+ * RX+ / Elite / Pro → avancé), 1RM et poids de corps lus dans
+ * `profiles.personal_records` (RPC privée), classe du jour en « Après ma classe ».
+ * La catégorie Functional du profil est conservée pour l'historique (`level`).
+ */
+async function generateMuscuForUser(
+  user: Pick<User, 'id' | 'level' | 'gender'>,
+  boxId: string | null | undefined,
+  screen: MuscuScreenParams,
+  seed: number,
+): Promise<MuscuResult> {
+  const [{ catalog, bank }, signatures, dayClass, records] = await Promise.all([
+    loadEngineData(),
+    recentSignatures(user.id),
+    screen.entry === 'after_class' ? todayClass(boxId) : Promise.resolve(null),
+    fetchMyPersonalRecords().catch(() => ({} as Record<string, unknown>)),
+  ]);
+  const params: MuscuParams = {
+    entry: screen.entry,
+    target: screen.target,
+    objective: screen.objective,
+    budget_min: screen.budget_min,
+    equipment: screen.equipment,
+    exclude: screen.exclude,
+    level: muscuLevelFor(user.level ?? null),
+    recent_signatures: signatures,
+    one_rep_max: muscuOneRepMax(records),
+    bodyweight_kg: readBodyweightKg(records),
+    after_class: screen.entry === 'after_class' && dayClass
+      ? { day_movements: dayClass.movements, box_wod_title: dayClass.title }
+      : null,
+  };
+  const wod = generateMuscu(params, catalog, bank, seed);
+  return { wod: { ...wod, description: renderMuscu(wod) }, params, category: categoryFor(user, 'functional') };
 }
 
 /** Re-tirage : mêmes paramètres (signatures relues), nouvelle graine. */
@@ -169,9 +286,11 @@ const LEVEL_OF_CATEGORY: Record<Category, string> = {
 };
 
 /** Insère dans `generated_wods` : colonnes texte (rendu) + `wod_json` (structuré). */
-export async function saveGeneratedWod(userId: string, wod: GeneratedWod, category: Category): Promise<string> {
+export async function saveGeneratedWod(userId: string, wod: AnyWod, category: Category): Promise<string> {
   const equipment = Array.from(new Set(
-    wod.blocks.flatMap((b) => b.movements.map((m) => m.id)),
+    isMuscuWod(wod)
+      ? wod.blocks[0].exercises.map((e) => e.id)
+      : wod.blocks.flatMap((b) => b.movements.map((m) => m.id)),
   ));
   const { data, error } = await supabase
     .from('generated_wods')
@@ -181,8 +300,8 @@ export async function saveGeneratedWod(userId: string, wod: GeneratedWod, catego
       wod_name: wod.title,
       wod_type: wod.wod_type,
       duration: wod.budget_min,
-      level: LEVEL_OF_CATEGORY[category],
-      format: wod.format,
+      level: isMuscuWod(wod) ? wod.level : LEVEL_OF_CATEGORY[category],
+      format: isMuscuWod(wod) ? 'Solo' : wod.format,
       movements: wod.description,
       scoring: wod.score_type,
       coach_tip: wod.stimulus.note,
@@ -267,7 +386,7 @@ export function editorFieldsOf(wod: GeneratedWod): Pick<
  */
 export async function addToWhiteboard(
   userId: string,
-  wod: GeneratedWod,
+  wod: AnyWod,
   generatedId: string,
   existingScore: ScoreSubmission | null,
 ): Promise<string> {
@@ -281,7 +400,7 @@ export async function addToWhiteboard(
       wod_type: wod.wod_type,
       scheduled_date: todayISO(),
       time_cap_seconds: wod.time_cap_seconds,
-      rounds: editorRoundsOf(wod),
+      rounds: isMuscuWod(wod) ? null : editorRoundsOf(wod),
       emom_interval_minutes: wod.emom_interval_minutes,
       tabata_work_seconds: wod.tabata_work_seconds,
       tabata_rest_seconds: wod.tabata_rest_seconds,
@@ -312,11 +431,98 @@ export async function addToWhiteboard(
       capped: false,
       rx,
       scaled: !rx,
-      notes: [`Catégorie : ${CATEGORY_LABEL[existingScore.category]}`, existingScore.notes.trim()].filter(Boolean).join('\n'),
+      notes: scoreNotes(wod, existingScore),
     }, { onConflict: 'wod_id,member_id' });
     if (scoreError) throw scoreError;
   }
   return boxWodId;
+}
+
+function scoreNotes(wod: AnyWod, s: Pick<ScoreSubmission, 'category' | 'notes'>): string {
+  const head = isMuscuWod(wod) ? 'Tonnage (kg × reps)' : `Catégorie : ${CATEGORY_LABEL[s.category]}`;
+  return [head, s.notes.trim()].filter(Boolean).join('\n');
+}
+
+// ── Musculation : séries réalisées → tonnage ────────────────────────────────
+
+/** Une série réellement effectuée (saisie à l'écran). */
+export interface PerformedSet {
+  reps: number;
+  load_kg: number;
+}
+
+/** Séries réalisées par exercice, dans l'ordre de la séance (`exercise_id` = ligne du bloc). */
+export interface PerformedExercise {
+  exercise_id: string;
+  name: string;
+  sets: PerformedSet[];
+}
+
+/** Tonnage d'une série : charge × reps ; au poids du corps (0 kg) la série ne compte pas. */
+export function setTonnage(s: PerformedSet): number {
+  return s.load_kg > 0 && s.reps > 0 ? s.load_kg * s.reps : 0;
+}
+
+export function totalTonnage(performed: readonly PerformedExercise[]): number {
+  return performed.reduce((sum, ex) => sum + ex.sets.reduce((acc, s) => acc + setTonnage(s), 0), 0);
+}
+
+/** Séries prévues par le moteur → séries pré-remplies (reps et kg du 1RM connus, sinon 0 kg). */
+export function plannedSets(e: MuscuExercise): PerformedSet[] {
+  const reps = e.reps_unit === 'reps' ? e.reps : 0;
+  const load_kg = e.load.mode === '1rm' || e.load.mode === 'weighted' ? e.load.kg ?? 0 : 0;
+  return Array.from({ length: e.sets }, () => ({ reps, load_kg }));
+}
+
+/**
+ * Reps réellement faites par mouvement, pour le crédit de badges : somme des
+ * reps saisies (les séries en secondes / mètres ne créditent rien), charge la
+ * plus lourde de l'exercice. Jamais relu depuis `strength_set_logs`.
+ */
+export function performedMovementEntries(performed: readonly PerformedExercise[]): MovementEntry[] {
+  const out: MovementEntry[] = [];
+  for (const ex of performed) {
+    const reps = ex.sets.reduce((acc, s) => acc + Math.max(0, Math.floor(s.reps)), 0);
+    if (reps <= 0) continue;
+    const weight = Math.max(0, ...ex.sets.map((s) => s.load_kg));
+    out.push({ name: ex.name, reps, unit: 'reps', ...(weight > 0 ? { weight_kg: weight } : {}) });
+  }
+  return out;
+}
+
+export interface MuscuScoreSubmission {
+  wodId: string;
+  performed: PerformedExercise[];
+  notes: string;
+}
+
+/**
+ * Score Musculation : tonnage total dans `generated_wod_scores`
+ * (`score_type = 'weight'`), compteur, puis crédit de badges d'après les reps
+ * saisies via `logMovementReps` — indépendant du journal `strength_set_logs`.
+ */
+export async function submitMuscuScore(
+  user: Pick<User, 'id'>,
+  boxId: string | null | undefined,
+  wod: MuscuWod,
+  s: MuscuScoreSubmission,
+): Promise<number> {
+  const tonnage = totalTonnage(s.performed);
+  const { error } = await supabase.from('generated_wod_scores').insert({
+    wod_id: s.wodId,
+    user_id: user.id,
+    score_type: 'weight',
+    score_value: tonnage,
+    rx: wod.level !== 'debutant',
+    notes: scoreNotes(wod, { category: 'rx', notes: s.notes }),
+  });
+  if (error) throw error;
+  incrementCounter(user.id, 'total_scores_submitted', 1, boxId ?? undefined)
+    .catch((e) => captureError(e, { action: 'incrementScores' }));
+  cancelTodayScoreReminder().catch((e) => captureError(e, { action: 'cancelScoreReminder' }));
+  logMovementReps(user.id, performedMovementEntries(s.performed), 'wod', s.wodId)
+    .catch((e) => captureError(e, { action: 'logMovementReps' }));
+  return tonnage;
 }
 
 /** Score + compteurs + crédit de badges par mouvement (grammaire du rendu texte). */
@@ -326,7 +532,7 @@ export async function submitGeneratedScore(
   wod: GeneratedWod,
   s: ScoreSubmission,
 ): Promise<void> {
-  const notes = [`Catégorie : ${CATEGORY_LABEL[s.category]}`, s.notes.trim()].filter(Boolean).join('\n');
+  const notes = scoreNotes(wod, s);
   const { error } = await supabase.from('generated_wod_scores').insert({
     wod_id: s.wodId,
     user_id: user.id,

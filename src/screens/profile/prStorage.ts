@@ -32,8 +32,21 @@ export const WEIGHTLIFTING_PR_MOVEMENTS = [
   'Push Press', 'Push Jerk', 'Split Jerk', 'Squat Clean', 'Power Clean',
   'Hang Power Clean', 'Hang Squat Clean', 'Squat Snatch', 'Power Snatch',
   'Hang Power Snatch', 'Hang Squat Snatch', 'Clean & Jerk', 'Overhead Squat',
-  'Thruster',
+  'Thruster', 'Hip Thrust',
 ] as const;
+
+/**
+ * Poids de corps (kg) de l'athlète, dans `profiles.personal_records` à côté des
+ * 1RM (pas de colonne dédiée : le générateur Musculation en a besoin pour le
+ * lest, et une migration pour un seul nombre n'est pas justifiée).
+ */
+export const BODYWEIGHT_KEY = '_bodyweight_kg';
+
+export function readBodyweightKg(records: Record<string, unknown> | null | undefined): number | null {
+  const raw = records?.[BODYWEIGHT_KEY];
+  const n = typeof raw === 'number' ? raw : typeof raw === 'string' ? parseFloat(raw.replace(',', '.')) : NaN;
+  return Number.isFinite(n) && n >= 30 && n <= 250 ? n : null;
+}
 
 const LOWER_TO_WEIGHTLIFTING_LABEL: Record<string, string> = Object.fromEntries(
   WEIGHTLIFTING_PR_MOVEMENTS.map(m => [m.toLowerCase(), m]),

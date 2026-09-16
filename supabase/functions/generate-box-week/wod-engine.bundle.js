@@ -22913,8 +22913,7 @@ var FINISHERS = [
   fin("calves_single_leg_hold", "calves", [mv("single_leg_calf_raise", 12, "reps", "Single-Leg Calf Raise (par c\xF4t\xE9)"), mv("calf_raise_hold", 20, "s", "Calf Raise Hold en haut")]),
   // Respiratoire
   fin("breathing_row_nasal", "breathing", [mv("row", 250, "m", "Row respiration nasale"), mv("box_breathing", 60, "s", "Box Breathing 4-4-4-4")], 2),
-  fin("breathing_bike_exhale", "breathing", [mv("bike_erg", 300, "m", "Bike Erg facile"), mv("slow_exhale", 60, "s", "Respiration 4 s inspir / 8 s expir")], 2),
-  fin("breathing_walk_breath_hold", "breathing", [mv("shuttle_run", 100, "m", "Marche rapide"), mv("breath_hold_walk", 20, "s", "Marche en apn\xE9e expiratoire")], 2)
+  fin("breathing_bike_exhale", "breathing", [mv("bike_erg", 300, "m", "Bike Erg facile"), mv("slow_exhale", 60, "s", "Respiration 4 s inspir / 8 s expir")], 2)
 ];
 var S1_snatch = {
   id: "S1_snatch",
@@ -24426,7 +24425,8 @@ var DEMOTED_RANGE = [6, 8];
 var DEMOTED_PERCENT_MAX = 75;
 var REST_EXTRA_MAX = 15;
 var BODYWEIGHT_MAX_LOADED = 1;
-var BONUS_CORE_MAX = 2;
+var CORE_MAX_OUTSIDE_TRONC = 1;
+var BONUS_EXCLUDED_IDS = ["mountain_climber", "vacuum", "russian_twist"];
 var HIGH_REP_SETS_MAX = 5;
 var HIGH_REP_SETS_REPS_MAX = 15;
 var PULL_UP_ENDURANCE_RANGE = [8, 12];
@@ -24540,17 +24540,37 @@ function basePool(ctx) {
   const noSquat = NO_SQUAT_TARGETS.includes(params.target);
   const noBwPullUp = params.objective === "endurance" && params.level !== "avance";
   const troncMuscles = TARGET_MUSCLES.tronc;
-  return ctx.catalog.movements.filter((m) => m.muscu).filter((m) => equipmentWeight(m, params.equipment) > 0 && levelOk(m, params.level) && !isExcluded2(ctx, m) && !ctx.excludedMuscles.has(m.muscu.muscle_primary) && !(noSquat && SQUAT_IDS.includes(m.id)) && !(noBwPullUp && BODYWEIGHT_PULL_UP_IDS.includes(m.id)) && !(params.target === "tronc" && m.muscu.compound && !troncMuscles.includes(m.muscu.muscle_primary)));
+  const minSets = SCHEMES[params.objective].sets_min;
+  return ctx.catalog.movements.filter((m) => m.muscu).filter((m) => equipmentWeight(m, params.equipment) > 0 && levelOk(m, params.level) && !isExcluded2(ctx, m) && !ctx.excludedMuscles.has(m.muscu.muscle_primary) && weeklyRoomOk(ctx, m.muscu.muscle_primary, minSets) && !(noSquat && SQUAT_IDS.includes(m.id)) && !(noBwPullUp && BODYWEIGHT_PULL_UP_IDS.includes(m.id)) && !(params.target === "tronc" && m.muscu.compound && !troncMuscles.includes(m.muscu.muscle_primary)));
+}
+function isCoreMuscle(mu) {
+  return TARGET_MUSCLES.tronc.includes(mu);
 }
 function isBodyweightNonCore(m) {
-  return m.muscu.load_mode === "bodyweight" && !TARGET_MUSCLES.tronc.includes(m.muscu.muscle_primary) && m.muscu.muscle_primary !== "mollets";
+  return m.muscu.load_mode === "bodyweight" && !isCoreMuscle(m.muscu.muscle_primary);
 }
 function bodyweightAllowed(ctx, m, picked) {
   if (!isBodyweightNonCore(m)) return true;
   if (ctx.params.equipment === "none" || ctx.params.level === "debutant") return true;
-  const loadedExists = ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== "bodyweight" && x.muscu.compound === m.muscu.compound);
+  const loadedExists = ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== "bodyweight");
   if (!loadedExists) return true;
-  return picked.filter((p) => isBodyweightNonCore(p.m)).length < BODYWEIGHT_MAX_LOADED;
+  return picked.filter((p) => isBodyweightNonCore(p.m) && loadedFor(ctx, p.m)).length < BODYWEIGHT_MAX_LOADED;
+}
+function loadedFor(ctx, m) {
+  return ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== "bodyweight");
+}
+function coreAllowed(ctx, m, picked) {
+  if (ctx.params.target === "tronc" || !isCoreMuscle(m.muscu.muscle_primary)) return true;
+  return picked.filter((p) => isCoreMuscle(p.m.muscu.muscle_primary)).length < CORE_MAX_OUTSIDE_TRONC;
+}
+function weeklyRoomOk(ctx, mu, minSets) {
+  if (muscleCap(ctx, mu) >= minSets) return true;
+  ctx.relax.add("weekly_cap");
+  return false;
+}
+function muscleCap(ctx, mu) {
+  const room = ctx.params.weekly_room?.[mu];
+  return room === void 0 ? VOLUME_CAP_SETS[ctx.params.objective] : Math.min(VOLUME_CAP_SETS[ctx.params.objective], room);
 }
 function groupAllowed(ctx, m, slot2, picked) {
   if (ctx.params.target === "full_body" || slot2.role === "core") return true;
@@ -24580,6 +24600,7 @@ function candidates(ctx, slot2, f, picked, prevMuscle) {
     if (slot2.role === "main_compound" && ctx.params.objective === "force" && !(f.ids && slot2.groups) && mainMuscles.has(m.muscu.muscle_primary)) return false;
     if (!groupAllowed(ctx, m, slot2, picked)) return false;
     if (!bodyweightAllowed(ctx, m, picked)) return false;
+    if (!coreAllowed(ctx, m, picked)) return false;
     return true;
   });
 }
@@ -24692,12 +24713,11 @@ function volumeByMuscle(lines) {
   return v;
 }
 function applyVolumeCaps2(ctx, lines) {
-  const cap = VOLUME_CAP_SETS[ctx.params.objective];
   const out = [];
   const v = /* @__PURE__ */ new Map();
   for (const l of lines) {
     const mu = l.m.muscu.muscle_primary;
-    const room = cap - (v.get(mu) ?? 0);
+    const room = muscleCap(ctx, mu) - (v.get(mu) ?? 0);
     if (room < 2) {
       ctx.relax.add("volume_cap");
       continue;
@@ -24746,26 +24766,30 @@ function bonusIndex(lines, muscle) {
 }
 function bonusExercise(ctx, lines, target) {
   const used = new Set(lines.map((l) => l.m.id));
-  const cap = VOLUME_CAP_SETS[ctx.params.objective];
   const vol = volumeByMuscle(lines);
   const minSets = SCHEMES[ctx.params.objective].sets_min;
-  const muscles = TARGET_MUSCLES[target].filter((mu) => !ctx.excludedMuscles.has(mu) && (vol.get(mu) ?? 0) + minSets <= cap);
-  const bonusSlot = { role: "isolation", muscle: TARGET_MUSCLES[target], optional: true };
-  const eligible = (m2, anyObjective = false) => !used.has(m2.id) && bonusIndex(lines, m2.muscu.muscle_primary) >= 0 && !ctx.excludedMuscles.has(m2.muscu.muscle_primary) && (vol.get(m2.muscu.muscle_primary) ?? 0) + minSets <= cap && (anyObjective || objectiveFor(m2, ctx.params.objective)) && groupAllowed(ctx, m2, { ...bonusSlot, role: m2.muscu.compound ? "secondary_compound" : TARGET_MUSCLES.tronc.includes(m2.muscu.muscle_primary) ? "core" : "isolation" }, lines) && bodyweightAllowed(ctx, m2, lines);
+  const room = (mu) => muscleCap(ctx, mu) - (vol.get(mu) ?? 0);
+  const muscles = TARGET_MUSCLES[target].filter((mu) => !ctx.excludedMuscles.has(mu) && room(mu) >= minSets);
+  const bonusSlot = { role: "isolation", muscle: TARGET_MUSCLES[target], optional: true, pair: true };
+  const eligible = (m2, anyObjective = false) => !used.has(m2.id) && bonusIndex(lines, m2.muscu.muscle_primary) >= 0 && !ctx.excludedMuscles.has(m2.muscu.muscle_primary) && room(m2.muscu.muscle_primary) >= minSets && (anyObjective || objectiveFor(m2, ctx.params.objective)) && !(ctx.params.objective !== "endurance" && BONUS_EXCLUDED_IDS.includes(m2.id)) && groupAllowed(ctx, m2, { ...bonusSlot, role: m2.muscu.compound ? "secondary_compound" : isCoreMuscle(m2.muscu.muscle_primary) ? "core" : "isolation" }, lines) && bodyweightAllowed(ctx, m2, lines) && coreAllowed(ctx, m2, lines);
   const targetMuscles = TARGET_MUSCLES[target];
   const primary = ctx.pool.filter((m2) => eligible(m2) && muscles.includes(m2.muscu.muscle_primary));
-  const secondary = primary.length ? [] : ctx.pool.filter((m2) => eligible(m2) && !m2.muscu.compound && m2.muscu.muscle_secondary.some((mu) => targetMuscles.includes(mu)));
-  const coreMuscles = TARGET_MUSCLES.tronc;
-  const tertiary = primary.length || secondary.length || lines.filter((l) => l.role === "core" && l.slotIndex === 99).length >= BONUS_CORE_MAX ? [] : ctx.pool.filter((m2) => eligible(m2, true) && coreMuscles.includes(m2.muscu.muscle_primary) && (!m2.muscu.compound || m2.muscu.movement_group === "carry"));
+  const secondaryOf = (ms) => new Set(ms.flatMap((m2) => m2.muscu.muscle_secondary).filter((mu) => !isCoreMuscle(mu)));
+  const fromLines = secondaryOf(lines.map((l) => l.m).filter((m2) => targetMuscles.includes(m2.muscu.muscle_primary)));
+  const fromPool = secondaryOf(ctx.pool.filter((m2) => targetMuscles.includes(m2.muscu.muscle_primary)));
+  const isSecondaryIso = (m2, set) => eligible(m2) && !m2.muscu.compound && !isCoreMuscle(m2.muscu.muscle_primary) && (set.has(m2.muscu.muscle_primary) || m2.muscu.muscle_secondary.some((mu) => targetMuscles.includes(mu)));
+  let secondary = primary.length ? [] : ctx.pool.filter((m2) => isSecondaryIso(m2, fromLines));
+  if (!primary.length && !secondary.length) secondary = ctx.pool.filter((m2) => isSecondaryIso(m2, fromPool));
+  const tertiary = primary.length || secondary.length ? [] : ctx.pool.filter((m2) => eligible(m2, true) && isCoreMuscle(m2.muscu.muscle_primary) && (!m2.muscu.compound || m2.muscu.movement_group === "carry"));
   const base = primary.length ? primary : secondary.length ? secondary : tertiary;
   const iso2 = base.filter((m2) => !m2.muscu.compound);
   const m = ctx.rng.pickWeighted(iso2.length ? iso2 : base, (x) => equipmentWeight(x, ctx.params.equipment));
   if (!m) return null;
-  const role = coreMuscles.includes(m.muscu.muscle_primary) ? "core" : m.muscu.compound ? "secondary_compound" : "isolation";
+  const role = isCoreMuscle(m.muscu.muscle_primary) ? "core" : m.muscu.compound ? "secondary_compound" : "isolation";
   const p = { m, role, objective: objectiveFor(m, ctx.params.objective) ?? (m.muscu.objectives.includes("hypertrophie") ? "hypertrophie" : m.muscu.objectives[0] ?? "hypertrophie"), optional: true, slotIndex: 99 };
   if (ctx.params.objective === "force" && p.objective === "force") p.objective = "hypertrophie";
   const line = lineFor(ctx, p);
-  line.sets = Math.min(line.sets, cap - (vol.get(m.muscu.muscle_primary) ?? 0));
+  line.sets = Math.min(line.sets, room(m.muscu.muscle_primary));
   return line;
 }
 function fitBudget(ctx, input, target) {
@@ -24838,9 +24862,8 @@ function fitBudget(ctx, input, target) {
         }
       }
     }
-    const cap = VOLUME_CAP_SETS[ctx.params.objective];
     const vol = volumeByMuscle(lines);
-    const addable = lines.filter((l) => l.sets < SCHEMES[l.objective].sets_max && (vol.get(l.m.muscu.muscle_primary) ?? 0) < cap).sort((a, b) => a.sets - b.sets || a.slotIndex - b.slotIndex);
+    const addable = lines.filter((l) => l.sets < SCHEMES[l.objective].sets_max && (vol.get(l.m.muscu.muscle_primary) ?? 0) < muscleCap(ctx, l.m.muscu.muscle_primary)).sort((a, b) => a.sets - b.sets || a.slotIndex - b.slotIndex);
     const fits = (l) => {
       const reps = l.reps;
       l.sets++;
@@ -24969,6 +24992,20 @@ function targetAvailable(catalog, target, equipment, level) {
 }
 function availableTargets(catalog, equipment, level) {
   return MUSCU_TARGETS.filter((t) => targetAvailable(catalog, t, equipment, level));
+}
+var DURATION_PROBE_SEEDS = 5;
+function availableDurations(catalog, bank, params) {
+  const all = params.target === "tronc" ? MUSCU_DURATIONS.tronc : params.entry === "after_class" ? MUSCU_DURATIONS.after_class : MUSCU_DURATIONS.express;
+  return all.filter((budget_min) => {
+    for (let seed = 1; seed <= DURATION_PROBE_SEEDS; seed++) {
+      try {
+        if (generateMuscu({ ...params, budget_min }, catalog, bank, seed).generator.relaxations.includes("budget_short")) return false;
+      } catch {
+        return false;
+      }
+    }
+    return true;
+  });
 }
 function generateMuscu(params, catalog, bank, seed) {
   if (params.objective === "force" && params.entry === "after_class") {
@@ -25668,8 +25705,11 @@ function generateMuscuWeek(params, catalog, bank, seed) {
   const relax = /* @__PURE__ */ new Set();
   const recent = [...params.recent_signatures ?? []];
   const days = [];
-  for (const d of MUSCU_WEEK_DAYS) {
+  const order = [...MUSCU_WEEK_DAYS].sort((a, b) => TARGET_MUSCLES[a.target].length - TARGET_MUSCLES[b.target].length || a.day - b.day);
+  for (const d of order) {
     const dayObjective = d.target === "tronc" && objective === "force" ? "hypertrophie" : objective;
+    const weekly_room = {};
+    for (const [mu, n] of setsByMuscle(days)) weekly_room[mu] = Math.max(0, MUSCU_WEEKLY_CAP_SETS - n);
     const wod = generateMuscu({
       entry: "express",
       target: d.target,
@@ -25679,11 +25719,13 @@ function generateMuscuWeek(params, catalog, bank, seed) {
       level,
       exclude: params.exclude,
       recent_signatures: [...recent, ...days.map((x) => x.wod.signature)],
-      box_wod: true
+      box_wod: true,
+      weekly_room
     }, catalog, bank, seed + d.day * 7919 >>> 0);
     for (const r of wod.generator.relaxations) relax.add(`${d.target}:${r}`);
     days.push({ day: d.day, target: d.target, budget_min: d.budget_min, wod });
   }
+  days.sort((a, b) => a.day - b.day);
   const minSets = SCHEMES[objective].sets_min;
   const touched = /* @__PURE__ */ new Set();
   for (let guard = 0; guard < 200; guard++) {
@@ -25894,12 +25936,15 @@ export {
   BEGINNER_MAX_EXERCISES_LONG,
   BODYWEIGHT_MAX_LOADED,
   BODYWEIGHT_PULL_UP_IDS,
+  BONUS_EXCLUDED_IDS,
   CARDIO_EXCLUDED_IDS,
   CATALOG_SNAPSHOT,
   CATEGORY_LABEL,
+  CORE_MAX_OUTSIDE_TRONC,
   DAY_LABEL,
   DEMOTED_PERCENT_MAX,
   DEMOTED_RANGE,
+  DURATION_PROBE_SEEDS,
   ENGINE_MIN_SHARE,
   ENGINE_VERSION,
   EQUIPMENT_FALLBACK,
@@ -25974,6 +26019,7 @@ export {
   WEIGHTED_IDS,
   afterClassFilter,
   afterClassMuscles,
+  availableDurations,
   availableTargets,
   bankFromRows,
   blocCRepsRx,
