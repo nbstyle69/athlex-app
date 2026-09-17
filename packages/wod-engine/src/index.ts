@@ -25,7 +25,7 @@ export type { MuscuSkeletonRow, SessionSkeletonRow, AnySkeletonRow } from './ban
 export { SESSION_SKELETONS, SESSION_BANK_VERSION, FINISHERS, S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long } from './bank';
 export {
   HYBRID_SESSION_SKELETONS, HYBRID_FORBIDDEN_IDS, HYBRID_JUMP_IDS,
-  HYBRID_WEEKLY_JUMP_CAP, HYBRID_WEEKLY_RUN_M, HYBRID_HARD_RPE, HYBRID_EASY_RPE,
+  HYBRID_WEEKLY_JUMP_CAP, HYBRID_WEEKLY_RUN_M, HYBRID_FRIDAY_RUN_M, HYBRID_HARD_RPE, HYBRID_EASY_RPE, HYBRID_TUESDAY_RPE,
   H1_intervals, H2_strength_stations, H3_run, H4_engine, H5_compromised, H6_simulation, H6_simulation_full,
 } from './bank';
 export {

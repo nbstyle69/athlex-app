@@ -24,6 +24,7 @@ import { half_sim } from './hybrid/half_sim';
 import { engine_continuous } from './hybrid/engine_continuous';
 import { core_carry_finisher } from './hybrid/core_carry_finisher';
 import { run_intervals } from './hybrid/run_intervals';
+import { engine_negative_split } from './hybrid/engine_negative_split';
 import { MUSCU_SKELETONS } from './muscu';
 import { SESSION_SKELETONS } from './session';
 import { HYBRID_SESSION_SKELETONS } from './session-hybrid';
@@ -32,7 +33,7 @@ export { MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, TARGET_MUSCLES } from
 export { SESSION_SKELETONS, SESSION_BANK_VERSION, FINISHERS, S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long } from './session';
 export {
   HYBRID_SESSION_SKELETONS, HYBRID_FORBIDDEN_IDS, HYBRID_JUMP_IDS,
-  HYBRID_WEEKLY_JUMP_CAP, HYBRID_WEEKLY_RUN_M, HYBRID_HARD_RPE, HYBRID_EASY_RPE,
+  HYBRID_WEEKLY_JUMP_CAP, HYBRID_WEEKLY_RUN_M, HYBRID_FRIDAY_RUN_M, HYBRID_HARD_RPE, HYBRID_EASY_RPE, HYBRID_TUESDAY_RPE,
   H1_intervals, H2_strength_stations, H3_run, H4_engine, H5_compromised, H6_simulation, H6_simulation_full,
 } from './session-hybrid';
 
@@ -48,7 +49,7 @@ export const FUNCTIONAL_SKELETONS = [
 
 export const HYBRID_SKELETONS = [
   run_into_station, stations_interval, amrap_distances, erg_pyramid, sled_repeats, compromised_run, half_sim,
-  engine_continuous, core_carry_finisher, run_intervals,
+  engine_continuous, core_carry_finisher, run_intervals, engine_negative_split,
 ];
 
 /**

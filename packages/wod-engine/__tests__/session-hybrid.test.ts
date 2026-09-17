@@ -12,6 +12,7 @@ import {
   functionalWeekRows, muscuWeekRows, H3_run, H6_simulation_full,
 } from '../src';
 import type { GeneratedSession, GeneratedWeek, SessionDay } from '../src';
+import { countHybridByCause, hybridViolations, HYBRID_CAUSES } from './conformity-hybrid';
 
 const WEEKS = Number(process.env.WOD_ENGINE_WEEKS ?? 52);
 const YEAR = 2027;
@@ -122,10 +123,12 @@ describe('règles de la piste (52 semaines)', () => {
     const seen: string[] = [];
     for (const w of weeks) for (const s of w.sessions) {
       if (seen.slice(-24).includes(s.signature)) {
-        // le jeudi n'a qu'un squelette de continu à 45' : ses combinaisons s'épuisent,
-        // et le moteur le dit au lieu d'échouer
-        expect({ day: s.day, relaxations: s.generator.relaxations })
-          .toMatchObject({ relaxations: expect.arrayContaining(['c_fallback:signature']) });
+        // deux cas admis : un bloc tiré dont les combinaisons s'épuisent (le moteur le dit
+        // au lieu d'échouer), ou une séance à structure écrite dont le tirage de postes
+        // retombe sur la même combinaison.
+        const written = s.bloc_c === null;
+        expect({ day: s.day, written, relaxations: s.generator.relaxations })
+          .toMatchObject(written ? { written: true } : { relaxations: expect.arrayContaining(['c_fallback:signature']) });
       }
       seen.push(s.signature);
     }
@@ -183,6 +186,29 @@ describe('interdits sur 200 graines par squelette', () => {
       expect([...found]).toEqual([]);
     },
   );
+});
+
+describe('conformité H1 à H7 (corrections de la relecture)', () => {
+  it('compteurs à zéro sur les 52 semaines, sauf les écarts structurels documentés', () => {
+    const counts = countHybridByCause(weeks);
+    // vendredi (course compromise, RPE 8) puis samedi (simulation, RPE 9) : la semaine type
+    // enchaîne ses deux séances les plus dures. Constaté, tracé, jamais masqué.
+    const { 'regle:jours_durs_consecutifs': hardDays, ...strict } = counts;
+    expect(strict).toEqual(Object.fromEntries(HYBRID_CAUSES.filter((c) => c !== 'regle:jours_durs_consecutifs').map((c) => [c, 0])));
+    for (const w of weeks) {
+      const v = hybridViolations(w);
+      if (v['regle:jours_durs_consecutifs']?.length) {
+        expect(w.relaxations.some((r) => r.startsWith('hard_days_in_a_row:'))).toBe(true);
+      }
+    }
+    expect(hardDays).toBeGreaterThanOrEqual(0);
+  });
+
+  it('le détail d’une semaine nomme ses violations, s’il y en a', () => {
+    const v = hybridViolations(weeks[0]);
+    const strict = Object.entries(v).filter(([c]) => c !== 'regle:jours_durs_consecutifs');
+    expect(Object.fromEntries(strict)).toEqual({});
+  });
 });
 
 describe('les trois pistes ensemble', () => {

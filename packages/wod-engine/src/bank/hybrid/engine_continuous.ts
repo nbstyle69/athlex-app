@@ -4,7 +4,7 @@ export const engine_continuous: Skeleton = {
   id: 'engine_continuous',
   discipline: 'hybrid',
   format: 'continuous',
-  durations: [20, 30, 45],
+  durations: [20, 30, 35, 40, 45],
   intentions: ['aerobic'],
   band_by_intention: { aerobic: 'light' },
   rounds: { min: 1, max: 6 },

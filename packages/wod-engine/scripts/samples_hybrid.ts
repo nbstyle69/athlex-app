@@ -30,8 +30,8 @@ function renderWeek(w: GeneratedWeek, title: string): void {
     p(`### ${DAY_LABEL[s.day]} ${dates[s.day - 1]} · ${s.label} · ${s.total_minutes}' (budget ${s.budget_min}')`);
     p();
     p(`squelette \`${s.generator.skeleton_id}\``
-      + (s.bloc_c ? ` · bloc de travail \`${s.bloc_c.generator.skeleton_id}\` · intention **${s.bloc_c.intention}** · RPE ${s.bloc_c.stimulus.rpe}` : ' · séance chronométrée, sans bloc tiré')
-      + ` · course ${s.run_meters ?? 0} m`
+      + (s.bloc_c ? ` · bloc tiré \`${s.bloc_c.generator.skeleton_id}\` · intention **${s.bloc_c.intention}**` : ' · bloc de travail écrit dans le squelette')
+      + ` · RPE du jour **${s.rpe}** · course ${s.run_meters ?? 0} m`
       + (relax.length ? ` · **relâchements : ${relax.join(', ')}**` : ''));
     p();
     for (const b of s.blocks) {

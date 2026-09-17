@@ -14,6 +14,7 @@ import { TARGET_MUSCLES } from './bank/muscu';
 import { SESSION_SKELETONS } from './bank/session';
 import {
   HYBRID_FORBIDDEN_IDS, HYBRID_JUMP_IDS, HYBRID_WEEKLY_JUMP_CAP, HYBRID_WEEKLY_RUN_M, HYBRID_HARD_RPE,
+  HYBRID_FRIDAY_RUN_M,
 } from './bank/session-hybrid';
 
 export const SESSION_ENGINE_VERSION = '1.0.0';
@@ -120,6 +121,9 @@ export function stepLine(name: string, st: StrengthStep, tempo?: string | null):
   if (st.note) out += ` — charge ${st.note}`;
   return out;
 }
+
+/** saut de ligne des descriptions de blocs */
+const NL = '\n';
 
 const CAT_LABEL: Record<string, string> = { scaled: 'Scaled', inter: 'Inter', rx: 'RX', rxplus: 'RX+', elite: 'Elite', pro: 'Pro' };
 
@@ -275,6 +279,11 @@ function blockARunMeters(catalog: Catalog, opt: SessionBlockAOption): number {
     const stationsM = Array.from({ length: rounds }, (_, i) => ofItem(stations[i % stations.length], 1)).reduce((a, b) => a + b, 0);
     return rounds * run_m + stationsM;
   }
+  if (opt.compromised) {
+    const { rounds, stations } = opt.compromised;
+    const stationsM = Array.from({ length: rounds }, (_, i) => ofItem(stations[i % stations.length], 1)).reduce((a, b) => a + b, 0);
+    return totalRunOf(opt) + stationsM;
+  }
   return 0;
 }
 
@@ -323,22 +332,36 @@ function skeletonForDay(bank: SkeletonBank, day: SessionDay, track: SessionTrack
   return sk;
 }
 
-/** « 100/75 kg », hommes puis femmes, à la bande demandée ; vide si le mouvement n'a pas de charge. */
-function loadPair(catalog: Catalog, id: string, band?: Band): string {
-  if (!band) return '';
+/** Charge d'un mouvement à une bande, hommes puis femmes ; `null` si le catalogue n'en a pas. */
+function loadOf(catalog: Catalog, id: string, band?: Band): { men: number; women: number; unit: string } | null {
+  if (!band) return null;
   const m = movementById(catalog, id);
-  if (!m?.loads) return '';
+  if (!m?.loads) return null;
   const men = loadsFor(m, 'men', band);
   const women = loadsFor(m, 'women', band);
-  if (!men?.length || !women?.length) return '';
-  return ` @ ${men[0]}/${women[0]} ${m.load_unit ?? 'kg'}`;
+  if (!men?.length || !women?.length) return null;
+  return { men: men[0], women: women[0], unit: m.load_unit ?? 'kg' };
 }
 
-/** « 25 m Sled Push @ 100/75 kg », « 10 Goblet Squats @ 24/16 kg », « 500 m SkiErg ». */
+/**
+ * Suffixe de charge d'un poste. Une hauteur de box (`cm`) n'est pas une charge : elle est
+ * rendue entre parenthèses, et la charge vient alors du mouvement désigné par `load_from`.
+ */
+function loadPair(catalog: Catalog, it: SessionStationItem): string {
+  const own = loadOf(catalog, it.id, it.band);
+  const extra = it.load_from ? loadOf(catalog, it.load_from, it.band) : null;
+  const parts: string[] = [];
+  if (own && own.unit === 'cm') parts.push(`(box ${own.men}/${own.women} cm)`);
+  else if (own) parts.push(`@ ${own.men}/${own.women} ${own.unit}`);
+  if (extra) parts.push(`@ ${extra.men}/${extra.women} ${extra.unit}`);
+  return parts.length ? ` ${parts.join(' ')}` : '';
+}
+
+/** « 25 m Sled Push @ 125/100 kg », « 60 s Row », « 10 Box Step-ups (box 60/50 cm) @ 24/16 kg ». */
 function stationLine(catalog: Catalog, it: SessionStationItem): string {
   const name = it.name ?? nameOf(catalog, it.id);
   const qty = it.unit === 'reps' ? `${it.qty}` : `${it.qty} ${it.unit}`;
-  return `${qty} ${name}${loadPair(catalog, it.id, it.band)}`;
+  return `${qty} ${name}${loadPair(catalog, it)}`;
 }
 
 /** Ligne Pro d'un poste chargé, quand le catalogue connaît les charges Pro. */
@@ -348,6 +371,7 @@ function proLine(catalog: Catalog, items: readonly SessionStationItem[]): string
     if (!it.band) continue;
     const m = movementById(catalog, it.id);
     if (!m?.loads) continue;
+    if ((m.load_unit ?? 'kg') === 'cm') continue;
     const men = loadsFor(m, 'men_pro', it.band);
     const women = loadsFor(m, 'women_pro', it.band);
     if (!men?.length || !women?.length) continue;
@@ -361,13 +385,44 @@ function proLine(catalog: Catalog, items: readonly SessionStationItem[]): string
  * Un `race.ordered` (test de bloc) est rendu tel quel, pour rester comparable d'une fois sur l'autre.
  */
 export function drawRace(opt: SessionBlockAOption, rng: RNG): SessionBlockAOption {
+  const shuffle = <T>(xs: readonly T[]): T[] => {
+    const pool = [...xs];
+    const out: T[] = [];
+    while (pool.length) out.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
+    return out;
+  };
+  if (opt.compromised) {
+    const c = opt.compromised;
+    const runs = Array.from({ length: c.rounds }, () => rng.int(c.run_m_min / 100, c.run_m_max / 100) * 100);
+    // le vendredi est la séance de course compromise : il garantit sa distance, en
+    // remontant d'abord les courses les plus courtes jusqu'au maximum du squelette
+    let total = runs.reduce((a, b) => a + b, 0);
+    while (total < HYBRID_FRIDAY_RUN_M) {
+      const i = runs.indexOf(Math.min(...runs));
+      if (runs[i] >= c.run_m_max) break;
+      runs[i] += 100;
+      total += 100;
+    }
+    return { ...opt, compromised: { ...c, stations: shuffle(c.stations), runs } };
+  }
   const race = opt.race;
   if (!race || race.ordered) return opt;
-  const pool = [...race.stations];
-  const stations: SessionStationItem[] = [];
-  while (pool.length) stations.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
   const rounds = rng.int(race.rounds_min ?? race.rounds, race.rounds_max ?? race.rounds);
-  return { ...opt, race: { ...race, rounds, stations } };
+  return { ...opt, race: { ...race, rounds, stations: shuffle(race.stations) } };
+}
+
+/** Distance de course d'un round du bloc compromise (tirée, ou moyenne à défaut). */
+function runOfRound(opt: SessionBlockAOption, i: number): number {
+  const c = opt.compromised;
+  if (!c) return 0;
+  return c.runs?.[i] ?? Math.round((c.run_m_min + c.run_m_max) / 200) * 100;
+}
+
+/** Total de course du bloc compromise. */
+function totalRunOf(opt: SessionBlockAOption): number {
+  const c = opt.compromised;
+  if (!c) return 0;
+  return Array.from({ length: c.rounds }, (_, i) => runOfRound(opt, i)).reduce((a, b) => a + b, 0);
 }
 
 /** Bloc A des séances Hybrid : station `Every X'`, intervalles de course, ou enchaînement chronométré. */
@@ -376,10 +431,11 @@ function hybridALines(catalog: Catalog, opt: SessionBlockAOption, iso_week: numb
   if (opt.kind === 'station' && opt.station) {
     const { every_s, rounds, items } = opt.station;
     lines.push(items.length > 1
-      ? `Every ${fmtEvery(every_s)} × ${rounds}, en alternance :`
+      ? `Every ${fmtEvery(every_s)} × ${rounds}, en rotation :`
       : `Every ${fmtEvery(every_s)} × ${rounds} :`);
     for (const [i, it] of items.entries()) {
-      const tag = items.length > 1 ? `${i % 2 === 0 ? 'Impair' : 'Pair'} · ` : '';
+      // deux postes s'alternent (impair / pair), au-delà ils tournent et se numérotent
+      const tag = items.length === 2 ? `${i === 0 ? 'Impair' : 'Pair'} · ` : items.length > 2 ? `Poste ${i + 1} · ` : '';
       lines.push(`${tag}${stationLine(catalog, it)}`);
     }
     const pro = proLine(catalog, items);
@@ -392,6 +448,19 @@ function hybridALines(catalog: Catalog, opt: SessionBlockAOption, iso_week: numb
     lines.push(`Intervalles course — ${v.label}, repos ${fmtRest(v.rest_s)}`);
     lines.push(`Allure cible : ${v.target}. L'écart entre le premier et le dernier intervalle reste sous 5 s.`);
     lines.push(`Autres variantes du cycle : ${opt.run.variants.filter((x) => x !== v).map((x) => x.label).join(' · ')}`);
+  } else if (opt.kind === 'compromised' && opt.compromised) {
+    const { rounds, work_s, run_m_min, run_m_max, stations, target } = opt.compromised;
+    lines.push(`${rounds} rounds :`);
+    for (let i = 0; i < rounds; i++) {
+      const st = stations[i % stations.length];
+      const run = runOfRound(opt, i);
+      lines.push(`${i + 1}. ${work_s} s de station — ${stationLine(catalog, st)}`);
+      lines.push(`   puis ${run} m Run à allure cible (${target})`);
+    }
+    const used = Array.from({ length: rounds }, (_, i) => stations[i % stations.length]);
+    const pro = proLine(catalog, used);
+    if (pro) lines.push(pro);
+    lines.push(`Total de course : ${totalRunOf(opt)} m. Tenir l'allure avec les jambes chargées, ne pas sprinter la station.`);
   } else if (opt.kind === 'race' && opt.race) {
     const { rounds, run_m, stations, score } = opt.race;
     lines.push(`Enchaînement chronométré — ${rounds} tours, dans l'ordre :`);
@@ -399,7 +468,7 @@ function hybridALines(catalog: Catalog, opt: SessionBlockAOption, iso_week: numb
       const st = stations[i % stations.length];
       lines.push(`${i + 1}. ${run_m} m Run puis ${stationLine(catalog, st)}`);
     }
-    const pro = proLine(catalog, stations);
+    const pro = proLine(catalog, Array.from({ length: rounds }, (_, i) => stations[i % stations.length]));
     if (pro) lines.push(pro);
     lines.push(`Score : ${score}. Note le temps de chaque segment.`);
   }
@@ -446,6 +515,9 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     optA = withSkillProgression(rng.pick(eligible.length ? eligible : sk.block_a));
     optA = drawRace(optA, rng);
   }
+  // Bloc de travail écrit (mardi, vendredi, samedi) : postes tirés, devient le bloc `wod`.
+  const optW: SessionBlockAOption | null = sk.block_work?.length ? drawRace(rng.pick(sk.block_work), rng) : null;
+  const cool = sk.cooldown?.length ? rng.pick(sk.cooldown) : null;
   const movA = optA ? movementById(catalog, optA.movement) : undefined;
   // Les blocs Hybrid (station, course, enchaînement) n'imposent pas de pattern lourd au bloc C :
   // leurs charges restent en bande légère ou moyenne, sauf le sled du vendredi.
@@ -476,7 +548,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
 
   // Bloc C : durée choisie pour tenir 60' avec / sans B et finisher
   const cFilter = sk.block_c;
-  const fixed = sk.warmup.minutes + (optA?.minutes ?? 0);
+  const fixed = sk.warmup.minutes + (optA?.minutes ?? 0) + (optW?.minutes ?? 0) + (cool?.minutes ?? 0);
   const lo = sk.budget_min * (1 - SESSION_TOLERANCE);
   const hi = sk.budget_min * (1 + SESSION_TOLERANCE);
   const combos: Array<{ c: number; b: boolean; f: boolean }> = [];
@@ -486,7 +558,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     combos.push({ c, b, f });
   }
   const totalOf = (x: { c: number; b: boolean; f: boolean }) => {
-    const blocks = (cFilter ? 1 : 0) + (optA ? 1 : 0) + (x.b ? 1 : 0) + (x.f ? 1 : 0);
+    const blocks = (cFilter ? 1 : 0) + (optA ? 1 : 0) + (optW ? 1 : 0) + (cool ? 1 : 0) + (x.b ? 1 : 0) + (x.f ? 1 : 0);
     return fixed + x.c + (x.b ? optB!.minutes : 0) + (x.f ? optF!.minutes : 0) + TRANSITION_MIN * blocks;
   };
   const fitting = combos.filter((x) => totalOf(x) >= lo && totalOf(x) <= hi);
@@ -541,9 +613,10 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
   }
   let blocC: GeneratedWod | null = null;
   let lastErr: unknown = null;
+  let fallbackC: { wod: GeneratedWod; tag: string | null; c: number } | null = null;
   for (const [idx, a] of cFilter ? attempts.entries() : []) {
     try {
-      blocC = generateBlocC({
+      const candidate = generateBlocC({
         entry: 'express',
         discipline: cDiscipline,
         budget_min: a.c,
@@ -553,7 +626,15 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
         recent_signatures: a.noRecent ? [] : recentC,
         pattern_not: a.patternNot.length ? a.patternNot : undefined,
         skeleton_not: skeletonNot,
+        round_qty: true,
       }, catalog, bank, idx === 0 ? cSeed : hashSeed(cSeed, a.tag ?? '', idx));
+      // Plafond d'effort du jour (mardi 7,5 ; jeudi 6,5) : on continue la cascade tant
+      // qu'un bloc plus dur sort, et on garde le premier trouvé en secours.
+      if (sk.max_rpe !== undefined && candidate.stimulus.rpe > sk.max_rpe) {
+        fallbackC = fallbackC ?? { wod: candidate, tag: a.tag, c: a.c };
+        continue;
+      }
+      blocC = candidate;
       if (a.tag) relax.add(a.tag);
       if (a.c !== choice.c) choice = { ...choice, c: a.c };
       break;
@@ -561,6 +642,12 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
       if (!(e instanceof NoValidWod)) throw e;
       lastErr = e;
     }
+  }
+  if (cFilter && !blocC && fallbackC) {
+    blocC = fallbackC.wod;
+    if (fallbackC.tag) relax.add(fallbackC.tag);
+    if (fallbackC.c !== choice.c) choice = { ...choice, c: fallbackC.c };
+    relax.add('rpe_over_cap');
   }
   if (cFilter && !blocC) throw lastErr;
   if (blocC) for (const r of blocC.generator.relaxations) relax.add(`c:${r}`);
@@ -578,7 +665,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     addReps(gym, gymReps(catalog, aReps));
     const KIND_LABEL: Record<SessionBlockAOption['kind'], string> = {
       weightlifting: 'Haltéro', strength: 'Force', skill: 'Skill',
-      station: 'Force sur station', run: 'Course', race: 'Simulation',
+      station: 'Force sur station', run: 'Course', race: 'Simulation', compromised: 'Course compromise',
     };
     const title = optA.kind === 'race' ? sk.label : `${KIND_LABEL[optA.kind]} · ${nameOf(catalog, optA.movement)}`;
     // Une séance chronométrée (H6) n'a pas de bloc C : c'est son bloc A qui porte le classement.
@@ -609,6 +696,18 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
       structured('building', optB.id, { movement: optB.movement, steps: optB.steps, gym_reps_rx: gymReps(catalog, bReps) }),
       null,
     ));
+  }
+  if (optW) {
+    const wLines = hybridALines(catalog, optW, params.iso_week);
+    const w = editor(
+      optW.kind === 'race' ? sk.label : `${sk.label} · ${nameOf(catalog, optW.movement)}`,
+      [...(optA ? [] : warm), ...wLines].join(NL),
+      'custom', 'wod', sort++, optW.minutes + (optA ? 0 : sk.warmup.minutes),
+      structured(optW.kind, optW.id, { movement: optW.movement, gym_reps_rx: {} }),
+      optW.timed ? 'Séance chronométrée de bout en bout : compare avec ta dernière simulation.' : null,
+    );
+    w.leaderboard_enabled = true;
+    blocks.push(w);
   }
   if (blocC) {
     const cReps = blocCRepsRx(blocC);
@@ -643,6 +742,17 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     ));
   }
 
+  if (cool) {
+    blocks.push(editor(
+      'Retour au calme', cool.lines.join(NL), 'custom', 'cooldown', sort++, cool.minutes,
+      structured('cooldown', `cooldown_${cool.minutes}`, {}), null,
+    ));
+  }
+
+  // Effort de la journée : le maximum des blocs, pas celui du seul bloc tiré. Un mercredi
+  // à 8 × 400 m n'est pas un jour facile parce que son bloc de tronc est à RPE 6.
+  const rpe = Math.max(optA?.rpe ?? 0, optW?.rpe ?? 0, blocC?.stimulus.rpe ?? 0);
+
   return {
     source: 'generator',
     discipline: 'session',
@@ -666,7 +776,9 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
       : `session|${sk.id}|${optA?.id ?? '-'}|${optA?.race ? `${optA.race.rounds}x${optA.race.run_m}:${optA.race.stations.map((x) => x.id).join(',')}` : '-'}`,
     block_b_movement: choice.b && optB ? optB.movement : null,
     finisher_id: choice.f && optF ? optF.id : null,
+    rpe,
     run_meters: (optA ? blockARunMeters(catalog, optA) + runVariantMeters(optA, params.iso_week) : 0)
+      + (optW ? blockARunMeters(catalog, optW) : 0)
       + (blocC ? blocCRunMeters(catalog, blocC) : 0),
   };
 }
@@ -759,9 +871,11 @@ export function generateWeek(params: WeekParams, catalog: Catalog, bank: Skeleto
     }
     if (hybridJumpReps(sessions) > HYBRID_WEEKLY_JUMP_CAP) relax.add('weekly_jump_cap_exceeded');
 
-    // §3.5 : jamais deux jours durs de suite. Le second est retiré à graine salée ;
-    // au bout de HARD_RETRY tentatives on garde le meilleur RPE obtenu et on le trace.
-    const rpeOf = (s: GeneratedSession) => s.bloc_c?.stimulus.rpe ?? 0;
+    // §3.5 : jamais deux jours durs de suite, sur l'effort de la JOURNÉE (max des blocs).
+    // Le second jour est retiré à graine salée ; au bout de HARD_RETRY tentatives on garde
+    // le meilleur RPE obtenu et on le trace. Un jour dont le bloc de travail est écrit
+    // (vendredi, samedi) ne peut pas s'adoucir : sa dureté est sa raison d'être.
+    const rpeOf = (s: GeneratedSession) => s.rpe;
     const HARD_RETRY = 8;
     for (let i = 1; i < sessions.length; i++) {
       if (rpeOf(sessions[i]) < HYBRID_HARD_RPE || rpeOf(sessions[i - 1]) < HYBRID_HARD_RPE) continue;
