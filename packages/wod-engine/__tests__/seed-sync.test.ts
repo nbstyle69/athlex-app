@@ -94,10 +94,15 @@ describe('seeds SQL ↔ snapshot embarqué', () => {
     expect(seeded(only15)).not.toEqual(seeded(JSON.parse(JSON.stringify(expected))));
   });
 
-  it('squelettes metcon et plafonds : 20261212 + 20261222 = BANK_V1', () => {
+  it('squelettes metcon et plafonds : 20261212 + 20261222 + 20261225 = BANK_V1', () => {
     const sql = read('20261212000000_wod_skeletons_volume_caps.sql');
-    // 20261222 ajoute l'engine long à la banque Hybrid et élargit les durées du continu
-    const seed = [...skeletonsFromSeed(read('20261222000000_auto_programming_tracks_hybrid.sql'), skeletonsFromSeed(sql), { skipMissingUpdates: true }).values()]
+    // 20261222 ajoute l'engine long à la banque Hybrid et élargit les durées du continu ;
+    // 20261225 ouvre trois slots Functional de plus à la corde à sauter.
+    const seed = [...skeletonsFromSeed(
+      read('20261225000000_wod_skeletons_jump_rope_slots.sql'),
+      skeletonsFromSeed(read('20261222000000_auto_programming_tracks_hybrid.sql'), skeletonsFromSeed(sql), { skipMissingUpdates: true }),
+      { skipMissingUpdates: true },
+    ).values()]
       .filter((r) => r.discipline === 'functional' || r.discipline === 'hybrid');
     const expected = BANK_V1.skeletons.map((sk) => skeletonToRow(sk, BANK_VERSION));
     expect(seeded(seed)).toEqual(seeded(JSON.parse(JSON.stringify(expected))));

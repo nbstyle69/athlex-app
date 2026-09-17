@@ -6,7 +6,7 @@ export {
 } from './catalog';
 export type { CatalogRow } from './catalog';
 export { CATALOG_SNAPSHOT } from './catalog/snapshot';
-export { BANK_V1, BANK_VERSION, FUNCTIONAL_SKELETONS, HYBRID_SKELETONS, MOVEMENT_CAPS, VOLUME_CAP_FACTOR } from './bank';
+export { BANK_V1, BANK_VERSION, FUNCTIONAL_SKELETONS, HYBRID_SKELETONS, MOVEMENT_CAPS, VOLUME_CAP_FACTOR, FAMILY_CAP_FACTOR, genericCapFor } from './bank';
 export { bankFromRows, skeletonToRow, movementCapToRow, movementCapFromRow } from './bank/rows';
 export type { SkeletonRow, VolumeCapRow } from './bank/rows';
 export {

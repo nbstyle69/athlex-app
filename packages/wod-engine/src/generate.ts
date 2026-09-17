@@ -9,7 +9,7 @@ import {
 } from './catalog';
 import { RNG } from './rng';
 import { estimateAll, estimateBlock, referenceCategory, roundSeconds, fixedWorkSeconds, TIME_BOUNDED, movementSeconds, TRANSITION_S, ladderStep, deathByMinute } from './estimate';
-import { VOLUME_CAP_FACTOR } from './bank';
+import { VOLUME_CAP_FACTOR, genericCapFor } from './bank';
 import { signature } from './signature';
 import { render } from './render';
 
@@ -839,9 +839,10 @@ export function movementCapFor(bank: SkeletonBank, m: CatalogMovement, band: Ban
 }
 
 /**
- * §5.4 : volume total par mouvement borné. Plafond générique par unité, puis plafonds
- * par classe (`movement_caps`). Un dépassement réduit d'abord la quantité dans sa plage
- * (formats à quantité libre), sinon rejette le squelette. La durée est revérifiée dans `finalize`.
+ * §5.4 : volume total par mouvement borné. Plafond générique par unité, modulé par la
+ * famille (`FAMILY_CAP_FACTOR`), qu'une entrée de `movement_caps` REMPLACE quand elle
+ * existe. Un dépassement réduit d'abord la quantité dans sa plage (formats à quantité
+ * libre), sinon rejette le squelette. La durée est revérifiée dans `finalize`.
  */
 function applyVolumeCaps(ctx: Ctx, d: Draft): void {
   // réduire un slot raccourcit le round (AMRAP, continu) et relève le multiplicateur des autres : on itère jusqu'à stabilité
@@ -857,9 +858,11 @@ function capPass(ctx: Ctx, d: Draft): boolean {
   for (const p of d.picked) {
     const mult = volumeMultiplier(ctx, d, p);
     const perWod = tabata ? (16 * 20) / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
-    const generic = caps[p.unit];
+    // Le plafond de classe REMPLACE le générique : il doit pouvoir le relever
+    // autant que le resserrer. Avec l'ancien `Math.min`, écrire 200 dans
+    // `movement_caps` pour une famille plafonnée à 100 ne changeait rien.
     const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
-    const cap = Math.min(generic ?? Infinity, specific ?? Infinity);
+    const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
     if (cap === Infinity || perWod <= cap) continue;
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
     const next = roundQty(Math.floor(cap / mult), p.unit);

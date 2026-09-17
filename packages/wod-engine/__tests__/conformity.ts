@@ -1,6 +1,6 @@
 import {
   CATALOG_SNAPSHOT, BANK_V1, movementById, primaryPattern, isFunctionalCategory, categoriesFor, cadenceFor,
-  carriesIntention, isSlowSkill, movementCapFor, ladderStep, deathByMinute, roundSeconds, afterClassFilter,
+  carriesIntention, isSlowSkill, movementCapFor, genericCapFor, ladderStep, deathByMinute, roundSeconds, afterClassFilter,
   heavyAllowed, rackAllowed, engineShare, RACK_ONLY_IDS, ENGINE_MIN_SHARE, RUN_MIN_M,
 } from '../src';
 import type { SkeletonRef } from '../src';
@@ -53,11 +53,16 @@ export function violations(wod: GeneratedWod, params: GenerateParams): string[] 
     if (a.grip === 'high' && c.grip === 'high') out.push(`grip high consécutif ${a.id}→${c.id}`);
     if ((b.format === 'stations' || b.format === 'emom') && a.shoulder_load === 'high' && c.shoulder_load === 'high') out.push(`épaules high consécutives ${a.id}→${c.id}`);
   }
-  // 4 : volumes bornés
+  // 4 : volumes bornés. Le plafond applicable est celui de la classe quand elle
+  // en a un (`movement_caps`, qui REMPLACE le générique et peut donc le relever),
+  // sinon le générique de l'unité modulé par la famille (`FAMILY_CAP_FACTOR` :
+  // 100 reps régissaient aussi bien un thruster qu'un double under, ce qui
+  // rendait la corde à sauter intirable — mesuré le 17/09/2026).
   const caps = BANK_V1.volume_caps[params.discipline][ref] ?? {};
   const mult = b.format === 'rounds_for_time' ? (b.rounds ?? 1) : 1;
   for (const r of rows) {
-    const cap = caps[r.gm.unit];
+    const specific = movementCapFor(BANK_V1, r.m, r.gm.load_band ?? 'light', r.gm.unit, ref);
+    const cap = specific ?? genericCapFor(caps, r.m.family, r.gm.unit);
     const total = r.gm.qty * (r.gm.round !== undefined ? 1 : mult);
     if (cap !== undefined && total > cap) out.push(`volume ${r.gm.id} ${total} > ${cap}`);
   }

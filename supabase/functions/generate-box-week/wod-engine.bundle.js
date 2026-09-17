@@ -22068,7 +22068,7 @@ var triplet_amrap_mid = {
   slots: [
     { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
     { pick: { family: ["barbell", "dumbbell", "kettlebell", "wallball"], pattern_any: ["squat", "hinge", "push_v"] }, qty: "range" },
-    { pick: { family: ["gym", "bodyweight"], pattern_any: ["pull_v", "core", "mono"], pattern_not_of_slot: 1 }, qty: "range" }
+    { pick: { family: ["gym", "bodyweight", "jump_rope"], pattern_any: ["pull_v", "core", "mono"], pattern_not_of_slot: 1 }, qty: "range" }
   ],
   score_type: "rounds_reps",
   cap_factor: 1.4,
@@ -22159,7 +22159,7 @@ var emom_alternating = {
     { pick: { family: ["barbell"] }, qty: "range" },
     { pick: { family: ["gym"] }, qty: "range" },
     { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
-    { pick: { family: ["bodyweight"] }, qty: "range", optional: true }
+    { pick: { family: ["bodyweight", "jump_rope"] }, qty: "range", optional: true }
   ],
   score_type: "reps_total",
   cap_factor: 1.4,
@@ -22181,7 +22181,7 @@ var interval_work_rest = {
   slots: [
     { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
     { pick: { family: ["barbell", "dumbbell"], pattern_any: ["hinge", "squat"] }, qty: "range" },
-    { pick: { family: ["bodyweight"], pattern_any: ["mono"] }, qty: "range" }
+    { pick: { family: ["bodyweight", "jump_rope"], pattern_any: ["mono"] }, qty: "range" }
   ],
   score_type: "time",
   cap_factor: 1.4,
@@ -23475,6 +23475,13 @@ var HYBRID_CAPS = {
   women_pro: { reps: 120, cal: 120, m: 7e3, s: 420 },
   men_pro: { reps: 120, cal: 120, m: 7e3, s: 420 }
 };
+var FAMILY_CAP_FACTOR = {
+  jump_rope: 4
+};
+function genericCapFor(caps, family, unit) {
+  const base = caps[unit];
+  return base === void 0 ? void 0 : base * (FAMILY_CAP_FACTOR[family] ?? 1);
+}
 var MOVEMENT_CAPS = [
   { label: "HSPU", ids: ["handstand_push_up"], unit: "reps", rx: 45 },
   { label: "strict HSPU", ids: ["strict_handstand_push_up"], unit: "reps", rx: 20 },
@@ -24700,9 +24707,8 @@ function capPass(ctx, d) {
   for (const p of d.picked) {
     const mult = volumeMultiplier(ctx, d, p);
     const perWod = tabata ? 16 * 20 / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
-    const generic = caps[p.unit];
     const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
-    const cap = Math.min(generic ?? Infinity, specific ?? Infinity);
+    const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
     if (cap === Infinity || perWod <= cap) continue;
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
     const next = roundQty(Math.floor(cap / mult), p.unit);
@@ -26770,6 +26776,7 @@ export {
   ENGINE_VERSION,
   EQUIPMENT_FALLBACK,
   EQUIPMENT_LABEL,
+  FAMILY_CAP_FACTOR,
   FINISHERS,
   FINISHER_SIGNATURE_PREFIX,
   FUNCTIONAL_CATEGORIES,
@@ -26880,6 +26887,7 @@ export {
   generateMuscuWeek,
   generateSession,
   generateWeek,
+  genericCapFor,
   hashSeed,
   heavyAllowed,
   hybridJumpReps,
