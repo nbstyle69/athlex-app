@@ -39,7 +39,9 @@ export type { AfterClassMuscles } from './muscu';
 export {
   runWeekGeneration, functionalWeekRows, TRACK_SEED_KEY, muscuWeekRows, weekDates, nextIsoWeek, revealAt, weekSeed, parisOffsetMinutes,
   TRACKS, TRACK_LABEL, TRACK_GROUP_NAME, PROGRAMMING_VERSION, REVEAL_HOUR_PARIS, RECENT_WEEKS,
+  DEFAULT_REVEAL, revealFromRow, parisInstant, weeklyRevealDate, publishAtFor,
 } from './programming';
 export type {
   Track, RunStatus, RunRow, BoxWodInsert, ExistingAutoRow, ProgrammingBox, ProgrammingDb, WeekContext, WeekOutcome, RunOptions,
+  RevealConfig,
 } from './programming';

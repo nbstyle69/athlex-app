@@ -75,7 +75,13 @@ export interface ExistingAutoRow {
   scored: boolean;
 }
 
-export interface ProgrammingBox { id: string; owner_id: string | null; tracks: Track[] }
+export interface ProgrammingBox {
+  id: string;
+  owner_id: string | null;
+  tracks: Track[];
+  /** absent = défaut J1 (dimanche 18:00 Paris, semaine entière) */
+  reveal?: RevealConfig;
+}
 
 export interface ProgrammingDb {
   listEnabledBoxes(): Promise<ProgrammingBox[]>;
@@ -120,13 +126,61 @@ export function parisOffsetMinutes(utc: Date): number {
   return Math.round((p.getTime() - u.getTime()) / 60000);
 }
 
-/** Dimanche 18:00 Europe/Paris précédant le lundi de la semaine, en ISO UTC. */
-export function revealAt(iso_year: number, iso_week: number): string {
+/**
+ * Révélation d'une box — colonnes `boxes.auto_programming_reveal_*` (migration 20261221).
+ * `weekly` : toutes les cartes ensemble, le jour `dow` de la semaine qui précède le lundi
+ * ciblé (le lundi lui-même si `dow = 1`). `daily` : chaque carte le jour de sa séance.
+ */
+export interface RevealConfig {
+  mode: 'daily' | 'weekly';
+  /** 0 = dimanche … 6 = samedi ; ignoré en `daily`. */
+  dow: number;
+  /** heure locale Europe/Paris, `HH:MM` ou `HH:MM:SS`. */
+  time: string;
+}
+
+/** Défaut J1, conservé pour une box sans colonnes de révélation : dimanche 18:00 Paris, semaine entière. */
+export const DEFAULT_REVEAL: RevealConfig = { mode: 'weekly', dow: 0, time: `${REVEAL_HOUR_PARIS}:00` };
+
+/** `RevealConfig` depuis une ligne `boxes` : valeur absente, nulle ou hors domaine → défaut J1. */
+export function revealFromRow(mode: unknown, dow: unknown, time: unknown): RevealConfig {
+  const d = typeof dow === 'number' ? dow : Number(dow);
+  return {
+    mode: mode === 'daily' ? 'daily' : 'weekly',
+    dow: Number.isInteger(d) && d >= 0 && d <= 6 ? d : DEFAULT_REVEAL.dow,
+    time: typeof time === 'string' && /^\d{1,2}:\d{2}(:\d{2})?$/.test(time) ? time : DEFAULT_REVEAL.time,
+  };
+}
+
+/**
+ * Instant UTC (ISO) d'une heure locale Europe/Paris un jour donné (`YYYY-MM-DD`, `HH:MM[:SS]`).
+ * Le décalage est lu à midi UTC : jamais dans l'heure sautée ni doublée d'un changement d'heure.
+ */
+export function parisInstant(ymd: string, time: string): string {
+  const [y, m, d] = ymd.split('-').map(Number);
+  const [hh = 0, mm = 0, ss = 0] = time.split(':').map(Number);
+  const midnightUtc = Date.UTC(y, m - 1, d);
+  const offset = parisOffsetMinutes(new Date(midnightUtc + 12 * 3600000));
+  return new Date(midnightUtc + ((hh * 60 + mm) * 60 + ss) * 1000 - offset * 60000).toISOString();
+}
+
+/** Jour (`YYYY-MM-DD`) de la révélation hebdomadaire de la semaine ciblée. */
+export function weeklyRevealDate(iso_year: number, iso_week: number, dow: number): string {
   const monday = isoWeekMonday(iso_year, iso_week);
-  const sundayNoonUtc = new Date(monday.getTime() - 86400000 + 12 * 3600000);
-  const offset = parisOffsetMinutes(sundayNoonUtc);
-  const t = new Date(monday.getTime() - 86400000 + REVEAL_HOUR_PARIS * 3600000 - offset * 60000);
-  return t.toISOString();
+  const daysBefore = dow === 1 ? 0 : dow === 0 ? 1 : 8 - dow;
+  return new Date(monday.getTime() - daysBefore * 86400000).toISOString().slice(0, 10);
+}
+
+/** Révélation hebdomadaire en ISO UTC (défaut : dimanche 18:00 Paris, comportement J1). */
+export function revealAt(iso_year: number, iso_week: number, reveal: RevealConfig = DEFAULT_REVEAL): string {
+  return parisInstant(weeklyRevealDate(iso_year, iso_week, reveal.dow), reveal.time);
+}
+
+/** `publish_at` d'une carte : son propre jour en `daily`, la révélation hebdomadaire sinon. */
+export function publishAtFor(
+  scheduled_date: string, iso_year: number, iso_week: number, reveal: RevealConfig = DEFAULT_REVEAL,
+): string {
+  return reveal.mode === 'daily' ? parisInstant(scheduled_date, reveal.time) : revealAt(iso_year, iso_week, reveal);
 }
 
 export function weekSeed(box_id: string, track: Track, iso_year: number, iso_week: number, regen_counter: number): number {
@@ -139,11 +193,13 @@ export interface WeekContext {
   run_id: string;
   iso_year: number;
   iso_week: number;
+  /** absent = défaut J1 (dimanche 18:00 Paris, semaine entière) */
+  reveal?: RevealConfig;
 }
 
 export function functionalWeekRows(week: GeneratedWeek, ctx: WeekContext): BoxWodInsert[] {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
-  const publish_at = revealAt(ctx.iso_year, ctx.iso_week);
+  const publishAt = (date: string) => publishAtFor(date, ctx.iso_year, ctx.iso_week, ctx.reveal);
   const rows: BoxWodInsert[] = [];
   for (const s of week.sessions) {
     for (const b of s.blocks) {
@@ -164,7 +220,7 @@ export function functionalWeekRows(week: GeneratedWeek, ctx: WeekContext): BoxWo
         tabata_work_seconds: b.tabata_work_seconds,
         tabata_rest_seconds: b.tabata_rest_seconds,
         is_published: true,
-        publish_at,
+        publish_at: publishAt(dates[s.day - 1]),
         audience: 'all',
         sort_order: b.sort_order,
         wod_json: b.wod_json,
@@ -178,7 +234,7 @@ export function functionalWeekRows(week: GeneratedWeek, ctx: WeekContext): BoxWo
 
 export function muscuWeekRows(week: GeneratedMuscuWeek, ctx: WeekContext): BoxWodInsert[] {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
-  const publish_at = revealAt(ctx.iso_year, ctx.iso_week);
+  const publishAt = (date: string) => publishAtFor(date, ctx.iso_year, ctx.iso_week, ctx.reveal);
   return week.days.map((d) => ({
     box_id: ctx.box_id,
     created_by: ctx.created_by,
@@ -196,7 +252,7 @@ export function muscuWeekRows(week: GeneratedMuscuWeek, ctx: WeekContext): BoxWo
     tabata_work_seconds: null,
     tabata_rest_seconds: null,
     is_published: true,
-    publish_at,
+    publish_at: publishAt(dates[d.day - 1]),
     audience: 'all',
     sort_order: 0,
     wod_json: d.wod,
@@ -259,7 +315,10 @@ export async function runWeekGeneration(
       try {
         await db.ensureGroup(box.id, TRACK_GROUP_NAME[track], box.owner_id);
         const recent = await db.recentSignatures(box.id, track, target, RECENT_WEEKS);
-        const ctx: WeekContext = { box_id: box.id, created_by: box.owner_id, run_id: run.id, iso_year: target.iso_year, iso_week: target.iso_week };
+        const ctx: WeekContext = {
+          box_id: box.id, created_by: box.owner_id, run_id: run.id,
+          iso_year: target.iso_year, iso_week: target.iso_week, reveal: box.reveal,
+        };
         let rows: BoxWodInsert[];
         let signatures: string[];
         let relaxations: string[];

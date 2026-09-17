@@ -27,7 +27,7 @@ import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supa
 // dépend que du bundle.
 // @deno-types="../../../packages/wod-engine/src/index.ts"
 import {
-  BANK_V1, CATALOG_SNAPSHOT, bankFromRows, catalogFromRows, runWeekGeneration, TRACKS,
+  BANK_V1, CATALOG_SNAPSHOT, bankFromRows, catalogFromRows, runWeekGeneration, revealFromRow, TRACKS,
 } from './wod-engine.bundle.js';
 import type {
   BoxWodInsert, Catalog, ExistingAutoRow, ProgrammingBox, ProgrammingDb, RunRow, SkeletonBank, Track,
@@ -74,14 +74,22 @@ function makeDb(admin: SupabaseClient): ProgrammingDb {
   };
   return {
     async listEnabledBoxes(): Promise<ProgrammingBox[]> {
-      const { data, error } = await admin.from('boxes')
-        .select('id, owner_id, auto_programming_tracks')
-        .eq('auto_programming', true);
+      const REVEAL_COLS = 'auto_programming_reveal_mode, auto_programming_reveal_dow, auto_programming_reveal_time';
+      const read = (cols: string) => admin.from('boxes').select(cols).eq('auto_programming', true);
+      // Colonnes de révélation absentes (base antérieure à 20261221) : `42703` / `PGRST204`,
+      // on relit sans elles et `revealFromRow` rend le défaut J1.
+      let { data, error } = await read(`id, owner_id, auto_programming_tracks, ${REVEAL_COLS}`);
+      if (error && (error.code === '42703' || error.code === 'PGRST204')) {
+        ({ data, error } = await read('id, owner_id, auto_programming_tracks'));
+      }
       fail('boxes', error);
-      return (data ?? []).map((b) => ({
+      return ((data ?? []) as Record<string, unknown>[]).map((b) => ({
         id: b.id as string,
         owner_id: (b.owner_id as string | null) ?? null,
         tracks: ((b.auto_programming_tracks as string[] | null) ?? []).filter(isTrack),
+        reveal: revealFromRow(
+          b.auto_programming_reveal_mode, b.auto_programming_reveal_dow, b.auto_programming_reveal_time,
+        ),
       }));
     },
     async getRun(box_id, track, iso_year, iso_week) {

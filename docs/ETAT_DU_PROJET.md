@@ -285,7 +285,7 @@ suivaient déjà cette logique dans `bankFromRows`. Devient sans effet une fois 
 **Pilotage de la programmation automatique — PR J2 ([`AthleX-Manager` #338](https://github.com/nbstyle69/AthleX-Manager/pull/338), aucune migration ici).**
 Les trois écrans qui manquaient à J1, côté Manager : ni le moteur, ni la fonction edge, ni le cron
 ne sont touchés. `/admin/boxes` porte l'interrupteur par box (pistes Functional / Hybrid et
-Musculation) et le réglage de révélation, via `PATCH /api/admin/boxes/[id]/auto-programming` —
+Musculation) et le réglage de révélation de `20261221`, via `PATCH /api/admin/boxes/[id]/auto-programming` —
 rôle `admin` / `super_admin` revérifié, écriture en service role, refus du trigger
 `boxes_auto_programming_guard` rendu tel quel plutôt que contourné. Le Whiteboard d'une box flaguée
 gagne un bandeau (« générée le samedi 8h · visible par les athlètes *selon le réglage* ») avec
@@ -294,19 +294,21 @@ suivante) et **Régénérer la semaine** (confirmation disant que les jours scor
 conservés, puis un appel par piste, agrégé) ; les deux passent par
 `POST /api/box/[id]/auto-programming/run`, garde owner/coach explicite et `CRON_SECRET` côté
 serveur, jamais depuis le client. Badges `AUTO` / `AUTO · modifiée` (`box_wods.source`,
-`edited_at`) dans le Manager seul. `/admin/auto-programming` journalise en lecture seule les runs
-des 8 dernières semaines (`cardinality(wod_ids)` pour le nombre de lignes). Écart E12 fermé :
-familles `machine` et `cable` ajoutées à `CATALOG_FAMILIES` et à la validation de la route — les
-55 exercices de musculation du catalogue étaient inéditables — et colonnes muscu affichées en
-lecture seule. `createServiceClient` n'a plus de repli sur la clé anon : un client « service »
-portant la clé anon faisait passer une variable d'environnement absente pour un refus RLS.
-Le réglage de révélation attend `20261221` (colonnes `boxes.auto_programming_reveal_*`) : tant
-qu'elle n'est pas là, la route enregistre interrupteur et pistes, renvoie `reveal_saved: false`, et
-l'écran le dit. Le cron (samedi 08:00 Europe/Paris) reste à créer côté `athlex-app`
-(`docs/RUNBOOK_CRONS.md`), et `CRON_SECRET` reste à ajouter aux variables Vercel du Manager.
-Tests : 749 jest verts, `tsc` et `check:elo-writes` verts. **Validation navigateur et captures non
-faites** : la pile jetable exige `psql`, absent de la machine de développement.
-**Appliquée en prod : sans objet** (aucune migration dans ce lot).
+`edited_at`) dans le Manager seul — le trigger marquant toute main humaine, un simple déplacement
+de jour suffit à afficher « modifiée », ce qui est la promesse voulue : ce jour sera conservé.
+`/admin/auto-programming` journalise en lecture seule les runs des 8 dernières semaines
+(`cardinality(wod_ids)` pour le nombre de lignes). Écart E12 fermé : familles `machine` et `cable`
+ajoutées à `CATALOG_FAMILIES` et à la validation de la route — les 55 exercices de musculation du
+catalogue étaient inéditables — et colonnes muscu affichées en lecture seule.
+`createServiceClient` n'a plus de repli sur la clé anon : un client « service » portant la clé anon
+faisait passer une variable d'environnement absente pour un refus RLS. Le Manager suit le repli
+`42703` de `20261221` tant qu'elle n'est pas en prod : la route enregistre interrupteur et pistes,
+renvoie `reveal_saved: false`, et l'écran affiche que le réglage attend la migration ; le défaut
+montré (dimanche 18:00) est exactement le comportement en vigueur. Reste ouvert : `CRON_SECRET` à
+ajouter aux variables Vercel du Manager (sans elle les deux boutons rendent un 500 explicite, et
+rien n'est appelé). Tests : 749 jest verts, `tsc` et `check:elo-writes` verts.
+**Validation navigateur et captures non faites** : la pile jetable exige `psql`, absent de la
+machine de développement. **Appliquée en prod : sans objet** (aucune migration dans ce lot).
 
 **Programmation automatique AthleX Fitness — PR J1 (`athlex-app`, migrations `20261216` + `20261217`).**
 Une box `auto_programming` reçoit chaque semaine ISO suivante, par piste (`auto_programming_tracks`
@@ -329,7 +331,7 @@ base avec snapshot en repli), **cron désactivé par défaut** (`docs/RUNBOOK_CR
 réservés admin / backend par trigger (message « Accès refusé : programmation automatique réservée à
 un administrateur »), journal en lecture propriétaire seule. Tests §8 : `session.test.ts`,
 `programming.test.ts`, `edge-bundle.test.ts`, suite serveur `scripts/test-auto-programming.mjs`
-(27 contrôles, mutation inverse). **Migrations `20261216` + `20261217` appliquées en prod : oui** (16/09/2026 19:41 UTC, dump `20260916T194119Z` dans `db-dumps` ; `boxes.auto_programming` à `false` partout, `box_auto_programming_runs` vide, 887 `box_wods` toutes `manual`). **Premier appel prod (16/09/2026 20:26 UTC, AthleX Fitness, semaine 39) : piste musculation `done` (5 cartes), piste functional en `TypeError`** : le seed `20261217` datait d'avant les progressions A / B des skills S3 (a265d33), la prod lisait des options skill sans `progression`. Correctif : migration `20261219` (UPDATE des 6 squelettes `session` = snapshot, version 2, **appliquée en prod : non**), `withSkillProgression` (repli sur le snapshot, erreur nommant le skill sinon), test `seed-sync.test.ts` qui rejoue les seeds SQL et les compare au snapshot pour séance, musculation, metcon et plafonds. Ni Manager ni écran :
+(27 contrôles, mutation inverse). **Migrations `20261216` + `20261217` appliquées en prod : oui** (16/09/2026 19:41 UTC, dump `20260916T194119Z` dans `db-dumps` ; `boxes.auto_programming` à `false` partout, `box_auto_programming_runs` vide, 887 `box_wods` toutes `manual`). **Premier appel prod (16/09/2026 20:26 UTC, AthleX Fitness, semaine 39) : piste musculation `done` (5 cartes), piste functional en `TypeError`** : le seed `20261217` datait d'avant les progressions A / B des skills S3 (a265d33), la prod lisait des options skill sans `progression`. Correctif : migration `20261219` (UPDATE des 6 squelettes `session` = snapshot, version 2, **appliquée en prod : non**), `withSkillProgression` (repli sur le snapshot, erreur nommant le skill sinon), test `seed-sync.test.ts` qui rejoue les seeds SQL et les compare au snapshot pour séance, musculation, metcon et plafonds. **Révélation par box** (migration `20261221`, **appliquée en prod : non**) : `boxes.auto_programming_reveal_mode` (`weekly` / `daily`), `_dow` (0 = dimanche) et `_time` (heure locale Paris) remplacent le dimanche 18:00 codé en dur ; `weekly` pose toutes les cartes au jour `dow` précédant le lundi ciblé (le lundi même si `dow = 1`), `daily` pose chaque carte le jour de sa séance ; défauts identiques au comportement J1, repli `42703` si les colonnes manquent. Ni Manager ni écran :
 J2 / J3 attendent la relecture de `packages/wod-engine/samples-programmation.md`.
 
 **Générateur Musculation V1 — PR M1 (`athlex-app`, migrations `20261214` + `20261215`).**
