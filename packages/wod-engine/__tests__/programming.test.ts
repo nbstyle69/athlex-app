@@ -97,6 +97,18 @@ describe('semaine cible, seed, publish_at', () => {
     expect(muscu).toHaveLength(5);
     expect(muscu.every((r) => !r.leaderboard_enabled && r.wod_type === 'strength' && r.block_name === 'strength')).toBe(true);
   });
+
+  it('chaque ligne porte sa piste (20261223) : les onglets du Whiteboard filtrent dessus', () => {
+    const ctx = { box_id: BOX, created_by: OWNER, run_id: 'run-t', ...TARGET };
+    const fonctionnel = functionalWeekRows(generateWeek({ ...TARGET, track: 'functional' }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx);
+    const hybrid = functionalWeekRows(generateWeek({ ...TARGET, track: 'hybrid' }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx);
+    const muscu = muscuWeekRows(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx);
+    expect(fonctionnel.every((r) => r.track === 'functional')).toBe(true);
+    expect(hybrid.every((r) => r.track === 'hybrid')).toBe(true);
+    expect(muscu.every((r) => r.track === 'musculation')).toBe(true);
+    // Jamais null : `null` est la valeur des WODs saisis par un coach.
+    expect([...fonctionnel, ...hybrid, ...muscu].some((r) => !r.track)).toBe(false);
+  });
 });
 
 describe('révélation par box (20261221) — modes weekly / daily', () => {

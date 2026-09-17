@@ -26636,7 +26636,8 @@ function functionalWeekRows(week, ctx) {
         sort_order: b.sort_order,
         wod_json: b.wod_json,
         source: "auto",
-        auto_run_id: ctx.run_id
+        auto_run_id: ctx.run_id,
+        track: week.track
       });
     }
   }
@@ -26667,7 +26668,8 @@ function muscuWeekRows(week, ctx) {
     sort_order: 0,
     wod_json: d.wod,
     source: "auto",
-    auto_run_id: ctx.run_id
+    auto_run_id: ctx.run_id,
+    track: "musculation"
   }));
 }
 async function runWeekGeneration(db, catalog, bank, opts) {

@@ -140,7 +140,16 @@ function makeDb(admin: SupabaseClient): ProgrammingDb {
       fail('box_wods.delete', error);
     },
     async insertRows(rows: BoxWodInsert[]) {
-      const { data, error } = await admin.from('box_wods').insert(rows).select('id');
+      const put = (r: BoxWodInsert[]) => admin.from('box_wods').insert(r).select('id');
+      // Colonne `track` absente (base antérieure à 20261223) : `42703` / `PGRST204`.
+      // On repose les mêmes lignes sans elle plutôt que de faire tomber toute la
+      // génération — la semaine est posée, seuls les onglets du Whiteboard
+      // attendent la migration. Contrairement à `listEnabledBoxes`, le repli est
+      // ici sur l'ÉCRITURE : une lecture `select('*')` ne peut pas lever 42703.
+      let { data, error } = await put(rows);
+      if (error && (error.code === '42703' || error.code === 'PGRST204')) {
+        ({ data, error } = await put(rows.map(({ track: _track, ...rest }) => rest as BoxWodInsert)));
+      }
       fail('box_wods.insert', error);
       return (data ?? []).map((r) => r.id as string);
     },

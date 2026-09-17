@@ -28,7 +28,9 @@ import { WhiteboardStackParamList } from '../../navigation';
 import { buildFullSeqBlockFromWOD } from '../../utils/wodToTimer';
 import WodTypeBadge, { getTypeColors } from '../../components/wod/WodTypeBadge';
 import TimerLaunchModal, { TimerRunParams } from '../../components/wod/TimerLaunchModal';
-import WeekDayPicker from '../../components/WeekDayPicker';
+import WeekDayPicker, { getWeekDates } from '../../components/WeekDayPicker';
+import WhiteboardTrackTabs from '../../components/WhiteboardTrackTabs';
+import { TrackTab, filterByTab, resolveTab, visibleTabs, whiteboardTrackKey } from '../../utils/whiteboardTracks';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
@@ -68,6 +70,13 @@ export default function WhiteboardScreen() {
   const [membersModal,  setMembersModal]  = useState(false);
   const [members,       setMembers]       = useState<BoxMember[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
+
+  // Onglets de piste : filtre global de la partie basse de l'écran. `null` tant
+  // que la semaine n'a pas répondu, ou quand aucune piste n'y a de contenu.
+  const [track, setTrack] = useState<TrackTab | null>(null);
+  // `undefined` = clé locale pas encore lue ; on ne résout pas l'onglet avant,
+  // sinon l'athlète voit Functional clignoter puis basculer sur son choix.
+  const [storedTrack, setStoredTrack] = useState<string | null | undefined>(undefined);
 
   // Program WODs
   interface ProgWodEntry { programTitle: string; weekNumber: number; dayLabel: string; wod: { id: string; title: string; description: string; wod_type: string; time_cap_seconds?: number } }
@@ -151,6 +160,56 @@ export default function WhiteboardScreen() {
     setMembers(profiles as BoxMember[]);
     setMembersLoading(false);
   }, [currentBox]);
+
+  useEffect(() => {
+    if (!currentBox) { setStoredTrack(null); return; }
+    let vivant = true;
+    setStoredTrack(undefined);
+    AsyncStorage.getItem(whiteboardTrackKey(currentBox.id))
+      .then((v) => { if (vivant) setStoredTrack(v); })
+      .catch(() => { if (vivant) setStoredTrack(null); });
+    return () => { vivant = false; };
+  }, [currentBox?.id]);
+
+  const weekBounds = useMemo(() => {
+    const dates = getWeekDates(weekOffset);
+    return { from: toISO(dates[0]), to: toISO(dates[6]) };
+  }, [weekOffset]);
+
+  // Quelles pistes ont du contenu sur la semaine affichée ? Requête légère,
+  // deux colonnes, sept jours : le chargement des cartes reste au jour.
+  // Si la colonne `track` n'existe pas encore en base (42703), la requête
+  // échoue et on rend zéro piste : pas de barre, écran d'avant les onglets.
+  const { data: weekTracks } = useFocusQuery(
+    ['whiteboard-tracks', currentBox?.id, weekBounds.from, boxRole],
+    async () => {
+      if (!currentBox) return [];
+      const isStaff = boxRole === 'owner' || boxRole === 'coach' || user?.id === currentBox.owner_id;
+      let q = supabase.from('box_wods').select('track')
+        .eq('box_id', currentBox.id)
+        .gte('scheduled_date', weekBounds.from)
+        .lte('scheduled_date', weekBounds.to);
+      if (!isStaff) q = q.eq('is_published', true);
+      const { data, error } = await q;
+      if (error) return [];
+      return (data ?? []).map((r: any) => r.track as string | null);
+    },
+    { enabled: !!currentBox },
+  );
+
+  const trackTabs = useMemo(() => visibleTabs(weekTracks ?? []), [weekTracks]);
+
+  // Le choix courant tient s'il a encore du contenu ; sinon Functional, sinon
+  // « Tout ». Même règle pour l'athlète neuf, dont le choix mémorisé est vide.
+  useEffect(() => {
+    if (storedTrack === undefined) return;
+    setTrack((prev) => resolveTab(prev ?? storedTrack, trackTabs));
+  }, [trackTabs, storedTrack]);
+
+  const choisirPiste = useCallback((tab: TrackTab) => {
+    setTrack(tab);
+    if (currentBox) AsyncStorage.setItem(whiteboardTrackKey(currentBox.id), tab).catch(() => {});
+  }, [currentBox?.id]);
 
   const { data: wodData, isLoading: wodQueryLoading, refetch: refetchWods } = useFocusQuery(
     ['whiteboard', currentBox?.id, selectedDate, boxRole],
@@ -335,6 +394,11 @@ export default function WhiteboardScreen() {
     else if (wodQueryLoading) setLoading(true);
   }, [wodData, wodQueryLoading]);
 
+  const shownWODs = useMemo(
+    () => (track ? filterByTab(dayWODs, track) : dayWODs),
+    [dayWODs, track],
+  );
+
   // Le WOD d'un programme EST un WOD de box : pour un acheteur qui est aussi
   // membre de la box vendeuse, il arrive par les deux listes. On ne l'affiche
   // qu'une fois, dans la liste du jour qui porte score et complétion.
@@ -414,11 +478,17 @@ export default function WhiteboardScreen() {
 
   const isStaff = boxRole === 'owner' || boxRole === 'coach' || user?.id === currentBox?.owner_id;
 
-  async function moveWod(index: number, direction: 'up' | 'down') {
+  // `visible` est la liste affichée, filtrée par l'onglet : sur une piste, la
+  // carte du dessus est celle que le coach voit, pas une carte d'une autre
+  // piste masquée. Les `sort_order` restent écrits sur le jour entier.
+  async function moveWod(visible: BoxWOD[], index: number, direction: 'up' | 'down') {
     const target = direction === 'up' ? index - 1 : index + 1;
-    if (target < 0 || target >= dayWODs.length) return;
+    if (target < 0 || target >= visible.length) return;
+    const a = dayWODs.indexOf(visible[index]);
+    const b = dayWODs.indexOf(visible[target]);
+    if (a < 0 || b < 0) return;
     const updated = [...dayWODs];
-    [updated[index], updated[target]] = [updated[target], updated[index]];
+    [updated[a], updated[b]] = [updated[b], updated[a]];
     setDayWODs(updated);
     // Persist new sort_order for both swapped WODs
     const promises = updated.map((w, i) =>
@@ -691,6 +761,8 @@ export default function WhiteboardScreen() {
         </View>
       </View>
 
+      <WhiteboardTrackTabs tabs={trackTabs} value={track} onChange={choisirPiste} theme={theme} />
+
       <WeekDayPicker
         weekOffset={weekOffset}
         setWeekOffset={setWeekOffset}
@@ -702,10 +774,10 @@ export default function WhiteboardScreen() {
       {/* Quick action buttons when a WOD block exists */}
       {(() => {
         const mainWod =
-          dayWODs.find(w => w.block_name === 'wod') ??
-          dayWODs.find(w => (w as any).leaderboard_enabled === true) ??
-          dayWODs.find(w => w.wod_type === 'for-time' || w.wod_type === 'amrap') ??
-          dayWODs[0];
+          shownWODs.find(w => w.block_name === 'wod') ??
+          shownWODs.find(w => (w as any).leaderboard_enabled === true) ??
+          shownWODs.find(w => w.wod_type === 'for-time' || w.wod_type === 'amrap') ??
+          shownWODs[0];
         if (!mainWod) return null;
         return (
           <View style={S.quickActions}>
@@ -739,17 +811,17 @@ export default function WhiteboardScreen() {
               ? t('whiteboard.sessionOfDay')
               : new Date(selectedDate + 'T00:00:00').toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
           </Text>
-          {dayWODs.length > 0 ? (
+          {shownWODs.length > 0 ? (
             <View style={S.dayGroup}>
-              {dayWODs.map((wod, idx) => {
+              {shownWODs.map((wod, idx) => {
                 const typeColors = getTypeColors(theme);
                 const tc = typeColors[wod.wod_type ?? 'custom'] ?? theme.textMuted;
                 return (
                   <View key={wod.id} style={S.wodRow}>
-                    {isStaff && dayWODs.length > 1 && (
+                    {isStaff && shownWODs.length > 1 && (
                       <View style={S.reorderCol}>
                         <TouchableOpacity
-                          onPress={() => moveWod(idx, 'up')}
+                          onPress={() => moveWod(shownWODs, idx, 'up')}
                           disabled={idx === 0}
                           style={[S.reorderBtn, idx === 0 && { opacity: 0.25 }]}
                           hitSlop={{ top: 8, bottom: 4, left: 8, right: 8 }}
@@ -757,9 +829,9 @@ export default function WhiteboardScreen() {
                           <ChevronUp color={theme.textSecondary} size={16} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                          onPress={() => moveWod(idx, 'down')}
-                          disabled={idx === dayWODs.length - 1}
-                          style={[S.reorderBtn, idx === dayWODs.length - 1 && { opacity: 0.25 }]}
+                          onPress={() => moveWod(shownWODs, idx, 'down')}
+                          disabled={idx === shownWODs.length - 1}
+                          style={[S.reorderBtn, idx === shownWODs.length - 1 && { opacity: 0.25 }]}
                           hitSlop={{ top: 4, bottom: 8, left: 8, right: 8 }}
                         >
                           <ChevronDown color={theme.textSecondary} size={16} />

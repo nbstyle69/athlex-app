@@ -5,7 +5,8 @@ import { AppTheme } from '../context/ThemeContext';
 
 const DAY_LABELS = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
 
-function getWeekDates(offset = 0): Date[] {
+/** Lundi → dimanche de la semaine affichée ; le Whiteboard s'en sert aussi pour ses onglets. */
+export function getWeekDates(offset = 0): Date[] {
   const today = new Date();
   const monday = new Date(today);
   const day = today.getDay();
