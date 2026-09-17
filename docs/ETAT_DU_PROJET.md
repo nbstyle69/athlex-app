@@ -282,6 +282,29 @@ partagés, exercices muscu seuls ajoutés), source tracée `supabase+snapshot_mu
 suivaient déjà cette logique dans `bankFromRows`. Devient sans effet une fois M1 appliquée.
 **Appliquée en prod : sans objet** (aucune migration).
 
+**Archivage réversible d'une box — PR archivage ([`athlex-app` #311](https://github.com/nbstyle69/athlex-app/pull/311), migration `20261224`).**
+`boxes.archived_at` / `archived_by` : une box archivée sort des annuaires, des recherches
+et des listes, ses membres perdent l'accès, et le cron ne la génère plus — sans qu'aucune
+ligne ne soit supprimée, `archived_at = NULL` la réveillant telle quelle. Le masquage passe
+par une policy **RESTRICTIVE** et non par un filtre ajouté aux policies existantes : `boxes`
+en porte sept, toutes PERMISSIVE, dont deux `USING (true)` ; les permissives se combinent par
+OU, donc un filtre ajouté à l'une d'elles n'aurait rien refusé et il aurait fallu réécrire
+les sept. Une restrictive se combine par ET : une ligne suffit, les sept ne bougent pas, et
+le masquage couvre l'app mobile — annuaire, fiche de box, sélecteur de box du classement, qui
+n'avait aucun filtre — **sans livrer de nouvelle version**. `FOR ALL` et pas `FOR SELECT` :
+une restriction en lecture ne borne pas les policies d'écriture, et une box archivée ne doit
+pas rester modifiable par son gérant. `service_role` contourne la RLS, donc le back-office
+continue de la voir, ce qui est nécessaire pour la rouvrir. Les deux fonctions SECURITY
+DEFINER qui listent des box (`get_my_admin_boxes()`, `get_user_box_ids()`) échappent à toute
+policy et filtrent donc dans leur corps. `listEnabledBoxes` de `generate-box-week` tourne
+aussi en service role : elle ajoute `archived_at is null`, avec repli si la colonne manque.
+Contrôle `scripts/test-box-archivage.mjs` : 18 assertions sous de vraies identités (gérant,
+membre, anonyme, service role), dont la **mutation inverse** — policy retirée, le membre
+revoit la box archivée ; migration rejouée, il ne la voit plus — et la réactivation, qui rend
+tout à l'identique. Les écrans sont côté Manager ([#341](https://github.com/nbstyle69/AthleX-Manager/pull/341)) :
+archiver, réactiver, filtre « Archivées », et suppression définitive d'une box vide dont le
+décompte porte sur les 35 tables en cascade. **Appliquée en prod : non.**
+
 **Pilotage de la programmation automatique — PR J2 ([`AthleX-Manager` #338](https://github.com/nbstyle69/AthleX-Manager/pull/338), aucune migration ici).**
 Les trois écrans qui manquaient à J1, côté Manager : ni le moteur, ni la fonction edge, ni le cron
 ne sont touchés. `/admin/boxes` porte l'interrupteur par box (pistes Functional / Hybrid et
