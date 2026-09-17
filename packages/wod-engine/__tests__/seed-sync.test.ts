@@ -18,7 +18,7 @@ import { withSkillProgression } from '../src/session';
 const MIGRATIONS = path.resolve(__dirname, '../../../supabase/migrations');
 const read = (name: string) => fs.readFileSync(path.join(MIGRATIONS, name), 'utf8');
 const unq = (s: string) => s.replace(/''/g, "'");
-const STR = "'((?:[^']|'')*)'";
+const STR = "'((?:[^']+|'')*)'";  // boucle déroulée : la forme ambiguë part en backtracking exponentiel sur les gros seeds
 
 interface SeedSkeleton { id: string; discipline: string; format: string; definition: unknown; active: boolean; version: number }
 interface SeedCap { label: string; ids: string[] | null; family: string | null; band: string | null; unit: string; rx_total: number; active: boolean; version: number }
@@ -57,10 +57,14 @@ export function capsFromSeed(sql: string): Map<string, SeedCap> {
 const seeded = <T extends { id: string }>(rows: T[]) => new Map(rows.map((r) => [r.id, r]));
 
 describe('seeds SQL ↔ snapshot embarqué', () => {
-  it('squelettes de séance : 20261217 + 20261219 = SESSION_SKELETONS (progressions comprises)', () => {
-    const seed = skeletonsFromSeed(read('20261219000000_wod_skeletons_session_sync.sql'), skeletonsFromSeed(read('20261217000000_wod_skeletons_session.sql')));
+  it('squelettes de séance : 20261217 + 20261219 + 20261222 = les 13 squelettes du snapshot', () => {
+    const seed = skeletonsFromSeed(
+      read('20261222000000_auto_programming_tracks_hybrid.sql'),
+      skeletonsFromSeed(read('20261219000000_wod_skeletons_session_sync.sql'), skeletonsFromSeed(read('20261217000000_wod_skeletons_session.sql'))),
+    );
     const session = [...seed.values()].filter((r) => r.discipline === 'session');
     const expected = BANK_V1.session_skeletons.map((sk) => sessionSkeletonToRow(sk, SESSION_BANK_VERSION));
+    expect(session).toHaveLength(13);
     expect(seeded(session)).toEqual(seeded(JSON.parse(JSON.stringify(expected))));
     const skills = session.flatMap((r) => ((r.definition as { block_a: { skill?: { progression?: unknown } }[] | null }).block_a ?? []).filter((o) => o.skill));
     expect(skills.length).toBeGreaterThan(0);

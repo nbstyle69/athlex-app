@@ -97,11 +97,11 @@ describe('séance Functional / Hybrid (52 semaines)', () => {
   it('bloc C : intention et durée du squelette, pattern lourd de A écarté, règles Functional conservées', () => {
     for (const w of weeks) for (const s of w.sessions) {
       const sk = SESSION_SKELETONS[s.day - 1];
-      const c = s.bloc_c;
+      const c = s.bloc_c!;
       expect(c.discipline).toBe('functional');
       const relaxed = new Set(s.generator.relaxations.map((r) => r.split(':').slice(0, 2).join(':')));
-      if (!relaxed.has('c_fallback:intention')) expect(sk.block_c.intentions as string[]).toContain(c.intention);
-      expect(sk.block_c.durations).toContain(c.budget_min);
+      if (!relaxed.has('c_fallback:intention')) expect(sk.block_c!.intentions as string[]).toContain(c.intention);
+      expect(sk.block_c!.durations).toContain(c.budget_min);
       if (s.heavy_pattern && !relaxed.has('c_fallback:pattern')) {
         const heavy: Pattern = s.heavy_pattern;
         const patterns = c.blocks.flatMap((b) => b.movements).map((m) => CATALOG_SNAPSHOT.movements.find((x) => x.id === m.id)?.pattern);
@@ -124,8 +124,8 @@ describe('séance Functional / Hybrid (52 semaines)', () => {
       if (tags.some((t) => t.startsWith('c_fallback:format'))) format++;
       if (tags.some((t) => t.startsWith('c_fallback:pattern'))) pattern++;
       const sk = SESSION_SKELETONS[s.day - 1];
-      const allowed: string[] = sk.block_c.intentions;
-      if (!allowed.includes(s.bloc_c.intention)) {
+      const allowed: string[] = sk.block_c!.intentions;
+      if (!allowed.includes(s.bloc_c!.intention)) {
         expect(tags.some((t) => t.startsWith('c_fallback:intention'))).toBe(true);
       }
     }
@@ -138,7 +138,7 @@ describe('séance Functional / Hybrid (52 semaines)', () => {
     const seen: string[] = [];
     for (const w of weeks) {
       for (let i = 1; i < w.sessions.length; i++) {
-        expect(w.sessions[i].bloc_c.generator.skeleton_id).not.toBe(w.sessions[i - 1].bloc_c.generator.skeleton_id);
+        expect(w.sessions[i].bloc_c!.generator.skeleton_id).not.toBe(w.sessions[i - 1].bloc_c!.generator.skeleton_id);
       }
       for (const s of w.sessions) {
         expect(seen.slice(-24)).not.toContain(s.signature);

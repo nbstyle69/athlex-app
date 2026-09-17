@@ -266,9 +266,31 @@ export interface StrengthStep {
 
 export interface SessionBlockAOption {
   id: string;
-  kind: 'weightlifting' | 'strength' | 'skill';
+  /** `station`, `run` et `race` sont propres à la piste Hybrid (aucun haltéro technique). */
+  kind: 'weightlifting' | 'strength' | 'skill' | 'station' | 'run' | 'race';
   /** mouvement de référence (id catalogue) : nom du 1RM, pattern lourd */
   movement: string;
+  /** `station` : Every `every_s` × `rounds`, postes en alternance quand il y en a plusieurs */
+  station?: { every_s: number; rounds: number; items: SessionStationItem[] };
+  /** `run` : variantes d'intervalles en rotation par `iso_week % variants.length` */
+  run?: { variants: Array<{ label: string; target: string; rest_s: number; meters: number }> };
+  /**
+   * `race` : enchaînement chronométré, `rounds` × (`run_m` de course + un poste).
+   * `ordered` fige l'ordre et le nombre de tours (test de bloc, comparable d'une fois
+   * sur l'autre) ; sinon l'ordre et le nombre de tours (`rounds_min`..`rounds_max`)
+   * sont tirés par la graine, pour que deux samedis ne se ressemblent pas.
+   */
+  race?: {
+    rounds: number;
+    rounds_min?: number;
+    rounds_max?: number;
+    run_m: number;
+    stations: SessionStationItem[];
+    score: string;
+    ordered?: boolean;
+  };
+  /** bloc chronométré : devient le bloc `wod` de la séance (classement activé) */
+  timed?: boolean;
   /** mouvements du complexe (ids catalogue), dans l'ordre ; vide en force / skill */
   complex?: string[];
   /** semaines paires / impaires (variante) ; absent = toujours éligible */
@@ -310,33 +332,59 @@ export interface SessionFinisherOption {
 
 /** Filtre du bloc C : ce que reçoit `generateBlocC`. */
 export interface SessionBlocCFilter {
-  intentions: FunctionalIntention[];
+  intentions: Intention[];
   durations: number[];
   formats?: FormatChoice[];
   /** pattern lourd du bloc A exclu du bloc C ; `heavy_pattern` = déduit du mouvement A */
   pattern_not: Pattern[] | 'heavy_pattern';
   /** aucun mouvement de ces familles (S2 : pas de squat lourd = pas de barre en squat) */
   exclude?: string[];
+  /**
+   * Liste blanche de squelettes de bloc C (piste Hybrid) : tout le reste de la
+   * discipline est passé en `skeleton_not`. Absente = toute la banque est ouverte.
+   */
+  skeletons?: string[];
+}
+
+/** Piste de programmation d'un squelette de séance : deux semaines types distinctes. */
+export type SessionTrack = 'functional' | 'hybrid';
+
+/** Un poste d'un bloc A Hybrid : mouvement du catalogue, quantité, unité, bande de charge. */
+export interface SessionStationItem {
+  id: string;
+  qty: number;
+  unit: Unit;
+  /** bande de charge du catalogue ; absente = pas de charge affichée */
+  band?: Band;
+  /** libellé de repli quand le mouvement n'est pas au catalogue */
+  name?: string;
 }
 
 export interface SessionSkeleton {
   id: string;
   discipline: 'session';
   format: 'session';
+  /** absent = `functional` : les six squelettes S1–S6 d'avant la piste Hybrid */
+  track?: SessionTrack;
   day: SessionDay;
   label: string;
   budget_min: number;
   warmup: { minutes: number; lines: string[] };
   block_a: SessionBlockAOption[] | null;
   block_b: SessionBlockBOption[] | null;
-  block_c: SessionBlocCFilter;
+  /** `null` = séance sans bloc C tiré (H6 : l'enchaînement chronométré est le bloc A) */
+  block_c: SessionBlocCFilter | null;
   finisher: SessionFinisherOption[] | null;
+  /** semaines ISO où ce squelette remplace celui du même jour (H6 complète : `% 8 === 0`) */
+  weeks_modulo?: { modulo: number; equals: number };
 }
 
 export interface SessionParams {
   day: SessionDay;
   iso_year: number;
   iso_week: number;
+  /** piste dont on tire le squelette du jour ; absente = `functional` */
+  track?: SessionTrack;
   /** signatures des blocs C des 4 dernières semaines (journal) */
   recent_signatures?: string[];
   /** squelette du bloc C de la veille (règle 2 : jamais deux fois le même) */
@@ -363,7 +411,7 @@ export interface SessionBlock extends Omit<EditorColumns, 'block_name'> {
 export interface SessionStructuredBlock {
   source: 'generator';
   discipline: 'session';
-  kind: 'weightlifting' | 'strength' | 'skill' | 'building' | 'finisher';
+  kind: 'weightlifting' | 'strength' | 'skill' | 'building' | 'finisher' | 'station' | 'run' | 'race';
   option_id: string;
   movement: string | null;
   heavy_pattern: Pattern | null;
@@ -387,7 +435,8 @@ export interface GeneratedSession {
   total_minutes: number;
   heavy_pattern: Pattern | null;
   blocks: SessionBlock[];
-  bloc_c: GeneratedWod;
+  /** `null` pour une séance sans bloc C tiré (H6 : l'enchaînement chronométré est le bloc A) */
+  bloc_c: GeneratedWod | null;
   /** reps RX par id gym sur toute la séance (A + B + C + finisher) */
   gym_reps_rx: Record<string, number>;
   /** signature du bloc C (anti-répétition 4 semaines) */
@@ -396,6 +445,8 @@ export interface GeneratedSession {
   block_b_movement: string | null;
   /** id du finisher retenu (null sans finisher) */
   finisher_id: string | null;
+  /** mètres de course et d'erg de la séance (bloc A Hybrid + bloc C), règle §3.4 */
+  run_meters?: number;
 }
 
 export interface WeekParams {
@@ -403,10 +454,12 @@ export interface WeekParams {
   iso_week: number;
   recent_signatures?: string[];
   exclude?: string[];
+  /** piste générée ; absente = `functional` */
+  track?: SessionTrack;
 }
 
 export interface GeneratedWeek {
-  track: 'functional';
+  track: SessionTrack;
   iso_year: number;
   iso_week: number;
   seed: number;

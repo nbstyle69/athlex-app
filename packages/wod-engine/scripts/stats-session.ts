@@ -18,7 +18,7 @@ for (let w = 1; w <= 52; w++) {
     for (const r of s.generator.relaxations) relax.set(`d${s.day}:${r}`, (relax.get(`d${s.day}:${r}`) ?? 0) + 1);
   }
   for (let i = 1; i < week.sessions.length; i++) {
-    if (week.sessions[i].bloc_c.generator.skeleton_id === week.sessions[i - 1].bloc_c.generator.skeleton_id) consecutive++;
+    if (week.sessions[i].bloc_c!.generator.skeleton_id === week.sessions[i - 1].bloc_c!.generator.skeleton_id) consecutive++;
   }
   if (week.gym_volume.pull > 150 || week.gym_volume.hspu > 80) gymOver++;
   recent.push(...week.sessions.map((s) => s.signature));

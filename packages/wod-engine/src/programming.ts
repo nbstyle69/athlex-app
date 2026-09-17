@@ -13,13 +13,17 @@ import type {
 import { generateMuscuWeek, generateWeek, hashSeed, isoWeek, isoWeekMonday, DAY_LABEL, SESSION_ENGINE_VERSION } from './session';
 import { renderMuscu } from './muscu';
 
-export type Track = 'functional' | 'musculation';
-export const TRACKS: readonly Track[] = ['functional', 'musculation'];
-export const TRACK_LABEL: Record<Track, string> = { functional: 'Functional / Hybrid', musculation: 'Musculation' };
+/** Trois pistes indépendantes, activables séparément par box. */
+export type Track = 'functional' | 'hybrid' | 'musculation';
+export const TRACKS: readonly Track[] = ['functional', 'hybrid', 'musculation'];
+export const TRACK_LABEL: Record<Track, string> = { functional: 'Functional', hybrid: 'Hybrid', musculation: 'Musculation' };
 /** Groupes créés dans la box (si absents) pour un futur ciblage par piste (J3). */
-export const TRACK_GROUP_NAME: Record<Track, string> = { functional: 'Functional / Hybrid', musculation: 'Musculation' };
-/** Clé de piste entrant dans le seed (figée : la piste `functional` s'appelait `crossfit`, les seeds des samples relus en dépendent). */
-export const TRACK_SEED_KEY: Record<Track, string> = { functional: 'crossfit', musculation: 'musculation' };
+export const TRACK_GROUP_NAME: Record<Track, string> = { functional: 'Functional', hybrid: 'Hybrid', musculation: 'Musculation' };
+/**
+ * Clé de piste entrant dans le seed. `functional` vaut `crossfit` par héritage : la piste
+ * portait ce nom interne, et les graines des samples déjà relus en dépendent — ne pas toucher.
+ */
+export const TRACK_SEED_KEY: Record<Track, string> = { functional: 'crossfit', hybrid: 'hybrid', musculation: 'musculation' };
 export const PROGRAMMING_VERSION = SESSION_ENGINE_VERSION;
 /** Lisibilité du Whiteboard : révélation dimanche 18:00 Paris, comme la Marketplace. */
 export const REVEAL_HOUR_PARIS = 18;
@@ -322,8 +326,10 @@ export async function runWeekGeneration(
         let rows: BoxWodInsert[];
         let signatures: string[];
         let relaxations: string[];
-        if (track === 'functional') {
-          const week = generateWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
+        if (track === 'functional' || track === 'hybrid') {
+          const week = generateWeek({
+            iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent, track,
+          }, catalog, bank, seed);
           rows = functionalWeekRows(week, ctx);
           signatures = week.signatures;
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];

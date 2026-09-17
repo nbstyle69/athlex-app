@@ -24,7 +24,7 @@ function session(s: GeneratedSession, date: string, idx: number) {
   const relax = s.generator.relaxations;
   p(`### #${idx} — ${DAY_LABEL[s.day]} ${date} · ${s.label} · ${s.total_minutes}' (budget ${s.budget_min}')`);
   p();
-  p(`squelette \`${s.generator.skeleton_id}\` · bloc C \`${s.bloc_c.generator.skeleton_id}\` · intention **${s.bloc_c.intention}** · pattern lourd écarté du C : ${s.heavy_pattern ?? 'aucun'}` +
+  p(`squelette \`${s.generator.skeleton_id}\` · bloc C \`${s.bloc_c!.generator.skeleton_id}\` · intention **${s.bloc_c!.intention}** · pattern lourd écarté du C : ${s.heavy_pattern ?? 'aucun'}` +
     ` · signature \`${s.signature}\`` + (relax.length ? ` · **relâchements : ${relax.join(', ')}**` : ' · aucun relâchement'));
   p();
   for (const b of s.blocks) {

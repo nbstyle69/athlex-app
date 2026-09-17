@@ -26,9 +26,15 @@ import { core_carry_finisher } from './hybrid/core_carry_finisher';
 import { run_intervals } from './hybrid/run_intervals';
 import { MUSCU_SKELETONS } from './muscu';
 import { SESSION_SKELETONS } from './session';
+import { HYBRID_SESSION_SKELETONS } from './session-hybrid';
 
 export { MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, TARGET_MUSCLES } from './muscu';
 export { SESSION_SKELETONS, SESSION_BANK_VERSION, FINISHERS, S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long } from './session';
+export {
+  HYBRID_SESSION_SKELETONS, HYBRID_FORBIDDEN_IDS, HYBRID_JUMP_IDS,
+  HYBRID_WEEKLY_JUMP_CAP, HYBRID_WEEKLY_RUN_M, HYBRID_HARD_RPE, HYBRID_EASY_RPE,
+  H1_intervals, H2_strength_stations, H3_run, H4_engine, H5_compromised, H6_simulation, H6_simulation_full,
+} from './session-hybrid';
 
 export const BANK_VERSION = 3;
 /** version des squelettes Musculation (lignes `discipline = musculation`) : 1 = seed 20261215, 2 = resynchronisation 20261220 (règles M1–M10 et M2) */
@@ -102,5 +108,5 @@ export const BANK_V1: SkeletonBank = {
   volume_caps: { functional: FUNCTIONAL_CAPS, hybrid: HYBRID_CAPS },
   movement_caps: MOVEMENT_CAPS,
   muscu_skeletons: MUSCU_SKELETONS,
-  session_skeletons: SESSION_SKELETONS,
+  session_skeletons: [...SESSION_SKELETONS, ...HYBRID_SESSION_SKELETONS],
 };

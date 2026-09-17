@@ -22705,7 +22705,7 @@ var TARGET_MUSCLES = {
 };
 
 // packages/wod-engine/src/bank/session.ts
-var SESSION_BANK_VERSION = 2;
+var SESSION_BANK_VERSION = 3;
 var WL_STEPS = [
   { sets: 2, reps: 2, percent: 30, rest_s: 60, note: "mont\xE9e" },
   { sets: 2, reps: 2, percent: 50, rest_s: 60, note: "mont\xE9e" },
@@ -22919,6 +22919,7 @@ var S1_snatch = {
   id: "S1_snatch",
   discipline: "session",
   format: "session",
+  track: "functional",
   day: 1,
   label: "Halt\xE9ro \xB7 Snatch",
   budget_min: 60,
@@ -22932,6 +22933,7 @@ var S2_squat = {
   id: "S2_squat",
   discipline: "session",
   format: "session",
+  track: "functional",
   day: 2,
   label: "Force \xB7 Squat",
   budget_min: 60,
@@ -22945,6 +22947,7 @@ var S3_gym = {
   id: "S3_gym",
   discipline: "session",
   format: "session",
+  track: "functional",
   day: 3,
   label: "Gym \xB7 Skill",
   budget_min: 60,
@@ -22958,6 +22961,7 @@ var S4_cj = {
   id: "S4_cj",
   discipline: "session",
   format: "session",
+  track: "functional",
   day: 4,
   label: "Halt\xE9ro \xB7 Clean & Jerk",
   budget_min: 60,
@@ -22971,6 +22975,7 @@ var S5_hinge = {
   id: "S5_hinge",
   discipline: "session",
   format: "session",
+  track: "functional",
   day: 5,
   label: "Force \xB7 Hinge",
   budget_min: 60,
@@ -22984,6 +22989,7 @@ var S6_long = {
   id: "S6_long",
   discipline: "session",
   format: "session",
+  track: "functional",
   day: 6,
   label: "Long \xB7 Engine",
   budget_min: 60,
@@ -22994,6 +23000,269 @@ var S6_long = {
   finisher: FINISHERS
 };
 var SESSION_SKELETONS = [S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long];
+
+// packages/wod-engine/src/bank/session-hybrid.ts
+var HYBRID_FORBIDDEN_IDS = [
+  // haltéro technique
+  "power_snatch",
+  "squat_snatch",
+  "hang_power_snatch",
+  "hang_squat_snatch",
+  "muscle_snatch",
+  "snatch_balance",
+  "db_snatch",
+  "kb_snatch",
+  "power_clean",
+  "squat_clean",
+  "hang_power_clean",
+  "hang_squat_clean",
+  "muscle_clean",
+  "clean_and_jerk",
+  "db_clean_and_jerk",
+  "kb_clean_and_jerk",
+  "kb_clean",
+  "sandbag_clean",
+  "push_jerk",
+  "split_jerk",
+  "cluster",
+  "thruster",
+  "overhead_squat",
+  "snatch_deadlift",
+  "clean_deadlift",
+  // gymnique avancé
+  "bar_muscle_up",
+  "ring_muscle_up",
+  "handstand_push_up",
+  "strict_handstand_push_up",
+  "handstand_walk",
+  "handstand_hold",
+  "wall_walk",
+  "half_wall_walk",
+  "rope_climb",
+  "legless_rope_climb",
+  "pistol",
+  "box_pistol",
+  "pistol_to_box",
+  "chest_to_bar",
+  "bar_muscle_up_banded"
+];
+var HYBRID_JUMP_IDS = ["box_jump", "box_jump_over", "burpee_box_jump", "burpee_box_jump_over"];
+var HYBRID_WEEKLY_JUMP_CAP = 60;
+var HYBRID_WEEKLY_RUN_M = 12e3;
+var HYBRID_HARD_RPE = 8;
+var HYBRID_EASY_RPE = 6.5;
+var item = (id, qty, unit, band, name) => ({ id, qty, unit, ...band ? { band } : {}, ...name ? { name } : {} });
+var station = (id, movement, minutes, every_s, rounds, items) => ({ id, kind: "station", movement, minutes, station: { every_s, rounds, items } });
+var fin2 = (id, family, minutes, rounds, movements) => ({ id, family, rounds, minutes, movements });
+var mv2 = (id, qty, unit = "reps", name) => ({ id, qty, unit, ...name ? { name } : {} });
+var CORE_FINISHERS = [
+  fin2("h_core_plank_hollow", "core", 5, 3, [mv2("plank_hold", 40, "s"), mv2("hollow_rock", 12)]),
+  fin2("h_core_suitcase", "carry", 5, 3, [mv2("suitcase_carry", 40, "m"), mv2("dead_bug", 10)]),
+  fin2("h_core_sit_up_superman", "core", 5, 3, [mv2("sit_up", 20), mv2("superman", 30, "s")]),
+  fin2("h_core_carry_plank", "carry", 5, 3, [mv2("db_farmer_carry", 40, "m"), mv2("plank_hold", 30, "s")])
+];
+var MOBILITY_FINISHERS = [
+  fin2("h_mob_hanches", "breathing", 8, 1, [mv2("plank_hold", 30, "s", "Mobilit\xE9 hanches, chevilles et cha\xEEne post\xE9rieure")]),
+  fin2("h_mob_posterieure", "breathing", 8, 1, [mv2("plank_hold", 30, "s", "Mobilit\xE9 dorsale, ischios et mollets")])
+];
+var H1_A = [
+  station("h1_sled_goblet", "sled_push", 16, 120, 8, [item("sled_push", 25, "m", "medium"), item("kb_goblet_squat", 10, "reps", "medium")]),
+  station("h1_pull_step", "sled_pull", 16, 120, 8, [item("sled_pull", 25, "m", "medium"), item("box_step_up", 12, "reps", "light")]),
+  station("h1_swing_squat", "kb_swing_russian", 16, 120, 8, [item("kb_swing_russian", 15, "reps", "medium"), item("air_squat", 15, "reps")])
+];
+var H1_intervals = {
+  id: "H1_intervals",
+  discipline: "session",
+  format: "session",
+  track: "hybrid",
+  day: 1,
+  label: "Intervalles",
+  budget_min: 60,
+  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 800 m course progressive, 10 leg swings / jambe, 10 air squats, 10 pompes, 2 \xD7 20 s skipping."] },
+  block_a: H1_A,
+  block_b: null,
+  block_c: {
+    intentions: ["run", "interval", "engine"],
+    durations: [20, 30],
+    pattern_not: [],
+    skeletons: ["run_intervals", "stations_interval", "amrap_distances", "run_into_station"]
+  },
+  finisher: CORE_FINISHERS
+};
+var H2_A = [
+  station("h2_front_squat_carry", "front_squat", 20, 180, 5, [item("front_squat", 6, "reps", "medium"), item("db_farmer_carry", 20, "m", "medium")]),
+  station("h2_back_squat_carry", "back_squat", 20, 180, 5, [item("back_squat", 6, "reps", "medium"), item("suitcase_carry", 20, "m", "medium")]),
+  station("h2_hip_thrust_carry", "hip_thrust", 20, 180, 5, [item("hip_thrust", 10, "reps", "medium"), item("db_farmer_carry", 20, "m", "medium")]),
+  station("h2_rdl_carry", "romanian_deadlift", 20, 180, 5, [item("romanian_deadlift", 8, "reps", "medium"), item("sandbag_carry", 20, "m", "medium")])
+];
+var H2_strength_stations = {
+  id: "H2_strength_stations",
+  discipline: "session",
+  format: "session",
+  track: "hybrid",
+  day: 2,
+  label: "Force & stations",
+  budget_min: 60,
+  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 500 m rameur facile, 10 hip hinges \xE0 la barre \xE0 vide, 10 fentes / jambe, 10 pompes, 20 m d'ours."] },
+  block_a: H2_A,
+  block_b: null,
+  block_c: {
+    intentions: ["interval", "force", "engine", "run"],
+    durations: [20],
+    pattern_not: [],
+    skeletons: ["stations_interval", "sled_repeats", "amrap_distances", "run_into_station"]
+  },
+  finisher: CORE_FINISHERS
+};
+var H3_A = [{
+  id: "h3_run_intervals",
+  kind: "run",
+  movement: "run",
+  minutes: 30,
+  run: {
+    variants: [
+      { label: "8 \xD7 400 m", target: "allure 5 km", rest_s: 60, meters: 3200 },
+      { label: "5 \xD7 800 m", target: "allure 10 km \u2212 10 s/km", rest_s: 90, meters: 4e3 },
+      { label: "3 \xD7 1 600 m", target: "allure 10 km", rest_s: 120, meters: 4800 },
+      { label: "12 \xD7 200 m shuttle", target: "allure rapide et r\xE9guli\xE8re", rest_s: 45, meters: 2400 }
+    ]
+  }
+}];
+var H3_run = {
+  id: "H3_run",
+  discipline: "session",
+  format: "session",
+  track: "hybrid",
+  day: 3,
+  label: "Course",
+  budget_min: 60,
+  warmup: { minutes: 12, lines: ["\xC9chauffement (12') \u2014 1 km progressif, gammes (talons-fesses, mont\xE9es de genoux, pas chass\xE9s) 2 \xD7 20 m, 3 \xD7 30 m d'acc\xE9l\xE9rations."] },
+  block_a: H3_A,
+  block_b: null,
+  block_c: {
+    intentions: ["core", "run", "interval"],
+    durations: [10, 15, 20],
+    pattern_not: [],
+    skeletons: ["core_carry_finisher", "run_intervals", "amrap_distances"]
+  },
+  finisher: null
+};
+var H4_engine = {
+  id: "H4_engine",
+  discipline: "session",
+  format: "session",
+  track: "hybrid",
+  day: 4,
+  label: "Engine",
+  budget_min: 60,
+  warmup: { minutes: 8, lines: ["\xC9chauffement (8') \u2014 400 m course facile, 10 air squats, 10 pompes, 5 inchworms."] },
+  block_a: null,
+  block_b: null,
+  // 45' de continu : la seule durée qui tient le budget avec l'échauffement court et la
+  // mobilité de fin. `engine_continuous` est le seul squelette de la banque à la proposer.
+  block_c: { intentions: ["aerobic"], durations: [45], pattern_not: [], skeletons: ["engine_continuous"] },
+  finisher: MOBILITY_FINISHERS
+};
+var H5_A = [
+  station("h5_sled_push_heavy", "sled_push", 12, 150, 5, [item("sled_push", 30, "m", "heavy"), item("run", 100, "m")]),
+  station("h5_sled_pull_heavy", "sled_pull", 12, 150, 5, [item("sled_pull", 30, "m", "heavy"), item("run", 100, "m")]),
+  station("h5_sandbag_heavy", "sandbag_carry", 12, 150, 5, [item("sandbag_carry", 50, "m", "heavy"), item("run", 100, "m")])
+];
+var H5_compromised = {
+  id: "H5_compromised",
+  discipline: "session",
+  format: "session",
+  track: "hybrid",
+  day: 5,
+  label: "Course compromise",
+  budget_min: 60,
+  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 600 m course, 10 hip hinges, 10 fentes / jambe, 20 m de sled \xE0 vide, 10 wall balls l\xE9g\xE8res."] },
+  block_a: H5_A,
+  block_b: null,
+  block_c: {
+    intentions: ["run", "interval", "engine"],
+    durations: [30],
+    pattern_not: [],
+    skeletons: ["compromised_run", "run_into_station", "stations_interval"]
+  },
+  finisher: CORE_FINISHERS
+};
+var HALF_SIM_STATIONS = [
+  item("ski_erg", 500, "m"),
+  item("sled_push", 25, "m", "medium"),
+  item("sled_pull", 25, "m", "medium"),
+  item("burpee_broad_jump", 40, "m"),
+  item("db_farmer_carry", 100, "m", "medium"),
+  item("sandbag_lunge", 50, "m", "medium"),
+  item("wall_ball", 50, "reps", "medium")
+];
+var H6_simulation = {
+  id: "H6_simulation",
+  discipline: "session",
+  format: "session",
+  track: "hybrid",
+  day: 6,
+  label: "Simulation",
+  budget_min: 60,
+  warmup: { minutes: 12, lines: ["\xC9chauffement (12') \u2014 1 km progressif, gammes, puis 20 m de chaque station \xE0 vide."] },
+  block_a: [{
+    id: "h6_half_sim",
+    kind: "race",
+    movement: "run",
+    minutes: 40,
+    timed: true,
+    race: { rounds: 7, rounds_min: 6, rounds_max: 8, run_m: 500, stations: HALF_SIM_STATIONS, score: "temps total" }
+  }],
+  block_b: null,
+  block_c: null,
+  finisher: MOBILITY_FINISHERS
+};
+var H6_simulation_full = {
+  id: "H6_simulation_full",
+  discipline: "session",
+  format: "session",
+  track: "hybrid",
+  day: 6,
+  label: "Simulation \xB7 test de bloc",
+  budget_min: 75,
+  weeks_modulo: { modulo: 8, equals: 0 },
+  warmup: { minutes: 12, lines: ["\xC9chauffement (12') \u2014 1 km progressif, gammes, puis 20 m de chaque station \xE0 vide. Pr\xE9pare ton mat\xE9riel : la s\xE9ance s'encha\xEEne sans arr\xEAt."] },
+  block_a: [{
+    id: "h6_full_sim",
+    kind: "race",
+    movement: "run",
+    minutes: 55,
+    timed: true,
+    race: {
+      rounds: 8,
+      run_m: 1e3,
+      score: "temps total",
+      ordered: true,
+      stations: [
+        item("ski_erg", 1e3, "m"),
+        item("sled_push", 50, "m", "medium"),
+        item("sled_pull", 50, "m", "medium"),
+        item("burpee_broad_jump", 80, "m"),
+        item("row", 1e3, "m"),
+        item("db_farmer_carry", 200, "m", "medium"),
+        item("sandbag_lunge", 100, "m", "medium"),
+        item("wall_ball", 100, "reps", "medium")
+      ]
+    }
+  }],
+  block_b: null,
+  block_c: null,
+  finisher: MOBILITY_FINISHERS
+};
+var HYBRID_SESSION_SKELETONS = [
+  H1_intervals,
+  H2_strength_stations,
+  H3_run,
+  H4_engine,
+  H5_compromised,
+  H6_simulation,
+  H6_simulation_full
+];
 
 // packages/wod-engine/src/bank/index.ts
 var BANK_VERSION = 3;
@@ -23080,7 +23349,7 @@ var BANK_V1 = {
   volume_caps: { functional: FUNCTIONAL_CAPS, hybrid: HYBRID_CAPS },
   movement_caps: MOVEMENT_CAPS,
   muscu_skeletons: MUSCU_SKELETONS,
-  session_skeletons: SESSION_SKELETONS
+  session_skeletons: [...SESSION_SKELETONS, ...HYBRID_SESSION_SKELETONS]
 };
 
 // packages/wod-engine/src/bank/rows.ts
@@ -25319,6 +25588,7 @@ function finisherLines(catalog, opt) {
 function blocCRepsRx(wod) {
   const b = wod.blocks[0];
   const budgetS = wod.budget_min * 60;
+  const ref = referenceCategory(wod);
   const out = {};
   for (const gm of b.movements) {
     let mult = 1;
@@ -25332,10 +25602,10 @@ function blocCRepsRx(wod) {
           break;
         case "amrap":
         case "continuous":
-          mult = Math.ceil(budgetS / roundSeconds(b, "rx"));
+          mult = Math.ceil(budgetS / roundSeconds(b, ref));
           break;
         case "ladder": {
-          const { step } = ladderProgress(b, "rx", budgetS);
+          const { step } = ladderProgress(b, ref, budgetS);
           const start = b.ladder?.start ?? gm.qty;
           const inc = b.ladder?.step ?? gm.qty;
           const n = inc > 0 ? Math.max(1, Math.floor((step - start) / inc) + 1) : 1;
@@ -25343,7 +25613,7 @@ function blocCRepsRx(wod) {
           break;
         }
         case "death_by": {
-          const n = deathByMinute(b, "rx", wod.budget_min);
+          const n = deathByMinute(b, ref, wod.budget_min);
           mult = gm.per_minute ? n * (n + 1) / 2 / Math.max(1, gm.qty) : n;
           break;
         }
@@ -25366,6 +25636,52 @@ function gymReps(catalog, reps) {
   for (const [id, n] of Object.entries(reps)) if (movementById(catalog, id)?.family === "gym") out[id] = n;
   return out;
 }
+function hybridJumpReps(sessions) {
+  let n = 0;
+  for (const s of sessions) {
+    if (!s.bloc_c) continue;
+    const reps = blocCRepsRx(s.bloc_c);
+    for (const id of HYBRID_JUMP_IDS) n += reps[id] ?? 0;
+  }
+  return n;
+}
+var CAL_TO_M = 10;
+function blocCRunMeters(catalog, wod) {
+  const reps = blocCRepsRx(wod);
+  let total2 = 0;
+  for (const gm of wod.blocks[0].movements) {
+    const m = movementById(catalog, gm.id);
+    if (!m || m.modality !== "M") continue;
+    const qty = reps[gm.id] ?? 0;
+    if (gm.unit === "cal") total2 += qty * CAL_TO_M;
+    else if (gm.unit === "m") total2 += qty;
+  }
+  return total2;
+}
+function blockARunMeters(catalog, opt) {
+  const ofItem = (it, times) => {
+    const m = movementById(catalog, it.id);
+    if (!m || m.modality !== "M") return 0;
+    return (it.unit === "cal" ? it.qty * CAL_TO_M : it.unit === "m" ? it.qty : 0) * times;
+  };
+  if (opt.station) {
+    const { rounds, items } = opt.station;
+    return items.reduce((n, it) => n + ofItem(it, Math.ceil(rounds / items.length)), 0);
+  }
+  if (opt.race) {
+    const { rounds, run_m, stations } = opt.race;
+    const stationsM = Array.from({ length: rounds }, (_, i) => ofItem(stations[i % stations.length], 1)).reduce((a, b) => a + b, 0);
+    return rounds * run_m + stationsM;
+  }
+  return 0;
+}
+function runVariantMeters(opt, iso_week) {
+  if (!opt.run) return 0;
+  return opt.run.variants[iso_week % opt.run.variants.length].meters;
+}
+function hybridRunMeters(sessions) {
+  return sessions.reduce((n, s) => n + (s.run_meters ?? 0), 0);
+}
 function weeklyGymVolume(sessions) {
   let pull = 0;
   let hspu = 0;
@@ -25383,10 +25699,81 @@ var InvalidSessionParams = class extends Error {
     this.code = code;
   }
 };
-function skeletonForDay(bank, day) {
-  const sk = bank.session_skeletons.find((s) => s.day === day);
-  if (!sk) throw new InvalidSessionParams("no_skeleton", `Aucun squelette de s\xE9ance pour le jour ${day}`);
+var trackOf = (sk) => sk.track ?? "functional";
+function skeletonForDay(bank, day, track, iso_week) {
+  const sameDay = bank.session_skeletons.filter((s) => s.day === day && trackOf(s) === track);
+  const special = sameDay.find((s) => s.weeks_modulo && iso_week % s.weeks_modulo.modulo === s.weeks_modulo.equals);
+  const sk = special ?? sameDay.find((s) => !s.weeks_modulo);
+  if (!sk) throw new InvalidSessionParams("no_skeleton", `Aucun squelette de s\xE9ance ${track} pour le jour ${day}`);
   return sk;
+}
+function loadPair(catalog, id, band) {
+  if (!band) return "";
+  const m = movementById(catalog, id);
+  if (!m?.loads) return "";
+  const men = loadsFor(m, "men", band);
+  const women = loadsFor(m, "women", band);
+  if (!men?.length || !women?.length) return "";
+  return ` @ ${men[0]}/${women[0]} ${m.load_unit ?? "kg"}`;
+}
+function stationLine(catalog, it) {
+  const name = it.name ?? nameOf(catalog, it.id);
+  const qty = it.unit === "reps" ? `${it.qty}` : `${it.qty} ${it.unit}`;
+  return `${qty} ${name}${loadPair(catalog, it.id, it.band)}`;
+}
+function proLine(catalog, items) {
+  const parts = [];
+  for (const it of items) {
+    if (!it.band) continue;
+    const m = movementById(catalog, it.id);
+    if (!m?.loads) continue;
+    const men = loadsFor(m, "men_pro", it.band);
+    const women = loadsFor(m, "women_pro", it.band);
+    if (!men?.length || !women?.length) continue;
+    parts.push(`${it.name ?? nameOf(catalog, it.id)} ${men[0]}/${women[0]} ${m.load_unit ?? "kg"}`);
+  }
+  return parts.length ? `Women Pro / Men Pro : ${parts.join(" \xB7 ")}` : null;
+}
+function drawRace(opt, rng) {
+  const race = opt.race;
+  if (!race || race.ordered) return opt;
+  const pool = [...race.stations];
+  const stations = [];
+  while (pool.length) stations.push(pool.splice(rng.int(0, pool.length - 1), 1)[0]);
+  const rounds = rng.int(race.rounds_min ?? race.rounds, race.rounds_max ?? race.rounds);
+  return { ...opt, race: { ...race, rounds, stations } };
+}
+function hybridALines(catalog, opt, iso_week) {
+  const lines = [];
+  if (opt.kind === "station" && opt.station) {
+    const { every_s, rounds, items } = opt.station;
+    lines.push(items.length > 1 ? `Every ${fmtEvery(every_s)} \xD7 ${rounds}, en alternance :` : `Every ${fmtEvery(every_s)} \xD7 ${rounds} :`);
+    for (const [i, it] of items.entries()) {
+      const tag = items.length > 1 ? `${i % 2 === 0 ? "Impair" : "Pair"} \xB7 ` : "";
+      lines.push(`${tag}${stationLine(catalog, it)}`);
+    }
+    const pro = proLine(catalog, items);
+    if (pro) lines.push(pro);
+    if (items.some((it) => it.band === "heavy")) {
+      lines.push("Seule charge lourde de la semaine. Pouss\xE9e continue, jamais en saccades.");
+    }
+  } else if (opt.kind === "run" && opt.run) {
+    const v = opt.run.variants[iso_week % opt.run.variants.length];
+    lines.push(`Intervalles course \u2014 ${v.label}, repos ${fmtRest2(v.rest_s)}`);
+    lines.push(`Allure cible : ${v.target}. L'\xE9cart entre le premier et le dernier intervalle reste sous 5 s.`);
+    lines.push(`Autres variantes du cycle : ${opt.run.variants.filter((x) => x !== v).map((x) => x.label).join(" \xB7 ")}`);
+  } else if (opt.kind === "race" && opt.race) {
+    const { rounds, run_m, stations, score } = opt.race;
+    lines.push(`Encha\xEEnement chronom\xE9tr\xE9 \u2014 ${rounds} tours, dans l'ordre :`);
+    for (let i = 0; i < rounds; i++) {
+      const st = stations[i % stations.length];
+      lines.push(`${i + 1}. ${run_m} m Run puis ${stationLine(catalog, st)}`);
+    }
+    const pro = proLine(catalog, stations);
+    if (pro) lines.push(pro);
+    lines.push(`Score : ${score}. Note le temps de chaque segment.`);
+  }
+  return lines;
 }
 function heavyPatternOf(m) {
   if (!m) return null;
@@ -25429,7 +25816,8 @@ function structured(kind, option_id, extra) {
   };
 }
 function generateSession(params, catalog, bank, seed) {
-  const sk = skeletonForDay(bank, params.day);
+  const track = params.track ?? "functional";
+  const sk = skeletonForDay(bank, params.day, track, params.iso_week);
   const rng = new RNG(seed);
   const weeks = params.iso_week % 2 === 0 ? "even" : "odd";
   const relax = /* @__PURE__ */ new Set();
@@ -25437,9 +25825,10 @@ function generateSession(params, catalog, bank, seed) {
   if (sk.block_a) {
     const eligible = sk.block_a.filter((o) => !o.weeks || o.weeks === weeks);
     optA = withSkillProgression(rng.pick(eligible.length ? eligible : sk.block_a));
+    optA = drawRace(optA, rng);
   }
   const movA = optA ? movementById(catalog, optA.movement) : void 0;
-  const heavy = optA && optA.kind !== "skill" ? heavyPatternOf(movA) : null;
+  const heavy = optA && (optA.kind === "weightlifting" || optA.kind === "strength") ? heavyPatternOf(movA) : null;
   const { c: recentC, finishers: journalFinishers } = splitSignatures(params.recent_signatures ?? []);
   let optB = null;
   if (sk.block_b) {
@@ -25467,17 +25856,18 @@ function generateSession(params, catalog, bank, seed) {
       relax.add("finisher_repeat");
     }
   }
+  const cFilter = sk.block_c;
   const fixed = sk.warmup.minutes + (optA?.minutes ?? 0);
   const lo = sk.budget_min * (1 - SESSION_TOLERANCE);
   const hi = sk.budget_min * (1 + SESSION_TOLERANCE);
   const combos = [];
-  for (const c of sk.block_c.durations) for (const b of [true, false]) for (const f of [true, false]) {
+  for (const c of cFilter ? cFilter.durations : [0]) for (const b of [true, false]) for (const f of [true, false]) {
     if (b && !optB) continue;
     if (f && !optF) continue;
     combos.push({ c, b, f });
   }
   const totalOf = (x) => {
-    const blocks2 = 1 + (optA ? 1 : 0) + (x.b ? 1 : 0) + (x.f ? 1 : 0);
+    const blocks2 = (cFilter ? 1 : 0) + (optA ? 1 : 0) + (x.b ? 1 : 0) + (x.f ? 1 : 0);
     return fixed + x.c + (x.b ? optB.minutes : 0) + (x.f ? optF.minutes : 0) + TRANSITION_MIN * blocks2;
   };
   const fitting = combos.filter((x) => totalOf(x) >= lo && totalOf(x) <= hi);
@@ -25486,39 +25876,50 @@ function generateSession(params, catalog, bank, seed) {
   const rank = (x) => (x.b ? 2 : 0) + (x.f ? 1 : 0);
   const bestRank = Math.max(...pool.map(rank));
   let choice = rng.pick(pool.filter((x) => rank(x) === bestRank));
-  const patternNot = [
-    ...sk.block_c.pattern_not === "heavy_pattern" ? heavy ? [heavy] : [] : sk.block_c.pattern_not,
+  const patternNot = cFilter ? [
+    ...cFilter.pattern_not === "heavy_pattern" ? heavy ? [heavy] : [] : cFilter.pattern_not,
     ...params.pattern_not ?? []
-  ];
-  const intention = rng.pick(sk.block_c.intentions);
-  const format = sk.block_c.formats ? rng.pick(sk.block_c.formats) : void 0;
+  ] : [];
+  const intention = cFilter ? rng.pick(cFilter.intentions) : "mixed";
+  const format = cFilter?.formats ? rng.pick(cFilter.formats) : void 0;
   const cSeed = seed + 104729 * params.day >>> 0;
-  const exclude = [...sk.block_c.exclude ?? [], ...params.exclude ?? []];
+  const aIdsHybrid = track === "hybrid" && optA ? [...optA.station?.items ?? [], ...optA.race?.stations ?? []].map((it) => it.id) : [];
+  const exclude = [
+    ...cFilter?.exclude ?? [],
+    ...params.exclude ?? [],
+    ...track === "hybrid" ? [...HYBRID_FORBIDDEN_IDS, ...aIdsHybrid] : []
+  ];
   const neighbours = [params.previous_c_skeleton, params.next_c_skeleton].filter((s) => !!s);
-  const skeletonNot = neighbours.length ? neighbours : void 0;
+  const cDiscipline = track === "hybrid" ? "hybrid" : "functional";
+  const outside = cFilter?.skeletons ? bank.skeletons.filter((s) => s.discipline === cDiscipline && !cFilter.skeletons.includes(s.id)).map((s) => s.id) : [];
+  const notList = [.../* @__PURE__ */ new Set([...neighbours, ...outside])];
+  const skeletonNot = notList.length ? notList : void 0;
   const attempts = [
     { tag: null, c: choice.c, intention, format, patternNot }
   ];
   attempts.push({ tag: "c_fallback:reseed", c: choice.c, intention, format, patternNot });
   if (format) attempts.push({ tag: "c_fallback:format", c: choice.c, intention, format: void 0, patternNot });
-  for (const c of sk.block_c.durations) if (c !== choice.c) attempts.push({ tag: "c_fallback:duration", c, intention, format, patternNot });
+  for (const c of cFilter?.durations ?? []) if (c !== choice.c) attempts.push({ tag: "c_fallback:duration", c, intention, format, patternNot });
   if (format) {
-    for (const c of sk.block_c.durations) if (c !== choice.c) attempts.push({ tag: "c_fallback:duration", c, intention, format: void 0, patternNot });
+    for (const c of cFilter?.durations ?? []) if (c !== choice.c) attempts.push({ tag: "c_fallback:duration", c, intention, format: void 0, patternNot });
   }
-  for (const i of sk.block_c.intentions) if (i !== intention) attempts.push({ tag: "c_fallback:intention", c: choice.c, intention: i, format: void 0, patternNot });
+  for (const i of cFilter?.intentions ?? []) if (i !== intention) attempts.push({ tag: "c_fallback:intention", c: choice.c, intention: i, format: void 0, patternNot });
   if (patternNot.length) attempts.push({ tag: "c_fallback:pattern", c: choice.c, intention, format: void 0, patternNot: [] });
+  for (const i of cFilter?.intentions ?? []) {
+    attempts.push({ tag: "c_fallback:signature", c: choice.c, intention: i, format: void 0, patternNot: [], noRecent: true });
+  }
   let blocC = null;
   let lastErr = null;
-  for (const [idx, a] of attempts.entries()) {
+  for (const [idx, a] of cFilter ? attempts.entries() : []) {
     try {
       blocC = generateBlocC({
         entry: "express",
-        discipline: "functional",
+        discipline: cDiscipline,
         budget_min: a.c,
         intention: a.intention,
         format: a.format,
         exclude,
-        recent_signatures: recentC,
+        recent_signatures: a.noRecent ? [] : recentC,
         pattern_not: a.patternNot.length ? a.patternNot : void 0,
         skeleton_not: skeletonNot
       }, catalog, bank, idx === 0 ? cSeed : hashSeed(cSeed, a.tag ?? "", idx));
@@ -25530,23 +25931,32 @@ function generateSession(params, catalog, bank, seed) {
       lastErr = e;
     }
   }
-  if (!blocC) throw lastErr;
-  for (const r of blocC.generator.relaxations) relax.add(`c:${r}`);
+  if (cFilter && !blocC) throw lastErr;
+  if (blocC) for (const r of blocC.generator.relaxations) relax.add(`c:${r}`);
   const blocks = [];
   const gym = {};
   const warm = [...sk.warmup.lines, ""];
   let sort = 0;
   if (optA) {
-    const lines = blockALines(catalog, optA, weeks);
+    const isHybridA = optA.kind === "station" || optA.kind === "run" || optA.kind === "race";
+    const lines = isHybridA ? hybridALines(catalog, optA, params.iso_week) : blockALines(catalog, optA, weeks);
     const aReps = {};
     if (optA.skill) aReps[optA.movement] = optA.skill.reps * optA.skill.rounds;
     addReps(gym, gymReps(catalog, aReps));
-    const kindLabel = optA.kind === "weightlifting" ? "Halt\xE9ro" : optA.kind === "strength" ? "Force" : "Skill";
-    blocks.push(editor(
-      `${kindLabel} \xB7 ${nameOf(catalog, optA.movement)}`,
+    const KIND_LABEL = {
+      weightlifting: "Halt\xE9ro",
+      strength: "Force",
+      skill: "Skill",
+      station: "Force sur station",
+      run: "Course",
+      race: "Simulation"
+    };
+    const title = optA.kind === "race" ? sk.label : `${KIND_LABEL[optA.kind]} \xB7 ${nameOf(catalog, optA.movement)}`;
+    const a = editor(
+      title,
       [...warm, ...lines].join("\n"),
-      optA.kind === "skill" ? "custom" : "strength",
-      optA.kind === "skill" ? "skill" : "strength",
+      optA.kind === "skill" || isHybridA ? "custom" : "strength",
+      optA.timed ? "wod" : optA.kind === "skill" ? "skill" : "strength",
       sort++,
       sk.warmup.minutes + optA.minutes,
       structured(optA.kind, optA.id, {
@@ -25557,8 +25967,10 @@ function generateSession(params, catalog, bank, seed) {
         skill: optA.skill ?? null,
         gym_reps_rx: gymReps(catalog, aReps)
       }),
-      optA.kind === "weightlifting" ? "Pourcentages du 1RM du mouvement complet ; sans 1RM, charge propre." : null
-    ));
+      optA.kind === "weightlifting" ? "Pourcentages du 1RM du mouvement complet ; sans 1RM, charge propre." : optA.timed ? "S\xE9ance chronom\xE9tr\xE9e de bout en bout : compare avec ta derni\xE8re simulation." : null
+    );
+    if (optA.timed) a.leaderboard_enabled = true;
+    blocks.push(a);
   }
   if (choice.b && optB) {
     const bReps = {};
@@ -25575,26 +25987,28 @@ function generateSession(params, catalog, bank, seed) {
       null
     ));
   }
-  const cReps = blocCRepsRx(blocC);
-  addReps(gym, gymReps(catalog, cReps));
-  const cDescription = optA ? blocC.description : [...warm, blocC.description].join("\n");
-  blocks.push({
-    title: blocC.title,
-    description: cDescription,
-    wod_type: blocC.wod_type,
-    block_name: "wod",
-    sort_order: sort++,
-    minutes: choice.c + (optA ? 0 : sk.warmup.minutes),
-    wod_json: blocC,
-    time_cap_seconds: blocC.time_cap_seconds,
-    rounds: blocC.rounds,
-    notes: blocC.notes,
-    video_url: null,
-    leaderboard_enabled: true,
-    emom_interval_minutes: blocC.emom_interval_minutes,
-    tabata_work_seconds: blocC.tabata_work_seconds,
-    tabata_rest_seconds: blocC.tabata_rest_seconds
-  });
+  if (blocC) {
+    const cReps = blocCRepsRx(blocC);
+    addReps(gym, gymReps(catalog, cReps));
+    const cDescription = optA ? blocC.description : [...warm, blocC.description].join("\n");
+    blocks.push({
+      title: blocC.title,
+      description: cDescription,
+      wod_type: blocC.wod_type,
+      block_name: "wod",
+      sort_order: sort++,
+      minutes: choice.c + (optA ? 0 : sk.warmup.minutes),
+      wod_json: blocC,
+      time_cap_seconds: blocC.time_cap_seconds,
+      rounds: blocC.rounds,
+      notes: blocC.notes,
+      video_url: null,
+      leaderboard_enabled: true,
+      emom_interval_minutes: blocC.emom_interval_minutes,
+      tabata_work_seconds: blocC.tabata_work_seconds,
+      tabata_rest_seconds: blocC.tabata_rest_seconds
+    });
+  }
   if (choice.f && optF) {
     const fReps = {};
     for (const m of optF.movements) if (m.unit === "reps") fReps[m.id] = (fReps[m.id] ?? 0) + m.qty * optF.rounds;
@@ -25631,29 +26045,44 @@ function generateSession(params, catalog, bank, seed) {
     blocks,
     bloc_c: blocC,
     gym_reps_rx: gym,
-    signature: blocC.signature,
+    // Sans bloc C (séance chronométrée), la signature vient du squelette et de son bloc A :
+    // l'anti-répétition sur 4 semaines reste calculable.
+    signature: blocC ? blocC.signature : `session|${sk.id}|${optA?.id ?? "-"}|${optA?.race ? `${optA.race.rounds}x${optA.race.run_m}:${optA.race.stations.map((x) => x.id).join(",")}` : "-"}`,
     block_b_movement: choice.b && optB ? optB.movement : null,
-    finisher_id: choice.f && optF ? optF.id : null
+    finisher_id: choice.f && optF ? optF.id : null,
+    run_meters: (optA ? blockARunMeters(catalog, optA) + runVariantMeters(optA, params.iso_week) : 0) + (blocC ? blocCRunMeters(catalog, blocC) : 0)
   };
 }
 function generateWeek(params, catalog, bank, seed) {
   const relax = /* @__PURE__ */ new Set();
+  const track = params.track ?? "functional";
   const recent = [...params.recent_signatures ?? []];
   const sessions = [];
-  const once = (day, salt, patternNot) => generateSession({
+  const alreadyUsed = (day) => track !== "hybrid" ? [] : sessions.filter((s) => s.day !== day && s.bloc_c).flatMap((s) => s.bloc_c.blocks[0].movements.map((m) => m.id)).filter((id) => movementById(catalog, id)?.modality !== "M");
+  const once = (day, salt, patternNot, extraExclude = [], unique = true) => generateSession({
+    track,
     day,
     iso_year: params.iso_year,
     iso_week: params.iso_week,
     recent_signatures: [...recent, ...sessions.filter((s) => s.day !== day).map((s) => s.signature)],
     week_b_movements: sessions.filter((s) => s.day !== day).flatMap((s) => s.block_b_movement ? [s.block_b_movement] : []),
     recent_finishers: sessions.filter((s) => s.day !== day).flatMap((s) => s.finisher_id ? [s.finisher_id] : []),
-    previous_c_skeleton: sessions.find((s) => s.day === day - 1)?.bloc_c.generator.skeleton_id ?? null,
-    next_c_skeleton: sessions.find((s) => s.day === day + 1)?.bloc_c.generator.skeleton_id ?? null,
+    previous_c_skeleton: sessions.find((s) => s.day === day - 1)?.bloc_c?.generator.skeleton_id ?? null,
+    next_c_skeleton: sessions.find((s) => s.day === day + 1)?.bloc_c?.generator.skeleton_id ?? null,
     pattern_not: patternNot,
-    exclude: params.exclude
+    exclude: [...params.exclude ?? [], ...unique ? alreadyUsed(day) : [], ...extraExclude]
   }, catalog, bank, seed + day * 7919 + salt * 104729 >>> 0);
+  const onceRelaxed = (day, salt, patternNot, extraExclude = []) => {
+    try {
+      return once(day, salt, patternNot, extraExclude);
+    } catch (e) {
+      if (!(e instanceof NoValidWod)) throw e;
+      relax.add(`movement_repeat_week:${day}`);
+      return once(day, salt, patternNot, extraExclude, false);
+    }
+  };
   const repeatsB = (s) => s.generator.relaxations.includes("b_repeat_week");
-  const gen = (day, patternNot) => once(day, 0, patternNot);
+  const gen = (day, patternNot) => onceRelaxed(day, 0, patternNot);
   for (const day of [1, 2, 3, 4, 5, 6]) {
     sessions.push(gen(day));
     if (!repeatsB(sessions[sessions.length - 1])) continue;
@@ -25662,8 +26091,8 @@ function generateWeek(params, catalog, bank, seed) {
     for (let back = 1; back < day && !solved; back++) {
       for (let salt = 1; salt <= B_RETRY_MAX && !solved; salt++) {
         sessions.splice(day - 1 - back);
-        sessions.push(once(day - back, salt));
-        for (let d = day - back + 1; d <= day; d++) sessions.push(once(d, 0));
+        sessions.push(onceRelaxed(day - back, salt));
+        for (let d = day - back + 1; d <= day; d++) sessions.push(onceRelaxed(d, 0));
         solved = sessions.slice(day - 1 - back).every((s) => !repeatsB(s));
       }
     }
@@ -25681,8 +26110,33 @@ function generateWeek(params, catalog, bank, seed) {
   }
   const gym_volume = weeklyGymVolume(sessions);
   if (gym_volume.pull > WEEKLY_GYM_CAPS.pull || gym_volume.hspu > WEEKLY_GYM_CAPS.hspu) relax.add("weekly_gym_cap_exceeded");
+  if (track === "hybrid") {
+    for (let pass = 0; pass < 3 && hybridJumpReps(sessions) > HYBRID_WEEKLY_JUMP_CAP; pass++) {
+      const worst = [...sessions].sort((a, b) => hybridJumpReps([b]) - hybridJumpReps([a]))[0];
+      if (!worst || hybridJumpReps([worst]) === 0) break;
+      const i = sessions.findIndex((s) => s.day === worst.day);
+      sessions[i] = onceRelaxed(worst.day, 0, void 0, [...HYBRID_JUMP_IDS]);
+      relax.add(`weekly_jump_cap:${worst.day}`);
+    }
+    if (hybridJumpReps(sessions) > HYBRID_WEEKLY_JUMP_CAP) relax.add("weekly_jump_cap_exceeded");
+    const rpeOf = (s) => s.bloc_c?.stimulus.rpe ?? 0;
+    const HARD_RETRY = 8;
+    for (let i = 1; i < sessions.length; i++) {
+      if (rpeOf(sessions[i]) < HYBRID_HARD_RPE || rpeOf(sessions[i - 1]) < HYBRID_HARD_RPE) continue;
+      let best = sessions[i];
+      for (let salt = 1; salt <= HARD_RETRY; salt++) {
+        const candidate = onceRelaxed(sessions[i].day, salt);
+        if (rpeOf(candidate) < rpeOf(best)) best = candidate;
+        if (rpeOf(candidate) < HYBRID_HARD_RPE) break;
+      }
+      sessions[i] = best;
+      if (rpeOf(best) >= HYBRID_HARD_RPE) relax.add(`hard_days_in_a_row:${best.day}`);
+      else relax.add(`hard_day_softened:${best.day}`);
+    }
+    if (hybridRunMeters(sessions) < HYBRID_WEEKLY_RUN_M) relax.add("weekly_run_short");
+  }
   return {
-    track: "functional",
+    track,
     iso_year: params.iso_year,
     iso_week: params.iso_week,
     seed,
@@ -25777,10 +26231,10 @@ function generateMuscuWeek(params, catalog, bank, seed) {
 }
 
 // packages/wod-engine/src/programming.ts
-var TRACKS = ["functional", "musculation"];
-var TRACK_LABEL = { functional: "Functional / Hybrid", musculation: "Musculation" };
-var TRACK_GROUP_NAME = { functional: "Functional / Hybrid", musculation: "Musculation" };
-var TRACK_SEED_KEY = { functional: "crossfit", musculation: "musculation" };
+var TRACKS = ["functional", "hybrid", "musculation"];
+var TRACK_LABEL = { functional: "Functional", hybrid: "Hybrid", musculation: "Musculation" };
+var TRACK_GROUP_NAME = { functional: "Functional", hybrid: "Hybrid", musculation: "Musculation" };
+var TRACK_SEED_KEY = { functional: "crossfit", hybrid: "hybrid", musculation: "musculation" };
 var PROGRAMMING_VERSION = SESSION_ENGINE_VERSION;
 var REVEAL_HOUR_PARIS = 18;
 var RECENT_WEEKS = 4;
@@ -25933,8 +26387,13 @@ async function runWeekGeneration(db, catalog, bank, opts) {
         let rows;
         let signatures;
         let relaxations;
-        if (track === "functional") {
-          const week = generateWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
+        if (track === "functional" || track === "hybrid") {
+          const week = generateWeek({
+            iso_year: target.iso_year,
+            iso_week: target.iso_week,
+            recent_signatures: recent,
+            track
+          }, catalog, bank, seed);
           rows = functionalWeekRows(week, ctx);
           signatures = week.signatures;
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];
@@ -25972,6 +26431,7 @@ export {
   BODYWEIGHT_MAX_LOADED,
   BODYWEIGHT_PULL_UP_IDS,
   BONUS_EXCLUDED_IDS,
+  CAL_TO_M,
   CARDIO_EXCLUDED_IDS,
   CATALOG_SNAPSHOT,
   CATEGORY_LABEL,
@@ -25989,12 +26449,26 @@ export {
   FINISHER_SIGNATURE_PREFIX,
   FUNCTIONAL_CATEGORIES,
   FUNCTIONAL_SKELETONS,
+  H1_intervals,
+  H2_strength_stations,
+  H3_run,
+  H4_engine,
+  H5_compromised,
+  H6_simulation,
+  H6_simulation_full,
   HEAVY_MAX,
   HEAVY_PERCENT,
   HIGH_REP_SETS_MAX,
   HIGH_REP_SETS_REPS_MAX,
   HYBRID_CATEGORIES,
+  HYBRID_EASY_RPE,
+  HYBRID_FORBIDDEN_IDS,
+  HYBRID_HARD_RPE,
+  HYBRID_JUMP_IDS,
+  HYBRID_SESSION_SKELETONS,
   HYBRID_SKELETONS,
+  HYBRID_WEEKLY_JUMP_CAP,
+  HYBRID_WEEKLY_RUN_M,
   InvalidMuscuParams,
   InvalidSessionParams,
   LEVEL_LABEL,
@@ -26080,6 +26554,8 @@ export {
   generateWeek,
   hashSeed,
   heavyAllowed,
+  hybridJumpReps,
+  hybridRunMeters,
   isFunctionalCategory,
   isMuscuSkeletonRow,
   isSessionSkeletonRow,
@@ -26127,9 +26603,11 @@ export {
   stepLine,
   substitutionFor,
   targetAvailable,
+  trackOf,
   weekDates,
   weekSeed,
   weeklyGymVolume,
   weeklyRevealDate,
-  weightFor
+  weightFor,
+  withSkillProgression
 };
