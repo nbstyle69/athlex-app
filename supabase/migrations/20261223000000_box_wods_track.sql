@@ -1,7 +1,10 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- La piste de programmation portée par la carte.
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI (17/09/2026 17:38 UTC, dump `athlex-prod-public-20260917T173726Z.dump`
+-- dans `db-dumps/2026-09-17/`, sha256 246988163c4c14d8bd5eae28691c46afe82877be1e3fbadb496e9ff1bd5f3986).
+-- `--single-transaction` ; le rétroactif a touché exactement 52 lignes (UPDATE 52), les 890 lignes
+-- `manual` sont inchangées (même empreinte md5 avant et après). Fonction redéployée dans la foulée.
 --
 -- Additif et rejouable. Depuis 20261222 une box peut avoir trois pistes
 -- actives ; la génération les pose toutes le même jour, en `audience = 'all'`,
