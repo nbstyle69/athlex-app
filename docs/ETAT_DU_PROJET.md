@@ -282,6 +282,32 @@ partagés, exercices muscu seuls ajoutés), source tracée `supabase+snapshot_mu
 suivaient déjà cette logique dans `bankFromRows`. Devient sans effet une fois M1 appliquée.
 **Appliquée en prod : sans objet** (aucune migration).
 
+**Pilotage de la programmation automatique — PR J2 ([`AthleX-Manager` #338](https://github.com/nbstyle69/AthleX-Manager/pull/338), aucune migration ici).**
+Les trois écrans qui manquaient à J1, côté Manager : ni le moteur, ni la fonction edge, ni le cron
+ne sont touchés. `/admin/boxes` porte l'interrupteur par box (pistes Functional / Hybrid et
+Musculation) et le réglage de révélation, via `PATCH /api/admin/boxes/[id]/auto-programming` —
+rôle `admin` / `super_admin` revérifié, écriture en service role, refus du trigger
+`boxes_auto_programming_guard` rendu tel quel plutôt que contourné. Le Whiteboard d'une box flaguée
+gagne un bandeau (« générée le samedi 8h · visible par les athlètes *selon le réglage* ») avec
+**Générer maintenant** (corps `{ box_id }`, désactivé quand chaque piste active a déjà sa semaine
+suivante) et **Régénérer la semaine** (confirmation disant que les jours scorés ou édités sont
+conservés, puis un appel par piste, agrégé) ; les deux passent par
+`POST /api/box/[id]/auto-programming/run`, garde owner/coach explicite et `CRON_SECRET` côté
+serveur, jamais depuis le client. Badges `AUTO` / `AUTO · modifiée` (`box_wods.source`,
+`edited_at`) dans le Manager seul. `/admin/auto-programming` journalise en lecture seule les runs
+des 8 dernières semaines (`cardinality(wod_ids)` pour le nombre de lignes). Écart E12 fermé :
+familles `machine` et `cable` ajoutées à `CATALOG_FAMILIES` et à la validation de la route — les
+55 exercices de musculation du catalogue étaient inéditables — et colonnes muscu affichées en
+lecture seule. `createServiceClient` n'a plus de repli sur la clé anon : un client « service »
+portant la clé anon faisait passer une variable d'environnement absente pour un refus RLS.
+Le réglage de révélation attend `20261221` (colonnes `boxes.auto_programming_reveal_*`) : tant
+qu'elle n'est pas là, la route enregistre interrupteur et pistes, renvoie `reveal_saved: false`, et
+l'écran le dit. Le cron (samedi 08:00 Europe/Paris) reste à créer côté `athlex-app`
+(`docs/RUNBOOK_CRONS.md`), et `CRON_SECRET` reste à ajouter aux variables Vercel du Manager.
+Tests : 749 jest verts, `tsc` et `check:elo-writes` verts. **Validation navigateur et captures non
+faites** : la pile jetable exige `psql`, absent de la machine de développement.
+**Appliquée en prod : sans objet** (aucune migration dans ce lot).
+
 **Programmation automatique AthleX Fitness — PR J1 (`athlex-app`, migrations `20261216` + `20261217`).**
 Une box `auto_programming` reçoit chaque semaine ISO suivante, par piste (`auto_programming_tracks`
 ⊆ {`functional`, `musculation`}), ses séances posées dans `box_wods` (`source = 'auto'`, `audience = 'all'`,
