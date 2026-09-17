@@ -252,7 +252,7 @@ export interface SkeletonBank {
 
 /** Jour ISO : 1 = lundi … 6 = samedi. */
 export type SessionDay = 1 | 2 | 3 | 4 | 5 | 6;
-export type SessionBlockName = 'strength' | 'skill' | 'building' | 'wod' | 'finisher';
+export type SessionBlockName = 'strength' | 'skill' | 'building' | 'wod' | 'finisher' | 'cooldown';
 
 /** Un pas de progression : série × reps à un % du 1RM (bloc A haltéro / force). */
 export interface StrengthStep {
@@ -266,9 +266,47 @@ export interface StrengthStep {
 
 export interface SessionBlockAOption {
   id: string;
-  kind: 'weightlifting' | 'strength' | 'skill';
+  /** `station`, `run` et `race` sont propres à la piste Hybrid (aucun haltéro technique). */
+  kind: 'weightlifting' | 'strength' | 'skill' | 'station' | 'run' | 'race' | 'compromised';
   /** mouvement de référence (id catalogue) : nom du 1RM, pattern lourd */
   movement: string;
+  /** `station` : Every `every_s` × `rounds`, postes en alternance quand il y en a plusieurs */
+  station?: { every_s: number; rounds: number; items: SessionStationItem[] };
+  /** `run` : variantes d'intervalles en rotation par `iso_week % variants.length` */
+  run?: { variants: Array<{ label: string; target: string; rest_s: number; meters: number }> };
+  /**
+   * `race` : enchaînement chronométré, `rounds` × (`run_m` de course + un poste).
+   * `ordered` fige l'ordre et le nombre de tours (test de bloc, comparable d'une fois
+   * sur l'autre) ; sinon l'ordre et le nombre de tours (`rounds_min`..`rounds_max`)
+   * sont tirés par la graine, pour que deux samedis ne se ressemblent pas.
+   */
+  race?: {
+    rounds: number;
+    rounds_min?: number;
+    rounds_max?: number;
+    run_m: number;
+    stations: SessionStationItem[];
+    score: string;
+    ordered?: boolean;
+  };
+  /** bloc chronométré : devient le bloc `wod` de la séance (classement activé) */
+  timed?: boolean;
+  /**
+   * `compromised` : `rounds` × (un poste tenu `work_s` + une course de `run_m_min`..`run_m_max`),
+   * postes tirés. Le vendredi de la piste Hybrid, dont l'identité est la course chargée.
+   */
+  compromised?: {
+    rounds: number;
+    work_s: number;
+    run_m_min: number;
+    run_m_max: number;
+    stations: SessionStationItem[];
+    target: string;
+    /** distance de course de chaque round, tirée à la graine (multiples de 100 m) */
+    runs?: number[];
+  };
+  /** effort attendu du bloc, pour le RPE de la journée (max des blocs) */
+  rpe?: number;
   /** mouvements du complexe (ids catalogue), dans l'ordre ; vide en force / skill */
   complex?: string[];
   /** semaines paires / impaires (variante) ; absent = toujours éligible */
@@ -310,33 +348,79 @@ export interface SessionFinisherOption {
 
 /** Filtre du bloc C : ce que reçoit `generateBlocC`. */
 export interface SessionBlocCFilter {
-  intentions: FunctionalIntention[];
+  intentions: Intention[];
   durations: number[];
   formats?: FormatChoice[];
   /** pattern lourd du bloc A exclu du bloc C ; `heavy_pattern` = déduit du mouvement A */
   pattern_not: Pattern[] | 'heavy_pattern';
   /** aucun mouvement de ces familles (S2 : pas de squat lourd = pas de barre en squat) */
   exclude?: string[];
+  /**
+   * Liste blanche de squelettes de bloc C (piste Hybrid) : tout le reste de la
+   * discipline est passé en `skeleton_not`. Absente = toute la banque est ouverte.
+   */
+  skeletons?: string[];
+}
+
+/** Piste de programmation d'un squelette de séance : deux semaines types distinctes. */
+export type SessionTrack = 'functional' | 'hybrid';
+
+/** Un poste d'un bloc A Hybrid : mouvement du catalogue, quantité, unité, bande de charge. */
+export interface SessionStationItem {
+  id: string;
+  qty: number;
+  unit: Unit;
+  /** bande de charge du catalogue ; absente = pas de charge affichée */
+  band?: Band;
+  /** libellé de repli quand le mouvement n'est pas au catalogue */
+  name?: string;
+  /**
+   * Mouvement dont la charge est affichée, quand elle ne vient pas du mouvement lui-même :
+   * un box step-up porte une hauteur en cm au catalogue, sa charge est celle des haltères.
+   */
+  load_from?: string;
+  /** durée de travail du poste, quand il se mesure en temps plutôt qu'en quantité (bloc B de H5) */
+  work_s?: number;
 }
 
 export interface SessionSkeleton {
   id: string;
   discipline: 'session';
   format: 'session';
+  /** absent = `functional` : les six squelettes S1–S6 d'avant la piste Hybrid */
+  track?: SessionTrack;
   day: SessionDay;
   label: string;
   budget_min: number;
   warmup: { minutes: number; lines: string[] };
   block_a: SessionBlockAOption[] | null;
   block_b: SessionBlockBOption[] | null;
-  block_c: SessionBlocCFilter;
+  /**
+   * Bloc de travail écrit, quand l'identité du jour tient à sa structure (stations du
+   * mardi, course compromise du vendredi, simulation du samedi) : il devient le bloc
+   * `wod` de la séance. Ses postes restent tirés à la graine.
+   */
+  block_work?: SessionBlockAOption[] | null;
+  /** `null` = séance sans bloc tiré dans la banque partagée */
+  block_c: SessionBlocCFilter | null;
   finisher: SessionFinisherOption[] | null;
+  /** semaines ISO où ce squelette remplace celui du même jour (H6 complète : `% 8 === 0`) */
+  weeks_modulo?: { modulo: number; equals: number };
+  /** retour au calme : bloc réel de fin de séance (footing ou erg facile + étirements nommés) */
+  cooldown?: { minutes: number; lines: string[] }[] | null;
+  /**
+   * Effort maximal admis pour la journée (max des blocs). Le moteur préfère un bloc de
+   * travail qui s'y tient ; s'il n'en trouve pas, il le dit (`rpe_over_cap`).
+   */
+  max_rpe?: number;
 }
 
 export interface SessionParams {
   day: SessionDay;
   iso_year: number;
   iso_week: number;
+  /** piste dont on tire le squelette du jour ; absente = `functional` */
+  track?: SessionTrack;
   /** signatures des blocs C des 4 dernières semaines (journal) */
   recent_signatures?: string[];
   /** squelette du bloc C de la veille (règle 2 : jamais deux fois le même) */
@@ -363,7 +447,7 @@ export interface SessionBlock extends Omit<EditorColumns, 'block_name'> {
 export interface SessionStructuredBlock {
   source: 'generator';
   discipline: 'session';
-  kind: 'weightlifting' | 'strength' | 'skill' | 'building' | 'finisher';
+  kind: 'weightlifting' | 'strength' | 'skill' | 'building' | 'finisher' | 'station' | 'run' | 'race' | 'compromised' | 'cooldown';
   option_id: string;
   movement: string | null;
   heavy_pattern: Pattern | null;
@@ -387,7 +471,8 @@ export interface GeneratedSession {
   total_minutes: number;
   heavy_pattern: Pattern | null;
   blocks: SessionBlock[];
-  bloc_c: GeneratedWod;
+  /** `null` pour une séance sans bloc C tiré (H6 : l'enchaînement chronométré est le bloc A) */
+  bloc_c: GeneratedWod | null;
   /** reps RX par id gym sur toute la séance (A + B + C + finisher) */
   gym_reps_rx: Record<string, number>;
   /** signature du bloc C (anti-répétition 4 semaines) */
@@ -396,6 +481,16 @@ export interface GeneratedSession {
   block_b_movement: string | null;
   /** id du finisher retenu (null sans finisher) */
   finisher_id: string | null;
+  /** effort de la journée : maximum des blocs (A, B, travail), pas du seul bloc tiré */
+  rpe: number;
+  /**
+   * Mouvements de la séance par rôle : `a` = bloc A, `work` = bloc de travail (écrit ou
+   * tiré). Sert la règle de répétition hebdomadaire : un même mouvement peut revenir dans
+   * un rôle différent, jamais dans le même.
+   */
+  movements_by_role?: { a: string[]; work: string[] };
+  /** mètres de course et d'erg de la séance (bloc A Hybrid + bloc C), règle §3.4 */
+  run_meters?: number;
 }
 
 export interface WeekParams {
@@ -403,10 +498,12 @@ export interface WeekParams {
   iso_week: number;
   recent_signatures?: string[];
   exclude?: string[];
+  /** piste générée ; absente = `functional` */
+  track?: SessionTrack;
 }
 
 export interface GeneratedWeek {
-  track: 'functional';
+  track: SessionTrack;
   iso_year: number;
   iso_week: number;
   seed: number;
@@ -472,6 +569,12 @@ export interface GenerateParams {
   pattern_not?: Pattern[];
   /** squelettes interdits (séance : squelette du bloc C de la veille) */
   skeleton_not?: string[];
+  /**
+   * Arrondir les quantités à des valeurs lisibles sur un tableau de box : reps et
+   * calories au multiple de 5, temps au multiple de 10 s. Utilisé par la programmation
+   * automatique ; le générateur athlète garde ses quantités fines.
+   */
+  round_qty?: boolean;
 }
 
 export interface GeneratedMovement {

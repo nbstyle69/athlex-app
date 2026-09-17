@@ -911,10 +911,26 @@ function finalize(ctx: Ctx, d: Draft, tierRelaxations: string[], attempts: numbe
       ? { excluded_patterns: [...ctx.afterClass.patterns].sort(), excluded_families: [...ctx.afterClass.families].sort() }
       : null,
   };
+  if (ctx.params.round_qty) roundQuantities(block);
   const estimate = estimateAll({ ...partial, ...emptyEditor() });
   const wod: GeneratedWod = { ...emptyEditor(), ...partial, estimate, signature: '' };
   wod.signature = signature(wod);
   return render(wod);
+}
+
+/**
+ * Quantités lisibles sur un tableau de box : reps et calories au multiple de 5, temps au
+ * multiple de 10 s. Les distances gardent leur pas, elles sont déjà rondes. Jamais zéro.
+ */
+function roundQuantities(block: GeneratedWod['blocks'][number]): void {
+  const step = (unit: string) => (unit === 'reps' || unit === 'cal' ? 5 : unit === 's' ? 10 : 0);
+  const snap = (q: number, s: number) => (s ? Math.max(s, Math.round(q / s) * s) : q);
+  for (const m of block.movements) {
+    const s = step(m.unit);
+    if (!s) continue;
+    m.qty = snap(m.qty, s);
+    if (m.scheme) m.scheme = m.scheme.map((q) => snap(q, s));
+  }
 }
 
 function pickCats(ctx: Ctx): Partial<Record<Category, number>> {

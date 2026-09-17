@@ -181,7 +181,8 @@ describe('runWeekGeneration (base en mémoire)', () => {
     const cf = db.wods.filter((w) => w.auto_run_id === db.runs[0].id);
     expect(new Set(cf.map((w) => w.scheduled_date)).size).toBe(6);
     expect(db.wods.filter((w) => w.auto_run_id === db.runs[1].id)).toHaveLength(5);
-    expect(db.groups.map((g) => g.name).sort()).toEqual(Object.values(TRACK_GROUP_NAME).sort());
+    // un groupe par piste *activée* : la box de ce test n'a pas la piste Hybrid
+    expect(db.groups.map((g) => g.name).sort()).toEqual(db.boxes[0].tracks.map((t) => TRACK_GROUP_NAME[t]).sort());
     expect(db.runs[0].wod_ids.sort()).toEqual(cf.map((w) => w.id).sort());
   });
 

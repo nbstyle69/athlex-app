@@ -18,13 +18,15 @@ import { withSkillProgression } from '../src/session';
 const MIGRATIONS = path.resolve(__dirname, '../../../supabase/migrations');
 const read = (name: string) => fs.readFileSync(path.join(MIGRATIONS, name), 'utf8');
 const unq = (s: string) => s.replace(/''/g, "'");
-const STR = "'((?:[^']|'')*)'";
+const STR = "'((?:[^']+|'')*)'";  // boucle déroulée : la forme ambiguë part en backtracking exponentiel sur les gros seeds
 
 interface SeedSkeleton { id: string; discipline: string; format: string; definition: unknown; active: boolean; version: number }
 interface SeedCap { label: string; ids: string[] | null; family: string | null; band: string | null; unit: string; rx_total: number; active: boolean; version: number }
 
 /** Lignes `wod_skeletons` d'un seed : VALUES (…) d'un INSERT puis UPDATE … WHERE id = …, dans l'ordre du fichier. */
-export function skeletonsFromSeed(sql: string, into = new Map<string, SeedSkeleton>()): Map<string, SeedSkeleton> {
+export function skeletonsFromSeed(
+  sql: string, into = new Map<string, SeedSkeleton>(), opts: { skipMissingUpdates?: boolean } = {},
+): Map<string, SeedSkeleton> {
   const insert = new RegExp(`\\(${STR}, ${STR}, ${STR}, ${STR}::jsonb, (true|false), (\\d+)\\)`, 'g');
   const update = new RegExp(`UPDATE public\\.wod_skeletons SET definition = ${STR}::jsonb, version = (\\d+)[^;]*?WHERE id = ${STR}`, 'g');
   for (const m of sql.matchAll(insert)) {
@@ -32,6 +34,8 @@ export function skeletonsFromSeed(sql: string, into = new Map<string, SeedSkelet
   }
   for (const m of sql.matchAll(update)) {
     const prev = into.get(unq(m[3]));
+    // un rejeu partiel (contrôle metcon seul) ne voit pas les lignes de séance
+    if (!prev && opts.skipMissingUpdates) continue;
     if (!prev) throw new Error(`UPDATE d'une ligne absente des seeds précédents : ${unq(m[3])}`);
     into.set(prev.id, { ...prev, definition: JSON.parse(unq(m[1])), version: Number(m[2]) });
   }
@@ -57,10 +61,14 @@ export function capsFromSeed(sql: string): Map<string, SeedCap> {
 const seeded = <T extends { id: string }>(rows: T[]) => new Map(rows.map((r) => [r.id, r]));
 
 describe('seeds SQL ↔ snapshot embarqué', () => {
-  it('squelettes de séance : 20261217 + 20261219 = SESSION_SKELETONS (progressions comprises)', () => {
-    const seed = skeletonsFromSeed(read('20261219000000_wod_skeletons_session_sync.sql'), skeletonsFromSeed(read('20261217000000_wod_skeletons_session.sql')));
+  it('squelettes de séance : 20261217 + 20261219 + 20261222 = les 13 squelettes du snapshot', () => {
+    const seed = skeletonsFromSeed(
+      read('20261222000000_auto_programming_tracks_hybrid.sql'),
+      skeletonsFromSeed(read('20261219000000_wod_skeletons_session_sync.sql'), skeletonsFromSeed(read('20261217000000_wod_skeletons_session.sql'))),
+    );
     const session = [...seed.values()].filter((r) => r.discipline === 'session');
     const expected = BANK_V1.session_skeletons.map((sk) => sessionSkeletonToRow(sk, SESSION_BANK_VERSION));
+    expect(session).toHaveLength(13);
     expect(seeded(session)).toEqual(seeded(JSON.parse(JSON.stringify(expected))));
     const skills = session.flatMap((r) => ((r.definition as { block_a: { skill?: { progression?: unknown } }[] | null }).block_a ?? []).filter((o) => o.skill));
     expect(skills.length).toBeGreaterThan(0);
@@ -86,9 +94,11 @@ describe('seeds SQL ↔ snapshot embarqué', () => {
     expect(seeded(only15)).not.toEqual(seeded(JSON.parse(JSON.stringify(expected))));
   });
 
-  it('squelettes metcon et plafonds : 20261212 = BANK_V1', () => {
+  it('squelettes metcon et plafonds : 20261212 + 20261222 = BANK_V1', () => {
     const sql = read('20261212000000_wod_skeletons_volume_caps.sql');
-    const seed = [...skeletonsFromSeed(sql).values()].filter((r) => r.discipline === 'functional' || r.discipline === 'hybrid');
+    // 20261222 ajoute l'engine long à la banque Hybrid et élargit les durées du continu
+    const seed = [...skeletonsFromSeed(read('20261222000000_auto_programming_tracks_hybrid.sql'), skeletonsFromSeed(sql), { skipMissingUpdates: true }).values()]
+      .filter((r) => r.discipline === 'functional' || r.discipline === 'hybrid');
     const expected = BANK_V1.skeletons.map((sk) => skeletonToRow(sk, BANK_VERSION));
     expect(seeded(seed)).toEqual(seeded(JSON.parse(JSON.stringify(expected))));
     const caps = Object.fromEntries(capsFromSeed(sql));

@@ -6,7 +6,7 @@ import type { Pattern, SessionBlockAOption, SessionBlockBOption, SessionFinisher
  * Functional existante avec `pattern_not` = pattern lourd du bloc A.
  */
 
-export const SESSION_BANK_VERSION = 2;
+export const SESSION_BANK_VERSION = 3;
 
 // Montées et progressions (brief §4)
 const WL_STEPS: StrengthStep[] = [
@@ -137,7 +137,7 @@ export const FINISHERS: SessionFinisherOption[] = [
 ];
 
 export const S1_snatch: SessionSkeleton = {
-  id: 'S1_snatch', discipline: 'session', format: 'session', day: 1, label: 'Haltéro · Snatch', budget_min: 60,
+  id: 'S1_snatch', discipline: 'session', format: 'session', track: 'functional', day: 1, label: 'Haltéro · Snatch', budget_min: 60,
   warmup: { minutes: 10, lines: ['Échauffement (10\') — mobilité épaules et hanches, barre à vide : Snatch Deadlift, Muscle Snatch, Overhead Squat, Snatch Balance en série de 5.'] },
   block_a: S1_A,
   block_b: [B_OHS, B_SNATCH_BALANCE, B_STRICT_PULL_UP],
@@ -146,7 +146,7 @@ export const S1_snatch: SessionSkeleton = {
 };
 
 export const S2_squat: SessionSkeleton = {
-  id: 'S2_squat', discipline: 'session', format: 'session', day: 2, label: 'Force · Squat', budget_min: 60,
+  id: 'S2_squat', discipline: 'session', format: 'session', track: 'functional', day: 2, label: 'Force · Squat', budget_min: 60,
   warmup: { minutes: 10, lines: ['Échauffement (10\') — vélo ou rameur facile, mobilité chevilles et hanches, Air Squats, Goblet Squats légers, activation fessiers.'] },
   block_a: S2_A,
   block_b: [B_PUSH_PRESS, B_STRICT_PRESS, B_RING_DIP, B_STRICT_PULL_UP],
@@ -155,7 +155,7 @@ export const S2_squat: SessionSkeleton = {
 };
 
 export const S3_gym: SessionSkeleton = {
-  id: 'S3_gym', discipline: 'session', format: 'session', day: 3, label: 'Gym · Skill', budget_min: 60,
+  id: 'S3_gym', discipline: 'session', format: 'session', track: 'functional', day: 3, label: 'Gym · Skill', budget_min: 60,
   warmup: { minutes: 10, lines: ['Échauffement (10\') — mobilité épaules et poignets, Scap Pull-Ups, Kip Swings, Hollow / Arch, marche en HS contre le mur.'] },
   block_a: S3_A,
   block_b: [B_RING_DIP, B_STRICT_HSPU, B_STRICT_PULL_UP],
@@ -164,7 +164,7 @@ export const S3_gym: SessionSkeleton = {
 };
 
 export const S4_cj: SessionSkeleton = {
-  id: 'S4_cj', discipline: 'session', format: 'session', day: 4, label: 'Haltéro · Clean & Jerk', budget_min: 60,
+  id: 'S4_cj', discipline: 'session', format: 'session', track: 'functional', day: 4, label: 'Haltéro · Clean & Jerk', budget_min: 60,
   warmup: { minutes: 10, lines: ['Échauffement (10\') — mobilité poignets et hanches, barre à vide : Clean Deadlift, Muscle Clean, Front Squat, Push Press, Push Jerk en série de 5.'] },
   block_a: S4_A,
   block_b: [B_FRONT_SQUAT, B_PUSH_PRESS, B_STRICT_PULL_UP],
@@ -173,7 +173,7 @@ export const S4_cj: SessionSkeleton = {
 };
 
 export const S5_hinge: SessionSkeleton = {
-  id: 'S5_hinge', discipline: 'session', format: 'session', day: 5, label: 'Force · Hinge', budget_min: 60,
+  id: 'S5_hinge', discipline: 'session', format: 'session', track: 'functional', day: 5, label: 'Force · Hinge', budget_min: 60,
   warmup: { minutes: 10, lines: ['Échauffement (10\') — rameur facile, mobilité ischios et hanches, Good Mornings barre à vide, Glute Bridges, Kettlebell Swings légers.'] },
   block_a: S5_A,
   block_b: [B_FRONT_RACK_LUNGE, B_STRICT_PRESS, B_GHD],
@@ -182,7 +182,7 @@ export const S5_hinge: SessionSkeleton = {
 };
 
 export const S6_long: SessionSkeleton = {
-  id: 'S6_long', discipline: 'session', format: 'session', day: 6, label: 'Long · Engine', budget_min: 60,
+  id: 'S6_long', discipline: 'session', format: 'session', track: 'functional', day: 6, label: 'Long · Engine', budget_min: 60,
   warmup: { minutes: 18, lines: ['Échauffement long (18\') — 3 tours faciles : 2\' d\'erg au choix, Inchworms, Spiderman Lunges, Scap Pull-Ups, Air Squats ; puis les mouvements du metcon à vide.'] },
   block_a: null,
   block_b: null,

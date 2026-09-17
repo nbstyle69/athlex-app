@@ -24,10 +24,16 @@ export { muscuSkeletonToRow, isMuscuSkeletonRow, sessionSkeletonToRow, isSession
 export type { MuscuSkeletonRow, SessionSkeletonRow, AnySkeletonRow } from './bank/rows';
 export { SESSION_SKELETONS, SESSION_BANK_VERSION, FINISHERS, S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long } from './bank';
 export {
+  HYBRID_SESSION_SKELETONS, HYBRID_FORBIDDEN_IDS, HYBRID_JUMP_IDS,
+  HYBRID_WEEKLY_JUMP_CAP, HYBRID_WEEKLY_RUN_M, HYBRID_FRIDAY_RUN_M, HYBRID_HARD_RPE, HYBRID_EASY_RPE, HYBRID_TUESDAY_RPE, HYBRID_FRIDAY_RPE,
+  H1_intervals, H2_strength_stations, H3_run, H4_engine, H5_compromised, H6_simulation, H6_simulation_full,
+} from './bank';
+export {
   generateSession, generateWeek, generateMuscuWeek, hashSeed, isoWeek, isoWeekMonday, muscuObjectiveForWeek, blocCRepsRx,
   weeklyGymVolume, stepLine, InvalidSessionParams, SESSION_ENGINE_VERSION, SESSION_TOLERANCE, TRANSITION_MIN, WEEKLY_GYM_CAPS,
   WEEKLY_PULL_IDS, WEEKLY_HSPU_IDS, MUSCU_WEEKLY_CAP_SETS, MUSCU_WEEK_DAYS, MUSCU_OBJECTIVE_CYCLE, DAY_LABEL,
   SKILL_STEP_S, FINISHER_SIGNATURE_PREFIX, finisherSignature, splitSignatures,
+  withSkillProgression, trackOf, hybridJumpReps, hybridRunMeters, CAL_TO_M, itemsOf,
 } from './session';
 export {
   generateMuscu, targetAvailable, availableTargets, availableDurations, renderMuscu, exerciseLine, loadText, muscuSignature, afterClassMuscles, muscuLevelFor, percentForReps, sessionSeconds,
