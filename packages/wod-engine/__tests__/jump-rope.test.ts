@@ -42,6 +42,10 @@ const contient = (w: ReturnType<typeof tirages>[number], id: string) =>
   w.blocks.flatMap((b) => b.movements ?? []).some((m) => m.id === id);
 
 describe('plafond de volume : facteur par famille', () => {
+  it('le poids de tirage de la corde est relevé à 13 au catalogue', () => {
+    expect(movementById(CATALOG_SNAPSHOT, 'double_under')!.weight_functional).toBe(13);
+  });
+
   it('jump_rope est la seule famille modulée, à 4', () => {
     expect(FAMILY_CAP_FACTOR).toEqual({ jump_rope: 4 });
   });
@@ -70,6 +74,18 @@ describe('plafond de classe : il remplace le générique, il ne s\'y minimise pa
   const wallBall = movementById(CATALOG_SNAPSHOT, 'wall_ball')!;
   const genRx = BANK_V1.volume_caps.functional.rx!.reps!;
 
+  it('la corde à sauter est plafonnée à 200 en RX, sous son générique modulé de 400', () => {
+    const du = movementById(CATALOG_SNAPSHOT, 'double_under')!;
+    expect(movementCapFor(BANK_V1, du, 'light', 'reps', 'rx')).toBe(200);
+    expect(genericCapFor({ reps: 100 }, 'jump_rope', 'reps')).toBe(400);
+  });
+
+  it('et déclinée par catégorie comme les autres plafonds', () => {
+    const du = movementById(CATALOG_SNAPSHOT, 'double_under')!;
+    expect(movementCapFor(BANK_V1, du, 'light', 'reps', 'scaled')).toBe(140);
+    expect(movementCapFor(BANK_V1, du, 'light', 'reps', 'elite')).toBe(260);
+  });
+
   it('les wall balls sont plafonnés à 150 en RX, au-dessus du générique de 100', () => {
     // C'est ce que la table dit depuis toujours ; le `Math.min` l'ignorait.
     expect(movementCapFor(BANK_V1, wallBall, 'medium', 'reps', 'rx')).toBe(150);
@@ -92,26 +108,41 @@ describe('la corde à sauter sort du générateur Functional', () => {
     expect(wods).toHaveLength(N);
   });
 
-  it('les double unders apparaissent sur 500 tirages, plancher à 5 %', () => {
+  it('les double unders apparaissent sur 500 tirages, plancher à 4,5 %', () => {
     const n = wods.filter((w) => contient(w, 'double_under')).length;
-    // Le brief visait 15 %, ramené à 8 % après mesure. Le plafond corrigé plus
-    // l'élargissement à trois squelettes donnent 6,38 % en moyenne, dispersés de
-    // 5,4 à 7,2 % sur huit blocs de 500 tirages : la cible de 8 % n'est pas
-    // atteinte, et le seul levier restant est le poids de tirage au catalogue,
-    // que ce lot ne touche pas. Écart signalé dans la PR, pas résolu en silence.
-    // Le plancher est posé sous le minimum observé pour ne pas être capricieux.
-    expect(n / N).toBeGreaterThanOrEqual(0.05);
+    // Le brief visait 15 %, ramené à 8 %, puis assumé à 5,9 % : arbitrage de Nab
+    // du 17/09/2026, « le plafond de volume valait plus que le point et demi de
+    // fréquence ». Borner la corde à 200 reps coûte environ 1,4 point
+    // d'apparition ; un WOD à 300 double unders discrédite plus sûrement le
+    // générateur que leur rareté. Mesuré à poids 13 et plafond 200 : 5,92 % en
+    // moyenne sur huit blocs de 500, dispersés de 5,0 à 7,0 %. Le plancher est
+    // posé sous le minimum observé pour ne pas être capricieux.
+    expect(n / N).toBeGreaterThanOrEqual(0.045);
   });
 
-  it('sur 2 000 tirages, le taux se stabilise au-dessus de 6 %', () => {
+  it('sur 2 000 tirages, le taux se stabilise au-dessus de 5,5 %', () => {
     const grand = tirages(2000, 500000);
     const n = grand.filter((w) => contient(w, 'double_under')).length;
-    expect(n / grand.length).toBeGreaterThanOrEqual(0.06);
+    expect(n / grand.length).toBeGreaterThanOrEqual(0.055);
   });
 
   it('… sans devenir omniprésente', () => {
     const n = wods.filter((w) => contient(w, 'double_under')).length;
     expect(n / N).toBeLessThan(0.20);
+  });
+
+  it('et sans volume déraisonnable : 200 reps au plus en RX', () => {
+    // Le facteur de famille seul laissait passer 300 à 400 reps sur 9 % des
+    // tirages. Le plafond de classe les ramène sous 200 ; c'est lui qui décide,
+    // et il ne le pourrait pas sans le correctif du `Math.min`.
+    const volumes = wods.flatMap((w) => {
+      const b = w.blocks[0];
+      const mult = b.format === 'rounds_for_time' ? (b.rounds ?? 1) : 1;
+      return b.movements.filter((m) => m.id === 'double_under')
+        .map((m) => m.qty * (m.round !== undefined ? 1 : mult));
+    });
+    expect(volumes.length).toBeGreaterThan(0);
+    expect(Math.max(...volumes)).toBeLessThanOrEqual(200);
   });
 
   it('elle est répartie sur plusieurs squelettes, pas concentrée sur un seul', () => {
@@ -124,12 +155,30 @@ describe('la corde à sauter sort du générateur Functional', () => {
     expect(Math.max(...Object.values(parSk)) / total).toBeLessThan(0.6);
   });
 
-  it('le contrôle sait échouer : facteur à 1, la corde disparaît', () => {
+  it('le contrôle sait échouer : ramené à 100 reps, la corde disparaît', () => {
+    // On reproduit l'état d'avant le lot : pas de plafond de classe pour la
+    // famille, et pas de facteur — la corde retombe sous le générique de 100.
+    // Retirer le seul facteur ne suffirait plus : le plafond de classe à 200
+    // décide désormais à sa place, et c'est le comportement voulu.
     const avant = FAMILY_CAP_FACTOR.jump_rope;
+    const i = BANK_V1.movement_caps.findIndex((c) => c.family === 'jump_rope');
+    const [retire] = BANK_V1.movement_caps.splice(i, 1);
     FAMILY_CAP_FACTOR.jump_rope = 1;
     try {
       const n = tirages(500).filter((w) => contient(w, 'double_under')).length;
       expect(n / 500).toBeLessThan(0.01);
+    } finally {
+      FAMILY_CAP_FACTOR.jump_rope = avant;
+      BANK_V1.movement_caps.splice(i, 0, retire);
+    }
+  });
+
+  it('… et le plafond de classe seul suffit à la borner, facteur ou pas', () => {
+    const avant = FAMILY_CAP_FACTOR.jump_rope;
+    FAMILY_CAP_FACTOR.jump_rope = 1;
+    try {
+      const n = tirages(500).filter((w) => contient(w, 'double_under')).length;
+      expect(n / 500).toBeGreaterThan(0.01);
     } finally {
       FAMILY_CAP_FACTOR.jump_rope = avant;
     }

@@ -42,12 +42,12 @@ export function skeletonsFromSeed(
   return into;
 }
 
-/** Lignes `wod_volume_caps` d'un seed (INSERT VALUES). */
-export function capsFromSeed(sql: string): Map<string, SeedCap> {
+/** Lignes `wod_volume_caps` d'un seed (INSERT VALUES), cumulées dans l'ordre des migrations. */
+export function capsFromSeed(sql: string, into = new Map<string, SeedCap>()): Map<string, SeedCap> {
   const arr = "(NULL|ARRAY\\[[^\\]]*\\]::text\\[\\])";
   const nul = `(NULL|${STR})`;
   const row = new RegExp(`\\(${STR}, ${arr}, ${nul}, ${nul}, ${STR}, (\\d+(?:\\.\\d+)?), (true|false), (\\d+)\\)`, 'g');
-  const out = new Map<string, SeedCap>();
+  const out = into;
   for (const m of sql.matchAll(row)) {
     const ids = m[2] === 'NULL' ? null : [...m[2].matchAll(new RegExp(STR, 'g'))].map((x) => unq(x[1]));
     out.set(unq(m[1]), {
@@ -106,7 +106,8 @@ describe('seeds SQL ↔ snapshot embarqué', () => {
       .filter((r) => r.discipline === 'functional' || r.discipline === 'hybrid');
     const expected = BANK_V1.skeletons.map((sk) => skeletonToRow(sk, BANK_VERSION));
     expect(seeded(seed)).toEqual(seeded(JSON.parse(JSON.stringify(expected))));
-    const caps = Object.fromEntries(capsFromSeed(sql));
+    // 20261226 ajoute le plafond de classe de la corde à sauter
+    const caps = Object.fromEntries(capsFromSeed(read('20261226000000_jump_rope_poids_et_plafond.sql'), capsFromSeed(sql)));
     const expectedCaps = Object.fromEntries(BANK_V1.movement_caps.map((c) => [c.label, movementCapToRow(c, BANK_VERSION)]));
     expect(caps).toEqual(JSON.parse(JSON.stringify(expectedCaps)));
   });

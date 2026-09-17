@@ -116,6 +116,13 @@ export interface MuscuFields {
   unit: MuscuUnit;
   /** 1 = meilleur exercice principal pour le muscle (slot main_compound), 5 = dernier recours */
   priority: number;
+  /**
+   * Priorité propre au mode « Sans matériel » (A1). Deux modes, deux ordres :
+   * une pompe classique reste devant des pompes déclinées en salle, mais sans
+   * matériel c'est la variété qui prime et les options doivent se serrer pour
+   * concourir. `null` = pas d'ordre spécifique, on retombe sur `priority`.
+   */
+  priority_bodyweight: number | null;
   movement_group: MovementGroup;
 }
 
@@ -717,6 +724,12 @@ export interface MuscuParams {
   /** matériel (`barbell`, `cable`, `leg_press`…), ids ou noms d'exercices exclus */
   exclude?: string[];
   recent_signatures?: string[];
+  /**
+   * Ids des exercices sortis lors des derniers tirages de l'athlète (A1).
+   * En « Sans matériel », ils sont pénalisés au tirage : le catalogue y est
+   * étroit, et sans cela le même exercice revient séance après séance.
+   */
+  recent_exercise_ids?: string[];
   /** 1RM connus (kg) par référence */
   one_rep_max?: Partial<Record<RmReference, number>> | null;
   bodyweight_kg?: number | null;
@@ -725,6 +738,22 @@ export interface MuscuParams {
   box_wod?: boolean;
   /** Séries encore disponibles par muscle avant le plafond hebdomadaire (piste box) : la séance se compose autour, sans raccourcir. */
   weekly_room?: Partial<Record<Muscle, number>> | null;
+  /**
+   * A2 — exercices déjà posés ailleurs dans la semaine (piste box). Un exercice
+   * et son geste n'y reviennent qu'une fois ; deux tolérées si les deux séances
+   * ne sont pas des jours consécutifs et que le rôle diffère.
+   */
+  week_seen?: WeekSeen[] | null;
+  /** Jour de la séance dans la semaine (1 = lundi), pour la règle des jours consécutifs. */
+  week_day?: number | null;
+}
+
+/** Une occurrence d'exercice ailleurs dans la semaine (A2). */
+export interface WeekSeen {
+  id: string;
+  group: MovementGroup;
+  day: number;
+  role: string;
 }
 
 export interface MuscuLoad {

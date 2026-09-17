@@ -120,6 +120,10 @@ export const MOVEMENT_CAPS: MovementCap[] = [
   { label: 'barre medium', family: 'barbell', band: 'medium', unit: 'reps', rx: 60 },
   { label: 'barre light', family: 'barbell', band: 'light', unit: 'reps', rx: 90 },
   { label: 'wall balls', ids: ['wall_ball'], unit: 'reps', rx: 150 },
+  // Borne le haut de la corde à sauter : sans elle, le facteur de famille
+  // laissait passer 300 à 400 double unders dans un WOD de rounds. Le plafond
+  // de classe remplace le générique modulé (400 en RX) et le ramène à 200.
+  { label: 'corde à sauter', family: 'jump_rope', unit: 'reps', rx: 200 },
   { label: 'devil press', ids: ['devil_press'], unit: 'reps', rx: 30 },
   { label: 'burpee box jump over', ids: ['burpee_box_jump_over'], unit: 'reps', rx: 40 },
   { label: 'box jump over', ids: ['box_jump_over'], unit: 'reps', rx: 60 },

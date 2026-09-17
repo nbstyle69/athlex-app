@@ -46,6 +46,7 @@ export interface CatalogRow {
   weight_gym?: number | null;
   muscu_unit?: string | null;
   priority?: number | null;
+  priority_bodyweight?: number | null;
   movement_group?: string | null;
 }
 
@@ -75,6 +76,7 @@ function muscuFromRow(r: CatalogRow): MuscuFields | null {
     weight_gym: Number(r.weight_gym ?? 0),
     unit: (r.muscu_unit ?? 'reps') as MuscuFields['unit'],
     priority: Number(r.priority ?? 3),
+    priority_bodyweight: r.priority_bodyweight == null ? null : Number(r.priority_bodyweight),
     movement_group: (r.movement_group ?? 'carry') as MuscuFields['movement_group'],
   };
 }
