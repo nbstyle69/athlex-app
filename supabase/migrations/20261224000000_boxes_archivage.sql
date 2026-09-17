@@ -1,7 +1,11 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Archivage réversible d'une box.
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI (17/09/2026 20:44 UTC, dump `athlex-prod-public-20260917T204118Z.dump`
+-- dans `db-dumps/2026-09-17`, sha256 `378690446d6fd939b461339aeacbdb043ed08baf69ea3ba8176a680398c99ae3`).
+-- Vérifié après application : les deux colonnes, l'index partiel, la policy RESTRICTIVE
+-- active sur `anon, authenticated`, les deux fonctions SECURITY DEFINER filtrées, et
+-- **aucune box archivée** (4 box, `archived_at` nul partout).
 --
 -- Une box archivée disparaît des annuaires, des recherches et des listes, perd
 -- l'accès de ses membres, et n'est plus générée — mais ne perd RIEN : aucune

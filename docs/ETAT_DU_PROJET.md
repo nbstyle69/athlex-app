@@ -303,7 +303,7 @@ membre, anonyme, service role), dont la **mutation inverse** — policy retirée
 revoit la box archivée ; migration rejouée, il ne la voit plus — et la réactivation, qui rend
 tout à l'identique. Les écrans sont côté Manager ([#341](https://github.com/nbstyle69/AthleX-Manager/pull/341)) :
 archiver, réactiver, filtre « Archivées », et suppression définitive d'une box vide dont le
-décompte porte sur les 35 tables en cascade. **Appliquée en prod : non.**
+décompte porte sur les 35 tables en cascade. **Appliquée en prod : oui** (17/09/2026 20:44 UTC, dump `athlex-prod-public-20260917T204118Z.dump` dans `db-dumps/2026-09-17` ; après application : colonnes et index en place, policy RESTRICTIVE active sur `anon, authenticated`, les deux fonctions filtrées, **aucune box archivée** — 4 box, `archived_at` nul partout, et le gérant d'AthleX Fitness voit toujours sa box).
 
 **Pilotage de la programmation automatique — PR J2 ([`AthleX-Manager` #338](https://github.com/nbstyle69/AthleX-Manager/pull/338), aucune migration ici).**
 Les trois écrans qui manquaient à J1, côté Manager : ni le moteur, ni la fonction edge, ni le cron
