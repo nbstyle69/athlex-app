@@ -1,7 +1,8 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Programmation automatique — mode et horaire de révélation par box.
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI (17/09/2026, juste avant le redéploiement de la fonction à 11:10 UTC).
+-- Sans nouveau dump : trois colonnes additives à valeurs par défaut, aucune donnée réécrite.
 --
 -- Additif et rejouable. J1 révélait toute la semaine le dimanche 18:00 Paris,
 -- en dur dans le moteur (`REVEAL_HOUR_PARIS`). Ces trois colonnes rendent la

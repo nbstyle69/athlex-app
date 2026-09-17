@@ -7,7 +7,8 @@
 -- séparément. Aucune box n'est migrée : celles qui ont `{functional, musculation}`
 -- gardent exactement ces deux pistes, Hybrid se coche depuis le Manager.
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI (17/09/2026 15:08 UTC, dump `athlex-prod-public-20260917T150804Z.dump`
+-- dans `db-dumps/2026-09-17`).
 --
 -- Additif et rejouable :
 --   1. CHECK de `boxes.auto_programming_tracks` et de `box_auto_programming_runs.track`
