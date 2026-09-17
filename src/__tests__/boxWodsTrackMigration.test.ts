@@ -62,7 +62,9 @@ describe('rétroactif — les cartes déjà posées reçoivent leur piste', () =
   });
 
   it('c\'est le seul UPDATE de la migration, et il ne touche que track', () => {
-    expect(sql.match(/UPDATE /g)).toHaveLength(1);
+    // `UPDATE public.box_wods` et non `UPDATE ` : l'en-tête cite le nombre de
+    // lignes touchées à l'application, et ce compte rendu n'est pas une requête.
+    expect(sql.match(/^UPDATE /gm)).toHaveLength(1);
     expect(majPiste.match(/SET /g)).toHaveLength(1);
   });
 });
