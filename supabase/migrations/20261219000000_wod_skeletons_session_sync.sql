@@ -12,7 +12,8 @@
 -- (sessionSkeletonToRow + JSON.stringify). Contrôlé par
 -- packages/wod-engine/__tests__/seed-sync.test.ts (seed 20261217 + 20261219 = snapshot).
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI (16/09/2026 22:41 UTC). Sans nouveau dump : seuls six UPDATE
+-- sur une table de squelettes, rejouables ; dernier dump `20260916T194119Z` dans `db-dumps`.
 --
 -- Idempotent : UPDATE par id, valeur cible constante, aucune ligne créée.
 -- ═════════════════════════════════════════════════════════════════════════════

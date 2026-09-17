@@ -12,7 +12,8 @@
 -- (muscuSkeletonToRow + JSON.stringify). Contrôlé par seed-sync.test.ts
 -- (seed 20261215 + 20261220 = snapshot).
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI (16/09/2026 22:41 UTC, même transaction que 20261219). Sans nouveau
+-- dump : 39 UPDATE rejouables ; dernier dump `20260916T194119Z` dans `db-dumps`.
 --
 -- Idempotent : UPDATE par id, valeur cible constante, aucune ligne créée.
 -- ═════════════════════════════════════════════════════════════════════════════
