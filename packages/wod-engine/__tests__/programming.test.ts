@@ -6,8 +6,9 @@
 import {
   runWeekGeneration, weekSeed, revealAt, weekDates, nextIsoWeek, functionalWeekRows, muscuWeekRows,
   generateWeek, generateMuscuWeek, CATALOG_SNAPSHOT, BANK_V1, TRACK_GROUP_NAME, PROGRAMMING_VERSION,
+  DEFAULT_REVEAL, revealFromRow, parisInstant, weeklyRevealDate, publishAtFor,
 } from '../src';
-import type { ProgrammingDb, ProgrammingBox, RunRow, BoxWodInsert, ExistingAutoRow, Track } from '../src';
+import type { ProgrammingDb, ProgrammingBox, RunRow, BoxWodInsert, ExistingAutoRow, Track, RevealConfig } from '../src';
 
 interface StoredWod extends BoxWodInsert { id: string; edited_at: string | null; scored: boolean }
 
@@ -95,6 +96,72 @@ describe('semaine cible, seed, publish_at', () => {
     const muscu = muscuWeekRows(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx);
     expect(muscu).toHaveLength(5);
     expect(muscu.every((r) => !r.leaderboard_enabled && r.wod_type === 'strength' && r.block_name === 'strength')).toBe(true);
+  });
+});
+
+describe('révélation par box (20261221) — modes weekly / daily', () => {
+  const ctxFor = (reveal?: RevealConfig) => ({ box_id: BOX, created_by: OWNER, run_id: 'run-r', ...TARGET, reveal });
+  const rowsFor = (reveal?: RevealConfig) =>
+    functionalWeekRows(generateWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctxFor(reveal));
+
+  it('défaut = comportement J1 : dimanche 18:00 Paris, semaine entière', () => {
+    expect(DEFAULT_REVEAL).toEqual({ mode: 'weekly', dow: 0, time: '18:00' });
+    expect(revealAt(2027, 11, DEFAULT_REVEAL)).toBe(revealAt(2027, 11));
+    expect(publishAtFor('2027-03-18', 2027, 11)).toBe('2027-03-14T17:00:00.000Z');
+    // une box sans colonnes de révélation garde le dimanche 18:00
+    expect(new Set(rowsFor(undefined).map((r) => r.publish_at))).toEqual(new Set(['2027-03-14T17:00:00.000Z']));
+  });
+
+  it('weekly : le jour dow de la semaine précédente, le lundi ciblé lui-même si dow = 1', () => {
+    expect(weeklyRevealDate(2027, 11, 0)).toBe('2027-03-14'); // dimanche
+    expect(weeklyRevealDate(2027, 11, 1)).toBe('2027-03-15'); // lundi de la semaine ciblée
+    expect(weeklyRevealDate(2027, 11, 6)).toBe('2027-03-13'); // samedi d'avant
+    expect(weeklyRevealDate(2027, 11, 2)).toBe('2027-03-09'); // mardi d'avant
+    expect(revealAt(2027, 11, { mode: 'weekly', dow: 6, time: '08:00' })).toBe('2027-03-13T07:00:00.000Z'); // CET
+    expect(revealAt(2027, 11, { mode: 'weekly', dow: 1, time: '06:30' })).toBe('2027-03-15T05:30:00.000Z');
+    expect(revealAt(2027, 20, { mode: 'weekly', dow: 6, time: '08:00' })).toBe('2027-05-15T06:00:00.000Z'); // CEST
+  });
+
+  it('weekly : les 21 lignes de la semaine partagent le même publish_at', () => {
+    const rows = rowsFor({ mode: 'weekly', dow: 6, time: '08:00' });
+    expect(new Set(rows.map((r) => r.publish_at))).toEqual(new Set(['2027-03-13T07:00:00.000Z']));
+  });
+
+  it('daily : chaque carte à l’heure locale de son propre jour (CET et CEST)', () => {
+    const daily: RevealConfig = { mode: 'daily', dow: 0, time: '07:00' };
+    expect(publishAtFor('2027-03-15', 2027, 11, daily)).toBe('2027-03-15T06:00:00.000Z'); // CET
+    expect(publishAtFor('2027-05-17', 2027, 20, daily)).toBe('2027-05-17T05:00:00.000Z'); // CEST
+    const rows = rowsFor(daily);
+    // un publish_at par jour de séance, chacun le matin du jour concerné
+    const byDate = new Map(rows.map((r) => [r.scheduled_date, r.publish_at]));
+    expect([...byDate.keys()].sort()).toEqual(weekDates(2027, 11));
+    for (const [date, at] of byDate) expect(at).toBe(`${date}T06:00:00.000Z`);
+    const muscu = muscuWeekRows(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctxFor(daily));
+    for (const r of muscu) expect(r.publish_at).toBe(`${r.scheduled_date}T06:00:00.000Z`);
+    expect(new Set(muscu.map((r) => r.publish_at)).size).toBe(5);
+  });
+
+  it('parisInstant : minuit, secondes, CET / CEST, et le jour du changement d’heure', () => {
+    expect(parisInstant('2027-03-15', '00:00')).toBe('2027-03-14T23:00:00.000Z');
+    expect(parisInstant('2027-03-15', '18:30:45')).toBe('2027-03-15T17:30:45.000Z');
+    expect(parisInstant('2027-03-28', '18:00')).toBe('2027-03-28T16:00:00.000Z'); // bascule CEST ce jour-là
+    expect(parisInstant('2027-10-31', '18:00')).toBe('2027-10-31T17:00:00.000Z'); // retour CET
+  });
+
+  it('revealFromRow : colonne absente, nulle ou hors domaine → défaut J1', () => {
+    expect(revealFromRow('daily', 3, '07:15:00')).toEqual({ mode: 'daily', dow: 3, time: '07:15:00' });
+    expect(revealFromRow(undefined, undefined, undefined)).toEqual(DEFAULT_REVEAL);
+    expect(revealFromRow(null, null, null)).toEqual(DEFAULT_REVEAL);
+    expect(revealFromRow('hebdo', 9, 'midi')).toEqual(DEFAULT_REVEAL);
+    expect(revealFromRow('weekly', '5', '08:00')).toEqual({ mode: 'weekly', dow: 5, time: '08:00' });
+  });
+
+  it('runWeekGeneration : la révélation de la box est celle des lignes posées', async () => {
+    const db = fresh(['musculation']);
+    db.boxes[0].reveal = { mode: 'daily', dow: 0, time: '06:45' };
+    await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
+    expect(db.wods).toHaveLength(5);
+    for (const w of db.wods) expect(w.publish_at).toBe(`${w.scheduled_date}T05:45:00.000Z`);
   });
 });
 

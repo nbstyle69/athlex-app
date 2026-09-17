@@ -25801,19 +25801,39 @@ function parisOffsetMinutes(utc) {
   const u = new Date(utc.toLocaleString("en-US", { timeZone: "UTC" }));
   return Math.round((p.getTime() - u.getTime()) / 6e4);
 }
-function revealAt(iso_year, iso_week) {
+var DEFAULT_REVEAL = { mode: "weekly", dow: 0, time: `${REVEAL_HOUR_PARIS}:00` };
+function revealFromRow(mode, dow, time) {
+  const d = typeof dow === "number" ? dow : Number(dow);
+  return {
+    mode: mode === "daily" ? "daily" : "weekly",
+    dow: Number.isInteger(d) && d >= 0 && d <= 6 ? d : DEFAULT_REVEAL.dow,
+    time: typeof time === "string" && /^\d{1,2}:\d{2}(:\d{2})?$/.test(time) ? time : DEFAULT_REVEAL.time
+  };
+}
+function parisInstant(ymd, time) {
+  const [y, m, d] = ymd.split("-").map(Number);
+  const [hh = 0, mm = 0, ss = 0] = time.split(":").map(Number);
+  const midnightUtc = Date.UTC(y, m - 1, d);
+  const offset = parisOffsetMinutes(new Date(midnightUtc + 12 * 36e5));
+  return new Date(midnightUtc + ((hh * 60 + mm) * 60 + ss) * 1e3 - offset * 6e4).toISOString();
+}
+function weeklyRevealDate(iso_year, iso_week, dow) {
   const monday = isoWeekMonday(iso_year, iso_week);
-  const sundayNoonUtc = new Date(monday.getTime() - 864e5 + 12 * 36e5);
-  const offset = parisOffsetMinutes(sundayNoonUtc);
-  const t = new Date(monday.getTime() - 864e5 + REVEAL_HOUR_PARIS * 36e5 - offset * 6e4);
-  return t.toISOString();
+  const daysBefore = dow === 1 ? 0 : dow === 0 ? 1 : 8 - dow;
+  return new Date(monday.getTime() - daysBefore * 864e5).toISOString().slice(0, 10);
+}
+function revealAt(iso_year, iso_week, reveal = DEFAULT_REVEAL) {
+  return parisInstant(weeklyRevealDate(iso_year, iso_week, reveal.dow), reveal.time);
+}
+function publishAtFor(scheduled_date, iso_year, iso_week, reveal = DEFAULT_REVEAL) {
+  return reveal.mode === "daily" ? parisInstant(scheduled_date, reveal.time) : revealAt(iso_year, iso_week, reveal);
 }
 function weekSeed(box_id, track, iso_year, iso_week, regen_counter) {
   return hashSeed(box_id, TRACK_SEED_KEY[track], iso_year, iso_week, regen_counter);
 }
 function functionalWeekRows(week, ctx) {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
-  const publish_at = revealAt(ctx.iso_year, ctx.iso_week);
+  const publishAt = (date) => publishAtFor(date, ctx.iso_year, ctx.iso_week, ctx.reveal);
   const rows = [];
   for (const s of week.sessions) {
     for (const b of s.blocks) {
@@ -25834,7 +25854,7 @@ function functionalWeekRows(week, ctx) {
         tabata_work_seconds: b.tabata_work_seconds,
         tabata_rest_seconds: b.tabata_rest_seconds,
         is_published: true,
-        publish_at,
+        publish_at: publishAt(dates[s.day - 1]),
         audience: "all",
         sort_order: b.sort_order,
         wod_json: b.wod_json,
@@ -25847,7 +25867,7 @@ function functionalWeekRows(week, ctx) {
 }
 function muscuWeekRows(week, ctx) {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
-  const publish_at = revealAt(ctx.iso_year, ctx.iso_week);
+  const publishAt = (date) => publishAtFor(date, ctx.iso_year, ctx.iso_week, ctx.reveal);
   return week.days.map((d) => ({
     box_id: ctx.box_id,
     created_by: ctx.created_by,
@@ -25865,7 +25885,7 @@ function muscuWeekRows(week, ctx) {
     tabata_work_seconds: null,
     tabata_rest_seconds: null,
     is_published: true,
-    publish_at,
+    publish_at: publishAt(dates[d.day - 1]),
     audience: "all",
     sort_order: 0,
     wod_json: d.wod,
@@ -25902,7 +25922,14 @@ async function runWeekGeneration(db, catalog, bank, opts) {
       try {
         await db.ensureGroup(box.id, TRACK_GROUP_NAME[track], box.owner_id);
         const recent = await db.recentSignatures(box.id, track, target, RECENT_WEEKS);
-        const ctx = { box_id: box.id, created_by: box.owner_id, run_id: run.id, iso_year: target.iso_year, iso_week: target.iso_week };
+        const ctx = {
+          box_id: box.id,
+          created_by: box.owner_id,
+          run_id: run.id,
+          iso_year: target.iso_year,
+          iso_week: target.iso_week,
+          reveal: box.reveal
+        };
         let rows;
         let signatures;
         let relaxations;
@@ -25950,6 +25977,7 @@ export {
   CATEGORY_LABEL,
   CORE_MAX_OUTSIDE_TRONC,
   DAY_LABEL,
+  DEFAULT_REVEAL,
   DEMOTED_PERCENT_MAX,
   DEMOTED_RANGE,
   DURATION_PROBE_SEEDS,
@@ -26076,15 +26104,18 @@ export {
   muscuWeekRows,
   nameKey,
   nextIsoWeek,
+  parisInstant,
   parisOffsetMinutes,
   percentForReps,
   primaryPattern,
   profileCategory,
+  publishAtFor,
   rackAllowed,
   render,
   renderMuscu,
   resolveMovement,
   revealAt,
+  revealFromRow,
   roundSeconds,
   runWeekGeneration,
   sessionSeconds,
@@ -26099,5 +26130,6 @@ export {
   weekDates,
   weekSeed,
   weeklyGymVolume,
+  weeklyRevealDate,
   weightFor
 };
