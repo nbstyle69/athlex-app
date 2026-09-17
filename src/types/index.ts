@@ -173,6 +173,14 @@ export interface BoxWOD {
   emom_interval_minutes?: number;
   tabata_work_seconds?: number;
   tabata_rest_seconds?: number;
+  /** `manual` = saisi par un humain ; `auto` = posé par `generate-box-week`. */
+  source?: 'manual' | 'auto';
+  /**
+   * Piste de programmation (migration 20261223). `null` / absent = carte de la
+   * box, saisie par un coach : c'est l'onglet « Box » du Whiteboard, pas une
+   * donnée manquante. Absent tant que la migration n'est pas appliquée.
+   */
+  track?: 'functional' | 'hybrid' | 'musculation' | null;
   created_at: string;
   scores?: WODScore[];
 }

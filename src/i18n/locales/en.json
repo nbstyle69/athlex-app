@@ -1169,7 +1169,14 @@
     "join": "Join",
     "membersTitle": "Members · {{name}}",
     "noMembers": "No member found.",
-    "updateFailed": "Unable to update."
+    "updateFailed": "Unable to update.",
+    "track": {
+      "functional": "Functional",
+      "hybrid": "Hybrid",
+      "musculation": "Musculation",
+      "box": "Box",
+      "all": "All"
+    }
   },
   "wodGenerator": {
     "title": "WOD Generator",

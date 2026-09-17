@@ -1169,7 +1169,14 @@
     "join": "Rejoindre",
     "membersTitle": "Membres · {{name}}",
     "noMembers": "Aucun membre trouvé.",
-    "updateFailed": "Impossible de mettre à jour."
+    "updateFailed": "Impossible de mettre à jour.",
+    "track": {
+      "functional": "Functional",
+      "hybrid": "Hybrid",
+      "musculation": "Musculation",
+      "box": "Box",
+      "all": "Tout"
+    }
   },
   "wodGenerator": {
     "title": "Générateur WOD",

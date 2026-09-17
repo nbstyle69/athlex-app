@@ -70,6 +70,12 @@ export interface BoxWodInsert {
   wod_json: unknown;
   source: 'auto';
   auto_run_id: string;
+  /**
+   * Piste de la carte (migration 20261223). L'app et le Manager s'en servent
+   * pour filtrer le Whiteboard par onglets ; `null` est réservé aux WODs saisis
+   * par un coach, qu'une génération ne pose jamais.
+   */
+  track: Track;
 }
 
 export interface ExistingAutoRow {
@@ -230,6 +236,7 @@ export function functionalWeekRows(week: GeneratedWeek, ctx: WeekContext): BoxWo
         wod_json: b.wod_json,
         source: 'auto',
         auto_run_id: ctx.run_id,
+        track: week.track,
       });
     }
   }
@@ -262,6 +269,7 @@ export function muscuWeekRows(week: GeneratedMuscuWeek, ctx: WeekContext): BoxWo
     wod_json: d.wod,
     source: 'auto',
     auto_run_id: ctx.run_id,
+    track: 'musculation',
   }));
 }
 
