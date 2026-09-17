@@ -23078,6 +23078,7 @@ var HYBRID_FRIDAY_RUN_M = 3e3;
 var HYBRID_HARD_RPE = 8;
 var HYBRID_EASY_RPE = 6.5;
 var HYBRID_TUESDAY_RPE = 7.5;
+var HYBRID_FRIDAY_RPE = 7.5;
 var item = (id, qty, unit, o = {}) => ({
   id,
   qty,
@@ -23114,7 +23115,12 @@ var CORE_FINISHERS = [
   fin2("h_shoulders_carry", "shoulders", 5, 3, [mv2("suitcase_carry", 40, "m", "Overhead Carry (par c\xF4t\xE9)"), mv2("push_up", 10)]),
   fin2("h_shoulders_pushup", "shoulders", 5, 3, [mv2("push_up", 15), mv2("plank_hold", 30, "s")]),
   // mollets, second choix
-  fin2("h_calves_carry", "calves", 5, 3, [mv2("bodyweight_calf_raise", 25), mv2("db_farmer_carry", 40, "m")])
+  fin2("h_calves_carry", "calves", 5, 3, [mv2("bodyweight_calf_raise", 25), mv2("db_farmer_carry", 40, "m")]),
+  // gainage, troisième choix
+  fin2("h_core_hollow_superman", "core", 5, 3, [mv2("hollow_rock", 20), mv2("superman", 40, "s")]),
+  fin2("h_core_situp_plank", "core", 5, 3, [mv2("sit_up", 25), mv2("plank_hold", 40, "s")]),
+  fin2("h_post_bridge_deadbug", "glutes", 5, 3, [mv2("glute_bridge", 25), mv2("dead_bug", 12)]),
+  fin2("h_breath_row_long", "breathing", 5, 2, [mv2("row", 25, "cal", "Row facile, respiration nasale"), mv2("superman", 40, "s")])
 ];
 var COOLDOWNS = [
   { minutes: 8, lines: [
@@ -23131,17 +23137,17 @@ var COOLDOWNS = [
   ] }
 ];
 var H1_A = [
-  station("h1_sled_goblet", "sled_push", 18, 120, 8, [
-    item("sled_push", 25, "m", { band: "medium" }),
-    item("kb_goblet_squat", 10, "reps", { band: "medium" })
+  station("h1_goblet_squat", "kb_goblet_squat", 18, 120, 8, [
+    item("kb_goblet_squat", 12, "reps", { band: "medium" }),
+    item("air_squat", 15, "reps")
   ], 7.5),
-  station("h1_pull_step", "sled_pull", 18, 120, 8, [
-    item("sled_pull", 25, "m", { band: "medium" }),
+  station("h1_swing_step", "kb_swing_russian", 18, 120, 8, [
+    item("kb_swing_russian", 15, "reps", { band: "medium" }),
     item("box_step_up", 10, "reps", { band: "medium", load_from: "db_farmer_carry", name: "Box Step-ups lest\xE9s (2 \xD7 DB)" })
   ], 7.5),
-  station("h1_swing_squat", "kb_swing_russian", 18, 120, 8, [
-    item("kb_swing_russian", 15, "reps", { band: "medium" }),
-    item("air_squat", 15, "reps")
+  station("h1_carry_pushup", "suitcase_carry", 18, 120, 8, [
+    item("suitcase_carry", 40, "m"),
+    item("push_up", 12, "reps")
   ], 7)
 ];
 var H1_intervals = {
@@ -23155,11 +23161,13 @@ var H1_intervals = {
   warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 800 m course progressive, 10 leg swings / jambe, 10 air squats, 10 pompes, 2 \xD7 20 s skipping."] },
   block_a: H1_A,
   block_b: null,
+  // `run_intervals` est exclu : le mercredi EST la séance d'intervalles de course, dans son
+  // bloc A. Le lundi est « intervalles courts avec stations ».
   block_c: {
-    intentions: ["run", "interval"],
+    intentions: ["interval", "engine", "run"],
     durations: [20],
     pattern_not: [],
-    skeletons: ["run_intervals", "stations_interval", "amrap_distances", "run_into_station"]
+    skeletons: ["amrap_distances", "stations_interval", "run_into_station", "compromised_run"]
   },
   finisher: CORE_FINISHERS
 };
@@ -23168,9 +23176,13 @@ var H2_A = [
     item("front_squat", 6, "reps", { band: "medium" }),
     item("db_farmer_carry", 20, "m", { band: "medium" })
   ], 7),
-  station("h2_back_squat_carry", "back_squat", 20, 180, 5, [
-    item("back_squat", 6, "reps", { band: "medium" }),
+  station("h2_front_squat_sandbag", "front_squat", 20, 180, 5, [
+    item("front_squat", 6, "reps", { band: "medium" }),
     item("sandbag_carry", 20, "m", { band: "medium" })
+  ], 7),
+  station("h2_goblet_carry", "kb_goblet_squat", 20, 180, 5, [
+    item("kb_goblet_squat", 12, "reps", { band: "medium" }),
+    item("db_farmer_carry", 20, "m", { band: "medium" })
   ], 7)
 ];
 var H2_WORK = [
@@ -23187,7 +23199,7 @@ var H2_WORK = [
         item("row", 60, "s", { work_s: 60, name: "Row \u2014 allure tenable, ni sprint ni promenade" }),
         item("sandbag_lunge", 60, "s", { band: "medium", work_s: 60 }),
         item("ski_erg", 60, "s", { work_s: 60, name: "SkiErg \u2014 allure tenable" }),
-        item("kb_swing_russian", 60, "s", { band: "medium", work_s: 60 })
+        item("sandbag_carry", 60, "s", { band: "medium", work_s: 60 })
       ]
     }
   },
@@ -23231,6 +23243,7 @@ var H3_A = [{
   movement: "run",
   minutes: 30,
   rpe: 8.5,
+  timed: true,
   run: {
     variants: [
       { label: "8 \xD7 400 m", target: "allure 5 km", rest_s: 60, meters: 3200 },
@@ -23251,9 +23264,15 @@ var H3_run = {
   warmup: { minutes: 12, lines: ["\xC9chauffement (12') \u2014 1 km progressif, gammes (talons-fesses, mont\xE9es de genoux, pas chass\xE9s) 2 \xD7 20 m, 3 \xD7 30 m d'acc\xE9l\xE9rations."] },
   block_a: H3_A,
   block_b: null,
-  // le mercredi est déjà une journée dure par son bloc A : le bloc tiré reste du tronc
-  block_c: { intentions: ["core"], durations: [10, 15], pattern_not: [], skeletons: ["core_carry_finisher"] },
-  finisher: null
+  /*
+   * Aucun bloc tiré : `core_carry_finisher` est le seul squelette court de la banque
+   * Hybrid, et ses carries sont déjà au mardi et au jeudi — les deux jours voisins.
+   * Le tronc du mercredi passe donc en finisher, où la banque est large.
+   */
+  block_c: null,
+  finisher: CORE_FINISHERS,
+  // après des intervalles de course, la sortie lente fait partie de la séance
+  cooldown: COOLDOWNS
 };
 var H4_engine = {
   id: "H4_engine",
@@ -23275,22 +23294,22 @@ var H5_A = [
   station("h5_sled_push_heavy", "sled_push", 12, 150, 5, [
     item("sled_push", 30, "m", { band: "heavy" }),
     item("run", 100, "m")
-  ], 8),
+  ], HYBRID_FRIDAY_RPE),
   station("h5_sled_pull_heavy", "sled_pull", 12, 150, 5, [
     item("sled_pull", 30, "m", { band: "heavy" }),
     item("run", 100, "m")
-  ], 8),
+  ], HYBRID_FRIDAY_RPE),
   station("h5_sandbag_heavy", "sandbag_carry", 12, 150, 5, [
     item("sandbag_carry", 50, "m", { band: "heavy" }),
     item("run", 100, "m")
-  ], 8)
+  ], HYBRID_FRIDAY_RPE)
 ];
 var H5_WORK = [{
   id: "h5_compromised_run",
   kind: "compromised",
   movement: "run",
   minutes: 28,
-  rpe: 8,
+  rpe: HYBRID_FRIDAY_RPE,
   timed: false,
   compromised: {
     rounds: 4,
@@ -23298,13 +23317,15 @@ var H5_WORK = [{
     run_m_min: 600,
     run_m_max: 1e3,
     target: "allure 5 km + 15 s/km",
+    // aucun poste en commun avec la simulation du samedi : les deux jours se suivent,
+    // et un mouvement qui revient le lendemain est la répétition la plus visible
     stations: [
-      item("burpee_broad_jump", 40, "m", { work_s: 90 }),
       item("box_step_up", 20, "reps", { band: "medium", load_from: "db_farmer_carry", name: "Box Step-ups lest\xE9s (2 \xD7 DB)", work_s: 90 }),
-      item("wall_ball", 20, "reps", { band: "medium", work_s: 90 }),
       item("box_jump", 15, "reps", { band: "medium", work_s: 90 }),
-      item("kb_swing_russian", 20, "reps", { band: "medium", work_s: 90 }),
-      item("sandbag_lunge", 30, "m", { band: "medium", work_s: 90 })
+      item("burpee", 20, "reps", { work_s: 90 }),
+      item("sandbag_carry", 40, "m", { band: "medium", work_s: 90 }),
+      item("suitcase_carry", 40, "m", { work_s: 90 }),
+      item("air_squat", 30, "reps", { work_s: 90 })
     ]
   }
 }];
@@ -23316,6 +23337,7 @@ var H5_compromised = {
   day: 5,
   label: "Course compromise",
   budget_min: 60,
+  max_rpe: HYBRID_FRIDAY_RPE,
   warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 600 m course, 10 hip hinges, 10 fentes / jambe, 20 m de sled \xE0 vide, 10 wall balls l\xE9g\xE8res."] },
   block_a: H5_A,
   block_b: null,
@@ -25813,6 +25835,9 @@ function blocCRunMeters(catalog, wod) {
   }
   return total2;
 }
+function itemsOf(opt) {
+  return [...opt.station?.items ?? [], ...opt.race?.stations ?? [], ...opt.compromised?.stations ?? []];
+}
 function blockARunMeters(catalog, opt) {
   const ofItem = (it, times) => {
     const m = movementById(catalog, it.id);
@@ -26303,6 +26328,13 @@ function generateSession(params, catalog, bank, seed) {
     block_b_movement: choice.b && optB ? optB.movement : null,
     finisher_id: choice.f && optF ? optF.id : null,
     rpe,
+    movements_by_role: {
+      a: optA ? itemsOf(optA).map((it) => it.id) : [],
+      work: [
+        ...optW ? itemsOf(optW).map((it) => it.id) : [],
+        ...blocC ? blocC.blocks[0].movements.map((m) => m.id) : []
+      ]
+    },
     run_meters: (optA ? blockARunMeters(catalog, optA) + runVariantMeters(optA, params.iso_week) : 0) + (optW ? blockARunMeters(catalog, optW) : 0) + (blocC ? blocCRunMeters(catalog, blocC) : 0)
   };
 }
@@ -26311,7 +26343,30 @@ function generateWeek(params, catalog, bank, seed) {
   const track = params.track ?? "functional";
   const recent = [...params.recent_signatures ?? []];
   const sessions = [];
-  const alreadyUsed = (day) => track !== "hybrid" ? [] : sessions.filter((s) => s.day !== day && s.bloc_c).flatMap((s) => s.bloc_c.blocks[0].movements.map((m) => m.id)).filter((id) => movementById(catalog, id)?.modality !== "M");
+  const functionalOnly = (ids) => ids.filter((id) => movementById(catalog, id)?.modality !== "M");
+  const writtenOf = (d) => {
+    const sk = bank.session_skeletons.find((x) => x.day === d && trackOf(x) === track && (x.weeks_modulo ? params.iso_week % x.weeks_modulo.modulo === x.weeks_modulo.equals : true));
+    if (!sk) return [];
+    return functionalOnly([...sk.block_a ?? [], ...sk.block_work ?? []].flatMap((o) => itemsOf(o).map((it) => it.id)));
+  };
+  const alreadyUsed = (day) => {
+    if (track !== "hybrid") return [];
+    const days = /* @__PURE__ */ new Map();
+    const neighbour = /* @__PURE__ */ new Set();
+    const note = (d, ids) => {
+      for (const id of ids) days.set(id, (days.get(id) ?? /* @__PURE__ */ new Set()).add(d));
+      if (Math.abs(d - day) === 1) for (const id of ids) neighbour.add(id);
+    };
+    for (const d of [day - 1, day + 1]) if (d >= 1 && d <= 6) note(d, writtenOf(d));
+    for (const s of sessions) {
+      if (s.day === day) continue;
+      const roles = s.movements_by_role ?? { a: [], work: [] };
+      note(s.day, functionalOnly([...roles.a, ...roles.work]));
+    }
+    const out = new Set(neighbour);
+    for (const [id, ds] of days) if (ds.size >= 2) out.add(id);
+    return [...out];
+  };
   const once = (day, salt, patternNot, extraExclude = [], unique = true) => generateSession({
     track,
     day,
@@ -26385,6 +26440,21 @@ function generateWeek(params, catalog, bank, seed) {
       sessions[i] = best;
       if (rpeOf(best) >= HYBRID_HARD_RPE) relax.add(`hard_days_in_a_row:${best.day}`);
       else relax.add(`hard_day_softened:${best.day}`);
+    }
+    const SLED_OK = /* @__PURE__ */ new Set(["sled_push", "sled_pull"]);
+    const byMovement = /* @__PURE__ */ new Map();
+    for (const s of sessions) {
+      const roles = s.movements_by_role ?? { a: [], work: [] };
+      for (const id of functionalOnly([...roles.a, ...roles.work])) {
+        byMovement.set(id, (byMovement.get(id) ?? /* @__PURE__ */ new Set()).add(s.day));
+      }
+    }
+    for (const [id, ds] of byMovement) {
+      const days = [...ds].sort((a, b) => a - b);
+      if (days.length < 2) continue;
+      const adjacent = days.some((d, i) => i > 0 && d - days[i - 1] === 1);
+      if (SLED_OK.has(id) && days.every((d) => d === 5 || d === 6)) continue;
+      if (days.length > 2 || adjacent) relax.add(`movement_repeat_week:${id}`);
     }
     if (hybridRunMeters(sessions) < HYBRID_WEEKLY_RUN_M) relax.add("weekly_run_short");
   }
@@ -26716,6 +26786,7 @@ export {
   HYBRID_CATEGORIES,
   HYBRID_EASY_RPE,
   HYBRID_FORBIDDEN_IDS,
+  HYBRID_FRIDAY_RPE,
   HYBRID_FRIDAY_RUN_M,
   HYBRID_HARD_RPE,
   HYBRID_JUMP_IDS,
@@ -26817,6 +26888,7 @@ export {
   isSlowSkill,
   isoWeek,
   isoWeekMonday,
+  itemsOf,
   ladderStep,
   loadText2 as loadText,
   loadsFor,

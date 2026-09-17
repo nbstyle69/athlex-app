@@ -49,6 +49,12 @@ export const HYBRID_HARD_RPE = 8;
 export const HYBRID_EASY_RPE = 6.5;
 /** Plafond de RPE du mardi : force puis stations à 80 % d'effort, jamais un second jour dur. */
 export const HYBRID_TUESDAY_RPE = 7.5;
+/**
+ * Plafond de RPE du vendredi. La course compromise se court à allure cible, pas à fond :
+ * sans ce plafond, vendredi (8) précédait samedi (9) et la semaine enchaînait ses deux
+ * séances les plus dures.
+ */
+export const HYBRID_FRIDAY_RPE = 7.5;
 
 // ─── Fabriques ───────────────────────────────────────────────────────────────
 
@@ -67,10 +73,11 @@ const mv = (id: string, qty: number, unit: SessionFinisherOption['movements'][nu
   ({ id, qty, unit, ...(name ? { name } : {}) });
 
 /**
- * Seize finishers en sept familles, sur le modèle de la banque Functional. La piste en
+ * Vingt finishers en sept familles, sur le modèle de la banque Functional. La piste en
  * tirait quatre et `finisher_repeat` était relâché presque toutes les semaines ; à douze
  * elle tombait pile sur la fenêtre d'anti-répétition (trois par semaine, quatre semaines
- * de journal), ce qui suffisait à la vider. Seize laissent de la marge.
+ * de journal), ce qui suffisait à la vider. Quatre jours en portent désormais un (lundi, mardi,
+ * mercredi, vendredi) : vingt laissent de la marge sur les quatre semaines de journal.
  */
 const CORE_FINISHERS: SessionFinisherOption[] = [
   // gainage
@@ -97,6 +104,11 @@ const CORE_FINISHERS: SessionFinisherOption[] = [
   fin('h_shoulders_pushup', 'shoulders', 5, 3, [mv('push_up', 15), mv('plank_hold', 30, 's')]),
   // mollets, second choix
   fin('h_calves_carry', 'calves', 5, 3, [mv('bodyweight_calf_raise', 25), mv('db_farmer_carry', 40, 'm')]),
+  // gainage, troisième choix
+  fin('h_core_hollow_superman', 'core', 5, 3, [mv('hollow_rock', 20), mv('superman', 40, 's')]),
+  fin('h_core_situp_plank', 'core', 5, 3, [mv('sit_up', 25), mv('plank_hold', 40, 's')]),
+  fin('h_post_bridge_deadbug', 'glutes', 5, 3, [mv('glute_bridge', 25), mv('dead_bug', 12)]),
+  fin('h_breath_row_long', 'breathing', 5, 2, [mv('row', 25, 'cal', 'Row facile, respiration nasale'), mv('superman', 40, 's')]),
 ];
 
 /**
@@ -120,18 +132,22 @@ const COOLDOWNS: { minutes: number; lines: string[] }[] = [
 
 // ─── H1 — Lundi, intervalles courts ──────────────────────────────────────────
 
+/**
+ * Pas de sled le lundi : il est au bloc lourd du vendredi et dans la simulation du samedi.
+ * L'y remettre en faisait un mouvement de trois jours sur six.
+ */
 const H1_A: SessionBlockAOption[] = [
-  station('h1_sled_goblet', 'sled_push', 18, 120, 8, [
-    item('sled_push', 25, 'm', { band: 'medium' }),
-    item('kb_goblet_squat', 10, 'reps', { band: 'medium' }),
+  station('h1_goblet_squat', 'kb_goblet_squat', 18, 120, 8, [
+    item('kb_goblet_squat', 12, 'reps', { band: 'medium' }),
+    item('air_squat', 15, 'reps'),
   ], 7.5),
-  station('h1_pull_step', 'sled_pull', 18, 120, 8, [
-    item('sled_pull', 25, 'm', { band: 'medium' }),
+  station('h1_swing_step', 'kb_swing_russian', 18, 120, 8, [
+    item('kb_swing_russian', 15, 'reps', { band: 'medium' }),
     item('box_step_up', 10, 'reps', { band: 'medium', load_from: 'db_farmer_carry', name: 'Box Step-ups lestés (2 × DB)' }),
   ], 7.5),
-  station('h1_swing_squat', 'kb_swing_russian', 18, 120, 8, [
-    item('kb_swing_russian', 15, 'reps', { band: 'medium' }),
-    item('air_squat', 15, 'reps'),
+  station('h1_carry_pushup', 'suitcase_carry', 18, 120, 8, [
+    item('suitcase_carry', 40, 'm'),
+    item('push_up', 12, 'reps'),
   ], 7),
 ];
 
@@ -141,23 +157,34 @@ export const H1_intervals: SessionSkeleton = {
   warmup: { minutes: 10, lines: ["Échauffement (10') — 800 m course progressive, 10 leg swings / jambe, 10 air squats, 10 pompes, 2 × 20 s skipping."] },
   block_a: H1_A,
   block_b: null,
+  // `run_intervals` est exclu : le mercredi EST la séance d'intervalles de course, dans son
+  // bloc A. Le lundi est « intervalles courts avec stations ».
   block_c: {
-    intentions: ['run', 'interval'], durations: [20], pattern_not: [],
-    skeletons: ['run_intervals', 'stations_interval', 'amrap_distances', 'run_into_station'],
+    intentions: ['interval', 'engine', 'run'], durations: [20], pattern_not: [],
+    skeletons: ['amrap_distances', 'stations_interval', 'run_into_station', 'compromised_run'],
   },
   finisher: CORE_FINISHERS,
 };
 
 // ─── H2 — Mardi, force et stations (jour modéré par conception) ──────────────
 
+/**
+ * Le back squat est écarté : sa bande moyenne au catalogue vaut 100/70 kg, soit un vrai
+ * lourd pour cinq séries de six en bloc A Hybrid. Le front squat (70/50) et la charnière
+ * tiennent la consigne « bande moyenne » sans la trahir.
+ */
 const H2_A: SessionBlockAOption[] = [
   station('h2_front_squat_carry', 'front_squat', 20, 180, 5, [
     item('front_squat', 6, 'reps', { band: 'medium' }),
     item('db_farmer_carry', 20, 'm', { band: 'medium' }),
   ], 7),
-  station('h2_back_squat_carry', 'back_squat', 20, 180, 5, [
-    item('back_squat', 6, 'reps', { band: 'medium' }),
+  station('h2_front_squat_sandbag', 'front_squat', 20, 180, 5, [
+    item('front_squat', 6, 'reps', { band: 'medium' }),
     item('sandbag_carry', 20, 'm', { band: 'medium' }),
+  ], 7),
+  station('h2_goblet_carry', 'kb_goblet_squat', 20, 180, 5, [
+    item('kb_goblet_squat', 12, 'reps', { band: 'medium' }),
+    item('db_farmer_carry', 20, 'm', { band: 'medium' }),
   ], 7),
 ];
 
@@ -175,7 +202,7 @@ const H2_WORK: SessionBlockAOption[] = [
         item('row', 60, 's', { work_s: 60, name: 'Row — allure tenable, ni sprint ni promenade' }),
         item('sandbag_lunge', 60, 's', { band: 'medium', work_s: 60 }),
         item('ski_erg', 60, 's', { work_s: 60, name: 'SkiErg — allure tenable' }),
-        item('kb_swing_russian', 60, 's', { band: 'medium', work_s: 60 }),
+        item('sandbag_carry', 60, 's', { band: 'medium', work_s: 60 }),
       ],
     },
   },
@@ -207,7 +234,7 @@ export const H2_strength_stations: SessionSkeleton = {
 // ─── H3 — Mercredi, course ───────────────────────────────────────────────────
 
 const H3_A: SessionBlockAOption[] = [{
-  id: 'h3_run_intervals', kind: 'run', movement: 'run', minutes: 30, rpe: 8.5,
+  id: 'h3_run_intervals', kind: 'run', movement: 'run', minutes: 30, rpe: 8.5, timed: true,
   run: {
     variants: [
       { label: '8 × 400 m', target: 'allure 5 km', rest_s: 60, meters: 3200 },
@@ -224,9 +251,15 @@ export const H3_run: SessionSkeleton = {
   warmup: { minutes: 12, lines: ["Échauffement (12') — 1 km progressif, gammes (talons-fesses, montées de genoux, pas chassés) 2 × 20 m, 3 × 30 m d'accélérations."] },
   block_a: H3_A,
   block_b: null,
-  // le mercredi est déjà une journée dure par son bloc A : le bloc tiré reste du tronc
-  block_c: { intentions: ['core'], durations: [10, 15], pattern_not: [], skeletons: ['core_carry_finisher'] },
-  finisher: null,
+  /*
+   * Aucun bloc tiré : `core_carry_finisher` est le seul squelette court de la banque
+   * Hybrid, et ses carries sont déjà au mardi et au jeudi — les deux jours voisins.
+   * Le tronc du mercredi passe donc en finisher, où la banque est large.
+   */
+  block_c: null,
+  finisher: CORE_FINISHERS,
+  // après des intervalles de course, la sortie lente fait partie de la séance
+  cooldown: COOLDOWNS,
 };
 
 // ─── H4 — Jeudi, engine continu (jour facile obligatoire) ────────────────────
@@ -248,13 +281,13 @@ export const H4_engine: SessionSkeleton = {
 const H5_A: SessionBlockAOption[] = [
   station('h5_sled_push_heavy', 'sled_push', 12, 150, 5, [
     item('sled_push', 30, 'm', { band: 'heavy' }), item('run', 100, 'm'),
-  ], 8),
+  ], HYBRID_FRIDAY_RPE),
   station('h5_sled_pull_heavy', 'sled_pull', 12, 150, 5, [
     item('sled_pull', 30, 'm', { band: 'heavy' }), item('run', 100, 'm'),
-  ], 8),
+  ], HYBRID_FRIDAY_RPE),
   station('h5_sandbag_heavy', 'sandbag_carry', 12, 150, 5, [
     item('sandbag_carry', 50, 'm', { band: 'heavy' }), item('run', 100, 'm'),
-  ], 8),
+  ], HYBRID_FRIDAY_RPE),
 ];
 
 /**
@@ -263,23 +296,25 @@ const H5_A: SessionBlockAOption[] = [
  * en stations sans course, à 1,7 km quand la séance doit en garantir 3.
  */
 const H5_WORK: SessionBlockAOption[] = [{
-  id: 'h5_compromised_run', kind: 'compromised', movement: 'run', minutes: 28, rpe: 8, timed: false,
+  id: 'h5_compromised_run', kind: 'compromised', movement: 'run', minutes: 28, rpe: HYBRID_FRIDAY_RPE, timed: false,
   compromised: {
     rounds: 4, work_s: 90, run_m_min: 600, run_m_max: 1000, target: 'allure 5 km + 15 s/km',
+    // aucun poste en commun avec la simulation du samedi : les deux jours se suivent,
+    // et un mouvement qui revient le lendemain est la répétition la plus visible
     stations: [
-      item('burpee_broad_jump', 40, 'm', { work_s: 90 }),
       item('box_step_up', 20, 'reps', { band: 'medium', load_from: 'db_farmer_carry', name: 'Box Step-ups lestés (2 × DB)', work_s: 90 }),
-      item('wall_ball', 20, 'reps', { band: 'medium', work_s: 90 }),
       item('box_jump', 15, 'reps', { band: 'medium', work_s: 90 }),
-      item('kb_swing_russian', 20, 'reps', { band: 'medium', work_s: 90 }),
-      item('sandbag_lunge', 30, 'm', { band: 'medium', work_s: 90 }),
+      item('burpee', 20, 'reps', { work_s: 90 }),
+      item('sandbag_carry', 40, 'm', { band: 'medium', work_s: 90 }),
+      item('suitcase_carry', 40, 'm', { work_s: 90 }),
+      item('air_squat', 30, 'reps', { work_s: 90 }),
     ],
   },
 }];
 
 export const H5_compromised: SessionSkeleton = {
   id: 'H5_compromised', discipline: 'session', format: 'session', track: 'hybrid', day: 5,
-  label: 'Course compromise', budget_min: 60,
+  label: 'Course compromise', budget_min: 60, max_rpe: HYBRID_FRIDAY_RPE,
   warmup: { minutes: 10, lines: ["Échauffement (10') — 600 m course, 10 hip hinges, 10 fentes / jambe, 20 m de sled à vide, 10 wall balls légères."] },
   block_a: H5_A,
   block_b: null,

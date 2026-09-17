@@ -82,17 +82,26 @@ describe('règles de la piste (52 semaines)', () => {
     }
   });
 
-  it('§3.6 : un mouvement fonctionnel deux fois dans la semaine est tracé', () => {
+  it('§3.6 assouplie : une seconde occurrence passe si elle évite les jours voisins', () => {
     for (const w of weeks) {
-      const byDay = w.sessions.map((s) => new Set(movementsOf(s).filter((id) => {
-        const m = CATALOG_SNAPSHOT.movements.find((x) => x.id === id);
-        return m && m.modality !== 'M';
-      })));
-      const seen = new Map<string, number>();
-      for (const set of byDay) for (const id of set) seen.set(id, (seen.get(id) ?? 0) + 1);
-      const repeated = [...seen.entries()].filter(([, n]) => n > 1);
-      if (repeated.length) {
-        expect(w.relaxations.some((r) => r.startsWith('movement_repeat_week:'))).toBe(true);
+      const days = new Map<string, Set<number>>();
+      for (const s of w.sessions) {
+        const roles = s.movements_by_role ?? { a: [], work: [] };
+        for (const id of [...roles.a, ...roles.work]) {
+          const m = CATALOG_SNAPSHOT.movements.find((x) => x.id === id);
+          if (!m || m.modality === 'M') continue;
+          days.set(id, (days.get(id) ?? new Set()).add(s.day));
+        }
+      }
+      const traced = w.relaxations.some((r) => r.startsWith('movement_repeat_week:'));
+      for (const [id, ds] of days) {
+        const sorted = [...ds].sort((a, b) => a - b);
+        const adjacent = sorted.some((d, i) => i > 0 && d - sorted[i - 1] === 1);
+        // le traîneau est l'objet du vendredi lourd et de la simulation du samedi
+        const sled = (id === 'sled_push' || id === 'sled_pull') && sorted.every((d) => d === 5 || d === 6);
+        if ((sorted.length > 2 || adjacent) && !sled) {
+          expect({ week: w.iso_week, id, days: sorted, traced }).toMatchObject({ traced: true });
+        }
       }
     }
   });
@@ -190,24 +199,23 @@ describe('interdits sur 200 graines par squelette', () => {
 
 describe('conformité H1 à H7 (corrections de la relecture)', () => {
   it('compteurs à zéro sur les 52 semaines, sauf les écarts structurels documentés', () => {
-    const counts = countHybridByCause(weeks);
-    // vendredi (course compromise, RPE 8) puis samedi (simulation, RPE 9) : la semaine type
-    // enchaîne ses deux séances les plus dures. Constaté, tracé, jamais masqué.
-    const { 'regle:jours_durs_consecutifs': hardDays, ...strict } = counts;
-    expect(strict).toEqual(Object.fromEntries(HYBRID_CAUSES.filter((c) => c !== 'regle:jours_durs_consecutifs').map((c) => [c, 0])));
-    for (const w of weeks) {
-      const v = hybridViolations(w);
-      if (v['regle:jours_durs_consecutifs']?.length) {
-        expect(w.relaxations.some((r) => r.startsWith('hard_days_in_a_row:'))).toBe(true);
-      }
-    }
-    expect(hardDays).toBeGreaterThanOrEqual(0);
+    // Depuis que le vendredi se court à allure cible (7,5), la semaine n'enchaîne plus
+    // deux jours durs : 8 / 7,5 / 8,5 / 6 / 7,5 / 9. Tous les compteurs sont à zéro.
+    expect(countHybridByCause(weeks)).toEqual(Object.fromEntries(HYBRID_CAUSES.map((c) => [c, 0])));
+  });
+
+  it('aucun relâchement sur les 52 semaines, hors répétitions nommées', () => {
+    // seule trace admise : `movement_repeat_week:<mouvement>`, qui dit lequel traverse
+    // trois jours à cause des blocs écrits. Aucun repli de tirage, aucun budget forcé.
+    const relaxed = weeks
+      .map((w) => [w.iso_week, w.relaxations.filter((r) => !r.startsWith('movement_repeat_week:'))] as const)
+      .filter(([, r]) => r.length)
+      .map(([wk, r]) => `W${wk} ${r.join(',')}`);
+    expect(relaxed).toEqual([]);
   });
 
   it('le détail d’une semaine nomme ses violations, s’il y en a', () => {
-    const v = hybridViolations(weeks[0]);
-    const strict = Object.entries(v).filter(([c]) => c !== 'regle:jours_durs_consecutifs');
-    expect(Object.fromEntries(strict)).toEqual({});
+    expect(hybridViolations(weeks[0])).toEqual({});
   });
 });
 

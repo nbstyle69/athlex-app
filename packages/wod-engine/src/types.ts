@@ -483,6 +483,12 @@ export interface GeneratedSession {
   finisher_id: string | null;
   /** effort de la journée : maximum des blocs (A, B, travail), pas du seul bloc tiré */
   rpe: number;
+  /**
+   * Mouvements de la séance par rôle : `a` = bloc A, `work` = bloc de travail (écrit ou
+   * tiré). Sert la règle de répétition hebdomadaire : un même mouvement peut revenir dans
+   * un rôle différent, jamais dans le même.
+   */
+  movements_by_role?: { a: string[]; work: string[] };
   /** mètres de course et d'erg de la séance (bloc A Hybrid + bloc C), règle §3.4 */
   run_meters?: number;
 }

@@ -262,6 +262,11 @@ function blocCRunMeters(catalog: Catalog, wod: GeneratedWod): number {
   return total;
 }
 
+/** Postes d'un bloc écrit (station, enchaînement, course compromise). */
+export function itemsOf(opt: SessionBlockAOption): SessionStationItem[] {
+  return [...(opt.station?.items ?? []), ...(opt.race?.stations ?? []), ...(opt.compromised?.stations ?? [])];
+}
+
 /** Mètres de course et d'erg d'un bloc A Hybrid (stations et enchaînement chronométré). */
 function blockARunMeters(catalog: Catalog, opt: SessionBlockAOption): number {
   const ofItem = (it: SessionStationItem, times: number) => {
@@ -777,6 +782,13 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     block_b_movement: choice.b && optB ? optB.movement : null,
     finisher_id: choice.f && optF ? optF.id : null,
     rpe,
+    movements_by_role: {
+      a: optA ? itemsOf(optA).map((it) => it.id) : [],
+      work: [
+        ...(optW ? itemsOf(optW).map((it) => it.id) : []),
+        ...(blocC ? blocC.blocks[0].movements.map((m) => m.id) : []),
+      ],
+    },
     run_meters: (optA ? blockARunMeters(catalog, optA) + runVariantMeters(optA, params.iso_week) : 0)
       + (optW ? blockARunMeters(catalog, optW) : 0)
       + (blocC ? blocCRunMeters(catalog, blocC) : 0),
@@ -796,14 +808,48 @@ export function generateWeek(params: WeekParams, catalog: Catalog, bank: Skeleto
   const recent = [...(params.recent_signatures ?? [])];
   const sessions: GeneratedSession[] = [];
   /**
-   * Règle Hybrid §3.6 : un mouvement *fonctionnel* n'apparaît qu'une fois dans la semaine.
-   * Les monostructuraux (course, rameur, SkiErg, vélos) en sont exclus : ils sont la trame
-   * de la piste et reviennent tous les jours.
+   * Règle Hybrid §3.6, assouplie : un mouvement fonctionnel peut revenir une seconde fois
+   * dans la semaine s'il n'est pas sur deux jours consécutifs et s'il change de rôle
+   * (bloc A puis bloc de travail). Au-delà, il est écarté du tirage — et si le moteur n'y
+   * arrive pas, le relâchement le dit. Les monostructuraux (course, ergs) sont hors règle :
+   * ils sont la trame de la piste et reviennent tous les jours.
+   *
+   * Les blocs écrits du mardi, du vendredi et du samedi rétrécissent mécaniquement le pool ;
+   * interdire toute seconde occurrence revenait à relâcher la règle presque chaque semaine.
    */
-  const alreadyUsed = (day: SessionDay) => (track !== 'hybrid' ? [] : sessions
-    .filter((s) => s.day !== day && s.bloc_c)
-    .flatMap((s) => s.bloc_c!.blocks[0].movements.map((m) => m.id))
-    .filter((id) => movementById(catalog, id)?.modality !== 'M'));
+  const functionalOnly = (ids: string[]) => ids.filter((id) => movementById(catalog, id)?.modality !== 'M');
+  /**
+   * Postes des blocs écrits d'un jour, connus avant tout tirage. Sans eux, le lundi
+   * ignorerait ce que le mardi et le samedi vont poser — leurs blocs sont pourtant fixés
+   * par le squelette, et c'est là que naissaient les répétitions sur trois jours.
+   */
+  const writtenOf = (d: SessionDay): string[] => {
+    const sk = bank.session_skeletons.find((x) => x.day === d && trackOf(x) === track
+      && (x.weeks_modulo ? params.iso_week % x.weeks_modulo.modulo === x.weeks_modulo.equals : true));
+    if (!sk) return [];
+    return functionalOnly([...(sk.block_a ?? []), ...(sk.block_work ?? [])].flatMap((o) => itemsOf(o).map((it) => it.id)));
+  };
+  const alreadyUsed = (day: SessionDay) => {
+    if (track !== 'hybrid') return [];
+    const days = new Map<string, Set<number>>();
+    const neighbour = new Set<string>();
+    const note = (d: SessionDay, ids: string[]) => {
+      for (const id of ids) days.set(id, (days.get(id) ?? new Set()).add(d));
+      if (Math.abs(d - day) === 1) for (const id of ids) neighbour.add(id);
+    };
+    // seulement les jours voisins : c'est là que la répétition se voit. Pré-charger les six
+    // jours assécherait le vocabulaire Hybrid, déjà étroit, et ferait relâcher la règle.
+    for (const d of [day - 1, day + 1] as SessionDay[]) if (d >= 1 && d <= 6) note(d, writtenOf(d));
+    for (const s of sessions) {
+      if (s.day === day) continue;
+      const roles = s.movements_by_role ?? { a: [], work: [] };
+      note(s.day, functionalOnly([...roles.a, ...roles.work]));
+    }
+    const out = new Set<string>(neighbour);
+    // une troisième occurrence est de trop ; la deuxième passe si elle n'est pas voisine
+    for (const [id, ds] of days) if (ds.size >= 2) out.add(id);
+    return [...out];
+  };
   const once = (day: SessionDay, salt: number, patternNot?: Pattern[], extraExclude: string[] = [], unique = true) => generateSession({
     track,
     day, iso_year: params.iso_year, iso_week: params.iso_week,
@@ -888,6 +934,25 @@ export function generateWeek(params: WeekParams, catalog: Catalog, bank: Skeleto
       sessions[i] = best;
       if (rpeOf(best) >= HYBRID_HARD_RPE) relax.add(`hard_days_in_a_row:${best.day}`);
       else relax.add(`hard_day_softened:${best.day}`);
+    }
+    // §3.6 : constat final. Le tirage évite les jours voisins et la troisième occurrence,
+    // mais les blocs écrits du mardi, du vendredi et du samedi sont fixes : quand un
+    // mouvement les traverse quand même, on le nomme au lieu de le taire.
+    const SLED_OK = new Set(['sled_push', 'sled_pull']);
+    const byMovement = new Map<string, Set<number>>();
+    for (const s of sessions) {
+      const roles = s.movements_by_role ?? { a: [], work: [] };
+      for (const id of functionalOnly([...roles.a, ...roles.work])) {
+        byMovement.set(id, (byMovement.get(id) ?? new Set()).add(s.day));
+      }
+    }
+    for (const [id, ds] of byMovement) {
+      const days = [...ds].sort((a, b) => a - b);
+      if (days.length < 2) continue;
+      const adjacent = days.some((d, i) => i > 0 && d - days[i - 1] === 1);
+      // le traîneau est l'objet du vendredi lourd et de la simulation du samedi
+      if (SLED_OK.has(id) && days.every((d) => d === 5 || d === 6)) continue;
+      if (days.length > 2 || adjacent) relax.add(`movement_repeat_week:${id}`);
     }
     // §3.4 : constaté et tracé, jamais corrigé en silence.
     if (hybridRunMeters(sessions) < HYBRID_WEEKLY_RUN_M) relax.add('weekly_run_short');

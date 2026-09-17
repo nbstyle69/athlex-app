@@ -9,54 +9,60 @@ Le bloc de travail est tiré dans la banque Hybrid existante, restreinte par jou
 ## 2026-W40 (lundi 2026-09-28)
 
 seed `1637939396` · révélation par défaut `2026-09-27T16:00:00.000Z` (dimanche 18:00 Paris)
-course et ergs de la semaine : **32.6 km** · répétitions sautées : 0
-**relâchements : hard_days_in_a_row:6**
+course et ergs de la semaine : **29.9 km** · répétitions sautées : 0
+**relâchements : movement_repeat_week:db_farmer_carry, movement_repeat_week:kb_goblet_squat, movement_repeat_week:sled_pull**
 
 ### Lundi 2026-09-28 · Intervalles · 56' (budget 60')
 
-squelette `H1_intervals` · bloc tiré `run_intervals:B` · intention **run** · RPE du jour **8.5** · course 3200 m
+squelette `H1_intervals` · bloc tiré `run_into_station` · intention **engine** · RPE du jour **8.5** · course 3170 m
 
-**strength · Force sur station · Sled Push**
+**strength · Force sur station · Goblet Squat**
 
 ```
 Échauffement (10') — 800 m course progressive, 10 leg swings / jambe, 10 air squats, 10 pompes, 2 × 20 s skipping.
 
 Every 2' × 8, en rotation :
-Impair · 25 m Sled Push @ 125/100 kg
-Pair · 10 Goblet Squat @ 24/16 kg
-Women Pro / Men Pro : Sled Push 150/125 kg · Goblet Squat 28/20 kg
+Impair · 12 Goblet Squat @ 24/16 kg
+Pair · 15 Air Squats
+Women Pro / Men Pro : Goblet Squat 28/20 kg
 ```
 
-**wod · Intervalles · Run** — *classement activé*
+**wod · 4 rounds · Run / Sled Pull** — *classement activé*
 
 ```
-4 rounds · repos 1:30 entre les répétitions
-800 m Run
-Stimulus : RPE 8.5 — Allure 5 km ou plus vite, régularité entre répétitions. Cible Men : ≈ 3:44 par répétition.
+4 rounds for time (cap 27')
+650 m Run
+R1 · 45 m Sled Pull (75/50 kg)
+Pro 100/75 kg
+R2 · 550 m SkiErg
+R3 · 20 m Burpee Broad Jumps
+R4 · 30 m Sled Push (100/75 kg)
+Pro 125/100 kg
+Stimulus : RPE 8.5 — Allure course à 90 % du 5 km, stations sans pause. Cible Men : ≈ 21:24, cap 27'.
 ```
-> Allure 5 km ou plus vite, régularité entre répétitions. Score : time.
+> Allure course à 90 % du 5 km, stations sans pause. Score : time.
 
 **finisher · Finisher**
 
 ```
 Finisher — 3 rounds, rythme continu :
-15 Row en respiration nasale
-30 s Plank Hold
+40 m Overhead Carry (par côté)
+10 Push-ups
 ```
 
 ### Mardi 2026-09-29 · Force & stations · 58' (budget 60')
 
 squelette `H2_strength_stations` · bloc de travail écrit dans le squelette · RPE du jour **7.5** · course 0 m
 
-**strength · Force sur station · Back Squat**
+**strength · Force sur station · Goblet Squat**
 
 ```
 Échauffement (10') — 500 m rameur facile, 10 hip hinges à la barre à vide, 10 fentes / jambe, 10 pompes, 20 m d'ours.
 
 Every 3' × 5, en rotation :
-Impair · 6 Back Squat @ 100/70 kg
-Pair · 20 m Sandbag Carry @ 40/30 kg
-Women Pro / Men Pro : Back Squat 120/80 kg · Sandbag Carry 50/35 kg
+Impair · 12 Goblet Squat @ 24/16 kg
+Pair · 20 m Farmer Carry @ 24/16 kg
+Women Pro / Men Pro : Goblet Squat 28/20 kg · Farmer Carry 28/20 kg
 ```
 
 **wod · Force & stations · Row** — *classement activé*
@@ -66,23 +72,23 @@ Every 1'30 × 12, en rotation :
 Poste 1 · 60 s Row — allure tenable, ni sprint ni promenade
 Poste 2 · 60 s Sandbag Lunges @ 40/30 kg
 Poste 3 · 60 s SkiErg — allure tenable
-Poste 4 · 60 s KB Swings Russian @ 24/16 kg
-Women Pro / Men Pro : Sandbag Lunges 50/35 kg · KB Swings Russian 28/20 kg
+Poste 4 · 60 s Sandbag Carry @ 40/30 kg
+Women Pro / Men Pro : Sandbag Lunges 50/35 kg · Sandbag Carry 50/35 kg
 ```
 
 **finisher · Finisher**
 
 ```
 Finisher — 3 rounds, rythme continu :
-40 s Plank Hold
-15 Hollow Rocks
+20 Sit-ups
+30 s Superman Hold
 ```
 
-### Mercredi 2026-09-30 · Course · 59' (budget 60')
+### Mercredi 2026-09-30 · Course · 56' (budget 60')
 
-squelette `H3_run` · bloc tiré `core_carry_finisher` · intention **core** · RPE du jour **8.5** · course 4000 m
+squelette `H3_run` · bloc de travail écrit dans le squelette · RPE du jour **8.5** · course 3200 m
 
-**strength · Course · Run**
+**wod · Course · Run** — *classement activé*
 
 ```
 Échauffement (12') — 1 km progressif, gammes (talons-fesses, montées de genoux, pas chassés) 2 × 20 m, 3 × 30 m d'accélérations.
@@ -91,22 +97,26 @@ Intervalles course — 8 × 400 m, repos 1:00
 Allure cible : allure 5 km. L'écart entre le premier et le dernier intervalle reste sous 5 s.
 Autres variantes du cycle : 5 × 800 m · 3 × 1 600 m · 12 × 200 m shuttle
 ```
+> Séance chronométrée de bout en bout : compare avec ta dernière simulation.
 
-**wod · 4 rounds · Farmer Carry / Plank Hold / Shuttle Run** — *classement activé*
+**finisher · Finisher**
 
 ```
-4 rounds for time (cap 20:30)
-90 m Farmer Carry (20/16 kg)
-Pro 24/16 kg
-50 s Plank Hold
-200 m Shuttle Run
-Stimulus : RPE 6 — Posture et gainage, jamais à l'échec. Cible Men : ≈ 16:27, cap 20:30.
+Finisher — 3 rounds, rythme continu :
+40 m Suitcase Carry
+10 Dead Bug
 ```
-> Posture et gainage, jamais à l'échec. Score : time.
+
+**cooldown · Retour au calme**
+
+```
+Retour au calme (6') — 400 m de marche rapide puis respiration 4-6 allongé, 2'.
+Étirements : quadriceps debout 45 s / jambe · adducteurs en grenouille 45 s · psoas en fente basse 45 s / côté.
+```
 
 ### Jeudi 2026-10-01 · Engine · 58' (budget 60')
 
-squelette `H4_engine` · bloc tiré `engine_continuous` · intention **aerobic** · RPE du jour **6** · course 11400 m
+squelette `H4_engine` · bloc tiré `engine_continuous` · intention **aerobic** · RPE du jour **6** · course 9500 m
 
 **wod · Continu · SkiErg / Run / Bike Erg** — *classement activé*
 
@@ -117,9 +127,9 @@ En continu 40' · rotation sans repos, score = distance totale
 500 m SkiErg
 400 m Run
 1000 m Bike Erg
-200 m Sandbag Carry (30/20 kg)
-Pro 40/30 kg
-Stimulus : RPE 6 — Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget. Cible Men : ≈ 10611 m.
+200 m Farmer Carry (20/16 kg)
+Pro 24/16 kg
+Stimulus : RPE 6 — Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget. Cible Men : ≈ 9980 m.
 ```
 > Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget. Score : distance.
 
@@ -132,7 +142,7 @@ Retour au calme (8') — 600 m de footing très lent ou 5' de vélo facile, resp
 
 ### Vendredi 2026-10-02 · Course compromise · 58' (budget 60')
 
-squelette `H5_compromised` · bloc de travail écrit dans le squelette · RPE du jour **8** · course 3940 m
+squelette `H5_compromised` · bloc de travail écrit dans le squelette · RPE du jour **7.5** · course 3900 m
 
 **strength · Force sur station · Sled Pull**
 
@@ -150,15 +160,15 @@ Seule charge lourde de la semaine. Poussée continue, jamais en saccades.
 
 ```
 4 rounds :
-1. 90 s de station — 15 Box Jumps (box 60/50 cm)
+1. 90 s de station — 40 m Sandbag Carry @ 40/30 kg
    puis 1000 m Run à allure cible (allure 5 km + 15 s/km)
-2. 90 s de station — 40 m Burpee Broad Jumps
+2. 90 s de station — 20 Box Step-ups lestés (2 × DB) (box 60/50 cm) @ 24/16 kg
    puis 1000 m Run à allure cible (allure 5 km + 15 s/km)
-3. 90 s de station — 20 Wall Balls @ 9/6 kg
+3. 90 s de station — 20 Burpees
    puis 600 m Run à allure cible (allure 5 km + 15 s/km)
-4. 90 s de station — 20 Box Step-ups lestés (2 × DB) (box 60/50 cm) @ 24/16 kg
+4. 90 s de station — 15 Box Jumps (box 60/50 cm)
    puis 1000 m Run à allure cible (allure 5 km + 15 s/km)
-Women Pro / Men Pro : Wall Balls 12/9 kg
+Women Pro / Men Pro : Sandbag Carry 50/35 kg
 Total de course : 3600 m. Tenir l'allure avec les jambes chargées, ne pas sprinter la station.
 ```
 
@@ -166,8 +176,8 @@ Total de course : 3600 m. Tenir l'allure avec les jambes chargées, ne pas sprin
 
 ```
 Finisher — 3 rounds, rythme continu :
-20 Glute Bridge
-30 s Superman Hold
+25 Calf Raise (bodyweight)
+30 s Plank Hold
 ```
 
 ### Samedi 2026-10-03 · Simulation · test de bloc · 73' (budget 75')
@@ -203,54 +213,60 @@ Retour au calme (6') — 400 m de marche rapide puis respiration 4-6 allongé, 2
 ## 2026-W41 (lundi 2026-10-05)
 
 seed `3224906895` · révélation par défaut `2026-10-04T16:00:00.000Z` (dimanche 18:00 Paris)
-course et ergs de la semaine : **25.3 km** · répétitions sautées : 0
-**relâchements : hard_days_in_a_row:6**
+course et ergs de la semaine : **23.6 km** · répétitions sautées : 0
+**relâchements : movement_repeat_week:db_farmer_carry**
 
 ### Lundi 2026-10-05 · Intervalles · 56' (budget 60')
 
-squelette `H1_intervals` · bloc tiré `run_intervals:C` · intention **run** · RPE du jour **8.5** · course 2000 m
+squelette `H1_intervals` · bloc tiré `run_into_station` · intention **engine** · RPE du jour **8.5** · course 3135 m
 
-**strength · Force sur station · Sled Pull**
+**strength · Force sur station · KB Swings Russian**
 
 ```
 Échauffement (10') — 800 m course progressive, 10 leg swings / jambe, 10 air squats, 10 pompes, 2 × 20 s skipping.
 
 Every 2' × 8, en rotation :
-Impair · 25 m Sled Pull @ 100/75 kg
+Impair · 15 KB Swings Russian @ 24/16 kg
 Pair · 10 Box Step-ups lestés (2 × DB) (box 60/50 cm) @ 24/16 kg
-Women Pro / Men Pro : Sled Pull 125/100 kg
+Women Pro / Men Pro : KB Swings Russian 28/20 kg
 ```
 
-**wod · Intervalles · Shuttle Run** — *classement activé*
+**wod · 4 rounds · Run / Sled Pull** — *classement activé*
 
 ```
-10 rounds · repos 0:45 entre les répétitions
-200 m Shuttle Run
-Stimulus : RPE 8.5 — Allure 5 km ou plus vite, régularité entre répétitions. Cible Men : ≈ 1:12 par répétition.
+4 rounds for time (cap 27')
+650 m Run
+R1 · 30 m Sled Pull (75/50 kg)
+Pro 100/75 kg
+R2 · 35 m Burpee Broad Jumps
+R3 · 35 m Sled Push (100/75 kg)
+Pro 125/100 kg
+R4 · 500 m Row
+Stimulus : RPE 8.5 — Allure course à 90 % du 5 km, stations sans pause. Cible Men : ≈ 21:19, cap 27'.
 ```
-> Allure 5 km ou plus vite, régularité entre répétitions. Score : time.
+> Allure course à 90 % du 5 km, stations sans pause. Score : time.
 
 **finisher · Finisher**
 
 ```
 Finisher — 3 rounds, rythme continu :
-10 Single-Leg RDL poids du corps (par jambe)
-20 Glute Bridge
+15 Row en respiration nasale
+30 s Plank Hold
 ```
 
 ### Mardi 2026-10-06 · Force & stations · 58' (budget 60')
 
 squelette `H2_strength_stations` · bloc de travail écrit dans le squelette · RPE du jour **7.5** · course 0 m
 
-**strength · Force sur station · Back Squat**
+**strength · Force sur station · Goblet Squat**
 
 ```
 Échauffement (10') — 500 m rameur facile, 10 hip hinges à la barre à vide, 10 fentes / jambe, 10 pompes, 20 m d'ours.
 
 Every 3' × 5, en rotation :
-Impair · 6 Back Squat @ 100/70 kg
-Pair · 20 m Sandbag Carry @ 40/30 kg
-Women Pro / Men Pro : Back Squat 120/80 kg · Sandbag Carry 50/35 kg
+Impair · 12 Goblet Squat @ 24/16 kg
+Pair · 20 m Farmer Carry @ 24/16 kg
+Women Pro / Men Pro : Goblet Squat 28/20 kg · Farmer Carry 28/20 kg
 ```
 
 **wod · Force & stations · Row** — *classement activé*
@@ -260,23 +276,23 @@ Every 1'30 × 12, en rotation :
 Poste 1 · 60 s Row — allure tenable, ni sprint ni promenade
 Poste 2 · 60 s Sandbag Lunges @ 40/30 kg
 Poste 3 · 60 s SkiErg — allure tenable
-Poste 4 · 60 s KB Swings Russian @ 24/16 kg
-Women Pro / Men Pro : Sandbag Lunges 50/35 kg · KB Swings Russian 28/20 kg
+Poste 4 · 60 s Sandbag Carry @ 40/30 kg
+Women Pro / Men Pro : Sandbag Lunges 50/35 kg · Sandbag Carry 50/35 kg
 ```
 
 **finisher · Finisher**
 
 ```
 Finisher — 3 rounds, rythme continu :
-15 Bike Erg facile, respiration nasale
-30 s Superman Hold
+25 Calf Raise (bodyweight)
+40 m Farmer Carry
 ```
 
-### Mercredi 2026-10-07 · Course · 59' (budget 60')
+### Mercredi 2026-10-07 · Course · 58' (budget 60')
 
-squelette `H3_run` · bloc tiré `core_carry_finisher` · intention **core** · RPE du jour **8.5** · course 4900 m
+squelette `H3_run` · bloc de travail écrit dans le squelette · RPE du jour **8.5** · course 4000 m
 
-**strength · Course · Run**
+**wod · Course · Run** — *classement activé*
 
 ```
 Échauffement (12') — 1 km progressif, gammes (talons-fesses, montées de genoux, pas chassés) 2 × 20 m, 3 × 30 m d'accélérations.
@@ -285,22 +301,26 @@ Intervalles course — 5 × 800 m, repos 1:30
 Allure cible : allure 10 km − 10 s/km. L'écart entre le premier et le dernier intervalle reste sous 5 s.
 Autres variantes du cycle : 8 × 400 m · 3 × 1 600 m · 12 × 200 m shuttle
 ```
+> Séance chronométrée de bout en bout : compare avec ta dernière simulation.
 
-**wod · 5 rounds · Farmer Carry / Sit-ups / Shuttle Run** — *classement activé*
+**finisher · Finisher**
 
 ```
-5 rounds for time (cap 20')
-60 m Farmer Carry (20/16 kg)
-Pro 24/16 kg
-15 Sit-ups
-180 m Shuttle Run
-Stimulus : RPE 6 — Posture et gainage, jamais à l'échec. Cible Men : ≈ 15:40, cap 20'.
+Finisher — 3 rounds, rythme continu :
+25 Glute Bridge
+12 Dead Bug
 ```
-> Posture et gainage, jamais à l'échec. Score : time.
+
+**cooldown · Retour au calme**
+
+```
+Retour au calme (8') — 5' de rameur très facile, épaules relâchées.
+Étirements : chaîne postérieure assis 45 s · pigeon 45 s / côté · ouverture thoracique au mur 45 s / bras.
+```
 
 ### Jeudi 2026-10-08 · Engine · 56' (budget 60')
 
-squelette `H4_engine` · bloc tiré `engine_continuous` · intention **aerobic** · RPE du jour **6** · course 11400 m
+squelette `H4_engine` · bloc tiré `engine_continuous` · intention **aerobic** · RPE du jour **6** · course 9500 m
 
 **wod · Continu · Row / Run / Bike Erg** — *classement activé*
 
@@ -311,9 +331,9 @@ En continu 40' · rotation sans repos, score = distance totale
 500 m Row
 400 m Run
 1000 m Bike Erg
-200 m Sandbag Carry (30/20 kg)
-Pro 40/30 kg
-Stimulus : RPE 6 — Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget. Cible Men : ≈ 10723 m.
+200 m Farmer Carry (20/16 kg)
+Pro 24/16 kg
+Stimulus : RPE 6 — Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget. Cible Men : ≈ 10080 m.
 ```
 > Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget. Score : distance.
 
@@ -326,7 +346,7 @@ Retour au calme (6') — 400 m de marche rapide puis respiration 4-6 allongé, 2
 
 ### Vendredi 2026-10-09 · Course compromise · 58' (budget 60')
 
-squelette `H5_compromised` · bloc de travail écrit dans le squelette · RPE du jour **8** · course 3540 m
+squelette `H5_compromised` · bloc de travail écrit dans le squelette · RPE du jour **7.5** · course 3500 m
 
 **strength · Force sur station · Sandbag Carry**
 
@@ -344,15 +364,15 @@ Seule charge lourde de la semaine. Poussée continue, jamais en saccades.
 
 ```
 4 rounds :
-1. 90 s de station — 30 m Sandbag Lunges @ 40/30 kg
+1. 90 s de station — 30 Air Squats
    puis 700 m Run à allure cible (allure 5 km + 15 s/km)
-2. 90 s de station — 20 Wall Balls @ 9/6 kg
+2. 90 s de station — 20 Burpees
    puis 1000 m Run à allure cible (allure 5 km + 15 s/km)
-3. 90 s de station — 40 m Burpee Broad Jumps
+3. 90 s de station — 20 Box Step-ups lestés (2 × DB) (box 60/50 cm) @ 24/16 kg
    puis 600 m Run à allure cible (allure 5 km + 15 s/km)
-4. 90 s de station — 15 Box Jumps (box 60/50 cm)
+4. 90 s de station — 40 m Sandbag Carry @ 40/30 kg
    puis 900 m Run à allure cible (allure 5 km + 15 s/km)
-Women Pro / Men Pro : Sandbag Lunges 50/35 kg · Wall Balls 12/9 kg
+Women Pro / Men Pro : Sandbag Carry 50/35 kg
 Total de course : 3200 m. Tenir l'allure avec les jambes chargées, ne pas sprinter la station.
 ```
 
@@ -395,46 +415,41 @@ Retour au calme (6') — 400 m de marche rapide puis respiration 4-6 allongé, 2
 ## 2026-W48 (lundi 2026-11-23) — semaine de simulation complète
 
 seed `1751627452` · révélation par défaut `2026-11-22T17:00:00.000Z` (dimanche 18:00 Paris)
-course et ergs de la semaine : **30.5 km** · répétitions sautées : 0
-**relâchements : hard_days_in_a_row:6, movement_repeat_week:4**
+course et ergs de la semaine : **28.7 km** · répétitions sautées : 0
+**relâchements : movement_repeat_week:db_farmer_carry**
 
 ### Lundi 2026-11-23 · Intervalles · 56' (budget 60')
 
-squelette `H1_intervals` · bloc tiré `run_into_station` · intention **run** · RPE du jour **8.5** · course 2100 m
+squelette `H1_intervals` · bloc tiré `compromised_run` · intention **interval** · RPE du jour **8** · course 2600 m
 
-**strength · Force sur station · Sled Pull**
+**strength · Force sur station · KB Swings Russian**
 
 ```
 Échauffement (10') — 800 m course progressive, 10 leg swings / jambe, 10 air squats, 10 pompes, 2 × 20 s skipping.
 
 Every 2' × 8, en rotation :
-Impair · 25 m Sled Pull @ 100/75 kg
+Impair · 15 KB Swings Russian @ 24/16 kg
 Pair · 10 Box Step-ups lestés (2 × DB) (box 60/50 cm) @ 24/16 kg
-Women Pro / Men Pro : Sled Pull 125/100 kg
+Women Pro / Men Pro : KB Swings Russian 28/20 kg
 ```
 
-**wod · 4 rounds · Run / Sled Push** — *classement activé*
+**wod · 4 rounds · Sled Push / Run** — *classement activé*
 
 ```
-4 rounds for time (cap 24:30)
-450 m Run
-R1 · 90 m Sled Push (100/75 kg)
-Pro 125/100 kg
-R2 · 300 m Row
-R3 · 30 Wall Balls (6/4 kg)
-Pro 9/6 kg
-R4 · 150 m Farmer Carry (20/16 kg)
-Pro 24/16 kg
-Stimulus : RPE 8.5 — Allure course à 90 % du 5 km, stations sans pause. Cible Men : ≈ 19:22, cap 24:30.
+4 rounds for time (cap 27')
+40 m Sled Push (125/100 kg)
+Pro 150/125 kg
+650 m Run
+Stimulus : RPE 8 — Courir vite sur des jambes fatiguées : allure 5 km + 15 s/km. Cible Men : ≈ 21:26, cap 27'.
 ```
-> Allure course à 90 % du 5 km, stations sans pause. Score : time.
+> Courir vite sur des jambes fatiguées : allure 5 km + 15 s/km. Score : time.
 
 **finisher · Finisher**
 
 ```
 Finisher — 3 rounds, rythme continu :
-40 m Sandbag Carry
-20 Sit-ups
+10 Single-Leg RDL poids du corps (par jambe)
+20 Glute Bridge
 ```
 
 ### Mardi 2026-11-24 · Force & stations · 58' (budget 60')
@@ -467,15 +482,15 @@ Women Pro / Men Pro : Wall Balls 12/9 kg · Farmer Carry 28/20 kg
 
 ```
 Finisher — 3 rounds, rythme continu :
-15 Push-ups
-30 s Plank Hold
+20 Hollow Rocks
+40 s Superman Hold
 ```
 
-### Mercredi 2026-11-25 · Course · 59' (budget 60')
+### Mercredi 2026-11-25 · Course · 56' (budget 60')
 
-squelette `H3_run` · bloc tiré `core_carry_finisher` · intention **core** · RPE du jour **8.5** · course 5450 m
+squelette `H3_run` · bloc de travail écrit dans le squelette · RPE du jour **8.5** · course 3200 m
 
-**strength · Course · Run**
+**wod · Course · Run** — *classement activé*
 
 ```
 Échauffement (12') — 1 km progressif, gammes (talons-fesses, montées de genoux, pas chassés) 2 × 20 m, 3 × 30 m d'accélérations.
@@ -484,35 +499,39 @@ Intervalles course — 8 × 400 m, repos 1:00
 Allure cible : allure 5 km. L'écart entre le premier et le dernier intervalle reste sous 5 s.
 Autres variantes du cycle : 5 × 800 m · 3 × 1 600 m · 12 × 200 m shuttle
 ```
+> Séance chronométrée de bout en bout : compare avec ta dernière simulation.
 
-**wod · 3 rounds · Sandbag Carry / Sit-ups / Run** — *classement activé*
+**finisher · Finisher**
 
 ```
-3 rounds for time (cap 20:30)
-60 m Sandbag Carry (30/20 kg)
-Pro 40/30 kg
-15 Sit-ups
-750 m Run
-Stimulus : RPE 6 — Posture et gainage, jamais à l'échec. Cible Men : ≈ 16:05, cap 20:30.
+Finisher — 2 rounds, rythme continu :
+25 Row facile, respiration nasale
+40 s Superman Hold
 ```
-> Posture et gainage, jamais à l'échec. Score : time.
+
+**cooldown · Retour au calme**
+
+```
+Retour au calme (6') — 400 m de marche rapide puis respiration 4-6 allongé, 2'.
+Étirements : quadriceps debout 45 s / jambe · adducteurs en grenouille 45 s · psoas en fente basse 45 s / côté.
+```
 
 ### Jeudi 2026-11-26 · Engine · 58' (budget 60')
 
-squelette `H4_engine` · bloc tiré `engine_continuous` · intention **aerobic** · RPE du jour **6** · course 9500 m
+squelette `H4_engine` · bloc tiré `engine_continuous` · intention **aerobic** · RPE du jour **6** · course 9500 m · **relâchements : c_fallback:signature**
 
-**wod · Continu · Row / Run / Bike Erg** — *classement activé*
+**wod · Continu · SkiErg / Run / Bike Erg** — *classement activé*
 
 ```
 Échauffement (8') — 400 m course facile, 10 air squats, 10 pompes, 5 inchworms.
 
 En continu 40' · rotation sans repos, score = distance totale
-500 m Row
+500 m SkiErg
 400 m Run
 1000 m Bike Erg
 200 m Farmer Carry (20/16 kg)
 Pro 24/16 kg
-Stimulus : RPE 6 — Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget. Cible Men : ≈ 10080 m.
+Stimulus : RPE 6 — Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget. Cible Men : ≈ 9980 m.
 ```
 > Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget. Score : distance.
 
@@ -525,7 +544,7 @@ Retour au calme (8') — 600 m de footing très lent ou 5' de vélo facile, resp
 
 ### Vendredi 2026-11-27 · Course compromise · 58' (budget 60')
 
-squelette `H5_compromised` · bloc de travail écrit dans le squelette · RPE du jour **8** · course 3340 m
+squelette `H5_compromised` · bloc de travail écrit dans le squelette · RPE du jour **7.5** · course 3300 m
 
 **strength · Force sur station · Sled Pull**
 
@@ -543,15 +562,15 @@ Seule charge lourde de la semaine. Poussée continue, jamais en saccades.
 
 ```
 4 rounds :
-1. 90 s de station — 20 Wall Balls @ 9/6 kg
+1. 90 s de station — 20 Burpees
    puis 900 m Run à allure cible (allure 5 km + 15 s/km)
-2. 90 s de station — 15 Box Jumps (box 60/50 cm)
+2. 90 s de station — 40 m Sandbag Carry @ 40/30 kg
    puis 700 m Run à allure cible (allure 5 km + 15 s/km)
-3. 90 s de station — 40 m Burpee Broad Jumps
+3. 90 s de station — 20 Box Step-ups lestés (2 × DB) (box 60/50 cm) @ 24/16 kg
    puis 800 m Run à allure cible (allure 5 km + 15 s/km)
-4. 90 s de station — 20 Box Step-ups lestés (2 × DB) (box 60/50 cm) @ 24/16 kg
+4. 90 s de station — 15 Box Jumps (box 60/50 cm)
    puis 600 m Run à allure cible (allure 5 km + 15 s/km)
-Women Pro / Men Pro : Wall Balls 12/9 kg
+Women Pro / Men Pro : Sandbag Carry 50/35 kg
 Total de course : 3000 m. Tenir l'allure avec les jambes chargées, ne pas sprinter la station.
 ```
 
