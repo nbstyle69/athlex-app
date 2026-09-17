@@ -82,12 +82,25 @@ function makeDb(admin: SupabaseClient): ProgrammingDb {
   return {
     async listEnabledBoxes(): Promise<ProgrammingBox[]> {
       const REVEAL_COLS = 'auto_programming_reveal_mode, auto_programming_reveal_dow, auto_programming_reveal_time';
-      const read = (cols: string) => admin.from('boxes').select(cols).eq('auto_programming', true);
+      // `archived_at is null` ici et pas par policy : cette fonction tourne en
+      // service_role, qui contourne la RLS. Une box archivée ne doit plus être
+      // générée, quel que soit son flag (migration 20261224).
+      const read = (cols: string) => admin.from('boxes').select(cols)
+        .eq('auto_programming', true)
+        .is('archived_at', null);
+      // Base antérieure à 20261224 : `archived_at` n'existe pas, on relit sans.
+      const readSafe = async (cols: string) => {
+        const r = await read(cols);
+        if (r.error && (r.error.code === '42703' || r.error.code === 'PGRST204')) {
+          return await admin.from('boxes').select(cols).eq('auto_programming', true);
+        }
+        return r;
+      };
       // Colonnes de révélation absentes (base antérieure à 20261221) : `42703` / `PGRST204`,
       // on relit sans elles et `revealFromRow` rend le défaut J1.
-      let { data, error } = await read(`id, owner_id, auto_programming_tracks, ${REVEAL_COLS}`);
+      let { data, error } = await readSafe(`id, owner_id, auto_programming_tracks, ${REVEAL_COLS}`);
       if (error && (error.code === '42703' || error.code === 'PGRST204')) {
-        ({ data, error } = await read('id, owner_id, auto_programming_tracks'));
+        ({ data, error } = await readSafe('id, owner_id, auto_programming_tracks'));
       }
       fail('boxes', error);
       return ((data ?? []) as Record<string, unknown>[]).map((b) => ({
