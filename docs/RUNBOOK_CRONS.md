@@ -64,6 +64,36 @@ en-tête. Désactiver les deux :
 Contrôle sans effet, n'importe quel jour : exécuter la commande du job telle quelle. Hors
 samedi 08:00 Paris, la garde la rend inerte et `net._http_response` ne bouge pas.
 
+### Déployer la fonction
+
+```bash
+node scripts/deploy-edge.mjs generate-box-week
+```
+
+**Jamais `supabase functions deploy generate-box-week` en direct** : la commande
+échoue en `EISDIR` sans jamais téléverser le bundle. La CLI collecte les sources
+depuis l'entrée, suit la directive `@deno-types` et l'`import type` de `index.ts`
+vers `packages/wod-engine/src/index.ts`, puis ouvre les spécificateurs de ce
+fichier **tels quels, sans ajouter `.ts`** — et `packages/wod-engine/src/bank`
+est un répertoire. Ce n'est pas réparable dans le moteur : il faudrait des
+extensions `.ts` dans les imports, que TypeScript refuse, et corriger un seul
+spécificateur déplace l'échec sur `./catalog`.
+
+Le script déploie depuis une copie temporaire privée de ces deux lignes. Elles
+sont type-only, donc effacées à l'exécution : la fonction déployée est identique
+à ce que décrit le dépôt, qui garde son type-check.
+
+Le bundle du moteur, lui, est commité et doit être à jour **avant** le
+déploiement (`node packages/wod-engine/scripts/bundle-edge.mjs` ; le test
+`edge-bundle.test.ts` refuse un bundle périmé).
+
+`node scripts/deploy-edge.mjs generate-box-week --check` ne déploie rien et
+vérifie la source. Il échoue si `index.ts` se met à importer une **valeur** hors
+de son dossier : ce serait une vraie dépendance, que le script ne peut pas
+retirer sans casser la fonction. Les valeurs du moteur passent par
+`wod-engine.bundle.js`, voisin de l'entrée. `src/__tests__/deployEdge.test.ts`
+rejoue ce contrôle.
+
 ## `tournament-notifications-sweep`
 
 Décalé de 5 minutes après `tournament_activation_sweep` — et non planifié en

@@ -22,9 +22,16 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 // Le bundle est du JS ; ses types sont ceux du package source (type-check via
-// `deno check --sloppy-imports`, cf. __tests__/edge-bundle.test.ts). Directive
-// et import de types sont effacés à l'exécution : la fonction déployée ne
-// dépend que du bundle.
+// `deno check --sloppy-imports`, cf. __tests__/edge-bundle.test.ts).
+//
+// DÉPLOIEMENT : `node scripts/deploy-edge.mjs generate-box-week`, jamais
+// `supabase functions deploy` en direct. La directive `@deno-types` et
+// l'`import type` ci-dessous ne survivent pas au déploiement : la CLI Supabase
+// les suit vers les sources du moteur, dont elle ouvre les spécificateurs sans
+// ajouter `.ts`, et `packages/wod-engine/src/bank` est un répertoire — elle
+// échoue en `EISDIR` avant même de téléverser le bundle. Le script déploie une
+// copie sans ces deux lignes ; type-only, elles sont de toute façon effacées à
+// l'exécution, et la fonction déployée ne dépend que du bundle.
 // @deno-types="../../../packages/wod-engine/src/index.ts"
 import {
   BANK_V1, CATALOG_SNAPSHOT, bankFromRows, catalogFromRows, runWeekGeneration, revealFromRow, TRACKS,
