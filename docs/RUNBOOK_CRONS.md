@@ -18,28 +18,51 @@ pas ces jobs**. La liste ci-dessous est la référence pour les remonter.
 | `tournament_activation_sweep` | toutes les 15 min | `SELECT sync_tournament_activation()` |
 | `tournament-notifications-sweep` | min. 5, 20, 35, 50 | edge `tournament-notifications-cron` |
 | `weekly-owner-digest-monday` | lundi 07:00 UTC | edge `weekly-owner-digest` |
-| `generate-box-week-saturday` | **non créé** (désactivé par défaut) | edge `generate-box-week` |
+| `generate-box-week-cet` / `-cest` | sam. 07:00 / 06:00 UTC | edge `generate-box-week` |
 
 ## `generate-box-week` (programmation automatique, J1)
 
-Volontairement **absent** de `cron.job` : la fonction ne fait rien tant que le job n'existe
-pas, et aucune box n'a `auto_programming = true` avant le lot J2 (admin). Quand on l'activera,
-un seul passage par semaine suffit, avant la révélation du dimanche 18:00 Paris ; la fonction
-génère la semaine ISO **suivante**, est idempotente (`box_auto_programming_runs`) et refuse
-tout appel sans `x-cron-secret` valide.
+**Créé et actif depuis le 17/09/2026** (jobs 12 et 13), sur le modèle de
+`materialize-box-programming` : deux jobs couvrent les deux décalages, une garde
+`Europe/Paris` fait que seul celui du bon décalage agit. Cible : **samedi 08:00 Paris**,
+deux jours avant la révélation par défaut du dimanche 18:00.
+
+| Job | Cron (UTC) | Agit |
+| --- | --- | --- |
+| `generate-box-week-cest` | `0 6 * * 6` | de fin mars à fin octobre (UTC+2) |
+| `generate-box-week-cet` | `0 7 * * 6` | de fin octobre à fin mars (UTC+1) |
+
+La différence avec `materialize-box-programming` : là-bas la garde est dans la fonction SQL
+(`materialize_box_programming()` sort si l'heure de Paris n'est pas 18), ici l'appel est un
+`net.http_post` sans fonction SQL intermédiaire, donc la garde est **dans la commande du job** :
 
 ```sql
-SELECT cron.schedule(
-  'generate-box-week-saturday', '0 6 * * 6',   -- samedi 06:00 UTC
-  $$SELECT net.http_post(
+DO $guard$
+BEGIN
+  IF EXTRACT(ISODOW FROM (now() AT TIME ZONE 'Europe/Paris'))::int = 6
+     AND EXTRACT(HOUR  FROM (now() AT TIME ZONE 'Europe/Paris'))::int = 8 THEN
+    PERFORM net.http_post(
       url     := 'https://<ref>.supabase.co/functions/v1/generate-box-week',
-      headers := '{"Content-Type":"application/json","apikey":"<anon>","x-cron-secret":"<CRON_SECRET>"}'::jsonb,
-      body    := '{}'::jsonb)$$);
+      headers := jsonb_build_object(
+        'Authorization', '<Bearer …>', 'Content-Type', 'application/json',
+        'x-cron-secret', '<CRON_SECRET>'),
+      body    := '{}'::jsonb);
+  END IF;
+END $guard$;
 ```
+
+La fonction génère la semaine ISO **suivant celle du jour de l'appel** : un samedi pose donc la
+semaine qui commence le lundi 9 jours plus tard. Elle est idempotente
+(`box_auto_programming_runs`) — un second passage rend `kept` sans rien écrire — et refuse tout
+appel sans `x-cron-secret` valide.
 
 Régénérer une semaine à la main (les jours édités ou scorés sont conservés) :
 `POST {"regen":{"box_id":"…","track":"functional"}, "iso_year":2026, "iso_week":41}` avec le même
-en-tête. Désactiver : `SELECT cron.unschedule('generate-box-week-saturday');`.
+en-tête. Désactiver les deux :
+`SELECT cron.unschedule('generate-box-week-cest'), cron.unschedule('generate-box-week-cet');`.
+
+Contrôle sans effet, n'importe quel jour : exécuter la commande du job telle quelle. Hors
+samedi 08:00 Paris, la garde la rend inerte et `net._http_response` ne bouge pas.
 
 ## `tournament-notifications-sweep`
 
