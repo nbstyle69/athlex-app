@@ -16,6 +16,8 @@
 //   POST { "iso_year": 2026, "iso_week": 40 } → semaine cible explicite
 //   POST { "regen": { "box_id": "…", "track": "functional" } }
 //         → régénère (regen_counter + 1) ; les jours édités ou scorés restent.
+//   POST { "box_id": "…", "tracks": ["hybrid"] }
+//         → ne pose que ces pistes (∩ pistes actives) ; absent = toutes, inchangé.
 //
 // Le cron est DÉSACTIVÉ par défaut : voir docs/RUNBOOK_CRONS.md.
 // ------------------------------------------------------------------
@@ -51,6 +53,8 @@ interface Body {
   iso_year?: number;
   iso_week?: number;
   regen?: { box_id: string; track: Track };
+  /** pistes à générer, parmi functional | hybrid | musculation ; absent = toutes les pistes actives */
+  tracks?: string[];
 }
 
 const isTrack = (t: unknown): t is Track => typeof t === 'string' && (TRACKS as readonly string[]).includes(t);
@@ -201,6 +205,9 @@ serve(async (req: Request) => {
     let body: Body = {};
     try { body = (await req.json()) as Body; } catch { /* corps vide = défauts */ }
     if (body.regen && !isTrack(body.regen.track)) return json({ error: 'regen.track invalide' }, 400);
+    if (body.tracks !== undefined && (!Array.isArray(body.tracks) || !body.tracks.every(isTrack))) {
+      return json({ error: 'tracks invalide : tableau parmi functional | hybrid | musculation' }, 400);
+    }
 
     const [{ catalog, source: catalogSource }, { bank, source: bankSource }] = await Promise.all([loadCatalog(admin), loadBank(admin)]);
     const started = Date.now();
@@ -209,6 +216,7 @@ serve(async (req: Request) => {
       target: body.iso_year && body.iso_week ? { iso_year: body.iso_year, iso_week: body.iso_week } : undefined,
       regen: body.regen,
       only_box_id: body.box_id ?? body.regen?.box_id,
+      tracks: body.tracks as Track[] | undefined,
     });
     return json({
       ok: true,

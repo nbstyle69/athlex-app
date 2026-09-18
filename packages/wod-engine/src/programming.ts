@@ -294,6 +294,12 @@ export interface RunOptions {
   regen?: { box_id: string; track: Track };
   /** ne traiter que cette box */
   only_box_id?: string;
+  /**
+   * Ne générer que ces pistes, intersectées avec les pistes actives de la box.
+   * Absent = toutes les pistes actives, comportement inchangé. Vaut aussi pour la
+   * régénération. Le journal garde une ligne par piste traitée.
+   */
+  tracks?: Track[];
 }
 
 /**
@@ -310,7 +316,10 @@ export async function runWeekGeneration(
   const boxes = (await db.listEnabledBoxes()).filter((b) => !opts.only_box_id || b.id === opts.only_box_id);
   const out: WeekOutcome[] = [];
   for (const box of boxes) {
-    for (const track of box.tracks) {
+    // `tracks` demandées ∩ pistes actives de la box : une piste demandée mais
+    // inactive n'est pas générée, une piste active mais non demandée non plus.
+    const tracks = opts.tracks ? box.tracks.filter((t) => opts.tracks!.includes(t)) : box.tracks;
+    for (const track of tracks) {
       const base = { box_id: box.id, track, iso_year: target.iso_year, iso_week: target.iso_week };
       const existing = await db.getRun(box.id, track, target.iso_year, target.iso_week);
       const regen = !!opts.regen && opts.regen.box_id === box.id && opts.regen.track === track;

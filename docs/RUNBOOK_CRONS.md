@@ -58,7 +58,13 @@ appel sans `x-cron-secret` valide.
 
 Régénérer une semaine à la main (les jours édités ou scorés sont conservés) :
 `POST {"regen":{"box_id":"…","track":"functional"}, "iso_year":2026, "iso_week":41}` avec le même
-en-tête. Désactiver les deux :
+en-tête.
+
+Ne poser que certaines pistes : `"tracks": ["hybrid"]` dans le corps, tableau parmi
+`functional | hybrid | musculation`, intersecté avec les pistes actives de la box (une piste
+demandée mais inactive n'est pas générée). Absent = toutes les pistes actives, comportement
+inchangé. Vaut aussi avec `regen`. Le journal garde une ligne par piste traitée. C'est ce que le
+Manager appelle, un appel par piste cochée. Désactiver les deux :
 `SELECT cron.unschedule('generate-box-week-cest'), cron.unschedule('generate-box-week-cet');`.
 
 Contrôle sans effet, n'importe quel jour : exécuter la commande du job telle quelle. Hors

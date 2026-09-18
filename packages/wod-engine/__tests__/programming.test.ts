@@ -269,3 +269,58 @@ describe('runWeekGeneration (base en mémoire)', () => {
     expect(db.runs.filter((r) => r.box_id === 'autre')).toHaveLength(0);
   });
 });
+
+describe('runWeekGeneration — champ tracks (pistes à générer)', () => {
+  const TROIS: Track[] = ['functional', 'hybrid', 'musculation'];
+
+  it("tracks: ['hybrid'] sur une box à trois pistes : seules les séances Hybrid, une seule ligne de journal", async () => {
+    const db = fresh(TROIS);
+    const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW, tracks: ['hybrid'] });
+    expect(out.map((o) => [o.track, o.status])).toEqual([['hybrid', 'done']]);
+    expect(db.runs).toHaveLength(1);
+    expect(db.runs[0].track).toBe('hybrid');
+    expect(db.wods.length).toBeGreaterThan(0);
+    expect(db.wods.every((w) => w.track === 'hybrid')).toBe(true);
+  });
+
+  it("sans tracks : identique à aujourd'hui, toutes les pistes actives", async () => {
+    const avec = fresh(TROIS);
+    const sans = fresh(TROIS);
+    const outSans = await runWeekGeneration(sans, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
+    const outAvec = await runWeekGeneration(avec, CATALOG_SNAPSHOT, BANK_V1, { now: NOW, tracks: TROIS });
+    expect(outSans.map((o) => [o.track, o.status, o.inserted])).toEqual(outAvec.map((o) => [o.track, o.status, o.inserted]));
+    expect(sans.runs.map((r) => [r.track, r.seed, r.signatures])).toEqual(avec.runs.map((r) => [r.track, r.seed, r.signatures]));
+    expect(new Set(sans.wods.map((w) => w.track))).toEqual(new Set(TROIS));
+  });
+
+  it("une piste demandée mais inactive sur la box n'est pas générée : intersection, pas union", async () => {
+    const db = fresh(['functional', 'musculation']);
+    const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW, tracks: ['hybrid'] });
+    expect(out).toEqual([]);
+    expect(db.runs).toHaveLength(0);
+    expect(db.wods).toHaveLength(0);
+  });
+
+  it('régénération : tracks restreint aussi le chemin regen, les autres pistes ne sont pas touchées', async () => {
+    const db = fresh(TROIS);
+    await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
+    const avant = db.wods.filter((w) => w.track !== 'hybrid').map((w) => w.id).sort();
+    const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, {
+      now: NOW, regen: { box_id: BOX, track: 'hybrid' }, tracks: ['hybrid'],
+    });
+    expect(out.map((o) => [o.track, o.status, o.regen_counter])).toEqual([['hybrid', 'done', 1]]);
+    expect(db.runs.find((r) => r.track === 'hybrid')?.regen_counter).toBe(1);
+    expect(db.runs.filter((r) => r.track !== 'hybrid').every((r) => r.regen_counter === 0)).toBe(true);
+    expect(db.wods.filter((w) => w.track !== 'hybrid').map((w) => w.id).sort()).toEqual(avant);
+  });
+
+  it('régénération demandée sur une piste exclue de tracks : rien ne se passe', async () => {
+    const db = fresh(TROIS);
+    await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
+    const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, {
+      now: NOW, regen: { box_id: BOX, track: 'hybrid' }, tracks: ['functional'],
+    });
+    expect(out.map((o) => [o.track, o.status])).toEqual([['functional', 'kept']]);
+    expect(db.runs.every((r) => r.regen_counter === 0)).toBe(true);
+  });
+});

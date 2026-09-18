@@ -30411,7 +30411,8 @@ async function runWeekGeneration(db, catalog, bank, opts) {
   const boxes = (await db.listEnabledBoxes()).filter((b) => !opts.only_box_id || b.id === opts.only_box_id);
   const out = [];
   for (const box of boxes) {
-    for (const track of box.tracks) {
+    const tracks = opts.tracks ? box.tracks.filter((t) => opts.tracks.includes(t)) : box.tracks;
+    for (const track of tracks) {
       const base = { box_id: box.id, track, iso_year: target.iso_year, iso_week: target.iso_week };
       const existing = await db.getRun(box.id, track, target.iso_year, target.iso_week);
       const regen = !!opts.regen && opts.regen.box_id === box.id && opts.regen.track === track;
