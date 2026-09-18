@@ -138,8 +138,8 @@ function movementFromRow(r) {
     muscu: muscuFromRow(r)
   };
 }
-function catalogFromRows(rows) {
-  const movements = rows.map(movementFromRow);
+function catalogFromRows(rows2) {
+  const movements = rows2.map(movementFromRow);
   const version = movements.reduce((v, m) => Math.max(v, m.version), 0);
   return { version, movements };
 }
@@ -27276,10 +27276,11 @@ var TIME_BOUNDED = /* @__PURE__ */ new Set([
 function degradation(rounds) {
   return Math.min(1.3, 1 + 0.05 * (Math.max(1, rounds) - 1));
 }
+var BAND_CADENCE_FACTOR = { light: 1, medium: 1.2, heavy: 1.5 };
 function cadence(m, category) {
   const c = m.cadence_by_category[category];
   if (c === void 0) throw new Error(`cadence manquante : ${m.id} / ${category}`);
-  return c;
+  return c * (m.load_band ? BAND_CADENCE_FACTOR[m.load_band] : 1);
 }
 function movementSeconds(m, category, qty = m.qty) {
   return qty * cadence(m, category);
@@ -27596,7 +27597,9 @@ function footer(wod, b) {
   return out;
 }
 function titleOf(wod, b) {
-  const names = [...new Set(b.movements.filter((m) => m.round === void 0 || m.round === 1).map((m) => m.name))].slice(0, 3);
+  const all = [...new Set(b.movements.filter((m) => m.round === void 0 || m.round === 1).map((m) => m.name))];
+  const names = all.slice(0, 3);
+  if (all.length > 3) names[2] = `${names[2]} +${all.length - 3}`;
   const label = {
     amrap: `AMRAP ${wod.budget_min}`,
     for_time: b.scheme ? b.scheme.join("-") : "For time",
@@ -27852,6 +27855,7 @@ function candidateTiers(params, bank) {
   return tiers;
 }
 var TIER_ATTEMPTS = 50;
+var TIER_ATTEMPTS_EXPLICIT = 200;
 function pickUnit(slot2, m) {
   const want = slot2.pick.unit ?? (m.family === "erg" ? slot2.pick.erg_unit : void 0);
   if (want) return m.units_allowed.includes(want) ? want : null;
@@ -28498,8 +28502,11 @@ function generateBlocC(params, catalog, bank, seed) {
   const reasons = {};
   let tier = 0;
   let tierFails = 0;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    if (tierFails >= TIER_ATTEMPTS && tier < tiers.length - 1) {
+  const explicit = !!params.format && params.format !== "surprise";
+  const tierBudget = explicit ? TIER_ATTEMPTS_EXPLICIT : TIER_ATTEMPTS;
+  const maxAttempts = explicit ? MAX_ATTEMPTS + TIER_ATTEMPTS_EXPLICIT : MAX_ATTEMPTS;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (tierFails >= tierBudget && tier < tiers.length - 1) {
       tier++;
       tierFails = 0;
     }
@@ -28519,7 +28526,7 @@ function generateBlocC(params, catalog, bank, seed) {
       throw e;
     }
   }
-  throw new NoValidWod(`Aucun WOD valide apr\xE8s ${MAX_ATTEMPTS} tirages`, reasons);
+  throw new NoValidWod(`Aucun WOD valide apr\xE8s ${maxAttempts} tirages`, reasons);
 }
 
 // packages/wod-engine/src/profile.ts
@@ -28575,6 +28582,11 @@ var WEIGHTED_BODYWEIGHT_RATIO = 0.1;
 var TEMPO_311 = "3-1-1";
 var TEMPO_311_SECONDS_PER_REP = 5;
 var SCHEMES = {
+  // Barème des repos : main = polyarticulaire principal, other = tout le reste.
+  // Le rôle `core` (gainage) est à part et plafonné à 60 s (30 s en endurance),
+  // voir `lineFor` : un gainage n'a pas besoin de deux minutes, et c'est ce
+  // qu'un coach ferait. Validé par Nab le 18/09/2026 — une carte Tronc en
+  // Prise de muscle affiche donc 60 s partout, ce n'est pas une anomalie.
   hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rpe: 8, rir: "derni\xE8re s\xE9rie \xE0 1-2 reps de l'\xE9chec" },
   force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rpe: 8, rir: "RIR 2, derni\xE8re s\xE9rie RPE 9" },
   endurance: { sets: { main: 3, other: 3 }, sets_min: 2, sets_max: 5, rest: { main: 40, other: 40 }, rpe: 7, rir: "rythme continu, aucune s\xE9rie \xE0 l'\xE9chec" }
@@ -28754,11 +28766,12 @@ var REPEAT_PENALTY = 4;
 function priorityFor(m, equipment) {
   return equipment === "none" ? m.muscu.priority_bodyweight ?? m.muscu.priority : m.muscu.priority;
 }
+var PRIORITY_RANKS = { none: 3, box: 3, gym: 3 };
 function choose(ctx, list, role) {
   const sansMateriel = ctx.params.equipment === "none";
   if (role === "main_compound") {
     const rangs = [...new Set(list.map((m) => priorityFor(m, ctx.params.equipment)))].sort((a, b) => a - b);
-    const gardees = new Set(sansMateriel ? rangs.slice(0, 3) : rangs.slice(0, 1));
+    const gardees = new Set(rangs.slice(0, PRIORITY_RANKS[ctx.params.equipment]));
     list = list.filter((m) => gardees.has(priorityFor(m, ctx.params.equipment)));
   }
   const recents = sansMateriel ? new Set(ctx.params.recent_exercise_ids ?? []) : /* @__PURE__ */ new Set();
@@ -28772,26 +28785,27 @@ function pickSlot(ctx, slot2, index, picked, target) {
   const prev = picked.length ? picked[picked.length - 1].m.muscu.muscle_primary : null;
   const steps = [
     [null, { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: true }],
+    ["semaine", { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: false }],
     // geste imposé (M4) : on garde le groupe avant de lâcher l'objectif ou le rôle
-    [slot2.groups ? "slot_objective" : null, { ids: true, unilateral: true, role: true, objective: false, muscles: slotMuscles, week: true }],
-    [slot2.groups ? "slot_role" : null, { ids: true, unilateral: true, role: false, objective: false, muscles: slotMuscles, week: true }],
-    [slot2.ids || slot2.groups ? "slot_ids" : null, { ids: false, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: true }],
-    [slot2.unilateral ? "slot_unilateral" : null, { ids: false, unilateral: false, role: true, objective: true, muscles: slotMuscles, week: true }],
-    ["slot_role", { ids: false, unilateral: false, role: false, objective: true, muscles: slotMuscles, week: true }],
-    ["slot_objective", { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles, week: true }]
+    [slot2.groups ? "slot_objective" : null, { ids: true, unilateral: true, role: true, objective: false, muscles: slotMuscles, week: false }],
+    [slot2.groups ? "slot_role" : null, { ids: true, unilateral: true, role: false, objective: false, muscles: slotMuscles, week: false }],
+    [slot2.ids || slot2.groups ? "slot_ids" : null, { ids: false, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: false }],
+    [slot2.unilateral ? "slot_unilateral" : null, { ids: false, unilateral: false, role: true, objective: true, muscles: slotMuscles, week: false }],
+    ["slot_role", { ids: false, unilateral: false, role: false, objective: true, muscles: slotMuscles, week: false }],
+    ["slot_objective", { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles, week: false }]
   ];
-  steps.push(["semaine", { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles, week: false }]);
   if (!slot2.optional) {
     const wider = TARGET_MUSCLES[target].filter((mu) => !slotMuscles.includes(mu) && !ctx.excludedMuscles.has(mu));
-    if (wider.length) steps.push(["slot_muscle", { ids: false, unilateral: false, role: true, objective: true, muscles: wider, week: true }]);
-    if (wider.length) steps.push(["slot_muscle", { ids: false, unilateral: false, role: false, objective: false, muscles: wider, week: true }]);
+    if (wider.length) steps.push(["slot_muscle", { ids: false, unilateral: false, role: true, objective: true, muscles: wider, week: false }]);
+    if (wider.length) steps.push(["slot_muscle", { ids: false, unilateral: false, role: false, objective: false, muscles: wider, week: false }]);
   }
   for (const [i, [relax, f]] of steps.entries()) {
     if (i > 0 && relax === null) continue;
     const list = candidates(ctx, slot2, f, picked, prev);
     if (!list.length) continue;
     const m = choose(ctx, list, slot2.role);
-    if (relax) ctx.relax.add(relax === "semaine" ? `semaine:${m.id}` : relax);
+    if (relax && relax !== "semaine") ctx.relax.add(relax);
+    if (i > 0 && !weekAllowed(ctx, m, slot2)) ctx.relax.add(`semaine:${m.id}`);
     const required = !!slot2.groups && f.ids && !slot2.optional;
     return { m, role: slot2.role, objective: objectiveFor(m, ctx.params.objective) ?? "hypertrophie", optional: !!slot2.optional, slotIndex: index, ...required ? { required } : {} };
   }
@@ -30331,10 +30345,10 @@ function weekSeed(box_id, track, iso_year, iso_week, regen_counter) {
 function functionalWeekRows(week, ctx) {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
   const publishAt = (date) => publishAtFor(date, ctx.iso_year, ctx.iso_week, ctx.reveal);
-  const rows = [];
+  const rows2 = [];
   for (const s of week.sessions) {
     for (const b of s.blocks) {
-      rows.push({
+      rows2.push({
         box_id: ctx.box_id,
         created_by: ctx.created_by,
         title: b.title,
@@ -30361,7 +30375,7 @@ function functionalWeekRows(week, ctx) {
       });
     }
   }
-  return rows;
+  return rows2;
 }
 function muscuWeekRows(week, ctx) {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
@@ -30429,7 +30443,7 @@ async function runWeekGeneration(db, catalog, bank, opts) {
           iso_week: target.iso_week,
           reveal: box.reveal
         };
-        let rows;
+        let rows2;
         let signatures;
         let relaxations;
         if (track === "functional" || track === "hybrid") {
@@ -30439,12 +30453,12 @@ async function runWeekGeneration(db, catalog, bank, opts) {
             recent_signatures: recent,
             track
           }, catalog, bank, seed);
-          rows = functionalWeekRows(week, ctx);
+          rows2 = functionalWeekRows(week, ctx);
           signatures = week.signatures;
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];
         } else {
           const week = generateMuscuWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
-          rows = muscuWeekRows(week, ctx);
+          rows2 = muscuWeekRows(week, ctx);
           signatures = week.days.map((d) => d.wod.signature);
           relaxations = week.relaxations;
         }
@@ -30453,7 +30467,7 @@ async function runWeekGeneration(db, catalog, bank, opts) {
         const toDelete = previous.filter((r) => !keptDates.has(r.scheduled_date)).map((r) => r.id);
         if (toDelete.length) await db.deleteRows(toDelete);
         const keptIds = previous.filter((r) => keptDates.has(r.scheduled_date)).map((r) => r.id);
-        const inserts = rows.filter((r) => !keptDates.has(r.scheduled_date));
+        const inserts = rows2.filter((r) => !keptDates.has(r.scheduled_date));
         const ids = inserts.length ? await db.insertRows(inserts) : [];
         await db.updateRun(run.id, { status: "done", error: null, wod_ids: [...keptIds, ...ids], signatures, relaxations, seed, regen_counter });
         out.push({ ...base, status: "done", regen_counter, inserted: ids.length, kept_dates: [...keptDates].sort(), deleted: toDelete.length });
@@ -30466,8 +30480,156 @@ async function runWeekGeneration(db, catalog, bank, opts) {
   }
   return out;
 }
+
+// packages/wod-engine/src/bank/feasibility.ts
+var FEASIBILITY = [
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 8, intention: "mixed", feasible: true },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 8, intention: "gym", feasible: true },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 8, intention: "force", feasible: false },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 12, intention: "mixed", feasible: false },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 12, intention: "gym", feasible: false },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 12, intention: "force", feasible: false },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 8, intention: "mixed", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 8, intention: "cardio", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 8, intention: "gym", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 12, intention: "mixed", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 12, intention: "cardio", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 12, intention: "gym", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 12, intention: "mixed", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 12, intention: "cardio", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 15, intention: "mixed", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 15, intention: "cardio", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 20, intention: "cardio", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 12, intention: "mixed", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 12, intention: "force", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 15, intention: "mixed", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 15, intention: "force", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 20, intention: "force", feasible: true },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 15, intention: "mixed", feasible: false },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 15, intention: "cardio", feasible: false },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 20, intention: "mixed", feasible: false },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 20, intention: "cardio", feasible: false },
+  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 20, intention: "cardio", feasible: true },
+  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 30, intention: "mixed", feasible: false },
+  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 30, intention: "cardio", feasible: false },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 12, intention: "mixed", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 12, intention: "gym", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 12, intention: "force", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 15, intention: "mixed", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 15, intention: "gym", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 15, intention: "force", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 20, intention: "gym", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 20, intention: "force", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 15, intention: "mixed", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 15, intention: "cardio", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 15, intention: "force", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 20, intention: "cardio", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 20, intention: "force", feasible: true },
+  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 10, intention: "mixed", feasible: true },
+  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 10, intention: "gym", feasible: true },
+  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 15, intention: "mixed", feasible: false },
+  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 15, intention: "gym", feasible: false },
+  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 10, intention: "mixed", feasible: true },
+  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 10, intention: "force", feasible: true },
+  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 15, intention: "mixed", feasible: true },
+  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 15, intention: "force", feasible: true },
+  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 8, intention: "cardio", feasible: true },
+  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 8, intention: "gym", feasible: false },
+  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 10, intention: "cardio", feasible: true },
+  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 10, intention: "gym", feasible: false },
+  { id: "heavy_couplet", discipline: "functional", format: "rounds_for_time", budget_min: 10, intention: "force", feasible: true },
+  { id: "heavy_couplet", discipline: "functional", format: "rounds_for_time", budget_min: 15, intention: "force", feasible: true },
+  { id: "engine_long_amrap", discipline: "functional", format: "amrap", budget_min: 20, intention: "cardio", feasible: true },
+  { id: "engine_long_amrap", discipline: "functional", format: "amrap", budget_min: 30, intention: "cardio", feasible: true },
+  { id: "gym_density", discipline: "functional", format: "emom", budget_min: 10, intention: "gym", feasible: true },
+  { id: "gym_density", discipline: "functional", format: "emom", budget_min: 15, intention: "gym", feasible: true },
+  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 20, intention: "cardio", feasible: true },
+  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 30, intention: "mixed", feasible: true },
+  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 30, intention: "cardio", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "interval", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "engine", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "run", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "interval", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "engine", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "run", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 45, intention: "interval", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 45, intention: "engine", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 45, intention: "run", feasible: true },
+  { id: "stations_interval", discipline: "hybrid", format: "stations", budget_min: 20, intention: "interval", feasible: true },
+  { id: "stations_interval", discipline: "hybrid", format: "stations", budget_min: 30, intention: "interval", feasible: true },
+  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 15, intention: "interval", feasible: true },
+  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 15, intention: "engine", feasible: true },
+  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 20, intention: "interval", feasible: true },
+  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 20, intention: "engine", feasible: true },
+  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 20, intention: "engine", feasible: false },
+  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 20, intention: "aerobic", feasible: false },
+  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 30, intention: "engine", feasible: false },
+  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 30, intention: "aerobic", feasible: false },
+  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 15, intention: "force", feasible: false },
+  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 15, intention: "interval", feasible: false },
+  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 20, intention: "force", feasible: false },
+  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 20, intention: "interval", feasible: false },
+  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "interval", feasible: true },
+  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "run", feasible: true },
+  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "interval", feasible: true },
+  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "run", feasible: true },
+  { id: "half_sim", discipline: "hybrid", format: "rounds_for_time", budget_min: 15, intention: "interval", feasible: false },
+  { id: "half_sim", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "interval", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 20, intention: "aerobic", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 30, intention: "aerobic", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 35, intention: "aerobic", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 40, intention: "aerobic", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 45, intention: "aerobic", feasible: true },
+  { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 10, intention: "core", feasible: true },
+  { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 15, intention: "core", feasible: true },
+  { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "core", feasible: true },
+  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 10, intention: "run", feasible: false },
+  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 15, intention: "run", feasible: true },
+  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 20, intention: "run", feasible: true },
+  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", budget_min: 30, intention: "aerobic", feasible: false },
+  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", budget_min: 35, intention: "aerobic", feasible: false },
+  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", budget_min: 40, intention: "aerobic", feasible: false }
+];
+
+// packages/wod-engine/src/feasibility.ts
+var FORMAT_CHOICE_COVERS = {
+  amrap: ["amrap"],
+  for_time: ["for_time", "rounds_for_time", "ladder"],
+  emom: ["emom", "death_by"],
+  chipper: ["chipper"],
+  stations: ["stations", "continuous"],
+  interval: ["interval", "tabata"]
+};
+var CHOICES = Object.keys(FORMAT_CHOICE_COVERS);
+function rows(discipline) {
+  return FEASIBILITY.filter((r) => r.discipline === discipline && r.feasible);
+}
+function formatsOfferedFor(discipline) {
+  const served = new Set(rows(discipline).map((r) => r.format));
+  return ["surprise", ...CHOICES.filter((c) => FORMAT_CHOICE_COVERS[c].some((f) => served.has(f)))];
+}
+function feasibleFormats(discipline, budget_min, intention) {
+  const served = new Set(rows(discipline).filter((r) => r.budget_min === budget_min && r.intention === intention).map((r) => r.format));
+  const out = new Set(CHOICES.filter((c) => FORMAT_CHOICE_COVERS[c].some((f) => served.has(f))));
+  if (served.size) out.add("surprise");
+  return out;
+}
+function feasibleDurations(discipline, intention, format = "surprise") {
+  const covers = format === "surprise" ? null : new Set(FORMAT_CHOICE_COVERS[format]);
+  return new Set(rows(discipline).filter((r) => r.intention === intention && (!covers || covers.has(r.format))).map((r) => r.budget_min));
+}
+function combinationFeasible(discipline, budget_min, intention, format) {
+  return feasibleFormats(discipline, budget_min, intention).has(format);
+}
 export {
   AFTER_CLASS_DURATIONS,
+  BAND_CADENCE_FACTOR,
   BANK_V1,
   BANK_VERSION,
   BEGINNER_LONG_BUDGET_MIN,
@@ -30491,8 +30653,10 @@ export {
   EQUIPMENT_FALLBACK,
   EQUIPMENT_LABEL,
   FAMILY_CAP_FACTOR,
+  FEASIBILITY,
   FINISHERS,
   FINISHER_SIGNATURE_PREFIX,
+  FORMAT_CHOICE_COVERS,
   FUNCTIONAL_CATEGORIES,
   FUNCTIONAL_SKELETONS,
   H1_intervals,
@@ -30539,6 +30703,7 @@ export {
   NO_SQUAT_TARGETS,
   NoValidWod,
   OBJECTIVE_LABEL,
+  PRIORITY_RANKS,
   PROGRAMMING_VERSION,
   RACK_ONLY_IDS,
   RECENT_WEEKS,
@@ -30586,14 +30751,18 @@ export {
   carriesIntention,
   catalogFromRows,
   categoriesFor,
+  combinationFeasible,
   deathByMinute,
   engineShare,
   estimateAll,
   estimateBlock,
   estimateDuration,
   exerciseLine,
+  feasibleDurations,
+  feasibleFormats,
   finisherSignature,
   forceBand,
+  formatsOfferedFor,
   functionalRef,
   functionalWeekRows,
   generateBlocC,

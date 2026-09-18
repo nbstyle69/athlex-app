@@ -276,6 +276,13 @@ function candidateTiers(params: GenerateParams, bank: SkeletonBank): Array<{ lis
 
 /** Tirages consécutifs ratés sur un palier avant de passer au palier plus relâché. */
 export const TIER_ATTEMPTS = 50;
+/**
+ * Même budget quand l'athlète a CHOISI un format (G1). Avec 50 essais, un palier
+ * exact à candidat unique — `triplet_rounds_for_time` en Force sur 20 min —
+ * abandonnait trois fois sur quatre avant d'avoir trouvé une composition qui
+ * tient la durée, et un EMOM sortait à la place d'un For time demandé.
+ */
+export const TIER_ATTEMPTS_EXPLICIT = 200;
 
 // ─── Tirage des mouvements ───────────────────────────────────────────────────
 
@@ -983,8 +990,14 @@ export function generateBlocC(params: GenerateParams, catalog: Catalog, bank: Sk
   const reasons: Record<string, number> = {};
   let tier = 0;
   let tierFails = 0;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    if (tierFails >= TIER_ATTEMPTS && tier < tiers.length - 1) { tier++; tierFails = 0; }
+  // Format explicite : le palier exact reçoit son propre budget EN PLUS du
+  // total, sinon il consommerait tout et le relâchement n'aurait plus lieu —
+  // l'athlète recevrait une erreur là où l'écran promet « voici un EMOM ».
+  const explicit = !!params.format && params.format !== 'surprise';
+  const tierBudget = explicit ? TIER_ATTEMPTS_EXPLICIT : TIER_ATTEMPTS;
+  const maxAttempts = explicit ? MAX_ATTEMPTS + TIER_ATTEMPTS_EXPLICIT : MAX_ATTEMPTS;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (tierFails >= tierBudget && tier < tiers.length - 1) { tier++; tierFails = 0; }
     const { list, relaxations } = tiers[tier];
     const sk = rng.pick(list);
     try {
@@ -997,5 +1010,5 @@ export function generateBlocC(params: GenerateParams, catalog: Catalog, bank: Sk
       throw e;
     }
   }
-  throw new NoValidWod(`Aucun WOD valide après ${MAX_ATTEMPTS} tirages`, reasons);
+  throw new NoValidWod(`Aucun WOD valide après ${maxAttempts} tirages`, reasons);
 }

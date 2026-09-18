@@ -78,6 +78,11 @@ interface Scheme {
   rir: string;
 }
 export const SCHEMES: Record<MuscuObjective, Scheme> = {
+  // Barème des repos : main = polyarticulaire principal, other = tout le reste.
+  // Le rôle `core` (gainage) est à part et plafonné à 60 s (30 s en endurance),
+  // voir `lineFor` : un gainage n'a pas besoin de deux minutes, et c'est ce
+  // qu'un coach ferait. Validé par Nab le 18/09/2026 — une carte Tronc en
+  // Prise de muscle affiche donc 60 s partout, ce n'est pas une anomalie.
   hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rpe: 8, rir: 'dernière série à 1-2 reps de l\'échec' },
   force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rpe: 8, rir: 'RIR 2, dernière série RPE 9' },
   endurance: { sets: { main: 3, other: 3 }, sets_min: 2, sets_max: 5, rest: { main: 40, other: 40 }, rpe: 7, rir: 'rythme continu, aucune série à l\'échec' },
@@ -377,11 +382,21 @@ export function priorityFor(m: { muscu: { priority: number; priority_bodyweight:
  * jamais être interdits : sur un muscle qui n'a qu'un candidat, mieux vaut le
  * répéter que rendre une séance vide.
  */
+/**
+ * Rangs de priorité en concurrence sur le slot principal, par matériel.
+ * Un seul rang rend le slot déterministe : mesuré le 18/09/2026, `bench_press`
+ * sortait dans 100 % des séances Push en Box comme en Salle, et Jambes / Force
+ * ne produisait que deux séances distinctes sur cinquante. La mémoire des dix
+ * dernières signatures n'y change rien : elle fait retirer, mais le slot retire
+ * toujours la même chose. Objet mutable pour que les mesures le fassent varier.
+ */
+export const PRIORITY_RANKS: Record<MuscuEquipment, number> = { none: 3, box: 3, gym: 3 };
+
 function choose(ctx: Ctx, list: Mv[], role: MuscuSlotRole): Mv {
   const sansMateriel = ctx.params.equipment === 'none';
   if (role === 'main_compound') {
     const rangs = [...new Set(list.map((m) => priorityFor(m, ctx.params.equipment)))].sort((a, b) => a - b);
-    const gardees = new Set(sansMateriel ? rangs.slice(0, 3) : rangs.slice(0, 1));
+    const gardees = new Set(rangs.slice(0, PRIORITY_RANKS[ctx.params.equipment]));
     list = list.filter((m) => gardees.has(priorityFor(m, ctx.params.equipment)));
   }
   const recents = sansMateriel ? new Set(ctx.params.recent_exercise_ids ?? []) : new Set<string>();
@@ -395,30 +410,38 @@ function choose(ctx: Ctx, list: Mv[], role: MuscuSlotRole): Mv {
 function pickSlot(ctx: Ctx, slot: MuscuSlot, index: number, picked: Picked[], target: MuscuTarget): Picked | null {
   const slotMuscles = Array.isArray(slot.muscle) ? slot.muscle : [slot.muscle];
   const prev = picked.length ? picked[picked.length - 1].m.muscu.muscle_primary : null;
+  // A2 : l'anti-répétition hebdomadaire n'est respectée QUE sur le cran exact.
+  // C'est une préférence, pas une règle de séance : dès qu'il faut relâcher
+  // quoi que ce soit de structurel (geste imposé, rôle, objectif, muscle), elle
+  // s'efface d'abord — sinon un jour Pull perdait son tirage horizontal (M4)
+  // parce qu'un rowing avait servi de bonus la veille. Mesuré le 18/09/2026 :
+  // cinq semaines sur 52 sans rowing le jour Pull. Le relâchement nomme
+  // l'exercice répété, il ne se tait pas (`semaine:<id>`, posé plus bas).
   const steps: Array<[string | null, Filter]> = [
     [null, { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: true }],
+    ['semaine', { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: false }],
     // geste imposé (M4) : on garde le groupe avant de lâcher l'objectif ou le rôle
-    [slot.groups ? 'slot_objective' : null, { ids: true, unilateral: true, role: true, objective: false, muscles: slotMuscles, week: true }],
-    [slot.groups ? 'slot_role' : null, { ids: true, unilateral: true, role: false, objective: false, muscles: slotMuscles, week: true }],
-    [slot.ids || slot.groups ? 'slot_ids' : null, { ids: false, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: true }],
-    [slot.unilateral ? 'slot_unilateral' : null, { ids: false, unilateral: false, role: true, objective: true, muscles: slotMuscles, week: true }],
-    ['slot_role', { ids: false, unilateral: false, role: false, objective: true, muscles: slotMuscles, week: true }],
-    ['slot_objective', { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles, week: true }],
+    [slot.groups ? 'slot_objective' : null, { ids: true, unilateral: true, role: true, objective: false, muscles: slotMuscles, week: false }],
+    [slot.groups ? 'slot_role' : null, { ids: true, unilateral: true, role: false, objective: false, muscles: slotMuscles, week: false }],
+    [slot.ids || slot.groups ? 'slot_ids' : null, { ids: false, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: false }],
+    [slot.unilateral ? 'slot_unilateral' : null, { ids: false, unilateral: false, role: true, objective: true, muscles: slotMuscles, week: false }],
+    ['slot_role', { ids: false, unilateral: false, role: false, objective: true, muscles: slotMuscles, week: false }],
+    ['slot_objective', { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles, week: false }],
   ];
-  // A2 : l'anti-répétition hebdomadaire se relâche en dernier, après tout le
-  // reste — et le relâchement nomme l'exercice répété, il ne se tait pas.
-  steps.push(['semaine', { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles, week: false }]);
   if (!slot.optional) {
     const wider = TARGET_MUSCLES[target].filter((mu) => !slotMuscles.includes(mu) && !ctx.excludedMuscles.has(mu));
-    if (wider.length) steps.push(['slot_muscle', { ids: false, unilateral: false, role: true, objective: true, muscles: wider, week: true }]);
-    if (wider.length) steps.push(['slot_muscle', { ids: false, unilateral: false, role: false, objective: false, muscles: wider, week: true }]);
+    if (wider.length) steps.push(['slot_muscle', { ids: false, unilateral: false, role: true, objective: true, muscles: wider, week: false }]);
+    if (wider.length) steps.push(['slot_muscle', { ids: false, unilateral: false, role: false, objective: false, muscles: wider, week: false }]);
   }
   for (const [i, [relax, f]] of steps.entries()) {
     if (i > 0 && relax === null) continue;
     const list = candidates(ctx, slot, f, picked, prev);
     if (!list.length) continue;
     const m = choose(ctx, list, slot.role);
-    if (relax) ctx.relax.add(relax === 'semaine' ? `semaine:${m.id}` : relax);
+    // Le cran « semaine » ne se trace que si l'exercice retenu répète vraiment ;
+    // un cran structurel plus bas qui répète aussi est nommé de la même façon.
+    if (relax && relax !== 'semaine') ctx.relax.add(relax);
+    if (i > 0 && !weekAllowed(ctx, m, slot)) ctx.relax.add(`semaine:${m.id}`);
     const required = !!slot.groups && f.ids && !slot.optional;
     return { m, role: slot.role, objective: objectiveFor(m, ctx.params.objective) ?? 'hypertrophie', optional: !!slot.optional, slotIndex: index, ...(required ? { required } : {}) };
   }

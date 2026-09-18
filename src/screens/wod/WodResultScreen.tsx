@@ -35,8 +35,11 @@ import { maskTimeInput, timeStringToSeconds } from '../../utils/tournamentUtils'
 import { buildFullSeqBlockFromWOD } from '../../utils/wodToTimer';
 import {
   CATEGORY_LABEL, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES,
+  TIME_BOUNDED,
 } from '../../../packages/wod-engine/src';
 import type { Category, GeneratedMovement, GeneratedWod, MuscuWod } from '../../../packages/wod-engine/src';
+import type { SkeletonFormat } from '../../../packages/wod-engine/src';
+import { FORMATS, INTENTIONS } from './wodGeneratorOptions';
 import {
   GenerateResult, PerformedExercise, ScoreInputType, ScoreSubmission, ScreenParams, addToWhiteboard, editorFieldsOf,
   isMuscuWod, redraw, saveGeneratedWod, scoreInputTypeFor, setFavorite, submitGeneratedScore, submitMuscuScore,
@@ -117,6 +120,27 @@ export default function WodResultScreen() {
   const screen = route.params.screen;
   const muscu: MuscuWod | null = isMuscuWod(wod) ? wod : null;
   const metcon: GeneratedWod | null = isMuscuWod(wod) ? null : wod;
+  // G3 : un EMOM, un AMRAP, une séance de séries sont bornés par leur durée —
+  // afficher « Cap » dessus est faux. « Cap » ne vaut que pour les formats
+  // scorés au temps (For time, chipper…), où c'est un plafond à ne pas franchir.
+  const borneParDuree = metcon ? TIME_BOUNDED.has(metcon.format) : true;
+
+  // G1 : le format demandé a été relâché par le moteur (aucun squelette de ce
+  // format n'a abouti sur cette durée × intention). On le dit, on ne laisse pas
+  // croire que le choix a été respecté. Le moteur trace `format` dans ses
+  // relâchements ; l'écran connaît la demande par `screen`.
+  const FORMAT_OBTENU: Record<SkeletonFormat, string> = {
+    amrap: 'AMRAP', for_time: 'For time', rounds_for_time: 'Rounds for time', chipper: 'Chipper', ladder: 'Ladder',
+    emom: 'EMOM', death_by: 'Death by', tabata: 'Tabata', interval: 'Intervalles', stations: 'Stations', continuous: 'Continu',
+  };
+  const formatRelache = (() => {
+    if (!metcon || screen.discipline === 'musculation') return null;
+    const demande = screen.format;
+    if (!demande || demande === 'surprise' || !metcon.generator.relaxations.includes('format')) return null;
+    const fmt = FORMATS.find((f) => f.key === demande)?.label ?? demande;
+    const intention = INTENTIONS[metcon.discipline].find((i) => i.key === metcon.intention)?.label ?? metcon.intention;
+    return `Aucun ${fmt} ne tient en ${intention} sur ${metcon.budget_min} min — voici un ${FORMAT_OBTENU[metcon.format]}.`;
+  })();
   const accent = muscu ? MUSCU_BLUE : wod.discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;
   const categories: readonly Category[] = wod.discipline === 'hybrid' ? HYBRID_CATEGORIES : FUNCTIONAL_CATEGORIES;
 
@@ -329,6 +353,11 @@ export default function WodResultScreen() {
       </View>
 
       <ScrollView contentContainerStyle={[S.content, { paddingBottom: bottomBarPadding + 150 }]} showsVerticalScrollIndicator={false}>
+        {formatRelache && (
+          <GlassCard radius={12} style={{ marginBottom: 12, padding: 12 }} testID="wodresult-format-relache">
+            <Text style={{ fontSize: 13, color: theme.text, fontWeight: '600' }}>{formatRelache}</Text>
+          </GlassCard>
+        )}
         {/* Carte WOD (Whiteboard) */}
         <GlassCard radius={16} style={S.wodCard} testID="wodresult-card">
           <View style={S.wodCardInner}>
@@ -337,7 +366,7 @@ export default function WodResultScreen() {
             {wod.time_cap_seconds != null && (
               <View style={S.timeCap}>
                 <Clock color={theme.textMuted} size={12} />
-                <Text style={S.timeCapText}>Cap {mmss(wod.time_cap_seconds)}</Text>
+                <Text style={S.timeCapText}>{borneParDuree ? 'Durée' : 'Cap'} {mmss(wod.time_cap_seconds)}</Text>
               </View>
             )}
             {metcon?.vest && metcon.vest.mode !== 'none' && (

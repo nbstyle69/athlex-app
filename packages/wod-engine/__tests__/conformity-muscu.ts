@@ -1,7 +1,7 @@
 import {
   CATALOG_SNAPSHOT, targetAvailable, MUSCU_TARGETS, MUSCU_OBJECTIVES, MUSCU_DURATIONS, TARGET_MUSCLES, SCHEMES,
   HEAVY_MAX, HEAVY_PERCENT, REST_EXTRA_MAX, BODYWEIGHT_MAX_LOADED, BODYWEIGHT_PULL_UP_IDS, NO_SQUAT_TARGETS, SQUAT_IDS, HIGH_REP_SETS_MAX, HIGH_REP_SETS_REPS_MAX,
-  MUSCU_SKELETONS, priorityFor,
+  MUSCU_SKELETONS, priorityFor, PRIORITY_RANKS,
 } from '../src';
 import type { MuscuWod, MuscuParams, MuscuExercise, MuscuEquipment, MuscuLevel, CatalogMovement, MuscuFields, MovementGroup } from '../src';
 
@@ -69,7 +69,9 @@ export function muscuViolations(wod: MuscuWod, params: MuscuParams): string[] {
   // sont acceptés — le catalogue y est étroit, et prendre toujours le premier
   // faisait revenir le même exercice à chaque séance. La règle n'est pas levée,
   // elle est élargie d'un rang, et seulement dans ce mode.
-  const rangsTolerees = params.equipment === 'none' ? 3 : 1;
+  // Les rangs en concurrence sont ceux du moteur (`PRIORITY_RANKS`), pas une
+  // copie : c'est lui qu'on interroge, pour ne pas recopier sa règle ici.
+  const rangsTolerees = PRIORITY_RANKS[params.equipment];
   // La priorité applicable dépend du mode (A1) : sans matériel, le catalogue a
   // son propre ordre. On interroge le moteur plutôt que de recopier la règle.
   const prioriteDe = (x: MuscuExercise) => {
