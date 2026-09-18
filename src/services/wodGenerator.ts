@@ -4,6 +4,7 @@
  * hors ligne avec `packages/wod-engine`, puis enregistre historique / favori /
  * score dans les tables existantes (`generated_wods`, `generated_wod_scores`).
  */
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { Json } from '../types/supabase';
 import { BoxWOD, User } from '../types';
@@ -233,6 +234,33 @@ export async function generateForUser(
 }
 
 /**
+ * Mémoire des tirages Musculation (lot B). Le moteur pénalise (×4, mode « Sans
+ * matériel ») un exercice sorti aux derniers tirages, mais il ne sait rien de
+ * l'historique : c'est l'écran qui doit le lui donner. Clé locale par
+ * utilisateur, préfixe `@athlex:` donc purgée à la déconnexion (appareil
+ * partagé), remplacée à chaque tirage — re-tirage compris, c'est le but.
+ */
+const MUSCU_RECENT_DRAWS = 3;
+const muscuRecentKey = (userId: string) => `@athlex:muscuRecent:${userId}`;
+
+export async function loadRecentExerciseIds(userId: string): Promise<string[]> {
+  try {
+    const raw = await AsyncStorage.getItem(muscuRecentKey(userId));
+    const draws = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(draws) ? Array.from(new Set(draws.flat().filter((x): x is string => typeof x === 'string'))) : [];
+  } catch { return []; }
+}
+
+export async function rememberExerciseIds(userId: string, ids: string[]): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(muscuRecentKey(userId));
+    const draws = raw ? (JSON.parse(raw) as unknown) : [];
+    const prev = Array.isArray(draws) ? (draws as string[][]) : [];
+    await AsyncStorage.setItem(muscuRecentKey(userId), JSON.stringify([ids, ...prev].slice(0, MUSCU_RECENT_DRAWS)));
+  } catch (e) { captureError(e, { action: 'rememberExerciseIds' }); }
+}
+
+/**
  * Musculation : niveau du profil (Scaled → débutant, Inter / RX → intermédiaire,
  * RX+ / Elite / Pro → avancé), 1RM et poids de corps lus dans
  * `profiles.personal_records` (RPC privée), classe du jour en « Après ma classe ».
@@ -244,11 +272,12 @@ async function generateMuscuForUser(
   screen: MuscuScreenParams,
   seed: number,
 ): Promise<MuscuResult> {
-  const [{ catalog, bank }, signatures, dayClass, records] = await Promise.all([
+  const [{ catalog, bank }, signatures, dayClass, records, recentIds] = await Promise.all([
     loadEngineData(),
     recentSignatures(user.id),
     screen.entry === 'after_class' ? todayClass(boxId) : Promise.resolve(null),
     fetchMyPersonalRecords().catch(() => ({} as Record<string, unknown>)),
+    loadRecentExerciseIds(user.id),
   ]);
   const params: MuscuParams = {
     entry: screen.entry,
@@ -259,6 +288,7 @@ async function generateMuscuForUser(
     exclude: screen.exclude,
     level: muscuLevelFor(user.level ?? null),
     recent_signatures: signatures,
+    recent_exercise_ids: recentIds,
     one_rep_max: muscuOneRepMax(records),
     bodyweight_kg: readBodyweightKg(records),
     after_class: screen.entry === 'after_class' && dayClass
@@ -266,6 +296,7 @@ async function generateMuscuForUser(
       : null,
   };
   const wod = generateMuscu(params, catalog, bank, seed);
+  await rememberExerciseIds(user.id, wod.blocks[0].exercises.map((e) => e.id));
   return { wod: { ...wod, description: renderMuscu(wod) }, params, category: categoryFor(user, 'functional') };
 }
 
