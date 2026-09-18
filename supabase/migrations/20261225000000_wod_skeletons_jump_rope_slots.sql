@@ -1,7 +1,7 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- La corde à sauter entre dans trois squelettes Functional de plus.
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 18/09/2026 à 20:26:48 UTC (dump db-dumps/2026-09-18/athlex-prod-public-20260918T202555Z.dump avant).
 --
 -- Additif et rejouable : trois `UPDATE` de `wod_skeletons.definition`, aucune
 -- ligne créée ni supprimée, aucune autre table touchée.

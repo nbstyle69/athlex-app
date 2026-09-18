@@ -759,6 +759,8 @@ export interface WeekSeen {
 export interface MuscuLoad {
   /** `percent` : %1RM sans kg (WOD de box) */
   mode: LoadMode | 'weighted' | 'percent';
+  /** S4 : exercice à l'élastique — même mode `bodyweight` (pas de kg), mais le libellé dit « élastique », pas « poids du corps ». */
+  band?: true;
   kg?: number;
   percent?: number;
   rpe?: number;

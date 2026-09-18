@@ -7853,7 +7853,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "s",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -15929,7 +15929,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -15985,7 +15985,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "s",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -18587,7 +18587,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "triceps_ext",
-        "priority_bodyweight": 2
+        "priority_bodyweight": 3
       }
     },
     {
@@ -19951,7 +19951,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_flex",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -20007,7 +20007,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_flex",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -20070,7 +20070,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_flex",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -20426,7 +20426,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "s",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -21066,7 +21066,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "s",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -21124,7 +21124,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_flex",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -22069,7 +22069,7 @@ var CATALOG_SNAPSHOT = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -22251,7 +22251,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "press_v"
       }
@@ -22315,7 +22315,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "press_v"
       }
@@ -22373,7 +22373,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "s",
-        "priority": 4,
+        "priority": 5,
         "priority_bodyweight": 1,
         "movement_group": "press_v"
       }
@@ -22437,7 +22437,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "raise"
       }
@@ -22500,7 +22500,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "raise"
       }
@@ -22563,7 +22563,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "press_h"
       }
@@ -22626,7 +22626,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "triceps_ext"
       }
@@ -22689,7 +22689,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "press_h"
       }
@@ -22753,7 +22753,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 1,
         "movement_group": "press_h"
       }
@@ -22817,7 +22817,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 4,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "press_h"
       }
@@ -22944,7 +22944,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "row"
       }
@@ -23008,7 +23008,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "row"
       }
@@ -23073,14 +23073,14 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 3,
         "movement_group": "pull_v"
       }
     },
     {
       "id": "band_pull_apart",
-      "name": "\xC9cart\xE9s \xE0 l'\xE9lastique",
+      "name": "Pull-apart \xE0 l'\xE9lastique",
       "family": "bodyweight",
       "pattern": [
         "pull_h"
@@ -23138,7 +23138,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 2,
         "movement_group": "raise"
       }
@@ -23203,7 +23203,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 9,
         "weight_gym": 9,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "pull_v"
       }
@@ -23268,7 +23268,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "curl"
       }
@@ -23331,7 +23331,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 5,
         "weight_gym": 5,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "curl"
       }
@@ -23396,7 +23396,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "shrug"
       }
@@ -23459,7 +23459,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 1,
         "movement_group": "shrug"
       }
@@ -23519,7 +23519,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 9,
         "weight_gym": 9,
         "unit": "s",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "carry"
       }
@@ -23583,7 +23583,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "press_h"
       }
@@ -23644,7 +23644,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 1,
         "movement_group": "carry"
       }
@@ -23709,7 +23709,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "raise"
       }
@@ -23775,7 +23775,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 2,
         "movement_group": "raise"
       }
@@ -23838,7 +23838,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 3,
         "movement_group": "raise"
       }
@@ -23903,7 +23903,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "pull_v"
       }
@@ -23968,8 +23968,8 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
-        "priority_bodyweight": 2,
+        "priority": 4,
+        "priority_bodyweight": 3,
         "movement_group": "pull_v"
       }
     },
@@ -24034,8 +24034,8 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
-        "priority_bodyweight": 2,
+        "priority": 4,
+        "priority_bodyweight": 3,
         "movement_group": "row"
       }
     },
@@ -24098,8 +24098,8 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 1,
-        "priority_bodyweight": 1,
+        "priority": 4,
+        "priority_bodyweight": 2,
         "movement_group": "row"
       }
     },
@@ -24162,7 +24162,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 3,
         "movement_group": "row"
       }
@@ -24227,8 +24227,8 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
-        "priority_bodyweight": 1,
+        "priority": 4,
+        "priority_bodyweight": 2,
         "movement_group": "pull_v"
       }
     },
@@ -24293,7 +24293,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "pull_v"
       }
@@ -24358,7 +24358,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "pull_v"
       }
@@ -24423,7 +24423,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 2,
         "movement_group": "pull_v"
       }
@@ -24486,7 +24486,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "lunge"
       }
@@ -24550,7 +24550,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 2,
         "movement_group": "lunge"
       }
@@ -24614,7 +24614,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "core_anti"
       }
@@ -24677,7 +24677,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "core_anti"
       }
@@ -24740,7 +24740,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 2,
         "movement_group": "raise"
       }
@@ -24806,8 +24806,8 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
-        "priority_bodyweight": 2,
+        "priority": 4,
+        "priority_bodyweight": 3,
         "movement_group": "row"
       }
     },
@@ -24869,8 +24869,8 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 4,
-        "priority_bodyweight": 2,
+        "priority": 5,
+        "priority_bodyweight": 1,
         "movement_group": "row"
       }
     },
@@ -24934,8 +24934,8 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
-        "priority_bodyweight": 1,
+        "priority": 4,
+        "priority_bodyweight": 2,
         "movement_group": "triceps_ext"
       }
     },
@@ -24997,7 +24997,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "lunge"
       }
@@ -25060,7 +25060,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "lunge"
       }
@@ -25124,7 +25124,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "squat"
       }
@@ -25188,7 +25188,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "squat"
       }
@@ -25251,7 +25251,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 4,
+        "priority": 5,
         "priority_bodyweight": 3,
         "movement_group": "squat"
       }
@@ -25313,7 +25313,7 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 5,
-        "priority_bodyweight": 2,
+        "priority_bodyweight": 1,
         "movement_group": "squat"
       }
     },
@@ -25437,7 +25437,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "raise"
       }
@@ -25500,7 +25500,7 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "hinge"
       }
@@ -25563,8 +25563,8 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 4,
-        "priority_bodyweight": 2,
+        "priority": 5,
+        "priority_bodyweight": 1,
         "movement_group": "core_anti"
       }
     },
@@ -25625,7 +25625,7 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 5,
-        "priority_bodyweight": 2,
+        "priority_bodyweight": 1,
         "movement_group": "core_flex"
       }
     },
@@ -25687,8 +25687,8 @@ var CATALOG_SNAPSHOT = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
-        "priority_bodyweight": 1,
+        "priority": 4,
+        "priority_bodyweight": 2,
         "movement_group": "core_anti"
       }
     }
@@ -28109,6 +28109,16 @@ function fitAmrap(ctx, d) {
   }
   throw new Reject("amrap_round_length");
 }
+var HEAVY_STATION_REPS = [3, 5];
+function capHeavyStationReps(ctx, d) {
+  if (ctx.params.intention !== "force") return;
+  const [lo, hi] = HEAVY_STATION_REPS;
+  for (const p of d.picked) {
+    if (p.band !== "heavy" || p.unit !== "reps" || !p.m.loads) continue;
+    if (p.range && (p.range[0] > hi || p.range[1] < lo)) throw new Reject(`heavy_station_reps:${p.m.id}`);
+    p.qty = Math.min(hi, Math.max(lo, p.qty));
+  }
+}
 function fitEmom(ctx, d) {
   const every = typeof d.sk.rest?.every_s === "number" ? d.sk.rest.every_s : 60;
   const maxWork = d.sk.max_station_work_s ?? every * 0.65;
@@ -28300,12 +28310,15 @@ function buildDraft(ctx, sk) {
       break;
     case "emom":
       fitEmom(ctx, d);
+      capHeavyStationReps(ctx, d);
       break;
     case "interval":
       fitInterval(ctx, d, roundsCandidates);
+      capHeavyStationReps(ctx, d);
       break;
     case "stations":
       fitStations(ctx, d);
+      capHeavyStationReps(ctx, d);
       break;
     case "ladder":
       fitLadder(ctx, d);
@@ -28681,29 +28694,43 @@ function objectiveFor(m, objective) {
   if (objective === "force" && !m.muscu.compound && m.muscu.objectives.includes("hypertrophie")) return "hypertrophie";
   return null;
 }
+var PUSH_TARGETS = /* @__PURE__ */ new Set(["push", "pecs"]);
+var PULL_TARGETS = /* @__PURE__ */ new Set(["pull", "dos"]);
+var PUSH_PATTERNS = /* @__PURE__ */ new Set(["push_h", "push_v"]);
+var PULL_PATTERNS = /* @__PURE__ */ new Set(["pull_h", "pull_v"]);
+var REAR_DELT_PUSH_IDS = /* @__PURE__ */ new Set(["face_pull", "rear_delt_fly", "bent_over_lateral_raise", "rear_delt_machine"]);
+function directionOk(target, m) {
+  if (PUSH_TARGETS.has(target)) return REAR_DELT_PUSH_IDS.has(m.id) || !m.pattern.some((p) => PULL_PATTERNS.has(p));
+  if (PULL_TARGETS.has(target)) return !m.pattern.some((p) => PUSH_PATTERNS.has(p));
+  return true;
+}
 function basePool(ctx) {
   const { params } = ctx;
   const noSquat = NO_SQUAT_TARGETS.includes(params.target);
   const noBwPullUp = params.objective === "endurance" && params.level !== "avance";
   const troncMuscles = TARGET_MUSCLES.tronc;
   const minSets = SCHEMES[params.objective].sets_min;
-  return ctx.catalog.movements.filter((m) => m.muscu).filter((m) => equipmentWeight(m, params.equipment) > 0 && levelOk(m, params.level) && !isExcluded2(ctx, m) && !ctx.excludedMuscles.has(m.muscu.muscle_primary) && weeklyRoomOk(ctx, m.muscu.muscle_primary, minSets) && !(noSquat && SQUAT_IDS.includes(m.id)) && !(noBwPullUp && BODYWEIGHT_PULL_UP_IDS.includes(m.id)) && !(params.target === "tronc" && m.muscu.compound && !troncMuscles.includes(m.muscu.muscle_primary)));
+  return ctx.catalog.movements.filter((m) => m.muscu).filter((m) => equipmentWeight(m, params.equipment) > 0 && levelOk(m, params.level) && !isExcluded2(ctx, m) && !ctx.excludedMuscles.has(m.muscu.muscle_primary) && directionOk(params.target, m) && weeklyRoomOk(ctx, m.muscu.muscle_primary, minSets) && !(noSquat && SQUAT_IDS.includes(m.id)) && !(noBwPullUp && BODYWEIGHT_PULL_UP_IDS.includes(m.id)) && !(params.target === "tronc" && m.muscu.compound && !troncMuscles.includes(m.muscu.muscle_primary)));
 }
 function isCoreMuscle(mu) {
   return TARGET_MUSCLES.tronc.includes(mu);
 }
 function isBodyweightNonCore(m) {
-  return m.muscu.load_mode === "bodyweight" && !isCoreMuscle(m.muscu.muscle_primary);
+  return m.muscu.load_mode === "bodyweight" && !m.equipment.includes("band") && !isCoreMuscle(m.muscu.muscle_primary);
+}
+function isLoaded(m) {
+  return m.muscu.load_mode !== "bodyweight" || m.equipment.includes("band");
 }
 function bodyweightAllowed(ctx, m, picked) {
   if (!isBodyweightNonCore(m)) return true;
   if (ctx.params.equipment === "none" || ctx.params.level === "debutant") return true;
-  const loadedExists = ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== "bodyweight");
-  if (!loadedExists) return true;
-  return picked.filter((p) => isBodyweightNonCore(p.m) && loadedFor(ctx, p.m)).length < BODYWEIGHT_MAX_LOADED;
+  if (!loadedFor(ctx, m)) return true;
+  const reserved = TARGET_MUSCLES[ctx.params.target].some((mu) => ctx.pool.some((x) => x.muscu.muscle_primary === mu) && !ctx.pool.some((x) => x.muscu.muscle_primary === mu && isLoaded(x)));
+  if (reserved) return false;
+  return picked.filter((p) => isBodyweightNonCore(p.m)).length < BODYWEIGHT_MAX_LOADED;
 }
 function loadedFor(ctx, m) {
-  return ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== "bodyweight");
+  return ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && isLoaded(x));
 }
 function coreAllowed(ctx, m, picked) {
   if (ctx.params.target === "tronc" || !isCoreMuscle(m.muscu.muscle_primary)) return true;
@@ -28746,6 +28773,7 @@ function candidates(ctx, slot2, f, picked, prevMuscle) {
   const requireUnilateral = f.unilateral && !!slot2.unilateral && ctx.params.level !== "debutant";
   return ctx.pool.filter((m) => {
     if (used.has(m.id)) return false;
+    if (slot2.role !== "isolation" && PUSH_TARGETS.has(ctx.params.target) && REAR_DELT_PUSH_IDS.has(m.id)) return false;
     if (!f.muscles.includes(m.muscu.muscle_primary)) return false;
     if (prevMuscle && !(f.ids && slot2.groups) && m.muscu.muscle_primary === prevMuscle) return false;
     if (slot2.exclude_ids?.includes(m.id)) return false;
@@ -28767,6 +28795,14 @@ function priorityFor(m, equipment) {
   return equipment === "none" ? m.muscu.priority_bodyweight ?? m.muscu.priority : m.muscu.priority;
 }
 var PRIORITY_RANKS = { none: 3, box: 3, gym: 3 };
+var FALLBACK_PRIORITY = 4;
+function isFallback(ctx, m) {
+  return ctx.params.equipment !== "none" && m.muscu.load_mode === "bodyweight" && m.muscu.priority >= FALLBACK_PRIORITY;
+}
+function preferLoaded(ctx, list) {
+  const mieux = list.filter((m) => !isFallback(ctx, m));
+  return mieux.length ? mieux : list;
+}
 function choose(ctx, list, role) {
   const sansMateriel = ctx.params.equipment === "none";
   if (role === "main_compound") {
@@ -28801,7 +28837,8 @@ function pickSlot(ctx, slot2, index, picked, target) {
   }
   for (const [i, [relax, f]] of steps.entries()) {
     if (i > 0 && relax === null) continue;
-    const list = candidates(ctx, slot2, f, picked, prev);
+    const tous = candidates(ctx, slot2, f, picked, prev);
+    const list = i === 0 ? tous.filter((m2) => !isFallback(ctx, m2)) : preferLoaded(ctx, tous);
     if (!list.length) continue;
     const m = choose(ctx, list, slot2.role);
     if (relax && relax !== "semaine") ctx.relax.add(relax);
@@ -28860,7 +28897,7 @@ function loadFor(ctx, l) {
       const bw = params.bodyweight_kg;
       return bw && bw > 0 ? { mode: "weighted", kg: roundLoad(bw * WEIGHTED_BODYWEIGHT_RATIO), rpe: scheme.rpe } : { mode: "weighted", rpe: scheme.rpe };
     }
-    return { mode: "bodyweight" };
+    return l.m.equipment.includes("band") ? { mode: "bodyweight", band: true } : { mode: "bodyweight" };
   }
   if (mu.load_mode === "1rm" && mu.rm_reference) {
     const rm = params.one_rep_max?.[mu.rm_reference];
@@ -28954,7 +28991,7 @@ function bonusExercise(ctx, lines, target) {
   const tertiary = primary.length || secondary.length ? [] : ctx.pool.filter((m2) => eligible(m2, true) && isCoreMuscle(m2.muscu.muscle_primary) && (!m2.muscu.compound || m2.muscu.movement_group === "carry"));
   const base = primary.length ? primary : secondary.length ? secondary : tertiary;
   const iso2 = base.filter((m2) => !m2.muscu.compound);
-  const m = ctx.rng.pickWeighted(iso2.length ? iso2 : base, (x) => equipmentWeight(x, ctx.params.equipment));
+  const m = choose(ctx, preferLoaded(ctx, iso2.length ? iso2 : base), "isolation");
   if (!m) return null;
   const role = isCoreMuscle(m.muscu.muscle_primary) ? "core" : m.muscu.compound ? "secondary_compound" : "isolation";
   const p = { m, role, objective: objectiveFor(m, ctx.params.objective) ?? (m.muscu.objectives.includes("hypertrophie") ? "hypertrophie" : m.muscu.objectives[0] ?? "hypertrophie"), optional: true, slotIndex: 99 };
@@ -29317,7 +29354,7 @@ function loadText2(e) {
     case "weighted":
       return l.kg ? `lest\xE9 ${l.kg} kg, RPE ${l.rpe}` : `lest\xE9 l\xE9ger, RPE ${l.rpe}`;
     case "bodyweight":
-      return e.reps_unit === "reps" ? "poids du corps" : "\u2014";
+      return l.band ? "\xE9lastique" : e.reps_unit === "reps" ? "poids du corps" : "\u2014";
     default:
       return l.percent ? `RPE ${l.rpe} (\u2248 ${l.percent} % du 1RM)` : `RPE ${l.rpe}`;
   }
@@ -29335,6 +29372,8 @@ function exerciseLine(e) {
     out += l.kg ? ` \u2014 lest\xE9 ${l.kg} kg (10 % du poids de corps), RPE ${l.rpe}` : ` \u2014 lest\xE9 l\xE9ger, RPE ${l.rpe}`;
   } else if (l.mode === "rpe") {
     out += l.percent ? ` \u2014 charge RPE ${l.rpe} (\u2248 ${l.percent} % du 1RM)` : ` \u2014 charge RPE ${l.rpe}`;
+  } else if (l.band) {
+    out += " \u2014 charge \xE9lastique";
   } else if (e.reps_unit === "reps") {
     out += " \u2014 charge poids du corps";
   }
@@ -30652,6 +30691,7 @@ export {
   ENGINE_VERSION,
   EQUIPMENT_FALLBACK,
   EQUIPMENT_LABEL,
+  FALLBACK_PRIORITY,
   FAMILY_CAP_FACTOR,
   FEASIBILITY,
   FINISHERS,
@@ -30668,6 +30708,7 @@ export {
   H6_simulation_full,
   HEAVY_MAX,
   HEAVY_PERCENT,
+  HEAVY_STATION_REPS,
   HIGH_REP_SETS_MAX,
   HIGH_REP_SETS_REPS_MAX,
   HYBRID_CATEGORIES,
@@ -30706,6 +30747,7 @@ export {
   PRIORITY_RANKS,
   PROGRAMMING_VERSION,
   RACK_ONLY_IDS,
+  REAR_DELT_PUSH_IDS,
   RECENT_WEEKS,
   REST_EXTRA_MAX,
   REVEAL_HOUR_PARIS,
