@@ -8,6 +8,7 @@ import {
   blockDurationSec,
   buildTimerRunParamsFromBlock,
   formatBlockPreconfig,
+  roundSplitExercises,
   TIMER_BLOCK_TYPES,
 } from '../../utils/wodToTimer';
 
@@ -44,7 +45,8 @@ export default function TimerLaunchModal({ visible, title, initialBlock, onClose
   }, [visible, initialBlock]);
 
   function updateBlock(patch: Partial<SeqBlock>) {
-    setBlock(b => (b ? { ...b, ...patch } : b));
+    // B5 : passer un bloc sans exercices en Split le splitte par round
+    setBlock(b => (b ? { ...b, ...patch, ...(patch.type === 'split' && !b.splitExercises?.length ? { splitExercises: roundSplitExercises(b.emomRounds) } : {}) } : b));
   }
 
   function launch(withCamera: boolean) {
@@ -232,6 +234,16 @@ export default function TimerLaunchModal({ visible, title, initialBlock, onClose
 
         {blk.type === 'ywyr' && (
           <Text style={S.emomTotalHint}>{t('whiteboard.ywyrHint')}</Text>
+        )}
+        {blk.type === 'split' && (
+          <View style={{ marginTop: 4 }}>
+            {(blk.splitExercises ?? []).map((e, i) => (
+              <Text key={`${e.name}-${i}`} style={S.timerModalPreviewText} numberOfLines={1}>
+                {e.name} · {e.sets} {e.sets > 1 ? 'séries' : 'série'}{e.restSec > 0 ? ` · repos ${e.restSec} s` : ''}
+              </Text>
+            ))}
+            <Text style={S.emomTotalHint}>Chrono global. « Série terminée » enregistre un split et lance le repos ; les splits sont listés en fin de séance.</Text>
+          </View>
         )}
       </View>
     );
