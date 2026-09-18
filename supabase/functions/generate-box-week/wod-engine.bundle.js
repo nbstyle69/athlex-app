@@ -22514,7 +22514,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "none",
-      "shoulder_load": "medium",
+      "shoulder_load": "high",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -22640,7 +22640,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "none",
-      "shoulder_load": "medium",
+      "shoulder_load": "high",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -22703,7 +22703,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "none",
-      "shoulder_load": "medium",
+      "shoulder_load": "high",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -22767,7 +22767,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "none",
-      "shoulder_load": "medium",
+      "shoulder_load": "high",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -22831,7 +22831,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "none",
-      "shoulder_load": "medium",
+      "shoulder_load": "high",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -23022,7 +23022,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "high",
-      "shoulder_load": "medium",
+      "shoulder_load": "low",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -23152,7 +23152,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "high",
-      "shoulder_load": "medium",
+      "shoulder_load": "low",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -23345,7 +23345,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "high",
-      "shoulder_load": "medium",
+      "shoulder_load": "low",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -23473,7 +23473,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "high",
-      "shoulder_load": "medium",
+      "shoulder_load": "low",
       "unit_default": "s",
       "units_allowed": [
         "s"
@@ -23533,7 +23533,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "none",
-      "shoulder_load": "medium",
+      "shoulder_load": "high",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -23852,7 +23852,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "none",
-      "shoulder_load": "medium",
+      "shoulder_load": "low",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -23917,7 +23917,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "none",
-      "shoulder_load": "medium",
+      "shoulder_load": "low",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
@@ -24176,7 +24176,7 @@ var CATALOG_SNAPSHOT = {
       ],
       "modality": "G",
       "grip": "none",
-      "shoulder_load": "medium",
+      "shoulder_load": "low",
       "unit_default": "reps",
       "units_allowed": [
         "reps"
