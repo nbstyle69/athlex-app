@@ -1,7 +1,7 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Les 55 exercices sans matériel sont des replis en Box et en Salle.
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 18/09/2026 à 20:26:49 UTC (dump db-dumps/2026-09-18/athlex-prod-public-20260918T202555Z.dump avant).
 --
 -- Additif et rejouable : trois UPDATE sur des lignes existantes, aucune ligne
 -- créée ni supprimée. Suite de 20261227.
