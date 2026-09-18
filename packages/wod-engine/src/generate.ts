@@ -575,6 +575,25 @@ function fitAmrap(ctx: Ctx, d: Draft): void {
   throw new Reject('amrap_round_length');
 }
 
+/**
+ * Reps par station d'un mouvement en bande lourde, en Force, sur un EMOM, des
+ * intervalles ou des stations : 3 à 5, quelle que soit l'estimation de cadence.
+ * La borne de temps de la station (40 s) laissait passer 7 à 8 front squats
+ * lourds par minute ; la cadence par bande n'y suffisait pas. Une station
+ * lourde se compte en reps, pas en secondes (Nab, 18/09/2026).
+ */
+export const HEAVY_STATION_REPS: readonly [number, number] = [3, 5];
+
+function capHeavyStationReps(ctx: Ctx, d: Draft): void {
+  if (ctx.params.intention !== 'force') return;
+  const [lo, hi] = HEAVY_STATION_REPS;
+  for (const p of d.picked) {
+    if (p.band !== 'heavy' || p.unit !== 'reps' || !p.m.loads) continue;
+    if (p.range && (p.range[0] > hi || p.range[1] < lo)) throw new Reject(`heavy_station_reps:${p.m.id}`);
+    p.qty = Math.min(hi, Math.max(lo, p.qty));
+  }
+}
+
 function fitEmom(ctx: Ctx, d: Draft): void {
   const every = typeof d.sk.rest?.every_s === 'number' ? d.sk.rest.every_s : 60;
   const maxWork = d.sk.max_station_work_s ?? every * 0.65;
@@ -767,9 +786,9 @@ function buildDraft(ctx: Ctx, sk: Skeleton): Draft {
 
   switch (format) {
     case 'amrap': fitAmrap(ctx, d); d.rounds = null; break;
-    case 'emom': fitEmom(ctx, d); break;
-    case 'interval': fitInterval(ctx, d, roundsCandidates); break;
-    case 'stations': fitStations(ctx, d); break;
+    case 'emom': fitEmom(ctx, d); capHeavyStationReps(ctx, d); break;
+    case 'interval': fitInterval(ctx, d, roundsCandidates); capHeavyStationReps(ctx, d); break;
+    case 'stations': fitStations(ctx, d); capHeavyStationReps(ctx, d); break;
     case 'ladder': fitLadder(ctx, d); break;
     case 'death_by': fitDeathBy(ctx, d); break;
     case 'continuous': fitContinuous(ctx, d); break;

@@ -1,7 +1,7 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Corde à sauter : poids de tirage relevé, volume borné par un plafond de classe.
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 18/09/2026 à 20:26:49 UTC (dump db-dumps/2026-09-18/athlex-prod-public-20260918T202555Z.dump avant).
 --
 -- Additif et rejouable. Suite de 20261225 (trois slots ouverts à la corde) et
 -- du correctif moteur `FAMILY_CAP_FACTOR`.

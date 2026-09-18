@@ -42,8 +42,14 @@ describe('G1 — combinaisons grisées avant le tirage, relâchement affiché ap
     expect(combinationFeasible('functional', 8, 'force', 'for_time')).toBe(false);
   });
 
+  it("E2 — le relâchement de durée (±5 min) est annoncé comme celui du format, avec l'estimation réelle", () => {
+    expect(resultat).toContain("rel.includes('duration±5')");
+    expect(resultat).toMatch(/Demandé \$\{metcon\.budget_min\} min, généré \$\{genere\} min\./);
+    expect(resultat).toContain('metcon.estimate.reference_minutes');
+  });
+
   it('le résultat annonce le relâchement avec le message convenu', () => {
-    expect(resultat).toContain("metcon.generator.relaxations.includes('format')");
+    expect(resultat).toContain("rel.includes('format')");
     expect(resultat).toMatch(/Aucun \$\{fmt\} ne tient en \$\{intention\} sur \$\{metcon\.budget_min\} min — voici un/);
     expect(resultat).toContain('testID="wodresult-format-relache"');
   });
