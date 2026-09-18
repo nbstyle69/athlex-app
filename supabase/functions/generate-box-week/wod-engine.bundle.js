@@ -8659,7 +8659,7 @@ var CATALOG_SNAPSHOT = {
         "reps"
       ],
       "load_unit": null,
-      "weight_functional": 13,
+      "weight_functional": 10,
       "weight_hybrid": 3,
       "equipment": [
         "jump_rope"
