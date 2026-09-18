@@ -219,8 +219,16 @@ const PUSH_TARGETS: ReadonlySet<MuscuTarget> = new Set(['push', 'pecs']);
 const PULL_TARGETS: ReadonlySet<MuscuTarget> = new Set(['pull', 'dos']);
 const PUSH_PATTERNS: ReadonlySet<Pattern> = new Set(['push_h', 'push_v']);
 const PULL_PATTERNS: ReadonlySet<Pattern> = new Set(['pull_h', 'pull_v']);
+/**
+ * Exception nominative (Nab, 18/09/2026) : les quatre isolations d'arrière
+ * d'épaule restent en `pull_h` mais sont admises en Push en rôle isolation
+ * uniquement — l'accessoire d'équilibre classique en fin de séance Push —
+ * jamais en principal ni en secondaire (`candidates` les refuse ailleurs).
+ */
+export const REAR_DELT_PUSH_IDS: ReadonlySet<string> = new Set(['face_pull', 'rear_delt_fly', 'bent_over_lateral_raise', 'rear_delt_machine']);
+
 function directionOk(target: MuscuTarget, m: Mv): boolean {
-  if (PUSH_TARGETS.has(target)) return !m.pattern.some((p) => PULL_PATTERNS.has(p));
+  if (PUSH_TARGETS.has(target)) return REAR_DELT_PUSH_IDS.has(m.id) || !m.pattern.some((p) => PULL_PATTERNS.has(p));
   if (PULL_TARGETS.has(target)) return !m.pattern.some((p) => PUSH_PATTERNS.has(p));
   return true;
 }
@@ -365,6 +373,7 @@ function candidates(ctx: Ctx, slot: MuscuSlot, f: Filter, picked: Picked[], prev
   const requireUnilateral = f.unilateral && !!slot.unilateral && ctx.params.level !== 'debutant';
   return ctx.pool.filter((m) => {
     if (used.has(m.id)) return false;
+    if (slot.role !== 'isolation' && PUSH_TARGETS.has(ctx.params.target) && REAR_DELT_PUSH_IDS.has(m.id)) return false;
     if (!f.muscles.includes(m.muscu.muscle_primary)) return false;
     // un slot à geste imposé (tirage horizontal après le vertical, M4) peut suivre le même muscle : l'ordre est réarrangé ensuite
     if (prevMuscle && !(f.ids && slot.groups) && m.muscu.muscle_primary === prevMuscle) return false;

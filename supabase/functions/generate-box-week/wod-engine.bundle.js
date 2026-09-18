@@ -28698,8 +28698,9 @@ var PUSH_TARGETS = /* @__PURE__ */ new Set(["push", "pecs"]);
 var PULL_TARGETS = /* @__PURE__ */ new Set(["pull", "dos"]);
 var PUSH_PATTERNS = /* @__PURE__ */ new Set(["push_h", "push_v"]);
 var PULL_PATTERNS = /* @__PURE__ */ new Set(["pull_h", "pull_v"]);
+var REAR_DELT_PUSH_IDS = /* @__PURE__ */ new Set(["face_pull", "rear_delt_fly", "bent_over_lateral_raise", "rear_delt_machine"]);
 function directionOk(target, m) {
-  if (PUSH_TARGETS.has(target)) return !m.pattern.some((p) => PULL_PATTERNS.has(p));
+  if (PUSH_TARGETS.has(target)) return REAR_DELT_PUSH_IDS.has(m.id) || !m.pattern.some((p) => PULL_PATTERNS.has(p));
   if (PULL_TARGETS.has(target)) return !m.pattern.some((p) => PUSH_PATTERNS.has(p));
   return true;
 }
@@ -28772,6 +28773,7 @@ function candidates(ctx, slot2, f, picked, prevMuscle) {
   const requireUnilateral = f.unilateral && !!slot2.unilateral && ctx.params.level !== "debutant";
   return ctx.pool.filter((m) => {
     if (used.has(m.id)) return false;
+    if (slot2.role !== "isolation" && PUSH_TARGETS.has(ctx.params.target) && REAR_DELT_PUSH_IDS.has(m.id)) return false;
     if (!f.muscles.includes(m.muscu.muscle_primary)) return false;
     if (prevMuscle && !(f.ids && slot2.groups) && m.muscu.muscle_primary === prevMuscle) return false;
     if (slot2.exclude_ids?.includes(m.id)) return false;
@@ -30745,6 +30747,7 @@ export {
   PRIORITY_RANKS,
   PROGRAMMING_VERSION,
   RACK_ONLY_IDS,
+  REAR_DELT_PUSH_IDS,
   RECENT_WEEKS,
   REST_EXTRA_MAX,
   REVEAL_HOUR_PARIS,

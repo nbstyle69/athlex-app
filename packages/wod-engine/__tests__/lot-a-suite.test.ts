@@ -8,7 +8,7 @@
  *      EMOM, des intervalles ou des stations — jamais 7 front squats dans la minute.
  */
 import {
-  generateBlocC, generateMuscu, generateMuscuWeek, hashSeed, CATALOG_SNAPSHOT, BANK_V1, movementById, HEAVY_STATION_REPS,
+  generateBlocC, generateMuscu, generateMuscuWeek, hashSeed, CATALOG_SNAPSHOT, BANK_V1, movementById, HEAVY_STATION_REPS, REAR_DELT_PUSH_IDS,
 } from '../src';
 import type { MuscuParams, MuscuTarget } from '../src';
 import fs from 'node:fs';
@@ -36,11 +36,22 @@ describe('S1 — direction des séances', () => {
         let wod;
         try { wod = gen({ ...base, target, equipment }, 900 + i); } catch { continue; }
         for (const e of wod.blocks[0].exercises) {
+          if (sens === 'push' && REAR_DELT_PUSH_IDS.has(e.id) && e.role === 'isolation') continue;
           const interdit = sens === 'push' ? estTirage(e.id) : estPoussee(e.id);
           if (interdit) throw new Error(`${target} / ${equipment} seed ${900 + i} : ${e.id} (${patternsOf(e.id).join(',')}) n'a rien à faire là`);
         }
       }
     }
+  });
+
+  it("exception nominative : l'arrière d'épaule sort en Push, en isolation seulement, jamais en principal ni en secondaire", () => {
+    const roles = new Set<string>();
+    for (const target of ['push', 'pecs'] as const) for (const equipment of ['box', 'gym'] as const) for (const objective of ['hypertrophie', 'force'] as const) for (let i = 0; i < 40; i++) {
+      let wod;
+      try { wod = gen({ ...base, target, equipment, objective, budget_min: 45 }, 1500 + i); } catch { continue; }
+      for (const e of wod.blocks[0].exercises) if (REAR_DELT_PUSH_IDS.has(e.id)) roles.add(e.role);
+    }
+    expect([...roles]).toEqual(['isolation']);
   });
 
   it('les cas relevés à la relecture sont couverts : pull-apart, reverse snow angels, face pull', () => {
