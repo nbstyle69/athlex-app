@@ -7,7 +7,7 @@
  * Ajouter au Whiteboard, Saisir mon score, menu ⋯ (Copier / Partager).
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Share,
   KeyboardAvoidingView, Platform, Pressable,
@@ -32,7 +32,8 @@ import { captureError } from '../../lib/sentry';
 import { hapticSuccess } from '../../lib/haptics';
 import { spacing, typography } from '../../theme/designTokens';
 import { maskTimeInput, timeStringToSeconds } from '../../utils/tournamentUtils';
-import { buildFullSeqBlockFromWOD } from '../../utils/wodToTimer';
+import { buildFullSeqBlockFromWOD, buildMuscuSplitBlock } from '../../utils/wodToTimer';
+import { clearWodDraft, saveWodDraft } from '../../services/wodDraft';
 import {
   CATEGORY_LABEL, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES,
   TIME_BOUNDED,
@@ -49,7 +50,12 @@ import { HYBRID_ORANGE } from './wodGeneratorOptions';
 import { MUSCU_BLUE, muscuDisplayedFor } from './muscuOptions';
 import MuscuSessionCard, { initialPerformed } from './MuscuSessionCard';
 
-export type WodResultParams = { screen: ScreenParams; result: GenerateResult };
+export type WodResultParams = {
+  screen: ScreenParams;
+  result: GenerateResult;
+  /** B6 : reprise du brouillon local — charges saisies et score déjà posé. */
+  draft?: { performed?: PerformedExercise[]; submittedScore?: ScoreSubmission | null };
+};
 type Route = RouteProp<{ WodResult: WodResultParams }, 'WodResult'>;
 
 const fmtNum = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, ''));
@@ -94,10 +100,6 @@ export function displayedForText(category: Category, hasLevel: boolean): { text:
 }
 
 /** Minuteur libre pour une séance de séries (pas de Split en M2) : durée estimée en compte à rebours. */
-function muscuTimerFields(wod: MuscuWod): Parameters<typeof buildFullSeqBlockFromWOD>[0] {
-  return { wod_type: 'custom', time_cap_seconds: Math.max(60, Math.round(wod.estimate.seconds)) };
-}
-
 const SCORE_TYPES: { key: ScoreInputType; label: string }[] = [
   { key: 'time', label: 'Temps' }, { key: 'rounds', label: 'Rounds' }, { key: 'reps', label: 'Reps' }, { key: 'weight', label: 'Charge' },
 ];
@@ -178,14 +180,22 @@ export default function WodResultScreen() {
   const [scoreCategory, setScoreCategory] = useState<Category>(category);
   const [scoreNotes, setScoreNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [submittedScore, setSubmittedScore] = useState<ScoreSubmission | null>(null);
-  const [performed, setPerformed] = useState<PerformedExercise[]>(() => (muscu ? initialPerformed(muscu) : []));
+  const [submittedScore, setSubmittedScore] = useState<ScoreSubmission | null>(route.params.draft?.submittedScore ?? null);
+  const [performed, setPerformed] = useState<PerformedExercise[]>(() => route.params.draft?.performed ?? (muscu ? initialPerformed(muscu) : []));
+
+  // B6 : brouillon local tant que la séance n'est pas enregistrée — écrit à
+  // chaque changement (tirage, charges saisies, score), effacé à l'enregistrement.
+  useEffect(() => {
+    if (!user || savedId) return;
+    saveWodDraft(user.id, { screen, result, performed, submittedScore });
+  }, [user, savedId, screen, result, performed, submittedScore]);
 
   const headerLine = useMemo(() => wod.description.split('\n')[0] ?? '', [wod.description]);
   const estimate = metcon ? metcon.estimate.by_category[category] : null;
   const displayedFor = muscu ? muscuDisplayedFor(user?.level ?? null) : displayedForText(category, !!user?.level);
   const timerBlock = useMemo(
-    () => buildFullSeqBlockFromWOD(isMuscuWod(wod) ? muscuTimerFields(wod) : editorFieldsOf(wod)),
+    // B5 : une séance Musculation part en mode Split (séries, repos de chaque exercice)
+    () => (isMuscuWod(wod) ? buildMuscuSplitBlock(wod) : buildFullSeqBlockFromWOD(editorFieldsOf(wod))),
     [wod],
   );
 
@@ -221,6 +231,7 @@ export default function WodResultScreen() {
     try {
       const id = await saveGeneratedWod(user.id, wod, category);
       setSavedId(id);
+      clearWodDraft(user.id);
       return id;
     } catch (e) {
       captureError(e, { screen: 'WodResult', action: 'save' });

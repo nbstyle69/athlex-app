@@ -18,6 +18,7 @@ function useShellScreenOptions() {
   return { headerShown: false, contentStyle: { backgroundColor: theme.background } } as const;
 }
 import { navigationRef } from './navigationRef';
+import { tabPressAction, TAB_ROOTS, type LastTap, type TabName } from './tabPress';
 import { linking } from './linking';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -223,10 +224,14 @@ export type ExplorerStackParamList = {
 };
 
 export type TimerType = 'for-time' | 'amrap' | 'emom' | 'tabata' | 'ywyr' | 'splits' | 'libre';
-export type BlockType = Exclude<TimerType, 'libre' | 'splits'>;
+export type BlockType = Exclude<TimerType, 'libre' | 'splits'> | 'split';
+/** B5 : un exercice du mode Split — ses séries, et le repos lancé après chaque « Série terminée ». */
+export type SplitExercise = { name: string; sets: number; restSec: number };
 export type SeqBlock = {
   id: string;
   type: BlockType;
+  /** Mode Split : exercices et séries ; un metcon splitté par round n'en a qu'un (« Round »). */
+  splitExercises?: SplitExercise[];
   durationMin: number;  // amrap/for-time duration (0=unlimited for ft) — hérité, arrondi
   // Durée exacte en secondes : un cap 12:30 ne s'exprime pas en minutes entières.
   // Quand elle est présente elle fait foi ; `durationMin` reste pour les blocs
@@ -763,6 +768,16 @@ function MainTabs() {
   const insets = useSafeAreaInsets();
   const bottomInset = Platform.OS === 'android' ? insets.bottom : 0;
   useAndroidNavBar(theme.tabBar, mode);
+  // B4 : chaque onglet garde sa pile (la barre ne navigue pas quand l'onglet est
+  // déjà actif) ; un double appui sur l'onglet actif ramène à sa racine.
+  const lastTap = React.useRef<LastTap>(null);
+  const tabListeners = ({ navigation, route }: { navigation: { isFocused: () => boolean; navigate: (...a: any[]) => void }; route: { name: string } }) => ({
+    tabPress: () => {
+      const r = tabPressAction(lastTap.current, route.name, navigation.isFocused(), Date.now());
+      lastTap.current = r.last;
+      if (r.action === 'root') navigation.navigate(route.name, { screen: TAB_ROOTS[route.name as TabName] });
+    },
+  });
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -806,17 +821,12 @@ function MainTabs() {
         },
       })}
     >
-      <Tab.Screen name="Competitions" component={CompetitionNavigator} options={{ tabBarLabel: t('tabs.competition') }}
-        listeners={({ navigation }) => ({ tabPress: () => navigation.navigate('Competitions', { screen: 'CompetitionList' }) })} />
-      <Tab.Screen name="Explorer"     component={ExplorerNavigator}     options={{ tabBarLabel: t('tabs.explorer') }}
-        listeners={({ navigation }) => ({ tabPress: () => navigation.navigate('Explorer', { screen: 'ExplorerMain' }) })} />
-      <Tab.Screen name="Home"         component={HomeNavigator}         options={{ tabBarLabel: t('tabs.home') }}
-        listeners={({ navigation }) => ({ tabPress: () => navigation.navigate('Home', { screen: 'HomeList' }) })} />
+      <Tab.Screen name="Competitions" component={CompetitionNavigator} options={{ tabBarLabel: t('tabs.competition') }} listeners={tabListeners} />
+      <Tab.Screen name="Explorer"     component={ExplorerNavigator}     options={{ tabBarLabel: t('tabs.explorer') }} listeners={tabListeners} />
+      <Tab.Screen name="Home"         component={HomeNavigator}         options={{ tabBarLabel: t('tabs.home') }} listeners={tabListeners} />
       <Tab.Screen name="Whiteboard"   component={WhiteboardNavigator}
-        options={{ tabBarLabel: t('tabs.myBox'), tabBarBadge: unreadMessages > 0 ? unreadMessages : undefined }}
-        listeners={({ navigation }) => ({ tabPress: () => navigation.navigate('Whiteboard', { screen: 'WhiteboardMain' }) })} />
-      <Tab.Screen name="Reservation"  component={ReservationNavigator}  options={{ tabBarLabel: t('tabs.reservation') }}
-        listeners={({ navigation }) => ({ tabPress: () => navigation.navigate('Reservation', { screen: 'ReservationMain' }) })} />
+        options={{ tabBarLabel: t('tabs.myBox'), tabBarBadge: unreadMessages > 0 ? unreadMessages : undefined }} listeners={tabListeners} />
+      <Tab.Screen name="Reservation"  component={ReservationNavigator}  options={{ tabBarLabel: t('tabs.reservation') }} listeners={tabListeners} />
     </Tab.Navigator>
   );
 }
