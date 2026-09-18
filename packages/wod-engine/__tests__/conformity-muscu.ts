@@ -1,6 +1,7 @@
 import {
   CATALOG_SNAPSHOT, targetAvailable, MUSCU_TARGETS, MUSCU_OBJECTIVES, MUSCU_DURATIONS, TARGET_MUSCLES, SCHEMES,
   HEAVY_MAX, HEAVY_PERCENT, REST_EXTRA_MAX, BODYWEIGHT_MAX_LOADED, BODYWEIGHT_PULL_UP_IDS, NO_SQUAT_TARGETS, SQUAT_IDS, HIGH_REP_SETS_MAX, HIGH_REP_SETS_REPS_MAX,
+  MUSCU_SKELETONS, priorityFor, PRIORITY_RANKS,
 } from '../src';
 import type { MuscuWod, MuscuParams, MuscuExercise, MuscuEquipment, MuscuLevel, CatalogMovement, MuscuFields, MovementGroup } from '../src';
 
@@ -63,10 +64,33 @@ export function muscuViolations(wod: MuscuWod, params: MuscuParams): string[] {
   const usedGroups = new Set<MovementGroup>(nonCore.map((e) => e.movement_group));
   const excluded = new Set(wod.after_class?.excluded_muscles ?? []);
 
-  // M1 : le main_compound est le meilleur exercice disponible (priorité minimale) pour son muscle
+  // M1 : le main_compound est le meilleur exercice disponible (priorité minimale)
+  // pour son muscle. Exception « Sans matériel » (A1) : les DEUX meilleurs rangs
+  // sont acceptés — le catalogue y est étroit, et prendre toujours le premier
+  // faisait revenir le même exercice à chaque séance. La règle n'est pas levée,
+  // elle est élargie d'un rang, et seulement dans ce mode.
+  // Les rangs en concurrence sont ceux du moteur (`PRIORITY_RANKS`), pas une
+  // copie : c'est lui qu'on interroge, pour ne pas recopier sa règle ici.
+  const rangsTolerees = PRIORITY_RANKS[params.equipment];
+  // La priorité applicable dépend du mode (A1) : sans matériel, le catalogue a
+  // son propre ordre. On interroge le moteur plutôt que de recopier la règle.
+  const prioriteDe = (x: MuscuExercise) => {
+    const mv = byId.get(x.id);
+    return mv ? priorityFor(mv, params.equipment) : x.priority;
+  };
+  // Un slot peut imposer un geste (`groups`) : le slot `dos` de `haut_hypertrophie`
+  // n'admet que du tirage vertical. Comparer les priorités sur tout le muscle
+  // sans en tenir compte reproche au moteur un choix qu'il n'avait pas. Le défaut
+  // était invisible avant A1, faute d'exercice de priorité 1 hors du geste imposé.
+  const squelette = MUSCU_SKELETONS.find((sk) => sk.target === params.target && sk.objective === params.objective);
+  const gesteImpose = (e: MuscuExercise): MovementGroup[] | null => {
+    const slot = (squelette?.slots ?? []).find((sl) => sl.role === e.role && sl.groups?.includes(e.movement_group));
+    return slot?.groups ?? null;
+  };
   for (const e of ex.filter((x) => x.role === 'main_compound')) {
+    const impose = gesteImpose(e);
     const better = [...byId.values()].filter((c) =>
-      c.id !== e.id && c.muscu.compound && c.muscu.muscle_primary === e.muscle_primary && c.muscu.priority < e.priority
+      c.id !== e.id && c.muscu.compound && c.muscu.muscle_primary === e.muscle_primary && priorityFor(c, params.equipment) < prioriteDe(e)
       && eqWeight(c, params.equipment) > 0 && RANK[c.muscu.level_min] <= RANK[params.level] && !(params.level === 'debutant' && c.muscu.unilateral)
       && c.muscu.objectives.includes(params.objective)
       && !(NO_SQUAT_TARGETS.includes(params.target) && SQUAT_IDS.includes(c.id))
@@ -75,8 +99,14 @@ export function muscuViolations(wod: MuscuWod, params: MuscuParams): string[] {
       && !excluded.has(c.muscu.muscle_primary)
       && !ex.some((x) => x.id === c.id)
       && (params.target === 'full_body' || !usedGroups.has(c.muscu.movement_group) || c.muscu.movement_group === e.movement_group)
-      && !(isBodyweightNonCore(c) && params.equipment !== 'none' && params.level !== 'debutant'));
-    if (better.length) out.push(`[M1] ${e.name} (priorité ${e.priority}) en principal alors que ${better.map((b) => b.name).join(' / ')} est disponible`);
+      && !(isBodyweightNonCore(c) && params.equipment !== 'none' && params.level !== 'debutant')
+      && (!impose || impose.includes(c.muscu.movement_group)));
+    // Nombre de rangs de priorité strictement meilleurs réellement disponibles :
+    // c'est lui qui dit si l'exercice tiré est encore dans la fenêtre tolérée.
+    const rangsMeilleurs = new Set(better.map((b) => priorityFor(b, params.equipment))).size;
+    if (better.length && rangsMeilleurs >= rangsTolerees) {
+      out.push(`[M1] ${e.name} (priorité ${prioriteDe(e)}) en principal alors que ${better.map((b) => b.name).join(' / ')} est disponible`);
+    }
   }
 
   // M2 : un seul exercice par geste, sauf Full body et sauf paire compound + isolation

@@ -2,7 +2,7 @@ import type {
   Catalog, CatalogMovement, FormatChoice, FunctionalIntention, GeneratedMuscuWeek, GeneratedSession, GeneratedWeek, GeneratedWod, Muscle,
   MuscuObjective, MuscuTarget, MuscuWeekDay, MuscuWeekParams, MuscuWod, Pattern, SessionBlock, SessionBlockAOption,
   SessionBlockBOption, SessionDay, SessionFinisherOption, SessionParams, SessionSkeleton, SessionStructuredBlock,
-  SkeletonBank, StrengthStep, WeekParams, Band, Intention, SessionStationItem, SessionTrack,
+  SkeletonBank, StrengthStep, WeekParams, Band, Intention, SessionStationItem, SessionTrack, WeekSeen,
 } from './types';
 import { NoValidWod } from './types';
 import { RNG } from './rng';
@@ -1002,9 +1002,17 @@ export function generateMuscuWeek(params: MuscuWeekParams, catalog: Catalog, ban
     const dayObjective = d.target === 'tronc' && objective === 'force' ? 'hypertrophie' : objective;
     const weekly_room: Partial<Record<Muscle, number>> = {};
     for (const [mu, n] of setsByMuscle(days)) weekly_room[mu] = Math.max(0, MUSCU_WEEKLY_CAP_SETS - n);
+    // A2 : ce que la semaine a déjà posé, avec le jour et le rôle de chaque
+    // exercice. Les jours sont composés du plus étroit au plus large, donc
+    // `days` ne contient pas les jours dans l'ordre du calendrier — c'est bien
+    // `d.day` qui porte la position dans la semaine, pas l'ordre de composition.
+    const week_seen: WeekSeen[] = days.flatMap((x) => x.wod.blocks[0].exercises.map((e) => ({
+      id: e.id, group: e.movement_group, day: x.day, role: e.role,
+    })));
     const wod = generateMuscu({
       entry: 'express', target: d.target, objective: dayObjective, budget_min: d.budget_min, equipment, level,
       exclude: params.exclude, recent_signatures: [...recent, ...days.map((x) => x.wod.signature)], box_wod: true, weekly_room,
+      week_seen, week_day: d.day,
     }, catalog, bank, (seed + d.day * 7919) >>> 0);
     for (const r of wod.generator.relaxations) relax.add(`${d.target}:${r}`);
     days.push({ day: d.day, target: d.target, budget_min: d.budget_min, wod });

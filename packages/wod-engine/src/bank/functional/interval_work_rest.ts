@@ -13,7 +13,7 @@ export const interval_work_rest: Skeleton = {
   slots: [
     { pick: { family: ['erg'], unit: 'cal' }, qty: 'range' },
     { pick: { family: ['barbell', 'dumbbell'], pattern_any: ['hinge', 'squat'] }, qty: 'range' },
-    { pick: { family: ['bodyweight'], pattern_any: ['mono'] }, qty: 'range' },
+    { pick: { family: ['bodyweight', 'jump_rope'], pattern_any: ['mono'] }, qty: 'range' },
   ],
   score_type: 'time',
   cap_factor: 1.4,

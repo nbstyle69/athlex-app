@@ -1,4 +1,4 @@
-import type { Category, MovementCap, SkeletonBank } from '../types';
+import type { Category, Family, MovementCap, SkeletonBank } from '../types';
 import { couplet_for_time_21_15_9 } from './functional/couplet_for_time_21_15_9';
 import { couplet_amrap_short } from './functional/couplet_amrap_short';
 import { triplet_amrap_mid } from './functional/triplet_amrap_mid';
@@ -73,8 +73,37 @@ const HYBRID_CAPS = {
 };
 
 /**
+ * Facteur appliqué au plafond GÉNÉRIQUE de `volume_caps`, par famille.
+ *
+ * Le plafond générique est posé par unité : 100 reps en RX. Il régit donc de la
+ * même façon un thruster et un double under, alors qu'une rep ne veut pas dire
+ * la même chose dans les deux cas. Conséquence mesurée le 17/09/2026 : la corde
+ * à sauter ne sortait JAMAIS en Functional. Ses plages partent de 25 à 50 reps
+ * par round ; au-delà de deux rounds le minimum dépasse 100, la quantité ne peut
+ * pas être réduite sous son plancher, et la tentative entière est rejetée.
+ *
+ * Une famille absente vaut 1 : son plafond est inchangé. `erg` et `run` ne
+ * figurent pas ici parce qu'ils sont régis par leurs unités propres (`cal`,
+ * `m`), qui ont leurs propres plafonds génériques.
+ */
+export const FAMILY_CAP_FACTOR: Partial<Record<Family, number>> = {
+  jump_rope: 4,
+};
+
+/** Plafond générique d'une famille pour une unité : `undefined` si l'unité n'en a pas. */
+export function genericCapFor(caps: Partial<Record<string, number>>, family: Family, unit: string): number | undefined {
+  const base = caps[unit];
+  return base === undefined ? undefined : base * (FAMILY_CAP_FACTOR[family] ?? 1);
+}
+
+/**
  * Plafonds §5.4 par classe de mouvements, total par WOD à la référence RX.
  * Scaled / Inter × 0,7 ; Elite / Pro × 1,3 (`VOLUME_CAP_FACTOR`).
+ *
+ * Une entrée REMPLACE le plafond générique de la famille, elle ne s'y ajoute
+ * pas : elle peut donc le RELEVER autant que le resserrer. C'était un `Math.min`
+ * jusqu'au 17/09/2026, et la moitié haute de la table était alors inopérante —
+ * on pouvait y écrire 200 sans que rien ne change.
  */
 export const MOVEMENT_CAPS: MovementCap[] = [
   { label: 'HSPU', ids: ['handstand_push_up'], unit: 'reps', rx: 45 },
@@ -91,6 +120,10 @@ export const MOVEMENT_CAPS: MovementCap[] = [
   { label: 'barre medium', family: 'barbell', band: 'medium', unit: 'reps', rx: 60 },
   { label: 'barre light', family: 'barbell', band: 'light', unit: 'reps', rx: 90 },
   { label: 'wall balls', ids: ['wall_ball'], unit: 'reps', rx: 150 },
+  // Borne le haut de la corde à sauter : sans elle, le facteur de famille
+  // laissait passer 300 à 400 double unders dans un WOD de rounds. Le plafond
+  // de classe remplace le générique modulé (400 en RX) et le ramène à 200.
+  { label: 'corde à sauter', family: 'jump_rope', unit: 'reps', rx: 200 },
   { label: 'devil press', ids: ['devil_press'], unit: 'reps', rx: 30 },
   { label: 'burpee box jump over', ids: ['burpee_box_jump_over'], unit: 'reps', rx: 40 },
   { label: 'box jump over', ids: ['box_jump_over'], unit: 'reps', rx: 60 },

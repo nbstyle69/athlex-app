@@ -6,7 +6,7 @@ export {
 } from './catalog';
 export type { CatalogRow } from './catalog';
 export { CATALOG_SNAPSHOT } from './catalog/snapshot';
-export { BANK_V1, BANK_VERSION, FUNCTIONAL_SKELETONS, HYBRID_SKELETONS, MOVEMENT_CAPS, VOLUME_CAP_FACTOR } from './bank';
+export { BANK_V1, BANK_VERSION, FUNCTIONAL_SKELETONS, HYBRID_SKELETONS, MOVEMENT_CAPS, VOLUME_CAP_FACTOR, FAMILY_CAP_FACTOR, genericCapFor } from './bank';
 export { bankFromRows, skeletonToRow, movementCapToRow, movementCapFromRow } from './bank/rows';
 export type { SkeletonRow, VolumeCapRow } from './bank/rows';
 export {
@@ -15,7 +15,7 @@ export {
   forceBand, isSlowSkill, carriesIntention, engineShare, movementCapFor,
 } from './generate';
 export type { SkeletonRef } from './generate';
-export { estimateDuration, estimateAll, estimateBlock, TIME_BOUNDED, ladderStep, deathByMinute, roundSeconds } from './estimate';
+export { estimateDuration, estimateAll, estimateBlock, TIME_BOUNDED, BAND_CADENCE_FACTOR, ladderStep, deathByMinute, roundSeconds } from './estimate';
 export { signature } from './signature';
 export { render, movementLine, movementLines, CATEGORY_LABEL } from './render';
 export { profileCategory } from './profile';
@@ -36,7 +36,7 @@ export {
   withSkillProgression, trackOf, hybridJumpReps, hybridRunMeters, CAL_TO_M, itemsOf,
 } from './session';
 export {
-  generateMuscu, targetAvailable, availableTargets, availableDurations, renderMuscu, exerciseLine, loadText, muscuSignature, afterClassMuscles, muscuLevelFor, percentForReps, sessionSeconds,
+  generateMuscu, priorityFor, PRIORITY_RANKS, targetAvailable, availableTargets, availableDurations, renderMuscu, exerciseLine, loadText, muscuSignature, afterClassMuscles, muscuLevelFor, percentForReps, sessionSeconds,
   sideLabel, InvalidMuscuParams, MUSCU_ENGINE_VERSION, MUSCU_MAX_ATTEMPTS, MUSCU_TOLERANCE, MUSCU_DURATIONS, BEGINNER_MAX_EXERCISES, BEGINNER_MAX_EXERCISES_LONG, BEGINNER_LONG_BUDGET_MIN, MAX_EXERCISES,
   HEAVY_MAX, HEAVY_PERCENT, DEMOTED_RANGE, DEMOTED_PERCENT_MAX, REST_EXTRA_MAX, BODYWEIGHT_MAX_LOADED, CORE_MAX_OUTSIDE_TRONC, BONUS_EXCLUDED_IDS, DURATION_PROBE_SEEDS, BODYWEIGHT_PULL_UP_IDS, NO_SQUAT_TARGETS, SQUAT_IDS, HIGH_REP_SETS_MAX, HIGH_REP_SETS_REPS_MAX,
   VOLUME_CAP_SETS, WEIGHTED_IDS, UNIT_RANGES, SCHEMES, TARGET_LABEL, OBJECTIVE_LABEL, EQUIPMENT_LABEL, LEVEL_LABEL,
@@ -51,3 +51,6 @@ export type {
   Track, RunStatus, RunRow, BoxWodInsert, ExistingAutoRow, ProgrammingBox, ProgrammingDb, WeekContext, WeekOutcome, RunOptions,
   RevealConfig,
 } from './programming';
+export { FEASIBILITY } from './bank/feasibility';
+export type { FeasibilityRow } from './bank/feasibility';
+export { formatsOfferedFor, feasibleFormats, feasibleDurations, combinationFeasible, FORMAT_CHOICE_COVERS } from './feasibility';

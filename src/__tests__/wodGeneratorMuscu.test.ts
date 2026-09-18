@@ -40,6 +40,7 @@ jest.mock('../services/notifications', () => ({ cancelTodayScoreReminder: () => 
 const records: Record<string, unknown> = {};
 jest.mock('../services/myProfile', () => ({ fetchMyPersonalRecords: () => Promise.resolve(records) }));
 
+import type { MuscuExercise } from '../../packages/wod-engine/src';
 import {
   generateForUser, isMuscuResult, isMuscuWod, loadMuscuEquipment, performedMovementEntries, plannedSets,
   saveGeneratedWod, saveMuscuEquipment, setTonnage, submitMuscuScore, totalTonnage,
@@ -154,9 +155,15 @@ describe('tonnage et badges', () => {
     expect(setTonnage({ reps: 8, load_kg: 0 })).toBe(0);
     expect(totalTonnage([{ exercise_id: 'a', name: 'A', sets: [{ reps: 8, load_kg: 60 }, { reps: 6, load_kg: 70 }] }])).toBe(900);
     records['weightlifting_Hip Thrust'] = '100';
-    const r = await generateForUser(user, 'box', screen, 3);
-    if (!isMuscuResult(r)) throw new Error('muscu attendu');
-    const ht = r.wod.blocks[0].exercises.find((e) => e.load.mode === '1rm');
+    // Depuis le lot A, trois rangs de priorité concourent sur le slot principal :
+    // le hip thrust n'est plus garanti sur un seed donné. On cherche le premier
+    // tirage qui charge un exercice depuis le 1RM connu — c'est lui qu'on vérifie.
+    let ht: MuscuExercise | undefined;
+    for (let seed = 1; seed <= 12 && !ht; seed++) {
+      const r = await generateForUser(user, 'box', screen, seed);
+      if (!isMuscuResult(r)) throw new Error('muscu attendu');
+      ht = r.wod.blocks[0].exercises.find((e) => e.load.mode === '1rm');
+    }
     expect(ht).toBeDefined();
     if (!ht) return;
     const sets = plannedSets(ht);

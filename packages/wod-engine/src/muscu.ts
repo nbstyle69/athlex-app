@@ -78,6 +78,11 @@ interface Scheme {
   rir: string;
 }
 export const SCHEMES: Record<MuscuObjective, Scheme> = {
+  // Barème des repos : main = polyarticulaire principal, other = tout le reste.
+  // Le rôle `core` (gainage) est à part et plafonné à 60 s (30 s en endurance),
+  // voir `lineFor` : un gainage n'a pas besoin de deux minutes, et c'est ce
+  // qu'un coach ferait. Validé par Nab le 18/09/2026 — une carte Tronc en
+  // Prise de muscle affiche donc 60 s partout, ce n'est pas une anomalie.
   hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rpe: 8, rir: 'dernière série à 1-2 reps de l\'échec' },
   force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rpe: 8, rir: 'RIR 2, dernière série RPE 9' },
   endurance: { sets: { main: 3, other: 3 }, sets_min: 2, sets_max: 5, rest: { main: 40, other: 40 }, rpe: 7, rir: 'rythme continu, aucune série à l\'échec' },
@@ -299,6 +304,29 @@ interface Filter {
   role: boolean;
   objective: boolean;
   muscles: Muscle[];
+  /** A2 : respecter l'anti-répétition hebdomadaire (dernier cran relâché). */
+  week: boolean;
+}
+
+/**
+ * A2 — un exercice, et le geste dont il relève, ne reviennent qu'une fois dans
+ * la semaine. Deux occurrences sont tolérées à deux conditions cumulées : pas
+ * sur deux jours consécutifs, et pas dans le même rôle. Au-delà, refus.
+ *
+ * Le geste (`movement_group`) porte la règle autant que l'id : hip thrust à la
+ * barre, aux haltères et à la machine sont le même exercice pour un athlète,
+ * et c'est ce que le constat de terrain remontait.
+ */
+function weekAllowed(ctx: Ctx, m: Mv, slot: MuscuSlot): boolean {
+  const seen = ctx.params.week_seen;
+  const day = ctx.params.week_day;
+  if (!seen?.length || day == null) return true;
+  const memes = seen.filter((s) => s.id === m.id || s.group === m.muscu.movement_group);
+  if (memes.length === 0) return true;
+  if (memes.length > 1) return false;
+  const [autre] = memes;
+  if (Math.abs(autre.day - day) <= 1) return false;
+  return autre.role !== slot.role;
 }
 
 function candidates(ctx: Ctx, slot: MuscuSlot, f: Filter, picked: Picked[], prevMuscle: Muscle | null): Mv[] {
@@ -317,6 +345,7 @@ function candidates(ctx: Ctx, slot: MuscuSlot, f: Filter, picked: Picked[], prev
     if (f.role && !roleOk(m, slot.role)) return false;
     if (f.objective && !objectiveFor(m, ctx.params.objective)) return false;
     if (slot.role === 'main_compound' && ctx.params.objective === 'force' && !(f.ids && slot.groups) && mainMuscles.has(m.muscu.muscle_primary)) return false;
+    if (f.week && !weekAllowed(ctx, m, slot)) return false;
     if (!groupAllowed(ctx, m, slot, picked)) return false;
     if (!bodyweightAllowed(ctx, m, picked)) return false;
     if (!coreAllowed(ctx, m, picked)) return false;
@@ -324,40 +353,95 @@ function candidates(ctx: Ctx, slot: MuscuSlot, f: Filter, picked: Picked[], prev
   });
 }
 
-/** M1 : le slot principal prend le meilleur exercice disponible (`priority` 1 → 5) ; tirage pondéré seulement entre égalités. */
+/** Pénalité de répétition (A1) : un exercice sorti récemment pèse quatre fois moins. */
+const REPEAT_PENALTY = 4;
+
+/**
+ * Priorité applicable au mode courant (A1). Sans matériel, les exercices ont
+ * leur propre ordre : le catalogue y est étroit, et l'ordre canonique de la
+ * salle — où une pompe classique passe avant une pompe déclinée — y donnerait
+ * toujours le même gagnant. Ailleurs, `priority` ne bouge pas d'un pouce.
+ */
+export function priorityFor(m: { muscu: { priority: number; priority_bodyweight: number | null } }, equipment: MuscuEquipment): number {
+  return equipment === 'none' ? (m.muscu.priority_bodyweight ?? m.muscu.priority) : m.muscu.priority;
+}
+
+/**
+ * M1 : le slot principal prend le meilleur exercice disponible (`priority` 1 → 5) ;
+ * tirage pondéré seulement entre égalités.
+ *
+ * Exception « Sans matériel » (A1) : on garde les TROIS meilleures priorités, pas
+ * la seule première. Deux ne suffisaient pas : avec deux candidats en lice,
+ * chacun sort une fois sur deux, et le critère produit (aucun exercice au-delà
+ * de 45 % des séances) est arithmétiquement hors d'atteinte. Le catalogue sans matériel est étroit — deux candidats pour
+ * les épaules avant ce lot — et prendre toujours le premier faisait revenir le
+ * même exercice à chaque séance. Élargir le catalogue ne suffisait pas : la
+ * règle de priorité aurait simplement désigné un autre unique gagnant.
+ *
+ * Les exercices des derniers tirages sont pénalisés dans le même mode, sans
+ * jamais être interdits : sur un muscle qui n'a qu'un candidat, mieux vaut le
+ * répéter que rendre une séance vide.
+ */
+/**
+ * Rangs de priorité en concurrence sur le slot principal, par matériel.
+ * Un seul rang rend le slot déterministe : mesuré le 18/09/2026, `bench_press`
+ * sortait dans 100 % des séances Push en Box comme en Salle, et Jambes / Force
+ * ne produisait que deux séances distinctes sur cinquante. La mémoire des dix
+ * dernières signatures n'y change rien : elle fait retirer, mais le slot retire
+ * toujours la même chose. Objet mutable pour que les mesures le fassent varier.
+ */
+export const PRIORITY_RANKS: Record<MuscuEquipment, number> = { none: 3, box: 3, gym: 3 };
+
 function choose(ctx: Ctx, list: Mv[], role: MuscuSlotRole): Mv {
+  const sansMateriel = ctx.params.equipment === 'none';
   if (role === 'main_compound') {
-    const best = Math.min(...list.map((m) => m.muscu.priority));
-    list = list.filter((m) => m.muscu.priority === best);
+    const rangs = [...new Set(list.map((m) => priorityFor(m, ctx.params.equipment)))].sort((a, b) => a - b);
+    const gardees = new Set(rangs.slice(0, PRIORITY_RANKS[ctx.params.equipment]));
+    list = list.filter((m) => gardees.has(priorityFor(m, ctx.params.equipment)));
   }
-  return ctx.rng.pickWeighted(list, (x) => equipmentWeight(x, ctx.params.equipment))!;
+  const recents = sansMateriel ? new Set(ctx.params.recent_exercise_ids ?? []) : new Set<string>();
+  return ctx.rng.pickWeighted(list, (x) => {
+    const w = equipmentWeight(x, ctx.params.equipment);
+    return recents.has(x.id) ? w / REPEAT_PENALTY : w;
+  })!;
 }
 
 /** Ordre de relâchement d'un slot : ids / groupes → unilatéral → rôle → objectif → muscles de la cible. */
 function pickSlot(ctx: Ctx, slot: MuscuSlot, index: number, picked: Picked[], target: MuscuTarget): Picked | null {
   const slotMuscles = Array.isArray(slot.muscle) ? slot.muscle : [slot.muscle];
   const prev = picked.length ? picked[picked.length - 1].m.muscu.muscle_primary : null;
+  // A2 : l'anti-répétition hebdomadaire n'est respectée QUE sur le cran exact.
+  // C'est une préférence, pas une règle de séance : dès qu'il faut relâcher
+  // quoi que ce soit de structurel (geste imposé, rôle, objectif, muscle), elle
+  // s'efface d'abord — sinon un jour Pull perdait son tirage horizontal (M4)
+  // parce qu'un rowing avait servi de bonus la veille. Mesuré le 18/09/2026 :
+  // cinq semaines sur 52 sans rowing le jour Pull. Le relâchement nomme
+  // l'exercice répété, il ne se tait pas (`semaine:<id>`, posé plus bas).
   const steps: Array<[string | null, Filter]> = [
-    [null, { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles }],
+    [null, { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: true }],
+    ['semaine', { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: false }],
     // geste imposé (M4) : on garde le groupe avant de lâcher l'objectif ou le rôle
-    [slot.groups ? 'slot_objective' : null, { ids: true, unilateral: true, role: true, objective: false, muscles: slotMuscles }],
-    [slot.groups ? 'slot_role' : null, { ids: true, unilateral: true, role: false, objective: false, muscles: slotMuscles }],
-    [slot.ids || slot.groups ? 'slot_ids' : null, { ids: false, unilateral: true, role: true, objective: true, muscles: slotMuscles }],
-    [slot.unilateral ? 'slot_unilateral' : null, { ids: false, unilateral: false, role: true, objective: true, muscles: slotMuscles }],
-    ['slot_role', { ids: false, unilateral: false, role: false, objective: true, muscles: slotMuscles }],
-    ['slot_objective', { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles }],
+    [slot.groups ? 'slot_objective' : null, { ids: true, unilateral: true, role: true, objective: false, muscles: slotMuscles, week: false }],
+    [slot.groups ? 'slot_role' : null, { ids: true, unilateral: true, role: false, objective: false, muscles: slotMuscles, week: false }],
+    [slot.ids || slot.groups ? 'slot_ids' : null, { ids: false, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: false }],
+    [slot.unilateral ? 'slot_unilateral' : null, { ids: false, unilateral: false, role: true, objective: true, muscles: slotMuscles, week: false }],
+    ['slot_role', { ids: false, unilateral: false, role: false, objective: true, muscles: slotMuscles, week: false }],
+    ['slot_objective', { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles, week: false }],
   ];
   if (!slot.optional) {
     const wider = TARGET_MUSCLES[target].filter((mu) => !slotMuscles.includes(mu) && !ctx.excludedMuscles.has(mu));
-    if (wider.length) steps.push(['slot_muscle', { ids: false, unilateral: false, role: true, objective: true, muscles: wider }]);
-    if (wider.length) steps.push(['slot_muscle', { ids: false, unilateral: false, role: false, objective: false, muscles: wider }]);
+    if (wider.length) steps.push(['slot_muscle', { ids: false, unilateral: false, role: true, objective: true, muscles: wider, week: false }]);
+    if (wider.length) steps.push(['slot_muscle', { ids: false, unilateral: false, role: false, objective: false, muscles: wider, week: false }]);
   }
   for (const [i, [relax, f]] of steps.entries()) {
     if (i > 0 && relax === null) continue;
     const list = candidates(ctx, slot, f, picked, prev);
     if (!list.length) continue;
     const m = choose(ctx, list, slot.role);
-    if (relax) ctx.relax.add(relax);
+    // Le cran « semaine » ne se trace que si l'exercice retenu répète vraiment ;
+    // un cran structurel plus bas qui répète aussi est nommé de la même façon.
+    if (relax && relax !== 'semaine') ctx.relax.add(relax);
+    if (i > 0 && !weekAllowed(ctx, m, slot)) ctx.relax.add(`semaine:${m.id}`);
     const required = !!slot.groups && f.ids && !slot.optional;
     return { m, role: slot.role, objective: objectiveFor(m, ctx.params.objective) ?? 'hypertrophie', optional: !!slot.optional, slotIndex: index, ...(required ? { required } : {}) };
   }
@@ -533,7 +617,14 @@ function bonusExercise(ctx: Ctx, lines: Line[], target: MuscuTarget): Line | nul
     && !(ctx.params.objective !== 'endurance' && BONUS_EXCLUDED_IDS.includes(m.id))
     && groupAllowed(ctx, m, { ...bonusSlot, role: m.muscu.compound ? 'secondary_compound' : isCoreMuscle(m.muscu.muscle_primary) ? 'core' : 'isolation' }, lines)
     && bodyweightAllowed(ctx, m, lines)
-    && coreAllowed(ctx, m, lines);
+    && coreAllowed(ctx, m, lines)
+    // A2 : le rattrapage de budget tire ici, sans passer par `candidates`. Il
+    // doit voir l'anti-répétition hebdomadaire comme les slots, sinon la règle
+    // n'existe que sur un chemin sur deux — mesuré le 18/09/2026 : quatre
+    // `core_anti` dans la semaine, zéro relâchement tracé, parce que trois des
+    // quatre venaient d'ici. Une règle qui ne protège qu'un chemin est pire
+    // qu'une règle absente : on la croit posée.
+    && weekAllowed(ctx, m, { ...bonusSlot, role: m.muscu.compound ? 'secondary_compound' : isCoreMuscle(m.muscu.muscle_primary) ? 'core' : 'isolation' });
   const targetMuscles = TARGET_MUSCLES[target];
   const primary = ctx.pool.filter((m) => eligible(m) && muscles.includes(m.muscu.muscle_primary));
   // repli : isolation d'un muscle secondaire de la cible — muscles secondaires des exercices déjà tirés (puis de tout le pool

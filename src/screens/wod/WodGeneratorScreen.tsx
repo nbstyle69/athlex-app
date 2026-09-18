@@ -29,6 +29,7 @@ import type {
   Catalog, Discipline, Entry, FormatChoice, Intention, MuscuEquipment, MuscuObjective, MuscuTarget, SkeletonBank, Vest,
 } from '../../../packages/wod-engine/src';
 import { availableDurations, availableTargets, muscuLevelFor } from '../../../packages/wod-engine/src';
+import { formatsOfferedFor, feasibleFormats, feasibleDurations } from '../../../packages/wod-engine/src';
 import {
   HYBRID_ORANGE, DURATIONS, FORMATS, INTENTIONS, VESTS, avoidedText, equipmentOptions, coerceDuration,
 } from './wodGeneratorOptions';
@@ -66,6 +67,18 @@ export default function WodGeneratorScreen() {
   const [duration, setDuration] = useState(15);
   const [format, setFormat] = useState<FormatChoice>('surprise');
   const [intention, setIntention] = useState<Intention>('mixed');
+
+  // G1 / G4 : l'écran ne propose que ce que la banque sait servir. Les formats
+  // absents de la discipline (Hybrid n'a ni EMOM ni Chipper) disparaissent ;
+  // une combinaison durée × format × intention qu'aucun squelette n'aboutit
+  // est grisée — jamais choisie puis remplacée en silence. Tout vient de la
+  // table de faisabilité générée depuis la banque, rien n'est écrit en dur.
+  const formatsOffered = isMuscu ? [] : formatsOfferedFor(discipline);
+  const formatsFaisables = isMuscu ? new Set<FormatChoice>() : feasibleFormats(discipline, duration, intention);
+  const dureesFaisables = isMuscu ? new Set<number>() : feasibleDurations(discipline, intention, entry === 'express' ? format : 'surprise');
+  useEffect(() => {
+    if (!isMuscu && !formatsOffered.includes(format)) setFormat('surprise');
+  }, [discipline, isMuscu, format, formatsOffered]);
   const [vest, setVest] = useState<Vest>('none');
   const [exclude, setExclude] = useState<string[]>([]);
   const [advanced, setAdvanced] = useState(false);
@@ -350,7 +363,7 @@ export default function WodGeneratorScreen() {
         <Section title="Durée" S={S}>
           <ChipScroll>
             {DURATIONS[entry][discipline].map((d) => (
-              <Chip key={d} label={`${d} min`} selected={duration === d} onPress={() => setDuration(d)} />
+              <Chip key={d} label={`${d} min`} selected={duration === d} onPress={() => setDuration(d)} disabled={!dureesFaisables.has(d)} testID={`wodgen-duration-${d}`} />
             ))}
           </ChipScroll>
         </Section>
@@ -359,8 +372,8 @@ export default function WodGeneratorScreen() {
         {!isMuscu && entry === 'express' && (
           <Section title="Format" S={S}>
             <ChipScroll>
-              {FORMATS.map((f) => (
-                <Chip key={f.key} label={f.label} selected={format === f.key} onPress={() => setFormat(f.key)} />
+              {FORMATS.filter((f) => formatsOffered.includes(f.key)).map((f) => (
+                <Chip key={f.key} label={f.label} selected={format === f.key} onPress={() => setFormat(f.key)} disabled={!formatsFaisables.has(f.key)} testID={`wodgen-format-${f.key}`} />
               ))}
             </ChipScroll>
           </Section>

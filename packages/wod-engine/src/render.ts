@@ -164,8 +164,11 @@ function footer(wod: GeneratedWod, b: GeneratedBlock): string[] {
   return out;
 }
 
+/** Le titre garde trois mouvements et DIT quand il en reste : « … / BIKE ERG +1 », jamais une troncature muette (G2). */
 function titleOf(wod: GeneratedWod, b: GeneratedBlock): string {
-  const names = [...new Set(b.movements.filter((m) => m.round === undefined || m.round === 1).map((m) => m.name))].slice(0, 3);
+  const all = [...new Set(b.movements.filter((m) => m.round === undefined || m.round === 1).map((m) => m.name))];
+  const names = all.slice(0, 3);
+  if (all.length > 3) names[2] = `${names[2]} +${all.length - 3}`;
   const label: Record<SkeletonFormat, string> = {
     amrap: `AMRAP ${wod.budget_min}`, for_time: b.scheme ? b.scheme.join('-') : 'For time',
     rounds_for_time: `${b.rounds} rounds`, chipper: 'Chipper', ladder: 'Ladder', emom: `EMOM ${wod.budget_min}`,

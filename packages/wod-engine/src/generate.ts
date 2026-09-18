@@ -9,7 +9,7 @@ import {
 } from './catalog';
 import { RNG } from './rng';
 import { estimateAll, estimateBlock, referenceCategory, roundSeconds, fixedWorkSeconds, TIME_BOUNDED, movementSeconds, TRANSITION_S, ladderStep, deathByMinute } from './estimate';
-import { VOLUME_CAP_FACTOR } from './bank';
+import { VOLUME_CAP_FACTOR, genericCapFor } from './bank';
 import { signature } from './signature';
 import { render } from './render';
 
@@ -276,6 +276,13 @@ function candidateTiers(params: GenerateParams, bank: SkeletonBank): Array<{ lis
 
 /** Tirages consécutifs ratés sur un palier avant de passer au palier plus relâché. */
 export const TIER_ATTEMPTS = 50;
+/**
+ * Même budget quand l'athlète a CHOISI un format (G1). Avec 50 essais, un palier
+ * exact à candidat unique — `triplet_rounds_for_time` en Force sur 20 min —
+ * abandonnait trois fois sur quatre avant d'avoir trouvé une composition qui
+ * tient la durée, et un EMOM sortait à la place d'un For time demandé.
+ */
+export const TIER_ATTEMPTS_EXPLICIT = 200;
 
 // ─── Tirage des mouvements ───────────────────────────────────────────────────
 
@@ -839,9 +846,10 @@ export function movementCapFor(bank: SkeletonBank, m: CatalogMovement, band: Ban
 }
 
 /**
- * §5.4 : volume total par mouvement borné. Plafond générique par unité, puis plafonds
- * par classe (`movement_caps`). Un dépassement réduit d'abord la quantité dans sa plage
- * (formats à quantité libre), sinon rejette le squelette. La durée est revérifiée dans `finalize`.
+ * §5.4 : volume total par mouvement borné. Plafond générique par unité, modulé par la
+ * famille (`FAMILY_CAP_FACTOR`), qu'une entrée de `movement_caps` REMPLACE quand elle
+ * existe. Un dépassement réduit d'abord la quantité dans sa plage (formats à quantité
+ * libre), sinon rejette le squelette. La durée est revérifiée dans `finalize`.
  */
 function applyVolumeCaps(ctx: Ctx, d: Draft): void {
   // réduire un slot raccourcit le round (AMRAP, continu) et relève le multiplicateur des autres : on itère jusqu'à stabilité
@@ -857,9 +865,11 @@ function capPass(ctx: Ctx, d: Draft): boolean {
   for (const p of d.picked) {
     const mult = volumeMultiplier(ctx, d, p);
     const perWod = tabata ? (16 * 20) / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
-    const generic = caps[p.unit];
+    // Le plafond de classe REMPLACE le générique : il doit pouvoir le relever
+    // autant que le resserrer. Avec l'ancien `Math.min`, écrire 200 dans
+    // `movement_caps` pour une famille plafonnée à 100 ne changeait rien.
     const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
-    const cap = Math.min(generic ?? Infinity, specific ?? Infinity);
+    const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
     if (cap === Infinity || perWod <= cap) continue;
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
     const next = roundQty(Math.floor(cap / mult), p.unit);
@@ -980,8 +990,14 @@ export function generateBlocC(params: GenerateParams, catalog: Catalog, bank: Sk
   const reasons: Record<string, number> = {};
   let tier = 0;
   let tierFails = 0;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    if (tierFails >= TIER_ATTEMPTS && tier < tiers.length - 1) { tier++; tierFails = 0; }
+  // Format explicite : le palier exact reçoit son propre budget EN PLUS du
+  // total, sinon il consommerait tout et le relâchement n'aurait plus lieu —
+  // l'athlète recevrait une erreur là où l'écran promet « voici un EMOM ».
+  const explicit = !!params.format && params.format !== 'surprise';
+  const tierBudget = explicit ? TIER_ATTEMPTS_EXPLICIT : TIER_ATTEMPTS;
+  const maxAttempts = explicit ? MAX_ATTEMPTS + TIER_ATTEMPTS_EXPLICIT : MAX_ATTEMPTS;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (tierFails >= tierBudget && tier < tiers.length - 1) { tier++; tierFails = 0; }
     const { list, relaxations } = tiers[tier];
     const sk = rng.pick(list);
     try {
@@ -994,5 +1010,5 @@ export function generateBlocC(params: GenerateParams, catalog: Catalog, bank: Sk
       throw e;
     }
   }
-  throw new NoValidWod(`Aucun WOD valide après ${MAX_ATTEMPTS} tirages`, reasons);
+  throw new NoValidWod(`Aucun WOD valide après ${maxAttempts} tirages`, reasons);
 }

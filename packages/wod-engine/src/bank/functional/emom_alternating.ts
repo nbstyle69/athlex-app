@@ -14,7 +14,7 @@ export const emom_alternating: Skeleton = {
     { pick: { family: ['barbell'] }, qty: 'range' },
     { pick: { family: ['gym'] }, qty: 'range' },
     { pick: { family: ['erg'], unit: 'cal' }, qty: 'range' },
-    { pick: { family: ['bodyweight'] }, qty: 'range', optional: true },
+    { pick: { family: ['bodyweight', 'jump_rope'] }, qty: 'range', optional: true },
   ],
   score_type: 'reps_total',
   cap_factor: 1.4,

@@ -10,9 +10,9 @@ const active = CATALOG_SNAPSHOT.movements.filter((m) => m.active && (m.weight_fu
 const BANDS: Band[] = ['light', 'medium', 'heavy'];
 
 describe('catalogue embarqué (catalogue-v1.csv)', () => {
-  it('compte 95 mouvements metcon actifs + les mouvements legacy inactifs (+ 160 exercices musculation seule)', () => {
+  it('compte 95 mouvements metcon actifs + les legacy inactifs (+ 160 musculation seule, + 55 sans matériel A1)', () => {
     expect(active).toHaveLength(95);
-    expect(CATALOG_SNAPSHOT.movements.length).toBe(109 + 160);
+    expect(CATALOG_SNAPSHOT.movements.length).toBe(109 + 160 + 55);  // + 35 sans matériel (A1)
     expect(CATALOG_SNAPSHOT.movements.filter((m) => !m.active).every((m) => m.weight_functional === 0 && m.weight_hybrid === 0)).toBe(true);
   });
 

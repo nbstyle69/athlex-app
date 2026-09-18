@@ -11,7 +11,7 @@ export const triplet_amrap_mid: Skeleton = {
   slots: [
     { pick: { family: ['erg'], unit: 'cal' }, qty: 'range' },
     { pick: { family: ['barbell', 'dumbbell', 'kettlebell', 'wallball'], pattern_any: ['squat', 'hinge', 'push_v'] }, qty: 'range' },
-    { pick: { family: ['gym', 'bodyweight'], pattern_any: ['pull_v', 'core', 'mono'], pattern_not_of_slot: 1 }, qty: 'range' },
+    { pick: { family: ['gym', 'bodyweight', 'jump_rope'], pattern_any: ['pull_v', 'core', 'mono'], pattern_not_of_slot: 1 }, qty: 'range' },
   ],
   score_type: 'rounds_reps',
   cap_factor: 1.4,

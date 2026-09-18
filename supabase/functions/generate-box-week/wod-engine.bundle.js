@@ -107,6 +107,7 @@ function muscuFromRow(r) {
     weight_gym: Number(r.weight_gym ?? 0),
     unit: r.muscu_unit ?? "reps",
     priority: Number(r.priority ?? 3),
+    priority_bodyweight: r.priority_bodyweight == null ? null : Number(r.priority_bodyweight),
     movement_group: r.movement_group ?? "carry"
   };
 }
@@ -137,8 +138,8 @@ function movementFromRow(r) {
     muscu: muscuFromRow(r)
   };
 }
-function catalogFromRows(rows) {
-  const movements = rows.map(movementFromRow);
+function catalogFromRows(rows2) {
+  const movements = rows2.map(movementFromRow);
   const version = movements.reduce((v, m) => Math.max(v, m.version), 0);
   return { version, movements };
 }
@@ -2236,7 +2237,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "squat"
+        "movement_group": "squat",
+        "priority_bodyweight": null
       }
     },
     {
@@ -2430,7 +2432,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "squat"
+        "movement_group": "squat",
+        "priority_bodyweight": null
       }
     },
     {
@@ -2619,7 +2622,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "hinge"
+        "movement_group": "hinge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -2968,7 +2972,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -3687,7 +3692,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "squat"
+        "movement_group": "squat",
+        "priority_bodyweight": null
       }
     },
     {
@@ -4494,7 +4500,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "lunge"
+        "movement_group": "lunge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -4834,7 +4841,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "m",
         "priority": 3,
-        "movement_group": "carry"
+        "movement_group": "carry",
+        "priority_bodyweight": null
       }
     },
     {
@@ -6874,7 +6882,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "press_v"
+        "movement_group": "press_v",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -7268,7 +7277,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -7371,7 +7381,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -7469,7 +7480,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "squat"
+        "movement_group": "squat",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -7840,7 +7852,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "s",
         "priority": 3,
-        "movement_group": "core_anti"
+        "movement_group": "core_anti",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -8627,7 +8640,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "lunge"
+        "movement_group": "lunge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -8645,7 +8659,7 @@ var CATALOG_SNAPSHOT = {
         "reps"
       ],
       "load_unit": null,
-      "weight_functional": 9,
+      "weight_functional": 10,
       "weight_hybrid": 3,
       "equipment": [
         "jump_rope"
@@ -8863,7 +8877,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "squat"
+        "movement_group": "squat",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -8958,7 +8973,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "lunge"
+        "movement_group": "lunge",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -10526,7 +10542,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 4,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -10624,7 +10641,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -11073,7 +11091,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "press_v"
+        "movement_group": "press_v",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -12022,7 +12041,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "press_v"
+        "movement_group": "press_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12180,7 +12200,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12246,7 +12267,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12312,7 +12334,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12376,7 +12399,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12438,7 +12462,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12500,7 +12525,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12563,7 +12589,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12633,7 +12660,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12698,7 +12726,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "press_v"
+        "movement_group": "press_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12758,7 +12787,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "press_v"
+        "movement_group": "press_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12820,7 +12850,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "raise"
+        "movement_group": "raise",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12882,7 +12913,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "raise"
+        "movement_group": "raise",
+        "priority_bodyweight": null
       }
     },
     {
@@ -12946,7 +12978,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13010,7 +13043,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13072,7 +13106,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "raise"
+        "movement_group": "raise",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13133,7 +13168,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "press_v"
+        "movement_group": "press_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13195,7 +13231,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13257,7 +13294,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13315,7 +13353,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13381,7 +13420,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13443,7 +13483,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13513,7 +13554,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13577,7 +13619,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13642,7 +13685,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13706,7 +13750,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13771,7 +13816,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13837,7 +13883,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13902,7 +13949,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -13966,7 +14014,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14035,7 +14084,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14099,7 +14149,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14161,7 +14212,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14222,7 +14274,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "hinge"
+        "movement_group": "hinge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14287,7 +14340,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hinge"
+        "movement_group": "hinge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14349,7 +14403,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14411,7 +14466,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14475,7 +14531,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14533,7 +14590,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14595,7 +14653,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14652,7 +14711,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14721,7 +14781,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "squat"
+        "movement_group": "squat",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14785,7 +14846,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "squat"
+        "movement_group": "squat",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14850,7 +14912,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "lunge"
+        "movement_group": "lunge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14920,7 +14983,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "hinge"
+        "movement_group": "hinge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -14984,7 +15048,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hinge"
+        "movement_group": "hinge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15046,7 +15111,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "squat"
+        "movement_group": "squat",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15108,7 +15174,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15178,7 +15245,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15240,7 +15308,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -15300,7 +15369,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "hinge"
+        "movement_group": "hinge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15365,7 +15435,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "hinge"
+        "movement_group": "hinge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15428,7 +15499,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "raise"
+        "movement_group": "raise",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15490,7 +15562,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "raise"
+        "movement_group": "raise",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15547,7 +15620,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15611,7 +15685,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15673,7 +15748,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15737,7 +15813,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_anti"
+        "movement_group": "core_anti",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15795,7 +15872,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_anti"
+        "movement_group": "core_anti",
+        "priority_bodyweight": null
       }
     },
     {
@@ -15850,7 +15928,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_anti"
+        "movement_group": "core_anti",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -15905,7 +15984,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "s",
         "priority": 3,
-        "movement_group": "core_anti"
+        "movement_group": "core_anti",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -15965,7 +16045,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16025,7 +16106,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "m",
         "priority": 3,
-        "movement_group": "carry"
+        "movement_group": "carry",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16091,7 +16173,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16151,7 +16234,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16216,7 +16300,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16277,7 +16362,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16341,7 +16427,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16399,7 +16486,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16463,7 +16551,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16525,7 +16614,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -16590,7 +16680,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16654,7 +16745,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "press_v"
+        "movement_group": "press_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16714,7 +16806,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "press_v"
+        "movement_group": "press_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16779,7 +16872,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "raise"
+        "movement_group": "raise",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16843,7 +16937,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16901,7 +16996,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "raise"
+        "movement_group": "raise",
+        "priority_bodyweight": null
       }
     },
     {
@@ -16965,7 +17061,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17027,7 +17124,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "raise"
+        "movement_group": "raise",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17089,7 +17187,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "raise"
+        "movement_group": "raise",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17148,7 +17247,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17206,7 +17306,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "fly"
+        "movement_group": "fly",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17271,7 +17372,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17331,7 +17433,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17395,7 +17498,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17459,7 +17563,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "row"
+        "movement_group": "row",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17521,7 +17626,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "shrug"
+        "movement_group": "shrug",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17583,7 +17689,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "shrug"
+        "movement_group": "shrug",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17646,7 +17753,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "shrug"
+        "movement_group": "shrug",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17708,7 +17816,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "shrug"
+        "movement_group": "shrug",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17772,7 +17881,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17841,7 +17951,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17905,7 +18016,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 1,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -17969,7 +18081,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18033,7 +18146,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18097,7 +18211,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18161,7 +18276,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18225,7 +18341,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "pull_v"
+        "movement_group": "pull_v",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18283,7 +18400,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18347,7 +18465,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18411,7 +18530,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18466,7 +18586,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": 2
       }
     },
     {
@@ -18528,7 +18649,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18585,7 +18707,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18647,7 +18770,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18709,7 +18833,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 4,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -18767,7 +18892,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18829,7 +18955,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18891,7 +19018,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -18953,7 +19081,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19016,7 +19145,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19078,7 +19208,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "triceps_ext"
+        "movement_group": "triceps_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19136,7 +19267,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19200,7 +19332,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19258,7 +19391,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19317,7 +19451,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19381,7 +19516,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19443,7 +19579,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19501,7 +19638,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19566,7 +19704,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "curl"
+        "movement_group": "curl",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19630,7 +19769,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "carry"
+        "movement_group": "carry",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19694,7 +19834,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "carry"
+        "movement_group": "carry",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19751,7 +19892,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "s",
         "priority": 3,
-        "movement_group": "carry"
+        "movement_group": "carry",
+        "priority_bodyweight": null
       }
     },
     {
@@ -19808,7 +19950,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -19863,7 +20006,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -19925,7 +20069,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -19987,7 +20132,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -20049,7 +20195,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -20104,7 +20251,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -20163,7 +20311,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -20220,7 +20369,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -20275,7 +20425,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "s",
         "priority": 3,
-        "movement_group": "core_anti"
+        "movement_group": "core_anti",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -20330,7 +20481,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -20387,7 +20539,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -20444,7 +20597,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -20501,7 +20655,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -20560,7 +20715,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": null
       }
     },
     {
@@ -20617,7 +20773,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "s",
         "priority": 3,
-        "movement_group": "squat"
+        "movement_group": "squat",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -20679,7 +20836,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -20737,7 +20895,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "hinge"
+        "movement_group": "hinge",
+        "priority_bodyweight": 2
       }
     },
     {
@@ -20792,7 +20951,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "raise"
+        "movement_group": "raise",
+        "priority_bodyweight": 2
       }
     },
     {
@@ -20849,7 +21009,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "s",
         "priority": 3,
-        "movement_group": "core_anti"
+        "movement_group": "core_anti",
+        "priority_bodyweight": 2
       }
     },
     {
@@ -20904,7 +21065,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "s",
         "priority": 3,
-        "movement_group": "core_anti"
+        "movement_group": "core_anti",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -20961,7 +21123,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_flex"
+        "movement_group": "core_flex",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -21025,7 +21188,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -21087,7 +21251,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -21149,7 +21314,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -21206,7 +21372,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -21268,7 +21435,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -21334,7 +21502,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "squat"
+        "movement_group": "squat",
+        "priority_bodyweight": null
       }
     },
     {
@@ -21389,7 +21558,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -21454,7 +21624,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -21518,7 +21689,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -21582,7 +21754,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "lunge"
+        "movement_group": "lunge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -21642,7 +21815,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "lunge"
+        "movement_group": "lunge",
+        "priority_bodyweight": null
       }
     },
     {
@@ -21711,7 +21885,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 8,
         "unit": "reps",
         "priority": 2,
-        "movement_group": "hip_ext"
+        "movement_group": "hip_ext",
+        "priority_bodyweight": null
       }
     },
     {
@@ -21774,7 +21949,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 4,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -21833,7 +22009,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 2,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "press_h"
+        "movement_group": "press_h",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -21891,7 +22068,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 3,
-        "movement_group": "core_anti"
+        "movement_group": "core_anti",
+        "priority_bodyweight": 1
       }
     },
     {
@@ -21953,7 +22131,8 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 5,
-        "movement_group": "lunge"
+        "movement_group": "lunge",
+        "priority_bodyweight": 3
       }
     },
     {
@@ -22010,7 +22189,3507 @@ var CATALOG_SNAPSHOT = {
         "weight_gym": 6,
         "unit": "s",
         "priority": 3,
+        "movement_group": "squat",
+        "priority_bodyweight": 1
+      }
+    },
+    {
+      "id": "pike_push_up_elevated",
+      "name": "Pike Push-Ups sur\xE9lev\xE9es",
+      "family": "bodyweight",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "pieds sur\xE9lev\xE9s : plus vertical, plus proche du HSPU",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            6,
+            12
+          ],
+          "endurance": [
+            12,
+            20
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
+        "movement_group": "press_v"
+      }
+    },
+    {
+      "id": "hindu_push_up",
+      "name": "Pompes Hindu",
+      "family": "bodyweight",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "pecs",
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 2,
+        "movement_group": "press_v"
+      }
+    },
+    {
+      "id": "handstand_hold",
+      "name": "Handstand Hold",
+      "family": "bodyweight",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "tenue, unit\xE9 en secondes",
+      "muscu": {
+        "muscle_primary": "epaules",
+        "muscle_secondary": [
+          "tronc"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 20,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            20,
+            60
+          ]
+        },
+        "weight_bodyweight": 5,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "s",
+        "priority": 4,
+        "priority_bodyweight": 1,
+        "movement_group": "press_v"
+      }
+    },
+    {
+      "id": "prone_ytw",
+      "name": "Prone Y-T-W",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "au sol, sans charge : trap\xE8zes moyens et bas",
+      "muscu": {
+        "muscle_primary": "trapezes",
+        "muscle_secondary": [
+          "epaules_post",
+          "dos"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "reverse_snow_angel",
+      "name": "Reverse Snow Angels",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "epaules_post",
+        "muscle_secondary": [
+          "trapezes"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "diamond_push_up_decline",
+      "name": "Pompes diamant d\xE9clin\xE9es",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [
+          "pecs"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "floor_triceps_extension",
+      "name": "Extensions triceps au sol",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "skull crusher au poids du corps, genoux ou pieds",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [
+          "epaules_ant"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            12,
+            20
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "close_push_up_box",
+      "name": "Pompes serr\xE9es sur box",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [
+          "pecs"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 2,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "archer_push_up",
+      "name": "Pompes archer",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "une main tendue : charge d\xE9cal\xE9e sur un c\xF4t\xE9",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps",
+          "epaules_ant"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "avance",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            5,
+            10
+          ],
+          "force": [
+            3,
+            6
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 1,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "decline_push_up_wall",
+      "name": "Pompes d\xE9clin\xE9es pieds au mur",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "epaules_ant",
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            20
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 4,
+        "priority_bodyweight": 2,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "weighted_bag_push_up",
+      "name": "Pompes lest\xE9es (sac)",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "sac \xE0 dos charg\xE9 : progression quand les pompes deviennent faciles",
+      "muscu": {
+        "muscle_primary": "pecs",
+        "muscle_secondary": [
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            4,
+            6
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 5,
+        "priority_bodyweight": 3,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "inverted_row_table",
+      "name": "Rowing invers\xE9 sous table",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "table, barre basse ou anneaux : le tirage horizontal sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps",
+          "trapezes"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 9,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "superman_pull",
+      "name": "Superman Pull",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "lombaires",
+          "trapezes"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "scapular_pull_up",
+      "name": "Scapular Pull-Ups",
+      "family": "gym",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "G",
+      "grip": "high",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "pull_up_bar"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "barre fixe : r\xE9serv\xE9 au mode Box",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "trapezes"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            12,
+            20
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 3,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "band_pull_apart",
+      "name": "\xC9cart\xE9s \xE0 l'\xE9lastique",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique : admis en sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "epaules_post",
+        "muscle_secondary": [
+          "trapezes"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            12,
+            20
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 2,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "chin_up_supine",
+      "name": "Tractions supination",
+      "family": "gym",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "G",
+      "grip": "high",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "pull_up_bar"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "barre fixe : r\xE9serv\xE9 au mode Box",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [
+          "dos"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            5,
+            10
+          ],
+          "force": [
+            3,
+            6
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 9,
+        "weight_gym": 9,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "band_biceps_curl",
+      "name": "Curls \xE0 l'\xE9lastique",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique : admis en sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [
+          "avant_bras"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "towel_curl_isometric",
+      "name": "Curls isom\xE9triques \xE0 la serviette",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "auto-r\xE9sistance : une main freine l'autre",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [
+          "avant_bras"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            12,
+            20
+          ]
+        },
+        "weight_bodyweight": 6,
+        "weight_box": 5,
+        "weight_gym": 5,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 2,
+        "movement_group": "curl"
+      }
+    },
+    {
+      "id": "bar_hang_shrug",
+      "name": "Shrugs suspendus \xE0 la barre",
+      "family": "gym",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "G",
+      "grip": "high",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "pull_up_bar"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "barre fixe : r\xE9serv\xE9 au mode Box",
+      "muscu": {
+        "muscle_primary": "trapezes",
+        "muscle_secondary": [
+          "dos"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
+        "movement_group": "shrug"
+      }
+    },
+    {
+      "id": "scapular_push_up",
+      "name": "Scapular Push-Ups",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "trap\xE8zes inf\xE9rieurs et dentel\xE9, en planche",
+      "muscu": {
+        "muscle_primary": "trapezes",
+        "muscle_secondary": [
+          "epaules_ant"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            20
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 1,
+        "movement_group": "shrug"
+      }
+    },
+    {
+      "id": "dead_hang",
+      "name": "Suspension passive",
+      "family": "gym",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "G",
+      "grip": "high",
+      "shoulder_load": "low",
+      "unit_default": "s",
+      "units_allowed": [
+        "s"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "pull_up_bar"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "barre fixe : r\xE9serv\xE9 au mode Box, unit\xE9 en secondes",
+      "muscu": {
+        "muscle_primary": "avant_bras",
+        "muscle_secondary": [
+          "dos"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 1,
+        "setup_s": 15,
+        "objectives": [
+          "endurance"
+        ],
+        "rep_ranges": {
+          "endurance": [
+            20,
+            60
+          ]
+        },
+        "weight_bodyweight": 0,
+        "weight_box": 9,
+        "weight_gym": 9,
+        "unit": "s",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "carry"
+      }
+    },
+    {
+      "id": "fingertip_push_up",
+      "name": "Pompes sur les doigts",
+      "family": "bodyweight",
+      "pattern": [
+        "push_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "high",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "doigts en appui : poignets et fl\xE9chisseurs",
+      "muscu": {
+        "muscle_primary": "avant_bras",
+        "muscle_secondary": [
+          "pecs",
+          "triceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            6,
+            12
+          ],
+          "endurance": [
+            10,
+            20
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
+        "movement_group": "press_h"
+      }
+    },
+    {
+      "id": "bodyweight_wrist_curl",
+      "name": "Flexions de poignet au poids du corps",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE0 genoux, mains au sol",
+      "muscu": {
+        "muscle_primary": "avant_bras",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            12,
+            20
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 1,
+        "movement_group": "carry"
+      }
+    },
+    {
+      "id": "band_external_rotation",
+      "name": "Rotations externes \xE0 l'\xE9lastique",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique, coude au corps : admis en sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "coiffe",
+        "muscle_secondary": [
+          "epaules_post"
+        ],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            12,
+            20
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "band_face_pull",
+      "name": "Face Pull \xE0 l'\xE9lastique",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique \xE0 hauteur de visage",
+      "muscu": {
+        "muscle_primary": "coiffe",
+        "muscle_secondary": [
+          "epaules_post",
+          "trapezes"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            12,
+            20
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 2,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "prone_external_rotation",
+      "name": "Rotations externes \xE0 plat ventre",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "sans charge, amplitude lente",
+      "muscu": {
+        "muscle_primary": "coiffe",
+        "muscle_secondary": [
+          "epaules_post"
+        ],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 3,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "band_lat_pulldown_kneeling",
+      "name": "Tirage vertical \xE9lastique \xE0 genoux",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique ancr\xE9 haut, \xE0 genoux : amplitude compl\xE8te sans barre",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "band_single_arm_pulldown",
+      "name": "Tirage \xE9lastique un bras",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "un bras \xE0 la fois : corrige les asym\xE9tries",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            14
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 2,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "band_bent_over_row",
+      "name": "Rowing \xE9lastique buste pench\xE9",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique sous les pieds, dos plat",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps",
+          "trapezes"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 2,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "inverted_row_feet_elevated",
+      "name": "Rowing invers\xE9 pieds sur\xE9lev\xE9s",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "pieds sur une chaise : le tirage horizontal le plus chargeant sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps",
+          "trapezes"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 15,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            6,
+            12
+          ],
+          "force": [
+            5,
+            8
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "towel_row_post",
+      "name": "Rowing serviette autour d'un poteau",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "serviette autour d'un montant : partout, sans rien",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps",
+          "avant_bras"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 3,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "band_lat_pulldown",
+      "name": "Tirage vertical \xE0 l'\xE9lastique",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique ancr\xE9 en hauteur : le tirage vertical sans barre",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "band_face_pull_high",
+      "name": "Face Pull \xE9lastique haut",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique en hauteur, coudes hauts",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "trapezes",
+          "epaules_post"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            12,
+            20
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "band_curl_supine_grip",
+      "name": "Curls \xE9lastique prise supination large",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique sous les pieds, coudes au corps",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [
+          "dos"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "band_hammer_curl",
+      "name": "Curls marteau \xE0 l'\xE9lastique",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_v"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "prise neutre",
+      "muscu": {
+        "muscle_primary": "biceps",
+        "muscle_secondary": [
+          "avant_bras"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 2,
+        "movement_group": "pull_v"
+      }
+    },
+    {
+      "id": "chair_step_up",
+      "name": "Step-up sur chaise",
+      "family": "bodyweight",
+      "pattern": [
+        "lunge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "mont\xE9e contr\xF4l\xE9e, descente frein\xE9e",
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "quadriceps"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 9,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "lunge"
+      }
+    },
+    {
+      "id": "lateral_lunge",
+      "name": "Fente lat\xE9rale",
+      "family": "bodyweight",
+      "pattern": [
+        "lunge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "fessiers",
+        "muscle_secondary": [
+          "quadriceps",
+          "ischios"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 2,
+        "movement_group": "lunge"
+      }
+    },
+    {
+      "id": "bird_dog_hold",
+      "name": "Bird Dog tenu",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "bras et jambe oppos\xE9s, bassin fixe",
+      "muscu": {
+        "muscle_primary": "lombaires",
+        "muscle_secondary": [
+          "fessiers",
+          "tronc"
+        ],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            14
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "pallof_press_band",
+      "name": "Pallof Press \xE0 l'\xE9lastique",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique lat\xE9ral : anti-rotation",
+      "muscu": {
+        "muscle_primary": "obliques",
+        "muscle_secondary": [
+          "tronc"
+        ],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "prone_ytw_hold",
+      "name": "Prone Y-T-W tenu",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "chaque position tenue 3 s",
+      "muscu": {
+        "muscle_primary": "trapezes",
+        "muscle_secondary": [
+          "epaules_post"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 2,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "band_row",
+      "name": "Rowing \xE0 l'\xE9lastique",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique ancr\xE9 : le tirage horizontal partout",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "biceps",
+          "trapezes"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 2,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "scapular_pull_floor",
+      "name": "Scapular Pull au sol",
+      "family": "bodyweight",
+      "pattern": [
+        "pull_h"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE0 plat ventre, omoplates seules : sans barre",
+      "muscu": {
+        "muscle_primary": "dos",
+        "muscle_secondary": [
+          "trapezes"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 4,
+        "priority_bodyweight": 2,
+        "movement_group": "row"
+      }
+    },
+    {
+      "id": "band_overhead_triceps_extension",
+      "name": "Extensions triceps \xE9lastique au-dessus de la t\xEAte",
+      "family": "bodyweight",
+      "pattern": [
+        "push_v"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [
+        "band"
+      ],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "\xE9lastique derri\xE8re la nuque",
+      "muscu": {
+        "muscle_primary": "triceps",
+        "muscle_secondary": [
+          "epaules"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
+        "movement_group": "triceps_ext"
+      }
+    },
+    {
+      "id": "bulgarian_split_squat_chair",
+      "name": "Fentes bulgares (pied sur chaise)",
+      "family": "bodyweight",
+      "pattern": [
+        "lunge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "pied arri\xE8re sur une chaise : la fente la plus chargeante sans mat\xE9riel",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "force": [
+            5,
+            8
+          ]
+        },
+        "weight_bodyweight": 9,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
+        "movement_group": "lunge"
+      }
+    },
+    {
+      "id": "reverse_lunge_slow",
+      "name": "Fente arri\xE8re lente",
+      "family": "bodyweight",
+      "pattern": [
+        "lunge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "descente contr\xF4l\xE9e, sans charge",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 2,
+        "movement_group": "lunge"
+      }
+    },
+    {
+      "id": "jump_squat",
+      "name": "Squat saut\xE9",
+      "family": "bodyweight",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers",
+          "mollets"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            16
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
         "movement_group": "squat"
+      }
+    },
+    {
+      "id": "cossack_squat",
+      "name": "Cossack Squat",
+      "family": "bodyweight",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "squat lat\xE9ral, jambe oppos\xE9e tendue",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers",
+          "ischios"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            6,
+            12
+          ],
+          "endurance": [
+            12,
+            20
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 3,
+        "priority_bodyweight": 2,
+        "movement_group": "squat"
+      }
+    },
+    {
+      "id": "shrimp_squat",
+      "name": "Shrimp Squat",
+      "family": "bodyweight",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "avance",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 5,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            4,
+            8
+          ],
+          "force": [
+            3,
+            5
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 4,
+        "priority_bodyweight": 3,
+        "movement_group": "squat"
+      }
+    },
+    {
+      "id": "sissy_squat",
+      "name": "Sissy Squat",
+      "family": "bodyweight",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "quadriceps en \xE9tirement, appui l\xE9ger",
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            12
+          ],
+          "endurance": [
+            12,
+            20
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 5,
+        "priority_bodyweight": 2,
+        "movement_group": "squat"
+      }
+    },
+    {
+      "id": "jumping_lunge",
+      "name": "Fentes saut\xE9es",
+      "family": "bodyweight",
+      "pattern": [
+        "lunge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "quadriceps",
+        "muscle_secondary": [
+          "fessiers",
+          "mollets"
+        ],
+        "compound": true,
+        "unilateral": true,
+        "level_min": "inter",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            16
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 5,
+        "priority_bodyweight": 3,
+        "movement_group": "lunge"
+      }
+    },
+    {
+      "id": "single_leg_calf_raise",
+      "name": "Mollets unilat\xE9raux",
+      "family": "bodyweight",
+      "pattern": [
+        "squat"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "sur une marche, amplitude compl\xE8te",
+      "muscu": {
+        "muscle_primary": "mollets",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 2,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            12,
+            20
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 9,
+        "weight_box": 8,
+        "weight_gym": 8,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "raise"
+      }
+    },
+    {
+      "id": "nordic_curl_assisted",
+      "name": "Nordic Curl assist\xE9",
+      "family": "bodyweight",
+      "pattern": [
+        "hinge"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "pieds bloqu\xE9s, descente frein\xE9e",
+      "muscu": {
+        "muscle_primary": "ischios",
+        "muscle_secondary": [
+          "fessiers"
+        ],
+        "compound": true,
+        "unilateral": false,
+        "level_min": "avance",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 5,
+        "setup_s": 20,
+        "objectives": [
+          "hypertrophie",
+          "force"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            4,
+            8
+          ],
+          "force": [
+            3,
+            6
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 2,
+        "priority_bodyweight": 1,
+        "movement_group": "hinge"
+      }
+    },
+    {
+      "id": "weighted_dead_bug",
+      "name": "Dead Bug lest\xE9",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "sac ou bouteilles dans les mains",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [
+          "obliques"
+        ],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 4,
+        "setup_s": 10,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            14
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 4,
+        "priority_bodyweight": 2,
+        "movement_group": "core_anti"
+      }
+    },
+    {
+      "id": "floor_toes_to_bar",
+      "name": "Toes-to-Bar au sol",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": "allong\xE9, mains au sol au-dessus de la t\xEAte",
+      "muscu": {
+        "muscle_primary": "tronc",
+        "muscle_secondary": [],
+        "compound": false,
+        "unilateral": false,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            10,
+            15
+          ],
+          "endurance": [
+            20,
+            30
+          ]
+        },
+        "weight_bodyweight": 7,
+        "weight_box": 6,
+        "weight_gym": 6,
+        "unit": "reps",
+        "priority": 5,
+        "priority_bodyweight": 2,
+        "movement_group": "core_flex"
+      }
+    },
+    {
+      "id": "side_plank_rotation",
+      "name": "Side Plank avec rotation",
+      "family": "bodyweight",
+      "pattern": [
+        "core"
+      ],
+      "modality": "G",
+      "grip": "none",
+      "shoulder_load": "low",
+      "unit_default": "reps",
+      "units_allowed": [
+        "reps"
+      ],
+      "load_unit": null,
+      "weight_functional": 0,
+      "weight_hybrid": 0,
+      "equipment": [],
+      "cadence": null,
+      "loads": null,
+      "rep_ranges": null,
+      "substitutions": null,
+      "variant_up": null,
+      "badge_key": null,
+      "active": true,
+      "version": 1,
+      "notes": null,
+      "muscu": {
+        "muscle_primary": "obliques",
+        "muscle_secondary": [
+          "tronc"
+        ],
+        "compound": false,
+        "unilateral": true,
+        "level_min": "debutant",
+        "load_mode": "bodyweight",
+        "rm_reference": null,
+        "rm_factor": null,
+        "seconds_per_rep": 3,
+        "setup_s": 5,
+        "objectives": [
+          "hypertrophie",
+          "endurance"
+        ],
+        "rep_ranges": {
+          "hypertrophie": [
+            8,
+            14
+          ],
+          "endurance": [
+            15,
+            25
+          ]
+        },
+        "weight_bodyweight": 8,
+        "weight_box": 7,
+        "weight_gym": 7,
+        "unit": "reps",
+        "priority": 1,
+        "priority_bodyweight": 1,
+        "movement_group": "core_anti"
       }
     }
   ]
@@ -22068,7 +25747,7 @@ var triplet_amrap_mid = {
   slots: [
     { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
     { pick: { family: ["barbell", "dumbbell", "kettlebell", "wallball"], pattern_any: ["squat", "hinge", "push_v"] }, qty: "range" },
-    { pick: { family: ["gym", "bodyweight"], pattern_any: ["pull_v", "core", "mono"], pattern_not_of_slot: 1 }, qty: "range" }
+    { pick: { family: ["gym", "bodyweight", "jump_rope"], pattern_any: ["pull_v", "core", "mono"], pattern_not_of_slot: 1 }, qty: "range" }
   ],
   score_type: "rounds_reps",
   cap_factor: 1.4,
@@ -22159,7 +25838,7 @@ var emom_alternating = {
     { pick: { family: ["barbell"] }, qty: "range" },
     { pick: { family: ["gym"] }, qty: "range" },
     { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
-    { pick: { family: ["bodyweight"] }, qty: "range", optional: true }
+    { pick: { family: ["bodyweight", "jump_rope"] }, qty: "range", optional: true }
   ],
   score_type: "reps_total",
   cap_factor: 1.4,
@@ -22181,7 +25860,7 @@ var interval_work_rest = {
   slots: [
     { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
     { pick: { family: ["barbell", "dumbbell"], pattern_any: ["hinge", "squat"] }, qty: "range" },
-    { pick: { family: ["bodyweight"], pattern_any: ["mono"] }, qty: "range" }
+    { pick: { family: ["bodyweight", "jump_rope"], pattern_any: ["mono"] }, qty: "range" }
   ],
   score_type: "time",
   cap_factor: 1.4,
@@ -23475,6 +27154,13 @@ var HYBRID_CAPS = {
   women_pro: { reps: 120, cal: 120, m: 7e3, s: 420 },
   men_pro: { reps: 120, cal: 120, m: 7e3, s: 420 }
 };
+var FAMILY_CAP_FACTOR = {
+  jump_rope: 4
+};
+function genericCapFor(caps, family, unit) {
+  const base = caps[unit];
+  return base === void 0 ? void 0 : base * (FAMILY_CAP_FACTOR[family] ?? 1);
+}
 var MOVEMENT_CAPS = [
   { label: "HSPU", ids: ["handstand_push_up"], unit: "reps", rx: 45 },
   { label: "strict HSPU", ids: ["strict_handstand_push_up"], unit: "reps", rx: 20 },
@@ -23490,6 +27176,10 @@ var MOVEMENT_CAPS = [
   { label: "barre medium", family: "barbell", band: "medium", unit: "reps", rx: 60 },
   { label: "barre light", family: "barbell", band: "light", unit: "reps", rx: 90 },
   { label: "wall balls", ids: ["wall_ball"], unit: "reps", rx: 150 },
+  // Borne le haut de la corde à sauter : sans elle, le facteur de famille
+  // laissait passer 300 à 400 double unders dans un WOD de rounds. Le plafond
+  // de classe remplace le générique modulé (400 en RX) et le ramène à 200.
+  { label: "corde \xE0 sauter", family: "jump_rope", unit: "reps", rx: 200 },
   { label: "devil press", ids: ["devil_press"], unit: "reps", rx: 30 },
   { label: "burpee box jump over", ids: ["burpee_box_jump_over"], unit: "reps", rx: 40 },
   { label: "box jump over", ids: ["box_jump_over"], unit: "reps", rx: 60 },
@@ -23586,10 +27276,11 @@ var TIME_BOUNDED = /* @__PURE__ */ new Set([
 function degradation(rounds) {
   return Math.min(1.3, 1 + 0.05 * (Math.max(1, rounds) - 1));
 }
+var BAND_CADENCE_FACTOR = { light: 1, medium: 1.2, heavy: 1.5 };
 function cadence(m, category) {
   const c = m.cadence_by_category[category];
   if (c === void 0) throw new Error(`cadence manquante : ${m.id} / ${category}`);
-  return c;
+  return c * (m.load_band ? BAND_CADENCE_FACTOR[m.load_band] : 1);
 }
 function movementSeconds(m, category, qty = m.qty) {
   return qty * cadence(m, category);
@@ -23906,7 +27597,9 @@ function footer(wod, b) {
   return out;
 }
 function titleOf(wod, b) {
-  const names = [...new Set(b.movements.filter((m) => m.round === void 0 || m.round === 1).map((m) => m.name))].slice(0, 3);
+  const all = [...new Set(b.movements.filter((m) => m.round === void 0 || m.round === 1).map((m) => m.name))];
+  const names = all.slice(0, 3);
+  if (all.length > 3) names[2] = `${names[2]} +${all.length - 3}`;
   const label = {
     amrap: `AMRAP ${wod.budget_min}`,
     for_time: b.scheme ? b.scheme.join("-") : "For time",
@@ -24162,6 +27855,7 @@ function candidateTiers(params, bank) {
   return tiers;
 }
 var TIER_ATTEMPTS = 50;
+var TIER_ATTEMPTS_EXPLICIT = 200;
 function pickUnit(slot2, m) {
   const want = slot2.pick.unit ?? (m.family === "erg" ? slot2.pick.erg_unit : void 0);
   if (want) return m.units_allowed.includes(want) ? want : null;
@@ -24700,9 +28394,8 @@ function capPass(ctx, d) {
   for (const p of d.picked) {
     const mult = volumeMultiplier(ctx, d, p);
     const perWod = tabata ? 16 * 20 / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
-    const generic = caps[p.unit];
     const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
-    const cap = Math.min(generic ?? Infinity, specific ?? Infinity);
+    const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
     if (cap === Infinity || perWod <= cap) continue;
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
     const next = roundQty(Math.floor(cap / mult), p.unit);
@@ -24809,8 +28502,11 @@ function generateBlocC(params, catalog, bank, seed) {
   const reasons = {};
   let tier = 0;
   let tierFails = 0;
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    if (tierFails >= TIER_ATTEMPTS && tier < tiers.length - 1) {
+  const explicit = !!params.format && params.format !== "surprise";
+  const tierBudget = explicit ? TIER_ATTEMPTS_EXPLICIT : TIER_ATTEMPTS;
+  const maxAttempts = explicit ? MAX_ATTEMPTS + TIER_ATTEMPTS_EXPLICIT : MAX_ATTEMPTS;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    if (tierFails >= tierBudget && tier < tiers.length - 1) {
       tier++;
       tierFails = 0;
     }
@@ -24830,7 +28526,7 @@ function generateBlocC(params, catalog, bank, seed) {
       throw e;
     }
   }
-  throw new NoValidWod(`Aucun WOD valide apr\xE8s ${MAX_ATTEMPTS} tirages`, reasons);
+  throw new NoValidWod(`Aucun WOD valide apr\xE8s ${maxAttempts} tirages`, reasons);
 }
 
 // packages/wod-engine/src/profile.ts
@@ -24886,6 +28582,11 @@ var WEIGHTED_BODYWEIGHT_RATIO = 0.1;
 var TEMPO_311 = "3-1-1";
 var TEMPO_311_SECONDS_PER_REP = 5;
 var SCHEMES = {
+  // Barème des repos : main = polyarticulaire principal, other = tout le reste.
+  // Le rôle `core` (gainage) est à part et plafonné à 60 s (30 s en endurance),
+  // voir `lineFor` : un gainage n'a pas besoin de deux minutes, et c'est ce
+  // qu'un coach ferait. Validé par Nab le 18/09/2026 — une carte Tronc en
+  // Prise de muscle affiche donc 60 s partout, ce n'est pas une anomalie.
   hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rpe: 8, rir: "derni\xE8re s\xE9rie \xE0 1-2 reps de l'\xE9chec" },
   force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rpe: 8, rir: "RIR 2, derni\xE8re s\xE9rie RPE 9" },
   endurance: { sets: { main: 3, other: 3 }, sets_min: 2, sets_max: 5, rest: { main: 40, other: 40 }, rpe: 7, rir: "rythme continu, aucune s\xE9rie \xE0 l'\xE9chec" }
@@ -25028,6 +28729,17 @@ function roleOk(m, role) {
   if (role === "core" || role === "calves") return true;
   return COMPOUND_ROLES.has(role) ? m.muscu.compound : !m.muscu.compound;
 }
+function weekAllowed(ctx, m, slot2) {
+  const seen = ctx.params.week_seen;
+  const day = ctx.params.week_day;
+  if (!seen?.length || day == null) return true;
+  const memes = seen.filter((s) => s.id === m.id || s.group === m.muscu.movement_group);
+  if (memes.length === 0) return true;
+  if (memes.length > 1) return false;
+  const [autre] = memes;
+  if (Math.abs(autre.day - day) <= 1) return false;
+  return autre.role !== slot2.role;
+}
 function candidates(ctx, slot2, f, picked, prevMuscle) {
   const used = new Set(picked.map((p) => p.m.id));
   const mainMuscles = new Set(picked.filter((p) => p.role === "main_compound").map((p) => p.m.muscu.muscle_primary));
@@ -25043,43 +28755,57 @@ function candidates(ctx, slot2, f, picked, prevMuscle) {
     if (f.role && !roleOk(m, slot2.role)) return false;
     if (f.objective && !objectiveFor(m, ctx.params.objective)) return false;
     if (slot2.role === "main_compound" && ctx.params.objective === "force" && !(f.ids && slot2.groups) && mainMuscles.has(m.muscu.muscle_primary)) return false;
+    if (f.week && !weekAllowed(ctx, m, slot2)) return false;
     if (!groupAllowed(ctx, m, slot2, picked)) return false;
     if (!bodyweightAllowed(ctx, m, picked)) return false;
     if (!coreAllowed(ctx, m, picked)) return false;
     return true;
   });
 }
+var REPEAT_PENALTY = 4;
+function priorityFor(m, equipment) {
+  return equipment === "none" ? m.muscu.priority_bodyweight ?? m.muscu.priority : m.muscu.priority;
+}
+var PRIORITY_RANKS = { none: 3, box: 3, gym: 3 };
 function choose(ctx, list, role) {
+  const sansMateriel = ctx.params.equipment === "none";
   if (role === "main_compound") {
-    const best = Math.min(...list.map((m) => m.muscu.priority));
-    list = list.filter((m) => m.muscu.priority === best);
+    const rangs = [...new Set(list.map((m) => priorityFor(m, ctx.params.equipment)))].sort((a, b) => a - b);
+    const gardees = new Set(rangs.slice(0, PRIORITY_RANKS[ctx.params.equipment]));
+    list = list.filter((m) => gardees.has(priorityFor(m, ctx.params.equipment)));
   }
-  return ctx.rng.pickWeighted(list, (x) => equipmentWeight(x, ctx.params.equipment));
+  const recents = sansMateriel ? new Set(ctx.params.recent_exercise_ids ?? []) : /* @__PURE__ */ new Set();
+  return ctx.rng.pickWeighted(list, (x) => {
+    const w = equipmentWeight(x, ctx.params.equipment);
+    return recents.has(x.id) ? w / REPEAT_PENALTY : w;
+  });
 }
 function pickSlot(ctx, slot2, index, picked, target) {
   const slotMuscles = Array.isArray(slot2.muscle) ? slot2.muscle : [slot2.muscle];
   const prev = picked.length ? picked[picked.length - 1].m.muscu.muscle_primary : null;
   const steps = [
-    [null, { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles }],
+    [null, { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: true }],
+    ["semaine", { ids: true, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: false }],
     // geste imposé (M4) : on garde le groupe avant de lâcher l'objectif ou le rôle
-    [slot2.groups ? "slot_objective" : null, { ids: true, unilateral: true, role: true, objective: false, muscles: slotMuscles }],
-    [slot2.groups ? "slot_role" : null, { ids: true, unilateral: true, role: false, objective: false, muscles: slotMuscles }],
-    [slot2.ids || slot2.groups ? "slot_ids" : null, { ids: false, unilateral: true, role: true, objective: true, muscles: slotMuscles }],
-    [slot2.unilateral ? "slot_unilateral" : null, { ids: false, unilateral: false, role: true, objective: true, muscles: slotMuscles }],
-    ["slot_role", { ids: false, unilateral: false, role: false, objective: true, muscles: slotMuscles }],
-    ["slot_objective", { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles }]
+    [slot2.groups ? "slot_objective" : null, { ids: true, unilateral: true, role: true, objective: false, muscles: slotMuscles, week: false }],
+    [slot2.groups ? "slot_role" : null, { ids: true, unilateral: true, role: false, objective: false, muscles: slotMuscles, week: false }],
+    [slot2.ids || slot2.groups ? "slot_ids" : null, { ids: false, unilateral: true, role: true, objective: true, muscles: slotMuscles, week: false }],
+    [slot2.unilateral ? "slot_unilateral" : null, { ids: false, unilateral: false, role: true, objective: true, muscles: slotMuscles, week: false }],
+    ["slot_role", { ids: false, unilateral: false, role: false, objective: true, muscles: slotMuscles, week: false }],
+    ["slot_objective", { ids: false, unilateral: false, role: false, objective: false, muscles: slotMuscles, week: false }]
   ];
   if (!slot2.optional) {
     const wider = TARGET_MUSCLES[target].filter((mu) => !slotMuscles.includes(mu) && !ctx.excludedMuscles.has(mu));
-    if (wider.length) steps.push(["slot_muscle", { ids: false, unilateral: false, role: true, objective: true, muscles: wider }]);
-    if (wider.length) steps.push(["slot_muscle", { ids: false, unilateral: false, role: false, objective: false, muscles: wider }]);
+    if (wider.length) steps.push(["slot_muscle", { ids: false, unilateral: false, role: true, objective: true, muscles: wider, week: false }]);
+    if (wider.length) steps.push(["slot_muscle", { ids: false, unilateral: false, role: false, objective: false, muscles: wider, week: false }]);
   }
   for (const [i, [relax, f]] of steps.entries()) {
     if (i > 0 && relax === null) continue;
     const list = candidates(ctx, slot2, f, picked, prev);
     if (!list.length) continue;
     const m = choose(ctx, list, slot2.role);
-    if (relax) ctx.relax.add(relax);
+    if (relax && relax !== "semaine") ctx.relax.add(relax);
+    if (i > 0 && !weekAllowed(ctx, m, slot2)) ctx.relax.add(`semaine:${m.id}`);
     const required = !!slot2.groups && f.ids && !slot2.optional;
     return { m, role: slot2.role, objective: objectiveFor(m, ctx.params.objective) ?? "hypertrophie", optional: !!slot2.optional, slotIndex: index, ...required ? { required } : {} };
   }
@@ -25216,7 +28942,7 @@ function bonusExercise(ctx, lines, target) {
   const room = (mu) => muscleCap(ctx, mu) - (vol.get(mu) ?? 0);
   const muscles = TARGET_MUSCLES[target].filter((mu) => !ctx.excludedMuscles.has(mu) && room(mu) >= minSets);
   const bonusSlot = { role: "isolation", muscle: TARGET_MUSCLES[target], optional: true, pair: true };
-  const eligible = (m2, anyObjective = false) => !used.has(m2.id) && bonusIndex(lines, m2.muscu.muscle_primary) >= 0 && !ctx.excludedMuscles.has(m2.muscu.muscle_primary) && room(m2.muscu.muscle_primary) >= minSets && (anyObjective || objectiveFor(m2, ctx.params.objective)) && !(ctx.params.objective !== "endurance" && BONUS_EXCLUDED_IDS.includes(m2.id)) && groupAllowed(ctx, m2, { ...bonusSlot, role: m2.muscu.compound ? "secondary_compound" : isCoreMuscle(m2.muscu.muscle_primary) ? "core" : "isolation" }, lines) && bodyweightAllowed(ctx, m2, lines) && coreAllowed(ctx, m2, lines);
+  const eligible = (m2, anyObjective = false) => !used.has(m2.id) && bonusIndex(lines, m2.muscu.muscle_primary) >= 0 && !ctx.excludedMuscles.has(m2.muscu.muscle_primary) && room(m2.muscu.muscle_primary) >= minSets && (anyObjective || objectiveFor(m2, ctx.params.objective)) && !(ctx.params.objective !== "endurance" && BONUS_EXCLUDED_IDS.includes(m2.id)) && groupAllowed(ctx, m2, { ...bonusSlot, role: m2.muscu.compound ? "secondary_compound" : isCoreMuscle(m2.muscu.muscle_primary) ? "core" : "isolation" }, lines) && bodyweightAllowed(ctx, m2, lines) && coreAllowed(ctx, m2, lines) && weekAllowed(ctx, m2, { ...bonusSlot, role: m2.muscu.compound ? "secondary_compound" : isCoreMuscle(m2.muscu.muscle_primary) ? "core" : "isolation" });
   const targetMuscles = TARGET_MUSCLES[target];
   const primary = ctx.pool.filter((m2) => eligible(m2) && muscles.includes(m2.muscu.muscle_primary));
   const secondaryOf = (ms) => new Set(ms.flatMap((m2) => m2.muscu.muscle_secondary).filter((mu) => !isCoreMuscle(mu)));
@@ -26495,6 +30221,12 @@ function generateMuscuWeek(params, catalog, bank, seed) {
     const dayObjective = d.target === "tronc" && objective === "force" ? "hypertrophie" : objective;
     const weekly_room = {};
     for (const [mu, n] of setsByMuscle(days)) weekly_room[mu] = Math.max(0, MUSCU_WEEKLY_CAP_SETS - n);
+    const week_seen = days.flatMap((x) => x.wod.blocks[0].exercises.map((e) => ({
+      id: e.id,
+      group: e.movement_group,
+      day: x.day,
+      role: e.role
+    })));
     const wod = generateMuscu({
       entry: "express",
       target: d.target,
@@ -26505,7 +30237,9 @@ function generateMuscuWeek(params, catalog, bank, seed) {
       exclude: params.exclude,
       recent_signatures: [...recent, ...days.map((x) => x.wod.signature)],
       box_wod: true,
-      weekly_room
+      weekly_room,
+      week_seen,
+      week_day: d.day
     }, catalog, bank, seed + d.day * 7919 >>> 0);
     for (const r of wod.generator.relaxations) relax.add(`${d.target}:${r}`);
     days.push({ day: d.day, target: d.target, budget_min: d.budget_min, wod });
@@ -26611,10 +30345,10 @@ function weekSeed(box_id, track, iso_year, iso_week, regen_counter) {
 function functionalWeekRows(week, ctx) {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
   const publishAt = (date) => publishAtFor(date, ctx.iso_year, ctx.iso_week, ctx.reveal);
-  const rows = [];
+  const rows2 = [];
   for (const s of week.sessions) {
     for (const b of s.blocks) {
-      rows.push({
+      rows2.push({
         box_id: ctx.box_id,
         created_by: ctx.created_by,
         title: b.title,
@@ -26641,7 +30375,7 @@ function functionalWeekRows(week, ctx) {
       });
     }
   }
-  return rows;
+  return rows2;
 }
 function muscuWeekRows(week, ctx) {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
@@ -26709,7 +30443,7 @@ async function runWeekGeneration(db, catalog, bank, opts) {
           iso_week: target.iso_week,
           reveal: box.reveal
         };
-        let rows;
+        let rows2;
         let signatures;
         let relaxations;
         if (track === "functional" || track === "hybrid") {
@@ -26719,12 +30453,12 @@ async function runWeekGeneration(db, catalog, bank, opts) {
             recent_signatures: recent,
             track
           }, catalog, bank, seed);
-          rows = functionalWeekRows(week, ctx);
+          rows2 = functionalWeekRows(week, ctx);
           signatures = week.signatures;
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];
         } else {
           const week = generateMuscuWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
-          rows = muscuWeekRows(week, ctx);
+          rows2 = muscuWeekRows(week, ctx);
           signatures = week.days.map((d) => d.wod.signature);
           relaxations = week.relaxations;
         }
@@ -26733,7 +30467,7 @@ async function runWeekGeneration(db, catalog, bank, opts) {
         const toDelete = previous.filter((r) => !keptDates.has(r.scheduled_date)).map((r) => r.id);
         if (toDelete.length) await db.deleteRows(toDelete);
         const keptIds = previous.filter((r) => keptDates.has(r.scheduled_date)).map((r) => r.id);
-        const inserts = rows.filter((r) => !keptDates.has(r.scheduled_date));
+        const inserts = rows2.filter((r) => !keptDates.has(r.scheduled_date));
         const ids = inserts.length ? await db.insertRows(inserts) : [];
         await db.updateRun(run.id, { status: "done", error: null, wod_ids: [...keptIds, ...ids], signatures, relaxations, seed, regen_counter });
         out.push({ ...base, status: "done", regen_counter, inserted: ids.length, kept_dates: [...keptDates].sort(), deleted: toDelete.length });
@@ -26746,8 +30480,156 @@ async function runWeekGeneration(db, catalog, bank, opts) {
   }
   return out;
 }
+
+// packages/wod-engine/src/bank/feasibility.ts
+var FEASIBILITY = [
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 8, intention: "mixed", feasible: true },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 8, intention: "gym", feasible: true },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 8, intention: "force", feasible: false },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 12, intention: "mixed", feasible: false },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 12, intention: "gym", feasible: false },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 12, intention: "force", feasible: false },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 8, intention: "mixed", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 8, intention: "cardio", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 8, intention: "gym", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 12, intention: "mixed", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 12, intention: "cardio", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 12, intention: "gym", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 12, intention: "mixed", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 12, intention: "cardio", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 15, intention: "mixed", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 15, intention: "cardio", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 20, intention: "cardio", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 12, intention: "mixed", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 12, intention: "force", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 15, intention: "mixed", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 15, intention: "force", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 20, intention: "force", feasible: true },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 15, intention: "mixed", feasible: false },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 15, intention: "cardio", feasible: false },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 20, intention: "mixed", feasible: false },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 20, intention: "cardio", feasible: false },
+  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 20, intention: "cardio", feasible: true },
+  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 30, intention: "mixed", feasible: false },
+  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 30, intention: "cardio", feasible: false },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 12, intention: "mixed", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 12, intention: "gym", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 12, intention: "force", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 15, intention: "mixed", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 15, intention: "gym", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 15, intention: "force", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 20, intention: "gym", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 20, intention: "force", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 15, intention: "mixed", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 15, intention: "cardio", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 15, intention: "force", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 20, intention: "cardio", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 20, intention: "force", feasible: true },
+  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 10, intention: "mixed", feasible: true },
+  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 10, intention: "gym", feasible: true },
+  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 15, intention: "mixed", feasible: false },
+  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 15, intention: "gym", feasible: false },
+  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 10, intention: "mixed", feasible: true },
+  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 10, intention: "force", feasible: true },
+  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 15, intention: "mixed", feasible: true },
+  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 15, intention: "force", feasible: true },
+  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 8, intention: "cardio", feasible: true },
+  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 8, intention: "gym", feasible: false },
+  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 10, intention: "cardio", feasible: true },
+  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 10, intention: "gym", feasible: false },
+  { id: "heavy_couplet", discipline: "functional", format: "rounds_for_time", budget_min: 10, intention: "force", feasible: true },
+  { id: "heavy_couplet", discipline: "functional", format: "rounds_for_time", budget_min: 15, intention: "force", feasible: true },
+  { id: "engine_long_amrap", discipline: "functional", format: "amrap", budget_min: 20, intention: "cardio", feasible: true },
+  { id: "engine_long_amrap", discipline: "functional", format: "amrap", budget_min: 30, intention: "cardio", feasible: true },
+  { id: "gym_density", discipline: "functional", format: "emom", budget_min: 10, intention: "gym", feasible: true },
+  { id: "gym_density", discipline: "functional", format: "emom", budget_min: 15, intention: "gym", feasible: true },
+  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 20, intention: "mixed", feasible: true },
+  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 20, intention: "cardio", feasible: true },
+  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 30, intention: "mixed", feasible: true },
+  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 30, intention: "cardio", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "interval", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "engine", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "run", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "interval", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "engine", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "run", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 45, intention: "interval", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 45, intention: "engine", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 45, intention: "run", feasible: true },
+  { id: "stations_interval", discipline: "hybrid", format: "stations", budget_min: 20, intention: "interval", feasible: true },
+  { id: "stations_interval", discipline: "hybrid", format: "stations", budget_min: 30, intention: "interval", feasible: true },
+  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 15, intention: "interval", feasible: true },
+  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 15, intention: "engine", feasible: true },
+  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 20, intention: "interval", feasible: true },
+  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 20, intention: "engine", feasible: true },
+  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 20, intention: "engine", feasible: false },
+  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 20, intention: "aerobic", feasible: false },
+  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 30, intention: "engine", feasible: false },
+  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 30, intention: "aerobic", feasible: false },
+  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 15, intention: "force", feasible: false },
+  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 15, intention: "interval", feasible: false },
+  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 20, intention: "force", feasible: false },
+  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 20, intention: "interval", feasible: false },
+  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "interval", feasible: true },
+  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "run", feasible: true },
+  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "interval", feasible: true },
+  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "run", feasible: true },
+  { id: "half_sim", discipline: "hybrid", format: "rounds_for_time", budget_min: 15, intention: "interval", feasible: false },
+  { id: "half_sim", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "interval", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 20, intention: "aerobic", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 30, intention: "aerobic", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 35, intention: "aerobic", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 40, intention: "aerobic", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 45, intention: "aerobic", feasible: true },
+  { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 10, intention: "core", feasible: true },
+  { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 15, intention: "core", feasible: true },
+  { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "core", feasible: true },
+  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 10, intention: "run", feasible: false },
+  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 15, intention: "run", feasible: true },
+  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 20, intention: "run", feasible: true },
+  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", budget_min: 30, intention: "aerobic", feasible: false },
+  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", budget_min: 35, intention: "aerobic", feasible: false },
+  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", budget_min: 40, intention: "aerobic", feasible: false }
+];
+
+// packages/wod-engine/src/feasibility.ts
+var FORMAT_CHOICE_COVERS = {
+  amrap: ["amrap"],
+  for_time: ["for_time", "rounds_for_time", "ladder"],
+  emom: ["emom", "death_by"],
+  chipper: ["chipper"],
+  stations: ["stations", "continuous"],
+  interval: ["interval", "tabata"]
+};
+var CHOICES = Object.keys(FORMAT_CHOICE_COVERS);
+function rows(discipline) {
+  return FEASIBILITY.filter((r) => r.discipline === discipline && r.feasible);
+}
+function formatsOfferedFor(discipline) {
+  const served = new Set(rows(discipline).map((r) => r.format));
+  return ["surprise", ...CHOICES.filter((c) => FORMAT_CHOICE_COVERS[c].some((f) => served.has(f)))];
+}
+function feasibleFormats(discipline, budget_min, intention) {
+  const served = new Set(rows(discipline).filter((r) => r.budget_min === budget_min && r.intention === intention).map((r) => r.format));
+  const out = new Set(CHOICES.filter((c) => FORMAT_CHOICE_COVERS[c].some((f) => served.has(f))));
+  if (served.size) out.add("surprise");
+  return out;
+}
+function feasibleDurations(discipline, intention, format = "surprise") {
+  const covers = format === "surprise" ? null : new Set(FORMAT_CHOICE_COVERS[format]);
+  return new Set(rows(discipline).filter((r) => r.intention === intention && (!covers || covers.has(r.format))).map((r) => r.budget_min));
+}
+function combinationFeasible(discipline, budget_min, intention, format) {
+  return feasibleFormats(discipline, budget_min, intention).has(format);
+}
 export {
   AFTER_CLASS_DURATIONS,
+  BAND_CADENCE_FACTOR,
   BANK_V1,
   BANK_VERSION,
   BEGINNER_LONG_BUDGET_MIN,
@@ -26770,8 +30652,11 @@ export {
   ENGINE_VERSION,
   EQUIPMENT_FALLBACK,
   EQUIPMENT_LABEL,
+  FAMILY_CAP_FACTOR,
+  FEASIBILITY,
   FINISHERS,
   FINISHER_SIGNATURE_PREFIX,
+  FORMAT_CHOICE_COVERS,
   FUNCTIONAL_CATEGORIES,
   FUNCTIONAL_SKELETONS,
   H1_intervals,
@@ -26818,6 +30703,7 @@ export {
   NO_SQUAT_TARGETS,
   NoValidWod,
   OBJECTIVE_LABEL,
+  PRIORITY_RANKS,
   PROGRAMMING_VERSION,
   RACK_ONLY_IDS,
   RECENT_WEEKS,
@@ -26865,14 +30751,18 @@ export {
   carriesIntention,
   catalogFromRows,
   categoriesFor,
+  combinationFeasible,
   deathByMinute,
   engineShare,
   estimateAll,
   estimateBlock,
   estimateDuration,
   exerciseLine,
+  feasibleDurations,
+  feasibleFormats,
   finisherSignature,
   forceBand,
+  formatsOfferedFor,
   functionalRef,
   functionalWeekRows,
   generateBlocC,
@@ -26880,6 +30770,7 @@ export {
   generateMuscuWeek,
   generateSession,
   generateWeek,
+  genericCapFor,
   hashSeed,
   heavyAllowed,
   hybridJumpReps,
@@ -26913,6 +30804,7 @@ export {
   parisOffsetMinutes,
   percentForReps,
   primaryPattern,
+  priorityFor,
   profileCategory,
   publishAtFor,
   rackAllowed,

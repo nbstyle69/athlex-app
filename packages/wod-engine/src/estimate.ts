@@ -15,10 +15,19 @@ export function degradation(rounds: number): number {
   return Math.min(1.3, 1 + 0.05 * (Math.max(1, rounds) - 1));
 }
 
+/**
+ * La cadence du catalogue est mesurée à charge légère. Une barre lourde se
+ * déplace moins vite — et sans ce facteur, un front squat à 100 kg était estimé
+ * aussi rapide qu'à 40 kg : sept reps par minute passaient le contrôle EMOM.
+ * Effet mesuré le 18/09/2026 sur 600 tirages : +5,9 % de travail estimé en
+ * Functional, +2,4 % en Hybrid, sous le seuil de 10 % fixé pour l'inclure ici.
+ */
+export const BAND_CADENCE_FACTOR: Record<'light' | 'medium' | 'heavy', number> = { light: 1, medium: 1.2, heavy: 1.5 };
+
 function cadence(m: GeneratedMovement, category: Category): number {
   const c = m.cadence_by_category[category];
   if (c === undefined) throw new Error(`cadence manquante : ${m.id} / ${category}`);
-  return c;
+  return c * (m.load_band ? BAND_CADENCE_FACTOR[m.load_band] : 1);
 }
 
 /** Secondes de travail d'un mouvement exécuté une fois pour `qty`. */

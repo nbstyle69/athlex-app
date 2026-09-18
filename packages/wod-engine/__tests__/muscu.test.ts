@@ -28,8 +28,8 @@ function* grid(): Generator<MuscuParams> {
 }
 
 describe('catalogue musculation (import CSV v1)', () => {
-  it('179 exercices (173 du CSV + 5 variantes faciles sans matériel + Banded Pull-Ups), 19 partagés avec le catalogue metcon (13 annoncés par le brief + 6 alignés par nom), 160 nouveaux', () => {
-    expect(muscuRows).toHaveLength(179);
+  it('234 exercices : 179 du CSV v1 + 55 sans matériel (A1), 19 partagés avec le catalogue metcon', () => {
+    expect(muscuRows).toHaveLength(179 + 55);
     const shared = Object.keys(MUSCU_ALIGNMENT);
     expect(shared).toHaveLength(19);
     const sharedIds = new Set(Object.values(MUSCU_ALIGNMENT) as string[]);
@@ -37,7 +37,7 @@ describe('catalogue musculation (import CSV v1)', () => {
     expect(sharedRows).toHaveLength(19);
     // partagé = ligne metcon existante (poids metcon renseignés ou ligne legacy inactive), jamais une seconde ligne
     for (const m of sharedRows) expect(m.notes ?? '').not.toMatch(/^Musculation/);
-    expect(muscuRows.filter((m) => !sharedIds.has(m.id))).toHaveLength(160);
+    expect(muscuRows.filter((m) => !sharedIds.has(m.id))).toHaveLength(160 + 55);
     const names = CATALOG_SNAPSHOT.movements.map((m) => m.name.toLowerCase());
     expect(new Set(names).size).toBe(names.length);
   });
@@ -80,7 +80,7 @@ describe('catalogue musculation (import CSV v1)', () => {
     const sql = readFileSync(path.join(__dirname, '../../../supabase/migrations/20261214000000_movement_catalog_musculation.sql'), 'utf8');
     expect(sql).toMatch(/'machine','cable'/);
     expect(sql).toMatch(/Appliquée en prod : OUI \(16\/09\/2026/);
-    expect((sql.match(/^\s+\('/gm) ?? []).length).toBe(179);
+    expect((sql.match(/^\s+\('/gm) ?? []).length).toBe(179);  // le seed 20261214 ; les 35 de A1 sont dans 20261227
     expect(sql).toMatch(/ON CONFLICT \(id\) DO UPDATE SET\n\s+discipline_muscu/);
     expect(sql).toMatch(/priority = EXCLUDED.priority/);
     expect(sql).toMatch(/movement_group = EXCLUDED.movement_group/);
@@ -279,15 +279,26 @@ describe('generateMuscu — conformité (cible × objectif × durée × matérie
     }
   });
 
-  it('cible indisponible (sans matériel : pull, dos), Force sans matériel / Après ma classe / Tronc, durée Tronc hors 15-20-30 → erreur explicite', () => {
-    expect(() => gen({ ...base, equipment: 'none', target: 'pull' }, 1)).toThrow(InvalidMuscuParams);
+  it('Force sans matériel / Après ma classe / Tronc, durée Tronc hors 15-20-30 → erreur explicite', () => {
     expect(() => gen({ ...base, target: 'tronc', objective: 'force', budget_min: 20 }, 1)).toThrow(/Tronc/);
     expect(() => gen({ ...base, target: 'tronc', budget_min: 45 }, 1)).toThrow(/15, 20 ou 30/);
     expect(gen({ ...base, target: 'tronc', budget_min: 30 }, 1).blocks[0].exercises.length).toBeGreaterThanOrEqual(2);
     expect(() => gen({ ...base, equipment: 'none', objective: 'force', target: 'push' }, 1)).toThrow(/Force/);
     expect(() => gen({ ...base, entry: 'after_class', objective: 'force', after_class: { day_movements: [] } }, 1)).toThrow(/Force/);
     expect(availableTargets(CATALOG_SNAPSHOT, 'gym', 'debutant')).toEqual(MUSCU_TARGETS);
-    expect(availableTargets(CATALOG_SNAPSHOT, 'none', 'avance')).not.toContain('pull');
+  });
+
+  it('A1 : Dos et Pull deviennent générables sans matériel', () => {
+    // Ce test remplace un cas d'indisponibilité qui encodait le trou que A1
+    // comble : avant ce lot, le catalogue n'avait AUCUN exercice de dos ni de
+    // biceps sans matériel, et la génération levait `InvalidMuscuParams`.
+    for (const target of ['pull', 'dos'] as const) {
+      const wod = gen({ ...base, equipment: 'none', target }, 1);
+      const exs = wod.blocks[0].exercises;
+      expect(exs.length).toBeGreaterThanOrEqual(3);
+      expect(exs.some((e) => e.movement_group === 'row' || e.movement_group === 'pull_v')).toBe(true);
+    }
+    expect(availableTargets(CATALOG_SNAPSHOT, 'none', 'avance')).toContain('pull');
   });
 });
 
