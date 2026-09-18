@@ -7661,7 +7661,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "s",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -15737,7 +15737,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -15793,7 +15793,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "s",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -18395,7 +18395,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "triceps_ext",
-        "priority_bodyweight": 2
+        "priority_bodyweight": 3
       }
     },
     {
@@ -19759,7 +19759,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_flex",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -19815,7 +19815,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_flex",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -19878,7 +19878,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_flex",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -20234,7 +20234,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "s",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -20874,7 +20874,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "s",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -20932,7 +20932,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_flex",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -21877,7 +21877,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "unit": "reps",
         "priority": 3,
         "movement_group": "core_anti",
-        "priority_bodyweight": 1
+        "priority_bodyweight": 2
       }
     },
     {
@@ -22059,7 +22059,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "press_v"
       }
@@ -22123,7 +22123,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "press_v"
       }
@@ -22181,7 +22181,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "s",
-        "priority": 4,
+        "priority": 5,
         "priority_bodyweight": 1,
         "movement_group": "press_v"
       }
@@ -22245,7 +22245,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "raise"
       }
@@ -22308,7 +22308,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "raise"
       }
@@ -22371,7 +22371,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "press_h"
       }
@@ -22434,7 +22434,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "triceps_ext"
       }
@@ -22497,7 +22497,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "press_h"
       }
@@ -22561,7 +22561,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 1,
         "movement_group": "press_h"
       }
@@ -22625,7 +22625,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 4,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "press_h"
       }
@@ -22752,7 +22752,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "row"
       }
@@ -22816,7 +22816,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "row"
       }
@@ -22881,14 +22881,14 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 3,
         "movement_group": "pull_v"
       }
     },
     {
       "id": "band_pull_apart",
-      "name": "Écartés à l'élastique",
+      "name": "Pull-apart à l'élastique",
       "family": "bodyweight",
       "pattern": [
         "pull_h"
@@ -22946,7 +22946,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 2,
         "movement_group": "raise"
       }
@@ -23011,7 +23011,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 9,
         "weight_gym": 9,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "pull_v"
       }
@@ -23076,7 +23076,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "curl"
       }
@@ -23139,7 +23139,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 5,
         "weight_gym": 5,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "curl"
       }
@@ -23204,7 +23204,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "shrug"
       }
@@ -23267,7 +23267,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 1,
         "movement_group": "shrug"
       }
@@ -23327,7 +23327,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 9,
         "weight_gym": 9,
         "unit": "s",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "carry"
       }
@@ -23391,7 +23391,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "press_h"
       }
@@ -23452,7 +23452,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 1,
         "movement_group": "carry"
       }
@@ -23517,7 +23517,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "raise"
       }
@@ -23583,7 +23583,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 2,
         "movement_group": "raise"
       }
@@ -23646,7 +23646,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 3,
         "movement_group": "raise"
       }
@@ -23711,7 +23711,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "pull_v"
       }
@@ -23776,8 +23776,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
-        "priority_bodyweight": 2,
+        "priority": 4,
+        "priority_bodyweight": 3,
         "movement_group": "pull_v"
       }
     },
@@ -23842,8 +23842,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
-        "priority_bodyweight": 2,
+        "priority": 4,
+        "priority_bodyweight": 3,
         "movement_group": "row"
       }
     },
@@ -23906,8 +23906,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 1,
-        "priority_bodyweight": 1,
+        "priority": 4,
+        "priority_bodyweight": 2,
         "movement_group": "row"
       }
     },
@@ -23970,7 +23970,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 3,
         "movement_group": "row"
       }
@@ -24035,8 +24035,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
-        "priority_bodyweight": 1,
+        "priority": 4,
+        "priority_bodyweight": 2,
         "movement_group": "pull_v"
       }
     },
@@ -24101,7 +24101,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "pull_v"
       }
@@ -24166,7 +24166,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "pull_v"
       }
@@ -24231,7 +24231,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 2,
         "movement_group": "pull_v"
       }
@@ -24294,7 +24294,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "lunge"
       }
@@ -24358,7 +24358,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 2,
         "movement_group": "lunge"
       }
@@ -24422,7 +24422,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "core_anti"
       }
@@ -24485,7 +24485,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "core_anti"
       }
@@ -24548,7 +24548,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 2,
         "movement_group": "raise"
       }
@@ -24614,8 +24614,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
-        "priority_bodyweight": 2,
+        "priority": 4,
+        "priority_bodyweight": 3,
         "movement_group": "row"
       }
     },
@@ -24677,8 +24677,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 4,
-        "priority_bodyweight": 2,
+        "priority": 5,
+        "priority_bodyweight": 1,
         "movement_group": "row"
       }
     },
@@ -24742,8 +24742,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
-        "priority_bodyweight": 1,
+        "priority": 4,
+        "priority_bodyweight": 2,
         "movement_group": "triceps_ext"
       }
     },
@@ -24805,7 +24805,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "lunge"
       }
@@ -24868,7 +24868,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "lunge"
       }
@@ -24932,7 +24932,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "squat"
       }
@@ -24996,7 +24996,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 3,
+        "priority": 5,
         "priority_bodyweight": 2,
         "movement_group": "squat"
       }
@@ -25059,7 +25059,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 4,
+        "priority": 5,
         "priority_bodyweight": 3,
         "movement_group": "squat"
       }
@@ -25121,7 +25121,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 5,
-        "priority_bodyweight": 2,
+        "priority_bodyweight": 1,
         "movement_group": "squat"
       }
     },
@@ -25245,7 +25245,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 8,
         "weight_gym": 8,
         "unit": "reps",
-        "priority": 1,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "raise"
       }
@@ -25308,7 +25308,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 6,
         "weight_gym": 6,
         "unit": "reps",
-        "priority": 2,
+        "priority": 4,
         "priority_bodyweight": 1,
         "movement_group": "hinge"
       }
@@ -25371,8 +25371,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 4,
-        "priority_bodyweight": 2,
+        "priority": 5,
+        "priority_bodyweight": 1,
         "movement_group": "core_anti"
       }
     },
@@ -25433,7 +25433,7 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_gym": 6,
         "unit": "reps",
         "priority": 5,
-        "priority_bodyweight": 2,
+        "priority_bodyweight": 1,
         "movement_group": "core_flex"
       }
     },
@@ -25495,8 +25495,8 @@ export const CATALOG_SNAPSHOT: Catalog = {
         "weight_box": 7,
         "weight_gym": 7,
         "unit": "reps",
-        "priority": 1,
-        "priority_bodyweight": 1,
+        "priority": 4,
+        "priority_bodyweight": 2,
         "movement_group": "core_anti"
       }
     }

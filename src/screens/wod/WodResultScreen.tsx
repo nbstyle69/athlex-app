@@ -133,13 +133,24 @@ export default function WodResultScreen() {
     amrap: 'AMRAP', for_time: 'For time', rounds_for_time: 'Rounds for time', chipper: 'Chipper', ladder: 'Ladder',
     emom: 'EMOM', death_by: 'Death by', tabata: 'Tabata', interval: 'Intervalles', stations: 'Stations', continuous: 'Continu',
   };
+  // Même mécanisme pour la durée : un squelette voisin (±5 min) a servi, et
+  // l'estimation réelle peut s'écarter de la demande. On le dit avec les deux
+  // nombres, plutôt que d'afficher la durée demandée comme si elle était tenue.
   const formatRelache = (() => {
     if (!metcon || screen.discipline === 'musculation') return null;
+    const rel = metcon.generator.relaxations;
+    const parts: string[] = [];
     const demande = screen.format;
-    if (!demande || demande === 'surprise' || !metcon.generator.relaxations.includes('format')) return null;
-    const fmt = FORMATS.find((f) => f.key === demande)?.label ?? demande;
-    const intention = INTENTIONS[metcon.discipline].find((i) => i.key === metcon.intention)?.label ?? metcon.intention;
-    return `Aucun ${fmt} ne tient en ${intention} sur ${metcon.budget_min} min — voici un ${FORMAT_OBTENU[metcon.format]}.`;
+    if (demande && demande !== 'surprise' && rel.includes('format')) {
+      const fmt = FORMATS.find((f) => f.key === demande)?.label ?? demande;
+      const intention = INTENTIONS[metcon.discipline].find((i) => i.key === metcon.intention)?.label ?? metcon.intention;
+      parts.push(`Aucun ${fmt} ne tient en ${intention} sur ${metcon.budget_min} min — voici un ${FORMAT_OBTENU[metcon.format]}.`);
+    }
+    if (rel.includes('duration±5')) {
+      const genere = Math.round(metcon.estimate.reference_minutes);
+      if (genere !== metcon.budget_min) parts.push(`Demandé ${metcon.budget_min} min, généré ${genere} min.`);
+    }
+    return parts.length ? parts.join(' ') : null;
   })();
   const accent = muscu ? MUSCU_BLUE : wod.discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;
   const categories: readonly Category[] = wod.discipline === 'hybrid' ? HYBRID_CATEGORIES : FUNCTIONAL_CATEGORIES;

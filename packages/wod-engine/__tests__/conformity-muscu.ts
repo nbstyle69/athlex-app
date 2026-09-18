@@ -1,6 +1,6 @@
 import {
   CATALOG_SNAPSHOT, targetAvailable, MUSCU_TARGETS, MUSCU_OBJECTIVES, MUSCU_DURATIONS, TARGET_MUSCLES, SCHEMES,
-  HEAVY_MAX, HEAVY_PERCENT, REST_EXTRA_MAX, BODYWEIGHT_MAX_LOADED, BODYWEIGHT_PULL_UP_IDS, NO_SQUAT_TARGETS, SQUAT_IDS, HIGH_REP_SETS_MAX, HIGH_REP_SETS_REPS_MAX,
+  HEAVY_MAX, HEAVY_PERCENT, FALLBACK_PRIORITY, REST_EXTRA_MAX, BODYWEIGHT_MAX_LOADED, BODYWEIGHT_PULL_UP_IDS, NO_SQUAT_TARGETS, SQUAT_IDS, HIGH_REP_SETS_MAX, HIGH_REP_SETS_REPS_MAX,
   MUSCU_SKELETONS, priorityFor, PRIORITY_RANKS,
 } from '../src';
 import type { MuscuWod, MuscuParams, MuscuExercise, MuscuEquipment, MuscuLevel, CatalogMovement, MuscuFields, MovementGroup } from '../src';
@@ -47,8 +47,9 @@ function isCore(e: MuscuExercise): boolean {
   return e.role === 'core' || e.role === 'calves' || CORE_MUSCLES.includes(e.muscle_primary);
 }
 
+/** Poids du corps au sens de M5 : l'élastique est une charge, pas un poids du corps. */
 function isBodyweightNonCore(m: Mv): boolean {
-  return m.muscu.load_mode === 'bodyweight' && !CORE_MUSCLES.includes(m.muscu.muscle_primary) && m.muscu.muscle_primary !== 'mollets';
+  return m.muscu.load_mode === 'bodyweight' && !m.equipment.includes('band') && !CORE_MUSCLES.includes(m.muscu.muscle_primary);
 }
 
 function heavy(e: MuscuExercise): boolean {
@@ -100,6 +101,8 @@ export function muscuViolations(wod: MuscuWod, params: MuscuParams): string[] {
       && !ex.some((x) => x.id === c.id)
       && (params.target === 'full_body' || !usedGroups.has(c.muscu.movement_group) || c.muscu.movement_group === e.movement_group)
       && !(isBodyweightNonCore(c) && params.equipment !== 'none' && params.level !== 'debutant')
+      // S2 : en Box / Salle, un poids du corps de priorité 4–5 est un repli, il n'est pas « disponible » (règle du moteur)
+      && !(params.equipment !== 'none' && c.muscu.load_mode === 'bodyweight' && c.muscu.priority >= FALLBACK_PRIORITY)
       && (!impose || impose.includes(c.muscu.movement_group)));
     // Nombre de rangs de priorité strictement meilleurs réellement disponibles :
     // c'est lui qui dit si l'exercice tiré est encore dans la fenêtre tolérée.
@@ -133,12 +136,14 @@ export function muscuViolations(wod: MuscuWod, params: MuscuParams): string[] {
     if (!ex.some((e) => e.movement_group === 'row')) out.push('[M4] aucun tirage horizontal');
   }
 
-  // M5 : Box / Salle, inter et avancé → au plus un poids du corps hors tronc quand le muscle a des exercices chargés
+  // M5 : Box / Salle, inter et avancé → au plus un poids du corps hors tronc, mollets compris, dès qu'un d'eux a une
+  // alternative chargée (un calf raise seul en box reste libre : rien de chargé pour les mollets)
   if (params.equipment !== 'none' && params.level !== 'debutant') {
-    const bw = ex.filter((e) => isBodyweightNonCore(mv(e)) && [...byId.values()].some((c) =>
-      c.muscu.muscle_primary === e.muscle_primary && c.muscu.load_mode !== 'bodyweight' && c.muscu.compound === mv(e).muscu.compound
+    const bw = ex.filter((e) => isBodyweightNonCore(mv(e)));
+    const remplacable = bw.filter((e) => [...byId.values()].some((c) =>
+      c.muscu.muscle_primary === e.muscle_primary && (c.muscu.load_mode !== 'bodyweight' || c.equipment.includes('band')) && c.muscu.compound === mv(e).muscu.compound
       && eqWeight(c, params.equipment) > 0 && RANK[c.muscu.level_min] <= RANK[params.level]));
-    if (bw.length > BODYWEIGHT_MAX_LOADED) out.push(`[M5] ${bw.length} exercices poids du corps : ${bw.map((e) => e.name).join(' + ')}`);
+    if (remplacable.length && bw.length > BODYWEIGHT_MAX_LOADED) out.push(`[M5] ${bw.length} exercices poids du corps : ${bw.map((e) => e.name).join(' + ')}`);
   }
 
   // M6 : Tonification → tractions poids du corps remplacées (sauf avancé) ; jamais de tractions PdC à 15-20 reps

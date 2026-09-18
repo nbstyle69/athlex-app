@@ -206,6 +206,25 @@ function objectiveFor(m: Mv, objective: MuscuObjective): MuscuObjective | null {
   return null;
 }
 
+/**
+ * S1 (18/09/2026) : une séance Push ne contient aucun tirage, une séance Pull
+ * aucune poussée — quel que soit le muscle. La cible Push inclut l'arrière
+ * d'épaule, et le bonus « isolation d'un muscle secondaire » faisait entrer un
+ * face pull par ce biais ; un pull-apart y passait par son muscle principal.
+ * La règle se pose sur le PATTERN, à l'entrée du pool, pour couvrir les slots
+ * comme le bonus. Conséquence assumée : les accessoires d'arrière d'épaule
+ * (`pull_h`) ne sortent plus en Push.
+ */
+const PUSH_TARGETS: ReadonlySet<MuscuTarget> = new Set(['push', 'pecs']);
+const PULL_TARGETS: ReadonlySet<MuscuTarget> = new Set(['pull', 'dos']);
+const PUSH_PATTERNS: ReadonlySet<Pattern> = new Set(['push_h', 'push_v']);
+const PULL_PATTERNS: ReadonlySet<Pattern> = new Set(['pull_h', 'pull_v']);
+function directionOk(target: MuscuTarget, m: Mv): boolean {
+  if (PUSH_TARGETS.has(target)) return !m.pattern.some((p) => PULL_PATTERNS.has(p));
+  if (PULL_TARGETS.has(target)) return !m.pattern.some((p) => PUSH_PATTERNS.has(p));
+  return true;
+}
+
 function basePool(ctx: Ctx): Mv[] {
   const { params } = ctx;
   const noSquat = NO_SQUAT_TARGETS.includes(params.target);
@@ -217,6 +236,7 @@ function basePool(ctx: Ctx): Mv[] {
     && levelOk(m, params.level)
     && !isExcluded(ctx, m)
     && !ctx.excludedMuscles.has(m.muscu.muscle_primary)
+    && directionOk(params.target, m)
     && weeklyRoomOk(ctx, m.muscu.muscle_primary, minSets)
     && !(noSquat && SQUAT_IDS.includes(m.id))
     && !(noBwPullUp && BODYWEIGHT_PULL_UP_IDS.includes(m.id))
@@ -227,8 +247,14 @@ function isCoreMuscle(mu: Muscle): boolean {
   return TARGET_MUSCLES.tronc.includes(mu);
 }
 
+/** Poids du corps au sens de M5 : l'élastique est une charge (S4), pas un poids du corps. */
 function isBodyweightNonCore(m: Mv): boolean {
-  return m.muscu.load_mode === 'bodyweight' && !isCoreMuscle(m.muscu.muscle_primary);
+  return m.muscu.load_mode === 'bodyweight' && !m.equipment.includes('band') && !isCoreMuscle(m.muscu.muscle_primary);
+}
+
+/** Option chargée au sens de M5 : charge externe ou élastique. */
+function isLoaded(m: Mv): boolean {
+  return m.muscu.load_mode !== 'bodyweight' || m.equipment.includes('band');
 }
 
 /**
@@ -240,13 +266,17 @@ function isBodyweightNonCore(m: Mv): boolean {
 function bodyweightAllowed(ctx: Ctx, m: Mv, picked: ReadonlyArray<{ m: Mv }>): boolean {
   if (!isBodyweightNonCore(m)) return true;
   if (ctx.params.equipment === 'none' || ctx.params.level === 'debutant') return true;
-  const loadedExists = ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== 'bodyweight');
-  if (!loadedExists) return true;
-  return picked.filter((p) => isBodyweightNonCore(p.m) && loadedFor(ctx, p.m)).length < BODYWEIGHT_MAX_LOADED;
+  if (!loadedFor(ctx, m)) return true;
+  // S3 (18/09/2026) : la place unique se compte mollets compris, et elle est
+  // réservée quand un muscle de la cible n'a rien de chargé (mollets en box) :
+  // sur un jour Jambes, le calf raise au poids du corps est le seul toléré.
+  const reserved = TARGET_MUSCLES[ctx.params.target].some((mu) => ctx.pool.some((x) => x.muscu.muscle_primary === mu) && !ctx.pool.some((x) => x.muscu.muscle_primary === mu && isLoaded(x)));
+  if (reserved) return false;
+  return picked.filter((p) => isBodyweightNonCore(p.m)).length < BODYWEIGHT_MAX_LOADED;
 }
 
 function loadedFor(ctx: Ctx, m: Mv): boolean {
-  return ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && x.muscu.load_mode !== 'bodyweight');
+  return ctx.pool.some((x) => x.muscu.muscle_primary === m.muscu.muscle_primary && isLoaded(x));
 }
 
 /** Hors cible Tronc, un seul exercice de gainage par séance. */
@@ -392,6 +422,25 @@ export function priorityFor(m: { muscu: { priority: number; priority_bodyweight:
  */
 export const PRIORITY_RANKS: Record<MuscuEquipment, number> = { none: 3, box: 3, gym: 3 };
 
+/**
+ * S2 (18/09/2026) : en Box et en Salle, un exercice au poids du corps de
+ * priorité 4 ou 5 est un REPLI — il ne sort que si le slot n'a rien de mieux.
+ * La priorité ne jouait que sur le slot principal ; les 55 ajouts sans
+ * matériel, pondérés comme n'importe quel exercice, entraient par les slots
+ * accessoires (Bulgarian split squat sur chaise le jour Jambes, en box).
+ */
+export const FALLBACK_PRIORITY = 4;
+
+function isFallback(ctx: Ctx, m: Mv): boolean {
+  return ctx.params.equipment !== 'none' && m.muscu.load_mode === 'bodyweight' && m.muscu.priority >= FALLBACK_PRIORITY;
+}
+
+/** Box / Salle : la liste sans ses replis, s'il reste quelque chose. */
+function preferLoaded(ctx: Ctx, list: Mv[]): Mv[] {
+  const mieux = list.filter((m) => !isFallback(ctx, m));
+  return mieux.length ? mieux : list;
+}
+
 function choose(ctx: Ctx, list: Mv[], role: MuscuSlotRole): Mv {
   const sansMateriel = ctx.params.equipment === 'none';
   if (role === 'main_compound') {
@@ -433,9 +482,13 @@ function pickSlot(ctx: Ctx, slot: MuscuSlot, index: number, picked: Picked[], ta
     if (wider.length) steps.push(['slot_muscle', { ids: false, unilateral: false, role: true, objective: true, muscles: wider, week: false }]);
     if (wider.length) steps.push(['slot_muscle', { ids: false, unilateral: false, role: false, objective: false, muscles: wider, week: false }]);
   }
+  // S2 : un repli ne sort jamais sur le cran exact — répéter un exercice chargé
+  // de la semaine vaut mieux qu'un poids du corps en box — et, plus bas, seulement
+  // si le cran n'a rien de mieux : un ring row vaut mieux qu'un jour Pull sans rowing (M4).
   for (const [i, [relax, f]] of steps.entries()) {
     if (i > 0 && relax === null) continue;
-    const list = candidates(ctx, slot, f, picked, prev);
+    const tous = candidates(ctx, slot, f, picked, prev);
+    const list = i === 0 ? tous.filter((m) => !isFallback(ctx, m)) : preferLoaded(ctx, tous);
     if (!list.length) continue;
     const m = choose(ctx, list, slot.role);
     // Le cran « semaine » ne se trace que si l'exercice retenu répète vraiment ;
@@ -519,7 +572,7 @@ function loadFor(ctx: Ctx, l: Line): MuscuLoad {
         ? { mode: 'weighted', kg: roundLoad(bw * WEIGHTED_BODYWEIGHT_RATIO), rpe: scheme.rpe }
         : { mode: 'weighted', rpe: scheme.rpe };
     }
-    return { mode: 'bodyweight' };
+    return l.m.equipment.includes('band') ? { mode: 'bodyweight', band: true } : { mode: 'bodyweight' };
   }
   if (mu.load_mode === '1rm' && mu.rm_reference) {
     const rm = params.one_rep_max?.[mu.rm_reference];
@@ -642,7 +695,7 @@ function bonusExercise(ctx: Ctx, lines: Line[], target: MuscuTarget): Line | nul
     : ctx.pool.filter((m) => eligible(m, true) && isCoreMuscle(m.muscu.muscle_primary) && (!m.muscu.compound || m.muscu.movement_group === 'carry'));
   const base = primary.length ? primary : secondary.length ? secondary : tertiary;
   const iso = base.filter((m) => !m.muscu.compound);
-  const m = ctx.rng.pickWeighted(iso.length ? iso : base, (x) => equipmentWeight(x, ctx.params.equipment));
+  const m = choose(ctx, preferLoaded(ctx, iso.length ? iso : base), 'isolation');
   if (!m) return null;
   const role: MuscuSlotRole = isCoreMuscle(m.muscu.muscle_primary) ? 'core' : m.muscu.compound ? 'secondary_compound' : 'isolation';
   const p: Picked = { m, role, objective: objectiveFor(m, ctx.params.objective) ?? (m.muscu.objectives.includes('hypertrophie') ? 'hypertrophie' : m.muscu.objectives[0] ?? 'hypertrophie'), optional: true, slotIndex: 99 };
@@ -967,7 +1020,7 @@ export function loadText(e: MuscuExercise): string {
     case '1rm': return `${l.kg} kg (${l.percent} %)`;
     case 'percent': return `${l.percent} % 1RM`;
     case 'weighted': return l.kg ? `lesté ${l.kg} kg, RPE ${l.rpe}` : `lesté léger, RPE ${l.rpe}`;
-    case 'bodyweight': return e.reps_unit === 'reps' ? 'poids du corps' : '—';
+    case 'bodyweight': return l.band ? 'élastique' : e.reps_unit === 'reps' ? 'poids du corps' : '—';
     default: return l.percent ? `RPE ${l.rpe} (≈ ${l.percent} % du 1RM)` : `RPE ${l.rpe}`;
   }
 }
@@ -986,6 +1039,8 @@ export function exerciseLine(e: MuscuExercise): string {
     out += l.kg ? ` — lesté ${l.kg} kg (10 % du poids de corps), RPE ${l.rpe}` : ` — lesté léger, RPE ${l.rpe}`;
   } else if (l.mode === 'rpe') {
     out += l.percent ? ` — charge RPE ${l.rpe} (≈ ${l.percent} % du 1RM)` : ` — charge RPE ${l.rpe}`;
+  } else if (l.band) {
+    out += ' — charge élastique';
   } else if (e.reps_unit === 'reps') {
     out += ' — charge poids du corps';
   }
