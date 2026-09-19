@@ -36,7 +36,7 @@ import { maskTimeInput, timeStringToSeconds } from '../../utils/tournamentUtils'
 import { buildFullSeqBlockFromWOD } from '../../utils/wodToTimer';
 import {
   CATEGORY_LABEL, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES,
-  TIME_BOUNDED,
+  TIME_BOUNDED, TOLERANCE,
 } from '../../../packages/wod-engine/src';
 import type { Category, GeneratedMovement, GeneratedWod, MuscuWod } from '../../../packages/wod-engine/src';
 import type { SkeletonFormat } from '../../../packages/wod-engine/src';
@@ -147,10 +147,10 @@ export default function WodResultScreen() {
       const intention = INTENTIONS[metcon.discipline].find((i) => i.key === metcon.intention)?.label ?? metcon.intention;
       parts.push(`Aucun ${fmt} ne tient en ${intention} sur ${metcon.budget_min} min — voici un ${FORMAT_OBTENU[metcon.format]}.`);
     }
-    if (rel.includes('duration±5')) {
-      const genere = Math.round(metcon.estimate.reference_minutes);
-      if (genere !== metcon.budget_min) parts.push(`Demandé ${metcon.budget_min} min, généré ${genere} min.`);
-    }
+    // La durée est une cible, pas une contrainte : l'écart ne s'annonce qu'au-delà
+    // de la fourchette du moteur (±20 %) ; l'estimation réelle reste affichée plus bas.
+    const genere = Math.round(metcon.estimate.reference_minutes);
+    if (Math.abs(genere - metcon.budget_min) > metcon.budget_min * TOLERANCE) parts.push(`Demandé ${metcon.budget_min} min, généré ${genere} min.`);
     return parts.length ? parts.join(' ') : null;
   })();
   const accent = muscu ? MUSCU_BLUE : wod.discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;

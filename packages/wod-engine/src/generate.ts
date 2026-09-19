@@ -15,7 +15,8 @@ import { render } from './render';
 
 export const ENGINE_VERSION = '1.1.0';
 export const MAX_ATTEMPTS = 200;
-export const TOLERANCE = 0.10;
+/** Durée = indicateur, pas obligation (Nab, 19/09/2026) : 15 min → 12 à 18, 30 min → 24 à 36. */
+export const TOLERANCE = 0.20;
 
 const DEFAULT_BAND: Record<Intention, Band> = {
   mixed: 'medium', cardio: 'light', force: 'heavy', gym: 'light',
@@ -349,8 +350,13 @@ function matchesPick(ctx: Ctx, slot: Slot, m: CatalogMovement, picked: Picked[],
  * sa chaîne de substitution (`rx` → `inter` → `scaled`, un cran à la fois :
  * Ring Muscle-up → Bar Muscle-up → Chest-to-Bar → Pull-ups → Banded Pull-ups)
  * jusqu'au premier mouvement qui a un record, ou qui n'en demande pas.
+ *
+ * Volume : jamais plus de 50 % du record dans une même série ou un même round
+ * (record 30 → 15 par round, record 12 → 6). Le total du WOD n'est borné que
+ * par les plafonds de volume existants — un plafond par WOD (60 %) faisait
+ * disparaître les tractions strictes sous 50 de record (mesuré le 19/09/2026).
  */
-export const GYM_RECORD_FRACTION = 0.6;
+export const GYM_RECORD_FRACTION = 0.5;
 
 function gymRecordMissing(ctx: Ctx, m: CatalogMovement): boolean {
   const rec = ctx.params.gym_records;
@@ -937,23 +943,24 @@ function capPass(ctx: Ctx, d: Draft): boolean {
     // autant que le resserrer. Avec l'ancien `Math.min`, écrire 200 dans
     // `movement_caps` pour une famille plafonnée à 100 ne changeait rien.
     const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
-    // B10 : jamais plus de 60 % du record gymnique en volume total sur un WOD (12 tractions → 7, pas 45)
+    // B10 : jamais plus de 50 % du record gymnique dans une même série ou un même round
     const rec = p.unit === 'reps' ? ctx.params.gym_records?.[p.m.id] : undefined;
-    const gymCap = rec && rec > 0 ? Math.max(1, Math.floor(rec * GYM_RECORD_FRACTION)) : Infinity;
-    const cap = Math.min(specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity, gymCap);
-    if (cap === Infinity || perWod <= cap) continue;
-    const reducible = !!p.range && mult > 0 && !tabata && roundQty(Math.floor(cap / mult), p.unit) >= p.range[0];
-    if (!reducible && perWod > gymCap) {
-      // le format ne tient pas sous le record (un AMRAP de 15 min pour 12 tractions) :
-      // la variante accessible prend la place, plutôt que 7 tractions en 6 rounds
-      const alt = gymDown(ctx, p.m, d.picked);
-      if (alt) {
+    if (rec && rec > 0 && !tabata) {
+      const perSet = Math.max(1, Math.floor(rec * GYM_RECORD_FRACTION));
+      const biggest = p.scheme ? Math.max(...p.scheme) : p.qty;
+      if (biggest > perSet) {
+        if (p.range && !p.scheme && perSet >= p.range[0]) { p.qty = perSet; changed = true; continue; }
+        // la série minimale du format dépasse le record : la variante accessible prend la place
+        const alt = gymDown(ctx, p.m, d.picked);
+        if (!alt) throw new Reject(`gym_record:${p.m.id}`);
         p.m = alt;
         if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format);
         changed = true;
         continue;
       }
     }
+    const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
+    if (cap === Infinity || perWod <= cap) continue;
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
     const next = roundQty(Math.floor(cap / mult), p.unit);
     if (next < p.range[0] || next >= p.qty) throw new Reject(`volume_cap:${p.m.id}`);

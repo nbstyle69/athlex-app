@@ -27641,7 +27641,7 @@ function movementLines(wod) {
 // packages/wod-engine/src/generate.ts
 var ENGINE_VERSION = "1.1.0";
 var MAX_ATTEMPTS = 200;
-var TOLERANCE = 0.1;
+var TOLERANCE = 0.2;
 var DEFAULT_BAND = {
   mixed: "medium",
   cardio: "light",
@@ -27905,7 +27905,7 @@ function matchesPick(ctx, slot2, m, picked, sk, functionalSmall) {
   if (functionalSmall && m.family === "barbell" && picked.some((q) => q.m.family === "barbell")) return "second_barbell";
   return null;
 }
-var GYM_RECORD_FRACTION = 0.6;
+var GYM_RECORD_FRACTION = 0.5;
 function gymRecordMissing(ctx, m) {
   const rec = ctx.params.gym_records;
   if (!rec || m.family !== "gym") return false;
@@ -28449,19 +28449,25 @@ function capPass(ctx, d) {
     const perWod = tabata ? 16 * 20 / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
     const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
     const rec = p.unit === "reps" ? ctx.params.gym_records?.[p.m.id] : void 0;
-    const gymCap = rec && rec > 0 ? Math.max(1, Math.floor(rec * GYM_RECORD_FRACTION)) : Infinity;
-    const cap = Math.min(specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity, gymCap);
-    if (cap === Infinity || perWod <= cap) continue;
-    const reducible = !!p.range && mult > 0 && !tabata && roundQty(Math.floor(cap / mult), p.unit) >= p.range[0];
-    if (!reducible && perWod > gymCap) {
-      const alt = gymDown(ctx, p.m, d.picked);
-      if (alt) {
+    if (rec && rec > 0 && !tabata) {
+      const perSet = Math.max(1, Math.floor(rec * GYM_RECORD_FRACTION));
+      const biggest = p.scheme ? Math.max(...p.scheme) : p.qty;
+      if (biggest > perSet) {
+        if (p.range && !p.scheme && perSet >= p.range[0]) {
+          p.qty = perSet;
+          changed = true;
+          continue;
+        }
+        const alt = gymDown(ctx, p.m, d.picked);
+        if (!alt) throw new Reject(`gym_record:${p.m.id}`);
         p.m = alt;
         if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format);
         changed = true;
         continue;
       }
     }
+    const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
+    if (cap === Infinity || perWod <= cap) continue;
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
     const next = roundQty(Math.floor(cap / mult), p.unit);
     if (next < p.range[0] || next >= p.qty) throw new Reject(`volume_cap:${p.m.id}`);
@@ -28619,7 +28625,7 @@ function profileCategory(discipline, level, gender) {
 // packages/wod-engine/src/muscu.ts
 var MUSCU_ENGINE_VERSION = "1.0.0";
 var MUSCU_MAX_ATTEMPTS = 40;
-var MUSCU_TOLERANCE = 0.1;
+var MUSCU_TOLERANCE = 0.2;
 var MUSCU_DURATIONS = { express: [20, 30, 45, 60], after_class: [15, 20, 30], tronc: [15, 20, 30] };
 var BEGINNER_MAX_EXERCISES = 4;
 var BEGINNER_MAX_EXERCISES_LONG = 6;
@@ -29451,7 +29457,7 @@ function renderMuscu(wod) {
 
 // packages/wod-engine/src/session.ts
 var SESSION_ENGINE_VERSION = "1.0.0";
-var SESSION_TOLERANCE = 0.1;
+var SESSION_TOLERANCE = 0.2;
 var TRANSITION_MIN = 1;
 var SKILL_STEP_S = 180;
 var B_RETRY_MAX = 12;
@@ -30599,7 +30605,7 @@ var FEASIBILITY = [
   { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 15, intention: "force", feasible: true },
   { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 20, intention: "mixed", feasible: true },
   { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 20, intention: "force", feasible: true },
-  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 15, intention: "mixed", feasible: false },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 15, intention: "mixed", feasible: true },
   { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 15, intention: "cardio", feasible: false },
   { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 20, intention: "mixed", feasible: false },
   { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 20, intention: "cardio", feasible: false },
@@ -30681,7 +30687,7 @@ var FEASIBILITY = [
   { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 10, intention: "core", feasible: true },
   { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 15, intention: "core", feasible: true },
   { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "core", feasible: true },
-  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 10, intention: "run", feasible: false },
+  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 10, intention: "run", feasible: true },
   { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 15, intention: "run", feasible: true },
   { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 20, intention: "run", feasible: true },
   { id: "engine_negative_split", discipline: "hybrid", format: "continuous", budget_min: 30, intention: "aerobic", feasible: false },
