@@ -14,7 +14,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ChevronLeft, ChevronDown, ChevronUp, Sparkles, X, History, Heart, BookOpen, Zap, GraduationCap, Dumbbell,
@@ -39,6 +39,7 @@ import {
 } from './muscuOptions';
 import { readBodyweightKg } from '../profile/prStorage';
 import { equipmentLabel } from '../../utils/wod/equipmentLabels';
+import { loadWodDraft, saveWodDraft, WodDraft } from '../../services/wodDraft';
 import { loadEngineData } from '../../services/wodEngineData';
 import { fetchMyPersonalRecords } from '../../services/myProfile';
 import {
@@ -86,6 +87,13 @@ export default function WodGeneratorScreen() {
   const [search, setSearch] = useState('');
   const [dayClass, setDayClass] = useState<DayClass | null>(null);
   const [generating, setGenerating] = useState(false);
+  // B6 : brouillon de la dernière séance générée, relu à chaque retour sur l'écran
+  const [draft, setDraft] = useState<WodDraft | null>(null);
+  useFocusEffect(useCallback(() => {
+    let alive = true;
+    if (user?.id) loadWodDraft(user.id).then((d) => { if (alive) setDraft(d); }); else setDraft(null);
+    return () => { alive = false; };
+  }, [user?.id]));
 
   useEffect(() => {
     let alive = true;
@@ -185,6 +193,7 @@ export default function WodGeneratorScreen() {
       };
     try {
       const result = await generateForUser(user, currentBox?.id, screen);
+      await saveWodDraft(user.id, { screen, result });
       navigation.navigate('WodResult', { screen, result });
     } catch (e) {
       Alert.alert(
@@ -294,6 +303,22 @@ export default function WodGeneratorScreen() {
             );
           })}
         </View>
+
+        {/* B6 : reprendre la séance générée non enregistrée */}
+        {draft && (
+          <GlassCard radius={14} style={S.classCard} testID="wodgen-draft">
+            <Text style={S.classTitle}>Dernière séance générée</Text>
+            <Text style={S.classWod}>{draft.result.wod.title}</Text>
+            <TouchableOpacity
+              style={[S.chip, { alignSelf: 'flex-start', marginTop: 10 }]}
+              onPress={() => navigation.navigate('WodResult', { screen: draft.screen, result: draft.result, draft: { performed: draft.performed, submittedScore: draft.submittedScore } })}
+              activeOpacity={0.8}
+              testID="wodgen-draft-resume"
+            >
+              <Text style={S.chipText}>Reprendre la séance</Text>
+            </TouchableOpacity>
+          </GlassCard>
+        )}
 
         {/* Classe du jour (Après ma classe) */}
         {entry === 'after_class' && dayClass && currentBox && (

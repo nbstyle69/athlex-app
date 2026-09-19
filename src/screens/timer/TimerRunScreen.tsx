@@ -428,6 +428,10 @@ export default function TimerRunScreen() {
 
   const [seqPausing, setSeqPausing] = useState(false);
   const [seqPauseLeft, setSeqPauseLeft] = useState(0);
+  // B5 — mode Split : exercice / série courants, et journal des splits (secondes du chrono global)
+  const splitPosRef = useRef({ ex: 0, set: 1 });
+  const [splitPos, setSplitPos] = useState({ ex: 0, set: 1 });
+  const [splitLog, setSplitLog] = useState<{ label: string; at: number }[]>([]);
 
   const [saving, setSaving] = useState(false);
   const [savedUri, setSavedUri] = useState<string | null>(null);
@@ -628,6 +632,7 @@ export default function TimerRunScreen() {
               break;
             }
             case 'ywyr': break; // dynamique
+            case 'split': break; // dynamique
           }
           if (blk.pauseSec > 0) cursor += blk.pauseSec;
         }
@@ -1135,6 +1140,15 @@ export default function TimerRunScreen() {
                   else { const nxt = currentRoundRef.current + 1; if (nxt > blk.tabRounds) seqBlockDone(); else { currentRoundRef.current = nxt; setCurrentRound(nxt); innerPhaseRef.current = 'work'; setInnerPhase('work'); roundTimeLeftRef.current = blk.workSec; setRoundTimeLeft(blk.workSec); if (!recovering) playBeep('go'); } }
                 } else if (roundTimeLeftRef.current <= 3 && !recovering) { playBeep('tick'); }
                 break;
+              case 'split':
+                // chrono global toujours en marche ; seul le repos compte à rebours
+                timerValRef.current += deltaSecs; setTimerVal(timerValRef.current);
+                if (innerPhaseRef.current === 'rest') {
+                  roundTimeLeftRef.current -= deltaSecs; setRoundTimeLeft(roundTimeLeftRef.current);
+                  if (roundTimeLeftRef.current <= 0) { innerPhaseRef.current = 'work'; setInnerPhase('work'); roundTimeLeftRef.current = 0; setRoundTimeLeft(0); if (!recovering) playBeep('go'); }
+                  else if (roundTimeLeftRef.current <= 3 && !recovering) playBeep('tick');
+                }
+                break;
               case 'ywyr':
                 if (innerPhaseRef.current === 'work') { ywyrWorkRef.current += deltaSecs; setTimerVal(ywyrWorkRef.current); }
                 else { timerValRef.current -= deltaSecs; setTimerVal(timerValRef.current); if (timerValRef.current <= 0) seqBlockDone(); else if (timerValRef.current <= 3 && !recovering) playBeep('tick'); }
@@ -1166,6 +1180,11 @@ export default function TimerRunScreen() {
       }
       case 'tabata': roundTimeLeftRef.current = blk.workSec; setRoundTimeLeft(blk.workSec); break;
       case 'ywyr': roundTimeLeftRef.current = 0; setRoundTimeLeft(0); break;
+      case 'split':
+        roundTimeLeftRef.current = 0; setRoundTimeLeft(0);
+        splitPosRef.current = { ex: 0, set: 1 }; setSplitPos({ ex: 0, set: 1 });
+        if (idx === 0) setSplitLog([]);
+        break;
     }
   }
   function seqBlockDone() {
@@ -1182,6 +1201,27 @@ export default function TimerRunScreen() {
     if (next >= seqBlocksRef.current.length) { playBeep('done'); stopAndSave(); return; }
     seqIdxRef.current = next; setSeqIdx(next);
     initSeqBlockByIdx(next);
+    playBeep('go');
+  }
+
+  // ─── SPLIT (B5) : « Série terminée » → split enregistré, repos de l'exercice, exercice suivant ─
+  function splitSetDone() {
+    const blk = seqBlocksRef.current[seqIdxRef.current];
+    const list = blk?.splitExercises ?? [];
+    const { ex, set } = splitPosRef.current;
+    const cur = list[ex];
+    if (!blk || !cur) { seqBlockDone(); return; }
+    if (innerPhaseRef.current === 'rest') {
+      // passer le repos
+      innerPhaseRef.current = 'work'; setInnerPhase('work'); roundTimeLeftRef.current = 0; setRoundTimeLeft(0);
+      return;
+    }
+    const at = timerValRef.current;
+    setSplitLog((l) => [...l, { label: list.length > 1 ? `${cur.name} · série ${set}/${cur.sets}` : `${cur.name} ${set}/${cur.sets}`, at }]);
+    const next = set < cur.sets ? { ex, set: set + 1 } : { ex: ex + 1, set: 1 };
+    if (!list[next.ex]) { Vibration.vibrate([0, 350, 120, 350]); seqBlockDone(); return; }
+    splitPosRef.current = next; setSplitPos(next);
+    if (cur.restSec > 0) { innerPhaseRef.current = 'rest'; setInnerPhase('rest'); roundTimeLeftRef.current = cur.restSec; setRoundTimeLeft(cur.restSec); }
     playBeep('go');
   }
 
@@ -1283,7 +1323,7 @@ export default function TimerRunScreen() {
     return b.emomInterval === 1 ? 'EMOM' : `E${b.emomInterval}MOM`;
   };
   const blkLabel = curBlk
-    ? ({ 'for-time': 'FOR TIME', amrap: 'AMRAP', emom: emomLabelFor(curBlk), tabata: 'TABATA', ywyr: 'YWYR' } as Record<string, string>)[curBlk.type] ?? 'PERSONNALISÉ'
+    ? ({ 'for-time': 'FOR TIME', amrap: 'AMRAP', emom: emomLabelFor(curBlk), tabata: 'TABATA', ywyr: 'YWYR', split: 'SPLIT' } as Record<string, string>)[curBlk.type] ?? 'PERSONNALISÉ'
     : 'PERSONNALISÉ';
   const displayLabel = timerType === 'for-time' ? 'FOR TIME'
     : timerType === 'amrap'   ? 'AMRAP'
@@ -1295,7 +1335,7 @@ export default function TimerRunScreen() {
     : `BLOC ${seqIdx + 1} / ${seqTotal}`;
 
   const seqBlockLabel = curBlk
-    ? ({ 'for-time': 'FOR TIME', amrap: 'AMRAP', emom: emomLabelFor(curBlk), tabata: 'TABATA', ywyr: 'YWYR' } as Record<string, string>)[curBlk.type] ?? ''
+    ? ({ 'for-time': 'FOR TIME', amrap: 'AMRAP', emom: emomLabelFor(curBlk), tabata: 'TABATA', ywyr: 'YWYR', split: 'SPLIT' } as Record<string, string>)[curBlk.type] ?? ''
     : '';
 
   const mainTime = (() => {
@@ -1392,7 +1432,7 @@ export default function TimerRunScreen() {
 
   // Phase label text — only show TRAVAIL/REPOS for types with work/rest phases
   const hasWorkRest = timerType === 'tabata' || timerType === 'ywyr'
-    || (timerType === 'libre' && curBlk && (curBlk.type === 'tabata' || curBlk.type === 'ywyr'));
+    || (timerType === 'libre' && curBlk && (curBlk.type === 'tabata' || curBlk.type === 'ywyr' || curBlk.type === 'split'));
   const phaseLabel = phase === 'countdown' ? 'PRÉPARER'
     : phase === 'running' && seqPausing ? 'PAUSE'
     : phase === 'running' && hasWorkRest && innerPhase === 'rest' ? 'REPOS'
@@ -1489,6 +1529,9 @@ export default function TimerRunScreen() {
   const mainBtnStop = isActive && !(isYwyrSolo && phase === 'running');
   const showEndBlockBtn = phase === 'running' && !seqPausing &&
     timerType === 'libre' && curBlk?.type === 'for-time' && innerPhase === 'work' && seqBlocksRef.current.length > 1;
+  // B5 : bouton « Série terminée » du mode Split (« Round terminé » pour un metcon splitté, « Passer le repos » pendant le repos)
+  const showSplitBtn = phase === 'running' && !seqPausing && timerType === 'libre' && curBlk?.type === 'split';
+  const splitBtnLabel = innerPhase === 'rest' ? 'PASSER LE REPOS' : (curBlk?.splitExercises?.length ?? 0) > 1 ? 'SÉRIE TERMINÉE' : 'ROUND TERMINÉ';
   const showNormalStop = isActive && !showEndWorkBtn && !showEndBlockBtn;
 
   const qrData = JSON.stringify({
@@ -1633,6 +1676,13 @@ export default function TimerRunScreen() {
                 <Text style={{ fontSize: 10, fontWeight: '800', color: onBg2, letterSpacing: 4, textTransform: 'uppercase' }}>TEMPS FINAL</Text>
                 <Text style={[styles.sessionTime, { color: withCamera ? '#FFFFFF' : onBg1 }]}>{mainTime}</Text>
                 {videoTitle ? <Text style={[styles.sessionTitle, { color: onBg1 }]} numberOfLines={2}>{videoTitle}</Text> : null}
+                {splitLog.length > 0 && (
+                  <ScrollView style={{ maxHeight: 150, marginTop: 6, alignSelf: 'stretch' }} contentContainerStyle={{ alignItems: 'center' }}>
+                    {splitLog.map((sp, i) => (
+                      <Text key={i} style={{ color: onBg2, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{sp.label} — {formatTime(sp.at)}</Text>
+                    ))}
+                  </ScrollView>
+                )}
                 {withCamera && <Text style={[styles.sessionDate, { color: onBg2 }]}>{clockStr}</Text>}
                 {withCamera && (
                   <View style={[styles.sessionQRWrap, { marginTop: 6, padding: 10 }]}>
@@ -1806,7 +1856,7 @@ export default function TimerRunScreen() {
                   </View>
 
                   {/* Hint + contextual buttons — float ABOVE the fixed play/stop button */}
-                  {(phase === 'ready' || showEndWorkBtn || showYwyrEndBtn || showEndBlockBtn) && (
+                  {(phase === 'ready' || showEndWorkBtn || showYwyrEndBtn || showEndBlockBtn || showSplitBtn) && (
                     <View style={{ position: 'absolute', right: 18, bottom: 98,
                       width: 70, alignItems: 'center', gap: 8 }}>
                       {phase === 'ready' && (
@@ -1830,6 +1880,12 @@ export default function TimerRunScreen() {
                         <TouchableOpacity onPress={libreEndForTimeBlock}
                           style={[styles.ywyrBtn, { paddingHorizontal: 8, paddingVertical: 6 }]} activeOpacity={0.8}>
                           <Text style={[styles.ywyrBtnText, { fontSize: 9, textAlign: 'center', color: ensureContrast('#4ADE80', currentBg) }]}>FIN DU{"\n"}BLOC</Text>
+                        </TouchableOpacity>
+                      )}
+                      {showSplitBtn && (
+                        <TouchableOpacity onPress={splitSetDone}
+                          style={[styles.ywyrBtn, { paddingHorizontal: 8, paddingVertical: 6 }]} activeOpacity={0.8}>
+                          <Text style={[styles.ywyrBtnText, { fontSize: 9, textAlign: 'center', color: ensureContrast('#4ADE80', currentBg) }]}>{splitBtnLabel}</Text>
                         </TouchableOpacity>
                       )}
                     </View>
@@ -1982,6 +2038,18 @@ export default function TimerRunScreen() {
                         : `EXERCICE DANS ${formatTime(roundTimeLeft)}`}
                     </Text>
                   )}
+                  {timerType === 'libre' && curBlk?.type === 'split' && phase === 'running' && (() => {
+                    const ex = curBlk.splitExercises?.[splitPos.ex];
+                    if (!ex) return null;
+                    const unite = (curBlk.splitExercises?.length ?? 0) > 1 ? 'SÉRIE' : 'ROUND';
+                    return (
+                      <Text style={{ color: onBg2, fontSize: 13, fontWeight: '700', letterSpacing: 1, marginTop: 8, textAlign: 'center' }}>
+                        {innerPhase === 'rest'
+                          ? `REPOS ${formatTime(roundTimeLeft)} · PUIS ${ex.name.toUpperCase()} ${splitPos.set}/${ex.sets}`
+                          : `${ex.name.toUpperCase()} · ${unite} ${splitPos.set}/${ex.sets}`}
+                      </Text>
+                    );
+                  })()}
                 </View>
 
                 {/* ROUND BUBBLES */}
@@ -2065,6 +2133,11 @@ export default function TimerRunScreen() {
                       <Text style={[styles.ywyrBtnText, { color: ensureContrast('#4ADE80', currentBg) }]}>FIN DU BLOC</Text>
                     </TouchableOpacity>
                   )}
+                  {showSplitBtn && (
+                    <TouchableOpacity onPress={splitSetDone} style={styles.ywyrBtn} activeOpacity={0.8}>
+                      <Text style={[styles.ywyrBtnText, { color: ensureContrast('#4ADE80', currentBg) }]}>{splitBtnLabel}</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
               </View>
@@ -2087,7 +2160,7 @@ export default function TimerRunScreen() {
                 )}
 
                 {/* Boutons contextuels FIN DU TRAVAIL / FIN DU BLOC */}
-                {(showEndWorkBtn || showEndBlockBtn) && (
+                {(showEndWorkBtn || showEndBlockBtn || showSplitBtn) && (
                   <View style={{ position: 'absolute', bottom: 96, left: 0, right: 0, alignItems: 'center' }} pointerEvents="box-none">
                     {showEndWorkBtn && (
                       <TouchableOpacity onPress={ywyrEndWork} style={styles.ywyrBtn} activeOpacity={0.8}>
@@ -2097,6 +2170,11 @@ export default function TimerRunScreen() {
                     {showEndBlockBtn && (
                       <TouchableOpacity onPress={libreEndForTimeBlock} style={styles.ywyrBtn} activeOpacity={0.8}>
                         <Text style={styles.ywyrBtnText}>FIN DU BLOC</Text>
+                      </TouchableOpacity>
+                    )}
+                    {showSplitBtn && (
+                      <TouchableOpacity onPress={splitSetDone} style={styles.ywyrBtn} activeOpacity={0.8}>
+                        <Text style={styles.ywyrBtnText}>{splitBtnLabel}</Text>
                       </TouchableOpacity>
                     )}
                   </View>
