@@ -416,7 +416,7 @@ describe('buildTimerRunParamsFromBlock', () => {
     expect(p.videoTitle).toBe('Grace');
   });
 
-  it('exposes all 5 timer modes in the launcher list', () => {
-    expect(TIMER_BLOCK_TYPES.map(m => m.key)).toEqual(['for-time', 'amrap', 'emom', 'tabata', 'ywyr']);
+  it('exposes all 6 timer modes in the launcher list (Split depuis le lot B)', () => {
+    expect(TIMER_BLOCK_TYPES.map(m => m.key)).toEqual(['for-time', 'amrap', 'emom', 'tabata', 'ywyr', 'split']);
   });
 });

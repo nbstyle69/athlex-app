@@ -1,7 +1,7 @@
 // Maps a BoxWOD to a Timer SeqBlock so the athlete can launch a
 // preconfigured timer directly from the whiteboard.
 import { BoxWOD } from '../types';
-import { SeqBlock, BlockType } from '../navigation';
+import { SeqBlock, BlockType, SplitExercise } from '../navigation';
 import { formatCap } from './scoreFormat';
 
 function newId(): string {
@@ -135,9 +135,37 @@ export const TIMER_BLOCK_TYPES: { key: BlockType; label: string }[] = [
   { key: 'emom', label: 'EMOM' },
   { key: 'tabata', label: 'TABATA' },
   { key: 'ywyr', label: 'YWYR' },
+  { key: 'split', label: 'SPLIT' },
 ];
 
-const SUPPORTED_BLOCK_TYPES: BlockType[] = ['for-time', 'amrap', 'emom', 'tabata', 'ywyr'];
+const SUPPORTED_BLOCK_TYPES: BlockType[] = ['for-time', 'amrap', 'emom', 'tabata', 'ywyr', 'split'];
+
+/**
+ * B5 — bloc Split : chrono global qui tourne, « Série terminée » enregistre un
+ * split et lance le repos de l'exercice courant, exercice suivant quand toutes
+ * ses séries sont faites. Défaut d'une séance Musculation ; un metcon se
+ * splitte par round (un seul « exercice », sans repos).
+ */
+export function buildSplitBlock(exercises: SplitExercise[]): SeqBlock {
+  return {
+    id: newId(), type: 'split', splitExercises: exercises.filter((e) => e.sets > 0),
+    durationMin: 0, durationSec: 0, emomInterval: 1, emomRounds: 10, emomCustomSec: 90, workSec: 20, restSec: 10, tabRounds: 8, pauseSec: 0,
+  };
+}
+
+export function buildMuscuSplitBlock(wod: { blocks: ReadonlyArray<{ exercises: ReadonlyArray<{ name: string; sets: number; rest_s: number }> }> }): SeqBlock {
+  return buildSplitBlock(wod.blocks[0].exercises.map((e) => ({ name: e.name, sets: e.sets, restSec: Math.max(0, Math.round(e.rest_s)) })));
+}
+
+/** Un metcon splitté par round : autant de « séries » que de rounds connus, sans repos imposé. */
+export function roundSplitExercises(rounds: number | undefined): SplitExercise[] {
+  return [{ name: 'Round', sets: rounds && rounds > 0 ? rounds : 1, restSec: 0 }];
+}
+
+/** Séries totales d'un bloc Split. */
+export function splitTotalSets(b: Pick<SeqBlock, 'splitExercises'>): number {
+  return (b.splitExercises ?? []).reduce((n, e) => n + e.sets, 0);
+}
 
 /**
  * Build a fully-seeded SeqBlock from a BoxWOD: every mode-specific field is
@@ -168,6 +196,7 @@ export function buildFullSeqBlockFromWOD(wod: WODConfigFields): SeqBlock {
     restSec: tabRest,
     tabRounds: rounds ?? 8,
     pauseSec: 0,
+    splitExercises: roundSplitExercises(rounds),
   };
 }
 
@@ -186,6 +215,11 @@ export function formatBlockPreconfig(b: SeqBlock): string {
       return `Tabata · ${b.tabRounds} × ${b.workSec}/${b.restSec}s`;
     case 'ywyr':
       return 'YWYR · Your Work Your Rest';
+    case 'split': {
+      const n = b.splitExercises?.length ?? 0;
+      const sets = splitTotalSets(b);
+      return n <= 1 ? `Split · ${sets} round${sets > 1 ? 's' : ''}` : `Split · ${n} exercices · ${sets} séries`;
+    }
     case 'for-time':
     default:
       return durSec > 0 ? `For Time · Cap ${formatDurationLabel(durSec)}` : 'For Time · Chrono libre';
