@@ -343,6 +343,44 @@ function matchesPick(ctx: Ctx, slot: Slot, m: CatalogMovement, picked: Picked[],
  * s'il a une version sans matériel (`EQUIPMENT_FALLBACK`) : c'est elle qui est retenue.
  * `need` restreint le tirage aux mouvements qui satisfont l'intention (dernier slot libre).
  */
+/**
+ * B10 (lot B) — les records gymniques du profil priment sur la catégorie pour
+ * les variantes gymniques. Un mouvement dont le record est absent ou à 0 descend
+ * sa chaîne de substitution (`rx` → `inter` → `scaled`, un cran à la fois :
+ * Ring Muscle-up → Bar Muscle-up → Chest-to-Bar → Pull-ups → Banded Pull-ups)
+ * jusqu'au premier mouvement qui a un record, ou qui n'en demande pas.
+ */
+export const GYM_RECORD_FRACTION = 0.6;
+
+function gymRecordMissing(ctx: Ctx, m: CatalogMovement): boolean {
+  const rec = ctx.params.gym_records;
+  if (!rec || m.family !== 'gym') return false;
+  const r = rec[m.id];
+  return r !== undefined && r <= 0;
+}
+
+function gymSubstitute(ctx: Ctx, m: CatalogMovement): CatalogMovement {
+  let cur = m;
+  for (let i = 0; i < 8 && gymRecordMissing(ctx, cur); i++) {
+    const s = cur.substitutions;
+    // un cran vers le bas : la première substitution qui n'est pas le mouvement lui-même
+    const nextId = [s?.rx, s?.inter, s?.scaled].find((id) => id && id !== cur.id) ?? null;
+    const next = nextId ? movementById(ctx.catalog, nextId) : null;
+    if (!next) break;
+    cur = next;
+  }
+  return cur;
+}
+
+/** Un cran de substitution vers le bas, même famille, pas déjà tiré, avec record ou sans record demandé. */
+function gymDown(ctx: Ctx, m: CatalogMovement, picked: ReadonlyArray<Picked>): CatalogMovement | null {
+  const s = m.substitutions;
+  const nextId = [s?.rx, s?.inter, s?.scaled].find((id) => id && id !== m.id) ?? null;
+  const next = nextId ? movementById(ctx.catalog, nextId) : null;
+  if (!next || next.family !== m.family || picked.some((p) => p.m.id === next.id)) return null;
+  return gymRecordMissing(ctx, next) ? gymDown(ctx, next, picked) : next;
+}
+
 function drawMovement(
   ctx: Ctx, slot: Slot, index: number, picked: Picked[], sk: SkeletonRef, functionalSmall: boolean,
   need?: (m: CatalogMovement) => boolean,
@@ -359,10 +397,21 @@ function drawMovement(
     return null;
   };
   const pool: Array<{ drawn: CatalogMovement; use: CatalogMovement }> = [];
+  const seen = new Set<string>();
   for (const m of ctx.catalog.movements) {
-    const use = resolve(m);
+    let use = resolve(m);
     if (!use) continue;
+    // B10 : record gymnique absent → variante accessible, qui doit tenir dans le slot elle aussi
+    const sub = gymSubstitute(ctx, use);
+    // sans record ni variante accessible, le mouvement ne sort pas
+    if (gymRecordMissing(ctx, sub)) { reasons.gym_record = (reasons.gym_record ?? 0) + 1; continue; }
+    if (sub !== use) {
+      if (matchesPick(ctx, slot, sub, picked, sk, functionalSmall) !== null) { reasons.gym_record = (reasons.gym_record ?? 0) + 1; continue; }
+      use = sub;
+    }
     if (need && !need(use)) { reasons.intention = (reasons.intention ?? 0) + 1; continue; }
+    if (seen.has(use.id)) continue;
+    seen.add(use.id);
     pool.push({ drawn: m, use });
   }
   const hit = ctx.rng.pickWeighted(pool, (x) => weightFor(x.drawn, ctx.params.discipline));
@@ -888,8 +937,23 @@ function capPass(ctx: Ctx, d: Draft): boolean {
     // autant que le resserrer. Avec l'ancien `Math.min`, écrire 200 dans
     // `movement_caps` pour une famille plafonnée à 100 ne changeait rien.
     const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
-    const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
+    // B10 : jamais plus de 60 % du record gymnique en volume total sur un WOD (12 tractions → 7, pas 45)
+    const rec = p.unit === 'reps' ? ctx.params.gym_records?.[p.m.id] : undefined;
+    const gymCap = rec && rec > 0 ? Math.max(1, Math.floor(rec * GYM_RECORD_FRACTION)) : Infinity;
+    const cap = Math.min(specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity, gymCap);
     if (cap === Infinity || perWod <= cap) continue;
+    const reducible = !!p.range && mult > 0 && !tabata && roundQty(Math.floor(cap / mult), p.unit) >= p.range[0];
+    if (!reducible && perWod > gymCap) {
+      // le format ne tient pas sous le record (un AMRAP de 15 min pour 12 tractions) :
+      // la variante accessible prend la place, plutôt que 7 tractions en 6 rounds
+      const alt = gymDown(ctx, p.m, d.picked);
+      if (alt) {
+        p.m = alt;
+        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format);
+        changed = true;
+        continue;
+      }
+    }
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
     const next = roundQty(Math.floor(cap / mult), p.unit);
     if (next < p.range[0] || next >= p.qty) throw new Reject(`volume_cap:${p.m.id}`);

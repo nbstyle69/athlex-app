@@ -571,6 +571,13 @@ export interface GenerateParams {
   recent_signatures?: string[];
   /** catégorie du profil (cible d'estimation) ; `rx` / `men` par défaut */
   profile_category?: Category | null;
+  /**
+   * B10 : records gymniques du profil, id catalogue → reps. Absent ou vide :
+   * la catégorie décide seule. Renseigné : un mouvement gymnique dont le record
+   * est à 0 est substitué par sa variante accessible, et le volume d'un
+   * mouvement à record est borné à `GYM_RECORD_FRACTION` du record par WOD.
+   */
+  gym_records?: Record<string, number>;
   after_class?: AfterClassContext | null;
   /** patterns interdits à tous les mouvements (séance : pattern lourd du bloc A) */
   pattern_not?: Pattern[];

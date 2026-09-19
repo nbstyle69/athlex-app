@@ -15,6 +15,7 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import GlassCard from '../../components/glass/GlassCard';
 import { prKey, readPr } from '../profile/prStorage';
 import { fetchMyPersonalRecords } from '../../services/myProfile';
+import { GYM_PR_MOVEMENTS, GYM_ZONES, gymRepsAt } from './gymZones';
 
 const STORAGE_KEY = '@athlex:1rm_calc';
 
@@ -64,6 +65,10 @@ export default function OneRMCalculatorScreen() {
   const [input, setInput] = useState('');
   const [isLbs, setIsLbs] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState<string | null>(null);
+  // B8 : section Gymnastique (records en reps)
+  const [section, setSection] = useState<'barbell' | 'gym'>('barbell');
+  const [gymInput, setGymInput] = useState('');
+  const [gymMovement, setGymMovement] = useState<string | null>(null);
   const [prData, setPrData] = useState<Record<string, string>>({});
   const [showPRList, setShowPRList] = useState(false);
 
@@ -76,6 +81,9 @@ export default function OneRMCalculatorScreen() {
         if (saved.input) setInput(saved.input);
         if (saved.movement) setSelectedMovement(saved.movement);
         if (saved.isLbs !== undefined) setIsLbs(saved.isLbs);
+        if (saved.section === 'gym' || saved.section === 'barbell') setSection(saved.section);
+        if (saved.gymInput) setGymInput(saved.gymInput);
+        if (saved.gymMovement) setGymMovement(saved.gymMovement);
       } catch (e) { captureError(e, { screen: 'OneRMCalculator', action: 'restoreState' }); }
     });
   }, []);
@@ -86,8 +94,11 @@ export default function OneRMCalculatorScreen() {
       input,
       movement: selectedMovement,
       isLbs,
+      section,
+      gymInput,
+      gymMovement,
     })).catch(e => captureError(e, { action: 'persistOneRM' }));
-  }, [input, selectedMovement, isLbs]);
+  }, [input, selectedMovement, isLbs, section, gymInput, gymMovement]);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -112,6 +123,17 @@ export default function OneRMCalculatorScreen() {
     setShowPRList(false);
   }
 
+  const savedGymPRs = GYM_PR_MOVEMENTS
+    .map(name => {
+      const key = prKey('gymnastics', name);
+      const val = readPr(prData, 'gymnastics', name) ?? '';
+      const num = parseFloat(val);
+      return { name, key, value: val, num };
+    })
+    .filter(pr => pr.value && !isNaN(pr.num) && pr.num > 0);
+  const gymRecord = parseFloat(gymInput.replace(',', '.'));
+  const gymValid = !isNaN(gymRecord) && gymRecord > 0;
+
   const unit = isLbs ? 'lbs' : 'kg';
   const step = isLbs ? 5 : 2.5;
   const raw = parseFloat(input.replace(',', '.'));
@@ -133,6 +155,104 @@ export default function OneRMCalculatorScreen() {
 
       <ScrollView style={S.scroll} contentContainerStyle={S.scrollContent} showsVerticalScrollIndicator={false}>
 
+        {/* B8 : Barres ou Gymnastique */}
+        <View style={S.sectionRow}>
+          {([['barbell', 'Barres'], ['gym', 'Gymnastique']] as const).map(([key, label]) => (
+            <TouchableOpacity
+              key={key}
+              style={[S.sectionChip, section === key && S.sectionChipActive]}
+              onPress={() => { setSection(key); setShowPRList(false); }}
+              activeOpacity={0.8}
+              testID={`onerm-section-${key}`}
+            >
+              <Text style={[S.sectionChipText, section === key && { color: theme.success }]}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {section === 'gym' && (
+          <>
+            {savedGymPRs.length > 0 && (
+              <View style={S.prSection}>
+                <GlassCard radius={14} variant="emerald">
+                  <TouchableOpacity style={S.prToggle} onPress={() => setShowPRList(!showPRList)} activeOpacity={0.7}>
+                    <Dumbbell color={theme.accent} size={16} />
+                    <Text style={S.prToggleText}>{gymMovement ?? 'Choisir un mouvement (mes PR)'}</Text>
+                    {showPRList ? <ChevronUp color={theme.textMuted} size={16} /> : <ChevronDown color={theme.textMuted} size={16} />}
+                  </TouchableOpacity>
+                </GlassCard>
+                {showPRList && (
+                  <GlassCard radius={14} style={{ marginTop: 6 }}>
+                    <View>
+                      {savedGymPRs.map(pr => (
+                        <TouchableOpacity
+                          key={pr.key}
+                          style={[S.prItem, gymMovement === pr.name && S.prItemActive]}
+                          onPress={() => { setGymMovement(pr.name); setGymInput(String(Math.round(pr.num))); setShowPRList(false); }}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={[S.prItemName, gymMovement === pr.name && { color: theme.accent }]}>{pr.name}</Text>
+                          <Text style={S.prItemValue}>{Math.round(pr.num)} reps</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </GlassCard>
+                )}
+              </View>
+            )}
+
+            <GlassCard radius={16} style={{ marginTop: 20, marginBottom: 20 }}>
+              <View style={S.inputCardInner}>
+                <Text style={S.inputLabel}>{gymMovement ? `RECORD — ${gymMovement.toUpperCase()}` : 'TON RECORD (REPS)'}</Text>
+                <View style={S.inputRow}>
+                  <TextInput
+                    style={S.input}
+                    value={gymInput}
+                    onChangeText={(v) => { setGymInput(v); setGymMovement(null); }}
+                    keyboardType="number-pad"
+                    placeholder="ex: 20"
+                    placeholderTextColor={theme.textMuted}
+                    maxLength={4}
+                    testID="onerm-gym-input"
+                  />
+                  <Text style={S.inputUnit}>reps</Text>
+                </View>
+              </View>
+            </GlassCard>
+
+            <GlassCard radius={10} style={{ marginBottom: 4 }}>
+              <View style={S.tableHeader}>
+                <Text style={[S.thTxt, { flex: 0.7 }]}>%</Text>
+                <Text style={[S.thTxt, { flex: 1 }]}>Reps</Text>
+                <Text style={[S.thTxt, { flex: 1.5 }]}>Zone</Text>
+                <Text style={[S.thTxt, { flex: 1.3 }]}>Usage</Text>
+              </View>
+            </GlassCard>
+            {GYM_ZONES.map((z) => {
+              const reps = gymValid ? gymRepsAt(gymRecord, z.pct) : null;
+              const bgGlass = z.bg + '40';
+              return (
+                <View key={z.pct} style={[S.row, { backgroundColor: bgGlass, borderColor: z.color + '40' }]}>
+                  <View style={[S.pctBadge, { borderColor: z.color }]}>
+                    <Text style={[S.pctTxt, { color: z.color }]}>{z.pct}%</Text>
+                  </View>
+                  <Text style={[S.loadTxt, { flex: 1, color: reps != null ? theme.text : theme.textMuted }]}>
+                    {reps != null ? `${reps} reps` : '—'}
+                  </Text>
+                  <Text style={[S.zoneTxt, { flex: 1.5, color: z.color }]}>{z.zone}</Text>
+                  <Text style={[S.repsTxt, { flex: 1.3 }]}>{z.usage}</Text>
+                </View>
+              );
+            })}
+            <View style={S.footer}>
+              <Text style={S.footerTxt}>
+                Reps arrondies à l'entier. 60 % du record : le plafond que le générateur s'impose sur un WOD.
+              </Text>
+            </View>
+          </>
+        )}
+
+        {section === 'barbell' && (<>
         {/* PR Quick Select */}
         {savedPRs.length > 0 && (
           <View style={S.prSection}>
@@ -241,6 +361,7 @@ export default function OneRMCalculatorScreen() {
             Au-delà de 100% : excentrique, partiel ou assisté uniquement.
           </Text>
         </View>
+        </>)}
       </ScrollView>
     </SafeAreaView>
   );
@@ -306,6 +427,10 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   repsTxt: { fontSize: 11, fontWeight: '600', color: theme.textSecondary },
   footer: { marginTop: 20, paddingHorizontal: 4 },
   footerTxt: { fontSize: 11, color: theme.textMuted, lineHeight: 18, textAlign: 'center' },
+  sectionRow: { flexDirection: 'row', gap: 8, marginTop: 16 },
+  sectionChip: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card },
+  sectionChipActive: { borderColor: theme.success, backgroundColor: `${theme.success}14` },
+  sectionChipText: { fontSize: 13, fontWeight: '800', color: theme.textSecondary, letterSpacing: 0.3 },
   prSection: { marginTop: 20, marginBottom: 0 },
   prToggle: {
     flexDirection: 'row', alignItems: 'center', gap: 10,

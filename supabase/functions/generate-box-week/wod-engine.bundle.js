@@ -27905,6 +27905,31 @@ function matchesPick(ctx, slot2, m, picked, sk, functionalSmall) {
   if (functionalSmall && m.family === "barbell" && picked.some((q) => q.m.family === "barbell")) return "second_barbell";
   return null;
 }
+var GYM_RECORD_FRACTION = 0.6;
+function gymRecordMissing(ctx, m) {
+  const rec = ctx.params.gym_records;
+  if (!rec || m.family !== "gym") return false;
+  const r = rec[m.id];
+  return r !== void 0 && r <= 0;
+}
+function gymSubstitute(ctx, m) {
+  let cur = m;
+  for (let i = 0; i < 8 && gymRecordMissing(ctx, cur); i++) {
+    const s = cur.substitutions;
+    const nextId = [s?.rx, s?.inter, s?.scaled].find((id) => id && id !== cur.id) ?? null;
+    const next = nextId ? movementById(ctx.catalog, nextId) : null;
+    if (!next) break;
+    cur = next;
+  }
+  return cur;
+}
+function gymDown(ctx, m, picked) {
+  const s = m.substitutions;
+  const nextId = [s?.rx, s?.inter, s?.scaled].find((id) => id && id !== m.id) ?? null;
+  const next = nextId ? movementById(ctx.catalog, nextId) : null;
+  if (!next || next.family !== m.family || picked.some((p) => p.m.id === next.id)) return null;
+  return gymRecordMissing(ctx, next) ? gymDown(ctx, next, picked) : next;
+}
 function drawMovement(ctx, slot2, index, picked, sk, functionalSmall, need) {
   const reasons = {};
   const resolve = (m) => {
@@ -27918,13 +27943,28 @@ function drawMovement(ctx, slot2, index, picked, sk, functionalSmall, need) {
     return null;
   };
   const pool = [];
+  const seen = /* @__PURE__ */ new Set();
   for (const m of ctx.catalog.movements) {
-    const use = resolve(m);
+    let use = resolve(m);
     if (!use) continue;
+    const sub = gymSubstitute(ctx, use);
+    if (gymRecordMissing(ctx, sub)) {
+      reasons.gym_record = (reasons.gym_record ?? 0) + 1;
+      continue;
+    }
+    if (sub !== use) {
+      if (matchesPick(ctx, slot2, sub, picked, sk, functionalSmall) !== null) {
+        reasons.gym_record = (reasons.gym_record ?? 0) + 1;
+        continue;
+      }
+      use = sub;
+    }
     if (need && !need(use)) {
       reasons.intention = (reasons.intention ?? 0) + 1;
       continue;
     }
+    if (seen.has(use.id)) continue;
+    seen.add(use.id);
     pool.push({ drawn: m, use });
   }
   const hit = ctx.rng.pickWeighted(pool, (x) => weightFor(x.drawn, ctx.params.discipline));
@@ -28408,8 +28448,20 @@ function capPass(ctx, d) {
     const mult = volumeMultiplier(ctx, d, p);
     const perWod = tabata ? 16 * 20 / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
     const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
-    const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
+    const rec = p.unit === "reps" ? ctx.params.gym_records?.[p.m.id] : void 0;
+    const gymCap = rec && rec > 0 ? Math.max(1, Math.floor(rec * GYM_RECORD_FRACTION)) : Infinity;
+    const cap = Math.min(specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity, gymCap);
     if (cap === Infinity || perWod <= cap) continue;
+    const reducible = !!p.range && mult > 0 && !tabata && roundQty(Math.floor(cap / mult), p.unit) >= p.range[0];
+    if (!reducible && perWod > gymCap) {
+      const alt = gymDown(ctx, p.m, d.picked);
+      if (alt) {
+        p.m = alt;
+        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format);
+        changed = true;
+        continue;
+      }
+    }
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
     const next = roundQty(Math.floor(cap / mult), p.unit);
     if (next < p.range[0] || next >= p.qty) throw new Reject(`volume_cap:${p.m.id}`);
@@ -30700,6 +30752,7 @@ export {
   FORMAT_CHOICE_COVERS,
   FUNCTIONAL_CATEGORIES,
   FUNCTIONAL_SKELETONS,
+  GYM_RECORD_FRACTION,
   H1_intervals,
   H2_strength_stations,
   H3_run,

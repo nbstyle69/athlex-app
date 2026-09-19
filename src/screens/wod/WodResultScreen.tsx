@@ -27,6 +27,7 @@ import GlassCard from '../../components/glass/GlassCard';
 import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import WodTypeBadge from '../../components/wod/WodTypeBadge';
 import TimerLaunchModal, { TimerRunParams } from '../../components/wod/TimerLaunchModal';
+import DateField from '../../components/DateField';
 import i18n from '../../i18n';
 import { captureError } from '../../lib/sentry';
 import { hapticSuccess } from '../../lib/haptics';
@@ -171,6 +172,9 @@ export default function WodResultScreen() {
   const [timerOpen, setTimerOpen] = useState(false);
   const [boxWodId, setBoxWodId] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  // B7 : date libre (passé et futur), jour même par défaut
+  const [wbModal, setWbModal] = useState(false);
+  const [wbDate, setWbDate] = useState(() => new Date().toISOString().slice(0, 10));
 
   const [scoreModal, setScoreModal] = useState(false);
   const [scoreType, setScoreType] = useState<ScoreInputType>(metcon ? scoreInputTypeFor(metcon) : 'weight');
@@ -258,17 +262,26 @@ export default function WodResultScreen() {
     navigation.navigate('TimerRun', params);
   }
 
-  async function onAddToWhiteboard() {
+  function onAddToWhiteboard() {
     if (!user) return;
     if (boxWodId) {
       navigation.navigate('Whiteboard', { screen: 'WhiteboardMain' });
       return;
     }
+    setWbDate(new Date().toISOString().slice(0, 10));
+    setWbModal(true);
+  }
+
+  const DATE_ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+  async function onConfirmWhiteboard() {
+    if (!user || !DATE_ISO.test(wbDate)) return;
+    setWbModal(false);
     const id = await onSave();
     if (!id) return;
     setAdding(true);
     try {
-      const created = await addToWhiteboard(user.id, wod, id, submittedScore);
+      const created = await addToWhiteboard(user.id, wod, id, submittedScore, wbDate);
       setBoxWodId(created);
       hapticSuccess();
       Alert.alert(
@@ -574,6 +587,34 @@ export default function WodResultScreen() {
         </View>
         </View>
       </GlassCard>
+
+      {/* B7 : date d'ajout au Whiteboard */}
+      <Modal visible={wbModal} transparent animationType="fade" onRequestClose={() => setWbModal(false)}>
+        <TouchableOpacity style={S.modalBg} activeOpacity={1} onPress={() => setWbModal(false)}>
+          <TouchableOpacity activeOpacity={1} style={S.modalSheet} onPress={() => {}}>
+            <Text style={S.modalTitle}>Ajouter au Whiteboard</Text>
+            <Text style={{ fontSize: 13, color: theme.textSecondary, marginTop: 4, marginBottom: 12 }}>
+              {muscu ? 'Un bloc par exercice, à valider et scorer un par un.' : 'Le WOD rejoint « Mes WODs perso » à la date choisie.'}
+            </Text>
+            <DateField style={S.input} value={wbDate} onChangeText={setWbDate} theme={theme} />
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+              {([[-1, 'Hier'], [0, "Aujourd'hui"], [1, 'Demain']] as const).map(([d, label]) => (
+                <TouchableOpacity
+                  key={label}
+                  style={S.chip}
+                  activeOpacity={0.8}
+                  onPress={() => { const x = new Date(); x.setDate(x.getDate() + d); setWbDate(x.toISOString().slice(0, 10)); }}
+                >
+                  <Text style={S.chipText}>{label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <EmeraldCTAButton size="md" style={{ marginTop: 16 }} onPress={onConfirmWhiteboard} disabled={!DATE_ISO.test(wbDate)}>
+              Ajouter
+            </EmeraldCTAButton>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
 
       <TimerLaunchModal
         visible={timerOpen}
