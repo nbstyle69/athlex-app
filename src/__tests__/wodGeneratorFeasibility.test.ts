@@ -42,8 +42,8 @@ describe('G1 — combinaisons grisées avant le tirage, relâchement affiché ap
     expect(combinationFeasible('functional', 8, 'force', 'for_time')).toBe(false);
   });
 
-  it("E2 — le relâchement de durée (±5 min) est annoncé comme celui du format, avec l'estimation réelle", () => {
-    expect(resultat).toContain("rel.includes('duration±5')");
+  it("E2 — l'écart de durée est annoncé comme le relâchement de format, seulement au-delà de la fourchette du moteur (±20 %)", () => {
+    expect(resultat).toContain('Math.abs(genere - metcon.budget_min) > metcon.budget_min * TOLERANCE');
     expect(resultat).toMatch(/Demandé \$\{metcon\.budget_min\} min, généré \$\{genere\} min\./);
     expect(resultat).toContain('metcon.estimate.reference_minutes');
   });

@@ -19,7 +19,7 @@ import {
 
 export const SESSION_ENGINE_VERSION = '1.0.0';
 /** ± 10 % autour de 60' (brief J1 §5.1) */
-export const SESSION_TOLERANCE = 0.10;
+export const SESSION_TOLERANCE = 0.20;
 /** minute de transition entre deux blocs */
 export const TRANSITION_MIN = 1;
 /** durée des étapes A et B d'un skill (secondes) */

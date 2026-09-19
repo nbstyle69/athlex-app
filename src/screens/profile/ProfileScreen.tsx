@@ -29,7 +29,7 @@ import { Json } from '../../types/supabase';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { prKey, normalizePrRecords, PrCategorySlug, WEIGHTLIFTING_PR_MOVEMENTS, BODYWEIGHT_KEY, readBodyweightKg } from './prStorage';
-import GymDeclarationSection from '../../components/wod/GymDeclarationSection';
+import { formatTimeValue, isTimeUnit, parseTimeInput } from './timeValue';
 import StrengthHistory from '../../components/profile/StrengthHistory';
 import { fetchMyStrengthSets, groupStrengthSessions } from '../../services/strengthSets';
 import { inkOn } from '../../theme/ink';
@@ -848,7 +848,6 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               )}
             </View>
-            {!searching && <GymDeclarationSection userId={user?.id} />}
             {searching && filtered.length === 0 && (
               <Text style={S.prNoResults}>{t('profile.pr.noResults', { query: prSearch.trim() })}</Text>
             )}
@@ -886,15 +885,24 @@ export default function ProfileScreen() {
                               style={S.prEditInput}
                               value={prValues[key] ?? ''}
                               onChangeText={v => setPrValues(prev => ({ ...prev, [key]: v }))}
-                              keyboardType="numeric"
+                              keyboardType={isTimeUnit(pr.unit) ? 'numbers-and-punctuation' : 'numeric'}
+                              placeholder={isTimeUnit(pr.unit) ? 'mm:ss' : undefined}
+                              placeholderTextColor={theme.textMuted}
                               autoFocus
                               selectTextOnFocus
                             />
-                            <Text style={S.prUnit}>{pr.unit}</Text>
+                            <Text style={S.prUnit}>{isTimeUnit(pr.unit) ? 'min:s' : pr.unit}</Text>
                             <TouchableOpacity
                               onPress={() => {
+                                // B11 : un temps se saisit en minutes et secondes, se stocke en minutes décimales
+                                let value = prValues[key] ?? '';
+                                if (isTimeUnit(pr.unit)) {
+                                  const parsed = parseTimeInput(value);
+                                  if (parsed === null) { Alert.alert('Temps invalide', 'Saisis un temps au format mm:ss, par exemple 1:42.'); return; }
+                                  value = parsed;
+                                }
                                 const today = new Date().toISOString().split('T')[0];
-                                const updated = { ...prValues, [`${key}_date`]: today };
+                                const updated = { ...prValues, [key]: value, [`${key}_date`]: today };
                                 setPrValues(updated);
                                 setEditingPR(null);
                                 savePRs(updated, [key, `${key}_date`]);
@@ -907,8 +915,8 @@ export default function ProfileScreen() {
                         ) : (
                           <TouchableOpacity onPress={() => setEditingPR(key)} style={S.prValueBtn}>
                             <Text style={[S.prValue, !prValues[key] && { color: theme.textMuted }]}>
-                              {prValues[key] ?? '—'}{' '}
-                              <Text style={S.prUnit}>{prValues[key] ? pr.unit : ''}</Text>
+                              {prValues[key] ? (isTimeUnit(pr.unit) ? formatTimeValue(prValues[key]) : prValues[key]) : '—'}{' '}
+                              <Text style={S.prUnit}>{prValues[key] ? (isTimeUnit(pr.unit) ? 'min' : pr.unit) : ''}</Text>
                             </Text>
                             <Edit3 color={theme.textMuted} size={12} />
                           </TouchableOpacity>
