@@ -29,7 +29,6 @@ import { Json } from '../../types/supabase';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { prKey, normalizePrRecords, PrCategorySlug, WEIGHTLIFTING_PR_MOVEMENTS, BODYWEIGHT_KEY, readBodyweightKg } from './prStorage';
-import GymDeclarationSection from '../../components/wod/GymDeclarationSection';
 import { formatTimeValue, isTimeUnit, parseTimeInput } from './timeValue';
 import StrengthHistory from '../../components/profile/StrengthHistory';
 import { fetchMyStrengthSets, groupStrengthSessions } from '../../services/strengthSets';
@@ -849,7 +848,6 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               )}
             </View>
-            {!searching && <GymDeclarationSection userId={user?.id} />}
             {searching && filtered.length === 0 && (
               <Text style={S.prNoResults}>{t('profile.pr.noResults', { query: prSearch.trim() })}</Text>
             )}
