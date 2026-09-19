@@ -195,3 +195,32 @@ describe('tonnage et badges', () => {
     }])).toEqual([{ name: 'X', reps: 12, unit: 'reps', weight_kg: 20 }]);
   });
 });
+
+describe('mémoire des tirages Musculation (lot B)', () => {
+  const AsyncStorage = require('@react-native-async-storage/async-storage');
+  const ids = (r: Awaited<ReturnType<typeof generateForUser>>) => (isMuscuResult(r) ? r.wod.blocks[0].exercises.map((e) => e.id) : []);
+
+  it("le premier tirage part sans historique, le second reçoit les exercices du premier — clé locale par utilisateur, préfixe purgé au signOut", async () => {
+    await AsyncStorage.clear();
+    const sans = { ...screen, equipment: 'none' as const };
+    const first = await generateForUser(user, null, sans, 11);
+    expect(isMuscuResult(first) && first.params.recent_exercise_ids).toEqual([]);
+    const second = await generateForUser(user, null, sans, 12);
+    expect(isMuscuResult(second) && second.params.recent_exercise_ids).toEqual(ids(first));
+    expect(await AsyncStorage.getItem('@athlex:muscuRecent:u1')).toBe(JSON.stringify([ids(second), ids(first)]));
+    expect(await AsyncStorage.getItem('@athlex:muscuRecent:u2')).toBeNull();
+  });
+
+  it('trois tirages au plus sont retenus, sans doublon dans ce qui est transmis au moteur', async () => {
+    await AsyncStorage.clear();
+    const sans = { ...screen, equipment: 'none' as const };
+    const draws = [];
+    for (let seed = 21; seed < 26; seed++) draws.push(ids(await generateForUser(user, null, sans, seed)));
+    const stored = JSON.parse((await AsyncStorage.getItem('@athlex:muscuRecent:u1')) as string) as string[][];
+    expect(stored).toEqual(draws.slice(2).reverse());
+    const last = await generateForUser(user, null, sans, 26);
+    const passed = isMuscuResult(last) ? last.params.recent_exercise_ids ?? [] : [];
+    expect(new Set(passed).size).toBe(passed.length);
+    expect(new Set(passed)).toEqual(new Set(stored.flat()));
+  });
+});
