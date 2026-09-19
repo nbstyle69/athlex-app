@@ -1,0 +1,65 @@
+/**
+ * Libellés français du matériel du catalogue (B3, lot B). La valeur interne
+ * reste l'identifiant (`band`, `barbell`…) : c'est lui qui est persisté dans
+ * les exclusions et lu par le moteur ; seul l'affichage change. Un identifiant
+ * inconnu s'affiche tel quel plutôt que de disparaître.
+ */
+export const EQUIPMENT_LABELS_FR: Record<string, string> = {
+  ab_machine: 'Machine à abdos',
+  ab_wheel: 'Roue abdominale',
+  abduction_machine: 'Machine à abducteurs',
+  abmat: 'AbMat',
+  band: 'Élastique',
+  barbell: 'Barre',
+  bench: 'Banc',
+  bench_decline: 'Banc décliné',
+  bench_incline: 'Banc incliné',
+  bike_erg: 'Bike Erg',
+  box: 'Box de saut',
+  cable: 'Poulie',
+  cable_row: 'Poulie basse',
+  calf_machine: 'Machine à mollets',
+  chest_press_machine: 'Machine à pectoraux',
+  dip_machine: 'Machine à dips',
+  dip_station: 'Station à dips',
+  dumbbell: 'Haltères',
+  echo_bike: 'Echo Bike',
+  floor: 'Sol',
+  ghd: 'GHD',
+  hack_squat: 'Hack squat',
+  hip_thrust_machine: 'Machine à hip thrust',
+  jump_rope: 'Corde à sauter',
+  kettlebell: 'Kettlebell',
+  landmine: 'Landmine',
+  lat_pulldown: 'Poulie haute',
+  leg_curl: 'Leg curl',
+  leg_extension: 'Leg extension',
+  leg_press: 'Presse à cuisses',
+  pec_deck: 'Pec deck',
+  preacher_bench: 'Pupitre à biceps',
+  preacher_machine: 'Machine à biceps',
+  pull_up_bar: 'Barre de traction',
+  pullover_machine: 'Machine à pull-over',
+  pvc: 'Bâton PVC',
+  rack: 'Rack',
+  rig: 'Rig',
+  rings: 'Anneaux',
+  rope: 'Corde à grimper',
+  rotation_machine: 'Machine à rotation',
+  row_machine: 'Machine à rowing',
+  rower: 'Rameur',
+  sandbag: 'Sandbag',
+  shoulder_press_machine: 'Machine à épaules',
+  shrug_machine: 'Machine à shrugs',
+  ski_erg: 'Ski Erg',
+  sled: 'Traîneau',
+  swiss_ball: 'Swiss ball',
+  triceps_machine: 'Machine à triceps',
+  wall: 'Mur',
+  wallball: 'Wall ball',
+  wrist_roller: 'Rouleau à poignets',
+};
+
+export function equipmentLabel(id: string): string {
+  return EQUIPMENT_LABELS_FR[id] ?? id;
+}

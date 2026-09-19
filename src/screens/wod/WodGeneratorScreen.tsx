@@ -12,7 +12,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,6 +38,7 @@ import {
   muscuOneRepMax, objectiveDisabled, oneRepMaxLine, targetLabel, targetOrderFor, targetOrderHint,
 } from './muscuOptions';
 import { readBodyweightKg } from '../profile/prStorage';
+import { equipmentLabel } from '../../utils/wod/equipmentLabels';
 import { loadWodDraft, saveWodDraft, WodDraft } from '../../services/wodDraft';
 import { loadEngineData } from '../../services/wodEngineData';
 import { fetchMyPersonalRecords } from '../../services/myProfile';
@@ -173,7 +174,7 @@ export default function WodGeneratorScreen() {
       .slice(0, 8);
   }, [catalog, search, exclude]);
   const excludedMovements = useMemo(
-    () => exclude.filter((k) => !equipment.includes(k)).map((id) => ({ id, name: catalog?.movements.find((m) => m.id === id)?.name ?? id })),
+    () => exclude.filter((k) => !equipment.includes(k)).map((id) => ({ id, name: catalog?.movements.find((m) => m.id === id)?.name ?? equipmentLabel(id) })),
     [exclude, equipment, catalog],
   );
 
@@ -249,14 +250,16 @@ export default function WodGeneratorScreen() {
             </TouchableOpacity>
           </View>
         </View>
-        <Text style={S.headerTitle}>
-          Générateur de WOD
-          {sport === 'hybrid' ? <Text style={{ color: HYBRID_ORANGE }}> · Hybrid</Text> : null}
-          {isMuscu ? <Text style={{ color: MUSCU_BLUE }}> · Musculation</Text> : null}
+        {/* B1 : deux lignes centrées, la discipline toujours nommée — Functional comme les autres */}
+        <Text style={S.headerTitle}>Générateur de WOD</Text>
+        <Text style={[S.headerDiscipline, { color: accent }]} testID="wodgen-discipline">
+          {isMuscu ? 'Musculation' : sport === 'hybrid' ? 'Hybrid' : 'Functional'}
         </Text>
       </View>
 
-      <ScrollView contentContainerStyle={[S.content, { paddingBottom: insets.bottom + 120 }]} showsVerticalScrollIndicator={false}>
+      {/* B3 : le champ de recherche reste au-dessus du clavier (iOS ; Android redimensionne la fenêtre) */}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={[S.content, { paddingBottom: insets.bottom + 120 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Entrée */}
         <View style={S.cardRow}>
           {([
@@ -447,7 +450,7 @@ export default function WodGeneratorScreen() {
                     onPress={() => toggleExclude(e)}
                     activeOpacity={0.8}
                   >
-                    <Text style={[S.chipText, exclude.includes(e) && S.exclChipText]}>{e}</Text>
+                    <Text style={[S.chipText, exclude.includes(e) && S.exclChipText]}>{equipmentLabel(e)}</Text>
                     {exclude.includes(e) && <X size={12} color={theme.error} />}
                   </TouchableOpacity>
                 ))}
@@ -489,6 +492,7 @@ export default function WodGeneratorScreen() {
           </TouchableOpacity>
         </GlassCard>
       </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -506,7 +510,8 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   container: { flex: 1, backgroundColor: theme.background },
   header: { paddingHorizontal: 20, paddingBottom: 12 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { fontSize: 24, fontWeight: '900', color: theme.text, marginTop: 12 },
+  headerTitle: { fontSize: 24, fontWeight: '900', color: theme.text, marginTop: 12, textAlign: 'center' },
+  headerDiscipline: { fontSize: 15, fontWeight: '800', letterSpacing: 0.4, textAlign: 'center', marginTop: 2 },
   menu: { flexDirection: 'row', gap: 6 },
   menuBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6,
@@ -532,10 +537,11 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   hint: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
   hintLink: { fontWeight: '800' },
 
-  classCard: { padding: 14, marginBottom: 16 },
+  // B2 : mêmes marges et corps que les cartes de la page résultat, hauteur libre, rien de tronqué
+  classCard: { padding: 16, marginBottom: 16 },
   classTitle: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textSecondary },
-  classWod: { fontSize: 15, fontWeight: '800', color: theme.text, marginTop: 4 },
-  classSub: { fontSize: 11, color: theme.textMuted, marginTop: 4 },
+  classWod: { fontSize: 16, fontWeight: '800', color: theme.text, marginTop: 6, lineHeight: 22 },
+  classSub: { fontSize: 13, color: theme.textSecondary, marginTop: 6, lineHeight: 19 },
 
   section: { marginBottom: 18 },
   sectionTitle: { fontSize: 13, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', color: theme.textSecondary, marginBottom: 10 },
