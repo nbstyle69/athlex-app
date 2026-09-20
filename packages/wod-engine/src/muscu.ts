@@ -20,7 +20,7 @@ import { MUSCU_SKELETONS, MUSCU_TARGETS, TARGET_MUSCLES } from './bank/muscu';
 
 export const MUSCU_ENGINE_VERSION = '1.0.0';
 export const MUSCU_MAX_ATTEMPTS = 40;
-export const MUSCU_TOLERANCE = 0.10;
+export const MUSCU_TOLERANCE = 0.20;
 export const MUSCU_DURATIONS = { express: [20, 30, 45, 60], after_class: [15, 20, 30], tronc: [15, 20, 30] } as const;
 /** Débutant : bilatéral, sans lest, 4 exercices maximum (§5) — 6 à partir de 45 minutes (M7). */
 export const BEGINNER_MAX_EXERCISES = 4;

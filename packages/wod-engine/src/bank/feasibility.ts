@@ -1,5 +1,5 @@
 // GÉNÉRÉ par scripts/feasibility.mjs — ne pas éditer. 25 seeds par combinaison.
-// 112 combinaisons déclarées, 27 jamais servies.
+// 112 combinaisons déclarées, 25 jamais servies.
 import type { Discipline, Intention, SkeletonFormat } from '../types';
 
 export interface FeasibilityRow {
@@ -37,7 +37,7 @@ export const FEASIBILITY: readonly FeasibilityRow[] = [
   { id: 'triplet_rounds_for_time', discipline: 'functional', format: 'rounds_for_time', budget_min: 15, intention: 'force', feasible: true },
   { id: 'triplet_rounds_for_time', discipline: 'functional', format: 'rounds_for_time', budget_min: 20, intention: 'mixed', feasible: true },
   { id: 'triplet_rounds_for_time', discipline: 'functional', format: 'rounds_for_time', budget_min: 20, intention: 'force', feasible: true },
-  { id: 'chipper_descending', discipline: 'functional', format: 'chipper', budget_min: 15, intention: 'mixed', feasible: false },
+  { id: 'chipper_descending', discipline: 'functional', format: 'chipper', budget_min: 15, intention: 'mixed', feasible: true },
   { id: 'chipper_descending', discipline: 'functional', format: 'chipper', budget_min: 15, intention: 'cardio', feasible: false },
   { id: 'chipper_descending', discipline: 'functional', format: 'chipper', budget_min: 20, intention: 'mixed', feasible: false },
   { id: 'chipper_descending', discipline: 'functional', format: 'chipper', budget_min: 20, intention: 'cardio', feasible: false },
@@ -119,7 +119,7 @@ export const FEASIBILITY: readonly FeasibilityRow[] = [
   { id: 'core_carry_finisher', discipline: 'hybrid', format: 'rounds_for_time', budget_min: 10, intention: 'core', feasible: true },
   { id: 'core_carry_finisher', discipline: 'hybrid', format: 'rounds_for_time', budget_min: 15, intention: 'core', feasible: true },
   { id: 'core_carry_finisher', discipline: 'hybrid', format: 'rounds_for_time', budget_min: 20, intention: 'core', feasible: true },
-  { id: 'run_intervals', discipline: 'hybrid', format: 'interval', budget_min: 10, intention: 'run', feasible: false },
+  { id: 'run_intervals', discipline: 'hybrid', format: 'interval', budget_min: 10, intention: 'run', feasible: true },
   { id: 'run_intervals', discipline: 'hybrid', format: 'interval', budget_min: 15, intention: 'run', feasible: true },
   { id: 'run_intervals', discipline: 'hybrid', format: 'interval', budget_min: 20, intention: 'run', feasible: true },
   { id: 'engine_negative_split', discipline: 'hybrid', format: 'continuous', budget_min: 30, intention: 'aerobic', feasible: false },

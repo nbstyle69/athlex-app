@@ -1,4 +1,5 @@
 import {
+  TOLERANCE,
   generateBlocC, estimateDuration, signature, CATALOG_SNAPSHOT, BANK_V1, NoValidWod, movementById,
   profileCategory, VEST_LOAD_KG, HYBRID_CATEGORIES, FUNCTIONAL_CATEGORIES, movementLines,
   cadenceFor, movementCapFor, forceBand, isSlowSkill, carriesIntention, EQUIPMENT_FALLBACK, render,
@@ -95,7 +96,7 @@ describe('generateBlocC — conformité §5 sur toutes les combinaisons', () => 
 });
 
 describe('estimateDuration', () => {
-  it('estime toutes les catégories de la discipline et reste dans ±10 % pour la référence', () => {
+  it('estime toutes les catégories de la discipline et reste dans la tolérance du moteur pour la référence', () => {
     for (const [p, cats] of [[F, FUNCTIONAL_CATEGORIES], [H, HYBRID_CATEGORIES]] as const) {
       for (let s = 1; s <= 10; s++) {
         const w = gen(p, s);
@@ -103,7 +104,7 @@ describe('estimateDuration', () => {
           const e = estimateDuration(w, c);
           expect(e.by_category[c]!.minutes).toBeGreaterThan(0);
         }
-        expect(Math.abs(w.estimate.reference_minutes - p.budget_min) / p.budget_min).toBeLessThanOrEqual(0.1 + 1e-9);
+        expect(Math.abs(w.estimate.reference_minutes - p.budget_min) / p.budget_min).toBeLessThanOrEqual(TOLERANCE + 1e-9);
         const scaledOrWomen = w.estimate.by_category[p.discipline === 'functional' ? 'scaled' : 'women']!.minutes;
         const ref = w.estimate.reference_minutes;
         if (w.time_cap_seconds !== null) expect(scaledOrWomen).toBeGreaterThanOrEqual(ref);
@@ -214,7 +215,7 @@ describe('profil → catégorie', () => {
 
   it('profile_category cible l’estimation ; une catégorie hors discipline retombe sur la référence', () => {
     const w = gen({ ...F, profile_category: 'scaled' }, 9);
-    expect(Math.abs(w.estimate.by_category.scaled!.minutes - F.budget_min) / F.budget_min).toBeLessThanOrEqual(0.1 + 1e-9);
+    expect(Math.abs(w.estimate.by_category.scaled!.minutes - F.budget_min) / F.budget_min).toBeLessThanOrEqual(TOLERANCE + 1e-9);
     expect(gen({ ...F, profile_category: 'men' }, 9)).toEqual(gen({ ...F, profile_category: 'rx' }, 9));
   });
 });
@@ -313,7 +314,10 @@ describe('corrections A–K des relectures des samples', () => {
     expect(forceBand({ budget_min: 20, entry: 'express' }, amrap)).toBe('medium');
     expect(forceBand({ budget_min: 20, entry: 'express' }, emom)).toBe('heavy');
     for (const format of ['emom', 'stations', 'interval'] as const) {
-      every((w) => w.blocks[0].movements.some((gm) => gm.load_band === 'heavy'), { ...F, intention: 'force', budget_min: 20, format }, 20);
+      // ±20 % : un format relâché vers du continu (rounds for time à 16' pour 20') ne porte pas de heavy — c'est la règle du continu
+      every((w) => (heavyAllowed(skOf(w), 20)
+        ? w.blocks[0].movements.some((gm) => gm.load_band === 'heavy')
+        : w.blocks[0].movements.every((gm) => gm.load_band !== 'heavy')), { ...F, intention: 'force', budget_min: 20, format }, 20);
     }
     // aucun squelette Force continu à 20' : le format se relâche vers EMOM/intervalles (heavy légitime) ;
     // si un format continu sort malgré tout, il ne porte jamais de heavy

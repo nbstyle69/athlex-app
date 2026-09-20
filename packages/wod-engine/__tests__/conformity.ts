@@ -1,4 +1,5 @@
 import {
+  TOLERANCE,
   CATALOG_SNAPSHOT, BANK_V1, movementById, primaryPattern, isFunctionalCategory, categoriesFor, cadenceFor,
   carriesIntention, isSlowSkill, movementCapFor, genericCapFor, ladderStep, deathByMinute, roundSeconds, afterClassFilter,
   heavyAllowed, rackAllowed, engineShare, RACK_ONLY_IDS, ENGINE_MIN_SHARE, RUN_MIN_M,
@@ -92,9 +93,9 @@ export function violations(wod: GeneratedWod, params: GenerateParams): string[] 
       if (v && !(c === 'elite' || c === 'pro')) out.push(`variante hors Elite/Pro ${r.gm.id}/${c}`);
     }
   }
-  // 12 : estimation ±10 % du budget pour la catégorie de référence
+  // 12 : estimation dans la tolérance du moteur (±20 % depuis le 19/09/2026 : la durée est une cible)
   const est = wod.estimate.reference_minutes;
-  if (Math.abs(est - params.budget_min) / params.budget_min > 0.10 + 1e-9) out.push(`estimation ${est.toFixed(1)} hors ±10 % de ${params.budget_min}`);
+  if (Math.abs(est - params.budget_min) / params.budget_min > TOLERANCE + 1e-9) out.push(`estimation ${est.toFixed(1)} hors ±${Math.round(TOLERANCE * 100)} % de ${params.budget_min}`);
   // 13 : après-classe
   if (params.entry === 'after_class' && wod.after_class) {
     const pats = new Set(wod.after_class.excluded_patterns);

@@ -14,7 +14,7 @@ import { cancelTodayScoreReminder } from './notifications';
 import { computeCompletedMovements } from '../utils/movementParser';
 import { captureError } from '../lib/sentry';
 import {
-  generateBlocC, generateMuscu, profileCategory, muscuLevelFor, renderMuscu, CATEGORY_LABEL,
+  generateBlocC, generateMuscu, profileCategory, muscuLevelFor, renderMuscu, exerciseLine, CATEGORY_LABEL,
 } from '../../packages/wod-engine/src';
 import type {
   Category, GenerateParams, GeneratedWod, MuscuExercise, MuscuEquipment, MuscuParams, MuscuWod,
@@ -23,6 +23,7 @@ import { loadEngineData } from './wodEngineData';
 import { fetchMyPersonalRecords } from './myProfile';
 import { readBodyweightKg } from '../screens/profile/prStorage';
 import { muscuOneRepMax } from '../screens/wod/muscuOptions';
+import { gymRecordsFrom } from '../screens/wod/gymRecords';
 
 export const SIGNATURE_WINDOW = 10;
 
@@ -215,16 +216,19 @@ export async function generateForUser(
   seed: number = newSeed(),
 ): Promise<GenerateResult> {
   if (isMuscuScreen(screen)) return generateMuscuForUser(user, boxId, screen, seed);
-  const [{ catalog, bank }, signatures, dayClass] = await Promise.all([
+  const [{ catalog, bank }, signatures, dayClass, records] = await Promise.all([
     loadEngineData(),
     recentSignatures(user.id),
     screen.entry === 'after_class' ? todayClass(boxId) : Promise.resolve(null),
+    fetchMyPersonalRecords().catch(() => ({} as Record<string, unknown>)),
   ]);
   const category = categoryFor(user, screen.discipline);
   const params: GenerateParams = {
     ...screen,
     recent_signatures: signatures,
     profile_category: category,
+    // B10 : les records gym du profil priment sur la catégorie pour les variantes gymniques
+    gym_records: gymRecordsFrom(records),
     after_class: screen.entry === 'after_class' && dayClass
       ? { day_movements: dayClass.movements, box_wod_title: dayClass.title }
       : null,
@@ -415,39 +419,89 @@ export function editorFieldsOf(wod: GeneratedWod): Pick<
  * Un score déjà saisi depuis la page résultat est recopié dans `wod_scores`
  * sur ce WOD (flux normal du Whiteboard), pas dupliqué côté `generated_wod_scores`.
  */
+/**
+ * B7 : la séance n'est plus une ligne de texte unique. Chaque exercice
+ * (Musculation) ou chaque bloc (Functional / Hybrid) devient une ligne
+ * `box_wods` — `block_name`, `sort_order`, `wod_json` et description rendue,
+ * comme une séance de box — pour être validée et scorée bloc par bloc depuis
+ * le Whiteboard.
+ */
+export interface WhiteboardRow {
+  title: string;
+  description: string;
+  wod_type: AnyWod['wod_type'];
+  block_name: string;
+  sort_order: number;
+  time_cap_seconds: number | null;
+  rounds: number | null;
+  emom_interval_minutes: number | null;
+  tabata_work_seconds: number | null;
+  tabata_rest_seconds: number | null;
+  notes: string | null;
+  wod_json: unknown;
+}
+
+export function whiteboardRows(wod: AnyWod): WhiteboardRow[] {
+  if (isMuscuWod(wod)) {
+    return wod.blocks[0].exercises.map((e, i) => ({
+      title: e.name,
+      description: exerciseLine(e),
+      wod_type: 'strength',
+      block_name: 'strength',
+      sort_order: i,
+      time_cap_seconds: null,
+      rounds: null,
+      emom_interval_minutes: null,
+      tabata_work_seconds: null,
+      tabata_rest_seconds: null,
+      notes: i === 0 ? wod.stimulus.note : null,
+      wod_json: { ...wod, blocks: [{ kind: 'strength_session', exercises: [e] }] },
+    }));
+  }
+  return wod.blocks.map((b, i) => ({
+    title: wod.blocks.length > 1 ? `${wod.title} · bloc ${i + 1}` : wod.title,
+    description: wod.description,
+    wod_type: wod.wod_type,
+    block_name: 'wod',
+    sort_order: i,
+    time_cap_seconds: wod.time_cap_seconds,
+    rounds: editorRoundsOf(wod),
+    emom_interval_minutes: wod.emom_interval_minutes,
+    tabata_work_seconds: wod.tabata_work_seconds,
+    tabata_rest_seconds: wod.tabata_rest_seconds,
+    notes: wod.stimulus.note,
+    wod_json: wod.blocks.length > 1 ? { ...wod, blocks: [b] } : wod,
+  }));
+}
+
 export async function addToWhiteboard(
   userId: string,
   wod: AnyWod,
   generatedId: string,
   existingScore: ScoreSubmission | null,
+  scheduledDate: string = todayISO(),
 ): Promise<string> {
+  const rows = whiteboardRows(wod).map((r) => ({
+    ...r,
+    box_id: null,
+    created_by: userId,
+    scheduled_date: scheduledDate,
+    is_published: true,
+    leaderboard_enabled: false,
+    wod_json: r.wod_json as Json,
+  }));
   const { data, error } = await supabase
     .from('box_wods')
-    .insert({
-      box_id: null,
-      created_by: userId,
-      title: wod.title,
-      description: wod.description,
-      wod_type: wod.wod_type,
-      scheduled_date: todayISO(),
-      time_cap_seconds: wod.time_cap_seconds,
-      rounds: isMuscuWod(wod) ? null : editorRoundsOf(wod),
-      emom_interval_minutes: wod.emom_interval_minutes,
-      tabata_work_seconds: wod.tabata_work_seconds,
-      tabata_rest_seconds: wod.tabata_rest_seconds,
-      notes: wod.stimulus.note,
-      is_published: true,
-      leaderboard_enabled: false,
-      sort_order: 0,
-    })
-    .select('id')
-    .single();
+    .insert(rows)
+    .select('id');
   if (error) throw error;
-  const boxWodId = data.id;
+  const ids = (data ?? []).map((d) => d.id as string);
+  const boxWodId = ids[0];
+  if (!boxWodId) throw new Error('aucune ligne posée sur le Whiteboard');
 
   const { error: linkError } = await supabase
     .from('generated_wods')
-    .update({ wod_json: { ...wod, box_wod_id: boxWodId } as unknown as Json })
+    .update({ wod_json: { ...wod, box_wod_id: boxWodId, box_wod_ids: ids } as unknown as Json })
     .eq('id', generatedId);
   if (linkError) captureError(linkError, { action: 'linkBoxWod' });
 

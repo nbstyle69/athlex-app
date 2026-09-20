@@ -15,7 +15,8 @@ import { render } from './render';
 
 export const ENGINE_VERSION = '1.1.0';
 export const MAX_ATTEMPTS = 200;
-export const TOLERANCE = 0.10;
+/** Durée = indicateur, pas obligation (Nab, 19/09/2026) : 15 min → 12 à 18, 30 min → 24 à 36. */
+export const TOLERANCE = 0.20;
 
 const DEFAULT_BAND: Record<Intention, Band> = {
   mixed: 'medium', cardio: 'light', force: 'heavy', gym: 'light',
@@ -343,6 +344,49 @@ function matchesPick(ctx: Ctx, slot: Slot, m: CatalogMovement, picked: Picked[],
  * s'il a une version sans matériel (`EQUIPMENT_FALLBACK`) : c'est elle qui est retenue.
  * `need` restreint le tirage aux mouvements qui satisfont l'intention (dernier slot libre).
  */
+/**
+ * B10 (lot B) — les records gymniques du profil priment sur la catégorie pour
+ * les variantes gymniques. Un mouvement dont le record est absent ou à 0 descend
+ * sa chaîne de substitution (`rx` → `inter` → `scaled`, un cran à la fois :
+ * Ring Muscle-up → Bar Muscle-up → Chest-to-Bar → Pull-ups → Banded Pull-ups)
+ * jusqu'au premier mouvement qui a un record, ou qui n'en demande pas.
+ *
+ * Volume : jamais plus de 50 % du record dans une même série ou un même round
+ * (record 30 → 15 par round, record 12 → 6). Le total du WOD n'est borné que
+ * par les plafonds de volume existants — un plafond par WOD (60 %) faisait
+ * disparaître les tractions strictes sous 50 de record (mesuré le 19/09/2026).
+ */
+export const GYM_RECORD_FRACTION = 0.5;
+
+function gymRecordMissing(ctx: Ctx, m: CatalogMovement): boolean {
+  const rec = ctx.params.gym_records;
+  if (!rec || m.family !== 'gym') return false;
+  const r = rec[m.id];
+  return r !== undefined && r <= 0;
+}
+
+function gymSubstitute(ctx: Ctx, m: CatalogMovement): CatalogMovement {
+  let cur = m;
+  for (let i = 0; i < 8 && gymRecordMissing(ctx, cur); i++) {
+    const s = cur.substitutions;
+    // un cran vers le bas : la première substitution qui n'est pas le mouvement lui-même
+    const nextId = [s?.rx, s?.inter, s?.scaled].find((id) => id && id !== cur.id) ?? null;
+    const next = nextId ? movementById(ctx.catalog, nextId) : null;
+    if (!next) break;
+    cur = next;
+  }
+  return cur;
+}
+
+/** Un cran de substitution vers le bas, même famille, pas déjà tiré, avec record ou sans record demandé. */
+function gymDown(ctx: Ctx, m: CatalogMovement, picked: ReadonlyArray<Picked>): CatalogMovement | null {
+  const s = m.substitutions;
+  const nextId = [s?.rx, s?.inter, s?.scaled].find((id) => id && id !== m.id) ?? null;
+  const next = nextId ? movementById(ctx.catalog, nextId) : null;
+  if (!next || next.family !== m.family || picked.some((p) => p.m.id === next.id)) return null;
+  return gymRecordMissing(ctx, next) ? gymDown(ctx, next, picked) : next;
+}
+
 function drawMovement(
   ctx: Ctx, slot: Slot, index: number, picked: Picked[], sk: SkeletonRef, functionalSmall: boolean,
   need?: (m: CatalogMovement) => boolean,
@@ -359,10 +403,21 @@ function drawMovement(
     return null;
   };
   const pool: Array<{ drawn: CatalogMovement; use: CatalogMovement }> = [];
+  const seen = new Set<string>();
   for (const m of ctx.catalog.movements) {
-    const use = resolve(m);
+    let use = resolve(m);
     if (!use) continue;
+    // B10 : record gymnique absent → variante accessible, qui doit tenir dans le slot elle aussi
+    const sub = gymSubstitute(ctx, use);
+    // sans record ni variante accessible, le mouvement ne sort pas
+    if (gymRecordMissing(ctx, sub)) { reasons.gym_record = (reasons.gym_record ?? 0) + 1; continue; }
+    if (sub !== use) {
+      if (matchesPick(ctx, slot, sub, picked, sk, functionalSmall) !== null) { reasons.gym_record = (reasons.gym_record ?? 0) + 1; continue; }
+      use = sub;
+    }
     if (need && !need(use)) { reasons.intention = (reasons.intention ?? 0) + 1; continue; }
+    if (seen.has(use.id)) continue;
+    seen.add(use.id);
     pool.push({ drawn: m, use });
   }
   const hit = ctx.rng.pickWeighted(pool, (x) => weightFor(x.drawn, ctx.params.discipline));
@@ -888,6 +943,22 @@ function capPass(ctx: Ctx, d: Draft): boolean {
     // autant que le resserrer. Avec l'ancien `Math.min`, écrire 200 dans
     // `movement_caps` pour une famille plafonnée à 100 ne changeait rien.
     const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
+    // B10 : jamais plus de 50 % du record gymnique dans une même série ou un même round
+    const rec = p.unit === 'reps' ? ctx.params.gym_records?.[p.m.id] : undefined;
+    if (rec && rec > 0 && !tabata) {
+      const perSet = Math.max(1, Math.floor(rec * GYM_RECORD_FRACTION));
+      const biggest = p.scheme ? Math.max(...p.scheme) : p.qty;
+      if (biggest > perSet) {
+        if (p.range && !p.scheme && perSet >= p.range[0]) { p.qty = perSet; changed = true; continue; }
+        // la série minimale du format dépasse le record : la variante accessible prend la place
+        const alt = gymDown(ctx, p.m, d.picked);
+        if (!alt) throw new Reject(`gym_record:${p.m.id}`);
+        p.m = alt;
+        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format);
+        changed = true;
+        continue;
+      }
+    }
     const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
     if (cap === Infinity || perWod <= cap) continue;
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);

@@ -12,7 +12,7 @@ export type { SkeletonRow, VolumeCapRow } from './bank/rows';
 export {
   generateBlocC, ENGINE_VERSION, MAX_ATTEMPTS, TOLERANCE, VEST_LOAD_KG, AFTER_CLASS_DURATIONS, afterClassFilter,
   EQUIPMENT_FALLBACK, CARDIO_EXCLUDED_IDS, RACK_ONLY_IDS, ENGINE_MIN_SHARE, RUN_MIN_M, heavyAllowed, rackAllowed,
-  forceBand, isSlowSkill, carriesIntention, engineShare, movementCapFor, HEAVY_STATION_REPS,
+  forceBand, isSlowSkill, carriesIntention, engineShare, movementCapFor, HEAVY_STATION_REPS, GYM_RECORD_FRACTION,
 } from './generate';
 export type { SkeletonRef } from './generate';
 export { estimateDuration, estimateAll, estimateBlock, TIME_BOUNDED, BAND_CADENCE_FACTOR, ladderStep, deathByMinute, roundSeconds } from './estimate';

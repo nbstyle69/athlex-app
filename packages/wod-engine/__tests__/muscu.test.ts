@@ -250,10 +250,11 @@ describe('generateMuscu — conformité (cible × objectif × durée × matérie
     }
   });
 
-  it('durées proposées : celles que le catalogue remplit ; Pecs sans matériel n’offre pas 45 ni 60, Push salle offre tout', () => {
+  it('durées proposées : celles que le catalogue remplit ; Pecs sans matériel n’offre pas 60, Push salle offre tout', () => {
     expect(availableDurations(CATALOG_SNAPSHOT, BANK_V1, { entry: 'express', target: 'push', objective: 'hypertrophie', equipment: 'gym', level: 'inter' })).toEqual([...MUSCU_DURATIONS.express]);
     const pecsNone = availableDurations(CATALOG_SNAPSHOT, BANK_V1, { entry: 'express', target: 'pecs', objective: 'hypertrophie', equipment: 'none', level: 'inter' });
-    expect(pecsNone).toEqual([20, 30]);
+    // ±20 % (19/09/2026) : 45 min se remplit à 36, la durée est une cible ; 60 reste hors de portée
+    expect(pecsNone).toEqual([20, 30, 45]);
     expect(availableDurations(CATALOG_SNAPSHOT, BANK_V1, { entry: 'express', target: 'tronc', objective: 'hypertrophie', equipment: 'box', level: 'inter' })).toEqual([...MUSCU_DURATIONS.tronc]);
     expect(availableDurations(CATALOG_SNAPSHOT, BANK_V1, { entry: 'after_class', target: 'haut', objective: 'endurance', equipment: 'box', level: 'inter', after_class: { day_movements: [] } })).toEqual([...MUSCU_DURATIONS.after_class]);
   });
