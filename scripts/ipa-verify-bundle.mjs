@@ -130,8 +130,10 @@ check('serveur Mixpanel EU embarqué', js.includes('https://api-eu.mixpanel.com'
 // 5. Identité du binaire : version, build, runtime, canal de mise à jour.
 // Les plists d'un IPA sont binaires : on les convertit pour les lire. La
 // configuration des mises à jour ne vit pas dans Info.plist mais dans Expo.plist.
+// `python3` sur Windows est un raccourci du Store qui ne lance rien : on passe à `python`.
+const PYTHON = process.platform === 'win32' ? 'python' : 'python3';
 const readPlist = (p) => (existsSync(p)
-  ? JSON.parse(execFileSync('python3', ['-c',
+  ? JSON.parse(execFileSync(PYTHON, ['-c',
       'import plistlib,json,sys;print(json.dumps(plistlib.load(open(sys.argv[1],"rb")),default=str))',
       p], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }))
   : {});
