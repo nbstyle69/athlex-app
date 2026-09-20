@@ -428,10 +428,13 @@ export default function TimerRunScreen() {
 
   const [seqPausing, setSeqPausing] = useState(false);
   const [seqPauseLeft, setSeqPauseLeft] = useState(0);
-  // B5 — mode Split : exercice / série courants, et journal des splits (secondes du chrono global)
+  // Split : exercice / série courants et journal des temps.
   const splitPosRef = useRef({ ex: 0, set: 1 });
   const [splitPos, setSplitPos] = useState({ ex: 0, set: 1 });
-  const [splitLog, setSplitLog] = useState<{ label: string; at: number }[]>([]);
+  const [splitLog, setSplitLog] = useState<{ label: string; duration: number; at: number }[]>([]);
+  const [splitExerciseStart, setSplitExerciseStart] = useState(0);
+  const sequenceElapsedRef = useRef(0);
+  const [sequenceElapsed, setSequenceElapsed] = useState(0);
 
   const [saving, setSaving] = useState(false);
   const [savedUri, setSavedUri] = useState<string | null>(null);
@@ -1101,6 +1104,8 @@ export default function TimerRunScreen() {
           case 'libre': {
             const blk = seqBlocksRef.current[seqIdxRef.current];
             if (!blk) { stopAndSave(); break; }
+            sequenceElapsedRef.current += deltaSecs;
+            setSequenceElapsed(sequenceElapsedRef.current);
             // Inter-block pause
             if (seqPausingRef.current) {
               seqPauseLeftRef.current -= deltaSecs;
@@ -1167,6 +1172,10 @@ export default function TimerRunScreen() {
   function initSeqBlockByIdx(idx: number) {
     const blk = seqBlocksRef.current[idx];
     if (!blk) return;
+    if (idx === 0) {
+      sequenceElapsedRef.current = 0; setSequenceElapsed(0); setSplitLog([]);
+    }
+    setSplitExerciseStart(sequenceElapsedRef.current);
     innerPhaseRef.current = 'work'; setInnerPhase('work');
     ywyrWorkRef.current = 0; timerValRef.current = 0; setTimerVal(0);
     currentRoundRef.current = 1; setCurrentRound(1);
@@ -1183,7 +1192,6 @@ export default function TimerRunScreen() {
       case 'split':
         roundTimeLeftRef.current = 0; setRoundTimeLeft(0);
         splitPosRef.current = { ex: 0, set: 1 }; setSplitPos({ ex: 0, set: 1 });
-        if (idx === 0) setSplitLog([]);
         break;
     }
   }
@@ -1216,10 +1224,12 @@ export default function TimerRunScreen() {
       innerPhaseRef.current = 'work'; setInnerPhase('work'); roundTimeLeftRef.current = 0; setRoundTimeLeft(0);
       return;
     }
-    const at = timerValRef.current;
-    setSplitLog((l) => [...l, { label: list.length > 1 ? `${cur.name} · série ${set}/${cur.sets}` : `${cur.name} ${set}/${cur.sets}`, at }]);
+    const at = sequenceElapsedRef.current;
+    const duration = at - splitExerciseStart;
+    setSplitLog((l) => [...l, { label: list.length > 1 ? `${cur.name} · série ${set}/${cur.sets}` : `${cur.name} ${set}/${cur.sets}`, duration, at }]);
     const next = set < cur.sets ? { ex, set: set + 1 } : { ex: ex + 1, set: 1 };
     if (!list[next.ex]) { Vibration.vibrate([0, 350, 120, 350]); seqBlockDone(); return; }
+    if (next.ex !== ex) setSplitExerciseStart(at);
     splitPosRef.current = next; setSplitPos(next);
     if (cur.restSec > 0) { innerPhaseRef.current = 'rest'; setInnerPhase('rest'); roundTimeLeftRef.current = cur.restSec; setRoundTimeLeft(cur.restSec); }
     playBeep('go');
@@ -1313,6 +1323,7 @@ export default function TimerRunScreen() {
 
   const curBlk = timerType === 'libre' ? seqBlocksRef.current[seqIdx] : undefined;
   const seqTotal = seqBlocksRef.current.length;
+  const hasSplit = timerType === 'libre' && seqBlocksRef.current.some((block) => block.type === 'split');
 
   const emomLabelFor = (b: SeqBlock) => {
     if (b.emomInterval === 0) {
@@ -1339,6 +1350,7 @@ export default function TimerRunScreen() {
     : '';
 
   const mainTime = (() => {
+    if (hasSplit && phase === 'done') return formatTime(sequenceElapsed);
     if (timerType === 'amrap' || timerType === 'emom' || timerType === 'tabata' || timerType === 'splits') return formatTime(roundTimeLeft);
     if (timerType === 'libre') {
       if (seqPausing) return formatTime(seqPauseLeft);
@@ -1352,6 +1364,7 @@ export default function TimerRunScreen() {
         }
       }
       if (curBlk.type === 'amrap' || curBlk.type === 'emom' || curBlk.type === 'tabata' || (curBlk.type === 'ywyr' && innerPhase === 'rest')) return formatTime(roundTimeLeft);
+      if (curBlk.type === 'split') return formatTime(sequenceElapsed - splitExerciseStart);
       return formatTime(timerVal);
     }
     return formatTime(timerVal);
@@ -1462,6 +1475,7 @@ export default function TimerRunScreen() {
 
   const totalElapsed = (() => {
     if (phase === 'ready' || phase === 'countdown') return 0;
+    if (hasSplit) return sequenceElapsed;
     if (timerType === 'for-time') return timerVal;
     if (timerType === 'amrap') return totalSeconds - roundTimeLeft;
     if (timerType === 'emom') return (currentRound - 1) * interval * 60 + (interval * 60 - roundTimeLeft);
@@ -1674,12 +1688,14 @@ export default function TimerRunScreen() {
               {/* ── CENTRE : temps final ── */}
               <View style={{ alignItems: 'center', gap: 4 }}>
                 <Text style={{ fontSize: 10, fontWeight: '800', color: onBg2, letterSpacing: 4, textTransform: 'uppercase' }}>TEMPS FINAL</Text>
-                <Text style={[styles.sessionTime, { color: withCamera ? '#FFFFFF' : onBg1 }]}>{mainTime}</Text>
+                <Text testID="timer-final-time" style={[styles.sessionTime, { color: withCamera ? '#FFFFFF' : onBg1 }]}>{mainTime}</Text>
                 {videoTitle ? <Text style={[styles.sessionTitle, { color: onBg1 }]} numberOfLines={2}>{videoTitle}</Text> : null}
                 {splitLog.length > 0 && (
                   <ScrollView style={{ maxHeight: 150, marginTop: 6, alignSelf: 'stretch' }} contentContainerStyle={{ alignItems: 'center' }}>
                     {splitLog.map((sp, i) => (
-                      <Text key={i} style={{ color: onBg2, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{sp.label} — {formatTime(sp.at)}</Text>
+                      <Text key={i} testID={`timer-split-${i}`} style={{ color: onBg2, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'], textAlign: 'center' }}>
+                        {sp.label} — exercice {formatTime(sp.duration)} · total {formatTime(sp.at)}
+                      </Text>
                     ))}
                   </ScrollView>
                 )}
@@ -1691,7 +1707,7 @@ export default function TimerRunScreen() {
                   </View>
                 )}
                 {/* Bouton recommencer centré sous le timer */}
-                <TouchableOpacity onPress={handleReset} style={[styles.resetBtn, { marginTop: 8,
+                <TouchableOpacity testID="timer-reset" onPress={handleReset} style={[styles.resetBtn, { marginTop: 8,
                   backgroundColor: isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
                   borderColor: isLightBg ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)' }]} activeOpacity={0.8}>
                   <RotateCcw color={iconColor} size={26} />
@@ -1792,8 +1808,9 @@ export default function TimerRunScreen() {
                       </View>
                     )}
                     <View style={{ flex: 1 }} />
-                    <Text style={{ color: onBg2, fontSize: 13, fontWeight: '600',
+                    <Text testID="timer-total" style={{ color: onBg2, fontSize: 13, fontWeight: '600',
                       letterSpacing: 0.5, fontVariant: ['tabular-nums'] as any }}>
+                      {hasSplit ? 'TOTAL ' : ''}
                       {formatTime(totalElapsed)}
                     </Text>
                     <TouchableOpacity onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7}>
@@ -1817,7 +1834,7 @@ export default function TimerRunScreen() {
                         {countdownVal}
                       </Text>
                     ) : (
-                      <Text
+                      <Text testID="timer-main-time"
                         style={{ fontSize: Math.round(winH * 0.58),
                           fontWeight: '900', color: accentColor, letterSpacing: -6 }}>
                         {mainTime}
@@ -1926,6 +1943,7 @@ export default function TimerRunScreen() {
                       {displayOpts.clockStyle === 'arc' && <ArcTimer time={mainTime} progress={arcProgress} color="#FFFFFF" fontSize={displayOpts.fontSize} strokeColor={phaseColor} landscape flat />}
                       {displayOpts.clockStyle === 'bar' && <BarTimer time={mainTime} progress={arcProgress} color="#FFFFFF" fontSize={displayOpts.fontSize} strokeColor={phaseColor} landscape flat />}
                       {displayOpts.clockStyle === 'digits' && <DigitsTimer time={mainTime} color="#FFFFFF" fontSize={displayOpts.fontSize} landscape flat />}
+                      {hasSplit && <Text style={{ color: '#FFFFFF', fontSize: 13, marginTop: 8 }}>TOTAL {formatTime(totalElapsed)}</Text>}
                       {hasRounds && phase === 'running' && !seqPausing && (
                         <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 4, letterSpacing: 2 }}>ROUND {currentRound} / {currentRound + roundsLeft}</Text>
                       )}
@@ -1969,8 +1987,9 @@ export default function TimerRunScreen() {
                         {seqPausing ? 'PAUSE' : displayLabel}
                       </Text>
                     </View>
-                    <Text style={{ color: onBg2, fontSize: 13, fontWeight: '600',
+                    <Text testID="timer-total" style={{ color: onBg2, fontSize: 13, fontWeight: '600',
                       letterSpacing: 0.5, fontVariant: ['tabular-nums'] as any }}>
+                      {hasSplit ? 'TOTAL ' : ''}
                       {formatTime(totalElapsed)}
                     </Text>
                   </View>
@@ -2023,7 +2042,7 @@ export default function TimerRunScreen() {
                       {countdownVal}
                     </Text>
                   ) : (
-                    <Text adjustsFontSizeToFit numberOfLines={1}
+                    <Text testID="timer-main-time" adjustsFontSizeToFit numberOfLines={1}
                       style={{ fontSize: displayOpts.fontSize, fontWeight: '900',
                         color: accentColor, letterSpacing: -4, fontVariant: ['tabular-nums'] }}>
                       {mainTime}
@@ -2090,6 +2109,7 @@ export default function TimerRunScreen() {
                 {/* PLAY / STOP BUTTON */}
                 <View style={{ alignItems: 'center', paddingBottom: 40, paddingTop: 14, gap: 8 }}>
                   <TouchableOpacity
+                    testID="timer-start-stop"
                     style={[styles.newBigPlayBtn, mainBtnStop && styles.newBigPlayBtnStop,
                       { width: 80, height: 80, borderRadius: 40,
                         shadowColor: mainBtnStop ? '#EF4444' : accentColor,
@@ -2134,7 +2154,7 @@ export default function TimerRunScreen() {
                     </TouchableOpacity>
                   )}
                   {showSplitBtn && (
-                    <TouchableOpacity onPress={splitSetDone} style={styles.ywyrBtn} activeOpacity={0.8}>
+                    <TouchableOpacity testID="timer-split-done" onPress={splitSetDone} style={styles.ywyrBtn} activeOpacity={0.8}>
                       <Text style={[styles.ywyrBtnText, { color: ensureContrast('#4ADE80', currentBg) }]}>{splitBtnLabel}</Text>
                     </TouchableOpacity>
                   )}
@@ -2153,6 +2173,7 @@ export default function TimerRunScreen() {
                     {displayOpts.clockStyle === 'arc' && <ArcTimer time={mainTime} progress={arcProgress} color="#FFFFFF" fontSize={displayOpts.fontSize} strokeColor={phaseColor} flat />}
                     {displayOpts.clockStyle === 'bar' && <BarTimer time={mainTime} progress={arcProgress} color="#FFFFFF" fontSize={displayOpts.fontSize} strokeColor={phaseColor} flat />}
                     {displayOpts.clockStyle === 'digits' && <DigitsTimer time={mainTime} color="#FFFFFF" fontSize={displayOpts.fontSize} flat />}
+                    {hasSplit && <Text style={{ color: '#FFFFFF', fontSize: 13, marginTop: 8 }}>TOTAL {formatTime(totalElapsed)}</Text>}
                     {hasRounds && phase === 'running' && !seqPausing && (
                       <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 15, marginTop: 12, letterSpacing: 2, fontWeight: '700' }}>ROUND {currentRound} / {currentRound + roundsLeft}</Text>
                     )}

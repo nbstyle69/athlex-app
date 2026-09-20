@@ -223,6 +223,13 @@ Migration `20261229`, **appliquée en prod : non** : à appliquer par Nabil **av
 1.0.55**. L'ancien lecteur garde les définitions v3 ; le nouveau lit `definition.c2c3`.
 Les trois contrôles indépendants de #313 restent au backlog. C1, C4, C5 et C6 restent séparés.
 
+**Lot C5 — Split par exercice** (aucune migration, PR indépendante de C2+C3).
+Le chrono principal repart de zéro au changement d'exercice ; les séries d'un
+même exercice conservent leur chrono, repos compris. Le total reste visible en
+petit, y compris avec caméra. Chaque split final donne le temps de l'exercice et
+le total cumulé. Le total comprend tous les blocs et pauses de la séance ; le
+redémarrage efface les chronos et le journal.
+
 **Lot C4 — Adapter à mes PR** (aucune migration, PR indépendante de C2+C3).
 Option activée par défaut dans les options avancées Functional/Hybrid et mémorisée
 dans les réglages du profil. Activée, elle conserve les substitutions gym et le
