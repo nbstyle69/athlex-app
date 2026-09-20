@@ -28,7 +28,9 @@ import { gymRecordsFrom } from '../screens/wod/gymRecords';
 export const SIGNATURE_WINDOW = 10;
 
 /** Paramètres Functional / Hybrid choisis à l'écran ; le service complète signatures, catégorie et classe du jour. */
-export type MetconScreenParams = Pick<GenerateParams, 'entry' | 'discipline' | 'budget_min' | 'format' | 'intention' | 'vest' | 'exclude'>;
+export type MetconScreenParams = Pick<GenerateParams, 'entry' | 'discipline' | 'budget_min' | 'format' | 'intention' | 'vest' | 'exclude'> & {
+  adapt_to_pr?: boolean;
+};
 
 /** Paramètres Musculation ; le service complète niveau, 1RM, poids de corps, signatures et classe du jour. */
 export type MuscuScreenParams = Pick<MuscuParams, 'entry' | 'target' | 'objective' | 'budget_min' | 'equipment' | 'exclude'> & {
@@ -106,7 +108,7 @@ export async function todayClass(boxId: string | null | undefined): Promise<DayC
 
 // ── Exclusions persistées dans le profil (user_generation_settings.last_params) ──
 
-type LastParams = { exclude?: unknown; muscu_equipment?: unknown } & Record<string, unknown>;
+type LastParams = { exclude?: unknown; muscu_equipment?: unknown; adapt_to_pr?: unknown } & Record<string, unknown>;
 
 const MUSCU_EQUIPMENTS: readonly MuscuEquipment[] = ['none', 'box', 'gym'];
 
@@ -120,16 +122,37 @@ async function readLastParams(userId: string): Promise<LastParams | null> {
   return (data?.last_params ?? null) as LastParams | null;
 }
 
-async function patchLastParams(userId: string, patch: Record<string, Json>, action: string): Promise<void> {
+const settingsWrites = new Map<string, Promise<void>>();
+
+function patchLastParams(userId: string, patch: Record<string, Json>, action: string): Promise<void> {
+  const pending = (settingsWrites.get(userId) ?? Promise.resolve()).then(async () => {
+    try {
+      const prev = (await readLastParams(userId)) ?? {};
+      const last_params = { ...prev, ...patch } as Json;
+      const { error } = await supabase
+        .from('user_generation_settings')
+        .upsert({ user_id: userId, last_params, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+      if (error) throw error;
+    } catch (e) {
+      captureError(e, { action });
+    }
+  });
+  settingsWrites.set(userId, pending);
+  return pending.finally(() => {
+    if (settingsWrites.get(userId) === pending) settingsWrites.delete(userId);
+  });
+}
+
+export async function loadAdaptToPr(userId: string): Promise<boolean> {
   try {
-    const prev = (await readLastParams(userId)) ?? {};
-    const last_params = { ...prev, ...patch } as Json;
-    await supabase
-      .from('user_generation_settings')
-      .upsert({ user_id: userId, last_params, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-  } catch (e) {
-    captureError(e, { action });
+    return (await readLastParams(userId))?.adapt_to_pr !== false;
+  } catch {
+    return true;
   }
+}
+
+export function saveAdaptToPr(userId: string, enabled: boolean): Promise<void> {
+  return patchLastParams(userId, { adapt_to_pr: enabled }, 'saveAdaptToPr');
 }
 
 /** Dernier matériel Musculation choisi (`last_params.muscu_equipment`), `box` par défaut. */
@@ -216,19 +239,19 @@ export async function generateForUser(
   seed: number = newSeed(),
 ): Promise<GenerateResult> {
   if (isMuscuScreen(screen)) return generateMuscuForUser(user, boxId, screen, seed);
+  const { adapt_to_pr = true, ...engineScreen } = screen;
   const [{ catalog, bank }, signatures, dayClass, records] = await Promise.all([
     loadEngineData(),
     recentSignatures(user.id),
     screen.entry === 'after_class' ? todayClass(boxId) : Promise.resolve(null),
-    fetchMyPersonalRecords().catch(() => ({} as Record<string, unknown>)),
+    adapt_to_pr ? fetchMyPersonalRecords().catch(() => ({} as Record<string, unknown>)) : Promise.resolve({}),
   ]);
   const category = categoryFor(user, screen.discipline);
   const params: GenerateParams = {
-    ...screen,
+    ...engineScreen,
     recent_signatures: signatures,
     profile_category: category,
-    // B10 : les records gym du profil priment sur la catégorie pour les variantes gymniques
-    gym_records: gymRecordsFrom(records),
+    gym_records: adapt_to_pr ? gymRecordsFrom(records) : undefined,
     after_class: screen.entry === 'after_class' && dayClass
       ? { day_movements: dayClass.movements, box_wod_title: dayClass.title }
       : null,

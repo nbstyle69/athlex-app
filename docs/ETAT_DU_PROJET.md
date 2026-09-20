@@ -198,6 +198,13 @@ Supabase/Resend.
 
 ## En cours
 
+**Lot C4 — Adapter à mes PR** (aucune migration, PR indépendante de C2+C3).
+Option activée par défaut dans les options avancées Functional/Hybrid et mémorisée
+dans les réglages du profil. Activée, elle conserve les substitutions gym et le
+plafond de 50 % du record par série ; désactivée, le mode challenge suit la
+catégorie seule. Le choix accompagne aussi le brouillon et le re-tirage. Les
+écritures de réglages sont ordonnées pour préserver exclusions et matériel.
+
 **Générateur de WOD v1 — PR 1/3 (`athlex-app`, migration `20261211`).** Le générateur est
 refait de zéro en moteur déterministe (`packages/wod-engine`, TypeScript pur, aucune IA ni
 réseau à l'exécution) ; on garde seulement le RNG à graine et la signature anti-répétition.
