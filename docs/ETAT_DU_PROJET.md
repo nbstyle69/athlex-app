@@ -198,6 +198,13 @@ Supabase/Resend.
 
 ## En cours
 
+**Lot C1 — recherche des exclusions** (aucune migration, PR indépendante de C2+C3).
+Le champ des options avancées interroge les libellés français du matériel et les noms
+affichés des mouvements, sans casse ni accents : « corde » retrouve « Corde à sauter »,
+« elastique » retrouve « Élastique ». La sélection conserve les identifiants du catalogue.
+Le test cherche un mot de chaque entrée de la table FR et couvre les filtres Musculation,
+les exclusions déjà choisies et le matériel disponible.
+
 **Générateur de WOD v1 — PR 1/3 (`athlex-app`, migration `20261211`).** Le générateur est
 refait de zéro en moteur déterministe (`packages/wod-engine`, TypeScript pur, aucune IA ni
 réseau à l'exécution) ; on garde seulement le RNG à graine et la signature anti-répétition.
