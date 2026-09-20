@@ -313,7 +313,8 @@ function canComposeSlots(ctx: Ctx, sk: Skeleton, variant: SkeletonVariant | null
 /** Les appels à durée explicite conservent leurs paliers format, durée ±5, squelette. */
 function candidateTiers(params: GenerateParams, bank: SkeletonBank): Array<{ list: Skeleton[]; relaxations: string[] }> {
   const banned = new Set((params.skeleton_not ?? []).map((id) => id.split(':')[0]));
-  const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id));
+  const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id)
+    && (s.format !== 'chipper' || s.durations.includes(params.budget_min)));
   const base = all.filter((s) => s.intentions.includes(params.intention));
   const formats = formatsFor(params.format);
   const near = (d: number) => Math.abs(d - params.budget_min) <= 5;
@@ -497,8 +498,9 @@ function calculatedQty(q: number, m: CatalogMovement, unit: Unit, range: [number
   return clamp(roundCalculatedQuantity(q, unit, m.family), min, max);
 }
 
-function rangeFor(ctx: Ctx, slot: Slot, m: CatalogMovement, unit: Unit, format: SkeletonFormat): [number, number] {
-  let r = slot.reps_range ?? m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]];
+function rangeFor(ctx: Ctx, slot: Slot, m: CatalogMovement, unit: Unit, format: SkeletonFormat, band: Band): [number, number] {
+  const heavyStation = ctx.params.intention === 'force' && band === 'heavy' && m.loads && unit === 'reps' && RACK_FORMATS.has(format);
+  let r = slot.reps_range ?? (heavyStation ? [...HEAVY_STATION_REPS] as [number, number] : m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]]);
   if (!r) throw new Reject(`no_range:${m.id}:${unit}`);
   if (slot.qty_max !== undefined && slot.qty_max < r[1]) r = [Math.min(r[0], slot.qty_max), slot.qty_max];
   if (m.family === 'sled' && unit === 'm' && CONTINUOUS_FORMATS.has(format)) {
@@ -718,7 +720,15 @@ function capHeavyStationReps(ctx: Ctx, d: Draft): void {
 }
 
 function fitEmom(ctx: Ctx, d: Draft): void {
-  const every = typeof d.restSpec?.every_s === 'number' ? d.restSpec.every_s : 60;
+  const everyList = Array.isArray(d.restSpec?.every_s) ? d.restSpec.every_s : [d.restSpec?.every_s ?? 60];
+  const every = everyList.find((interval) => {
+    const cycle = interval * d.picked.length;
+    const durations = ctx.durationRange
+      ? seq(Math.ceil(ctx.durationRange[0]), Math.floor(ctx.durationRange[1]), 1)
+      : [ctx.params.budget_min];
+    return durations.some((duration) => duration * 60 % cycle === 0 && duration * 60 >= cycle * 2);
+  });
+  if (every === undefined) throw new Reject('emom_no_complete_cycles');
   const maxWork = d.sk.max_station_work_s ?? every * 0.65;
   d.rest = { every_s: every };
   const cycle = every * d.picked.length;
@@ -887,7 +897,7 @@ function buildDraft(ctx: Ctx, sk: Skeleton, variant: SkeletonVariant | null = nu
     const base: Picked = { slot, index, m, unit, band: slotBand, qty: 0 };
     switch (slot.qty) {
       case 'range': {
-        const r = rangeFor(ctx, slot, m, unit, format);
+        const r = rangeFor(ctx, slot, m, unit, format, slotBand);
         base.range = r;
         base.qty = calculatedQty(ctx.rng.int(r[0], r[1]), m, unit, r);
         break;
@@ -909,7 +919,7 @@ function buildDraft(ctx: Ctx, sk: Skeleton, variant: SkeletonVariant | null = nu
         const mm = drawMovement(ctx, slot, index, [...d.picked, base, ...extra], sk, functionalSmall);
         const uu = pickUnit(slot, mm)!;
         const q: Picked = { slot, index, m: mm, unit: uu, band: slotBand, qty: 0, round: r };
-        if (slot.qty === 'range') { q.range = rangeFor(ctx, slot, mm, uu, format); q.qty = calculatedQty(ctx.rng.int(q.range[0], q.range[1]), mm, uu, q.range); }
+        if (slot.qty === 'range') { q.range = rangeFor(ctx, slot, mm, uu, format, slotBand); q.qty = calculatedQty(ctx.rng.int(q.range[0], q.range[1]), mm, uu, q.range); }
         else q.qty = drawFixed(ctx, slot, mm, uu);
         extra.push(q);
       }
@@ -1051,7 +1061,7 @@ function capPass(ctx: Ctx, d: Draft): boolean {
         const alt = gymDown(ctx, p.m, d.picked);
         if (!alt) throw new Reject(`gym_record:${p.m.id}`);
         p.m = alt;
-        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format);
+        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format, p.band);
         changed = true;
         continue;
       }

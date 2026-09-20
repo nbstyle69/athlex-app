@@ -37,6 +37,18 @@ describe('R1/R4 — durée des prescriptions', () => {
       }
     }
   });
+
+  it.each([10, 15, 20])('la densité gym à %s minutes reste servable après la classe, avec des cycles complets', (budget_min) => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const wod = gen(skeleton('gym_density'), seed, {
+        ...request, entry: 'after_class', intention: 'gym', budget_min,
+        after_class: { day_movements: ['Back Squat', 'Thrusters'] },
+      });
+      const b = wod.blocks[0];
+      expect(wod.budget_min).toBe(budget_min);
+      expect(b.rounds! * b.movements.length * b.rest!.every_s!).toBe(budget_min * 60);
+    }
+  });
 });
 
 describe('R2 — quantités calculées avant contrôles, prescriptions exactes', () => {
@@ -67,6 +79,20 @@ describe('R2 — quantités calculées avant contrôles, prescriptions exactes',
           if (m.unit === 'm' && family === 'run') expect(m.qty % 100).toBe(0);
           if (box.format === 'stations') expect(movementSeconds(m, 'rx')).toBeLessThanOrEqual(box.blocks[0].rest!.work_s!);
         }
+      }
+    }
+  });
+
+  it('la plage des stations lourdes Force porte les 3–5 reps avant les contrôles', () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const wod = gen(skeleton('stations_rotation'), seed, {
+        ...request, intention: 'force', budget_min: 30,
+      });
+      const loaded = wod.blocks[0].movements.filter((m) => m.unit === 'reps' && m.load_band === 'heavy');
+      expect(loaded.length).toBeGreaterThan(0);
+      for (const m of loaded) {
+        expect(m.qty).toBeGreaterThanOrEqual(3);
+        expect(m.qty).toBeLessThanOrEqual(5);
       }
     }
   });

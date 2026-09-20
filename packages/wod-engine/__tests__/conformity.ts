@@ -185,10 +185,11 @@ export function causeViolations(wod: GeneratedWod, params: GenerateParams): stri
   if (params.intention === 'cardio') {
     for (const r of rows) if (isSlowSkill(r.m)) out.push(`[C] cardio avec skill exclu ${r.gm.id} (${cadenceFor(r.m, 'rx', 'reps') ?? '-'} s/rep)`);
   }
-  // D — chipper : un seul passage, run ≤ 800 m
+  // D — chipper : un seul passage, run ≤ 800 m en Functional, ≤ 1 km en Hybrid
   if (b.format === 'chipper') {
     if ((b.rounds ?? 1) > 1) out.push(`[D] chipper en ${b.rounds} rounds`);
-    for (const r of rows) if (r.m.family === 'run' && r.gm.unit === 'm' && r.gm.qty > 800) out.push(`[D] run ${r.gm.qty} m dans un chipper`);
+    const maxRun = params.discipline === 'hybrid' ? 1000 : 800;
+    for (const r of rows) if (r.m.family === 'run' && r.gm.unit === 'm' && r.gm.qty > maxRun) out.push(`[D] run ${r.gm.qty} m dans un chipper`);
   }
   // E — ladder ouverte : palier différent entre la catégorie la plus basse et la plus haute
   if (b.format === 'ladder' && bankSk?.ladder_mode !== 'finite') {

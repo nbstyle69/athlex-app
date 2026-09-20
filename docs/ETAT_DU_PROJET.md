@@ -210,6 +210,8 @@ discipline après R1–R5, aucun échec ; minimum des familles affichées 10,45 
 Tabata 9,75 %, Death by 5,65 % (protocole et variantes dans la PR).
 R1–R5 : les EMOM/E2MOM/E3MOM terminent des cycles complets ; les autres budgets athlète
 utilisent 8/10/12/15/16/18/20/25/30 dans leur plage (Musculation séance : 45).
+La densité gym utilise des départs compatibles de 60 ou 90 s, avec 40 s de travail maximum ; les plages calculées
+des stations lourdes Force portent les 3–5 reps dès le tirage, y compris à durée explicite.
 Les slots `range`/`draw` sont calculés et arrondis avant durée/volume ; `scheme`/`fixed`
 gardent les prescriptions exactes, y compris en box. Caps à la minute, sled ≤50 m en
 enchaînement ; les cibles de stations utilisent aussi la cadence de la bande de charge.

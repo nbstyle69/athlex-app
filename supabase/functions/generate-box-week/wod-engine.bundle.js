@@ -26083,8 +26083,8 @@ var gym_density = {
   durations: [10, 15],
   intentions: ["gym"],
   band_by_intention: { gym: "light" },
-  rest: { every_s: 90 },
-  max_station_work_s: 60,
+  rest: { every_s: [60, 90] },
+  max_station_work_s: 40,
   slots: [
     { pick: { family: ["gym"], pattern_any: ["pull_v", "push_v"] }, qty: "range", reps_range: [5, 12] },
     { pick: { ids: ["hollow_rock", "ghd_sit_up", "plank_hold", "toes_to_bar"], no_shared_high_grip_with: 0 }, qty: "range" }
@@ -28093,7 +28093,7 @@ function canComposeSlots(ctx, sk, variant) {
 }
 function candidateTiers(params, bank) {
   const banned = new Set((params.skeleton_not ?? []).map((id) => id.split(":")[0]));
-  const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id));
+  const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id) && (s.format !== "chipper" || s.durations.includes(params.budget_min)));
   const base = all.filter((s) => s.intentions.includes(params.intention));
   const formats = formatsFor(params.format);
   const near = (d) => Math.abs(d - params.budget_min) <= 5;
@@ -28241,8 +28241,9 @@ function calculatedQty(q, m, unit, range) {
   const [min, max] = calculatedRange(range, m, unit);
   return clamp(roundCalculatedQuantity(q, unit, m.family), min, max);
 }
-function rangeFor(ctx, slot2, m, unit, format) {
-  let r = slot2.reps_range ?? m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]];
+function rangeFor(ctx, slot2, m, unit, format, band) {
+  const heavyStation = ctx.params.intention === "force" && band === "heavy" && m.loads && unit === "reps" && RACK_FORMATS.has(format);
+  let r = slot2.reps_range ?? (heavyStation ? [...HEAVY_STATION_REPS] : m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]]);
   if (!r) throw new Reject(`no_range:${m.id}:${unit}`);
   if (slot2.qty_max !== void 0 && slot2.qty_max < r[1]) r = [Math.min(r[0], slot2.qty_max), slot2.qty_max];
   if (m.family === "sled" && unit === "m" && CONTINUOUS_FORMATS.has(format)) {
@@ -28427,7 +28428,13 @@ function capHeavyStationReps(ctx, d) {
   }
 }
 function fitEmom(ctx, d) {
-  const every = typeof d.restSpec?.every_s === "number" ? d.restSpec.every_s : 60;
+  const everyList = Array.isArray(d.restSpec?.every_s) ? d.restSpec.every_s : [d.restSpec?.every_s ?? 60];
+  const every = everyList.find((interval) => {
+    const cycle2 = interval * d.picked.length;
+    const durations = ctx.durationRange ? seq(Math.ceil(ctx.durationRange[0]), Math.floor(ctx.durationRange[1]), 1) : [ctx.params.budget_min];
+    return durations.some((duration) => duration * 60 % cycle2 === 0 && duration * 60 >= cycle2 * 2);
+  });
+  if (every === void 0) throw new Reject("emom_no_complete_cycles");
   const maxWork = d.sk.max_station_work_s ?? every * 0.65;
   d.rest = { every_s: every };
   const cycle = every * d.picked.length;
@@ -28583,7 +28590,7 @@ function buildDraft(ctx, sk, variant = null) {
     const base = { slot: slot2, index, m, unit, band: slotBand, qty: 0 };
     switch (slot2.qty) {
       case "range": {
-        const r = rangeFor(ctx, slot2, m, unit, format);
+        const r = rangeFor(ctx, slot2, m, unit, format, slotBand);
         base.range = r;
         base.qty = calculatedQty(ctx.rng.int(r[0], r[1]), m, unit, r);
         break;
@@ -28613,7 +28620,7 @@ function buildDraft(ctx, sk, variant = null) {
         const uu = pickUnit(slot2, mm);
         const q = { slot: slot2, index, m: mm, unit: uu, band: slotBand, qty: 0, round: r };
         if (slot2.qty === "range") {
-          q.range = rangeFor(ctx, slot2, mm, uu, format);
+          q.range = rangeFor(ctx, slot2, mm, uu, format, slotBand);
           q.qty = calculatedQty(ctx.rng.int(q.range[0], q.range[1]), mm, uu, q.range);
         } else q.qty = drawFixed(ctx, slot2, mm, uu);
         extra.push(q);
@@ -28752,7 +28759,7 @@ function capPass(ctx, d) {
         const alt = gymDown(ctx, p.m, d.picked);
         if (!alt) throw new Reject(`gym_record:${p.m.id}`);
         p.m = alt;
-        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format);
+        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format, p.band);
         changed = true;
         continue;
       }

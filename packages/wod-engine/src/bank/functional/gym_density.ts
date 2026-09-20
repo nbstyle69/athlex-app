@@ -8,8 +8,8 @@ export const gym_density: Skeleton = {
   durations: [10, 15],
   intentions: ['gym'],
   band_by_intention: { gym: 'light' },
-  rest: { every_s: 90 },
-  max_station_work_s: 60,
+  rest: { every_s: [60, 90] },
+  max_station_work_s: 40,
   slots: [
     { pick: { family: ['gym'], pattern_any: ['pull_v', 'push_v'] }, qty: 'range', reps_range: [5, 12] },
     { pick: { ids: ['hollow_rock', 'ghd_sit_up', 'plank_hold', 'toes_to_bar'], no_shared_high_grip_with: 0 }, qty: 'range' },
