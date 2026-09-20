@@ -39,6 +39,7 @@ jest.mock('../services/wodDraft', () => ({ loadWodDraft: async () => mockDraft }
 jest.mock('../services/myProfile', () => ({ fetchMyPersonalRecords: async () => ({}) }));
 jest.mock('../services/wodGenerator', () => ({
   loadExcludes: async () => [], loadMuscuEquipment: async () => 'box',
+  loadAdaptToPr: async () => true,
   todayClass: async () => ({ title: 'Une classe avec un titre long et des mouvements à éviter', movements: ['20 Air Squats'] }),
 }));
 jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));

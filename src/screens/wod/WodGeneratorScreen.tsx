@@ -12,7 +12,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -46,6 +46,7 @@ import { loadEngineData } from '../../services/wodEngineData';
 import { fetchMyPersonalRecords } from '../../services/myProfile';
 import {
   DayClass, ScreenParams, generateForUser, loadExcludes, loadMuscuEquipment, saveExcludes, saveMuscuEquipment, todayClass,
+  loadAdaptToPr, saveAdaptToPr,
 } from '../../services/wodGenerator';
 
 type Sport = Discipline | 'musculation';
@@ -86,6 +87,8 @@ export default function WodGeneratorScreen() {
   const [vest, setVest] = useState<Vest>('none');
   const [exclude, setExclude] = useState<string[]>([]);
   const [advanced, setAdvanced] = useState(false);
+  const [adaptToPr, setAdaptToPr] = useState(true);
+  const [prPreferenceReady, setPrPreferenceReady] = useState(false);
   const [search, setSearch] = useState('');
   const [dayClass, setDayClass] = useState<DayClass | null>(null);
   const [generating, setGenerating] = useState(false);
@@ -99,12 +102,17 @@ export default function WodGeneratorScreen() {
 
   useEffect(() => {
     let alive = true;
+    setAdaptToPr(true);
+    setPrPreferenceReady(false);
     loadEngineData().then((d) => { if (alive) { setCatalog(d.catalog); setBank(d.bank); } });
     if (user?.id) {
+      loadAdaptToPr(user.id).then((enabled) => {
+        if (alive) { setAdaptToPr(enabled); setPrPreferenceReady(true); }
+      });
       loadExcludes(user.id).then((ex) => { if (alive) setExclude(ex); });
       loadMuscuEquipment(user.id).then((eq) => { if (alive) setMuscuEquipment(eq); });
       fetchMyPersonalRecords().then((r) => { if (alive) setRecords(r); }).catch(() => {});
-    }
+    } else setPrPreferenceReady(true);
     return () => { alive = false; };
   }, [user?.id]);
 
@@ -130,6 +138,10 @@ export default function WodGeneratorScreen() {
   const chooseMuscuEquipment = (eq: MuscuEquipment) => {
     setMuscuEquipment(eq);
     if (user?.id) saveMuscuEquipment(user.id, eq);
+  };
+  const chooseAdaptToPr = (enabled: boolean) => {
+    setAdaptToPr(enabled);
+    if (user?.id) saveAdaptToPr(user.id, enabled);
   };
 
   const muscuLevel = muscuLevelFor(user?.level ?? null);
@@ -178,7 +190,7 @@ export default function WodGeneratorScreen() {
   );
 
   async function generate() {
-    if (!user) return;
+    if (!user || (!isMuscu && !prPreferenceReady)) return;
     setGenerating(true);
     const screen: ScreenParams = isMuscu
       ? {
@@ -186,7 +198,7 @@ export default function WodGeneratorScreen() {
         equipment: muscuEquipment, exclude,
       }
       : {
-        entry, discipline, budget_min: duration, intention, exclude,
+        entry, discipline, budget_min: duration, intention, exclude, adapt_to_pr: adaptToPr,
         format: entry === 'express' ? format : 'surprise',
         vest: discipline === 'hybrid' ? vest : 'none',
       };
@@ -425,13 +437,31 @@ export default function WodGeneratorScreen() {
           </Section>
         )}
 
-        {/* Options avancées : une seule ligne Exclure */}
+        {/* Options avancées */}
         <TouchableOpacity style={S.advToggle} onPress={() => setAdvanced((v) => !v)} activeOpacity={0.8} testID="wodgen-advanced">
           <Text style={S.advToggleText}>Options avancées{exclude.length ? ` · ${exclude.length} exclu${exclude.length > 1 ? 's' : ''}` : ''}</Text>
           {advanced ? <ChevronUp size={18} color={theme.textSecondary} /> : <ChevronDown size={18} color={theme.textSecondary} />}
         </TouchableOpacity>
         {advanced && (
           <View style={S.advBox}>
+            {!isMuscu && (
+              <View style={S.prOption}>
+                <View style={{ flex: 1 }}>
+                  <Text style={S.advLabel}>Adapter à mes PR</Text>
+                  <Text style={S.hint}>
+                    {adaptToPr ? 'Gym : substitutions et 50 % du record par série.' : 'Mode challenge : catégorie seule, sans adaptation aux PR gym.'}
+                  </Text>
+                </View>
+                <Switch
+                  value={adaptToPr}
+                  onValueChange={chooseAdaptToPr}
+                  disabled={!prPreferenceReady}
+                  accessibilityLabel="Adapter à mes PR"
+                  trackColor={{ false: theme.border, true: accent }}
+                  testID="wodgen-adapt-pr"
+                />
+              </View>
+            )}
             <Text style={S.advLabel}>Exclure</Text>
             {!catalog ? <ActivityIndicator color={accent} /> : (
               <ChipScroll>
@@ -479,7 +509,7 @@ export default function WodGeneratorScreen() {
           <TouchableOpacity
             style={[S.generateBtn, { borderColor: accent, backgroundColor: `${accent}1A` }]}
             onPress={generate}
-            disabled={generating || !user}
+            disabled={generating || !user || (!isMuscu && !prPreferenceReady)}
             activeOpacity={0.9}
             testID="wodgen-generate"
           >
@@ -534,6 +564,7 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   sportLabel: { fontSize: 13, fontWeight: '800', color: theme.textSecondary },
   hint: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
   hintLink: { fontWeight: '800' },
+  prOption: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
 
   section: { marginBottom: 18 },
   sectionTitle: { fontSize: 13, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', color: theme.textSecondary, marginBottom: 10 },
