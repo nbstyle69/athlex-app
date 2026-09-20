@@ -143,7 +143,7 @@ function totalVolume(wod: GeneratedWod, ref: Category, i: number): number {
       const n = deathByMinute(b, ref, wod.budget_min);
       return gm.per_minute ? (n * (n + 1)) / 2 : gm.qty * n;
     }
-    case 'tabata': return (16 * 20) / gm.cadence_by_category[ref]!;
+    case 'tabata': return (8 * 20) / gm.cadence_by_category[ref]!;
     default: return gm.qty;
   }
 }
@@ -164,11 +164,12 @@ export function causeViolations(wod: GeneratedWod, params: GenerateParams): stri
   const budgetS = params.budget_min * 60;
   const sk = skeletonRef(wod);
   const bankSk = BANK_V1.skeletons.find((s) => s.id === sk.id);
+  const variant = bankSk?.variants?.find((v) => v.id === wod.generator.skeleton_id.split(':')[1]);
+  const declaredScheme = variant?.scheme ?? bankSk?.scheme;
 
-  // A — scheme fixe : un for time à schéma est 21-15-9 / 9-7-5 (≤ 45 reps), jamais gonflé
+  // A — le schéma fixe reste celui de sa variante.
   if (b.format === 'for_time' && b.scheme && rows.some((r) => r.gm.unit === 'reps' && r.gm.scheme)) {
-    const sum = b.scheme.reduce((s, q) => s + q, 0);
-    if (sum > 45) out.push(`[A] scheme gonflé ${b.scheme.join('-')}`);
+    if (b.scheme.join('-') !== declaredScheme?.join('-')) out.push(`[A] scheme modifié ${b.scheme.join('-')}`);
   }
   // B — plafonds §5.4 par mouvement, total du WOD à la référence
   rows.forEach((r, i) => {
@@ -190,8 +191,8 @@ export function causeViolations(wod: GeneratedWod, params: GenerateParams): stri
     for (const r of rows) if (r.m.family === 'run' && r.gm.unit === 'm' && r.gm.qty > 800) out.push(`[D] run ${r.gm.qty} m dans un chipper`);
   }
   // E — ladder ouverte : palier différent entre la catégorie la plus basse et la plus haute
-  if (b.format === 'ladder') {
-    if (!b.ladder) out.push('[E] ladder fermée (pas de pas)');
+  if (b.format === 'ladder' && bankSk?.ladder_mode !== 'finite') {
+    if (!b.ladder) out.push('[E] ladder ouverte sans pas');
     const cats = categoriesFor(params.discipline);
     const lo = ladderStep(b, cats[0], budgetS);
     const hi = ladderStep(b, cats[cats.length - 1], budgetS);
@@ -228,9 +229,9 @@ export function causeViolations(wod: GeneratedWod, params: GenerateParams): stri
   }
   // I — chipper : schéma fixe (celui de la banque, jamais gonflé), durée parmi celles du squelette
   if (b.format === 'chipper' && bankSk) {
-    if (bankSk.scheme) {
+    if (declaredScheme) {
       const got = rows.filter((r) => r.gm.round === undefined).map((r) => r.gm.qty);
-      if (got.some((q, i) => q !== bankSk.scheme![i])) out.push(`[I] chipper ${got.join('-')} ≠ schéma ${bankSk.scheme.join('-')}`);
+      if (got.join('-') !== declaredScheme.join('-')) out.push(`[I] chipper ${got.join('-')} ≠ schéma ${declaredScheme.join('-')}`);
     }
     if (!bankSk.durations.includes(params.budget_min)) out.push(`[I] ${sk.id} tiré à ${params.budget_min} min (${bankSk.durations.join('/')})`);
   }

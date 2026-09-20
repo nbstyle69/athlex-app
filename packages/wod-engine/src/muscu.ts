@@ -910,7 +910,16 @@ export function availableDurations(
   });
 }
 
-export function generateMuscu(params: MuscuParams, catalog: Catalog, bank: SkeletonBank, seed: number): MuscuWod {
+export function generateMuscu(
+  request: Omit<MuscuParams, 'budget_min'> & { budget_min?: number },
+  catalog: Catalog,
+  bank: SkeletonBank,
+  seed: number,
+): MuscuWod {
+  const params: MuscuParams = {
+    ...request,
+    budget_min: request.budget_min ?? (request.entry === 'express' ? 45 : new RNG(seed).int(15, 20)),
+  };
   if (params.objective === 'force' && params.entry === 'after_class') {
     throw new InvalidMuscuParams('force_after_class', 'Après ma classe : la Force n\'est pas proposée (hypertrophie ou endurance)');
   }
@@ -919,9 +928,6 @@ export function generateMuscu(params: MuscuParams, catalog: Catalog, bank: Skele
   }
   if (params.target === 'tronc' && params.objective === 'force') {
     throw new InvalidMuscuParams('force_tronc', 'Tronc : la Force n\'est pas proposée (Prise de muscle ou Tonification)');
-  }
-  if (params.target === 'tronc' && !(MUSCU_DURATIONS.tronc as readonly number[]).includes(params.budget_min)) {
-    throw new InvalidMuscuParams('tronc_duration', 'Tronc : durées 15, 20 ou 30 minutes');
   }
   const sk = findSkeleton(bank, params.target, params.objective);
   const ac = params.entry === 'after_class' && params.after_class ? afterClassMuscles(catalog, params.after_class) : null;

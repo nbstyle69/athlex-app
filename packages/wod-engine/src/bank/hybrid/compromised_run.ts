@@ -4,6 +4,7 @@ export const compromised_run: Skeleton = {
   id: 'compromised_run',
   discipline: 'hybrid',
   format: 'rounds_for_time',
+  duration_range: [15, 30],
   durations: [20, 30],
   intentions: ['interval', 'run'],
   band_by_intention: { interval: 'medium', run: 'medium' },

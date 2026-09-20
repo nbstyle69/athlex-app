@@ -17,7 +17,7 @@ import {
   generateBlocC, generateMuscu, profileCategory, muscuLevelFor, renderMuscu, exerciseLine, CATEGORY_LABEL,
 } from '../../packages/wod-engine/src';
 import type {
-  Category, GenerateParams, GeneratedWod, MuscuExercise, MuscuEquipment, MuscuParams, MuscuWod,
+  Category, GenerateParams, GenerateRequest, GeneratedWod, MuscuExercise, MuscuEquipment, MuscuParams, MuscuWod,
 } from '../../packages/wod-engine/src';
 import { loadEngineData } from './wodEngineData';
 import { fetchMyPersonalRecords } from './myProfile';
@@ -28,10 +28,10 @@ import { gymRecordsFrom } from '../screens/wod/gymRecords';
 export const SIGNATURE_WINDOW = 10;
 
 /** Paramètres Functional / Hybrid choisis à l'écran ; le service complète signatures, catégorie et classe du jour. */
-export type MetconScreenParams = Pick<GenerateParams, 'entry' | 'discipline' | 'budget_min' | 'format' | 'intention' | 'vest' | 'exclude'>;
+export type MetconScreenParams = Pick<GenerateParams, 'entry' | 'discipline' | 'format' | 'intention' | 'vest' | 'exclude'>;
 
 /** Paramètres Musculation ; le service complète niveau, 1RM, poids de corps, signatures et classe du jour. */
-export type MuscuScreenParams = Pick<MuscuParams, 'entry' | 'target' | 'objective' | 'budget_min' | 'equipment' | 'exclude'> & {
+export type MuscuScreenParams = Pick<MuscuParams, 'entry' | 'target' | 'objective' | 'equipment' | 'exclude'> & {
   discipline: 'musculation';
 };
 
@@ -223,8 +223,13 @@ export async function generateForUser(
     fetchMyPersonalRecords().catch(() => ({} as Record<string, unknown>)),
   ]);
   const category = categoryFor(user, screen.discipline);
-  const params: GenerateParams = {
-    ...screen,
+  const params: GenerateRequest = {
+    entry: screen.entry,
+    discipline: screen.discipline,
+    format: screen.format,
+    intention: screen.intention,
+    vest: screen.vest,
+    exclude: screen.exclude,
     recent_signatures: signatures,
     profile_category: category,
     // B10 : les records gym du profil priment sur la catégorie pour les variantes gymniques
@@ -234,7 +239,7 @@ export async function generateForUser(
       : null,
   };
   const wod = generateBlocC(params, catalog, bank, seed);
-  return { wod, params, category };
+  return { wod, params: { ...params, budget_min: wod.budget_min }, category };
 }
 
 /**
@@ -283,11 +288,10 @@ async function generateMuscuForUser(
     fetchMyPersonalRecords().catch(() => ({} as Record<string, unknown>)),
     loadRecentExerciseIds(user.id),
   ]);
-  const params: MuscuParams = {
+  const params: Omit<MuscuParams, 'budget_min'> = {
     entry: screen.entry,
     target: screen.target,
     objective: screen.objective,
-    budget_min: screen.budget_min,
     equipment: screen.equipment,
     exclude: screen.exclude,
     level: muscuLevelFor(user.level ?? null),
@@ -301,7 +305,7 @@ async function generateMuscuForUser(
   };
   const wod = generateMuscu(params, catalog, bank, seed);
   await rememberExerciseIds(user.id, wod.blocks[0].exercises.map((e) => e.id));
-  return { wod: { ...wod, description: renderMuscu(wod) }, params, category: categoryFor(user, 'functional') };
+  return { wod: { ...wod, description: renderMuscu(wod) }, params: { ...params, budget_min: wod.budget_min }, category: categoryFor(user, 'functional') };
 }
 
 /** Re-tirage : mêmes paramètres (signatures relues), nouvelle graine. */

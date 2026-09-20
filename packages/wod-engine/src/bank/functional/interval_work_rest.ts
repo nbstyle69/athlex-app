@@ -4,6 +4,7 @@ export const interval_work_rest: Skeleton = {
   id: 'interval_work_rest',
   discipline: 'functional',
   format: 'interval',
+  duration_range: [15, 20],
   durations: [15, 20],
   intentions: ['mixed', 'cardio', 'force'],
   band_by_intention: { mixed: 'medium', cardio: 'light', force: 'heavy' },

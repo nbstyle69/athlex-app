@@ -37,7 +37,7 @@ import { buildFullSeqBlockFromWOD, buildMuscuSplitBlock } from '../../utils/wodT
 import { clearWodDraft, saveWodDraft } from '../../services/wodDraft';
 import {
   CATEGORY_LABEL, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES,
-  TIME_BOUNDED, TOLERANCE,
+  TIME_BOUNDED,
 } from '../../../packages/wod-engine/src';
 import type { Category, GeneratedMovement, GeneratedWod, MuscuWod } from '../../../packages/wod-engine/src';
 import type { SkeletonFormat } from '../../../packages/wod-engine/src';
@@ -126,7 +126,7 @@ export default function WodResultScreen() {
   // G3 : un EMOM, un AMRAP, une séance de séries sont bornés par leur durée —
   // afficher « Cap » dessus est faux. « Cap » ne vaut que pour les formats
   // scorés au temps (For time, chipper…), où c'est un plafond à ne pas franchir.
-  const borneParDuree = metcon ? TIME_BOUNDED.has(metcon.format) : true;
+  const borneParDuree = metcon ? TIME_BOUNDED.has(metcon.format) && !(metcon.format === 'ladder' && !metcon.blocks[0].ladder) : true;
 
   // G1 : le format demandé a été relâché par le moteur (aucun squelette de ce
   // format n'a abouti sur cette durée × intention). On le dit, on ne laisse pas
@@ -147,12 +147,8 @@ export default function WodResultScreen() {
     if (demande && demande !== 'surprise' && rel.includes('format')) {
       const fmt = FORMATS.find((f) => f.key === demande)?.label ?? demande;
       const intention = INTENTIONS[metcon.discipline].find((i) => i.key === metcon.intention)?.label ?? metcon.intention;
-      parts.push(`Aucun ${fmt} ne tient en ${intention} sur ${metcon.budget_min} min — voici un ${FORMAT_OBTENU[metcon.format]}.`);
+      parts.push(`Aucun ${fmt} disponible en ${intention} — voici un ${FORMAT_OBTENU[metcon.format]}.`);
     }
-    // La durée est une cible, pas une contrainte : l'écart ne s'annonce qu'au-delà
-    // de la fourchette du moteur (±20 %) ; l'estimation réelle reste affichée plus bas.
-    const genere = Math.round(metcon.estimate.reference_minutes);
-    if (Math.abs(genere - metcon.budget_min) > metcon.budget_min * TOLERANCE) parts.push(`Demandé ${metcon.budget_min} min, généré ${genere} min.`);
     return parts.length ? parts.join(' ') : null;
   })();
   const accent = muscu ? MUSCU_BLUE : wod.discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;

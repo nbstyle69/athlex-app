@@ -4,6 +4,7 @@ export const gym_density: Skeleton = {
   id: 'gym_density',
   discipline: 'functional',
   format: 'emom',
+  duration_range: [10, 20],
   durations: [10, 15],
   intentions: ['gym'],
   band_by_intention: { gym: 'light' },

@@ -4,6 +4,7 @@ export const half_sim: Skeleton = {
   id: 'half_sim',
   discipline: 'hybrid',
   format: 'rounds_for_time',
+  duration_range: [18, 22],
   // bank-v1 annonce 45' ; avec les cadences du catalogue 4 × (500 m + station) ≈ 16' RX → recalé sur 15/20.
   durations: [15, 20],
   intentions: ['interval'],

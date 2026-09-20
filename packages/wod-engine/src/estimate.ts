@@ -121,6 +121,10 @@ export function estimateBlock(block: GeneratedBlock, category: Category, budgetM
       return { minutes: budgetMin, target: `≈ ${Math.floor(rounds)} rounds` };
     }
     case 'ladder': {
+      if (!block.ladder) {
+        const s = fixedWorkSeconds(block, category);
+        return { minutes: s / 60, target: `≈ ${fmtTime(s)}` };
+      }
       const { step, partial } = ladderProgress(block, category, budgetS);
       const next = block.ladder ? step + block.ladder.step : step;
       const pct = Math.round(partial * 100);

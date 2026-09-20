@@ -4,6 +4,7 @@ export const heavy_couplet: Skeleton = {
   id: 'heavy_couplet',
   discipline: 'functional',
   format: 'rounds_for_time',
+  duration_range: [8, 15],
   durations: [10, 15],
   intentions: ['force'],
   band_by_intention: { force: 'heavy' },

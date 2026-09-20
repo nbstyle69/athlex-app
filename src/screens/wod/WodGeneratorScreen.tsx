@@ -2,10 +2,10 @@
  * AthleX — « Générateur de WOD » (brief §8)
  * ==========================================
  * Formulaire unique branché sur `packages/wod-engine` (hors ligne, déterministe) :
- * entrée (WOD express / Après ma classe) → discipline → durée → format (express)
+ * entrée (WOD express / Après ma classe) → discipline → format (express)
  * → intention → gilet (Hybrid) → Exclure (matériel + mouvements, persisté).
  * Troisième carte « Musculation » (PR M2) : objectif → cible (ordre selon le genre)
- * → durée filtrée par `availableDurations` → matériel (persisté) → ligne 1RM.
+ * → matériel (persisté) → ligne 1RM.
  * Pas de ligne Catégorie : la catégorie / le niveau du profil servent à l'estimation.
  * Le résultat s'ouvre sur `WodResult`.
  */
@@ -26,18 +26,16 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import GlassCard from '../../components/glass/GlassCard';
 import i18n from '../../i18n';
 import type {
-  Catalog, Discipline, Entry, FormatChoice, Intention, MuscuEquipment, MuscuObjective, MuscuTarget, SkeletonBank, Vest,
+  Catalog, Discipline, Entry, FormatChoice, Intention, MuscuEquipment, MuscuObjective, MuscuTarget, Vest,
 } from '../../../packages/wod-engine/src';
-import { availableDurations, availableTargets, muscuLevelFor } from '../../../packages/wod-engine/src';
-import { formatsOfferedFor, feasibleFormats, feasibleDurations } from '../../../packages/wod-engine/src';
+import { availableTargets, muscuLevelFor, feasibleFormats } from '../../../packages/wod-engine/src';
 import {
-  HYBRID_ORANGE, DURATIONS, FORMATS, INTENTIONS, VESTS, avoidedText, equipmentOptions, coerceDuration,
+  HYBRID_ORANGE, FORMATS, INTENTIONS, VESTS, avoidedText, equipmentOptions,
 } from './wodGeneratorOptions';
 import {
-  MUSCU_BLUE, MUSCU_EQUIPMENTS, MUSCU_OBJECTIVES, candidateDurations, coerceMuscuDuration, muscuEquipmentOptions,
+  MUSCU_BLUE, MUSCU_EQUIPMENTS, MUSCU_OBJECTIVES, muscuEquipmentOptions,
   muscuOneRepMax, objectiveDisabled, oneRepMaxLine, targetLabel, targetOrderFor, targetOrderHint,
 } from './muscuOptions';
-import { readBodyweightKg } from '../profile/prStorage';
 import { equipmentLabel } from '../../utils/wod/equipmentLabels';
 import { loadWodDraft, saveWodDraft, WodDraft } from '../../services/wodDraft';
 import { loadEngineData } from '../../services/wodEngineData';
@@ -56,7 +54,6 @@ export default function WodGeneratorScreen() {
   const S = createStyles(theme);
 
   const [catalog, setCatalog] = useState<Catalog | null>(null);
-  const [bank, setBank] = useState<SkeletonBank | null>(null);
   const [entry, setEntry] = useState<Entry>('express');
   const [sport, setSport] = useState<Sport>('functional');
   const discipline: Discipline = sport === 'hybrid' ? 'hybrid' : 'functional';
@@ -64,23 +61,17 @@ export default function WodGeneratorScreen() {
   const [target, setTarget] = useState<MuscuTarget>('full_body');
   const [objective, setObjective] = useState<MuscuObjective>('hypertrophie');
   const [muscuEquipment, setMuscuEquipment] = useState<MuscuEquipment>('box');
-  const [muscuDuration, setMuscuDuration] = useState(30);
   const [records, setRecords] = useState<Record<string, unknown>>({});
-  const [duration, setDuration] = useState(15);
   const [format, setFormat] = useState<FormatChoice>('surprise');
   const [intention, setIntention] = useState<Intention>('mixed');
 
-  // G1 / G4 : l'écran ne propose que ce que la banque sait servir. Les formats
-  // absents de la discipline (Hybrid n'a ni EMOM ni Chipper) disparaissent ;
-  // une combinaison durée × format × intention qu'aucun squelette n'aboutit
-  // est grisée — jamais choisie puis remplacée en silence. Tout vient de la
-  // table de faisabilité générée depuis la banque, rien n'est écrit en dur.
-  const formatsOffered = isMuscu ? [] : formatsOfferedFor(discipline);
-  const formatsFaisables = isMuscu ? new Set<FormatChoice>() : feasibleFormats(discipline, duration, intention);
-  const dureesFaisables = isMuscu ? new Set<number>() : feasibleDurations(discipline, intention, entry === 'express' ? format : 'surprise');
+  const formatsFaisables = useMemo(
+    () => isMuscu ? new Set<FormatChoice>() : feasibleFormats(discipline, intention),
+    [discipline, intention, isMuscu],
+  );
   useEffect(() => {
-    if (!isMuscu && !formatsOffered.includes(format)) setFormat('surprise');
-  }, [discipline, isMuscu, format, formatsOffered]);
+    if (!isMuscu && !formatsFaisables.has(format)) setFormat('surprise');
+  }, [isMuscu, format, formatsFaisables]);
   const [vest, setVest] = useState<Vest>('none');
   const [exclude, setExclude] = useState<string[]>([]);
   const [advanced, setAdvanced] = useState(false);
@@ -97,7 +88,7 @@ export default function WodGeneratorScreen() {
 
   useEffect(() => {
     let alive = true;
-    loadEngineData().then((d) => { if (alive) { setCatalog(d.catalog); setBank(d.bank); } });
+    loadEngineData().then((d) => { if (alive) setCatalog(d.catalog); });
     if (user?.id) {
       loadExcludes(user.id).then((ex) => { if (alive) setExclude(ex); });
       loadMuscuEquipment(user.id).then((eq) => { if (alive) setMuscuEquipment(eq); });
@@ -117,12 +108,11 @@ export default function WodGeneratorScreen() {
     return () => { alive = false; };
   }, [entry, currentBox?.id]);
 
-  const chooseEntry = (e: Entry) => { setEntry(e); setDuration((d) => coerceDuration(e, discipline, d)); };
+  const chooseEntry = (e: Entry) => { setEntry(e); };
   const chooseSport = (s: Sport) => {
     setSport(s);
     if (s === 'musculation') return;
     setIntention(INTENTIONS[s][0].key);
-    setDuration((cur) => coerceDuration(entry, s, cur));
     if (s === 'functional') setVest('none');
   };
   const chooseMuscuEquipment = (eq: MuscuEquipment) => {
@@ -132,7 +122,6 @@ export default function WodGeneratorScreen() {
 
   const muscuLevel = muscuLevelFor(user?.level ?? null);
   const oneRepMax = useMemo(() => muscuOneRepMax(records), [records]);
-  const bodyweightKg = useMemo(() => readBodyweightKg(records), [records]);
   const targets = useMemo(() => {
     const order = targetOrderFor(user?.gender);
     if (!catalog) return order;
@@ -141,15 +130,6 @@ export default function WodGeneratorScreen() {
   }, [catalog, muscuEquipment, muscuLevel, user?.gender]);
   const effectiveObjective: MuscuObjective =
     objectiveDisabled(objective, entry, target, muscuEquipment) ? 'hypertrophie' : objective;
-  const muscuDurations = useMemo(() => {
-    const candidates = candidateDurations(entry, target);
-    if (!catalog || !bank || !isMuscu) return candidates;
-    return availableDurations(catalog, bank, {
-      entry, target, objective: effectiveObjective, equipment: muscuEquipment, level: muscuLevel, exclude,
-      one_rep_max: oneRepMax, bodyweight_kg: bodyweightKg,
-    });
-  }, [catalog, bank, isMuscu, entry, target, effectiveObjective, muscuEquipment, muscuLevel, exclude, oneRepMax, bodyweightKg]);
-  useEffect(() => { setMuscuDuration((cur) => coerceMuscuDuration(muscuDurations, cur)); }, [muscuDurations]);
   useEffect(() => { if (targets.length && !targets.includes(target)) setTarget(targets[0]); }, [targets, target]);
   const rmLine = oneRepMaxLine(oneRepMax);
   const targetHint = targetOrderHint(user?.gender);
@@ -183,11 +163,11 @@ export default function WodGeneratorScreen() {
     setGenerating(true);
     const screen: ScreenParams = isMuscu
       ? {
-        discipline: 'musculation', entry, target, objective: effectiveObjective, budget_min: muscuDuration,
+        discipline: 'musculation', entry, target, objective: effectiveObjective,
         equipment: muscuEquipment, exclude,
       }
       : {
-        entry, discipline, budget_min: duration, intention, exclude,
+        entry, discipline, intention, exclude,
         format: entry === 'express' ? format : 'surprise',
         vest: discipline === 'hybrid' ? vest : 'none',
       };
@@ -360,14 +340,6 @@ export default function WodGeneratorScreen() {
               </Text>
             </Section>
 
-            <Section title="Durée" S={S}>
-              <ChipScroll>
-                {(muscuDurations.length ? muscuDurations : candidateDurations(entry, target)).map((d) => (
-                  <Chip key={d} label={`${d} min`} selected={muscuDuration === d} onPress={() => setMuscuDuration(d)} testID={`wodgen-muscu-duration-${d}`} />
-                ))}
-              </ChipScroll>
-            </Section>
-
             <Section title="Matériel" S={S}>
               <ChipScroll>
                 {MUSCU_EQUIPMENTS.map((e) => (
@@ -387,21 +359,11 @@ export default function WodGeneratorScreen() {
           </>
         )}
 
-        {!isMuscu && (
-        <Section title="Durée" S={S}>
-          <ChipScroll>
-            {DURATIONS[entry][discipline].map((d) => (
-              <Chip key={d} label={`${d} min`} selected={duration === d} onPress={() => setDuration(d)} disabled={!dureesFaisables.has(d)} testID={`wodgen-duration-${d}`} />
-            ))}
-          </ChipScroll>
-        </Section>
-        )}
-
         {!isMuscu && entry === 'express' && (
           <Section title="Format" S={S}>
             <ChipScroll>
-              {FORMATS.filter((f) => formatsOffered.includes(f.key)).map((f) => (
-                <Chip key={f.key} label={f.label} selected={format === f.key} onPress={() => setFormat(f.key)} disabled={!formatsFaisables.has(f.key)} testID={`wodgen-format-${f.key}`} />
+              {FORMATS.filter((f) => formatsFaisables.has(f.key)).map((f) => (
+                <Chip key={f.key} label={f.label} selected={format === f.key} onPress={() => setFormat(f.key)} testID={`wodgen-format-${f.key}`} />
               ))}
             </ChipScroll>
           </Section>

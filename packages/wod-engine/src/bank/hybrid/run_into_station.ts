@@ -9,6 +9,7 @@ export const run_into_station: Skeleton = {
   id: 'run_into_station',
   discipline: 'hybrid',
   format: 'rounds_for_time',
+  duration_range: [15, 30],
   durations: [20, 30, 45],
   intentions: ['interval', 'engine', 'run'],
   band_by_intention: { interval: 'medium', engine: 'light', run: 'light' },

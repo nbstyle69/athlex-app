@@ -4,6 +4,7 @@ export const erg_pyramid: Skeleton = {
   id: 'erg_pyramid',
   discipline: 'hybrid',
   format: 'for_time',
+  duration_range: [8, 15],
   durations: [20, 30],
   intentions: ['engine', 'aerobic'],
   band_by_intention: { engine: 'light', aerobic: 'light' },

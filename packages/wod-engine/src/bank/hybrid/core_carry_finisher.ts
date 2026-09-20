@@ -4,6 +4,7 @@ export const core_carry_finisher: Skeleton = {
   id: 'core_carry_finisher',
   discipline: 'hybrid',
   format: 'rounds_for_time',
+  duration_range: [10, 20],
   durations: [10, 15, 20],
   intentions: ['core'],
   band_by_intention: { core: 'light' },

@@ -4,9 +4,10 @@ export const triplet_amrap_mid: Skeleton = {
   id: 'triplet_amrap_mid',
   discipline: 'functional',
   format: 'amrap',
+  duration_range: [12, 20],
   durations: [12, 15, 20],
-  intentions: ['mixed', 'cardio'],
-  band_by_intention: { mixed: 'medium', cardio: 'light' },
+  intentions: ['mixed', 'cardio', 'gym'],
+  band_by_intention: { mixed: 'medium', cardio: 'light', gym: 'light' },
   rounds: 'amrap',
   slots: [
     { pick: { family: ['erg'], unit: 'cal' }, qty: 'range' },

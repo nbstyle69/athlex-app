@@ -262,11 +262,11 @@ describe('corrections A–K des relectures des samples', () => {
   };
   const m = (id: string) => movementById(CATALOG_SNAPSHOT, id)!;
 
-  it('A — un for time à schéma garde 21-15-9 (ou 9-7-5 en lourd), jamais gonflé', () => {
+  it('A — un for time à schéma conserve un des classiques, jamais gonflé', () => {
     every((w) => {
       const b = w.blocks[0];
       if (b.format !== 'for_time' || !b.scheme) return true;
-      return ['21,15,9', '9,7,5'].includes(b.scheme.join(','));
+      return ['21,15,9', '9,15,21', '15,12,9', '9,12,15', '21,18,15,12,9,6,3', '3,6,9,12,15,18,21'].includes(b.scheme.join(','));
     }, { ...F, budget_min: 8, format: 'for_time' });
   });
 
@@ -325,14 +325,14 @@ describe('corrections A–K des relectures des samples', () => {
     every((w) => heavyAllowed(skOf(w), 30) || w.blocks[0].movements.every((gm) => gm.load_band !== 'heavy'), { ...F, intention: 'force', budget_min: 30 }, 20);
   });
 
-  it('I — chipper à schéma fixe 50-40-30-20-10, 15/20 min seulement, plafonds devil press / BBJO / BJO / DB snatch', () => {
+  it('I — chipper à quantités fixes par variante, plafonds devil press / BBJO / BJO / DB snatch', () => {
     const cd = BANK_V1.skeletons.find((s) => s.id === 'chipper_descending')!;
     expect(cd.durations).toEqual([15, 20]);
-    expect(cd.scheme).toEqual([50, 40, 30, 20, 10]);
+    expect(cd.variants?.map((v) => v.scheme)).toEqual([[50, 40, 30, 20, 10], [40, 30, 20, 10], [30, 25, 20, 15, 10]]);
     every((w) => {
       const b = w.blocks[0];
       if (skOf(w).id !== 'chipper_descending') return true;
-      return b.movements.map((gm) => gm.qty).join(',') === '50,40,30,20,10';
+      return ['50,40,30,20,10', '40,30,20,10', '30,25,20,15,10'].includes(b.movements.map((gm) => gm.qty).join(','));
     }, { ...F, budget_min: 20, format: 'chipper' });
     every((w) => skOf(w).id !== 'chipper_descending', { ...F, budget_min: 30, format: 'chipper' });
     expect(movementCapFor(BANK_V1, m('devil_press'), 'light', 'reps', 'rx')).toBe(30);
@@ -384,7 +384,7 @@ describe('corrections A–K des relectures des samples', () => {
     for (let seed = 1; seed <= 60; seed++) {
       const w = gen({ ...F, budget_min: 10, format: 'for_time' }, seed);
       const b = w.blocks[0];
-      if (b.format !== 'ladder') continue;
+      if (skOf(w).id !== 'ladder_ascending') continue;
       seen++;
       expect(b.ladder).toEqual({ start: 3, step: 3 });
       expect(b.scheme![b.scheme!.length - 1]).toBeGreaterThan(9);

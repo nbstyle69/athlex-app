@@ -112,7 +112,7 @@ function header(wod: GeneratedWod, b: GeneratedBlock): string[] {
     case 'chipper': return [`Chipper · for time${cap}`];
     case 'ladder': return b.ladder
       ? [`Ladder ${b.ladder.start}-${b.ladder.start + b.ladder.step}-${b.ladder.start + 2 * b.ladder.step}… · AMRAP ${wod.budget_min}`, `Monter les paliers (+${b.ladder.step} à chaque palier) jusqu'au temps, score = reps totales`]
-      : [`Ladder ${schemeText(b)} · AMRAP ${wod.budget_min}`, 'Monter les paliers dans le temps imparti, score = reps totales'];
+      : [`Ladder ${schemeText(b)} · for time${cap}`, 'Effectuer une fois tous les paliers indiqués'];
     case 'emom': return [`EMOM ${wod.budget_min}${b.rest?.every_s && b.rest.every_s !== 60 ? ` · every ${mmss(b.rest.every_s)}` : ''} · ${b.movements.length} stations en alternance`];
     case 'death_by': return [`EMOM ${wod.budget_min} · Death by : +1 rep par minute jusqu'à l'échec`];
     case 'tabata': return [`Tabata × 2 blocs · 8 × 20 s / 10 s${b.rest?.transition_s ? `, transition ${b.rest.transition_s} s` : ''}`];
@@ -185,7 +185,7 @@ export function render(wod: GeneratedWod): GeneratedWod {
     ...wod,
     title: titleOf(wod, b),
     description: lines.join('\n'),
-    wod_type: WOD_TYPE[b.format],
+    wod_type: b.format === 'ladder' && !b.ladder ? 'for-time' : WOD_TYPE[b.format],
     block_name: 'wod',
     time_cap_seconds: b.timecap ?? wod.budget_min * 60,
     rounds: b.rounds,

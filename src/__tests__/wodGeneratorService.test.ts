@@ -81,7 +81,7 @@ describe('tirage', () => {
 
 describe('persistance', () => {
   it('enregistre le rendu texte + wod_json structuré, puis favori', async () => {
-    const { wod } = await generateForUser(user, null, { entry: 'express', discipline: 'hybrid', budget_min: 20, format: 'surprise', intention: 'engine', vest: 'required', exclude: [] }, 11);
+    const { wod } = await generateForUser(user, null, { entry: 'express', discipline: 'hybrid', format: 'surprise', intention: 'engine', vest: 'required', exclude: [] }, 11);
     const id = await saveGeneratedWod('u1', wod, 'men');
     expect(id).toBe('wod-1');
     const row = inserted.find((i) => i.table === 'generated_wods')!.row;
@@ -97,7 +97,7 @@ describe('persistance', () => {
   });
 
   it('score : catégorie demandée dans les notes, rx dérivé, compteur + crédit de badges', async () => {
-    const { wod } = await generateForUser(user, null, { entry: 'express', discipline: 'functional', budget_min: 12, format: 'amrap', intention: 'mixed', vest: 'none', exclude: [] }, 3);
+    const { wod } = await generateForUser(user, null, { entry: 'express', discipline: 'functional', format: 'amrap', intention: 'mixed', vest: 'none', exclude: [] }, 3);
     expect(scoreInputTypeFor(wod)).toBe('rounds');
     await submitGeneratedScore(user, 'box', wod, { wodId: 'wod-1', scoreType: 'rounds', value: 5, category: 'scaled', notes: 'dur' });
     const score = inserted.find((i) => i.table === 'generated_wod_scores')!.row;

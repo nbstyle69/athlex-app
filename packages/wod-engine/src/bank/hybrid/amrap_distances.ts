@@ -4,6 +4,7 @@ export const amrap_distances: Skeleton = {
   id: 'amrap_distances',
   discipline: 'hybrid',
   format: 'amrap',
+  duration_range: [15, 30],
   durations: [15, 20],
   intentions: ['interval', 'engine'],
   band_by_intention: { interval: 'medium', engine: 'light' },

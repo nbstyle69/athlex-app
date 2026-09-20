@@ -191,6 +191,9 @@ export interface Skeleton {
   id: string;
   discipline: Discipline;
   format: SkeletonFormat;
+  /** Plage de durée propre au squelette ; le générateur athlète y tire sa cible. */
+  duration_range: [number, number];
+  /** Anciennes cibles discrètes, conservées pour la programmation et les clients 1.0.55 déjà servis. */
   durations: number[];
   intentions: Intention[];
   band_by_intention: Partial<Record<Intention, Band>>;
@@ -206,6 +209,8 @@ export interface Skeleton {
   station_count?: { by_duration?: Record<number, number>; min?: number; max?: number };
   /** variantes exclusives (ex. run_intervals A/B/C) : une seule est tirée */
   variants?: SkeletonVariant[];
+  /** Une ladder finie exécute son schéma une fois ; une ladder ouverte progresse jusqu'au temps. */
+  ladder_mode?: 'finite' | 'open';
   score_type: ScoreType;
   cap_factor: number;
   allow_variant_up: boolean;
@@ -223,6 +228,8 @@ export interface Skeleton {
 export interface SkeletonVariant {
   id: string;
   slots: Slot[];
+  /** Une variante peut resserrer la plage du squelette qui la porte. */
+  duration_range?: [number, number];
   rounds?: { min: number; max: number };
   rest?: SkeletonRest;
   scheme?: number[];
@@ -590,6 +597,9 @@ export interface GenerateParams {
    */
   round_qty?: boolean;
 }
+
+/** Requête athlète : sans durée, le moteur la tire dans la plage du squelette. */
+export type GenerateRequest = Omit<GenerateParams, 'budget_min'> & { budget_min?: number };
 
 export interface GeneratedMovement {
   id: string;

@@ -203,6 +203,7 @@ export function blocCRepsRx(wod: GeneratedWod): Record<string, number> {
         case 'rounds_for_time': case 'interval': case 'stations': case 'emom': mult = b.rounds ?? 1; break;
         case 'amrap': case 'continuous': mult = Math.ceil(budgetS / roundSeconds(b, ref)); break;
         case 'ladder': {
+          if (!b.ladder) break;
           const { step } = ladderProgress(b, ref, budgetS);
           const start = b.ladder?.start ?? gm.qty;
           const inc = b.ladder?.step ?? gm.qty;

@@ -6,7 +6,7 @@ export interface SkeletonRow {
   id: string;
   discipline: Discipline;
   format: SkeletonFormat;
-  definition: Skeleton;
+  definition: Skeleton & { c2c3?: Skeleton };
   active: boolean;
   version: number;
 }
@@ -103,7 +103,7 @@ export function bankFromRows(skeletons: AnySkeletonRow[], caps: VolumeCapRow[]):
   const version = Math.max(...metcon.map((r) => r.version), ...activeCaps.map((r) => r.version));
   return {
     version,
-    skeletons: metcon.map((r) => ({ ...r.definition, id: r.id, discipline: r.discipline, format: r.format })),
+    skeletons: metcon.map((r) => ({ ...(r.definition.c2c3 ?? r.definition), id: r.id, discipline: r.discipline, format: r.format })),
     volume_caps: BANK_V1.volume_caps,
     movement_caps: activeCaps.map(movementCapFromRow),
     // base antérieure à la migration 20261215 (aucune ligne musculation) → snapshot embarqué

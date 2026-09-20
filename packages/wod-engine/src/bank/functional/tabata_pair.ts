@@ -4,6 +4,7 @@ export const tabata_pair: Skeleton = {
   id: 'tabata_pair',
   discipline: 'functional',
   format: 'tabata',
+  duration_range: [8, 10],
   durations: [8, 10],
   intentions: ['cardio', 'gym'],
   band_by_intention: { cardio: 'light', gym: 'light' },
