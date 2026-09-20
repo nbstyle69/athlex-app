@@ -205,6 +205,13 @@ petit, y compris avec caméra. Chaque split final donne le temps de l'exercice e
 le total cumulé. Le total comprend tous les blocs et pauses de la séance ; le
 redémarrage efface les chronos et le journal.
 
+**Lot C4 — Adapter à mes PR** (aucune migration, PR indépendante de C2+C3).
+Option activée par défaut dans les options avancées Functional/Hybrid et mémorisée
+dans les réglages du profil. Activée, elle conserve les substitutions gym et le
+plafond de 50 % du record par série ; désactivée, le mode challenge suit la
+catégorie seule. Le choix accompagne aussi le brouillon et le re-tirage. Les
+écritures de réglages sont ordonnées pour préserver exclusions et matériel.
+
 **Lot C1 — recherche des exclusions** (aucune migration, PR indépendante de C2+C3).
 Le champ des options avancées interroge les libellés français du matériel et les noms
 affichés des mouvements, sans casse ni accents : « corde » retrouve « Corde à sauter »,
