@@ -198,6 +198,13 @@ Supabase/Resend.
 
 ## En cours
 
+**Lot C5 — Split par exercice** (aucune migration, PR indépendante de C2+C3).
+Le chrono principal repart de zéro au changement d'exercice ; les séries d'un
+même exercice conservent leur chrono, repos compris. Le total reste visible en
+petit, y compris avec caméra. Chaque split final donne le temps de l'exercice et
+le total cumulé. Le total comprend tous les blocs et pauses de la séance ; le
+redémarrage efface les chronos et le journal.
+
 **Générateur de WOD v1 — PR 1/3 (`athlex-app`, migration `20261211`).** Le générateur est
 refait de zéro en moteur déterministe (`packages/wod-engine`, TypeScript pur, aucune IA ni
 réseau à l'exécution) ; on garde seulement le RNG à graine et la signature anti-répétition.
