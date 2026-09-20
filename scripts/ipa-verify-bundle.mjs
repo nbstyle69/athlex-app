@@ -130,8 +130,10 @@ check('serveur Mixpanel EU embarqué', js.includes('https://api-eu.mixpanel.com'
 // 5. Identité du binaire : version, build, runtime, canal de mise à jour.
 // Les plists d'un IPA sont binaires : on les convertit pour les lire. La
 // configuration des mises à jour ne vit pas dans Info.plist mais dans Expo.plist.
+// `python3` sur Windows est un raccourci du Store qui ne lance rien : on passe à `python`.
+const PYTHON = process.platform === 'win32' ? 'python' : 'python3';
 const readPlist = (p) => (existsSync(p)
-  ? JSON.parse(execFileSync('python3', ['-c',
+  ? JSON.parse(execFileSync(PYTHON, ['-c',
       'import plistlib,json,sys;print(json.dumps(plistlib.load(open(sys.argv[1],"rb")),default=str))',
       p], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }))
   : {});
@@ -163,6 +165,22 @@ check('runtime OTA = version applicative', runtime === expected.version, runtime
 check('canal OTA = production', channel === 'production', channel ?? 'absent');
 check('URL OTA = projet EAS de app.json',
   expoPlist.EXUpdatesURL === expected.updates.url, expoPlist.EXUpdatesURL ?? 'absente');
+
+
+// 6. Fonctions attendues du build 1.0.55 : chaînes ASCII de la table Hermes
+//    (un testID ou un préfixe de clé, jamais un libellé accentué — l'UTF-16 de
+//    Hermes ne se lit pas par `includes`).
+const FEATURES = [
+  ['onglets de piste du Whiteboard', 'whiteboard-track-tabs'],
+  ['memoire de piste du Whiteboard', '@athlex:whiteboardTrack:'],
+  ['section Gymnastique du calculateur 1RM', 'onerm-gym-input'],
+  ['mode Split du minuteur', 'PASSER LE REPOS'],
+  ['vue Musculation du generateur', 'wodgen-discipline'],
+  ['reprise de la seance generee', 'wodgen-draft-resume'],
+  ['memoire des tirages Musculation', '@athlex:muscuRecent:'],
+];
+for (const [name, marker] of FEATURES) check(`${name} embarque`, js.includes(marker), marker);
+check('ancien moteur engineCrossFit absent', !js.includes('engineCrossFit'));
 
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} assertions vraies`);
