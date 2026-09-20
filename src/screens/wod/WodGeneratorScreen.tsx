@@ -37,6 +37,7 @@ import {
   muscuOneRepMax, objectiveDisabled, oneRepMaxLine, targetLabel, targetOrderFor, targetOrderHint,
 } from './muscuOptions';
 import { equipmentLabel } from '../../utils/wod/equipmentLabels';
+import { searchExclusions } from '../../utils/wod/exclusionSearch';
 import { loadWodDraft, saveWodDraft, WodDraft } from '../../services/wodDraft';
 import { loadEngineData } from '../../services/wodEngineData';
 import { fetchMyPersonalRecords } from '../../services/myProfile';
@@ -146,13 +147,10 @@ export default function WodGeneratorScreen() {
     () => (catalog ? (isMuscu ? muscuEquipmentOptions(catalog, muscuEquipment) : equipmentOptions(catalog)) : []),
     [catalog, isMuscu, muscuEquipment],
   );
-  const movementHits = useMemo(() => {
-    if (!catalog || search.trim().length < 2) return [];
-    const q = search.trim().toLowerCase();
-    return catalog.movements
-      .filter((m) => m.active && (isMuscu ? !!m.muscu : true) && !exclude.includes(m.id) && m.name.toLowerCase().includes(q))
-      .slice(0, 8);
-  }, [catalog, search, exclude]);
+  const exclusionHits = useMemo(
+    () => catalog ? searchExclusions(catalog, equipment, search, exclude, isMuscu) : [],
+    [catalog, equipment, search, exclude, isMuscu],
+  );
   const excludedMovements = useMemo(
     () => exclude.filter((k) => !equipment.includes(k)).map((id) => ({ id, name: catalog?.movements.find((m) => m.id === id)?.name ?? equipmentLabel(id) })),
     [exclude, equipment, catalog],
@@ -420,17 +418,17 @@ export default function WodGeneratorScreen() {
             )}
             <TextInput
               style={S.input}
-              placeholder="Exclure un mouvement…"
+              placeholder="Exclure du matériel ou un mouvement…"
               placeholderTextColor={theme.textMuted}
               value={search}
               onChangeText={setSearch}
               autoCapitalize="none"
               testID="wodgen-exclude-search"
             />
-            {movementHits.length > 0 && (
+            {exclusionHits.length > 0 && (
               <View style={S.chipRow}>
-                {movementHits.map((m) => (
-                  <TouchableOpacity key={m.id} style={S.chip} onPress={() => { toggleExclude(m.id); setSearch(''); }} activeOpacity={0.8}>
+                {exclusionHits.map((m) => (
+                  <TouchableOpacity key={`${m.kind}-${m.id}`} style={S.chip} onPress={() => { toggleExclude(m.id); setSearch(''); }} activeOpacity={0.8} testID={`wodgen-exclude-${m.kind}-${m.id}`}>
                     <Text style={S.chipText}>+ {m.name}</Text>
                   </TouchableOpacity>
                 ))}
