@@ -24,6 +24,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import GlassCard from '../../components/glass/GlassCard';
+import SessionContextCard from '../../components/wod/SessionContextCard';
 import i18n from '../../i18n';
 import type {
   Catalog, Discipline, Entry, FormatChoice, Intention, MuscuEquipment, MuscuObjective, MuscuTarget, SkeletonBank, Vest,
@@ -306,27 +307,26 @@ export default function WodGeneratorScreen() {
 
         {/* B6 : reprendre la séance générée non enregistrée */}
         {draft && (
-          <GlassCard radius={14} style={S.classCard} testID="wodgen-draft">
-            <Text style={S.classTitle}>Dernière séance générée</Text>
-            <Text style={S.classWod}>{draft.result.wod.title}</Text>
-            <TouchableOpacity
-              style={[S.chip, { alignSelf: 'flex-start', marginTop: 10 }]}
-              onPress={() => navigation.navigate('WodResult', { screen: draft.screen, result: draft.result, draft: { performed: draft.performed, submittedScore: draft.submittedScore } })}
-              activeOpacity={0.8}
-              testID="wodgen-draft-resume"
-            >
-              <Text style={S.chipText}>Reprendre la séance</Text>
-            </TouchableOpacity>
-          </GlassCard>
+          <SessionContextCard
+            testID="wodgen-draft"
+            label="Dernière séance générée"
+            title={draft.result.wod.title}
+            action={{
+              label: 'Reprendre la séance',
+              testID: 'wodgen-draft-resume',
+              onPress: () => navigation.navigate('WodResult', { screen: draft.screen, result: draft.result, draft: { performed: draft.performed, submittedScore: draft.submittedScore } }),
+            }}
+          />
         )}
 
         {/* Classe du jour (Après ma classe) */}
         {entry === 'after_class' && dayClass && currentBox && (
-          <GlassCard radius={14} style={S.classCard}>
-            <Text style={S.classTitle}>Classe du jour · {currentBox.name}</Text>
-            <Text style={S.classWod}>{dayClass.title}</Text>
-            <Text style={S.classSub}>{catalog ? avoidedText(catalog, dayClass.movements) : ''}</Text>
-          </GlassCard>
+          <SessionContextCard
+            testID="wodgen-class"
+            label={`Classe du jour · ${currentBox.name}`}
+            title={dayClass.title}
+            subtitle={catalog ? avoidedText(catalog, dayClass.movements) : ''}
+          />
         )}
 
         {isMuscu && (
@@ -536,12 +536,6 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   sportLabel: { fontSize: 13, fontWeight: '800', color: theme.textSecondary },
   hint: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
   hintLink: { fontWeight: '800' },
-
-  // B2 : mêmes marges et corps que les cartes de la page résultat, hauteur libre, rien de tronqué
-  classCard: { padding: 16, marginBottom: 16 },
-  classTitle: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textSecondary },
-  classWod: { fontSize: 16, fontWeight: '800', color: theme.text, marginTop: 6, lineHeight: 22 },
-  classSub: { fontSize: 13, color: theme.textSecondary, marginTop: 6, lineHeight: 19 },
 
   section: { marginBottom: 18 },
   sectionTitle: { fontSize: 13, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', color: theme.textSecondary, marginBottom: 10 },

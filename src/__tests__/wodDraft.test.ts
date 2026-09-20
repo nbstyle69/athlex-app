@@ -51,7 +51,7 @@ describe('service wodDraft', () => {
 describe('écrans', () => {
   it('le générateur écrit le brouillon dès la génération et propose de reprendre la dernière séance', () => {
     expect(generateur).toContain('await saveWodDraft(user.id, { screen, result });');
-    expect(generateur).toContain('testID="wodgen-draft-resume"');
+    expect(generateur).toContain("testID: 'wodgen-draft-resume'");
     expect(generateur).toMatch(/navigation\.navigate\('WodResult', \{ screen: draft\.screen, result: draft\.result, draft: \{ performed: draft\.performed, submittedScore: draft\.submittedScore \} \}\)/);
     expect(generateur).toContain('useFocusEffect(');
   });

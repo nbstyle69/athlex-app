@@ -198,6 +198,13 @@ Supabase/Resend.
 
 ## En cours
 
+**Lot C6 — Cartes de contexte** (préparé, action « Classe du jour » à arbitrer).
+`SessionContextCard` rend les deux encarts avec le même verre, un padding de
+16 à l'intérieur, l'étiquette en capitales, le corps et le rendu du bouton.
+« Reprendre la séance » conserve son action. « Classe du jour » n'avait pas de
+bouton : son action reste à confirmer avant de terminer le lot.
+Aucune migration ; PR indépendante de C2+C3.
+
 **Générateur de WOD v1 — PR 1/3 (`athlex-app`, migration `20261211`).** Le générateur est
 refait de zéro en moteur déterministe (`packages/wod-engine`, TypeScript pur, aucune IA ni
 réseau à l'exécution) ; on garde seulement le RNG à graine et la signature anti-répétition.
