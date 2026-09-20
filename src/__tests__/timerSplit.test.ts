@@ -52,7 +52,7 @@ describe('minuteur', () => {
 
   it('« Série terminée » : split enregistré au temps global, repos de l\'exercice courant, exercice suivant, fin du bloc après la dernière série', () => {
     expect(timer).toContain('function splitSetDone()');
-    expect(timer).toContain("setSplitLog((l) => [...l, { label: list.length > 1 ? `${cur.name} · série ${set}/${cur.sets}` : `${cur.name} ${set}/${cur.sets}`, at }]);");
+    expect(timer).toContain("setSplitLog((l) => [...l, { label: list.length > 1 ? `${cur.name} · série ${set}/${cur.sets}` : `${cur.name} ${set}/${cur.sets}`, duration, at }]);");
     expect(timer).toContain('const next = set < cur.sets ? { ex, set: set + 1 } : { ex: ex + 1, set: 1 };');
     expect(timer).toContain('if (!list[next.ex]) { Vibration.vibrate([0, 350, 120, 350]); seqBlockDone(); return; }');
     expect(timer).toContain("if (cur.restSec > 0) { innerPhaseRef.current = 'rest'; setInnerPhase('rest'); roundTimeLeftRef.current = cur.restSec; setRoundTimeLeft(cur.restSec); }");
