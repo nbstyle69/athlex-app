@@ -223,6 +223,13 @@ Migration `20261229`, **appliquée en prod : non** : à appliquer par Nabil **av
 1.0.55**. L'ancien lecteur garde les définitions v3 ; le nouveau lit `definition.c2c3`.
 Les trois contrôles indépendants de #313 restent au backlog. C1, C4, C5 et C6 restent séparés.
 
+**Lot C4 — Adapter à mes PR** (aucune migration, PR indépendante de C2+C3).
+Option activée par défaut dans les options avancées Functional/Hybrid et mémorisée
+dans les réglages du profil. Activée, elle conserve les substitutions gym et le
+plafond de 50 % du record par série ; désactivée, le mode challenge suit la
+catégorie seule. Le choix accompagne aussi le brouillon et le re-tirage. Les
+écritures de réglages sont ordonnées pour préserver exclusions et matériel.
+
 **Lot C1 — recherche des exclusions** (aucune migration, PR indépendante de C2+C3).
 Le champ des options avancées interroge les libellés français du matériel et les noms
 affichés des mouvements, sans casse ni accents : « corde » retrouve « Corde à sauter »,
