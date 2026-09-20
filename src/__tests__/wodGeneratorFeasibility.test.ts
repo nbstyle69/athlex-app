@@ -21,9 +21,9 @@ describe('G4 — formats proposés par discipline, depuis la banque', () => {
     expect(generateur).toContain('feasibleFormats(discipline, intention)');
   });
 
-  it('Hybrid perd EMOM et Chipper, Functional garde tout', () => {
-    expect(formatsOfferedFor('hybrid')).not.toContain('emom');
-    expect(formatsOfferedFor('hybrid')).not.toContain('chipper');
+  it('Hybrid propose EMOM et Chipper, Functional garde tout', () => {
+    expect(formatsOfferedFor('hybrid')).toContain('emom');
+    expect(formatsOfferedFor('hybrid')).toContain('chipper');
     expect(formatsOfferedFor('functional')).toHaveLength(7);
   });
 

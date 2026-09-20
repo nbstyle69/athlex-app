@@ -4,7 +4,7 @@
  * des squelettes, qui promettent parfois ce qu'elles ne tiennent pas.
  *
  * L'écran du générateur s'en sert pour ne proposer que les formats que la
- * discipline et l'intention savent servir (Hybrid n'a ni EMOM ni Chipper). Un
+ * discipline et l'intention savent servir. Un
  * athlète ne doit jamais pouvoir choisir ce que le moteur ne sait pas faire,
  * puis recevoir autre chose en silence (G1, G4 — 18/09/2026).
  */

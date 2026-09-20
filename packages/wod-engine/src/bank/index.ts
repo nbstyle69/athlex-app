@@ -27,6 +27,8 @@ import { engine_continuous } from './hybrid/engine_continuous';
 import { core_carry_finisher } from './hybrid/core_carry_finisher';
 import { run_intervals } from './hybrid/run_intervals';
 import { engine_negative_split } from './hybrid/engine_negative_split';
+import { emom_hybrid } from './hybrid/emom_hybrid';
+import { chipper_hybrid } from './hybrid/chipper_hybrid';
 import { MUSCU_SKELETONS } from './muscu';
 import { SESSION_SKELETONS } from './session';
 import { HYBRID_SESSION_SKELETONS } from './session-hybrid';
@@ -51,7 +53,7 @@ export const FUNCTIONAL_SKELETONS = [
 
 export const HYBRID_SKELETONS = [
   run_into_station, stations_interval, amrap_distances, erg_pyramid, sled_repeats, compromised_run, half_sim,
-  engine_continuous, core_carry_finisher, run_intervals, engine_negative_split,
+  engine_continuous, core_carry_finisher, run_intervals, engine_negative_split, emom_hybrid, chipper_hybrid,
 ];
 
 /**

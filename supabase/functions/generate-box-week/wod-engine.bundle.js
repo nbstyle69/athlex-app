@@ -25861,9 +25861,9 @@ var chipper_stations_erg = {
   band_by_intention: { mixed: "medium", cardio: "light" },
   rounds: { min: 1, max: 1 },
   slots: [
-    { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
+    { pick: { family: ["erg"], unit: "cal" }, qty: "range", reps_range: [40, 100] },
     { pick: { family: ["sled", "carry", "sandbag"], unit: "m" }, qty: "range" },
-    { pick: { family: ["erg"], unit: "cal" }, qty: "range", role: "erg diff\xE9rent du (1)" },
+    { pick: { family: ["erg"], unit: "cal" }, qty: "range", reps_range: [40, 100], role: "erg diff\xE9rent du (1)" },
     { pick: { family: ["run"], unit: "m" }, qty: "range", qty_max: 800 },
     { pick: { family: ["bodyweight", "gym"], pattern_any: ["core", "pull_v", "push_v"] }, qty: "range" }
   ],
@@ -26142,7 +26142,7 @@ var run_into_station = {
   band_by_intention: { interval: "medium", engine: "light", run: "light" },
   rounds: { min: 4, max: 6 },
   slots: [
-    { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [400, 800] },
+    { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [400, 800] },
     { pick: { ids: HYBRID_STATIONS, erg_unit: "m" }, qty: "range", rotate_per_round: true }
   ],
   score_type: "time",
@@ -26189,10 +26189,10 @@ var amrap_distances = {
   band_by_intention: { interval: "medium", engine: "light" },
   rounds: "amrap",
   slots: [
-    { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [200, 400] },
-    { pick: { ids: ["sled_push", "sled_pull"], unit: "m" }, qty: "fixed", fixed_range: [25, 50] },
+    { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [200, 400] },
+    { pick: { ids: ["sled_push", "sled_pull"], unit: "m" }, qty: "draw", fixed_range: [25, 50] },
     { pick: { ids: ["wall_ball", "sandbag_lunge"] }, qty: "range" },
-    { pick: { family: ["erg"], unit: "cal" }, qty: "fixed", fixed_range: [10, 20] }
+    { pick: { family: ["erg"], unit: "cal" }, qty: "draw", fixed_range: [10, 20] }
   ],
   score_type: "rounds_reps",
   cap_factor: 1,
@@ -26274,7 +26274,7 @@ var compromised_run = {
   rounds: { min: 3, max: 4 },
   slots: [
     { pick: { ids: ["sled_push", "sandbag_lunge", "wall_ball", "db_farmer_carry"] }, qty: "range", role: "station lourde 60-90 s" },
-    { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [600, 1e3] }
+    { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [600, 1e3] }
   ],
   score_type: "time",
   cap_factor: 1.25,
@@ -26298,7 +26298,7 @@ var half_sim = {
     {
       id: "A",
       slots: [
-        { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [500, 800] },
+        { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [500, 800] },
         {
           pick: { ids: ["ski_erg", "sled_push", "sled_pull", "burpee_broad_jump"], erg_unit: "m" },
           qty: "fixed",
@@ -26311,7 +26311,7 @@ var half_sim = {
     {
       id: "B",
       slots: [
-        { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [500, 800] },
+        { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [500, 800] },
         {
           pick: { ids: ["row", "db_farmer_carry", "sandbag_lunge", "wall_ball"], erg_unit: "m" },
           qty: "fixed",
@@ -26362,7 +26362,7 @@ var core_carry_finisher = {
   band_by_intention: { core: "light" },
   rounds: { min: 3, max: 6 },
   slots: [
-    { pick: { ids: ["db_farmer_carry", "sandbag_carry"], unit: "m" }, qty: "fixed", fixed_range: [50, 100] },
+    { pick: { ids: ["db_farmer_carry", "sandbag_carry"], unit: "m" }, qty: "draw", fixed_range: [50, 100] },
     { pick: { ids: ["hollow_rock", "plank_hold", "sit_up", "ghd_sit_up"] }, qty: "range" },
     { pick: { family: ["erg", "run"], pattern_any: ["mono"], erg_unit: "cal" }, qty: "range", optional: true, role: "mono" }
   ],
@@ -26417,6 +26417,61 @@ var engine_negative_split = {
     rpe: 6,
     note: "Zone 3, respiration nasale tenable. Seconde moiti\xE9 un cran plus vite que la premi\xE8re, sans jamais passer en zone 4."
   }
+};
+
+// packages/wod-engine/src/bank/hybrid/emom_hybrid.ts
+var slots5 = [
+  { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
+  { pick: { ids: ["run"], unit: "m" }, qty: "range", reps_range: [100, 300] },
+  {
+    pick: { ids: ["sled_push", "sled_pull", "sandbag_lunge", "sandbag_carry", "kb_swing_russian", "wall_ball", "db_farmer_carry"] },
+    qty: "range"
+  }
+];
+var emom_hybrid = {
+  id: "emom_hybrid",
+  discipline: "hybrid",
+  format: "emom",
+  duration_range: [12, 20],
+  durations: [12, 15, 18, 20],
+  intentions: ["interval", "engine", "aerobic", "run"],
+  band_by_intention: { interval: "medium", engine: "light", aerobic: "light", run: "light" },
+  slots: slots5,
+  variants: [
+    { id: "EMOM", slots: slots5, rest: { every_s: 60 } },
+    { id: "E2MOM", slots: slots5, rest: { every_s: 120 } },
+    { id: "E3MOM", slots: slots5, rest: { every_s: 180 } }
+  ],
+  score_type: "reps_total",
+  cap_factor: 1,
+  allow_variant_up: false,
+  stimulus: { rpe: 7, note: "Erg, course et charge en alternance ; garder un tiers de chaque d\xE9part pour r\xE9cup\xE9rer." }
+};
+
+// packages/wod-engine/src/bank/hybrid/chipper_hybrid.ts
+var chipper_hybrid = {
+  id: "chipper_hybrid",
+  discipline: "hybrid",
+  format: "chipper",
+  duration_range: [18, 30],
+  durations: [20, 30],
+  intentions: ["interval", "engine", "aerobic", "run"],
+  band_by_intention: { interval: "medium", engine: "light", aerobic: "light", run: "light" },
+  rounds: { min: 1, max: 1 },
+  station_count: { min: 6, max: 7 },
+  slots: [
+    { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [800, 1e3], role: "ouverture" },
+    { pick: { family: ["erg"], unit: "cal" }, qty: "range", reps_range: [30, 60] },
+    { pick: { ids: ["wall_ball", "sandbag_lunge", "sled_push", "sled_pull"] }, qty: "range" },
+    { pick: { ids: ["db_farmer_carry", "sandbag_carry"], unit: "m" }, qty: "range", reps_range: [50, 150] },
+    { pick: { family: ["erg"], unit: "cal" }, qty: "range", reps_range: [30, 60] },
+    { pick: { ids: ["wall_ball", "sandbag_lunge", "sled_push", "sled_pull"] }, qty: "range", optional: true },
+    { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [800, 1e3], allow_repeat: true, role: "fermeture" }
+  ],
+  score_type: "time",
+  cap_factor: 1.3,
+  allow_variant_up: false,
+  stimulus: { rpe: 7, note: "Course en ouverture et fermeture, stations encha\xEEn\xE9es \xE0 allure r\xE9guli\xE8re." }
 };
 
 // packages/wod-engine/src/bank/muscu.ts
@@ -27278,7 +27333,9 @@ var HYBRID_SKELETONS = [
   engine_continuous,
   core_carry_finisher,
   run_intervals,
-  engine_negative_split
+  engine_negative_split,
+  emom_hybrid,
+  chipper_hybrid
 ];
 var FUNCTIONAL_CAPS = {
   scaled: { reps: 60, cal: 60, m: 2e3, s: 240 },
@@ -27402,6 +27459,23 @@ function bankFromRows(skeletons, caps) {
   };
 }
 
+// packages/wod-engine/src/quantities.ts
+function step(q, unit, family) {
+  if (unit === "reps") return q >= 10 ? 5 : 1;
+  if (unit === "cal") return 5;
+  if (unit === "m") {
+    if (family === "run") return 100;
+    if (family === "sled" || family === "carry") return 25;
+    return q >= 1e3 ? 100 : q >= 200 ? 50 : q >= 50 ? 10 : 5;
+  }
+  return q >= 20 ? 5 : 1;
+}
+function roundCalculatedQuantity(q, unit, family, mode = "nearest") {
+  const s = step(q, unit, family);
+  const round = mode === "down" ? Math.floor : mode === "up" ? Math.ceil : Math.round;
+  return round(q / s) * s;
+}
+
 // packages/wod-engine/src/estimate.ts
 var TRANSITION_S = 8;
 var TIME_BOUNDED = /* @__PURE__ */ new Set([
@@ -27456,14 +27530,14 @@ function ladderProgress(block, category, budgetS) {
   if (block.ladder) for (let q = block.ladder.start, i = 0; i < 200; q += block.ladder.step, i++) steps.push(q);
   else steps.push(...block.scheme ?? []);
   let acc = 0;
-  let step = 0;
+  let step2 = 0;
   for (const q of steps) {
     const s = stepSeconds(q);
-    if (acc + s > budgetS) return { step, partial: Math.max(0, Math.min(0.99, (budgetS - acc) / s)) };
+    if (acc + s > budgetS) return { step: step2, partial: Math.max(0, Math.min(0.99, (budgetS - acc) / s)) };
     acc += s;
-    step = q;
+    step2 = q;
   }
-  return { step, partial: 0 };
+  return { step: step2, partial: 0 };
 }
 function deathByMinute(block, category, budgetMin) {
   const buyIn = block.movements.filter((m) => m.round === void 0 && m.qty > 0 && !m.per_minute);
@@ -27479,8 +27553,9 @@ function deathByMinute(block, category, budgetMin) {
   return minute;
 }
 function fmtTime(s) {
-  const m = Math.floor(s / 60);
-  const sec2 = Math.round(s % 60);
+  const total2 = Math.round(s);
+  const m = Math.floor(total2 / 60);
+  const sec2 = total2 % 60;
   return `${m}:${sec2.toString().padStart(2, "0")}`;
 }
 function estimateBlock(block, category, budgetMin) {
@@ -27497,10 +27572,10 @@ function estimateBlock(block, category, budgetMin) {
         const s = fixedWorkSeconds(block, category);
         return { minutes: s / 60, target: `\u2248 ${fmtTime(s)}` };
       }
-      const { step, partial } = ladderProgress(block, category, budgetS);
-      const next = block.ladder ? step + block.ladder.step : step;
+      const { step: step2, partial } = ladderProgress(block, category, budgetS);
+      const next = block.ladder ? step2 + block.ladder.step : step2;
       const pct = Math.round(partial * 100);
-      return { minutes: budgetMin, target: step ? pct >= 5 ? `palier ${step} + ${pct} % du palier ${next}` : `palier ${step}` : "palier 1 partiel" };
+      return { minutes: budgetMin, target: step2 ? pct >= 5 ? `palier ${step2} + ${pct} % du palier ${next}` : `palier ${step2}` : "palier 1 partiel" };
     }
     case "death_by": {
       const minute = deathByMinute(block, category, budgetMin);
@@ -27608,8 +27683,9 @@ function fmtNum(n) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, "");
 }
 function mmss(s) {
-  const m = Math.floor(s / 60);
-  const sec2 = Math.round(s % 60);
+  const total2 = Math.round(s);
+  const m = Math.floor(total2 / 60);
+  const sec2 = total2 % 60;
   return sec2 ? `${m}:${sec2.toString().padStart(2, "0")}` : `${m}'`;
 }
 function loadText(m, discipline) {
@@ -27982,6 +28058,10 @@ function durationRange(sk, variant, entry) {
   const max = entry === "after_class" ? Math.min(20, declaredMax) : declaredMax;
   return min <= max ? [min, max] : null;
 }
+var USUAL_DURATIONS = [8, 10, 12, 15, 16, 18, 20, 25, 30];
+function usualDurations([min, max]) {
+  return USUAL_DURATIONS.filter((duration) => duration >= min && duration <= max);
+}
 function candidatePool(ctx, params, bank, rng) {
   const banned = new Set((params.skeleton_not ?? []).map((id) => id.split(":")[0]));
   const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id) && s.intentions.includes(params.intention) && durationRange(s, null, params.entry) !== null && (!ctx.afterClass && !ctx.exclude.size || (s.variants ?? [null]).some((variant) => durationRange(s, variant, params.entry) !== null && canComposeSlots(ctx, s, variant))));
@@ -27999,14 +28079,14 @@ function canComposeSlots(ctx, sk, variant) {
   const source = variant?.slots ?? sk.slots;
   const rounds = variant?.rounds ?? sk.rounds;
   const rotations = typeof rounds === "object" && rounds.min >= 4 ? rounds.min : 1;
-  const slots5 = source.flatMap((slot2, index) => slot2.rotate_per_round && rotations > 1 ? Array.from({ length: rotations }, (_, r) => ({ slot: slot2, index, round: r + 1 })) : [{ slot: slot2, index, round: void 0 }]);
+  const slots6 = source.flatMap((slot2, index) => slot2.rotate_per_round && rotations > 1 ? Array.from({ length: rotations }, (_, r) => ({ slot: slot2, index, round: r + 1 })) : [{ slot: slot2, index, round: void 0 }]);
   const band = effectiveBand(sk, ctx.params);
-  const small = sk.discipline === "functional" && slots5.length <= 3;
-  const pools = slots5.map(({ slot: slot2 }) => ctx.catalog.movements.filter((m) => matchesPick(ctx, slot2, m, [], sk, small) === null && !gymRecordMissing(ctx, m)));
+  const small = sk.discipline === "functional" && slots6.length <= 3;
+  const pools = slots6.map(({ slot: slot2 }) => ctx.catalog.movements.filter((m) => matchesPick(ctx, slot2, m, [], sk, small) === null && !gymRecordMissing(ctx, m)));
   const visit = (index, picked) => {
-    if (index === slots5.length) return !SLOT_INTENTIONS.has(ctx.params.intention) || picked.some((p) => carriesIntention(ctx.params, p.m, p.band, sk));
-    const { slot: slot2, index: slotIndex, round } = slots5[index];
-    if (slot2.optional && sk.station_count && picked.length >= (sk.station_count.min ?? slots5.length) && visit(index + 1, picked)) return true;
+    if (index === slots6.length) return !SLOT_INTENTIONS.has(ctx.params.intention) || picked.some((p) => carriesIntention(ctx.params, p.m, p.band, sk));
+    const { slot: slot2, index: slotIndex, round } = slots6[index];
+    if (slot2.optional && sk.station_count && picked.length >= (sk.station_count.min ?? slots6.length) && visit(index + 1, picked)) return true;
     return pools[index].some((m) => matchesPick(ctx, slot2, m, picked, sk, small) === null && visit(index + 1, [...picked, { m, slot: slot2, index: slotIndex, round, unit: pickUnit(slot2, m), band, qty: 1 }]));
   };
   return visit(0, []);
@@ -28066,7 +28146,7 @@ function matchesPick(ctx, slot2, m, picked, sk, functionalSmall) {
     if (!carrier && ctx.afterClass.families.has(m.family)) return "after_class_family";
   }
   const repeatedRun = format === "continuous" && m.family === "run" && picked.at(-1)?.m.family !== "run";
-  if (picked.some((q) => q.m.id === m.id) && !repeatedRun) return "duplicate";
+  if (picked.some((q) => q.m.id === m.id) && !repeatedRun && !slot2.allow_repeat) return "duplicate";
   if (p.pattern_not_of_slot !== void 0) {
     const other = picked.find((q) => q.index === p.pattern_not_of_slot);
     if (other && primaryPattern(other.m) === primaryPattern(m)) return "pattern_not_of_slot";
@@ -28151,33 +28231,33 @@ function drawMovement(ctx, slot2, index, picked, sk, functionalSmall, need) {
   if (!hit) throw new Reject(`slot_${index}_empty:${Object.keys(reasons).sort().join(",")}`);
   return hit.use;
 }
-function stepQty(q, unit) {
-  if (unit === "m") return q > 1e3 ? 100 : q > 200 ? 50 : q > 50 ? 10 : 5;
-  if (unit === "cal" || unit === "s") return q > 20 ? 5 : 1;
-  return 1;
+function calculatedRange(range, m, unit) {
+  const min = roundCalculatedQuantity(Math.max(1, range[0]), unit, m.family, "up");
+  const max = roundCalculatedQuantity(range[1], unit, m.family, "down");
+  if (min > max) throw new Reject(`quantity_range:${m.id}`);
+  return [min, max];
 }
-function roundQty(q, unit) {
-  if (unit === "m") {
-    if (q >= 1e3) return Math.round(q / 100) * 100;
-    return q >= 200 ? Math.round(q / 50) * 50 : q >= 50 ? Math.round(q / 10) * 10 : Math.round(q / 5) * 5;
-  }
-  if (unit === "cal" || unit === "s") return q >= 20 ? Math.round(q / 5) * 5 : Math.round(q);
-  return Math.max(1, Math.round(q));
+function calculatedQty(q, m, unit, range) {
+  const [min, max] = calculatedRange(range, m, unit);
+  return clamp(roundCalculatedQuantity(q, unit, m.family), min, max);
 }
 function rangeFor(ctx, slot2, m, unit, format) {
   let r = slot2.reps_range ?? m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]];
   if (!r) throw new Reject(`no_range:${m.id}:${unit}`);
   if (slot2.qty_max !== void 0 && slot2.qty_max < r[1]) r = [Math.min(r[0], slot2.qty_max), slot2.qty_max];
+  if (m.family === "sled" && unit === "m" && CONTINUOUS_FORMATS.has(format)) {
+    r = [r[0], Math.min(r[1], 50)];
+  }
   if (ctx.params.intention === "run" && m.family === "run" && unit === "m") {
     if (r[1] < RUN_MIN_M) throw new Reject(`run_too_short:${m.id}`);
     r = [Math.max(r[0], RUN_MIN_M), r[1]];
   }
-  return r;
+  return calculatedRange(r, m, unit);
 }
 function drawFixed(ctx, slot2, m, unit) {
   if (slot2.fixed_by_id && slot2.fixed_by_id[m.id] !== void 0) return slot2.fixed_by_id[m.id];
   if (slot2.fixed !== void 0) return slot2.fixed;
-  if (slot2.fixed_range) return roundQty(ctx.rng.int(slot2.fixed_range[0], slot2.fixed_range[1]), unit);
+  if (slot2.fixed_range) return calculatedQty(ctx.rng.int(slot2.fixed_range[0], slot2.fixed_range[1]), m, unit, slot2.fixed_range);
   throw new Reject(`fixed_missing:${m.id}`);
 }
 function clamp(v, lo, hi) {
@@ -28259,7 +28339,7 @@ function scaleRanges(d, factor) {
   let moved = false;
   for (const p of d.picked) {
     if (!p.range) continue;
-    const next = clamp(roundQty(p.qty * factor, p.unit), p.range[0], p.range[1]);
+    const next = calculatedQty(p.qty * factor, p.m, p.unit, p.range);
     if (next !== p.qty) {
       p.qty = next;
       moved = true;
@@ -28277,8 +28357,7 @@ function fitFixedVolume(ctx, d, roundsCandidates) {
     for (let iter = 0; iter < 4; iter++) {
       const est = fixedWorkSeconds(refBlock(ctx, d), ctx.ref);
       if (ctx.durationRange) {
-        const [min, max] = ctx.durationRange;
-        const durations = Array.from({ length: Math.floor(max) - Math.ceil(min) + 1 }, (_, i) => Math.ceil(min) + i).filter((duration) => within(est / 60, duration));
+        const durations = usualDurations(ctx.durationRange).filter((duration) => within(est / 60, duration));
         if (durations.length) {
           ctx.params.budget_min = ctx.rng.pick(durations);
           return;
@@ -28351,7 +28430,15 @@ function fitEmom(ctx, d) {
   const every = typeof d.restSpec?.every_s === "number" ? d.restSpec.every_s : 60;
   const maxWork = d.sk.max_station_work_s ?? every * 0.65;
   d.rest = { every_s: every };
-  d.rounds = Math.floor(ctx.params.budget_min * 60 / every / d.picked.length);
+  const cycle = every * d.picked.length;
+  if (ctx.durationRange) {
+    const [min, max] = ctx.durationRange;
+    const durations = seq(Math.ceil(min), Math.floor(max), 1).filter((duration) => duration * 60 % cycle === 0 && duration * 60 >= cycle * 2);
+    if (!durations.length) throw new Reject("emom_no_complete_cycles");
+    ctx.params.budget_min = ctx.rng.pick(durations);
+  }
+  d.rounds = ctx.params.budget_min * 60 / cycle;
+  if (!Number.isInteger(d.rounds)) throw new Reject("emom_incomplete_cycle");
   if (d.rounds < 2) throw new Reject("emom_too_short");
   for (const p of d.picked) {
     const m = toGenerated(ctx, d, p);
@@ -28362,7 +28449,7 @@ function fitEmom(ctx, d) {
         if (work > maxWork) throw new Reject("emom_station_too_long");
         break;
       }
-      const next = clamp(roundQty(p.qty * (maxWork * 0.8 / work), p.unit), p.range[0], p.range[1]);
+      const next = calculatedQty(p.qty * (maxWork * 0.8 / work), p.m, p.unit, p.range);
       if (next === p.qty) {
         if (work > maxWork) throw new Reject("emom_station_too_long");
         break;
@@ -28386,45 +28473,44 @@ function fitStations(ctx, d) {
       d.rest = { work_s: w, rest_s: r };
       d.stations = n;
       for (const p of d.picked) {
-        const cad = cadenceFor(p.m, ctx.ref, p.unit);
-        if (!cad) throw new Reject(`no_cadence:${p.m.id}`);
-        let q = roundQty(w * 0.9 / cad, p.unit);
-        while (q * cad > w && q > 1) q = roundQty(q - stepQty(q, p.unit), p.unit);
-        if (q * cad > w) throw new Reject(`station_target:${p.m.id}`);
-        p.qty = q;
+        const cad = movementSeconds(toGenerated(ctx, d, p), ctx.ref, 1);
+        if (p.slot.qty === "range" || p.slot.qty === "draw" || p.slot.fixed_range) {
+          p.qty = calculatedQty(w * 0.9 / cad, p.m, p.unit, [1, Math.min(w / cad, p.slot.qty_max ?? Infinity)]);
+        }
+        if (p.qty * cad > w) throw new Reject(`station_target:${p.m.id}`);
       }
       return;
     }
   }
   throw new Reject("duration_stations");
 }
-function seq(a, b, step) {
+function seq(a, b, step2) {
   const out = [];
-  for (let v = a; v <= b; v += step) out.push(v);
+  for (let v = a; v <= b; v += step2) out.push(v);
   return out;
 }
 function fitLadder(ctx, d) {
   const base = d.sk.scheme ?? [];
   if (base.length < 2) throw new Reject("ladder_scheme_missing");
   const start = base[0];
-  const step = base[1] - base[0];
-  d.ladder = { start, step };
+  const step2 = base[1] - base[0];
+  d.ladder = { start, step: step2 };
   d.rounds = null;
-  d.scheme = [start, start + step];
+  d.scheme = [start, start + step2];
   for (const p of d.picked) {
     p.scheme = d.scheme;
-    p.qty = start * 2 + step;
+    p.qty = start * 2 + step2;
   }
   const budgetS = ctx.params.budget_min * 60;
   const block = refBlock(ctx, d);
   const refStep = ladderStep(block, ctx.ref, budgetS);
-  if (refStep < start + 2 * step) throw new Reject("ladder_too_short");
+  if (refStep < start + 2 * step2) throw new Reject("ladder_too_short");
   const cats = categoriesFor(ctx.params.discipline);
   const lo = ladderStep(block, cats[0], budgetS);
   const hi = ladderStep(block, cats[cats.length - 1], budgetS);
   if (lo >= hi) throw new Reject("ladder_same_step_all_categories");
   d.scheme = [];
-  for (let q = start; q <= refStep; q += step) d.scheme.push(q);
+  for (let q = start; q <= refStep; q += step2) d.scheme.push(q);
   const total2 = d.scheme.reduce((s, q) => s + q, 0);
   for (const p of d.picked) {
     p.scheme = d.scheme;
@@ -28460,10 +28546,10 @@ function fitTabata(ctx, d) {
   if (total2 > ctx.params.budget_min || !within(total2, ctx.params.budget_min)) throw new Reject("duration_tabata");
   for (const p of d.picked) p.qty = 0;
 }
-function lastCarrierSlot(ctx, sk, slots5, band) {
+function lastCarrierSlot(ctx, sk, slots6, band) {
   if (!SLOT_INTENTIONS.has(ctx.params.intention)) return -1;
-  for (let i = slots5.length - 1; i >= 0; i--) {
-    const p = slots5[i].pick;
+  for (let i = slots6.length - 1; i >= 0; i--) {
+    const p = slots6[i].pick;
     const slotBand = p.band ? constrainBand(p.band, ctx.params, sk) : band;
     const ok = ctx.catalog.movements.some((m) => m.active && weightFor(m, ctx.params.discipline) > 0 && (!p.ids || p.ids.includes(m.id)) && (!p.family || p.family.includes(m.family)) && (!p.modality || p.modality.includes(m.modality)) && (!p.pattern_any || m.pattern.some((x) => p.pattern_any.includes(x))) && (!p.pattern_not || !m.pattern.some((x) => p.pattern_not.includes(x))) && carriesIntention(ctx.params, m, slotBand, sk));
     if (ok) return i;
@@ -28472,14 +28558,14 @@ function lastCarrierSlot(ctx, sk, slots5, band) {
 }
 function buildDraft(ctx, sk, variant = null) {
   const band = effectiveBand(sk, ctx.params);
-  const slots5 = activeSlots(ctx, sk, variant);
+  const slots6 = activeSlots(ctx, sk, variant);
   const format = sk.format;
-  const functionalSmall = ctx.params.discipline === "functional" && slots5.length <= 3;
+  const functionalSmall = ctx.params.discipline === "functional" && slots6.length <= 3;
   const scheme = variant?.scheme ?? sk.scheme_by_band?.[band] ?? sk.scheme;
   const d = {
     sk,
     variantId: variant?.id ?? null,
-    slots: slots5,
+    slots: slots6,
     band,
     picked: [],
     rounds: null,
@@ -28488,8 +28574,8 @@ function buildDraft(ctx, sk, variant = null) {
   const roundsCandidates = pickRounds(ctx, sk, variant, band);
   const rounds = roundsCandidates[0] || null;
   const intentionMet = () => !SLOT_INTENTIONS.has(ctx.params.intention) || d.picked.some((p) => carriesIntention(ctx.params, p.m, p.band, sk));
-  const lastCarrier = lastCarrierSlot(ctx, sk, slots5, band);
-  slots5.forEach((slot2, index) => {
+  const lastCarrier = lastCarrierSlot(ctx, sk, slots6, band);
+  slots6.forEach((slot2, index) => {
     const slotBand = slot2.pick.band ? constrainBand(slot2.pick.band, ctx.params, sk) : band;
     const need = index === lastCarrier && !intentionMet() ? (m2) => carriesIntention(ctx.params, m2, slotBand, sk) : void 0;
     const m = drawMovement(ctx, slot2, index, d.picked, sk, functionalSmall, need);
@@ -28499,9 +28585,10 @@ function buildDraft(ctx, sk, variant = null) {
       case "range": {
         const r = rangeFor(ctx, slot2, m, unit, format);
         base.range = r;
-        base.qty = roundQty(ctx.rng.int(r[0], r[1]), unit);
+        base.qty = calculatedQty(ctx.rng.int(r[0], r[1]), m, unit, r);
         break;
       }
+      case "draw":
       case "fixed":
         base.qty = drawFixed(ctx, slot2, m, unit);
         break;
@@ -28527,7 +28614,7 @@ function buildDraft(ctx, sk, variant = null) {
         const q = { slot: slot2, index, m: mm, unit: uu, band: slotBand, qty: 0, round: r };
         if (slot2.qty === "range") {
           q.range = rangeFor(ctx, slot2, mm, uu, format);
-          q.qty = roundQty(ctx.rng.int(q.range[0], q.range[1]), uu);
+          q.qty = calculatedQty(ctx.rng.int(q.range[0], q.range[1]), mm, uu, q.range);
         } else q.qty = drawFixed(ctx, slot2, mm, uu);
         extra.push(q);
       }
@@ -28538,6 +28625,9 @@ function buildDraft(ctx, sk, variant = null) {
   });
   if (format !== "chipper" && scheme && !variant?.scheme) d.scheme = scheme;
   if (variant?.scheme) d.scheme = variant.scheme;
+  if (CONTINUOUS_FORMATS.has(format) && d.picked.some((p) => p.m.family === "sled" && p.unit === "m" && p.qty > 50)) {
+    throw new Reject("sled_passage_over_50m");
+  }
   switch (format) {
     case "amrap":
       fitAmrap(ctx, d);
@@ -28655,7 +28745,7 @@ function capPass(ctx, d) {
       const biggest = p.scheme ? Math.max(...p.scheme) : p.qty;
       if (biggest > perSet) {
         if (p.range && !p.scheme && perSet >= p.range[0]) {
-          p.qty = perSet;
+          p.qty = calculatedQty(perSet, p.m, p.unit, [p.range[0], Math.min(p.range[1], perSet)]);
           changed = true;
           continue;
         }
@@ -28670,7 +28760,7 @@ function capPass(ctx, d) {
     const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
     if (cap === Infinity || perWod <= cap) continue;
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
-    const next = roundQty(Math.floor(cap / mult), p.unit);
+    const next = roundCalculatedQuantity(Math.floor(cap / mult), p.unit, p.m.family, "down");
     if (next < p.range[0] || next >= p.qty) throw new Reject(`volume_cap:${p.m.id}`);
     p.qty = next;
     changed = true;
@@ -28689,7 +28779,7 @@ function finalize(ctx, d, tierRelaxations, attempts, seed) {
     if (rounds < 3 || rounds > 10) throw new Reject("amrap_round_length");
   }
   const timeBounded = !finiteLadder && TIME_BOUNDED.has(d.sk.format) || d.sk.format === "interval" || d.sk.score_type !== "time";
-  block.timecap = timeBounded ? null : Math.ceil(refEst.minutes * d.sk.cap_factor / 0.5) * 30;
+  block.timecap = timeBounded ? null : Math.ceil(refEst.minutes * d.sk.cap_factor) * 60;
   const vest = ctx.params.discipline === "hybrid" && ctx.params.vest && ctx.params.vest !== "none" ? { mode: ctx.params.vest, load_kg_by_category: pickCats(ctx) } : null;
   const partial = {
     source: "generator",
@@ -28713,21 +28803,10 @@ function finalize(ctx, d, tierRelaxations, attempts, seed) {
     score_type: d.sk.score_type,
     after_class: ctx.afterClass ? { excluded_patterns: [...ctx.afterClass.patterns].sort(), excluded_families: [...ctx.afterClass.families].sort() } : null
   };
-  if (ctx.params.round_qty) roundQuantities(block);
   const estimate = estimateAll({ ...partial, ...emptyEditor() });
   const wod = { ...emptyEditor(), ...partial, estimate, signature: "" };
   wod.signature = signature(wod);
   return render(wod);
-}
-function roundQuantities(block) {
-  const step = (unit) => unit === "reps" || unit === "cal" ? 5 : unit === "s" ? 10 : 0;
-  const snap = (q, s) => s ? Math.max(s, Math.round(q / s) * s) : q;
-  for (const m of block.movements) {
-    const s = step(m.unit);
-    if (!s) continue;
-    m.qty = snap(m.qty, s);
-    if (m.scheme) m.scheme = m.scheme.map((q) => snap(q, s));
-  }
 }
 function pickCats(ctx) {
   const out = {};
@@ -28793,7 +28872,9 @@ function generateBlocC(params, catalog, bank, seed) {
     const variant = variants.length ? rng.pick(variants) : null;
     const range = durationRange(sk, variant, params.entry);
     if (athlete && !range) continue;
-    const budget = params.budget_min ?? rng.int(Math.ceil(range[0]), Math.floor(range[1]));
+    const durations = range ? sk.format === "emom" ? seq(Math.ceil(range[0]), Math.floor(range[1]), 1) : usualDurations(range) : [];
+    if (athlete && !durations.length) continue;
+    const budget = params.budget_min ?? rng.pick(durations);
     ctx.params = { ...normalized, budget_min: budget };
     ctx.durationRange = athlete ? range : void 0;
     try {
@@ -29489,7 +29570,7 @@ function availableDurations(catalog, bank, params) {
 function generateMuscu(request, catalog, bank, seed) {
   const params = {
     ...request,
-    budget_min: request.budget_min ?? (request.entry === "express" ? 45 : new RNG(seed).int(15, 20))
+    budget_min: request.budget_min ?? (request.entry === "express" ? 45 : new RNG(seed).pick([15, 16, 18, 20]))
   };
   if (params.objective === "force" && params.entry === "after_class") {
     throw new InvalidMuscuParams("force_after_class", "Apr\xE8s ma classe : la Force n'est pas propos\xE9e (hypertrophie ou endurance)");
@@ -29820,10 +29901,10 @@ function blocCRepsRx(wod) {
           break;
         case "ladder": {
           if (!b.ladder) break;
-          const { step } = ladderProgress(b, ref, budgetS);
+          const { step: step2 } = ladderProgress(b, ref, budgetS);
           const start = b.ladder?.start ?? gm.qty;
           const inc = b.ladder?.step ?? gm.qty;
-          const n = inc > 0 ? Math.max(1, Math.floor((step - start) / inc) + 1) : 1;
+          const n = inc > 0 ? Math.max(1, Math.floor((step2 - start) / inc) + 1) : 1;
           mult = n * (start + (n - 1) * inc / 2) / Math.max(1, gm.qty);
           break;
         }
@@ -30850,7 +30931,15 @@ var FEASIBILITY = [
   { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", intention: "core", feasible: true },
   { id: "run_intervals", discipline: "hybrid", format: "interval", intention: "run", feasible: true },
   { id: "run_intervals", discipline: "hybrid", format: "interval", intention: "engine", feasible: true },
-  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", intention: "aerobic", feasible: true }
+  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", intention: "aerobic", feasible: true },
+  { id: "emom_hybrid", discipline: "hybrid", format: "emom", intention: "interval", feasible: true },
+  { id: "emom_hybrid", discipline: "hybrid", format: "emom", intention: "engine", feasible: true },
+  { id: "emom_hybrid", discipline: "hybrid", format: "emom", intention: "aerobic", feasible: true },
+  { id: "emom_hybrid", discipline: "hybrid", format: "emom", intention: "run", feasible: true },
+  { id: "chipper_hybrid", discipline: "hybrid", format: "chipper", intention: "interval", feasible: true },
+  { id: "chipper_hybrid", discipline: "hybrid", format: "chipper", intention: "engine", feasible: true },
+  { id: "chipper_hybrid", discipline: "hybrid", format: "chipper", intention: "aerobic", feasible: true },
+  { id: "chipper_hybrid", discipline: "hybrid", format: "chipper", intention: "run", feasible: true }
 ];
 
 // packages/wod-engine/src/feasibility.ts

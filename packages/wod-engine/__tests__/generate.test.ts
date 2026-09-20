@@ -112,10 +112,10 @@ describe('estimateDuration', () => {
     }
   });
 
-  it('un for time porte un cap = estimation × cap_factor arrondi à 30 s ; un AMRAP n’en a pas', () => {
+  it('un for time porte un cap = estimation × cap_factor arrondi à la minute ; un AMRAP n’en a pas', () => {
     const ft = gen({ ...F, format: 'for_time' }, 5);
     expect(ft.time_cap_seconds).not.toBeNull();
-    expect(ft.time_cap_seconds! % 30).toBe(0);
+    expect(ft.time_cap_seconds! % 60).toBe(0);
     expect(ft.time_cap_seconds!).toBeGreaterThan(ft.estimate.reference_minutes * 60);
     const am = gen({ ...F, format: 'amrap' }, 5);
     expect(am.format).toBe('amrap');

@@ -1,5 +1,5 @@
 // GÉNÉRÉ par scripts/feasibility.mjs — ne pas éditer. 25 seeds par combinaison.
-// 55 combinaisons déclarées, 0 jamais servies.
+// 63 combinaisons déclarées, 0 jamais servies.
 import type { Discipline, Intention, SkeletonFormat } from '../types';
 
 export interface FeasibilityRow {
@@ -67,4 +67,12 @@ export const FEASIBILITY: readonly FeasibilityRow[] = [
   { id: 'run_intervals', discipline: 'hybrid', format: 'interval', intention: 'run', feasible: true },
   { id: 'run_intervals', discipline: 'hybrid', format: 'interval', intention: 'engine', feasible: true },
   { id: 'engine_negative_split', discipline: 'hybrid', format: 'continuous', intention: 'aerobic', feasible: true },
+  { id: 'emom_hybrid', discipline: 'hybrid', format: 'emom', intention: 'interval', feasible: true },
+  { id: 'emom_hybrid', discipline: 'hybrid', format: 'emom', intention: 'engine', feasible: true },
+  { id: 'emom_hybrid', discipline: 'hybrid', format: 'emom', intention: 'aerobic', feasible: true },
+  { id: 'emom_hybrid', discipline: 'hybrid', format: 'emom', intention: 'run', feasible: true },
+  { id: 'chipper_hybrid', discipline: 'hybrid', format: 'chipper', intention: 'interval', feasible: true },
+  { id: 'chipper_hybrid', discipline: 'hybrid', format: 'chipper', intention: 'engine', feasible: true },
+  { id: 'chipper_hybrid', discipline: 'hybrid', format: 'chipper', intention: 'aerobic', feasible: true },
+  { id: 'chipper_hybrid', discipline: 'hybrid', format: 'chipper', intention: 'run', feasible: true },
 ];

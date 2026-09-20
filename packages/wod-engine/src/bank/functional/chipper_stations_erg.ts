@@ -10,9 +10,9 @@ export const chipper_stations_erg: Skeleton = {
   band_by_intention: { mixed: 'medium', cardio: 'light' },
   rounds: { min: 1, max: 1 },
   slots: [
-    { pick: { family: ['erg'], unit: 'cal' }, qty: 'range' },
+    { pick: { family: ['erg'], unit: 'cal' }, qty: 'range', reps_range: [40, 100] },
     { pick: { family: ['sled', 'carry', 'sandbag'], unit: 'm' }, qty: 'range' },
-    { pick: { family: ['erg'], unit: 'cal' }, qty: 'range', role: 'erg différent du (1)' },
+    { pick: { family: ['erg'], unit: 'cal' }, qty: 'range', reps_range: [40, 100], role: 'erg différent du (1)' },
     { pick: { family: ['run'], unit: 'm' }, qty: 'range', qty_max: 800 },
     { pick: { family: ['bodyweight', 'gym'], pattern_any: ['core', 'pull_v', 'push_v'] }, qty: 'range' },
   ],

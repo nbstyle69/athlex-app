@@ -10,7 +10,7 @@ export const core_carry_finisher: Skeleton = {
   band_by_intention: { core: 'light' },
   rounds: { min: 3, max: 6 },
   slots: [
-    { pick: { ids: ['db_farmer_carry', 'sandbag_carry'], unit: 'm' }, qty: 'fixed', fixed_range: [50, 100] },
+    { pick: { ids: ['db_farmer_carry', 'sandbag_carry'], unit: 'm' }, qty: 'draw', fixed_range: [50, 100] },
     { pick: { ids: ['hollow_rock', 'plank_hold', 'sit_up', 'ghd_sit_up'] }, qty: 'range' },
     { pick: { family: ['erg', 'run'], pattern_any: ['mono'], erg_unit: 'cal' }, qty: 'range', optional: true, role: 'mono' },
   ],

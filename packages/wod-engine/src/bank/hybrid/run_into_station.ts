@@ -15,7 +15,7 @@ export const run_into_station: Skeleton = {
   band_by_intention: { interval: 'medium', engine: 'light', run: 'light' },
   rounds: { min: 4, max: 6 },
   slots: [
-    { pick: { ids: ['run'], unit: 'm' }, qty: 'fixed', fixed_range: [400, 800] },
+    { pick: { ids: ['run'], unit: 'm' }, qty: 'draw', fixed_range: [400, 800] },
     { pick: { ids: HYBRID_STATIONS, erg_unit: 'm' }, qty: 'range', rotate_per_round: true },
   ],
   score_type: 'time',

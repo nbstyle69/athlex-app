@@ -918,7 +918,7 @@ export function generateMuscu(
 ): MuscuWod {
   const params: MuscuParams = {
     ...request,
-    budget_min: request.budget_min ?? (request.entry === 'express' ? 45 : new RNG(seed).int(15, 20)),
+    budget_min: request.budget_min ?? (request.entry === 'express' ? 45 : new RNG(seed).pick([15, 16, 18, 20])),
   };
   if (params.objective === 'force' && params.entry === 'after_class') {
     throw new InvalidMuscuParams('force_after_class', 'Après ma classe : la Force n\'est pas proposée (hypertrophie ou endurance)');

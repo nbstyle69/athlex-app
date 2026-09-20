@@ -62,8 +62,9 @@ type Route = RouteProp<{ WodResult: WodResultParams }, 'WodResult'>;
 const fmtNum = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, ''));
 
 export function mmss(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = Math.round(s % 60);
+  const total = Math.round(s);
+  const m = Math.floor(total / 60);
+  const sec = total % 60;
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 

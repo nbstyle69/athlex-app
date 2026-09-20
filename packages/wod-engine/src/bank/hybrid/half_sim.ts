@@ -15,7 +15,7 @@ export const half_sim: Skeleton = {
     {
       id: 'A',
       slots: [
-        { pick: { ids: ['run'], unit: 'm' }, qty: 'fixed', fixed_range: [500, 800] },
+        { pick: { ids: ['run'], unit: 'm' }, qty: 'draw', fixed_range: [500, 800] },
         {
           pick: { ids: ['ski_erg', 'sled_push', 'sled_pull', 'burpee_broad_jump'], erg_unit: 'm' }, qty: 'fixed',
           fixed_by_id: { ski_erg: 500, sled_push: 25, sled_pull: 25, burpee_broad_jump: 40 }, rotate_per_round: true,
@@ -26,7 +26,7 @@ export const half_sim: Skeleton = {
     {
       id: 'B',
       slots: [
-        { pick: { ids: ['run'], unit: 'm' }, qty: 'fixed', fixed_range: [500, 800] },
+        { pick: { ids: ['run'], unit: 'm' }, qty: 'draw', fixed_range: [500, 800] },
         {
           pick: { ids: ['row', 'db_farmer_carry', 'sandbag_lunge', 'wall_ball'], erg_unit: 'm' }, qty: 'fixed',
           fixed_by_id: { row: 500, db_farmer_carry: 100, sandbag_lunge: 50, wall_ball: 50 }, rotate_per_round: true,

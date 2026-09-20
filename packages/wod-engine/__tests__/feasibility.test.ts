@@ -31,11 +31,15 @@ describe('table de faisabilité', () => {
 });
 
 describe('ce que l\'écran peut proposer', () => {
-  it('Hybrid ne propose ni EMOM ni Chipper : la banque n\'en a pas', () => {
+  it('Hybrid propose EMOM et Chipper pour les intentions cardio servies', () => {
     const offered = formatsOfferedFor('hybrid');
-    expect(offered).not.toContain('emom');
-    expect(offered).not.toContain('chipper');
+    expect(offered).toContain('emom');
+    expect(offered).toContain('chipper');
     expect(offered).toContain('surprise');
+    for (const intention of ['interval', 'engine', 'aerobic', 'run'] as const) {
+      expect(feasibleFormats('hybrid', intention).has('emom')).toBe(true);
+      expect(feasibleFormats('hybrid', intention).has('chipper')).toBe(true);
+    }
   });
 
   it('Functional propose tous les formats de l\'écran', () => {
