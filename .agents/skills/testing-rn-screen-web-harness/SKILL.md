@@ -5,6 +5,44 @@ description: Test a single React Native screen end-to-end in the browser when th
 
 # Testing a RN screen via an isolated web-export harness
 
+## Local alternative when builds/exports or remote access are forbidden
+
+Use this procedure instead of the static export and authenticated seeding steps below
+when the task forbids builds/exports, credentials or remote writes. It proves local
+screen/service behavior, not native integration or server authorization. No secrets
+are needed.
+
+- Verify the checkout revision and branch before starting. Import data from that
+  checkout; do not reuse banks or baselines from another feature branch.
+- Keep the entry point and adapters outside the repository. Use the installed esbuild
+  context development server with `write:false`, browser platform, React automatic
+  JSX and an in-memory output directory. Alias React Native to react-native-web and
+  retain web-first module extensions. No production build or Expo export is needed.
+- Import the real screen and services. Replace only unavailable navigation, auth,
+  native layout and network transports. Keep catalog/search/formatting logic unchanged.
+- For persistence UI, preserve save/load services with a narrowly scoped in-memory
+  transport at the Supabase boundary. Reject unexpected mutations. Reread IDs through
+  the real load service; do not directly modify screen state. Label storage mock local.
+- Prove selection/deserialization through UI selection, checking IDs, switching modes
+  and unmounting/remounting without clearing storage. Do not claim remote persistence
+  or RLS validation.
+- For themes, use the actual ThemeProvider/toggleTheme. Adapt native backgrounds using
+  the real theme background rather than a fixed light color.
+- A standalone RN-web bootstrap may need `window.global = window` before loading the
+  memory bundle. Missing `global` can surface only on animated-screen unmount in
+  `TimingAnimation.stop`; capture uncaught error stacks and exercise navigation.
+- Retain actual web `expo-blur` and `expo-linear-gradient` for glass-card layout tests.
+  Bound the HTML root to the viewport, but do not treat clipping as proof of fit:
+  compare card/text rectangles against content bounds and inspect pixels. Deduplicate
+  Range rectangles by vertical coordinate for wrapped-line counts; `getClientRects()`
+  can return multiple fragments per line.
+- Record a short UI flow with selected states. Inspect testIDs or transport DTOs
+  read-only to corroborate internal IDs.
+- Stop the server and remove temporary adapters; leave the original harness and repo
+  unchanged.
+
+## Static export with authorized remote data access
+
 Battlewod is React Native (Expo). On the CI/VM there is **no iOS/Android simulator**, and the
 **Expo web dev server is unreliable here** (Metro often crashes with `Error: Got unexpected undefined`
 during incremental/HMR bundling, and native-only view managers — maps, video recorder, timer —
