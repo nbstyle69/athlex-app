@@ -39,7 +39,7 @@ describe('options du formulaire', () => {
     const eq = equipmentOptions(CATALOG_SNAPSHOT);
     expect(eq).toEqual(expect.arrayContaining(['barbell', 'rower']));
     expect(eq).toEqual([...eq].sort((a, b) => a.localeCompare(b)));
-    expect(screen).toContain('placeholder="Exclure un mouvement…"');
+    expect(screen).toContain('placeholder="Exclure du matériel ou un mouvement…"');
     expect(screen).toContain('saveExcludes(user.id, next)');
     expect(screen).not.toMatch(/title="Catégorie"/);
     expect(screen).not.toContain('CATEGORY_LABEL');
