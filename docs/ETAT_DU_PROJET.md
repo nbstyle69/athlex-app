@@ -198,11 +198,13 @@ Supabase/Resend.
 
 ## En cours
 
-**Lot C6 — Cartes de contexte** (préparé, action « Classe du jour » à arbitrer).
+**Lot C6 — Cartes de contexte** (PR #326 prête à relire, non mergée).
 `SessionContextCard` rend les deux encarts avec le même verre, un padding de
-16 à l'intérieur, l'étiquette en capitales, le corps et le rendu du bouton.
-« Reprendre la séance » conserve son action. « Classe du jour » n'avait pas de
-bouton : son action reste à confirmer avant de terminer le lot.
+16 à l'intérieur, l'étiquette en capitales et le corps. Le bouton est optionnel :
+« Reprendre la séance » reste présent pour « Dernière séance générée » ;
+« Classe du jour » reste sans bouton, conformément à l'arbitrage de Nabil.
+Montage réel testé en clair/sombre sur les variantes iOS/Android ; navigateur
+validé à 320, 375 et 1000 px, sans débordement des cartes.
 Aucune migration ; PR indépendante de C2+C3.
 
 **Générateur de WOD v1 — PR 1/3 (`athlex-app`, migration `20261211`).** Le générateur est

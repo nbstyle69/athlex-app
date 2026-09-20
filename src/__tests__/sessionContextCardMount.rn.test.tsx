@@ -1,5 +1,5 @@
 import React, { useEffect as mockUseEffect } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import { BANK_V1 as mockBank, CATALOG_SNAPSHOT as mockCatalog, generateBlocC, GenerateParams } from '../../packages/wod-engine/src';
 import { lightTheme, darkTheme } from '../theme/palette';
@@ -66,6 +66,8 @@ for (const os of ['ios', 'android'] as const) {
       expect(cards.map((card) => card.props.label)).toEqual([
         'Dernière séance générée', 'Classe du jour · AthleX Fitness',
       ]);
+      expect(cards[0].findAllByType(TouchableOpacity)).toHaveLength(1);
+      expect(cards[1].findAllByType(TouchableOpacity)).toHaveLength(0);
       for (const card of cards) {
         const glass = card.findByType(GlassCard);
         expect(glass.props.radius).toBe(14);
