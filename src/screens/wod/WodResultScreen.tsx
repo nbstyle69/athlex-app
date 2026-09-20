@@ -39,7 +39,7 @@ import {
   CATEGORY_LABEL, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES,
   TIME_BOUNDED,
 } from '../../../packages/wod-engine/src';
-import type { Category, GeneratedMovement, GeneratedWod, MuscuWod } from '../../../packages/wod-engine/src';
+import type { Category, GeneratedBlock, GeneratedMovement, GeneratedWod, MuscuWod } from '../../../packages/wod-engine/src';
 import type { SkeletonFormat } from '../../../packages/wod-engine/src';
 import { FORMATS, INTENTIONS } from './wodGeneratorOptions';
 import {
@@ -71,7 +71,11 @@ export function minutesText(min: number): string {
   return mmss(Math.round(min * 60));
 }
 
-export function qtyText(m: GeneratedMovement): string {
+export function qtyText(m: GeneratedMovement, block: GeneratedBlock): string {
+  if (block.format === 'tabata') {
+    const work = block.rest?.work_s ?? 20;
+    return m.unit === 's' ? `Tenue ${work} s ·` : `Max ${m.unit} en ${work} s ·`;
+  }
   const q = m.scheme ? m.scheme.join('-') : String(m.qty);
   const per = m.per_minute ? ' (+1 / min)' : '';
   return m.unit === 'reps' ? `${q}${per}` : `${q} ${m.unit}${per}`;
@@ -479,7 +483,7 @@ export default function WodResultScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={S.moveText}>
                       {m.round != null ? <Text style={S.moveRound}>R{m.round} · </Text> : null}
-                      <Text style={[S.moveQty, { color: accent }]}>{qtyText(m)}</Text> {m.name}
+                      <Text style={[S.moveQty, { color: accent }]}>{qtyText(m, metcon.blocks[0])}</Text> {m.name}
                     </Text>
                     <Text style={S.moveSub}>{line ?? 'Toutes catégories'}</Text>
                   </View>
