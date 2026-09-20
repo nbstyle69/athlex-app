@@ -198,6 +198,13 @@ Supabase/Resend.
 
 ## En cours
 
+**Lot C5 — Split par exercice** (aucune migration, PR indépendante de C2+C3).
+Le chrono principal repart de zéro au changement d'exercice ; les séries d'un
+même exercice conservent leur chrono, repos compris. Le total reste visible en
+petit, y compris avec caméra. Chaque split final donne le temps de l'exercice et
+le total cumulé. Le total comprend tous les blocs et pauses de la séance ; le
+redémarrage efface les chronos et le journal.
+
 **Lot C4 — Adapter à mes PR** (aucune migration, PR indépendante de C2+C3).
 Option activée par défaut dans les options avancées Functional/Hybrid et mémorisée
 dans les réglages du profil. Activée, elle conserve les substitutions gym et le
