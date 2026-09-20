@@ -164,6 +164,22 @@ check('canal OTA = production', channel === 'production', channel ?? 'absent');
 check('URL OTA = projet EAS de app.json',
   expoPlist.EXUpdatesURL === expected.updates.url, expoPlist.EXUpdatesURL ?? 'absente');
 
+
+// 6. Fonctions attendues du build 1.0.55 : chaînes ASCII de la table Hermes
+//    (un testID ou un préfixe de clé, jamais un libellé accentué — l'UTF-16 de
+//    Hermes ne se lit pas par `includes`).
+const FEATURES = [
+  ['onglets de piste du Whiteboard', 'whiteboard-track-tabs'],
+  ['memoire de piste du Whiteboard', '@athlex:whiteboardTrack:'],
+  ['section Gymnastique du calculateur 1RM', 'onerm-gym-input'],
+  ['mode Split du minuteur', 'PASSER LE REPOS'],
+  ['vue Musculation du generateur', 'wodgen-discipline'],
+  ['reprise de la seance generee', 'wodgen-draft-resume'],
+  ['memoire des tirages Musculation', '@athlex:muscuRecent:'],
+];
+for (const [name, marker] of FEATURES) check(`${name} embarque`, js.includes(marker), marker);
+check('ancien moteur engineCrossFit absent', !js.includes('engineCrossFit'));
+
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} assertions vraies`);
 if (failed.length) {
