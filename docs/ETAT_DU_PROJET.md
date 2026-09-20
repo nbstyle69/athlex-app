@@ -1,6 +1,6 @@
 # État du projet AthleX
 
-Dernière mise à jour : **15 septembre 2026**.
+Dernière mise à jour : **20 septembre 2026**.
 
 Ce fichier est écrit pour être lu en deux minutes, sans être développeur. Il dit ce qui
 marche aujourd'hui, ce qui est en train de se faire, ce qui vient ensuite, et ce qui est
@@ -197,6 +197,20 @@ Supabase/Resend.
 ---
 
 ## En cours
+
+**Lot C2+C3 — durée et variété du générateur** ([PR #322](https://github.com/nbstyle69/athlex-app/pull/322), diffusion en attente).
+Le choix de durée disparaît dans les trois disciplines : le moteur la tire dans la plage du
+squelette ou de sa variante, 45 minutes en séance Musculation, 15–20 après la classe.
+La durée estimée reste au résultat, sans comparaison à une durée demandée. Les formats sont
+proposés selon l'intention ; Surprends-moi choisit une famille servable à parts égales puis
+son sous-format, conservés pendant la composition. La banque ajoute les schémas classiques,
+les ladders finies et ouvertes et les départs EMOM/E2MOM/E3MOM ; elle rétablit les squelettes
+Hybrid morts, avec les restrictions de programmation conservées. Sur 2 000 tirages par
+discipline, aucun échec ; minimum des familles affichées 10,45 % Functional et 12,05 % Hybrid,
+Tabata 9,75 %, Death by 5,65 % (protocole et variantes dans la PR).
+Migration `20261229`, **appliquée en prod : non** : à appliquer par Nabil **avant merge et OTA
+1.0.55**. L'ancien lecteur garde les définitions v3 ; le nouveau lit `definition.c2c3`.
+Les trois contrôles indépendants de #313 restent au backlog. C1, C4, C5 et C6 restent séparés.
 
 **Générateur de WOD v1 — PR 1/3 (`athlex-app`, migration `20261211`).** Le générateur est
 refait de zéro en moteur déterministe (`packages/wod-engine`, TypeScript pur, aucune IA ni

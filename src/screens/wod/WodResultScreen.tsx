@@ -128,17 +128,10 @@ export default function WodResultScreen() {
   // scorés au temps (For time, chipper…), où c'est un plafond à ne pas franchir.
   const borneParDuree = metcon ? TIME_BOUNDED.has(metcon.format) && !(metcon.format === 'ladder' && !metcon.blocks[0].ladder) : true;
 
-  // G1 : le format demandé a été relâché par le moteur (aucun squelette de ce
-  // format n'a abouti sur cette durée × intention). On le dit, on ne laisse pas
-  // croire que le choix a été respecté. Le moteur trace `format` dans ses
-  // relâchements ; l'écran connaît la demande par `screen`.
   const FORMAT_OBTENU: Record<SkeletonFormat, string> = {
     amrap: 'AMRAP', for_time: 'For time', rounds_for_time: 'Rounds for time', chipper: 'Chipper', ladder: 'Ladder',
     emom: 'EMOM', death_by: 'Death by', tabata: 'Tabata', interval: 'Intervalles', stations: 'Stations', continuous: 'Continu',
   };
-  // Même mécanisme pour la durée : un squelette voisin (±5 min) a servi, et
-  // l'estimation réelle peut s'écarter de la demande. On le dit avec les deux
-  // nombres, plutôt que d'afficher la durée demandée comme si elle était tenue.
   const formatRelache = (() => {
     if (!metcon || screen.discipline === 'musculation') return null;
     const rel = metcon.generator.relaxations;
@@ -457,7 +450,7 @@ export default function WodResultScreen() {
               <View style={S.estRow}>
                 <Text style={S.estBig} testID="wodresult-estimate">{minutesText(muscu.estimate.minutes)}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={S.estLabel}>Durée estimée · {muscu.budget_min}' demandées</Text>
+                  <Text style={S.estLabel}>Durée estimée</Text>
                   <Text style={S.estTarget}>{muscu.blocks[0].exercises.length} exercices · repos compris</Text>
                 </View>
               </View>
