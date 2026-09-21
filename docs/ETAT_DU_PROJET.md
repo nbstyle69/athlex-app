@@ -223,6 +223,15 @@ Migration `20261229`, **appliquée en prod : non** : à appliquer par Nabil **av
 1.0.55**. L'ancien lecteur garde les définitions v3 ; le nouveau lit `definition.c2c3`.
 Les trois contrôles indépendants de #313 restent au backlog. C1, C4, C5 et C6 restent séparés.
 
+**Lot C6 — Cartes de contexte** (PR #326 mergée).
+`SessionContextCard` rend les deux encarts avec le même verre, un padding de
+16 à l'intérieur, l'étiquette en capitales et le corps. Le bouton est optionnel :
+« Reprendre la séance » reste présent pour « Dernière séance générée » ;
+« Classe du jour » reste sans bouton, conformément à l'arbitrage de Nabil.
+Montage réel testé en clair/sombre sur les variantes iOS/Android ; navigateur
+validé à 320, 375 et 1000 px, sans débordement des cartes.
+Aucune migration ; PR indépendante de C2+C3.
+
 **Lot C5 — Split par exercice** (aucune migration, PR indépendante de C2+C3).
 Le chrono principal repart de zéro au changement d'exercice ; les séries d'un
 même exercice conservent leur chrono, repos compris. Le total reste visible en

@@ -9,6 +9,7 @@ import { CATALOG_SNAPSHOT } from '../../packages/wod-engine/src/catalog/snapshot
 import { EQUIPMENT_LABELS_FR, equipmentLabel } from '../utils/wod/equipmentLabels';
 
 const generateur = fs.readFileSync(path.join(__dirname, '..', 'screens/wod/WodGeneratorScreen.tsx'), 'utf8');
+const contextCard = fs.readFileSync(path.join(__dirname, '..', 'components/wod/SessionContextCard.tsx'), 'utf8');
 
 describe('B1 — titre et discipline', () => {
   it('deux lignes centrées, la discipline toujours nommée, Functional compris', () => {
@@ -21,10 +22,9 @@ describe('B1 — titre et discipline', () => {
 
 describe('B2 — encart Classe du jour', () => {
   it('padding intérieur 16, hauteur libre, aucune ligne tronquée', () => {
-    expect(generateur).toMatch(/classCard: \{ padding: 16/);
-    expect(generateur).not.toMatch(/classCard: \{[^}]*height/);
-    const encart = generateur.slice(generateur.indexOf('Classe du jour · '), generateur.indexOf('</GlassCard>', generateur.indexOf('Classe du jour · ')));
-    expect(encart).not.toContain('numberOfLines');
+    expect(contextCard).toMatch(/content: \{ padding: 16/);
+    expect(contextCard).not.toMatch(/(?:card|content): \{[^}]*height/);
+    expect(contextCard).not.toContain('numberOfLines');
   });
 });
 
