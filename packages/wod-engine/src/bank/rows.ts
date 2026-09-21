@@ -91,12 +91,43 @@ export function movementCapFromRow(r: VolumeCapRow): MovementCap {
  * (`volume_caps`, constantes) et le facteur par catégorie restent ceux du
  * snapshot embarqué. Lève si l'une des deux listes est vide : l'appelant
  * retombe alors sur `BANK_V1`.
+ *
+ * Les lignes sont ORDONNÉES ici : le moteur filtre les squelettes dans l'ordre
+ * du tableau et `movementCapFor` retourne le PREMIER plafond qui correspond. Or
+ * `select('*')` ne promet aucun ordre, et un `UPDATE` déplace les lignes dans le
+ * tas : la même graine rendait un autre WOD après une simple réécriture de la
+ * banque (mesuré le 21/09/2026 sur la migration 20261229 — 232 tirages sur 672
+ * changés à définitions identiques).
+ *
+ * L'ordre canonique est celui de la banque embarquée, pas l'ordre alphabétique :
+ * une base et un repli hors-ligne doivent rendre le MÊME WOD à graine égale
+ * (`__tests__/rows.test.ts`). Une ligne que le snapshot ne connaît pas encore —
+ * un squelette ajouté par une migration avant que le code ne parte — se range
+ * après, par id, ce qui reste déterministe.
  */
+const rangDans = (ids: readonly string[]): ReadonlyMap<string, number> => new Map(ids.map((id, i) => [id, i]));
+const RANG_SKELETON = rangDans([
+  ...BANK_V1.skeletons.map((s) => s.id),
+  ...BANK_V1.muscu_skeletons.map((s) => s.id),
+  ...BANK_V1.session_skeletons.map((s) => s.id),
+]);
+const RANG_CAP = rangDans(BANK_V1.movement_caps.map((c) => c.label));
+
+function parRang<T>(xs: readonly T[], cle: (x: T) => string, rangs: ReadonlyMap<string, number>): T[] {
+  return [...xs].sort((a, b) => {
+    const ra = rangs.get(cle(a)) ?? Infinity;
+    const rb = rangs.get(cle(b)) ?? Infinity;
+    if (ra !== rb) return ra - rb;
+    return cle(a) < cle(b) ? -1 : cle(a) > cle(b) ? 1 : 0;
+  });
+}
+
 export function bankFromRows(skeletons: AnySkeletonRow[], caps: VolumeCapRow[]): SkeletonBank {
-  const metcon = skeletons.filter((r): r is SkeletonRow => r.active && !isMuscuSkeletonRow(r) && !isSessionSkeletonRow(r));
-  const muscu = skeletons.filter((r): r is MuscuSkeletonRow => r.active && isMuscuSkeletonRow(r));
-  const session = skeletons.filter((r): r is SessionSkeletonRow => r.active && isSessionSkeletonRow(r));
-  const activeCaps = caps.filter((r) => r.active);
+  const triees = parRang(skeletons, (r) => r.id, RANG_SKELETON);
+  const metcon = triees.filter((r): r is SkeletonRow => r.active && !isMuscuSkeletonRow(r) && !isSessionSkeletonRow(r));
+  const muscu = triees.filter((r): r is MuscuSkeletonRow => r.active && isMuscuSkeletonRow(r));
+  const session = triees.filter((r): r is SessionSkeletonRow => r.active && isSessionSkeletonRow(r));
+  const activeCaps = parRang(caps.filter((r) => r.active), (r) => r.label, RANG_CAP);
   if (metcon.length === 0 || activeCaps.length === 0) {
     throw new Error('wod_skeletons / wod_volume_caps vides');
   }

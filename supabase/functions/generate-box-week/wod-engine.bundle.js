@@ -27439,11 +27439,27 @@ function movementCapFromRow(r) {
   if (r.band) cap.band = r.band;
   return cap;
 }
+var rangDans = (ids) => new Map(ids.map((id, i) => [id, i]));
+var RANG_SKELETON = rangDans([
+  ...BANK_V1.skeletons.map((s) => s.id),
+  ...BANK_V1.muscu_skeletons.map((s) => s.id),
+  ...BANK_V1.session_skeletons.map((s) => s.id)
+]);
+var RANG_CAP = rangDans(BANK_V1.movement_caps.map((c) => c.label));
+function parRang(xs, cle, rangs) {
+  return [...xs].sort((a, b) => {
+    const ra = rangs.get(cle(a)) ?? Infinity;
+    const rb = rangs.get(cle(b)) ?? Infinity;
+    if (ra !== rb) return ra - rb;
+    return cle(a) < cle(b) ? -1 : cle(a) > cle(b) ? 1 : 0;
+  });
+}
 function bankFromRows(skeletons, caps) {
-  const metcon = skeletons.filter((r) => r.active && !isMuscuSkeletonRow(r) && !isSessionSkeletonRow(r));
-  const muscu = skeletons.filter((r) => r.active && isMuscuSkeletonRow(r));
-  const session = skeletons.filter((r) => r.active && isSessionSkeletonRow(r));
-  const activeCaps = caps.filter((r) => r.active);
+  const triees = parRang(skeletons, (r) => r.id, RANG_SKELETON);
+  const metcon = triees.filter((r) => r.active && !isMuscuSkeletonRow(r) && !isSessionSkeletonRow(r));
+  const muscu = triees.filter((r) => r.active && isMuscuSkeletonRow(r));
+  const session = triees.filter((r) => r.active && isSessionSkeletonRow(r));
+  const activeCaps = parRang(caps.filter((r) => r.active), (r) => r.label, RANG_CAP);
   if (metcon.length === 0 || activeCaps.length === 0) {
     throw new Error("wod_skeletons / wod_volume_caps vides");
   }

@@ -68,8 +68,9 @@ async function loadCatalog(admin: SupabaseClient): Promise<{ catalog: Catalog; s
 
 async function loadBank(admin: SupabaseClient): Promise<{ bank: SkeletonBank; source: string }> {
   const [sk, caps] = await Promise.all([
-    admin.from('wod_skeletons').select('*').eq('active', true),
-    admin.from('wod_volume_caps').select('*').eq('active', true),
+    // même contrat que l'app (voir `bankFromRows`) : lecture ordonnée, tirage stable
+    admin.from('wod_skeletons').select('*').eq('active', true).order('id'),
+    admin.from('wod_volume_caps').select('*').eq('active', true).order('label'),
   ]);
   if (sk.error || caps.error || !sk.data?.length || !caps.data?.length) return { bank: BANK_V1, source: 'snapshot' };
   try {
