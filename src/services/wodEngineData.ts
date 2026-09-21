@@ -46,8 +46,10 @@ async function fetchCatalog(): Promise<Catalog | null> {
 
 async function fetchBank(): Promise<SkeletonBank | null> {
   const [sk, caps] = await Promise.all([
-    supabase.from('wod_skeletons').select('*').eq('active', true),
-    supabase.from('wod_volume_caps').select('*').eq('active', true),
+    // `order` explicite : voir `bankFromRows`, le tirage ne doit pas dépendre de
+    // l'ordre du tas Postgres (et une lecture ordonnée se compare d'une fois sur l'autre).
+    supabase.from('wod_skeletons').select('*').eq('active', true).order('id'),
+    supabase.from('wod_volume_caps').select('*').eq('active', true).order('label'),
   ]);
   if (sk.error || caps.error || !sk.data?.length || !caps.data?.length) return null;
   const skeletonRows = sk.data.map((r) => ({

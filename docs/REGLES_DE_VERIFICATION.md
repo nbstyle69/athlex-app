@@ -546,6 +546,8 @@ ce qu'on veut pouvoir dire, et c'est pour ça qu'on paie le smoke.
 - [ ] Une garde d'écriture est prouvée sur le rôle **sans** policy (0 ligne) et sur celui qui
       en a une (erreur attendue), puis par relecture de la ligne.
 - [ ] Rejeu sur les données réelles après application de la migration, pas seulement en local.
+- [ ] Aucun `node_modules` relié dans un worktree destiné à la suppression : `--force` suit la
+      jonction et vide le vrai (voir `docs/RUNBOOK_CRONS.md`).
 - [ ] Un déploiement OTA est prouvé par l'**identité de l'update reçu** sur l'appareil, jamais
       par « l'écran s'affiche » : avant la coupe, l'ancien code s'affiche aussi.
 - [ ] Le bundle **réellement servi** contient sa configuration (`ota-verify-bundle.mjs`) : une

@@ -139,3 +139,21 @@ SELECT j.jobname, r.status, r.start_time, left(r.return_message, 120)
 
 `status = 'succeeded'` ne prouve que l'appel HTTP, pas le résultat de la
 fonction : la réponse est dans les logs de la fonction edge.
+
+## Worktree jetable : ne jamais y relier `node_modules`
+
+Pour exécuter une suite depuis une branche tierce, on crée un worktree — et on est
+tenté d'y faire une jonction vers le `node_modules` du dépôt pour éviter un `npm ci`.
+À ne pas faire : `git worktree remove --force` **suit la jonction** et vide le vrai
+`node_modules`. Pire, `node_modules` contient un lien vers `modules/realtime-recorder`
+(module Expo local) : la suppression a effacé ses 33 fichiers suivis dans le dépôt
+(21/09/2026, restaurés par `git restore`, puis `npm ci`).
+
+À la place, au choix :
+
+- `npm ci --prefix <worktree>` (installation propre, jetable avec le worktree) ;
+- ou copier le seul fichier à interroger dans le dépôt principal et le lire, sans worktree ;
+- ou, si la jonction est vraiment nécessaire, la supprimer AVANT de retirer le worktree :
+  `cmd /c rmdir "<worktree>
+ode_modules"` (jamais `rm -rf`, qui suit le lien), puis
+  `git worktree remove`.

@@ -7,6 +7,7 @@
 type Result = { data: unknown[] | null; error: { message: string } | null };
 const results: Record<string, Result> = {};
 const queried: string[] = [];
+const ordered: string[] = [];
 
 jest.mock('../lib/supabase', () => ({
   supabase: {
@@ -15,6 +16,9 @@ jest.mock('../lib/supabase', () => ({
       const builder = {
         select: () => builder,
         eq: () => builder,
+        // la banque se lit ordonnée (voir `bankFromRows`) : le mock doit le suivre,
+        // sinon il teste une requête que le code ne fait plus
+        order: (col: string) => { ordered.push(`${table}.${col}`); return builder; },
         then: (resolve: (r: Result) => unknown) =>
           Promise.resolve(results[table] ?? { data: null, error: { message: 'down' } }).then(resolve),
       };
@@ -72,6 +76,7 @@ function preM1Rows(): CatalogRow[] {
 beforeEach(() => {
   resetEngineDataCache();
   queried.length = 0;
+  ordered.length = 0;
   for (const k of Object.keys(results)) delete results[k];
 });
 
@@ -92,6 +97,7 @@ describe('loadEngineData', () => {
     expect(d.bank).not.toBe(BANK_V1);
     expect(d.bank.skeletons).toEqual(BANK_V1.skeletons);
     expect(d.bank.movement_caps).toEqual(BANK_V1.movement_caps);
+    expect(ordered).toEqual(['wod_skeletons.id', 'wod_volume_caps.label']);
   });
 
   it('une table vide ou en erreur ramène au snapshot de la banque seulement', async () => {
