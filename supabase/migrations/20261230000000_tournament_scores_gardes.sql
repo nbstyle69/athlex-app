@@ -9,12 +9,20 @@
 --   1. La policy INSERT de `tournament_scores` n'impose ni `status = 'pending'`
 --      ni l'inscription de l'athlète au tournoi : un athlète pouvait déposer un
 --      score déjà « validated », sur un tournoi auquel il n'est pas inscrit.
---   2. La policy UPDATE n'a pas de `WITH CHECK` : `USING` ne contraint que la
---      ligne lue. Un athlète pouvait faire passer sa propre ligne `pending` à
---      `validated`. Elle exigeait aussi une ancienne ligne `pending`, ce qui
---      faisait échouer EN SILENCE (0 ligne, aucune erreur remontée) la
---      correction d'un score rejeté — que l'app propose pourtant
---      (`TournamentWODScreen.tsx` : UPDATE quand la ligne est `rejected`).
+--   2. La policy UPDATE n'a pas de `WITH CHECK`, et elle exige une ancienne
+--      ligne `pending`. Deux conséquences, mesurées sur base de rejeu :
+--        - l'athlète pouvait écrire `admin_message`, `validated_by` et
+--          `validated_at` sur sa propre ligne (1 ligne modifiée) : rien
+--          n'empêchait de forger la trace de modération ;
+--        - la correction d'un score REJETÉ échouait EN SILENCE (0 ligne,
+--          aucune erreur remontée) — alors que l'app la propose
+--          (`TournamentWODScreen.tsx` : UPDATE quand la ligne est `rejected`).
+--      En revanche, `pending` → `validated` était DÉJÀ refusé, contrairement à
+--      ce que dit le rapport d'audit : faute de `WITH CHECK`, Postgres applique
+--      le `USING` à la ligne écrite, et celui-ci exigeait `status = 'pending'`.
+--      C'est aussi pourquoi le `WITH CHECK` explicite devient NÉCESSAIRE ici :
+--      le `USING` élargi à `rejected` servirait sinon de repli et laisserait
+--      l'athlète écrire `rejected` sur sa propre ligne.
 --   3. `recalc_division_points` n'a aucune garde de rôle dans son corps : seule
 --      son ACL la protège aujourd'hui.
 --
