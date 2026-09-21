@@ -1,4 +1,4 @@
--- C2+C3 — banque metcon v4. appliquée en prod : non
+-- C2+C3 — banque metcon v4. Appliquée en prod : OUI, le 21/09/2026 à 11:11 UTC (dump db-dumps/2026-09-21/athlex-prod-public-20260921T111043Z.dump avant).
 -- Appliquer avant merge / OTA 1.0.55. Les anciens lecteurs gardent les définitions v3.
 -- Le nouveau lecteur utilise definition.c2c3 ; les nouveaux squelettes ont durations=[] pour les anciens lecteurs.
 BEGIN;
