@@ -280,9 +280,9 @@ describe('generateMuscu — conformité (cible × objectif × durée × matérie
     }
   });
 
-  it('Force sans matériel / Après ma classe / Tronc, durée Tronc hors 15-20-30 → erreur explicite', () => {
+  it('Force sans matériel / Après ma classe / Tronc → erreur explicite ; Tronc accepte 45 minutes', () => {
     expect(() => gen({ ...base, target: 'tronc', objective: 'force', budget_min: 20 }, 1)).toThrow(/Tronc/);
-    expect(() => gen({ ...base, target: 'tronc', budget_min: 45 }, 1)).toThrow(/15, 20 ou 30/);
+    expect(gen({ ...base, target: 'tronc', budget_min: 45 }, 1).budget_min).toBe(45);
     expect(gen({ ...base, target: 'tronc', budget_min: 30 }, 1).blocks[0].exercises.length).toBeGreaterThanOrEqual(2);
     expect(() => gen({ ...base, equipment: 'none', objective: 'force', target: 'push' }, 1)).toThrow(/Force/);
     expect(() => gen({ ...base, entry: 'after_class', objective: 'force', after_class: { day_movements: [] } }, 1)).toThrow(/Force/);

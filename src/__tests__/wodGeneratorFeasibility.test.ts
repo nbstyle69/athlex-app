@@ -17,40 +17,41 @@ const resultat = lire('screens/wod/WodResultScreen.tsx');
 
 describe('G4 — formats proposés par discipline, depuis la banque', () => {
   it('l\'écran filtre les puces de format par ce que la discipline sait servir', () => {
-    expect(generateur).toContain('FORMATS.filter((f) => formatsOffered.includes(f.key))');
-    expect(generateur).toContain('formatsOfferedFor(discipline)');
+    expect(generateur).toContain('FORMATS.filter((f) => formatsFaisables.has(f.key))');
+    expect(generateur).toContain('feasibleFormats(discipline, intention)');
   });
 
-  it('Hybrid perd EMOM et Chipper, Functional garde tout', () => {
-    expect(formatsOfferedFor('hybrid')).not.toContain('emom');
-    expect(formatsOfferedFor('hybrid')).not.toContain('chipper');
+  it('Hybrid propose EMOM et Chipper, Functional garde tout', () => {
+    expect(formatsOfferedFor('hybrid')).toContain('emom');
+    expect(formatsOfferedFor('hybrid')).toContain('chipper');
     expect(formatsOfferedFor('functional')).toHaveLength(7);
   });
 
   it('un format devenu indisponible en changeant de discipline retombe sur « Surprends-moi »', () => {
-    expect(generateur).toMatch(/if \(!isMuscu && !formatsOffered\.includes\(format\)\) setFormat\('surprise'\)/);
+    expect(generateur).toMatch(/if \(!isMuscu && !formatsFaisables\.has\(format\)\) setFormat\('surprise'\)/);
   });
 });
 
-describe('G1 — combinaisons grisées avant le tirage, relâchement affiché après', () => {
-  it('les puces de format et de durée portent `disabled` selon la faisabilité', () => {
-    expect(generateur).toMatch(/disabled=\{!formatsFaisables\.has\(f\.key\)\}/);
-    expect(generateur).toMatch(/disabled=\{!dureesFaisables\.has\(d\)\}/);
+describe('C2 — durée dérivée, formats faisables visibles', () => {
+  it('supprime les sélecteurs de durée et le grisage des formats', () => {
+    expect(generateur).not.toContain('title="Durée"');
+    expect(generateur).not.toContain('budget_min:');
+    expect(generateur).not.toMatch(/disabled=\{!formatsFaisables/);
   });
 
-  it('le cas rapporté serait grisé : For time · Force · 8 min', () => {
-    expect(combinationFeasible('functional', 8, 'force', 'for_time')).toBe(false);
+  it('For time · Force reste proposé, le moteur détermine sa durée', () => {
+    expect(combinationFeasible('functional', 'force', 'for_time')).toBe(true);
   });
 
-  it("E2 — l'écart de durée est annoncé comme le relâchement de format, seulement au-delà de la fourchette du moteur (±20 %)", () => {
-    expect(resultat).toContain('Math.abs(genere - metcon.budget_min) > metcon.budget_min * TOLERANCE');
-    expect(resultat).toMatch(/Demandé \$\{metcon\.budget_min\} min, généré \$\{genere\} min\./);
+  it('la durée estimée reste visible sans comparaison avec une demande', () => {
+    expect(resultat).not.toContain('Demandé ${metcon.budget_min}');
+    expect(resultat).not.toContain('Math.abs(genere - metcon.budget_min)');
     expect(resultat).toContain('metcon.estimate.reference_minutes');
   });
 
   it('le résultat annonce le relâchement avec le message convenu', () => {
     expect(resultat).toContain("rel.includes('format')");
-    expect(resultat).toMatch(/Aucun \$\{fmt\} ne tient en \$\{intention\} sur \$\{metcon\.budget_min\} min — voici un/);
+    expect(resultat).toContain('Aucun ${fmt} disponible en ${intention} — voici un');
     expect(resultat).toContain('testID="wodresult-format-relache"');
   });
 });

@@ -1,6 +1,6 @@
 # État du projet AthleX
 
-Dernière mise à jour : **15 septembre 2026**.
+Dernière mise à jour : **20 septembre 2026**.
 
 Ce fichier est écrit pour être lu en deux minutes, sans être développeur. Il dit ce qui
 marche aujourd'hui, ce qui est en train de se faire, ce qui vient ensuite, et ce qui est
@@ -198,7 +198,32 @@ Supabase/Resend.
 
 ## En cours
 
-**Lot C6 — Cartes de contexte** (PR #326 prête à relire, non mergée).
+**Lot C2+C3 — durée et variété du générateur** ([PR #322](https://github.com/nbstyle69/athlex-app/pull/322), diffusion en attente).
+Le choix de durée disparaît dans les trois disciplines : le moteur la tire dans la plage du
+squelette ou de sa variante, 45 minutes en séance Musculation, 15–20 après la classe.
+La durée estimée reste au résultat, sans comparaison à une durée demandée. Les formats sont
+proposés selon l'intention ; Surprends-moi choisit une famille servable à parts égales puis
+son sous-format, conservés pendant la composition. La banque ajoute les schémas classiques,
+les ladders finies et ouvertes et les départs EMOM/E2MOM/E3MOM ; elle rétablit les squelettes
+Hybrid morts, avec les restrictions de programmation conservées. Sur 2 000 tirages par
+discipline après R1–R5, aucun échec ; minimum des familles affichées 10,45 % Functional et 7,30 % Hybrid,
+Tabata 9,75 %, Death by 5,65 % (protocole et variantes dans la PR).
+R1–R5 : les EMOM/E2MOM/E3MOM terminent des cycles complets ; les autres budgets athlète
+utilisent 8/10/12/15/16/18/20/25/30 dans leur plage (Musculation séance : 45).
+La densité gym utilise des départs compatibles de 60 ou 90 s, avec 40 s de travail maximum ; les plages calculées
+des stations lourdes Force portent les 3–5 reps dès le tirage, y compris à durée explicite.
+Les slots `range`/`draw` sont calculés et arrondis avant durée/volume ; `scheme`/`fixed`
+gardent les prescriptions exactes, y compris en box. Caps à la minute, sled ≤50 m en
+enchaînement ; les cibles de stations utilisent aussi la cadence de la bande de charge.
+Le chipper Functional long autorise 40–100 cal par erg pour rester faisable après classe
+avec ce plafond sled, sans changer les cadences. Hybrid propose `emom_hybrid` (12–20 min,
+erg/course/charge) et `chipper_hybrid` (18–30 min, course 800–1000 m aux deux extrémités,
+4–5 stations intermédiaires), pour Interval, Engine, Aerobic et Run. Core reste For time.
+Migration `20261229`, **appliquée en prod : non** : à appliquer par Nabil **avant merge et OTA
+1.0.55**. L'ancien lecteur garde les définitions v3 ; le nouveau lit `definition.c2c3`.
+Les trois contrôles indépendants de #313 restent au backlog. C1, C4, C5 et C6 restent séparés.
+
+**Lot C6 — Cartes de contexte** (PR #326 mergée).
 `SessionContextCard` rend les deux encarts avec le même verre, un padding de
 16 à l'intérieur, l'étiquette en capitales et le corps. Le bouton est optionnel :
 « Reprendre la séance » reste présent pour « Dernière séance générée » ;

@@ -37,9 +37,9 @@ import { buildFullSeqBlockFromWOD, buildMuscuSplitBlock } from '../../utils/wodT
 import { clearWodDraft, saveWodDraft } from '../../services/wodDraft';
 import {
   CATEGORY_LABEL, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES,
-  TIME_BOUNDED, TOLERANCE,
+  TIME_BOUNDED,
 } from '../../../packages/wod-engine/src';
-import type { Category, GeneratedMovement, GeneratedWod, MuscuWod } from '../../../packages/wod-engine/src';
+import type { Category, GeneratedBlock, GeneratedMovement, GeneratedWod, MuscuWod } from '../../../packages/wod-engine/src';
 import type { SkeletonFormat } from '../../../packages/wod-engine/src';
 import { FORMATS, INTENTIONS } from './wodGeneratorOptions';
 import {
@@ -62,8 +62,9 @@ type Route = RouteProp<{ WodResult: WodResultParams }, 'WodResult'>;
 const fmtNum = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, ''));
 
 export function mmss(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = Math.round(s % 60);
+  const total = Math.round(s);
+  const m = Math.floor(total / 60);
+  const sec = total % 60;
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
@@ -71,7 +72,11 @@ export function minutesText(min: number): string {
   return mmss(Math.round(min * 60));
 }
 
-export function qtyText(m: GeneratedMovement): string {
+export function qtyText(m: GeneratedMovement, block: GeneratedBlock): string {
+  if (block.format === 'tabata') {
+    const work = block.rest?.work_s ?? 20;
+    return m.unit === 's' ? `Tenue ${work} s ·` : `Max ${m.unit} en ${work} s ·`;
+  }
   const q = m.scheme ? m.scheme.join('-') : String(m.qty);
   const per = m.per_minute ? ' (+1 / min)' : '';
   return m.unit === 'reps' ? `${q}${per}` : `${q} ${m.unit}${per}`;
@@ -126,19 +131,12 @@ export default function WodResultScreen() {
   // G3 : un EMOM, un AMRAP, une séance de séries sont bornés par leur durée —
   // afficher « Cap » dessus est faux. « Cap » ne vaut que pour les formats
   // scorés au temps (For time, chipper…), où c'est un plafond à ne pas franchir.
-  const borneParDuree = metcon ? TIME_BOUNDED.has(metcon.format) : true;
+  const borneParDuree = metcon ? TIME_BOUNDED.has(metcon.format) && !(metcon.format === 'ladder' && !metcon.blocks[0].ladder) : true;
 
-  // G1 : le format demandé a été relâché par le moteur (aucun squelette de ce
-  // format n'a abouti sur cette durée × intention). On le dit, on ne laisse pas
-  // croire que le choix a été respecté. Le moteur trace `format` dans ses
-  // relâchements ; l'écran connaît la demande par `screen`.
   const FORMAT_OBTENU: Record<SkeletonFormat, string> = {
     amrap: 'AMRAP', for_time: 'For time', rounds_for_time: 'Rounds for time', chipper: 'Chipper', ladder: 'Ladder',
     emom: 'EMOM', death_by: 'Death by', tabata: 'Tabata', interval: 'Intervalles', stations: 'Stations', continuous: 'Continu',
   };
-  // Même mécanisme pour la durée : un squelette voisin (±5 min) a servi, et
-  // l'estimation réelle peut s'écarter de la demande. On le dit avec les deux
-  // nombres, plutôt que d'afficher la durée demandée comme si elle était tenue.
   const formatRelache = (() => {
     if (!metcon || screen.discipline === 'musculation') return null;
     const rel = metcon.generator.relaxations;
@@ -147,12 +145,8 @@ export default function WodResultScreen() {
     if (demande && demande !== 'surprise' && rel.includes('format')) {
       const fmt = FORMATS.find((f) => f.key === demande)?.label ?? demande;
       const intention = INTENTIONS[metcon.discipline].find((i) => i.key === metcon.intention)?.label ?? metcon.intention;
-      parts.push(`Aucun ${fmt} ne tient en ${intention} sur ${metcon.budget_min} min — voici un ${FORMAT_OBTENU[metcon.format]}.`);
+      parts.push(`Aucun ${fmt} disponible en ${intention} — voici un ${FORMAT_OBTENU[metcon.format]}.`);
     }
-    // La durée est une cible, pas une contrainte : l'écart ne s'annonce qu'au-delà
-    // de la fourchette du moteur (±20 %) ; l'estimation réelle reste affichée plus bas.
-    const genere = Math.round(metcon.estimate.reference_minutes);
-    if (Math.abs(genere - metcon.budget_min) > metcon.budget_min * TOLERANCE) parts.push(`Demandé ${metcon.budget_min} min, généré ${genere} min.`);
     return parts.length ? parts.join(' ') : null;
   })();
   const accent = muscu ? MUSCU_BLUE : wod.discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;
@@ -461,7 +455,7 @@ export default function WodResultScreen() {
               <View style={S.estRow}>
                 <Text style={S.estBig} testID="wodresult-estimate">{minutesText(muscu.estimate.minutes)}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={S.estLabel}>Durée estimée · {muscu.budget_min}' demandées</Text>
+                  <Text style={S.estLabel}>Durée estimée</Text>
                   <Text style={S.estTarget}>{muscu.blocks[0].exercises.length} exercices · repos compris</Text>
                 </View>
               </View>
@@ -490,7 +484,7 @@ export default function WodResultScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={S.moveText}>
                       {m.round != null ? <Text style={S.moveRound}>R{m.round} · </Text> : null}
-                      <Text style={[S.moveQty, { color: accent }]}>{qtyText(m)}</Text> {m.name}
+                      <Text style={[S.moveQty, { color: accent }]}>{qtyText(m, metcon.blocks[0])}</Text> {m.name}
                     </Text>
                     <Text style={S.moveSub}>{line ?? 'Toutes catégories'}</Text>
                   </View>

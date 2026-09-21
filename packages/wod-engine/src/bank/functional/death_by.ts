@@ -4,6 +4,7 @@ export const death_by: Skeleton = {
   id: 'death_by',
   discipline: 'functional',
   format: 'death_by',
+  duration_range: [10, 20],
   durations: [10, 15],
   intentions: ['mixed', 'force'],
   band_by_intention: { mixed: 'medium', force: 'heavy' },

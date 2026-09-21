@@ -217,6 +217,14 @@ describe('séance Functional / Hybrid (52 semaines)', () => {
           }
         }
         if (b.block_name === 'wod' && !/^\d+ rounds × \d+ stations/m.test(b.description)) {
+          const schemeMovements = s.bloc_c!.blocks[0].movements;
+          if (schemeMovements.every((m) => m.scheme)) {
+            for (const m of schemeMovements) {
+              expect(b.description).toContain(m.name);
+              expect(parseMovementLine(`1 ${m.name}`)).toBeTruthy();
+            }
+            continue;
+          }
           const lines = b.description.split('\n').map((l) => l.replace(/^(R\d+|Min \d+) · /, '')).filter((l) => /^\d+(\.\d+)? /.test(l) && !/^\d+ rounds?/i.test(l));
           const hits = lines.map((l) => parseMovementLine(l)).filter(Boolean);
           expect(hits.length).toBeGreaterThan(0);

@@ -3,11 +3,13 @@ import { couplet_for_time_21_15_9 } from './functional/couplet_for_time_21_15_9'
 import { couplet_amrap_short } from './functional/couplet_amrap_short';
 import { triplet_amrap_mid } from './functional/triplet_amrap_mid';
 import { triplet_rounds_for_time } from './functional/triplet_rounds_for_time';
+import { triplet_for_time_classics } from './functional/triplet_for_time_classics';
 import { chipper_descending } from './functional/chipper_descending';
 import { chipper_stations_erg } from './functional/chipper_stations_erg';
 import { emom_alternating } from './functional/emom_alternating';
 import { interval_work_rest } from './functional/interval_work_rest';
 import { ladder_ascending } from './functional/ladder_ascending';
+import { ladder_finite } from './functional/ladder_finite';
 import { death_by } from './functional/death_by';
 import { tabata_pair } from './functional/tabata_pair';
 import { heavy_couplet } from './functional/heavy_couplet';
@@ -25,6 +27,8 @@ import { engine_continuous } from './hybrid/engine_continuous';
 import { core_carry_finisher } from './hybrid/core_carry_finisher';
 import { run_intervals } from './hybrid/run_intervals';
 import { engine_negative_split } from './hybrid/engine_negative_split';
+import { emom_hybrid } from './hybrid/emom_hybrid';
+import { chipper_hybrid } from './hybrid/chipper_hybrid';
 import { MUSCU_SKELETONS } from './muscu';
 import { SESSION_SKELETONS } from './session';
 import { HYBRID_SESSION_SKELETONS } from './session-hybrid';
@@ -37,19 +41,19 @@ export {
   H1_intervals, H2_strength_stations, H3_run, H4_engine, H5_compromised, H6_simulation, H6_simulation_full,
 } from './session-hybrid';
 
-export const BANK_VERSION = 3;
+export const BANK_VERSION = 4;
 /** version des squelettes Musculation (lignes `discipline = musculation`) : 1 = seed 20261215, 2 = resynchronisation 20261220 (règles M1–M10 et M2) */
 export const MUSCU_BANK_VERSION = 2;
 
 export const FUNCTIONAL_SKELETONS = [
-  couplet_for_time_21_15_9, couplet_amrap_short, triplet_amrap_mid, triplet_rounds_for_time, chipper_descending,
-  chipper_stations_erg, emom_alternating, interval_work_rest, ladder_ascending, death_by, tabata_pair, heavy_couplet,
+  couplet_for_time_21_15_9, triplet_for_time_classics, couplet_amrap_short, triplet_amrap_mid, triplet_rounds_for_time, chipper_descending,
+  chipper_stations_erg, emom_alternating, interval_work_rest, ladder_ascending, ladder_finite, death_by, tabata_pair, heavy_couplet,
   engine_long_amrap, gym_density, stations_rotation,
 ];
 
 export const HYBRID_SKELETONS = [
   run_into_station, stations_interval, amrap_distances, erg_pyramid, sled_repeats, compromised_run, half_sim,
-  engine_continuous, core_carry_finisher, run_intervals, engine_negative_split,
+  engine_continuous, core_carry_finisher, run_intervals, engine_negative_split, emom_hybrid, chipper_hybrid,
 ];
 
 /**

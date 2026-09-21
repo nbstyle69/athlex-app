@@ -53,4 +53,4 @@ export type {
 } from './programming';
 export { FEASIBILITY } from './bank/feasibility';
 export type { FeasibilityRow } from './bank/feasibility';
-export { formatsOfferedFor, feasibleFormats, feasibleDurations, combinationFeasible, FORMAT_CHOICE_COVERS } from './feasibility';
+export { formatsOfferedFor, feasibleFormats, combinationFeasible, FORMAT_CHOICE_COVERS } from './feasibility';

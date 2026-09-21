@@ -40,7 +40,7 @@ import { gymRecordsFrom } from '../screens/wod/gymRecords';
 
 const user = { id: 'u1', level: 'rx' as const, gender: 'male' as const };
 const screen: MetconScreenParams = {
-  entry: 'express', discipline: 'functional', budget_min: 15, intention: 'gym', format: 'surprise', exclude: [],
+  entry: 'express', discipline: 'functional', intention: 'gym', format: 'surprise', exclude: [],
 };
 
 beforeEach(() => {
@@ -83,6 +83,17 @@ describe('C4 — préférence du profil', () => {
 });
 
 describe('C4 — génération avec le vrai moteur', () => {
+  it.each([true, false])('ignore la durée d’un ancien brouillon avec adaptation %s', async (adapt_to_pr) => {
+    records['gymnastics_Pull-ups'] = '12';
+    const currentScreen = { ...screen, adapt_to_pr };
+    const legacyScreen = { ...currentScreen, budget_min: 1 };
+    const current = await generateForUser(user, null, currentScreen, 7);
+    const legacy = await generateForUser(user, null, legacyScreen, 7);
+    expect(legacy.wod).toEqual(current.wod);
+    expect(legacy.params.budget_min).toBeGreaterThan(1);
+    expect(legacy.params).not.toHaveProperty('adapt_to_pr');
+  });
+
   it('anciens paramètres et option active transmettent les records et donnent le même résultat', async () => {
     records['gymnastics_Pull-ups'] = '12';
     const legacy = await generateForUser(user, null, screen, 7);

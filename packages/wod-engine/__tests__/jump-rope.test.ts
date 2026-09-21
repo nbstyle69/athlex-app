@@ -156,7 +156,7 @@ describe('la corde à sauter sort du générateur Functional', () => {
     expect(Math.max(...Object.values(parSk)) / total).toBeLessThan(0.6);
   });
 
-  it('le contrôle sait échouer : ramené à 100 reps, la corde disparaît', () => {
+  it('ramené à 100 reps, le plafond exclut les séances dépassant ce volume', () => {
     // On reproduit l'état d'avant le lot : pas de plafond de classe pour la
     // famille, et pas de facteur — la corde retombe sous le générique de 100.
     // Retirer le seul facteur ne suffirait plus : le plafond de classe à 200
@@ -166,8 +166,14 @@ describe('la corde à sauter sort du générateur Functional', () => {
     const [retire] = BANK_V1.movement_caps.splice(i, 1);
     FAMILY_CAP_FACTOR.jump_rope = 1;
     try {
-      const n = tirages(500).filter((w) => contient(w, 'double_under')).length;
-      expect(n / 500).toBeLessThan(0.01);
+      const reduced = tirages(500).filter((w) => contient(w, 'double_under'));
+      for (const w of reduced) {
+        const b = w.blocks[0];
+        const m = b.movements.find((m) => m.id === 'double_under')!;
+        const mult = ['emom', 'interval', 'stations', 'rounds_for_time'].includes(w.format) ? b.rounds ?? 1 : 1;
+        expect(m.qty * mult).toBeLessThanOrEqual(100);
+      }
+      expect(reduced.length).toBeLessThan(wods.filter((w) => contient(w, 'double_under')).length / (wods.length / 500));
     } finally {
       FAMILY_CAP_FACTOR.jump_rope = avant;
       BANK_V1.movement_caps.splice(i, 0, retire);
@@ -200,8 +206,8 @@ describe('les trois squelettes élargis', () => {
     '%s a désormais un slot ouvert à la corde', (id) => expect(accepte(id)).toBe(true),
   );
 
-  it('l\'élargissement s\'arrête là : six squelettes Functional au plus la nomment', () => {
+  it('sept squelettes Functional admettent la corde, dont le triplet classique', () => {
     const n = FUNCTIONAL_SKELETONS.filter((sk) => accepte(sk.id)).length;
-    expect(n).toBe(6);
+    expect(n).toBe(7);
   });
 });

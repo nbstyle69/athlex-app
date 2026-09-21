@@ -155,12 +155,13 @@ export interface SlotPick {
 export interface Slot {
   pick: SlotPick;
   /**
-   * `range`  : tiré dans rep_ranges[unit][format], ajusté au budget ;
-   * `fixed`  : quantité imposée (`fixed` ou tirée dans `fixed_range`) ;
-   * `scheme` : suit le scheme du squelette ;
-   * `minute` : reps = numéro de la minute (death by).
+   * `range`  : calculé et arrondi, ajustable au budget dans rep_ranges ;
+   * `draw`   : calculé et arrondi dans fixed_range, sans ajustement au budget ;
+   * `fixed`  : prescription exacte (fixed / fixed_by_id), jamais arrondie ;
+   * `scheme` : schéma nommé exact du squelette, jamais arrondi ;
+   * `minute` : progression exacte (death by).
    */
-  qty: 'range' | 'fixed' | 'scheme' | 'minute';
+  qty: 'range' | 'draw' | 'fixed' | 'scheme' | 'minute';
   fixed?: number;
   fixed_range?: [number, number];
   /** quantité imposée selon le mouvement tiré */
@@ -175,6 +176,8 @@ export interface Slot {
   role?: string;
   /** un mouvement différent par round (tirage sans remise), rendu `R1 · …` */
   rotate_per_round?: boolean;
+  /** Répéter ce mouvement à une autre station (ex. course en ouverture/fermeture). */
+  allow_repeat?: boolean;
 }
 
 export type ScoreType = 'time' | 'rounds_reps' | 'cal_total' | 'distance' | 'reps_total';
@@ -191,6 +194,9 @@ export interface Skeleton {
   id: string;
   discipline: Discipline;
   format: SkeletonFormat;
+  /** Plage de durée propre au squelette ; le générateur athlète y tire sa cible. */
+  duration_range: [number, number];
+  /** Anciennes cibles discrètes, conservées pour la programmation et les clients 1.0.55 déjà servis. */
   durations: number[];
   intentions: Intention[];
   band_by_intention: Partial<Record<Intention, Band>>;
@@ -206,6 +212,8 @@ export interface Skeleton {
   station_count?: { by_duration?: Record<number, number>; min?: number; max?: number };
   /** variantes exclusives (ex. run_intervals A/B/C) : une seule est tirée */
   variants?: SkeletonVariant[];
+  /** Une ladder finie exécute son schéma une fois ; une ladder ouverte progresse jusqu'au temps. */
+  ladder_mode?: 'finite' | 'open';
   score_type: ScoreType;
   cap_factor: number;
   allow_variant_up: boolean;
@@ -223,6 +231,8 @@ export interface Skeleton {
 export interface SkeletonVariant {
   id: string;
   slots: Slot[];
+  /** Une variante peut resserrer la plage du squelette qui la porte. */
+  duration_range?: [number, number];
   rounds?: { min: number; max: number };
   rest?: SkeletonRest;
   scheme?: number[];
@@ -583,13 +593,12 @@ export interface GenerateParams {
   pattern_not?: Pattern[];
   /** squelettes interdits (séance : squelette du bloc C de la veille) */
   skeleton_not?: string[];
-  /**
-   * Arrondir les quantités à des valeurs lisibles sur un tableau de box : reps et
-   * calories au multiple de 5, temps au multiple de 10 s. Utilisé par la programmation
-   * automatique ; le générateur athlète garde ses quantités fines.
-   */
+  /** @deprecated Les quantités calculées sont arrondies dans tous les parcours. */
   round_qty?: boolean;
 }
+
+/** Requête athlète : sans durée, le moteur la tire dans la plage du squelette. */
+export type GenerateRequest = Omit<GenerateParams, 'budget_min'> & { budget_min?: number };
 
 export interface GeneratedMovement {
   id: string;

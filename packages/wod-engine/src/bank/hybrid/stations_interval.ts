@@ -6,6 +6,7 @@ export const stations_interval: Skeleton = {
   id: 'stations_interval',
   discipline: 'hybrid',
   format: 'stations',
+  duration_range: [15, 30],
   durations: [20, 30],
   intentions: ['interval'],
   band_by_intention: { interval: 'medium' },

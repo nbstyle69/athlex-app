@@ -4,6 +4,7 @@ export const stations_rotation: Skeleton = {
   id: 'stations_rotation',
   discipline: 'functional',
   format: 'stations',
+  duration_range: [15, 20],
   durations: [20, 30],
   intentions: ['mixed', 'cardio'],
   band_by_intention: { mixed: 'medium', cardio: 'light' },

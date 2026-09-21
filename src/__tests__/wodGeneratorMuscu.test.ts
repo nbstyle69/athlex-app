@@ -55,7 +55,7 @@ import type { AthleteLevel } from '../types';
 
 const user = { id: 'u1', level: 'rx' as AthleteLevel, gender: 'female' as const };
 const screen: MuscuScreenParams = {
-  discipline: 'musculation', entry: 'express', target: 'fessiers', objective: 'hypertrophie', budget_min: 30, equipment: 'box', exclude: [],
+  discipline: 'musculation', entry: 'express', target: 'fessiers', objective: 'hypertrophie', equipment: 'box', exclude: [],
 };
 
 beforeEach(() => {

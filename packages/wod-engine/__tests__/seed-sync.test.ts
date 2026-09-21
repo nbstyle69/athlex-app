@@ -11,9 +11,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {
   BANK_V1, BANK_VERSION, MUSCU_BANK_VERSION, SESSION_BANK_VERSION, SESSION_SKELETONS,
-  skeletonToRow, movementCapToRow, muscuSkeletonToRow, sessionSkeletonToRow,
+  skeletonToRow, movementCapToRow, muscuSkeletonToRow, sessionSkeletonToRow, bankFromRows,
 } from '../src';
 import { withSkillProgression } from '../src/session';
+import type { SkeletonRow } from '../src';
 
 const MIGRATIONS = path.resolve(__dirname, '../../../supabase/migrations');
 const read = (name: string) => fs.readFileSync(path.join(MIGRATIONS, name), 'utf8');
@@ -94,20 +95,30 @@ describe('seeds SQL ↔ snapshot embarqué', () => {
     expect(seeded(only15)).not.toEqual(seeded(JSON.parse(JSON.stringify(expected))));
   });
 
-  it('squelettes metcon et plafonds : 20261212 + 20261222 + 20261225 = BANK_V1', () => {
+  it('squelettes metcon et plafonds : seeds cumulés jusqu’au 20261229 = BANK_V1', () => {
     const sql = read('20261212000000_wod_skeletons_volume_caps.sql');
     // 20261222 ajoute l'engine long à la banque Hybrid et élargit les durées du continu ;
     // 20261225 ouvre trois slots Functional de plus à la corde à sauter.
-    const seed = [...skeletonsFromSeed(
+    const previous = skeletonsFromSeed(
       read('20261225000000_wod_skeletons_jump_rope_slots.sql'),
       skeletonsFromSeed(read('20261222000000_auto_programming_tracks_hybrid.sql'), skeletonsFromSeed(sql), { skipMissingUpdates: true }),
       { skipMissingUpdates: true },
-    ).values()]
-      .filter((r) => r.discipline === 'functional' || r.discipline === 'hybrid');
+    );
+    const migration = read('20261229000000_wod_skeletons_duration_formats.sql');
+    const seed = [...skeletonsFromSeed(migration, new Map(previous)).values()]
+      .filter((r) => r.discipline === 'functional' || r.discipline === 'hybrid') as SkeletonRow[];
+    for (const row of seed) {
+      const { c2c3, ...legacy } = row.definition;
+      expect(c2c3).toBeDefined();
+      if (previous.has(row.id)) expect(legacy).toEqual(previous.get(row.id)!.definition);
+      else expect(legacy.durations).toEqual([]);
+    }
     const expected = BANK_V1.skeletons.map((sk) => skeletonToRow(sk, BANK_VERSION));
-    expect(seeded(seed)).toEqual(seeded(JSON.parse(JSON.stringify(expected))));
+    expect(seeded(seed.map((row) => ({ ...row, definition: row.definition.c2c3 })))).toEqual(seeded(JSON.parse(JSON.stringify(expected))));
+    expect(seeded(bankFromRows(seed, BANK_V1.movement_caps.map((cap) => movementCapToRow(cap, BANK_VERSION))).skeletons))
+      .toEqual(seeded(JSON.parse(JSON.stringify(BANK_V1.skeletons))));
     // 20261226 ajoute le plafond de classe de la corde à sauter
-    const caps = Object.fromEntries(capsFromSeed(read('20261226000000_jump_rope_poids_et_plafond.sql'), capsFromSeed(sql)));
+    const caps = Object.fromEntries(capsFromSeed(migration, capsFromSeed(read('20261226000000_jump_rope_poids_et_plafond.sql'), capsFromSeed(sql))));
     const expectedCaps = Object.fromEntries(BANK_V1.movement_caps.map((c) => [c.label, movementCapToRow(c, BANK_VERSION)]));
     expect(caps).toEqual(JSON.parse(JSON.stringify(expectedCaps)));
   });

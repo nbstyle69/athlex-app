@@ -176,10 +176,10 @@ function loadsFor(m, category, band) {
   const ref = functionalRef(category);
   const byBand = m.loads[ref];
   if (!byBand) return null;
-  const pair = byBand[band];
-  if (!pair) return null;
-  if (isFunctionalCategory(category)) return [pair[0], pair[1]];
-  return [pair[genderIndex(category)]];
+  const pair2 = byBand[band];
+  if (!pair2) return null;
+  if (isFunctionalCategory(category)) return [pair2[0], pair2[1]];
+  return [pair2[genderIndex(category)]];
 }
 function cadenceFor(m, category, unit) {
   if (!m.cadence) return void 0;
@@ -25696,19 +25696,28 @@ var CATALOG_SNAPSHOT = {
 };
 
 // packages/wod-engine/src/bank/functional/couplet_for_time_21_15_9.ts
+var slots = [
+  { pick: { family: ["barbell", "dumbbell"], pattern_any: ["squat", "hinge", "push_v"] }, qty: "scheme" },
+  { pick: { family: ["gym"], pattern_any: ["pull_v", "push_v", "core"], pattern_not_of_slot: 0 }, qty: "scheme" }
+];
 var couplet_for_time_21_15_9 = {
   id: "couplet_for_time_21_15_9",
   discipline: "functional",
   format: "for_time",
+  duration_range: [8, 20],
   durations: [8, 12],
   intentions: ["mixed", "gym", "force"],
   band_by_intention: { mixed: "medium", force: "heavy", gym: "light" },
   scheme: [21, 15, 9],
-  scheme_by_band: { heavy: [9, 7, 5] },
   rounds: "scheme",
-  slots: [
-    { pick: { family: ["barbell", "dumbbell"], pattern_any: ["squat", "hinge", "push_v"] }, qty: "scheme" },
-    { pick: { family: ["gym"], pattern_any: ["pull_v", "push_v", "core"], pattern_not_of_slot: 0 }, qty: "scheme" }
+  slots,
+  variants: [
+    { id: "21-15-9", slots, scheme: [21, 15, 9], duration_range: [8, 12] },
+    { id: "9-15-21", slots, scheme: [9, 15, 21], duration_range: [8, 12] },
+    { id: "15-12-9", slots, scheme: [15, 12, 9], duration_range: [8, 12] },
+    { id: "9-12-15", slots, scheme: [9, 12, 15], duration_range: [8, 12] },
+    { id: "21-18-15-12-9-6-3", slots, scheme: [21, 18, 15, 12, 9, 6, 3], duration_range: [12, 20] },
+    { id: "3-6-9-12-15-18-21", slots, scheme: [3, 6, 9, 12, 15, 18, 21], duration_range: [12, 20] }
   ],
   score_type: "time",
   cap_factor: 1.4,
@@ -25721,6 +25730,7 @@ var couplet_amrap_short = {
   id: "couplet_amrap_short",
   discipline: "functional",
   format: "amrap",
+  duration_range: [12, 20],
   durations: [8, 12],
   intentions: ["mixed", "cardio", "gym"],
   band_by_intention: { mixed: "medium", cardio: "light", gym: "light" },
@@ -25740,9 +25750,10 @@ var triplet_amrap_mid = {
   id: "triplet_amrap_mid",
   discipline: "functional",
   format: "amrap",
+  duration_range: [12, 20],
   durations: [12, 15, 20],
-  intentions: ["mixed", "cardio"],
-  band_by_intention: { mixed: "medium", cardio: "light" },
+  intentions: ["mixed", "cardio", "gym"],
+  band_by_intention: { mixed: "medium", cardio: "light", gym: "light" },
   rounds: "amrap",
   slots: [
     { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
@@ -25760,6 +25771,7 @@ var triplet_rounds_for_time = {
   id: "triplet_rounds_for_time",
   discipline: "functional",
   format: "rounds_for_time",
+  duration_range: [12, 20],
   durations: [12, 15, 20],
   intentions: ["mixed", "force"],
   band_by_intention: { mixed: "medium", force: "heavy" },
@@ -25776,23 +25788,61 @@ var triplet_rounds_for_time = {
   stimulus: { rpe: 8, note: "Rounds r\xE9guliers, la barre ne se pose pas avant la fin du set." }
 };
 
+// packages/wod-engine/src/bank/functional/triplet_for_time_classics.ts
+var slots2 = [
+  { pick: { family: ["barbell", "dumbbell", "kettlebell"], pattern_any: ["squat", "hinge", "push_v"] }, qty: "scheme" },
+  { pick: { family: ["gym"], pattern_any: ["pull_v", "push_v", "core"], pattern_not_of_slot: 0 }, qty: "scheme" },
+  { pick: { family: ["bodyweight", "box", "jump_rope"], pattern_not_of_slot: 1 }, qty: "scheme" }
+];
+var triplet_for_time_classics = {
+  id: "triplet_for_time_classics",
+  discipline: "functional",
+  format: "for_time",
+  duration_range: [8, 20],
+  durations: [10, 15, 20],
+  intentions: ["mixed", "gym", "force"],
+  band_by_intention: { mixed: "medium", gym: "light", force: "heavy" },
+  scheme: [21, 15, 9],
+  rounds: "scheme",
+  slots: slots2,
+  variants: [
+    { id: "21-15-9", slots: slots2, scheme: [21, 15, 9], duration_range: [8, 12] },
+    { id: "9-15-21", slots: slots2, scheme: [9, 15, 21], duration_range: [8, 12] },
+    { id: "15-12-9", slots: slots2, scheme: [15, 12, 9], duration_range: [8, 12] },
+    { id: "9-12-15", slots: slots2, scheme: [9, 12, 15], duration_range: [8, 12] },
+    { id: "21-18-15-12-9-6-3", slots: slots2, scheme: [21, 18, 15, 12, 9, 6, 3], duration_range: [12, 20] },
+    { id: "3-6-9-12-15-18-21", slots: slots2, scheme: [3, 6, 9, 12, 15, 18, 21], duration_range: [12, 20] }
+  ],
+  score_type: "time",
+  cap_factor: 1.4,
+  allow_variant_up: true,
+  stimulus: { rpe: 8.5, note: "Transitions courtes et s\xE9ries fractionn\xE9es avant l\u2019\xE9chec." }
+};
+
 // packages/wod-engine/src/bank/functional/chipper_descending.ts
+var slots3 = [
+  { pick: { family: ["erg"], unit: "cal" }, qty: "scheme" },
+  { pick: { family: ["box", "jump_rope"] }, qty: "scheme" },
+  { pick: { family: ["kettlebell", "dumbbell", "wallball"] }, qty: "scheme" },
+  { pick: { family: ["barbell"], band: "light" }, qty: "scheme" },
+  { pick: { family: ["bodyweight"], pattern_any: ["core", "mono"] }, qty: "scheme" }
+];
 var chipper_descending = {
   id: "chipper_descending",
   discipline: "functional",
   format: "chipper",
+  duration_range: [8, 14],
   durations: [15, 20],
   intentions: ["mixed", "cardio"],
   band_by_intention: { mixed: "medium", cardio: "light" },
-  scheme: [50, 40, 30, 20, 10],
+  scheme: [30, 25, 20, 15, 10],
   rounds: "scheme",
   barbell_low_scheme: true,
-  slots: [
-    { pick: { family: ["erg"], unit: "cal" }, qty: "scheme" },
-    { pick: { family: ["box", "jump_rope"] }, qty: "scheme" },
-    { pick: { family: ["kettlebell", "dumbbell", "wallball"] }, qty: "scheme" },
-    { pick: { family: ["barbell"], band: "light" }, qty: "scheme" },
-    { pick: { family: ["bodyweight"], pattern_any: ["core", "mono"] }, qty: "scheme" }
+  slots: slots3,
+  variants: [
+    { id: "50-40-30-20-10", slots: slots3, scheme: [50, 40, 30, 20, 10], duration_range: [11, 14] },
+    { id: "40-30-20-10", slots: slots3.slice(0, 4), scheme: [40, 30, 20, 10], duration_range: [8, 10] },
+    { id: "30-25-20-15-10", slots: slots3, scheme: [30, 25, 20, 15, 10], duration_range: [8, 10] }
   ],
   score_type: "time",
   cap_factor: 1.4,
@@ -25805,15 +25855,15 @@ var chipper_stations_erg = {
   id: "chipper_stations_erg",
   discipline: "functional",
   format: "chipper",
+  duration_range: [20, 30],
   durations: [20, 30],
   intentions: ["mixed", "cardio"],
   band_by_intention: { mixed: "medium", cardio: "light" },
   rounds: { min: 1, max: 1 },
   slots: [
-    { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
+    { pick: { family: ["erg"], unit: "cal" }, qty: "range", reps_range: [40, 100] },
     { pick: { family: ["sled", "carry", "sandbag"], unit: "m" }, qty: "range" },
-    { pick: { family: ["erg"], unit: "cal" }, qty: "range", role: "erg diff\xE9rent du (1)" },
-    { pick: { family: ["kettlebell", "dumbbell", "wallball"] }, qty: "range" },
+    { pick: { family: ["erg"], unit: "cal" }, qty: "range", reps_range: [40, 100], role: "erg diff\xE9rent du (1)" },
     { pick: { family: ["run"], unit: "m" }, qty: "range", qty_max: 800 },
     { pick: { family: ["bodyweight", "gym"], pattern_any: ["core", "pull_v", "push_v"] }, qty: "range" }
   ],
@@ -25824,26 +25874,45 @@ var chipper_stations_erg = {
 };
 
 // packages/wod-engine/src/bank/functional/emom_alternating.ts
+var pair = [
+  { pick: { family: ["barbell", "dumbbell", "kettlebell"] }, qty: "range" },
+  { pick: { family: ["gym", "bodyweight", "erg"], pattern_not_of_slot: 0 }, qty: "range" }
+];
+var triplet = [
+  { pick: { family: ["barbell", "dumbbell", "kettlebell"] }, qty: "range" },
+  { pick: { family: ["gym"] }, qty: "range" },
+  { pick: { family: ["erg", "bodyweight", "jump_rope"], pattern_not_of_slot: 1 }, qty: "range" }
+];
+var five = [
+  ...triplet,
+  { pick: { family: ["bodyweight", "box"], pattern_not_of_slot: 1 }, qty: "range" },
+  { pick: { family: ["erg", "jump_rope"], pattern_not_of_slot: 3 }, qty: "range" }
+];
 var emom_alternating = {
   id: "emom_alternating",
   discipline: "functional",
   format: "emom",
+  duration_range: [10, 20],
   durations: [12, 15, 20],
   intentions: ["mixed", "gym", "force"],
   band_by_intention: { mixed: "medium", gym: "light", force: "heavy" },
   rest: { every_s: 60 },
   station_count: { by_duration: { 12: 3, 15: 3, 20: 4 } },
-  max_station_work_s: 40,
   slots: [
     { pick: { family: ["barbell"] }, qty: "range" },
     { pick: { family: ["gym"] }, qty: "range" },
     { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
     { pick: { family: ["bodyweight", "jump_rope"] }, qty: "range", optional: true }
   ],
+  variants: [
+    { id: "EMOM-five", slots: five, rest: { every_s: 60 }, duration_range: [10, 20] },
+    { id: "E2MOM-triplet", slots: triplet, rest: { every_s: 120 }, duration_range: [12, 20] },
+    { id: "E3MOM-pair", slots: pair, rest: { every_s: 180 }, duration_range: [15, 20] }
+  ],
   score_type: "reps_total",
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 7, note: "Chaque station \u2264 40 s de travail, le repos est la consigne." }
+  stimulus: { rpe: 7, note: "Garder au moins un tiers de chaque intervalle pour r\xE9cup\xE9rer." }
 };
 
 // packages/wod-engine/src/bank/functional/interval_work_rest.ts
@@ -25851,6 +25920,7 @@ var interval_work_rest = {
   id: "interval_work_rest",
   discipline: "functional",
   format: "interval",
+  duration_range: [15, 20],
   durations: [15, 20],
   intentions: ["mixed", "cardio", "force"],
   band_by_intention: { mixed: "medium", cardio: "light", force: "heavy" },
@@ -25873,10 +25943,12 @@ var ladder_ascending = {
   id: "ladder_ascending",
   discipline: "functional",
   format: "ladder",
+  duration_range: [8, 12],
   durations: [10, 15],
   intentions: ["mixed", "gym"],
+  ladder_mode: "open",
   band_by_intention: { mixed: "medium", gym: "light" },
-  scheme: [3, 6, 9],
+  scheme: [3, 6],
   rounds: "scheme",
   slots: [
     { pick: { family: ["barbell", "dumbbell"], pattern_any: ["squat", "push_v", "hinge"] }, qty: "scheme" },
@@ -25888,11 +25960,43 @@ var ladder_ascending = {
   stimulus: { rpe: 8, note: "Les premiers paliers se font sans poser la barre." }
 };
 
+// packages/wod-engine/src/bank/functional/ladder_finite.ts
+var slots4 = [
+  { pick: { family: ["barbell", "dumbbell"], pattern_any: ["squat", "push_v", "hinge"] }, qty: "scheme" },
+  { pick: { family: ["gym", "bodyweight"], pattern_any: ["pull_v", "push_v", "core"], pattern_not_of_slot: 0 }, qty: "scheme" }
+];
+var ladder_finite = {
+  id: "ladder_finite",
+  discipline: "functional",
+  format: "ladder",
+  duration_range: [4, 12],
+  durations: [10, 15, 20],
+  intentions: ["mixed", "gym"],
+  band_by_intention: { mixed: "medium", gym: "light" },
+  ladder_mode: "finite",
+  scheme: [3, 6, 9, 12],
+  rounds: "scheme",
+  slots: slots4,
+  variants: [
+    { id: "3-6-9-12", slots: slots4, scheme: [3, 6, 9, 12], duration_range: [4, 8] },
+    { id: "12-9-6-3", slots: slots4, scheme: [12, 9, 6, 3], duration_range: [4, 8] },
+    { id: "2-4-6-8-10", slots: slots4, scheme: [2, 4, 6, 8, 10], duration_range: [4, 8] },
+    { id: "10-8-6-4-2", slots: slots4, scheme: [10, 8, 6, 4, 2], duration_range: [4, 8] },
+    { id: "3-6-9-12-9-6-3", slots: slots4, scheme: [3, 6, 9, 12, 9, 6, 3], duration_range: [8, 12] },
+    { id: "2-4-6-8-10-8-6-4-2", slots: slots4, scheme: [2, 4, 6, 8, 10, 8, 6, 4, 2], duration_range: [8, 12] }
+  ],
+  score_type: "time",
+  cap_factor: 1.4,
+  allow_variant_up: true,
+  stimulus: { rpe: 8, note: "Rythme progressif, garder des s\xE9ries propres sur le sommet." }
+};
+
 // packages/wod-engine/src/bank/functional/death_by.ts
 var death_by = {
   id: "death_by",
   discipline: "functional",
   format: "death_by",
+  duration_range: [10, 20],
   durations: [10, 15],
   intentions: ["mixed", "force"],
   band_by_intention: { mixed: "medium", force: "heavy" },
@@ -25912,6 +26016,7 @@ var tabata_pair = {
   id: "tabata_pair",
   discipline: "functional",
   format: "tabata",
+  duration_range: [8, 10],
   durations: [8, 10],
   intentions: ["cardio", "gym"],
   band_by_intention: { cardio: "light", gym: "light" },
@@ -25932,6 +26037,7 @@ var heavy_couplet = {
   id: "heavy_couplet",
   discipline: "functional",
   format: "rounds_for_time",
+  duration_range: [8, 15],
   durations: [10, 15],
   intentions: ["force"],
   band_by_intention: { force: "heavy" },
@@ -25951,6 +26057,7 @@ var engine_long_amrap = {
   id: "engine_long_amrap",
   discipline: "functional",
   format: "amrap",
+  duration_range: [12, 20],
   durations: [20, 30],
   intentions: ["cardio"],
   band_by_intention: { cardio: "light" },
@@ -25972,11 +26079,12 @@ var gym_density = {
   id: "gym_density",
   discipline: "functional",
   format: "emom",
+  duration_range: [10, 20],
   durations: [10, 15],
   intentions: ["gym"],
   band_by_intention: { gym: "light" },
-  rest: { every_s: 90 },
-  max_station_work_s: 60,
+  rest: { every_s: [60, 90] },
+  max_station_work_s: 40,
   slots: [
     { pick: { family: ["gym"], pattern_any: ["pull_v", "push_v"] }, qty: "range", reps_range: [5, 12] },
     { pick: { ids: ["hollow_rock", "ghd_sit_up", "plank_hold", "toes_to_bar"], no_shared_high_grip_with: 0 }, qty: "range" }
@@ -25992,6 +26100,7 @@ var stations_rotation = {
   id: "stations_rotation",
   discipline: "functional",
   format: "stations",
+  duration_range: [15, 20],
   durations: [20, 30],
   intentions: ["mixed", "cardio"],
   band_by_intention: { mixed: "medium", cardio: "light" },
@@ -26027,12 +26136,13 @@ var run_into_station = {
   id: "run_into_station",
   discipline: "hybrid",
   format: "rounds_for_time",
+  duration_range: [15, 30],
   durations: [20, 30, 45],
   intentions: ["interval", "engine", "run"],
   band_by_intention: { interval: "medium", engine: "light", run: "light" },
   rounds: { min: 4, max: 6 },
   slots: [
-    { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [400, 800] },
+    { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [400, 800] },
     { pick: { ids: HYBRID_STATIONS, erg_unit: "m" }, qty: "range", rotate_per_round: true }
   ],
   score_type: "time",
@@ -26047,6 +26157,7 @@ var stations_interval = {
   id: "stations_interval",
   discipline: "hybrid",
   format: "stations",
+  duration_range: [15, 30],
   durations: [20, 30],
   intentions: ["interval"],
   band_by_intention: { interval: "medium" },
@@ -26072,15 +26183,16 @@ var amrap_distances = {
   id: "amrap_distances",
   discipline: "hybrid",
   format: "amrap",
+  duration_range: [15, 30],
   durations: [15, 20],
   intentions: ["interval", "engine"],
   band_by_intention: { interval: "medium", engine: "light" },
   rounds: "amrap",
   slots: [
-    { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [200, 400] },
-    { pick: { ids: ["sled_push", "sled_pull"], unit: "m" }, qty: "fixed", fixed_range: [25, 50] },
+    { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [200, 400] },
+    { pick: { ids: ["sled_push", "sled_pull"], unit: "m" }, qty: "draw", fixed_range: [25, 50] },
     { pick: { ids: ["wall_ball", "sandbag_lunge"] }, qty: "range" },
-    { pick: { family: ["erg"], unit: "cal" }, qty: "fixed", fixed_range: [10, 20] }
+    { pick: { family: ["erg"], unit: "cal" }, qty: "draw", fixed_range: [10, 20] }
   ],
   score_type: "rounds_reps",
   cap_factor: 1,
@@ -26093,6 +26205,7 @@ var erg_pyramid = {
   id: "erg_pyramid",
   discipline: "hybrid",
   format: "for_time",
+  duration_range: [8, 15],
   durations: [20, 30],
   intentions: ["engine", "aerobic"],
   band_by_intention: { engine: "light", aerobic: "light" },
@@ -26113,16 +26226,35 @@ var sled_repeats = {
   id: "sled_repeats",
   discipline: "hybrid",
   format: "interval",
+  duration_range: [15, 28],
   durations: [15, 20],
   intentions: ["force", "interval"],
   band_by_intention: { force: "heavy", interval: "heavy" },
-  rest: { every_s: 180 },
-  rounds: { min: 5, max: 7 },
-  max_work_fraction: 0.75,
-  slots: [
-    { pick: { ids: ["sled_push"], unit: "m" }, qty: "fixed", fixed_range: [25, 30] },
-    { pick: { ids: ["sled_pull", "sandbag_carry"], unit: "m" }, qty: "fixed", fixed_by_id: { sled_pull: 25, sandbag_carry: 50 } },
-    { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [100, 200] }
+  rest: { every_s: 240 },
+  rounds: { min: 4, max: 7 },
+  max_work_fraction: 0.7,
+  slots: [],
+  variants: [
+    {
+      id: "25m-every4",
+      duration_range: [16, 28],
+      rest: { every_s: 240 },
+      rounds: { min: 4, max: 7 },
+      slots: [
+        { pick: { ids: ["sled_push"], unit: "m" }, qty: "fixed", fixed: 25 },
+        { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed: 200 }
+      ]
+    },
+    {
+      id: "15m-every3",
+      duration_range: [15, 21],
+      rest: { every_s: 180 },
+      rounds: { min: 5, max: 7 },
+      slots: [
+        { pick: { ids: ["sled_push"], unit: "m" }, qty: "fixed", fixed: 15 },
+        { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed: 200 }
+      ]
+    }
   ],
   score_type: "time",
   cap_factor: 1.25,
@@ -26135,13 +26267,14 @@ var compromised_run = {
   id: "compromised_run",
   discipline: "hybrid",
   format: "rounds_for_time",
+  duration_range: [15, 30],
   durations: [20, 30],
   intentions: ["interval", "run"],
   band_by_intention: { interval: "medium", run: "medium" },
   rounds: { min: 3, max: 4 },
   slots: [
     { pick: { ids: ["sled_push", "sandbag_lunge", "wall_ball", "db_farmer_carry"] }, qty: "range", role: "station lourde 60-90 s" },
-    { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [600, 1e3] }
+    { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [600, 1e3] }
   ],
   score_type: "time",
   cap_factor: 1.25,
@@ -26154,6 +26287,7 @@ var half_sim = {
   id: "half_sim",
   discipline: "hybrid",
   format: "rounds_for_time",
+  duration_range: [18, 22],
   // bank-v1 annonce 45' ; avec les cadences du catalogue 4 × (500 m + station) ≈ 16' RX → recalé sur 15/20.
   durations: [15, 20],
   intentions: ["interval"],
@@ -26164,7 +26298,7 @@ var half_sim = {
     {
       id: "A",
       slots: [
-        { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [500, 800] },
+        { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [500, 800] },
         {
           pick: { ids: ["ski_erg", "sled_push", "sled_pull", "burpee_broad_jump"], erg_unit: "m" },
           qty: "fixed",
@@ -26177,7 +26311,7 @@ var half_sim = {
     {
       id: "B",
       slots: [
-        { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed_range: [500, 800] },
+        { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [500, 800] },
         {
           pick: { ids: ["row", "db_farmer_carry", "sandbag_lunge", "wall_ball"], erg_unit: "m" },
           qty: "fixed",
@@ -26199,6 +26333,7 @@ var engine_continuous = {
   id: "engine_continuous",
   discipline: "hybrid",
   format: "continuous",
+  duration_range: [20, 45],
   durations: [20, 30, 35, 40, 45],
   intentions: ["aerobic"],
   band_by_intention: { aerobic: "light" },
@@ -26221,12 +26356,13 @@ var core_carry_finisher = {
   id: "core_carry_finisher",
   discipline: "hybrid",
   format: "rounds_for_time",
+  duration_range: [10, 20],
   durations: [10, 15, 20],
   intentions: ["core"],
   band_by_intention: { core: "light" },
   rounds: { min: 3, max: 6 },
   slots: [
-    { pick: { ids: ["db_farmer_carry", "sandbag_carry"], unit: "m" }, qty: "fixed", fixed_range: [50, 100] },
+    { pick: { ids: ["db_farmer_carry", "sandbag_carry"], unit: "m" }, qty: "draw", fixed_range: [50, 100] },
     { pick: { ids: ["hollow_rock", "plank_hold", "sit_up", "ghd_sit_up"] }, qty: "range" },
     { pick: { family: ["erg", "run"], pattern_any: ["mono"], erg_unit: "cal" }, qty: "range", optional: true, role: "mono" }
   ],
@@ -26241,9 +26377,10 @@ var run_intervals = {
   id: "run_intervals",
   discipline: "hybrid",
   format: "interval",
+  duration_range: [10, 20],
   durations: [10, 15, 20],
-  intentions: ["run"],
-  band_by_intention: { run: "light" },
+  intentions: ["run", "engine"],
+  band_by_intention: { run: "light", engine: "light" },
   slots: [],
   variants: [
     { id: "A", slots: [{ pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed: 400 }], rounds: { min: 4, max: 8 }, rest: { rest_s: 60 } },
@@ -26261,6 +26398,7 @@ var engine_negative_split = {
   id: "engine_negative_split",
   discipline: "hybrid",
   format: "continuous",
+  duration_range: [30, 40],
   durations: [30, 35, 40],
   intentions: ["aerobic"],
   band_by_intention: { aerobic: "light" },
@@ -26268,8 +26406,8 @@ var engine_negative_split = {
   slots: [
     { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed: 800 },
     { pick: { ids: ["row", "ski_erg"], unit: "m" }, qty: "fixed", fixed: 750 },
-    { pick: { ids: ["bike_erg"], unit: "m" }, qty: "fixed", fixed: 1500 },
-    { pick: { ids: ["db_farmer_carry", "sandbag_carry"], unit: "m" }, qty: "fixed", fixed: 200, optional: true }
+    { pick: { ids: ["run"], unit: "m" }, qty: "fixed", fixed: 800 },
+    { pick: { ids: ["bike_erg"], unit: "m" }, qty: "fixed", fixed: 1500 }
   ],
   station_count: { min: 3, max: 4 },
   score_type: "distance",
@@ -26279,6 +26417,61 @@ var engine_negative_split = {
     rpe: 6,
     note: "Zone 3, respiration nasale tenable. Seconde moiti\xE9 un cran plus vite que la premi\xE8re, sans jamais passer en zone 4."
   }
+};
+
+// packages/wod-engine/src/bank/hybrid/emom_hybrid.ts
+var slots5 = [
+  { pick: { family: ["erg"], unit: "cal" }, qty: "range" },
+  { pick: { ids: ["run"], unit: "m" }, qty: "range", reps_range: [100, 300] },
+  {
+    pick: { ids: ["sled_push", "sled_pull", "sandbag_lunge", "sandbag_carry", "kb_swing_russian", "wall_ball", "db_farmer_carry"] },
+    qty: "range"
+  }
+];
+var emom_hybrid = {
+  id: "emom_hybrid",
+  discipline: "hybrid",
+  format: "emom",
+  duration_range: [12, 20],
+  durations: [12, 15, 18, 20],
+  intentions: ["interval", "engine", "aerobic", "run"],
+  band_by_intention: { interval: "medium", engine: "light", aerobic: "light", run: "light" },
+  slots: slots5,
+  variants: [
+    { id: "EMOM", slots: slots5, rest: { every_s: 60 } },
+    { id: "E2MOM", slots: slots5, rest: { every_s: 120 } },
+    { id: "E3MOM", slots: slots5, rest: { every_s: 180 } }
+  ],
+  score_type: "reps_total",
+  cap_factor: 1,
+  allow_variant_up: false,
+  stimulus: { rpe: 7, note: "Erg, course et charge en alternance ; garder un tiers de chaque d\xE9part pour r\xE9cup\xE9rer." }
+};
+
+// packages/wod-engine/src/bank/hybrid/chipper_hybrid.ts
+var chipper_hybrid = {
+  id: "chipper_hybrid",
+  discipline: "hybrid",
+  format: "chipper",
+  duration_range: [18, 30],
+  durations: [20, 30],
+  intentions: ["interval", "engine", "aerobic", "run"],
+  band_by_intention: { interval: "medium", engine: "light", aerobic: "light", run: "light" },
+  rounds: { min: 1, max: 1 },
+  station_count: { min: 6, max: 7 },
+  slots: [
+    { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [800, 1e3], role: "ouverture" },
+    { pick: { family: ["erg"], unit: "cal" }, qty: "range", reps_range: [30, 60] },
+    { pick: { ids: ["wall_ball", "sandbag_lunge", "sled_push", "sled_pull"] }, qty: "range" },
+    { pick: { ids: ["db_farmer_carry", "sandbag_carry"], unit: "m" }, qty: "range", reps_range: [50, 150] },
+    { pick: { family: ["erg"], unit: "cal" }, qty: "range", reps_range: [30, 60] },
+    { pick: { ids: ["wall_ball", "sandbag_lunge", "sled_push", "sled_pull"] }, qty: "range", optional: true },
+    { pick: { ids: ["run"], unit: "m" }, qty: "draw", fixed_range: [800, 1e3], allow_repeat: true, role: "fermeture" }
+  ],
+  score_type: "time",
+  cap_factor: 1.3,
+  allow_variant_up: false,
+  stimulus: { rpe: 7, note: "Course en ouverture et fermeture, stations encha\xEEn\xE9es \xE0 allure r\xE9guli\xE8re." }
 };
 
 // packages/wod-engine/src/bank/muscu.ts
@@ -27108,10 +27301,11 @@ var HYBRID_SESSION_SKELETONS = [
 ];
 
 // packages/wod-engine/src/bank/index.ts
-var BANK_VERSION = 3;
+var BANK_VERSION = 4;
 var MUSCU_BANK_VERSION = 2;
 var FUNCTIONAL_SKELETONS = [
   couplet_for_time_21_15_9,
+  triplet_for_time_classics,
   couplet_amrap_short,
   triplet_amrap_mid,
   triplet_rounds_for_time,
@@ -27120,6 +27314,7 @@ var FUNCTIONAL_SKELETONS = [
   emom_alternating,
   interval_work_rest,
   ladder_ascending,
+  ladder_finite,
   death_by,
   tabata_pair,
   heavy_couplet,
@@ -27138,7 +27333,9 @@ var HYBRID_SKELETONS = [
   engine_continuous,
   core_carry_finisher,
   run_intervals,
-  engine_negative_split
+  engine_negative_split,
+  emom_hybrid,
+  chipper_hybrid
 ];
 var FUNCTIONAL_CAPS = {
   scaled: { reps: 60, cal: 60, m: 2e3, s: 240 },
@@ -27253,13 +27450,30 @@ function bankFromRows(skeletons, caps) {
   const version = Math.max(...metcon.map((r) => r.version), ...activeCaps.map((r) => r.version));
   return {
     version,
-    skeletons: metcon.map((r) => ({ ...r.definition, id: r.id, discipline: r.discipline, format: r.format })),
+    skeletons: metcon.map((r) => ({ ...r.definition.c2c3 ?? r.definition, id: r.id, discipline: r.discipline, format: r.format })),
     volume_caps: BANK_V1.volume_caps,
     movement_caps: activeCaps.map(movementCapFromRow),
     // base antérieure à la migration 20261215 (aucune ligne musculation) → snapshot embarqué
     muscu_skeletons: muscu.length ? muscu.map((r) => ({ ...r.definition, id: r.id, discipline: "musculation", format: "strength_session" })) : BANK_V1.muscu_skeletons,
     session_skeletons: session.length ? session.map((r) => ({ ...r.definition, id: r.id, discipline: "session", format: "session" })) : BANK_V1.session_skeletons
   };
+}
+
+// packages/wod-engine/src/quantities.ts
+function step(q, unit, family) {
+  if (unit === "reps") return q >= 10 ? 5 : 1;
+  if (unit === "cal") return 5;
+  if (unit === "m") {
+    if (family === "run") return 100;
+    if (family === "sled" || family === "carry") return 25;
+    return q >= 1e3 ? 100 : q >= 200 ? 50 : q >= 50 ? 10 : 5;
+  }
+  return q >= 20 ? 5 : 1;
+}
+function roundCalculatedQuantity(q, unit, family, mode = "nearest") {
+  const s = step(q, unit, family);
+  const round = mode === "down" ? Math.floor : mode === "up" ? Math.ceil : Math.round;
+  return round(q / s) * s;
 }
 
 // packages/wod-engine/src/estimate.ts
@@ -27316,14 +27530,14 @@ function ladderProgress(block, category, budgetS) {
   if (block.ladder) for (let q = block.ladder.start, i = 0; i < 200; q += block.ladder.step, i++) steps.push(q);
   else steps.push(...block.scheme ?? []);
   let acc = 0;
-  let step = 0;
+  let step2 = 0;
   for (const q of steps) {
     const s = stepSeconds(q);
-    if (acc + s > budgetS) return { step, partial: Math.max(0, Math.min(0.99, (budgetS - acc) / s)) };
+    if (acc + s > budgetS) return { step: step2, partial: Math.max(0, Math.min(0.99, (budgetS - acc) / s)) };
     acc += s;
-    step = q;
+    step2 = q;
   }
-  return { step, partial: 0 };
+  return { step: step2, partial: 0 };
 }
 function deathByMinute(block, category, budgetMin) {
   const buyIn = block.movements.filter((m) => m.round === void 0 && m.qty > 0 && !m.per_minute);
@@ -27339,8 +27553,9 @@ function deathByMinute(block, category, budgetMin) {
   return minute;
 }
 function fmtTime(s) {
-  const m = Math.floor(s / 60);
-  const sec2 = Math.round(s % 60);
+  const total2 = Math.round(s);
+  const m = Math.floor(total2 / 60);
+  const sec2 = total2 % 60;
   return `${m}:${sec2.toString().padStart(2, "0")}`;
 }
 function estimateBlock(block, category, budgetMin) {
@@ -27353,10 +27568,14 @@ function estimateBlock(block, category, budgetMin) {
       return { minutes: budgetMin, target: `\u2248 ${Math.floor(rounds)} rounds` };
     }
     case "ladder": {
-      const { step, partial } = ladderProgress(block, category, budgetS);
-      const next = block.ladder ? step + block.ladder.step : step;
+      if (!block.ladder) {
+        const s = fixedWorkSeconds(block, category);
+        return { minutes: s / 60, target: `\u2248 ${fmtTime(s)}` };
+      }
+      const { step: step2, partial } = ladderProgress(block, category, budgetS);
+      const next = block.ladder ? step2 + block.ladder.step : step2;
       const pct = Math.round(partial * 100);
-      return { minutes: budgetMin, target: step ? pct >= 5 ? `palier ${step} + ${pct} % du palier ${next}` : `palier ${step}` : "palier 1 partiel" };
+      return { minutes: budgetMin, target: step2 ? pct >= 5 ? `palier ${step2} + ${pct} % du palier ${next}` : `palier ${step2}` : "palier 1 partiel" };
     }
     case "death_by": {
       const minute = deathByMinute(block, category, budgetMin);
@@ -27464,15 +27683,16 @@ function fmtNum(n) {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, "");
 }
 function mmss(s) {
-  const m = Math.floor(s / 60);
-  const sec2 = Math.round(s % 60);
+  const total2 = Math.round(s);
+  const m = Math.floor(total2 / 60);
+  const sec2 = total2 % 60;
   return sec2 ? `${m}:${sec2.toString().padStart(2, "0")}` : `${m}'`;
 }
 function loadText(m, discipline) {
   if (!m.load_unit) return null;
-  const pair = discipline === "functional" ? m.loads_by_category.rx : [m.loads_by_category.men?.[0], m.loads_by_category.women?.[0]];
-  if (!pair || pair.some((v) => v === void 0 || v === null)) return null;
-  const vals = pair;
+  const pair2 = discipline === "functional" ? m.loads_by_category.rx : [m.loads_by_category.men?.[0], m.loads_by_category.women?.[0]];
+  if (!pair2 || pair2.some((v) => v === void 0 || v === null)) return null;
+  const vals = pair2;
   return `${vals.map(fmtNum).join("/")} ${m.load_unit}`;
 }
 function qtyText(m) {
@@ -27542,7 +27762,7 @@ function header(wod, b) {
     case "chipper":
       return [`Chipper \xB7 for time${cap}`];
     case "ladder":
-      return b.ladder ? [`Ladder ${b.ladder.start}-${b.ladder.start + b.ladder.step}-${b.ladder.start + 2 * b.ladder.step}\u2026 \xB7 AMRAP ${wod.budget_min}`, `Monter les paliers (+${b.ladder.step} \xE0 chaque palier) jusqu'au temps, score = reps totales`] : [`Ladder ${schemeText(b)} \xB7 AMRAP ${wod.budget_min}`, "Monter les paliers dans le temps imparti, score = reps totales"];
+      return b.ladder ? [`Ladder ${b.ladder.start}-${b.ladder.start + b.ladder.step}-${b.ladder.start + 2 * b.ladder.step}\u2026 \xB7 AMRAP ${wod.budget_min}`, `Monter les paliers (+${b.ladder.step} \xE0 chaque palier) jusqu'au temps, score = reps totales`] : [`Ladder ${schemeText(b)} \xB7 for time${cap}`, "Effectuer une fois tous les paliers indiqu\xE9s"];
     case "emom":
       return [`EMOM ${wod.budget_min}${b.rest?.every_s && b.rest.every_s !== 60 ? ` \xB7 every ${mmss(b.rest.every_s)}` : ""} \xB7 ${b.movements.length} stations en alternance`];
     case "death_by":
@@ -27622,7 +27842,7 @@ function render(wod) {
     ...wod,
     title: titleOf(wod, b),
     description: lines.join("\n"),
-    wod_type: WOD_TYPE[b.format],
+    wod_type: b.format === "ladder" && !b.ladder ? "for-time" : WOD_TYPE[b.format],
     block_name: "wod",
     time_cap_seconds: b.timecap ?? wod.budget_min * 60,
     rounds: b.rounds,
@@ -27832,9 +28052,48 @@ function formatsFor(choice) {
   if (!choice || choice === "surprise") return null;
   return FORMAT_CHOICES[choice];
 }
+function durationRange(sk, variant, entry) {
+  const [declaredMin, declaredMax] = variant?.duration_range ?? sk.duration_range ?? [Math.min(...sk.durations), Math.max(...sk.durations)];
+  const min = entry === "after_class" ? Math.max(15, declaredMin) : declaredMin;
+  const max = entry === "after_class" ? Math.min(20, declaredMax) : declaredMax;
+  return min <= max ? [min, max] : null;
+}
+var USUAL_DURATIONS = [8, 10, 12, 15, 16, 18, 20, 25, 30];
+function usualDurations([min, max]) {
+  return USUAL_DURATIONS.filter((duration) => duration >= min && duration <= max);
+}
+function candidatePool(ctx, params, bank, rng) {
+  const banned = new Set((params.skeleton_not ?? []).map((id) => id.split(":")[0]));
+  const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id) && s.intentions.includes(params.intention) && durationRange(s, null, params.entry) !== null && (!ctx.afterClass && !ctx.exclude.size || (s.variants ?? [null]).some((variant) => durationRange(s, variant, params.entry) !== null && canComposeSlots(ctx, s, variant))));
+  const choices = Object.keys(FORMAT_CHOICES).filter((choice2) => all.some((s) => FORMAT_CHOICES[choice2].includes(s.format)));
+  const requested = params.format && params.format !== "surprise" ? params.format : null;
+  if (requested && !choices.includes(requested)) return null;
+  const choice = requested ?? (choices.length ? rng.pick(choices) : null);
+  if (!choice) return null;
+  const formats = FORMAT_CHOICES[choice].filter((format2) => all.some((s) => s.format === format2));
+  if (!formats.length) return null;
+  const format = rng.pick(formats);
+  return all.filter((s) => s.format === format);
+}
+function canComposeSlots(ctx, sk, variant) {
+  const source = variant?.slots ?? sk.slots;
+  const rounds = variant?.rounds ?? sk.rounds;
+  const rotations = typeof rounds === "object" && rounds.min >= 4 ? rounds.min : 1;
+  const slots6 = source.flatMap((slot2, index) => slot2.rotate_per_round && rotations > 1 ? Array.from({ length: rotations }, (_, r) => ({ slot: slot2, index, round: r + 1 })) : [{ slot: slot2, index, round: void 0 }]);
+  const band = effectiveBand(sk, ctx.params);
+  const small = sk.discipline === "functional" && slots6.length <= 3;
+  const pools = slots6.map(({ slot: slot2 }) => ctx.catalog.movements.filter((m) => matchesPick(ctx, slot2, m, [], sk, small) === null && !gymRecordMissing(ctx, m)));
+  const visit = (index, picked) => {
+    if (index === slots6.length) return !SLOT_INTENTIONS.has(ctx.params.intention) || picked.some((p) => carriesIntention(ctx.params, p.m, p.band, sk));
+    const { slot: slot2, index: slotIndex, round } = slots6[index];
+    if (slot2.optional && sk.station_count && picked.length >= (sk.station_count.min ?? slots6.length) && visit(index + 1, picked)) return true;
+    return pools[index].some((m) => matchesPick(ctx, slot2, m, picked, sk, small) === null && visit(index + 1, [...picked, { m, slot: slot2, index: slotIndex, round, unit: pickUnit(slot2, m), band, qty: 1 }]));
+  };
+  return visit(0, []);
+}
 function candidateTiers(params, bank) {
-  const banned = new Set(params.skeleton_not ?? []);
-  const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id));
+  const banned = new Set((params.skeleton_not ?? []).map((id) => id.split(":")[0]));
+  const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id) && (s.format !== "chipper" || s.durations.includes(params.budget_min)));
   const base = all.filter((s) => s.intentions.includes(params.intention));
   const formats = formatsFor(params.format);
   const near = (d) => Math.abs(d - params.budget_min) <= 5;
@@ -27886,7 +28145,8 @@ function matchesPick(ctx, slot2, m, picked, sk, functionalSmall) {
     if (!carrier && m.pattern.some((x) => ctx.afterClass.patterns.has(x))) return "after_class_pattern";
     if (!carrier && ctx.afterClass.families.has(m.family)) return "after_class_family";
   }
-  if (picked.some((q) => q.m.id === m.id)) return "duplicate";
+  const repeatedRun = format === "continuous" && m.family === "run" && picked.at(-1)?.m.family !== "run";
+  if (picked.some((q) => q.m.id === m.id) && !repeatedRun && !slot2.allow_repeat) return "duplicate";
   if (p.pattern_not_of_slot !== void 0) {
     const other = picked.find((q) => q.index === p.pattern_not_of_slot);
     if (other && primaryPattern(other.m) === primaryPattern(m)) return "pattern_not_of_slot";
@@ -27971,33 +28231,34 @@ function drawMovement(ctx, slot2, index, picked, sk, functionalSmall, need) {
   if (!hit) throw new Reject(`slot_${index}_empty:${Object.keys(reasons).sort().join(",")}`);
   return hit.use;
 }
-function stepQty(q, unit) {
-  if (unit === "m") return q > 1e3 ? 100 : q > 200 ? 50 : q > 50 ? 10 : 5;
-  if (unit === "cal" || unit === "s") return q > 20 ? 5 : 1;
-  return 1;
+function calculatedRange(range, m, unit) {
+  const min = roundCalculatedQuantity(Math.max(1, range[0]), unit, m.family, "up");
+  const max = roundCalculatedQuantity(range[1], unit, m.family, "down");
+  if (min > max) throw new Reject(`quantity_range:${m.id}`);
+  return [min, max];
 }
-function roundQty(q, unit) {
-  if (unit === "m") {
-    if (q >= 1e3) return Math.round(q / 100) * 100;
-    return q >= 200 ? Math.round(q / 50) * 50 : q >= 50 ? Math.round(q / 10) * 10 : Math.round(q / 5) * 5;
-  }
-  if (unit === "cal" || unit === "s") return q >= 20 ? Math.round(q / 5) * 5 : Math.round(q);
-  return Math.max(1, Math.round(q));
+function calculatedQty(q, m, unit, range) {
+  const [min, max] = calculatedRange(range, m, unit);
+  return clamp(roundCalculatedQuantity(q, unit, m.family), min, max);
 }
-function rangeFor(ctx, slot2, m, unit, format) {
-  let r = slot2.reps_range ?? m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]];
+function rangeFor(ctx, slot2, m, unit, format, band) {
+  const heavyStation = ctx.params.intention === "force" && band === "heavy" && m.loads && unit === "reps" && RACK_FORMATS.has(format);
+  let r = slot2.reps_range ?? (heavyStation ? [...HEAVY_STATION_REPS] : m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]]);
   if (!r) throw new Reject(`no_range:${m.id}:${unit}`);
   if (slot2.qty_max !== void 0 && slot2.qty_max < r[1]) r = [Math.min(r[0], slot2.qty_max), slot2.qty_max];
+  if (m.family === "sled" && unit === "m" && CONTINUOUS_FORMATS.has(format)) {
+    r = [r[0], Math.min(r[1], 50)];
+  }
   if (ctx.params.intention === "run" && m.family === "run" && unit === "m") {
     if (r[1] < RUN_MIN_M) throw new Reject(`run_too_short:${m.id}`);
     r = [Math.max(r[0], RUN_MIN_M), r[1]];
   }
-  return r;
+  return calculatedRange(r, m, unit);
 }
 function drawFixed(ctx, slot2, m, unit) {
   if (slot2.fixed_by_id && slot2.fixed_by_id[m.id] !== void 0) return slot2.fixed_by_id[m.id];
   if (slot2.fixed !== void 0) return slot2.fixed;
-  if (slot2.fixed_range) return roundQty(ctx.rng.int(slot2.fixed_range[0], slot2.fixed_range[1]), unit);
+  if (slot2.fixed_range) return calculatedQty(ctx.rng.int(slot2.fixed_range[0], slot2.fixed_range[1]), m, unit, slot2.fixed_range);
   throw new Reject(`fixed_missing:${m.id}`);
 }
 function clamp(v, lo, hi) {
@@ -28079,7 +28340,7 @@ function scaleRanges(d, factor) {
   let moved = false;
   for (const p of d.picked) {
     if (!p.range) continue;
-    const next = clamp(roundQty(p.qty * factor, p.unit), p.range[0], p.range[1]);
+    const next = calculatedQty(p.qty * factor, p.m, p.unit, p.range);
     if (next !== p.qty) {
       p.qty = next;
       moved = true;
@@ -28096,6 +28357,13 @@ function fitFixedVolume(ctx, d, roundsCandidates) {
     d.rounds = rounds > 1 ? rounds : null;
     for (let iter = 0; iter < 4; iter++) {
       const est = fixedWorkSeconds(refBlock(ctx, d), ctx.ref);
+      if (ctx.durationRange) {
+        const durations = usualDurations(ctx.durationRange).filter((duration) => within(est / 60, duration));
+        if (durations.length) {
+          ctx.params.budget_min = ctx.rng.pick(durations);
+          return;
+        }
+      }
       if (within(est / 60, ctx.params.budget_min)) return;
       if (!scaleRanges(d, budgetS / est)) break;
     }
@@ -28160,10 +28428,24 @@ function capHeavyStationReps(ctx, d) {
   }
 }
 function fitEmom(ctx, d) {
-  const every = typeof d.sk.rest?.every_s === "number" ? d.sk.rest.every_s : 60;
+  const everyList = Array.isArray(d.restSpec?.every_s) ? d.restSpec.every_s : [d.restSpec?.every_s ?? 60];
+  const every = everyList.find((interval) => {
+    const cycle2 = interval * d.picked.length;
+    const durations = ctx.durationRange ? seq(Math.ceil(ctx.durationRange[0]), Math.floor(ctx.durationRange[1]), 1) : [ctx.params.budget_min];
+    return durations.some((duration) => duration * 60 % cycle2 === 0 && duration * 60 >= cycle2 * 2);
+  });
+  if (every === void 0) throw new Reject("emom_no_complete_cycles");
   const maxWork = d.sk.max_station_work_s ?? every * 0.65;
   d.rest = { every_s: every };
-  d.rounds = Math.floor(ctx.params.budget_min * 60 / every / d.picked.length);
+  const cycle = every * d.picked.length;
+  if (ctx.durationRange) {
+    const [min, max] = ctx.durationRange;
+    const durations = seq(Math.ceil(min), Math.floor(max), 1).filter((duration) => duration * 60 % cycle === 0 && duration * 60 >= cycle * 2);
+    if (!durations.length) throw new Reject("emom_no_complete_cycles");
+    ctx.params.budget_min = ctx.rng.pick(durations);
+  }
+  d.rounds = ctx.params.budget_min * 60 / cycle;
+  if (!Number.isInteger(d.rounds)) throw new Reject("emom_incomplete_cycle");
   if (d.rounds < 2) throw new Reject("emom_too_short");
   for (const p of d.picked) {
     const m = toGenerated(ctx, d, p);
@@ -28174,7 +28456,7 @@ function fitEmom(ctx, d) {
         if (work > maxWork) throw new Reject("emom_station_too_long");
         break;
       }
-      const next = clamp(roundQty(p.qty * (maxWork * 0.8 / work), p.unit), p.range[0], p.range[1]);
+      const next = calculatedQty(p.qty * (maxWork * 0.8 / work), p.m, p.unit, p.range);
       if (next === p.qty) {
         if (work > maxWork) throw new Reject("emom_station_too_long");
         break;
@@ -28184,7 +28466,7 @@ function fitEmom(ctx, d) {
   }
 }
 function fitStations(ctx, d) {
-  const rest = d.sk.rest ?? {};
+  const rest = d.restSpec ?? {};
   const works = Array.isArray(rest.work_s) ? seq(rest.work_s[0], rest.work_s[1], 15) : [rest.work_s ?? 60];
   const rests = Array.isArray(rest.rest_s) ? seq(rest.rest_s[0], rest.rest_s[1], 15) : [rest.rest_s ?? 15];
   const roundsList = pickRounds(ctx, d.sk, null, d.band);
@@ -28198,45 +28480,44 @@ function fitStations(ctx, d) {
       d.rest = { work_s: w, rest_s: r };
       d.stations = n;
       for (const p of d.picked) {
-        const cad = cadenceFor(p.m, ctx.ref, p.unit);
-        if (!cad) throw new Reject(`no_cadence:${p.m.id}`);
-        let q = roundQty(w * 0.9 / cad, p.unit);
-        while (q * cad > w && q > 1) q = roundQty(q - stepQty(q, p.unit), p.unit);
-        if (q * cad > w) throw new Reject(`station_target:${p.m.id}`);
-        p.qty = q;
+        const cad = movementSeconds(toGenerated(ctx, d, p), ctx.ref, 1);
+        if (p.slot.qty === "range" || p.slot.qty === "draw" || p.slot.fixed_range) {
+          p.qty = calculatedQty(w * 0.9 / cad, p.m, p.unit, [1, Math.min(w / cad, p.slot.qty_max ?? Infinity)]);
+        }
+        if (p.qty * cad > w) throw new Reject(`station_target:${p.m.id}`);
       }
       return;
     }
   }
   throw new Reject("duration_stations");
 }
-function seq(a, b, step) {
+function seq(a, b, step2) {
   const out = [];
-  for (let v = a; v <= b; v += step) out.push(v);
+  for (let v = a; v <= b; v += step2) out.push(v);
   return out;
 }
 function fitLadder(ctx, d) {
   const base = d.sk.scheme ?? [];
   if (base.length < 2) throw new Reject("ladder_scheme_missing");
   const start = base[0];
-  const step = base[1] - base[0];
-  d.ladder = { start, step };
+  const step2 = base[1] - base[0];
+  d.ladder = { start, step: step2 };
   d.rounds = null;
-  d.scheme = [start, start + step];
+  d.scheme = [start, start + step2];
   for (const p of d.picked) {
     p.scheme = d.scheme;
-    p.qty = start * 2 + step;
+    p.qty = start * 2 + step2;
   }
   const budgetS = ctx.params.budget_min * 60;
   const block = refBlock(ctx, d);
   const refStep = ladderStep(block, ctx.ref, budgetS);
-  if (refStep < start + 2 * step) throw new Reject("ladder_too_short");
+  if (refStep < start + 2 * step2) throw new Reject("ladder_too_short");
   const cats = categoriesFor(ctx.params.discipline);
   const lo = ladderStep(block, cats[0], budgetS);
   const hi = ladderStep(block, cats[cats.length - 1], budgetS);
   if (lo >= hi) throw new Reject("ladder_same_step_all_categories");
   d.scheme = [];
-  for (let q = start; q <= refStep; q += step) d.scheme.push(q);
+  for (let q = start; q <= refStep; q += step2) d.scheme.push(q);
   const total2 = d.scheme.reduce((s, q) => s + q, 0);
   for (const p of d.picked) {
     p.scheme = d.scheme;
@@ -28272,29 +28553,36 @@ function fitTabata(ctx, d) {
   if (total2 > ctx.params.budget_min || !within(total2, ctx.params.budget_min)) throw new Reject("duration_tabata");
   for (const p of d.picked) p.qty = 0;
 }
-function lastCarrierSlot(ctx, sk, slots, band) {
+function lastCarrierSlot(ctx, sk, slots6, band) {
   if (!SLOT_INTENTIONS.has(ctx.params.intention)) return -1;
-  for (let i = slots.length - 1; i >= 0; i--) {
-    const p = slots[i].pick;
+  for (let i = slots6.length - 1; i >= 0; i--) {
+    const p = slots6[i].pick;
     const slotBand = p.band ? constrainBand(p.band, ctx.params, sk) : band;
     const ok = ctx.catalog.movements.some((m) => m.active && weightFor(m, ctx.params.discipline) > 0 && (!p.ids || p.ids.includes(m.id)) && (!p.family || p.family.includes(m.family)) && (!p.modality || p.modality.includes(m.modality)) && (!p.pattern_any || m.pattern.some((x) => p.pattern_any.includes(x))) && (!p.pattern_not || !m.pattern.some((x) => p.pattern_not.includes(x))) && carriesIntention(ctx.params, m, slotBand, sk));
     if (ok) return i;
   }
   return -1;
 }
-function buildDraft(ctx, sk) {
-  const variant = sk.variants && sk.variants.length ? ctx.rng.pick(sk.variants) : null;
+function buildDraft(ctx, sk, variant = null) {
   const band = effectiveBand(sk, ctx.params);
-  const slots = activeSlots(ctx, sk, variant);
+  const slots6 = activeSlots(ctx, sk, variant);
   const format = sk.format;
-  const functionalSmall = ctx.params.discipline === "functional" && slots.length <= 3;
+  const functionalSmall = ctx.params.discipline === "functional" && slots6.length <= 3;
   const scheme = variant?.scheme ?? sk.scheme_by_band?.[band] ?? sk.scheme;
-  const d = { sk, variantId: variant?.id ?? null, slots, band, picked: [], rounds: null };
+  const d = {
+    sk,
+    variantId: variant?.id ?? null,
+    slots: slots6,
+    band,
+    picked: [],
+    rounds: null,
+    restSpec: variant?.rest ?? sk.rest
+  };
   const roundsCandidates = pickRounds(ctx, sk, variant, band);
   const rounds = roundsCandidates[0] || null;
   const intentionMet = () => !SLOT_INTENTIONS.has(ctx.params.intention) || d.picked.some((p) => carriesIntention(ctx.params, p.m, p.band, sk));
-  const lastCarrier = lastCarrierSlot(ctx, sk, slots, band);
-  slots.forEach((slot2, index) => {
+  const lastCarrier = lastCarrierSlot(ctx, sk, slots6, band);
+  slots6.forEach((slot2, index) => {
     const slotBand = slot2.pick.band ? constrainBand(slot2.pick.band, ctx.params, sk) : band;
     const need = index === lastCarrier && !intentionMet() ? (m2) => carriesIntention(ctx.params, m2, slotBand, sk) : void 0;
     const m = drawMovement(ctx, slot2, index, d.picked, sk, functionalSmall, need);
@@ -28302,11 +28590,12 @@ function buildDraft(ctx, sk) {
     const base = { slot: slot2, index, m, unit, band: slotBand, qty: 0 };
     switch (slot2.qty) {
       case "range": {
-        const r = rangeFor(ctx, slot2, m, unit, format);
+        const r = rangeFor(ctx, slot2, m, unit, format, slotBand);
         base.range = r;
-        base.qty = roundQty(ctx.rng.int(r[0], r[1]), unit);
+        base.qty = calculatedQty(ctx.rng.int(r[0], r[1]), m, unit, r);
         break;
       }
+      case "draw":
       case "fixed":
         base.qty = drawFixed(ctx, slot2, m, unit);
         break;
@@ -28331,8 +28620,8 @@ function buildDraft(ctx, sk) {
         const uu = pickUnit(slot2, mm);
         const q = { slot: slot2, index, m: mm, unit: uu, band: slotBand, qty: 0, round: r };
         if (slot2.qty === "range") {
-          q.range = rangeFor(ctx, slot2, mm, uu, format);
-          q.qty = roundQty(ctx.rng.int(q.range[0], q.range[1]), uu);
+          q.range = rangeFor(ctx, slot2, mm, uu, format, slotBand);
+          q.qty = calculatedQty(ctx.rng.int(q.range[0], q.range[1]), mm, uu, q.range);
         } else q.qty = drawFixed(ctx, slot2, mm, uu);
         extra.push(q);
       }
@@ -28343,6 +28632,9 @@ function buildDraft(ctx, sk) {
   });
   if (format !== "chipper" && scheme && !variant?.scheme) d.scheme = scheme;
   if (variant?.scheme) d.scheme = variant.scheme;
+  if (CONTINUOUS_FORMATS.has(format) && d.picked.some((p) => p.m.family === "sled" && p.unit === "m" && p.qty > 50)) {
+    throw new Reject("sled_passage_over_50m");
+  }
   switch (format) {
     case "amrap":
       fitAmrap(ctx, d);
@@ -28361,7 +28653,10 @@ function buildDraft(ctx, sk) {
       capHeavyStationReps(ctx, d);
       break;
     case "ladder":
-      fitLadder(ctx, d);
+      if (sk.ladder_mode === "finite") {
+        fitFixedVolume(ctx, d, [1]);
+        d.rounds = null;
+      } else fitLadder(ctx, d);
       break;
     case "death_by":
       fitDeathBy(ctx, d);
@@ -28387,6 +28682,9 @@ function buildDraft(ctx, sk) {
   }
   applyVolumeCaps(ctx, d);
   checkComposition(ctx, d);
+  if (ctx.params.discipline === "functional" && (d.picked.length < 2 || d.picked.length > 5)) {
+    throw new Reject("functional_movement_count");
+  }
   return d;
 }
 function checkComposition(ctx, d) {
@@ -28446,7 +28744,7 @@ function capPass(ctx, d) {
   let changed = false;
   for (const p of d.picked) {
     const mult = volumeMultiplier(ctx, d, p);
-    const perWod = tabata ? 16 * 20 / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
+    const perWod = tabata ? 8 * 20 / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
     const specific = movementCapFor(ctx.bank, p.m, p.band, p.unit, ctx.ref);
     const rec = p.unit === "reps" ? ctx.params.gym_records?.[p.m.id] : void 0;
     if (rec && rec > 0 && !tabata) {
@@ -28454,14 +28752,14 @@ function capPass(ctx, d) {
       const biggest = p.scheme ? Math.max(...p.scheme) : p.qty;
       if (biggest > perSet) {
         if (p.range && !p.scheme && perSet >= p.range[0]) {
-          p.qty = perSet;
+          p.qty = calculatedQty(perSet, p.m, p.unit, [p.range[0], Math.min(p.range[1], perSet)]);
           changed = true;
           continue;
         }
         const alt = gymDown(ctx, p.m, d.picked);
         if (!alt) throw new Reject(`gym_record:${p.m.id}`);
         p.m = alt;
-        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format);
+        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format, p.band);
         changed = true;
         continue;
       }
@@ -28469,7 +28767,7 @@ function capPass(ctx, d) {
     const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
     if (cap === Infinity || perWod <= cap) continue;
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
-    const next = roundQty(Math.floor(cap / mult), p.unit);
+    const next = roundCalculatedQuantity(Math.floor(cap / mult), p.unit, p.m.family, "down");
     if (next < p.range[0] || next >= p.qty) throw new Reject(`volume_cap:${p.m.id}`);
     p.qty = next;
     changed = true;
@@ -28481,13 +28779,14 @@ function finalize(ctx, d, tierRelaxations, attempts, seed) {
   const ac = ctx.afterClass;
   const relaxations = ac?.intentionExempt && d.picked.some((p) => p.m.pattern.some((x) => ac.patterns.has(x)) || ac.families.has(p.m.family)) ? [...tierRelaxations, "after_class_pattern"] : tierRelaxations;
   const refEst = estimateBlock(block, ctx.ref, ctx.params.budget_min);
-  if (!TIME_BOUNDED.has(d.sk.format) && !within(refEst.minutes, ctx.params.budget_min)) throw new Reject("duration_final");
+  const finiteLadder = d.sk.format === "ladder" && d.sk.ladder_mode === "finite";
+  if ((!TIME_BOUNDED.has(d.sk.format) || finiteLadder) && !within(refEst.minutes, ctx.params.budget_min)) throw new Reject("duration_final");
   if (d.sk.format === "amrap") {
     const rounds = ctx.params.budget_min * 60 / roundSeconds(block, ctx.ref);
     if (rounds < 3 || rounds > 10) throw new Reject("amrap_round_length");
   }
-  const timeBounded = TIME_BOUNDED.has(d.sk.format) || d.sk.format === "interval" || d.sk.score_type !== "time";
-  block.timecap = timeBounded ? null : Math.ceil(refEst.minutes * d.sk.cap_factor / 0.5) * 30;
+  const timeBounded = !finiteLadder && TIME_BOUNDED.has(d.sk.format) || d.sk.format === "interval" || d.sk.score_type !== "time";
+  block.timecap = timeBounded ? null : Math.ceil(refEst.minutes * d.sk.cap_factor) * 60;
   const vest = ctx.params.discipline === "hybrid" && ctx.params.vest && ctx.params.vest !== "none" ? { mode: ctx.params.vest, load_kg_by_category: pickCats(ctx) } : null;
   const partial = {
     source: "generator",
@@ -28511,21 +28810,10 @@ function finalize(ctx, d, tierRelaxations, attempts, seed) {
     score_type: d.sk.score_type,
     after_class: ctx.afterClass ? { excluded_patterns: [...ctx.afterClass.patterns].sort(), excluded_families: [...ctx.afterClass.families].sort() } : null
   };
-  if (ctx.params.round_qty) roundQuantities(block);
   const estimate = estimateAll({ ...partial, ...emptyEditor() });
   const wod = { ...emptyEditor(), ...partial, estimate, signature: "" };
   wod.signature = signature(wod);
   return render(wod);
-}
-function roundQuantities(block) {
-  const step = (unit) => unit === "reps" || unit === "cal" ? 5 : unit === "s" ? 10 : 0;
-  const snap = (q, s) => s ? Math.max(s, Math.round(q / s) * s) : q;
-  for (const m of block.movements) {
-    const s = step(m.unit);
-    if (!s) continue;
-    m.qty = snap(m.qty, s);
-    if (m.scheme) m.scheme = m.scheme.map((q) => snap(q, s));
-  }
 }
 function pickCats(ctx) {
   const out = {};
@@ -28552,8 +28840,10 @@ function generateBlocC(params, catalog, bank, seed) {
   const rng = new RNG(seed);
   const ref = params.profile_category ?? referenceCategory({ discipline: params.discipline });
   const refOk = categoriesFor(params.discipline).includes(ref);
+  const initialBudget = params.budget_min ?? (params.entry === "after_class" ? 15 : 10);
+  const normalized = { ...params, budget_min: initialBudget };
   const ctx = {
-    params,
+    params: normalized,
     catalog,
     bank,
     rng,
@@ -28564,28 +28854,39 @@ function generateBlocC(params, catalog, bank, seed) {
   };
   if (ctx.afterClass && SLOT_INTENTIONS.has(params.intention)) {
     const probe = { id: "probe", format: "emom" };
-    const reachable = catalog.movements.some((m) => m.active && weightFor(m, params.discipline) > 0 && !ctx.subOnly.has(m.id) && carriesIntention(params, m, "light", probe) && !equipmentExcluded(ctx, m) && !m.pattern.some((x) => ctx.afterClass.patterns.has(x)) && !ctx.afterClass.families.has(m.family));
+    const reachable = catalog.movements.some((m) => m.active && weightFor(m, params.discipline) > 0 && !ctx.subOnly.has(m.id) && carriesIntention(normalized, m, "light", probe) && !equipmentExcluded(ctx, m) && !m.pattern.some((x) => ctx.afterClass.patterns.has(x)) && !ctx.afterClass.families.has(m.family));
     if (!reachable) ctx.afterClass.intentionExempt = true;
   }
-  const tiers = candidateTiers(params, bank);
-  if (!tiers.length) throw new NoValidWod("Aucun squelette compatible", { no_skeleton: 1 });
+  const athlete = params.budget_min === void 0;
+  const pool = athlete ? candidatePool(ctx, params, bank, rng) : null;
+  const tiers = athlete ? [] : candidateTiers(normalized, bank);
+  if (!pool && !tiers.length) throw new NoValidWod("Aucun squelette compatible", { no_skeleton: 1 });
   const recent = new Set(params.recent_signatures ?? []);
   const reasons = {};
   let tier = 0;
   let tierFails = 0;
   const explicit = !!params.format && params.format !== "surprise";
   const tierBudget = explicit ? TIER_ATTEMPTS_EXPLICIT : TIER_ATTEMPTS;
-  const maxAttempts = explicit ? MAX_ATTEMPTS + TIER_ATTEMPTS_EXPLICIT : MAX_ATTEMPTS;
+  const maxAttempts = athlete || !explicit ? MAX_ATTEMPTS : MAX_ATTEMPTS + TIER_ATTEMPTS_EXPLICIT;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    if (tierFails >= tierBudget && tier < tiers.length - 1) {
+    if (!athlete && tierFails >= tierBudget && tier < tiers.length - 1) {
       tier++;
       tierFails = 0;
     }
-    const { list, relaxations } = tiers[tier];
+    const list = pool ?? tiers[tier].list;
     const sk = rng.pick(list);
+    const variants = sk.variants?.filter((v) => !athlete || durationRange(sk, v, params.entry) !== null && (!ctx.afterClass && !ctx.exclude.size || canComposeSlots(ctx, sk, v))) ?? [];
+    const variant = variants.length ? rng.pick(variants) : null;
+    const range = durationRange(sk, variant, params.entry);
+    if (athlete && !range) continue;
+    const durations = range ? sk.format === "emom" ? seq(Math.ceil(range[0]), Math.floor(range[1]), 1) : usualDurations(range) : [];
+    if (athlete && !durations.length) continue;
+    const budget = params.budget_min ?? rng.pick(durations);
+    ctx.params = { ...normalized, budget_min: budget };
+    ctx.durationRange = athlete ? range : void 0;
     try {
-      const d = buildDraft(ctx, sk);
-      const wod = finalize(ctx, d, relaxations, attempt, seed);
+      const d = buildDraft(ctx, sk, variant);
+      const wod = finalize(ctx, d, athlete ? [] : tiers[tier].relaxations, attempt, seed);
       if (recent.has(wod.signature)) throw new Reject("recent_signature");
       return wod;
     } catch (e) {
@@ -29273,7 +29574,11 @@ function availableDurations(catalog, bank, params) {
     return true;
   });
 }
-function generateMuscu(params, catalog, bank, seed) {
+function generateMuscu(request, catalog, bank, seed) {
+  const params = {
+    ...request,
+    budget_min: request.budget_min ?? (request.entry === "express" ? 45 : new RNG(seed).pick([15, 16, 18, 20]))
+  };
   if (params.objective === "force" && params.entry === "after_class") {
     throw new InvalidMuscuParams("force_after_class", "Apr\xE8s ma classe : la Force n'est pas propos\xE9e (hypertrophie ou endurance)");
   }
@@ -29282,9 +29587,6 @@ function generateMuscu(params, catalog, bank, seed) {
   }
   if (params.target === "tronc" && params.objective === "force") {
     throw new InvalidMuscuParams("force_tronc", "Tronc : la Force n'est pas propos\xE9e (Prise de muscle ou Tonification)");
-  }
-  if (params.target === "tronc" && !MUSCU_DURATIONS.tronc.includes(params.budget_min)) {
-    throw new InvalidMuscuParams("tronc_duration", "Tronc : dur\xE9es 15, 20 ou 30 minutes");
   }
   const sk = findSkeleton(bank, params.target, params.objective);
   const ac = params.entry === "after_class" && params.after_class ? afterClassMuscles(catalog, params.after_class) : null;
@@ -29605,10 +29907,11 @@ function blocCRepsRx(wod) {
           mult = Math.ceil(budgetS / roundSeconds(b, ref));
           break;
         case "ladder": {
-          const { step } = ladderProgress(b, ref, budgetS);
+          if (!b.ladder) break;
+          const { step: step2 } = ladderProgress(b, ref, budgetS);
           const start = b.ladder?.start ?? gm.qty;
           const inc = b.ladder?.step ?? gm.qty;
-          const n = inc > 0 ? Math.max(1, Math.floor((step - start) / inc) + 1) : 1;
+          const n = inc > 0 ? Math.max(1, Math.floor((step2 - start) / inc) + 1) : 1;
           mult = n * (start + (n - 1) * inc / 2) / Math.max(1, gm.qty);
           break;
         }
@@ -30581,118 +30884,69 @@ async function runWeekGeneration(db, catalog, bank, opts) {
 
 // packages/wod-engine/src/bank/feasibility.ts
 var FEASIBILITY = [
-  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 8, intention: "mixed", feasible: true },
-  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 8, intention: "gym", feasible: true },
-  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 8, intention: "force", feasible: false },
-  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 12, intention: "mixed", feasible: false },
-  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 12, intention: "gym", feasible: false },
-  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", budget_min: 12, intention: "force", feasible: false },
-  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 8, intention: "mixed", feasible: true },
-  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 8, intention: "cardio", feasible: true },
-  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 8, intention: "gym", feasible: true },
-  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 12, intention: "mixed", feasible: true },
-  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 12, intention: "cardio", feasible: true },
-  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", budget_min: 12, intention: "gym", feasible: true },
-  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 12, intention: "mixed", feasible: true },
-  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 12, intention: "cardio", feasible: true },
-  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 15, intention: "mixed", feasible: true },
-  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 15, intention: "cardio", feasible: true },
-  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 20, intention: "mixed", feasible: true },
-  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", budget_min: 20, intention: "cardio", feasible: true },
-  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 12, intention: "mixed", feasible: true },
-  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 12, intention: "force", feasible: true },
-  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 15, intention: "mixed", feasible: true },
-  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 15, intention: "force", feasible: true },
-  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 20, intention: "mixed", feasible: true },
-  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", budget_min: 20, intention: "force", feasible: true },
-  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 15, intention: "mixed", feasible: true },
-  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 15, intention: "cardio", feasible: false },
-  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 20, intention: "mixed", feasible: false },
-  { id: "chipper_descending", discipline: "functional", format: "chipper", budget_min: 20, intention: "cardio", feasible: false },
-  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 20, intention: "mixed", feasible: true },
-  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 20, intention: "cardio", feasible: true },
-  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 30, intention: "mixed", feasible: false },
-  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", budget_min: 30, intention: "cardio", feasible: false },
-  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 12, intention: "mixed", feasible: true },
-  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 12, intention: "gym", feasible: true },
-  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 12, intention: "force", feasible: true },
-  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 15, intention: "mixed", feasible: true },
-  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 15, intention: "gym", feasible: true },
-  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 15, intention: "force", feasible: true },
-  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 20, intention: "mixed", feasible: true },
-  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 20, intention: "gym", feasible: true },
-  { id: "emom_alternating", discipline: "functional", format: "emom", budget_min: 20, intention: "force", feasible: true },
-  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 15, intention: "mixed", feasible: true },
-  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 15, intention: "cardio", feasible: true },
-  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 15, intention: "force", feasible: true },
-  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 20, intention: "mixed", feasible: true },
-  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 20, intention: "cardio", feasible: true },
-  { id: "interval_work_rest", discipline: "functional", format: "interval", budget_min: 20, intention: "force", feasible: true },
-  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 10, intention: "mixed", feasible: true },
-  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 10, intention: "gym", feasible: true },
-  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 15, intention: "mixed", feasible: false },
-  { id: "ladder_ascending", discipline: "functional", format: "ladder", budget_min: 15, intention: "gym", feasible: false },
-  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 10, intention: "mixed", feasible: true },
-  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 10, intention: "force", feasible: true },
-  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 15, intention: "mixed", feasible: true },
-  { id: "death_by", discipline: "functional", format: "death_by", budget_min: 15, intention: "force", feasible: true },
-  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 8, intention: "cardio", feasible: true },
-  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 8, intention: "gym", feasible: false },
-  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 10, intention: "cardio", feasible: true },
-  { id: "tabata_pair", discipline: "functional", format: "tabata", budget_min: 10, intention: "gym", feasible: false },
-  { id: "heavy_couplet", discipline: "functional", format: "rounds_for_time", budget_min: 10, intention: "force", feasible: true },
-  { id: "heavy_couplet", discipline: "functional", format: "rounds_for_time", budget_min: 15, intention: "force", feasible: true },
-  { id: "engine_long_amrap", discipline: "functional", format: "amrap", budget_min: 20, intention: "cardio", feasible: true },
-  { id: "engine_long_amrap", discipline: "functional", format: "amrap", budget_min: 30, intention: "cardio", feasible: true },
-  { id: "gym_density", discipline: "functional", format: "emom", budget_min: 10, intention: "gym", feasible: true },
-  { id: "gym_density", discipline: "functional", format: "emom", budget_min: 15, intention: "gym", feasible: true },
-  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 20, intention: "mixed", feasible: true },
-  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 20, intention: "cardio", feasible: true },
-  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 30, intention: "mixed", feasible: true },
-  { id: "stations_rotation", discipline: "functional", format: "stations", budget_min: 30, intention: "cardio", feasible: true },
-  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "interval", feasible: true },
-  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "engine", feasible: true },
-  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "run", feasible: true },
-  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "interval", feasible: true },
-  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "engine", feasible: true },
-  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "run", feasible: true },
-  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 45, intention: "interval", feasible: true },
-  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 45, intention: "engine", feasible: true },
-  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", budget_min: 45, intention: "run", feasible: true },
-  { id: "stations_interval", discipline: "hybrid", format: "stations", budget_min: 20, intention: "interval", feasible: true },
-  { id: "stations_interval", discipline: "hybrid", format: "stations", budget_min: 30, intention: "interval", feasible: true },
-  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 15, intention: "interval", feasible: true },
-  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 15, intention: "engine", feasible: true },
-  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 20, intention: "interval", feasible: true },
-  { id: "amrap_distances", discipline: "hybrid", format: "amrap", budget_min: 20, intention: "engine", feasible: true },
-  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 20, intention: "engine", feasible: false },
-  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 20, intention: "aerobic", feasible: false },
-  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 30, intention: "engine", feasible: false },
-  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", budget_min: 30, intention: "aerobic", feasible: false },
-  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 15, intention: "force", feasible: false },
-  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 15, intention: "interval", feasible: false },
-  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 20, intention: "force", feasible: false },
-  { id: "sled_repeats", discipline: "hybrid", format: "interval", budget_min: 20, intention: "interval", feasible: false },
-  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "interval", feasible: true },
-  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "run", feasible: true },
-  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "interval", feasible: true },
-  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", budget_min: 30, intention: "run", feasible: true },
-  { id: "half_sim", discipline: "hybrid", format: "rounds_for_time", budget_min: 15, intention: "interval", feasible: false },
-  { id: "half_sim", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "interval", feasible: true },
-  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 20, intention: "aerobic", feasible: true },
-  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 30, intention: "aerobic", feasible: true },
-  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 35, intention: "aerobic", feasible: true },
-  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 40, intention: "aerobic", feasible: true },
-  { id: "engine_continuous", discipline: "hybrid", format: "continuous", budget_min: 45, intention: "aerobic", feasible: true },
-  { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 10, intention: "core", feasible: true },
-  { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 15, intention: "core", feasible: true },
-  { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", budget_min: 20, intention: "core", feasible: true },
-  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 10, intention: "run", feasible: true },
-  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 15, intention: "run", feasible: true },
-  { id: "run_intervals", discipline: "hybrid", format: "interval", budget_min: 20, intention: "run", feasible: true },
-  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", budget_min: 30, intention: "aerobic", feasible: false },
-  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", budget_min: 35, intention: "aerobic", feasible: false },
-  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", budget_min: 40, intention: "aerobic", feasible: false }
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", intention: "mixed", feasible: true },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", intention: "gym", feasible: true },
+  { id: "couplet_for_time_21_15_9", discipline: "functional", format: "for_time", intention: "force", feasible: true },
+  { id: "triplet_for_time_classics", discipline: "functional", format: "for_time", intention: "mixed", feasible: true },
+  { id: "triplet_for_time_classics", discipline: "functional", format: "for_time", intention: "gym", feasible: true },
+  { id: "triplet_for_time_classics", discipline: "functional", format: "for_time", intention: "force", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", intention: "mixed", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", intention: "cardio", feasible: true },
+  { id: "couplet_amrap_short", discipline: "functional", format: "amrap", intention: "gym", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", intention: "mixed", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", intention: "cardio", feasible: true },
+  { id: "triplet_amrap_mid", discipline: "functional", format: "amrap", intention: "gym", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", intention: "mixed", feasible: true },
+  { id: "triplet_rounds_for_time", discipline: "functional", format: "rounds_for_time", intention: "force", feasible: true },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", intention: "mixed", feasible: true },
+  { id: "chipper_descending", discipline: "functional", format: "chipper", intention: "cardio", feasible: true },
+  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", intention: "mixed", feasible: true },
+  { id: "chipper_stations_erg", discipline: "functional", format: "chipper", intention: "cardio", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", intention: "mixed", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", intention: "gym", feasible: true },
+  { id: "emom_alternating", discipline: "functional", format: "emom", intention: "force", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", intention: "mixed", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", intention: "cardio", feasible: true },
+  { id: "interval_work_rest", discipline: "functional", format: "interval", intention: "force", feasible: true },
+  { id: "ladder_ascending", discipline: "functional", format: "ladder", intention: "mixed", feasible: true },
+  { id: "ladder_ascending", discipline: "functional", format: "ladder", intention: "gym", feasible: true },
+  { id: "ladder_finite", discipline: "functional", format: "ladder", intention: "mixed", feasible: true },
+  { id: "ladder_finite", discipline: "functional", format: "ladder", intention: "gym", feasible: true },
+  { id: "death_by", discipline: "functional", format: "death_by", intention: "mixed", feasible: true },
+  { id: "death_by", discipline: "functional", format: "death_by", intention: "force", feasible: true },
+  { id: "tabata_pair", discipline: "functional", format: "tabata", intention: "cardio", feasible: true },
+  { id: "tabata_pair", discipline: "functional", format: "tabata", intention: "gym", feasible: true },
+  { id: "heavy_couplet", discipline: "functional", format: "rounds_for_time", intention: "force", feasible: true },
+  { id: "engine_long_amrap", discipline: "functional", format: "amrap", intention: "cardio", feasible: true },
+  { id: "gym_density", discipline: "functional", format: "emom", intention: "gym", feasible: true },
+  { id: "stations_rotation", discipline: "functional", format: "stations", intention: "mixed", feasible: true },
+  { id: "stations_rotation", discipline: "functional", format: "stations", intention: "cardio", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", intention: "interval", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", intention: "engine", feasible: true },
+  { id: "run_into_station", discipline: "hybrid", format: "rounds_for_time", intention: "run", feasible: true },
+  { id: "stations_interval", discipline: "hybrid", format: "stations", intention: "interval", feasible: true },
+  { id: "amrap_distances", discipline: "hybrid", format: "amrap", intention: "interval", feasible: true },
+  { id: "amrap_distances", discipline: "hybrid", format: "amrap", intention: "engine", feasible: true },
+  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", intention: "engine", feasible: true },
+  { id: "erg_pyramid", discipline: "hybrid", format: "for_time", intention: "aerobic", feasible: true },
+  { id: "sled_repeats", discipline: "hybrid", format: "interval", intention: "force", feasible: true },
+  { id: "sled_repeats", discipline: "hybrid", format: "interval", intention: "interval", feasible: true },
+  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", intention: "interval", feasible: true },
+  { id: "compromised_run", discipline: "hybrid", format: "rounds_for_time", intention: "run", feasible: true },
+  { id: "half_sim", discipline: "hybrid", format: "rounds_for_time", intention: "interval", feasible: true },
+  { id: "engine_continuous", discipline: "hybrid", format: "continuous", intention: "aerobic", feasible: true },
+  { id: "core_carry_finisher", discipline: "hybrid", format: "rounds_for_time", intention: "core", feasible: true },
+  { id: "run_intervals", discipline: "hybrid", format: "interval", intention: "run", feasible: true },
+  { id: "run_intervals", discipline: "hybrid", format: "interval", intention: "engine", feasible: true },
+  { id: "engine_negative_split", discipline: "hybrid", format: "continuous", intention: "aerobic", feasible: true },
+  { id: "emom_hybrid", discipline: "hybrid", format: "emom", intention: "interval", feasible: true },
+  { id: "emom_hybrid", discipline: "hybrid", format: "emom", intention: "engine", feasible: true },
+  { id: "emom_hybrid", discipline: "hybrid", format: "emom", intention: "aerobic", feasible: true },
+  { id: "emom_hybrid", discipline: "hybrid", format: "emom", intention: "run", feasible: true },
+  { id: "chipper_hybrid", discipline: "hybrid", format: "chipper", intention: "interval", feasible: true },
+  { id: "chipper_hybrid", discipline: "hybrid", format: "chipper", intention: "engine", feasible: true },
+  { id: "chipper_hybrid", discipline: "hybrid", format: "chipper", intention: "aerobic", feasible: true },
+  { id: "chipper_hybrid", discipline: "hybrid", format: "chipper", intention: "run", feasible: true }
 ];
 
 // packages/wod-engine/src/feasibility.ts
@@ -30712,18 +30966,14 @@ function formatsOfferedFor(discipline) {
   const served = new Set(rows(discipline).map((r) => r.format));
   return ["surprise", ...CHOICES.filter((c) => FORMAT_CHOICE_COVERS[c].some((f) => served.has(f)))];
 }
-function feasibleFormats(discipline, budget_min, intention) {
-  const served = new Set(rows(discipline).filter((r) => r.budget_min === budget_min && r.intention === intention).map((r) => r.format));
+function feasibleFormats(discipline, intention) {
+  const served = new Set(rows(discipline).filter((r) => r.intention === intention).map((r) => r.format));
   const out = new Set(CHOICES.filter((c) => FORMAT_CHOICE_COVERS[c].some((f) => served.has(f))));
   if (served.size) out.add("surprise");
   return out;
 }
-function feasibleDurations(discipline, intention, format = "surprise") {
-  const covers = format === "surprise" ? null : new Set(FORMAT_CHOICE_COVERS[format]);
-  return new Set(rows(discipline).filter((r) => r.intention === intention && (!covers || covers.has(r.format))).map((r) => r.budget_min));
-}
-function combinationFeasible(discipline, budget_min, intention, format) {
-  return feasibleFormats(discipline, budget_min, intention).has(format);
+function combinationFeasible(discipline, intention, format) {
+  return feasibleFormats(discipline, intention).has(format);
 }
 export {
   AFTER_CLASS_DURATIONS,
@@ -30860,7 +31110,6 @@ export {
   estimateBlock,
   estimateDuration,
   exerciseLine,
-  feasibleDurations,
   feasibleFormats,
   finisherSignature,
   forceBand,

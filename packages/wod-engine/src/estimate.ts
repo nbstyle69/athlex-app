@@ -105,8 +105,9 @@ export function deathByMinute(block: GeneratedBlock, category: Category, budgetM
 }
 
 function fmtTime(s: number): string {
-  const m = Math.floor(s / 60);
-  const sec = Math.round(s % 60);
+  const total = Math.round(s);
+  const m = Math.floor(total / 60);
+  const sec = total % 60;
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
@@ -121,6 +122,10 @@ export function estimateBlock(block: GeneratedBlock, category: Category, budgetM
       return { minutes: budgetMin, target: `≈ ${Math.floor(rounds)} rounds` };
     }
     case 'ladder': {
+      if (!block.ladder) {
+        const s = fixedWorkSeconds(block, category);
+        return { minutes: s / 60, target: `≈ ${fmtTime(s)}` };
+      }
       const { step, partial } = ladderProgress(block, category, budgetS);
       const next = block.ladder ? step + block.ladder.step : step;
       const pct = Math.round(partial * 100);

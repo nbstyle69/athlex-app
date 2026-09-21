@@ -4,6 +4,7 @@ export const engine_long_amrap: Skeleton = {
   id: 'engine_long_amrap',
   discipline: 'functional',
   format: 'amrap',
+  duration_range: [12, 20],
   durations: [20, 30],
   intentions: ['cardio'],
   band_by_intention: { cardio: 'light' },

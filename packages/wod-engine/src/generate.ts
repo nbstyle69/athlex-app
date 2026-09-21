@@ -1,5 +1,5 @@
 import {
-  Band, Catalog, CatalogMovement, Category, EditorColumns, Family, FormatChoice, GenerateParams, GeneratedBlock,
+  Band, Catalog, CatalogMovement, Category, EditorColumns, Family, FormatChoice, GenerateParams, GenerateRequest, GeneratedBlock,
   GeneratedMovement, GeneratedWod, Intention, Modality, NoValidWod, Pattern, RangeFormat, Skeleton, SkeletonBank, SkeletonFormat,
   Slot, SkeletonVariant, Unit,
 } from './types';
@@ -8,6 +8,7 @@ import {
   resolveMovement, substitutionFor, weightFor,
 } from './catalog';
 import { RNG } from './rng';
+import { roundCalculatedQuantity } from './quantities';
 import { estimateAll, estimateBlock, referenceCategory, roundSeconds, fixedWorkSeconds, TIME_BOUNDED, movementSeconds, TRANSITION_S, ladderStep, deathByMinute } from './estimate';
 import { VOLUME_CAP_FACTOR, genericCapFor } from './bank';
 import { signature } from './signature';
@@ -99,6 +100,7 @@ interface AfterClassFilter {
 
 interface Ctx {
   params: GenerateParams;
+  durationRange?: [number, number];
   catalog: Catalog;
   bank: SkeletonBank;
   rng: RNG;
@@ -246,15 +248,73 @@ function formatsFor(choice: FormatChoice | undefined): SkeletonFormat[] | null {
   return FORMAT_CHOICES[choice];
 }
 
+function durationRange(sk: Skeleton, variant: SkeletonVariant | null, entry: GenerateRequest['entry']): [number, number] | null {
+  const [declaredMin, declaredMax] = variant?.duration_range ?? sk.duration_range ?? [Math.min(...sk.durations), Math.max(...sk.durations)];
+  const min = entry === 'after_class' ? Math.max(15, declaredMin) : declaredMin;
+  const max = entry === 'after_class' ? Math.min(20, declaredMax) : declaredMax;
+  return min <= max ? [min, max] : null;
+}
+
+const USUAL_DURATIONS = [8, 10, 12, 15, 16, 18, 20, 25, 30];
+
+function usualDurations([min, max]: [number, number]): number[] {
+  return USUAL_DURATIONS.filter((duration) => duration >= min && duration <= max);
+}
+
 /**
- * Paliers de squelettes candidats, du tirage exact aux relâchements successifs :
- * format, durée ±5, puis squelettes non étiquetés pour l'intention (`skeleton`).
- * L'intention elle-même n'est jamais relâchée : bande et composition (`checkComposition`)
- * restent celles de l'intention demandée quel que soit le palier.
+ * « Surprends-moi » choisit d'abord une famille d'écran, puis un sous-format,
+ * uniformément parmi ceux que la banque sait servir pour l'intention. Ce choix
+ * est conservé pendant toute la recherche de composition.
  */
+function candidatePool(ctx: Ctx, params: GenerateRequest, bank: SkeletonBank, rng: RNG): Skeleton[] | null {
+  const banned = new Set((params.skeleton_not ?? []).map((id) => id.split(':')[0]));
+  const all = bank.skeletons.filter((s) =>
+    s.discipline === params.discipline
+    && !banned.has(s.id)
+    && s.intentions.includes(params.intention)
+    && durationRange(s, null, params.entry) !== null
+    && (!ctx.afterClass && !ctx.exclude.size || (s.variants ?? [null]).some((variant) =>
+      durationRange(s, variant, params.entry) !== null && canComposeSlots(ctx, s, variant))));
+  const choices = (Object.keys(FORMAT_CHOICES) as Array<Exclude<FormatChoice, 'surprise'>>)
+    .filter((choice) => all.some((s) => FORMAT_CHOICES[choice].includes(s.format)));
+  const requested = params.format && params.format !== 'surprise' ? params.format : null;
+  if (requested && !choices.includes(requested)) return null;
+  const choice = requested ?? (choices.length ? rng.pick(choices) : null);
+  if (!choice) return null;
+  const formats = FORMAT_CHOICES[choice].filter((format) => all.some((s) => s.format === format));
+  if (!formats.length) return null;
+  const format = rng.pick(formats);
+  return all.filter((s) => s.format === format);
+}
+
+function canComposeSlots(ctx: Ctx, sk: Skeleton, variant: SkeletonVariant | null): boolean {
+  const source = variant?.slots ?? sk.slots;
+  const rounds = variant?.rounds ?? sk.rounds;
+  const rotations = typeof rounds === 'object' && rounds.min >= 4 ? rounds.min : 1;
+  const slots = source.flatMap<{ slot: Slot; index: number; round: number | undefined }>((slot, index) => slot.rotate_per_round && rotations > 1
+    ? Array.from({ length: rotations }, (_, r) => ({ slot, index, round: r + 1 }))
+    : [{ slot, index, round: undefined }]);
+  const band = effectiveBand(sk, ctx.params);
+  const small = sk.discipline === 'functional' && slots.length <= 3;
+  const pools = slots.map(({ slot }) => ctx.catalog.movements.filter((m) =>
+    matchesPick(ctx, slot, m, [], sk, small) === null && !gymRecordMissing(ctx, m)));
+  const visit = (index: number, picked: Picked[]): boolean => {
+    if (index === slots.length) return !SLOT_INTENTIONS.has(ctx.params.intention)
+      || picked.some((p) => carriesIntention(ctx.params, p.m, p.band, sk));
+    const { slot, index: slotIndex, round } = slots[index];
+    if (slot.optional && sk.station_count && picked.length >= (sk.station_count.min ?? slots.length)
+      && visit(index + 1, picked)) return true;
+    return pools[index].some((m) => matchesPick(ctx, slot, m, picked, sk, small) === null
+      && visit(index + 1, [...picked, { m, slot, index: slotIndex, round, unit: pickUnit(slot, m)!, band, qty: 1 }]));
+  };
+  return visit(0, []);
+}
+
+/** Les appels à durée explicite conservent leurs paliers format, durée ±5, squelette. */
 function candidateTiers(params: GenerateParams, bank: SkeletonBank): Array<{ list: Skeleton[]; relaxations: string[] }> {
-  const banned = new Set(params.skeleton_not ?? []);
-  const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id));
+  const banned = new Set((params.skeleton_not ?? []).map((id) => id.split(':')[0]));
+  const all = bank.skeletons.filter((s) => s.discipline === params.discipline && !banned.has(s.id)
+    && (s.format !== 'chipper' || s.durations.includes(params.budget_min)));
   const base = all.filter((s) => s.intentions.includes(params.intention));
   const formats = formatsFor(params.format);
   const near = (d: number) => Math.abs(d - params.budget_min) <= 5;
@@ -318,7 +378,8 @@ function matchesPick(ctx: Ctx, slot: Slot, m: CatalogMovement, picked: Picked[],
     if (!carrier && m.pattern.some((x) => ctx.afterClass!.patterns.has(x))) return 'after_class_pattern';
     if (!carrier && ctx.afterClass.families.has(m.family)) return 'after_class_family';
   }
-  if (picked.some((q) => q.m.id === m.id)) return 'duplicate';
+  const repeatedRun = format === 'continuous' && m.family === 'run' && picked.at(-1)?.m.family !== 'run';
+  if (picked.some((q) => q.m.id === m.id) && !repeatedRun && !slot.allow_repeat) return 'duplicate';
   if (p.pattern_not_of_slot !== undefined) {
     const other = picked.find((q) => q.index === p.pattern_not_of_slot);
     if (other && primaryPattern(other.m) === primaryPattern(m)) return 'pattern_not_of_slot';
@@ -425,37 +486,37 @@ function drawMovement(
   return hit.use;
 }
 
-/** Pas d'arrondi de `roundQty` autour d'une quantité. */
-function stepQty(q: number, unit: Unit): number {
-  if (unit === 'm') return q > 1000 ? 100 : q > 200 ? 50 : q > 50 ? 10 : 5;
-  if (unit === 'cal' || unit === 's') return q > 20 ? 5 : 1;
-  return 1;
+function calculatedRange(range: [number, number], m: CatalogMovement, unit: Unit): [number, number] {
+  const min = roundCalculatedQuantity(Math.max(1, range[0]), unit, m.family, 'up');
+  const max = roundCalculatedQuantity(range[1], unit, m.family, 'down');
+  if (min > max) throw new Reject(`quantity_range:${m.id}`);
+  return [min, max];
 }
 
-function roundQty(q: number, unit: Unit): number {
-  if (unit === 'm') {
-    if (q >= 1000) return Math.round(q / 100) * 100;
-    return q >= 200 ? Math.round(q / 50) * 50 : q >= 50 ? Math.round(q / 10) * 10 : Math.round(q / 5) * 5;
-  }
-  if (unit === 'cal' || unit === 's') return q >= 20 ? Math.round(q / 5) * 5 : Math.round(q);
-  return Math.max(1, Math.round(q));
+function calculatedQty(q: number, m: CatalogMovement, unit: Unit, range: [number, number]): number {
+  const [min, max] = calculatedRange(range, m, unit);
+  return clamp(roundCalculatedQuantity(q, unit, m.family), min, max);
 }
 
-function rangeFor(ctx: Ctx, slot: Slot, m: CatalogMovement, unit: Unit, format: SkeletonFormat): [number, number] {
-  let r = slot.reps_range ?? m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]];
+function rangeFor(ctx: Ctx, slot: Slot, m: CatalogMovement, unit: Unit, format: SkeletonFormat, band: Band): [number, number] {
+  const heavyStation = ctx.params.intention === 'force' && band === 'heavy' && m.loads && unit === 'reps' && RACK_FORMATS.has(format);
+  let r = slot.reps_range ?? (heavyStation ? [...HEAVY_STATION_REPS] as [number, number] : m.rep_ranges?.[unit]?.[RANGE_FORMAT[format]]);
   if (!r) throw new Reject(`no_range:${m.id}:${unit}`);
   if (slot.qty_max !== undefined && slot.qty_max < r[1]) r = [Math.min(r[0], slot.qty_max), slot.qty_max];
+  if (m.family === 'sled' && unit === 'm' && CONTINUOUS_FORMATS.has(format)) {
+    r = [r[0], Math.min(r[1], 50)];
+  }
   if (ctx.params.intention === 'run' && m.family === 'run' && unit === 'm') {
     if (r[1] < RUN_MIN_M) throw new Reject(`run_too_short:${m.id}`);
     r = [Math.max(r[0], RUN_MIN_M), r[1]];
   }
-  return r;
+  return calculatedRange(r, m, unit);
 }
 
 function drawFixed(ctx: Ctx, slot: Slot, m: CatalogMovement, unit: Unit): number {
   if (slot.fixed_by_id && slot.fixed_by_id[m.id] !== undefined) return slot.fixed_by_id[m.id];
   if (slot.fixed !== undefined) return slot.fixed;
-  if (slot.fixed_range) return roundQty(ctx.rng.int(slot.fixed_range[0], slot.fixed_range[1]), unit);
+  if (slot.fixed_range) return calculatedQty(ctx.rng.int(slot.fixed_range[0], slot.fixed_range[1]), m, unit, slot.fixed_range);
   throw new Reject(`fixed_missing:${m.id}`);
 }
 
@@ -473,6 +534,7 @@ interface Draft {
   scheme?: number[];
   ladder?: GeneratedBlock['ladder'];
   rest?: GeneratedBlock['rest'];
+  restSpec?: Skeleton['rest'];
   stations?: number;
 }
 
@@ -560,7 +622,7 @@ function scaleRanges(d: Draft, factor: number): boolean {
   let moved = false;
   for (const p of d.picked) {
     if (!p.range) continue;
-    const next = clamp(roundQty(p.qty * factor, p.unit), p.range[0], p.range[1]);
+    const next = calculatedQty(p.qty * factor, p.m, p.unit, p.range);
     if (next !== p.qty) { p.qty = next; moved = true; }
   }
   return moved;
@@ -575,6 +637,14 @@ function fitFixedVolume(ctx: Ctx, d: Draft, roundsCandidates: number[]): void {
     d.rounds = rounds > 1 ? rounds : null;
     for (let iter = 0; iter < 4; iter++) {
       const est = fixedWorkSeconds(refBlock(ctx, d), ctx.ref);
+      if (ctx.durationRange) {
+        const durations = usualDurations(ctx.durationRange)
+          .filter((duration) => within(est / 60, duration));
+        if (durations.length) {
+          ctx.params.budget_min = ctx.rng.pick(durations);
+          return;
+        }
+      }
       if (within(est / 60, ctx.params.budget_min)) return;
       if (!scaleRanges(d, budgetS / est)) break;
     }
@@ -650,10 +720,27 @@ function capHeavyStationReps(ctx: Ctx, d: Draft): void {
 }
 
 function fitEmom(ctx: Ctx, d: Draft): void {
-  const every = typeof d.sk.rest?.every_s === 'number' ? d.sk.rest.every_s : 60;
+  const everyList = Array.isArray(d.restSpec?.every_s) ? d.restSpec.every_s : [d.restSpec?.every_s ?? 60];
+  const every = everyList.find((interval) => {
+    const cycle = interval * d.picked.length;
+    const durations = ctx.durationRange
+      ? seq(Math.ceil(ctx.durationRange[0]), Math.floor(ctx.durationRange[1]), 1)
+      : [ctx.params.budget_min];
+    return durations.some((duration) => duration * 60 % cycle === 0 && duration * 60 >= cycle * 2);
+  });
+  if (every === undefined) throw new Reject('emom_no_complete_cycles');
   const maxWork = d.sk.max_station_work_s ?? every * 0.65;
   d.rest = { every_s: every };
-  d.rounds = Math.floor((ctx.params.budget_min * 60) / every / d.picked.length);
+  const cycle = every * d.picked.length;
+  if (ctx.durationRange) {
+    const [min, max] = ctx.durationRange;
+    const durations = seq(Math.ceil(min), Math.floor(max), 1)
+      .filter((duration) => duration * 60 % cycle === 0 && duration * 60 >= cycle * 2);
+    if (!durations.length) throw new Reject('emom_no_complete_cycles');
+    ctx.params.budget_min = ctx.rng.pick(durations);
+  }
+  d.rounds = ctx.params.budget_min * 60 / cycle;
+  if (!Number.isInteger(d.rounds)) throw new Reject('emom_incomplete_cycle');
   if (d.rounds < 2) throw new Reject('emom_too_short');
   for (const p of d.picked) {
     const m = toGenerated(ctx, d, p);
@@ -661,7 +748,7 @@ function fitEmom(ctx: Ctx, d: Draft): void {
       const work = movementSeconds({ ...m, qty: p.qty }, ctx.ref);
       if (work <= maxWork && work >= maxWork * 0.4) break;
       if (!p.range) { if (work > maxWork) throw new Reject('emom_station_too_long'); break; }
-      const next = clamp(roundQty(p.qty * ((maxWork * 0.8) / work), p.unit), p.range[0], p.range[1]);
+      const next = calculatedQty(p.qty * ((maxWork * 0.8) / work), p.m, p.unit, p.range);
       if (next === p.qty) { if (work > maxWork) throw new Reject('emom_station_too_long'); break; }
       p.qty = next;
     }
@@ -669,7 +756,7 @@ function fitEmom(ctx: Ctx, d: Draft): void {
 }
 
 function fitStations(ctx: Ctx, d: Draft): void {
-  const rest = d.sk.rest ?? {};
+  const rest = d.restSpec ?? {};
   const works = Array.isArray(rest.work_s) ? seq(rest.work_s[0], rest.work_s[1], 15) : [rest.work_s ?? 60];
   const rests = Array.isArray(rest.rest_s) ? seq(rest.rest_s[0], rest.rest_s[1], 15) : [rest.rest_s ?? 15];
   const roundsList = pickRounds(ctx, d.sk, null, d.band);
@@ -683,13 +770,11 @@ function fitStations(ctx: Ctx, d: Draft): void {
       d.rest = { work_s: w, rest_s: r };
       d.stations = n;
       for (const p of d.picked) {
-        const cad = cadenceFor(p.m, ctx.ref, p.unit);
-        if (!cad) throw new Reject(`no_cadence:${p.m.id}`);
-        // cible tenable dans le temps de travail : on arrondit, puis on redescend d'un cran si ça déborde
-        let q = roundQty((w * 0.9) / cad, p.unit);
-        while (q * cad > w && q > 1) q = roundQty(q - stepQty(q, p.unit), p.unit);
-        if (q * cad > w) throw new Reject(`station_target:${p.m.id}`);
-        p.qty = q;
+        const cad = movementSeconds(toGenerated(ctx, d, p), ctx.ref, 1);
+        if (p.slot.qty === 'range' || p.slot.qty === 'draw' || p.slot.fixed_range) {
+          p.qty = calculatedQty((w * 0.9) / cad, p.m, p.unit, [1, Math.min(w / cad, p.slot.qty_max ?? Infinity)]);
+        }
+        if (p.qty * cad > w) throw new Reject(`station_target:${p.m.id}`);
       }
       return;
     }
@@ -781,14 +866,21 @@ function lastCarrierSlot(ctx: Ctx, sk: Skeleton, slots: Slot[], band: Band): num
   return -1;
 }
 
-function buildDraft(ctx: Ctx, sk: Skeleton): Draft {
-  const variant = sk.variants && sk.variants.length ? ctx.rng.pick(sk.variants) : null;
+function buildDraft(ctx: Ctx, sk: Skeleton, variant: SkeletonVariant | null = null): Draft {
   const band = effectiveBand(sk, ctx.params);
   const slots = activeSlots(ctx, sk, variant);
   const format = sk.format;
   const functionalSmall = ctx.params.discipline === 'functional' && slots.length <= 3;
   const scheme = variant?.scheme ?? sk.scheme_by_band?.[band] ?? sk.scheme;
-  const d: Draft = { sk, variantId: variant?.id ?? null, slots, band, picked: [], rounds: null };
+  const d: Draft = {
+    sk,
+    variantId: variant?.id ?? null,
+    slots,
+    band,
+    picked: [],
+    rounds: null,
+    restSpec: variant?.rest ?? sk.rest,
+  };
   const roundsCandidates = pickRounds(ctx, sk, variant, band);
   const rounds = roundsCandidates[0] || null;
 
@@ -805,12 +897,12 @@ function buildDraft(ctx: Ctx, sk: Skeleton): Draft {
     const base: Picked = { slot, index, m, unit, band: slotBand, qty: 0 };
     switch (slot.qty) {
       case 'range': {
-        const r = rangeFor(ctx, slot, m, unit, format);
+        const r = rangeFor(ctx, slot, m, unit, format, slotBand);
         base.range = r;
-        base.qty = roundQty(ctx.rng.int(r[0], r[1]), unit);
+        base.qty = calculatedQty(ctx.rng.int(r[0], r[1]), m, unit, r);
         break;
       }
-      case 'fixed': base.qty = drawFixed(ctx, slot, m, unit); break;
+      case 'draw': case 'fixed': base.qty = drawFixed(ctx, slot, m, unit); break;
       case 'scheme': {
         if (!scheme) throw new Reject('scheme_missing');
         if (format === 'chipper') base.qty = scheme[index] ?? scheme[scheme.length - 1];
@@ -827,7 +919,7 @@ function buildDraft(ctx: Ctx, sk: Skeleton): Draft {
         const mm = drawMovement(ctx, slot, index, [...d.picked, base, ...extra], sk, functionalSmall);
         const uu = pickUnit(slot, mm)!;
         const q: Picked = { slot, index, m: mm, unit: uu, band: slotBand, qty: 0, round: r };
-        if (slot.qty === 'range') { q.range = rangeFor(ctx, slot, mm, uu, format); q.qty = roundQty(ctx.rng.int(q.range[0], q.range[1]), uu); }
+        if (slot.qty === 'range') { q.range = rangeFor(ctx, slot, mm, uu, format, slotBand); q.qty = calculatedQty(ctx.rng.int(q.range[0], q.range[1]), mm, uu, q.range); }
         else q.qty = drawFixed(ctx, slot, mm, uu);
         extra.push(q);
       }
@@ -838,13 +930,21 @@ function buildDraft(ctx: Ctx, sk: Skeleton): Draft {
   });
   if (format !== 'chipper' && scheme && !variant?.scheme) d.scheme = scheme;
   if (variant?.scheme) d.scheme = variant.scheme;
+  if (CONTINUOUS_FORMATS.has(format) && d.picked.some((p) => p.m.family === 'sled' && p.unit === 'm' && p.qty > 50)) {
+    throw new Reject('sled_passage_over_50m');
+  }
 
   switch (format) {
     case 'amrap': fitAmrap(ctx, d); d.rounds = null; break;
     case 'emom': fitEmom(ctx, d); capHeavyStationReps(ctx, d); break;
     case 'interval': fitInterval(ctx, d, roundsCandidates); capHeavyStationReps(ctx, d); break;
     case 'stations': fitStations(ctx, d); capHeavyStationReps(ctx, d); break;
-    case 'ladder': fitLadder(ctx, d); break;
+    case 'ladder':
+      if (sk.ladder_mode === 'finite') {
+        fitFixedVolume(ctx, d, [1]);
+        d.rounds = null;
+      } else fitLadder(ctx, d);
+      break;
     case 'death_by': fitDeathBy(ctx, d); break;
     case 'continuous': fitContinuous(ctx, d); break;
     case 'tabata': fitTabata(ctx, d); break;
@@ -865,6 +965,9 @@ function buildDraft(ctx: Ctx, sk: Skeleton): Draft {
   }
   applyVolumeCaps(ctx, d);
   checkComposition(ctx, d);
+  if (ctx.params.discipline === 'functional' && (d.picked.length < 2 || d.picked.length > 5)) {
+    throw new Reject('functional_movement_count');
+  }
   return d;
 }
 
@@ -938,7 +1041,7 @@ function capPass(ctx: Ctx, d: Draft): boolean {
   let changed = false;
   for (const p of d.picked) {
     const mult = volumeMultiplier(ctx, d, p);
-    const perWod = tabata ? (16 * 20) / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
+    const perWod = tabata ? (8 * 20) / (cadenceFor(p.m, ctx.ref, p.unit) ?? 1) : p.qty * mult;
     // Le plafond de classe REMPLACE le générique : il doit pouvoir le relever
     // autant que le resserrer. Avec l'ancien `Math.min`, écrire 200 dans
     // `movement_caps` pour une famille plafonnée à 100 ne changeait rien.
@@ -949,12 +1052,16 @@ function capPass(ctx: Ctx, d: Draft): boolean {
       const perSet = Math.max(1, Math.floor(rec * GYM_RECORD_FRACTION));
       const biggest = p.scheme ? Math.max(...p.scheme) : p.qty;
       if (biggest > perSet) {
-        if (p.range && !p.scheme && perSet >= p.range[0]) { p.qty = perSet; changed = true; continue; }
+        if (p.range && !p.scheme && perSet >= p.range[0]) {
+          p.qty = calculatedQty(perSet, p.m, p.unit, [p.range[0], Math.min(p.range[1], perSet)]);
+          changed = true;
+          continue;
+        }
         // la série minimale du format dépasse le record : la variante accessible prend la place
         const alt = gymDown(ctx, p.m, d.picked);
         if (!alt) throw new Reject(`gym_record:${p.m.id}`);
         p.m = alt;
-        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format);
+        if (p.range) p.range = rangeFor(ctx, p.slot, alt, p.unit, d.sk.format, p.band);
         changed = true;
         continue;
       }
@@ -962,7 +1069,7 @@ function capPass(ctx: Ctx, d: Draft): boolean {
     const cap = specific ?? genericCapFor(caps, p.m.family, p.unit) ?? Infinity;
     if (cap === Infinity || perWod <= cap) continue;
     if (!p.range || mult <= 0 || tabata) throw new Reject(`volume_cap:${p.m.id}`);
-    const next = roundQty(Math.floor(cap / mult), p.unit);
+    const next = roundCalculatedQuantity(Math.floor(cap / mult), p.unit, p.m.family, 'down');
     if (next < p.range[0] || next >= p.qty) throw new Reject(`volume_cap:${p.m.id}`);
     p.qty = next;
     changed = true;
@@ -977,13 +1084,14 @@ function finalize(ctx: Ctx, d: Draft, tierRelaxations: string[], attempts: numbe
     ? [...tierRelaxations, 'after_class_pattern']
     : tierRelaxations;
   const refEst = estimateBlock(block, ctx.ref, ctx.params.budget_min);
-  if (!TIME_BOUNDED.has(d.sk.format) && !within(refEst.minutes, ctx.params.budget_min)) throw new Reject('duration_final');
+  const finiteLadder = d.sk.format === 'ladder' && d.sk.ladder_mode === 'finite';
+  if ((!TIME_BOUNDED.has(d.sk.format) || finiteLadder) && !within(refEst.minutes, ctx.params.budget_min)) throw new Reject('duration_final');
   if (d.sk.format === 'amrap') {
     const rounds = (ctx.params.budget_min * 60) / roundSeconds(block, ctx.ref);
     if (rounds < 3 || rounds > 10) throw new Reject('amrap_round_length');
   }
-  const timeBounded = TIME_BOUNDED.has(d.sk.format) || d.sk.format === 'interval' || d.sk.score_type !== 'time';
-  block.timecap = timeBounded ? null : Math.ceil((refEst.minutes * d.sk.cap_factor) / 0.5) * 30;
+  const timeBounded = (!finiteLadder && TIME_BOUNDED.has(d.sk.format)) || d.sk.format === 'interval' || d.sk.score_type !== 'time';
+  block.timecap = timeBounded ? null : Math.ceil(refEst.minutes * d.sk.cap_factor) * 60;
   const vest = ctx.params.discipline === 'hybrid' && ctx.params.vest && ctx.params.vest !== 'none'
     ? { mode: ctx.params.vest, load_kg_by_category: pickCats(ctx) }
     : null;
@@ -1011,26 +1119,10 @@ function finalize(ctx: Ctx, d: Draft, tierRelaxations: string[], attempts: numbe
       ? { excluded_patterns: [...ctx.afterClass.patterns].sort(), excluded_families: [...ctx.afterClass.families].sort() }
       : null,
   };
-  if (ctx.params.round_qty) roundQuantities(block);
   const estimate = estimateAll({ ...partial, ...emptyEditor() });
   const wod: GeneratedWod = { ...emptyEditor(), ...partial, estimate, signature: '' };
   wod.signature = signature(wod);
   return render(wod);
-}
-
-/**
- * Quantités lisibles sur un tableau de box : reps et calories au multiple de 5, temps au
- * multiple de 10 s. Les distances gardent leur pas, elles sont déjà rondes. Jamais zéro.
- */
-function roundQuantities(block: GeneratedWod['blocks'][number]): void {
-  const step = (unit: string) => (unit === 'reps' || unit === 'cal' ? 5 : unit === 's' ? 10 : 0);
-  const snap = (q: number, s: number) => (s ? Math.max(s, Math.round(q / s) * s) : q);
-  for (const m of block.movements) {
-    const s = step(m.unit);
-    if (!s) continue;
-    m.qty = snap(m.qty, s);
-    if (m.scheme) m.scheme = m.scheme.map((q) => snap(q, s));
-  }
 }
 
 function pickCats(ctx: Ctx): Partial<Record<Category, number>> {
@@ -1049,12 +1141,14 @@ function emptyEditor(): EditorColumns {
 
 // ─── API publique ────────────────────────────────────────────────────────────
 
-export function generateBlocC(params: GenerateParams, catalog: Catalog, bank: SkeletonBank, seed: number): GeneratedWod {
+export function generateBlocC(params: GenerateRequest, catalog: Catalog, bank: SkeletonBank, seed: number): GeneratedWod {
   const rng = new RNG(seed);
   const ref = params.profile_category ?? referenceCategory({ discipline: params.discipline });
   const refOk = categoriesFor(params.discipline).includes(ref);
+  const initialBudget = params.budget_min ?? (params.entry === 'after_class' ? 15 : 10);
+  const normalized: GenerateParams = { ...params, budget_min: initialBudget };
   const ctx: Ctx = {
-    params,
+    params: normalized,
     catalog,
     bank,
     rng,
@@ -1068,31 +1162,42 @@ export function generateBlocC(params: GenerateParams, catalog: Catalog, bank: Sk
   if (ctx.afterClass && SLOT_INTENTIONS.has(params.intention)) {
     const probe: SkeletonRef = { id: 'probe', format: 'emom' };
     const reachable = catalog.movements.some((m) => m.active && weightFor(m, params.discipline) > 0 && !ctx.subOnly.has(m.id)
-      && carriesIntention(params, m, 'light', probe)
+      && carriesIntention(normalized, m, 'light', probe)
       && !equipmentExcluded(ctx, m)
       && !m.pattern.some((x) => ctx.afterClass!.patterns.has(x))
       && !ctx.afterClass!.families.has(m.family));
     if (!reachable) ctx.afterClass.intentionExempt = true;
   }
-  const tiers = candidateTiers(params, bank);
-  if (!tiers.length) throw new NoValidWod('Aucun squelette compatible', { no_skeleton: 1 });
+  const athlete = params.budget_min === undefined;
+  const pool = athlete ? candidatePool(ctx, params, bank, rng) : null;
+  const tiers = athlete ? [] : candidateTiers(normalized, bank);
+  if (!pool && !tiers.length) throw new NoValidWod('Aucun squelette compatible', { no_skeleton: 1 });
   const recent = new Set(params.recent_signatures ?? []);
   const reasons: Record<string, number> = {};
   let tier = 0;
   let tierFails = 0;
-  // Format explicite : le palier exact reçoit son propre budget EN PLUS du
-  // total, sinon il consommerait tout et le relâchement n'aurait plus lieu —
-  // l'athlète recevrait une erreur là où l'écran promet « voici un EMOM ».
   const explicit = !!params.format && params.format !== 'surprise';
   const tierBudget = explicit ? TIER_ATTEMPTS_EXPLICIT : TIER_ATTEMPTS;
-  const maxAttempts = explicit ? MAX_ATTEMPTS + TIER_ATTEMPTS_EXPLICIT : MAX_ATTEMPTS;
+  const maxAttempts = athlete || !explicit ? MAX_ATTEMPTS : MAX_ATTEMPTS + TIER_ATTEMPTS_EXPLICIT;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    if (tierFails >= tierBudget && tier < tiers.length - 1) { tier++; tierFails = 0; }
-    const { list, relaxations } = tiers[tier];
+    if (!athlete && tierFails >= tierBudget && tier < tiers.length - 1) { tier++; tierFails = 0; }
+    const list = pool ?? tiers[tier].list;
     const sk = rng.pick(list);
+    const variants = sk.variants?.filter((v) => !athlete || (durationRange(sk, v, params.entry) !== null
+      && (!ctx.afterClass && !ctx.exclude.size || canComposeSlots(ctx, sk, v)))) ?? [];
+    const variant = variants.length ? rng.pick(variants) : null;
+    const range = durationRange(sk, variant, params.entry);
+    if (athlete && !range) continue;
+    const durations = range
+      ? sk.format === 'emom' ? seq(Math.ceil(range[0]), Math.floor(range[1]), 1) : usualDurations(range)
+      : [];
+    if (athlete && !durations.length) continue;
+    const budget = params.budget_min ?? rng.pick(durations);
+    ctx.params = { ...normalized, budget_min: budget };
+    ctx.durationRange = athlete ? range! : undefined;
     try {
-      const d = buildDraft(ctx, sk);
-      const wod = finalize(ctx, d, relaxations, attempt, seed);
+      const d = buildDraft(ctx, sk, variant);
+      const wod = finalize(ctx, d, athlete ? [] : tiers[tier].relaxations, attempt, seed);
       if (recent.has(wod.signature)) throw new Reject('recent_signature');
       return wod;
     } catch (e) {

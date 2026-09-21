@@ -4,6 +4,7 @@ export const couplet_amrap_short: Skeleton = {
   id: 'couplet_amrap_short',
   discipline: 'functional',
   format: 'amrap',
+  duration_range: [12, 20],
   durations: [8, 12],
   intentions: ['mixed', 'cardio', 'gym'],
   band_by_intention: { mixed: 'medium', cardio: 'light', gym: 'light' },

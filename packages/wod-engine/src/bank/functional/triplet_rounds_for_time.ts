@@ -4,6 +4,7 @@ export const triplet_rounds_for_time: Skeleton = {
   id: 'triplet_rounds_for_time',
   discipline: 'functional',
   format: 'rounds_for_time',
+  duration_range: [12, 20],
   durations: [12, 15, 20],
   intentions: ['mixed', 'force'],
   band_by_intention: { mixed: 'medium', force: 'heavy' },

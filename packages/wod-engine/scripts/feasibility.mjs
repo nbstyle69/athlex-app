@@ -1,17 +1,12 @@
 /**
- * Table de faisabilité des combinaisons (squelette × durée × intention), GÉNÉRÉE
+ * Table de faisabilité des combinaisons (squelette × intention), GÉNÉRÉE
  * depuis la banque par tirage réel — pas déclarée à la main.
  *
  *   node packages/wod-engine/scripts/feasibility.mjs            # écrit src/bank/feasibility.ts
  *   node packages/wod-engine/scripts/feasibility.mjs --check    # échoue si la table commitée est périmée
  *
- * Pourquoi. Un squelette DÉCLARE des durées et des intentions, mais une
- * déclaration n'est pas une garantie : `couplet_for_time_21_15_9` annonce 8 min
- * en Force et n'y aboutit jamais — un 21-15-9 en bande lourde ne tient pas dans
- * 8 minutes. Le 18/09/2026, 28 combinaisons déclarées sur 112 n'aboutissaient
- * jamais. L'écran du générateur doit griser ce que le moteur ne sait pas servir,
- * et la liste des formats proposés par discipline doit suivre la banque : les
- * deux se lisent dans cette table, que `__tests__/feasibility.test.ts` rejoue.
+ * L'écran ne propose que les familles servies pour la discipline et l'intention.
+ * La durée est tirée dans la plage du squelette ou de sa variante.
  */
 import { build } from 'esbuild';
 import fs from 'node:fs';
@@ -39,26 +34,24 @@ const ids = BANK_V1.skeletons.map((s) => s.id);
 const rows = [];
 for (const sk of BANK_V1.skeletons) {
   const ref = sk.discipline === 'functional' ? 'rx' : 'men';
-  for (const budget_min of sk.durations) {
-    for (const intention of sk.intentions) {
+  for (const intention of sk.intentions) {
       let ok = 0;
       for (let i = 0; i < FEASIBILITY_SEEDS; i++) {
         try {
           generateBlocC(
-            { entry: 'express', discipline: sk.discipline, budget_min, intention, format: 'surprise', profile_category: ref, skeleton_not: ids.filter((x) => x !== sk.id) },
+            { entry: 'express', discipline: sk.discipline, intention, format: 'surprise', profile_category: ref, skeleton_not: ids.filter((x) => x !== sk.id) },
             CATALOG_SNAPSHOT, BANK_V1, 777 + i,
           );
           ok++;
         } catch { /* rejeté */ }
       }
-      rows.push({ id: sk.id, discipline: sk.discipline, format: sk.format, budget_min, intention, feasible: ok > 0 });
-    }
+      rows.push({ id: sk.id, discipline: sk.discipline, format: sk.format, intention, feasible: ok > 0 });
   }
 }
 
 const dead = rows.filter((r) => !r.feasible);
 const lignes = rows.map((r) =>
-  `  { id: '${r.id}', discipline: '${r.discipline}', format: '${r.format}', budget_min: ${r.budget_min}, intention: '${r.intention}', feasible: ${r.feasible} },`);
+  `  { id: '${r.id}', discipline: '${r.discipline}', format: '${r.format}', intention: '${r.intention}', feasible: ${r.feasible} },`);
 const contenu = `// GÉNÉRÉ par scripts/feasibility.mjs — ne pas éditer. ${FEASIBILITY_SEEDS} seeds par combinaison.
 // ${rows.length} combinaisons déclarées, ${dead.length} jamais servies.
 import type { Discipline, Intention, SkeletonFormat } from '../types';
@@ -67,7 +60,6 @@ export interface FeasibilityRow {
   id: string;
   discipline: Discipline;
   format: SkeletonFormat;
-  budget_min: number;
   intention: Intention;
   /** au moins un tirage sur ${FEASIBILITY_SEEDS} aboutit, ce squelette seul autorisé */
   feasible: boolean;
@@ -88,5 +80,5 @@ if (check) {
 } else {
   fs.writeFileSync(out, contenu);
   console.log(`feasibility.ts écrit : ${rows.length} combinaisons, ${dead.length} jamais servies`);
-  for (const r of dead) console.log(`   ${r.discipline} · ${r.id} · ${r.budget_min} min · ${r.intention}`);
+  for (const r of dead) console.log(`   ${r.discipline} · ${r.id} · ${r.intention}`);
 }

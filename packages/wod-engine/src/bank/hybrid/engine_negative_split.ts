@@ -14,6 +14,7 @@ export const engine_negative_split: Skeleton = {
   id: 'engine_negative_split',
   discipline: 'hybrid',
   format: 'continuous',
+  duration_range: [30, 40],
   durations: [30, 35, 40],
   intentions: ['aerobic'],
   band_by_intention: { aerobic: 'light' },
@@ -21,8 +22,8 @@ export const engine_negative_split: Skeleton = {
   slots: [
     { pick: { ids: ['run'], unit: 'm' }, qty: 'fixed', fixed: 800 },
     { pick: { ids: ['row', 'ski_erg'], unit: 'm' }, qty: 'fixed', fixed: 750 },
+    { pick: { ids: ['run'], unit: 'm' }, qty: 'fixed', fixed: 800 },
     { pick: { ids: ['bike_erg'], unit: 'm' }, qty: 'fixed', fixed: 1500 },
-    { pick: { ids: ['db_farmer_carry', 'sandbag_carry'], unit: 'm' }, qty: 'fixed', fixed: 200, optional: true },
   ],
   station_count: { min: 3, max: 4 },
   score_type: 'distance',
