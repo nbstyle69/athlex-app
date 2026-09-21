@@ -1,7 +1,10 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Écriture des scores de tournoi et garde du recalcul des divisions
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 21/09/2026 à 16:40 UTC (dump schéma + données
+-- db-dumps/2026-09-21/athlex-prod-public-20260921T163854Z.dump avant ; corps de
+-- `internal` comparé au corps déployé de `public.recalc_division_points` juste
+-- avant application : identiques, 1887 caractères normalisés).
 --
 -- Trois défauts confirmés sur les définitions réellement déployées
 -- (`docs/audits/VERIF_PROD_TOURNOIS_BADGES.md`, PR #330) :
