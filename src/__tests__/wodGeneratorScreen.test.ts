@@ -47,7 +47,7 @@ describe('options du formulaire', () => {
 
   it('Après ma classe : carte « Classe du jour · box » seulement si box + WOD publié, patterns évités', () => {
     expect(screen).toContain("entry === 'after_class' && dayClass && currentBox");
-    expect(screen).toContain('Classe du jour · {currentBox.name}');
+    expect(screen).toContain('label={`Classe du jour · ${currentBox.name}`}');
     expect(avoidedText(CATALOG_SNAPSHOT, ['21 Thruster (43/30 kg)', '21 Pull-ups'])).toMatch(/^Patterns évités : .*traction verticale/);
     expect(avoidedText(CATALOG_SNAPSHOT, ['21 Thruster (43/30 kg)'])).toContain('barre');
     expect(avoidedText(CATALOG_SNAPSHOT, [])).toContain('sans filtre');
