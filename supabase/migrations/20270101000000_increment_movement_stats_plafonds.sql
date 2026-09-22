@@ -1,7 +1,11 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Plafond par appel d'`increment_movement_stats` — lot badges 4b, PR 1
 --
--- Appliquée en prod : non
+-- Appliquée en prod : OUI, le 22/09/2026 à 20:34 UTC (dump schéma, données et droits
+-- db-dumps/2026-09-22/athlex-prod-public-20260922T203344Z.dump avant, 127 sections
+-- TABLE DATA et 391 ACL ; précontrôle : corps de prod identique à 20261204,
+-- 703 caractères normalisés ; `user_movement_stats` et `athlete_badges`
+-- inchangées, md5 identiques avant et après.)
 --
 -- Depuis la 4a, les badges `mv_*` se décident sur `user_movement_stats`. Or
 -- cette table est alimentée par `increment_movement_stats`, que l'athlète
