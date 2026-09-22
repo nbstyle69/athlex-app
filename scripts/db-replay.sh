@@ -112,4 +112,21 @@ BEGIN
 END $$;
 SQL
 
+# Tests SQL rejoues sur la base reconstruite : ils verifient ce que les
+# migrations PROMETTENT (policies, gardes de fonctions), pas seulement qu'elles
+# passent. Un fichier ajoute dans supabase/tests/ est joue automatiquement.
+if compgen -G "supabase/tests/*.sql" >/dev/null; then
+  echo "==> Tests SQL (supabase/tests)"
+  for t in supabase/tests/*.sql; do
+    printf '    %-64s' "$(basename "$t")"
+    if psql "$DB_URL" -v ON_ERROR_STOP=1 -q -f "$t" >/tmp/sqltest.log 2>&1; then
+      echo "ok"
+    else
+      echo "ECHEC"
+      tail -20 /tmp/sqltest.log
+      exit 1
+    fi
+  done
+fi
+
 echo "==> REJEU OK"
