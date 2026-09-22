@@ -164,43 +164,54 @@ const contenu = JSON.stringify({
 }, null, 2) + '\n';
 
 /**
- * Les cas de parité sont écrits à la main dans `badge_rules_cases.json`, mais le
- * test SQL ne sait pas lire un fichier JSON : psql n'a ni `cat` portable ni
- * lecture côté serveur. On en dépose donc une copie dans un `.sql` trivial —
- * une seule valeur `jsonb` — et `--check` échoue si elle a vieilli. Même
- * mécanique que le bundle de `wod-engine` : un artefact dérivé, mais dont la
- * fraîcheur est un test.
+ * Les fichiers de cas sont écrits à la main en JSON, mais un test SQL ne sait
+ * pas lire un fichier JSON : psql n'a ni `cat` portable ni lecture côté
+ * serveur. On en dépose donc une copie dans un `.sql` trivial — une seule
+ * valeur `jsonb` dans une table temporaire — et `--check` échoue si elle a
+ * vieilli. Même mécanique que le bundle de `wod-engine` : un artefact dérivé,
+ * mais dont la fraîcheur est un test.
+ *
+ * [json source, table temporaire, test SQL qui le charge]
  */
-const CAS_JSON = path.join(RACINE, 'supabase', 'seed', 'badge_rules_cases.json');
-const CAS_SQL = path.join(RACINE, 'supabase', 'seed', 'badge_rules_cases.sql');
+const TRANSPORTS = [
+  ['badge_rules_cases', 'cas_parite', 'badge_rules_mv.sql'],
+  ['movement_credit_caps_cases', 'cas_plafonds', 'movement_credit_caps.sql'],
+].map(([base, table, test]) => ({
+  json: path.join(RACINE, 'supabase', 'seed', `${base}.json`),
+  sql: path.join(RACINE, 'supabase', 'seed', `${base}.sql`),
+  nom: `${base}.sql`,
+  table,
+  test,
+  base,
+}));
 
-const casSql = () => {
-  const brut = fs.readFileSync(CAS_JSON, 'utf8');
+const transportSql = t => {
+  const brut = fs.readFileSync(t.json, 'utf8');
   JSON.parse(brut); // un JSON invalide doit échouer ici, pas dans psql
-  return `-- Généré par scripts/generate-badge-rules.mjs depuis badge_rules_cases.json.\n`
+  return `-- Généré par scripts/generate-badge-rules.mjs depuis ${t.base}.json.\n`
     + `-- Ne pas éditer : la source est le .json, ce fichier n'est qu'un transport\n`
-    + `-- vers psql. Chargé par \\i depuis supabase/tests/badge_rules_mv.sql.\n`
-    + `CREATE TEMP TABLE cas_parite (donnees jsonb);\n`
-    + `INSERT INTO cas_parite VALUES ($cas$${brut.trimEnd()}$cas$::jsonb);\n`;
+    + `-- vers psql. Chargé par \\i depuis supabase/tests/${t.test}.\n`
+    + `CREATE TEMP TABLE ${t.table} (donnees jsonb);\n`
+    + `INSERT INTO ${t.table} VALUES ($cas$${brut.trimEnd()}$cas$::jsonb);\n`;
 };
 
 if (process.argv.includes('--check')) {
   const ko = [
     [SORTIE, contenu, 'badge_rules.json'],
-    [CAS_SQL, casSql(), 'badge_rules_cases.sql'],
+    ...TRANSPORTS.map(t => [t.sql, transportSql(t), t.nom]),
   ].filter(([f, attendu]) => (fs.existsSync(f) ? fs.readFileSync(f, 'utf8') : '') !== attendu);
   if (ko.length) {
     console.error(`${ko.map(([, , n]) => n).join(' et ')} ne correspond plus à ses sources`
       + ' — relance `node scripts/generate-badge-rules.mjs`.');
     process.exit(1);
   }
-  console.log('badge_rules.json et badge_rules_cases.sql à jour.');
+  console.log(`badge_rules.json et ${TRANSPORTS.map(t => t.nom).join(', ')} à jour.`);
 } else {
   fs.mkdirSync(path.dirname(SORTIE), { recursive: true });
   fs.writeFileSync(SORTIE, contenu);
-  fs.writeFileSync(CAS_SQL, casSql());
+  for (const t of TRANSPORTS) fs.writeFileSync(t.sql, transportSql(t));
   const r = JSON.parse(contenu).regles;
   const parType = r.reduce((a, x) => ({ ...a, [x.rule_kind]: (a[x.rule_kind] ?? 0) + 1 }), {});
   console.log(`${r.length} règles écrites dans supabase/seed/badge_rules.json`, parType);
-  console.log('cas de parité recopiés dans supabase/seed/badge_rules_cases.sql');
+  console.log(`cas recopiés : ${TRANSPORTS.map(t => `supabase/seed/${t.nom}`).join(', ')}`);
 }

@@ -1,0 +1,63 @@
+{
+  "_lisez_moi": "Usages normaux mesurés, qui doivent rester sous les plafonds d'increment_movement_stats. Chaque cas est un WOD de coach tel qu'il s'écrit au Whiteboard ; `credits` est la liste, dans l'ordre, des appels que le client envoie à la RPC (un par ligne). Le test jest src/__tests__/movementCreditCaps.test.ts recalcule `credits` avec le vrai code du client (computeCompletedMovements) et échoue s'il diverge ; supabase/tests/movement_credit_caps.sql rejoue ces appels contre les plafonds de la base.",
+  "cas": [
+    {
+      "nom": "Murph",
+      "lignes": ["1600 m Run", "100 Pull-ups", "200 Push-ups", "300 Air Squats", "1600 m Run"],
+      "type": "For Time",
+      "score": 2700,
+      "type_score": "time",
+      "credits": [
+        { "movement": "run", "unit": "m", "quantite": 1600 },
+        { "movement": "pull_up", "unit": "reps", "quantite": 100 },
+        { "movement": "push_up", "unit": "reps", "quantite": 200 },
+        { "movement": "air_squat", "unit": "reps", "quantite": 300 },
+        { "movement": "run", "unit": "m", "quantite": 1600 }
+      ]
+    },
+    {
+      "nom": "Cindy, 25 tours (750 reps)",
+      "lignes": ["5 Pull-ups", "10 Push-ups", "15 Air Squats"],
+      "type": "AMRAP",
+      "score": 750,
+      "type_score": "reps",
+      "credits": [
+        { "movement": "pull_up", "unit": "reps", "quantite": 125 },
+        { "movement": "push_up", "unit": "reps", "quantite": 250 },
+        { "movement": "air_squat", "unit": "reps", "quantite": 375 }
+      ]
+    },
+    {
+      "nom": "5 Rounds For Time : 100 DU, 20 T2B",
+      "lignes": ["5 Rounds For Time :", "100 Double Unders", "20 Toes to Bar"],
+      "type": "For Time",
+      "score": 1200,
+      "type_score": "time",
+      "credits": [
+        { "movement": "double_under", "unit": "reps", "quantite": 500 },
+        { "movement": "toes_to_bar", "unit": "reps", "quantite": 100 }
+      ]
+    },
+    {
+      "nom": "Marathon au rameur",
+      "lignes": ["42195 m Row"],
+      "type": "For Time",
+      "score": 10800,
+      "type_score": "time",
+      "credits": [
+        { "movement": "row", "unit": "m", "quantite": 42195 }
+      ]
+    },
+    {
+      "nom": "AMRAP 20 : 20 cal Row, 10 burpees, 20 tours",
+      "lignes": ["20 cal Row", "10 Burpees"],
+      "type": "AMRAP",
+      "score": 600,
+      "type_score": "reps",
+      "credits": [
+        { "movement": "row", "unit": "cal", "quantite": 400 },
+        { "movement": "burpee", "unit": "reps", "quantite": 200 }
+      ]
+    }
+  ]
+}
