@@ -1,0 +1,2227 @@
+{
+  "_lisez_moi": "Fichier généré par scripts/generate-badge-rules.mjs — ne pas éditer à la main.",
+  "regles": [
+    {
+      "badge_key": "mv_air_squat_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "air_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_air_squat_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "air_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_air_squat_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "air_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_air_squat_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "air_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bench_press_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "bench_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bench_press_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "bench_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bench_press_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "bench_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bench_press_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "bench_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bike_10000",
+      "rule_kind": "movement",
+      "unit": "cal",
+      "threshold": 10000,
+      "movement_keys": [
+        "bike"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bike_2000",
+      "rule_kind": "movement",
+      "unit": "cal",
+      "threshold": 2000,
+      "movement_keys": [
+        "bike"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bike_500",
+      "rule_kind": "movement",
+      "unit": "cal",
+      "threshold": 500,
+      "movement_keys": [
+        "bike"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bike_5000",
+      "rule_kind": "movement",
+      "unit": "cal",
+      "threshold": 5000,
+      "movement_keys": [
+        "bike"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bike_m_100000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 100000,
+      "movement_keys": [
+        "bike"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bike_m_25000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 25000,
+      "movement_keys": [
+        "bike"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bike_m_250000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 250000,
+      "movement_keys": [
+        "bike"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bmu_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "bar_muscle_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_bmu_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "bar_muscle_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_box_jump_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "box_jump"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_box_jump_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "box_jump"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_box_jump_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "box_jump"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_burpee_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "burpee",
+        "burpee_box_jump"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_burpee_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "burpee",
+        "burpee_box_jump"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_burpee_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "burpee",
+        "burpee_box_jump"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_burpee_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "burpee",
+        "burpee_box_jump"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_burpee_bj_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "burpee_box_jump"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_burpee_bj_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "burpee_box_jump"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_c2b_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "chest_to_bar"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_c2b_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "chest_to_bar"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_c2b_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "chest_to_bar"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_cj_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "clean_and_jerk"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_cj_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "clean_and_jerk"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_cj_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "clean_and_jerk"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_cj_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "clean_and_jerk"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_clean_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "clean"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_clean_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "clean"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_clean_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "clean"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_clean_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "clean"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_clean_pull_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "clean_pull"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_clean_pull_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "clean_pull"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_clean_pull_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "clean_pull"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_clean_pull_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "clean_pull"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_cj_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "db_cj"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_cj_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "db_cj"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_cj_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "db_cj"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_lunge_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "db_lunge"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_lunge_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "db_lunge"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_lunge_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "db_lunge"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_push_press_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "db_push_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_push_press_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "db_push_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_snatch_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "db_snatch"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_snatch_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "db_snatch"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_snatch_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "db_snatch"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_strict_press_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "db_strict_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_strict_press_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "db_strict_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_strict_press_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "db_strict_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_thruster_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "db_thruster"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_thruster_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "db_thruster"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_db_thruster_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "db_thruster"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_deadlifts_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "deadlift"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_deadlifts_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "deadlift"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_deadlifts_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "deadlift"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_deadlifts_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "deadlift"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_devil_press_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "devil_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_devil_press_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "devil_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_devil_press_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "devil_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_du_10000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 10000,
+      "movement_keys": [
+        "double_under"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_du_2000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 2000,
+      "movement_keys": [
+        "double_under"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_du_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "double_under"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_du_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "double_under"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_goblet_squat_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "goblet_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_goblet_squat_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "goblet_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_hollow_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "hollow_rock"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_hollow_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "hollow_rock"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_hspu_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "hspu"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_hspu_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "hspu"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_hspu_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "hspu"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_k2e_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "knees_to_elbow"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_k2e_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "knees_to_elbow"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_kb_cj_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "kb_cj"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_kb_cj_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "kb_cj"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_kb_snatch_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "kb_snatch"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_kb_snatch_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "kb_snatch"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_kb_swing_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "kb_swing"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_kb_swing_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "kb_swing"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_kb_swing_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "kb_swing"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_kb_swing_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "kb_swing"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_kb_thruster_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "kb_thruster"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_kb_thruster_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "kb_thruster"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_lunge_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "lunge"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_lunge_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "lunge"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_lunge_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "lunge"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_mb_slam_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "mb_slam"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_mb_slam_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "mb_slam"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_mtclimber_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "mountain_climber"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_mtclimber_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "mountain_climber"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ohs_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "overhead_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ohs_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "overhead_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ohs_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "overhead_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pistol_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "pistol_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pistol_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "pistol_squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_polyvalent_10",
+      "rule_kind": "polyvalent",
+      "unit": "reps",
+      "threshold": 10,
+      "movement_keys": [
+        "air_squat",
+        "bar_muscle_up",
+        "bench_press",
+        "bike",
+        "box_jump",
+        "burpee",
+        "burpee_box_jump",
+        "chest_to_bar",
+        "clean",
+        "clean_and_jerk",
+        "clean_pull",
+        "db_cj",
+        "db_push_press",
+        "db_snatch",
+        "db_strict_press",
+        "db_thruster",
+        "deadlift",
+        "devil_press",
+        "double_under",
+        "goblet_squat",
+        "hollow_rock",
+        "hspu",
+        "kb_cj",
+        "kb_snatch",
+        "kb_swing",
+        "kb_thruster",
+        "knees_to_elbow",
+        "lunge",
+        "mb_slam",
+        "mountain_climber",
+        "muscle_up",
+        "overhead_squat",
+        "pistol_squat",
+        "press",
+        "pull_over",
+        "pull_up",
+        "push_up",
+        "ring_dip",
+        "ring_muscle_up",
+        "ring_row",
+        "row",
+        "run",
+        "sdlhp",
+        "single_under",
+        "sit_up",
+        "ski_erg",
+        "snatch",
+        "snatch_balance",
+        "snatch_high_pull",
+        "squat",
+        "strict_press",
+        "thruster",
+        "toes_to_bar",
+        "turkish_get_up",
+        "v_up",
+        "wall_ball",
+        "wall_walk"
+      ],
+      "per_movement_threshold": 100
+    },
+    {
+      "badge_key": "mv_polyvalent_20",
+      "rule_kind": "polyvalent",
+      "unit": "reps",
+      "threshold": 20,
+      "movement_keys": [
+        "air_squat",
+        "bar_muscle_up",
+        "bench_press",
+        "bike",
+        "box_jump",
+        "burpee",
+        "burpee_box_jump",
+        "chest_to_bar",
+        "clean",
+        "clean_and_jerk",
+        "clean_pull",
+        "db_cj",
+        "db_push_press",
+        "db_snatch",
+        "db_strict_press",
+        "db_thruster",
+        "deadlift",
+        "devil_press",
+        "double_under",
+        "goblet_squat",
+        "hollow_rock",
+        "hspu",
+        "kb_cj",
+        "kb_snatch",
+        "kb_swing",
+        "kb_thruster",
+        "knees_to_elbow",
+        "lunge",
+        "mb_slam",
+        "mountain_climber",
+        "muscle_up",
+        "overhead_squat",
+        "pistol_squat",
+        "press",
+        "pull_over",
+        "pull_up",
+        "push_up",
+        "ring_dip",
+        "ring_muscle_up",
+        "ring_row",
+        "row",
+        "run",
+        "sdlhp",
+        "single_under",
+        "sit_up",
+        "ski_erg",
+        "snatch",
+        "snatch_balance",
+        "snatch_high_pull",
+        "squat",
+        "strict_press",
+        "thruster",
+        "toes_to_bar",
+        "turkish_get_up",
+        "v_up",
+        "wall_ball",
+        "wall_walk"
+      ],
+      "per_movement_threshold": 100
+    },
+    {
+      "badge_key": "mv_polyvalent_5",
+      "rule_kind": "polyvalent",
+      "unit": "reps",
+      "threshold": 5,
+      "movement_keys": [
+        "air_squat",
+        "bar_muscle_up",
+        "bench_press",
+        "bike",
+        "box_jump",
+        "burpee",
+        "burpee_box_jump",
+        "chest_to_bar",
+        "clean",
+        "clean_and_jerk",
+        "clean_pull",
+        "db_cj",
+        "db_push_press",
+        "db_snatch",
+        "db_strict_press",
+        "db_thruster",
+        "deadlift",
+        "devil_press",
+        "double_under",
+        "goblet_squat",
+        "hollow_rock",
+        "hspu",
+        "kb_cj",
+        "kb_snatch",
+        "kb_swing",
+        "kb_thruster",
+        "knees_to_elbow",
+        "lunge",
+        "mb_slam",
+        "mountain_climber",
+        "muscle_up",
+        "overhead_squat",
+        "pistol_squat",
+        "press",
+        "pull_over",
+        "pull_up",
+        "push_up",
+        "ring_dip",
+        "ring_muscle_up",
+        "ring_row",
+        "row",
+        "run",
+        "sdlhp",
+        "single_under",
+        "sit_up",
+        "ski_erg",
+        "snatch",
+        "snatch_balance",
+        "snatch_high_pull",
+        "squat",
+        "strict_press",
+        "thruster",
+        "toes_to_bar",
+        "turkish_get_up",
+        "v_up",
+        "wall_ball",
+        "wall_walk"
+      ],
+      "per_movement_threshold": 100
+    },
+    {
+      "badge_key": "mv_press_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_press_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_press_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_press_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pullover_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "pull_over"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pullover_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "pull_over"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pullup_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "pull_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pullup_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "pull_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pullup_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "pull_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pullup_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "pull_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pushup_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "push_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pushup_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "push_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pushup_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "push_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_pushup_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "push_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ring_dip_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "ring_dip"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ring_dip_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "ring_dip"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ring_mu_200",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 200,
+      "movement_keys": [
+        "ring_muscle_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ring_mu_50",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 50,
+      "movement_keys": [
+        "ring_muscle_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ring_mu_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "ring_muscle_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ring_row_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "ring_row"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ring_row_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "ring_row"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_row_2000",
+      "rule_kind": "movement",
+      "unit": "cal",
+      "threshold": 2000,
+      "movement_keys": [
+        "row"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_row_500",
+      "rule_kind": "movement",
+      "unit": "cal",
+      "threshold": 500,
+      "movement_keys": [
+        "row"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_row_5000",
+      "rule_kind": "movement",
+      "unit": "cal",
+      "threshold": 5000,
+      "movement_keys": [
+        "row"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_row_m_10000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 10000,
+      "movement_keys": [
+        "row"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_row_m_100000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 100000,
+      "movement_keys": [
+        "row"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_row_m_250000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 250000,
+      "movement_keys": [
+        "row"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_row_m_42195",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 42195,
+      "movement_keys": [
+        "row"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_run_10000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 10000,
+      "movement_keys": [
+        "run"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_run_100000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 100000,
+      "movement_keys": [
+        "run"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_run_250000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 250000,
+      "movement_keys": [
+        "run"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_run_42195",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 42195,
+      "movement_keys": [
+        "run"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_sdlhp_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "sdlhp"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_situp_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "sit_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_situp_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "sit_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_situp_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "sit_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ski_2000",
+      "rule_kind": "movement",
+      "unit": "cal",
+      "threshold": 2000,
+      "movement_keys": [
+        "ski_erg"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ski_500",
+      "rule_kind": "movement",
+      "unit": "cal",
+      "threshold": 500,
+      "movement_keys": [
+        "ski_erg"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ski_5000",
+      "rule_kind": "movement",
+      "unit": "cal",
+      "threshold": 5000,
+      "movement_keys": [
+        "ski_erg"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ski_m_10000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 10000,
+      "movement_keys": [
+        "ski_erg"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ski_m_100000",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 100000,
+      "movement_keys": [
+        "ski_erg"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_ski_m_42195",
+      "rule_kind": "movement",
+      "unit": "m",
+      "threshold": 42195,
+      "movement_keys": [
+        "ski_erg"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "snatch"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "snatch"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "snatch"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "snatch"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_balance_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "snatch_balance"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_balance_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "snatch_balance"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_balance_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "snatch_balance"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_balance_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "snatch_balance"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_hp_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "snatch_high_pull"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_hp_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "snatch_high_pull"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_hp_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "snatch_high_pull"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_snatch_hp_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "snatch_high_pull"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_squat_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "air_squat",
+        "goblet_squat",
+        "overhead_squat",
+        "squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_squat_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "air_squat",
+        "goblet_squat",
+        "overhead_squat",
+        "squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_squat_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "air_squat",
+        "goblet_squat",
+        "overhead_squat",
+        "squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_squat_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "air_squat",
+        "goblet_squat",
+        "overhead_squat",
+        "squat"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_strict_press_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "strict_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_strict_press_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "strict_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_strict_press_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "strict_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_strict_press_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "strict_press"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_su_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "single_under"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_su_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "single_under"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_t2b_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "toes_to_bar"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_t2b_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "toes_to_bar"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_t2b_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "toes_to_bar"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_thrusters_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "thruster"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_thrusters_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "thruster"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_thrusters_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "thruster"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_thrusters_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "thruster"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_total_100k",
+      "rule_kind": "total",
+      "unit": "reps",
+      "threshold": 100000,
+      "movement_keys": [
+        "air_squat",
+        "bar_muscle_up",
+        "bench_press",
+        "bike",
+        "box_jump",
+        "burpee",
+        "burpee_box_jump",
+        "chest_to_bar",
+        "clean",
+        "clean_and_jerk",
+        "clean_pull",
+        "db_cj",
+        "db_push_press",
+        "db_snatch",
+        "db_strict_press",
+        "db_thruster",
+        "deadlift",
+        "devil_press",
+        "double_under",
+        "goblet_squat",
+        "hollow_rock",
+        "hspu",
+        "kb_cj",
+        "kb_snatch",
+        "kb_swing",
+        "kb_thruster",
+        "knees_to_elbow",
+        "lunge",
+        "mb_slam",
+        "mountain_climber",
+        "muscle_up",
+        "overhead_squat",
+        "pistol_squat",
+        "press",
+        "pull_over",
+        "pull_up",
+        "push_up",
+        "ring_dip",
+        "ring_muscle_up",
+        "ring_row",
+        "row",
+        "run",
+        "sdlhp",
+        "single_under",
+        "sit_up",
+        "ski_erg",
+        "snatch",
+        "snatch_balance",
+        "snatch_high_pull",
+        "squat",
+        "strict_press",
+        "thruster",
+        "toes_to_bar",
+        "turkish_get_up",
+        "v_up",
+        "wall_ball",
+        "wall_walk"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_total_10k",
+      "rule_kind": "total",
+      "unit": "reps",
+      "threshold": 10000,
+      "movement_keys": [
+        "air_squat",
+        "bar_muscle_up",
+        "bench_press",
+        "bike",
+        "box_jump",
+        "burpee",
+        "burpee_box_jump",
+        "chest_to_bar",
+        "clean",
+        "clean_and_jerk",
+        "clean_pull",
+        "db_cj",
+        "db_push_press",
+        "db_snatch",
+        "db_strict_press",
+        "db_thruster",
+        "deadlift",
+        "devil_press",
+        "double_under",
+        "goblet_squat",
+        "hollow_rock",
+        "hspu",
+        "kb_cj",
+        "kb_snatch",
+        "kb_swing",
+        "kb_thruster",
+        "knees_to_elbow",
+        "lunge",
+        "mb_slam",
+        "mountain_climber",
+        "muscle_up",
+        "overhead_squat",
+        "pistol_squat",
+        "press",
+        "pull_over",
+        "pull_up",
+        "push_up",
+        "ring_dip",
+        "ring_muscle_up",
+        "ring_row",
+        "row",
+        "run",
+        "sdlhp",
+        "single_under",
+        "sit_up",
+        "ski_erg",
+        "snatch",
+        "snatch_balance",
+        "snatch_high_pull",
+        "squat",
+        "strict_press",
+        "thruster",
+        "toes_to_bar",
+        "turkish_get_up",
+        "v_up",
+        "wall_ball",
+        "wall_walk"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_total_50k",
+      "rule_kind": "total",
+      "unit": "reps",
+      "threshold": 50000,
+      "movement_keys": [
+        "air_squat",
+        "bar_muscle_up",
+        "bench_press",
+        "bike",
+        "box_jump",
+        "burpee",
+        "burpee_box_jump",
+        "chest_to_bar",
+        "clean",
+        "clean_and_jerk",
+        "clean_pull",
+        "db_cj",
+        "db_push_press",
+        "db_snatch",
+        "db_strict_press",
+        "db_thruster",
+        "deadlift",
+        "devil_press",
+        "double_under",
+        "goblet_squat",
+        "hollow_rock",
+        "hspu",
+        "kb_cj",
+        "kb_snatch",
+        "kb_swing",
+        "kb_thruster",
+        "knees_to_elbow",
+        "lunge",
+        "mb_slam",
+        "mountain_climber",
+        "muscle_up",
+        "overhead_squat",
+        "pistol_squat",
+        "press",
+        "pull_over",
+        "pull_up",
+        "push_up",
+        "ring_dip",
+        "ring_muscle_up",
+        "ring_row",
+        "row",
+        "run",
+        "sdlhp",
+        "single_under",
+        "sit_up",
+        "ski_erg",
+        "snatch",
+        "snatch_balance",
+        "snatch_high_pull",
+        "squat",
+        "strict_press",
+        "thruster",
+        "toes_to_bar",
+        "turkish_get_up",
+        "v_up",
+        "wall_ball",
+        "wall_walk"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_turkish_gu_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "turkish_get_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_turkish_gu_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "turkish_get_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_vup_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "v_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_vup_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "v_up"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_wallball_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "wall_ball"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_wallball_1000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 1000,
+      "movement_keys": [
+        "wall_ball"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_wallball_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "wall_ball"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_wallball_5000",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 5000,
+      "movement_keys": [
+        "wall_ball"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_wallwalk_100",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 100,
+      "movement_keys": [
+        "wall_walk"
+      ],
+      "per_movement_threshold": null
+    },
+    {
+      "badge_key": "mv_wallwalk_500",
+      "rule_kind": "movement",
+      "unit": "reps",
+      "threshold": 500,
+      "movement_keys": [
+        "wall_walk"
+      ],
+      "per_movement_threshold": null
+    }
+  ]
+}
