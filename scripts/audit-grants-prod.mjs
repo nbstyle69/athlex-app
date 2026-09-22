@@ -29,6 +29,9 @@ import { ANON_WHITELIST, SONDES_ANONYMES, SONDES_ANONYMES_MUTANTES } from './lib
 import {
   controlerGrantsTables, controlerRpcMutantes, ASSERTIONS_GRANTS_TABLES,
 } from './lib/controle-grants-tables.mjs';
+import {
+  controlerSchemaInternal, ASSERTIONS_SCHEMA_INTERNAL,
+} from './lib/controle-schema-internal.mjs';
 import { PROD_PROJECT_REF } from './lib/prod-ref.mjs';
 
 const DB_URL = process.env.PROD_DB_URL ?? '';
@@ -89,7 +92,8 @@ const ASSERTIONS_ATTENDUES = ASSERTIONS_FIXES
   + SONDES_ANONYMES.length
   + SONDES_ANONYMES_MUTANTES.length // jugées sur le catalogue, jamais appelées
   + 2 // lectures REST publiques (boxes, profiles)
-  + ASSERTIONS_GRANTS_TABLES; // T1..T9 : les grants de tables (lot 5-E)
+  + ASSERTIONS_GRANTS_TABLES // T1..T9 : les grants de tables (lot 5-E)
+  + ASSERTIONS_SCHEMA_INTERNAL; // I1..I3 : le schéma `internal`
 
 // Si le processus meurt entre deux assertions (psql injoignable, exception non
 // rattrapée), personne ne verrait le compte : ce filet l'imprime quand même et
@@ -322,6 +326,13 @@ assert(
 // sur 101 tables de public, ce qu'aucun contrôle ne disait.
 console.log('\n=== Grants de tables — PRODUCTION (lecture seule) ===\n');
 controlerGrantsTables(query, assert);
+
+// ── Schéma `internal` ──────────────────────────────────────────
+// Tout ce qui précède ne regarde que `public`. `internal` y échappait par
+// construction — c'est pourtant le schéma dont les fonctions portent le corps
+// SANS garde de rôle : leur inaccessibilité est toute leur protection.
+console.log('\n=== Schéma `internal` — PRODUCTION (lecture seule) ===\n');
+controlerSchemaInternal(query, assert);
 
 // Pas de sonde d'écriture ici, et c'est un choix mesuré. Une sonde d'écriture
 // *tente* une écriture : si le grant était encore là et la RLS permissive,
