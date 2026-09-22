@@ -3,6 +3,15 @@ import path from 'path';
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const read = (p: string) => readFileSync(path.join(ROOT, p), 'utf8');
+/**
+ * Chemin relatif à séparateurs `/`, quelle que soit la plateforme. `walk` rend
+ * des chemins absolus — donc avec des `\` sous Windows — et un filtre écrit
+ * `/docs\//` n'y reconnaissait rien : le rapport d'état du projet, qui cite
+ * l'ancien nom de variable, comptait alors comme une infraction. Le test
+ * échouait sur un poste de développement et passait en CI, ce qui est la pire
+ * des deux façons de se tromper.
+ */
+const rel = (f: string) => path.relative(ROOT, f).split(path.sep).join('/');
 
 const walk = (dir: string, out: string[] = []): string[] => {
   for (const name of readdirSync(dir)) {
@@ -23,7 +32,7 @@ describe('clé Google Maps Android — dépôt public, aucune clé embarquée', 
 
   it('aucun fichier versionné ne contient une clé Google', () => {
     const offenders = walk(ROOT).filter((f) => /AIza[0-9A-Za-z_-]{30,}/.test(readFileSync(f, 'utf8')));
-    expect(offenders.map((f) => path.relative(ROOT, f))).toEqual([]);
+    expect(offenders.map(rel)).toEqual([]);
   });
 
   it("app.config.js injecte GOOGLE_MAPS_ANDROID_API_KEY et ne lit plus l'ancienne GOOGLE_MAPS_API_KEY", () => {
@@ -36,9 +45,9 @@ describe('clé Google Maps Android — dépôt public, aucune clé embarquée', 
 
   it("l'ancien nom GOOGLE_MAPS_API_KEY n'est plus lu nulle part dans le code", () => {
     const offenders = walk(ROOT)
-      .filter((f) => !/docs\//.test(f) && !/__tests__/.test(f))
+      .filter((f) => !/^docs\//.test(rel(f)) && !/__tests__/.test(rel(f)))
       .filter((f) => /\bGOOGLE_MAPS_API_KEY\b/.test(readFileSync(f, 'utf8')));
-    expect(offenders.map((f) => path.relative(ROOT, f))).toEqual([]);
+    expect(offenders.map(rel)).toEqual([]);
   });
 
   it('verify:aab affirme la clé Maps du manifeste et le refus du préfixe interdit', () => {

@@ -65,6 +65,46 @@ pg_dump "$PROD_DB_URL" -Fc -n public --no-owner -f athlex-prod-public-<horodatag
   de l'état de sécurité de la base et doivent pouvoir être restaurés avec le
   reste. C'est le même raisonnement que la section « grants exacts » du baseline
   ci-dessus — un état restauré sans ses `GRANT`/`REVOKE` n'est pas l'état d'avant.
+- **Compter les sections du dump**, parce que c'est ce qui *prouve* ce qu'il
+  contient — un nom de fichier ne prouve rien :
+
+  ```bash
+  pg_restore -l athlex-prod-public-<horodatage>.dump | grep -c 'TABLE DATA'   # données
+  pg_restore -l athlex-prod-public-<horodatage>.dump | grep -ci 'ACL'         # droits
+  ```
+
+  Les deux comptes vont au compte rendu. Un `ACL` à zéro signifie un dump pris
+  avec `--no-acl` : il faut le refaire.
 - `--no-owner` reste en place : le propriétaire dépend de l'instance.
 - La copie locale est supprimée après dépôt ; `PROD_DB_URL` n'est ni affichée ni
   écrite dans un fichier.
+
+### Déposer le fichier dans le bucket
+
+```bash
+npx supabase storage cp <chemin/relatif>.dump ss:///db-dumps/AAAA-MM-JJ/<nom>.dump --experimental
+```
+
+Le chemin source doit être **relatif**. Un chemin absolu Windows échoue : le
+`C:` est pris pour un schéma d'URL, la CLI croit alors copier d'un dossier local
+vers un autre et rend un « Unsupported operation » qui ne dit pas cela du tout.
+Relire ensuite le fichier depuis le bucket et comparer les sha256 : c'est le seul
+contrôle qui prouve que le dépôt a bien eu lieu, et à l'octet près.
+
+### Ce qui doit rester intact, et comment le prouver
+
+Une migration qui ne doit pas toucher une table ne se contente pas de le dire :
+on relève **avant et après**, en lecture seule, le nombre de lignes et un md5 du
+contenu agrégé, et on les compare. Un comptage seul ne verrait pas une ligne
+modifiée en place.
+
+```sql
+SELECT count(*) AS lignes,
+       md5(string_agg(col_a || '|' || col_b, E'
+' ORDER BY cle)) AS empreinte
+  FROM public.<table>;
+```
+
+C'est ce qui a permis d'affirmer, pour la migration `20261231`, que les 208
+lignes de `badges_catalog` étaient **inchangées** — et pas seulement au même
+nombre — alors que la migration contenait un `INSERT` sur cette table.

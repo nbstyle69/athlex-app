@@ -11,7 +11,23 @@ import { CATALOG_SNAPSHOT } from '../../packages/wod-engine/src';
 
 const ROOT = path.join(__dirname, '..', '..');
 const read = (...p: string[]) => fs.readFileSync(path.join(ROOT, ...p), 'utf8');
-const exists = (...p: string[]) => fs.existsSync(path.join(ROOT, ...p));
+/**
+ * Présence d'un fichier, À LA CASSE PRÈS. `fs.existsSync` répond « oui » pour
+ * `WODGeneratorScreen.tsx` alors que seul `WodGeneratorScreen.tsx` existe :
+ * macOS et Windows ne distinguent pas la casse. Or ce test affirme justement
+ * l'absence de fichiers dont le nom ne diffère de l'actuel que par la casse —
+ * il passait en CI (Linux) et échouait sur un poste de développement, ce qui
+ * est la pire des deux façons de se tromper. On lit donc le dossier et on
+ * compare les noms exactement.
+ */
+const exists = (...p: string[]) => {
+  const nom = p[p.length - 1];
+  try {
+    return fs.readdirSync(path.join(ROOT, ...p.slice(0, -1))).includes(nom);
+  } catch {
+    return false; // dossier parent absent : le fichier l'est aussi
+  }
+};
 const screen = read('src', 'screens', 'wod', 'WodGeneratorScreen.tsx');
 const result = read('src', 'screens', 'wod', 'WodResultScreen.tsx');
 const nav = read('src', 'navigation', 'index.tsx');
