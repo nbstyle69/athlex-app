@@ -48,3 +48,23 @@ de table, de colonne, de routine) entre la prod et la base rejouée. Attendu :
 - **Hors périmètre du schéma** : schémas `auth`/`realtime` (plateforme), jobs
   `pg_cron`, secrets des edge functions, et les données. Le harnais de rejeu
   recrée le minimum de `storage` que la plateforme fournit normalement.
+
+## Dump de production avant d'appliquer une migration
+
+Toute application en prod est précédée d'un dump déposé dans le bucket privé
+`db-dumps` (`db-dumps/AAAA-MM-JJ/athlex-prod-public-<horodatage>.dump`), dont le
+chemin et le sha256 figurent au compte rendu.
+
+```bash
+pg_dump "$PROD_DB_URL" -Fc -n public --no-owner -f athlex-prod-public-<horodatage>.dump
+```
+
+- **Schéma *et* données** : jamais `--schema-only`. `pg_restore -l` doit lister
+  des sections `TABLE DATA`.
+- **Pas de `--no-acl`** (convention posée le 22/09/2026) : les droits font partie
+  de l'état de sécurité de la base et doivent pouvoir être restaurés avec le
+  reste. C'est le même raisonnement que la section « grants exacts » du baseline
+  ci-dessus — un état restauré sans ses `GRANT`/`REVOKE` n'est pas l'état d'avant.
+- `--no-owner` reste en place : le propriétaire dépend de l'instance.
+- La copie locale est supprimée après dépôt ; `PROD_DB_URL` n'est ni affichée ni
+  écrite dans un fichier.

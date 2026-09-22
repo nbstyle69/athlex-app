@@ -19,13 +19,22 @@ correspondant pas aux fichiers du dépôt.
   Référence repo : **dernière** définition rencontrée dans `supabase/migrations/`,
   fichiers pris dans l'ordre des noms.
 
+> **Amendement du 22 septembre 2026.** La réserve du point 3 (policy UPDATE de
+> `tournament_scores`) était **partiellement fausse** : l'absence de `WITH CHECK`
+> ne permettait **pas** à un athlète de faire passer sa ligne de `pending` à
+> `validated`. Quand le `WITH CHECK` est absent, PostgreSQL applique l'expression
+> du `USING` à la ligne écrite. Ce que l'absence laissait réellement passer est
+> décrit au [point 3](#3-policies-tournament_scores). Corrigé par la migration
+> `20261230000000_tournament_scores_gardes.sql` (PR #331), appliquée en prod le
+> 21/09/2026.
+
 ## Synthèse
 
 | # | Objet | Prod ≡ repo | Constat de l'audit |
 |---|---|---|---|
 | 1 | `badge_condition_met`, `claim_badge` — clés `mv_*` | **oui** | **confirmé** — aucune branche `mv_*`, `claim_badge` refuse |
 | 2 | `increment_movement_stats` | **oui** (2 signatures) | **confirmé** — présente et identique |
-| 3 | Policies `tournament_scores` INSERT / UPDATE | **oui** | **confirmé** pour l'INSERT ; UPDATE conforme à l'attendu, **avec une réserve** |
+| 3 | Policies `tournament_scores` INSERT / UPDATE | **oui** | **confirmé** pour l'INSERT ; UPDATE conforme à l'attendu, **avec une réserve amendée** (voir le point 3) |
 | 4 | `recalc_division_points` | **oui** | **infirmé** sur les droits, **confirmé** sur l'absence de garde de rôle |
 | 5 | `apply_bracket_match_elo` + `trg_bracket_match_elo` | **oui** | **confirmé** — ELO réappliqué sur réécriture |
 | 6 | `end_season_and_advance` | **oui** | **confirmé** — aucune garde d'idempotence |
@@ -159,11 +168,30 @@ l'ancienne ligne** (clause `USING`), ce qui répond à la question posée :
               WHERE t.id = tournament_scores.tournament_id AND is_box_admin(t.box_id))))
 ```
 
-**Réserve relevée pendant la vérification** : cette policy **n'a pas de
-`WITH_CHECK`** (`pg_policies.with_check` est nul). `USING` ne contraint que la
-ligne lue ; **rien ne contraint la ligne écrite**. Un athlète dont la ligne est
-`pending` peut donc, par un `UPDATE`, lui donner un autre statut — y compris
-celui qu'un organisateur poserait à la validation.
+**Réserve relevée pendant la vérification, amendée le 22/09/2026.** Cette policy
+**n'a pas de `WITH CHECK`** (`pg_policies.with_check` est nul) : le fait est
+exact, la conséquence qui en était tirée ne l'était pas. Il était écrit ici qu'un
+athlète dont la ligne est `pending` pouvait lui donner un autre statut, « y
+compris celui qu'un organisateur poserait à la validation ». **C'est faux** :
+quand le `WITH CHECK` est absent, PostgreSQL applique l'expression du `USING` à
+la ligne **écrite** autant qu'à la ligne lue. Le `status = 'pending'` du `USING`
+contraignait donc aussi la nouvelle ligne, et `pending` → `validated` était
+**déjà refusé** en production.
+
+Ce que l'absence de `WITH CHECK` laissait réellement passer, mesuré sur base de
+rejeu dans l'état d'avant correctif :
+
+- **la trace de modération était forgeable.** Aucune colonne n'était protégée :
+  un athlète pouvait écrire `admin_message`, `validated_by` et `validated_at`
+  sur sa propre ligne restée `pending` (1 ligne modifiée, sans erreur).
+- **la correction d'un score rejeté échouait en silence.** Le `USING` n'accepte
+  que `pending` : l'`UPDATE` que l'app propose sur une ligne `rejected`
+  (`TournamentWODScreen.tsx`) portait sur **0 ligne**, sans erreur remontée au
+  client — l'athlète croyait sa correction enregistrée.
+
+Le correctif élargit le `USING` à `rejected` pour rouvrir cette correction ; le
+`WITH CHECK` explicite y devient alors **nécessaire**, puisque le repli sur le
+`USING` laisserait sinon l'athlète écrire `rejected` sur sa propre ligne.
 
 ## 4. `recalc_division_points`
 
