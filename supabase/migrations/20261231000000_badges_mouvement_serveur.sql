@@ -1,7 +1,13 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Badges de mouvement (`mv_*`) reconnus par le serveur — lot badges 4a
 --
--- Appliquée en prod : non
+-- Appliquée en prod : OUI, le 22/09/2026 à 17:10 UTC (dump schéma, données et
+-- DROITS — sans `--no-acl` — db-dumps/2026-09-22/athlex-prod-public-20260922T170736Z.dump
+-- avant, 126 sections TABLE DATA et 390 sections ACL ; précontrôles en lecture
+-- seule : EXECUTE de `badge_condition_met` détenu par `postgres` SEUL — la
+-- révocation de `service_role` ne retire donc aucun droit réel — et les 187
+-- clés `mv_*` du catalogue de prod identiques à celles du dépôt. L'insertion de
+-- catalogue a bien rendu `INSERT 0 0` : opération blanche, comme annoncé.)
 --
 -- Constat (vérification prod du 21/09, `docs/audits/VERIF_PROD_TOURNOIS_BADGES.md`
 -- et état des lieux du 22/09) : `badge_condition_met` n'a aucune branche pour
