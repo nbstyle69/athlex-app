@@ -8,8 +8,12 @@
 -- les clés `mv_*` et retombe sur `RETURN false`. `claim_badge` refuse donc les
 -- 187 badges de mouvement publiés au catalogue — l'athlète qui termine un WOD
 -- ne peut débloquer aucun d'entre eux. Les 1 893 attributions existantes ne
--- viennent pas de là : elles ont été posées par le chemin gestionnaire de box,
--- à partir de `movement_rep_counts`.
+-- viennent pas de là : elles ont été posées EN LOT — toutes horodatées à
+-- 20:00:00 UTC pile, sans fraction de seconde, sur des dates rétro-datées du
+-- 29/07 au 04/09/2026 — et elles sont cohérentes avec `movement_rep_counts`,
+-- elle-même remplie en une fois le 04/09 à 20:00. `athlete_badges` n'ayant
+-- aucune colonne de traçabilité, rien ne permet de nommer l'auteur de ces
+-- écritures, et ce commentaire ne le fait pas.
 --
 -- ── Où vivent les règles ─────────────────────────────────────────────────────
 --
