@@ -30,7 +30,8 @@ VALUES ('00000000-0000-4000-a300-000000000001', 'plafond@test.invalid', 'plafond
 -- l'athlète. Rend 'ok', ou le SQLSTATE et le message du refus. Le rôle est
 -- rétabli avant de rendre la main, pour que les lectures de contrôle se
 -- fassent avec les droits du test.
-CREATE FUNCTION pg_temp.appel(p_role text, p_mouvement text, p_unite text, p_quantite integer)
+CREATE FUNCTION pg_temp.appel(p_role text, p_mouvement text, p_unite text, p_quantite integer,
+                               p_charge numeric DEFAULT NULL)
 RETURNS text LANGUAGE plpgsql AS $$
 DECLARE r text;
 BEGIN
@@ -39,7 +40,7 @@ BEGIN
   PERFORM set_config('role', p_role, true);
   BEGIN
     PERFORM public.increment_movement_stats(
-      '00000000-0000-4000-a300-000000000001', p_mouvement, p_quantite, NULL, p_unite);
+      '00000000-0000-4000-a300-000000000001', p_mouvement, p_quantite, p_charge, p_unite);
     r := 'ok';
   EXCEPTION WHEN others THEN
     r := SQLSTATE || '|' || SQLERRM;
@@ -206,6 +207,71 @@ BEGIN
   END IF;
 END $$;
 
+-- ── Q · les quantités qui ne sont pas des crédits ──────────────────────────
+-- « Aucune écriture » se prouve par l'emplacement physique de la ligne
+-- (`ctid`) : dans une même transaction `now()` ne bouge pas, un `updated_at`
+-- réécrit à l'identique ne dirait rien, alors qu'un UPDATE déplace la ligne.
+CREATE FUNCTION pg_temp.ligne(p_mouvement text)
+RETURNS text LANGUAGE sql AS $$
+  SELECT ctid::text || '|' || total_reps || '|' || COALESCE(best_weight::text, 'nul')
+    FROM public.user_movement_stats
+   WHERE user_id = '00000000-0000-4000-a300-000000000001' AND movement = p_mouvement AND unit = 'reps';
+$$;
+
+DO $$
+DECLARE r text; avant text;
+BEGIN
+  DELETE FROM public.user_movement_stats WHERE user_id = '00000000-0000-4000-a300-000000000001';
+  r := pg_temp.appel('authenticated', 'pull_up', 'reps', 50, 20);
+  IF r <> 'ok' THEN RAISE EXCEPTION 'Q : décor refusé — %', r; END IF;
+  avant := pg_temp.ligne('pull_up');
+
+  -- Q1 · NULL : ni erreur, ni écriture, cumul intact.
+  r := pg_temp.appel('authenticated', 'pull_up', 'reps', NULL);
+  IF r <> 'ok' THEN
+    RAISE EXCEPTION 'Q1 : une quantité NULL lève une erreur au lieu d''être ignorée — %', r;
+  END IF;
+  IF pg_temp.ligne('pull_up') IS DISTINCT FROM avant THEN
+    RAISE EXCEPTION 'Q1 : une quantité NULL a réécrit la ligne — % → %', avant, pg_temp.ligne('pull_up');
+  END IF;
+
+  -- Q2 · zéro : ni écriture sur une ligne existante, ni ligne créée.
+  r := pg_temp.appel('authenticated', 'pull_up', 'reps', 0);
+  IF r <> 'ok' OR pg_temp.ligne('pull_up') IS DISTINCT FROM avant THEN
+    RAISE EXCEPTION 'Q2a : un crédit nul a écrit — % · % → %', r, avant, pg_temp.ligne('pull_up');
+  END IF;
+  r := pg_temp.appel('authenticated', 'v_up', 'reps', 0);
+  IF r <> 'ok' OR pg_temp.ligne('v_up') IS NOT NULL THEN
+    RAISE EXCEPTION 'Q2b : un crédit nul a créé une ligne — % · %', r, pg_temp.ligne('v_up');
+  END IF;
+
+  -- Q3 · négatif : refusé en 22003, message complet, cumul intact.
+  r := pg_temp.appel('authenticated', 'pull_up', 'reps', -30);
+  IF r NOT LIKE '22003|%négative%' OR r NOT LIKE '%-30 reps de pull_up%' THEN
+    RAISE EXCEPTION 'Q3 : un crédit négatif n''est pas refusé comme attendu — %', r;
+  END IF;
+  IF pg_temp.ligne('pull_up') IS DISTINCT FROM avant THEN
+    RAISE EXCEPTION 'Q3 : le crédit négatif a modifié le cumul — % → %', avant, pg_temp.ligne('pull_up');
+  END IF;
+
+  -- Q4 · charge négative : refusée en 22003, cumul intact.
+  r := pg_temp.appel('authenticated', 'pull_up', 'reps', 10, -5);
+  IF r NOT LIKE '22003|%charge négative%' THEN
+    RAISE EXCEPTION 'Q4 : une charge négative n''est pas refusée — %', r;
+  END IF;
+  IF pg_temp.ligne('pull_up') IS DISTINCT FROM avant THEN
+    RAISE EXCEPTION 'Q4 : l''appel à charge négative a écrit — % → %', avant, pg_temp.ligne('pull_up');
+  END IF;
+
+  -- Q5 · charge NULL : le crédit passe, la meilleure charge reste.
+  r := pg_temp.appel('authenticated', 'pull_up', 'reps', 10, NULL);
+  IF r <> 'ok' THEN RAISE EXCEPTION 'Q5 : crédit sans charge refusé — %', r; END IF;
+  IF split_part(pg_temp.ligne('pull_up'), '|', 2) <> '60'
+     OR split_part(pg_temp.ligne('pull_up'), '|', 3) <> '20' THEN
+    RAISE EXCEPTION 'Q5 : attendu 60 reps et meilleure charge 20 — obtenu %', pg_temp.ligne('pull_up');
+  END IF;
+END $$;
+
 -- ── G · aucun rôle client ne lit ni n'écrit les plafonds ───────────────────
 DO $$
 DECLARE v_role text; v_err text;
@@ -233,6 +299,6 @@ BEGIN
   END LOOP;
 END $$;
 
-DO $$ BEGIN RAISE NOTICE 'movement_credit_caps : V01, B, N, S, R, F, E, G OK'; END $$;
+DO $$ BEGIN RAISE NOTICE 'movement_credit_caps : V01, B, N, S, R, F, E, Q, G OK'; END $$;
 
 ROLLBACK;

@@ -52,6 +52,18 @@
 -- `movement_credit_ledger` — le serveur ne peut pas se fier à `movement_logs`,
 -- que l'athlète écrit en direct.
 --
+-- ── Les quantités qui ne sont pas des crédits (relecture de Nab, 22/09/2026) ──
+--
+--   NULL ou 0     → retour immédiat, sans erreur ni écriture ;
+--   négative      → refus en 22003 : elle décrémentait le cumul, et aurait
+--                   permis de contourner la fenêtre de 24 h de la PR 2 ;
+--   charge < 0    → refus en 22003 (aucun plafond de charge dans ce lot).
+--
+-- Mesuré sur base de rejeu avant ce lot : un crédit de -30 faisait passer un
+-- cumul de 50 à 20. Un `NULL`, lui, ne corrompait pas la ligne — `total_reps`
+-- est NOT NULL, l'appel échouait en 23502 — mais c'était une erreur brute pour
+-- un appel qui n'avait simplement rien à créditer.
+--
 -- ── Structure ────────────────────────────────────────────────────────────────
 --
 -- Une table plutôt que des constantes dans le corps : la PR 2 lira les mêmes
@@ -126,6 +138,33 @@ BEGIN
   IF v_target IS NULL THEN RETURN; END IF;
   IF v_unit NOT IN ('reps', 'm', 'cal') THEN
     RAISE EXCEPTION 'increment_movement_stats: unité inconnue %', v_unit;
+  END IF;
+
+  -- Rien à créditer : on sort sans rien écrire. Un `NULL` échappait à la
+  -- comparaison au plafond et faisait échouer l'`ON CONFLICT` en 23502
+  -- (`total_reps` est NOT NULL) ; un zéro créait une ligne vide ou ne touchait
+  -- que `updated_at`. Le Whiteboard envoie réellement 0 : en AMRAP et en Max
+  -- Reps, il passe un score nul au découpage.
+  IF p_reps IS NULL OR p_reps = 0 THEN
+    RETURN;
+  END IF;
+
+  -- Un crédit négatif décrémentait le cumul. Avec la fenêtre de 24 h de la
+  -- PR 2, il permettrait de la contourner — des débits compensant des
+  -- crédits. La 1.0.56 n'en envoie jamais en usage normal (scores refusés à
+  -- zéro ou en dessous, quantités lues par des motifs sans signe).
+  IF p_reps < 0 THEN
+    RAISE EXCEPTION 'increment_movement_stats : quantité négative refusée — % % de %',
+      p_reps, v_unit, p_movement
+      USING ERRCODE = '22003';
+  END IF;
+
+  -- Charge négative : même refus. Pas de plafond de charge dans ce lot —
+  -- `best_weight` n'alimente aujourd'hui ni badge ni classement.
+  IF p_weight < 0 THEN
+    RAISE EXCEPTION 'increment_movement_stats : charge négative refusée — % kg sur %',
+      p_weight, p_movement
+      USING ERRCODE = '22003';
   END IF;
 
   -- L'exception nominative du mouvement l'emporte sur la valeur de l'unité.
