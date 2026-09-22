@@ -32,6 +32,7 @@ import {
 import {
   controlerSchemaInternal, ASSERTIONS_SCHEMA_INTERNAL,
 } from './lib/controle-schema-internal.mjs';
+import { signalerCorrespondancesCatalogue } from './lib/signal-correspondances-catalogue.mjs';
 import { PROD_PROJECT_REF } from './lib/prod-ref.mjs';
 
 const DB_URL = process.env.PROD_DB_URL ?? '';
@@ -333,6 +334,13 @@ controlerGrantsTables(query, assert);
 // SANS garde de rôle : leur inaccessibilité est toute leur protection.
 console.log('\n=== Schéma `internal` — PRODUCTION (lecture seule) ===\n');
 controlerSchemaInternal(query, assert);
+
+// ── Correspondance catalogue → clés : un signal, pas une assertion ───────────
+// Le catalogue se modifie depuis le back-office admin ; un mouvement ajouté sans
+// correspondance ne créditerait jamais rien. On le signale sans faire échouer
+// l'audit, et sans toucher au compte d'assertions attendu.
+console.log('\n=== Correspondance catalogue → clés — PRODUCTION (signal) ===\n');
+signalerCorrespondancesCatalogue(query);
 
 // Pas de sonde d'écriture ici, et c'est un choix mesuré. Une sonde d'écriture
 // *tente* une écriture : si le grant était encore là et la RLS permissive,

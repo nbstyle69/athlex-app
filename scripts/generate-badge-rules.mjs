@@ -176,6 +176,7 @@ const contenu = JSON.stringify({
 const TRANSPORTS = [
   ['badge_rules_cases', 'cas_parite', 'badge_rules_mv.sql'],
   ['movement_credit_caps_cases', 'cas_plafonds', 'movement_credit_caps.sql'],
+  ['tournament_credit_cases', 'cas_credits', 'tournament_credits.sql'],
 ].map(([base, table, test]) => ({
   json: path.join(RACINE, 'supabase', 'seed', `${base}.json`),
   sql: path.join(RACINE, 'supabase', 'seed', `${base}.sql`),
