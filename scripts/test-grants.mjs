@@ -32,6 +32,7 @@ import {
   ANON_WHITELIST, SONDES_ANONYMES, SONDES_ANONYMES_MUTANTES, SONDES_ECRITURE_ANONYME,
 } from './lib/anon-whitelist.mjs';
 import { controlerGrantsTables, controlerRpcMutantes } from './lib/controle-grants-tables.mjs';
+import { controlerSchemaInternal } from './lib/controle-schema-internal.mjs';
 
 const { url: SUPABASE_URL, anonKey: ANON_KEY } = requireTestTarget();
 
@@ -214,6 +215,12 @@ assert(
 // d'écriture sur 101 tables.
 console.log('\n=== Contrôle des grants de tables (schéma public) ===\n');
 controlerGrantsTables(query, assert);
+
+// ── Schéma `internal` ───────────────────────────────────────────
+// Même contrôle que sur la prod, même module : ici il prouve ce que nos
+// migrations produisent, là-bas ce que la base est devenue.
+console.log('\n=== Contrôle du schéma `internal` ===\n');
+controlerSchemaInternal(query, assert);
 
 // ── Le geste réel, et son effet mesuré ───────────────────────────────────────
 // Ici — pile jetable — la sonde peut être complète, et elle doit l'être : le
