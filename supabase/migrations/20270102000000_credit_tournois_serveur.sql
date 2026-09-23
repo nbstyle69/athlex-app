@@ -19,7 +19,10 @@
 --      total déclaré par l'athlète sur une fenêtre glissante de 24 h.
 --   5. Le crédit automatique, dans la transaction, à la validation d'un score ;
 --      son retrait quand le score quitte `validated` ; son recalcul quand le
---      score ou le WOD change. Badges `mv_*` atteints attribués au passage.
+--      score ou le WOD change — le WOD, sur EXACTEMENT les colonnes que le calcul
+--      lit : `movement_lines`, `type`, `rounds`, `reps_per_round` (un test
+--      échoue si le calcul se met à en lire une autre). Badges `mv_*` atteints
+--      attribués au passage.
 --
 -- ── Deux espaces de clés, un seul pont (arbitrage de Nab, 23/09/2026) ────────
 --
@@ -48,6 +51,9 @@
 --                      si `reps_per_round` est renseigné et diffère de la somme
 --                      des lignes, on ne sait pas quel tour l'athlète comptait :
 --                      rien
+--   Ligne en mètres    dans un AMRAP ou un For Time au CAP, crédit seulement si
+--                      `reps_per_round` est renseignée et égale à la somme des
+--                      lignes (le score compte alors les mètres) ; sinon rien
 --   EMOM               rien : le score n'a pas de sémantique structurée (il
 --                      débloquera avec le lot Manager)
 --   Tabata / Max Reps  le score, s'il porte sur un seul mouvement ; sinon rien
@@ -60,9 +66,10 @@
 -- client, qui ne les compte pas dans les reps d'un tour.
 --
 -- En AMRAP et au CAP, TOUTES les lignes comptent dans la répartition — y
--- compris celles sans correspondance et celles en `m` ou `cal`, que le score
--- total additionne comme des reps, comme le client — mais seules les lignes à
--- correspondance sont créditées.
+-- compris celles sans correspondance et celles en `cal`, que le score total
+-- additionne comme des reps, comme le client — mais seules les lignes à
+-- correspondance sont créditées. Une ligne en `m` n'y entre qu'avec la
+-- déclaration du gérant ci-dessus.
 --
 -- ── Fenêtre de 24 h ──────────────────────────────────────────────────────────
 --
@@ -468,6 +475,16 @@ BEGIN
 
   -- Répartition dans l'ordre des lignes : tours complets, puis le reste.
   IF v_reps IS NOT NULL THEN
+    -- Une ligne en mètres rend le tour hétérogène : sur « 200 m de course +
+    -- 10 burpees », un tour vaut 210 et un score saisi en reps se répartirait
+    -- arbitrairement. On ne crédite que si le gérant a déclaré que le score
+    -- compte les mètres : `reps_per_round` renseignée ET égale à la somme des
+    -- lignes. Les calories, elles, restent comptées comme des reps (arbitrage
+    -- de Nab, 23/09/2026).
+    IF 'm' = ANY (v_units)
+       AND (w.reps_per_round IS NULL OR w.reps_per_round <> v_par_tour) THEN
+      RETURN;
+    END IF;
     IF v_par_tour IS NULL OR v_par_tour <= 0 THEN RETURN; END IF;
     v_complets := v_reps / v_par_tour;
     v_reste    := v_reps % v_par_tour;
@@ -603,7 +620,7 @@ BEGIN
   IF NEW.movement_lines   IS NOT DISTINCT FROM OLD.movement_lines
      AND NEW.type             IS NOT DISTINCT FROM OLD.type
      AND NEW.rounds           IS NOT DISTINCT FROM OLD.rounds
-     AND NEW.duration_minutes IS NOT DISTINCT FROM OLD.duration_minutes THEN
+     AND NEW.reps_per_round   IS NOT DISTINCT FROM OLD.reps_per_round THEN
     RETURN NEW;
   END IF;
   -- Tous les scores du WOD : les validés sont recalculés, les autres n'ont ni
@@ -617,7 +634,7 @@ $$;
 
 DROP TRIGGER IF EXISTS trg_tournament_wods_credits ON public.tournament_wods;
 CREATE TRIGGER trg_tournament_wods_credits
-  AFTER UPDATE OF movement_lines, type, rounds, duration_minutes ON public.tournament_wods
+  AFTER UPDATE OF movement_lines, type, rounds, reps_per_round ON public.tournament_wods
   FOR EACH ROW EXECUTE FUNCTION public.trg_tournament_wods_credits();
 
 -- Les fonctions de trigger ne s'appellent pas en RPC, mais on ne laisse pas

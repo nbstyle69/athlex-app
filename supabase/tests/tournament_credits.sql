@@ -554,6 +554,108 @@ BEGIN
   END IF;
 END $$;
 
-DO $$ BEGIN RAISE NOTICE 'tournament_credits : P, I1…I12 OK'; END $$;
+-- ── I13 · correction de reps_per_round après validation : recalcul ────────
+DO $$
+DECLARE
+  v_ath   uuid := '00000000-0000-4000-a400-000000000011';
+  v_wod   uuid;
+  v_score uuid;
+BEGIN
+  PERFORM pg_temp.remise_a_zero(v_ath);
+  v_wod := pg_temp.wod('AMRAP', NULL, NULL,
+    '[{"movement":"row","unit":"cal","qty_male":20},{"movement":"burpee","unit":"reps","qty_male":10}]');
+  v_score := pg_temp.score(v_wod, v_ath, '95', false);
+  UPDATE public.tournament_scores SET status = 'validated' WHERE id = v_score;
+  IF pg_temp.cumuls(v_ath) <> 'burpee|reps|30,row|cal|65' THEN
+    RAISE EXCEPTION 'I13 : décor « % »', pg_temp.cumuls(v_ath);
+  END IF;
+
+  -- Un reps_per_round qui contredit la somme des lignes : plus rien de prouvé.
+  UPDATE public.tournament_wods SET reps_per_round = 25 WHERE id = v_wod;
+  IF pg_temp.cumuls(v_ath) <> '' OR pg_temp.credits(v_score) <> '' THEN
+    RAISE EXCEPTION 'I13a : reps_per_round corrigé à 25 sans recalcul — cumuls « % »', pg_temp.cumuls(v_ath);
+  END IF;
+
+  -- Rétabli à la somme : le crédit revient, au même montant.
+  UPDATE public.tournament_wods SET reps_per_round = 30 WHERE id = v_wod;
+  IF pg_temp.cumuls(v_ath) <> 'burpee|reps|30,row|cal|65' THEN
+    RAISE EXCEPTION 'I13b : reps_per_round rétabli sans recalcul — cumuls « % »', pg_temp.cumuls(v_ath);
+  END IF;
+END $$;
+
+-- ── I14 · le déclencheur du WOD suit exactement ce que le calcul lit ───────
+-- Un oubli de colonne ne se voit pas : le crédit reste simplement faux après
+-- une correction du WOD. Ce contrôle compare trois listes qui doivent être
+-- identiques — les colonnes de `tournament_wods` que le calcul lit (`tw.xxx`,
+-- hors la clé `id`), celles du `UPDATE OF` du déclencheur, et celles que la
+-- fonction du déclencheur compare avant de recalculer.
+DO $$
+DECLARE
+  v_lues      text[];
+  v_trigger   text[];
+  v_comparees text[];
+BEGIN
+  SELECT array_agg(DISTINCT m[1] ORDER BY m[1]) INTO v_lues
+    FROM pg_proc p, regexp_matches(p.prosrc, '\mtw\.([a-z_]+)', 'g') AS m
+   WHERE p.oid = 'internal.tournament_score_credits(uuid)'::regprocedure
+     AND m[1] <> 'id';
+
+  SELECT array_agg(a.attname::text ORDER BY a.attname) INTO v_trigger
+    FROM pg_trigger t
+    JOIN pg_attribute a ON a.attrelid = t.tgrelid AND a.attnum = ANY (t.tgattr)
+   WHERE t.tgrelid = 'public.tournament_wods'::regclass AND t.tgname = 'trg_tournament_wods_credits';
+
+  SELECT array_agg(DISTINCT m[1] ORDER BY m[1]) INTO v_comparees
+    FROM pg_proc p, regexp_matches(p.prosrc, 'NEW\.([a-z_]+)\s+IS NOT DISTINCT FROM', 'g') AS m
+   WHERE p.oid = 'public.trg_tournament_wods_credits()'::regprocedure;
+
+  -- Contre-exemple : sur des listes vides, l'égalité ne prouverait rien.
+  IF COALESCE(array_length(v_lues, 1), 0) < 3 THEN
+    RAISE EXCEPTION 'I14 : le calcul ne lit que % colonne(s) de tournament_wods — lecture introuvable', v_lues;
+  END IF;
+  IF v_trigger IS DISTINCT FROM v_lues THEN
+    RAISE EXCEPTION 'I14a : le calcul lit % mais le déclencheur ne suit que % — une correction de la colonne manquante laisserait des crédits faux',
+      v_lues, v_trigger;
+  END IF;
+  IF v_comparees IS DISTINCT FROM v_lues THEN
+    RAISE EXCEPTION 'I14b : le calcul lit % mais la fonction du déclencheur ne compare que %', v_lues, v_comparees;
+  END IF;
+END $$;
+
+-- ── I15 · supprimer le tournoi retire ses crédits, garde les badges ────────
+-- C'est le dernier geste du test réel : le tournoi de test est supprimé depuis
+-- le Manager, et la cascade atteint les scores.
+DO $$
+DECLARE
+  v_ath   uuid := '00000000-0000-4000-a400-000000000014';
+  v_t     uuid := gen_random_uuid();
+  v_wod   uuid := gen_random_uuid();
+  v_score uuid := gen_random_uuid();
+BEGIN
+  PERFORM pg_temp.remise_a_zero(v_ath);
+  DELETE FROM public.athlete_badges WHERE athlete_id = v_ath;
+  INSERT INTO public.tournaments (id, box_id, name, level, format, status)
+  VALUES (v_t, '00000000-0000-4000-b400-00000000000b', 'Tournoi jetable', 'rx', 'simple', 'active');
+  INSERT INTO public.tournament_wods (id, tournament_id, title, type, status, movement_lines)
+  VALUES (v_wod, v_t, 'WOD jetable', 'For Time', 'active', '[{"movement":"row","unit":"cal","qty_male":500}]');
+  INSERT INTO public.tournament_scores (id, tournament_id, tournament_wod_id, athlete_id, score_value, status)
+  VALUES (v_score, v_t, v_wod, v_ath, '1500', 'pending');
+  UPDATE public.tournament_scores SET status = 'validated' WHERE id = v_score;
+  IF pg_temp.cumuls(v_ath) <> 'row|cal|500'
+     OR NOT EXISTS (SELECT 1 FROM public.athlete_badges WHERE athlete_id = v_ath AND badge_key = 'mv_row_500') THEN
+    RAISE EXCEPTION 'I15 : décor — cumuls « % », badge mv_row_500 absent ?', pg_temp.cumuls(v_ath);
+  END IF;
+
+  DELETE FROM public.tournaments WHERE id = v_t;
+  IF pg_temp.cumuls(v_ath) <> '' OR pg_temp.credits(v_score) <> '' THEN
+    RAISE EXCEPTION 'I15a : tournoi supprimé, crédit resté — cumuls « % », registre « % »',
+      pg_temp.cumuls(v_ath), pg_temp.credits(v_score);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM public.athlete_badges WHERE athlete_id = v_ath AND badge_key = 'mv_row_500') THEN
+    RAISE EXCEPTION 'I15b : le badge obtenu a disparu avec le tournoi';
+  END IF;
+END $$;
+
+DO $$ BEGIN RAISE NOTICE 'tournament_credits : P, I1…I15 OK'; END $$;
 
 ROLLBACK;
