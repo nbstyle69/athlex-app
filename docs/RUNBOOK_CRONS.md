@@ -44,12 +44,20 @@ BEGIN
     PERFORM net.http_post(
       url     := 'https://<ref>.supabase.co/functions/v1/generate-box-week',
       headers := jsonb_build_object(
-        'Authorization', '<Bearer …>', 'Content-Type', 'application/json',
-        'x-cron-secret', '<CRON_SECRET>'),
+        'Content-Type', 'application/json',
+        'x-cron-secret', (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'cron_secret')),
       body    := '{}'::jsonb);
   END IF;
 END $guard$;
 ```
+
+Depuis la migration `20270104` (clés Supabase, PR C), les cinq jobs qui appellent une fonction
+edge (8, 10, 11, 12, 13) n'envoient **aucune clé d'API** : les fonctions ont `verify_jwt = false`
+(versionné dans `supabase/config.toml`) et authentifient le job par `x-cron-secret`, lu au moment
+de l'appel dans le Vault (`cron_secret`, égal au `CRON_SECRET` des fonctions). Un nouveau job
+suit ce modèle ; ne jamais écrire une clé ni le secret en clair dans une commande. Changer
+`CRON_SECRET` des fonctions, c'est changer **aussi** `cron_secret` dans le Vault
+(`vault.update_secret`), sinon les cinq jobs reçoivent 401.
 
 La fonction génère la semaine ISO **suivant celle du jour de l'appel** : un samedi pose donc la
 semaine qui commence le lundi 9 jours plus tard. Elle est idempotente
