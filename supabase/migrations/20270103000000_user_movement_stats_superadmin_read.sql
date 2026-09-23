@@ -1,7 +1,13 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Lecture des cumuls de mouvement par le super-admin — lot Manager, M4
 --
--- Appliquée en prod : non
+-- Appliquée en prod : OUI, le 23/09/2026 à 14:28 UTC, avec PGCLIENTENCODING=UTF8 forcé
+-- (dump schéma, données et droits db-dumps/2026-09-23/athlex-prod-public-20260923T142739Z.dump
+-- avant, 130 sections TABLE DATA et 398 ACL ; précontrôles : seule movement_stats_own_read
+-- en place, modèle et helper inchangés, chaque super-admin voyait 0 ligne sur 20 ;
+-- vérifications : deux policies de lecture, chaque super-admin voit 20 lignes sur 20,
+-- l'athlète de test sa seule ligne, md5 identiques avant et après pour les cumuls, les
+-- badges et les droits de table.)
 --
 -- L'onglet Statistiques de `/admin/movements` du Manager
 -- (`components/admin/MovementStats.tsx`) lit `user_movement_stats` depuis le
