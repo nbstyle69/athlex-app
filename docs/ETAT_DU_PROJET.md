@@ -214,7 +214,14 @@ acceptent `sb_publishable_` ou le JWT `anon`, et refusent toujours une clé secr
 `_shared/cle-secrete.ts` (`SUPABASE_SECRET_KEYS.default`, sinon `SUPABASE_SERVICE_ROLE_KEY`),
 `verify_jwt = false` versionné pour les huit, chacune authentifiant son appelant
 (`x-cron-secret` ou `auth.getUser`) ; prouvé sur la pile locale avec les deux clés
-(`scripts/_cles_edge_proto.mjs`), **déploiement en prod sur feu vert de Nab** ; **C** — tâches `pg_cron` sans clé,
+(`scripts/_cles_edge_proto.mjs`) ; **déployée en prod le 23/09/2026** (17:19–17:21 UTC, en deux temps),
+les huit fonctions utilisent désormais la clé `sb_secret_` `default`. Ce déploiement a aussi mis en
+prod deux corrections d'août mergées mais jamais déployées : le filtre des préférences de
+notification de `send-box-notification` (`cedf24b` / `e4aa095`, une annonce de box respecte
+`notifications_enabled` et `box_announcements`) et la journalisation des erreurs dans `incidents`
+de `session-followup-cron` (`6dc97ac`, une ligne fautive ne coupe plus les relances de toutes les
+box) — **déployées le 23/09/2026**. Retour arrière : les sources déployées avant la #341,
+hors dépôt, dans `C:\Users\NBS\athlex-retour-arriere-cles\fonctions-avant-341` ; **C** — tâches `pg_cron` sans clé,
 `x-cron-secret` dans le Vault. Puis les opérations de Nab dans les tableaux de bord, le build
 1.0.57, la désactivation des anciennes clés et la révocation de l'ancien secret JWT.
 
