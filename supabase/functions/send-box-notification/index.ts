@@ -10,6 +10,7 @@
 // ------------------------------------------------------------------
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+import { cleSecrete } from '../_shared/cle-secrete.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,7 +31,7 @@ serve(async (req: Request) => {
     if (!notificationId || typeof notificationId !== 'string') return json({ error: 'notification_id required' }, 400);
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const SERVICE_KEY = cleSecrete();
 
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) return json({ error: 'Missing Authorization header' }, 401);

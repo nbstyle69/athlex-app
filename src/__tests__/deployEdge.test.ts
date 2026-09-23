@@ -84,3 +84,25 @@ describe('le garde-fou refuse un import de valeur réintroduit', () => {
     expect(check(mute).code).toBe(1);
   });
 });
+
+describe('le code partagé entre fonctions (`_shared/`)', () => {
+  const source = fs.readFileSync(entree, 'utf8');
+
+  it('un import de `../_shared/` vers un fichier absent est refusé, et nommé', () => {
+    // La copie jetable ne contient pas `_shared/` : le fichier importé manque.
+    const r = check(source);
+    expect(r.code).toBe(1);
+    expect(r.sortie).toContain('importe un fichier partagé absent : _shared/cle-secrete.ts');
+  });
+
+  it('présent, il est accepté', () => {
+    const r = check();
+    expect(r.code).toBe(0);
+  });
+
+  it('la copie de déploiement emporte `_shared/` avec la fonction', () => {
+    const s = fs.readFileSync(script, 'utf8');
+    expect(s).toContain("const partage = path.join(root, 'supabase/functions/_shared');");
+    expect(s).toContain("copier(partage, path.join(tmp, 'supabase/functions/_shared'), (s) => s);");
+  });
+});

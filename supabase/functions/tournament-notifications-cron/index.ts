@@ -28,6 +28,7 @@
 // ------------------------------------------------------------------
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+import { cleSecrete } from '../_shared/cle-secrete.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -97,7 +98,7 @@ serve(async (req: Request) => {
     if (!cronSecret || provided !== cronSecret) return json({ error: 'unauthorized' }, 401);
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const SERVICE_KEY = cleSecrete();
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
     const now = Date.now();
@@ -290,9 +291,10 @@ serve(async (req: Request) => {
           headers: {
             'Content-Type': 'application/json',
             'x-cron-secret': cronSecret,
-            // L'edge gateway exige une clé d'API même pour un appel interne.
+            // L'appelant est authentifié par `x-cron-secret`. La clé ne passe
+            // qu'en `apikey` : une clé `sb_secret_…` n'est pas un JWT, et en
+            // `Authorization: Bearer` la plateforme la refuserait (« Invalid JWT »).
             apikey: SERVICE_KEY,
-            Authorization: `Bearer ${SERVICE_KEY}`,
           },
           body: JSON.stringify({
             category: type,

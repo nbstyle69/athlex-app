@@ -14,6 +14,7 @@
 // ------------------------------------------------------------------
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+import { cleSecrete } from '../_shared/cle-secrete.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -47,7 +48,7 @@ serve(async (req: Request) => {
 
     const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      cleSecrete(),
     );
 
     const { data, error } = await admin.rpc('get_weekly_digest_batch', { p_days: 7 });
