@@ -22,15 +22,21 @@ const FICHIER = path.resolve(import.meta.dirname, '..', '..', 'supabase', 'seed'
 
 /**
  * @param {(sql: string) => string[][]} query  lecteur de catalogue (psql)
- * @returns {string[]} les signaux émis (vide si tout concorde)
+ * @returns {{ signaux: string[], catalogueVisible: number }} les signaux émis
+ *   (vide si tout concorde) et le nombre de lignes du catalogue que le rôle voit
  */
 export function signalerCorrespondancesCatalogue(query) {
   const attendu = JSON.parse(fs.readFileSync(FICHIER, 'utf8'));
   const connusSans = new Set(attendu.sans_correspondance);
   const signaux = [];
 
+  // Un catalogue vide pour ce rôle (RLS sans policy qui le vise) rendrait le
+  // signal muet à tort : « aucun mouvement sans correspondance ». On le dit.
+  const catalogueVisible = Number(query(`select count(*) from public.movement_catalog`)[0]?.[0] ?? 0);
   const table = query(`select to_regclass('public.movement_stats_keys') is not null`)[0]?.[0];
-  if (table !== 't') {
+  if (catalogueVisible === 0) {
+    signaux.push('movement_catalog ne montre aucune ligne à ce rôle (RLS ou table vide) : le signal ne voit rien.');
+  } else if (table !== 't') {
     signaux.push('movement_stats_keys absente : la migration 20270102 n\'est pas appliquée sur cette base.');
   } else {
     // Ids du catalogue prod sans correspondance, comparés à la liste attendue.
@@ -62,5 +68,5 @@ export function signalerCorrespondancesCatalogue(query) {
   if (!signaux.length) {
     console.log('  ✓ correspondance catalogue → clés conforme au fichier canonique (signal, sans assertion)');
   }
-  return signaux;
+  return { signaux, catalogueVisible };
 }
