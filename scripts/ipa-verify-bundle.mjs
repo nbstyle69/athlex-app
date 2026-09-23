@@ -12,6 +12,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { verifierCleSupabase } from './lib/cle-supabase-bundle.mjs';
 
 const url = process.argv[2];
 if (!url) {
@@ -93,20 +94,7 @@ for (const col of REVOKED) {
 //    à la connexion : c'est le défaut du build 44).
 const urlMatch = js.match(/https:\/\/([a-z0-9]+)\.supabase\.co/);
 check('URL Supabase embarquée', !!urlMatch, urlMatch ? `projet ${urlMatch[1]}` : 'absente');
-const keyMatch = js.match(/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{20,}/);
-check('clé anon Supabase embarquée', !!keyMatch,
-  keyMatch ? `JWT de ${keyMatch[0].length} caractères` : 'absente');
-if (keyMatch) {
-  try {
-    const payload = JSON.parse(Buffer.from(keyMatch[0].split('.')[1], 'base64').toString());
-    check('la clé embarquée est bien un rôle anon', payload.role === 'anon',
-      `role=${payload.role} ref=${payload.ref}`);
-    check('la clé embarquée pointe le même projet que l’URL',
-      !urlMatch || payload.ref === urlMatch[1], `${payload.ref} vs ${urlMatch && urlMatch[1]}`);
-  } catch (e) {
-    check('la clé embarquée est décodable', false, String(e));
-  }
-}
+for (const c of verifierCleSupabase(js)) check(c.name, c.ok, c.detail);
 // Clé GIPHY : `'giphy-key:' + EXPO_PUBLIC_GIPHY_KEY + ':giphy-end'` est plié au
 // bundle en un littéral ; sans clé il reste `giphy-key::giphy-end` et le
 // sélecteur de GIF dit « GIF indisponibles ».

@@ -14,6 +14,8 @@
  * usage : node scripts/ota-verify-bundle.mjs <projectId> <runtimeVersion>
  */
 
+import { verifierCleSupabase } from './lib/cle-supabase-bundle.mjs';
+
 const [projectId, runtimeVersion] = process.argv.slice(2);
 
 if (!projectId || !runtimeVersion) {
@@ -95,7 +97,10 @@ for (const platform of PLATFORMS) {
   const { updateId, bundle } = await fetchLaunchBundle(platform);
 
   const hasUrl = /https:\/\/[a-z0-9]+\.supabase\.co/.test(bundle);
-  const hasKey = bundle.includes('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9');
+  // Clé publique (sb_publishable_ ou JWT anon) présente, aucune clé secrète.
+  const cle = verifierCleSupabase(bundle);
+  const hasKey = cle.every((c) => c.ok);
+  for (const c of cle.filter((c) => !c.ok)) console.error(`${platform} : ÉCHEC ${c.name} — ${c.detail}`);
   // Même mécanisme pour GIPHY : `'giphy-key:' + EXPO_PUBLIC_GIPHY_KEY + ':giphy-end'`
   // est plié au bundle en un seul littéral ; sans clé il reste `giphy-key::giphy-end`.
   const hasGiphy = GIPHY_TAG_RE.test(bundle);
@@ -104,7 +109,7 @@ for (const platform of PLATFORMS) {
 
   console.log(
     `${platform} : update ${updateId} — ${(bundle.length / 1024 / 1024).toFixed(1)} Mo — `
-    + `URL Supabase ${hasUrl ? 'présente' : 'ABSENTE'}, clé anon ${hasKey ? 'présente' : 'ABSENTE'}, `
+    + `URL Supabase ${hasUrl ? 'présente' : 'ABSENTE'}, clé publique ${hasKey ? 'conforme' : 'NON CONFORME'}, `
     + `clé GIPHY ${hasGiphy ? 'présente' : 'ABSENTE'}, DSN Sentry ${hasSentry ? 'présent' : 'ABSENT'}, `
     + `token Mixpanel + serveur EU ${hasMixpanel ? 'présents' : 'ABSENTS'}`,
   );
@@ -117,8 +122,8 @@ for (const platform of PLATFORMS) {
 
 if (failures.length > 0) {
   console.error(
-    `::error::Bundle publié sans configuration Supabase (${failures.join(', ')}) : `
-    + "l'app ne pourra pas se connecter. Les variables EXPO_PUBLIC_* doivent être "
+    `::error::Bundle publié sans configuration Supabase conforme (${failures.join(', ')}) : `
+    + "URL ou clé publique absente, ou clé secrète embarquée. Les variables EXPO_PUBLIC_* doivent être "
     + "présentes AU MOMENT du bundle (`eas update --environment production`).",
   );
   process.exit(1);

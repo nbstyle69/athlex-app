@@ -204,6 +204,17 @@ Supabase/Resend.
 
 ## En cours
 
+**Migration des clés d'API Supabase** (`anon` / `service_role` → `sb_publishable_` / `sb_secret_`).
+La clé `service_role` a été exposée dans l'historique public d'AthleX-Manager ; elle reste un JWT
+valide tant que l'ancien secret JWT n'est pas révoqué, et la désactivation des anciennes clés
+ne suffit pas à la neutraliser. Trois PR, chacune déployable avant comme après la création des
+nouvelles clés : **A** — les trois garde-fous de livraison (`ota-`, `ipa-`, `aab-verify-bundle`)
+acceptent `sb_publishable_` ou le JWT `anon`, et refusent toujours une clé secrète
+(`sb_secret_`, JWT `service_role`) ; **B** — Edge Functions (clé secrète lue dans
+`SUPABASE_SECRET_KEYS`, `verify_jwt = false` versionné) ; **C** — tâches `pg_cron` sans clé,
+`x-cron-secret` dans le Vault. Puis les opérations de Nab dans les tableaux de bord, le build
+1.0.57, la désactivation des anciennes clés et la révocation de l'ancien secret JWT.
+
 **Lot C2+C3 — durée et variété du générateur** ([PR #322](https://github.com/nbstyle69/athlex-app/pull/322), diffusion en attente).
 Le choix de durée disparaît dans les trois disciplines : le moteur la tire dans la plage du
 squelette ou de sa variante, 45 minutes en séance Musculation, 15–20 après la classe.
