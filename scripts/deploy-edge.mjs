@@ -119,6 +119,16 @@ if (HORS_FONCTION.test(allegee)) {
   process.exit(1);
 }
 
+// Un import de `../_shared/` doit viser un fichier présent : la copie de
+// déploiement n'emporte que ce dossier-là en plus de celui de la fonction.
+const partagesManquants = [...source.matchAll(/from '\.\.\/_shared\/([^']+)'/g)]
+  .map((m) => m[1])
+  .filter((f) => !fs.existsSync(path.join(root, 'supabase/functions/_shared', f)));
+if (partagesManquants.length) {
+  console.error(`${nom}/index.ts importe un fichier partagé absent : ${partagesManquants.map((f) => `_shared/${f}`).join(', ')}`);
+  process.exit(1);
+}
+
 if (check) {
   console.log(`${nom} : aucun import de valeur hors fonction, ${retires} ligne(s) type-only retirée(s) au déploiement.`);
   process.exit(0);
@@ -132,6 +142,10 @@ try {
   fs.mkdirSync(path.join(tmp, 'supabase/functions'), { recursive: true });
   fs.copyFileSync(path.join(root, 'supabase/config.toml'), path.join(tmp, 'supabase/config.toml'));
   copier(dossier, path.join(tmp, 'supabase/functions', nom), allege);
+  // Code partagé entre fonctions (`../_shared/…`, ex. la lecture de la clé
+  // secrète) : copié tel quel, la CLI le suit depuis l'entrée.
+  const partage = path.join(root, 'supabase/functions/_shared');
+  if (fs.existsSync(partage)) copier(partage, path.join(tmp, 'supabase/functions/_shared'), (s) => s);
   console.log(`${nom} : ${retires} ligne(s) type-only retirée(s), déploiement depuis une copie temporaire.`);
   // `--use-api` : le bundleur serveur est celui qui a été vérifié sur cette
   // fonction. Docker reste une option, mais rien ne l'a exercée ici.

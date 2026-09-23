@@ -23,6 +23,7 @@
 // ------------------------------------------------------------------
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient, type SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+import { cleSecrete } from '../_shared/cle-secrete.ts';
 // Le bundle est du JS ; ses types sont ceux du package source (type-check via
 // `deno check --sloppy-imports`, cf. __tests__/edge-bundle.test.ts).
 //
@@ -202,7 +203,7 @@ serve(async (req: Request) => {
     const provided = req.headers.get('x-cron-secret') ?? '';
     if (!cronSecret || provided !== cronSecret) return json({ error: 'unauthorized' }, 401);
 
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, cleSecrete());
     let body: Body = {};
     try { body = (await req.json()) as Body; } catch { /* corps vide = défauts */ }
     if (body.regen && !isTrack(body.regen.track)) return json({ error: 'regen.track invalide' }, 400);

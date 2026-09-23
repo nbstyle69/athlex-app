@@ -12,6 +12,7 @@
 // ------------------------------------------------------------------
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+import { cleSecrete } from '../_shared/cle-secrete.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -74,7 +75,7 @@ Retourne UNIQUEMENT le tableau JSON des WODs extraits.`;
 
 async function getUserAndVerifyOwnership(req: Request, boxId: string): Promise<{ ok: true; userId: string } | { ok: false; status: number; error: string }> {
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-  const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const SERVICE_KEY = cleSecrete();
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) return { ok: false, status: 401, error: 'Missing Authorization header' };
 
@@ -269,7 +270,7 @@ serve(async (req: Request) => {
     }
 
     // RATE LIMIT (Lot 6B-2) : 10 imports PDF / utilisateur / jour, vérifié serveur.
-    const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, cleSecrete());
     const { data: allowed, error: rlErr } = await admin
       .rpc('bump_ai_usage', { p_user: auth.userId, p_kind: 'parse_pdf', p_limit: 10 });
     if (rlErr) {

@@ -14,6 +14,7 @@
 // ------------------------------------------------------------------
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
+import { cleSecrete } from '../_shared/cle-secrete.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -46,7 +47,7 @@ serve(async (req: Request) => {
     if (!cronSecret || provided !== cronSecret) return json({ error: 'unauthorized' }, 401);
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
-    const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const SERVICE_KEY = cleSecrete();
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
 
     // Journal des défauts locaux. Un lot de relances ne s'arrête pas parce
