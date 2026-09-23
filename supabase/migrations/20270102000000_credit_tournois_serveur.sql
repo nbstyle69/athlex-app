@@ -1,7 +1,15 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Crédit des cumuls de mouvement par le serveur — lot badges 4b, PR 2
 --
--- Appliquée en prod : non
+-- Appliquée en prod : OUI, le 23/09/2026 à 11:21 UTC, avec PGCLIENTENCODING=UTF8 forcé
+-- (dump schéma, données et droits db-dumps/2026-09-23/athlex-prod-public-20260923T112047Z.dump
+-- avant, 128 sections TABLE DATA et 392 ACL ; précontrôles : tournament_scores vide, les
+-- 72 ids mappés présents au catalogue prod et aucun id inattendu, corps
+-- d'increment_movement_stats identique à 20270101 ; vérifications : 72 correspondances,
+-- déclencheur du WOD sur movement_lines/reps_per_round/rounds/type, fonctions internal
+-- hors de portée des rôles clients, aucune séquence doublement encodée, md5 identiques
+-- avant et après pour user_movement_stats, athlete_badges, badges_catalog,
+-- movement_rep_counts, tournament_scores et tournament_wods.)
 --
 -- Décision produit : la validation d'un score de tournoi crédite les cumuls de
 -- mouvement de l'athlète, au même titre qu'un WOD qu'il termine lui-même, quel
