@@ -210,8 +210,11 @@ valide tant que l'ancien secret JWT n'est pas révoqué, et la désactivation de
 ne suffit pas à la neutraliser. Trois PR, chacune déployable avant comme après la création des
 nouvelles clés : **A** — les trois garde-fous de livraison (`ota-`, `ipa-`, `aab-verify-bundle`)
 acceptent `sb_publishable_` ou le JWT `anon`, et refusent toujours une clé secrète
-(`sb_secret_`, JWT `service_role`) ; **B** — Edge Functions (clé secrète lue dans
-`SUPABASE_SECRET_KEYS`, `verify_jwt = false` versionné) ; **C** — tâches `pg_cron` sans clé,
+(`sb_secret_`, JWT `service_role`) ; **B** — Edge Functions : clé secrète lue par
+`_shared/cle-secrete.ts` (`SUPABASE_SECRET_KEYS.default`, sinon `SUPABASE_SERVICE_ROLE_KEY`),
+`verify_jwt = false` versionné pour les huit, chacune authentifiant son appelant
+(`x-cron-secret` ou `auth.getUser`) ; prouvé sur la pile locale avec les deux clés
+(`scripts/_cles_edge_proto.mjs`), **déploiement en prod sur feu vert de Nab** ; **C** — tâches `pg_cron` sans clé,
 `x-cron-secret` dans le Vault. Puis les opérations de Nab dans les tableaux de bord, le build
 1.0.57, la désactivation des anciennes clés et la révocation de l'ancien secret JWT.
 
