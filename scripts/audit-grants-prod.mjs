@@ -22,6 +22,14 @@
  *
  * Usage : PROD_DB_URL=… PROD_SUPABASE_URL=… PROD_SUPABASE_ANON_KEY=… \
  *           node scripts/audit-grants-prod.mjs
+ *
+ * Mode rejeu (CI, `scripts/db-replay.sh`) : AUDIT_CIBLE=rejeu PROD_DB_URL=<base locale>.
+ * Les mêmes requêtes, sur la base de rejeu, SOUS LE RÔLE DE L'AUDIT DE PROD
+ * (`athlex_audit_ro`). Ce mode juge les DROITS : une requête refusée à ce rôle
+ * arrête l'audit et fait échouer la CI. Il ne juge pas le CONTENU — les
+ * assertions sont écrites pour la prod, la base de rejeu n'est pas la prod —
+ * et ne fait aucun appel REST. Né le 23/09/2026 : le signal catalogue → clés
+ * lisait une table que ce rôle ne lisait pas, et ne l'a appris qu'en prod.
  */
 
 import { execFileSync } from 'child_process';
@@ -38,11 +46,13 @@ import { PROD_PROJECT_REF } from './lib/prod-ref.mjs';
 const DB_URL = process.env.PROD_DB_URL ?? '';
 const SUPABASE_URL = process.env.PROD_SUPABASE_URL ?? '';
 const ANON_KEY = process.env.PROD_SUPABASE_ANON_KEY ?? '';
+const REJEU = process.env.AUDIT_CIBLE === 'rejeu';
+/** Le rôle sous lequel l'audit tourne en prod (`PROD_DB_URL_RO`). */
+const ROLE_AUDIT = 'athlex_audit_ro';
 
 const manquants = [
   ['PROD_DB_URL', DB_URL],
-  ['PROD_SUPABASE_URL', SUPABASE_URL],
-  ['PROD_SUPABASE_ANON_KEY', ANON_KEY],
+  ...(REJEU ? [] : [['PROD_SUPABASE_URL', SUPABASE_URL], ['PROD_SUPABASE_ANON_KEY', ANON_KEY]]),
 ].filter(([, v]) => !v).map(([k]) => k);
 
 if (manquants.length) {
@@ -53,8 +63,14 @@ if (manquants.length) {
 
 // Garde en miroir de celle de test-grants.mjs : là-bas on refuse de viser la
 // prod, ici on refuse de viser autre chose. Un audit de production qui
-// interroge une base locale rendrait un vert qui ne prouve rien.
-if (!DB_URL.includes(PROD_PROJECT_REF) || !SUPABASE_URL.includes(PROD_PROJECT_REF)) {
+// interroge une base locale rendrait un vert qui ne prouve rien. Le mode rejeu
+// est l'inverse exact : base locale seulement.
+if (REJEU) {
+  if (!/@(127\.0\.0\.1|localhost)[:/]/.test(DB_URL)) {
+    console.error('Mode rejeu : la cible doit être une base locale — refus.');
+    process.exit(1);
+  }
+} else if (!DB_URL.includes(PROD_PROJECT_REF) || !SUPABASE_URL.includes(PROD_PROJECT_REF)) {
   console.error(`La cible ne porte pas la référence de production (${PROD_PROJECT_REF}) — refus.`);
   process.exit(1);
 }
@@ -94,15 +110,20 @@ const ASSERTIONS_ATTENDUES = ASSERTIONS_FIXES
   + SONDES_ANONYMES_MUTANTES.length // jugées sur le catalogue, jamais appelées
   + 2 // lectures REST publiques (boxes, profiles)
   + ASSERTIONS_GRANTS_TABLES // T1..T9 : les grants de tables (lot 5-E)
-  + ASSERTIONS_SCHEMA_INTERNAL; // I1..I3 : le schéma `internal`
+  + ASSERTIONS_SCHEMA_INTERNAL // I1..I3 : le schéma `internal`
+  - (REJEU ? SONDES_ANONYMES.length + 1 + 2 : 0) // en rejeu, aucun appel REST…
+  + (REJEU ? 1 : 0); // …mais le rôle doit voir le catalogue du signal
 
 // Si le processus meurt entre deux assertions (psql injoignable, exception non
 // rattrapée), personne ne verrait le compte : ce filet l'imprime quand même et
 // nomme l'interruption. Un audit qui s'arrête n'a pas « presque réussi ».
 let termine = false;
+// En rejeu, une assertion fausse est un écart de contenu (la base n'est pas la
+// prod), compté comme exécuté mais sans faire échouer : ce mode juge les droits.
+let ecartsRejeu = 0;
 process.on('exit', code => {
   if (termine) return;
-  const executees = passed + failed;
+  const executees = passed + failed + ecartsRejeu;
   console.log(`\n  ❌ audit interrompu avant la fin — ${executees}/${ASSERTIONS_ATTENDUES} assertion(s) exécutée(s)`);
   console.log(`AUDIT_PROD_ASSERTIONS=${executees}/${ASSERTIONS_ATTENDUES}`);
   if (code === 0) process.exitCode = 1;
@@ -112,6 +133,9 @@ function assert(label, condition, detail = '') {
   if (condition) {
     console.log(`  ✅ ${label}`);
     passed++;
+  } else if (REJEU) {
+    console.log(`  ·  ${label} — écart de contenu, sans objet sur la base de rejeu`);
+    ecartsRejeu++;
   } else {
     console.log(`  ❌ ${label}`);
     if (detail) console.log(`     → ${detail}`);
@@ -122,6 +146,8 @@ function assert(label, condition, detail = '') {
 function query(sql) {
   const out = execFileSync('psql', [DB_URL, '-tA', '-F', '|', '-c', sql], {
     encoding: 'utf-8',
+    // En rejeu, la session prend le rôle de l'audit de prod dès la connexion.
+    env: REJEU ? { ...process.env, PGOPTIONS: `-c role=${ROLE_AUDIT}` } : process.env,
   });
   return out.split('\n').map(l => l.trim()).filter(Boolean).map(l => l.split('|'));
 }
@@ -298,7 +324,8 @@ async function appelAnonyme(fn, body) {
   return { status: res.status, message: json?.message ?? '' };
 }
 
-for (const [fn, body] of SONDES_ANONYMES) {
+// Appels REST : prod seulement (le rejeu n'a pas d'API, et juge les droits du rôle).
+for (const [fn, body] of REJEU ? [] : SONDES_ANONYMES) {
   const { status, message } = await appelAnonyme(fn, body);
   assert(
     `à la clé anon de prod, ${fn} est refusée par le grant (pas par son corps)`,
@@ -314,12 +341,14 @@ controlerRpcMutantes(query, assert, SONDES_ANONYMES_MUTANTES);
 
 // Le contre-exemple, et il pèse autant que les refus : une révocation massive
 // sans contrôle positif est indistinguable d'une panne massive.
-const publique = await appelAnonyme('peek_box_invitation', { p_token: 'audit-inexistant' });
-assert(
-  'peek_box_invitation reste atteignable sans session (les pages publiques vivent)',
-  publique.status === 200 && !publique.message.includes('permission denied'),
-  `HTTP ${publique.status} — message : ${publique.message || '—'}`,
-);
+if (!REJEU) {
+  const publique = await appelAnonyme('peek_box_invitation', { p_token: 'audit-inexistant' });
+  assert(
+    'peek_box_invitation reste atteignable sans session (les pages publiques vivent)',
+    publique.status === 200 && !publique.message.includes('permission denied'),
+    `HTTP ${publique.status} — message : ${publique.message || '—'}`,
+  );
+}
 
 // ── Grants de tables (lot 5-E) ───────────────────────────────────────────
 // L'angle mort symétrique de cet audit : R1/R2/D1/D2 énumèrent des fonctions.
@@ -340,7 +369,16 @@ controlerSchemaInternal(query, assert);
 // correspondance ne créditerait jamais rien. On le signale sans faire échouer
 // l'audit, et sans toucher au compte d'assertions attendu.
 console.log('\n=== Correspondance catalogue → clés — PRODUCTION (signal) ===\n');
-signalerCorrespondancesCatalogue(query);
+const { catalogueVisible } = signalerCorrespondancesCatalogue(query);
+// En rejeu, un catalogue invisible à ce rôle est un défaut de DROITS (la RLS le
+// masque), pas un écart de contenu : la base de rejeu a son catalogue.
+if (REJEU && catalogueVisible > 0) {
+  console.log(`  ✅ le rôle ${ROLE_AUDIT} voit le catalogue du signal (${catalogueVisible} lignes)`);
+  passed++;
+} else if (REJEU) {
+  console.log(`  ❌ le rôle ${ROLE_AUDIT} ne voit aucune ligne de movement_catalog : le signal est aveugle`);
+  failed++;
+}
 
 // Pas de sonde d'écriture ici, et c'est un choix mesuré. Une sonde d'écriture
 // *tente* une écriture : si le grant était encore là et la RLS permissive,
@@ -357,7 +395,7 @@ const lectures = [
   ['profiles', 'profiles?select=username&limit=1'],
 ];
 
-for (const [nom, chemin] of lectures) {
+for (const [nom, chemin] of REJEU ? [] : lectures) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${chemin}`, {
     headers: { apikey: ANON_KEY },
   });
@@ -369,7 +407,7 @@ for (const [nom, chemin] of lectures) {
 }
 
 // ── Le contrôle du contrôle : combien d'assertions ont réellement tourné ─────
-const executees = passed + failed;
+const executees = passed + failed + ecartsRejeu;
 if (executees < ASSERTIONS_ATTENDUES) {
   console.log(`  ❌ audit incomplet — ${executees} assertion(s) exécutée(s), ${ASSERTIONS_ATTENDUES} attendues`);
   console.log('     → un audit qui n\'exécute pas ses assertions ne constate rien : '
@@ -381,6 +419,6 @@ if (executees < ASSERTIONS_ATTENDUES) {
 // son absence est un fait constatable côté workflow — y compris quand le module
 // meurt à l'import et que rien de ce fichier ne s'exécute.
 console.log(`AUDIT_PROD_ASSERTIONS=${executees}/${ASSERTIONS_ATTENDUES}`);
-console.log(`\n=== ${passed} ✅ · ${failed} ❌ ===\n`);
+console.log(`\n=== ${passed} ✅ · ${failed} ❌${REJEU ? ` · ${ecartsRejeu} écart(s) de contenu, sans objet en rejeu` : ''} ===\n`);
 termine = true;
 process.exit(failed === 0 ? 0 : 1);

@@ -42,6 +42,10 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='supabase_admin') THEN CREATE ROLE supabase_admin LOGIN SUPERUSER; END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='authenticator') THEN CREATE ROLE authenticator LOGIN NOINHERIT; END IF;
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='dashboard_user') THEN CREATE ROLE dashboard_user NOLOGIN; END IF;
+  -- Role de l'audit nocturne de prod (grants-prod.yml), cree a la main en prod le
+  -- 21/08/2026 : LOGIN, NOINHERIT, membre d'aucun role. Ses droits sont ceux que
+  -- les migrations lui donnent ; l'audit est rejoue plus bas sous ce role.
+  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='athlex_audit_ro') THEN CREATE ROLE athlex_audit_ro NOLOGIN NOINHERIT; END IF;
 END $$;
 GRANT anon, authenticated, service_role TO authenticator;
 CREATE SCHEMA IF NOT EXISTS auth;
@@ -128,5 +132,12 @@ if compgen -G "supabase/tests/*.sql" >/dev/null; then
     fi
   done
 fi
+
+# L'audit de production, rejoue ici SOUS LE ROLE QUI L'EXECUTE EN PROD. Il juge
+# les DROITS : une requete refusee a ce role arrete le rejeu. Un controle ajoute
+# a l'audit qui aurait besoin d'un droit absent echoue donc en CI, plus la nuit
+# en prod (23/09/2026 : le signal catalogue -> cles lisait movement_catalog).
+echo "==> Audit de prod rejoue sous le role athlex_audit_ro"
+AUDIT_CIBLE=rejeu PROD_DB_URL="$DB_URL" node scripts/audit-grants-prod.mjs
 
 echo "==> REJEU OK"
