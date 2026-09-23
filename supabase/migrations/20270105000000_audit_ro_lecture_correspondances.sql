@@ -1,7 +1,15 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Le rôle de l'audit nocturne lit les deux tables du signal catalogue → clés
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 23/09/2026 à 21:56 UTC, avec PGCLIENTENCODING=UTF8 forcé
+-- (dump schéma, données et droits db-dumps/2026-09-23/athlex-prod-public-20260923T215544Z.dump
+-- avant, 130 sections TABLE DATA, 398 ACL et 340 policies, sha256 vérifié après aller-retour ;
+-- précontrôles : rôle présent, aucun droit sur les deux tables, aucune policy
+-- movement_catalog_select_audit_ro, RLS active, 324 mouvements et 72 correspondances ;
+-- vérifications : SELECT sur les deux tables et sur elles seules, aucune écriture, policy
+-- exacte, md5 des ACL et des policies de public hors ces ajouts identiques avant et après,
+-- aucun double encodage ; audit grants-prod.yml relancé à 21:56 UTC sous athlex_audit_ro :
+-- 29/29, signal conforme, lectures anonymes de boxes et profiles à la clé sb_publishable_.)
 --
 -- L'audit nocturne des droits (`.github/workflows/grants-prod.yml`) se connecte
 -- à la prod avec `PROD_DB_URL_RO`, sous le rôle `athlex_audit_ro` : créé à la
