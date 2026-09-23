@@ -2,7 +2,18 @@
 -- Tâches pg_cron des fonctions edge : plus de clé d'API, x-cron-secret dans le Vault
 -- — clés Supabase, PR C
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 23/09/2026 à 18:54 UTC, avec PGCLIENTENCODING=UTF8 forcé
+-- (dump schémas public et internal, droits compris,
+-- db-dumps/2026-09-23/athlex-prod-public-internal-20260923T185319Z.dump avant, 130 sections
+-- TABLE DATA et 401 ACL, sha256 vérifié après aller-retour ; précontrôles : les cinq tâches
+-- sous l'ancienne forme, un seul secret et un seul JWT `anon`, secret égal au CRON_SECRET des
+-- fonctions, Vault vide, `verify_jwt = false` pour les huit fonctions (PR B déployée à 17:19–
+-- 17:21 UTC) ; vérifications : cinq commandes sans Authorization, JWT ni secret en clair, une
+-- lecture du Vault chacune, reconstruction depuis la sauvegarde = md5 d'origine pour les cinq,
+-- cron_secret égal au CRON_SECRET des fonctions, tâches 2 à 7 et 9 au même md5, plannings,
+-- rôle et état inchangés, aucun double encodage ; exécutions réelles après application :
+-- tâche 11 à 19:05 et 19:20, tâche 8 à 19:20, toutes `succeeded`, réponses HTTP 200. Tâches
+-- 10 (lundi) et 12/13 (samedi) à constater à leur prochaine exécution.)
 --
 -- Cinq tâches appellent une fonction edge par `net.http_post` :
 --   8  session-followup-cron-hourly   → session-followup-cron

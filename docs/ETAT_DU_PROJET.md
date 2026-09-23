@@ -222,7 +222,8 @@ notification de `send-box-notification` (`cedf24b` / `e4aa095`, une annonce de b
 de `session-followup-cron` (`6dc97ac`, une ligne fautive ne coupe plus les relances de toutes les
 box) — **déployées le 23/09/2026**. Retour arrière : les sources déployées avant la #341,
 hors dépôt, dans `C:\Users\NBS\athlex-retour-arriere-cles\fonctions-avant-341` ; **C** — migration
-`20270104` (**non appliquée**, après le déploiement de B) : les cinq tâches `pg_cron` qui appellent
+`20270104` (**appliquée en prod le 23/09/2026 à 18:54 UTC**, tâches 8 et 11 constatées à 200
+après application) : les cinq tâches `pg_cron` qui appellent
 une fonction edge n'envoient plus le JWT `anon`, et lisent `x-cron-secret` dans le Vault
 (`cron_secret`) au lieu de l'avoir en clair. Les clés `default` `sb_publishable_` et `sb_secret_`
 existent sur le projet depuis le 05/03/2026. Restent les opérations de Nab dans les tableaux de bord,
