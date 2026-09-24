@@ -1,7 +1,14 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Double élimination complète : aucun athlète omis — tournois, PR 5
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 12:21:17 UTC, avec PGCLIENTENCODING=UTF8 ; 5e des
+-- dix migrations du chantier, appliquées dans l'ordre (dump des schémas public et internal
+-- avec droits db-dumps/2026-09-24/athlex-prod-public-internal-20260924T122104Z.dump, sha256 4ea7aafbc98087005fdfd3c21301d5eb066ee9a02de311de20ccf4c1e9a75e53 vérifié
+-- après aller-retour ; précontrôles : objets du chantier identiques à ceux de master rejoué,
+-- aucun tournoi swiss ni league_div ; vérifications : md5 identiques avant et après des
+-- tables du chantier, des profils, des policies, des droits des tables et des autres
+-- fonctions, objets identiques à la référence droits compris, aucun double encodage ;
+-- audit grants-prod.yml relancé à 12:24 UTC : 29/29).
 --
 -- `advance_bracket_round`, branche `swiss` (double élimination), appariait le
 -- tableau des perdants par `LEAST(…)` des deux effectifs, sans exemption : à 8
