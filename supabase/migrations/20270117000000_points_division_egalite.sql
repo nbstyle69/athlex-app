@@ -1,7 +1,14 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Points de division : même règle d'égalité que le barème classique
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 18:40:51 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal
+-- avec droits db-dumps/2026-09-24/athlex-prod-public-internal-20260924T184039Z.dump, sha256 260dc4bab2e27888a7a6a9ca1a4006cdb0d7ebbb4cf0c36c557a6755c9e427fb vérifié
+-- après aller-retour ; précontrôles : objets du chantier identiques à ceux de master rejoué,
+-- aucun tournoi swiss ni league_div ; vérifications : md5 identiques avant et après des
+-- tables du chantier, des profils, des policies, des droits des tables et des autres
+-- fonctions, objets identiques à la référence droits compris, aucun double encodage ;
+-- audit grants-prod.yml relancé à 18:42 UTC : 29/29).
 --
 -- Décision de Nab (24/09/2026) : les points de division suivent la même règle
 -- d'égalité que le barème de la compétition classique (migration 20270116) :
