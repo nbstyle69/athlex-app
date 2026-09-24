@@ -227,6 +227,10 @@ Supabase/Resend.
   des perdants la gagne ; le classement suit la dernière finale, et la clôture refuse tant que le
   match décisif est dû. Une finale créée à la main par le Manager est tolérée. L'app affiche les deux
   matchs (« Grande finale — match décisif », FR/EN).
+- PR 7, comparaison en tableau (migration `20270112`, **non appliquée**) : la règle est au serveur
+  (`tournament_score_cle`, l'ordre de la compétition classique) et une RPC décide les matchs d'un tour
+  (`decide_bracket_round`) : un terminé bat un CAP, entre CAP le plus de reps, puis le tie-break.
+  Le Manager la branchera à la place de sa comparaison dans le navigateur.
 
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
