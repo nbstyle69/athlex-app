@@ -9,7 +9,7 @@ type Match = {
   id: string;
   round: number;
   match_number: number;
-  side: 'winner' | 'loser' | 'grand_final';
+  side: 'winner' | 'loser' | 'grand_final' | 'third_place';
   participant1_id: string | null;
   participant2_id: string | null;
   winner_id: string | null;
@@ -77,15 +77,17 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
     const wb: Record<number, Match[]> = {};
     const lb: Record<number, Match[]> = {};
     const gf: Match[] = [];
+    const tp: Match[] = [];
     matches.forEach(m => {
       if (m.side === 'grand_final') gf.push(m);
+      else if (m.side === 'third_place') tp.push(m);
       else if (m.side === 'winner') (wb[m.round] ??= []).push(m);
       else (lb[m.round] ??= []).push(m);
     });
     Object.values(wb).forEach(a => a.sort((x, y) => x.match_number - y.match_number));
     Object.values(lb).forEach(a => a.sort((x, y) => x.match_number - y.match_number));
     gf.sort((x, y) => x.round - y.round);
-    return { wb, lb, gf };
+    return { wb, lb, gf, tp };
   }, [matches]);
 
   if (loading) {
@@ -169,6 +171,16 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
           </ScrollView>
         </>
       )}
+
+      {/* Petite finale (élimination simple, option du tournoi). */}
+      {grouped.tp.map(m => (
+        <React.Fragment key={m.id}>
+          <Text style={S.sectionTitle}>{t('bracket.thirdPlace')}</Text>
+          <View style={[S.column, { width: 220 }]}>
+            <MatchBox m={m} />
+          </View>
+        </React.Fragment>
+      ))}
 
       {/* Grande finale, puis le match décisif si le vainqueur du tableau des perdants l'a gagnée. */}
       {format === 'swiss' && grouped.gf.map((m, i) => (

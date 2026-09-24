@@ -73,7 +73,7 @@ Autres écarts :
 6. **Grande finale avec reset** (`20270111`). Création automatique, puis second match si le vainqueur du tableau des perdants gagne. Une grande finale déjà créée par le Manager est tolérée. Le classement de clôture suit la dernière finale.
 7. **Comparaison en tableau** (`20270112`). Une fonction SQL applique la règle (`tournament_score_cle`, même ordre que la compétition classique) ; une RPC décide les matchs d'une manche (`decide_bracket_round`).
 8. **Forfait** (`20270113`). Statut `forfeit` : l'absent est perdant, l'adversaire passe, l'ELO ne bouge pas. Une contrainte garantit la cohérence ; le Manager écrit le forfait directement sur le match.
-9. **Petite finale optionnelle.** `tournaments.third_place_match`, et le côté `third_place` en élimination simple.
+9. **Petite finale optionnelle** (`20270114`). `tournaments.third_place_match`, et le côté `third_place` en élimination simple : créée avec la finale, ELO de match, 3e et 4e au classement.
 10. **Divisions.** Colonne `placement` (`auto` ou `manual`, `manual` par défaut) ; affectation par ELO dans la limite de `max_members`, débordement vers la division suivante ; un placement manuel n'est jamais déplacé.
 
 Aucun point n'exige de refonte importante du schéma : quelques colonnes, et des valeurs ajoutées aux contraintes.

@@ -234,6 +234,10 @@ Supabase/Resend.
 - PR 8, forfait (migration `20270113`, **appliquée en prod le 24/09/2026 à 12:22 UTC**) : statut `forfeit` sur un match de tableau ;
   l'absent perd, l'adversaire passe, aucun ELO ne bouge (un match terminé passé en forfait rend le
   sien). L'app affiche « Forfait » (FR/EN).
+- PR 9, petite finale (migration `20270114`, **appliquée en prod le 24/09/2026 à 12:22 UTC**) : option `third_place_match` du
+  tournoi ; en élimination simple, la petite finale naît avec la finale entre les perdants des
+  demi-finales, porte l'ELO de match, et départage les 3e et 4e. L'app l'affiche (« Petite finale
+  (3e place) », FR/EN).
 
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
