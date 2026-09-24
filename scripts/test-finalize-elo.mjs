@@ -140,7 +140,7 @@ async function closeAndCheck(format, tournId, { expectDistribution, participants
   return rows;
 }
 
-// ── Format simple : la règle de classement (lib/tournamentScoring) ───────────
+// ── Format simple : la règle de classement (barème de l'app, calculé en base) ─
 async function suiteSimple() {
   console.log('\n══ Simple (classique) ═══════════════════════════════════════════════════════');
   const tournId = await createTournament('simple');
@@ -168,29 +168,26 @@ async function suiteSimple() {
   assert(pendErr && /SCORES_EN_ATTENTE/.test(pendErr.message), 'simple : un score pending bloque la clôture (SCORES_EN_ATTENTE)', pendErr ?? { message: 'aucune erreur' });
   await db.from('tournament_scores').update({ status: 'validated' }).eq('tournament_wod_id', wods[1]).eq('athlete_id', AGENTS[7].id);
 
-  // Classement serveur attendu, calculé à la main d'après lib/tournamentScoring :
-  // WOD1 ordre : A4(250) A1(300) A2(300) A8(380) A3(420) A6(abc) A7(cappé 500) A5(DNF hérité 999999+50 → cappé, 50 reps)
-  //   cappés : A7 (500 reps) avant A5 (50 reps) ;
-  //   le non parsable (A6) reste en queue de SON groupe (finishers), donc AVANT
-  //   les cappés, et occupe une position sans marquer : A7 et A5 glissent d'un cran.
-  //   points : A4 100, A1 97, A2 94, A8 91, A3 88, A6 0 (pos. 6), A7 82, A5 79
-  // WOD2 ordre : A4(200) A6(180) A1(150) A2(150) A3(120) A8(110) A5(90) A7(60)
-  //   points : A4 100, A6 97, A1 94, A2 91, A3 88, A8 85, A5 82, A7 79
-  // Cumul : A4 200, A1 191, A2 185, A3 176, A8 176, A5 161, A7 161, A6 97
-  // A1/A2 ex-aequo (300, sans tiebreak) : ROW_NUMBER tranche par athlete_id
-  // (miroir du localeCompare de rankWodScores) — l'un prend 97, l'autre 94.
-  const expected = { 4: 200, 3: 176, 8: 176, 5: 161, 7: 161, 6: 97 };
-  const tied = [1, 2].sort((a, b) => AGENTS[a - 1].id.localeCompare(AGENTS[b - 1].id));
-  expected[tied[0]] = 191; expected[tied[1]] = 185;
+  // Classement serveur attendu, calculé à la main d'après le barème de l'app
+  // (table CF Games 100, 97, 95, 93, 91, 89, 87, 85…), la base seule le calcule
+  // (migration 20270116). Égalité sur un WOD : tie-break d'abord, puis rang
+  // partagé et mêmes points, le rang suivant sauté ; un score illisible est ignoré.
+  // WOD1 : A4(250) 1er 100 ; A1 et A2 (300, sans tie-break) 2es ex-aequo 97 ;
+  //   A8(380) 4e 93 ; A3(420) 5e 91 ; puis les cappés : A7 (500 reps) 89,
+  //   A5 (DNF hérité 999999+50 → cappé, 50 reps) 87 ; A6 (« abc ») : ignoré, 0.
+  // WOD2 : A4(200) 100 ; A6(180) 97 ; A1 et A2 (150) 3es ex-aequo 95 ; A3(120) 91 ;
+  //   A8(110) 89 ; A5(90) 87 ; A7(60) 85.
+  // Cumul : A4 200, A1 192, A2 192, A3 182, A8 182, A5 174, A7 174, A6 97.
+  const expected = { 1: 192, 2: 192, 3: 182, 4: 200, 5: 174, 6: 97, 7: 174, 8: 182 };
   const { data: standings, error: sErr } = await db.rpc('tournament_classique_standings', { p_tournament_id: tournId });
   assert(!sErr && standings?.length === 8, 'simple : tournament_classique_standings rend 8 lignes', sErr);
   const byId = Object.fromEntries((standings ?? []).map(s => [s.athlete_id, s]));
   const pointsOk = AGENTS.every((a, i) => byId[a.id]?.points === expected[i + 1]);
-  assert(pointsOk, 'simple : points SQL = règle lib/tournamentScoring (finishers < cappés, DNF hérité, non parsable = 0, 100−3·(rang−1))',
+  assert(pointsOk, "simple : points SQL = barème de l'app (table CF Games, finishers < cappés, DNF hérité, illisible ignoré, ex-aequo à mêmes points)",
     pointsOk ? null : { message: AGENTS.map((a, i) => `A${i + 1}=${byId[a.id]?.points}/${expected[i + 1]}`).join(' ') });
   const rankOf = i => byId[AGENTS[i - 1].id]?.final_rank;
-  assert(rankOf(4) === 1 && rankOf(3) === 4 && rankOf(8) === 4 && rankOf(7) === 6 && rankOf(5) === 6 && rankOf(6) === 8,
-    'simple : rangs 1,2,3,4,4,6,6,8 (ex-aequo partagés au cumul)');
+  assert(rankOf(4) === 1 && rankOf(1) === 2 && rankOf(2) === 2 && rankOf(3) === 4 && rankOf(8) === 4 && rankOf(7) === 6 && rankOf(5) === 6 && rankOf(6) === 8,
+    'simple : rangs 1,2,2,4,4,6,6,8 (ex-aequo partagés au cumul)');
 
   const rows = await closeAndCheck('simple', tournId, { expectDistribution: true });
   if (rows) {

@@ -37,7 +37,7 @@ Sources d'ELO d'un tournoi :
 
 ## Barèmes de la compétition classique : trois versions
 
-Rien n'est corrigé ici : le choix de la référence appartient à Nab.
+**Décision de Nab (24/09/2026)** : la référence est le barème de l'app. Sur un WOD, le tie-break départage d'abord ; s'il reste une égalité, rang partagé et mêmes points, le rang suivant sauté. La base devient la seule source du calcul (migration `20270116`). Les points de division suivent la même règle d'égalité (migration `20270117`). L'ELO des 4 anciens tournois supprimés n'est pas touché.
 
 | | App | Manager | SQL (qui fixe l'ELO de clôture) |
 |---|---|---|---|
