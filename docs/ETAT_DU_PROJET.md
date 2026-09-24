@@ -254,6 +254,9 @@ Supabase/Resend.
 - Points de division (migration `20270117`, **appliquée en prod le 24/09/2026 à 18:40 UTC**) : même règle d'égalité (tie-break, puis
   rang partagé et mêmes points) ; barème des divisions inchangé (100, 97, 94…) ; score lu comme partout
   (« 8:00 » vaut 480 s), score illisible ignoré.
+- Barème des divisions (migration `20270118`, **appliquée en prod le 24/09/2026 à 20:20 UTC**) : décision du 24/09, la table de la
+  compétition classique (`tournament_cf_points` : 100, 97, 95, 93…) à la place du barème linéaire ;
+  règle d'égalité inchangée.
 
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
