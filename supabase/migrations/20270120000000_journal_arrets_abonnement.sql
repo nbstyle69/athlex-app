@@ -1,7 +1,17 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Journal des arrêts d'abonnement décidés par un gérant — chantier S1
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 21:28:00 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-24/athlex-prod-public-internal-20260924T212721Z.dump,
+-- sha256 b031e0311aadf4c8f80bedcb135d995aaf69747f71d3d1f541bfa92029b87b65 vérifié
+-- après aller-retour, 131 TABLE DATA, 412 ACL, 341 POLICY ; précontrôles : table et
+-- fonction absentes, is_box_owner_admin(uuid) -> boolean présente ; vérifications :
+-- table présente et vide, RLS active, deux déclencheurs vers la fonction d'internal
+-- fermée aux rôles clients, authenticated SELECT seul, anon rien, clé serveur
+-- SELECT/INSERT/UPDATE sans DELETE ni TRUNCATE, index unique partiel présent,
+-- md5 de box_members et box_cash_payments identiques avant et après, aucun double
+-- encodage ; audit grants-prod.yml relancé à 21:30 UTC : 29/29).
 --
 -- Chantier « arrêt des abonnements par le gérant » (diagnostic côté Manager).
 -- Chaque arrêt décidé par un gérant laisse une trace, en ajout seul :

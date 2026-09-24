@@ -206,7 +206,9 @@ Supabase/Resend.
 ## En cours
 
 **Arrêt des abonnements par le gérant** (chantier en plusieurs lots ; diagnostic côté Manager).
-- S1, journal des arrêts (migration `20270120`, **non appliquée**) : table
+- S1, journal des arrêts (migration `20270120`, **appliquée en prod le 24/09/2026 à 21:28 UTC**,
+  dump `db-dumps/2026-09-24/athlex-prod-public-internal-20260924T212721Z.dump` ; audit relancé
+  aussitôt : **29/29**) : table
   `box_member_subscription_actions` en ajout seul — un trigger (fonction dans `internal`) refuse
   réécriture, suppression et TRUNCATE, sauf `notified_at` renseigné une seule fois ; sans clé étrangère,
   pour que l'historique survive à la suppression d'un membre ou d'une box sans la bloquer, l'intégrité
