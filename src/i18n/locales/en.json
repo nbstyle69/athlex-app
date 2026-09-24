@@ -1365,7 +1365,8 @@
     "lbRound": "LB Round {{n}}",
     "grandFinal": "Grand final",
     "grandFinalReset": "Grand final — decider",
-    "forfeit": "Forfeit"
+    "forfeit": "Forfeit",
+    "thirdPlace": "Third-place match"
   },
   "divisions": {
     "noDivision": "No division configured for this tournament.",
