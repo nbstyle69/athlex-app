@@ -254,7 +254,7 @@ Supabase/Resend.
 - Points de division (migration `20270117`, **appliquée en prod le 24/09/2026 à 18:40 UTC**) : même règle d'égalité (tie-break, puis
   rang partagé et mêmes points) ; barème des divisions inchangé (100, 97, 94…) ; score lu comme partout
   (« 8:00 » vaut 480 s), score illisible ignoré.
-- Barème des divisions (migration `20270118`, **non appliquée**) : décision du 24/09, la table de la
+- Barème des divisions (migration `20270118`, **appliquée en prod le 24/09/2026 à 20:20 UTC**) : décision du 24/09, la table de la
   compétition classique (`tournament_cf_points` : 100, 97, 95, 93…) à la place du barème linéaire ;
   règle d'égalité inchangée.
 - Ligue, général par saison (migration `20270119`, **non appliquée**) : `tournament_ligue_standings`
