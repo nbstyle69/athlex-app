@@ -231,7 +231,7 @@ Supabase/Resend.
   (`tournament_score_cle`, l'ordre de la compétition classique) et une RPC décide les matchs d'un tour
   (`decide_bracket_round`) : un terminé bat un CAP, entre CAP le plus de reps, puis le tie-break.
   Le Manager la branchera à la place de sa comparaison dans le navigateur.
-- PR 8, forfait (migration `20270113`, **non appliquée**) : statut `forfeit` sur un match de tableau ;
+- PR 8, forfait (migration `20270113`, **appliquée en prod le 24/09/2026 à 12:22 UTC**) : statut `forfeit` sur un match de tableau ;
   l'absent perd, l'adversaire passe, aucun ELO ne bouge (un match terminé passé en forfait rend le
   sien). L'app affiche « Forfait » (FR/EN).
 

@@ -1,7 +1,14 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Forfait en tableau — tournois, PR 8
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 12:22:02 UTC, avec PGCLIENTENCODING=UTF8 ; 8e des
+-- dix migrations du chantier, appliquées dans l'ordre (dump des schémas public et internal
+-- avec droits db-dumps/2026-09-24/athlex-prod-public-internal-20260924T122149Z.dump, sha256 2dc8da2efa75a43df21e7ede51158712bbf0bdcc875ceb7a3eb4a8f7cd6529c8 vérifié
+-- après aller-retour ; précontrôles : objets du chantier identiques à ceux de master rejoué,
+-- aucun tournoi swiss ni league_div ; vérifications : md5 identiques avant et après des
+-- tables du chantier, des profils, des policies, des droits des tables et des autres
+-- fonctions, objets identiques à la référence droits compris, aucun double encodage ;
+-- audit grants-prod.yml relancé à 12:24 UTC : 29/29).
 --
 -- Règle produit : « Forfait : l'absent perd le match, l'adversaire passe au tour
 -- suivant, aucun point ELO ne bouge pour ce match. »
