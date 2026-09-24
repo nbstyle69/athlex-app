@@ -238,7 +238,7 @@ Supabase/Resend.
   tournoi ; en élimination simple, la petite finale naît avec la finale entre les perdants des
   demi-finales, porte l'ELO de match, et départage les 3e et 4e. L'app l'affiche (« Petite finale
   (3e place) », FR/EN).
-- PR 10, divisions (migration `20270115`, **non appliquée**) : affectation par ELO du haut vers le bas
+- PR 10, divisions (migration `20270115`, **appliquée en prod le 24/09/2026 à 12:22 UTC**) : affectation par ELO du haut vers le bas
   dans la limite de `max_members`, débordement vers la division suivante, la dernière prend le reste ;
   placement du gérant marqué `manual` et jamais déplacé. Recalcul complet tant que la ligue n'a aucun
   score validé, ensuite les seuls nouveaux inscrits, depuis la division de leur ELO.
