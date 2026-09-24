@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Arrêt des abonnements par le gérant** (chantier en plusieurs lots ; diagnostic côté Manager).
+- S1, journal des arrêts (migration `20270120`, **non appliquée**) : table
+  `box_member_subscription_actions` en ajout seul — un trigger (fonction dans `internal`) refuse
+  réécriture, suppression et TRUNCATE, sauf `notified_at` renseigné une seule fois ; sans clé étrangère,
+  pour que l'historique survive à la suppression d'un membre ou d'une box sans la bloquer, l'intégrité
+  étant vérifiée à l'insertion ; une souscription Stripe ne s'arrête qu'une fois ; lecture par le gérant
+  de la box, écriture par la clé serveur seulement. Pas de push `membership_stopped` (S5).
+
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
 - App, classement de la compétition classique (sans migration, à livrer après la migration `20270116`) :
