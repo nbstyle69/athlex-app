@@ -1,17 +1,4 @@
-import { compareScores, normalizeScore } from './scoreFormat';
-
-// ── CF Games points table ─────────────────────────────────────────────────────
-export const CF_GAMES_POINTS: number[] = [
-  100, 97, 95, 93, 91, 89, 87, 85, 83, 81,
-   79, 77, 75, 73, 71, 69, 67, 65, 63, 61,
-   60, 59, 58, 57, 56, 55, 54, 53, 52, 51,
-   50, 49, 48, 47, 46, 45, 44, 43, 42, 41,
-   40, 39, 38, 37, 36, 35, 34, 33, 32, 31,
-];
-export function cfPoints(rank: number): number {
-  if (rank <= 0) return 0;
-  return CF_GAMES_POINTS[rank - 1] ?? Math.max(1, 30 - (rank - 51));
-}
+import { normalizeScore } from './scoreFormat';
 
 // ── Normalize movement names ──────────────────────────────────────────────────
 // Les lignes de WOD sont saisies librement : « Pull-ups », « Pull Up »,
@@ -304,43 +291,6 @@ export interface TournamentScore {
   profile?: { username: string; level: string; elo: number };
   tw?: { title: string; type: string; movements?: string[] };
   t?: { name: string };
-}
-
-export interface RankedScore extends TournamentScore {
-  rank: number;
-  cfPoints: number;
-  isExAequo: boolean;
-}
-
-// ── Rank WOD scores ───────────────────────────────────────────────────────────
-export function rankWodScores(scores: TournamentScore[], wodType: string): RankedScore[] {
-  const validated = scores.filter(s => s.status === 'validated');
-  // Miroir bit-à-bit de l'ORDER BY serveur (compute_league_wod_elo /
-  // recalc_division_points) : finishers d'abord (temps croissant), puis les
-  // cappés (reps décroissantes).
-  const isTime = isTimeScoredType(wodType);
-  const sorted = [...validated].sort((a, b) => compareScores(
-    { score_value: parseScoreToNumber(a.score_value, wodType), capped: a.capped },
-    { score_value: parseScoreToNumber(b.score_value, wodType), capped: b.capped },
-    isTime,
-  ));
-
-  let currentRank = 1;
-  return sorted.map((score, idx) => {
-    if (idx > 0) {
-      const prev = sorted[idx - 1];
-      const sameScore = score.score_value === prev.score_value
-        && !!score.capped === !!prev.capped;
-      const sameTiebreak = score.tiebreak_value === prev.tiebreak_value;
-      if (!sameScore || !sameTiebreak) currentRank = idx + 1;
-    }
-    const isExAequo = sorted.filter(s =>
-      s.score_value === score.score_value &&
-      !!s.capped === !!score.capped &&
-      s.tiebreak_value === score.tiebreak_value
-    ).length > 1;
-    return { ...score, rank: currentRank, cfPoints: cfPoints(currentRank), isExAequo };
-  });
 }
 
 export function formatDate(iso: string) {

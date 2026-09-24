@@ -8408,6 +8408,23 @@ export type Database = {
         Returns: Json
       }
       sync_tournament_activation: { Args: never; Returns: number }
+      tournament_classique_standings: {
+        Args: { p_tournament_id: string }
+        Returns: {
+          athlete_id: string
+          points: number
+          final_rank: number
+        }[]
+      }
+      tournament_classique_wod_ranks: {
+        Args: { p_tournament_id: string }
+        Returns: {
+          athlete_id: string
+          tournament_wod_id: string
+          wod_rank: number
+          points: number
+        }[]
+      }
       tournament_wod_accepts_scores: {
         Args: { p_tournament_id: string; p_wod_id: string }
         Returns: boolean

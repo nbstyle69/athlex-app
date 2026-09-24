@@ -207,6 +207,11 @@ Supabase/Resend.
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
+- App, classement de la compétition classique (sans migration, à livrer après la migration `20270116`) :
+  l'app lit le classement calculé par la base (`tournament_classique_standings`,
+  `tournament_classique_wod_ranks`) et n'écrit plus `tournament_participants.score` ; plus de bouton
+  « Recalculer le classement » ; un For Time illisible n'est plus premier, il est ignoré ; un score
+  rejeté sort du classement dès le rejet.
 - PR 1, ELO de match idempotent (migration `20270106`, **appliquée en prod le 24/09/2026 à 12:19 UTC**) : réécrire un match terminé
   sans changer de vainqueur ne réapplique plus l'ELO ni les compteurs ; changer de vainqueur, de
   perdant ou remettre le match à jouer défait exactement l'effet enregistré avant d'appliquer le nouveau.
