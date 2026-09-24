@@ -4,6 +4,8 @@
  * vrai react-native — même défaut, même correction que les onglets de piste de
  * « Ma Box » (#346) : un ScrollView porte `flexShrink: 1` dans son style de
  * base, et une colonne qui déborde l'écrasait jusqu'à rogner ses pastilles.
+ * Sur le classement, la pastille choisie passait en graisse 800 et décalait ses
+ * voisines : elle réserve désormais la largeur de son libellé en gras.
  *
  * react-test-renderer ne calcule pas la mise en page : on vérifie, dans chaque
  * état (clair et sombre, taille de texte ×1, ×1,3, ×2 ; chaque niveau choisi
@@ -90,8 +92,11 @@ async function monter(element: React.ReactElement, theme = lightTheme, echelle =
 }
 
 const plat = (i: ReactTestInstance) => StyleSheet.flatten(i.props.style) ?? {};
-const texte = (n: ReactTestInstance) =>
-  n.findAllByType(Text).map((t) => [t.props.children].flat().join('')).join(' ');
+/** Le libellé d'une pastille : son premier texte (sur le classement, la réserve en gras porte le même). */
+const texte = (n: ReactTestInstance) => {
+  const t = n.findAllByType(Text)[0];
+  return t ? [t.props.children].flat().join('') : '';
+};
 
 /** La bande horizontale dont une pastille porte ce libellé. */
 function bande(root: ReactTestInstance, libelle: string) {
@@ -137,10 +142,38 @@ describe('classement — filtres de niveau', () => {
           const p = bande(root, 'Tous').findAllByType(TouchableOpacity).find((x) => texte(x) === niveau)!;
           await act(async () => p.props.onPress());
           verifier(bande(root, 'Tous'), NIVEAUX.length);
+          for (const pastille of bande(root, 'Tous').findAllByType(TouchableOpacity)) {
+            const choisie = texte(pastille) === niveau;
+            const [reserve, libelle] = pastille.findAllByType(Text);
+            // La réserve : toujours en gras, invisible, masquée aux lecteurs d'écran.
+            expect(plat(reserve)).toMatchObject({ fontWeight: '800', opacity: 0 });
+            expect(reserve.props.accessibilityElementsHidden).toBe(true);
+            // Le libellé visible, posé dessus ; en gras seulement si la pastille est choisie.
+            expect(plat(libelle)).toMatchObject({ position: 'absolute', top: 0, left: 0, right: 0, textAlign: 'center' });
+            expect(plat(libelle).fontWeight).toBe(choisie ? '800' : '700');
+            expect(libelle.props.children).toBe(reserve.props.children);
+            expect(pastille.props.accessibilityLabel).toBe(texte(pastille));
+          }
         }
       });
     }
   }
+
+  it('largeur stable : ce qui dimensionne chaque pastille ne dépend pas du niveau choisi', async () => {
+    const root = await monter(<LeaderboardScreen />);
+    const empreintes: Record<string, Set<string>> = {};
+    for (const niveau of NIVEAUX) {
+      const p = bande(root, 'Tous').findAllByType(TouchableOpacity).find((x) => texte(x) === niveau)!;
+      await act(async () => p.props.onPress());
+      for (const pastille of bande(root, 'Tous').findAllByType(TouchableOpacity)) {
+        const { backgroundColor, borderColor, ...boite } = plat(pastille);
+        const reserve = pastille.findAllByType(Text)[0];
+        const { color, ...police } = plat(reserve);
+        (empreintes[texte(pastille)] ??= new Set()).add(JSON.stringify({ boite, police, libelle: reserve.props.children }));
+      }
+    }
+    for (const niveau of NIVEAUX) expect({ niveau, etats: empreintes[niveau].size }).toEqual({ niveau, etats: 1 });
+  });
 });
 
 describe('back-office, formulaire de WOD — rangée des mouvements', () => {

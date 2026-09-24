@@ -255,12 +255,25 @@ export default function LeaderboardScreen() {
               const isAll = l === 'all';
               const isSel = selectedLevel === l;
               const color = isAll ? theme.accent : (LevelColors[l as AthleteLevel] ?? theme.accent);
+              const libelle = isAll ? 'Tous' : l.toUpperCase();
               return (
                 <TouchableOpacity key={l} onPress={() => setSelectedLevel(l)}
+                  accessibilityLabel={libelle}
                   style={[S.chip, isSel && { backgroundColor: `${color}18`, borderColor: color }]}>
-                  <Text style={[S.chipText, isSel && { color, fontWeight: '800' }]}>
-                    {isAll ? 'Tous' : l.toUpperCase()}
-                  </Text>
+                  <View>
+                    {/* Réserve la largeur du libellé en gras (invisible, masquée aux lecteurs
+                        d'écran) : la pastille choisie ne s'élargit plus et ne décale plus ses voisines. */}
+                    <Text
+                      style={[S.chipText, S.chipTextReserve]}
+                      accessibilityElementsHidden
+                      importantForAccessibility="no-hide-descendants"
+                    >
+                      {libelle}
+                    </Text>
+                    <Text style={[S.chipText, isSel && { color, fontWeight: '800' }, S.chipTextLabel]}>
+                      {libelle}
+                    </Text>
+                  </View>
                 </TouchableOpacity>
               );
             })}
@@ -449,6 +462,9 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
     borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
   },
   chipText: { fontSize: 12, fontWeight: '700', color: theme.textMuted },
+  chipTextReserve: { fontWeight: '800', opacity: 0 },
+  // Posé sur la réserve, même boîte : centré en largeur, même ligne en hauteur.
+  chipTextLabel: { position: 'absolute', top: 0, left: 0, right: 0, textAlign: 'center' },
   list: { padding: 16, gap: 8, paddingBottom: 140 },
   sectionHint: { fontSize: 12, color: theme.textMuted, marginBottom: 8 },
   row: {

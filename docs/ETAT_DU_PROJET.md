@@ -213,8 +213,8 @@ colonne à hauteur fixe de l'écran l'écrasait ; la graisse 800 de l'onglet cho
 Correctif dans `WhiteboardTrackTabs` : barre non compressible, largeur réservée au libellé en
 gras. Taille de texte du téléphone respectée, sans plafond. Même correctif (bande non
 compressible, rien d'autre) sur les filtres de niveau du classement et la rangée des mouvements
-du formulaire de WOD du back-office ; à vérifier sur la 1.0.58. Reste, hors lot : la pastille de
-niveau choisie du classement passe en graisse 800 et s'élargit légèrement.
+du formulaire de WOD du back-office, et sur le classement la même largeur réservée au libellé
+en gras : la pastille de niveau choisie ne décale plus ses voisines. À vérifier sur la 1.0.58.
 
 **Migration des clés d'API Supabase** (`anon` / `service_role` → `sb_publishable_` / `sb_secret_`).
 La clé `service_role` a été exposée dans l'historique public d'AthleX-Manager ; elle reste un JWT
