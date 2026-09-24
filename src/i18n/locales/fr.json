@@ -1364,7 +1364,8 @@
     "loserBracket": "Loser Bracket",
     "lbRound": "LB Round {{n}}",
     "grandFinal": "Grande finale",
-    "grandFinalReset": "Grande finale — match décisif"
+    "grandFinalReset": "Grande finale — match décisif",
+    "forfeit": "Forfait"
   },
   "divisions": {
     "noDivision": "Aucune division configurée pour ce tournoi.",

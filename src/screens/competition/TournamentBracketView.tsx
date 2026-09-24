@@ -14,7 +14,7 @@ type Match = {
   participant2_id: string | null;
   winner_id: string | null;
   loser_id: string | null;
-  status: 'pending' | 'active' | 'completed' | 'bye';
+  status: 'pending' | 'active' | 'completed' | 'bye' | 'forfeit';
   wod_id: string | null;
 };
 
@@ -126,7 +126,7 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
     const lost = currentUserId && m.loser_id === currentUserId;
     return (
       <View style={[S.match, involvesMe && S.matchMine, won && S.matchWon, lost && S.matchLost]}>
-        <Text style={S.matchNum}>#{m.match_number}{m.status === 'bye' ? ' · BYE' : ''}</Text>
+        <Text style={S.matchNum}>#{m.match_number}{m.status === 'bye' ? ' · BYE' : m.status === 'forfeit' ? ` · ${t('bracket.forfeit')}` : ''}</Text>
         <PlayerRow id={m.participant1_id} winner={m.winner_id === m.participant1_id} loser={m.loser_id === m.participant1_id} name={name} S={S} />
         <PlayerRow id={m.participant2_id} winner={m.winner_id === m.participant2_id} loser={m.loser_id === m.participant2_id} name={name} S={S} />
       </View>

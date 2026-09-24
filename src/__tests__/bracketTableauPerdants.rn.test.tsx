@@ -4,6 +4,7 @@
  * le tour 2, et l'écran numérote ses colonnes depuis 1, sans trou. La grande
  * finale est suivie d'un match décisif quand le vainqueur du tableau des
  * perdants l'a gagnée : l'écran montre les deux, chacun sous son titre.
+ * Un match gagné par forfait (PR 8) le dit.
  */
 import React from 'react';
 import { Text } from 'react-native';
@@ -36,13 +37,14 @@ jest.mock('../context/ThemeContext', () => {
 import i18n from '../i18n';
 import TournamentBracketView from '../screens/competition/TournamentBracketView';
 
-async function textes(langue: string, finales: number) {
+async function textes(langue: string, finales: number, forfait = false) {
   mockMatchs = avecFinales(finales);
+  if (forfait) Object.assign(mockMatchs[0], { status: 'forfeit', match_number: 7 });
   await act(async () => { await i18n.changeLanguage(langue); });
   let r: TestRenderer.ReactTestRenderer;
   await act(async () => { r = TestRenderer.create(<TournamentBracketView tournamentId="t" format="swiss" />); });
   // Le titre d'une finale porte une icône avant son libellé : on garde les chaînes.
-  const out = r!.root.findAllByType(Text).map(t => [].concat(t.props.children).filter(c => typeof c === 'string').join('').trim());
+  const out = r!.root.findAllByType(Text).map(t => [].concat(t.props.children).filter(c => typeof c === 'string' || typeof c === 'number').join('').trim());
   await act(async () => r!.unmount());
   return out;
 }
@@ -58,6 +60,12 @@ describe.each(['fr', 'en'])('double élimination (%s)', langue => {
     const t = await textes(langue, 1);
     expect(t.filter(x => x === i18n.t('bracket.grandFinal'))).toHaveLength(1);
     expect(t).not.toContain(i18n.t('bracket.grandFinalReset'));
+  });
+
+  it('un match gagné par forfait le dit, et lui seul', async () => {
+    const t = await textes(langue, 1, true);
+    expect(t).toContain(`#7 · ${i18n.t('bracket.forfeit')}`);
+    expect(t.filter(x => x.includes(i18n.t('bracket.forfeit')))).toHaveLength(1);
   });
 
   it('finale puis match décisif, chacun sous son titre', async () => {
