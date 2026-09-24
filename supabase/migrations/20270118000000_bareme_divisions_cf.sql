@@ -1,7 +1,14 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Barème des divisions : la table de la compétition classique
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 20:20:50 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal
+-- avec droits db-dumps/2026-09-24/athlex-prod-public-internal-20260924T202035Z.dump, sha256 b8964ec2f927870fa8e4680e836c67dce929c4cb5e2a03d8dadaefd4e09f2c9d vérifié
+-- après aller-retour ; précontrôles : objets du chantier identiques à ceux de master rejoué,
+-- aucun tournoi swiss ni league_div ; vérifications : md5 identiques avant et après des
+-- tables du chantier, des profils, des policies, des droits des tables et des autres
+-- fonctions, objets identiques à la référence droits compris, aucun double encodage ;
+-- audit grants-prod.yml relancé à 20:22 UTC : 29/29).
 --
 -- Décision de Nab (24/09/2026) : les points de division suivent le même barème
 -- que la compétition classique, `tournament_cf_points` (table CF Games : 100,
