@@ -205,6 +205,12 @@ Supabase/Resend.
 
 ## En cours
 
+**Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
+[`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
+- PR 1, ELO de match idempotent (migration `20270106`, **appliquée en prod le 24/09/2026 à 12:19 UTC**) : réécrire un match terminé
+  sans changer de vainqueur ne réapplique plus l'ELO ni les compteurs ; changer de vainqueur, de
+  perdant ou remettre le match à jouer défait exactement l'effet enregistré avant d'appliquer le nouveau.
+
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
 choisie montrait de contenu (« Tout » presque illisible), et onglet choisi plus large que les
