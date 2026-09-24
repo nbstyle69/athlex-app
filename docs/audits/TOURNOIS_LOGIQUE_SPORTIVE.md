@@ -70,7 +70,7 @@ Autres écarts :
 3. **Divisions figées au moment du WOD.** `tournament_scores.division_id` est posé à l'insertion. Les points se classent par division du score, sur la saison en cours seulement.
 4. **Suppression d'un tournoi.** Trigger BEFORE DELETE sur `tournaments`, et sur les matchs de tableau, qui défait exactement ce qui a été appliqué (ELO de match, ELO de WOD, clôture `simple`, compteurs) puis supprime ces historiques.
 5. **Double élimination complète** (`20270110`). Aucun athlète omis ; exemption si le nombre est impair ; élimination à la deuxième défaite. Les deux tableaux avancent au même numéro de tour : le tableau des perdants commence au tour 2.
-6. **Grande finale avec reset.** Création automatique, puis second match si le vainqueur du tableau des perdants gagne. Une grande finale déjà créée par le Manager est tolérée.
+6. **Grande finale avec reset** (`20270111`). Création automatique, puis second match si le vainqueur du tableau des perdants gagne. Une grande finale déjà créée par le Manager est tolérée. Le classement de clôture suit la dernière finale.
 7. **Comparaison en tableau.** Une fonction SQL applique la règle ; une RPC décide les matchs d'une manche.
 8. **Forfait.** Statut `forfeit` : l'absent est perdant, l'adversaire passe, l'ELO ne bouge pas.
 9. **Petite finale optionnelle.** `tournaments.third_place_match`, et le côté `third_place` en élimination simple.

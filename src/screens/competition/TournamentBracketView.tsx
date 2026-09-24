@@ -76,14 +76,15 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
   const grouped = useMemo(() => {
     const wb: Record<number, Match[]> = {};
     const lb: Record<number, Match[]> = {};
-    let gf: Match | null = null;
+    const gf: Match[] = [];
     matches.forEach(m => {
-      if (m.side === 'grand_final') gf = m;
+      if (m.side === 'grand_final') gf.push(m);
       else if (m.side === 'winner') (wb[m.round] ??= []).push(m);
       else (lb[m.round] ??= []).push(m);
     });
     Object.values(wb).forEach(a => a.sort((x, y) => x.match_number - y.match_number));
     Object.values(lb).forEach(a => a.sort((x, y) => x.match_number - y.match_number));
+    gf.sort((x, y) => x.round - y.round);
     return { wb, lb, gf };
   }, [matches]);
 
@@ -169,14 +170,15 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
         </>
       )}
 
-      {format === 'swiss' && grouped.gf && (
-        <>
-          <Text style={[S.sectionTitle, { color: '#F5C518' }]}><Trophy color="#F5C518" size={14} />  {t('bracket.grandFinal')}</Text>
+      {/* Grande finale, puis le match décisif si le vainqueur du tableau des perdants l'a gagnée. */}
+      {format === 'swiss' && grouped.gf.map((m, i) => (
+        <React.Fragment key={m.id}>
+          <Text style={[S.sectionTitle, { color: '#F5C518' }]}><Trophy color="#F5C518" size={14} />  {t(i === 0 ? 'bracket.grandFinal' : 'bracket.grandFinalReset')}</Text>
           <View style={[S.column, { width: 220 }]}>
-            <MatchBox m={grouped.gf} />
+            <MatchBox m={m} />
           </View>
-        </>
-      )}
+        </React.Fragment>
+      ))}
     </ScrollView>
   );
 }

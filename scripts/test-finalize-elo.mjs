@@ -220,20 +220,10 @@ async function playBracket(tournId, format) {
     const round = pending[0].round;
     const ofRound = pending.filter(m => m.round === round);
     for (const m of ofRound) await resolve(m);
-    // Rend 0 une fois la finale (ou les deux tableaux) jouée.
+    // En swiss, crée aussi la grande finale, puis le match décisif s'il est dû.
+    // Rend 0 une fois la dernière finale jouée.
     const { error } = await asOwner.rpc('advance_bracket_round', { p_tournament_id: tournId, p_completed_round: round });
     if (error) fail(`advance round ${round}`, error);
-  }
-  if (format === 'swiss') {
-    // Grande finale : créée par le gérant (createGrandFinalAction côté web) entre
-    // le champion du WB et celui du LB, puis tranchée.
-    const { data: all } = await db.from('tournament_bracket_matches').select('round, side, winner_id').eq('tournament_id', tournId);
-    const top = side => all.filter(m => m.side === side && m.winner_id).sort((a, b) => b.round - a.round)[0]?.winner_id;
-    const { data: gf } = await db.from('tournament_bracket_matches').insert({
-      tournament_id: tournId, round: 99, match_number: 1, side: 'grand_final',
-      participant1_id: top('winner'), participant2_id: top('loser'), status: 'pending',
-    }).select('id, participant1_id, participant2_id').single();
-    await resolve(gf);
   }
 }
 
