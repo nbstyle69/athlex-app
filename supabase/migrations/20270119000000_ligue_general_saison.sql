@@ -1,7 +1,14 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Ligue : classement général d'une saison, calculé par la base
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 20:21:05 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal
+-- avec droits db-dumps/2026-09-24/athlex-prod-public-internal-20260924T202052Z.dump, sha256 eb324b641cb5539a0151f7f74db48220aa2bc89d1b0ec04a990c3925fe4e7c63 vérifié
+-- après aller-retour ; précontrôles : objets du chantier identiques à ceux de master rejoué,
+-- aucun tournoi swiss ni league_div ; vérifications : md5 identiques avant et après des
+-- tables du chantier, des profils, des policies, des droits des tables et des autres
+-- fonctions, objets identiques à la référence droits compris, aucun double encodage ;
+-- audit grants-prod.yml relancé à 20:22 UTC : 29/29).
 --
 -- Décision de Nab (24/09/2026) : dans une ligue, l'onglet « Général » de l'app
 -- se limite à la saison en cours, comme les points de division ; un onglet
