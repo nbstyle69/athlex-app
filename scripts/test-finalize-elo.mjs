@@ -272,10 +272,13 @@ async function suiteBracket(format) {
   return tournId;
 }
 
-// ── PR 2 : l'historique survit à la suppression du tournoi / du WOD ──────────
-// Les sept clés d'historique vers l'événement sont en ON DELETE SET NULL : la
-// trace (elo_before / elo_after) reste, la référence devient NULL, le profil ne
-// bouge pas, et l'égalité profil = dernier elo_after reste vraie.
+// ── Suppression d'un tournoi : l'ELO qu'il a apporté est retiré ─────────────
+// Règle produit du 24/09/2026 (tournois, PR 4, migration 20270109) : supprimer
+// un tournoi retire exactement l'ELO et les compteurs qu'il a appliqués — ici,
+// un tableau : ses matchs — et efface ses historiques. Le récapitulatif de
+// clôture d'un tableau n'avait rien appliqué : il est effacé sans rien retirer.
+// Les sept clés d'historique restent en ON DELETE SET NULL ; un WOD de box
+// supprimé garde sa trace (ci-dessous), hors de cette règle.
 const HISTORY_FKS = [
   'elo_history_wod_id_fkey', 'box_elo_history_wod_id_fkey',
   'tournament_elo_history_tournament_id_fkey', 'tournament_match_elo_history_match_id_fkey',
@@ -284,13 +287,13 @@ const HISTORY_FKS = [
 ];
 
 async function suiteDeletion(tournId) {
-  console.log('\n══ Suppression d\'un tournoi finalisé : l\'historique reste ═══════════════════');
+  console.log('\n══ Suppression d\'un tournoi finalisé : son ELO est retiré ════════════════════');
   if (!tournId) { fail('suppression : aucun tournoi bracket finalisé disponible'); return; }
 
   const adminUrl = process.env.TEST_ADMIN_DB_URL;
   if (adminUrl) {
     const { execSync } = await import('node:child_process');
-    const out = execSync(`psql "${adminUrl}" -At -c "SELECT conname || '=' || confdeltype::text FROM pg_constraint WHERE conname = ANY('{${HISTORY_FKS.join(',')}}') ORDER BY 1"`).toString().trim().split('\n');
+    const out = execSync(`psql "${adminUrl}" -At -c "SELECT conname || '=' || confdeltype::text FROM pg_constraint WHERE conname = ANY('{${HISTORY_FKS.join(',')}}') ORDER BY 1"`).toString().trim().split(/\r?\n/);
     const notSetNull = out.filter(l => !l.endsWith('=n'));
     assert(out.length === HISTORY_FKS.length && notSetNull.length === 0,
       'catalogue : les 7 clés d\'historique sont en ON DELETE SET NULL',
@@ -299,7 +302,7 @@ async function suiteDeletion(tournId) {
 
   const before = await snapshotProfiles();
   const { data: h0 } = await db.from('tournament_elo_history').select('id, athlete_id, elo_before, elo_after, tournament_id').eq('tournament_id', tournId);
-  const { data: m0 } = await db.from('tournament_match_elo_history').select('id').eq('tournament_id', tournId);
+  const { data: m0 } = await db.from('tournament_match_elo_history').select('id, athlete_id, result, elo_delta').eq('tournament_id', tournId);
   const ids = (h0 ?? []).map(h => h.id);
   const matchIds = (m0 ?? []).map(m => m.id);
   if (!assert(ids.length > 0 && matchIds.length > 0, `précondition : ${ids.length} lignes récap + ${matchIds.length} lignes match référencent le tournoi`)) return;
@@ -309,25 +312,27 @@ async function suiteDeletion(tournId) {
   const { count: tLeft } = await db.from('tournaments').select('*', { count: 'exact', head: true }).eq('id', tournId);
   assert(tLeft === 0, 'le tournoi n\'existe plus');
 
-  const { data: h1 } = await db.from('tournament_elo_history').select('id, athlete_id, elo_before, elo_after, tournament_id').in('id', ids);
-  assert(h1?.length === ids.length, `tournament_elo_history : ${h1?.length ?? 0}/${ids.length} lignes conservées`);
-  assert((h1 ?? []).every(h => h.tournament_id === null), 'tournament_elo_history.tournament_id = NULL (« tournoi supprimé »)');
-  const same = (h1 ?? []).every(h => { const o = h0.find(x => x.id === h.id); return o && o.elo_before === h.elo_before && o.elo_after === h.elo_after; });
-  assert(same, 'elo_before / elo_after intacts sur chaque ligne');
+  const { count: h1 } = await db.from('tournament_elo_history').select('*', { count: 'exact', head: true }).in('id', ids);
+  assert(h1 === 0, `tournament_elo_history : récapitulatif effacé (${h1} ligne(s) restante(s))`);
+  const { count: m1 } = await db.from('tournament_match_elo_history').select('*', { count: 'exact', head: true }).in('id', matchIds);
+  assert(m1 === 0, `tournament_match_elo_history : historique des matchs effacé (${m1} ligne(s) restante(s))`);
 
-  const { data: m1 } = await db.from('tournament_match_elo_history').select('id, match_id').in('id', matchIds);
-  assert(m1?.length === matchIds.length && m1.every(m => m.match_id === null),
-    `tournament_match_elo_history : ${m1?.length ?? 0}/${matchIds.length} lignes conservées, match_id = NULL`);
-
-  const after = await snapshotProfiles();
-  assert(AGENTS.every(a => before[a.id].elo === after[a.id].elo && before[a.id].total_matches === after[a.id].total_matches && before[a.id].wins === after[a.id].wins),
-    'profiles.elo / total_matches / wins inchangés par la suppression');
-
-  const { data: latest, error: latestErr } = await db.rpc('_felo_latest_elo_after', { p_athletes: AGENTS.map(a => a.id) });
-  if (latest && !latestErr) {
-    const bad = latest.filter(l => after[l.athlete_id]?.elo !== l.elo_after);
-    assert(latest.length === AGENTS.length && bad.length === 0, 'profil = dernier elo_after toujours vrai, tournoi supprimé compris');
+  // Chaque profil perd exactement ce que les matchs du tournoi lui avaient apporté.
+  const apport = {};
+  for (const m of m0 ?? []) {
+    const a = (apport[m.athlete_id] ??= { elo: 0, n: 0, w: 0 });
+    a.elo += m.elo_delta; a.n += 1; a.w += m.result === 'win' ? 1 : 0;
   }
+  const after = await snapshotProfiles();
+  const ecarts = AGENTS.filter(a => {
+    const x = apport[a.id] ?? { elo: 0, n: 0, w: 0 };
+    return after[a.id].elo !== Math.max(100, before[a.id].elo - x.elo)
+      || after[a.id].total_matches !== before[a.id].total_matches - x.n
+      || after[a.id].wins !== before[a.id].wins - x.w;
+  });
+  assert(ecarts.length === 0, `profils : l'apport des matchs du tournoi est retiré exactement (${ecarts.length} écart(s))`);
+  // Contre-exemple : le tournoi avait bien apporté quelque chose, sinon l'assertion ne prouvait rien.
+  assert(Object.values(apport).some(x => x.elo !== 0), 'contre-exemple : le tournoi avait bien fait bouger au moins un ELO');
 
   // WOD de box : même règle sur elo_history.wod_id.
   const { data: wod, error: wErr } = await db.from('box_wods').insert({
