@@ -1,12 +1,13 @@
 -- ═════════════════════════════════════════════════════════════════════════════
--- Points de division : même règle d'égalité que le barème (migration 20270117)
+-- Points de division : règle d'égalité (migration 20270117) et barème de la
+-- compétition classique (migration 20270118)
 --
 -- Rejoué par `scripts/db-replay.sh`, donc par la CI sur chaque PR.
 -- Des ligues d'une division Élite (A à G) et d'une division Open (H), un WOD
--- For Time de la saison en cours ; barème des divisions inchangé (100, 97, 94…).
+-- For Time de la saison en cours ; barème `tournament_cf_points` (100, 97, 95, 93, 91…).
 --   P1 cas de référence (étape 0) : A et B en 8:00, C en 9:30, D au CAP à 150
 --      reps, E au CAP à 140 reps, F sans score. Attendu : A 100, B 100 (rang 1
---      partagé), C 94 (rang 3, le 2 est sauté), D 91, E 88, F 0 ;
+--      partagé), C 95 (rang 3, le 2 est sauté), D 93, E 91, F 0 ;
 --   P2 le tie-break départage d'abord : A (30) devant B (40) ;
 --   P3 un score illisible est ignoré : aucun point, et il ne décale personne ;
 --   P4 « 8:00 » et « 480 » sont le même temps : égalité, pas 8 secondes ;
@@ -79,19 +80,19 @@ BEGIN
   END IF;
 
   v := pg_temp.points(1);
-  IF v NOT LIKE 'pd_A:100 pd_B:100 pd_C:94 pd_D:91 pd_E:88 pd_F:0 %' THEN
-    RAISE EXCEPTION 'P1 : cas de référence : % (attendu A 100, B 100, C 94, D 91, E 88, F 0)', v;
+  IF v NOT LIKE 'pd_A:100 pd_B:100 pd_C:95 pd_D:93 pd_E:91 pd_F:0 %' THEN
+    RAISE EXCEPTION 'P1 : cas de référence : % (attendu A 100, B 100, C 95, D 93, E 91, F 0)', v;
   END IF;
   v := pg_temp.points(2);
-  IF v NOT LIKE 'pd_A:100 pd_B:97 pd_C:94 %' THEN
+  IF v NOT LIKE 'pd_A:100 pd_B:97 pd_C:95 %' THEN
     RAISE EXCEPTION 'P2 : tie-break 30 contre 40 : %', v;
   END IF;
   v := pg_temp.points(3);
-  IF v NOT LIKE 'pd_A:100 pd_B:100 pd_C:94 pd_D:91 pd_E:88 pd_F:0 pd_G:0 %' THEN
+  IF v NOT LIKE 'pd_A:100 pd_B:100 pd_C:95 pd_D:93 pd_E:91 pd_F:0 pd_G:0 %' THEN
     RAISE EXCEPTION 'P3 : score illisible : %', v;
   END IF;
   v := pg_temp.points(4);
-  IF v NOT LIKE 'pd_A:100 pd_B:100 pd_C:94 %' THEN
+  IF v NOT LIKE 'pd_A:100 pd_B:100 pd_C:95 %' THEN
     RAISE EXCEPTION 'P4 : « 8:00 » contre « 480 » : %', v;
   END IF;
 
