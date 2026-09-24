@@ -157,9 +157,10 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
           <Text style={S.sectionTitle}>{t('bracket.loserBracket')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
             <View style={{ flexDirection: 'row', gap: 12 }}>
-              {lbRounds.map(r => (
+              {/* Le tableau des perdants commence au tour 2 du serveur : ses colonnes se numérotent depuis 1. */}
+              {lbRounds.map((r, i) => (
                 <View key={`lb-${r}`} style={S.column}>
-                  <Text style={S.colTitle}>{t('bracket.lbRound', { n: r })}</Text>
+                  <Text style={S.colTitle}>{t('bracket.lbRound', { n: i + 1 })}</Text>
                   {grouped.lb[r].map(m => <MatchBox key={m.id} m={m} />)}
                 </View>
               ))}
