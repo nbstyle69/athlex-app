@@ -14,7 +14,7 @@ Données en prod au 24/09 :
 
 - 8 tournois, formats `bracket` et `simple` seulement. **Aucune** double élimination (`swiss`), **aucune** division (`league_div`) ;
 - 135 matchs de tableau, dont 133 terminés, avec 133 historiques ELO de deux lignes, tous conformes à l'état de leur match ;
-- 4 lignes d'historique de clôture ELO (`tournament_elo_history`).
+- 4 lignes d'historique de clôture ELO (`tournament_elo_history`), **toutes orphelines** : ce sont les clôtures de tournois déjà supprimés en juillet et août (JCVD, in the bar), dont l'ELO est resté sur les profils. La PR 4 ne les touche pas ; les retirer rétroactivement est une décision de Nab.
 
 ## Ce que fait chaque sujet aujourd'hui
 
