@@ -205,6 +205,15 @@ Supabase/Resend.
 
 ## En cours
 
+**Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
+Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
+choisie montrait de contenu (« Tout » presque illisible), et onglet choisi plus large que les
+autres. Cause : le `ScrollView` de la barre gardait le `flexShrink: 1` de son style de base et la
+colonne à hauteur fixe de l'écran l'écrasait ; la graisse 800 de l'onglet choisi l'élargissait.
+Correctif dans `WhiteboardTrackTabs` : barre non compressible, largeur réservée au libellé en
+gras. Taille de texte du téléphone respectée, sans plafond. Même motif, hors de ce lot, sur les
+filtres de niveau du classement et la rangée de puces des WOD du back-office.
+
 **Migration des clés d'API Supabase** (`anon` / `service_role` → `sb_publishable_` / `sb_secret_`).
 La clé `service_role` a été exposée dans l'historique public d'AthleX-Manager ; elle reste un JWT
 valide tant que l'ancien secret JWT n'est pas révoqué, et la désactivation des anciennes clés
