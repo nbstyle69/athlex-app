@@ -6,7 +6,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ChevronLeft, Users, Calendar, Zap, CheckCircle,
-  Lock, Clock, Timer, UserX, Shield, Star, XCircle, RotateCcw, MessageSquare, Share2,
+  Lock, Clock, Timer, UserX, Shield, Star, XCircle, MessageSquare, Share2,
 } from 'lucide-react-native';
 import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -24,8 +24,9 @@ import { CompetitionStackParamList } from '../../navigation';
 import {
   TournamentWOD, TournamentScore,
   formatDate,
-  rankWodScores, cfPoints, parseScoreToNumber, formatScoreDisplay, isTimeScoredType,
+  formatScoreDisplay,
 } from '../../utils/tournamentUtils';
+import { chargerClassement, classementGeneral, classementWod, LigneClassement, RangWod } from '../../utils/classementTournoi';
 import { trackTournamentJoin } from '../../lib/analytics';
 import GlassBackground from '../../components/glass/GlassBackground';
 import TournamentBracketView from './TournamentBracketView';
@@ -83,6 +84,8 @@ export default function TournamentScreen() {
   const [registering,       setRegistering]       = useState(false);
   const [isRegistered,      setIsRegistered]      = useState(false);
   const [wodValidatedScores, setWodValidatedScores] = useState<any[]>([]);
+  // Classement calculé par la base (barème, tie-break, rang partagé) : l'app ne classe plus.
+  const [classement, setClassement] = useState<{ lignes: LigneClassement[]; rangs: RangWod[] }>({ lignes: [], rangs: [] });
   const [rankTab,            setRankTab]            = useState<string>('general');
   const [divisions,          setDivisions]          = useState<any[]>([]);
   const [divisionMembers,    setDivisionMembers]    = useState<any[]>([]);
@@ -101,7 +104,7 @@ export default function TournamentScreen() {
         .order('submitted_at', { ascending: false }) : { data: [] },
       supabase.rpc('get_tournament_validated_scores', { p_tournament_id: tournamentId }),
       user ? supabase.from('tournament_participants')
-        .select('athlete_id, score')
+        .select('athlete_id')
         .eq('tournament_id', tournamentId)
         .eq('athlete_id', user.id)
         .maybeSingle() : { data: null },
@@ -143,7 +146,6 @@ export default function TournamentScreen() {
         ...mappedParticipants,
         {
           athlete_id:  user.id,
-          score:       myReg?.score ?? 0,
           profile:     profileMap[user.id] ?? { id: user.id, username: user.username, elo: user.elo, level: user.level },
         },
       ];
@@ -152,6 +154,11 @@ export default function TournamentScreen() {
 
     setMyScores((ms ?? []) as TournamentScore[]);
     setWodValidatedScores(vs ?? []);
+    try {
+      setClassement(await chargerClassement(tournamentId));
+    } catch (e) {
+      captureError(e, { screen: 'Tournament', action: 'chargerClassement' });
+    }
 
     // ── Divisions (league_div only) ─────────────────────────────────────
     if ((tourData as any)?.format === 'league_div') {
@@ -194,7 +201,7 @@ export default function TournamentScreen() {
     setRegistering(true);
     try {
       const { error } = await supabase.from('tournament_participants')
-        .insert({ tournament_id: tournamentId, athlete_id: user.id, score: 0 });
+        .insert({ tournament_id: tournamentId, athlete_id: user.id });
       if (error && error.code !== '23505') {
         Alert.alert(t('tournament.registerError'), error.message);
         return;
@@ -209,7 +216,6 @@ export default function TournamentScreen() {
           ? prev
           : [...prev, {
               athlete_id: user.id,
-              score: 0,
               profile: {
                 id: user.id,
                 username: user.username,
@@ -223,23 +229,6 @@ export default function TournamentScreen() {
       Alert.alert(t('common.error'), e?.message ?? t('tournament.registerImpossible'));
     } finally {
       setRegistering(false);
-    }
-  }
-
-  async function recalcLeaderboard(tournamentWods: TournamentWOD[], validatedScores: TournamentScore[]) {
-    const pointsMap: Record<string, number> = {};
-    tournamentWods.forEach(wod => {
-      const wodScores = validatedScores.filter(s => s.tournament_wod_id === wod.id);
-      const ranked = rankWodScores(wodScores, wod.type);
-      ranked.forEach(rs => {
-        pointsMap[rs.athlete_id] = (pointsMap[rs.athlete_id] ?? 0) + rs.cfPoints;
-      });
-    });
-    for (const [athleteId, pts] of Object.entries(pointsMap)) {
-      await supabase.from('tournament_participants')
-        .update({ score: pts })
-        .eq('tournament_id', tournamentId)
-        .eq('athlete_id', athleteId);
     }
   }
 
@@ -260,10 +249,7 @@ export default function TournamentScreen() {
       .update({ status: 'validated', validated_at: new Date().toISOString() })
       .eq('id', scoreId);
     if (error) { Alert.alert(t('common.error'), error.message); setProcessing(null); return; }
-    const updated = allScores.map(s => s.id === scoreId ? { ...s, status: 'validated' as const } : s);
-    setAllScores(updated);
-    const validated = updated.filter(s => s.status === 'validated');
-    await recalcLeaderboard(wods, validated);
+    setAllScores(prev => prev.map(s => s.id === scoreId ? { ...s, status: 'validated' as const } : s));
     setProcessing(null);
     load();
   }
@@ -276,6 +262,7 @@ export default function TournamentScreen() {
     if (error) { Alert.alert(t('common.error'), error.message); setProcessing(null); return; }
     setAllScores(prev => prev.map(s => s.id === scoreId ? { ...s, status: 'rejected' as const } : s));
     setProcessing(null);
+    load(); // le score rejeté sort du classement calculé par la base
   }
 
   async function handleKick(athleteId: string, username: string) {
@@ -793,20 +780,17 @@ export default function TournamentScreen() {
                   <Text style={S.emptyTitle}>{t('tournament.emptyStandings')}</Text>
                   <Text style={S.emptyText}>{t('tournament.emptyStandingsSub')}</Text>
                 </View>
-              ) : participants
-                  .slice()
-                  .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0))
-                  .map((p: any, i: number) => {
+              ) : classementGeneral(participants, classement.lignes).map((p: any) => {
                 const isMe = user?.id === p.athlete_id;
                 const memberRow = divisionMembers.find((m: any) => m.athlete_id === p.athlete_id);
                 const myDiv    = memberRow ? divisions.find((d: any) => d.id === memberRow.division_id) : null;
                 return (
                   <View key={p.athlete_id} style={[S.rankRow, isMe && S.rankRowMe]}>
                     <View style={S.rankBadge}>
-                      {i === 0 ? <Text style={S.rankEmoji}>🥇</Text>
-                        : i === 1 ? <Text style={S.rankEmoji}>🥈</Text>
-                        : i === 2 ? <Text style={S.rankEmoji}>🥉</Text>
-                        : <Text style={S.rankNumber}>#{i + 1}</Text>}
+                      {p.rang === 1 ? <Text style={S.rankEmoji}>🥇</Text>
+                        : p.rang === 2 ? <Text style={S.rankEmoji}>🥈</Text>
+                        : p.rang === 3 ? <Text style={S.rankEmoji}>🥉</Text>
+                        : <Text style={S.rankNumber}>#{p.rang}</Text>}
                     </View>
                     <UserAvatar
                       uri={p.profile?.avatar_url}
@@ -829,7 +813,7 @@ export default function TournamentScreen() {
                       </View>
                       <Text style={S.rankElo}>ELO {p.profile?.elo ?? 1000}</Text>
                     </View>
-                    <Text style={S.rankScore}>{p.score ?? 0} pts</Text>
+                    <Text style={S.rankScore}>{p.points} pts</Text>
                   </View>
                 );
               })
@@ -841,7 +825,7 @@ export default function TournamentScreen() {
               const ranked = divMembers
                 .map((m: any) => {
                   const part = participants.find((p: any) => p.athlete_id === m.athlete_id);
-                  return { ...m, profile: part?.profile, score: m.points ?? part?.score ?? 0 };
+                  return { ...m, profile: part?.profile, score: m.points ?? 0 };
                 })
                 .sort((a: any, b: any) => (b.score ?? 0) - (a.score ?? 0));
               return (
@@ -905,14 +889,7 @@ export default function TournamentScreen() {
 
             {/* Par WOD */}
             {wods.map((wod: any, idx: number) => rankTab === `wod_${idx}` && (() => {
-              const wodScores = wodValidatedScores
-                .filter((s: any) => s.tournament_wod_id === wod.id)
-                .slice()
-                .sort((a: any, b: any) => {
-                  const av = parseScoreToNumber(a.score_value, wod.type);
-                  const bv = parseScoreToNumber(b.score_value, wod.type);
-                  return isTimeScoredType(wod.type) ? av - bv : bv - av;
-                });
+              const wodScores = classementWod(wodValidatedScores, classement.rangs, wod.id);
               return (
                 <View key={wod.id}>
                   <View style={S.wodRankHeader}>
@@ -923,16 +900,16 @@ export default function TournamentScreen() {
                       <Text style={S.emptyEmoji}>📋</Text>
                       <Text style={S.emptyTitle}>{t('tournament.noValidatedScore')}</Text>
                     </View>
-                  ) : wodScores.map((s: any, i: number) => {
+                  ) : wodScores.map((s: any) => {
                     const profile = participants.find((p: any) => p.athlete_id === s.athlete_id)?.profile;
                     const isMe = user?.id === s.athlete_id;
                     return (
                       <View key={s.athlete_id} style={[S.rankRow, isMe && S.rankRowMe]}>
                         <View style={S.rankBadge}>
-                          {i === 0 ? <Text style={S.rankEmoji}>🥇</Text>
-                            : i === 1 ? <Text style={S.rankEmoji}>🥈</Text>
-                            : i === 2 ? <Text style={S.rankEmoji}>🥉</Text>
-                            : <Text style={S.rankNumber}>#{i + 1}</Text>}
+                          {s.rang === 1 ? <Text style={S.rankEmoji}>🥇</Text>
+                            : s.rang === 2 ? <Text style={S.rankEmoji}>🥈</Text>
+                            : s.rang === 3 ? <Text style={S.rankEmoji}>🥉</Text>
+                            : <Text style={S.rankNumber}>#{s.rang}</Text>}
                         </View>
                         <UserAvatar
                           uri={profile?.avatar_url}
@@ -960,20 +937,6 @@ export default function TournamentScreen() {
         {/* ══ VALIDER (admin only) ══ */}
         {activeTab === 'validate' && isAdmin && (
           <>
-            {/* Recalc button */}
-            <TouchableOpacity
-              style={S.recalcBtn}
-              onPress={async () => {
-                const validated = allScores.filter(s => s.status === 'validated');
-                await recalcLeaderboard(wods, validated);
-                await load();
-                Alert.alert('✅', t('tournament.leaderboardRecalculated'));
-              }}
-              activeOpacity={0.8}>
-              <RotateCcw color={theme.accentText} size={13} />
-              <Text style={S.recalcBtnText}>{t('tournament.recalcLeaderboard')}</Text>
-            </TouchableOpacity>
-
             {allScores.length === 0 ? (
               <View style={S.emptyState}>
                 <Text style={S.emptyEmoji}>📋</Text>
@@ -1172,8 +1135,6 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   partMetaDot:  { fontSize: 12, color: theme.textMuted },
   partDate:     { fontSize: 11, color: theme.textMuted, marginTop: 1 },
   kickBtn:      { width: 36, height: 36, borderRadius: 10, backgroundColor: `${theme.error}12`, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: `${theme.error}30` },
-  recalcBtn:     { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, backgroundColor: `${theme.accent}12`, borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: `${theme.accent}25` },
-  recalcBtnText: { fontSize: 13, fontWeight: '700' as const, color: theme.accentText },
   scoreCard:       { backgroundColor: theme.card, borderRadius: 16, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: theme.cardBorder, gap: 10 },
   scoreCardHeader: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 10 },
   scoreAvatarWrap: { width: 38, height: 38, borderRadius: 19, backgroundColor: `${theme.accent}20`, justifyContent: 'center' as const, alignItems: 'center' as const },

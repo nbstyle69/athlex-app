@@ -10,6 +10,7 @@ import { LevelColors } from '../../theme/designTokens';
 import { AthleteLevel } from '../../types';
 import { HomeStackParamList, TimerType } from '../../navigation';
 import { supabase } from '../../lib/supabase';
+import { chargerClassement, classementGeneral } from '../../utils/classementTournoi';
 import { captureError } from '../../lib/sentry';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
@@ -45,18 +46,21 @@ export default function CompetitionDetailScreen({ navigation, route }: Props) {
   async function loadParticipants() {
     setLoadingParticipants(true);
     try {
-      const { data } = await supabase
-        .from('tournament_participants')
-        .select('athlete_id, score, profiles:athlete_id(username, avatar_url, elo)')
-        .eq('tournament_id', competition.id)
-        .order('score', { ascending: false });
+      // Points calculés par la base (classement de la compétition classique).
+      const [{ data }, { lignes }] = await Promise.all([
+        supabase
+          .from('tournament_participants')
+          .select('athlete_id, profiles:athlete_id(username, avatar_url, elo)')
+          .eq('tournament_id', competition.id),
+        chargerClassement(competition.id),
+      ]);
 
-      const mapped: Participant[] = (data ?? []).map((row: any) => ({
+      const mapped: Participant[] = classementGeneral(data ?? [], lignes).map((row: any) => ({
         athlete_id: row.athlete_id,
         username: row.profiles?.username ?? t('compDetail.unknown'),
         avatar_url: row.profiles?.avatar_url ?? null,
         elo: row.profiles?.elo ?? 1000,
-        score: row.score ?? 0,
+        score: row.points,
       }));
       setParticipants(mapped);
     } catch (e) { captureError(e, { screen: 'CompetitionDetail', action: 'loadParticipants' }); }

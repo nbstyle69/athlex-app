@@ -22,9 +22,10 @@ import { LevelColors } from '../../theme/designTokens';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import {
   TournamentScore,
-  rankWodScores, cfPoints, parseScoreToNumber, formatScoreDisplay,
+  parseScoreToNumber, formatScoreDisplay,
   normalizeMovement, formatDateTime,
 } from '../../utils/tournamentUtils';
+import { chargerClassement, classementGeneral, LigneClassement, RangWod } from '../../utils/classementTournoi';
 import { computeCompletedMovements, AthleteGender } from '../../utils/movementParser';
 import GlassBackground from '../../components/glass/GlassBackground';
 
@@ -59,6 +60,8 @@ export default function BOTournamentScreen() {
   const [scores,          setScores]          = useState<TournamentScore[]>([]);
   const [wods,            setWods]            = useState<any[]>([]);
   const [participants,    setParticipants]    = useState<any[]>([]);
+  // Classement calculé par la base (barème, tie-break, rang partagé) : l'app ne classe plus.
+  const [classement, setClassement] = useState<{ lignes: LigneClassement[]; rangs: RangWod[] }>({ lignes: [], rangs: [] });
   const [loading,         setLoading]         = useState(true);
   const [refreshing,      setRefreshing]      = useState(false);
   const [tab,             setTab]             = useState<'leaderboard' | 'participants' | 'validate'>('leaderboard');
@@ -114,7 +117,7 @@ export default function BOTournamentScreen() {
         .order('submitted_at', { ascending: false }),
       supabase.from('tournament_wods').select('*').eq('tournament_id', selectedId).order('order_index'),
       supabase.from('tournament_participants')
-        .select('athlete_id, score, created_at')
+        .select('athlete_id, created_at')
         .eq('tournament_id', selectedId)
         .order('created_at', { ascending: true }),
     ]);
@@ -143,6 +146,11 @@ export default function BOTournamentScreen() {
     setWods(tw ?? []);
     setParticipants(partList.map((p: any) => ({ ...p, profile: profileMap[p.athlete_id] ?? null })));
     setRankTo(String(partList.length));
+    try {
+      setClassement(await chargerClassement(selectedId));
+    } catch (e) {
+      captureError(e, { screen: 'BOTournament', action: 'chargerClassement' });
+    }
     setRefreshing(false);
   }, [selectedId]);
 
@@ -175,29 +183,6 @@ export default function BOTournamentScreen() {
         }},
       ]
     );
-  }
-
-  // ── Recalc leaderboard ────────────────────────────────────────────────────
-  async function recalcLeaderboard() {
-    if (!selectedId) return;
-    const { data: allScores } = await supabase.from('tournament_scores')
-      .select('*').eq('tournament_id', selectedId).eq('status', 'validated');
-    if (!allScores) return;
-
-    const pointsMap: Record<string, number> = {};
-    wods.forEach(wod => {
-      const wodScores = (allScores as TournamentScore[]).filter(sc => sc.tournament_wod_id === wod.id);
-      const ranked = rankWodScores(wodScores, wod.type);
-      ranked.forEach(rs => {
-        pointsMap[rs.athlete_id] = (pointsMap[rs.athlete_id] ?? 0) + rs.cfPoints;
-      });
-    });
-    for (const [athleteId, points] of Object.entries(pointsMap)) {
-      await supabase.from('tournament_participants')
-        .update({ score: points })
-        .eq('tournament_id', selectedId)
-        .eq('athlete_id', athleteId);
-    }
   }
 
   async function loadAthleteGender(athleteId: string): Promise<AthleteGender | null> {
@@ -263,7 +248,6 @@ export default function BOTournamentScreen() {
           }
         }
 
-        await recalcLeaderboard();
         const msg = newBadges.length > 0
           ? '\n\n' + t('bo.tournament.newBadge', { username: score.profile?.username, badges: newBadges.join('\n') })
           : '';
@@ -397,22 +381,16 @@ export default function BOTournamentScreen() {
 
   // ── Build leaderboard ─────────────────────────────────────────────────────
   function buildLeaderboard() {
-    const pointsMap: Record<string, { name: string; level: string; elo: number; totalPts: number; wodResults: Record<string, { rank: number; pts: number }> }> = {};
-    participants.forEach(p => {
-      pointsMap[p.athlete_id] = { name: p.profile?.username ?? '?', level: p.profile?.level ?? 'rx', elo: p.profile?.elo ?? 1000, totalPts: 0, wodResults: {} };
-    });
-    wods.forEach(wod => {
-      const wodScores = scores.filter(s => s.tournament_wod_id === wod.id);
-      const ranked = rankWodScores(wodScores, wod.type);
-      ranked.forEach(rs => {
-        if (!pointsMap[rs.athlete_id]) return;
-        pointsMap[rs.athlete_id].totalPts += rs.cfPoints;
-        pointsMap[rs.athlete_id].wodResults[wod.id] = { rank: rs.rank, pts: rs.cfPoints };
-      });
-    });
-    const rows = Object.entries(pointsMap)
-      .map(([athleteId, data]) => ({ athleteId, ...data }))
-      .sort((a, b) => b.totalPts - a.totalPts);
+    const rows = classementGeneral(participants, classement.lignes).map(p => ({
+      athleteId: p.athlete_id,
+      name: p.profile?.username ?? '?',
+      level: p.profile?.level ?? 'rx',
+      rang: p.rang,
+      totalPts: p.points,
+      wodResults: Object.fromEntries(classement.rangs
+        .filter(r => r.athlete_id === p.athlete_id)
+        .map(r => [r.tournament_wod_id, { rank: r.wod_rank, pts: r.points }])) as Record<string, { rank: number; pts: number }>,
+    }));
     const from = Math.max(1, parseInt(rankFrom) || 1) - 1;
     const to   = parseInt(rankTo) || rows.length;
     return rows.slice(from, to);
@@ -507,12 +485,6 @@ export default function BOTournamentScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Recalc button */}
-            <TouchableOpacity style={s.recalcBtn} onPress={async () => { await recalcLeaderboard(); await loadData(); Alert.alert('✅', t('bo.tournament.leaderboardRecalculated')); }} activeOpacity={0.8}>
-              <RotateCcw color={theme.accent} size={14} />
-              <Text style={s.recalcTxt}>{t('bo.tournament.recalcLeaderboard')}</Text>
-            </TouchableOpacity>
-
             {/* Table */}
             {buildLeaderboard().length === 0 ? (
               <View style={s.emptyState}>
@@ -538,10 +510,10 @@ export default function BOTournamentScreen() {
                     return (
                       <View key={row.athleteId} style={[s.tableRow, i % 2 === 0 ? s.tableRowEven : s.tableRowOdd]}>
                         <View style={[s.tableCell, s.colRank]}>
-                          {i === 0 ? <Text style={s.rankEmoji}>🥇</Text>
-                            : i === 1 ? <Text style={s.rankEmoji}>🥈</Text>
-                            : i === 2 ? <Text style={s.rankEmoji}>🥉</Text>
-                            : <Text style={s.rankNumTxt}>#{i + 1}</Text>}
+                          {row.rang === 1 ? <Text style={s.rankEmoji}>🥇</Text>
+                            : row.rang === 2 ? <Text style={s.rankEmoji}>🥈</Text>
+                            : row.rang === 3 ? <Text style={s.rankEmoji}>🥉</Text>
+                            : <Text style={s.rankNumTxt}>#{row.rang}</Text>}
                         </View>
                         <View style={[s.tableCell, s.colName]}>
                           <Text style={s.athleteName} numberOfLines={1}>{row.name}</Text>
@@ -881,8 +853,6 @@ function createStyles(t: AppTheme) { return StyleSheet.create({
   rankFilterLabel: { fontSize: 12, color: t.textMuted, fontWeight: '600' },
   rankFilterInput: { backgroundColor: t.card, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, fontWeight: '800', color: t.text, borderWidth: 1, borderColor: t.border, width: 48, textAlign: 'center' },
   rankResetBtn:    { padding: 6 },
-  recalcBtn:       { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: t.border, backgroundColor: t.card, marginBottom: 12 },
-  recalcTxt:       { fontSize: 12, fontWeight: '700', color: t.accent },
 
   tableRow:       { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: t.border },
   tableHeaderRow: { backgroundColor: t.surface },

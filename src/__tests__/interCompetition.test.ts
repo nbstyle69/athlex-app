@@ -7,8 +7,6 @@
  * - For Time vs Reps scoring direction
  */
 import { calculatePairwiseDeltas, clampElo, assignRanks, RankedPlayer, K_PAIRWISE } from '../utils/elo';
-import { cfPoints, rankWodScores } from '../utils/tournamentUtils';
-import type { TournamentScore } from '../utils/tournamentUtils';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -16,24 +14,6 @@ function makePlayer(id: string, elo: number, rank: number): RankedPlayer {
   return { id, elo, rank };
 }
 
-function makeScore(overrides: Partial<TournamentScore> = {}): TournamentScore {
-  return {
-    id: Math.random().toString(36).slice(2),
-    athlete_id: 'athlete-1',
-    tournament_id: 'tournament-1',
-    tournament_wod_id: 'wod-1',
-    score_value: '100',
-    tiebreak_value: null,
-    video_url: null,
-    notes: null,
-    status: 'validated',
-    submitted_at: new Date().toISOString(),
-    deadline_at: null,
-    ai_analysis: null,
-    elo_points: 0,
-    ...overrides,
-  };
-}
 
 // ── ELO Seeding Tests ───────────────────────────────────────────────────────
 
@@ -112,64 +92,6 @@ describe('inter-box ELO seeding', () => {
   });
 });
 
-// ── League Points Tests ─────────────────────────────────────────────────────
-
-describe('inter-box league round points', () => {
-  it('awards CF Games points based on rank', () => {
-    expect(cfPoints(1)).toBe(100);
-    expect(cfPoints(2)).toBe(97);
-    expect(cfPoints(3)).toBe(95);
-    expect(cfPoints(10)).toBe(81);
-    expect(cfPoints(50)).toBe(31);
-  });
-
-  it('ranks For Time scores ASC (lower = better)', () => {
-    const scores: TournamentScore[] = [
-      makeScore({ athlete_id: 'fast', score_value: '120' }),  // 2:00
-      makeScore({ athlete_id: 'slow', score_value: '300' }),  // 5:00
-      makeScore({ athlete_id: 'mid', score_value: '180' }),   // 3:00
-    ];
-    const ranked = rankWodScores(scores, 'For Time');
-    expect(ranked[0].athlete_id).toBe('fast');
-    expect(ranked[1].athlete_id).toBe('mid');
-    expect(ranked[2].athlete_id).toBe('slow');
-  });
-
-  it('ranks Reps scores DESC (higher = better)', () => {
-    const scores: TournamentScore[] = [
-      makeScore({ athlete_id: 'low', score_value: '50' }),
-      makeScore({ athlete_id: 'high', score_value: '200' }),
-      makeScore({ athlete_id: 'mid', score_value: '100' }),
-    ];
-    const ranked = rankWodScores(scores, 'AMRAP');
-    expect(ranked[0].athlete_id).toBe('high');
-    expect(ranked[1].athlete_id).toBe('mid');
-    expect(ranked[2].athlete_id).toBe('low');
-  });
-
-  it('cumulates points across multiple rounds (journees)', () => {
-    // Simulate 3 rounds, athlete finishing 1st, 3rd, 2nd
-    const roundPoints = [cfPoints(1), cfPoints(3), cfPoints(2)];
-    const total = roundPoints.reduce((a, b) => a + b, 0);
-    expect(total).toBe(100 + 95 + 97); // 292
-  });
-
-  it('handles tie in scores with same rank', () => {
-    const scores: TournamentScore[] = [
-      makeScore({ athlete_id: 'a', score_value: '100' }),
-      makeScore({ athlete_id: 'b', score_value: '100' }),
-      makeScore({ athlete_id: 'c', score_value: '80' }),
-    ];
-    const ranked = rankWodScores(scores, 'AMRAP');
-    // Both a and b should come before c
-    const aIdx = ranked.findIndex(s => s.athlete_id === 'a');
-    const bIdx = ranked.findIndex(s => s.athlete_id === 'b');
-    const cIdx = ranked.findIndex(s => s.athlete_id === 'c');
-    expect(cIdx).toBe(2);
-    expect(aIdx).toBeLessThan(cIdx);
-    expect(bIdx).toBeLessThan(cIdx);
-  });
-});
 
 // ── Pool Standings Tests ────────────────────────────────────────────────────
 
@@ -398,42 +320,3 @@ describe('inter-box ELO distribution at close', () => {
   });
 });
 
-// ── Scoring Direction Tests ─────────────────────────────────────────────────
-
-describe('scoring direction consistency', () => {
-  it('For Time: ASC (120s beats 300s)', () => {
-    const scores: TournamentScore[] = [
-      makeScore({ athlete_id: 'fast', score_value: '120' }),
-      makeScore({ athlete_id: 'slow', score_value: '300' }),
-    ];
-    const ranked = rankWodScores(scores, 'For Time');
-    expect(ranked[0].athlete_id).toBe('fast');
-  });
-
-  it('Reps: DESC (200 reps beats 100 reps)', () => {
-    const scores: TournamentScore[] = [
-      makeScore({ athlete_id: 'strong', score_value: '200' }),
-      makeScore({ athlete_id: 'weak', score_value: '100' }),
-    ];
-    const ranked = rankWodScores(scores, 'AMRAP');
-    expect(ranked[0].athlete_id).toBe('strong');
-  });
-
-  it('Weight: DESC (150kg beats 100kg)', () => {
-    const scores: TournamentScore[] = [
-      makeScore({ athlete_id: 'heavy', score_value: '150' }),
-      makeScore({ athlete_id: 'light', score_value: '100' }),
-    ];
-    const ranked = rankWodScores(scores, 'Max Weight');
-    expect(ranked[0].athlete_id).toBe('heavy');
-  });
-
-  it('rounds_reps: DESC (higher rounds+reps wins)', () => {
-    const scores: TournamentScore[] = [
-      makeScore({ athlete_id: 'more', score_value: '505' }),  // 5 rounds + 5 reps
-      makeScore({ athlete_id: 'less', score_value: '312' }),  // 3 rounds + 12 reps
-    ];
-    const ranked = rankWodScores(scores, 'Rounds + Reps');
-    expect(ranked[0].athlete_id).toBe('more');
-  });
-});
