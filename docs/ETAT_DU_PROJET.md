@@ -257,6 +257,9 @@ Supabase/Resend.
 - Barème des divisions (migration `20270118`, **non appliquée**) : décision du 24/09, la table de la
   compétition classique (`tournament_cf_points` : 100, 97, 95, 93…) à la place du barème linéaire ;
   règle d'égalité inchangée.
+- Ligue, général par saison (migration `20270119`, **non appliquée**) : `tournament_ligue_standings`
+  (tournoi, saison — la saison en cours par défaut) additionne les points de WOD de cette seule saison ;
+  sert à l'onglet « Général » d'une ligue et aux « Saisons précédentes ».
 
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
