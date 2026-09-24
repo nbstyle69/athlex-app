@@ -2,6 +2,8 @@
 
 Les dix PR du chantier « logique sportive des tournois » (#348 à #357) sont **appliquées en prod depuis le 24/09/2026**, de 12:19 à 12:22 UTC. Le serveur applique désormais les règles sportives, mais le Manager (dépôt `AthleX-Manager`) doit s'y brancher pour que le gérant en profite.
 
+Les décisions du 24/09 sur le classement de la compétition classique (#359 à #361) y sont ajoutées en priorité 2 bis.
+
 Ce document réunit en une seule liste ce que chaque PR demandait au Manager, classée par priorité. Le détail de chaque règle est dans [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md) et dans la description de chaque PR.
 
 ## Priorité 1 — à faire avant tout tournoi réel en double élimination
@@ -47,6 +49,26 @@ Les tableaux simples (`bracket`) existent déjà en prod, et le Manager y décid
 - **Confirmation** : le nombre de matchs décidés vient du retour de la RPC. Ne plus le calculer avant l'appel.
 - **Supprimer `winnerFromScores` et `parseScoreVal`** une fois l'appel branché : ils portent l'ancienne règle.
 - La règle appliquée : un For Time terminé bat un CAP ; entre deux CAP, le plus de reps gagne ; puis le tie-break le plus bas ; hors For Time, le score le plus haut. La clé est `tournament_score_cle`, le même ordre que la compétition classique.
+
+## Priorité 2 bis — classement de la compétition classique par la base (#359, #360, #361)
+
+Décision du 24/09/2026 : le barème de référence est celui de l'app (table CF Games 100, 97, 95, 93, 91…). Sur un WOD, le tie-break départage d'abord ; s'il reste une égalité, rang partagé et mêmes points, le rang suivant sauté. **La base est la seule source du calcul** : l'app ne classe plus rien depuis #361, et le Manager doit faire de même.
+
+Aujourd'hui, le Manager calcule son propre classement avec un barème linéaire (100, 97, 94…, égalités départagées par `athlete_id`) et l'écrit dans `tournament_participants.score`. Une fois #359 appliquée, ce chiffre ne correspond plus à celui de la base, ni à la clôture ELO.
+
+- **Cesser d'écrire `tournament_participants.score`** :
+  - retirer `recalcLeaderboard` de `app/(dashboard)/tournaments/[id]/scores/ScoresClient.tsx` (autour de la ligne 55) et ses appels, à la validation comme sur le bouton de recalcul : il n'y a plus rien à recalculer ;
+  - ne plus mettre `score` à l'inscription d'un athlète (0 par défaut en base).
+- **Lire le classement calculé par la base** :
+  - général : `supabase.rpc('tournament_classique_standings', { p_tournament_id })` → `{ athlete_id, points, final_rank }` ;
+  - par WOD : `supabase.rpc('tournament_classique_wod_ranks', { p_tournament_id })` → `{ athlete_id, tournament_wod_id, wod_rank, points }`. Seuls les scores validés et lisibles y figurent. Un score rejeté, en attente ou illisible n'a pas de rang : il n'apparaît pas ;
+  - à brancher sur la page Classement (`app/(dashboard)/tournaments/[id]/leaderboard/page.tsx`), qui lit aujourd'hui `tournament_participants.score` et classe chaque WOD avec `rankWodScores`.
+- **Afficher le rang de la base**, pas la position dans la liste : deux ex-aequo portent le même rang et les mêmes points, et le rang suivant est sauté (1, 1, 3…).
+- **Retirer le barème du Manager** : `rankClassique` et `rankWodScores` de `lib/tournamentScoring.ts`. `formatWodScore` reste utile à l'affichage.
+- **Rejet d'un score** : recharger le classement après un rejet. Le score sort du calcul de la base dès qu'il est rejeté.
+- **Points de division** : ils sont calculés par la base (`tournament_division_members.points`) avec la même règle d'égalité (#360). Le Manager les lit et ne les recalcule pas. Le bouton d'édition manuelle des points (`updatePoints`), s'il est gardé, est écrasé au prochain score validé.
+
+Cas de référence pour vérifier l'écran (un For Time) : A et B en 8:00, C en 9:30, D au CAP à 150 reps, E au CAP à 140 reps, F sans score. La base rend A 100 et B 100 (1ers ex-aequo), C 95 (3e), D 93, E 91, F 0.
 
 ## Priorité 3 — nouvelles possibilités du tableau
 
@@ -112,3 +134,5 @@ Les tableaux simples (`bracket`) existent déjà en prod, et le Manager y décid
 | `affecter_divisions(tournoi)` | répartit les athlètes par ELO dans les divisions | le gérant |
 | `end_season_and_advance(tournoi, saison_attendue)` | fin de saison, sans risque de double clôture | le gérant |
 | `finalize_tournament_elo(tournoi)` | clôture du tournoi | le gérant |
+| `tournament_classique_standings(tournoi)` | classement général de la compétition classique (points, rang final) | lecture |
+| `tournament_classique_wod_ranks(tournoi)` | rang et points de chaque athlète sur chaque WOD | lecture |
