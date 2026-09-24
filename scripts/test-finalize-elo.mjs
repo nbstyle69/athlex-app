@@ -211,7 +211,7 @@ async function playBracket(tournId, format) {
     await db.from('tournament_bracket_matches').update({ winner_id: winner, loser_id: loser ?? null, status: 'completed', completed_at: new Date().toISOString() }).eq('id', m.id);
   };
   // Tour par tour, comme le gérant : on tranche les matchs en attente du tour,
-  // on avance le WB (ce qui crée le LB du tour en swiss), et on recommence.
+  // on avance (en swiss, un tour porte les deux tableaux), et on recommence.
   for (let guard = 0; guard < 20; guard++) {
     const { data: pending } = await db.from('tournament_bracket_matches')
       .select('id, round, participant1_id, participant2_id, side')
@@ -220,15 +220,9 @@ async function playBracket(tournId, format) {
     const round = pending[0].round;
     const ofRound = pending.filter(m => m.round === round);
     for (const m of ofRound) await resolve(m);
-    const { count: wbInRound } = await db.from('tournament_bracket_matches').select('*', { count: 'exact', head: true })
-      .eq('tournament_id', tournId).eq('round', round).eq('side', 'winner');
-    const { count: nextWb } = await db.from('tournament_bracket_matches').select('*', { count: 'exact', head: true })
-      .eq('tournament_id', tournId).eq('round', round + 1).eq('side', 'winner');
-    // En swiss, avancer la finale WB ne crée aucun match WB mais crée le dernier tour du LB.
-    if ((wbInRound > 1 || format === 'swiss') && nextWb === 0 && ofRound.some(m => m.side === 'winner')) {
-      const { error } = await asOwner.rpc('advance_bracket_round', { p_tournament_id: tournId, p_completed_round: round });
-      if (error && !/unfinished/i.test(error.message)) fail(`advance round ${round}`, error);
-    }
+    // Rend 0 une fois la finale (ou les deux tableaux) jouée.
+    const { error } = await asOwner.rpc('advance_bracket_round', { p_tournament_id: tournId, p_completed_round: round });
+    if (error) fail(`advance round ${round}`, error);
   }
   if (format === 'swiss') {
     // Grande finale : créée par le gérant (createGrandFinalAction côté web) entre
@@ -245,9 +239,7 @@ async function playBracket(tournId, format) {
 
 async function suiteBracket(format) {
   console.log(`\n══ ${format} ${format === 'swiss' ? '(double élimination)' : '(simple élimination)'} ═══════════════════════════════`);
-  // Double élimination : 4 joueurs, seul effectif où advance_bracket_round
-  // converge. Le défaut à 8 est documenté par suiteSwiss8Defect (attendu-rouge).
-  const participants = format === 'swiss' ? AGENTS.slice(4) : AGENTS;
+  const participants = AGENTS;
   const tournId = await createTournament(format, participants);
   const { error: r1Err } = await asOwner.rpc('generate_bracket_round_1', { p_tournament_id: tournId });
   if (!assert(!r1Err, `${format} : round 1 généré`, r1Err)) return;
@@ -348,46 +340,6 @@ async function suiteDeletion(tournId) {
   assert(!wDelErr, 'le WOD est supprimé', wDelErr);
   const { data: eh1 } = await db.from('elo_history').select('id, wod_id, elo_after').eq('id', eh.id).maybeSingle();
   assert(eh1 && eh1.wod_id === null && eh1.elo_after === 1012, 'elo_history : ligne conservée, wod_id = NULL (« WOD supprimé »), elo_after intact');
-}
-
-// ── Suisse à 8 : défaut connu, attendu-rouge ─────────────────────────────────
-// advance_bracket_round (swiss) construit le LB en une seule passe par tour :
-//   LB tour N = vainqueurs du LB tour N-1  ×  perdants du WB tour N, appariés 1:1
-//   (LEAST des deux effectifs). Il n'y a jamais de tour « mineur » du LB où les
-//   vainqueurs du LB se rencontrent entre eux. Tant que les deux effectifs sont
-//   égaux (2 → 1 → …), ça converge : c'est le cas à 4 joueurs. À 8 : le LB tour 2
-//   produit 2 vainqueurs, la finale WB (tour 3) n'a qu'1 perdant → 1 match créé,
-//   le 2e vainqueur du LB n'a plus jamais d'adversaire, ni de défaite. Le tableau
-//   se termine, grande finale jouée, avec 1 athlète « encore en lice » (l'orphelin)
-//   et la clôture refuse.
-//   À 5, 6, 7 : les effectifs impairs ne reçoivent pas de bye en swiss
-//   (WHILE i+1 <= v_count) — un vainqueur du WB est simplement oublié.
-// Ce test AFFIRME le défaut : le jour où advance_bracket_round est corrigée,
-// il rougit, et on le retire avec la ligne « résiduel » d'ETAT_DU_PROJET.
-async function suiteSwiss8Defect() {
-  console.log('\n══ swiss à 8 — défaut connu d\'advance_bracket_round (attendu-rouge) ═════════');
-  const tournId = await createTournament('swiss', AGENTS);
-  const { error: r1Err } = await asOwner.rpc('generate_bracket_round_1', { p_tournament_id: tournId });
-  if (!assert(!r1Err, 'swiss×8 : round 1 généré (4 matchs WB)', r1Err)) return;
-  await playBracket(tournId, 'swiss');
-
-  const { data: all } = await db.from('tournament_bracket_matches')
-    .select('round, side, participant1_id, participant2_id, winner_id, loser_id').eq('tournament_id', tournId);
-  const lb = r => all.filter(m => m.side === 'loser' && m.round === r);
-  const wb = r => all.filter(m => m.side === 'winner' && m.round === r);
-  assert(wb(1).length === 4 && wb(2).length === 2 && wb(3).length === 1, `swiss×8 : WB 4 → 2 → 1 matchs (${wb(1).length}/${wb(2).length}/${wb(3).length})`);
-  assert(lb(1).length === 2 && lb(2).length === 2, `swiss×8 : LB tour 1 = 2 matchs, tour 2 = 2 matchs (${lb(1).length}/${lb(2).length})`);
-  assert(lb(3).length === 1, `swiss×8 : LB tour 3 = 1 seul match pour 2 vainqueurs du LB tour 2 + 1 perdant de la finale WB (${lb(3).length}) — attendu-rouge : c'est le défaut`);
-  const lb2Winners = lb(2).map(m => m.winner_id);
-  const playedAfter = new Set(all.filter(m => m.round > 2 || m.side === 'grand_final').flatMap(m => [m.participant1_id, m.participant2_id]));
-  const orphans = lb2Winners.filter(id => !playedAfter.has(id));
-  assert(orphans.length === 1, `swiss×8 : ${orphans.length} vainqueur du LB tour 2 ne rejoue jamais et n'est jamais éliminé — attendu-rouge : défaut documenté, pas accepté`);
-
-  const { error } = await asOwner.rpc('finalize_tournament_elo', { p_tournament_id: tournId });
-  assert(error && /TABLEAU_NON_TERMINE : 1 /.test(error.message),
-    `swiss×8 : la clôture refuse (${error?.message ?? 'aucune erreur'}) — attendu-rouge : le refus est la bonne réponse au tableau bancal, tant que la cause n'est pas corrigée`);
-  const { count: h } = await db.from('tournament_elo_history').select('*', { count: 'exact', head: true }).eq('tournament_id', tournId);
-  assert(h === 0, 'swiss×8 : aucune ligne d\'historique écrite par la clôture refusée');
 }
 
 // ── Ligue avec divisions ─────────────────────────────────────────────────────
@@ -491,7 +443,6 @@ async function main() {
       await suiteSimple();
       const bracketId = await suiteBracket('bracket');
       await suiteBracket('swiss');
-      await suiteSwiss8Defect();
       await suiteLeague();
       await suiteDeletion(bracketId);
     });

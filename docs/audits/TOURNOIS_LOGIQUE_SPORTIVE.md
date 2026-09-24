@@ -69,7 +69,7 @@ Autres écarts :
 2. **Fin de saison idempotente.** Verrou sur la ligne du tournoi, et `p_saison_attendue` en option : si elle ne correspond pas à la saison en cours, rien ne se passe. Sans ce paramètre, l'appel ne fait rien quand la saison en cours n'a aucun score validé et que la précédente vient d'être close.
 3. **Divisions figées au moment du WOD.** `tournament_scores.division_id` est posé à l'insertion. Les points se classent par division du score, sur la saison en cours seulement.
 4. **Suppression d'un tournoi.** Trigger BEFORE DELETE sur `tournaments`, et sur les matchs de tableau, qui défait exactement ce qui a été appliqué (ELO de match, ELO de WOD, clôture `simple`, compteurs) puis supprime ces historiques.
-5. **Double élimination complète.** Aucun athlète omis ; exemption si le nombre est impair ; élimination à la deuxième défaite.
+5. **Double élimination complète** (`20270110`). Aucun athlète omis ; exemption si le nombre est impair ; élimination à la deuxième défaite. Les deux tableaux avancent au même numéro de tour : le tableau des perdants commence au tour 2.
 6. **Grande finale avec reset.** Création automatique, puis second match si le vainqueur du tableau des perdants gagne. Une grande finale déjà créée par le Manager est tolérée.
 7. **Comparaison en tableau.** Une fonction SQL applique la règle ; une RPC décide les matchs d'une manche.
 8. **Forfait.** Statut `forfeit` : l'absent est perdant, l'adversaire passe, l'ELO ne bouge pas.
