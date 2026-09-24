@@ -1,7 +1,14 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Grande finale avec reset — tournois, PR 6
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 12:21:32 UTC, avec PGCLIENTENCODING=UTF8 ; 6e des
+-- dix migrations du chantier, appliquées dans l'ordre (dump des schémas public et internal
+-- avec droits db-dumps/2026-09-24/athlex-prod-public-internal-20260924T122119Z.dump, sha256 c0ef97fbd95ec78972d5040a9cf059ae15ff0ca710f202636bad7cfb6d5b3798 vérifié
+-- après aller-retour ; précontrôles : objets du chantier identiques à ceux de master rejoué,
+-- aucun tournoi swiss ni league_div ; vérifications : md5 identiques avant et après des
+-- tables du chantier, des profils, des policies, des droits des tables et des autres
+-- fonctions, objets identiques à la référence droits compris, aucun double encodage ;
+-- audit grants-prod.yml relancé à 12:24 UTC : 29/29).
 --
 -- Règle produit : « Grande finale en double élimination avec reset : si le
 -- vainqueur de la branche des perdants gagne la finale, un second match décisif
