@@ -215,6 +215,9 @@ Supabase/Resend.
 - PR 3, divisions figées au moment du WOD (migration `20270108`, **appliquée en prod le 24/09/2026 à 12:20 UTC**) : la division est
   enregistrée avec le score (`tournament_scores.division_id`, posée par le serveur, réservée au staff) ;
   les points se classent dans cette division, sur la saison en cours seulement.
+- PR 4, suppression d'un tournoi (migration `20270109`, **non appliquée**) : l'ELO qu'il a apporté
+  (matchs, WOD de ligue, clôture classique) est retiré exactement, compteurs compris, et ses
+  historiques effacés ; supprimer un match seul rend aussi son effet.
 
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
