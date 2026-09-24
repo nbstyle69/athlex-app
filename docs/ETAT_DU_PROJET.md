@@ -212,6 +212,9 @@ Supabase/Resend.
   `tournament_classique_wod_ranks`) et n'écrit plus `tournament_participants.score` ; plus de bouton
   « Recalculer le classement » ; un For Time illisible n'est plus premier, il est ignoré ; un score
   rejeté sort du classement dès le rejet.
+- App, ligue (sans migration, à livrer après la migration `20270119`) : l'onglet « Général » d'une ligue
+  se limite à la saison en cours ; nouvel onglet « Saisons précédentes » (FR/EN), affiché dès qu'une
+  saison est terminée, où l'athlète choisit la saison et voit son général final.
 - PR 1, ELO de match idempotent (migration `20270106`, **appliquée en prod le 24/09/2026 à 12:19 UTC**) : réécrire un match terminé
   sans changer de vainqueur ne réapplique plus l'ELO ni les compteurs ; changer de vainqueur, de
   perdant ou remettre le match à jouer défait exactement l'effet enregistré avant d'appliquer le nouveau.

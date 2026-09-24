@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl, Share,
@@ -26,7 +26,10 @@ import {
   formatDate,
   formatScoreDisplay,
 } from '../../utils/tournamentUtils';
-import { chargerClassement, classementGeneral, classementWod, LigneClassement, RangWod } from '../../utils/classementTournoi';
+import {
+  chargerClassement, chargerGeneralSaison, classementGeneral, classementWod, ongletsClassement, saisonsTerminees,
+  LigneClassement, RangWod,
+} from '../../utils/classementTournoi';
 import { trackTournamentJoin } from '../../lib/analytics';
 import GlassBackground from '../../components/glass/GlassBackground';
 import TournamentBracketView from './TournamentBracketView';
@@ -86,6 +89,9 @@ export default function TournamentScreen() {
   const [wodValidatedScores, setWodValidatedScores] = useState<any[]>([]);
   // Classement calculé par la base (barème, tie-break, rang partagé) : l'app ne classe plus.
   const [classement, setClassement] = useState<{ lignes: LigneClassement[]; rangs: RangWod[] }>({ lignes: [], rangs: [] });
+  // Ligue : saison terminée choisie dans « Saisons précédentes », et son général final.
+  const [saisonChoisie, setSaisonChoisie] = useState<number | null>(null);
+  const [generalSaison, setGeneralSaison] = useState<LigneClassement[]>([]);
   const [rankTab,            setRankTab]            = useState<string>('general');
   const [divisions,          setDivisions]          = useState<any[]>([]);
   const [divisionMembers,    setDivisionMembers]    = useState<any[]>([]);
@@ -155,7 +161,7 @@ export default function TournamentScreen() {
     setMyScores((ms ?? []) as TournamentScore[]);
     setWodValidatedScores(vs ?? []);
     try {
-      setClassement(await chargerClassement(tournamentId));
+      setClassement(await chargerClassement(tournamentId, (tourData as any)?.format === 'league_div'));
     } catch (e) {
       captureError(e, { screen: 'Tournament', action: 'chargerClassement' });
     }
@@ -230,6 +236,57 @@ export default function TournamentScreen() {
     } finally {
       setRegistering(false);
     }
+  }
+
+  // « Saisons précédentes » : général final de la saison choisie (la plus récente par défaut).
+  useEffect(() => {
+    if (rankTab !== 'previous') return;
+    const saison = saisonChoisie ?? saisonsTerminees(tournament?.format, tournament?.current_season)[0];
+    if (!saison) return;
+    let annule = false;
+    chargerGeneralSaison(tournamentId, saison)
+      .then(lignes => { if (!annule) setGeneralSaison(lignes); })
+      .catch(e => captureError(e, { screen: 'Tournament', action: 'chargerGeneralSaison' }));
+    return () => { annule = true; };
+  }, [rankTab, saisonChoisie, tournament?.format, tournament?.current_season, tournamentId]);
+
+  // Une ligne du classement général (onglet « Général » et « Saisons précédentes »).
+  function renderLigneGenerale(p: any) {
+    const isMe = user?.id === p.athlete_id;
+    const memberRow = divisionMembers.find((m: any) => m.athlete_id === p.athlete_id);
+    const myDiv    = memberRow ? divisions.find((d: any) => d.id === memberRow.division_id) : null;
+    return (
+      <View key={p.athlete_id} style={[S.rankRow, isMe && S.rankRowMe]}>
+        <View style={S.rankBadge}>
+          {p.rang === 1 ? <Text style={S.rankEmoji}>🥇</Text>
+            : p.rang === 2 ? <Text style={S.rankEmoji}>🥈</Text>
+            : p.rang === 3 ? <Text style={S.rankEmoji}>🥉</Text>
+            : <Text style={S.rankNumber}>#{p.rang}</Text>}
+        </View>
+        <UserAvatar
+          uri={p.profile?.avatar_url}
+          name={p.profile?.username ?? '?'}
+          size={40}
+          borderRadius={20}
+          backgroundColor={theme.surface}
+          textColor={theme.text}
+        />
+        <View style={S.rankInfo}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <Text style={[S.rankName, isMe && { color: theme.accentText }]}>
+              {p.profile?.username ?? '?'}{isMe ? t('tournament.youSuffix') : ''}
+            </Text>
+            {myDiv && (
+              <View style={S.divBadge}>
+                <Text style={S.divBadgeText}>D{myDiv.level} · {myDiv.name}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={S.rankElo}>ELO {p.profile?.elo ?? 1000}</Text>
+        </View>
+        <Text style={S.rankScore}>{p.points} pts</Text>
+      </View>
+    );
   }
 
   async function handleValidateScore(scoreId: string) {
@@ -747,13 +804,10 @@ export default function TournamentScreen() {
             {/* Sub-tabs: Général + Divisions (league_div) + WOD 1, WOD 2... */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false}
               style={{ marginBottom: 12 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 2 }}>
-              {([
-                ...(tournament?.format === 'league_div' ? [] : ['general']),
-                ...divisions.map((d: any) => `div_${d.id}`),
-                ...wods.map((_: any, i: number) => `wod_${i}`),
-              ] as string[]).map(tab => {
+              {ongletsClassement(tournament?.format, tournament?.current_season, divisions.map((d: any) => d.id), wods.length).map(tab => {
                 let label = '';
                 if (tab === 'general') label = t('tournament.generalRankTab');
+                else if (tab === 'previous') label = t('tournament.previousSeasonsTab');
                 else if (tab.startsWith('div_')) {
                   const d = divisions.find((dd: any) => `div_${dd.id}` === tab);
                   label = d ? `🔱 D${d.level} · ${d.name}` : '';
@@ -780,44 +834,30 @@ export default function TournamentScreen() {
                   <Text style={S.emptyTitle}>{t('tournament.emptyStandings')}</Text>
                   <Text style={S.emptyText}>{t('tournament.emptyStandingsSub')}</Text>
                 </View>
-              ) : classementGeneral(participants, classement.lignes).map((p: any) => {
-                const isMe = user?.id === p.athlete_id;
-                const memberRow = divisionMembers.find((m: any) => m.athlete_id === p.athlete_id);
-                const myDiv    = memberRow ? divisions.find((d: any) => d.id === memberRow.division_id) : null;
-                return (
-                  <View key={p.athlete_id} style={[S.rankRow, isMe && S.rankRowMe]}>
-                    <View style={S.rankBadge}>
-                      {p.rang === 1 ? <Text style={S.rankEmoji}>🥇</Text>
-                        : p.rang === 2 ? <Text style={S.rankEmoji}>🥈</Text>
-                        : p.rang === 3 ? <Text style={S.rankEmoji}>🥉</Text>
-                        : <Text style={S.rankNumber}>#{p.rang}</Text>}
-                    </View>
-                    <UserAvatar
-                      uri={p.profile?.avatar_url}
-                      name={p.profile?.username ?? '?'}
-                      size={40}
-                      borderRadius={20}
-                      backgroundColor={theme.surface}
-                      textColor={theme.text}
-                    />
-                    <View style={S.rankInfo}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <Text style={[S.rankName, isMe && { color: theme.accentText }]}>
-                          {p.profile?.username ?? '?'}{isMe ? t('tournament.youSuffix') : ''}
-                        </Text>
-                        {myDiv && (
-                          <View style={S.divBadge}>
-                            <Text style={S.divBadgeText}>D{myDiv.level} · {myDiv.name}</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={S.rankElo}>ELO {p.profile?.elo ?? 1000}</Text>
-                    </View>
-                    <Text style={S.rankScore}>{p.points} pts</Text>
-                  </View>
-                );
-              })
+              ) : classementGeneral(participants, classement.lignes).map(renderLigneGenerale)
             )}
+
+            {/* Saisons précédentes (ligue) : une puce par saison terminée, puis son général final */}
+            {rankTab === 'previous' && (() => {
+              const saisons = saisonsTerminees(tournament?.format, tournament?.current_season);
+              const saison = saisonChoisie ?? saisons[0];
+              return (
+                <>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}
+                    style={{ marginBottom: 12 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 2 }}>
+                    {saisons.map(n => (
+                      <TouchableOpacity key={n} onPress={() => setSaisonChoisie(n)}
+                        style={[S.rankSubTab, saison === n && S.rankSubTabActive]}>
+                        <Text style={[S.rankSubTabText, saison === n && S.rankSubTabTextActive]}>
+                          {t('tournament.seasonChip', { n })}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                  {classementGeneral(participants, generalSaison).map(renderLigneGenerale)}
+                </>
+              );
+            })()}
 
             {/* Par division (league_div) */}
             {divisions.map((div: any) => rankTab === `div_${div.id}` && (() => {

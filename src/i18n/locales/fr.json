@@ -1674,6 +1674,8 @@
     "youSuffix": " (toi)",
     "registeredOn": "Inscrit le {{date}}",
     "generalRankTab": "🏆 Général",
+    "previousSeasonsTab": "🗓️ Saisons précédentes",
+    "seasonChip": "Saison {{n}}",
     "wodRankTab": "WOD {{n}} — {{title}}",
     "emptyStandings": "Classement vide",
     "emptyStandingsSub": "Les scores apparaîtront ici dès les premières validations.",
