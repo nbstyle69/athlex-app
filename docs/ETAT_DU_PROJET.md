@@ -242,6 +242,10 @@ Supabase/Resend.
   dans la limite de `max_members`, débordement vers la division suivante, la dernière prend le reste ;
   placement du gérant marqué `manual` et jamais déplacé. Recalcul complet tant que la ligue n'a aucun
   score validé, ensuite les seuls nouveaux inscrits, depuis la division de leur ELO.
+- Barème de la compétition classique (migration `20270116`, **non appliquée**) : décision du 24/09,
+  la référence est le barème de l'app (table CF Games 100, 97, 95, 93, 91…) ; sur un WOD, le tie-break
+  départage d'abord, puis rang partagé et mêmes points. La base seule le calcule
+  (`tournament_classique_wod_ranks`, `tournament_classique_standings`), la clôture ELO `simple` le suit.
 
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
