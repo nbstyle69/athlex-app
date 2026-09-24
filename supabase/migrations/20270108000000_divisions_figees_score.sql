@@ -1,7 +1,14 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Divisions figées au moment du WOD — tournois, PR 3
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 12:20:47 UTC, avec PGCLIENTENCODING=UTF8 ; 3e des
+-- dix migrations du chantier, appliquées dans l'ordre (dump des schémas public et internal
+-- avec droits db-dumps/2026-09-24/athlex-prod-public-internal-20260924T122034Z.dump, sha256 0077da099df50dfcc20d6c382139418e4312335ccc8275ce26a34ecf6416e1d5 vérifié
+-- après aller-retour ; précontrôles : objets du chantier identiques à ceux de master rejoué,
+-- aucun tournoi swiss ni league_div ; vérifications : md5 identiques avant et après des
+-- tables du chantier, des profils, des policies, des droits des tables et des autres
+-- fonctions, objets identiques à la référence droits compris, aucun double encodage ;
+-- audit grants-prod.yml relancé à 12:24 UTC : 29/29).
 --
 -- Dans une ligue à divisions (`league_div`), les points d'un WOD se gagnent par
 -- rang DANS SA DIVISION. `internal.recalc_division_points` recalculait tout à

@@ -212,7 +212,7 @@ Supabase/Resend.
   perdant ou remettre le match à jouer défait exactement l'effet enregistré avant d'appliquer le nouveau.
 - PR 2, fin de saison idempotente (migration `20270107`, **appliquée en prod le 24/09/2026 à 12:20 UTC**) : un second appel à
   `end_season_and_advance` ne saute plus de saison ; saison attendue facultative (`p_saison_attendue`).
-- PR 3, divisions figées au moment du WOD (migration `20270108`, **non appliquée**) : la division est
+- PR 3, divisions figées au moment du WOD (migration `20270108`, **appliquée en prod le 24/09/2026 à 12:20 UTC**) : la division est
   enregistrée avec le score (`tournament_scores.division_id`, posée par le serveur, réservée au staff) ;
   les points se classent dans cette division, sur la saison en cours seulement.
 
