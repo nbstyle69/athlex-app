@@ -1,7 +1,14 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Compétition classique : le barème de l'app, calculé par la base seule
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 18:40:38 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal
+-- avec droits db-dumps/2026-09-24/athlex-prod-public-internal-20260924T184022Z.dump, sha256 858bfb9ab1eab26de6eba02ea4206d6dd5dbcce299236bb073adf7ede5dd987e vérifié
+-- après aller-retour ; précontrôles : objets du chantier identiques à ceux de master rejoué,
+-- aucun tournoi swiss ni league_div ; vérifications : md5 identiques avant et après des
+-- tables du chantier, des profils, des policies, des droits des tables et des autres
+-- fonctions, objets identiques à la référence droits compris, aucun double encodage ;
+-- audit grants-prod.yml relancé à 18:42 UTC : 29/29).
 --
 -- Décision de Nab (24/09/2026) : la référence est le barème de l'app
 -- (`src/utils/tournamentUtils.ts`, table CF Games 100, 97, 95, 93, 91…). Sur un
