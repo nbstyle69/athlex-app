@@ -1,7 +1,14 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- ELO de match de tableau : appliqué une seule fois par match — tournois, PR 1
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 12:19:43 UTC, avec PGCLIENTENCODING=UTF8 ; 1re des
+-- dix migrations du chantier, appliquées dans l'ordre (dump des schémas public et internal
+-- avec droits db-dumps/2026-09-24/athlex-prod-public-internal-20260924T121930Z.dump, sha256 7ac11042fd381bbb5f0e36c6dcc54d18aee09b0e4433d89af2efa0a0a352c407 vérifié
+-- après aller-retour ; précontrôles : objets du chantier identiques à ceux de master rejoué,
+-- aucun tournoi swiss ni league_div ; vérifications : md5 identiques avant et après des
+-- tables du chantier, des profils, des policies, des droits des tables et des autres
+-- fonctions, objets identiques à la référence droits compris, aucun double encodage ;
+-- audit grants-prod.yml relancé à 12:24 UTC : 29/29).
 --
 -- `apply_bracket_match_elo` (trigger de `tournament_bracket_matches`) défaisait
 -- l'effet d'un match quand son vainqueur changeait, mais RÉAPPLIQUAIT l'ELO à

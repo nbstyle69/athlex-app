@@ -207,7 +207,7 @@ Supabase/Resend.
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
-- PR 1, ELO de match idempotent (migration `20270106`, **non appliquée**) : réécrire un match terminé
+- PR 1, ELO de match idempotent (migration `20270106`, **appliquée en prod le 24/09/2026 à 12:19 UTC**) : réécrire un match terminé
   sans changer de vainqueur ne réapplique plus l'ELO ni les compteurs ; changer de vainqueur, de
   perdant ou remettre le match à jouer défait exactement l'effet enregistré avant d'appliquer le nouveau.
 
