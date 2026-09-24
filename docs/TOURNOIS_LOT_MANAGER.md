@@ -70,6 +70,22 @@ Aujourd'hui, le Manager calcule son propre classement avec un barème linéaire 
 
 Cas de référence pour vérifier l'écran (un For Time) : A et B en 8:00, C en 9:30, D au CAP à 150 reps, E au CAP à 140 reps, F sans score. La base rend A 100 et B 100 (1ers ex-aequo), C 95 (3e), D 93, E 91, F 0.
 
+### Ligues : barème des divisions et général par saison (#363, #364, #365)
+
+Décisions du 24/09/2026 :
+
+- **Barème des divisions** : c'est désormais la table de la compétition classique (`tournament_cf_points` : 100, 97, 95, 93…), à la place du barème linéaire. La base calcule `tournament_division_members.points`.
+  - Le Manager **n'a pas de barème à lui** pour les divisions : il lit ces points tels quels.
+  - Tout texte qui mentionne « 100, 97, 94… » (aide, info-bulle, export) est à corriger.
+- **Général d'une ligue = la saison en cours** : `supabase.rpc('tournament_ligue_standings', { p_tournament_id })` → `{ athlete_id, points, final_rank }`. C'est la somme des points de WOD de la **seule** saison en cours.
+  - Pour une ligue, **ne pas** utiliser `tournament_classique_standings`, qui additionne toutes les saisons.
+  - La page Classement (`leaderboard/page.tsx`) est concernée si elle affiche un général pour une ligue.
+- **Saisons précédentes**, si le Manager les affiche : `tournament_ligue_standings(tournoi, saison)` donne le général final d'une saison terminée.
+  - Les saisons terminées sont `1 … current_season − 1`.
+  - Proposer un choix de la saison ; l'app met la plus récente d'office.
+  - À n'afficher que s'il existe au moins une saison terminée.
+- **Rangs** : afficher le rang de la base (`final_rank`), ex-aequo compris, comme partout.
+
 ## Priorité 3 — nouvelles possibilités du tableau
 
 ### Forfait (#355)
@@ -136,3 +152,4 @@ Cas de référence pour vérifier l'écran (un For Time) : A et B en 8:00, C en 
 | `finalize_tournament_elo(tournoi)` | clôture du tournoi | le gérant |
 | `tournament_classique_standings(tournoi)` | classement général de la compétition classique (points, rang final) | lecture |
 | `tournament_classique_wod_ranks(tournoi)` | rang et points de chaque athlète sur chaque WOD | lecture |
+| `tournament_ligue_standings(tournoi, saison)` | général d'une ligue pour une saison (en cours par défaut) | lecture |
