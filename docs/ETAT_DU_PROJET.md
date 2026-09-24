@@ -212,6 +212,9 @@ Supabase/Resend.
   perdant ou remettre le match à jouer défait exactement l'effet enregistré avant d'appliquer le nouveau.
 - PR 2, fin de saison idempotente (migration `20270107`, **appliquée en prod le 24/09/2026 à 12:20 UTC**) : un second appel à
   `end_season_and_advance` ne saute plus de saison ; saison attendue facultative (`p_saison_attendue`).
+- PR 3, divisions figées au moment du WOD (migration `20270108`, **appliquée en prod le 24/09/2026 à 12:20 UTC**) : la division est
+  enregistrée avec le score (`tournament_scores.division_id`, posée par le serveur, réservée au staff) ;
+  les points se classent dans cette division, sur la saison en cours seulement.
 
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
