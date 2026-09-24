@@ -756,7 +756,9 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   },
   mTextarea:   { minHeight: 80, textAlignVertical: 'top' },
   mRow:        { flexDirection: 'row', gap: 10 },
-  chipRow:     { flexGrow: 0, marginBottom: 4 },
+  // flexShrink: 0 — le style de base d'un ScrollView porte flexShrink: 1 : sans lui,
+  // une colonne qui déborde écraserait la bande et rognerait les pastilles.
+  chipRow:     { flexGrow: 0, flexShrink: 0, marginBottom: 4 },
   catChip:     { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 999, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border },
   catChipText: { fontSize: 11, fontWeight: '700', color: theme.textSecondary },
   moveRow:     { flexDirection: 'row', alignItems: 'center', gap: 8 },
