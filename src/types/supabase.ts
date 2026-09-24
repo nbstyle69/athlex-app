@@ -8425,6 +8425,14 @@ export type Database = {
           points: number
         }[]
       }
+      tournament_ligue_standings: {
+        Args: { p_tournament_id: string; p_season?: number }
+        Returns: {
+          athlete_id: string
+          points: number
+          final_rank: number
+        }[]
+      }
       tournament_wod_accepts_scores: {
         Args: { p_tournament_id: string; p_wod_id: string }
         Returns: boolean
