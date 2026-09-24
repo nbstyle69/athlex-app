@@ -222,6 +222,11 @@ Supabase/Resend.
   éliminé qu'à sa deuxième défaite, personne n'est omis entre les deux tableaux, exemption si
   l'effectif est impair ; les deux tableaux avancent au même numéro de tour (le tableau des perdants
   commence au tour 2). Prouvée de 3 à 9 athlètes.
+- PR 6, grande finale avec reset (migration `20270111`, **non appliquée**) : le serveur crée la
+  grande finale quand les deux tableaux sont joués, puis le match décisif si le vainqueur du tableau
+  des perdants la gagne ; le classement suit la dernière finale, et la clôture refuse tant que le
+  match décisif est dû. Une finale créée à la main par le Manager est tolérée. L'app affiche les deux
+  matchs (« Grande finale — match décisif », FR/EN).
 
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
