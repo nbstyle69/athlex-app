@@ -1,7 +1,14 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Supprimer un tournoi retire l'ELO qu'il a apporté — tournois, PR 4
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 24/09/2026 à 12:21:02 UTC, avec PGCLIENTENCODING=UTF8 ; 4e des
+-- dix migrations du chantier, appliquées dans l'ordre (dump des schémas public et internal
+-- avec droits db-dumps/2026-09-24/athlex-prod-public-internal-20260924T122049Z.dump, sha256 ec899f565f525cc46be01204d29ba2f811031984eb64968535a231676205609f vérifié
+-- après aller-retour ; précontrôles : objets du chantier identiques à ceux de master rejoué,
+-- aucun tournoi swiss ni league_div ; vérifications : md5 identiques avant et après des
+-- tables du chantier, des profils, des policies, des droits des tables et des autres
+-- fonctions, objets identiques à la référence droits compris, aucun double encodage ;
+-- audit grants-prod.yml relancé à 12:24 UTC : 29/29).
 --
 -- Supprimer un tournoi supprimait en cascade ses matchs, WOD et scores, mais
 -- laissait sur les profils l'ELO et les compteurs que le tournoi avait apportés.
