@@ -246,8 +246,10 @@ export default function LeaderboardScreen() {
 
       {mainTab === 0 && (
         <View style={{ flex: 1 }}>
+          {/* flexShrink: 0 — le style de base d'un ScrollView porte flexShrink: 1 :
+              sans lui, la colonne écraserait la bande et rognerait les pastilles. */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false}
-            style={{ flexGrow: 0 }}
+            style={{ flexGrow: 0, flexShrink: 0 }}
             contentContainerStyle={S.levelFilters}>
             {LEVELS.map((l) => {
               const isAll = l === 'all';
