@@ -246,6 +246,9 @@ Supabase/Resend.
   la référence est le barème de l'app (table CF Games 100, 97, 95, 93, 91…) ; sur un WOD, le tie-break
   départage d'abord, puis rang partagé et mêmes points. La base seule le calcule
   (`tournament_classique_wod_ranks`, `tournament_classique_standings`), la clôture ELO `simple` le suit.
+- Points de division (migration `20270117`, **non appliquée**) : même règle d'égalité (tie-break, puis
+  rang partagé et mêmes points) ; barème des divisions inchangé (100, 97, 94…) ; score lu comme partout
+  (« 8:00 » vaut 480 s), score illisible ignoré.
 
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
