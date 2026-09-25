@@ -2,7 +2,18 @@
 -- Tournois : démarrage à la date de début ; option « inscriptions ouvertes
 -- pendant le tournoi » — tournois, PR 10
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 25/09/2026 à 17:55 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-25/athlex-prod-public-internal-20260925T175423Z.dump,
+-- sha256 9d66b4b3824f7dcd7a973fe346e6f69e5d6a3792292f6acf0e4fceabc0062eee vérifié
+-- après aller-retour, 132 TABLE DATA, 422 ACL, 343 POLICY ; précontrôles : les
+-- six fonctions concernées identiques au dépôt (aucun écart de fin de ligne),
+-- déclencheurs et cron inchangés, 8 tournois dont 2 « open » (1 à date passée) ;
+-- vérifications : md5 de tournaments (hors colonne ajoutée), des participants,
+-- des divisions et des WOD identiques avant/après, définitions, droits et
+-- déclencheur identiques au fichier ; audit des droits en prod 29/29 ; le
+-- tournoi « open » à date passée a démarré au passage du cron de 18:00 UTC ;
+-- tests réels en transaction annulée.)
 --
 -- Décisions du 25/09/2026.
 --

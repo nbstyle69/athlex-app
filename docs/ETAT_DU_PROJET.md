@@ -266,7 +266,8 @@ Supabase/Resend.
   `is_box_admin`) ; un match terminé ne se supprime plus, il se corrige (remise à jouer, choix du
   vainqueur, forfait : ELO recalculé, inchangé). Les déclencheurs de la PR 4 qui retiraient l'ELO à la
   suppression sont retirés. Masquer les tournois archivés : lots app et Manager.
-- PR 10, démarrage à la date et inscriptions pendant le tournoi (migration `20270125`, **non appliquée**) :
+- PR 10, démarrage à la date et inscriptions pendant le tournoi (migration `20270125`, **appliquée en prod le
+  25/09/2026 à 17:55 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T175423Z.dump`) :
   un tournoi « open » démarre à sa date de début à 00:00 heure de Paris, ou au premier WOD ouvert s'il
   vient avant (cron `tournament_activation_sweep`), jamais s'il est archivé. Option
   `registrations_open_during_tournament` (fausse par défaut) : classique, inscription permise (WOD
