@@ -40,6 +40,10 @@
 // devraient refaire leur propre fan-out Expo — c'est-à-dire re-créer un chemin
 // d'envoi qui ne consulte aucune préférence.
 //
+// TYPES RÉSERVÉS AU SERVEUR (2026-09-26) — `membership_stopped` (arrêt d'un
+// abonnement par le gérant) n'est accepté que par le chemin serveur ; envoyé
+// par un utilisateur connecté, l'appel est refusé en 403 `SERVER_ONLY_TYPE`.
+//
 // LANGUE (2026-09-26) — chaque jeton porte la langue du téléphone
 // (push_tokens.language, fr ou en). Un destinataire peut fournir `en` en plus
 // de `title` / `body` (alors la version française) : chaque jeton reçoit sa
@@ -56,7 +60,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { cleSecrete } from '../_shared/cle-secrete.ts';
-import { buildMessages, resolvePrefKey, type Recipient } from './regles.ts';
+import { buildMessages, resolvePrefKey, serverOnlyType, type Recipient } from './regles.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -247,6 +251,12 @@ serve(async (req: Request) => {
     const prefKey = resolvePrefKey(body?.category, body?.pref_key, types);
     if (!prefKey) {
       return json({ error: 'Unknown or missing notification category', sent: 0 }, 400);
+    }
+
+    // ── TYPES RÉSERVÉS AU SERVEUR : jamais depuis un utilisateur connecté ────
+    const reserve = isMachine ? null : serverOnlyType(body?.category, body?.pref_key, types);
+    if (reserve) {
+      return json({ error: 'SERVER_ONLY_TYPE', type: reserve, sent: 0 }, 403);
     }
 
     // ── AUTORISATION : ne garder que les destinataires réellement liés à l'appelant.

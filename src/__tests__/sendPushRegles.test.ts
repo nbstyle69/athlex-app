@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
-  buildMessages, resolvePrefKey, type Recipient,
+  buildMessages, resolvePrefKey, serverOnlyType, type Recipient,
 } from '../../supabase/functions/send-push/regles';
 
 const U1 = '00000000-0000-4000-8000-000000000001';
@@ -53,6 +53,30 @@ describe('send-push : le handler passe par ces règles', () => {
     expect(src).toContain('const messages = buildMessages(tokens, byUser);');
     expect(src).toContain('const prefKey = resolvePrefKey(body?.category, body?.pref_key, types);');
     expect(src).not.toMatch(/PREF_BY_TYPE\s*[:=]/);
+  });
+
+  it('refuse un type réservé au serveur à un utilisateur connecté, en 403 SERVER_ONLY_TYPE', () => {
+    expect(src).toContain('const reserve = isMachine ? null : serverOnlyType(body?.category, body?.pref_key, types);');
+    expect(src).toContain("return json({ error: 'SERVER_ONLY_TYPE', type: reserve, sent: 0 }, 403);");
+    // Le refus passe avant l'autorisation par relation et l'envoi.
+    expect(src.indexOf("'SERVER_ONLY_TYPE'")).toBeLessThan(src.indexOf('await authorizeRecipients('));
+  });
+});
+
+describe('send-push : types réservés au serveur', () => {
+  it('membership_stopped est réservé, quelle que soit la façon de le demander', () => {
+    expect(serverOnlyType(undefined, undefined, ['membership_stopped'])).toBe('membership_stopped');
+    expect(serverOnlyType(undefined, undefined, ['wod_published', 'membership_stopped'])).toBe('membership_stopped');
+    expect(serverOnlyType('membership_stopped', undefined, [])).toBe('membership_stopped');
+    expect(serverOnlyType(undefined, 'membership_stopped', [])).toBe('membership_stopped');
+  });
+
+  it('les autres types, et la seule clé de préférence des annonces, ne sont pas réservés', () => {
+    for (const t of ['wod_published', 'new_message', 'friend_request', 'tournament_closed', 'box_notification', 'elo_change']) {
+      expect(serverOnlyType(undefined, undefined, [t])).toBeNull();
+    }
+    expect(serverOnlyType('box_announcements', undefined, ['box_notification'])).toBeNull();
+    expect(serverOnlyType(undefined, undefined, [])).toBeNull();
   });
 });
 
