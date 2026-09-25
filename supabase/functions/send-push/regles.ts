@@ -54,6 +54,21 @@ export function resolvePrefKey(
   return keys.size === 1 ? [...keys][0] : null;
 }
 
+// Types qui annoncent un fait que seul le serveur établit : acceptés par le
+// seul chemin serveur (`x-cron-secret`), jamais d'un utilisateur connecté,
+// même gérant ou co-membre (il se ferait passer pour la box).
+export const SERVER_ONLY_TYPES = new Set<string>(['membership_stopped']);
+
+/** Le type réservé au serveur que demande cet appel (par data.type, category ou pref_key), ou null. */
+export function serverOnlyType(
+  category: unknown, legacyPrefKey: unknown, types: string[],
+): string | null {
+  for (const t of [category, legacyPrefKey, ...types]) {
+    if (typeof t === 'string' && SERVER_ONLY_TYPES.has(t)) return t;
+  }
+  return null;
+}
+
 /**
  * `title` / `body` : la version unique, ou la version française quand `en` est
  * fournie. `en` : la version anglaise, envoyée aux seuls jetons enregistrés en

@@ -249,6 +249,14 @@ Supabase/Resend.
   `C:\Users\NBS\athlex-retour-arriere-send-push\avant-375`, à redéployer AVANT de jouer le retour
   arrière de la migration). Côté app (bandeau, état de l'abonnement, langue du jeton) : PR
   séparée ; l'envoi à l'arrêt : lot Manager.
+- S5, `membership_stopped` réservé au serveur (`send-push`, sans migration, **déployée le 25/09/2026 à 22:29
+  UTC** ; retour arrière : sources déployées avant, identiques à master, dans
+  `C:\Users\NBS\athlex-retour-arriere-send-push\avant-377`) : accepté par
+  le seul chemin serveur (`x-cron-secret`) ; demandé par un utilisateur connecté, même gérant ou
+  co-membre, par `data.type`, `category` ou `pref_key`, l'appel est refusé en 403 `SERVER_ONLY_TYPE`.
+  Les autres types ne changent pas ; ceux qui annoncent un fait sensible et restent ouverts aux
+  utilisateurs (`box_notification`, `tournament_closed`, `inter_competition_closed`,
+  `inter_bracket_result`, `elo_change`) sont listés dans la PR, en attente d'une décision.
 
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
 dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
@@ -970,6 +978,7 @@ précise ; le faire avant casse quelque chose. Le détail technique est dans
 | Plafond de plausibilité sur la charge (`user_movement_stats.best_weight`) : aujourd'hui seule une charge négative est refusée | Le jour où `best_weight` alimente un badge ou un classement : tant qu'elle n'est qu'affichée, une charge irréaliste ne débloque rien. |
 | Entretien de `movement_stats_keys` quand un mouvement est ajouté au catalogue depuis le back-office admin : saisie de la correspondance dans l'admin, ou régénération du fichier canonique | Dès que l'audit nocturne de la prod (`audit-grants-prod.mjs`) émet l'avertissement « Correspondance catalogue » : un mouvement sans correspondance ne crédite jamais rien, en silence. Le signal ne fait pas échouer l'audit. |
 | Gamification en événements (event-sourcing) | Quand un badge devra être recalculé après coup, ou quand une contestation exigera de rejouer l'historique. |
+| **Types Supabase de l'app à régénérer en entier** (`npm run gen:types`). `src/types/supabase.ts` a pris du retard sur le schéma : la régénération complète depuis la prod (25/09/2026) change plus de 1 000 lignes et fait apparaître une erreur de type, `src/services/gamification.ts:523` (`number \| null` affecté à `number`). Les PR n'y reportent que les entrées qu'elles touchent (#376). | Un lot dédié, sans autre changement, avant la prochaine PR app qui aurait besoin de plusieurs objets absents des types : régénérer, corriger `gamification.ts:523` et ce que `tsc` signalera d'autre. |
 | Dette de vocabulaire `member` / `athlete` | Quand une table ou une API devra être ouverte à l'extérieur. Les deux mots désignent la même personne dans le code, ce qui se paie à chaque relecture. |
 | Provenance des encaissements au comptoir | Quand un gérant devra justifier un chiffre auprès de son comptable : le journal existe et compte juste, mais il ne dit pas encore qui a saisi la ligne ni sur quelle pièce. |
 | Bouton d'offre payante resté en français dans l'interface anglaise (« S'abonner — 59.00 €/month ») | Le prochain lot web qui touche la page publique de box. Un bouton mi-français mi-anglais sur une page de vente se corrige vite, mais pas en urgence. |
