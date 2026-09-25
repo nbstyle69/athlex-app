@@ -244,7 +244,10 @@ Supabase/Resend.
   d'app d'avant) ; `list_programming_catalog` ne liste plus les offres d'une box archivée ou en
   archivage programmé, sauf celles où la box est déjà abonnée. `send-push` : type `membership_stopped`
   (réglage « annonces de la box ») et version anglaise facultative (`en`) choisie jeton par jeton, le
-  français pour un jeton sans langue. Côté app (bandeau, état de l'abonnement, langue du jeton) : PR
+  français pour un jeton sans langue ; **déployée le 25/09/2026 à 21:14 UTC** (code en prod identique au
+  commit ; retour arrière : les sources déployées avant, identiques à master, hors dépôt dans
+  `C:\Users\NBS\athlex-retour-arriere-send-push\avant-375`, à redéployer AVANT de jouer le retour
+  arrière de la migration). Côté app (bandeau, état de l'abonnement, langue du jeton) : PR
   séparée ; l'envoi à l'arrêt : lot Manager.
 
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
