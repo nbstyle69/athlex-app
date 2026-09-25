@@ -237,6 +237,19 @@ Supabase/Resend.
   `program_members` directement ferait boucler PostgreSQL, ses règles relisant `programs`.
   `read_active_programs` et les règles de `program_members` inchangées.
 
+**Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
+dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
+- PR 1, la base (migration `20270127`, **appliquée en prod le 25/09/2026 à 20:05 UTC**, dump
+  `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T200404Z.dump`) : état « archivage programmé »
+  (`boxes.archive_scheduled_at`, `archive_scheduled_by`) ; règle unique `box_accepts_entries` (fausse si
+  archivée ou programmée), refus en clair `BOX_ARCHIVEE` / `BOX_ARCHIVAGE_PROGRAMME` dans les fonctions
+  d'entrée (rejoindre, invitations, essais, droits en attente, programmes, comptoir) et sur les écritures
+  directes du client (membres, offres, invitations) ; une box programmée sort de l'annuaire (règle
+  restrictive, ses membres et son staff la voient encore) ; archivage automatique quand plus rien ne paie
+  (tâche `box_archive_sweep`, toutes les heures, journal `box_auto_archive_log`) ; annulation
+  (`unschedule_box_archive`) et alerte des 2 jours (`box_archive_overdue`) pour le super-admin. Aligne le
+  dépôt sur `box_subscriptions.billing_source`, présent en prod sans migration.
+
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
 - App, classement de la compétition classique (sans migration, à livrer après la migration `20270116`) :
