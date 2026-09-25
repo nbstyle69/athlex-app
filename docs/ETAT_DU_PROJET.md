@@ -229,6 +229,13 @@ Supabase/Resend.
   `payment_method_type` (card, sepa_debit… ou NULL), pour que la boîte d'arrêt du Manager (PR
   AthleX-Manager #385) affiche « carte » ou « prélèvement SEPA ». Corps repris de la prod ; garde,
   droits et commentaire inchangés.
+- S4, programme désactivé (migration `20270123`, **appliquée en prod le 25/09/2026 à 15:40 UTC**,
+  dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T153958Z.dump`) : l'acheteur actif
+  (`program_members.status = 'active'`) lit encore un programme désactivé, jusqu'à ce que le webhook
+  passe sa ligne à `cancelled` en fin de période. Règle `buyer_read_purchased_programs` sur
+  `programs`, adossée à `program_in_my_active_membership` (SECURITY DEFINER) : une règle qui lirait
+  `program_members` directement ferait boucler PostgreSQL, ses règles relisant `programs`.
+  `read_active_programs` et les règles de `program_members` inchangées.
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
