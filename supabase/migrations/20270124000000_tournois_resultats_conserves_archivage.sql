@@ -1,7 +1,18 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Tournois : un résultat validé ne disparaît jamais ; archivage des tournois
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 25/09/2026 à 17:02 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-25/athlex-prod-public-internal-20260925T170104Z.dump,
+-- sha256 ef27ca9650f006f2140bdf0652e20df67e54033c120dd64167a5a15763b5b33b vérifié
+-- après aller-retour, 132 TABLE DATA, 417 ACL, 343 POLICY ; précontrôles :
+-- fonctions et déclencheurs concernés identiques au dépôt (is_privileged_backend
+-- à la fin de ligne près, CRLF en prod), comptages identiques à l'état des lieux
+-- (8 tournois, 135 matchs, 266 historiques de match, 4 de clôture orphelins),
+-- aucun objet nouveau présent ; vérifications : md5 de tournaments (hors
+-- archived_at), des matchs, des historiques et des ELO des profils identiques
+-- avant/après, définitions, droits et déclencheurs identiques au fichier ;
+-- audit des droits en prod 29/29 ; tests réels en transaction annulée.)
 --
 -- Décision produit du 25/09/2026 : un résultat validé ne disparaît jamais, mais
 -- une erreur de saisie se corrige.

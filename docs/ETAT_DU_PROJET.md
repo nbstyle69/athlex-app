@@ -259,7 +259,8 @@ Supabase/Resend.
   (matchs, WOD de ligue, clôture classique) est retiré exactement, compteurs compris, et ses
   historiques effacés ; supprimer un match seul rend aussi son effet. **Remplacée par la migration
   `20270124`** ci-dessous.
-- Résultats validés conservés et archivage (migration `20270124`, **non appliquée**) : un tournoi qui a
+- Résultats validés conservés et archivage (migration `20270124`, **appliquée en prod le 25/09/2026 à 17:02 UTC**,
+  dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T170104Z.dump`) : un tournoi qui a
   un résultat validé (clôturé, match terminé ou forfait, score validé, saison close, historique ELO) ne
   se supprime plus, on l'archive (`archived_at`, `archive_tournament` / `unarchive_tournament`, droits
   `is_box_admin`) ; un match terminé ne se supprime plus, il se corrige (remise à jouer, choix du

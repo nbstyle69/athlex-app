@@ -17,7 +17,7 @@ Mise à jour du 25/09/2026 : la priorité 0 ci-dessous passe **en premier**, et 
 - Conséquence : enregistrer une modification quelconque d'un tournoi en tableau, en double élimination ou en ligue le **convertit en « simple »**.
 - Correction attendue : à l'édition, garder le format du tournoi tel quel et ne pas l'envoyer (le format ne se change pas après la création). Test : éditer le nom d'un tournoi `bracket` laisse `format = 'bracket'`.
 
-### Archiver au lieu de supprimer (#… « Résultats validés conservés », migration `20270124`)
+### Archiver au lieu de supprimer (#371, migration `20270124`, appliquée en prod le 25/09/2026)
 
 Un tournoi qui a un résultat validé ne se supprime plus : la base refuse (`TOURNOI_AVEC_RESULTATS`, code `23001`) et invite à archiver. Résultat validé : tournoi clôturé (`status = 'completed'`), match de tableau terminé ou forfait, score validé, saison close, ou historique ELO (match, WOD de ligue, clôture).
 
