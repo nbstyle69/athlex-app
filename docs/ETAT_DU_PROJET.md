@@ -262,7 +262,8 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   (tâche `box_archive_sweep`, toutes les heures, journal `box_auto_archive_log`) ; annulation
   (`unschedule_box_archive`) et alerte des 2 jours (`box_archive_overdue`) pour le super-admin. Aligne le
   dépôt sur `box_subscriptions.billing_source`, présent en prod sans migration.
-- `boxes.archive_notified_at` (migration `20270129`, **non appliquée en prod**) : date d'envoi de l'e-mail
+- `boxes.archive_notified_at` (migration `20270129`, **appliquée en prod le 25/09/2026 à 22:36 UTC**, dump
+  `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T223607Z.dump` ; audit 29/29) : date d'envoi de l'e-mail
   d'archivage, que le Manager renseignera à l'envoi (sa PR 3, clé serveur, **après** la programmation).
   Un déclencheur la remet à vide dès que la box n'est plus ni archivée ni en archivage programmé (quel
   que soit le chemin : `unschedule_box_archive`, réactivation par le Manager, écriture directe) et

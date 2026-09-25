@@ -1,7 +1,21 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- boxes.archive_notified_at : l'e-mail d'archivage est parti
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 25/09/2026 à 22:36 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-25/athlex-prod-public-internal-20260925T223607Z.dump,
+-- sha256 908ed49a29009974418e18cb05d6d02bfb5a673ca136fb20d06040e935e3d2c3 vérifié
+-- après aller-retour, 133 TABLE DATA, 433 ACL, 345 POLICY ; précontrôles : ni
+-- colonne, ni fonction, ni déclencheur de ce nom, 3 déclencheurs sur boxes,
+-- unschedule_box_archive et internal.archiver_boxes_echues identiques au dépôt,
+-- prevent_client_box_insert identique aux fins de ligne près (8 retours chariot
+-- dans le corps en prod), règles de boxes identiques à search_path égal, 3 boxes
+-- dont aucune archivée ni programmée ; vérifications : fonction identique au
+-- rejeu octet pour octet (md5 5b8de3a3030511521b8816fe0793e24b, EXECUTE pour
+-- son propriétaire seulement), déclencheur et colonne conformes, anon ne la
+-- lit pas, boxes (hors colonne ajoutée), ses règles et ses droits identiques
+-- avant/après ; audit des droits en prod 29/29 ; tests réels en transaction
+-- annulée, sans trace.)
 --
 -- Pourquoi : le suivi Manager (AthleX-Manager #391) déduit « e-mail
 -- d'archivage envoyé une seule fois » de l'état des abonnements ; dans un cas
