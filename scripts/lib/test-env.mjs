@@ -13,6 +13,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { readFileSync } from 'fs';
+import { execFileSync } from 'child_process';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { PROD_PROJECT_REF } from './prod-ref.mjs';
@@ -155,6 +156,12 @@ export async function dropBoxAndOwner(db, boxId, ownerId) {
  * qu'une relance sur la même pile ne bute pas sur ses restes. Clé serveur
  * requise ; ce geste n'a pas sa place hors de la pile jetable : en prod, un
  * tournoi avec résultats s'archive.
+ *
+ * Rouvrir un tournoi clôturé est refusé par la base à tout chemin d'écriture
+ * (migration 20270126, `completed` ne recule jamais) : c'est voulu. La purge le
+ * fait donc par l'accès administrateur de la pile jetable (`TEST_ADMIN_DB_URL`,
+ * qui n'existe que pour elle), en suspendant la garde le temps de sa seule
+ * transaction. Sans cet accès, les tournois clôturés restent, et la box aussi.
  */
 async function defaireResultatsTournoisDeTest(db, boxId) {
   const { data: tournois, error } = await db.from('tournaments').select('id').eq('box_id', boxId);
@@ -169,12 +176,25 @@ async function defaireResultatsTournoisDeTest(db, boxId) {
     db.from('tournament_wod_elo_history').delete().in('tournament_id', ids),
     db.from('tournament_elo_history').delete().in('tournament_id', ids),
     db.from('tournament_season_history').delete().in('tournament_id', ids),
-    db.from('tournaments').update({ status: 'active' }).in('id', ids).eq('status', 'completed'),
   ];
   for (const etape of etapes) {
     const { error: e } = await etape;
     if (e) throw new Error(`résultats de test de la box ${boxId} : ${e.message}`);
   }
+  rouvrirTournoisClotures(boxId);
+}
+
+function rouvrirTournoisClotures(boxId) {
+  const adminUrl = process.env.TEST_ADMIN_DB_URL;
+  if (!adminUrl) return;
+  if (!/^[0-9a-f-]{36}$/.test(boxId)) throw new Error(`box de test invalide : ${boxId}`);
+  execFileSync('psql', [adminUrl, '-X', '-q', '-v', 'ON_ERROR_STOP=1', '-c', [
+    'BEGIN;',
+    'ALTER TABLE public.tournaments DISABLE TRIGGER trg_tournaments_statut_format;',
+    `UPDATE public.tournaments SET status = 'active' WHERE box_id = '${boxId}' AND status = 'completed';`,
+    'ALTER TABLE public.tournaments ENABLE TRIGGER trg_tournaments_statut_format;',
+    'COMMIT;',
+  ].join(' ')], { stdio: ['ignore', 'ignore', 'pipe'] });
 }
 
 // ── Purge fail-safe ──────────────────────────────────────────────────────────
