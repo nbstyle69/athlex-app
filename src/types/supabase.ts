@@ -7959,6 +7959,7 @@ export type Database = {
           member_id: string
           pause_resumes_at: string
           pause_started_at: string
+          payment_method_type: string
           plan_id: string
           platform_fee_cents: number
           role: string
