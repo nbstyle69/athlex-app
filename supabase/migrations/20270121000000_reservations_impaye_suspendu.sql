@@ -1,7 +1,19 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Impayé : les réservations d'un membre suspendu sont bloquées
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 25/09/2026 à 14:29 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-25/athlex-prod-public-internal-20260925T142741Z.dump,
+-- sha256 0fdf2687cd51fb4419f7fd9e4c2b333b27b65643af5e48e18cb05c4e5faf2f5e vérifié
+-- après aller-retour, 132 TABLE DATA, 414 ACL, 342 POLICY ; précontrôles : les
+-- deux fonctions internal et le déclencheur absents, consume_credit_on_reservation
+-- au md5 18d905c3d3b6980b011fd8d0b2d9800d (définition du lot essai, celle reprise
+-- ici), get_box_dunning au md5 87fada6405beafb43a611d782ae8342c, dunning_grace_days
+-- integer NOT NULL défaut 7, 0 membre past_due ; vérifications : md5 de
+-- class_reservations, box_members et boxes identiques avant/après, déclencheur en
+-- tête d'ordre alphabétique, fonctions internal fermées aux rôles clients,
+-- get_box_dunning inchangée, nouvelle définition identique au fichier ; audit des
+-- droits en prod 29/29 ; tests fonctionnels rejoués en transaction annulée.)
 --
 -- Décision produit du 25/09/2026. Un membre est « suspendu » quand son
 -- abonnement est en impayé (`subscription_status = 'past_due'`) et que

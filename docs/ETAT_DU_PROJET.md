@@ -206,7 +206,8 @@ Supabase/Resend.
 ## En cours
 
 **Impayés : blocage des réservations après le délai avant suspension** (décision produit du 25/09).
-- Migration `20270121` (**non appliquée**) : un membre `past_due` au-delà du délai de sa box
+- Migration `20270121` (**appliquée en prod le 25/09/2026**, dump
+  `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T142741Z.dump`) : un membre `past_due` au-delà du délai de sa box
   (`boxes.dunning_grace_days`, 0 à 90 jours, réglé dans le Manager, défaut 7 — la formule est celle du
   drapeau « suspended » de `get_box_dunning`) ne peut plus créer de réservation ni s'inscrire en liste
   d'attente (même table, statut `waiting`) ; refus `MEMBERSHIP_PAST_DUE`, que l'app affiche déjà. Le
