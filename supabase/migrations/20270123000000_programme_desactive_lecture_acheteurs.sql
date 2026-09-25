@@ -1,7 +1,18 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Programme désactivé : ses acheteurs actifs le lisent encore
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 25/09/2026 à 15:40 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-25/athlex-prod-public-internal-20260925T153958Z.dump,
+-- sha256 652b4761f9b4bfea36e4c05c14f03604641e8bc2a08c8bd9005a4eaa4633080e vérifié
+-- après aller-retour, 132 TABLE DATA, 416 ACL, 342 POLICY ; précontrôles : les
+-- 6 règles de programs et program_members identiques au relevé (md5
+-- 8502c61993eca450456d08291003d73b, search_path public), fonction et règle
+-- absentes ; vérifications : md5 de programs et program_members identiques
+-- avant/après, fonction (md5 e8715253f8bfb3ac9fa0a0d647c1edbc) et règle
+-- identiques au fichier, EXECUTE pour authenticated et service_role seulement,
+-- règles existantes inchangées, le gérant lit ses 4 programmes sans erreur ;
+-- audit des droits en prod 29/29 ; tests réels en transaction annulée.)
 --
 -- Décision produit : les acheteurs d'un programme désactivé gardent l'accès
 -- jusqu'à la fin de leur période payée (S4, PR AthleX-Manager #385, « Arrêter
