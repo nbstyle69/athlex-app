@@ -37,6 +37,7 @@ import TournamentDivisionsView from './TournamentDivisionsView';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import i18n from '../../i18n';
+import { tournamentRefusal } from '../../utils/refusals';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'Tournament'>;
 type Route = RouteProp<CompetitionStackParamList, 'Tournament'>;
@@ -86,6 +87,8 @@ export default function TournamentScreen() {
   const [refreshing,   setRefreshing]   = useState(false);
   const [registering,       setRegistering]       = useState(false);
   const [isRegistered,      setIsRegistered]      = useState(false);
+  // La base décide de l'inscription (statut, option « pendant le tournoi », box, catégorie, places…).
+  const [canJoin,           setCanJoin]           = useState(false);
   const [wodValidatedScores, setWodValidatedScores] = useState<any[]>([]);
   // Classement calculé par la base (barème, tie-break, rang partagé) : l'app ne classe plus.
   const [classement, setClassement] = useState<{ lignes: LigneClassement[]; rangs: RangWod[] }>({ lignes: [], rangs: [] });
@@ -98,7 +101,7 @@ export default function TournamentScreen() {
 
   const load = useCallback(async () => {
     const isAdminUser = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'box_owner';
-    const [{ data: tourData }, { data: tw }, { data: tp }, { data: ms }, { data: as_ }, { data: vs }, { data: myReg }] = await Promise.all([
+    const [{ data: tourData }, { data: tw }, { data: tp }, { data: ms }, { data: as_ }, { data: vs }, { data: myReg }, { data: joinable }] = await Promise.all([
       supabase.from('tournaments').select('*').eq('id', tournamentId).single(),
       supabase.from('tournament_wods').select('*').eq('tournament_id', tournamentId).order('order_index'),
       supabase.rpc('get_tournament_participants', { p_tournament_id: tournamentId }),
@@ -114,7 +117,9 @@ export default function TournamentScreen() {
         .eq('tournament_id', tournamentId)
         .eq('athlete_id', user.id)
         .maybeSingle() : { data: null },
+      user ? supabase.rpc('can_join_tournament', { p_tournament_id: tournamentId }) : { data: false },
     ]);
+    setCanJoin(joinable === true);
     setTournament(tourData);
     // For league_div tournaments, only show WODs from the current season.
     const allWods = (tw ?? []) as any[];
@@ -209,7 +214,7 @@ export default function TournamentScreen() {
       const { error } = await supabase.from('tournament_participants')
         .insert({ tournament_id: tournamentId, athlete_id: user.id });
       if (error && error.code !== '23505') {
-        Alert.alert(t('tournament.registerError'), error.message);
+        Alert.alert(t('tournament.registerError'), tournamentRefusal(error.message, tournament?.status));
         return;
       }
       setIsRegistered(true);
@@ -389,7 +394,10 @@ export default function TournamentScreen() {
 
   const levelColor  = LevelColors[tournament.level as AthleteLevel] ?? theme.accent;
   const isFull      = participants.length >= tournament.max_participants;
-  const canRegister = tournament.status === 'open' && !isRegistered && !isFull;
+  const isArchived  = !!tournament.archived_at;
+  // Pendant le tournoi, si l'option le permet : la base l'a dit (can_join_tournament).
+  const openDuring  = tournament.status === 'active' && canJoin;
+  const canRegister = canJoin && !isRegistered && !isArchived;
 
   return (
     <View style={S.container}>
@@ -439,7 +447,12 @@ export default function TournamentScreen() {
 
           {/* ── Personal registration status (persistent, all tabs) ── */}
           {user && (
-            isRegistered ? (
+            isArchived ? (
+              <View style={[S.myStatusPill, { backgroundColor: `${darkTheme.textMuted}22`, borderColor: `${darkTheme.textMuted}55` }]}>
+                <Lock color={darkTheme.textMuted} size={15} />
+                <Text style={[S.myStatusText, { color: darkTheme.textMuted }]}>{t('tournament.badgeArchived')}</Text>
+              </View>
+            ) : isRegistered ? (
               <View style={[S.myStatusPill, { backgroundColor: `${darkTheme.success}22`, borderColor: `${darkTheme.success}55` }]}>
                 <CheckCircle color={darkTheme.success} size={15} />
                 <Text style={[S.myStatusText, { color: darkTheme.success }]}>
@@ -455,6 +468,11 @@ export default function TournamentScreen() {
               <View style={[S.myStatusPill, { backgroundColor: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.2)' }]}>
                 <Zap color="rgba(255,255,255,0.85)" size={15} />
                 <Text style={[S.myStatusText, { color: 'rgba(255,255,255,0.85)' }]}>{t('tournament.notYetRegistered')}</Text>
+              </View>
+            ) : openDuring ? (
+              <View style={[S.myStatusPill, { backgroundColor: `${darkTheme.accent}22`, borderColor: `${darkTheme.accent}55` }]}>
+                <Zap color={darkTheme.accent} size={15} />
+                <Text style={[S.myStatusText, { color: darkTheme.accent }]}>{t('tournament.badgeOpenDuring')}</Text>
               </View>
             ) : null
           )}
@@ -513,8 +531,10 @@ export default function TournamentScreen() {
               ];
               // Current step: 0 = à inscrire, 1 = faire les WODs, 2 = score soumis (suivre le classement)
               const currentIndex = !isRegistered ? 0 : (myScores.length === 0 ? 1 : 2);
-              const hint = !isRegistered
-                ? (tournament.status === 'open' ? t('tournament.hintRegister') : t('tournament.hintClosed'))
+              const hint = isArchived ? t('tournament.hintArchived')
+                : !isRegistered
+                ? (tournament.status === 'open' ? t('tournament.hintRegister')
+                  : openDuring ? t('tournament.hintOpenDuring') : t('tournament.hintClosed'))
                 : myScores.length === 0
                   ? (isBracket ? t('tournament.hintBracket')
                     : t('tournament.hintWods'))

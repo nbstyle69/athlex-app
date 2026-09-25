@@ -87,6 +87,7 @@ export default function CompetitionScreen() {
       .select('id, name, level, status, max_participants, prize, start_date')
       .eq('box_id', currentBox.id)
       .in('status', ['open', 'active'])
+      .is('archived_at', null)
       .order('created_at', { ascending: false });
     const list = (data ?? []) as Tournament[];
     setTournaments(list);

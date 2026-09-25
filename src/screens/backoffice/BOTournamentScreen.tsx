@@ -81,6 +81,7 @@ export default function BOTournamentScreen() {
     supabase.from('tournaments')
       .select('id, name, status, end_date')
       .eq('box_id', currentBox.id)
+      .is('archived_at', null)
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         setTournaments(data ?? []);

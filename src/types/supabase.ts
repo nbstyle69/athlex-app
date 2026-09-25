@@ -5439,6 +5439,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          language: string | null
           platform: string
           token: string
           updated_at: string | null
@@ -5447,6 +5448,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          language?: string | null
           platform?: string
           token: string
           updated_at?: string | null
@@ -5455,6 +5457,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          language?: string | null
           platform?: string
           token?: string
           updated_at?: string | null
@@ -6831,6 +6834,7 @@ export type Database = {
       }
       tournaments: {
         Row: {
+          archived_at: string | null
           banner_url: string | null
           box_id: string | null
           created_at: string | null
@@ -6846,12 +6850,15 @@ export type Database = {
           max_participants: number
           name: string
           prize: string | null
+          registrations_open_during_tournament: boolean
           require_video_proof: boolean
           rules: string | null
           start_date: string | null
           status: string
+          third_place_match: boolean
         }
         Insert: {
+          archived_at?: string | null
           banner_url?: string | null
           box_id?: string | null
           created_at?: string | null
@@ -6867,12 +6874,15 @@ export type Database = {
           max_participants?: number
           name: string
           prize?: string | null
+          registrations_open_during_tournament?: boolean
           require_video_proof?: boolean
           rules?: string | null
           start_date?: string | null
           status?: string
+          third_place_match?: boolean
         }
         Update: {
+          archived_at?: string | null
           banner_url?: string | null
           box_id?: string | null
           created_at?: string | null
@@ -6888,10 +6898,12 @@ export type Database = {
           max_participants?: number
           name?: string
           prize?: string | null
+          registrations_open_during_tournament?: boolean
           require_video_proof?: boolean
           rules?: string | null
           start_date?: string | null
           status?: string
+          third_place_match?: boolean
         }
         Relationships: [
           {
@@ -8094,15 +8106,21 @@ export type Database = {
           amount_cents: number
           box_id: string
           commitment_end_date: string
+          dunning_grace_days: number
+          has_stripe_subscription: boolean
           id: string
           joined_at: string
+          past_due_since: string
           pause_resumes_at: string
           plan_id: string
           status: string
+          stop_mode: string
+          stopped_at: string
           subscription_cancel_at_period_end: boolean
           subscription_current_period_end: string
           subscription_paused: boolean
           subscription_status: string
+          suspended: boolean
         }[]
       }
       get_my_profile: {
@@ -8280,6 +8298,30 @@ export type Database = {
           scheduled_date: string
           title: string
           wod_id: string
+        }[]
+      }
+      list_programming_catalog: {
+        Args: { p_box_id: string }
+        Returns: {
+          billing: string
+          currency: string
+          days_per_week: number
+          description: string
+          discipline: string
+          equipment: string
+          goal: string
+          level: string
+          preview_week1: Json
+          price_cents: number
+          programming_id: string
+          publisher_box_id: string
+          publisher_box_name: string
+          subscribed: boolean
+          target_audience: string
+          title: string
+          weeks_count: number
+          wods_per_week: number[]
+          wods_total: number
         }[]
       }
       list_public_trial_slots: {

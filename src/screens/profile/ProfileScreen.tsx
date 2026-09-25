@@ -34,6 +34,7 @@ import StrengthHistory from '../../components/profile/StrengthHistory';
 import { fetchMyStrengthSets, groupStrengthSessions } from '../../services/strengthSets';
 import { inkOn } from '../../theme/ink';
 import { programWeekAt, toLocalIso } from '../../utils/programSchedule';
+import { getMyMemberships, membershipState, membershipStateText, MembershipState } from '../../services/membership';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Profile'>;
 
@@ -204,6 +205,28 @@ export default function ProfileScreen() {
   const [confirmPwd, setConfirmPwd] = useState('');
   const [changingPwd, setChangingPwd] = useState(false);
   const [pickingPhoto, setPickingPhoto] = useState(false);
+
+  // État de mes abonnements (fin programmée, arrêt, impayé, suspension)
+  const [membershipStates, setMembershipStates] = useState<{ boxId: string; name: string | null; state: MembershipState }[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const rows = await getMyMemberships();
+      const withState = rows.flatMap(r => {
+        const state = membershipState(r);
+        return state ? [{ boxId: r.box_id, state }] : [];
+      });
+      const names = new Map(myBoxes.map(e => [e.box.id, e.box.name]));
+      const missing = withState.map(m => m.boxId).filter(id => !names.has(id));
+      if (missing.length) {
+        const { data } = await supabase.from('boxes').select('id, name').in('id', missing);
+        (data ?? []).forEach(b => names.set(b.id, b.name));
+      }
+      if (!cancelled) setMembershipStates(withState.map(m => ({ ...m, name: names.get(m.boxId) ?? null })));
+    })().catch(e => captureError(e, { screen: 'Profile', action: 'membershipStates' }));
+    return () => { cancelled = true; };
+  }, [user, myBoxes]);
 
   // Load my programs
   useEffect(() => {
@@ -1049,6 +1072,14 @@ export default function ProfileScreen() {
                 <Hash color={theme.text} size={16} />
                 <Text style={S.joinBtnText}>{t('profile.account.joinBox')}</Text>
               </TouchableOpacity>
+              {membershipStates.map(m => (
+                <View key={m.boxId} style={S.subStateRow}>
+                  {m.name ? <Text style={S.subStateBox}>{m.name}</Text> : null}
+                  <Text style={[S.subStateText, (m.state.key === 'suspended' || m.state.key === 'pastDue') && { color: theme.error }]}>
+                    {membershipStateText(m.state)}
+                  </Text>
+                </View>
+              ))}
               {myBoxes.some(e => e.role === 'member') && (
                 <>
                   <TouchableOpacity
@@ -1772,6 +1803,9 @@ function createStyles(t: AppTheme) {
   },
   manageSubBtnText: { color: t.accent, fontSize: 14, fontWeight: '700' },
   manageSubHint: { fontSize: 11, color: t.textMuted, marginTop: 6, textAlign: 'center' },
+  subStateRow: { marginTop: 10, gap: 2 },
+  subStateBox: { fontSize: 12, fontWeight: '700', color: t.text },
+  subStateText: { fontSize: 13, color: t.textMuted, lineHeight: 18 },
   leaveBtn: {
     borderWidth: 1.5, borderColor: t.border, borderRadius: 14,
     padding: 12, alignItems: 'center',

@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { WEB_URL } from '../../lib/urls';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { boxClosedRefusal } from '../../utils/refusals';
 
 const DISCIPLINES = ['crossfit', 'hyrox', 'hybrid', 'haltero', 'endurance'];
 export const DISCIPLINE_LABEL: Record<string, string> = {
@@ -67,30 +68,25 @@ export default function BOProgrammingScreen({ navigation }: any) {
   const load = useCallback(async () => {
     if (!currentBox) { setLoading(false); return; }
     try {
-      const { data: cat } = await supabase
-        .from('box_programming')
-        .select('id, publisher_box_id, title, description, discipline, level, days_per_week, weeks_count, billing, price_cents, currency, boxes:publisher_box_id(name)')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false });
-      const items: CatalogueItem[] = (cat ?? [])
-        .filter((p) => p.publisher_box_id !== currentBox.id)
-        .map((p) => {
-          const box = Array.isArray(p.boxes) ? p.boxes[0] : p.boxes;
-          return {
-            id: p.id,
-            publisher_box_id: p.publisher_box_id,
-            title: p.title,
-            description: p.description,
-            discipline: p.discipline,
-            level: p.level,
-            days_per_week: p.days_per_week,
-            weeks_count: p.weeks_count,
-            billing: p.billing,
-            price_cents: p.price_cents,
-            currency: p.currency,
-            publisher_name: box?.name ?? t('bo.programming.aBox'),
-          };
-        });
+      // Le catalogue de la base : offres publiées des autres box, sans celles
+      // d'une box archivée ou en archivage programmé (sauf abonnement en cours).
+      const { data: cat, error: catError } = await supabase
+        .rpc('list_programming_catalog', { p_box_id: currentBox.id });
+      if (catError) throw catError;
+      const items: CatalogueItem[] = (cat ?? []).map((p) => ({
+        id: p.programming_id,
+        publisher_box_id: p.publisher_box_id,
+        title: p.title,
+        description: p.description,
+        discipline: p.discipline,
+        level: p.level,
+        days_per_week: p.days_per_week,
+        weeks_count: p.weeks_count,
+        billing: p.billing,
+        price_cents: p.price_cents,
+        currency: p.currency,
+        publisher_name: p.publisher_box_name ?? t('bo.programming.aBox'),
+      }));
       setCatalogue(items);
 
       const { data: subs } = await supabase
@@ -120,7 +116,7 @@ export default function BOProgrammingScreen({ navigation }: any) {
       setSubscribedIds((prev) => new Set(prev).add(item.id));
       Alert.alert(t('bo.programming.subscribedOk'), t('bo.programming.revealNote'));
     } catch (e: any) {
-      Alert.alert(t('common.error'), e.message ?? String(e));
+      Alert.alert(t('common.error'), boxClosedRefusal(e?.message, 'offer') ?? e?.message ?? String(e));
     }
     setSubscribing(null);
   }

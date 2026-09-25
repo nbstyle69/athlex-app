@@ -1,9 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, RefreshControl, Alert, Modal, FlatList,
+  ActivityIndicator, RefreshControl, Alert, Modal, FlatList, Linking,
 } from 'react-native';
-import { CalendarClock, ChevronLeft, ChevronRight, Users, Check, Clock, Timer, X, CalendarCheck } from 'lucide-react-native';
+import { CalendarClock, ChevronLeft, ChevronRight, Users, Check, Clock, Timer, X, CalendarCheck, AlertTriangle, ExternalLink } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
@@ -15,6 +15,8 @@ import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import { scheduleClassReminder, cancelClassReminder } from '../../services/notifications';
+import { getMyMemberships } from '../../services/membership';
+import { WEB_URL } from '../../lib/urls';
 
 interface ClassSchedule {
   id: string;
@@ -91,6 +93,8 @@ export default function ReservationScreen() {
   const [detailItem,  setDetailItem]  = useState<ClassSchedule | null>(null);
   const [participants, setParticipants] = useState<SlotParticipant[]>([]);
   const [detailLoading, setDetailLoading] = useState(false);
+  // Adhésion suspendue (impayé au-delà du délai de la box) : les réservations sont refusées.
+  const [suspension, setSuspension] = useState<{ stripe: boolean } | null>(null);
 
   const weekDates = getWeekDates(weekOffset);
 
@@ -168,6 +172,14 @@ export default function ReservationScreen() {
   }, [currentBox, user, weekOffset]);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  useFocusEffect(useCallback(() => {
+    if (!currentBox || !user) { setSuspension(null); return; }
+    getMyMemberships().then(rows => {
+      const m = rows.find(r => r.box_id === currentBox.id);
+      setSuspension(m?.suspended ? { stripe: !!m.has_stripe_subscription } : null);
+    });
+  }, [currentBox, user]));
 
   async function openParticipants(item: ClassSchedule) {
     setDetailItem(item);
@@ -335,6 +347,24 @@ export default function ReservationScreen() {
           </View>
         </View>
       </View>
+
+      {suspension && (
+        <View style={S.suspendedBanner} accessibilityRole="alert">
+          <View style={S.suspendedHead}>
+            <AlertTriangle size={16} color={theme.error} />
+            <Text style={S.suspendedTitle}>{t('reservation.suspendedTitle')}</Text>
+          </View>
+          <Text style={S.suspendedBody}>
+            {suspension.stripe ? t('reservation.suspendedBodyStripe') : t('reservation.suspendedBodyContact')}
+          </Text>
+          {suspension.stripe && (
+            <TouchableOpacity style={S.suspendedCta} onPress={() => Linking.openURL(`${WEB_URL}/compte`)} activeOpacity={0.8}>
+              <ExternalLink size={14} color={theme.error} />
+              <Text style={S.suspendedCtaText}>{t('reservation.suspendedCta')}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       <TouchableOpacity
         style={S.myResBtn}
@@ -598,6 +628,16 @@ function createStyles(t: AppTheme) {
       borderWidth: 1, borderColor: `${t.accent}25`,
     },
     myResBtnText: { fontSize: 13, fontWeight: '700' as const, color: t.accent },
+
+    suspendedBanner: {
+      marginHorizontal: 20, marginTop: 4, marginBottom: 4, padding: 14, gap: 6,
+      backgroundColor: `${t.error}15`, borderRadius: 12, borderWidth: 1, borderColor: `${t.error}40`,
+    },
+    suspendedHead:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    suspendedTitle:   { fontSize: 14, fontWeight: '800', color: t.error },
+    suspendedBody:    { fontSize: 13, color: t.text, lineHeight: 18 },
+    suspendedCta:     { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 4, paddingVertical: 6 },
+    suspendedCtaText: { fontSize: 13, fontWeight: '700', color: t.error },
 
     header:             { paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12 },
     headerTitle:        { fontSize: 26, fontWeight: '900', color: t.text, letterSpacing: -0.5 },

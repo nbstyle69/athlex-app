@@ -41,6 +41,11 @@ export function routeNotification(data: Record<string, any> | undefined) {
       navigateToTab('Whiteboard', 'Messages');
       break;
 
+    // ── Abonnement arrêté par le gérant → profil, onglet Compte (son état y est affiché) ──
+    case 'membership_stopped':
+      navigateToTab('Home', 'Profile');
+      break;
+
     default:
       break;
   }

@@ -8,6 +8,7 @@ import {
   Instagram, Clock, Dumbbell, ExternalLink,
 } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { BOX_COLUMNS } from '../../lib/boxColumns';
@@ -34,6 +35,7 @@ const SERVICE_LABELS: Record<string, string> = {
 
 export default function BoxDirectoryDetailScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const s = createStyles(theme);
@@ -69,11 +71,20 @@ export default function BoxDirectoryDetailScreen() {
     );
   }
 
+  // Box inexistante, ou cachée par la base (archivée, en archivage programmé).
   if (!box) {
     return (
-      <View style={[s.container, s.center]}>
+      <View style={s.container}>
         <GlassBackground />
-        <Text style={s.emptyText}>Box introuvable</Text>
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} accessibilityLabel={t('common.back')}>
+            <ChevronLeft color={theme.text} size={22} />
+          </TouchableOpacity>
+          <Text style={s.headerTitle} numberOfLines={1}>{t('boxAccess.notFoundTitle')}</Text>
+        </View>
+        <View style={[s.center, { paddingHorizontal: 32 }]}>
+          <Text style={[s.emptyText, { textAlign: 'center' }]}>{t('boxAccess.notFoundBody')}</Text>
+        </View>
       </View>
     );
   }

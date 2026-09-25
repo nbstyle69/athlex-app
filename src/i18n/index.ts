@@ -22,6 +22,13 @@ export function deviceLanguage(): AppLanguage {
   return SUPPORTED_LANGUAGES.includes(code as AppLanguage) ? (code as AppLanguage) : DEFAULT_LANGUAGE;
 }
 
+// Langue des notifications, enregistrée avec le jeton : la langue principale
+// du téléphone, `fr` ou `en` ; toute autre langue donne `en` (le choix de
+// langue de l'app n'y entre pas).
+export function pushLanguage(): AppLanguage {
+  return getLocales()[0]?.languageCode?.toLowerCase() === 'fr' ? 'fr' : 'en';
+}
+
 i18n.use(initReactI18next).init({
   resources,
   lng: DEFAULT_LANGUAGE,
