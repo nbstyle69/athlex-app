@@ -266,6 +266,13 @@ Supabase/Resend.
   `is_box_admin`) ; un match terminé ne se supprime plus, il se corrige (remise à jouer, choix du
   vainqueur, forfait : ELO recalculé, inchangé). Les déclencheurs de la PR 4 qui retiraient l'ELO à la
   suppression sont retirés. Masquer les tournois archivés : lots app et Manager.
+- PR 10, démarrage à la date et inscriptions pendant le tournoi (migration `20270125`, **non appliquée**) :
+  un tournoi « open » démarre à sa date de début à 00:00 heure de Paris, ou au premier WOD ouvert s'il
+  vient avant (cron `tournament_activation_sweep`), jamais s'il est archivé. Option
+  `registrations_open_during_tournament` (fausse par défaut) : classique, inscription permise (WOD
+  fermés le restent) ; tableau, jusqu'au tirage ; ligue, dans la division la plus basse tant qu'elle a
+  de la place, sans débordement. Règle unique `internal.motif_refus_inscription`, refus en clair ;
+  aucune inscription sur un tournoi archivé, staff compris. App et Manager : lots séparés.
 - PR 5, double élimination complète (migration `20270110`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : un athlète n'est
   éliminé qu'à sa deuxième défaite, personne n'est omis entre les deux tableaux, exemption si
   l'effectif est impair ; les deux tableaux avancent au même numéro de tour (le tableau des perdants

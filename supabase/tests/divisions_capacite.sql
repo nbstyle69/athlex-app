@@ -11,12 +11,13 @@
 --   V3 une ligne insérée par le gérant est « manual », même s'il écrit « auto » ;
 --   V6 le gérant rend A7 à l'affectation automatique : relancée, elle le place
 --      en Open ;
---   V4 la ligue a commencé (un score validé) : un nouvel inscrit n'est placé
---      qu'à partir de la division de son ELO, même si une division plus haute
---      a de la place, et personne d'autre ne bouge ;
+--   V4 le tournoi a démarré (migration 20270125, qui remplace ici la règle de
+--      la 20270115) : un nouvel inscrit va dans la division la plus basse s'il
+--      y reste de la place, même si une division plus haute en a, et nulle part
+--      quand elle est pleine ; personne d'autre ne bouge ;
 --   V5 un athlète ne peut pas relancer l'affectation (42501) ;
---   V7 à chaque étape, personne n'est dans deux divisions, et chaque inscrit a
---      une division.
+--   V7 à chaque étape, personne n'est dans deux divisions ; avant le
+--      démarrage, chaque inscrit a une division.
 -- Tout est joué dans une transaction annulée : rien ne subsiste.
 -- ═════════════════════════════════════════════════════════════════════════════
 
@@ -37,7 +38,7 @@ INSERT INTO public.boxes (id, name, invite_code, owner_id) VALUES
 INSERT INTO public.box_members (box_id, member_id, role, status) VALUES
   ('00000000-0000-4000-b9d1-000000000001', '00000000-0000-4000-a9d1-000000000009', 'owner', 'active');
 INSERT INTO public.tournaments (id, name, level, format, box_id, created_by, status) VALUES
-  ('00000000-0000-4000-c9d1-000000000001', 'Ligue', 'rx', 'league_div', '00000000-0000-4000-b9d1-000000000001', '00000000-0000-4000-a9d1-000000000009', 'active');
+  ('00000000-0000-4000-c9d1-000000000001', 'Ligue', 'rx', 'league_div', '00000000-0000-4000-b9d1-000000000001', '00000000-0000-4000-a9d1-000000000009', 'open');
 INSERT INTO public.tournament_divisions (id, tournament_id, name, level, max_members) VALUES
   ('00000000-0000-4000-e9d1-000000000001', '00000000-0000-4000-c9d1-000000000001', 'Élite', 1, 2),
   ('00000000-0000-4000-e9d1-000000000002', '00000000-0000-4000-c9d1-000000000001', 'Inter', 2, 2),
@@ -53,13 +54,13 @@ CREATE FUNCTION pg_temp.inscrire(p_n int) RETURNS void LANGUAGE sql AS $$
   INSERT INTO public.tournament_participants (tournament_id, athlete_id)
   VALUES ('00000000-0000-4000-c9d1-000000000001', ('00000000-0000-4000-a9d1-0000000000' || lpad(p_n::text, 2, '0'))::uuid)
 $$;
-CREATE FUNCTION pg_temp.v7(p_etape text) RETURNS void LANGUAGE plpgsql AS $$
+CREATE FUNCTION pg_temp.v7(p_etape text, p_tous_places boolean DEFAULT true) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
   IF EXISTS (SELECT athlete_id FROM public.tournament_division_members m
                JOIN public.tournament_divisions d ON d.id = m.division_id
               WHERE d.tournament_id = '00000000-0000-4000-c9d1-000000000001'
               GROUP BY athlete_id HAVING count(*) > 1)
-     OR EXISTS (SELECT 1 FROM public.tournament_participants tp
+     OR p_tous_places AND EXISTS (SELECT 1 FROM public.tournament_participants tp
                  WHERE tp.tournament_id = '00000000-0000-4000-c9d1-000000000001'
                    AND NOT EXISTS (SELECT 1 FROM public.tournament_division_members m
                                     JOIN public.tournament_divisions d ON d.id = m.division_id
@@ -128,20 +129,29 @@ BEGIN
     RAISE EXCEPTION 'V6 : répartition % (attendu É:0,1 I:2,3 O:4,5,6,7)', pg_temp.repartition();
   END IF;
 
-  -- V4 : la ligue commence (un score validé). A1 quitte l'Élite (place libre),
-  -- puis A8 (1050) s'inscrit : son ELO le classe en Open, il y va, et rien d'autre ne bouge.
+  -- V4 : le tournoi démarre (un score validé). A1 quitte l'Élite (place libre) ;
+  -- le gérant porte l'Open à 5 places. A8 (1050) s'inscrit : il va en Open, la
+  -- plus basse, pas en Élite. L'Open est alors pleine : A1 (1600) se réinscrit
+  -- et n'est placé nulle part. Personne d'autre ne bouge.
+  UPDATE public.tournaments SET status = 'active' WHERE id = v_t;
   INSERT INTO public.tournament_wods (id, tournament_id, title, type) VALUES
     ('00000000-0000-4000-f9d1-000000000001', v_t, 'WOD 1', 'AMRAP');
   INSERT INTO public.tournament_scores (tournament_id, tournament_wod_id, athlete_id, score_value, status)
   VALUES (v_t, '00000000-0000-4000-f9d1-000000000001', '00000000-0000-4000-a9d1-000000000000', '100', 'validated');
   DELETE FROM public.tournament_division_members WHERE athlete_id = '00000000-0000-4000-a9d1-000000000001';
   DELETE FROM public.tournament_participants WHERE tournament_id = v_t AND athlete_id = '00000000-0000-4000-a9d1-000000000001';
+  UPDATE public.tournament_divisions SET max_members = 5 WHERE id = '00000000-0000-4000-e9d1-000000000003';
   v_avant := pg_temp.repartition();
   PERFORM pg_temp.inscrire(8);
-  PERFORM pg_temp.v7('V4');
+  PERFORM pg_temp.v7('V4', false);
   IF pg_temp.repartition() <> 'É:0 I:2,3 O:4,5,6,7,8' THEN
     RAISE EXCEPTION 'V4 : répartition % avant, % après l''inscription de A8 (attendu É:0 I:2,3 O:4,5,6,7,8)',
       v_avant, pg_temp.repartition();
+  END IF;
+  PERFORM pg_temp.inscrire(1);
+  PERFORM pg_temp.v7('V4', false);
+  IF pg_temp.repartition() <> 'É:0 I:2,3 O:4,5,6,7,8' THEN
+    RAISE EXCEPTION 'V4 : Open pleine, A1 a été placé ailleurs : %', pg_temp.repartition();
   END IF;
 
   RAISE NOTICE 'divisions : V1 à V7 conformes';
