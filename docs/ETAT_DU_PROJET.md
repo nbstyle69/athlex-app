@@ -257,7 +257,14 @@ Supabase/Resend.
   les points se classent dans cette division, sur la saison en cours seulement.
 - PR 4, suppression d'un tournoi (migration `20270109`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : l'ELO qu'il a apporté
   (matchs, WOD de ligue, clôture classique) est retiré exactement, compteurs compris, et ses
-  historiques effacés ; supprimer un match seul rend aussi son effet.
+  historiques effacés ; supprimer un match seul rend aussi son effet. **Remplacée par la migration
+  `20270124`** ci-dessous.
+- Résultats validés conservés et archivage (migration `20270124`, **non appliquée**) : un tournoi qui a
+  un résultat validé (clôturé, match terminé ou forfait, score validé, saison close, historique ELO) ne
+  se supprime plus, on l'archive (`archived_at`, `archive_tournament` / `unarchive_tournament`, droits
+  `is_box_admin`) ; un match terminé ne se supprime plus, il se corrige (remise à jouer, choix du
+  vainqueur, forfait : ELO recalculé, inchangé). Les déclencheurs de la PR 4 qui retiraient l'ELO à la
+  suppression sont retirés. Masquer les tournois archivés : lots app et Manager.
 - PR 5, double élimination complète (migration `20270110`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : un athlète n'est
   éliminé qu'à sa deuxième défaite, personne n'est omis entre les deux tableaux, exemption si
   l'effectif est impair ; les deux tableaux avancent au même numéro de tour (le tableau des perdants

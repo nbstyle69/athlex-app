@@ -381,11 +381,15 @@ async function suiteTournaments() {
   const { data: closed } = await db.from('tournaments').select('status').eq('id', t?.id).single();
   assert(closed?.status === 'completed', `Statut: ${closed?.status}`);
 
-  // DELETE tournament
+  // DELETE tournament — clôturé, il a des résultats validés : la base refuse
+  // (migration 20270124) et on l'archive.
   const { error: delErr } = await db.from('tournaments').delete().eq('id', t?.id);
-  assert(!delErr, 'DELETE tournoi', delErr);
-  const { data: gone } = await db.from('tournaments').select('id').eq('id', t?.id).maybeSingle();
-  assert(!gone, 'Tournoi supprimé de la DB ✓');
+  assert(delErr?.code === '23001' && /TOURNOI_AVEC_RESULTATS/.test(delErr?.message ?? ''),
+    'DELETE tournoi clôturé refusé (TOURNOI_AVEC_RESULTATS)', delErr ?? { message: 'aucune erreur' });
+  const { data: archivedAt, error: archErr } = await db.rpc('archive_tournament', { p_tournament_id: t?.id });
+  assert(!archErr && archivedAt, 'Tournoi clôturé archivé', archErr);
+  const { data: kept } = await db.from('tournaments').select('id, status, archived_at').eq('id', t?.id).maybeSingle();
+  assert(kept?.status === 'completed' && kept?.archived_at, 'Tournoi conservé, clôturé et archivé');
 }
 
 // ── Suite 9 — Dashboard KPIs ─────────────────────────────────────────────────

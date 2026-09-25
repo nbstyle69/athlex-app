@@ -622,9 +622,10 @@ BEGIN
   END IF;
 END $$;
 
--- ── I15 · supprimer le tournoi retire ses crédits, garde les badges ────────
--- C'est le dernier geste du test réel : le tournoi de test est supprimé depuis
--- le Manager, et la cascade atteint les scores.
+-- ── I15 · un score validé retient son tournoi ; rejeté, le tournoi part ─────
+-- Depuis la migration 20270124, un tournoi qui a un score validé ne se supprime
+-- plus (on l'archive) : ses crédits restent. Une fois le score rejeté, les
+-- crédits partent, le tournoi se supprime, et le badge obtenu reste.
 DO $$
 DECLARE
   v_ath   uuid := '00000000-0000-4000-a400-000000000014';
@@ -646,9 +647,20 @@ BEGIN
     RAISE EXCEPTION 'I15 : décor — cumuls « % », badge mv_row_500 absent ?', pg_temp.cumuls(v_ath);
   END IF;
 
+  BEGIN
+    DELETE FROM public.tournaments WHERE id = v_t;
+    RAISE EXCEPTION 'I15a : un tournoi qui a un score validé a été supprimé';
+  EXCEPTION WHEN restrict_violation THEN NULL;
+  END;
+  IF pg_temp.cumuls(v_ath) <> 'row|cal|500' THEN
+    RAISE EXCEPTION 'I15a : suppression refusée, mais crédit touché — cumuls « % »', pg_temp.cumuls(v_ath);
+  END IF;
+
+  UPDATE public.tournament_scores SET status = 'rejected' WHERE id = v_score;
   DELETE FROM public.tournaments WHERE id = v_t;
-  IF pg_temp.cumuls(v_ath) <> '' OR pg_temp.credits(v_score) <> '' THEN
-    RAISE EXCEPTION 'I15a : tournoi supprimé, crédit resté — cumuls « % », registre « % »',
+  IF EXISTS (SELECT 1 FROM public.tournaments WHERE id = v_t)
+     OR pg_temp.cumuls(v_ath) <> '' OR pg_temp.credits(v_score) <> '' THEN
+    RAISE EXCEPTION 'I15a : score rejeté puis tournoi supprimé, crédit resté — cumuls « % », registre « % »',
       pg_temp.cumuls(v_ath), pg_temp.credits(v_score);
   END IF;
   IF NOT EXISTS (SELECT 1 FROM public.athlete_badges WHERE athlete_id = v_ath AND badge_key = 'mv_row_500') THEN

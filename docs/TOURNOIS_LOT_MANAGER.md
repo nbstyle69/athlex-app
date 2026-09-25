@@ -6,6 +6,31 @@ Les décisions du 24/09 sur le classement de la compétition classique (#359 à 
 
 Ce document réunit en une seule liste ce que chaque PR demandait au Manager, classée par priorité. Le détail de chaque règle est dans [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md) et dans la description de chaque PR.
 
+Mise à jour du 25/09/2026 : la priorité 0 ci-dessous passe **en premier**, et la règle de suppression change (migration `20270124` : un résultat validé ne disparaît jamais, on archive).
+
+## Priorité 0 — à faire en premier
+
+### Format converti en « simple » à l'édition (défaut, constaté le 25/09)
+
+- La page d'édition (`app/(dashboard)/tournaments/[id]/edit/page.tsx`, autour de la ligne 120) rend `TournamentForm` **sans `allowedFormats`**, qui vaut alors `['simple']` (`TournamentForm.tsx:35`).
+- `defaultFormat` (`TournamentForm.tsx:50`) ne trouve pas le format du tournoi dans cette liste et prend `simple`, et l'enregistrement envoie tout le formulaire (`...form`, autour de la ligne 122).
+- Conséquence : enregistrer une modification quelconque d'un tournoi en tableau, en double élimination ou en ligue le **convertit en « simple »**.
+- Correction attendue : à l'édition, garder le format du tournoi tel quel et ne pas l'envoyer (le format ne se change pas après la création). Test : éditer le nom d'un tournoi `bracket` laisse `format = 'bracket'`.
+
+### Archiver au lieu de supprimer (#… « Résultats validés conservés », migration `20270124`)
+
+Un tournoi qui a un résultat validé ne se supprime plus : la base refuse (`TOURNOI_AVEC_RESULTATS`, code `23001`) et invite à archiver. Résultat validé : tournoi clôturé (`status = 'completed'`), match de tableau terminé ou forfait, score validé, saison close, ou historique ELO (match, WOD de ligue, clôture).
+
+- **Bouton « Archiver »** à la place de « Supprimer » (`DeleteTournamentButton`, page du tournoi) quand le tournoi a un résultat validé :
+  - le Manager le déduit de ce qu'il lit déjà (statut, matchs, scores) ; en cas de doute, il peut tenter la suppression et, sur `TOURNOI_AVEC_RESULTATS`, proposer l'archivage ;
+  - appel : `supabase.rpc('archive_tournament', { p_tournament_id })` → la date d'archivage. Mêmes droits que la suppression (gérant, co-gérant, coach, admin plateforme).
+- **Fenêtre de confirmation** : titre « Archiver ce tournoi ? ». Texte : « Ce tournoi a des résultats validés : il ne peut pas être supprimé. Archivé, il n'apparaît plus dans les listes, mais ses résultats, ses classements et l'ELO gagné par les athlètes sont conservés. Tu pourras le désarchiver. » Bouton « Archiver » (non rouge), bouton « Annuler ».
+- **Supprimer** un tournoi sans résultat : inchangé. La fenêtre actuelle ne doit plus parler d'ELO retiré (voir la priorité 5, mise à jour).
+- **Désarchiver** : `supabase.rpc('unarchive_tournament', { p_tournament_id })`, depuis la liste des tournois archivés.
+- **Listes** : masquer les tournois où `archived_at` est renseigné, avec un filtre « Archivés ». Écrans qui lisent `tournaments` : `app/(dashboard)/page.tsx`, `app/(dashboard)/tournaments/page.tsx`, `app/(dashboard)/stats/page.tsx`, `app/admin/analytics/page.tsx`, `lib/tournaments/getTournamentForActiveBox.ts`.
+- **« Régénérer le tableau »** (`regenerateBracketAction`, `bracket/actions.ts`) : il supprime d'abord tous les matchs. Sur un tableau qui a un match terminé, la base refuse désormais (`MATCH_TERMINE`) : afficher ce refus. Il ne faut plus supprimer les matchs côté Manager ; `generate_bracket_round_1` refuse déjà un tableau joué.
+- **Corriger un match** : inchangé (réinitialiser, choisir le vainqueur, forfait) ; l'ELO est recalculé par la base.
+
 ## Priorité 1 — à faire avant tout tournoi réel en double élimination
 
 Aucun tournoi `swiss` (double élimination) n'existe en prod aujourd'hui. **Le premier ne doit pas commencer avant ces points** : sans eux, le tableau des perdants reste bloqué après la finale du tableau des gagnants.
@@ -135,8 +160,8 @@ Décisions du 24/09/2026 :
 
 ## Priorité 5 — avertissements et confort
 
-- **Supprimer un tournoi** (`DeleteTournamentButton`, #351) : prévenir que **l'ELO gagné ou perdu dans ce tournoi sera retiré aux athlètes**, si possible avec le nombre d'athlètes concernés. La fenêtre doit aussi se fermer après la suppression.
-- **Supprimer un match du tableau**, si l'action existe : même avertissement, à l'échelle du match.
+- **Supprimer un tournoi** (`DeleteTournamentButton`) : **mis à jour le 25/09** — la suppression ne retire plus aucun ELO ; elle n'est possible que sans résultat validé (sinon « Archiver », priorité 0). La fenêtre doit se fermer après la suppression.
+- **Supprimer un match du tableau**, si l'action existe : refusée par la base pour un match terminé ou forfait (`MATCH_TERMINE`) ; la correction passe par la réinitialisation ou le choix du vainqueur.
 - **Réinitialiser un match** (`resetMatchAction`, #348) : rien à changer. Le serveur rend désormais l'ELO du match, et corriger un vainqueur ne compte plus un match de trop. Facultatif : afficher dans la fiche du match l'écart d'ELO appliqué (`tournament_match_elo_history.elo_delta`).
 - **Clôture** : le refus `TABLEAU_NON_TERMINE` peut maintenant venir d'un match décisif dû (#353) ou d'une petite finale non jouée (#356). Le message affiché gagnerait à le dire.
 

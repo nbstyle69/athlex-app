@@ -1,201 +1,298 @@
 -- ═════════════════════════════════════════════════════════════════════════════
--- Supprimer un tournoi retire l'ELO qu'il a apporté (migration 20270109)
+-- Tournois : un résultat validé ne disparaît jamais ; archivage (migration 20270124)
 --
+-- Remplace le test de la migration 20270109 (« supprimer un tournoi retire son
+-- ELO »), dont la règle est renversée.
 -- Rejoué par `scripts/db-replay.sh`, donc par la CI sur chaque PR.
--- Quatre athlètes à 1000 ELO, cinq tournois, chacun avec sa source d'ELO réelle :
---   T1 tableau : deux matchs (A bat B, A bat C) ;
---   T2 tableau : un match (A bat C) + un récapitulatif de clôture (non appliqué) ;
---   T3 compétition classique : clôturée par `finalize_tournament_elo` ;
---   T4 ligue : ELO de WOD par `compute_league_wod_elo` ;
---   T5 tableau : un match (B bat D), supprimé SEUL.
---   X1 supprimer T1 retire exactement ses deux matchs ; T2, T3, T4 intacts ;
---   X2 supprimer T2 retire son match, pas son récapitulatif ;
---   X3 supprimer T3 retire la clôture (ELO, match, victoire) ;
---   X4 supprimer T4 retire l'ELO de WOD ;
---   X5 supprimer un match seul (T5) rend son effet, le tournoi reste ;
---   X6 tout supprimé : chaque profil est revenu EXACTEMENT à 1000 / 0 / 0, et
---      il ne reste aucun historique de ces tournois.
+-- Box B : gérant O, coach K, simple membre M. Athlètes A à H, à 1000 ELO.
+--   S1 suppression refusée pour chaque type de résultat validé, chacun seul
+--      dans son tournoi (K1 à K8) : clôturé, match terminé, forfait, score
+--      validé, saison close, historique de match, ELO de WOD de ligue,
+--      historique de clôture ; message qui invite à archiver ; ni ELO ni
+--      historique touchés ;
+--   S2 suppression acceptée pour un tournoi sans résultat (K9 : match en
+--      attente, exemption, score en attente et rejeté, WOD, division), par le
+--      gérant ;
+--   S3 match terminé ou forfait : suppression refusée ; en attente, en cours,
+--      exemption : acceptée (K10) ;
+--   S4 archivage (gérant) puis désarchivage (coach) : seule `archived_at`
+--      change ; ni ELO, ni historiques, ni matchs ; la clé serveur le peut aussi ;
+--   S5 archivage et désarchivage refusés au simple membre et à anon ;
+--   S6 correction du vainqueur d'un match terminé : l'ELO est recalculé (#348) ;
+--   S7 forfait posé sur un match terminé : l'ELO est recalculé (#355) ;
+--   S8 plus aucun déclencheur ne retire l'ELO à la suppression.
 -- Tout est joué dans une transaction annulée : rien ne subsiste.
 -- ═════════════════════════════════════════════════════════════════════════════
 
 \set ON_ERROR_STOP on
-\echo '==> Suppression d''un tournoi : l''ELO apporté est retiré'
+\echo '==> Tournois : résultats validés conservés, archivage'
 
 BEGIN;
 
-INSERT INTO auth.users (id) VALUES
-  ('00000000-0000-4000-a900-000000000009'),
-  ('00000000-0000-4000-a900-00000000000a'), ('00000000-0000-4000-a900-00000000000b'),
-  ('00000000-0000-4000-a900-00000000000c'), ('00000000-0000-4000-a900-00000000000d');
-INSERT INTO public.profiles (id, email, username) VALUES
-  ('00000000-0000-4000-a900-000000000009', 'sup-gerant@test.invalid', 'sup_gerant'),
-  ('00000000-0000-4000-a900-00000000000a', 'sup-a@test.invalid', 'sup_a'),
-  ('00000000-0000-4000-a900-00000000000b', 'sup-b@test.invalid', 'sup_b'),
-  ('00000000-0000-4000-a900-00000000000c', 'sup-c@test.invalid', 'sup_c'),
-  ('00000000-0000-4000-a900-00000000000d', 'sup-d@test.invalid', 'sup_d');
+INSERT INTO auth.users (id)
+SELECT ('00000000-0000-4000-a900-0000000000' || s)::uuid
+  FROM unnest(ARRAY['e0', 'e1', 'e2', '0a', '0b', '0c', '0d', '0e', '0f', '10', '11']) s;
+INSERT INTO public.profiles (id, email, username)
+SELECT ('00000000-0000-4000-a900-0000000000' || s)::uuid, 'sup-' || s || '@test.invalid', 'sup_' || s
+  FROM unnest(ARRAY['e0', 'e1', 'e2', '0a', '0b', '0c', '0d', '0e', '0f', '10', '11']) s;
 INSERT INTO public.boxes (id, name, invite_code, owner_id) VALUES
-  ('00000000-0000-4000-b900-000000000001', 'Box suppression', 'SUPT', '00000000-0000-4000-a900-000000000009');
+  ('00000000-0000-4000-b900-000000000001', 'Box résultats', 'SUPT', '00000000-0000-4000-a900-0000000000e0');
 INSERT INTO public.box_members (box_id, member_id, role, status) VALUES
-  ('00000000-0000-4000-b900-000000000001', '00000000-0000-4000-a900-000000000009', 'owner', 'active');
+  ('00000000-0000-4000-b900-000000000001', '00000000-0000-4000-a900-0000000000e0', 'owner',  'active'),
+  ('00000000-0000-4000-b900-000000000001', '00000000-0000-4000-a900-0000000000e1', 'coach',  'active'),
+  ('00000000-0000-4000-b900-000000000001', '00000000-0000-4000-a900-0000000000e2', 'member', 'active');
 
-INSERT INTO public.tournaments (id, name, level, format, box_id, created_by, status) VALUES
-  ('00000000-0000-4000-c900-000000000001', 'T1', 'rx', 'bracket',    '00000000-0000-4000-b900-000000000001', '00000000-0000-4000-a900-000000000009', 'active'),
-  ('00000000-0000-4000-c900-000000000002', 'T2', 'rx', 'bracket',    '00000000-0000-4000-b900-000000000001', '00000000-0000-4000-a900-000000000009', 'active'),
-  ('00000000-0000-4000-c900-000000000003', 'T3', 'rx', 'simple',     '00000000-0000-4000-b900-000000000001', '00000000-0000-4000-a900-000000000009', 'active'),
-  ('00000000-0000-4000-c900-000000000004', 'T4', 'rx', 'league_div', '00000000-0000-4000-b900-000000000001', '00000000-0000-4000-a900-000000000009', 'active'),
-  ('00000000-0000-4000-c900-000000000005', 'T5', 'rx', 'bracket',    '00000000-0000-4000-b900-000000000001', '00000000-0000-4000-a900-000000000009', 'active');
+-- K1 à K11 (…c9000000000001 à …11).
+INSERT INTO public.tournaments (id, name, level, format, box_id, created_by, status)
+SELECT ('00000000-0000-4000-c900-0000000000' || k)::uuid, 'K' || k, 'rx', f,
+       '00000000-0000-4000-b900-000000000001', '00000000-0000-4000-a900-0000000000e0', st
+  FROM (VALUES ('01', 'simple', 'completed'), ('02', 'bracket', 'active'), ('03', 'bracket', 'active'),
+               ('04', 'simple', 'active'), ('05', 'league_div', 'active'), ('06', 'bracket', 'active'),
+               ('07', 'league_div', 'active'), ('08', 'bracket', 'active'), ('09', 'bracket', 'open'),
+               ('10', 'bracket', 'active'), ('11', 'bracket', 'active')) v(k, f, st);
 
--- T1 et T2 : matchs terminés (l'ELO s'applique par le trigger de match).
+-- K2 : A bat B (ELO appliqué par le déclencheur de match).
 INSERT INTO public.tournament_bracket_matches (tournament_id, round, match_number, side, participant1_id, participant2_id, winner_id, loser_id, status) VALUES
-  ('00000000-0000-4000-c900-000000000001', 1, 1, 'winner', '00000000-0000-4000-a900-00000000000a', '00000000-0000-4000-a900-00000000000b', '00000000-0000-4000-a900-00000000000a', '00000000-0000-4000-a900-00000000000b', 'completed'),
-  ('00000000-0000-4000-c900-000000000001', 2, 1, 'winner', '00000000-0000-4000-a900-00000000000a', '00000000-0000-4000-a900-00000000000c', '00000000-0000-4000-a900-00000000000a', '00000000-0000-4000-a900-00000000000c', 'completed'),
-  ('00000000-0000-4000-c900-000000000002', 1, 1, 'winner', '00000000-0000-4000-a900-00000000000a', '00000000-0000-4000-a900-00000000000c', '00000000-0000-4000-a900-00000000000a', '00000000-0000-4000-a900-00000000000c', 'completed');
--- T2 : un récapitulatif de clôture de tableau, qui n'a RIEN appliqué au profil.
-INSERT INTO public.tournament_elo_history (tournament_id, athlete_id, final_rank, participants_count, avg_opponent_elo, elo_before, elo_after, elo_change)
-VALUES ('00000000-0000-4000-c900-000000000002', '00000000-0000-4000-a900-00000000000a', 1, 2, 1000, 1000, 1040, 40);
+  ('00000000-0000-4000-c900-000000000002', 1, 1, 'winner', '00000000-0000-4000-a900-00000000000a', '00000000-0000-4000-a900-00000000000b',
+   '00000000-0000-4000-a900-00000000000a', '00000000-0000-4000-a900-00000000000b', 'completed');
+-- K3 : un forfait, sans ELO.
+INSERT INTO public.tournament_bracket_matches (tournament_id, round, match_number, side, participant1_id, participant2_id, winner_id, loser_id, status) VALUES
+  ('00000000-0000-4000-c900-000000000003', 1, 1, 'winner', '00000000-0000-4000-a900-00000000000c', '00000000-0000-4000-a900-00000000000d',
+   '00000000-0000-4000-a900-00000000000c', '00000000-0000-4000-a900-00000000000d', 'forfeit');
+-- K4 : un score validé, rien d'autre.
+INSERT INTO public.tournament_wods (id, tournament_id, title, type) VALUES
+  ('00000000-0000-4000-f900-000000000004', '00000000-0000-4000-c900-000000000004', 'WOD K4', 'For Time');
+INSERT INTO public.tournament_scores (tournament_id, tournament_wod_id, athlete_id, score_value, status) VALUES
+  ('00000000-0000-4000-c900-000000000004', '00000000-0000-4000-f900-000000000004', '00000000-0000-4000-a900-00000000000c', '300', 'validated');
+-- K5 : une saison close.
+INSERT INTO public.tournament_season_history (tournament_id, season_number, division_level, division_name, athlete_id, final_rank, outcome) VALUES
+  ('00000000-0000-4000-c900-000000000005', 1, 1, 'Élite', '00000000-0000-4000-a900-00000000000c', 1, 'champion');
+-- K6, K7, K8 : une ligne d'historique ELO seule (le résultat qui l'a produite a changé depuis).
+INSERT INTO public.tournament_match_elo_history (tournament_id, athlete_id, result, elo_before, elo_after, elo_delta) VALUES
+  ('00000000-0000-4000-c900-000000000006', '00000000-0000-4000-a900-00000000000c', 'win', 1000, 1000, 0);
+INSERT INTO public.tournament_wod_elo_history (tournament_id, athlete_id, elo_before, elo_after, elo_delta, rank) VALUES
+  ('00000000-0000-4000-c900-000000000007', '00000000-0000-4000-a900-00000000000c', 1000, 1000, 0, 1);
+INSERT INTO public.tournament_elo_history (tournament_id, athlete_id, final_rank, participants_count, avg_opponent_elo, elo_before, elo_after, elo_change) VALUES
+  ('00000000-0000-4000-c900-000000000008', '00000000-0000-4000-a900-00000000000c', 1, 2, 1000, 1000, 1000, 0);
 
--- T3 : compétition classique, deux scores validés, clôturée pour de vrai.
+-- K9 : aucun résultat — un match en attente, une exemption, des scores en
+-- attente et rejeté, un WOD, une division, des participants.
 INSERT INTO public.tournament_participants (tournament_id, athlete_id) VALUES
-  ('00000000-0000-4000-c900-000000000003', '00000000-0000-4000-a900-00000000000b'),
-  ('00000000-0000-4000-c900-000000000003', '00000000-0000-4000-a900-00000000000d');
+  ('00000000-0000-4000-c900-000000000009', '00000000-0000-4000-a900-00000000000c'),
+  ('00000000-0000-4000-c900-000000000009', '00000000-0000-4000-a900-00000000000d');
+INSERT INTO public.tournament_bracket_matches (tournament_id, round, match_number, side, participant1_id, participant2_id, status) VALUES
+  ('00000000-0000-4000-c900-000000000009', 1, 1, 'winner', '00000000-0000-4000-a900-00000000000c', '00000000-0000-4000-a900-00000000000d', 'pending');
+INSERT INTO public.tournament_bracket_matches (tournament_id, round, match_number, side, participant1_id, winner_id, status) VALUES
+  ('00000000-0000-4000-c900-000000000009', 1, 2, 'winner', '00000000-0000-4000-a900-00000000000a', '00000000-0000-4000-a900-00000000000a', 'bye');
 INSERT INTO public.tournament_wods (id, tournament_id, title, type) VALUES
-  ('00000000-0000-4000-f900-000000000003', '00000000-0000-4000-c900-000000000003', 'WOD T3', 'For Time');
+  ('00000000-0000-4000-f900-000000000009', '00000000-0000-4000-c900-000000000009', 'WOD K9', 'AMRAP');
 INSERT INTO public.tournament_scores (tournament_id, tournament_wod_id, athlete_id, score_value, status) VALUES
-  ('00000000-0000-4000-c900-000000000003', '00000000-0000-4000-f900-000000000003', '00000000-0000-4000-a900-00000000000b', '300', 'validated'),
-  ('00000000-0000-4000-c900-000000000003', '00000000-0000-4000-f900-000000000003', '00000000-0000-4000-a900-00000000000d', '400', 'validated');
+  ('00000000-0000-4000-c900-000000000009', '00000000-0000-4000-f900-000000000009', '00000000-0000-4000-a900-00000000000c', '100', 'pending'),
+  ('00000000-0000-4000-c900-000000000009', '00000000-0000-4000-f900-000000000009', '00000000-0000-4000-a900-00000000000d', '90', 'rejected');
+INSERT INTO public.tournament_divisions (tournament_id, name, level) VALUES
+  ('00000000-0000-4000-c900-000000000009', 'Élite', 1);
 
--- T4 : ligue, une division (C, D), un WOD, deux scores validés.
-INSERT INTO public.tournament_divisions (id, tournament_id, name, level) VALUES
-  ('00000000-0000-4000-e900-000000000004', '00000000-0000-4000-c900-000000000004', 'Élite', 1);
-INSERT INTO public.tournament_division_members (division_id, athlete_id) VALUES
-  ('00000000-0000-4000-e900-000000000004', '00000000-0000-4000-a900-00000000000c'),
-  ('00000000-0000-4000-e900-000000000004', '00000000-0000-4000-a900-00000000000d');
-INSERT INTO public.tournament_wods (id, tournament_id, title, type) VALUES
-  ('00000000-0000-4000-f900-000000000004', '00000000-0000-4000-c900-000000000004', 'WOD T4', 'AMRAP');
-INSERT INTO public.tournament_scores (tournament_id, tournament_wod_id, athlete_id, score_value, status) VALUES
-  ('00000000-0000-4000-c900-000000000004', '00000000-0000-4000-f900-000000000004', '00000000-0000-4000-a900-00000000000c', '100', 'validated'),
-  ('00000000-0000-4000-c900-000000000004', '00000000-0000-4000-f900-000000000004', '00000000-0000-4000-a900-00000000000d', '90', 'validated');
+-- K10 : un match de chaque statut. K11 : deux matchs terminés, pour S6 et S7.
+INSERT INTO public.tournament_bracket_matches (id, tournament_id, round, match_number, side, participant1_id, participant2_id, winner_id, loser_id, status)
+SELECT ('00000000-0000-4000-d900-0000000000' || id)::uuid, ('00000000-0000-4000-c900-0000000000' || k)::uuid, 1, n, 'winner',
+       ('00000000-0000-4000-a900-0000000000' || p1)::uuid, ('00000000-0000-4000-a900-0000000000' || p2)::uuid,
+       ('00000000-0000-4000-a900-0000000000' || w)::uuid, ('00000000-0000-4000-a900-0000000000' || l)::uuid, st
+  FROM (VALUES ('01', '10', 1, '0c', '0d', '0c', '0d', 'completed'),
+               ('02', '10', 2, '0c', '0d', '0c', '0d', 'forfeit'),
+               ('03', '10', 3, '0c', '0d', NULL, NULL, 'pending'),
+               ('04', '10', 4, '0c', '0d', NULL, NULL, 'active'),
+               ('06', '11', 1, '0e', '0f', '0e', '0f', 'completed'),
+               ('07', '11', 2, '10', '11', '10', '11', 'completed')) v(id, k, n, p1, p2, w, l, st);
+INSERT INTO public.tournament_bracket_matches (id, tournament_id, round, match_number, side, participant1_id, winner_id, status) VALUES
+  ('00000000-0000-4000-d900-000000000005', '00000000-0000-4000-c900-000000000010', 1, 5, 'winner',
+   '00000000-0000-4000-a900-00000000000c', '00000000-0000-4000-a900-00000000000c', 'bye');
 
--- Clôture de T3 et ELO du WOD de T4, par le gérant, comme le Manager.
-DO $t$
+CREATE FUNCTION pg_temp.en_tant_que(p_qui text) RETURNS void LANGUAGE plpgsql AS $$
 BEGIN
-  PERFORM set_config('role', 'authenticated', true);
-  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-a900-000000000009', true);
-  PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
-  PERFORM public.finalize_tournament_elo('00000000-0000-4000-c900-000000000003');
-  PERFORM public.compute_league_wod_elo('00000000-0000-4000-f900-000000000004');
-  PERFORM set_config('role', 'none', true);
-END $t$;
+  IF p_qui IS NULL THEN
+    PERFORM set_config('request.jwt.claim.sub', '', true);
+    PERFORM set_config('request.jwt.claim.role', 'anon', true);
+    PERFORM set_config('role', 'anon', true);
+  ELSE
+    PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-a900-0000000000' || p_qui, true);
+    PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+    PERFORM set_config('role', 'authenticated', true);
+  END IF;
+END $$;
 
--- T5 : un match (B bat D), dont on supprimera le seul match.
-INSERT INTO public.tournament_bracket_matches (id, tournament_id, round, match_number, side, participant1_id, participant2_id, winner_id, loser_id, status) VALUES
-  ('00000000-0000-4000-d900-000000000005', '00000000-0000-4000-c900-000000000005', 1, 1, 'winner',
-   '00000000-0000-4000-a900-00000000000b', '00000000-0000-4000-a900-00000000000d', '00000000-0000-4000-a900-00000000000b', '00000000-0000-4000-a900-00000000000d', 'completed');
-
--- Outils.
-CREATE TEMP TABLE zz_ath (nom text PRIMARY KEY, id uuid);
-INSERT INTO zz_ath VALUES ('A', '00000000-0000-4000-a900-00000000000a'), ('B', '00000000-0000-4000-a900-00000000000b'),
-                          ('C', '00000000-0000-4000-a900-00000000000c'), ('D', '00000000-0000-4000-a900-00000000000d');
-CREATE FUNCTION pg_temp.profils() RETURNS text LANGUAGE sql AS $$
-  SELECT string_agg(z.nom || '=' || p.elo || '/' || p.total_matches || '/' || p.wins, ' ' ORDER BY z.nom)
-    FROM zz_ath z JOIN public.profiles p ON p.id = z.id
-$$;
--- Ce qu'un tournoi a appliqué, lu dans ses historiques (clôture comptée au format simple seulement).
-CREATE FUNCTION pg_temp.apport(p_tournoi uuid) RETURNS TABLE (athlete uuid, delta int, n int, w int) LANGUAGE sql AS $$
-  SELECT athlete_id, SUM(d)::int, SUM(n)::int, SUM(w)::int FROM (
-    SELECT athlete_id, elo_delta d, 1 n, (result = 'win')::int w FROM public.tournament_match_elo_history WHERE tournament_id = p_tournoi
-    UNION ALL
-    SELECT athlete_id, elo_delta, 1, (rank = 1)::int FROM public.tournament_wod_elo_history WHERE tournament_id = p_tournoi
-    UNION ALL
-    SELECT h.athlete_id, h.elo_change, 1, (h.final_rank = 1)::int FROM public.tournament_elo_history h
-      JOIN public.tournaments t ON t.id = h.tournament_id AND t.format = 'simple' WHERE h.tournament_id = p_tournoi
-  ) x GROUP BY athlete_id
-$$;
--- Profils attendus après avoir retiré l'apport d'un tournoi.
-CREATE FUNCTION pg_temp.attendu_sans(p_tournoi uuid) RETURNS text LANGUAGE sql AS $$
-  SELECT string_agg(z.nom || '=' || (p.elo - COALESCE(a.delta, 0)) || '/' || (p.total_matches - COALESCE(a.n, 0))
-                    || '/' || (p.wins - COALESCE(a.w, 0)), ' ' ORDER BY z.nom)
-    FROM zz_ath z JOIN public.profiles p ON p.id = z.id LEFT JOIN pg_temp.apport(p_tournoi) a ON a.athlete = z.id
-$$;
-CREATE FUNCTION pg_temp.historique(p_tournoi uuid) RETURNS bigint LANGUAGE sql AS $$
-  SELECT (SELECT count(*) FROM public.tournament_match_elo_history WHERE tournament_id = p_tournoi)
-       + (SELECT count(*) FROM public.tournament_wod_elo_history WHERE tournament_id = p_tournoi)
-       + (SELECT count(*) FROM public.tournament_elo_history WHERE tournament_id = p_tournoi)
+-- Empreinte de tout ce que la règle protège : profils, historiques, matchs.
+CREATE FUNCTION pg_temp.empreinte() RETURNS text LANGUAGE sql AS $$
+  SELECT md5(concat_ws('|',
+    (SELECT string_agg(id || ':' || elo || '/' || total_matches || '/' || wins, ',' ORDER BY id) FROM public.profiles WHERE id::text LIKE '%-a900-%'),
+    (SELECT string_agg(h::text, ',' ORDER BY h.id) FROM public.tournament_match_elo_history h),
+    (SELECT string_agg(h::text, ',' ORDER BY h.id) FROM public.tournament_wod_elo_history h),
+    (SELECT string_agg(h::text, ',' ORDER BY h.id) FROM public.tournament_elo_history h),
+    (SELECT string_agg(h::text, ',' ORDER BY h.id) FROM public.tournament_season_history h),
+    (SELECT string_agg(m::text, ',' ORDER BY m.id) FROM public.tournament_bracket_matches m)))
 $$;
 
 DO $t$
 DECLARE
-  attendu text;
-  autres_avant text;
-  t1 constant uuid := '00000000-0000-4000-c900-000000000001';
-  t2 constant uuid := '00000000-0000-4000-c900-000000000002';
-  t3 constant uuid := '00000000-0000-4000-c900-000000000003';
-  t4 constant uuid := '00000000-0000-4000-c900-000000000004';
-  t5 constant uuid := '00000000-0000-4000-c900-000000000005';
+  v_k text;
+  v_err text;
+  v_state text;
+  v_avant text;
+  v_ligne text;
+  v_ts timestamptz;
+  v_n int;
+  K2 constant uuid := '00000000-0000-4000-c900-000000000002';
 BEGIN
-  -- Contre-exemples : chaque source a bien appliqué quelque chose.
-  IF pg_temp.historique(t1) <> 4 OR pg_temp.historique(t2) <> 3 OR pg_temp.historique(t3) <> 2
-     OR pg_temp.historique(t4) <> 2 OR pg_temp.historique(t5) <> 2 THEN
-    RAISE EXCEPTION 'contre-exemple : historiques inattendus (T1 %, T2 %, T3 %, T4 %, T5 %)',
-      pg_temp.historique(t1), pg_temp.historique(t2), pg_temp.historique(t3), pg_temp.historique(t4), pg_temp.historique(t5);
-  END IF;
-  IF pg_temp.profils() = 'A=1000/0/0 B=1000/0/0 C=1000/0/0 D=1000/0/0' THEN
-    RAISE EXCEPTION 'contre-exemple : aucun ELO n''a été appliqué';
+  -- Contre-exemple : le match de K2 a bien appliqué un ELO.
+  IF (SELECT elo FROM public.profiles WHERE id = '00000000-0000-4000-a900-00000000000a') <= 1000 THEN
+    RAISE EXCEPTION 'contre-exemple : le match de K2 n''a pas appliqué d''ELO';
   END IF;
 
-  -- X1 : supprimer T1.
-  attendu := pg_temp.attendu_sans(t1);
-  SELECT string_agg(x, ',') INTO autres_avant FROM (
-    SELECT md5(string_agg(h::text, ',' ORDER BY h.id)) x FROM public.tournament_match_elo_history h WHERE tournament_id IN (t2, t5)
-    UNION ALL SELECT md5(string_agg(h::text, ',' ORDER BY h.id)) FROM public.tournament_wod_elo_history h WHERE tournament_id = t4
-    UNION ALL SELECT md5(string_agg(h::text, ',' ORDER BY h.id)) FROM public.tournament_elo_history h WHERE tournament_id IN (t2, t3)) y;
-  DELETE FROM public.tournaments WHERE id = t1;
-  IF pg_temp.profils() IS DISTINCT FROM attendu THEN
-    RAISE EXCEPTION 'X1 : après suppression de T1, % au lieu de %', pg_temp.profils(), attendu;
-  END IF;
-  IF pg_temp.historique(t1) <> 0 THEN RAISE EXCEPTION 'X1 : il reste un historique de T1'; END IF;
-  IF (SELECT string_agg(x, ',') FROM (
-        SELECT md5(string_agg(h::text, ',' ORDER BY h.id)) x FROM public.tournament_match_elo_history h WHERE tournament_id IN (t2, t5)
-        UNION ALL SELECT md5(string_agg(h::text, ',' ORDER BY h.id)) FROM public.tournament_wod_elo_history h WHERE tournament_id = t4
-        UNION ALL SELECT md5(string_agg(h::text, ',' ORDER BY h.id)) FROM public.tournament_elo_history h WHERE tournament_id IN (t2, t3)) y)
-     IS DISTINCT FROM autres_avant THEN
-    RAISE EXCEPTION 'X1 : la suppression de T1 a touché l''historique d''un autre tournoi';
+  -- S1 : chaque type de résultat validé bloque la suppression.
+  v_avant := pg_temp.empreinte();
+  FOREACH v_k IN ARRAY ARRAY['01', '02', '03', '04', '05', '06', '07', '08'] LOOP
+    v_err := NULL; v_state := NULL;
+    BEGIN
+      DELETE FROM public.tournaments WHERE id = ('00000000-0000-4000-c900-0000000000' || v_k)::uuid;
+    EXCEPTION WHEN OTHERS THEN v_err := SQLERRM; v_state := SQLSTATE;
+    END;
+    IF v_err IS NULL OR v_state <> '23001' OR v_err NOT LIKE 'TOURNOI_AVEC_RESULTATS%' OR v_err NOT LIKE '%Archive-le%' THEN
+      RAISE EXCEPTION 'S1 : la suppression de K% n''est pas refusée comme attendu (% %)', v_k, v_state, coalesce(v_err, 'aucune erreur');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.tournaments WHERE id = ('00000000-0000-4000-c900-0000000000' || v_k)::uuid) THEN
+      RAISE EXCEPTION 'S1 : K% a disparu', v_k;
+    END IF;
+  END LOOP;
+  IF pg_temp.empreinte() <> v_avant THEN RAISE EXCEPTION 'S1 : un refus a touché l''ELO, un historique ou un match'; END IF;
+
+  -- S2 : un tournoi sans résultat se supprime, par le gérant, sans rien toucher d'autre.
+  v_err := NULL;
+  PERFORM pg_temp.en_tant_que('e0');
+  BEGIN
+    DELETE FROM public.tournaments WHERE id = '00000000-0000-4000-c900-000000000009';
+  EXCEPTION WHEN OTHERS THEN v_err := SQLERRM;
+  END;
+  PERFORM set_config('role', 'none', true);
+  IF v_err IS NOT NULL THEN RAISE EXCEPTION 'S2 : un tournoi sans résultat n''est pas supprimé : %', v_err; END IF;
+  IF EXISTS (SELECT 1 FROM public.tournaments WHERE id = '00000000-0000-4000-c900-000000000009') THEN
+    RAISE EXCEPTION 'S2 : le tournoi sans résultat est toujours là';
   END IF;
 
-  -- X2 : T2 — son match est retiré, pas son récapitulatif (+40 jamais appliqué).
-  attendu := pg_temp.attendu_sans(t2);
-  DELETE FROM public.tournaments WHERE id = t2;
-  IF pg_temp.profils() IS DISTINCT FROM attendu THEN
-    RAISE EXCEPTION 'X2 : après suppression de T2, % au lieu de %', pg_temp.profils(), attendu;
+  -- S3 : matchs de K10.
+  FOREACH v_k IN ARRAY ARRAY['01', '02'] LOOP
+    v_err := NULL;
+    BEGIN
+      DELETE FROM public.tournament_bracket_matches WHERE id = ('00000000-0000-4000-d900-0000000000' || v_k)::uuid;
+    EXCEPTION WHEN OTHERS THEN v_err := SQLERRM;
+    END;
+    IF v_err IS NULL OR v_err NOT LIKE 'MATCH_TERMINE%' THEN
+      RAISE EXCEPTION 'S3 : la suppression du match terminé % n''est pas refusée (%)', v_k, coalesce(v_err, 'aucune erreur');
+    END IF;
+  END LOOP;
+  FOREACH v_k IN ARRAY ARRAY['03', '04', '05'] LOOP
+    v_err := NULL;
+    BEGIN
+      DELETE FROM public.tournament_bracket_matches WHERE id = ('00000000-0000-4000-d900-0000000000' || v_k)::uuid;
+    EXCEPTION WHEN OTHERS THEN v_err := SQLERRM;
+    END;
+    IF v_err IS NOT NULL OR EXISTS (SELECT 1 FROM public.tournament_bracket_matches WHERE id = ('00000000-0000-4000-d900-0000000000' || v_k)::uuid) THEN
+      RAISE EXCEPTION 'S3 : le match non terminé % n''est pas supprimé (%)', v_k, coalesce(v_err, 'toujours présent');
+    END IF;
+  END LOOP;
+
+  -- S4 : archiver (gérant), puis désarchiver (coach) : seule archived_at change.
+  v_avant := pg_temp.empreinte();
+  SELECT (to_jsonb(t) - 'archived_at')::text INTO v_ligne FROM public.tournaments t WHERE id = K2;
+  PERFORM pg_temp.en_tant_que('e0');
+  v_ts := public.archive_tournament(K2);
+  PERFORM set_config('role', 'none', true);
+  IF v_ts IS NULL OR (SELECT archived_at FROM public.tournaments WHERE id = K2) IS DISTINCT FROM v_ts THEN
+    RAISE EXCEPTION 'S4 : l''archivage n''a pas posé archived_at';
+  END IF;
+  IF (SELECT (to_jsonb(t) - 'archived_at')::text FROM public.tournaments t WHERE id = K2) <> v_ligne
+     OR pg_temp.empreinte() <> v_avant THEN
+    RAISE EXCEPTION 'S4 : l''archivage a changé autre chose qu''archived_at';
+  END IF;
+  PERFORM pg_temp.en_tant_que('e1');
+  PERFORM public.unarchive_tournament(K2);
+  PERFORM set_config('role', 'none', true);
+  IF (SELECT archived_at FROM public.tournaments WHERE id = K2) IS NOT NULL
+     OR (SELECT (to_jsonb(t) - 'archived_at')::text FROM public.tournaments t WHERE id = K2) <> v_ligne
+     OR pg_temp.empreinte() <> v_avant THEN
+    RAISE EXCEPTION 'S4 : le désarchivage n''a pas rendu l''état d''avant';
+  END IF;
+  -- La clé serveur archive et désarchive, comme elle supprime.
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  PERFORM set_config('request.jwt.claim.role', 'service_role', true);
+  PERFORM set_config('role', 'service_role', true);
+  v_ts := public.archive_tournament(K2);
+  PERFORM public.unarchive_tournament(K2);
+  PERFORM set_config('role', 'none', true);
+  IF v_ts IS NULL OR (SELECT archived_at FROM public.tournaments WHERE id = K2) IS NOT NULL THEN
+    RAISE EXCEPTION 'S4 : la clé serveur n''archive ou ne désarchive pas';
   END IF;
 
-  -- X3 : T3 — la clôture classique est retirée.
-  attendu := pg_temp.attendu_sans(t3);
-  DELETE FROM public.tournaments WHERE id = t3;
-  IF pg_temp.profils() IS DISTINCT FROM attendu THEN
-    RAISE EXCEPTION 'X3 : après suppression de T3, % au lieu de %', pg_temp.profils(), attendu;
+  -- S5 : simple membre et anon refusés.
+  FOREACH v_k IN ARRAY ARRAY['archive membre', 'desarchive membre', 'archive anon', 'desarchive anon'] LOOP
+    v_state := NULL;
+    PERFORM pg_temp.en_tant_que(CASE WHEN v_k LIKE '%membre' THEN 'e2' END);
+    BEGIN
+      IF v_k LIKE 'archive%' THEN PERFORM public.archive_tournament(K2);
+      ELSE PERFORM public.unarchive_tournament(K2); END IF;
+    EXCEPTION WHEN OTHERS THEN v_state := SQLSTATE;
+    END;
+    PERFORM set_config('role', 'none', true);
+    IF v_state IS DISTINCT FROM '42501' THEN
+      RAISE EXCEPTION 'S5 : % n''est pas refusé (obtenu : %)', v_k, coalesce(v_state, 'aucune erreur');
+    END IF;
+  END LOOP;
+  IF (SELECT archived_at FROM public.tournaments WHERE id = K2) IS NOT NULL THEN
+    RAISE EXCEPTION 'S5 : un refus a quand même archivé';
+  END IF;
+  IF has_function_privilege('anon', 'public.archive_tournament(uuid)', 'EXECUTE')
+     OR has_function_privilege('anon', 'public.unarchive_tournament(uuid)', 'EXECUTE') THEN
+    RAISE EXCEPTION 'S5 : anon a EXECUTE sur l''archivage';
   END IF;
 
-  -- X4 : T4 — l'ELO de WOD de ligue est retiré.
-  attendu := pg_temp.attendu_sans(t4);
-  DELETE FROM public.tournaments WHERE id = t4;
-  IF pg_temp.profils() IS DISTINCT FROM attendu THEN
-    RAISE EXCEPTION 'X4 : après suppression de T4, % au lieu de %', pg_temp.profils(), attendu;
+  -- S6 : E battait F ; on corrige : F gagne. ELO recalculé, un seul match compté.
+  BEGIN
+    UPDATE public.tournament_bracket_matches
+       SET winner_id = '00000000-0000-4000-a900-00000000000f', loser_id = '00000000-0000-4000-a900-00000000000e'
+     WHERE id = '00000000-0000-4000-d900-000000000006';
+  EXCEPTION WHEN OTHERS THEN
+    RAISE EXCEPTION 'S6 : la correction du vainqueur d''un match terminé est refusée : %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM public.profiles
+   WHERE (id = '00000000-0000-4000-a900-00000000000e' AND elo < 1000 AND total_matches = 1 AND wins = 0)
+      OR (id = '00000000-0000-4000-a900-00000000000f' AND elo > 1000 AND total_matches = 1 AND wins = 1);
+  IF v_n <> 2 OR NOT EXISTS (SELECT 1 FROM public.tournament_match_elo_history
+                              WHERE match_id = '00000000-0000-4000-d900-000000000006'
+                                AND athlete_id = '00000000-0000-4000-a900-00000000000f' AND result = 'win') THEN
+    RAISE EXCEPTION 'S6 : la correction du vainqueur ne recalcule pas l''ELO';
   END IF;
 
-  -- X5 : supprimer le seul match de T5 rend son effet ; le tournoi reste.
-  DELETE FROM public.tournament_bracket_matches WHERE id = '00000000-0000-4000-d900-000000000005';
-  IF NOT EXISTS (SELECT 1 FROM public.tournaments WHERE id = t5) OR pg_temp.historique(t5) <> 0 THEN
-    RAISE EXCEPTION 'X5 : la suppression d''un match seul n''a pas défait son effet';
+  -- S7 : forfait posé sur un match terminé (G battait H) : l'ELO du match est retiré.
+  BEGIN
+    UPDATE public.tournament_bracket_matches SET status = 'forfeit'
+     WHERE id = '00000000-0000-4000-d900-000000000007';
+  EXCEPTION WHEN OTHERS THEN
+    RAISE EXCEPTION 'S7 : le forfait posé sur un match terminé est refusé : %', SQLERRM;
+  END;
+  SELECT count(*) INTO v_n FROM public.profiles
+   WHERE id IN ('00000000-0000-4000-a900-000000000010', '00000000-0000-4000-a900-000000000011')
+     AND elo = 1000 AND total_matches = 0 AND wins = 0;
+  IF v_n <> 2 OR EXISTS (SELECT 1 FROM public.tournament_match_elo_history WHERE match_id = '00000000-0000-4000-d900-000000000007') THEN
+    RAISE EXCEPTION 'S7 : le forfait posé sur un match terminé ne recalcule pas l''ELO';
   END IF;
 
-  -- X6 : tout est rendu, exactement.
-  DELETE FROM public.tournaments WHERE id = t5;
-  IF pg_temp.profils() IS DISTINCT FROM 'A=1000/0/0 B=1000/0/0 C=1000/0/0 D=1000/0/0' THEN
-    RAISE EXCEPTION 'X6 : les profils ne sont pas revenus à leur état de départ : %', pg_temp.profils();
+  -- S8 : plus aucun déclencheur ne retire l'ELO à la suppression.
+  IF EXISTS (SELECT 1 FROM pg_trigger
+              WHERE NOT tgisinternal AND tgrelid IN ('public.tournaments'::regclass, 'public.tournament_bracket_matches'::regclass)
+                AND (tgtype & 8) <> 0
+                AND tgfoid NOT IN ('internal.refuser_suppression_tournoi_valide()'::regprocedure,
+                                   'internal.refuser_suppression_match_termine()'::regprocedure)) THEN
+    RAISE EXCEPTION 'S8 : un déclencheur de suppression autre que les refus agit encore sur les tournois ou les matchs';
   END IF;
-  RAISE NOTICE 'X1–X6 ok';
 END $t$;
 
 ROLLBACK;
-\echo '    ok'
+\echo '    S1 à S8 OK'

@@ -139,10 +139,42 @@ export async function dropBoxAndOwner(db, boxId, ownerId) {
   for (const table of ['wod_scores', 'score_comments', 'message_replies']) {
     await db.from(table).delete().eq('box_id', boxId);
   }
+  await defaireResultatsTournoisDeTest(db, boxId);
   const { error: bErr } = await db.from('boxes').delete().eq('id', boxId).select('id');
   if (bErr) throw new Error(`purge box ${boxId} : ${bErr.message}`);
   const { error: uErr } = await db.auth.admin.deleteUser(ownerId);
   if (uErr) throw new Error(`purge owner ${ownerId} : ${uErr.message}`);
+}
+
+/**
+ * Un tournoi qui a un résultat validé ne se supprime pas (migration 20270124) :
+ * la box qui le porte non plus, par cascade. Sur la pile jetable, la purge
+ * défait donc d'abord les résultats des tournois de la box — scores rejetés,
+ * matchs remis à jouer (l'ELO est rendu par le déclencheur de match),
+ * historiques effacés, tournoi rouvert — pour que le décor parte en entier et
+ * qu'une relance sur la même pile ne bute pas sur ses restes. Clé serveur
+ * requise ; ce geste n'a pas sa place hors de la pile jetable : en prod, un
+ * tournoi avec résultats s'archive.
+ */
+async function defaireResultatsTournoisDeTest(db, boxId) {
+  const { data: tournois, error } = await db.from('tournaments').select('id').eq('box_id', boxId);
+  if (error) throw new Error(`tournois de la box ${boxId} : ${error.message}`);
+  const ids = (tournois ?? []).map((t) => t.id);
+  if (ids.length === 0) return;
+  const etapes = [
+    db.from('tournament_scores').update({ status: 'rejected' }).in('tournament_id', ids).eq('status', 'validated'),
+    db.from('tournament_bracket_matches').update({ status: 'pending', winner_id: null, loser_id: null, completed_at: null })
+      .in('tournament_id', ids).in('status', ['completed', 'forfeit']),
+    db.from('tournament_match_elo_history').delete().in('tournament_id', ids),
+    db.from('tournament_wod_elo_history').delete().in('tournament_id', ids),
+    db.from('tournament_elo_history').delete().in('tournament_id', ids),
+    db.from('tournament_season_history').delete().in('tournament_id', ids),
+    db.from('tournaments').update({ status: 'active' }).in('id', ids).eq('status', 'completed'),
+  ];
+  for (const etape of etapes) {
+    const { error: e } = await etape;
+    if (e) throw new Error(`résultats de test de la box ${boxId} : ${e.message}`);
+  }
 }
 
 // ── Purge fail-safe ──────────────────────────────────────────────────────────
