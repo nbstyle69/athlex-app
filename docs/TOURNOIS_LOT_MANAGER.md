@@ -31,6 +31,21 @@ Un tournoi qui a un résultat validé ne se supprime plus : la base refuse (`TOU
 - **« Régénérer le tableau »** (`regenerateBracketAction`, `bracket/actions.ts`) : il supprime d'abord tous les matchs. Sur un tableau qui a un match terminé, la base refuse désormais (`MATCH_TERMINE`) : afficher ce refus. Il ne faut plus supprimer les matchs côté Manager ; `generate_bracket_round_1` refuse déjà un tableau joué.
 - **Corriger un match** : inchangé (réinitialiser, choisir le vainqueur, forfait) ; l'ELO est recalculé par la base.
 
+### Démarrage à la date et inscriptions pendant le tournoi (PR 10, migration `20270125`)
+
+La base démarre désormais seule un tournoi « open » : à sa date de début, **à 00:00 heure de Paris**, ou à l'ouverture de son premier WOD si elle vient avant (cron toutes les 15 minutes). Un tournoi archivé ne démarre jamais seul.
+
+- **Formulaire du tournoi, création et modification** (`TournamentForm.tsx`) : une case **« Inscriptions ouvertes pendant le tournoi »**, qui écrit `tournaments.registrations_open_during_tournament` (décochée par défaut). Sous la case, selon le format :
+  - classique : « Les athlètes peuvent s'inscrire après le démarrage. Les WOD déjà fermés le restent pour eux : 0 point. » ;
+  - tableau et double élimination : « Les inscriptions restent ouvertes jusqu'au tirage du premier tour. » ;
+  - ligue : « Les nouveaux inscrits entrent dans la division la plus basse, tant qu'elle a de la place. Ensuite, les inscriptions sont refusées. »
+  - La case reste modifiable après le démarrage.
+- **Date de début** : **pas besoin d'heure.** La règle démarre à 00:00 heure de Paris le jour indiqué, et le Manager enregistre déjà minuit heure locale (`fromDateInput`), soit le bon jour. Ajouter sous le champ : « Le tournoi démarre automatiquement ce jour-là à 00:00 (heure de Paris), ou à l'ouverture du premier WOD si elle vient avant. » Une heure ne servirait que si l'on voulait démarrer à une autre heure que minuit : ce serait une décision à part.
+- **« Démarrer le tournoi »** (`StartTournamentButton.tsx`) : le bouton de confirmation dit « Démarrer et fermer les inscriptions ». Si la case est cochée, dire plutôt « Démarrer le tournoi » et préciser que les inscriptions restent ouvertes selon le format.
+- **Ouvrir un WOD** (`TournamentWODManager.tsx`, fenêtre « Ouvrir maintenant ») : le texte « il démarre et les inscriptions se ferment » ne vaut que si la case est décochée.
+- **Ajouter un participant** (staff) : toujours possible, sauf sur un tournoi archivé : la base refuse (`TOURNOI_ARCHIVE`), afficher ce refus. En ligue démarrée, l'ajout va dans la division la plus basse s'il y reste de la place, **sinon nulle part** : le Manager doit alors proposer de le placer à la main (pastille « à placer »).
+- **Messages de refus** d'une inscription d'athlète (utiles si le Manager les affiche) : `INSCRIPTIONS_FERMEES`, `TABLEAU_DEJA_TIRE`, `DIVISION_PLEINE`, `DIVISION_INDISPONIBLE`, `TOURNOI_COMPLET`, `TOURNOI_ARCHIVE`, `HORS_BOX`, `GENRE_CIBLE`. Chaque message est de la forme « CODE: texte en français ».
+
 ## Priorité 1 — à faire avant tout tournoi réel en double élimination
 
 Aucun tournoi `swiss` (double élimination) n'existe en prod aujourd'hui. **Le premier ne doit pas commencer avant ces points** : sans eux, le tableau des perdants reste bloqué après la finale du tableau des gagnants.
