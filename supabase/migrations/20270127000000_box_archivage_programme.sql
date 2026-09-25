@@ -1,7 +1,20 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Archivage d'une box et abonnements — PR 1 sur 3 (la base)
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 25/09/2026 à 20:05 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-25/athlex-prod-public-internal-20260925T200404Z.dump,
+-- sha256 dd4dc8c491e3645fa5474e967f559b3b061e4d4eac352c5a3faed83bf7d936ea vérifié
+-- après aller-retour, 132 TABLE DATA, 425 ACL, 343 POLICY ; précontrôles : les 9
+-- fonctions d'entrée identiques à master, règles et déclencheurs de boxes,
+-- box_members, box_invitations et box_programming_subscriptions identiques au
+-- dépôt, 12 tâches cron sans box_archive_sweep, billing_source déjà présent (ajout
+-- sans effet), aucun nouvel objet ; vérifications : md5 de boxes (hors colonnes
+-- ajoutées), box_members, box_invitations, box_programming_subscriptions,
+-- box_subscriptions et program_members identiques avant/après, 30 objets
+-- identiques au fichier (droits compris) ; audit des droits en prod 29/29 ;
+-- premier passage de box_archive_sweep à 20:07 UTC réussi, rien archivé ; tests
+-- réels en transaction annulée sur une box fictive.)
 --
 -- Règle validée le 25/09/2026 : archiver une box qui a encore des abonnements
 -- actifs les arrête tous en fin de période payée (tout de suite pour les
