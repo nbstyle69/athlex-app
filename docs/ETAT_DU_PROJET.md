@@ -249,7 +249,9 @@ Supabase/Resend.
   `C:\Users\NBS\athlex-retour-arriere-send-push\avant-375`, à redéployer AVANT de jouer le retour
   arrière de la migration). Côté app (bandeau, état de l'abonnement, langue du jeton) : PR
   séparée ; l'envoi à l'arrêt : lot Manager.
-- S5, `membership_stopped` réservé au serveur (`send-push`, sans migration, **non déployée**) : accepté par
+- S5, `membership_stopped` réservé au serveur (`send-push`, sans migration, **déployée le 25/09/2026 à 22:29
+  UTC** ; retour arrière : sources déployées avant, identiques à master, dans
+  `C:\Users\NBS\athlex-retour-arriere-send-push\avant-377`) : accepté par
   le seul chemin serveur (`x-cron-secret`) ; demandé par un utilisateur connecté, même gérant ou
   co-membre, par `data.type`, `category` ou `pref_key`, l'appel est refusé en 403 `SERVER_ONLY_TYPE`.
   Les autres types ne changent pas ; ceux qui annoncent un fait sensible et restent ouverts aux
