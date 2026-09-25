@@ -262,6 +262,13 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   (tâche `box_archive_sweep`, toutes les heures, journal `box_auto_archive_log`) ; annulation
   (`unschedule_box_archive`) et alerte des 2 jours (`box_archive_overdue`) pour le super-admin. Aligne le
   dépôt sur `box_subscriptions.billing_source`, présent en prod sans migration.
+- `boxes.archive_notified_at` (migration `20270129`, **non appliquée en prod**) : date d'envoi de l'e-mail
+  d'archivage, que le Manager renseignera à l'envoi (sa PR 3, clé serveur, **après** la programmation).
+  Un déclencheur la remet à vide dès que la box n'est plus ni archivée ni en archivage programmé (quel
+  que soit le chemin : `unschedule_box_archive`, réactivation par le Manager, écriture directe) et
+  refuse qu'un rôle client la modifie (`BOX_ARCHIVE_NOTIFIED_AT`). Relevé en passant, **non corrigé** :
+  `archive_scheduled_at` n'a aucune garde, un gérant peut effacer lui-même l'archivage programmé de sa
+  box depuis le navigateur (constaté en prod en transaction annulée), décision attendue.
 - App (sans migration, s'appuie sur `20270125`, `20270127` et `20270128`, **à diffuser au prochain build**,
   lancé par Nab ; aucun build EAS dans ce lot) : inscription à un tournoi décidée par la base
   (`can_join_tournament`, donc aussi pendant le tournoi quand l'option le permet), pastille et indice
