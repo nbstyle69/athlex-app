@@ -2,7 +2,20 @@
 -- État de l'abonnement pour l'athlète, langue des jetons de notification,
 -- catalogue sans les boxs qui ferment
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 25/09/2026 à 21:11 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-25/athlex-prod-public-internal-20260925T211012Z.dump,
+-- sha256 20473f6d58236236a2c27f23cf4ab9e2e8ec9ef74b14bdf42423135754d5af7b vérifié
+-- après aller-retour, 133 TABLE DATA, 433 ACL, 345 POLICY ; précontrôles :
+-- get_my_membership_billing et list_programming_catalog aux md5 dont part ce
+-- fichier, internal.membership_suspendu identique au dépôt, droits et
+-- commentaire relevés, aucun objet dépendant, push_tokens sans colonne language ;
+-- vérifications : les deux définitions identiques au fichier (md5
+-- 6b3770f8bcf03c86b7e68f2e680c734e et 06329551f541f43204806c3bfeffc4da), droits
+-- et commentaire identiques à avant, push_tokens (hors colonne ajoutée),
+-- box_members, box_programming et le journal des arrêts identiques avant/après,
+-- 17 jetons sans langue ; audit des droits en prod 29/29 ; tests réels en
+-- transaction annulée, sans trace.)
 --
 -- Lot validé le 25/09/2026 (S5 côté athlète, notifications dans la langue du
 -- téléphone, suite de l'archivage des boxs). Trois changements, rien d'autre.

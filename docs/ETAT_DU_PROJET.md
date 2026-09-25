@@ -236,7 +236,8 @@ Supabase/Resend.
   `programs`, adossée à `program_in_my_active_membership` (SECURITY DEFINER) : une règle qui lirait
   `program_members` directement ferait boucler PostgreSQL, ses règles relisant `programs`.
   `read_active_programs` et les règles de `program_members` inchangées.
-- S5, la base et `send-push` (migration `20270128`, **non appliquée en prod**) :
+- S5, la base et `send-push` (migration `20270128`, **appliquée en prod le 25/09/2026 à 21:11 UTC**,
+  dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T211012Z.dump` ; audit 29/29) :
   `get_my_membership_billing` renvoie aussi `past_due_since`, `dunning_grace_days`, `suspended` (la
   règle qui bloque les réservations), `has_stripe_subscription`, et le dernier arrêt décidé par un
   gérant (`stopped_at`, `stop_mode`) ; `push_tokens.language` (`fr` / `en`, NULL pour les versions
