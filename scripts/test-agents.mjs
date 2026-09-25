@@ -401,6 +401,14 @@ async function testBOTournament() {
     .eq('id', tournId);
   assert(!closeErr, 'BO tournament closed (status=completed)', closeErr);
 
+  // Clôturé, il a des résultats validés : la base refuse sa suppression
+  // (migration 20270124) ; il s'archive.
+  const { error: delErr } = await supabase.from('tournaments').delete().eq('id', tournId);
+  assert(delErr?.code === '23001' && /TOURNOI_AVEC_RESULTATS/.test(delErr?.message ?? ''),
+    'BO tournament with results: deletion refused', delErr ?? { message: 'no error' });
+  const { data: archivedAt, error: archErr } = await supabase.rpc('archive_tournament', { p_tournament_id: tournId });
+  assert(!archErr && archivedAt, 'BO tournament archived', archErr);
+
   // ── 2f. Compute avg-opponent ELO ──────────────────────────────────────────
   console.log('\n  Computing ELO (avg-opponent)...');
   const withScores = agents.map((a, i) => ({ ...a, score: SCORES[i] }))
@@ -671,10 +679,8 @@ async function cleanup() {
     const { error } = await supabase.from('daily_tournaments').delete().eq('id', createdIds.dailyTournId);
     assert(!error, 'Daily tournament + cascade deleted', error);
   }
-  if (createdIds.boTournId) {
-    const { error } = await supabase.from('tournaments').delete().eq('id', createdIds.boTournId);
-    assert(!error, 'BO tournament + cascade deleted', error);
-  }
+  // Le tournoi du BO part avec sa box (purge commune) : clôturé, il ne se
+  // supprime plus seul (migration 20270124), voir l'étape 2e.
   if (createdIds.interCompId) {
     const { error } = await supabase.from('inter_competitions').delete().eq('id', createdIds.interCompId);
     assert(!error, 'Inter-box competition + cascade deleted', error);

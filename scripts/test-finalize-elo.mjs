@@ -251,13 +251,12 @@ async function suiteBracket(format) {
   return tournId;
 }
 
-// ── Suppression d'un tournoi : l'ELO qu'il a apporté est retiré ─────────────
-// Règle produit du 24/09/2026 (tournois, PR 4, migration 20270109) : supprimer
-// un tournoi retire exactement l'ELO et les compteurs qu'il a appliqués — ici,
-// un tableau : ses matchs — et efface ses historiques. Le récapitulatif de
-// clôture d'un tableau n'avait rien appliqué : il est effacé sans rien retirer.
-// Les sept clés d'historique restent en ON DELETE SET NULL ; un WOD de box
-// supprimé garde sa trace (ci-dessous), hors de cette règle.
+// ── Suppression d'un tournoi finalisé : refusée, il s'archive ────────────────
+// Règle produit du 25/09/2026 (migration 20270124, qui remplace la PR 4) : un
+// résultat validé ne disparaît jamais. Supprimer un tournoi qui en a est
+// refusé, même par la clé serveur ; on l'archive, et ni l'ELO, ni les
+// compteurs, ni les historiques ne bougent. Les sept clés d'historique restent
+// en ON DELETE SET NULL ; un WOD de box supprimé garde sa trace (ci-dessous).
 const HISTORY_FKS = [
   'elo_history_wod_id_fkey', 'box_elo_history_wod_id_fkey',
   'tournament_elo_history_tournament_id_fkey', 'tournament_match_elo_history_match_id_fkey',
@@ -266,7 +265,7 @@ const HISTORY_FKS = [
 ];
 
 async function suiteDeletion(tournId) {
-  console.log('\n══ Suppression d\'un tournoi finalisé : son ELO est retiré ════════════════════');
+  console.log('\n══ Suppression d\'un tournoi finalisé : refusée, il s\'archive, son ELO reste ════════════════════');
   if (!tournId) { fail('suppression : aucun tournoi bracket finalisé disponible'); return; }
 
   const adminUrl = process.env.TEST_ADMIN_DB_URL;
@@ -286,30 +285,33 @@ async function suiteDeletion(tournId) {
   const matchIds = (m0 ?? []).map(m => m.id);
   if (!assert(ids.length > 0 && matchIds.length > 0, `précondition : ${ids.length} lignes récap + ${matchIds.length} lignes match référencent le tournoi`)) return;
 
+  // Un tournoi qui a des résultats validés ne se supprime pas, même par la clé
+  // serveur ; on l'archive, et rien ne bouge.
   const { error: delErr } = await db.from('tournaments').delete().eq('id', tournId);
-  if (!assert(!delErr, 'le tournoi finalisé est supprimé (service_role)', delErr)) return;
+  assert(delErr?.code === '23001' && /TOURNOI_AVEC_RESULTATS/.test(delErr?.message ?? ''),
+    'la suppression du tournoi finalisé est refusée (TOURNOI_AVEC_RESULTATS)', delErr ?? { message: 'aucune erreur' });
   const { count: tLeft } = await db.from('tournaments').select('*', { count: 'exact', head: true }).eq('id', tournId);
-  assert(tLeft === 0, 'le tournoi n\'existe plus');
+  assert(tLeft === 1, 'le tournoi existe toujours');
 
   const { count: h1 } = await db.from('tournament_elo_history').select('*', { count: 'exact', head: true }).in('id', ids);
-  assert(h1 === 0, `tournament_elo_history : récapitulatif effacé (${h1} ligne(s) restante(s))`);
+  assert(h1 === ids.length, `tournament_elo_history : récapitulatif conservé (${h1}/${ids.length})`);
   const { count: m1 } = await db.from('tournament_match_elo_history').select('*', { count: 'exact', head: true }).in('id', matchIds);
-  assert(m1 === 0, `tournament_match_elo_history : historique des matchs effacé (${m1} ligne(s) restante(s))`);
+  assert(m1 === matchIds.length, `tournament_match_elo_history : historique des matchs conservé (${m1}/${matchIds.length})`);
 
-  // Chaque profil perd exactement ce que les matchs du tournoi lui avaient apporté.
+  const { data: archivedAt, error: archErr } = await db.rpc('archive_tournament', { p_tournament_id: tournId });
+  assert(!archErr && archivedAt, "le tournoi finalisé s'archive (service_role)", archErr);
+
+  // Chaque profil garde exactement ce que les matchs du tournoi lui avaient apporté.
   const apport = {};
   for (const m of m0 ?? []) {
     const a = (apport[m.athlete_id] ??= { elo: 0, n: 0, w: 0 });
     a.elo += m.elo_delta; a.n += 1; a.w += m.result === 'win' ? 1 : 0;
   }
   const after = await snapshotProfiles();
-  const ecarts = AGENTS.filter(a => {
-    const x = apport[a.id] ?? { elo: 0, n: 0, w: 0 };
-    return after[a.id].elo !== Math.max(100, before[a.id].elo - x.elo)
-      || after[a.id].total_matches !== before[a.id].total_matches - x.n
-      || after[a.id].wins !== before[a.id].wins - x.w;
-  });
-  assert(ecarts.length === 0, `profils : l'apport des matchs du tournoi est retiré exactement (${ecarts.length} écart(s))`);
+  const ecarts = AGENTS.filter(a => after[a.id].elo !== before[a.id].elo
+    || after[a.id].total_matches !== before[a.id].total_matches
+    || after[a.id].wins !== before[a.id].wins);
+  assert(ecarts.length === 0, `profils : refus et archivage ne retirent aucun ELO (${ecarts.length} écart(s))`);
   // Contre-exemple : le tournoi avait bien apporté quelque chose, sinon l'assertion ne prouvait rien.
   assert(Object.values(apport).some(x => x.elo !== 0), 'contre-exemple : le tournoi avait bien fait bouger au moins un ELO');
 
