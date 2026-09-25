@@ -236,6 +236,15 @@ Supabase/Resend.
   `programs`, adossée à `program_in_my_active_membership` (SECURITY DEFINER) : une règle qui lirait
   `program_members` directement ferait boucler PostgreSQL, ses règles relisant `programs`.
   `read_active_programs` et les règles de `program_members` inchangées.
+- S5, la base et `send-push` (migration `20270128`, **non appliquée en prod**) :
+  `get_my_membership_billing` renvoie aussi `past_due_since`, `dunning_grace_days`, `suspended` (la
+  règle qui bloque les réservations), `has_stripe_subscription`, et le dernier arrêt décidé par un
+  gérant (`stopped_at`, `stop_mode`) ; `push_tokens.language` (`fr` / `en`, NULL pour les versions
+  d'app d'avant) ; `list_programming_catalog` ne liste plus les offres d'une box archivée ou en
+  archivage programmé, sauf celles où la box est déjà abonnée. `send-push` : type `membership_stopped`
+  (réglage « annonces de la box ») et version anglaise facultative (`en`) choisie jeton par jeton, le
+  français pour un jeton sans langue. Côté app (bandeau, état de l'abonnement, langue du jeton) : PR
+  séparée ; l'envoi à l'arrêt : lot Manager.
 
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
 dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
