@@ -274,6 +274,10 @@ Supabase/Resend.
   fermés le restent) ; tableau, jusqu'au tirage ; ligue, dans la division la plus basse tant qu'elle a
   de la place, sans débordement. Règle unique `internal.motif_refus_inscription`, refus en clair ;
   aucune inscription sur un tournoi archivé, staff compris. App et Manager : lots séparés.
+- Garde du format et du statut (migration `20270126`, **non appliquée**) : le format d'un tournoi ne change
+  jamais ; le statut n'avance que vers l'avant (`open` → `active`, jamais de retour, rien après `completed`) ;
+  « completed » seulement par la clôture dédiée `finalize_tournament_elo`, qui se signale par un réglage
+  local à la transaction (`athlex.cloture_tournoi`, à l'identifiant du tournoi). Déclencheur dans `internal`.
 - PR 5, double élimination complète (migration `20270110`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : un athlète n'est
   éliminé qu'à sa deuxième défaite, personne n'est omis entre les deux tableaux, exemption si
   l'effectif est impair ; les deux tableaux avancent au même numéro de tour (le tableau des perdants

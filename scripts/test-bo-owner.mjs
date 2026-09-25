@@ -375,21 +375,23 @@ async function suiteTournaments() {
   const { data: lb } = await db.from('tournament_participants').select('athlete_id, score').eq('tournament_id', t?.id).order('score', { ascending: false });
   assert(lb && lb.length === 3, `Leaderboard: ${lb?.length} participants`);
 
-  // CLOSE tournament
+  // CLOSE tournament — une mise à jour directe vers « completed » est refusée
+  // (migration 20270126) : seule la clôture dédiée, qui calcule l'ELO, clôt.
+  const { data: before } = await db.from('tournaments').select('status').eq('id', t?.id).single();
   const { error: closeErr } = await db.from('tournaments').update({ status: 'completed' }).eq('id', t?.id);
-  assert(!closeErr, 'CLOSE tournoi (status=completed)', closeErr);
+  assert(/CLOTURE_DEDIEE/.test(closeErr?.message ?? ''), 'CLOSE direct refusé (CLOTURE_DEDIEE)', closeErr ?? { message: 'aucune erreur' });
   const { data: closed } = await db.from('tournaments').select('status').eq('id', t?.id).single();
-  assert(closed?.status === 'completed', `Statut: ${closed?.status}`);
+  assert(closed?.status === before?.status, `Statut inchangé: ${closed?.status}`);
 
-  // DELETE tournament — clôturé, il a des résultats validés : la base refuse
-  // (migration 20270124) et on l'archive.
+  // DELETE tournament — il a un score validé : la base refuse (migration
+  // 20270124) et on l'archive.
   const { error: delErr } = await db.from('tournaments').delete().eq('id', t?.id);
   assert(delErr?.code === '23001' && /TOURNOI_AVEC_RESULTATS/.test(delErr?.message ?? ''),
-    'DELETE tournoi clôturé refusé (TOURNOI_AVEC_RESULTATS)', delErr ?? { message: 'aucune erreur' });
+    'DELETE tournoi avec score validé refusé (TOURNOI_AVEC_RESULTATS)', delErr ?? { message: 'aucune erreur' });
   const { data: archivedAt, error: archErr } = await db.rpc('archive_tournament', { p_tournament_id: t?.id });
-  assert(!archErr && archivedAt, 'Tournoi clôturé archivé', archErr);
+  assert(!archErr && archivedAt, 'Tournoi archivé', archErr);
   const { data: kept } = await db.from('tournaments').select('id, status, archived_at').eq('id', t?.id).maybeSingle();
-  assert(kept?.status === 'completed' && kept?.archived_at, 'Tournoi conservé, clôturé et archivé');
+  assert(kept?.status === before?.status && kept?.archived_at, 'Tournoi conservé, statut inchangé et archivé');
 }
 
 // ── Suite 9 — Dashboard KPIs ─────────────────────────────────────────────────

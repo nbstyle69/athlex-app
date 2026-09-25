@@ -156,8 +156,9 @@ async function suiteClassique() {
   assert(sCount === 64, `Score count in DB = ${sCount} (expected 64)`);
 
   // Close
+  // Clôture directe refusée (migration 20270126) : seule la clôture dédiée clôt.
   const { error: cErr } = await db.from('tournaments').update({ status: 'completed' }).eq('id', t.id);
-  assert(!cErr, 'Tournament closed (status=completed)', cErr);
+  assert(/CLOTURE_DEDIEE/.test(cErr?.message ?? ''), 'Simple tournament: direct close refused', cErr ?? { message: 'no error' });
 }
 
 // ── Suite B: Bracket (single elimination) ────────────────────────────────────
@@ -210,8 +211,9 @@ async function suiteBracket() {
     .select('winner_id').eq('tournament_id', t.id).eq('round', 5).eq('side', 'winner').single();
   assert(!!final?.winner_id, `Champion identified in round 5`);
 
+  // Clôture directe refusée (migration 20270126) : seule la clôture dédiée clôt.
   const { error: cErr } = await db.from('tournaments').update({ status: 'completed' }).eq('id', t.id);
-  assert(!cErr, 'Bracket tournament closed', cErr);
+  assert(/CLOTURE_DEDIEE/.test(cErr?.message ?? ''), 'Bracket tournament: direct close refused', cErr ?? { message: 'no error' });
 }
 
 // ── Suite C: Swiss (double elimination) ──────────────────────────────────────
@@ -263,8 +265,9 @@ async function suiteSwiss() {
     .eq('tournament_id', t.id).eq('side', 'loser');
   assert(lbCount > 0, `Loser Bracket created (${lbCount} LB matches)`);
 
+  // Clôture directe refusée (migration 20270126) : seule la clôture dédiée clôt.
   const { error: cErr } = await db.from('tournaments').update({ status: 'completed' }).eq('id', t.id);
-  assert(!cErr, 'Swiss tournament closed', cErr);
+  assert(/CLOTURE_DEDIEE/.test(cErr?.message ?? ''), 'Swiss tournament: direct close refused', cErr ?? { message: 'no error' });
 }
 
 // ── Suite D: Ligue avec Divisions (4 saisons) ─────────────────────────────────
@@ -403,8 +406,9 @@ async function suiteLeague() {
   const { data: tourn } = await db.from('tournaments').select('current_season').eq('id', t.id).single();
   assert(tourn?.current_season === 5, `current_season = ${tourn?.current_season} (attendu: 5)`);
 
+  // Clôture directe refusée (migration 20270126) : seule la clôture dédiée clôt.
   const { error: cErr } = await db.from('tournaments').update({ status: 'completed' }).eq('id', t.id);
-  assert(!cErr, 'League tournament closed', cErr);
+  assert(/CLOTURE_DEDIEE/.test(cErr?.message ?? ''), 'League tournament: direct close refused', cErr ?? { message: 'no error' });
 }
 
 // ── Cleanup ───────────────────────────────────────────────────────────────────

@@ -396,13 +396,15 @@ async function testBOTournament() {
   assert(!!dupErr, 'Duplicate tournament score rejected (unique constraint per wod+athlete)');
 
   // ── 2e. Close tournament ──────────────────────────────────────────────────
+  // Une mise à jour directe vers « completed » est refusée (migration
+  // 20270126) : seule la clôture dédiée, qui calcule l'ELO, clôt.
   const { error: closeErr } = await supabase.from('tournaments')
     .update({ status: 'completed' })
     .eq('id', tournId);
-  assert(!closeErr, 'BO tournament closed (status=completed)', closeErr);
+  assert(/CLOTURE_DEDIEE/.test(closeErr?.message ?? ''), 'BO tournament direct close refused (CLOTURE_DEDIEE)', closeErr ?? { message: 'no error' });
 
-  // Clôturé, il a des résultats validés : la base refuse sa suppression
-  // (migration 20270124) ; il s'archive.
+  // Il a des scores validés : la base refuse sa suppression (migration
+  // 20270124) ; il s'archive.
   const { error: delErr } = await supabase.from('tournaments').delete().eq('id', tournId);
   assert(delErr?.code === '23001' && /TOURNOI_AVEC_RESULTATS/.test(delErr?.message ?? ''),
     'BO tournament with results: deletion refused', delErr ?? { message: 'no error' });

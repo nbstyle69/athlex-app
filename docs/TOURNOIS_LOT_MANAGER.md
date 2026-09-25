@@ -177,6 +177,8 @@ Décisions du 24/09/2026 :
 
 - **Supprimer un tournoi** (`DeleteTournamentButton`) : **mis à jour le 25/09** — la suppression ne retire plus aucun ELO ; elle n'est possible que sans résultat validé (sinon « Archiver », priorité 0). La fenêtre doit se fermer après la suppression.
 - **Supprimer un match du tableau**, si l'action existe : refusée par la base pour un match terminé ou forfait (`MATCH_TERMINE`) ; la correction passe par la réinitialisation ou le choix du vainqueur.
+- **Formulaire des tournois : « Max participants » vidé** (`TournamentForm.tsx`, `parseInt(e.target.value)`). Un champ vidé donne `NaN`, et l'enregistrement est refusé par la base (`max_participants` est `NOT NULL`, défaut 16). Attendu : garder la dernière valeur valide, ou refuser la saisie avec un message. *(Relevé par la PR Manager #387.)*
+- **Format et statut gardés en base** (migration `20270126`) : le format ne change jamais (`FORMAT_FIGE`), un tournoi démarré ne revient pas aux inscriptions (`STATUT_RECUL`), un tournoi clôturé ne bouge plus (`TOURNOI_CLOTURE`), et « Clôturé » ne s'obtient que par la clôture dédiée, `finalize_tournament_elo` (`CLOTURE_DEDIEE`). Le Manager respecte déjà ces règles (#387, #388) ; s'il affiche un refus de la base, ces codes le nomment.
 - **Réinitialiser un match** (`resetMatchAction`, #348) : rien à changer. Le serveur rend désormais l'ELO du match, et corriger un vainqueur ne compte plus un match de trop. Facultatif : afficher dans la fiche du match l'écart d'ELO appliqué (`tournament_match_elo_history.elo_delta`).
 - **Clôture** : le refus `TABLEAU_NON_TERMINE` peut maintenant venir d'un match décisif dû (#353) ou d'une petite finale non jouée (#356). Le message affiché gagnerait à le dire.
 
