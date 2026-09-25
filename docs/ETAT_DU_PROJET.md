@@ -224,7 +224,8 @@ Supabase/Resend.
   pour que l'historique survive à la suppression d'un membre ou d'une box sans la bloquer, l'intégrité
   étant vérifiée à l'insertion ; une souscription Stripe ne s'arrête qu'une fois ; lecture par le gérant
   de la box, écriture par la clé serveur seulement. Pas de push `membership_stopped` (S5).
-- S4, moyen de paiement (migration `20270122`, **non appliquée**) : `get_box_billing` renvoie aussi
+- S4, moyen de paiement (migration `20270122`, **appliquée en prod le 25/09/2026 à 15:06 UTC**, dump
+  `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T150516Z.dump`) : `get_box_billing` renvoie aussi
   `payment_method_type` (card, sepa_debit… ou NULL), pour que la boîte d'arrêt du Manager (PR
   AthleX-Manager #385) affiche « carte » ou « prélèvement SEPA ». Corps repris de la prod ; garde,
   droits et commentaire inchangés.

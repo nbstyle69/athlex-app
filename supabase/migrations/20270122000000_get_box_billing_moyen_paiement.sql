@@ -1,7 +1,18 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- get_box_billing renvoie aussi le moyen de paiement (payment_method_type)
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 25/09/2026 à 15:06 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-25/athlex-prod-public-internal-20260925T150516Z.dump,
+-- sha256 6ab9ce891fb9427f22f17f17abaca324f8acca0cf411321034b23b40b3c8eff6 vérifié
+-- après aller-retour, 132 TABLE DATA, 416 ACL, 342 POLICY ; précontrôles :
+-- get_box_billing au md5 add5743ad3c2db98050a55f06f5ebe7d (celui dont part ce
+-- fichier), box_members.payment_method_type en text, droits EXECUTE pour
+-- authenticated et service_role seulement, aucun objet dépendant ; vérifications :
+-- md5 de box_members identique avant/après, nouvelle définition identique au
+-- fichier (md5 c96d2dc554cdc4e3e240f526a38ecb98), droits et commentaire
+-- identiques à avant ; audit des droits en prod 29/29 ; tests réels en
+-- transaction annulée.)
 --
 -- Pour que le Manager affiche « carte » ou « prélèvement SEPA » dans la boîte
 -- d'arrêt d'abonnement (S4, PR AthleX-Manager #385). Seul
