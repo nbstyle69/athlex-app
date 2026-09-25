@@ -45,7 +45,9 @@
 -- Données en prod : aucune donnée touchée ; le blocage n'agit qu'aux
 -- prochaines insertions.
 --
--- Contrôlée par `supabase/tests/reservations_impaye.sql`.
+-- Contrôlée par `supabase/tests/reservations_impaye.sql` — dont R10, qui épingle
+-- la définition courante de consume_credit_on_reservation (message du lot essai) :
+-- une réécriture repartie d'une version périmée fait rougir le test.
 -- ═════════════════════════════════════════════════════════════════════════════
 
 BEGIN;
@@ -100,16 +102,26 @@ CREATE TRIGGER trg_aa_bloque_impaye
   BEFORE INSERT ON public.class_reservations
   FOR EACH ROW EXECUTE FUNCTION internal.bloquer_reservation_impaye();
 
--- Crédits : `past_due` ne vaut abonnement valide que dans le délai.
-CREATE OR REPLACE FUNCTION public.consume_credit_on_reservation() RETURNS trigger
-    LANGUAGE plpgsql SECURITY DEFINER
-    SET search_path TO 'public'
-    AS $$
+-- Crédits : `past_due` ne vaut abonnement valide que dans le délai. La
+-- définition reprise est la COURANTE (celle du lot essai, 20261126 : garde
+-- is_trial et message « aucun crédit disponible pour cette box »), pas celle
+-- de la baseline.
+CREATE OR REPLACE FUNCTION public.consume_credit_on_reservation()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $function$
 DECLARE
   v_has_sub    boolean;
   v_has_any    boolean;
   v_credit_id  uuid;
 BEGIN
+  -- Un essai est gratuit par construction : il ne consomme aucun crédit.
+  IF NEW.is_trial THEN
+    RETURN NEW;
+  END IF;
+
   -- Un crédit n'est consommé que par une réservation confirmée.
   IF NEW.status <> 'confirmed' THEN
     RETURN NEW;
@@ -167,12 +179,12 @@ BEGIN
   ) INTO v_has_any;
 
   IF v_has_any THEN
-    RAISE EXCEPTION 'NO_CREDITS_LEFT: aucun crédit valide (carnet épuisé ou expiré)'
+    RAISE EXCEPTION 'NO_CREDITS_LEFT: aucun crédit disponible pour cette box'
       USING ERRCODE = 'check_violation';
   END IF;
 
   RETURN NEW;
 END;
-$$;
+$function$;
 
 COMMIT;

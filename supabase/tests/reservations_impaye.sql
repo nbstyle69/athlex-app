@@ -19,7 +19,10 @@
 --       (délai 7) : accepté — l'autre box suit son propre délai ;
 --   R9  crédits : M7 suspendu avec un carnet, inscrit par le staff → le crédit
 --       est consommé (l'abonnement suspendu ne vaut plus abonnement) ; M8
---       impayé dans le délai avec un carnet → aucun crédit consommé.
+--       impayé dans le délai avec un carnet → aucun crédit consommé ;
+--   R10 M9 suspendu au carnet épuisé : refus NO_CREDITS_LEFT avec le message de
+--       la définition COURANTE (lot essai, 20261126) — épingle la version de
+--       consume_credit_on_reservation que la migration réécrit.
 -- Tout est joué dans une transaction annulée : rien ne subsiste.
 -- ═════════════════════════════════════════════════════════════════════════════
 
@@ -31,10 +34,10 @@ BEGIN;
 -- Gérant O1 …e0, coach C1 …e1, membres M1 à M8 …01 à …08, gérants B0/B2 …e2/…e3.
 INSERT INTO auth.users (id)
 SELECT ('00000000-0000-4000-a9ee-0000000000' || s)::uuid
-  FROM unnest(ARRAY['e0', 'e1', 'e2', 'e3', '01', '02', '03', '04', '05', '06', '07', '08']) s;
+  FROM unnest(ARRAY['e0', 'e1', 'e2', 'e3', '01', '02', '03', '04', '05', '06', '07', '08', '09']) s;
 INSERT INTO public.profiles (id, email, username)
 SELECT ('00000000-0000-4000-a9ee-0000000000' || s)::uuid, 'ri-' || s || '@test.invalid', 'ri_' || s
-  FROM unnest(ARRAY['e0', 'e1', 'e2', 'e3', '01', '02', '03', '04', '05', '06', '07', '08']) s;
+  FROM unnest(ARRAY['e0', 'e1', 'e2', 'e3', '01', '02', '03', '04', '05', '06', '07', '08', '09']) s;
 INSERT INTO public.boxes (id, name, invite_code, owner_id, dunning_grace_days) VALUES
   ('00000000-0000-4000-b9ee-000000000001', 'Box délai 3', 'RIB1', '00000000-0000-4000-a9ee-0000000000e0', 3),
   ('00000000-0000-4000-b9ee-000000000000', 'Box délai 0', 'RIB0', '00000000-0000-4000-a9ee-0000000000e2', 0),
@@ -62,7 +65,8 @@ SELECT ('00000000-0000-4000-b9ee-00000000000' || b)::uuid, ('00000000-0000-4000-
     ('05', '1', 'member', true,  NULL,       NULL),
     ('06', '2', 'member', true,  'past_due', now() - interval '5 days'),
     ('07', '1', 'member', true,  'past_due', now() - interval '5 days'),
-    ('08', '1', 'member', true,  'past_due', now() - interval '1 day')
+    ('08', '1', 'member', true,  'past_due', now() - interval '1 day'),
+    ('09', '1', 'member', true,  'past_due', now() - interval '5 days')
   ) v(m, b, r, avec_plan, ss, depuis);
 
 -- Carnets de M7 (suspendu) et M8 (dans le délai).
@@ -70,13 +74,17 @@ INSERT INTO public.member_class_credits (id, member_id, box_id, credits_total, c
 SELECT ('00000000-0000-4000-c9ee-00000000000' || n)::uuid, ('00000000-0000-4000-a9ee-0000000000' || m)::uuid,
        '00000000-0000-4000-b9ee-000000000001', 10, 0, now() + interval '90 days', 'active'
   FROM (VALUES ('7', '07'), ('8', '08')) v(n, m);
+-- M9 : carnet épuisé.
+INSERT INTO public.member_class_credits (id, member_id, box_id, credits_total, credits_used, expires_at, status)
+VALUES ('00000000-0000-4000-c9ee-000000000009', '00000000-0000-4000-a9ee-000000000009',
+        '00000000-0000-4000-b9ee-000000000001', 10, 10, now() + interval '90 days', 'exhausted');
 
 -- Un créneau par cas, demain, capacité large.
 INSERT INTO public.class_schedules (id, box_id, title, scheduled_date, start_time, end_time, max_capacity)
 SELECT ('00000000-0000-4000-d9ee-0000000000' || lpad(n::text, 2, '0'))::uuid,
        ('00000000-0000-4000-b9ee-00000000000' || b)::uuid,
        'WOD ' || n, CURRENT_DATE + 1, '18:00', '19:00', 15
-  FROM (VALUES (1, '1'), (2, '1'), (3, '0'), (4, '1'), (5, '1'), (6, '2'), (7, '1'), (8, '1'), (9, '1'), (10, '1')) v(n, b);
+  FROM (VALUES (1, '1'), (2, '1'), (3, '0'), (4, '1'), (5, '1'), (6, '2'), (7, '1'), (8, '1'), (9, '1'), (10, '1'), (11, '1')) v(n, b);
 
 -- La réservation que M2 avait prise avant sa suspension (posée hors rôle client).
 INSERT INTO public.class_reservations (id, schedule_id, member_id, box_id, status)
@@ -174,7 +182,14 @@ BEGIN
     RAISE EXCEPTION 'R9 : M8 dans le délai : un crédit a été consommé à tort';
   END IF;
 
-  RAISE NOTICE 'réservations en impayé : R1 à R9 conformes';
+  -- R10 : M9 suspendu, carnet épuisé, inscrit par le staff : le refus vient du
+  -- carnet, avec le message de la définition courante (celle du lot essai).
+  v := pg_temp.reserver('e1', '09', 11, '1', 'confirmed');
+  IF v <> 'NO_CREDITS_LEFT: aucun crédit disponible pour cette box' THEN
+    RAISE EXCEPTION 'R10 : refus de carnet : « % » (message de la définition courante attendu)', v;
+  END IF;
+
+  RAISE NOTICE 'réservations en impayé : R1 à R10 conformes';
 END $t$;
 
 ROLLBACK;
