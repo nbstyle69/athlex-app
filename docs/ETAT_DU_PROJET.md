@@ -255,8 +255,9 @@ Supabase/Resend.
   le seul chemin serveur (`x-cron-secret`) ; demandé par un utilisateur connecté, même gérant ou
   co-membre, par `data.type`, `category` ou `pref_key`, l'appel est refusé en 403 `SERVER_ONLY_TYPE`.
   Les autres types ne changent pas.
-- `send-push`, `box_notification` et `elo_change` réservés au serveur aussi (sans migration, **non
-  déployée**) : même refus (`SERVER_ONLY_TYPE`, par `data.type`, `category` ou `pref_key`). Aucun code ne
+- `send-push`, `box_notification` et `elo_change` réservés au serveur aussi (sans migration, **déployée le
+  25/09/2026 à 23:24 UTC** ; retour arrière : sources déployées avant, identiques à master, dans
+  `C:\Users\NBS\athlex-retour-arriere-send-push\avant-380`) : même refus (`SERVER_ONLY_TYPE`, par `data.type`, `category` ou `pref_key`). Aucun code ne
   les envoyait en tant qu'utilisateur (les annonces passent par `send-box-notification`, `elo_change`
   n'a aucun émetteur). Restent ouverts, en attendant que leur envoi passe côté serveur :
   `tournament_closed`, `inter_competition_closed`, `inter_bracket_result` (backlog).
