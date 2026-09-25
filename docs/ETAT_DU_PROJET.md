@@ -275,9 +275,16 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   d'archivage, que le Manager renseignera à l'envoi (sa PR 3, clé serveur, **après** la programmation).
   Un déclencheur la remet à vide dès que la box n'est plus ni archivée ni en archivage programmé (quel
   que soit le chemin : `unschedule_box_archive`, réactivation par le Manager, écriture directe) et
-  refuse qu'un rôle client la modifie (`BOX_ARCHIVE_NOTIFIED_AT`). Relevé en passant, **non corrigé** :
-  `archive_scheduled_at` n'a aucune garde, un gérant peut effacer lui-même l'archivage programmé de sa
-  box depuis le navigateur (constaté en prod en transaction annulée), décision attendue.
+  refuse qu'un rôle client la modifie (`BOX_ARCHIVE_NOTIFIED_AT`). Relevé en passant : `archive_scheduled_at`
+  n'avait aucune garde (corrigé par `20270130`, ci-dessous).
+- Garde sur l'état d'archivage (migration `20270130`, **non appliquée en prod**) : un rôle client
+  (`authenticated`, `anon`), gérant et co-gérant compris, ne peut plus ni poser, ni effacer, ni modifier
+  `archive_scheduled_at`, `archive_scheduled_by`, `archived_at` et `archived_by`, quelle que soit la règle
+  RLS d'écriture (42501 `BOX_ARCHIVAGE_RESERVE`). Avant, un gérant pouvait effacer lui-même l'archivage
+  programmé de sa box depuis le navigateur. Le rôle se lit dans `current_user` (garde SECURITY INVOKER),
+  pour que `unschedule_box_archive` appelée par un super-admin avec son jeton passe. Restent autorisés :
+  la clé serveur (routes super-admin du Manager), `unschedule_box_archive`, l'archivage automatique.
+  Remplace la garde de #378 (`internal.garder_archivage_box`, `trg_boxes_garde_archivage`).
 - App (sans migration, s'appuie sur `20270125`, `20270127` et `20270128`, **à diffuser au prochain build**,
   lancé par Nab ; aucun build EAS dans ce lot) : inscription à un tournoi décidée par la base
   (`can_join_tournament`, donc aussi pendant le tournoi quand l'option le permet), pastille et indice
