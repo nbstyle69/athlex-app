@@ -41,8 +41,10 @@
 // d'envoi qui ne consulte aucune préférence.
 //
 // TYPES RÉSERVÉS AU SERVEUR (2026-09-26) — `membership_stopped` (arrêt d'un
-// abonnement par le gérant) n'est accepté que par le chemin serveur ; envoyé
-// par un utilisateur connecté, l'appel est refusé en 403 `SERVER_ONLY_TYPE`.
+// abonnement par le gérant), `box_notification` (annonce de la box) et
+// `elo_change` (variation d'ELO) ne sont acceptés que par le chemin serveur ;
+// envoyés par un utilisateur connecté, l'appel est refusé en 403
+// `SERVER_ONLY_TYPE`. Liste dans regles.ts.
 //
 // LANGUE (2026-09-26) — chaque jeton porte la langue du téléphone
 // (push_tokens.language, fr ou en). Un destinataire peut fournir `en` en plus
