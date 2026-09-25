@@ -978,7 +978,14 @@
       "gallery": "Gallery",
       "camera": "Camera",
       "dangerZone": "Danger zone",
-      "deleteWarning": "Deleting your account is permanent. All your data (scores, PR, messages, ELO, badges) will be deleted."
+      "deleteWarning": "Deleting your account is permanent. All your data (scores, PR, messages, ELO, badges) will be deleted.",
+      "subscription": {
+        "endsOn": "Your membership ends on {{date}}.",
+        "stoppedOn": "Your box stopped your membership on {{date}}.",
+        "endedOn": "Your membership ended on {{date}}.",
+        "pastDue": "Your last payment failed. Update your payment method before {{date}} to keep booking.",
+        "suspended": "Membership suspended: payment overdue."
+      }
     },
     "password": {
       "title": "Change password",
@@ -1076,7 +1083,11 @@
     "waitlistDowngrade": "The slot was full — you're on the waitlist. You'll be registered automatically if a spot opens up.",
     "slotFullTitle": "Slot full",
     "slotFullBody": "You'll be added to the waitlist (#{{pos}}). You'll be registered automatically if a spot opens up.",
-    "joinWaitlist": "Join the waitlist"
+    "joinWaitlist": "Join the waitlist",
+    "suspendedTitle": "Membership suspended",
+    "suspendedBodyStripe": "Your payment is overdue, so bookings are suspended. Update your payment method to restore them.",
+    "suspendedBodyContact": "Your payment is overdue, so bookings are suspended. Contact your box to restore them.",
+    "suspendedCta": "Update my payment"
   },
   "myReservations": {
     "title": "My bookings",
@@ -1689,7 +1700,24 @@
     "noScoreSubmitted": "No score submitted",
     "athleteScoresHere": "Athlete scores will appear here.",
     "reject": "Reject",
-    "validate": "Validate"
+    "validate": "Validate",
+    "badgeOpenDuring": "Registration open during the tournament",
+    "hintOpenDuring": "The tournament has started, but you can still register.",
+    "badgeArchived": "Archived",
+    "hintArchived": "This tournament is archived.",
+    "refusal": {
+      "archived": "This tournament is archived: registration is closed.",
+      "unknownTournament": "This tournament no longer exists.",
+      "outsideBox": "This tournament is for members of the box only.",
+      "category": "This tournament is for another category.",
+      "full": "The tournament is full.",
+      "closedStarted": "The tournament has started: registration is closed.",
+      "closedOver": "The tournament is over.",
+      "bracketDrawn": "The bracket has already been drawn: registration is closed.",
+      "divisionUnavailable": "The league has no division open for registration.",
+      "divisionFull": "The league's entry division is full.",
+      "generic": "Registration failed. Please try again later."
+    }
   },
   "tour": {
     "next": "Next",
@@ -1739,5 +1767,12 @@
         "description": "Book the classes at your gym."
       }
     ]
+  },
+  "boxAccess": {
+    "joinRefused": "This box is no longer accepting new members.",
+    "invalidCode": "Invalid code or box not found.",
+    "offerRefused": "This box is no longer accepting new subscriptions or purchases.",
+    "notFoundTitle": "Box not found",
+    "notFoundBody": "This box doesn't exist or is no longer listed in the directory."
   }
 }

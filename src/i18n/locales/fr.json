@@ -978,7 +978,14 @@
       "gallery": "Galerie",
       "camera": "Caméra",
       "dangerZone": "Zone dangereuse",
-      "deleteWarning": "La suppression de ton compte est définitive. Toutes tes données (scores, PR, messages, ELO, badges) seront supprimées."
+      "deleteWarning": "La suppression de ton compte est définitive. Toutes tes données (scores, PR, messages, ELO, badges) seront supprimées.",
+      "subscription": {
+        "endsOn": "Ton abonnement prend fin le {{date}}.",
+        "stoppedOn": "Ta box a arrêté ton abonnement le {{date}}.",
+        "endedOn": "Ton abonnement a pris fin le {{date}}.",
+        "pastDue": "Ton dernier paiement a échoué. Mets ton moyen de paiement à jour avant le {{date}} pour continuer à réserver.",
+        "suspended": "Abonnement suspendu : paiement en retard."
+      }
     },
     "password": {
       "title": "Changer le mot de passe",
@@ -1076,7 +1083,11 @@
     "waitlistDowngrade": "Le créneau était complet — tu es sur liste d'attente. Tu seras inscrit(e) automatiquement si une place se libère.",
     "slotFullTitle": "Créneau complet",
     "slotFullBody": "Tu vas être ajouté(e) en liste d'attente (#{{pos}}). Tu seras inscrit(e) automatiquement si une place se libère.",
-    "joinWaitlist": "Rejoindre la liste"
+    "joinWaitlist": "Rejoindre la liste",
+    "suspendedTitle": "Abonnement suspendu",
+    "suspendedBodyStripe": "Ton paiement est en retard : les réservations sont suspendues. Mets ton moyen de paiement à jour pour les rétablir.",
+    "suspendedBodyContact": "Ton paiement est en retard : les réservations sont suspendues. Contacte ta box pour les rétablir.",
+    "suspendedCta": "Mettre à jour mon paiement"
   },
   "myReservations": {
     "title": "Mes réservations",
@@ -1689,7 +1700,24 @@
     "noScoreSubmitted": "Aucun score soumis",
     "athleteScoresHere": "Les scores des athlètes apparaîtront ici.",
     "reject": "Rejeter",
-    "validate": "Valider"
+    "validate": "Valider",
+    "badgeOpenDuring": "Inscriptions ouvertes pendant le tournoi",
+    "hintOpenDuring": "Le tournoi a commencé, mais tu peux encore t'inscrire.",
+    "badgeArchived": "Archivé",
+    "hintArchived": "Ce tournoi est archivé.",
+    "refusal": {
+      "archived": "Ce tournoi est archivé : les inscriptions sont fermées.",
+      "unknownTournament": "Ce tournoi n'existe plus.",
+      "outsideBox": "Ce tournoi est réservé aux membres de la box.",
+      "category": "Ce tournoi est réservé à une autre catégorie.",
+      "full": "Le tournoi est complet.",
+      "closedStarted": "Le tournoi a démarré : les inscriptions sont closes.",
+      "closedOver": "Le tournoi est terminé.",
+      "bracketDrawn": "Le tableau est déjà tiré : les inscriptions sont closes.",
+      "divisionUnavailable": "La ligue n'a pas de division ouverte aux inscriptions.",
+      "divisionFull": "La division d'entrée de la ligue est complète.",
+      "generic": "L'inscription n'a pas abouti. Réessaie plus tard."
+    }
   },
   "tour": {
     "next": "Suivant",
@@ -1739,5 +1767,12 @@
         "description": "Tu pourras t'inscrire aux cours de ta salle."
       }
     ]
+  },
+  "boxAccess": {
+    "joinRefused": "Cette box n'accepte plus de nouveaux membres.",
+    "invalidCode": "Code invalide ou box introuvable.",
+    "offerRefused": "Cette box n'accepte plus de nouvel abonnement ni d'achat.",
+    "notFoundTitle": "Box introuvable",
+    "notFoundBody": "Cette box n'existe pas ou n'est plus visible dans l'annuaire."
   }
 }

@@ -14,6 +14,7 @@ module.exports = {
     '^@react-native-async-storage/async-storage$': '<rootDir>/src/__mocks__/async-storage.js',
     '^@sentry/react-native$': '<rootDir>/src/__mocks__/sentry-rn.js',
     '^expo-haptics$': '<rootDir>/src/__mocks__/expo-haptics.js',
+    '^expo-localization$': '<rootDir>/src/__mocks__/expo-localization.js',
   },
   collectCoverageFrom: [
     'src/utils/**/*.ts',

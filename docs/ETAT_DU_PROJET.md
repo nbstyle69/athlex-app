@@ -262,6 +262,17 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   (tâche `box_archive_sweep`, toutes les heures, journal `box_auto_archive_log`) ; annulation
   (`unschedule_box_archive`) et alerte des 2 jours (`box_archive_overdue`) pour le super-admin. Aligne le
   dépôt sur `box_subscriptions.billing_source`, présent en prod sans migration.
+- App (sans migration, s'appuie sur `20270125`, `20270127` et `20270128`, **à diffuser au prochain build**,
+  lancé par Nab ; aucun build EAS dans ce lot) : inscription à un tournoi décidée par la base
+  (`can_join_tournament`, donc aussi pendant le tournoi quand l'option le permet), pastille et indice
+  « inscriptions ouvertes pendant le tournoi », refus traduits par leur code (FR/EN), « Se désinscrire »
+  réservé aux tournois ouverts ; tournois archivés hors des listes (accueil, compétition, back-office,
+  admin), gardés dans l'historique ELO, état « Archivé » sur le détail ; refus traduits pour rejoindre une
+  box fermée (un seul texte) et pour l'offre gratuite, catalogue lu par `list_programming_catalog` ;
+  « Box introuvable » traduit avec retour dans l'annuaire ; S5 : bandeau « Abonnement suspendu » sur les
+  réservations (lien vers la page de paiement si abonnement Stripe), état de l'abonnement dans le profil,
+  notification `membership_stopped` qui ouvre le profil ; la langue du téléphone (`fr`, sinon `en`) est
+  enregistrée avec le jeton de notification, et revue au retour au premier plan.
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).

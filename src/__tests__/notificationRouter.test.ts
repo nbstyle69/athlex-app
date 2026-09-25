@@ -110,6 +110,17 @@ describe('routeNotification', () => {
     });
   });
 
+  describe('abonnement arrêté → profil', () => {
+    it('routes "membership_stopped" to Home > Profile, où l\'état de l\'abonnement est affiché', () => {
+      routeNotification({ type: 'membership_stopped', box_id: 'b1' });
+      expect(mockNavigate).toHaveBeenCalledWith({
+        name: 'Home',
+        params: { screen: 'Profile', params: undefined },
+      });
+      expect(mockDispatch).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('unknown type', () => {
     it('does not navigate for unknown notification types', () => {
       routeNotification({ type: 'some_unknown_type' });

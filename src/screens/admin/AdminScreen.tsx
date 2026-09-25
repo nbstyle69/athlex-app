@@ -155,7 +155,7 @@ export default function AdminScreen() {
   const loadStats = useCallback(async () => {
     try {
       const [{ count: tournCount }, { count: dailyCount }] = await Promise.all([
-        supabase.from('tournaments').select('id', { count: 'exact', head: true }).in('status', ['open', 'active']),
+        supabase.from('tournaments').select('id', { count: 'exact', head: true }).in('status', ['open', 'active']).is('archived_at', null),
         supabase.from('daily_tournaments').select('id', { count: 'exact', head: true }).in('status', ['open', 'active']),
       ]);
       setOpenTournaments(tournCount ?? 0);

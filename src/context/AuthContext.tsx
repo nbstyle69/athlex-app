@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { BOX_COLUMNS, BOX_MEMBERSHIP_COLUMNS } from '../lib/boxColumns';
 import { readRows } from '../lib/db';
 import { User, Box, BoxMemberRole, BoxSubscription } from '../types';
 import { Session } from '@supabase/supabase-js';
-import { registerForPushNotifications, savePushToken, removePushToken, scheduleDailyReminder, scheduleScoreReminder, getNotificationPrefs, clearCachedPrefs, cancelAllLocalReminders } from '../services/notifications';
+import { registerForPushNotifications, savePushToken, refreshPushTokenLanguage, removePushToken, scheduleDailyReminder, scheduleScoreReminder, getNotificationPrefs, clearCachedPrefs, cancelAllLocalReminders } from '../services/notifications';
 import { awardLevelBadge } from '../services/gamification';
 import { setUserContext, clearUserContext, captureError } from '../lib/sentry';
 import { identifyUser, resetUser, forgetUser, trackLogin, trackSignUp, trackBoxJoin, trackDeleteAccount } from '../lib/analytics';
@@ -13,6 +14,8 @@ import { isPurgedAtSignOut } from '../lib/storageKeys';
 import { runSignOutSequence } from '../lib/signOutSequence';
 import { ONBOARDING_KEY } from '../lib/onboardingStatus';
 import { EMAIL_CONFIRMED_URL, UPDATE_PASSWORD_URL } from '../lib/urls';
+import { boxClosedRefusal } from '../utils/refusals';
+import i18n from '../i18n';
 
 const BOX_SKIPPED_KEY = '@athlex:boxSkipped';
 const ACTIVE_BOX_KEY = '@athlex:activeBoxId';
@@ -99,7 +102,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       else { setUser(null); setCurrentBox(null); setBoxRole(null); setProfileError(null); setLoading(false); }
     });
 
-    return () => { subscription.unsubscribe(); };
+    const appState = AppState.addEventListener('change', state => {
+      if (state === 'active') {
+        refreshPushTokenLanguage().catch(e => captureError(e, { action: 'refreshPushTokenLanguage' }));
+      }
+    });
+
+    return () => { subscription.unsubscribe(); appState.remove(); };
   }, []);
 
   // Realtime ban detection — runs once the user is known
@@ -384,7 +393,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       p_invite_code: inviteCode,
     });
     if (joinErr || !boxId) {
-      return { error: joinErr?.message ?? 'Code invalide ou box introuvable' };
+      const refusal = boxClosedRefusal(joinErr?.message, 'join');
+      if (refusal) return { error: refusal };
+      if (!joinErr || joinErr.message === 'Code invalide ou box introuvable') {
+        return { error: i18n.t('boxAccess.invalidCode') };
+      }
+      return { error: joinErr.message };
     }
 
     const box = await readRows(

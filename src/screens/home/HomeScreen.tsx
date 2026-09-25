@@ -133,6 +133,7 @@ export default function HomeScreen() {
               .from('tournaments')
               .select('id, name, description, level, status, start_date, end_date, max_participants, prize, tournament_participants(count)')
               .in('status', ['open', 'active'])
+              .is('archived_at', null)
               .eq('box_id', boxFilter)
               .order('start_date')
               .limit(6),
