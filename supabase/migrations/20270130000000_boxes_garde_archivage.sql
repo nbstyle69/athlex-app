@@ -1,7 +1,20 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Garde sur l'état d'archivage d'une box (faille relevée dans #378)
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 25/09/2026 à 23:14 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-25/athlex-prod-public-internal-20260925T231414Z.dump,
+-- sha256 c21827bd2684ab02af8a4593908f7a093886fe98b1bd36cdf1a5c243412fb8bd vérifié
+-- après aller-retour, 133 TABLE DATA, 434 ACL, 345 POLICY ; précontrôles : garde
+-- de #378 au md5 5b8de3a3030511521b8816fe0793e24b et son déclencheur,
+-- unschedule_box_archive et internal.archiver_boxes_echues identiques au dépôt,
+-- règles de boxes identiques au rejeu à search_path égal, 3 boxes dont aucune
+-- archivée ni programmée ; vérifications : garde identique au rejeu octet pour
+-- octet (md5 98b27a6b9b3d7816e4fc9a4bff7f32be, SECURITY INVOKER, EXECUTE pour
+-- son propriétaire seulement), déclencheur conforme, l'ancien retiré ; boxes,
+-- ses règles et ses droits identiques avant/après ; audit des droits en prod
+-- 29/29 ; tests réels en transaction annulée (R1, R3 à R6, et la reproduction
+-- de la faille, refusée en 42501 BOX_ARCHIVAGE_RESERVE), sans trace.)
 --
 -- La faille : `authenticated` a UPDATE sur toute la table `boxes`, et les
 -- règles d'écriture (`boxes_owner_write`, `box_owner_full`,

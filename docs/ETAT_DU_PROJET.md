@@ -277,7 +277,8 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   que soit le chemin : `unschedule_box_archive`, réactivation par le Manager, écriture directe) et
   refuse qu'un rôle client la modifie (`BOX_ARCHIVE_NOTIFIED_AT`). Relevé en passant : `archive_scheduled_at`
   n'avait aucune garde (corrigé par `20270130`, ci-dessous).
-- Garde sur l'état d'archivage (migration `20270130`, **non appliquée en prod**) : un rôle client
+- Garde sur l'état d'archivage (migration `20270130`, **appliquée en prod le 25/09/2026 à 23:14 UTC**, dump
+  `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T231414Z.dump` ; audit 29/29) : un rôle client
   (`authenticated`, `anon`), gérant et co-gérant compris, ne peut plus ni poser, ni effacer, ni modifier
   `archive_scheduled_at`, `archive_scheduled_by`, `archived_at` et `archived_by`, quelle que soit la règle
   RLS d'écriture (42501 `BOX_ARCHIVAGE_RESERVE`). Avant, un gérant pouvait effacer lui-même l'archivage
