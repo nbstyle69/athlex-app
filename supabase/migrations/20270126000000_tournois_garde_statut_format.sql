@@ -1,7 +1,17 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Tournois : le format ne change jamais, le statut n'avance que vers l'avant
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 25/09/2026 à 18:39 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-25/athlex-prod-public-internal-20260925T183843Z.dump,
+-- sha256 7b00b64b5446d55916f2ea1c00037c09c6e47ad15c4082d0368a1e0ff364e007 vérifié
+-- après aller-retour, 132 TABLE DATA, 424 ACL, 343 POLICY ; précontrôles :
+-- finalize_tournament_elo au md5 c0ececa5127e (celui dont part ce fichier, sans
+-- CR), cron et déclencheur de WOD de #372, seul déclencheur de tournaments
+-- celui de #371, garde absente ; vérifications : md5 de tournaments identique
+-- avant/après, définitions, droits et déclencheur identiques au fichier ; audit
+-- des droits en prod 29/29 ; passage du cron de 18:45 UTC sans erreur ; tests
+-- réels en transaction annulée.)
 --
 -- Décision du 25/09/2026. Le Manager (#387, #388) empêche déjà son formulaire
 -- de changer le format et de faire reculer le statut ; la même garde vit
