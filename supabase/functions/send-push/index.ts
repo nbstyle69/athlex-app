@@ -19,7 +19,7 @@
 // inconnu ni toute la base). Les 15 types de notifs de l'app restent couverts.
 //
 // PRÉFÉRENCES (2026-08-16) — la responsabilité est INVERSÉE : le mapping
-// « type de notification → clé de préférence » vit ICI, pas chez l'appelant.
+// « type de notification → clé de préférence » vit ICI (regles.ts), pas chez l'appelant.
 // Avant, le filtrage dépendait d'un `pref_key` que le client fournissait ou
 // non : 7 des 13 familles n'en passaient aucune et partaient donc malgré les
 // réglages, et le défaut était dans le sens dangereux (envoyer). Désormais la
@@ -40,8 +40,15 @@
 // devraient refaire leur propre fan-out Expo — c'est-à-dire re-créer un chemin
 // d'envoi qui ne consulte aucune préférence.
 //
+// LANGUE (2026-09-26) — chaque jeton porte la langue du téléphone
+// (push_tokens.language, fr ou en). Un destinataire peut fournir `en` en plus
+// de `title` / `body` (alors la version française) : chaque jeton reçoit sa
+// langue, un jeton sans langue le français. Sans `en`, la version unique part
+// à tous les jetons, comme avant.
+//
 // Body: {
-//   recipients: Array<{ user_id: string; title: string; body: string; data?: object }>,
+//   recipients: Array<{ user_id: string; title: string; body: string;
+//                       en?: { title: string; body: string }; data?: object }>,
 //   category?: string,   // ou pref_key (déprécié), ou data.type des recipients
 // }
 // Returns: { sent, recipients, authorized, dropped, category, pref_disabled }
@@ -49,6 +56,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { cleSecrete } from '../_shared/cle-secrete.ts';
+import { buildMessages, resolvePrefKey, type Recipient } from './regles.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,67 +64,9 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-// Mapping unique : type de notification → colonne de notification_preferences.
-// Toute famille de notification doit figurer ici. Un type absent est refusé,
-// pas envoyé : ajouter une notification force à décider quel réglage la
-// gouverne (c'est précisément l'oubli qui a produit le bug).
-const PREF_BY_TYPE: Record<string, string> = {
-  // Social
-  friend_request: 'friend_requests',
-  friend_accepted: 'friend_requests',
-  new_message: 'group_messages',
-  score_comment: 'score_comments',
-  score_reaction: 'score_reactions',
-  score_overtaken: 'score_updates',
-  // Entraînement
-  wod_published: 'new_wod',
-  // Compétition
-  tournament_closed: 'tournament_updates',
-  tournament_started: 'tournament_updates',
-  tournament_wod_scheduled: 'tournament_updates',
-  tournament_wod_open: 'tournament_updates',
-  tournament_submission_reminder: 'tournament_updates',
-  inter_wod_revealed: 'tournament_updates',
-  inter_bracket_match: 'tournament_updates',
-  inter_bracket_result: 'tournament_updates',
-  inter_pool_match: 'tournament_updates',
-  inter_competition_closed: 'elo_updates',
-  elo_change: 'elo_updates',
-  // Annonces de la box
-  box_notification: 'box_announcements',
-};
-
-// Les clés de préférence sont aussi acceptées comme catégorie : les versions
-// d'app déjà installées envoient `pref_key`, il ne s'agit pas de les casser.
-const PREF_KEYS = new Set<string>(Object.values(PREF_BY_TYPE));
-
-/** Colonne de préférence gouvernant cet appel, ou null si non résoluble. */
-function resolvePrefKey(
-  category: unknown, legacyPrefKey: unknown, types: string[],
-): string | null {
-  for (const raw of [category, legacyPrefKey]) {
-    if (typeof raw === 'string' && raw) {
-      if (PREF_KEYS.has(raw)) return raw;
-      if (PREF_BY_TYPE[raw]) return PREF_BY_TYPE[raw];
-      return null; // catégorie fournie mais inconnue → refus, pas de repli
-    }
-  }
-  const keys = new Set(types.map((t) => PREF_BY_TYPE[t]).filter(Boolean));
-  // Un lot mélangeant deux familles n'a pas de réglage unique : refusé plutôt
-  // que d'en choisir un au hasard.
-  return keys.size === 1 ? [...keys][0] : null;
-}
-
 // Plafond dur : un fan-out légitime (grande box, groupe) reste sous cette borne ;
 // au-delà = abus. Ne coupe aucun envoi réel connu.
 const MAX_RECIPIENTS = 1000;
-
-interface Recipient {
-  user_id: string;
-  title: string;
-  body: string;
-  data?: Record<string, unknown>;
-}
 
 // deno-lint-ignore no-explicit-any
 type Admin = any;
@@ -330,7 +280,7 @@ serve(async (req: Request) => {
     }
 
     const { data: tokens } = await admin
-      .from('push_tokens').select('token, user_id').in('user_id', userIds);
+      .from('push_tokens').select('token, user_id, language').in('user_id', userIds);
     if (!tokens || tokens.length === 0) {
       return json({
         sent: 0, recipients: userIds.length, authorized: allowed.size,
@@ -338,12 +288,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const messages = tokens
-      .filter((t: any) => t.token && byUser.has(t.user_id))
-      .map((t: any) => {
-        const r = byUser.get(t.user_id)!;
-        return { to: t.token, sound: 'default', title: r.title, body: r.body ?? '', data: r.data ?? {} };
-      });
+    const messages = buildMessages(tokens, byUser);
     if (messages.length === 0) {
       return json({
         sent: 0, recipients: userIds.length, authorized: allowed.size,
