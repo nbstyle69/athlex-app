@@ -1,10 +1,19 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Colonnes de facturation de box_members réservées au serveur (lot sécurité, PR H)
 --
--- Appliquée en prod : NON. À appliquer seulement après le GO de Nab, une fois
--- déployé le Manager qui fait passer `assignPlan` (formule d'un membre) et le
--- débannissement côté serveur : aujourd'hui, `assignPlan` écrit `plan_id`
--- depuis le navigateur et serait refusé.
+-- Appliquée en prod : OUI, le 26/09/2026 à 11:33 UTC, avec PGCLIENTENCODING=UTF8,
+-- sur GO de Nab après le déploiement du Manager #397 (route `members/assign-plan`
+-- en prod : 401 sans authentification, 405 en GET). Dump des schémas public et
+-- internal avec droits db-dumps/2026-09-26/athlex-prod-public-internal-20260926T113223Z.dump,
+-- sha256 93c8caf8f9903620fdfdc668132267e8bc0eecfcc52be51eae43f19f6f56dacf vérifié
+-- après aller-retour, 133 TABLE DATA, 434 ACL, 345 POLICY ; précontrôles (trois
+-- passages identiques) : colonnes, droits, règles et déclencheurs de box_members
+-- identiques au rejeu, reactivate_box_member au md5 dont part ce fichier, 178
+-- adhésions dont 4 avec abonnement Stripe, aucun banni, données de box_members
+-- à la même empreinte que le 25/09 ; vérifications : garde, déclencheur et
+-- reactivate_box_member identiques au rejeu octet pour octet, données, droits
+-- et règles de box_members inchangés ; audit des droits en prod 29/29 ; tests
+-- réels en transaction annulée (F1, F3 à F7 ; F2 en CI seulement), sans trace.
 --
 -- La faille (relevé du 26/09/2026, confirmé en prod) : `authenticated` a UPDATE
 -- sur les 24 colonnes de `box_members`, et `owner_manage_members` /

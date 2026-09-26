@@ -273,9 +273,9 @@ Supabase/Resend.
   utilisateur connecté ne l'envoie (par type, `category` ou `pref_key`) que s'il gère (propriétaire, rôle
   `owner` ou `coach` actif) une box qui contient tous les destinataires ; sinon 403 `STAFF_ONLY_CATEGORY`.
   Le chemin serveur passe. `tournament_updates` et `elo_updates` restent au backlog (lot tournois).
-- Facturation de `box_members` réservée au serveur (migration `20270132`, **prête, non appliquée : attend le
-  GO de Nab**, après le déploiement du Manager qui fait passer `assignPlan` et le débannissement côté
-  serveur) : un rôle client n'écrit plus les 18 colonnes de facturation (`MEMBRE_FACTURATION_RESERVEE`) ;
+- Facturation de `box_members` réservée au serveur (migration `20270132`, **appliquée en prod le 26/09/2026
+  à 11:33 UTC**, après le Manager #397 qui fait passer `assignPlan` et le débannissement côté serveur ;
+  dump `db-dumps/2026-09-26/athlex-prod-public-internal-20260926T113223Z.dump` ; audit 29/29) : un rôle client n'écrit plus les 18 colonnes de facturation (`MEMBRE_FACTURATION_RESERVEE`) ;
   il ne bannit plus un membre qui a un abonnement Stripe en cours (`MEMBRE_ABONNEMENT_EN_COURS`, le
   Manager bannit par sa route, qui arrête l'abonnement) ; `reactivate_box_member` refuse un membre dont
   l'abonnement Stripe court encore (`REACTIVATION_ABONNEMENT_EN_COURS`). Ni `status` (hors ce cas) ni
