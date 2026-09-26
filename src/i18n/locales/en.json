@@ -1615,6 +1615,19 @@
       "Round of 64"
     ],
     "stageN": "Stage {{n}}",
+    "winnersStages": [
+      "Winners' final",
+      "Winners' semi-final",
+      "Winners' quarter-final",
+      "Winners' round of 16",
+      "Winners' round of 32",
+      "Winners' round of 64"
+    ],
+    "winnersStageN": "{{n}} rounds before the winners' final",
+    "losersRound": "Losers' round {{n}}",
+    "stageGrandFinal": "Grand final",
+    "stageGrandFinalReset": "Grand final — decider",
+    "stageThirdPlace": "Third-place match",
     "registerError": "Registration error",
     "registerImpossible": "Registration failed",
     "videoRequiredTitle": "Video proof required",

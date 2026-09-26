@@ -342,11 +342,14 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   prévu pour son étape, calculée par la base seule (tirage, tour suivant, finales, grande finale créée à
   la main) ; la petite finale sans WOD prévu reçoit celui de la finale, le match décisif sans WOD prévu
   reste sans WOD ; `tournament_bracket_stages(tournoi)` rend les étapes à proposer et leurs libellés FR
-  et EN. Aucun match existant modifié. Reste : la PR Manager (formulaire « Étape du tournoi », lecture du
-  WOD du match), et **la prochaine PR app** : `TournamentBracketView` affiche le WOD du match
-  (`wod_id`) au lieu de recalculer l'étape (calcul aligné sur le Manager pour les anciens matchs), et
-  `TournamentScreen` affiche l'étape d'un WOD avec son tableau (`bracket_board`), libellés FR et EN de
-  `tournament_bracket_stages`.
+  et EN. Aucun match existant modifié. Manager branché (AthleX-Manager #403).
+- App, WOD par étape (sans migration, **à diffuser au prochain build**) : `TournamentBracketView` affiche
+  le WOD posé sur les matchs (`wod_id`), aussi dans le tableau des perdants, la grande finale, le match
+  décisif et la petite finale ; l'ancien calcul par étape ne sert qu'aux anciens matchs des gagnants
+  sans WOD, compté sur les participants du tour 1 comme le Manager. `TournamentScreen` dit l'étape d'un
+  WOD avec son tableau (`bracket_board`) : libellés de `tournament_bracket_stages`, recopiés dans les
+  traductions parce que la fonction est réservée au gérant, et tenus égaux à ceux de la migration par
+  `bracketWods.test.ts`. Élimination simple : libellés inchangés.
 - App, classement de la compétition classique (sans migration, à livrer après la migration `20270116`) :
   l'app lit le classement calculé par la base (`tournament_classique_standings`,
   `tournament_classique_wod_ranks`) et n'écrit plus `tournament_participants.score` ; plus de bouton

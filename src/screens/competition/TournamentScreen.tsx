@@ -38,6 +38,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import i18n from '../../i18n';
 import { tournamentRefusal } from '../../utils/refusals';
+import { libelleEtape } from '../../utils/bracketWods';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'Tournament'>;
 type Route = RouteProp<CompetitionStackParamList, 'Tournament'>;
@@ -60,10 +61,6 @@ function wodStatusLabel(status: string, t: TFunction) {
   if (status === 'active')  return t('tournament.statusActive');
   if (status === 'closed')  return t('tournament.statusClosed');
   return t('tournament.statusUpcoming');
-}
-function bracketStageLabel(stage: number, t: TFunction) {
-  const labels = t('tournament.bracketStages', { returnObjects: true }) as string[];
-  return labels[stage] ?? t('tournament.stageN', { n: stage });
 }
 
 export default function TournamentScreen() {
@@ -658,11 +655,16 @@ export default function TournamentScreen() {
                   <View style={S.wodCardHeader}>
                     <View style={S.wodIndexBadge}><Text style={S.wodIndexText}>WOD {i + 1}</Text></View>
                     <View style={S.wodTypeBadge}><Text style={S.wodTypeText}>{wod.type}</Text></View>
-                    {(tournament.format === 'bracket' || tournament.format === 'swiss') && (wod as any).bracket_stage != null && (
-                      <View style={S.wodStageBadge}>
-                        <Text style={S.wodStageText}>{bracketStageLabel((wod as any).bracket_stage, t)}</Text>
-                      </View>
-                    )}
+                    {(() => {
+                      // Étape du WOD selon son tableau (#386) ; libellés de tournament_bracket_stages.
+                      const etape = (tournament.format === 'bracket' || tournament.format === 'swiss')
+                        ? libelleEtape(wod as any, tournament.format === 'swiss', t) : null;
+                      return etape ? (
+                        <View style={S.wodStageBadge}>
+                          <Text style={S.wodStageText}>{etape}</Text>
+                        </View>
+                      ) : null;
+                    })()}
                     {tournament.format === 'league_div' && (() => {
                       const d = (wod as any).division_id ? divisions.find((x: any) => x.id === (wod as any).division_id) : null;
                       return (
