@@ -13,6 +13,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { LevelColors } from '../../theme/designTokens';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { memberActionRefusal } from '../../utils/refusals';
 
 interface MemberRow {
   id: string;
@@ -189,11 +190,11 @@ export default function BOMembersScreen({ navigation }: any) {
               const { error } = await supabase.rpc('reactivate_box_member', {
                 p_box_id: member.box_id, p_member_id: member.member_id,
               });
-              if (error) { captureError(error, { screen: 'BOMembers', action: 'reactivate' }); Alert.alert('Erreur', error.message); return; }
+              if (error) { captureError(error, { screen: 'BOMembers', action: 'reactivate' }); Alert.alert(t('common.error'), memberActionRefusal(error.message)); return; }
             } else {
               const { error } = await supabase.from('box_members')
                 .update({ status: newStatus }).eq('id', member.id);
-              if (error) { captureError(error, { screen: 'BOMembers', action: 'ban' }); Alert.alert('Erreur', error.message); return; }
+              if (error) { captureError(error, { screen: 'BOMembers', action: 'ban' }); Alert.alert(t('common.error'), memberActionRefusal(error.message)); return; }
             }
             load();
           },

@@ -322,6 +322,9 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   réservations (lien vers la page de paiement si abonnement Stripe), état de l'abonnement dans le profil,
   notification `membership_stopped` qui ouvre le profil ; la langue du téléphone (`fr`, sinon `en`) est
   enregistrée avec le jeton de notification, et revue au retour au premier plan.
+- App, refus du bannissement et de la réactivation traduits (sans migration, **à diffuser au prochain build**) :
+  `BOMembersScreen` traduit par leur code `MEMBRE_ABONNEMENT_EN_COURS` et `REACTIVATION_ABONNEMENT_EN_COURS`
+  (migration `20270132`), et affiche le texte générique pour tout autre refus, jamais le message brut.
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).

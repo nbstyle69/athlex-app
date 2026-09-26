@@ -378,6 +378,10 @@
         "endsOn": "ends on {{date}}",
         "resumesOn": "resumes on {{date}}",
         "commitmentUntil": "committed until {{date}}"
+      },
+      "refusal": {
+        "banActiveMembership": "This member has an active membership: ban them from the Manager, which also stops their membership.",
+        "reactivateActiveMembership": "This member still has an active membership and can't be reactivated yet."
       }
     },
     "gamification": {
