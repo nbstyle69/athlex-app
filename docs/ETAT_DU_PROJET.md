@@ -215,6 +215,15 @@ Supabase/Resend.
   le retour à `active` rétablit tout ; `consume_credit_on_reservation` ne tient plus un suspendu pour
   abonné valide (il bascule sur ses crédits). Écrans app à adapter listés dans la PR (lot app séparé).
 
+**Lot sécurité : l'argent relève du gérant, pas du coach** (relevé du 26/09/2026).
+- Migration `20270131` (**appliquée en prod le 26/09/2026 à 10:33 UTC**, dump
+  `db-dumps/2026-09-26/athlex-prod-public-internal-20260926T103329Z.dump` ; audit 29/29) : demandes de résiliation lues et traitées par
+  `is_box_owner_admin` seulement (plus par le coach) ; abonnements Marketplace : lecture côté abonné par le
+  staff de la box abonnée (coach compris, couleurs de `/wods`), côté éditeur (qui achète) par
+  `is_box_owner_admin` de l'éditrice ; écriture et `subscribe_free_programming` par `is_box_owner_admin` ;
+  `get_box_dunning` lève 42501 pour un non-gérant au lieu d'une liste vide (le Manager adaptera
+  `UnpaidPanel`). Le coach écrit toujours le contenu des offres (`box_programming_wods_write` inchangée).
+
 **Arrêt des abonnements par le gérant** (chantier en plusieurs lots ; diagnostic côté Manager).
 - S1, journal des arrêts (migration `20270120`, **appliquée en prod le 24/09/2026 à 21:28 UTC**,
   dump `db-dumps/2026-09-24/athlex-prod-public-internal-20260924T212721Z.dump` ; audit relancé
