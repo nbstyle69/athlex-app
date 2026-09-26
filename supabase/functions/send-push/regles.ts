@@ -66,6 +66,25 @@ export const SERVER_ONLY_TYPES = new Set<string>(['membership_stopped', 'box_not
 // ou sans type, qu'elle soit demandée par category, pref_key ou déduite du type.
 export const SERVER_ONLY_CATEGORIES = new Set<string>(['box_announcements']);
 
+// Catégories réservées au staff : un utilisateur connecté ne les envoie que
+// s'il gère (gérant, co-gérant ou coach) une box qui contient TOUS les
+// destinataires. « Nouveau WOD » annonce une publication de la box.
+export const STAFF_ONLY_CATEGORIES = new Set<string>(['new_wod']);
+
+/**
+ * Une box gérée par l'appelant qui contient tous les destinataires, ou null.
+ * `members` : paires (box, membre actif ou propriétaire) des box gérées.
+ */
+export function boxCoveringAll(
+  managedBoxIds: string[], members: { box_id: string; member_id: string }[], recipients: string[],
+): string | null {
+  for (const box of new Set(managedBoxIds)) {
+    const inBox = new Set(members.filter((m) => m.box_id === box).map((m) => m.member_id));
+    if (recipients.every((r) => inBox.has(r))) return box;
+  }
+  return null;
+}
+
 /** Le type réservé au serveur que demande cet appel (par data.type, category ou pref_key), ou null. */
 export function serverOnlyType(
   category: unknown, legacyPrefKey: unknown, types: string[],
