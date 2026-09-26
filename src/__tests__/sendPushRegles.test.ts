@@ -71,11 +71,20 @@ describe('send-push : types réservés au serveur', () => {
     expect(serverOnlyType(undefined, 'membership_stopped', [])).toBe('membership_stopped');
   });
 
-  it('les autres types, et la seule clé de préférence des annonces, ne sont pas réservés', () => {
-    for (const t of ['wod_published', 'new_message', 'friend_request', 'tournament_closed', 'box_notification', 'elo_change']) {
+  it.each(['box_notification', 'elo_change'])('%s est réservé aussi, aux trois endroits', (t) => {
+    expect(serverOnlyType(undefined, undefined, [t])).toBe(t);
+    expect(serverOnlyType(undefined, undefined, ['new_message', t])).toBe(t);
+    expect(serverOnlyType(t, undefined, [])).toBe(t);
+    expect(serverOnlyType(undefined, t, [])).toBe(t);
+  });
+
+  it('les autres types, et les clés de préférence, ne sont pas réservés', () => {
+    for (const t of ['wod_published', 'new_message', 'friend_request', 'score_overtaken', 'tournament_closed',
+      'tournament_started', 'inter_competition_closed', 'inter_bracket_result', 'inter_bracket_match']) {
       expect(serverOnlyType(undefined, undefined, [t])).toBeNull();
     }
-    expect(serverOnlyType('box_announcements', undefined, ['box_notification'])).toBeNull();
+    expect(serverOnlyType('box_announcements', undefined, [])).toBeNull();
+    expect(serverOnlyType(undefined, 'elo_updates', [])).toBeNull();
     expect(serverOnlyType(undefined, undefined, [])).toBeNull();
   });
 });

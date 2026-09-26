@@ -56,8 +56,10 @@ export function resolvePrefKey(
 
 // Types qui annoncent un fait que seul le serveur établit : acceptés par le
 // seul chemin serveur (`x-cron-secret`), jamais d'un utilisateur connecté,
-// même gérant ou co-membre (il se ferait passer pour la box).
-export const SERVER_ONLY_TYPES = new Set<string>(['membership_stopped']);
+// même gérant ou co-membre (il se ferait passer pour la box). Aucun n'est
+// envoyé par un utilisateur : les annonces passent par send-box-notification,
+// et elo_change n'a aucun émetteur.
+export const SERVER_ONLY_TYPES = new Set<string>(['membership_stopped', 'box_notification', 'elo_change']);
 
 /** Le type réservé au serveur que demande cet appel (par data.type, category ou pref_key), ou null. */
 export function serverOnlyType(
