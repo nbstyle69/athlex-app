@@ -1,7 +1,18 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- L'argent relève du gérant, pas du coach : résiliations, Marketplace, impayés
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 26/09/2026 à 10:33 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-26/athlex-prod-public-internal-20260926T103329Z.dump,
+-- sha256 cddf2efcae1a376ca348ab20cd7dc80a0ebc1386479a6407429fe44b8e9d0e90 vérifié
+-- après aller-retour, 133 TABLE DATA, 434 ACL, 345 POLICY ; précontrôles : les
+-- quatre règles et les deux fonctions aux définitions dont part ce fichier,
+-- is_box_owner_admin, manages_box et is_box_staff identiques au dépôt, 0 demande
+-- de résiliation, 2 abonnements Marketplace, 0 impayé ; vérifications : règles
+-- (rôles, commande, USING, WITH CHECK) et fonctions identiques au rejeu, droits,
+-- déclencheurs, autres règles et données inchangés ; audit des droits en prod
+-- 29/29 ; tests réels en transaction annulée (R1, R2, A1 à A5, D1 ; R2b en CI
+-- seulement), sans trace.)
 --
 -- Règle produit (26/09/2026) : l'argent relève du gérant et du co-gérant
 -- (`is_box_owner_admin`), jamais du coach. Relevé en prod le 26/09 : la base

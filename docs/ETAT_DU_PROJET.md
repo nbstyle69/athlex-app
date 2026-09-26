@@ -216,7 +216,8 @@ Supabase/Resend.
   abonné valide (il bascule sur ses crédits). Écrans app à adapter listés dans la PR (lot app séparé).
 
 **Lot sécurité : l'argent relève du gérant, pas du coach** (relevé du 26/09/2026).
-- Migration `20270131` (**non appliquée en prod**) : demandes de résiliation lues et traitées par
+- Migration `20270131` (**appliquée en prod le 26/09/2026 à 10:33 UTC**, dump
+  `db-dumps/2026-09-26/athlex-prod-public-internal-20260926T103329Z.dump` ; audit 29/29) : demandes de résiliation lues et traitées par
   `is_box_owner_admin` seulement (plus par le coach) ; abonnements Marketplace : lecture côté abonné par le
   staff de la box abonnée (coach compris, couleurs de `/wods`), côté éditeur (qui achète) par
   `is_box_owner_admin` de l'éditrice ; écriture et `subscribe_free_programming` par `is_box_owner_admin` ;
