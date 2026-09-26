@@ -1,7 +1,7 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- WOD de tableau préparés à l'avance : chaque match reçoit le WOD de son étape
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 26/09/2026 (dump db-dumps/2026-09-26/athlex-prod-public-internal-20260926T150300Z.dump).
 --
 -- Besoin (validé le 26/09/2026) : un gérant prépare avant le début d'un tournoi
 -- à tableau le WOD de chaque étape — tours du tableau des gagnants, tours du

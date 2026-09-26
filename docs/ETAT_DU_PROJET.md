@@ -335,7 +335,7 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
-- WOD de tableau préparés à l'avance (migration `20270133`, **non appliquée en prod**) :
+- WOD de tableau préparés à l'avance (migration `20270133`, appliquée en prod le 26/09/2026) :
   `tournament_wods.bracket_board` (`winner` = distance à la finale des gagnants, `loser` = tour des
   perdants depuis 1, `grand_final`, `grand_final_reset`, `third_place`), contrainte et un seul WOD par
   étape ; un déclencheur pose à la création de chaque match (hors exemption, sans WOD donné) le WOD
