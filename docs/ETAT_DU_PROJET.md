@@ -261,6 +261,12 @@ Supabase/Resend.
   les envoyait en tant qu'utilisateur (les annonces passent par `send-box-notification`, `elo_change`
   n'a aucun émetteur). Restent ouverts, en attendant que leur envoi passe côté serveur :
   `tournament_closed`, `inter_competition_closed`, `inter_bracket_result` (backlog).
+- `send-push`, catégorie « annonces de la box » (`box_announcements`) réservée au serveur (sans migration,
+  **déployée le 26/09/2026 à 09:07 UTC** ; retour arrière : sources déployées avant, identiques à master,
+  dans `C:\Users\NBS\athlex-retour-arriere-send-push\avant-381`) : un utilisateur connecté qui la demande, par `category` ou `pref_key`, avec ou sans
+  type, est refusé en 403 `SERVER_ONLY_CATEGORY` (la règle porte sur la catégorie résolue). Aucun envoi
+  de l'app ne l'utilise (l'app ne passe jamais `category` ni `pref_key`) ; le prototype
+  `_cles_edge_proto.mjs` passe à `group_messages`.
 
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
 dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).

@@ -44,7 +44,9 @@
 // abonnement par le gérant), `box_notification` (annonce de la box) et
 // `elo_change` (variation d'ELO) ne sont acceptés que par le chemin serveur ;
 // envoyés par un utilisateur connecté, l'appel est refusé en 403
-// `SERVER_ONLY_TYPE`. Liste dans regles.ts.
+// `SERVER_ONLY_TYPE`. De même, la catégorie « annonces de la box »
+// (`box_announcements`), demandée par category ou pref_key, avec ou sans type :
+// 403 `SERVER_ONLY_CATEGORY`. Listes dans regles.ts.
 //
 // LANGUE (2026-09-26) — chaque jeton porte la langue du téléphone
 // (push_tokens.language, fr ou en). Un destinataire peut fournir `en` en plus
@@ -62,7 +64,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { cleSecrete } from '../_shared/cle-secrete.ts';
-import { buildMessages, resolvePrefKey, serverOnlyType, type Recipient } from './regles.ts';
+import { buildMessages, resolvePrefKey, SERVER_ONLY_CATEGORIES, serverOnlyType, type Recipient } from './regles.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -259,6 +261,10 @@ serve(async (req: Request) => {
     const reserve = isMachine ? null : serverOnlyType(body?.category, body?.pref_key, types);
     if (reserve) {
       return json({ error: 'SERVER_ONLY_TYPE', type: reserve, sent: 0 }, 403);
+    }
+    // La catégorie résolue, quelle que soit sa source (category, pref_key, type).
+    if (!isMachine && SERVER_ONLY_CATEGORIES.has(prefKey)) {
+      return json({ error: 'SERVER_ONLY_CATEGORY', category: prefKey, sent: 0 }, 403);
     }
 
     // ── AUTORISATION : ne garder que les destinataires réellement liés à l'appelant.

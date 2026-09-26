@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
-  buildMessages, resolvePrefKey, serverOnlyType, type Recipient,
+  buildMessages, resolvePrefKey, SERVER_ONLY_CATEGORIES, serverOnlyType, type Recipient,
 } from '../../supabase/functions/send-push/regles';
 
 const U1 = '00000000-0000-4000-8000-000000000001';
@@ -61,6 +61,13 @@ describe('send-push : le handler passe par ces règles', () => {
     // Le refus passe avant l'autorisation par relation et l'envoi.
     expect(src.indexOf("'SERVER_ONLY_TYPE'")).toBeLessThan(src.indexOf('await authorizeRecipients('));
   });
+
+  it('refuse la catégorie des annonces à un utilisateur connecté, sur la catégorie résolue, en 403 SERVER_ONLY_CATEGORY', () => {
+    expect(src).toContain('if (!isMachine && SERVER_ONLY_CATEGORIES.has(prefKey)) {');
+    expect(src).toContain("return json({ error: 'SERVER_ONLY_CATEGORY', category: prefKey, sent: 0 }, 403);");
+    expect(src.indexOf("'SERVER_ONLY_CATEGORY'")).toBeGreaterThan(src.indexOf('const prefKey = resolvePrefKey('));
+    expect(src.indexOf("'SERVER_ONLY_CATEGORY'")).toBeLessThan(src.indexOf('await authorizeRecipients('));
+  });
 });
 
 describe('send-push : types réservés au serveur', () => {
@@ -86,6 +93,33 @@ describe('send-push : types réservés au serveur', () => {
     expect(serverOnlyType('box_announcements', undefined, [])).toBeNull();
     expect(serverOnlyType(undefined, 'elo_updates', [])).toBeNull();
     expect(serverOnlyType(undefined, undefined, [])).toBeNull();
+  });
+});
+
+describe('send-push : catégories réservées au serveur', () => {
+  // La règle porte sur la catégorie résolue : toute demande qui aboutit aux annonces est visée.
+  const reservee = (category: unknown, prefKey: unknown, types: string[]) => {
+    const k = resolvePrefKey(category, prefKey, types);
+    return k !== null && SERVER_ONLY_CATEGORIES.has(k);
+  };
+
+  it('les annonces de la box, par category ou pref_key, avec ou sans type', () => {
+    expect(reservee('box_announcements', undefined, [])).toBe(true);
+    expect(reservee(undefined, 'box_announcements', [])).toBe(true);
+    expect(reservee('box_announcements', undefined, ['new_message'])).toBe(true);
+    expect(reservee(undefined, 'box_announcements', ['wod_published'])).toBe(true);
+    expect(reservee(undefined, undefined, ['box_notification'])).toBe(true);
+  });
+
+  it("aucune des catégories qu'atteignent les envois de l'app", () => {
+    for (const t of ['wod_published', 'new_message', 'friend_request', 'friend_accepted', 'score_overtaken',
+      'tournament_closed', 'inter_wod_revealed', 'inter_bracket_match', 'inter_bracket_result', 'inter_pool_match',
+      'inter_competition_closed']) {
+      expect(reservee(undefined, undefined, [t])).toBe(false);
+    }
+    for (const k of ['group_messages', 'new_wod', 'tournament_updates', 'elo_updates', 'friend_requests', 'score_updates']) {
+      expect(reservee(k, undefined, [])).toBe(false);
+    }
   });
 });
 

@@ -249,7 +249,8 @@ async function passage(mode) {
     const h = { apikey, Authorization: `Bearer ${d.jeton}` };
     const sbn = await appel('send-box-notification', h, { notification_id: d.notif.id });
     reussite.push([`send-box-notification (apikey ${nomApikey}) → 200, destinataires lus`, sbn.status === 200 && (sbn.json?.recipients ?? 0) >= 1, `${sbn.status} ${JSON.stringify(sbn.json)}`]);
-    const sp = await appel('send-push', h, { category: 'box_announcements', recipients: [{ user_id: d.membre.id, title: 'ZZ', body: 'ZZ' }] });
+    // Catégorie ouverte aux utilisateurs : « annonces de la box » est réservée au serveur.
+    const sp = await appel('send-push', h, { category: 'group_messages', recipients: [{ user_id: d.membre.id, title: 'ZZ', body: 'ZZ' }] });
     reussite.push([`send-push, chemin utilisateur (apikey ${nomApikey}) → 200, destinataire autorisé`, sp.status === 200 && (sp.json?.authorized ?? 0) >= 1, `${sp.status} ${JSON.stringify(sp.json)}`]);
     // Clé Anthropic factice : atteindre l'appel à l'IA prouve l'authentification,
     // les lectures en base et la limite d'usage passées.

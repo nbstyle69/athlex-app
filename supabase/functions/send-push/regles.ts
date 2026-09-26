@@ -61,6 +61,11 @@ export function resolvePrefKey(
 // et elo_change n'a aucun émetteur.
 export const SERVER_ONLY_TYPES = new Set<string>(['membership_stopped', 'box_notification', 'elo_change']);
 
+// Catégories (clés de préférence) réservées au serveur : une notification
+// rangée sous « annonces de la box » vient de la box, jamais d'un membre, avec
+// ou sans type, qu'elle soit demandée par category, pref_key ou déduite du type.
+export const SERVER_ONLY_CATEGORIES = new Set<string>(['box_announcements']);
+
 /** Le type réservé au serveur que demande cet appel (par data.type, category ou pref_key), ou null. */
 export function serverOnlyType(
   category: unknown, legacyPrefKey: unknown, types: string[],
