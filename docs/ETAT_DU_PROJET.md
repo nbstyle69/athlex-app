@@ -335,6 +335,18 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
+- WOD de tableau préparés à l'avance (migration `20270133`, appliquée en prod le 26/09/2026) :
+  `tournament_wods.bracket_board` (`winner` = distance à la finale des gagnants, `loser` = tour des
+  perdants depuis 1, `grand_final`, `grand_final_reset`, `third_place`), contrainte et un seul WOD par
+  étape ; un déclencheur pose à la création de chaque match (hors exemption, sans WOD donné) le WOD
+  prévu pour son étape, calculée par la base seule (tirage, tour suivant, finales, grande finale créée à
+  la main) ; la petite finale sans WOD prévu reçoit celui de la finale, le match décisif sans WOD prévu
+  reste sans WOD ; `tournament_bracket_stages(tournoi)` rend les étapes à proposer et leurs libellés FR
+  et EN. Aucun match existant modifié. Reste : la PR Manager (formulaire « Étape du tournoi », lecture du
+  WOD du match), et **la prochaine PR app** : `TournamentBracketView` affiche le WOD du match
+  (`wod_id`) au lieu de recalculer l'étape (calcul aligné sur le Manager pour les anciens matchs), et
+  `TournamentScreen` affiche l'étape d'un WOD avec son tableau (`bracket_board`), libellés FR et EN de
+  `tournament_bracket_stages`.
 - App, classement de la compétition classique (sans migration, à livrer après la migration `20270116`) :
   l'app lit le classement calculé par la base (`tournament_classique_standings`,
   `tournament_classique_wod_ranks`) et n'écrit plus `tournament_participants.score` ; plus de bouton
