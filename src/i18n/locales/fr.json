@@ -1615,6 +1615,19 @@
       "32e de finale"
     ],
     "stageN": "Étape {{n}}",
+    "winnersStages": [
+      "Finale des gagnants",
+      "Demi-finale des gagnants",
+      "Quart de finale des gagnants",
+      "8e de finale des gagnants",
+      "16e de finale des gagnants",
+      "32e de finale des gagnants"
+    ],
+    "winnersStageN": "{{n}} tours avant la finale des gagnants",
+    "losersRound": "Tour {{n}} des perdants",
+    "stageGrandFinal": "Grande finale",
+    "stageGrandFinalReset": "Grande finale — match décisif",
+    "stageThirdPlace": "Petite finale",
     "registerError": "Erreur inscription",
     "registerImpossible": "Inscription impossible",
     "videoRequiredTitle": "Preuve vidéo requise",

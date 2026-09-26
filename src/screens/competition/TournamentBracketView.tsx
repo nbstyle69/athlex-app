@@ -4,6 +4,7 @@ import { Crown, GitBranch, Trophy } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { toursGagnants, wodColonne, wodEtapeGagnants } from '../../utils/bracketWods';
 
 type Match = {
   id: string;
@@ -19,7 +20,7 @@ type Match = {
 };
 
 type Profile = { id: string; username: string; level?: string };
-type WodLite = { id: string; title: string; bracket_stage: number | null };
+type WodLite = { id: string; title: string; bracket_board: string | null; bracket_stage: number | null };
 
 interface Props {
   tournamentId: string;
@@ -53,7 +54,7 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
 
       const { data: w } = await supabase
         .from('tournament_wods')
-        .select('id, title, bracket_stage')
+        .select('id, title, bracket_board, bracket_stage')
         .eq('tournament_id', tournamentId);
       if (!cancelled) setWods((w ?? []) as WodLite[]);
 
@@ -110,11 +111,13 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
   const wbRounds = Object.keys(grouped.wb).map(Number).sort((a, b) => a - b);
   const lbRounds = Object.keys(grouped.lb).map(Number).sort((a, b) => a - b);
 
-  // Map each WB round to its assigned WOD via bracket_stage (distance to final).
-  const maxWBRound = wbRounds.length ? wbRounds[wbRounds.length - 1] : 0;
-  function wodNameForRound(r: number): string | null {
-    const stage = maxWBRound - r;
-    return wods.find(w => w.bracket_stage === stage)?.title ?? null;
+  // WOD d'une colonne : celui que la base a posé sur ses matchs (#386). Les
+  // anciens matchs des gagnants sans WOD gardent l'ancien calcul par étape,
+  // compté sur les participants du tour 1 comme le Manager.
+  const tours = toursGagnants(matches);
+  function WodPill({ col, secours }: { col: Match[]; secours?: WodLite }) {
+    const nom = wodColonne(col, wods, secours)?.title;
+    return nom ? <View style={S.wodPill}><Text style={S.wodPillText} numberOfLines={1}>🏋️ {nom}</Text></View> : null;
   }
 
   function name(id: string | null) {
@@ -140,18 +143,13 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
       <Text style={S.sectionTitle}><Crown color="#F5C518" size={14} />  {format === 'swiss' ? t('bracket.winnerBracket') : t('bracket.bracket')}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', gap: 12 }}>
-          {wbRounds.map(r => {
-            const wodName = wodNameForRound(r);
-            return (
-              <View key={`wb-${r}`} style={S.column}>
-                <Text style={S.colTitle}>{t('bracket.round', { n: r })}</Text>
-                {wodName ? (
-                  <View style={S.wodPill}><Text style={S.wodPillText} numberOfLines={1}>🏋️ {wodName}</Text></View>
-                ) : null}
-                {grouped.wb[r].map(m => <MatchBox key={m.id} m={m} />)}
-              </View>
-            );
-          })}
+          {wbRounds.map(r => (
+            <View key={`wb-${r}`} style={S.column}>
+              <Text style={S.colTitle}>{t('bracket.round', { n: r })}</Text>
+              <WodPill col={grouped.wb[r]} secours={wodEtapeGagnants(wods, tours, r)} />
+              {grouped.wb[r].map(m => <MatchBox key={m.id} m={m} />)}
+            </View>
+          ))}
         </View>
       </ScrollView>
 
@@ -164,6 +162,7 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
               {lbRounds.map((r, i) => (
                 <View key={`lb-${r}`} style={S.column}>
                   <Text style={S.colTitle}>{t('bracket.lbRound', { n: i + 1 })}</Text>
+                  <WodPill col={grouped.lb[r]} />
                   {grouped.lb[r].map(m => <MatchBox key={m.id} m={m} />)}
                 </View>
               ))}
@@ -177,6 +176,7 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
         <React.Fragment key={m.id}>
           <Text style={S.sectionTitle}>{t('bracket.thirdPlace')}</Text>
           <View style={[S.column, { width: 220 }]}>
+            <WodPill col={[m]} />
             <MatchBox m={m} />
           </View>
         </React.Fragment>
@@ -187,6 +187,7 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
         <React.Fragment key={m.id}>
           <Text style={[S.sectionTitle, { color: '#F5C518' }]}><Trophy color="#F5C518" size={14} />  {t(i === 0 ? 'bracket.grandFinal' : 'bracket.grandFinalReset')}</Text>
           <View style={[S.column, { width: 220 }]}>
+            <WodPill col={[m]} />
             <MatchBox m={m} />
           </View>
         </React.Fragment>
