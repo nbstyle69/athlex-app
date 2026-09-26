@@ -27,6 +27,18 @@ export function tournamentRefusal(message: string | null | undefined, status: st
   return i18n.t(`tournament.refusal.${key ?? 'generic'}`);
 }
 
+const MEMBER_REFUSALS: Record<string, string> = {
+  MEMBRE_ABONNEMENT_EN_COURS: 'bo.members.refusal.banActiveMembership',
+  REACTIVATION_ABONNEMENT_EN_COURS: 'bo.members.refusal.reactivateActiveMembership',
+};
+
+/** Refus d'une action sur un membre (bannir, réactiver), traduit ; texte générique pour tout autre refus. */
+export function memberActionRefusal(message: string | null | undefined): string {
+  const code = refusalCode(message);
+  const key = code ? MEMBER_REFUSALS[code] : undefined;
+  return i18n.t(key ?? 'auth.errors.generic');
+}
+
 /** Refus d'une box archivée ou en archivage programmé, traduit ; null pour tout autre message. */
 export function boxClosedRefusal(message: string | null | undefined, entry: 'join' | 'offer'): string | null {
   const code = refusalCode(message);

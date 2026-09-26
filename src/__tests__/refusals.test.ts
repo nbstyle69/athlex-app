@@ -1,5 +1,7 @@
 import i18n from '../i18n';
-import { refusalCode, tournamentRefusal, boxClosedRefusal } from '../utils/refusals';
+import fs from 'fs';
+import path from 'path';
+import { refusalCode, tournamentRefusal, boxClosedRefusal, memberActionRefusal } from '../utils/refusals';
 
 // Messages tels que la base les renvoie (déclencheur d'inscription, 20270125 ;
 // refus d'entrée d'une box, 20270127).
@@ -85,5 +87,46 @@ describe.each([
   it('un autre refus n\'est pas pris pour une box fermée', () => {
     expect(boxClosedRefusal('BANNED: votre acces a cette box a ete revoque', 'join')).toBeNull();
     expect(boxClosedRefusal('Code invalide ou box introuvable', 'join')).toBeNull();
+  });
+});
+
+// Refus de la base sur un membre (migration 20270132), tels qu'elle les renvoie.
+const BAN = 'MEMBRE_ABONNEMENT_EN_COURS: Ce membre a un abonnement en cours : bannis-le depuis le Manager, qui arrête aussi son abonnement.';
+const REACT = 'REACTIVATION_ABONNEMENT_EN_COURS: Ce membre a encore un abonnement Stripe en cours : arrête-le depuis le Manager avant de le réactiver.';
+
+describe.each([
+  ['fr', {
+    ban: 'Ce membre a un abonnement en cours : bannis-le depuis le Manager, qui arrête aussi son abonnement.',
+    react: "Ce membre a encore un abonnement en cours : il ne peut pas être réactivé pour l'instant.",
+    generic: 'Une erreur est survenue. Réessaie dans un instant.',
+  }],
+  ['en', {
+    ban: 'This member has an active membership: ban them from the Manager, which also stops their membership.',
+    react: "This member still has an active membership and can't be reactivated yet.",
+    generic: 'Something went wrong. Please try again shortly.',
+  }],
+] as const)('refus sur un membre (%s)', (lang, attendu) => {
+  beforeAll(async () => { await i18n.changeLanguage(lang); });
+
+  it('bannissement d’un membre abonné par Stripe', () => {
+    expect(memberActionRefusal(BAN)).toBe(attendu.ban);
+  });
+  it('réactivation avec un abonnement en cours', () => {
+    expect(memberActionRefusal(REACT)).toBe(attendu.react);
+  });
+  it('code inconnu ou message sans code : texte générique, jamais le message de la base', () => {
+    expect(memberActionRefusal("MEMBRE_FACTURATION_RESERVEE: la facturation d'un membre est écrite par le serveur")).toBe(attendu.generic);
+    expect(memberActionRefusal('FORBIDDEN: reserve aux gestionnaires de la box')).toBe(attendu.generic);
+    expect(memberActionRefusal('permission denied for table box_members')).toBe(attendu.generic);
+    expect(memberActionRefusal(undefined)).toBe(attendu.generic);
+  });
+});
+
+describe('BOMembersScreen : les refus de bannir et de réactiver sont traduits', () => {
+  const src = fs.readFileSync(path.join(__dirname, '../screens/backoffice/BOMembersScreen.tsx'), 'utf8');
+  const toggleBan = src.slice(src.indexOf('async function toggleBan'), src.indexOf('function formatDate'));
+  it('les deux branches passent par memberActionRefusal, jamais par le message brut', () => {
+    expect(toggleBan.match(/Alert\.alert\(t\('common\.error'\), memberActionRefusal\(error\.message\)\)/g)).toHaveLength(2);
+    expect(toggleBan).not.toMatch(/Alert\.alert\([^)]*, error\.message\)/);
   });
 });

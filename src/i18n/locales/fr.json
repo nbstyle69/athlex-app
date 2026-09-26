@@ -378,6 +378,10 @@
         "endsOn": "fin le {{date}}",
         "resumesOn": "reprise le {{date}}",
         "commitmentUntil": "engagement jusqu'au {{date}}"
+      },
+      "refusal": {
+        "banActiveMembership": "Ce membre a un abonnement en cours : bannis-le depuis le Manager, qui arrête aussi son abonnement.",
+        "reactivateActiveMembership": "Ce membre a encore un abonnement en cours : il ne peut pas être réactivé pour l'instant."
       }
     },
     "gamification": {
