@@ -267,6 +267,10 @@ Supabase/Resend.
   type, est refusé en 403 `SERVER_ONLY_CATEGORY` (la règle porte sur la catégorie résolue). Aucun envoi
   de l'app ne l'utilise (l'app ne passe jamais `category` ni `pref_key`) ; le prototype
   `_cles_edge_proto.mjs` passe à `group_messages`.
+- `send-push`, « Nouveau WOD » (`new_wod`) réservé au staff (sans migration, **non déployée**) : un
+  utilisateur connecté ne l'envoie (par type, `category` ou `pref_key`) que s'il gère (propriétaire, rôle
+  `owner` ou `coach` actif) une box qui contient tous les destinataires ; sinon 403 `STAFF_ONLY_CATEGORY`.
+  Le chemin serveur passe. `tournament_updates` et `elo_updates` restent au backlog (lot tournois).
 
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
 dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).

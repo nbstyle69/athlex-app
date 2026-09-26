@@ -46,7 +46,9 @@
 // envoyés par un utilisateur connecté, l'appel est refusé en 403
 // `SERVER_ONLY_TYPE`. De même, la catégorie « annonces de la box »
 // (`box_announcements`), demandée par category ou pref_key, avec ou sans type :
-// 403 `SERVER_ONLY_CATEGORY`. Listes dans regles.ts.
+// 403 `SERVER_ONLY_CATEGORY`. « Nouveau WOD » (`new_wod`) n'est accepté d'un
+// utilisateur que s'il gère une box qui contient tous les destinataires :
+// 403 `STAFF_ONLY_CATEGORY` sinon. Listes dans regles.ts.
 //
 // LANGUE (2026-09-26) — chaque jeton porte la langue du téléphone
 // (push_tokens.language, fr ou en). Un destinataire peut fournir `en` en plus
@@ -64,7 +66,10 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { cleSecrete } from '../_shared/cle-secrete.ts';
-import { buildMessages, resolvePrefKey, SERVER_ONLY_CATEGORIES, serverOnlyType, type Recipient } from './regles.ts';
+import {
+  boxCoveringAll, buildMessages, resolvePrefKey, SERVER_ONLY_CATEGORIES, serverOnlyType, STAFF_ONLY_CATEGORIES,
+  type Recipient,
+} from './regles.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -198,6 +203,31 @@ async function authorizeRecipients(
   return allowed;
 }
 
+/**
+ * Une box que `caller` gère (propriétaire, ou owner / coach actif) et qui
+ * contient tous les destinataires (membres actifs ou propriétaire), ou null.
+ * Une lecture en échec donne null : l'envoi est alors refusé.
+ */
+async function staffBoxFor(admin: Admin, caller: string, userIds: string[]): Promise<string | null> {
+  const [{ data: owned }, { data: staff }] = await Promise.all([
+    admin.from('boxes').select('id').eq('owner_id', caller),
+    admin.from('box_members').select('box_id')
+      .eq('member_id', caller).in('role', ['owner', 'coach']).eq('status', 'active'),
+  ]);
+  const managed = [...(owned ?? []).map((b: any) => b.id), ...(staff ?? []).map((r: any) => r.box_id)].filter(Boolean);
+  if (managed.length === 0) return null;
+  const [{ data: members }, { data: owners }] = await Promise.all([
+    admin.from('box_members').select('box_id, member_id')
+      .in('box_id', managed).in('member_id', userIds).eq('status', 'active'),
+    admin.from('boxes').select('id, owner_id').in('id', managed).in('owner_id', userIds),
+  ]);
+  const pairs = [
+    ...(members ?? []),
+    ...(owners ?? []).map((b: any) => ({ box_id: b.id, member_id: b.owner_id })),
+  ];
+  return boxCoveringAll(managed, pairs, userIds);
+}
+
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
   if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: corsHeaders });
@@ -265,6 +295,10 @@ serve(async (req: Request) => {
     // La catégorie résolue, quelle que soit sa source (category, pref_key, type).
     if (!isMachine && SERVER_ONLY_CATEGORIES.has(prefKey)) {
       return json({ error: 'SERVER_ONLY_CATEGORY', category: prefKey, sent: 0 }, 403);
+    }
+    // Catégorie du staff : l'appelant gère une box qui contient tous les destinataires.
+    if (!isMachine && STAFF_ONLY_CATEGORIES.has(prefKey) && !(await staffBoxFor(admin, caller!, userIds))) {
+      return json({ error: 'STAFF_ONLY_CATEGORY', category: prefKey, sent: 0 }, 403);
     }
 
     // ── AUTORISATION : ne garder que les destinataires réellement liés à l'appelant.

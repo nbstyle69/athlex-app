@@ -1,7 +1,8 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import {
-  buildMessages, resolvePrefKey, SERVER_ONLY_CATEGORIES, serverOnlyType, type Recipient,
+  boxCoveringAll, buildMessages, resolvePrefKey, SERVER_ONLY_CATEGORIES, serverOnlyType, STAFF_ONLY_CATEGORIES,
+  type Recipient,
 } from '../../supabase/functions/send-push/regles';
 
 const U1 = '00000000-0000-4000-8000-000000000001';
@@ -120,6 +121,48 @@ describe('send-push : catégories réservées au serveur', () => {
     for (const k of ['group_messages', 'new_wod', 'tournament_updates', 'elo_updates', 'friend_requests', 'score_updates']) {
       expect(reservee(k, undefined, [])).toBe(false);
     }
+  });
+});
+
+describe('send-push : « Nouveau WOD » réservé au staff de la box des destinataires', () => {
+  const src = readFileSync(join(__dirname, '../../supabase/functions/send-push/index.ts'), 'utf8');
+  const BA = 'box-a', BB = 'box-b';
+  const membres = [
+    { box_id: BA, member_id: 'm1' }, { box_id: BA, member_id: 'm2' }, { box_id: BA, member_id: 'proprio-a' },
+    { box_id: BB, member_id: 'm3' },
+  ];
+
+  it('new_wod est la seule catégorie du staff, atteinte par le type wod_published', () => {
+    expect([...STAFF_ONLY_CATEGORIES]).toEqual(['new_wod']);
+    expect(resolvePrefKey(undefined, undefined, ['wod_published'])).toBe('new_wod');
+  });
+
+  it('staff : une box gérée contient tous les destinataires (propriétaire compris)', () => {
+    expect(boxCoveringAll([BA], membres, ['m1', 'm2'])).toBe(BA);
+    expect(boxCoveringAll([BA], membres, ['m1', 'proprio-a'])).toBe(BA);
+    expect(boxCoveringAll([BB, BA], membres, ['m2'])).toBe(BA);
+  });
+
+  it("simple membre : aucune box gérée, refusé", () => {
+    expect(boxCoveringAll([], membres, ['m1'])).toBeNull();
+  });
+
+  it('destinataires de deux boxes différentes : refusé, même si l’appelant gère les deux', () => {
+    expect(boxCoveringAll([BA, BB], membres, ['m1', 'm3'])).toBeNull();
+  });
+
+  it("un destinataire hors de la box gérée : refusé", () => {
+    expect(boxCoveringAll([BA], membres, ['m1', 'inconnu'])).toBeNull();
+    expect(boxCoveringAll([BB], membres, ['m1'])).toBeNull();
+  });
+
+  it('le handler l’applique à un utilisateur connecté, sur la catégorie résolue, avant l’autorisation', () => {
+    expect(src).toContain("if (!isMachine && STAFF_ONLY_CATEGORIES.has(prefKey) && !(await staffBoxFor(admin, caller!, userIds))) {");
+    expect(src).toContain("return json({ error: 'STAFF_ONLY_CATEGORY', category: prefKey, sent: 0 }, 403);");
+    expect(src.indexOf("'STAFF_ONLY_CATEGORY'")).toBeLessThan(src.indexOf('await authorizeRecipients('));
+    expect(src).toContain(".in('role', ['owner', 'coach']).eq('status', 'active'),");
+    expect(src).toContain(".in('box_id', managed).in('member_id', userIds).eq('status', 'active'),");
+    expect(src).toContain("admin.from('boxes').select('id, owner_id').in('id', managed).in('owner_id', userIds),");
   });
 });
 
