@@ -14,8 +14,8 @@
 --   N6  un gérant ou un co-gérant ne peut ni la renseigner ni l'effacer
 --       (42501, BOX_ARCHIVE_NOTIFIED_AT) ; il modifie toujours le reste de sa
 --       box sans y toucher ;
---   N7  un gérant qui efface lui-même la programmation (écriture directe,
---       aujourd'hui permise) : la colonne suit, remise à vide ;
+--   N7  un gérant ne peut plus effacer lui-même la programmation (20270130) :
+--       refusé, la colonne reste ;
 --   N8  la clé serveur ne peut pas la poser sur une box ni programmée ni
 --       archivée (elle y reste vide).
 -- Tout est joué dans une transaction annulée : rien ne subsiste.
@@ -137,14 +137,20 @@ BEGIN
     RAISE EXCEPTION 'N5 : une réactivation laisse archive_notified_at (B2 %, B3 %)', pg_temp.notifiee('2'), pg_temp.notifiee('3');
   END IF;
 
-  -- N7 : le gérant efface lui-même la programmation : la colonne suit.
+  -- N7 : le gérant ne peut plus effacer lui-même la programmation (20270130) :
+  -- refus, et la colonne reste. La clé serveur la lève ensuite (pour N8).
   UPDATE public.boxes SET archive_scheduled_at = now(), archive_notified_at = now() WHERE id = '00000000-0000-4000-b9be-000000000004';
+  v_sqlstate := NULL; v_message := NULL;
   PERFORM pg_temp.en_tant_que('e0');
-  UPDATE public.boxes SET archive_scheduled_at = NULL WHERE id = '00000000-0000-4000-b9be-000000000004';
+  BEGIN
+    UPDATE public.boxes SET archive_scheduled_at = NULL WHERE id = '00000000-0000-4000-b9be-000000000004';
+  EXCEPTION WHEN OTHERS THEN v_sqlstate := SQLSTATE; v_message := SQLERRM;
+  END;
   PERFORM set_config('role', 'none', true); PERFORM set_config('request.jwt.claim.role', '', true); PERFORM set_config('request.jwt.claim.sub', '', true);
-  IF pg_temp.notifiee('4') IS NOT NULL THEN
-    RAISE EXCEPTION 'N7 : programmation effacée par le gérant, archive_notified_at restée';
+  IF v_sqlstate IS DISTINCT FROM '42501' OR v_message NOT LIKE 'BOX_ARCHIVAGE_RESERVE:%' OR pg_temp.notifiee('4') IS NULL THEN
+    RAISE EXCEPTION 'N7 : le gérant a effacé la programmation (obtenu : % %)', coalesce(v_sqlstate, 'acceptée'), v_message;
   END IF;
+  UPDATE public.boxes SET archive_scheduled_at = NULL WHERE id = '00000000-0000-4000-b9be-000000000004';
 
   -- N8 : sur une box ni programmée ni archivée, elle reste vide.
   PERFORM pg_temp.en_tant_que('service');
