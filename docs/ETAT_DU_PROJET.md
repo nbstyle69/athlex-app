@@ -290,7 +290,8 @@ Supabase/Resend.
   l'abonnement Stripe court encore (`REACTIVATION_ABONNEMENT_EN_COURS`). Ni `status` (hors ce cas) ni
   `role` ne sont gardés. Refus à traduire dans l'app (`BOMembersScreen`).
 - Réservation sans formule refusée (chantier « argent », lot 1 de « Rejoindre une box en payant » ;
-  migration `20270133`, **appliquée en prod : non**) : jusqu'ici, un membre sans abonnement valable ni
+  migration `20270133`, **appliquée en prod le 27/09/2026 à 10:18 UTC** ; dump
+  `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T101714Z.dump` ; audit 30/30) : jusqu'ici, un membre sans abonnement valable ni
   aucun crédit réservait gratuitement et sans limite. Il est désormais refusé (`NO_ACTIVE_PLAN`), pour
   une réservation comme pour la liste d'attente, quand il s'inscrit lui-même. Le contrôle d'impayé
   (`MEMBERSHIP_PAST_DUE`) reste prioritaire, et `consume_credit_on_reservation` n'est pas modifiée

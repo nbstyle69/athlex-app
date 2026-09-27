@@ -1,7 +1,18 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Réservation sans formule : refusée au membre, signalée au gérant
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : OUI, le 27/09/2026 à 10:18 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-27/athlex-prod-public-internal-20260927T101714Z.dump,
+-- sha256 3d6acd2e854b313094bd42011b8d3ee37fd3b396a89f12455e0d04ab925c19e9 vérifié
+-- après aller-retour, 133 TABLE DATA, 439 ACL, 345 POLICY ; précontrôles :
+-- bloquer_reservation_impaye 8488e9f2…, trg_aa_bloque_impaye ee71f92c…,
+-- consume_credit_on_reservation f6bc083f… ; vérifications : nouvelles définitions
+-- aux md5 du rejeu, consume_credit_on_reservation inchangée, md5 de box_members,
+-- class_reservations et member_class_credits identiques avant/après,
+-- box_member_alerts vide et RLS active ; audit des droits 30/30 (T10 compris) ; test en réel sur AthleX Fitness en
+-- transaction annulée : NO_ACTIVE_PLAN en confirmed et en waiting, inscription
+-- par un coach acceptée avec une alerte, aucune trace ensuite.)
 --
 -- Chantier « argent », lot 1 de la spec « Rejoindre une box en payant ».
 -- Jusqu'ici, `consume_credit_on_reservation` laissait passer sans rien débiter
