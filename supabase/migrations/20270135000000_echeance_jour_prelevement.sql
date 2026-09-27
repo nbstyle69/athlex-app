@@ -2,7 +2,28 @@
 -- Rejoindre une box en payant, lot 3 (base) : prochaine échéance d'un adhérent
 -- migré et jour de prélèvement
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 27/09/2026 à 18:53 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-27/athlex-prod-public-internal-20260927T185220Z.dump,
+-- sha256 e9cafa0ca0e70d1ff8aa0df115abd96150adc77aef16f440d9ff37f9a98a9aa2 vérifié
+-- après aller-retour, 134 TABLE DATA, 445 ACL, 346 POLICY ; précontrôles (deux
+-- passages identiques, md5 calculés avec le search_path de la prod) :
+-- garder_facturation_membre e0dfcd26…, trg_box_members_garde_facturation
+-- 30cc7eae…, create_box_invitation à 8 arguments e0b48f48…,
+-- create_box_invitations_bulk 809ebf56…, resolve_box_invitation_for_checkout
+-- 4c2288bf…, peek_box_invitation 09b37db7…, claim_pending_entitlements 39653b35…,
+-- colonnes absentes ; vérifications : les six définitions aux empreintes du rejeu
+-- (2c8c6335…, f9412cbc…, 36cea426…, 3210ca73…, 1006ba8d…, a2ab681e…),
+-- déclencheur au texte attendu, une seule create_box_invitation, droits EXECUTE
+-- et commentaires inchangés, données de box_invitations (3 lignes),
+-- box_members (180) et pending_entitlements (0) à la même empreinte avant/après
+-- sur les colonnes existantes, colonnes ajoutées vides ; test en réel sur AthleX
+-- Fitness en transaction annulée : échéance à J+20 acceptée et stockée, passée
+-- refusée (DUE_DATE_PAST), à plus de douze mois refusée (DUE_DATE_TOO_FAR), ligne
+-- d'import mal formée refusée (DUE_DATE_INVALID), resolve et peek renvoient la
+-- date, un co-gérant fictif ne modifie ni ne lit billing_day
+-- (MEMBRE_FACTURATION_RESERVEE), aucune trace ensuite ; audit des droits en prod
+-- 30/30 (grants-prod.yml lancé depuis master).)
 --
 -- Un adhérent qui arrive d'un autre logiciel a une « prochaine échéance » (date
 -- où l'ancien prestataire l'aurait prélevé), que le gérant renseigne sur
