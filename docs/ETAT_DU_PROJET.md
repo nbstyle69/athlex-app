@@ -345,6 +345,12 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
 - App, refus du bannissement et de la réactivation traduits (sans migration, **à diffuser au prochain build**) :
   `BOMembersScreen` traduit par leur code `MEMBRE_ABONNEMENT_EN_COURS` et `REACTIVATION_ABONNEMENT_EN_COURS`
   (migration `20270132`), et affiche le texte générique pour tout autre refus, jamais le message brut.
+- App, réservation sans formule refusée et traduite (sans migration, s'appuie sur `20270133`, **à diffuser
+  au prochain build**) : `ReservationScreen` affiche « Tu n'as pas de formule active dans cette box.
+  Rapproche-toi de ta box pour activer ton abonnement. » (EN : « You don't have an active plan at this box.
+  Contact your box to activate your membership. ») pour le refus `NO_ACTIVE_PLAN`, que ce soit une réservation
+  ou une inscription en liste d'attente, au lieu du message brut. L'impayé passe par le même mapping
+  (`reservationRefusal`), avec un texte inchangé.
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).

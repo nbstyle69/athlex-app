@@ -1079,6 +1079,8 @@
     "leaveWaitlistConfirm": "Quitter la liste d'attente ?",
     "pastDueTitle": "Abonnement impayé",
     "pastDueBody": "Ton dernier prélèvement a échoué : les réservations sont suspendues. Mets ton moyen de paiement à jour ou contacte ta box pour rétablir ton accès.",
+    "noActivePlanTitle": "Pas de formule active",
+    "noActivePlanBody": "Tu n'as pas de formule active dans cette box. Rapproche-toi de ta box pour activer ton abonnement.",
     "limitReachedTitle": "Limite atteinte",
     "limitReachedBody": "Tu as utilisé tes {{max}} séance(s) cette semaine ({{used}}/{{max}}). Contacte ton coach pour changer de contrat.",
     "dailyLimitTitle": "Limite journalière",
