@@ -1079,6 +1079,8 @@
     "leaveWaitlistConfirm": "Leave the waitlist?",
     "pastDueTitle": "Unpaid membership",
     "pastDueBody": "Your last payment failed, so bookings are suspended. Update your payment method or contact your gym to restore access.",
+    "noActivePlanTitle": "No active plan",
+    "noActivePlanBody": "You don't have an active plan at this box. Contact your box to activate your membership.",
     "limitReachedTitle": "Limit reached",
     "limitReachedBody": "You've used your {{max}} session(s) this week ({{used}}/{{max}}). Contact your coach to change your plan.",
     "dailyLimitTitle": "Daily limit",

@@ -39,6 +39,19 @@ export function memberActionRefusal(message: string | null | undefined): string 
   return i18n.t(key ?? 'auth.errors.generic');
 }
 
+const RESERVATION_REFUSALS: Record<string, string> = {
+  MEMBERSHIP_PAST_DUE: 'reservation.pastDue',
+  NO_ACTIVE_PLAN: 'reservation.noActivePlan',
+};
+
+/** Refus d'une réservation ou d'une inscription en liste d'attente, traduit ; null pour tout autre message. */
+export function reservationRefusal(message: string | null | undefined): { title: string; body: string } | null {
+  const code = refusalCode(message);
+  const key = code ? RESERVATION_REFUSALS[code] : undefined;
+  if (!key) return null;
+  return { title: i18n.t(`${key}Title`), body: i18n.t(`${key}Body`) };
+}
+
 /** Refus d'une box archivée ou en archivage programmé, traduit ; null pour tout autre message. */
 export function boxClosedRefusal(message: string | null | undefined, entry: 'join' | 'offer'): string | null {
   const code = refusalCode(message);

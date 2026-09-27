@@ -17,6 +17,7 @@ import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import { scheduleClassReminder, cancelClassReminder } from '../../services/notifications';
 import { getMyMemberships } from '../../services/membership';
 import { WEB_URL } from '../../lib/urls';
+import { reservationRefusal } from '../../utils/refusals';
 
 interface ClassSchedule {
   id: string;
@@ -289,11 +290,9 @@ export default function ReservationScreen() {
           status: wantsWaiting ? 'waiting' : 'confirmed',
         }).select('status').single();
         if (error) {
-          if (error.message.includes('MEMBERSHIP_PAST_DUE')) {
-            Alert.alert(t('reservation.pastDueTitle'), t('reservation.pastDueBody'));
-          } else {
-            Alert.alert(t('common.error'), error.message);
-          }
+          const refusal = reservationRefusal(error.message);
+          if (refusal) Alert.alert(refusal.title, refusal.body);
+          else Alert.alert(t('common.error'), error.message);
         }
         else if (data?.status === 'waiting') {
           Alert.alert(t('reservation.waitlistTitle'), t('reservation.waitlistDowngrade'));

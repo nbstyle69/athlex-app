@@ -1,7 +1,7 @@
 import i18n from '../i18n';
 import fs from 'fs';
 import path from 'path';
-import { refusalCode, tournamentRefusal, boxClosedRefusal, memberActionRefusal } from '../utils/refusals';
+import { refusalCode, tournamentRefusal, boxClosedRefusal, memberActionRefusal, reservationRefusal } from '../utils/refusals';
 
 // Messages tels que la base les renvoie (déclencheur d'inscription, 20270125 ;
 // refus d'entrée d'une box, 20270127).
@@ -128,5 +128,44 @@ describe('BOMembersScreen : les refus de bannir et de réactiver sont traduits',
   it('les deux branches passent par memberActionRefusal, jamais par le message brut', () => {
     expect(toggleBan.match(/Alert\.alert\(t\('common\.error'\), memberActionRefusal\(error\.message\)\)/g)).toHaveLength(2);
     expect(toggleBan).not.toMatch(/Alert\.alert\([^)]*, error\.message\)/);
+  });
+});
+
+// Refus d'une réservation (migrations 20270121 et 20270133), tels que la base les renvoie.
+const PAST_DUE = "MEMBERSHIP_PAST_DUE: abonnement impayé au-delà du délai de la box — réservations et liste d'attente suspendues. Régularise ton paiement ou contacte ta box.";
+const NO_PLAN = 'NO_ACTIVE_PLAN: aucune formule active dans cette box — rapproche-toi de ta box pour activer ton abonnement.';
+
+describe.each([
+  ['fr', {
+    noPlan: { title: 'Pas de formule active', body: "Tu n'as pas de formule active dans cette box. Rapproche-toi de ta box pour activer ton abonnement." },
+    pastDue: { title: 'Abonnement impayé', body: 'Ton dernier prélèvement a échoué : les réservations sont suspendues. Mets ton moyen de paiement à jour ou contacte ta box pour rétablir ton accès.' },
+  }],
+  ['en', {
+    noPlan: { title: 'No active plan', body: "You don't have an active plan at this box. Contact your box to activate your membership." },
+    pastDue: { title: 'Unpaid membership', body: 'Your last payment failed, so bookings are suspended. Update your payment method or contact your gym to restore access.' },
+  }],
+] as const)('refus d’une réservation (%s)', (lang, attendu) => {
+  beforeAll(async () => { await i18n.changeLanguage(lang); });
+
+  it('sans formule active', () => {
+    expect(reservationRefusal(NO_PLAN)).toEqual(attendu.noPlan);
+  });
+  it('impayé : message inchangé', () => {
+    expect(reservationRefusal(PAST_DUE)).toEqual(attendu.pastDue);
+  });
+  it('autre refus ou message sans code : null, l’écran garde son chemin d’erreur', () => {
+    expect(reservationRefusal('NO_CREDITS_LEFT: aucun crédit disponible pour cette box')).toBeNull();
+    expect(reservationRefusal('duplicate key value violates unique constraint')).toBeNull();
+    expect(reservationRefusal(undefined)).toBeNull();
+  });
+});
+
+describe('ReservationScreen : le refus d’une réservation passe par reservationRefusal', () => {
+  const src = fs.readFileSync(path.join(__dirname, '../screens/reservation/ReservationScreen.tsx'), 'utf8');
+  const insert = src.slice(src.indexOf('const insertReservation'), src.indexOf('if (wantsWaiting) {', src.indexOf('const insertReservation')));
+  it('réservation et liste d’attente partagent ce chemin, qui affiche le refus traduit', () => {
+    expect(insert).toMatch(/const refusal = reservationRefusal\(error\.message\);\s*if \(refusal\) Alert\.alert\(refusal\.title, refusal\.body\);/);
+    expect(src.match(/from\('class_reservations'\)\.insert\(/g)).toHaveLength(1);
+    expect(src).toMatch(/\{ text: t\('reservation\.joinWaitlist'\), onPress: insertReservation \}/);
   });
 });
