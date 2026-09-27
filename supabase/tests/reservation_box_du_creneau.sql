@@ -236,7 +236,7 @@ BEGIN
   -- dans le search_path de supabase_admin l'abrégerait en `uid()`).
   PERFORM set_config('search_path', '"$user", public, extensions', true);
   FOR f IN SELECT * FROM (VALUES
-    ('member_add_reservation',       'b6176ffa1101b39a7ca141d62f481bfd'),
+    ('member_add_reservation',       'e2856d8070c21f6ce4328dae7d35730e'),
     ('box_admin_insert_reservation', '8938b926ccdb55c112600fcfa4d8b094'),
     ('box_admin_update_reservation', '13ff327ba59d78668d4cb8c61635ba84'),
     ('box_admin_delete_reservation', 'd13d760ba32b63be56b658132c15cb1c'),

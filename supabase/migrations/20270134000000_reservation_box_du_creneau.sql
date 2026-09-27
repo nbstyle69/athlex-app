@@ -23,13 +23,15 @@
 --   * la policy `member_add_reservation` (WITH CHECK member_id = auth.uid(),
 --     md5 7734932f3b163edf81287ccb07c9143a) ne vérifiait pas l'appartenance à la
 --     box : tout compte connecté réservait dans n'importe quelle box.
---     → WITH CHECK member_id = auth.uid() AND (box_id IN (SELECT
---       get_user_box_ids()) OR is_box_staff(box_id)) : membre actif d'une box non
---       archivée, ou staff de la box (propriétaire, owner ou coach actif).
---       Deux fonctions `public` existantes, SECURITY DEFINER, bornées à
---       auth.uid() : pas de lecture de box_members depuis la policy, donc pas de
---       récursion. Membre banni ou inactif : refusé. Effet accepté : un membre ne
---       réserve plus lui-même dans une box archivée (le staff, si).
+--     → WITH CHECK member_id = auth.uid() AND box_id IN (SELECT
+--       get_user_box_ids()) : membre actif d'une box non archivée. Fonction
+--       `public` existante, SECURITY DEFINER, bornée à auth.uid() : pas de
+--       lecture de box_members depuis la policy, donc pas de récursion. Membre
+--       banni ou inactif : refusé. Le staff passe par sa propre policy
+--       (`box_admin_insert_reservation`, is_box_admin), y compris pour lui-même
+--       et dans une box archivée ; une clause staff ici ne changerait aucun
+--       résultat. Effet accepté : un membre ne réserve plus lui-même dans une box
+--       archivée.
 --
 -- Inchangés : les policies du staff et de lecture, book_trial_slot (qui vérifie
 -- déjà la box du créneau), la promotion depuis la liste d'attente (UPDATE de
@@ -78,7 +80,7 @@ CREATE TRIGGER trg_a0_box_du_creneau
 ALTER POLICY member_add_reservation ON public.class_reservations
   WITH CHECK (
     member_id = auth.uid()
-    AND (box_id IN (SELECT public.get_user_box_ids()) OR public.is_box_staff(box_id))
+    AND box_id IN (SELECT public.get_user_box_ids())
   );
 
 COMMIT;
