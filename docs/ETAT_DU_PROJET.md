@@ -351,6 +351,11 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   Contact your box to activate your membership. ») pour le refus `NO_ACTIVE_PLAN`, que ce soit une réservation
   ou une inscription en liste d'attente, au lieu du message brut. L'impayé passe par le même mapping
   (`reservationRefusal`), avec un texte inchangé.
+- App, refus de box traduits à la réservation (sans migration, s'appuie sur `20270134`, **à diffuser au
+  prochain build**) : un compte qui n'est plus membre actif de la box (refus RLS 42501) lit « Tu ne fais
+  plus partie de cette box. Rejoins-la à nouveau ou contacte-la. », une box déclarée qui n'est pas celle du
+  créneau (`RESERVATION_BOX_MISMATCH`) « Ce cours n'appartient pas à ta box. Actualise l'écran et
+  réessaie. » (FR/EN), au lieu du message brut.
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
