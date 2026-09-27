@@ -35,13 +35,24 @@ import {
 const PLANCHER_TABLES = 100;
 
 /**
+ * Tables que seules des fonctions serveur écrivent : ni `anon` ni
+ * `authenticated` n'y détiennent d'écriture, et la RLS y est active. T6
+ * accepte que `authenticated` écrive presque partout ; ces tables-là sont
+ * l'exception, et une exception se nomme.
+ */
+const TABLES_ECRITURE_SERVEUR = new Map([
+  ['box_member_alerts', 'alertes au gérant — écrites par le déclencheur de 20270133, '
+    + 'résolues par resoudre_alerte_membre()'],
+]);
+
+/**
  * Nombre d'assertions exécutées par ce contrôle.
  *
  * T4 en compte une par rôle **propriétaire** de tables, et T5 exige qu'il n'y
  * en ait qu'un : deux propriétaires feraient dépasser l'attendu, et le
  * décompte le dirait au lieu de le taire.
  */
-export const ASSERTIONS_GRANTS_TABLES = 9; // T1..T9
+export const ASSERTIONS_GRANTS_TABLES = 9 + TABLES_ECRITURE_SERVEUR.size; // T1..T9, T10 par table
 
 const PRIV_LISTE = privs => privs.map(p => `'${p}'`).join(', ');
 
@@ -285,6 +296,41 @@ export function controlerGrantsTables(query, assert) {
         + 'fonction (`request_is_backend() or is_box_owner_admin(box_id)`).'
       : '',
   );
+
+  controlerTablesEcritureServeur(query, assert);
+}
+
+/**
+ * T10 : une assertion par table de TABLES_ECRITURE_SERVEUR — table présente,
+ * RLS active, aucune écriture de table ni de colonne pour les rôles clients.
+ */
+function controlerTablesEcritureServeur(query, assert) {
+  for (const [table, raison] of TABLES_ECRITURE_SERVEUR) {
+    const [[present, rls, ecritures]] = query(`
+      select count(c.oid)::text,
+             coalesce(bool_or(c.relrowsecurity), false)::text,
+             coalesce((select string_agg(distinct r || ':' || p, ',')
+                       from unnest(array['anon', 'authenticated']) r,
+                            unnest(array['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']) p
+                       where to_regclass('public.${table}') is not null
+                         and (has_table_privilege(r, 'public.${table}', p)
+                              or (p in ('INSERT', 'UPDATE')
+                                  and has_any_column_privilege(r, 'public.${table}', p)))), '')
+      from pg_class c
+      where c.oid = to_regclass('public.${table}')
+    `);
+
+    assert(
+      `T10 — \`${table}\` n'est écrite que par le serveur (${raison})`,
+      present === '1' && rls === 'true' && ecritures === '',
+      present !== '1'
+        ? 'table absente : la migration qui la crée n\'est pas appliquée, ou elle a été renommée.'
+        : rls !== 'true'
+          ? 'RLS désactivée.'
+          : `écritures client : ${ecritures} → REVOKE INSERT, UPDATE, DELETE, TRUNCATE `
+            + `ON public.${table} FROM anon, authenticated.`,
+    );
+  }
 }
 
 /**

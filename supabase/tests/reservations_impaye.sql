@@ -14,7 +14,9 @@
 --   R6  le coach inscrit M2 lui-même depuis le back-office : accepté ;
 --   R4  M2 repasse actif (past_due_since laissé tel quel, comme un webhook qui
 --       ne le nettoie pas) : accepté sans autre action ;
---   R7  M4 actif et M5 au comptoir (subscription_status NULL) : acceptés ;
+--   R7  M4 actif et M5 au comptoir (statut active, paiement cash, le profil
+--       comptoir de la prod) : acceptés. Un statut NULL n'est plus une formule
+--       depuis 20270133 (NO_ACTIVE_PLAN, voir reservation_sans_formule.sql) ;
 --   R8  anon : toujours refusé (RLS) ; M6, impayé depuis 5 jours dans B2
 --       (délai 7) : accepté — l'autre box suit son propre délai ;
 --   R9  crédits : M7 suspendu avec un carnet, inscrit par le staff → le crédit
@@ -62,12 +64,15 @@ SELECT ('00000000-0000-4000-b9ee-00000000000' || b)::uuid, ('00000000-0000-4000-
     ('02', '1', 'member', true,  'past_due', now() - interval '5 days'),
     ('03', '0', 'member', true,  'past_due', now() - interval '1 minute'),
     ('04', '1', 'member', true,  'active',   NULL),
-    ('05', '1', 'member', true,  NULL,       NULL),
+    ('05', '1', 'member', true,  'active',   NULL),
     ('06', '2', 'member', true,  'past_due', now() - interval '5 days'),
     ('07', '1', 'member', true,  'past_due', now() - interval '5 days'),
     ('08', '1', 'member', true,  'past_due', now() - interval '1 day'),
     ('09', '1', 'member', true,  'past_due', now() - interval '5 days')
   ) v(m, b, r, avec_plan, ss, depuis);
+
+UPDATE public.box_members SET payment_method_type = 'cash'
+ WHERE member_id = '00000000-0000-4000-a9ee-000000000005';
 
 -- Carnets de M7 (suspendu) et M8 (dans le délai).
 INSERT INTO public.member_class_credits (id, member_id, box_id, credits_total, credits_used, expires_at, status)
