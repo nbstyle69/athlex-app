@@ -754,6 +754,7 @@ export type Database = {
           last_name: string | null
           last_send_error: string | null
           last_sent_at: string | null
+          next_due_date: string | null
           payment_mode: string
           plan_id: string | null
           send_count: number
@@ -774,6 +775,7 @@ export type Database = {
           last_name?: string | null
           last_send_error?: string | null
           last_sent_at?: string | null
+          next_due_date?: string | null
           payment_mode?: string
           plan_id?: string | null
           send_count?: number
@@ -794,6 +796,7 @@ export type Database = {
           last_name?: string | null
           last_send_error?: string | null
           last_sent_at?: string | null
+          next_due_date?: string | null
           payment_mode?: string
           plan_id?: string | null
           send_count?: number
@@ -848,6 +851,7 @@ export type Database = {
       box_members: {
         Row: {
           amount_cents: number | null
+          billing_day: number | null
           box_id: string | null
           commitment_end_date: string | null
           dunning_attempts: number
@@ -874,6 +878,7 @@ export type Database = {
         }
         Insert: {
           amount_cents?: number | null
+          billing_day?: number | null
           box_id?: string | null
           commitment_end_date?: string | null
           dunning_attempts?: number
@@ -900,6 +905,7 @@ export type Database = {
         }
         Update: {
           amount_cents?: number | null
+          billing_day?: number | null
           box_id?: string | null
           commitment_end_date?: string | null
           dunning_attempts?: number
@@ -4922,6 +4928,7 @@ export type Database = {
       }
       pending_entitlements: {
         Row: {
+          billing_day: number | null
           claimed_at: string | null
           claimed_by: string | null
           created_at: string
@@ -4932,6 +4939,7 @@ export type Database = {
           stripe_checkout_session_id: string | null
         }
         Insert: {
+          billing_day?: number | null
           claimed_at?: string | null
           claimed_by?: string | null
           created_at?: string
@@ -4942,6 +4950,7 @@ export type Database = {
           stripe_checkout_session_id?: string | null
         }
         Update: {
+          billing_day?: number | null
           claimed_at?: string | null
           claimed_by?: string | null
           created_at?: string
@@ -7867,6 +7876,7 @@ export type Database = {
           p_email: string
           p_first_name?: string
           p_last_name?: string
+          p_next_due_date?: string
           p_payment_mode?: string
           p_plan_id?: string
           p_valid_days?: number

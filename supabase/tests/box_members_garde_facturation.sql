@@ -6,14 +6,21 @@
 -- MT (…10, cible des colonnes), MS (…11, abonnement Stripe en cours), MC (…12,
 -- au comptoir), MN (…13, sans abonnement), MB (…14, banni avec un abonnement
 -- Stripe en cours), MR (…15, banni, facturation périmée, sans abonnement).
+--   F0  la liste des colonnes testées est celle de la garde, et celle de
+--       box_members hors id, box_id, member_id, joined_at, role et status : une
+--       colonne ajoutée à la table sans être gardée (ou testée) fait échouer ;
+--       et celle de la liste UPDATE OF du déclencheur ;
 --   F1  règles réelles : G et C refusés (42501, MEMBRE_FACTURATION_RESERVEE)
---       sur chacune des 18 colonnes ; K ne change rien ; rien n'a bougé ;
---   F2  règle d'écriture ouverte à tous (dans la transaction) : G, C et K
---       refusés sur chacune des 18 colonnes ; rien n'a bougé ;
+--       sur chacune des 19 colonnes (billing_day comprise, migration
+--       20270135) ; K et le membre MN ne changent rien ; rien n'a bougé ;
+--   F2  règle d'écriture ouverte à tous (dans la transaction) : G, C, K et MN
+--       refusés sur chacune des 19 colonnes ; rien n'a bougé ;
 --   F3  réécriture à l'identique acceptée ; `role` et `status` restent libres ;
 --   F4  la clé serveur écrit la facturation ; `reactivate_box_member` (SECURITY
 --       DEFINER) remet MR à zéro ;
 --   F5  insertion par G : avec une formule, refusée ; sans facturation, acceptée ;
+--       avec un jour de prélèvement : G et C refusés par la garde, K et MN
+--       refusés, et tous les quatre par la garde seule sous une règle ouverte ;
 --   F6  bannissement : MS (Stripe en cours) refusé à G et à C
 --       (MEMBRE_ABONNEMENT_EN_COURS) ; MC (comptoir) et MN acceptés ; la clé
 --       serveur bannit MS ;
@@ -73,7 +80,7 @@ BEGIN
 END $$;
 
 CREATE FUNCTION pg_temp.facturation(p_id text) RETURNS text LANGUAGE sql AS $$
-  SELECT row(plan_id, subscription_status, stripe_subscription_id, stripe_checkout_session_id, subscription_current_period_end, subscription_cancel_at_period_end, amount_cents, platform_fee_cents, commitment_end_date, subscription_paused, pause_started_at, pause_resumes_at, payment_method_type, past_due_since, dunning_attempts, last_payment_error, dunning_reminders_sent, dunning_last_reminder_at)::text FROM public.box_members WHERE id = ('00000000-0000-4000-f9c1-0000000000' || p_id)::uuid;
+  SELECT row(plan_id, subscription_status, stripe_subscription_id, stripe_checkout_session_id, subscription_current_period_end, subscription_cancel_at_period_end, amount_cents, platform_fee_cents, commitment_end_date, subscription_paused, pause_started_at, pause_resumes_at, payment_method_type, past_due_since, dunning_attempts, last_payment_error, dunning_reminders_sent, dunning_last_reminder_at, billing_day)::text FROM public.box_members WHERE id = ('00000000-0000-4000-f9c1-0000000000' || p_id)::uuid;
 $$;
 
 DO $t$
@@ -96,7 +103,8 @@ DECLARE
     'dunning_attempts', '5',
     'last_payment_error', '''x''',
     'dunning_reminders_sent', '5',
-    'dunning_last_reminder_at', 'now()'];
+    'dunning_last_reminder_at', 'now()',
+    'billing_day', '5'];
   v text;
   v_qui text;
   v_i int;
@@ -104,21 +112,47 @@ DECLARE
   v_passage int;
   MAJ constant text := 'WITH m AS (UPDATE public.box_members SET %s = %s WHERE id = ''00000000-0000-4000-f9c1-000000000010'' RETURNING 1) SELECT count(*)::text FROM m';
 BEGIN
+  -- F0 : la liste ci-dessus n'est pas une copie qui vieillit seule.
+  IF (SELECT array_agg(c ORDER BY c) FROM (SELECT ACTIONS[2 * i - 1] c FROM generate_series(1, array_length(ACTIONS, 1) / 2) i) s)
+     IS DISTINCT FROM
+     (SELECT array_agg(DISTINCT m[1] ORDER BY m[1])
+        FROM regexp_matches(pg_get_functiondef('internal.garder_facturation_membre()'::regprocedure), 'NEW\.(\w+)', 'g') m
+       WHERE m[1] <> 'status') THEN
+    RAISE EXCEPTION 'F0 : colonnes testées différentes de celles de la garde';
+  END IF;
+  IF (SELECT array_agg(c ORDER BY c) FROM (SELECT ACTIONS[2 * i - 1] c FROM generate_series(1, array_length(ACTIONS, 1) / 2) i) s)
+     IS DISTINCT FROM
+     (SELECT array_agg(column_name::text ORDER BY column_name) FROM information_schema.columns
+       WHERE table_schema = 'public' AND table_name = 'box_members'
+         AND column_name NOT IN ('id', 'box_id', 'member_id', 'joined_at', 'role', 'status')) THEN
+    RAISE EXCEPTION 'F0 : une colonne de box_members n''est ni gardée ni testée';
+  END IF;
+  -- Le déclencheur ne se lève que sur ses colonnes : une colonne gardée mais
+  -- absente de sa liste ne serait jamais contrôlée à la mise à jour.
+  IF (SELECT array_agg(c ORDER BY c) FROM (SELECT ACTIONS[2 * i - 1] c FROM generate_series(1, array_length(ACTIONS, 1) / 2) i) s)
+     IS DISTINCT FROM
+     (SELECT array_agg(c ORDER BY c)
+        FROM pg_trigger t, unnest(string_to_array(substring(pg_get_triggerdef(t.oid) FROM 'UPDATE OF (.*) ON public'), ', ')) c
+       WHERE t.tgname = 'trg_box_members_garde_facturation' AND c <> 'status') THEN
+    RAISE EXCEPTION 'F0 : colonnes testées différentes de celles du déclencheur';
+  END IF;
+
   FOR v_passage IN 1..2 LOOP
     IF v_passage = 2 THEN
       -- Règle d'écriture ouverte à tous : la garde doit tenir seule.
       CREATE POLICY zz_ecriture_ouverte ON public.box_members FOR ALL TO authenticated USING (true) WITH CHECK (true);
     END IF;
-    FOREACH v_qui IN ARRAY ARRAY['e0', 'e1', 'e2'] LOOP
+    FOREACH v_qui IN ARRAY ARRAY['e0', 'e1', 'e2', '13'] LOOP
       FOR v_i IN 1..array_length(ACTIONS, 1) / 2 LOOP
         v := pg_temp.faire(v_qui, format(MAJ, ACTIONS[2 * v_i - 1], ACTIONS[2 * v_i]));
-        -- F1 : le coach n'a pas le droit d'écrire la table (0 ligne) ;
-        -- gérant et co-gérant l'ont, la garde les refuse. F2 : tous refusés.
-        IF (v_passage = 2 OR v_qui <> 'e2') AND v NOT LIKE '42501: MEMBRE_FACTURATION_RESERVEE:%' THEN
+        -- F1 : le coach et le membre n'ont pas le droit d'écrire la table
+        -- (0 ligne) ; gérant et co-gérant l'ont, la garde les refuse. F2 : tous
+        -- refusés.
+        IF (v_passage = 2 OR v_qui IN ('e0', 'e1')) AND v NOT LIKE '42501: MEMBRE_FACTURATION_RESERVEE:%' THEN
           RAISE EXCEPTION 'F% : % n''est pas refusé sur % (obtenu : %)', v_passage, v_qui, ACTIONS[2 * v_i - 1], v;
         END IF;
-        IF v_passage = 1 AND v_qui = 'e2' AND v <> '0' AND v NOT LIKE '42501:%' THEN
-          RAISE EXCEPTION 'F1 : le coach a écrit % (obtenu : %)', ACTIONS[2 * v_i - 1], v;
+        IF v_passage = 1 AND v_qui IN ('e2', '13') AND v <> '0' AND v NOT LIKE '42501:%' THEN
+          RAISE EXCEPTION 'F1 : % a écrit % (obtenu : %)', v_qui, ACTIONS[2 * v_i - 1], v;
         END IF;
       END LOOP;
     END LOOP;
@@ -130,7 +164,7 @@ BEGIN
 
   -- F3 : réécriture à l'identique (les valeurs actuelles, comme un formulaire
   -- enregistré sans changement) ; role et status libres.
-  v := pg_temp.faire('e0', 'WITH m AS (UPDATE public.box_members SET plan_id = ''00000000-0000-4000-c9c1-000000000001'', subscription_status = ''active'', stripe_subscription_id = NULL, stripe_checkout_session_id = NULL, subscription_current_period_end = NULL, subscription_cancel_at_period_end = false, amount_cents = NULL, platform_fee_cents = NULL, commitment_end_date = NULL, subscription_paused = false, pause_started_at = NULL, pause_resumes_at = NULL, payment_method_type = ''cash'', past_due_since = NULL, dunning_attempts = 0, last_payment_error = NULL, dunning_reminders_sent = 0, dunning_last_reminder_at = NULL, role = ''coach'' WHERE id = ''00000000-0000-4000-f9c1-000000000010'' RETURNING 1) SELECT count(*)::text FROM m');
+  v := pg_temp.faire('e0', 'WITH m AS (UPDATE public.box_members SET plan_id = ''00000000-0000-4000-c9c1-000000000001'', subscription_status = ''active'', stripe_subscription_id = NULL, stripe_checkout_session_id = NULL, subscription_current_period_end = NULL, subscription_cancel_at_period_end = false, amount_cents = NULL, platform_fee_cents = NULL, commitment_end_date = NULL, subscription_paused = false, pause_started_at = NULL, pause_resumes_at = NULL, payment_method_type = ''cash'', past_due_since = NULL, dunning_attempts = 0, last_payment_error = NULL, dunning_reminders_sent = 0, dunning_last_reminder_at = NULL, billing_day = NULL, role = ''coach'' WHERE id = ''00000000-0000-4000-f9c1-000000000010'' RETURNING 1) SELECT count(*)::text FROM m');
   IF v <> '1' THEN RAISE EXCEPTION 'F3 : réécriture à l''identique refusée (%)', v; END IF;
   v := pg_temp.faire('e1', 'WITH m AS (UPDATE public.box_members SET status = ''inactive'' WHERE id = ''00000000-0000-4000-f9c1-000000000013'' RETURNING 1) SELECT count(*)::text FROM m');
   IF v <> '1' THEN RAISE EXCEPTION 'F3 : changement de statut refusé (%)', v; END IF;
@@ -150,6 +184,23 @@ BEGIN
   IF v NOT LIKE '42501: MEMBRE_FACTURATION_RESERVEE:%' THEN RAISE EXCEPTION 'F5 : insertion avec formule acceptée (%)', v; END IF;
   v := pg_temp.faire('e0', 'WITH m AS (INSERT INTO public.box_members (box_id, member_id, role, status) VALUES (''00000000-0000-4000-b9c1-000000000001'', ''00000000-0000-4000-a9c1-000000000021'', ''member'', ''active'') RETURNING 1) SELECT count(*)::text FROM m');
   IF v <> '1' THEN RAISE EXCEPTION 'F5 : insertion sans facturation refusée (%)', v; END IF;
+  -- Jour de prélèvement à l'insertion : règles réelles, puis règle ouverte.
+  FOR v_passage IN 1..2 LOOP
+    IF v_passage = 2 THEN
+      CREATE POLICY zz_ecriture_ouverte ON public.box_members FOR ALL TO authenticated USING (true) WITH CHECK (true);
+    END IF;
+    FOREACH v_qui IN ARRAY ARRAY['e0', 'e1', 'e2', '13'] LOOP
+      v := pg_temp.faire(v_qui, 'WITH m AS (INSERT INTO public.box_members (box_id, member_id, role, status, billing_day) VALUES (''00000000-0000-4000-b9c1-000000000001'', ''00000000-0000-4000-a9c1-000000000020'', ''member'', ''active'', 5) RETURNING 1) SELECT count(*)::text FROM m');
+      IF (v_passage = 2 OR v_qui IN ('e0', 'e1')) AND v NOT LIKE '42501: MEMBRE_FACTURATION_RESERVEE:%' THEN
+        RAISE EXCEPTION 'F5 : % insère un jour de prélèvement (passage %, obtenu : %)', v_qui, v_passage, v;
+      END IF;
+      IF v NOT LIKE '42501:%' THEN RAISE EXCEPTION 'F5 : % insère un jour de prélèvement (%)', v_qui, v; END IF;
+    END LOOP;
+  END LOOP;
+  DROP POLICY zz_ecriture_ouverte ON public.box_members;
+  IF EXISTS (SELECT 1 FROM public.box_members WHERE member_id = '00000000-0000-4000-a9c1-000000000020') THEN
+    RAISE EXCEPTION 'F5 : une insertion avec jour de prélèvement a eu lieu';
+  END IF;
 
   -- F6 : bannissement.
   FOREACH v_qui IN ARRAY ARRAY['e0', 'e1'] LOOP
@@ -175,4 +226,4 @@ BEGIN
 END $t$;
 
 ROLLBACK;
-\echo '    F1 à F7 OK'
+\echo '    F0 à F7 OK'

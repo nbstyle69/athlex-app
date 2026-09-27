@@ -329,6 +329,17 @@ Supabase/Resend.
   - Inchangés : l'inscription par le staff, l'essai, la promotion depuis la liste d'attente, l'impayé,
     l'absence de formule et l'alerte au gérant.
   - En prod le 27/09, aucune réservation existante n'était dans l'un de ces cas.
+- Prochaine échéance d'un adhérent migré et jour de prélèvement (lot 3 de « Rejoindre une box en
+  payant », partie base ; migration `20270135`, **non appliquée en prod**). Calcul et Stripe : Manager,
+  lot suivant.
+  - Une invitation, unitaire ou importée, porte une prochaine échéance facultative (`next_due_date`).
+    Elle doit être au format AAAA-MM-JJ, tomber strictement après aujourd'hui (heure de Paris) et au
+    plus douze mois après. Refus `DUE_DATE_INVALID`, `DUE_DATE_PAST` ou `DUE_DATE_TOO_FAR` ; à
+    l'import, verdict `refusee` par ligne. Sans échéance, rien ne change.
+  - Le lien de paiement et la page d'invitation renvoient l'échéance.
+  - Jour de prélèvement `box_members.billing_day`, du 1er au 10, écrit par le serveur seulement
+    (19e colonne de la garde de facturation) ; recopié depuis un paiement antérieur au compte
+    (`pending_entitlements.billing_day`).
 
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
 dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
