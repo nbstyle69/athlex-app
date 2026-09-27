@@ -50,6 +50,16 @@ const db = serviceClient();
 const stamp = Date.now();
 const PASSWORD = 'TestProgBox1234!';
 const TODAY = new Date().toISOString().slice(0, 10);
+/**
+ * Lundi de la semaine courante (UTC) : `program_members.start_date` doit être
+ * un lundi (program_members_start_date_lundi). Aujourd'hui ou avant, donc
+ * l'adhésion est déjà en cours, quel que soit le jour où la suite tourne.
+ */
+const LUNDI = (() => {
+  const d = new Date(`${TODAY}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+  return d.toISOString().slice(0, 10);
+})();
 
 /** Colonnes de `programs` qui n'ont rien à faire dans une réponse anonyme. */
 const COLONNES_PRIVEES = ['invite_code', 'stripe_price_id', 'stripe_product_id', 'owner_id'];
@@ -174,7 +184,7 @@ async function main() {
   // ── Inscription de l'acheteur (par la porte backend, comme le webhook) ────
   const { error: pmErr } = await db.from('program_members').insert({
     program_id: programId, user_id: buyer, status: 'active', provenance: 'stripe',
-    start_date: TODAY, stripe_checkout_session_id: `cs_test_zzpb_${stamp}`,
+    start_date: LUNDI, stripe_checkout_session_id: `cs_test_zzpb_${stamp}`,
   });
   if (pmErr) throw new Error(`décor program_members : ${pmErr.message}`);
 

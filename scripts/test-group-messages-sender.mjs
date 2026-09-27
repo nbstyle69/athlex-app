@@ -56,13 +56,17 @@ rollback;`;
 
 let out;
 try {
-  out = execFileSync('psql', [DB_URL, '-v', 'ON_ERROR_STOP=1', '-tA', '-q'], { input: sql, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+  out = execFileSync('psql', [DB_URL, '-v', 'ON_ERROR_STOP=1', '-tA', '-q'], {
+    input: sql, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'],
+    env: { ...process.env, PGCLIENTENCODING: 'UTF8' },
+  });
 } catch (e) {
   console.log(`❌ psql a échoué : ${e.stderr?.trim() || e.message}`);
   console.log('GROUP_MESSAGES_SENDER=0/1');
   process.exit(1);
 }
-const got = Object.fromEntries(out.split('\n').filter(l => l.includes('=')).map(l => l.split('=')));
+// Sous Windows, psql termine ses lignes par \r\n : sans \r?, le \r resterait collé à la valeur.
+const got = Object.fromEntries(out.split(/\r?\n/).filter(l => l.includes('=')).map(l => l.split('=')));
 
 let failed = 0, passed = 0;
 const ok = (label, cond, detail = '') => {

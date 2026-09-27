@@ -205,6 +205,22 @@ Supabase/Resend.
 
 ## En cours
 
+**Intégration au vert sur master** (tests et CI seulement, sans migration ni code de production).
+- `integration.yml` joue désormais toutes les suites. Chacune est en `continue-on-error`, et une étape
+  finale (`scripts/bilan-suites.mjs`) publie le résumé par suite et fait échouer le job s'il y a eu un échec
+  ou si aucune suite n'a tourné. Avant, la première suite rouge masquait toutes les suivantes.
+- `auto-programming` est ajoutée aux choix du paramètre `suite`.
+- Suites remises au vert :
+  - `programs-par-box` écrit une `start_date` qui est le lundi de la semaine courante (la contrainte
+    exige un lundi) ;
+  - `abonnement-programmation` et `espace-coach` suivent la règle de #383 : le coach reçoit le refus
+    « gérant ou co-gérant », et c'est le gérant qui souscrit.
+- Sous Windows :
+  - `group-messages` accepte les fins de ligne `\r\n` de psql ;
+  - `auto-programming` force `PGCLIENTENCODING=UTF8` ;
+  - le test Jest `giphyGifPicker` appelle `git grep` sans shell.
+- Reste hors de la CI : `scripts/test-box-archivage.mjs` (#311), jamais branchée.
+
 **Impayés : blocage des réservations après le délai avant suspension** (décision produit du 25/09).
 - Migration `20270121` (**appliquée en prod le 25/09/2026**, dump
   `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T142741Z.dump`) : un membre `past_due` au-delà du délai de sa box
