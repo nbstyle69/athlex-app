@@ -289,6 +289,18 @@ Supabase/Resend.
   Manager bannit par sa route, qui arrête l'abonnement) ; `reactivate_box_member` refuse un membre dont
   l'abonnement Stripe court encore (`REACTIVATION_ABONNEMENT_EN_COURS`). Ni `status` (hors ce cas) ni
   `role` ne sont gardés. Refus à traduire dans l'app (`BOMembersScreen`).
+- Réservation sans formule refusée (chantier « argent », lot 1 de « Rejoindre une box en payant » ;
+  migration `20270133`, **appliquée en prod : non**) : jusqu'ici, un membre sans abonnement valable ni
+  aucun crédit réservait gratuitement et sans limite. Il est désormais refusé (`NO_ACTIVE_PLAN`), pour
+  une réservation comme pour la liste d'attente, quand il s'inscrit lui-même. Le contrôle d'impayé
+  (`MEMBERSHIP_PAST_DUE`) reste prioritaire, et `consume_credit_on_reservation` n'est pas modifiée
+  (`NO_CREDITS_LEFT` inchangé). Restent acceptés : le staff de la box, l'essai, la clé serveur,
+  l'inscription par le staff et la promotion depuis la liste d'attente. Quand le staff inscrit un membre
+  sans formule, la base ouvre une alerte dans `box_member_alerts`, une seule ouverte par membre et par
+  box. Seul le gérant ou co-gérant la lit et la résout (`resoudre_alerte_membre`) ; aucun rôle client
+  n'écrit la table (contrôle T10 de l'audit des droits). Affichage Manager et message traduit dans l'app :
+  lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à
+  venir).
 
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
 dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
