@@ -302,6 +302,16 @@ Supabase/Resend.
   n'écrit la table (contrôle T10 de l'audit des droits). Affichage Manager et message traduit dans l'app :
   lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à
   venir).
+- Réservation : la box est celle du créneau, et seul un membre de la box réserve (migration `20270134`,
+  **appliquée en prod : non**).
+  - Une réservation dont la box déclarée n'est pas celle du créneau est refusée
+    (`RESERVATION_BOX_MISMATCH`), quel que soit l'auteur, clé serveur comprise. Le contrôle passe avant
+    tous les autres déclencheurs.
+  - Un membre ne réserve plus lui-même que dans une box dont il est membre actif et qui n'est pas
+    archivée, ou dont il fait partie du staff. Un non-membre, un membre inactif ou banni est refusé.
+  - Inchangés : l'inscription par le staff, l'essai, la promotion depuis la liste d'attente, l'impayé,
+    l'absence de formule et l'alerte au gérant.
+  - En prod le 27/09, aucune réservation existante n'était dans l'un de ces cas.
 
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
 dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
