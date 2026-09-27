@@ -5,7 +5,7 @@
  */
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 
 const ROOT = path.join(__dirname, '..', '..');
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -24,10 +24,16 @@ describe('GIPHY remplace Tenor', () => {
 
   it('plus aucune référence à Tenor dans le code, l’env, les scripts et les workflows', () => {
     // Les docs gardent la trace historique du remplacement ; le code, non.
-    const out = execSync(
-      "git grep -il tenor -- src scripts .github App.tsx app.json eas.json .env.example ':!src/__tests__/giphyGifPicker.test.ts' || true",
-      { cwd: ROOT, encoding: 'utf8' },
-    ).trim();
+    // Sans shell (le `|| true` d'un shell POSIX échouait sous Windows) : git grep
+    // rend 1 quand il ne trouve rien, ce qui est le résultat attendu ; tout autre
+    // code reste une erreur.
+    let out = '';
+    try {
+      out = execFileSync('git', ['grep', '-il', 'tenor', '--', 'src', 'scripts', '.github', 'App.tsx', 'app.json',
+        'eas.json', '.env.example', ':!src/__tests__/giphyGifPicker.test.ts'], { cwd: ROOT, encoding: 'utf8' }).trim();
+    } catch (e: any) {
+      if (e.status !== 1) throw e;
+    }
     expect(out).toBe('');
     expect(read('.env.example')).toContain('EXPO_PUBLIC_GIPHY_KEY=');
   });

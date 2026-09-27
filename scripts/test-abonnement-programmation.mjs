@@ -18,7 +18,8 @@
  *     6. un client ne pose pas les références Stripe (il se déclarerait payé).
  *
  *   La porte du gratuit, vérifiée par le serveur
- *     7. le coach abonne sa box à une offre gratuite par la RPC : accordé ;
+ *     7. la RPC est une décision d'argent (#383) : le coach est refusé, le
+ *        gérant abonne sa box à une offre gratuite : accordé ;
  *     8. CONTRÔLE POSITIF de bout en bout : le contenu gratuit devient lisible ;
  *     9. rappel de la RPC : toujours un seul abonnement (idempotence) ;
  *    10. offre non publiée : refusée ;
@@ -61,7 +62,7 @@ const db = serviceClient();
 const stamp = Date.now();
 const PASSWORD = 'TestProgSub1234!';
 
-const PLAN = [6, 6, 4, 6, 2];
+const PLAN = [6, 7, 4, 6, 2];
 
 let passed = 0;
 let failed = 0;
@@ -216,17 +217,23 @@ async function main() {
   // ── 2. La porte du gratuit, vérifiée par le serveur ─────────────────────────
   console.log('\nLa porte du gratuit, vérifiée par le serveur');
 
-  const rpcFree = await c.client.rpc('subscribe_free_programming', {
+  const rpcCoach = await c.client.rpc('subscribe_free_programming', {
     p_programming_id: progFree, p_subscriber_box_id: box,
   });
-  assert('le coach abonne sa box à une offre gratuite par la RPC',
+  assert('le coach n\'abonne pas sa box, même à une offre gratuite (argent = gérant, #383)',
+    refus(rpcCoach.error, 'gérant ou co-gérant'), motifDe(rpcCoach.error));
+
+  const rpcFree = await g.client.rpc('subscribe_free_programming', {
+    p_programming_id: progFree, p_subscriber_box_id: box,
+  });
+  assert('le gérant abonne sa box à une offre gratuite par la RPC',
     !rpcFree.error && rpcFree.data?.status === 'active', motifDe(rpcFree.error));
 
   const libre = await contenuLisible(c.client, progFree);
   assert('CONTRÔLE POSITIF : le contenu gratuit devient lisible', libre.lignes === 1,
     `${libre.lignes} ligne(s) — attendu 1`);
 
-  const rpcFree2 = await c.client.rpc('subscribe_free_programming', {
+  const rpcFree2 = await g.client.rpc('subscribe_free_programming', {
     p_programming_id: progFree, p_subscriber_box_id: box,
   });
   const lignesFree = await lignesAbonnement(progFree, box);

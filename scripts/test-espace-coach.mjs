@@ -219,7 +219,13 @@ try {
   const readPaid = await coach.client.from('box_programming_wods').select('id').eq('id', progWod.id);
   check('le contenu payant reste illisible', (readPaid.data ?? []).length, 0);
 
-  const rpcPaid = await coach.client.rpc('subscribe_free_programming', {
+  // La RPC est une décision d'argent (#383) : le coach est refusé avant tout
+  // examen de l'offre ; le prix est jugé pour le gérant.
+  const rpcPaidCoach = await coach.client.rpc('subscribe_free_programming', {
+    p_programming_id: prog.id, p_subscriber_box_id: box.id,
+  });
+  check('la RPC gratuite refuse le coach (argent = gérant)', refus(rpcPaidCoach.error, 'gérant ou co-gérant'), true);
+  const rpcPaid = await owner.client.rpc('subscribe_free_programming', {
     p_programming_id: prog.id, p_subscriber_box_id: box.id,
   });
   check('la RPC gratuite refuse une offre payante', refus(rpcPaid.error, 'payante|PAID|gratuit'), true);
@@ -228,10 +234,14 @@ try {
     publisher_box_id: pubBox.id, title: `zz_l6_free_${stamp}`, is_published: true,
     price_cents: 0, billing: 'free', weeks_count: 4,
   }).select('id').single(), 'box_programming (gratuite)');
-  const rpcFree = await coach.client.rpc('subscribe_free_programming', {
+  const rpcFreeCoach = await coach.client.rpc('subscribe_free_programming', {
     p_programming_id: progFree.id, p_subscriber_box_id: box.id,
   });
-  check('contrôle positif : offre GRATUITE souscrite par la RPC', rpcFree.error == null, true);
+  check('le coach ne souscrit pas même une offre GRATUITE', refus(rpcFreeCoach.error, 'gérant ou co-gérant'), true);
+  const rpcFree = await owner.client.rpc('subscribe_free_programming', {
+    p_programming_id: progFree.id, p_subscriber_box_id: box.id,
+  });
+  check('contrôle positif : offre GRATUITE souscrite par le gérant', rpcFree.error == null, true);
   if (rpcFree.error) note('erreur', rpcFree.error.message);
   cleanup.unshift(() => svc.from('box_programming_subscriptions').delete().eq('programming_id', progFree.id));
 

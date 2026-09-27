@@ -59,6 +59,7 @@ on:
           - group-messages
           - onboarding
           - phys-served
+          - auto-programming
           - grants
 
 concurrency:
@@ -112,63 +113,87 @@ jobs:
 
       # Aucune de ces étapes ne reçoit de secret : la cible est locale au runner.
       - name: Suite — Multi-Agent Tournaments
+        id: s_agents
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'agents' }}
+        continue-on-error: true
         run: node scripts/test-agents.mjs ${{ steps.flags.outputs.extra_flag }}
 
       - name: Suite — Tournament Formats (bracket/swiss/league)
+        id: s_formats
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'formats' }}
+        continue-on-error: true
         run: node scripts/test-formats.mjs ${{ steps.flags.outputs.extra_flag }}
 
       - name: Suite — League Detailed (32 agents, 5 saisons)
+        id: s_league_detailed
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'league' }}
+        continue-on-error: true
         run: node scripts/test-league-detailed.mjs ${{ steps.flags.outputs.extra_flag }}
 
       - name: Suite — BO Owner (full lifecycle)
+        id: s_bo_owner
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'bo-owner' }}
+        continue-on-error: true
         run: node scripts/test-bo-owner.mjs ${{ steps.flags.outputs.extra_flag }}
 
       - name: Suite — Athlete (app mobile flows)
+        id: s_athlete
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'athlete' }}
+        continue-on-error: true
         run: node scripts/test-athlete.mjs ${{ steps.flags.outputs.extra_flag }}
 
       - name: Suite — RLS
+        id: s_rls
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'rls' }}
+        continue-on-error: true
         run: node scripts/test-rls.mjs
 
       - name: Suite — Semaines types (programmation)
+        id: s_templates
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'templates' }}
+        continue-on-error: true
         run: node scripts/test-templates.mjs ${{ steps.flags.outputs.extra_flag }}
 
       - name: Suite — Journal des séries réalisées (suivi athlète)
+        id: s_strength_journal
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'strength' }}
+        continue-on-error: true
         run: node scripts/test-strength-journal.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # L'autorisation du contenu payant : la policy de box_wods doit refuser,
       # pas le client. Le contrôle positif (WOD libre visible de tous) est dans
       # la suite : sans lui, un refus massif se lirait comme un succès.
       - name: Suite — Accès aux WOD restreints (programme / groupe)
+        id: s_wod_access
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'wod-access' }}
+        continue-on-error: true
         run: node scripts/test-wod-access.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # Fermer le WOD sans fermer ses dérivés est une garde sur deux : le
       # classement, les complétions, les gains d'ELO, les commentaires et les
       # réactions d'un WOD restreint passent par la même garde que le WOD.
       - name: Suite — Lectures dérivées d'un WOD restreint (score, ELO, commentaires)
+        id: s_wod_derived_reads
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'wod-derived' }}
+        continue-on-error: true
         run: node scripts/test-wod-derived-reads.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # Le titre qui ouvre ou ferme les routes argent : owner/co-gérant vs coach.
       # Le contrôle positif (le gérant administre bien sa box) empêche « personne
       # n'administre rien » de se lire comme un succès.
       - name: Suite — Résolveur des box administrées (titre owner / coach)
+        id: s_admin_boxes
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'admin-boxes' }}
+        continue-on-error: true
         run: node scripts/test-admin-boxes.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # Un programme appartient à sa box (pas à une personne), son contenu vit
       # dans box_wods, et dispenser de payer reste une décision d'argent. Le
       # contrôle positif : le WOD sans restriction reste visible des membres.
       - name: Suite — Programmes administrés par la box (contenu, grants, staff)
+        id: s_programs_par_box
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'programs-box' }}
+        continue-on-error: true
         run: node scripts/test-programs-par-box.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # L'encaissement comptoir d'un programme : qui le tient, où va le montant,
@@ -176,7 +201,9 @@ jobs:
       # fait monter « Programmes » sans être recomptée en « comptoir », une
       # ligne staff ne fait monter ni l'un ni l'autre.
       - name: Suite — Payé au comptoir (programmes, journal, surfaces d'argent)
+        id: s_comptoir_programmes
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'comptoir-programmes' }}
+        continue-on-error: true
         run: node scripts/test-comptoir-programmes.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # Une offre payante ne s'obtient pas sans payer : `status='active'` est
@@ -184,7 +211,9 @@ jobs:
       # Contrôles positifs : le webhook active toujours, et le coach lit
       # toujours le catalogue publié.
       - name: Suite — Abonnement à une programmation (payant, gratuit, prix)
+        id: s_abonnement_programmation
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'abonnement-programmation' }}
+        continue-on-error: true
         run: node scripts/test-abonnement-programmation.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # Marketplace ↔ Whiteboard (20261209) : visibilité explicite `audience`,
@@ -193,7 +222,9 @@ jobs:
       # Contrôles positifs : l'inscrit d'un programme garde scores/classement
       # d'une séance `none`, une copie de semaine type reste modifiable.
       - name: Suite — Marketplace ↔ Whiteboard (audience, ancrage, cron, verrou)
+        id: s_marketplace_whiteboard
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'marketplace-whiteboard' }}
+        continue-on-error: true
         run: node scripts/test-marketplace-whiteboard.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # Désabonnement d'une programmation : seul le gérant/co-gérant de la box
@@ -201,7 +232,9 @@ jobs:
       # futures partent uniquement si demandé ; payant = demande mémorisée,
       # conclue par le backend (webhook Stripe) à la fin de période.
       - name: Suite — Désabonnement programmation (garde, passé conservé, futures)
+        id: s_desabonnement_programmation
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'desabonnement-programmation' }}
+        continue-on-error: true
         run: node scripts/test-desabonnement-programmation.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # L'espace coach : le coach programme (semaines types, grille de créneaux)
@@ -209,7 +242,9 @@ jobs:
       # Contrôles positifs : le gérant et le co-gérant lisent l'abonnement
       # nominatif, l'adhérent lit le sien, et le coach garde le roster.
       - name: Suite — Espace coach (programmation, résidu nominatif)
+        id: s_espace_coach
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'espace-coach' }}
+        continue-on-error: true
         run: node scripts/test-espace-coach.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # Les heures de créneau sont du texte que tous les lecteurs parsent comme
@@ -217,7 +252,9 @@ jobs:
       # génération). La garde refuse les autres graphies — nommément, et même au
       # service_role : une contrainte n'est pas une policy.
       - name: Suite — Format HH:MM des heures de début
+        id: s_heures
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'heures' }}
+        continue-on-error: true
         run: node scripts/test-heures.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # Le tunnel Essai est la seule écriture publique du produit : les refus
@@ -226,7 +263,9 @@ jobs:
       # positifs et négatifs dans la même suite — dont « le plan_type inventé
       # reste refusé », sans quoi on aurait ouvert le CHECK au lieu de l'étendre.
       - name: Suite — Offre Essai (tunnel public, prospects, capacité)
+        id: s_essai_lot_base
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'essai' }}
+        continue-on-error: true
         run: node scripts/test-essai-lot-base.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # Le récapitulatif du gérant confondait un essai avec une présence
@@ -234,7 +273,9 @@ jobs:
       # négatif : sans le filtre, le même périmètre compte 2 — sinon un vert
       # ne distinguerait pas « le filtre trie » de « rien à trier ».
       - name: Suite — Récapitulatif hebdo (essais comptés à part)
+        id: s_essai_digest
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'essai' }}
+        continue-on-error: true
         run: node scripts/test-essai-digest.mjs ${{ steps.flags.outputs.extra_flag }}
 
       # Clôture de tournoi : une seule fonction serveur (tous formats) écrit
@@ -243,34 +284,46 @@ jobs:
       # piège PostgREST (PATCH d'un autre profil → 204 et 0 ligne). La mutation
       # inverse retire l'UPDATE du profil dans la fonction : la suite doit rougir.
       - name: Suite — Clôture ELO serveur (finalize_tournament_elo)
+        id: s_finalize_elo
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'elo' }}
+        continue-on-error: true
         run: node scripts/test-finalize-elo.mjs
       - name: Suite — Clôture ELO, mutation inverse
+        id: s_finalize_elo_mutation_sh
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'elo' }}
+        continue-on-error: true
         run: ./scripts/test-finalize-elo-mutation.sh
 
       # Séances de programme relatives (scheduled_date NULL) : leaderboard forcé
       # à false par CHECK, historiques ELO fermés par trigger, start_date NULL
       # puis lundi, program_rest_days. Mutation inverse intégrée (trigger off).
       - name: Suite — Séances de programme relatives (ELO fermé, start_date, repos)
+        id: s_programme_relatif_sh
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'elo' }}
+        continue-on-error: true
         run: ./scripts/test-programme-relatif.sh
 
       # Messagerie de groupe : group_messages.sender_id → profiles ON DELETE SET NULL.
       # Suppression d'un compte par delete_user_account → ses messages restent,
       # sender_id NULL. La mutation inverse retire la clé : la suite doit rougir.
       - name: Suite — group_messages.sender_id survit à la suppression du compte
+        id: s_group_messages_sender
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'group-messages' }}
+        continue-on-error: true
         run: node scripts/test-group-messages-sender.mjs
       - name: Suite — group_messages, mutation inverse
+        id: s_group_messages_sender_mutation_sh
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'group-messages' }}
+        continue-on-error: true
         run: ./scripts/test-group-messages-sender-mutation.sh
 
       # « Présentation vue » côté compte : profiles.onboarding_completed_at, écrite
       # par mark_onboarding_completed (idempotente, authenticated seulement), relue
       # par get_my_profile. Compte neuf NULL, autre compte intact, anon refusé.
       - name: Suite — onboarding_completed_at (présentation vue côté compte)
+        id: s_onboarding_completed
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'onboarding' }}
+        continue-on-error: true
         run: node scripts/test-onboarding-completed.mjs
 
       # Compétitions physiques : la vue physical_competitions_served recalcule le
@@ -278,27 +331,44 @@ jobs:
       # open. La table brute n'est pas écrite. Mutation inverse : lire la table
       # brute à la place de la vue → la passée revient « open » → rouge.
       - name: Suite — physical_competitions_served (passée ≠ ouverte)
+        id: s_physical_competitions_served
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'phys-served' }}
+        continue-on-error: true
         run: node scripts/test-physical-competitions-served.mjs
 
       # Liens e-mail Auth : GoTrue génère le vrai lien (verify?token=…&type=…&
       # redirect_to=…), on suit le 303 et on lit le Location. signup → /email-confirme,
       # recovery avec redirectTo → /update-password, recovery sans → Site URL (A4).
       - name: Suite — Liens e-mail GoTrue (signup / recovery)
+        id: s_auth_links
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'auth-links' }}
+        continue-on-error: true
         run: node scripts/test-auth-links.mjs
 
       # Programmation automatique (J1) : flags réservés admin/backend (mutation
       # inverse), journal des runs, edited_at, publish_at.
       - name: Suite — Programmation automatique (flags, journal, publish_at)
+        id: s_auto_programming
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'auto-programming' }}
+        continue-on-error: true
         run: node scripts/test-auto-programming.mjs
 
       # Contrôle de catalogue : ce que la base accorde réellement, pas ce que
       # les migrations avaient l'intention d'accorder.
       - name: Suite — Grants EXECUTE (schéma public)
+        id: s_grants
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'grants' }}
+        continue-on-error: true
         run: node scripts/test-grants.mjs
+
+      # Chaque suite a `continue-on-error` : une suite rouge n'empêche plus les
+      # suivantes de tourner (avant, la première en échec masquait toutes les
+      # autres). Le verdict est rendu ici, une fois toutes les suites jouées.
+      - name: Bilan des suites
+        if: always()
+        env:
+          ETAPES: ${{ toJSON(steps) }}
+        run: node scripts/bilan-suites.mjs
 
       - name: Arrêt de la pile
         if: always()

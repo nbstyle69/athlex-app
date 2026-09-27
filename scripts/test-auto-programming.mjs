@@ -45,11 +45,14 @@ function assert(label, condition, detail = '') {
   if (condition) { console.log(`  ✅ ${label}`); passed++; }
   else { console.log(`  ❌ ${label}`); if (detail) console.log(`     → ${detail}`); failed++; }
 }
+// Sous Windows, psql lit les fichiers dans l'encodage du poste (WIN1252) : la
+// migration rejouée stockerait ses messages mal encodés. UTF8 partout.
+const PSQL_ENV = { ...process.env, PGCLIENTENCODING: 'UTF8' };
 function psql(sql) {
-  return execFileSync('psql', [DB_URL, '-v', 'ON_ERROR_STOP=1', '-tA', '-q', '-c', sql], { encoding: 'utf8' }).trim();
+  return execFileSync('psql', [DB_URL, '-v', 'ON_ERROR_STOP=1', '-tA', '-q', '-c', sql], { encoding: 'utf8', env: PSQL_ENV }).trim();
 }
 function psqlFile(file) {
-  execFileSync('psql', [DB_URL, '-v', 'ON_ERROR_STOP=1', '-q', '-f', file], { encoding: 'utf8', stdio: ['ignore', 'ignore', 'pipe'] });
+  execFileSync('psql', [DB_URL, '-v', 'ON_ERROR_STOP=1', '-q', '-f', file], { encoding: 'utf8', stdio: ['ignore', 'ignore', 'pipe'], env: PSQL_ENV });
   psql("NOTIFY pgrst, 'reload schema';");
 }
 const msg = (r) => r.error ? r.error.message : 'aucune erreur';
