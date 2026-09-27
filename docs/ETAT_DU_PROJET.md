@@ -303,7 +303,8 @@ Supabase/Resend.
   lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à
   venir).
 - Réservation : la box est celle du créneau, et seul un membre de la box réserve (migration `20270134`,
-  **appliquée en prod : non**).
+  **appliquée en prod le 27/09/2026 à 15:56 UTC** ; dump
+  `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T155556Z.dump` ; audit 30/30).
   - Une réservation dont la box déclarée n'est pas celle du créneau est refusée
     (`RESERVATION_BOX_MISMATCH`), quel que soit l'auteur, clé serveur comprise. Le contrôle passe avant
     tous les autres déclencheurs.

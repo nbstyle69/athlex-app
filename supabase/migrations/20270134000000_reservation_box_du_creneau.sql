@@ -1,7 +1,22 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Réservation : la box est celle du créneau, et seul un membre de la box réserve
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : OUI, le 27/09/2026 à 15:56 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et internal avec droits
+-- db-dumps/2026-09-27/athlex-prod-public-internal-20260927T155556Z.dump,
+-- sha256 4c8c066f934a61c1da4c4605ec001dcc2339ecf4af9bc3a3cdede9f58d6c230d vérifié
+-- après aller-retour, 134 TABLE DATA, 444 ACL, 346 POLICY ; précontrôles (md5
+-- calculés avec le search_path de la prod) : member_add_reservation 7734932f…,
+-- les 6 autres policies et les 8 déclencheurs à leurs empreintes (989f097d…),
+-- consume_credit_on_reservation f6bc083f…, bloquer_reservation_impaye 3910a8d0…,
+-- alerter_reservation_sans_formule c7d27837… ; vérifications : policy e2856d80…
+-- et verifier_box_du_creneau c9f47362… (empreintes du rejeu), trg_a0 premier des
+-- BEFORE INSERT, reste inchangé, md5 de class_reservations, box_members et
+-- class_schedules identiques avant/après ; audit des droits 30/30 ; test en réel
+-- sur AthleX Fitness en transaction annulée : non-membre refusé (42501), membre
+-- actif accepté, box déclarée différente refusée par un membre et par la clé
+-- serveur (RESERVATION_BOX_MISMATCH), inscription par un coach acceptée, aucune
+-- trace ensuite.)
 --
 -- Deux trous relevés au précontrôle du lot « réservation sans formule »
 -- (20270133), aucun n'étant exploité en prod le 27/09/2026 (0 réservation sur
