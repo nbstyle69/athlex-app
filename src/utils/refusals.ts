@@ -42,12 +42,17 @@ export function memberActionRefusal(message: string | null | undefined): string 
 const RESERVATION_REFUSALS: Record<string, string> = {
   MEMBERSHIP_PAST_DUE: 'reservation.pastDue',
   NO_ACTIVE_PLAN: 'reservation.noActivePlan',
+  RESERVATION_BOX_MISMATCH: 'reservation.boxMismatch',
 };
 
-/** Refus d'une réservation ou d'une inscription en liste d'attente, traduit ; null pour tout autre message. */
-export function reservationRefusal(message: string | null | undefined): { title: string; body: string } | null {
-  const code = refusalCode(message);
-  const key = code ? RESERVATION_REFUSALS[code] : undefined;
+/**
+ * Refus d'une réservation ou d'une inscription en liste d'attente, traduit ; null pour tout autre erreur.
+ * Le refus RLS (42501) n'a pas de code dans son message : à l'insertion d'une réservation, c'est que le
+ * compte n'est plus membre actif de la box (migration 20270134).
+ */
+export function reservationRefusal(error: { code?: string; message?: string } | null | undefined): { title: string; body: string } | null {
+  const code = refusalCode(error?.message);
+  const key = code ? RESERVATION_REFUSALS[code] : error?.code === '42501' ? 'reservation.notMember' : undefined;
   if (!key) return null;
   return { title: i18n.t(`${key}Title`), body: i18n.t(`${key}Body`) };
 }

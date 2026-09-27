@@ -131,31 +131,48 @@ describe('BOMembersScreen : les refus de bannir et de réactiver sont traduits',
   });
 });
 
-// Refus d'une réservation (migrations 20270121 et 20270133), tels que la base les renvoie.
+// Refus d'une réservation (migrations 20270121, 20270133 et 20270134), tels que PostgREST les renvoie.
 const PAST_DUE = "MEMBERSHIP_PAST_DUE: abonnement impayé au-delà du délai de la box — réservations et liste d'attente suspendues. Régularise ton paiement ou contacte ta box.";
 const NO_PLAN = 'NO_ACTIVE_PLAN: aucune formule active dans cette box — rapproche-toi de ta box pour activer ton abonnement.';
+const erreur = (message: string, code = '23514') => ({ code, message });
+const RLS = erreur('new row violates row-level security policy for table "class_reservations"', '42501');
+const MISMATCH = erreur("RESERVATION_BOX_MISMATCH: la box de la réservation n'est pas celle du créneau.");
 
 describe.each([
   ['fr', {
     noPlan: { title: 'Pas de formule active', body: "Tu n'as pas de formule active dans cette box. Rapproche-toi de ta box pour activer ton abonnement." },
     pastDue: { title: 'Abonnement impayé', body: 'Ton dernier prélèvement a échoué : les réservations sont suspendues. Mets ton moyen de paiement à jour ou contacte ta box pour rétablir ton accès.' },
+    notMember: { title: 'Réservation impossible', body: 'Tu ne fais plus partie de cette box. Rejoins-la à nouveau ou contacte-la.' },
+    mismatch: { title: 'Réservation impossible', body: "Ce cours n'appartient pas à ta box. Actualise l'écran et réessaie." },
   }],
   ['en', {
     noPlan: { title: 'No active plan', body: "You don't have an active plan at this box. Contact your box to activate your membership." },
     pastDue: { title: 'Unpaid membership', body: 'Your last payment failed, so bookings are suspended. Update your payment method or contact your gym to restore access.' },
+    notMember: { title: "Can't book", body: "You're no longer a member of this box. Join it again or contact it." },
+    mismatch: { title: "Can't book", body: "This class doesn't belong to your box. Refresh and try again." },
   }],
 ] as const)('refus d’une réservation (%s)', (lang, attendu) => {
   beforeAll(async () => { await i18n.changeLanguage(lang); });
 
   it('sans formule active', () => {
-    expect(reservationRefusal(NO_PLAN)).toEqual(attendu.noPlan);
+    expect(reservationRefusal(erreur(NO_PLAN))).toEqual(attendu.noPlan);
   });
   it('impayé : message inchangé', () => {
-    expect(reservationRefusal(PAST_DUE)).toEqual(attendu.pastDue);
+    expect(reservationRefusal(erreur(PAST_DUE))).toEqual(attendu.pastDue);
+  });
+  it('plus membre de la box : refus RLS 42501', () => {
+    expect(reservationRefusal(RLS)).toEqual(attendu.notMember);
+  });
+  it('un message porteur d’un code l’emporte sur le SQLSTATE', () => {
+    expect(reservationRefusal(erreur(NO_PLAN, '42501'))).toEqual(attendu.noPlan);
+  });
+  it('box déclarée différente de celle du créneau', () => {
+    expect(reservationRefusal(MISMATCH)).toEqual(attendu.mismatch);
   });
   it('autre refus ou message sans code : null, l’écran garde son chemin d’erreur', () => {
-    expect(reservationRefusal('NO_CREDITS_LEFT: aucun crédit disponible pour cette box')).toBeNull();
-    expect(reservationRefusal('duplicate key value violates unique constraint')).toBeNull();
+    expect(reservationRefusal(erreur('NO_CREDITS_LEFT: aucun crédit disponible pour cette box'))).toBeNull();
+    expect(reservationRefusal(erreur('duplicate key value violates unique constraint', '23505'))).toBeNull();
+    expect(reservationRefusal(erreur('permission denied for table class_reservations', '42502'))).toBeNull();
     expect(reservationRefusal(undefined)).toBeNull();
   });
 });
@@ -164,7 +181,7 @@ describe('ReservationScreen : le refus d’une réservation passe par reservatio
   const src = fs.readFileSync(path.join(__dirname, '../screens/reservation/ReservationScreen.tsx'), 'utf8');
   const insert = src.slice(src.indexOf('const insertReservation'), src.indexOf('if (wantsWaiting) {', src.indexOf('const insertReservation')));
   it('réservation et liste d’attente partagent ce chemin, qui affiche le refus traduit', () => {
-    expect(insert).toMatch(/const refusal = reservationRefusal\(error\.message\);\s*if \(refusal\) Alert\.alert\(refusal\.title, refusal\.body\);/);
+    expect(insert).toMatch(/const refusal = reservationRefusal\(error\);\s*if \(refusal\) Alert\.alert\(refusal\.title, refusal\.body\);/);
     expect(src.match(/from\('class_reservations'\)\.insert\(/g)).toHaveLength(1);
     expect(src).toMatch(/\{ text: t\('reservation\.joinWaitlist'\), onPress: insertReservation \}/);
   });

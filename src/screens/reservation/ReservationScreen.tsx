@@ -290,7 +290,7 @@ export default function ReservationScreen() {
           status: wantsWaiting ? 'waiting' : 'confirmed',
         }).select('status').single();
         if (error) {
-          const refusal = reservationRefusal(error.message);
+          const refusal = reservationRefusal(error);
           if (refusal) Alert.alert(refusal.title, refusal.body);
           else Alert.alert(t('common.error'), error.message);
         }
