@@ -318,7 +318,9 @@ Supabase/Resend.
   n'écrit la table (contrôle T10 de l'audit des droits). Affichage Manager et message traduit dans l'app :
   lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à
   venir).
-- Sécurité, stockage `message-attachments` privé (migration `20270137`, **appliquée en prod : non**).
+- Sécurité, stockage `message-attachments` privé (migration `20270137`, **appliquée en prod le 28/09/2026
+  à 22:07 UTC** ; dump `db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T220703Z.dump` ;
+  audit 35/35 ; anon et authenticated sans jeton voient 0 objet).
   Constat du 28/09/2026 : stockage public, `public_read_attachments` ouverte à tous (anon lisait les 2
   images), dépôt permis n'importe où à tout compte connecté.
   - Une pièce jointe se lit, connecté seulement, par son auteur, ou par quiconque peut lire un message du
@@ -332,6 +334,10 @@ Supabase/Resend.
     appliquée de `migrations_archive/20260820_lot1c_c_buckets_prives.sql`.
   - App (PR séparée) : un dépôt enregistre le chemin du fichier et plus l'URL publique. Les builds antérieurs
     au 04/08/2026 (avant 1.0.51) n'affichent plus les images et ne déposent plus.
+  - Incident d'ordre, le même que pour `20270136` : #399 a été mergée à 22:06 UTC, avant l'application
+    (22:07). Le run de `grants-prod.yml` déclenché par ce merge (22:06, S4 et S5 déjà présents, prod pas
+    encore migrée) est rouge ; relancé à la main sur master à 22:08 UTC : **35/35, vert**. L'état
+    « appliquée » est reporté sur master par une PR de correction.
 - Sécurité, stockage `documents` privé et documents de box fermés aux clients (migration `20270136`,
   **appliquée en prod le 28/09/2026 à 21:15 UTC** ; dump
   `db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T211427Z.dump` ; audit 33/33 ; anon et
