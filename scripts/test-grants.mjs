@@ -34,6 +34,7 @@ import {
 import { controlerGrantsTables, controlerRpcMutantes } from './lib/controle-grants-tables.mjs';
 import { controlerSchemaInternal } from './lib/controle-schema-internal.mjs';
 import { controlerStockageDocuments } from './lib/controle-stockage-documents.mjs';
+import { controlerStockagePiecesJointes } from './lib/controle-stockage-pieces-jointes.mjs';
 
 const { url: SUPABASE_URL, anonKey: ANON_KEY } = requireTestTarget();
 
@@ -227,6 +228,10 @@ controlerSchemaInternal(query, assert);
 // Même contrôle que sur la prod (S1..S3), même module.
 console.log('\n=== Contrôle du stockage `documents` ===\n');
 controlerStockageDocuments(query, assert);
+
+// ── Stockage `message-attachments` (S4, S5) ────────────────────────────────────
+console.log('\n=== Contrôle du stockage `message-attachments` ===\n');
+controlerStockagePiecesJointes(query, assert);
 
 // ── Le geste réel, et son effet mesuré ───────────────────────────────────────
 // Ici — pile jetable — la sonde peut être complète, et elle doit l'être : le

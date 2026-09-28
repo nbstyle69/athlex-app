@@ -318,6 +318,20 @@ Supabase/Resend.
   n'écrit la table (contrôle T10 de l'audit des droits). Affichage Manager et message traduit dans l'app :
   lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à
   venir).
+- Sécurité, stockage `message-attachments` privé (migration `20270137`, **appliquée en prod : non**).
+  Constat du 28/09/2026 : stockage public, `public_read_attachments` ouverte à tous (anon lisait les 2
+  images), dépôt permis n'importe où à tout compte connecté.
+  - Une pièce jointe se lit, connecté seulement, par son auteur, ou par quiconque peut lire un message du
+    groupe dont le premier dossier porte l'identifiant (la RLS de `group_messages` décide : membre du groupe
+    ou propriétaire de la box ; un co-gérant non membre ne lit pas). Un ancien fichier au chemin plat se lit
+    par qui lit le message de groupe qui le cite (URL publique ou chemin). Celui que seule l'ancienne table
+    `messages` cite reste à son auteur et à la clé serveur.
+  - Dépôt : dans un groupe dont on est membre, nom de fichier préfixé par son uid. Suppression : aucune
+    règle client, comme avant. `delete_user_account` inchangée.
+  - Contrôles S4 et S5 ajoutés à l'audit des droits. Remplace, pour `message-attachments`, la partie jamais
+    appliquée de `migrations_archive/20260820_lot1c_c_buckets_prives.sql`.
+  - App (PR séparée) : un dépôt enregistre le chemin du fichier et plus l'URL publique. Les builds antérieurs
+    au 04/08/2026 (avant 1.0.51) n'affichent plus les images et ne déposent plus.
 - Sécurité, stockage `documents` privé et documents de box fermés aux clients (migration `20270136`,
   **appliquée en prod le 28/09/2026 à 21:15 UTC** ; dump
   `db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T211427Z.dump` ; audit 33/33 ; anon et
