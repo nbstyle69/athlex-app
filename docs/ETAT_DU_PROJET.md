@@ -319,7 +319,9 @@ Supabase/Resend.
   lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à
   venir).
 - Sécurité, stockage `documents` privé et documents de box fermés aux clients (migration `20270136`,
-  **appliquée en prod : non**). Constat du 28/09/2026 : le stockage était public et la policy
+  **appliquée en prod le 28/09/2026 à 21:15 UTC** ; dump
+  `db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T211427Z.dump` ; audit 33/33 ; anon et
+  authenticated sans jeton voient 0 objet). Constat du 28/09/2026 : le stockage était public et la policy
   `public_read_documents` (rôle public, sans condition) laissait n'importe qui, sans compte, lister et lire
   les 2 PDF d'une box.
   - Le stockage passe en privé ; ses 3 policies client (lecture, dépôt, suppression) sont supprimées.
@@ -332,6 +334,11 @@ Supabase/Resend.
     `migrations_archive/20260820_lot1c_c_buckets_prives.sql`. `message-attachments`, visé par le même
     fichier et lui aussi public : lot séparé, avant l'App Store.
   - Écran Documents retiré de l'app : PR app séparée, prochain build.
+  - Incident d'ordre : #394 a été mergée à 21:08 UTC, avant l'application (21:15). Le run de
+    `grants-prod.yml` déclenché par ce merge (21:08, contrôles S1 à S3 déjà présents, prod pas encore
+    migrée) est rouge ; relancé à la main sur master à 21:47 UTC : **33/33, vert**. L'état « appliquée »,
+    poussé sur la branche après le merge, est reporté sur master par une PR de correction. Rappel :
+    application d'abord, merge ensuite.
 - Réservation : la box est celle du créneau, et seul un membre de la box réserve (migration `20270134`,
   **appliquée en prod le 27/09/2026 à 15:56 UTC** ; dump
   `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T155556Z.dump` ; audit 30/30).
