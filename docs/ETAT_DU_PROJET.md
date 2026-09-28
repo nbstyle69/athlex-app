@@ -319,7 +319,9 @@ Supabase/Resend.
   lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à
   venir).
 - Sécurité, stockage `documents` privé et documents de box fermés aux clients (migration `20270136`,
-  **appliquée en prod : non**). Constat du 28/09/2026 : le stockage était public et la policy
+  **appliquée en prod le 28/09/2026 à 21:15 UTC** ; dump
+  `db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T211427Z.dump` ; audit 33/33 ; anon et
+  authenticated sans jeton voient 0 objet). Constat du 28/09/2026 : le stockage était public et la policy
   `public_read_documents` (rôle public, sans condition) laissait n'importe qui, sans compte, lister et lire
   les 2 PDF d'une box.
   - Le stockage passe en privé ; ses 3 policies client (lecture, dépôt, suppression) sont supprimées.

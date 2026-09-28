@@ -1,7 +1,18 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Stockage « documents » privé, et plus aucun accès client aux documents de box
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 28/09/2026 à 21:15 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public, internal et storage avec droits
+-- db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T211427Z.dump,
+-- sha256 bb5db6a0470e464fdfd3eb29eaf09d55f3e5f540e99667b0bf2d6d3381aab657 vérifié
+-- après aller-retour, 142 TABLE DATA, 456 ACL, 380 POLICY ; précontrôle (md5
+-- calculés avec le search_path de la prod) : les 7 policies à leurs empreintes,
+-- stockage public, ACL anon=rm / authenticated=arwdm, delete_user_account
+-- f891e2df…, 2 objets et 2 lignes ; vérifications : stockage privé, 0 policy sur
+-- documents et sur box_documents, RLS active, aucun droit client, service_role
+-- inchangé, delete_user_account inchangée, objets et lignes identiques (md5
+-- d4819ffa… et 0d6b14a6… avant/après), anon = 0 et authenticated sans jeton = 0 ;
+-- audit des droits grants-prod.yml 33/33, S1 à S3 compris, sous athlex_audit_ro.)
 --
 -- Constat en prod, lecture seule, le 28/09/2026 (md5 calculés par la base, avec
 -- le search_path de la prod "$user", public, extensions) :
