@@ -261,6 +261,8 @@ export type CompetitionSummary = {
 
 export type HomeStackParamList = {
   HomeList: undefined;
+  /** Catalogue des composants ax : développement uniquement. */
+  AxCatalog: undefined;
   BoxInfo: undefined;
   Changelog: undefined;
   WodGenerator: undefined;
@@ -465,6 +467,12 @@ export type ReservationStackParamList = {
   MyReservations: undefined;
 };
 
+// Catalogue des composants ax : chargé et enregistré seulement en développement
+// (__DEV__ est remplacé par false au build de production, le require disparaît).
+const AxCatalogScreen: React.ComponentType | null = __DEV__
+  ? require('../screens/dev/AxCatalogScreen').default
+  : null;
+
 const RootStack       = createNativeStackNavigator<RootStackParamList>();
 const AuthStack       = createNativeStackNavigator<AuthStackParamList>();
 const OnbStack        = createNativeStackNavigator<OnboardingStackParamList>();
@@ -509,6 +517,7 @@ function HomeNavigator() {
   return (
     <HomeStack.Navigator screenOptions={shell}>
       <HomeStack.Screen name="HomeList" component={HomeScreen} />
+      {AxCatalogScreen && <HomeStack.Screen name="AxCatalog" component={AxCatalogScreen} />}
       <HomeStack.Screen name="BoxInfo" component={BoxInfoScreen} />
       <HomeStack.Screen name="Changelog" component={ChangelogScreen} />
       <HomeStack.Screen name="WodGenerator" component={WodGeneratorScreen} />

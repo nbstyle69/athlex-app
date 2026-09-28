@@ -1,0 +1,71 @@
+import React, { useState } from 'react';
+import { KeyboardTypeOptions, StyleSheet, Text, TextInput, View } from 'react-native';
+import type { LucideIcon } from 'lucide-react-native';
+import { useTheme } from '../../context/ThemeContext';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+
+interface Props {
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder?: string;
+  icon?: LucideIcon;
+  /** Message d'erreur affiché sous le champ ; sa présence passe la bordure en danger. */
+  error?: string;
+  keyboardType?: KeyboardTypeOptions;
+  secureTextEntry?: boolean;
+  multiline?: boolean;
+  accessibilityLabel?: string;
+  testID?: string;
+}
+
+export function AxTextField({
+  value, onChangeText, placeholder, icon: Icon, error, keyboardType, secureTextEntry, multiline,
+  accessibilityLabel, testID = 'ax-text-field',
+}: Props) {
+  const { theme } = useTheme();
+  const c = theme.ax;
+  const [focused, setFocused] = useState(false);
+  const borderColor = error ? c.danger : focused ? c.accentText : c.fieldBorder;
+
+  return (
+    <View style={styles.wrapper}>
+      <View testID={`${testID}-box`} style={[styles.box, { backgroundColor: c.field, borderColor }]}>
+        <TextInput
+          testID={testID}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={c.textMuted}
+          keyboardType={keyboardType}
+          secureTextEntry={secureTextEntry}
+          multiline={multiline}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          accessibilityLabel={accessibilityLabel ?? placeholder}
+          accessibilityHint={error}
+          style={[axTypography.body, styles.input, { color: c.text }, multiline ? styles.multiline : null]}
+        />
+        {Icon && <Icon size={18} color={c.textMuted} strokeWidth={2} />}
+      </View>
+      {!!error && (
+        <Text testID={`${testID}-error`} style={[axTypography.caption, { color: c.danger }]}>
+          {error}
+        </Text>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  wrapper: { gap: axSpacing.xs },
+  box: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: axSpacing.sm,
+    padding: 14,
+    borderWidth: 1,
+    borderRadius: axRadius.control,
+  },
+  input: { flex: 1, padding: 0 },
+  multiline: { textAlignVertical: 'top' },
+});
