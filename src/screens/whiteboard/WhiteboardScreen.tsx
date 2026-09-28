@@ -7,7 +7,7 @@ import {
   Modal, TextInput, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
-import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, X, MessageCircle, FileText, Trophy, Upload, Sparkles, Newspaper, Play, BookOpen, Check, Timer as TimerIcon, Pencil } from 'lucide-react-native';
+import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, X, MessageCircle, FileText, Trophy, Sparkles, Newspaper, Play, BookOpen, Check, Timer as TimerIcon, Pencil } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -532,19 +532,11 @@ export default function WhiteboardScreen() {
           <Text style={S.headerTitle}>{t('whiteboard.title')}</Text>
         </View>
 
-        {/* Top CTA: rejoindre une box / importation WOD */}
+        {/* Top CTA: rejoindre une box */}
         <View style={S.topCtaRow}>
           <TouchableOpacity style={S.topJoinBtn} onPress={() => setJoinModal(true)} activeOpacity={0.85}>
             <Hash color="#fff" size={15} />
             <Text style={S.topJoinBtnText}>{t('whiteboard.joinBox')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={S.topImportBtn}
-            onPress={() => navigation.navigate('Documents')}
-            activeOpacity={0.85}
-          >
-            <Upload size={15} color={theme.accent} />
-            <Text style={S.topImportBtnText}>{t('whiteboard.importWodCta')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -725,14 +717,6 @@ export default function WhiteboardScreen() {
           </TouchableOpacity>
         </View>
         <View style={[S.headerBtns, { marginTop: 8 }]}>
-          <TouchableOpacity
-            style={[S.membersBtn, { flex: 1 }]}
-            onPress={() => navigation.navigate('Documents')}
-            activeOpacity={0.8}
-          >
-            <Upload size={16} color={theme.accent} />
-            <Text style={S.membersBtnText}>{t('whiteboard.importWod')}</Text>
-          </TouchableOpacity>
           <TouchableOpacity
             style={[S.membersBtn, { flex: 1 }]}
             onPress={() => navigation.navigate('Articles')}
@@ -1229,14 +1213,6 @@ function createStyles(theme: AppTheme) {
     borderRadius: 12, backgroundColor: theme.accent,
   },
   topJoinBtnText: { fontSize: 13, fontWeight: '900', color: '#fff', letterSpacing: 0.3 },
-  topImportBtn: {
-    flex: 1,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, paddingVertical: 12, paddingHorizontal: 14,
-    borderRadius: 12, backgroundColor: theme.card,
-    borderWidth: 1, borderColor: theme.border,
-  },
-  topImportBtnText: { fontSize: 13, fontWeight: '700', color: theme.accent },
   createWodBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 14, paddingHorizontal: 18,

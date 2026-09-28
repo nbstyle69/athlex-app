@@ -51,7 +51,6 @@ const SCREENS = [
   'src/screens/messages/MessagesScreen.tsx',
   'src/screens/leaderboard/LeaderboardScreen.tsx',
   'src/screens/documents/LegalScreen.tsx',
-  'src/screens/documents/DocumentsScreen.tsx',
   'src/screens/settings/NotificationSettingsScreen.tsx',
   // Onboarding (already styled — minimal)
   // 'src/screens/onboarding/WaitingScreen.tsx',
