@@ -23,13 +23,18 @@
 --      ni créer une séance validée, ni en faire une par modification (statut,
 --      charge max, dates de validation), ni toucher une séance validée : seule la
 --      fonction validate_strength_session le fait.
---   2. strength_set_logs rattachée à sa séance par une clé étrangère composite
---      (user_id, source_type, source_id) → strength_sessions, en cascade : une série
---      ne peut exister sans sa séance, ni appartenir à la séance d'un autre.
---      `reps` devient facultatif (une série commencée en brouillon) ;
+--   2. strength_set_logs rattachée à sa séance par la clé naturelle
+--      (user_id, source_type, source_id), sans clé étrangère pour l'instant :
+--      l'app actuelle et les builds installés écrivent leurs séries sans séance,
+--      au moment du score ; ce chemin « historique » reste permis et visible comme
+--      avant jusqu'à la diffusion des nouveaux écrans (la clé étrangère viendra
+--      ensuite). `reps` devient facultatif (une série commencée en brouillon) ;
 --      source_type accepte 'generated' (séances générées, PR 3).
---      Écriture directe des séries par l'athlète : seulement dans une séance en
---      brouillon. Lecture : l'athlète lit toutes ses séries (brouillons compris).
+--      Écriture directe des séries par l'athlète : partout sauf dans une séance
+--      validée. Lecture : l'athlète lit toutes ses séries (brouillons compris).
+--      Les 5 séances reprises (point 3) étant validées, un ancien build qui
+--      corrigerait l'une d'elles ne pourra plus en réécrire les séries (son score,
+--      lui, s'enregistre toujours).
 --   3. Reprise : les 5 séances existantes deviennent des séances validées
 --      (première validation = première série, charge max = plus lourde série
 --      valide). Aucune série, aucun score, aucun record modifié.
@@ -76,7 +81,6 @@
 --     USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 --   ALTER POLICY strength_sets_own_delete ON public.strength_set_logs USING (user_id = auth.uid());
 --   DELETE FROM public.strength_set_logs WHERE reps IS NULL OR source_type = 'generated';
---   ALTER TABLE public.strength_set_logs DROP CONSTRAINT strength_set_logs_session_fkey;
 --   ALTER TABLE public.strength_set_logs ALTER COLUMN reps SET NOT NULL;
 --   ALTER TABLE public.strength_set_logs DROP CONSTRAINT strength_set_logs_source_type_check;
 --   ALTER TABLE public.strength_set_logs ADD CONSTRAINT strength_set_logs_source_type_check
@@ -145,10 +149,12 @@ SELECT l.user_id, l.source_type, l.source_id, max(l.source_title), 'validated',
  GROUP BY l.user_id, l.source_type, l.source_id;
 
 -- ═══ 3. Séries rattachées à leur séance ══════════════════════════════════════
-ALTER TABLE public.strength_set_logs
-  ADD CONSTRAINT strength_set_logs_session_fkey
-  FOREIGN KEY (user_id, source_type, source_id)
-  REFERENCES public.strength_sessions (user_id, source_type, source_id) ON DELETE CASCADE;
+-- Le rattachement se fait par la clé naturelle (user_id, source_type, source_id),
+-- sans clé étrangère POUR L'INSTANT : l'app actuelle et les builds déjà installés
+-- écrivent leurs séries sans séance, au moment du score. Une clé étrangère les
+-- ferait échouer dès l'application. Une série sans séance reste donc une écriture
+-- « historique », permise et visible comme avant ; la clé étrangère sera posée
+-- quand plus aucun build ne passera par ce chemin.
 
 ALTER TABLE public.strength_set_logs ALTER COLUMN reps DROP NOT NULL;
 
@@ -158,28 +164,29 @@ ALTER TABLE public.strength_set_logs ADD CONSTRAINT strength_set_logs_source_typ
   CHECK (source_type = ANY (ARRAY['whiteboard'::text, 'program'::text, 'generated'::text]));
 
 -- Définitions en prod : user_id = auth.uid() (qual et with_check, md5 3a807491…).
--- La lecture reste celle-là ; l'écriture directe n'est permise que dans un
--- brouillon. La sous-requête lit strength_sessions, dont les policies ne relisent
--- pas strength_set_logs : pas de récursion.
+-- La lecture reste celle-là. L'écriture directe reste permise, sauf dans une
+-- séance validée : celle-là ne change que par validate_strength_session. La
+-- sous-requête lit strength_sessions, dont les policies ne relisent pas
+-- strength_set_logs : pas de récursion.
 ALTER POLICY strength_sets_own_insert ON public.strength_set_logs
-  WITH CHECK (user_id = auth.uid() AND EXISTS (
+  WITH CHECK (user_id = auth.uid() AND NOT EXISTS (
     SELECT 1 FROM public.strength_sessions s
      WHERE s.user_id = strength_set_logs.user_id AND s.source_type = strength_set_logs.source_type
-       AND s.source_id = strength_set_logs.source_id AND s.status = 'draft'));
+       AND s.source_id = strength_set_logs.source_id AND s.status = 'validated'));
 ALTER POLICY strength_sets_own_update ON public.strength_set_logs
-  USING (user_id = auth.uid() AND EXISTS (
+  USING (user_id = auth.uid() AND NOT EXISTS (
     SELECT 1 FROM public.strength_sessions s
      WHERE s.user_id = strength_set_logs.user_id AND s.source_type = strength_set_logs.source_type
-       AND s.source_id = strength_set_logs.source_id AND s.status = 'draft'))
-  WITH CHECK (user_id = auth.uid() AND EXISTS (
+       AND s.source_id = strength_set_logs.source_id AND s.status = 'validated'))
+  WITH CHECK (user_id = auth.uid() AND NOT EXISTS (
     SELECT 1 FROM public.strength_sessions s
      WHERE s.user_id = strength_set_logs.user_id AND s.source_type = strength_set_logs.source_type
-       AND s.source_id = strength_set_logs.source_id AND s.status = 'draft'));
+       AND s.source_id = strength_set_logs.source_id AND s.status = 'validated'));
 ALTER POLICY strength_sets_own_delete ON public.strength_set_logs
-  USING (user_id = auth.uid() AND EXISTS (
+  USING (user_id = auth.uid() AND NOT EXISTS (
     SELECT 1 FROM public.strength_sessions s
      WHERE s.user_id = strength_set_logs.user_id AND s.source_type = strength_set_logs.source_type
-       AND s.source_id = strength_set_logs.source_id AND s.status = 'draft'));
+       AND s.source_id = strength_set_logs.source_id AND s.status = 'validated'));
 
 -- ═══ 4. Validation ═════════════════════════════════════════════════════════════
 -- Estimation Epley, miroir de estimateOneRepMax (src/services/strengthPR.ts) sans
@@ -485,17 +492,18 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  -- Un brouillon n'est visible que de l'athlète lui-même.
+  -- Un brouillon n'est visible que de l'athlète lui-même (une série sans séance,
+  -- écrite par l'app actuelle au moment du score, reste visible comme avant).
   RETURN QUERY
   SELECT s.id, s.source_type, s.source_id, s.source_title, s.movement,
          s.movement_label, s.set_index, s.reps, s.load_kg,
          s.prescribed_reps, s.prescribed_load_kg, s.performed_at
   FROM public.strength_set_logs s
   WHERE s.user_id = p_user_id
-    AND (p_user_id = auth.uid() OR EXISTS (
+    AND (p_user_id = auth.uid() OR NOT EXISTS (
       SELECT 1 FROM public.strength_sessions ss
        WHERE ss.user_id = s.user_id AND ss.source_type = s.source_type
-         AND ss.source_id = s.source_id AND ss.status = 'validated'))
+         AND ss.source_id = s.source_id AND ss.status = 'draft'))
   ORDER BY s.performed_at DESC, s.movement, s.set_index
   LIMIT LEAST(GREATEST(COALESCE(p_limit, 200), 1), 1000);
 END;

@@ -8,12 +8,13 @@
 --
 --   M1  brouillon : A crée sa séance et ses séries (série commencée sans reps
 --       comprise) ; une séance créée validée est refusée ; A ne change ni statut ni
---       charge max ; B ne lit rien, n'écrit pas dans la séance de A et ne crée pas
---       de série sans séance ;
+--       charge max ; B ne lit rien et n'écrit pas dans la séance de A ; une série
+--       sans séance (chemin historique de l'app actuelle) reste permise ;
 --   M2  un brouillon n'a aucun effet : ni score, ni record, ni compteur, ni
 --       movement_logs ; le staff ne voit pas les séries d'un brouillon, A si ;
 --   M3  validation : refus sans session, sans série valide, WOD inconnu, WOD scoré
---       d'un autre type, séries en double ; la première validation garde les séries
+--       d'un autre type, séries en double ; une série historique reste écrite,
+--       modifiable et visible du coach ; la première validation garde les séries
 --       valides seulement, pose la charge max, le score (charge max, box du WOD),
 --       le record prouvé et rend premiere_validation ; un record plus haut que sa
 --       série est refusé sans rien écrire ;
@@ -144,9 +145,11 @@ BEGIN
   v := pg_temp.faire('02', format($q$INSERT INTO public.strength_set_logs (user_id, source_type, source_id, movement, set_index, reps, load_kg)
                                      VALUES (%L, 'whiteboard', %L, 'back squat', 3, 5, 100)$q$, a, w1));
   IF v NOT LIKE '42501:%' THEN RAISE EXCEPTION 'M1 : B écrit dans la séance de A : %', v; END IF;
+  -- Chemin historique (app actuelle, builds installés) : une série sans séance,
+  -- écrite au moment du score, reste permise pour soi.
   v := pg_temp.faire('02', format($q$INSERT INTO public.strength_set_logs (user_id, source_type, source_id, movement, set_index, reps, load_kg)
                                      VALUES ('00000000-0000-4000-a9fc-000000000002', 'whiteboard', %L, 'back squat', 1, 5, 100)$q$, w1));
-  IF v NOT LIKE '23503:%' AND v NOT LIKE '42501:%' THEN RAISE EXCEPTION 'M1 : série sans séance acceptée : %', v; END IF;
+  IF v <> 'OK' THEN RAISE EXCEPTION 'M1 : série sans séance (chemin historique) refusée : %', v; END IF;
 
   -- ── M2 : un brouillon n'a aucun effet ────────────────────────────────────
   IF pg_temp.score('1') IS NOT NULL THEN RAISE EXCEPTION 'M2 : un brouillon a écrit un score'; END IF;
@@ -210,6 +213,16 @@ BEGIN
   END IF;
   v := pg_temp.faire('03', format('SELECT count(*) FROM public.list_athlete_strength_sets(%L)', a));
   IF v <> 'OK 3' THEN RAISE EXCEPTION 'M3 : le coach ne voit pas la séance validée : %', v; END IF;
+  -- Série sans séance (chemin historique) : écrite, modifiable, visible du coach.
+  v := pg_temp.faire('01', format($q$INSERT INTO public.strength_set_logs (user_id, source_type, source_id, movement, set_index, reps, load_kg)
+                                     VALUES (%L, 'whiteboard', '00000000-0000-4000-c9fc-000000000002', 'row', 1, 10, 50)$q$, a));
+  IF v <> 'OK' THEN RAISE EXCEPTION 'M3 : série historique refusée : %', v; END IF;
+  v := pg_temp.faire('01', $q$UPDATE public.strength_set_logs SET load_kg = 55 WHERE movement = 'row'$q$);
+  IF v <> 'OK' OR (SELECT load_kg FROM public.strength_set_logs WHERE movement = 'row') <> 55 THEN
+    RAISE EXCEPTION 'M3 : série historique non modifiable : %', v;
+  END IF;
+  v := pg_temp.faire('03', format('SELECT count(*) FROM public.list_athlete_strength_sets(%L)', a));
+  IF v <> 'OK 4' THEN RAISE EXCEPTION 'M3 : le coach ne voit pas la série historique : %', v; END IF;
 
   -- ── M4 : modification ───────────────────────────────────────────────────
   -- Deadlift corrigé à 120 sans recalcul : le record (150, venu d'ici) n'est plus prouvé.
@@ -405,7 +418,6 @@ $function$;
       USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
     ALTER POLICY strength_sets_own_delete ON public.strength_set_logs USING (user_id = auth.uid());
     DELETE FROM public.strength_set_logs WHERE reps IS NULL OR source_type = 'generated';
-    ALTER TABLE public.strength_set_logs DROP CONSTRAINT strength_set_logs_session_fkey;
     ALTER TABLE public.strength_set_logs ALTER COLUMN reps SET NOT NULL;
     ALTER TABLE public.strength_set_logs DROP CONSTRAINT strength_set_logs_source_type_check;
     ALTER TABLE public.strength_set_logs ADD CONSTRAINT strength_set_logs_source_type_check

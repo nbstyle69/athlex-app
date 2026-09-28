@@ -323,8 +323,9 @@ Supabase/Resend.
   - `strength_sessions` : une séance par athlète et par source (WOD du Whiteboard ou de programme, séance
     générée), en brouillon ou validée, avec les séries prévues, la charge max et la date de première
     validation. L'athlète écrit ses brouillons ; lui seul les voit (le staff ne lit que les séances validées).
-  - Séries rattachées à leur séance (clé étrangère composite) ; écriture directe seulement en brouillon ; une
-    série commencée sans reps est gardée en brouillon.
+  - Séries rattachées à leur séance par (athlète, source) ; pas encore de clé étrangère : l'app actuelle et les
+    builds installés écrivent leurs séries sans séance, et ce chemin reste permis. Aucune écriture directe dans
+    une séance validée ; une série commencée sans reps est gardée en brouillon.
   - `validate_strength_session` écrit en une transaction les séries valides, la séance, le score (Whiteboard :
     charge max des séries) et les 1RM calculés par l'app, chacun prouvé par une série ; un 1RM ne baisse que
     s'il venait de cette séance. Elle rend `premiere_validation` : compteurs et crédits ne partiront qu'une
