@@ -28,6 +28,7 @@ import { computeCompletedMovements } from '../../utils/movementParser';
 import { annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
 import { buildStrengthGrid, logStrengthSets, StrengthSetDraft } from '../../services/strengthSets';
+import i18n from '../../i18n';
 import StrengthSetGrid from '../../components/wod/StrengthSetGrid';
 import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
 import { recordStrengthPRs } from '../../services/strengthPR';
@@ -733,10 +734,10 @@ export default function WODDetailScreen() {
                 if (allowed.types.length === 1) {
                   return (
                     <>
-                      <Text style={S.modalLabel}>TYPE DE SCORE</Text>
+                      <Text style={S.modalLabel}>{i18n.t('wod.scoreType.label').toUpperCase()}</Text>
                       <View style={S.typeRow}>
                         <View style={[S.typeChip, S.typeChipActive]}>
-                          <Text style={[S.typeChipText, S.typeChipTextActive]}>{allowed.types[0].toUpperCase()}</Text>
+                          <Text style={[S.typeChipText, S.typeChipTextActive]}>{i18n.t(`wod.scoreType.${allowed.types[0]}`).toUpperCase()}</Text>
                         </View>
                       </View>
                     </>
@@ -744,7 +745,7 @@ export default function WODDetailScreen() {
                 }
                 return (
                   <>
-                    <Text style={S.modalLabel}>TYPE DE SCORE</Text>
+                    <Text style={S.modalLabel}>{i18n.t('wod.scoreType.label').toUpperCase()}</Text>
                     <View style={S.typeRow}>
                       {allowed.types.map(t => (
                         <TouchableOpacity
@@ -753,7 +754,7 @@ export default function WODDetailScreen() {
                           onPress={() => setScoreType(t)}
                         >
                           <Text style={[S.typeChipText, scoreType === t && S.typeChipTextActive]}>
-                            {t.toUpperCase()}
+                            {i18n.t(`wod.scoreType.${t}`).toUpperCase()}
                           </Text>
                         </TouchableOpacity>
                       ))}
