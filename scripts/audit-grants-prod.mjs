@@ -43,6 +43,9 @@ import {
 import {
   controlerStockageDocuments, ASSERTIONS_STOCKAGE_DOCUMENTS,
 } from './lib/controle-stockage-documents.mjs';
+import {
+  controlerStockagePiecesJointes, ASSERTIONS_STOCKAGE_PIECES_JOINTES,
+} from './lib/controle-stockage-pieces-jointes.mjs';
 import { signalerCorrespondancesCatalogue } from './lib/signal-correspondances-catalogue.mjs';
 import { PROD_PROJECT_REF } from './lib/prod-ref.mjs';
 
@@ -115,6 +118,7 @@ const ASSERTIONS_ATTENDUES = ASSERTIONS_FIXES
   + ASSERTIONS_GRANTS_TABLES // T1..T9 : les grants de tables (lot 5-E)
   + ASSERTIONS_SCHEMA_INTERNAL // I1..I3 : le schéma `internal`
   + ASSERTIONS_STOCKAGE_DOCUMENTS // S1..S3 : le stockage `documents` (20270136)
+  + ASSERTIONS_STOCKAGE_PIECES_JOINTES // S4, S5 : le stockage `message-attachments` (20270137)
   - (REJEU ? SONDES_ANONYMES.length + 1 + 2 : 0) // en rejeu, aucun appel REST…
   + (REJEU ? 1 : 0); // …mais le rôle doit voir le catalogue du signal
 
@@ -374,6 +378,11 @@ controlerSchemaInternal(query, assert);
 // de storage.objects) qu'aucun des contrôles précédents ne regarde.
 console.log('\n=== Stockage `documents` — PRODUCTION (lecture seule) ===\n');
 controlerStockageDocuments(query, assert);
+
+// ── Stockage `message-attachments` ───────────────────────────────────────────
+// Public jusqu'au 28/09/2026 : les images des conversations se lisaient sans compte.
+console.log('\n=== Stockage `message-attachments` — PRODUCTION (lecture seule) ===\n');
+controlerStockagePiecesJointes(query, assert);
 
 // ── Correspondance catalogue → clés : un signal, pas une assertion ───────────
 // Le catalogue se modifie depuis le back-office admin ; un mouvement ajouté sans
