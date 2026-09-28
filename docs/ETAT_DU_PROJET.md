@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte visuelle mobile, lot R0 « Fondations » (aucun écran modifié).**
+- Jetons du nouveau design posés dans `src/theme/axTokens.ts` (source Figma, collections « AthleX —
+  Couleurs » et « AthleX — Dimensions ») : couleurs sombre et clair, rayons, espacements, flou du verre,
+  13 styles typographiques. Couleurs exposées dans `theme.ax` ; aucune valeur existante du thème ne change.
+- Police Oswald (`Oswald_500Medium`) chargée au démarrage, pas encore utilisée.
+- Contraste AA vérifié par test dans les deux modes. Les écrans passeront au nouveau design dans les lots
+  suivants (R1 : fond translucide du verre et repli Android).
+
 **Intégration au vert sur master** (tests et CI seulement, sans migration ni code de production).
 - `integration.yml` joue désormais toutes les suites. Chacune est en `continue-on-error`, et une étape
   finale (`scripts/bilan-suites.mjs`) publie le résumé par suite et fait échouer le job s'il y a eu un échec
