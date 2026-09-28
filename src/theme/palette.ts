@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { axColors, type AxColors } from './axTokens';
 
 // Android has no native BlurView → translucent cards look washed-out / "double rectangle".
 // On Android, we force more opaque card/surface fills so blocks render as crisp,
@@ -57,6 +58,8 @@ export interface AppTheme {
   shadow: string;
   modalCard: string;
   modalBackdrop: string;
+  /** Couleurs du nouveau design (refonte), non consommées par les écrans actuels. */
+  ax: AxColors;
 }
 
 export const lightTheme: AppTheme = {
@@ -105,6 +108,7 @@ export const lightTheme: AppTheme = {
   shadow: 'rgba(0,0,0,0.06)',
   modalCard: '#ffffff',
   modalBackdrop: 'rgba(0,0,0,0.55)',
+  ax: axColors.light,
 };
 
 export const darkTheme: AppTheme = {
@@ -146,4 +150,5 @@ export const darkTheme: AppTheme = {
   shadow: 'rgba(0,0,0,0.4)',
   modalCard: '#14161b',
   modalBackdrop: 'rgba(0,0,0,0.80)',
+  ax: axColors.dark,
 };

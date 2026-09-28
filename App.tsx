@@ -11,6 +11,7 @@ import { useFonts,
 import {
   Barlow_800ExtraBold, Barlow_900Black,
 } from '@expo-google-fonts/barlow';
+import { Oswald_500Medium } from '@expo-google-fonts/oswald';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './src/context/AuthContext';
 import { ThemeProvider } from './src/context/ThemeContext';
@@ -92,6 +93,7 @@ function App() {
     Inter_900Black,
     Barlow_800ExtraBold,
     Barlow_900Black,
+    Oswald_500Medium,
   });
 
   // Deep link: handle notification tap (foreground + background)
