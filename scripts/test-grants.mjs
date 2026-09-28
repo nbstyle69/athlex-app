@@ -33,6 +33,7 @@ import {
 } from './lib/anon-whitelist.mjs';
 import { controlerGrantsTables, controlerRpcMutantes } from './lib/controle-grants-tables.mjs';
 import { controlerSchemaInternal } from './lib/controle-schema-internal.mjs';
+import { controlerStockageDocuments } from './lib/controle-stockage-documents.mjs';
 
 const { url: SUPABASE_URL, anonKey: ANON_KEY } = requireTestTarget();
 
@@ -221,6 +222,11 @@ controlerGrantsTables(query, assert);
 // migrations produisent, là-bas ce que la base est devenue.
 console.log('\n=== Contrôle du schéma `internal` ===\n');
 controlerSchemaInternal(query, assert);
+
+// ── Stockage `documents` ───────────────────────────────────────
+// Même contrôle que sur la prod (S1..S3), même module.
+console.log('\n=== Contrôle du stockage `documents` ===\n');
+controlerStockageDocuments(query, assert);
 
 // ── Le geste réel, et son effet mesuré ───────────────────────────────────────
 // Ici — pile jetable — la sonde peut être complète, et elle doit l'être : le

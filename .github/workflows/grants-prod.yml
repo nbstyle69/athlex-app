@@ -26,6 +26,7 @@ on:
       - 'scripts/audit-grants-prod.mjs'
       - 'scripts/lib/anon-whitelist.mjs'
       - 'scripts/lib/controle-grants-tables.mjs'
+      - 'scripts/lib/controle-stockage-documents.mjs'
       - '.github/workflows/grants-prod.yml'
 
   workflow_dispatch:
@@ -79,7 +80,7 @@ jobs:
       # script compte donc ses assertions et imprime une sentinelle ; l'étape
       # exige cette sentinelle, ce qui couvre le cas où *rien* du script ne
       # s'exécute — aucun compte n'est alors imprimable depuis Node.
-      - name: R1 / R2 / D1 / D2 + effet à la clé anon
+      - name: R1 / R2 / D1 / D2 / S1-S3 (stockage documents) + effet à la clé anon
         env:
           PROD_DB_URL: ${{ secrets.PROD_DB_URL_RO }}
           PROD_SUPABASE_URL: ${{ secrets.PROD_SUPABASE_URL }}

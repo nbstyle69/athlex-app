@@ -40,6 +40,9 @@ import {
 import {
   controlerSchemaInternal, ASSERTIONS_SCHEMA_INTERNAL,
 } from './lib/controle-schema-internal.mjs';
+import {
+  controlerStockageDocuments, ASSERTIONS_STOCKAGE_DOCUMENTS,
+} from './lib/controle-stockage-documents.mjs';
 import { signalerCorrespondancesCatalogue } from './lib/signal-correspondances-catalogue.mjs';
 import { PROD_PROJECT_REF } from './lib/prod-ref.mjs';
 
@@ -111,6 +114,7 @@ const ASSERTIONS_ATTENDUES = ASSERTIONS_FIXES
   + 2 // lectures REST publiques (boxes, profiles)
   + ASSERTIONS_GRANTS_TABLES // T1..T9 : les grants de tables (lot 5-E)
   + ASSERTIONS_SCHEMA_INTERNAL // I1..I3 : le schéma `internal`
+  + ASSERTIONS_STOCKAGE_DOCUMENTS // S1..S3 : le stockage `documents` (20270136)
   - (REJEU ? SONDES_ANONYMES.length + 1 + 2 : 0) // en rejeu, aucun appel REST…
   + (REJEU ? 1 : 0); // …mais le rôle doit voir le catalogue du signal
 
@@ -363,6 +367,13 @@ controlerGrantsTables(query, assert);
 // SANS garde de rôle : leur inaccessibilité est toute leur protection.
 console.log('\n=== Schéma `internal` — PRODUCTION (lecture seule) ===\n');
 controlerSchemaInternal(query, assert);
+
+// ── Stockage `documents` ─────────────────────────────────────────────────────
+// Public jusqu'au 28/09/2026 : n'importe qui listait et lisait les PDF des box.
+// Les verrous portent sur des objets de la plateforme (storage.buckets, policies
+// de storage.objects) qu'aucun des contrôles précédents ne regarde.
+console.log('\n=== Stockage `documents` — PRODUCTION (lecture seule) ===\n');
+controlerStockageDocuments(query, assert);
 
 // ── Correspondance catalogue → clés : un signal, pas une assertion ───────────
 // Le catalogue se modifie depuis le back-office admin ; un mouvement ajouté sans
