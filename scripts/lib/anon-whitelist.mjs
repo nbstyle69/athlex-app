@@ -93,7 +93,6 @@ export const SONDES_ECRITURE_ANONYME = [
   ['box_articles', 'POST', '{}'],
   ['class_reservations', 'POST', '{}'],
   ['tournament_scores', 'POST', '{}'],
-  ['box_documents', 'DELETE', null],
   ['message_group_members', 'POST', '{}'],
   ['message_group_members', 'DELETE', null],
 ];

@@ -318,6 +318,20 @@ Supabase/Resend.
   n'écrit la table (contrôle T10 de l'audit des droits). Affichage Manager et message traduit dans l'app :
   lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à
   venir).
+- Sécurité, stockage `documents` privé et documents de box fermés aux clients (migration `20270136`,
+  **appliquée en prod : non**). Constat du 28/09/2026 : le stockage était public et la policy
+  `public_read_documents` (rôle public, sans condition) laissait n'importe qui, sans compte, lister et lire
+  les 2 PDF d'une box.
+  - Le stockage passe en privé ; ses 3 policies client (lecture, dépôt, suppression) sont supprimées.
+  - `box_documents` : les 4 policies sont supprimées, anon et authenticated n'ont plus aucun droit ; seule
+    la clé serveur lit. La table, ses 2 lignes et les 2 fichiers restent.
+  - `delete_user_account` inchangée : elle efface toujours les fichiers `documents` d'un compte supprimé.
+  - Contrôles S1 à S3 ajoutés à l'audit des droits (CI de rejeu, `test-grants`, `grants-prod.yml`) ; le rôle
+    `athlex_audit_ro` lit pour cela `id` et `public` de `storage.buckets`.
+  - Remplace, pour `documents`, la partie jamais appliquée de
+    `migrations_archive/20260820_lot1c_c_buckets_prives.sql`. `message-attachments`, visé par le même
+    fichier et lui aussi public : lot séparé, avant l'App Store.
+  - Écran Documents retiré de l'app : PR app séparée, prochain build.
 - Réservation : la box est celle du créneau, et seul un membre de la box réserve (migration `20270134`,
   **appliquée en prod le 27/09/2026 à 15:56 UTC** ; dump
   `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T155556Z.dump` ; audit 30/30).
