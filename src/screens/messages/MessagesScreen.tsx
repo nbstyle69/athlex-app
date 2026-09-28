@@ -19,6 +19,7 @@ import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import i18n from '../../i18n';
 import { resolveStorageUrls, isExternalValue } from '../../lib/storageUrl';
+import { uploadMessageAttachment, MESSAGE_ATTACHMENTS_BUCKET } from '../../lib/messageAttachments';
 import { lastSeenMessagesKey, markMessagesSeen } from '../../lib/unreadMessages';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
@@ -229,7 +230,7 @@ export default function MessagesScreen() {
     )].filter(v => !attachmentUrls[v]);
     if (pending.length === 0) return;
     (async () => {
-      const resolved = await resolveStorageUrls(pending, 'message-attachments');
+      const resolved = await resolveStorageUrls(pending, MESSAGE_ATTACHMENTS_BUCKET);
       if (cancelled) return;
       setAttachmentUrls(prev => {
         const next = { ...prev };
@@ -370,24 +371,16 @@ export default function MessagesScreen() {
   async function uploadImage(uri: string, groupId: string): Promise<string | null> {
     try {
       const ext = uri.split('.').pop()?.toLowerCase() ?? 'jpg';
-      // Chemin scopé (Lot 1C-c) : <group_id>/<uid>_<ts>_<rand>.<ext>.
-      // Avant, les chemins étaient plats → impossible de restreindre la lecture
-      // aux membres de la conversation. Le 1er segment porte le groupe : la
-      // policy storage lit l'appartenance sans requête applicative.
-      const fileName = `${groupId}/${user!.id}_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
       const response = await fetch(uri);
       const blob = await response.blob();
       const arrayBuf = await new Response(blob).arrayBuffer();
-      const { error } = await supabase.storage
-        .from('message-attachments')
-        .upload(fileName, arrayBuf, { contentType: blob.type || `image/${ext}`, upsert: false });
+      // Chemin <group_id>/<uid>_… enregistré tel quel : le stockage est privé
+      // (20270137), l'affichage signe via resolveStorageUrls.
+      const { path, error } = await uploadMessageAttachment(
+        supabase.storage, groupId, user!.id, ext, arrayBuf, blob.type || `image/${ext}`,
+      );
       if (error) { captureError(error, { screen: 'Messages', action: 'uploadImage' }); return null; }
-      // Format « public » conservé pour la coexistence de versions : tant que le
-      // bucket est public, une app non mise à jour doit pouvoir afficher une
-      // pièce jointe envoyée depuis la nouvelle. Le résolveur en extrait le
-      // chemin et la signe une fois le bucket privé.
-      const { data: urlData } = supabase.storage.from('message-attachments').getPublicUrl(fileName);
-      return urlData.publicUrl;
+      return path;
     } catch (e) { captureError(e, { screen: 'Messages', action: 'uploadImage' }); return null; }
   }
 
@@ -643,7 +636,7 @@ export default function MessagesScreen() {
                     // elle n'a jamais besoin d'être signée, donc elle ne doit pas
                     // attendre la résolution asynchrone. Seuls les objets du
                     // bucket privé attendent leur URL signée.
-                    const uri = isExternalValue(raw, 'message-attachments')
+                    const uri = isExternalValue(raw, MESSAGE_ATTACHMENTS_BUCKET)
                       ? raw
                       : attachmentUrls[raw];
                     if (!uri) return null;

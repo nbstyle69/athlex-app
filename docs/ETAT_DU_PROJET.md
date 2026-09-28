@@ -404,6 +404,11 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   Contact your box to activate your membership. ») pour le refus `NO_ACTIVE_PLAN`, que ce soit une réservation
   ou une inscription en liste d'attente, au lieu du message brut. L'impayé passe par le même mapping
   (`reservationRefusal`), avec un texte inchangé.
+- App, pièces jointes enregistrées par leur chemin (sans migration, **à diffuser au prochain build** ; la base
+  est fermée par `20270137`, PR séparée) : un dépôt enregistre `<groupe>/<uid>_…` dans
+  `group_messages.attachment_url` au lieu de l'URL publique (`src/lib/messageAttachments.ts`). L'affichage
+  reste sur `resolveStorageUrls`, qui signe aussi les anciennes URL publiques ; les GIF externes sont
+  inchangés. Un build antérieur au 04/08/2026 ne sait pas afficher un chemin nu.
 - App, refus de box traduits à la réservation (sans migration, s'appuie sur `20270134`, **à diffuser au
   prochain build**) : un compte qui n'est plus membre actif de la box (refus RLS 42501) lit « Tu ne fais
   plus partie de cette box. Rejoins-la à nouveau ou contacte-la. », une box déclarée qui n'est pas celle du
