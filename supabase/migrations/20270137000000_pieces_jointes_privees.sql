@@ -2,7 +2,19 @@
 -- Stockage « message-attachments » privé : une pièce jointe se lit comme le
 -- message qui la porte
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 28/09/2026 à 22:07 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public, internal et storage avec droits
+-- db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T220703Z.dump,
+-- sha256 2244202c291d6b4154389eb19abe6201a6397f4f7b9c1f568b3c7ce39414feba vérifié
+-- après aller-retour, 142 TABLE DATA, 458 ACL, 374 POLICY ; précontrôle (md5
+-- calculés avec le search_path de la prod) : stockage public, public_read_attachments
+-- 3de7fe44… et auth_upload_attachments 768135bd…, delete_user_account f891e2df…,
+-- 2 objets, 16 messages de groupe dont 2 avec pièce jointe (comme à l'inventaire) ;
+-- vérifications : stockage privé, anciennes policies absentes,
+-- message_attachments_lecture 2050adb5… et message_attachments_depot 20c0111a…,
+-- réservées à authenticated, identiques au rejeu ; anon = 0 et authenticated sans
+-- jeton = 0 ; objets et messages identiques (md5 cdd17c32… et c411cf81…
+-- avant/après) ; audit des droits grants-prod.yml 35/35, S1 à S5 compris.)
 --
 -- Constat en prod, lecture seule, le 28/09/2026 (md5 calculés par la base, avec
 -- le search_path de la prod "$user", public, extensions) :
