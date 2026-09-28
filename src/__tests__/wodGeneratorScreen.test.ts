@@ -105,13 +105,10 @@ describe('remplacement de l’ancien générateur', () => {
     ]) expect(exists(...p)).toBe(false);
   });
 
-  it('les routes WodGenerator / WodResult remplacent WODGenerator / WODGenPro / WODSuggestions dans les deux piles', () => {
+  it('les routes WodGenerator / WodResult remplacent WODGenerator / WODGenPro / WODSuggestions dans la pile Home', () => {
     for (const old of ['WODGenerator', 'WODGenPro', 'WODSuggestions']) expect(nav).not.toContain(old);
     expect(nav).toMatch(/<HomeStack\.Screen name="WodGenerator" component=\{WodGeneratorScreen\} \/>/);
     expect(nav).toMatch(/<HomeStack\.Screen name="WodResult" component=\{WodResultScreen\} \/>/);
-    expect(nav).toMatch(/<WODStack\.Screen name="WodGenerator" component=\{WodGeneratorScreen\} \/>/);
-    expect(nav).toMatch(/<WODStack\.Screen name="WodResult" component=\{WodResultScreen\} \/>/);
-    expect(read('src', 'screens', 'wod', 'WODScreen.tsx')).toContain("navigation.navigate('WodGenerator')");
     expect(read('src', 'screens', 'home', 'homeTools.ts')).toContain("screen: 'WodGenerator'");
   });
 

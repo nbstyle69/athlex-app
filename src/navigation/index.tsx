@@ -60,7 +60,6 @@ import HomeScreen from '../screens/home/HomeScreen';
 import TimerScreen from '../screens/timer/TimerScreen';
 import TimerRunScreen from '../screens/timer/TimerRunScreen';
 import VideoPlaybackScreen from '../screens/timer/VideoPlaybackScreen';
-import WODScreen from '../screens/wod/WODScreen';
 import WodGeneratorScreen from '../screens/wod/WodGeneratorScreen';
 import WodResultScreen, { WodResultParams } from '../screens/wod/WodResultScreen';
 import OneRMCalculatorScreen from '../screens/home/OneRMCalculatorScreen';
@@ -308,38 +307,6 @@ export type HomeStackParamList = {
   };
 };
 
-export type WODStackParamList = {
-  WODList: undefined;
-  WodGenerator: undefined;
-  WodResult: WodResultParams;
-  WodHistory: { filter?: 'favorites' } | undefined;
-  TimerRun: {
-    timerType: TimerType;
-    countdown: number;
-    totalSeconds: number;
-    maxTime: number;
-    interval: number;
-    rounds: number;
-    workTime: number;
-    restTime: number;
-    withCamera: boolean;
-    sequence: string;
-    videoTitle: string;
-    withTimestamp: boolean;
-    competitionLogoUrl?: string;
-    nextExercise?: string;
-  };
-  VideoPlayback: {
-    videoURL: string;
-    title?: string;
-    recordedAt?: string;
-    timerStartOffset?: number;
-    timerStopOffset?: number;
-    countdownDuration?: number;
-    overlaysBurned?: boolean;
-  };
-};
-
 export type CompetitionStackParamList = {
   CompetitionList: { initialTab?: number } | undefined;
   PhysicalCompetition: { mode: 'qualification' | 'info'; selectedId?: string };
@@ -471,7 +438,6 @@ const OnbStack        = createNativeStackNavigator<OnboardingStackParamList>();
 const Tab             = createBottomTabNavigator<MainTabParamList>();
 const BOTab           = createBottomTabNavigator<BoxOwnerTabParamList>();
 const BODashStack     = createNativeStackNavigator<BODashboardStackParamList>();
-const WODStack        = createNativeStackNavigator<WODStackParamList>();
 const CompStack       = createNativeStackNavigator<CompetitionStackParamList>();
 const HomeStack       = createNativeStackNavigator<HomeStackParamList>();
 const WhiteboardStack  = createNativeStackNavigator<WhiteboardStackParamList>();
@@ -532,20 +498,6 @@ function HomeNavigator() {
       <HomeStack.Screen name="Legal" component={LegalScreen} />
       <HomeStack.Screen name="ProgramDetail" component={ProgramDetailScreen} />
     </HomeStack.Navigator>
-  );
-}
-
-function WODNavigator() {
-  const shell = useShellScreenOptions();
-  return (
-    <WODStack.Navigator screenOptions={shell}>
-      <WODStack.Screen name="WODList" component={WODScreen} />
-      <WODStack.Screen name="WodGenerator" component={WodGeneratorScreen} />
-      <WODStack.Screen name="WodResult" component={WodResultScreen} />
-      <WODStack.Screen name="WodHistory"   component={WodHistoryScreen} />
-      <WODStack.Screen name="TimerRun"     component={TimerRunScreen} />
-      <WODStack.Screen name="VideoPlayback" component={VideoPlaybackScreen} />
-    </WODStack.Navigator>
   );
 }
 

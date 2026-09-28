@@ -1116,12 +1116,6 @@
     "cancelWaitingBody": "You'll be removed from the waitlist.",
     "yesCancel": "Yes, cancel"
   },
-  "wod": {
-    "title": "WOD",
-    "subtitle": "Workouts of the Day",
-    "generate": "Generate",
-    "all": "All"
-  },
   "wodHistory": {
     "title": "WOD history",
     "statWods": "WODs",
