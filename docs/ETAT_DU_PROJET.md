@@ -154,7 +154,7 @@ aucune régie) ; chiffrement en transit = oui (HTTPS partout) ; suppression dans
 | Genre, bio | Supabase `profiles` | Other Data Types / Other User Content · Fonctionnement · liée | Personal info → Other info · App functionality | `ProfileScreen.tsx` |
 | Photo de profil, images de messages/articles/logo | Supabase Storage (`avatars`, `message-attachments`, `box-assets`, `box-logos`) | User Content → Photos or Videos · Fonctionnement · liée | Photos and videos → Photos · App functionality | `ProfileScreen.tsx`, `MessagesScreen.tsx`, `BOArticlesScreen.tsx`, `BOBoxInfoScreen.tsx` |
 | Vidéos de performance | **Jamais envoyées** : galerie locale ; seule une URL saisie est stockée (`*.video_url`) | Vidéo : rien ; URL : Other User Content · liée | Photos and videos → non collecté | `TimerRunScreen.tsx` (`MediaLibrary.saveToLibraryAsync`), `InterScoreSubmitScreen.tsx` ; aucun `upload` de vidéo dans `src/` |
-| Documents (PDF) | Storage `documents` | User Content → Other User Content · Fonctionnement · liée | Files and docs · App functionality | `DocumentsScreen.tsx` |
+| Documents (PDF) — **plus collectés** à partir du prochain build (écran retiré) | Storage `documents`, privé, lu par la seule clé serveur (`20270136`) | À retirer au prochain envoi | À retirer au prochain envoi | Écran `DocumentsScreen.tsx` supprimé |
 | Performance sportive (scores, temps, charges, PR, ELO, séances) | Supabase | **Health & Fitness → Fitness** · Fonctionnement · liée | Health and fitness → Fitness info · App functionality | `src/services/strengthPR.ts`, `strengthSets.ts`, `myProfile.ts`, `gamification.ts` |
 | Messages (privés, groupes, commentaires) | Supabase | User Content → Other User Content · Fonctionnement · liée | Messages → Other in-app messages · App functionality | `MessagesScreen.tsx` |
 | Identifiant utilisateur | Supabase ; Sentry `user.id` ; Mixpanel `distinct_id` | Identifiers → User ID · Fonctionnement, Analytics · liée | Personal info → User IDs · App functionality, Analytics | `src/lib/sentry.ts`, `src/lib/analytics.ts` |
@@ -395,6 +395,12 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   plus partie de cette box. Rejoins-la à nouveau ou contacte-la. », une box déclarée qui n'est pas celle du
   créneau (`RESERVATION_BOX_MISMATCH`) « Ce cours n'appartient pas à ta box. Actualise l'écran et
   réessaie. » (FR/EN), au lieu du message brut.
+- App, écran Documents retiré (sans migration, **à diffuser au prochain build** ; la base est fermée par
+  `20270136`, PR séparée) : plus d'écran Documents ni de route `Documents`, plus de boutons « Import WOD »
+  sur Ma Box (celui du haut et celui de la ligne Actualités, qui prend toute la largeur) ; clés de traduction
+  retirées. Les builds déjà installés gardent l'écran jusqu'à la mise à jour : une fois `20270136` appliquée,
+  il affiche une liste vide et un dépôt est refusé (message d'erreur). `expo-document-picker` reste (import de WOD du
+  back-office). Déclaration App Privacy / Data Safety : la ligne « Documents (PDF) » tombe au prochain envoi.
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).

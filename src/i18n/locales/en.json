@@ -1144,8 +1144,6 @@
   "whiteboard": {
     "title": "My Box",
     "joinBox": "Join a box",
-    "importWodCta": "Import WOD",
-    "importWod": "Import WOD",
     "members": "Members",
     "messages": "Messages",
     "news": "News",

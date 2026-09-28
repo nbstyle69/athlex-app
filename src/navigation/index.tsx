@@ -107,7 +107,6 @@ import InterCompetitionListScreen from '../screens/competition/InterCompetitionL
 import InterCompetitionDetailScreen from '../screens/competition/InterCompetitionDetailScreen';
 import InterScoreSubmitScreen from '../screens/competition/InterScoreSubmitScreen';
 import InterTeamScreen from '../screens/competition/InterTeamScreen';
-import DocumentsScreen from '../screens/documents/DocumentsScreen';
 import EloHistoryScreen from '../screens/profile/EloHistoryScreen';
 import LegalScreen from '../screens/documents/LegalScreen';
 import BlockedUsersScreen from '../screens/profile/BlockedUsersScreen';
@@ -427,7 +426,6 @@ export type WhiteboardStackParamList = {
   BoxRanking: undefined;
   PublicProfile: { userId: string };
   Messages: undefined;
-  Documents: undefined;
   Articles: undefined;
   PersonalWODForm: { wodId?: string; date?: string } | undefined;
   TimerRun: {
@@ -561,7 +559,6 @@ function WhiteboardNavigator() {
       <WhiteboardStack.Screen name="BoxRanking"     component={BoxRankingScreen} />
       <WhiteboardStack.Screen name="PublicProfile"  component={PublicProfileScreen} />
       <WhiteboardStack.Screen name="Messages"       component={MessagesScreen} />
-      <WhiteboardStack.Screen name="Documents"      component={DocumentsScreen} />
       <WhiteboardStack.Screen name="Articles"        component={ArticlesScreen} />
       <WhiteboardStack.Screen name="PersonalWODForm" component={PersonalWODFormScreen} />
       <WhiteboardStack.Screen name="TimerRun"        component={TimerRunScreen} />
