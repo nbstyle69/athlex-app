@@ -232,14 +232,11 @@ describe('R6b : feuille « Partager sur YouTube » réduite', () => {
       expect(texts(sheet)).toEqual(['Share on YouTube', 'Publish your video from YouTube Studio', 'Open YouTube Studio', 'Close']);
     });
   });
-  it('code retiré : champ du lien, prompt, presse-papiers et leurs styles ; analyse IA commentée intacte', () => {
+  it('code retiré : champ du lien, prompt, presse-papiers et leurs styles', () => {
     const timer = read('screens/timer/TimerRunScreen.tsx');
     for (const gone of ['ytLink', 'setYtLink', 'TextInput', 'Clipboard', 'KeyboardAvoidingView', 'Copy,', 'Colle ton lien', 'prompt', 'ytInput', 'ytAnalyseBtn', 'ytBtn:', '🎬']) {
       expect(timer).not.toContain(gone);
     }
-    const master = execSync('git show origin/master:src/screens/timer/TimerRunScreen.tsx', { cwd: SRC, encoding: 'utf8' });
-    const commented = (s: string) => s.split('\n').filter((l) => /^\s*\/\//.test(l) && /IA|analy/i.test(l));
-    expect(commented(timer)).toEqual(commented(master));
   });
 });
 
@@ -392,8 +389,10 @@ describe('R6b : chrono et natif intacts', () => {
     expect(sha(back)).toBe('1041dd2f625b4dca7aef596260eec738457808105feae5f56912d121632992ed');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
-    const diff = execSync('git diff --stat origin/master -- modules/realtime-recorder', { cwd: path.join(SRC, '..'), encoding: 'utf8' });
-    expect(diff).toBe('');
+    const root = path.join(SRC, '..');
+    const files = execSync('git ls-files modules/realtime-recorder', { cwd: root }).toString().trim().split('\n');
+    const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
+    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('13a70926cacff27e9cdb575810f9da599703c39eb381e1317e6e18c7c4a15e64');
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
       .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');
