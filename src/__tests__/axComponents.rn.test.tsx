@@ -369,6 +369,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
     // R6a : écrans du mode caméra (lecture de la vidéo).
     path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'),
+    // R13 : écrans ouverts depuis le bloc Explorer de l'Accueil.
+    path.join(SRC, 'screens', 'explorer', 'BoxDirectoryMapScreen.tsx'),
   ];
 
   it('R4a : dans src/screens/wod et src/components/wod, seuls les fichiers du générateur et des résultats consomment ax', () => {
@@ -413,6 +415,17 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
       .map((f) => path.basename(f));
     expect(programs).toEqual(['ProgramDetailScreen.tsx']);
+  });
+
+  it('R13 : dans src/screens/explorer, seuls les sept écrans du bloc Explorer consomment ax (pas la carte web)', () => {
+    const explorer = walk(path.join(SRC, 'screens', 'explorer'))
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.basename(f))
+      .sort();
+    expect(explorer).toEqual([
+      'BoxDirectoryDetailScreen.tsx', 'BoxDirectoryMapScreen.tsx', 'BoxDirectoryScreen.tsx', 'BoxProgramsScreen.tsx',
+      'PartnerDetailScreen.tsx', 'PartnersScreen.tsx', 'ProgrammationScreen.tsx',
+    ]);
   });
 
   it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {

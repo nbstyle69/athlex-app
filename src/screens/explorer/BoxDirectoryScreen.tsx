@@ -1,10 +1,12 @@
 import i18n from '../../i18n';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import { AxIconButton } from '../../components/ax/AxIconButton';
+import { AxCard, AxChip, AxTag, AxTextField } from '../../components/ax';
+import { hitSlopFor } from '../../components/ax/color';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity,
-  TextInput, Image, ActivityIndicator,
+  View, Text, StyleSheet, FlatList, Pressable,
+  Image, ActivityIndicator,
 } from 'react-native';
 import { Search, MapPin, Users, Map, X } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -13,7 +15,8 @@ import { supabase } from '../../lib/supabase';
 import { readRows } from '../../lib/db';
 import { BOX_COLUMNS } from '../../lib/boxColumns';
 import { captureError } from '../../lib/sentry';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { HomeStackParamList } from '../../navigation';
 import { Box } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
@@ -37,7 +40,8 @@ export default function BoxDirectoryScreen() {
   const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
-  const s = createStyles(theme);
+  const c = theme.ax;
+  const s = createStyles(c);
 
   const [boxes, setBoxes] = useState<Box[]>([]);
   const [loading, setLoading] = useState(true);
@@ -108,10 +112,11 @@ export default function BoxDirectoryScreen() {
 
   function renderBox({ item }: { item: Box }) {
     return (
-      <TouchableOpacity
+      <AxCard
         style={s.card}
-        activeOpacity={0.8}
         onPress={() => navigation.navigate('BoxDirectoryDetail', { boxId: item.id })}
+        accessibilityLabel={item.name}
+        testID={`box-card-${item.id}`}
       >
         {item.logo_url ? (
           <Image source={{ uri: item.logo_url }} style={s.logo} />
@@ -128,26 +133,24 @@ export default function BoxDirectoryScreen() {
           <View style={s.cardMeta}>
             {item.city ? (
               <View style={s.metaRow}>
-                <MapPin size={11} color={theme.textMuted} />
-                <Text style={s.metaText}>{item.city}</Text>
+                <MapPin size={12} color={c.textMuted} />
+                <Text style={s.metaText} numberOfLines={1}>{item.city}</Text>
               </View>
             ) : null}
             <View style={s.metaRow}>
-              <Users size={11} color={theme.textMuted} />
-              <Text style={s.metaText}>{item.member_count ?? 0} membres</Text>
+              <Users size={12} color={c.textMuted} />
+              <Text style={s.metaText} numberOfLines={1}>{item.member_count ?? 0} membres</Text>
             </View>
           </View>
           {(item.sport_type ?? []).length > 0 && (
             <View style={s.sportRow}>
               {(item.sport_type ?? []).slice(0, 3).map(sp => (
-                <View key={sp} style={s.sportBadge}>
-                  <Text style={s.sportBadgeText}>{SPORT_LABELS[sp] ?? sp}</Text>
-                </View>
+                <AxTag key={sp} tone="muted" label={SPORT_LABELS[sp] ?? sp} />
               ))}
             </View>
           )}
         </View>
-      </TouchableOpacity>
+      </AxCard>
     );
   }
 
@@ -164,19 +167,24 @@ export default function BoxDirectoryScreen() {
 
       {/* Search */}
       <View style={s.searchWrap}>
-        <Search size={16} color={theme.textMuted} />
-        <TextInput
-          style={s.searchInput}
-          placeholder="Rechercher une box ou une ville..."
-          placeholderTextColor={theme.textMuted}
+        <AxTextField
           value={search}
           onChangeText={setSearch}
+          placeholder="Rechercher une box ou une ville..."
+          icon={search.length > 0 ? undefined : Search}
+          testID="box-search"
+          trailing={search.length > 0 ? (
+            <Pressable
+              onPress={() => setSearch('')}
+              hitSlop={hitSlopFor(18, 18)}
+              accessibilityRole="button"
+              accessibilityLabel="Effacer la recherche"
+              testID="box-search-clear"
+            >
+              <X size={18} color={c.textMuted} />
+            </Pressable>
+          ) : undefined}
         />
-        {search.length > 0 && (
-          <TouchableOpacity onPress={() => setSearch('')}>
-            <X size={16} color={theme.textMuted} />
-          </TouchableOpacity>
-        )}
       </View>
 
       {/* Sport filters */}
@@ -187,16 +195,14 @@ export default function BoxDirectoryScreen() {
             showsHorizontalScrollIndicator={false}
             data={allSports}
             keyExtractor={i => i}
-            contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}
+            contentContainerStyle={s.filtersList}
             renderItem={({ item: sp }) => (
-              <TouchableOpacity
-                style={[s.filterChip, selectedSport === sp && s.filterChipActive]}
+              <AxChip
+                label={SPORT_LABELS[sp] ?? sp}
+                selected={selectedSport === sp}
                 onPress={() => setSelectedSport(selectedSport === sp ? null : sp)}
-              >
-                <Text style={[s.filterChipText, selectedSport === sp && s.filterChipTextActive]}>
-                  {SPORT_LABELS[sp] ?? sp}
-                </Text>
-              </TouchableOpacity>
+                testID={`box-filter-${sp}`}
+              />
             )}
           />
         </View>
@@ -205,7 +211,7 @@ export default function BoxDirectoryScreen() {
       {/* List */}
       {loading ? (
         <View style={s.center}>
-          <ActivityIndicator size="large" color={theme.accent} />
+          <ActivityIndicator size="large" color={c.accentText} />
         </View>
       ) : filtered.length === 0 ? (
         <View style={s.center}>
@@ -216,74 +222,38 @@ export default function BoxDirectoryScreen() {
           data={filtered}
           keyExtractor={b => b.id}
           renderItem={renderBox}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace }}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+          contentContainerStyle={[s.list, { paddingBottom: tabSpace }]}
+          ItemSeparatorComponent={() => <View style={s.separator} />}
         />
       )}
     </View>
   );
 }
 
-function createStyles(t: AppTheme) {
+function createStyles(c: AxColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12,
-      backgroundColor: t.card, borderBottomWidth: 1, borderBottomColor: t.border,
-    },
-    backBtn: {
-      width: 36, height: 36, borderRadius: 10,
-      backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center',
-    },
-    headerTitle: { fontSize: 20, fontWeight: '900', color: t.text },
-    headerSub: { fontSize: 11, color: t.textMuted, marginTop: 1 },
-    mapBtn: {
-      width: 40, height: 40, borderRadius: 12,
-      backgroundColor: `${t.accent}15`, alignItems: 'center', justifyContent: 'center',
-    },
-    searchWrap: {
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      margin: 16, paddingHorizontal: 14, paddingVertical: 10,
-      backgroundColor: t.card, borderRadius: 12,
-      borderWidth: 1, borderColor: t.border,
-    },
-    searchInput: { flex: 1, fontSize: 14, color: t.text, padding: 0 },
-    filtersWrap: { marginBottom: 8 },
-    filterChip: {
-      paddingHorizontal: 14, paddingVertical: 7,
-      borderRadius: 20, backgroundColor: t.card,
-      borderWidth: 1, borderColor: t.border,
-    },
-    filterChipActive: {
-      backgroundColor: `${t.accent}15`, borderColor: t.accent,
-    },
-    filterChipText: { fontSize: 12, fontWeight: '600', color: t.textSecondary },
-    filterChipTextActive: { color: t.accent },
-    card: {
-      flexDirection: 'row', alignItems: 'center', gap: 14,
-      backgroundColor: t.card, borderRadius: 16, padding: 14,
-      borderWidth: 1, borderColor: t.border,
-    },
-    logo: { width: 56, height: 56, borderRadius: 14 },
+    headerSub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+    searchWrap: { paddingHorizontal: axSpacing.xl, paddingTop: axSpacing.md, paddingBottom: axSpacing.md },
+    filtersWrap: { marginBottom: axSpacing.md },
+    filtersList: { paddingHorizontal: axSpacing.xl, paddingVertical: 2, gap: axSpacing.sm },
+    list: { paddingHorizontal: axSpacing.xl },
+    separator: { height: axSpacing.md },
+    card: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+    logo: { width: 52, height: 52, borderRadius: axRadius.card },
     logoPlaceholder: {
-      backgroundColor: `${t.accent}15`,
+      backgroundColor: c.field, borderWidth: 1, borderColor: c.border,
       alignItems: 'center', justifyContent: 'center',
     },
-    logoLetter: { fontSize: 22, fontWeight: '900', color: t.accent },
-    cardContent: { flex: 1 },
-    cardName: { fontSize: 15, fontWeight: '800', color: t.text },
-    cardTagline: { fontSize: 12, color: t.textSecondary, marginTop: 2 },
-    cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 6 },
-    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    metaText: { fontSize: 11, color: t.textMuted },
-    sportRow: { flexDirection: 'row', gap: 6, marginTop: 8 },
-    sportBadge: {
-      paddingHorizontal: 8, paddingVertical: 3,
-      borderRadius: 6, backgroundColor: t.surface,
-    },
-    sportBadgeText: { fontSize: 10, fontWeight: '700', color: t.textSecondary },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { fontSize: 14, color: t.textMuted },
+    logoLetter: { ...axTypography.titleM, color: c.accentText },
+    cardContent: { flex: 1, minWidth: 0, gap: axSpacing.xs },
+    cardName: { ...axTypography.titleM, color: c.text },
+    cardTagline: { ...axTypography.bodySmall, color: c.textMuted },
+    cardMeta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', columnGap: axSpacing.md, rowGap: 2 },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, flexShrink: 1, minWidth: 0 },
+    metaText: { ...axTypography.bodySmall, color: c.textMuted, flexShrink: 1 },
+    sportRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.xs, marginTop: axSpacing.xs },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: axSpacing['2xl'] },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
   });
 }

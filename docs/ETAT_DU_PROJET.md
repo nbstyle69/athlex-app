@@ -205,6 +205,15 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R13 : annuaire, programmes et partenaires au nouveau design (app seule, aucune migration, apparence seule).**
+- `BoxDirectoryScreen` (recherche en `AxTextField`, sports en `AxChip`, boxs en `AxCard`, nom en `titleM`, ville et infos
+  en `bodySmall` `textMuted`, sports en `AxTag`), `BoxDirectoryMapScreen` (en-tête flottant et fiche basse `AxCard`
+  featured ; fond de carte et marqueurs inchangés ; toujours sans `AxScreenHeader`, écran plein écran), fiche box (identité
+  en `AxCard` featured, sports / services en `AxTag`, horaires en `AxCard`), Programmes, programmes des boxs, partenaires
+  et fiche partenaire (offre en `AxCard` featured, code en `AxButton` accent unique) ; `AxTextField` gagne l'option
+  rétrocompatible `trailing` (bouton d'effacement). Requêtes, navigation et liens inchangés ; ordre des textes comparé à un
+  relevé de master (`r13.rn.test.tsx`, `r13StructureBefore.json`).
+
 **R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).**
 - `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps,
   micro activé / coupé ; enregistrés dans `bwod_timer_display_opts_v2` (`src/lib/timerVideoOpts.ts`). Défauts inchangés
