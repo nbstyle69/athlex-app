@@ -369,6 +369,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
     // R6a : écrans du mode caméra (lecture de la vidéo).
     path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'),
+    // R7 : historique ELO par paliers (carte, filtres, graphique, paliers).
+    path.join(SRC, 'screens', 'profile', 'EloHistoryScreen.tsx'),
   ];
 
   it('R4a : dans src/screens/wod et src/components/wod, seuls les fichiers du générateur et des résultats consomment ax', () => {
@@ -413,6 +415,16 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
       .map((f) => path.basename(f));
     expect(programs).toEqual(['ProgramDetailScreen.tsx']);
+  });
+
+  it('R3c / R7 : dans src/screens/profile, seuls les écrans R3c et l’historique ELO consomment ax, et seul l’historique au-delà de l’en-tête', () => {
+    const profile = walk(path.join(SRC, 'screens', 'profile'))
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')));
+    expect(profile.map((f) => path.basename(f)).sort()).toEqual([
+      'BlockedUsersScreen.tsx', 'EloHistoryScreen.tsx', 'PublicProfileScreen.tsx',
+    ]);
+    const beyondHeader = profile.filter((f) => /from '\.\.\/\.\.\/components\/ax'/.test(fs.readFileSync(f, 'utf8')));
+    expect(beyondHeader.map((f) => path.basename(f))).toEqual(['EloHistoryScreen.tsx']);
   });
 
   it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {

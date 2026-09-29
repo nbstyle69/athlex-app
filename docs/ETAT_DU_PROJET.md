@@ -205,6 +205,17 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R7 : historique ELO par paliers (app seule, aucune migration, aucune écriture).**
+- `EloHistoryScreen` au nouveau design (`AxCard`, `AxChip`, tokens `ax`, médailles Lucide `Medal` à la place des emojis) ;
+  carte ELO : ELO en `numberL`, palier actuel (pastille + nom), « encore N pts avant <suivant> » (rien pour Pro), barre
+  entre les deux seuils, bornes « <palier> · <seuil> » ; graphique : bandes et seuils pointillés des paliers de la plage,
+  points colorés par palier, dernier point mis en avant, repères « Passage <palier> · <date> » et « Meilleur · <valeur> » ;
+  carte « Paliers » (six paliers, dépassés pleins, suivants estompés, « Toi »). Filtres, liste, ordre des blocs et
+  navigation inchangés ; calculs dans `src/utils/eloTiers.ts` (seuils de `eloLevels.ts`, `LevelColors` rapprochées de
+  l'encre du thème jusqu'à l'AA). Badge `level_inter` non touché.
+- Tests : `r7.rn.test.tsx` (27, instantané de structure avant / après), `eloTiers.test.ts` (43), isolement R1 élargi à
+  `EloHistoryScreen` ; `npx jest` 2021, `npm run test:rn` 513, `tsc` vert ; 67 mutations tuées (66 par les tests, 1 par `tsc`).
+
 **R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).**
 - `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps,
   micro activé / coupé ; enregistrés dans `bwod_timer_display_opts_v2` (`src/lib/timerVideoOpts.ts`). Défauts inchangés

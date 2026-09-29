@@ -733,7 +733,13 @@
     "deletedDaily": "Mini-tournoi supprimé",
     "deletedMatch": "Match supprimé",
     "unknownOpponent": "adversaire inconnu",
-    "versus": "vs {{opponent}}"
+    "versus": "vs {{opponent}}",
+    "tierRemaining": "encore {{points}} pts avant {{tier}}",
+    "tierBound": "{{tier}} · {{min}}",
+    "passage": "Passage {{tier}} · {{date}}",
+    "best": "Meilleur · {{value}}",
+    "tiersTitle": "Paliers",
+    "you": "Toi"
   },
   "common": {
     "save": "Enregistrer",

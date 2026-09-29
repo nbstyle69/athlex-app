@@ -1,25 +1,31 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxCard, AxChip, withAlpha } from '../../components/ax';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   ActivityIndicator, RefreshControl, Dimensions,
 } from 'react-native';
-import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line, Text as SvgText } from 'react-native-svg';
+import Svg, { Path, Circle, Line, Rect, G, Text as SvgText } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { TrendingUp, TrendingDown, Trophy, Dumbbell, Zap, Swords, ChevronRight, Minus } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Trophy, Dumbbell, Zap, Swords, ChevronRight, Medal } from 'lucide-react-native';
 import { HomeStackParamList } from '../../navigation';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { log } from '../../lib/logger';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import GlassBackground from '../../components/glass/GlassBackground';
 import {
   EloEntry, MatchEloRow, matchEloRowToEntry, sortEloEntries, eloCurvePoints,
 } from '../../utils/eloHistoryEntries';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import {
+  ELO_TIERS, tierIndexOf, tierOf, tierProgress, passageIndex, bestIndex, tierBands, thresholdsIn,
+  tierInk, tierBand, tierInkOnBand,
+} from '../../utils/eloTiers';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -28,9 +34,9 @@ export default function EloHistoryScreen() {
   const nav = useNavigation<Nav>();
   const { user } = useAuth();
   const { t } = useTranslation();
-  const { theme, mode } = useTheme();
-  const isDark = mode === 'dark';
-  const S = createStyles(theme, isDark);
+  const { theme } = useTheme();
+  const c = theme.ax;
+  const S = createStyles(c);
 
   const [entries, setEntries] = useState<EloEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -181,14 +187,6 @@ export default function EloHistoryScreen() {
     return `${day}/${month} à ${hours}:${mins}`;
   }
 
-  function rankLabel(rank: number | null) {
-    if (rank === null) return '';
-    if (rank === 1) return '🥇';
-    if (rank === 2) return '🥈';
-    if (rank === 3) return '🥉';
-    return `#${rank}`;
-  }
-
   return (
     <View style={S.container}>
       <GlassBackground />
@@ -197,61 +195,63 @@ export default function EloHistoryScreen() {
 
       <ScrollView
         contentContainerStyle={[S.scroll, { paddingBottom: tabSpace }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={c.accent} />}
       >
         {/* Current ELO card */}
-        <View style={S.eloCard}>
-          <Text style={S.eloCardValue}>{currentElo}</Text>
-          <Text style={S.eloCardLabel}>ELO ACTUEL</Text>
+        <AxCard testID="elo-card" style={S.eloCard}>
+          <Text testID="elo-value" style={[axTypography.numberL, { color: c.accentText }]}>{currentElo}</Text>
+          <Text style={[axTypography.overline, { color: c.textMuted }]}>ELO ACTUEL</Text>
           <View style={S.eloCardStats}>
             <View style={S.eloCardStat}>
-              <TrendingUp color="#22c55e" size={16} />
-              <Text style={[S.eloCardStatText, { color: '#22c55e' }]}>+{totalGain}</Text>
+              <TrendingUp color={c.success} size={16} />
+              <Text testID="elo-gain" style={[axTypography.label, { color: c.success }]}>+{totalGain}</Text>
             </View>
             <View style={S.eloCardStat}>
-              <TrendingDown color="#ef4444" size={16} />
-              <Text style={[S.eloCardStatText, { color: '#ef4444' }]}>{totalLoss}</Text>
+              <TrendingDown color={c.danger} size={16} />
+              <Text testID="elo-loss" style={[axTypography.label, { color: c.danger }]}>{totalLoss}</Text>
             </View>
           </View>
-        </View>
+          <EloTierProgress elo={currentElo} c={c} />
+        </AxCard>
 
         {/* Period filter */}
         {!loading && entries.length > 0 && (
           <View style={S.filterRow}>
             {(['7d', '30d', '365d', 'all'] as const).map(p => (
-              <TouchableOpacity
+              <AxChip
                 key={p}
+                testID={`elo-filter-${p}`}
+                selected={period === p}
                 onPress={() => setPeriod(p)}
-                style={[S.filterPill, period === p && { backgroundColor: theme.accent }]}
-              >
-                <Text style={[S.filterPillText, period === p && { color: '#fff' }]}>
-                  {p === '7d' ? '7j' : p === '30d' ? '30j' : p === '365d' ? '1an' : 'Tout'}
-                </Text>
-              </TouchableOpacity>
+                label={p === '7d' ? '7j' : p === '30d' ? '30j' : p === '365d' ? '1an' : 'Tout'}
+              />
             ))}
           </View>
         )}
 
         {/* ELO Chart */}
         {!loading && filtered.length >= 2 && (
-          <EloChart entries={filtered} currentElo={currentElo} theme={theme} isDark={isDark} />
+          <EloChart entries={filtered} currentElo={currentElo} c={c} />
         )}
+
+        {!loading && <EloTierLadder elo={currentElo} c={c} />}
 
         {/* History list */}
         {loading ? (
-          <ActivityIndicator color={theme.accent} size="large" style={{ marginTop: 40 }} />
+          <ActivityIndicator color={c.accent} size="large" style={{ marginTop: 40 }} />
         ) : filtered.length === 0 ? (
           <View style={S.emptyState}>
-            <Trophy color={theme.textMuted} size={40} />
-            <Text style={S.emptyText}>Aucun historique ELO</Text>
-            <Text style={S.emptySubtext}>Participe à des WODs ou tournois pour voir ton historique ici.</Text>
+            <Trophy color={c.textMuted} size={40} />
+            <Text style={[axTypography.label, S.emptyText]}>Aucun historique ELO</Text>
+            <Text style={[axTypography.bodySmall, S.emptySubtext]}>Participe à des WODs ou tournois pour voir ton historique ici.</Text>
           </View>
         ) : (
           <View style={S.list}>
-            <Text style={S.sectionTitle}>HISTORIQUE ({filtered.length})</Text>
+            <Text style={[axTypography.overline, S.sectionTitle]}>HISTORIQUE ({filtered.length})</Text>
             {filtered.map((entry) => (
               <TouchableOpacity
                 key={entry.id}
+                testID={`elo-row-${entry.id}`}
                 style={S.row}
                 activeOpacity={0.7}
                 onPress={() => {
@@ -260,34 +260,34 @@ export default function EloHistoryScreen() {
                   }
                 }}
               >
-                <View style={[S.rowIcon, { backgroundColor: entry.type === 'tournament' || entry.type === 'match' ? '#8b5cf620' : entry.type === 'daily' ? '#ef444420' : `${theme.accent}20` }]}>
+                <View style={[S.rowIcon, { backgroundColor: withAlpha(entryColor(entry.type, c), 0.12) }]}>
                   {entry.type === 'tournament'
-                    ? <Trophy color="#8b5cf6" size={18} />
+                    ? <Trophy color={c.violet} size={18} />
                     : entry.type === 'match'
-                    ? <Swords color="#8b5cf6" size={18} />
+                    ? <Swords color={c.violet} size={18} />
                     : entry.type === 'daily'
-                    ? <Zap color="#ef4444" size={18} />
-                    : <Dumbbell color={theme.accent} size={18} />
+                    ? <Zap color={c.danger} size={18} />
+                    : <Dumbbell color={c.accentText} size={18} />
                   }
                 </View>
                 <View style={S.rowBody}>
-                  <Text style={S.rowLabel} numberOfLines={1}>{entry.label}</Text>
+                  <Text style={[axTypography.label, { color: c.text }]} numberOfLines={1}>{entry.label}</Text>
                   <View style={S.rowMeta}>
-                    <Text style={S.rowDate}>{formatDate(entry.date)}</Text>
-                    <Text style={S.rowRank}>{rankLabel(entry.rank)}</Text>
+                    <Text style={[axTypography.caption, { color: c.textMuted }]}>{formatDate(entry.date)}</Text>
+                    <RankLabel rank={entry.rank} theme={theme} />
                   </View>
                 </View>
                 <View style={S.rowRight}>
                   <Text style={[
-                    S.rowDelta,
-                    { color: entry.delta > 0 ? '#22c55e' : entry.delta < 0 ? '#ef4444' : theme.textMuted },
+                    axTypography.label,
+                    { color: entry.delta > 0 ? c.success : entry.delta < 0 ? c.danger : c.textMuted },
                   ]}>
                     {entry.delta > 0 ? '+' : ''}{entry.delta}
                   </Text>
-                  <Text style={S.rowEloAfter}>{entry.eloAfter}</Text>
+                  <Text style={[axTypography.caption, { color: c.textMuted }]}>{entry.eloAfter}</Text>
                 </View>
                 {entry.type === 'wod' && (
-                  <ChevronRight color={theme.textMuted} size={16} />
+                  <ChevronRight color={c.textMuted} size={16} />
                 )}
               </TouchableOpacity>
             ))}
@@ -298,14 +298,100 @@ export default function EloHistoryScreen() {
   );
 }
 
+function entryColor(type: EloEntry['type'], c: AxColors): string {
+  return type === 'tournament' || type === 'match' ? c.violet : type === 'daily' ? c.danger : c.accentText;
+}
+
+const MEDAL_LABELS = ['1er', '2e', '3e'];
+
+function RankLabel({ rank, theme }: { rank: number | null; theme: AppTheme }) {
+  if (rank === null) return null;
+  if (rank >= 1 && rank <= 3) {
+    const color = rank === 1 ? theme.gold : rank === 2 ? theme.silver : theme.bronze;
+    return (
+      <View testID={`elo-rank-medal-${rank}`} accessible accessibilityLabel={MEDAL_LABELS[rank - 1]}>
+        <Medal color={color} size={14} />
+      </View>
+    );
+  }
+  return <Text style={[axTypography.labelSmall, { color: theme.ax.textMuted }]}>{`#${rank}`}</Text>;
+}
+
+// ── Palier actuel et progression ─────────────────────────────────────
+function EloTierProgress({ elo, c }: { elo: number; c: AxColors }) {
+  const { t } = useTranslation();
+  const { current, next, remaining, ratio } = tierProgress(elo);
+  const ink = tierInk(current.level, c);
+  return (
+    <View testID="elo-tier" style={tierStyles.progress}>
+      <View style={tierStyles.currentRow}>
+        <View testID="elo-tier-dot" style={[tierStyles.dot, { backgroundColor: ink }]} />
+        <Text testID="elo-tier-name" style={[axTypography.label, { color: ink }]}>{current.name}</Text>
+      </View>
+      {next && remaining !== null && (
+        <Text testID="elo-tier-remaining" style={[axTypography.bodySmall, { color: c.textMuted }]}>
+          {t('eloHistory.tierRemaining', { points: remaining, tier: next.name })}
+        </Text>
+      )}
+      <View testID="elo-tier-track" style={[tierStyles.track, { backgroundColor: withAlpha(c.text, 0.1) }]}>
+        <View testID="elo-tier-fill" style={[tierStyles.fill, { width: `${ratio * 100}%`, backgroundColor: ink }]} />
+      </View>
+      <View style={tierStyles.bounds}>
+        <Text testID="elo-tier-bound-low" numberOfLines={1} style={[axTypography.caption, { color: c.textMuted }]}>
+          {t('eloHistory.tierBound', { tier: current.name, min: current.min })}
+        </Text>
+        {next && (
+          <Text testID="elo-tier-bound-high" numberOfLines={1} style={[axTypography.caption, { color: c.textMuted }]}>
+            {t('eloHistory.tierBound', { tier: next.name, min: next.min })}
+          </Text>
+        )}
+      </View>
+    </View>
+  );
+}
+
+// ── Échelle des paliers ──────────────────────────────────────────────
+function EloTierLadder({ elo, c }: { elo: number; c: AxColors }) {
+  const { t } = useTranslation();
+  const currentIdx = tierIndexOf(elo);
+  return (
+    <AxCard testID="elo-tiers-card" style={tierStyles.ladderCard}>
+      <Text style={[axTypography.overline, { color: c.textMuted }]}>{t('eloHistory.tiersTitle')}</Text>
+      <View style={tierStyles.ladder}>
+        {ELO_TIERS.map((tier, i) => {
+          const ink = tierInk(tier.level, c);
+          const reached = i <= currentIdx;
+          return (
+            <View key={tier.level} testID={`elo-tier-step-${tier.level}`} style={tierStyles.step}>
+              <View
+                testID={`elo-tier-step-bar-${tier.level}`}
+                style={[tierStyles.stepBar, { backgroundColor: reached ? ink : withAlpha(ink, 0.25) }]}
+              />
+              <Text numberOfLines={1} style={[axTypography.labelSmall, { color: reached ? c.text : c.textMuted }]}>{tier.name}</Text>
+              <Text numberOfLines={1} style={[axTypography.caption, { color: c.textMuted }]}>{tier.min}</Text>
+              {i === currentIdx && (
+                <Text testID="elo-tier-you" numberOfLines={1} style={[axTypography.labelSmall, { color: c.accentText }]}>
+                  {t('eloHistory.you')}
+                </Text>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    </AxCard>
+  );
+}
+
 // ── ELO Progression Chart ────────────────────────────────────────────
-const CHART_WIDTH = Dimensions.get('window').width - 32;
+/** Écran moins les marges de la carte, son padding et sa bordure. */
+const CHART_WIDTH = Dimensions.get('window').width - 4 * axSpacing.lg - 2;
 const CHART_HEIGHT = 180;
 const PADDING = { top: 20, right: 16, bottom: 28, left: 44 };
 
-function EloChart({ entries, currentElo, theme, isDark }: {
-  entries: EloEntry[]; currentElo: number; theme: AppTheme; isDark: boolean;
+function EloChart({ entries, currentElo, c }: {
+  entries: EloEntry[]; currentElo: number; c: AxColors;
 }) {
+  const { t } = useTranslation();
   // Build chronological data points (oldest → newest, then current)
   const sorted = [...entries].reverse();
   const dayLabel = (iso: string) => { const d = new Date(iso); return `${d.getDate()}/${d.getMonth() + 1}`; };
@@ -337,11 +423,6 @@ function EloChart({ entries, currentElo, theme, isDark }: {
     linePath += ` C ${cpx} ${prev.cy}, ${cpx} ${curr.cy}, ${curr.cx} ${curr.cy}`;
   }
 
-  // Fill path (close at bottom)
-  const fillPath = linePath +
-    ` L ${linePoints[linePoints.length - 1].cx} ${PADDING.top + h}` +
-    ` L ${linePoints[0].cx} ${PADDING.top + h} Z`;
-
   // Y-axis labels (3-4 ticks)
   const tickCount = 4;
   const yTicks: number[] = [];
@@ -360,28 +441,30 @@ function EloChart({ entries, currentElo, theme, isDark }: {
     xLabels.push({ i: points.length - 1, label: points[points.length - 1].label });
   }
 
-  // Color: green if trending up, red if down
-  const lastPoint = points[points.length - 1];
-  const firstPoint = points[0];
-  const trending = lastPoint.elo >= firstPoint.elo;
-  const accentColor = trending ? '#22c55e' : '#ef4444';
+  const last = linePoints.length - 1;
+  const lastInk = tierInkOnBand(tierOf(points[last].elo).level, c);
+  const currentTier = tierOf(currentElo);
+  const passage = passageIndex(elos, currentTier.level);
+  const best = bestIndex(elos);
 
   return (
-    <View style={{
-      marginHorizontal: 16, marginBottom: 16, borderRadius: 20,
-      backgroundColor: isDark ? theme.card : '#f8f8f8',
-      borderWidth: 1, borderColor: theme.border, padding: 12,
-    }}>
-      <Text style={{ fontSize: 12, fontWeight: '700', color: theme.textMuted, letterSpacing: 1, marginBottom: 8, marginLeft: 4 }}>
+    <AxCard testID="elo-chart" style={S_CHART.card}>
+      <Text style={[axTypography.overline, { color: c.textMuted }]}>
         PROGRESSION ELO
       </Text>
       <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
-        <Defs>
-          <LinearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={accentColor} stopOpacity="0.3" />
-            <Stop offset="1" stopColor={accentColor} stopOpacity="0.02" />
-          </LinearGradient>
-        </Defs>
+        {/* Bandes des paliers */}
+        <G testID="elo-chart-bands">
+          {tierBands(padded.min, padded.max).map(({ tier, from, to }) => (
+            <Rect
+              key={`band-${tier.level}`}
+              testID={`elo-band-${tier.level}`}
+              x={PADDING.left} y={y(to)}
+              width={w} height={y(from) - y(to)}
+              fill={tierBand(tier.level, c)}
+            />
+          ))}
+        </G>
 
         {/* Grid lines */}
         {yTicks.map((tick, i) => (
@@ -389,10 +472,29 @@ function EloChart({ entries, currentElo, theme, isDark }: {
             key={`grid-${i}`}
             x1={PADDING.left} y1={y(tick)}
             x2={PADDING.left + w} y2={y(tick)}
-            stroke={isDark ? '#ffffff10' : '#00000010'}
+            stroke={withAlpha(c.text, 0.08)}
             strokeWidth={1}
           />
         ))}
+
+        {/* Seuils des paliers */}
+        <G testID="elo-chart-thresholds">
+          {thresholdsIn(padded.min, padded.max).map((tier) => {
+            const ink = tierInkOnBand(tier.level, c);
+            return (
+              <G key={`threshold-${tier.level}`} testID={`elo-threshold-${tier.level}`}>
+                <Line
+                  x1={PADDING.left} y1={y(tier.min)}
+                  x2={PADDING.left + w} y2={y(tier.min)}
+                  stroke={ink} strokeWidth={1} strokeDasharray="4 4"
+                />
+                <SvgText x={PADDING.left + w} y={y(tier.min) - 4} fontSize={10} fontWeight="600" fill={ink} textAnchor="end">
+                  {tier.min}
+                </SvgText>
+              </G>
+            );
+          })}
+        </G>
 
         {/* Y-axis labels */}
         {yTicks.map((tick, i) => (
@@ -402,7 +504,7 @@ function EloChart({ entries, currentElo, theme, isDark }: {
             y={y(tick) + 4}
             fontSize={10}
             fontWeight="600"
-            fill={theme.textMuted}
+            fill={c.textMuted}
             textAnchor="end"
           >
             {tick}
@@ -417,115 +519,135 @@ function EloChart({ entries, currentElo, theme, isDark }: {
             y={PADDING.top + h + 18}
             fontSize={10}
             fontWeight="500"
-            fill={theme.textMuted}
+            fill={c.textMuted}
             textAnchor="middle"
           >
             {label}
           </SvgText>
         ))}
 
-        {/* Gradient fill */}
-        <Path d={fillPath} fill="url(#chartGrad)" />
-
         {/* Line */}
-        <Path d={linePath} stroke={accentColor} strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <Path d={linePath} stroke={c.textMuted} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+
+        {/* Repères */}
+        <G testID="elo-chart-marks">
+          {passage !== null && (
+            <Circle testID="elo-passage-ring" cx={linePoints[passage].cx} cy={linePoints[passage].cy} r={8}
+              fill="none" stroke={c.text} strokeWidth={1.5} />
+          )}
+          {best !== null && (
+            <Circle testID="elo-best-ring" cx={linePoints[best].cx} cy={linePoints[best].cy} r={8}
+              fill="none" stroke={c.text} strokeWidth={1.5} strokeDasharray="2 2" />
+          )}
+          <Circle testID="elo-last-halo" cx={linePoints[last].cx} cy={linePoints[last].cy} r={10} fill={withAlpha(lastInk, 0.25)} />
+        </G>
 
         {/* Data points */}
         {linePoints.map((pt, i) => (
           <Circle
             key={`dot-${i}`}
+            testID={`elo-dot-${i}`}
             cx={pt.cx}
             cy={pt.cy}
-            r={i === linePoints.length - 1 ? 5 : 3}
-            fill={i === linePoints.length - 1 ? accentColor : isDark ? theme.card : '#fff'}
-            stroke={accentColor}
-            strokeWidth={2}
+            r={i === last ? 6 : 3.5}
+            fill={tierInkOnBand(tierOf(points[i].elo).level, c)}
+            stroke={c.surface}
+            strokeWidth={i === last ? 2 : 1}
           />
         ))}
 
         {/* Current ELO label on last point */}
         <SvgText
-          x={linePoints[linePoints.length - 1].cx}
-          y={linePoints[linePoints.length - 1].cy - 10}
+          x={linePoints[last].cx}
+          y={linePoints[last].cy - 12}
           fontSize={12}
           fontWeight="800"
-          fill={accentColor}
+          fill={c.text}
           textAnchor="middle"
         >
           {currentElo}
         </SvgText>
       </Svg>
-    </View>
+      {(passage !== null || best !== null) && (
+        <View testID="elo-chart-legend" style={S_CHART.legend}>
+          {passage !== null && (
+            <View style={S_CHART.legendItem}>
+              <View style={[S_CHART.legendRing, { borderColor: c.text }]} />
+              <Text testID="elo-passage" numberOfLines={1} style={[axTypography.caption, { color: c.text }]}>
+                {t('eloHistory.passage', { tier: currentTier.name, date: dayLabel(sorted[passage - 1].date) })}
+              </Text>
+            </View>
+          )}
+          {best !== null && (
+            <View style={S_CHART.legendItem}>
+              <View style={[S_CHART.legendRing, S_CHART.legendRingDashed, { borderColor: c.text }]} />
+              <Text testID="elo-best" numberOfLines={1} style={[axTypography.caption, { color: c.text }]}>
+                {t('eloHistory.best', { value: elos[best] })}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+    </AxCard>
   );
 }
 
-function createStyles(theme: AppTheme, isDark: boolean) {
+const S_CHART = StyleSheet.create({
+  card: { marginHorizontal: axSpacing.lg, marginBottom: axSpacing.lg, gap: axSpacing.sm },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', columnGap: axSpacing.lg, rowGap: axSpacing.xs },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, flexShrink: 1 },
+  legendRing: { width: 10, height: 10, borderRadius: 5, borderWidth: 1.5 },
+  legendRingDashed: { borderStyle: 'dashed' },
+});
+
+const tierStyles = StyleSheet.create({
+  progress: { alignSelf: 'stretch', gap: axSpacing.sm, marginTop: axSpacing.lg },
+  currentRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  track: { height: 6, borderRadius: 3, overflow: 'hidden' },
+  fill: { height: 6, borderRadius: 3 },
+  bounds: { flexDirection: 'row', justifyContent: 'space-between', gap: axSpacing.sm },
+  ladderCard: { marginHorizontal: axSpacing.lg, marginBottom: axSpacing.lg },
+  ladder: { flexDirection: 'row', gap: axSpacing.xs },
+  step: { flex: 1, minWidth: 0, gap: 2 },
+  stepBar: { height: 6, borderRadius: axRadius.badge, marginBottom: axSpacing.xs },
+});
+
+function createStyles(c: AxColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 16, paddingTop: 60, paddingBottom: 16,
-      backgroundColor: isDark ? theme.card : theme.background,
-      borderBottomWidth: 1, borderBottomColor: theme.border,
-    },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },
-    headerTitle: { fontSize: 18, fontWeight: '800', color: theme.text },
     scroll: { paddingBottom: 140 },
 
     // ELO Card
-    eloCard: {
-      margin: 16, padding: 24, borderRadius: 20,
-      backgroundColor: isDark ? theme.card : '#f8f8f8',
-      borderWidth: 1, borderColor: theme.border,
-      alignItems: 'center',
-    },
-    eloCardValue: { fontSize: 56, fontWeight: '900', color: theme.accent },
-    eloCardLabel: { fontSize: 13, fontWeight: '700', color: theme.textMuted, letterSpacing: 2, marginTop: 4 },
-    eloCardStats: { flexDirection: 'row', gap: 24, marginTop: 16 },
+    eloCard: { margin: axSpacing.lg, padding: axSpacing['2xl'], alignItems: 'center', gap: axSpacing.xs },
+    eloCardStats: { flexDirection: 'row', gap: axSpacing['2xl'], marginTop: axSpacing.md },
     eloCardStat: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    eloCardStatText: { fontSize: 15, fontWeight: '700' },
 
     // Empty state
     emptyState: { alignItems: 'center', paddingTop: 60, paddingHorizontal: 40 },
-    emptyText: { fontSize: 16, fontWeight: '700', color: theme.text, marginTop: 16 },
-    emptySubtext: { fontSize: 13, color: theme.textMuted, textAlign: 'center', marginTop: 8 },
+    emptyText: { color: c.text, marginTop: axSpacing.lg },
+    emptySubtext: { color: c.textMuted, textAlign: 'center', marginTop: axSpacing.sm },
 
     // Filter pills
     filterRow: {
-      flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 12,
-    },
-    filterPill: {
-      flex: 1, paddingVertical: 8, borderRadius: 12, alignItems: 'center',
-      backgroundColor: isDark ? theme.card : '#f0f0f0',
-      borderWidth: 1, borderColor: theme.border,
-    },
-    filterPillText: {
-      fontSize: 13, fontWeight: '700', color: theme.textMuted,
+      flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm, paddingHorizontal: axSpacing.lg, marginBottom: axSpacing.md,
     },
 
     // List
-    list: { paddingHorizontal: 16 },
-    sectionTitle: {
-      fontSize: 12, fontWeight: '700', color: theme.textMuted,
-      letterSpacing: 1, marginBottom: 12,
-    },
+    list: { paddingHorizontal: axSpacing.lg },
+    sectionTitle: { color: c.textMuted, marginBottom: axSpacing.md },
     row: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      backgroundColor: isDark ? theme.card : '#fff',
-      borderRadius: 14, padding: 14, marginBottom: 8,
-      borderWidth: 1, borderColor: theme.border,
+      flexDirection: 'row', alignItems: 'center', gap: axSpacing.md,
+      backgroundColor: c.surface,
+      borderRadius: axRadius.card, padding: 14, marginBottom: axSpacing.sm,
+      borderWidth: 1, borderColor: c.border,
     },
     rowIcon: {
-      width: 40, height: 40, borderRadius: 12,
+      width: 40, height: 40, borderRadius: axRadius.control,
       alignItems: 'center', justifyContent: 'center',
     },
-    rowBody: { flex: 1 },
-    rowLabel: { fontSize: 14, fontWeight: '700', color: theme.text },
-    rowMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 3 },
-    rowDate: { fontSize: 12, color: theme.textMuted },
-    rowRank: { fontSize: 12, fontWeight: '600', color: theme.textMuted },
+    rowBody: { flex: 1, minWidth: 0 },
+    rowMeta: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, marginTop: 3 },
     rowRight: { alignItems: 'flex-end' },
-    rowDelta: { fontSize: 16, fontWeight: '800' },
-    rowEloAfter: { fontSize: 11, color: theme.textMuted, marginTop: 2 },
   });
 }
