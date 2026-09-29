@@ -75,6 +75,14 @@ describe('R3c : écrans non concernés', () => {
     const src = read(file);
     expect(src).not.toMatch(/AxScreenHeader/);
     expect(src).not.toMatch(/common\.back/);
+    expect(src).not.toMatch(/goBack\(\)\}[^>]*>\s*<(?:ChevronLeft|ArrowLeft)\b/);
+  });
+
+  it('Réservation (racine) : plus de chevron de retour, titre et nom de box gardés', () => {
+    const src = read('reservation/ReservationScreen.tsx');
+    expect(src).not.toMatch(/navigation\.goBack\(\)/);
+    expect(src).not.toMatch(/\bChevronLeft\b/);
+    expect(src).toMatch(/<Text style=\{S\.headerTitle\}>\{t\('reservation\.title'\)\}<\/Text>\s*<Text style=\{S\.headerSub\}>\{currentBox\.name\}<\/Text>/);
   });
 
   it.each([
