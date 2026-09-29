@@ -336,6 +336,13 @@ Supabase/Resend.
   Manager bannit par sa route, qui arrête l'abonnement) ; `reactivate_box_member` refuse un membre dont
   l'abonnement Stripe court encore (`REACTIVATION_ABONNEMENT_EN_COURS`). Ni `status` (hors ce cas) ni
   `role` ne sont gardés. Refus à traduire dans l'app (`BOMembersScreen`).
+- Rôle co-gérant réservé au gérant principal (écart A du lot sécurité Manager ; migration `20270139`,
+  **non appliquée**) : seul `boxes.owner_id` donne ou retire le rôle `owner` d'une ligne de
+  `box_members` (insertion, changement de rôle, de statut, de personne ou de box, suppression de la ligne
+  d'un autre), refus 42501 `MEMBRE_ROLE_COGERANT_RESERVE`. Un co-gérant gère toujours membres et coachs,
+  renonce à son propre rôle et quitte la box ; clé serveur et fonctions SECURITY DEFINER non concernées.
+  Parcours du Manager « nommer un co-gérant » (rétrogradation puis promotion par le gérant principal)
+  inchangé. Contrôle T12 de l'audit des droits. Refus à traduire côté Manager (`/members`).
 - Réservation sans formule refusée (chantier « argent », lot 1 de « Rejoindre une box en payant » ;
   migration `20270133`, **appliquée en prod le 27/09/2026 à 10:18 UTC** ; dump
   `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T101714Z.dump` ; audit 30/30) : jusqu'ici, un membre sans abonnement valable ni
