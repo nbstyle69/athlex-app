@@ -1913,6 +1913,16 @@
       "prepare": "GET READY",
       "ready": "READY?",
       "go": "GO!"
+    },
+    "camera": {
+      "videoSaved": "Video saved",
+      "saveCard": "Save the card",
+      "cardSaved": "Card saved"
+    },
+    "youtube": {
+      "share": "Share on YouTube",
+      "hint": "Publish your video from YouTube Studio",
+      "openStudio": "Open YouTube Studio"
     }
   }
 }

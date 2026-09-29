@@ -36,9 +36,9 @@ describe('Libellés athlète : une seule terminologie (les 3 occurrences laissé
     }
   });
 
-  it("TimerRun : le prompt d'analyse vidéo dit Functional", () => {
+  it("TimerRun : plus de prompt d'analyse vidéo (retiré en R6b), aucune « vidéo CrossFit »", () => {
     const src = read('screens/timer/TimerRunScreen.tsx');
-    expect(src).toContain('Analyse cette vidéo Functional AthleX');
+    expect(src).not.toContain('Analyse cette vidéo');
     expect(src).not.toMatch(/vidéo CrossFit/);
   });
 

@@ -232,7 +232,8 @@ describe('R5a : capture', () => {
   });
 });
 
-const LOGIC_SHA = '1041dd2f625b4dca7aef596260eec738457808105feae5f56912d121632992ed';
+/** R6b : état du lien YouTube retiré, « GO ! » aussi en mode caméra (écart prouvé dans r6b.rn.test.tsx). */
+const LOGIC_SHA = '678f9be5481f4bf3dec1922dc497644a214ab9b0b215366a01d0ca86b48251cd';
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
 const MODAL_SHA = '48d210edde52dc6c61eefc919547338ded563c6ac4e8405c748e9c748a47c566';
 const LAUNCH_SHA = 'e4567887b4ed3745b56790f362ad063d475f82f5d770b1ab62783ff38c5f7dc2';
@@ -407,7 +408,7 @@ function srcRegion(file: string, from: string, to: string): string {
 const sha = (s: string) => crypto.createHash('sha256').update(s).digest('hex');
 
 describe('R5a : aucun calcul, bip ni thème touché', () => {
-  it('logique de TimerRunScreen (phases, tics, bips, enregistrement) figée (R5b : suivi du thème de l’app, vibration et GO du décompte)', () => {
+  it('logique de TimerRunScreen (phases, tics, bips, enregistrement) figée (R5b : suivi du thème de l’app, vibration et GO du décompte ; R6b : GO en mode caméra)', () => {
     const logic = srcRegion('screens/timer/TimerRunScreen.tsx', 'export default function TimerRunScreen()', '// Phase-aware accent color');
     expect(sha(logic)).toBe(LOGIC_SHA);
   });

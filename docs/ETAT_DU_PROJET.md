@@ -205,6 +205,17 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R6b : feuille YouTube réduite, partage en action principale et nouveau décompte en mode caméra (app seule, aucune migration).**
+- Feuille « Partager sur YouTube » : titre sans emoji, « Publie ta vidéo depuis YouTube Studio », `AxButton` accent
+  « Ouvrir YouTube Studio » (même lien) et outline « Fermer » ; retirés : champ du lien, « Copier le prompt d'analyse »,
+  état `ytLink`, imports `TextInput` / `Clipboard` / `KeyboardAvoidingView` / `Copy`, styles associés. Textes par clés
+  `timer.youtube.*` et `timer.camera.*` (FR / EN).
+- Temps final avec vidéo : « Partager sur YouTube » seule action accent ; icône Lucide `Check` à la place des ✓.
+- Décompte caméra : `CountdownView` et `GoFlash` de R5b sur voile `axVeil.countdown` (AA même sur image blanche) ;
+  vibrations 40 ms / 200 ms coupées avec les sons ; démarrage au même tic que GO. Module `realtime-recorder`,
+  `updateOverlayState` et décompte incrusté (chiffre blanc seul, sans libellé ni GO) inchangés.
+- Tests : `r6b.rn.test.tsx` (15), `npx jest` 1976, `npm run test:rn` 457, `tsc` vert ; 35 mutations tuées.
+
 **Refonte R6a : écrans du mode caméra au nouveau design (app seule, aucune migration, apparence seule).**
 - `TimerRunScreen` en mode caméra : pastille REC en `AxTag` danger à point rouge, retourner / fermer en `AxIconButton` sur
   voile, « Démarrer » / « Lancer le chrono » en `AxButton` accent, « Arrêter le chrono » / « Arrêter la vidéo » en stop ;

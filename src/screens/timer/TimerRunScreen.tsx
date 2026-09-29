@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, ScrollView, Modal,
-  TextInput, Linking, Clipboard, Alert, useWindowDimensions, Image, KeyboardAvoidingView, Platform, Vibration, AppState, Animated,
+  Linking, Alert, useWindowDimensions, Image, Platform, Vibration, AppState, Animated,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,7 +14,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system/legacy';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
-import { Square, Play, X, RotateCcw, CheckCircle, RefreshCw, Download, Settings, Youtube, Copy, ExternalLink, RotateCw, Palette, Volume2, VolumeX, Minus, Plus, Check } from 'lucide-react-native';
+import { Square, Play, X, RotateCcw, RefreshCw, Download, Settings, Youtube, ExternalLink, RotateCw, Palette, Volume2, VolumeX, Minus, Plus, Check } from 'lucide-react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -495,7 +495,6 @@ export default function TimerRunScreen() {
   const [saving, setSaving] = useState(false);
   const [savedUri, setSavedUri] = useState<string | null>(null);
   const [showYT, setShowYT] = useState(false);
-  const [ytLink, setYtLink] = useState('');
   const [isRecordingActive, setIsRecordingActive] = useState(false);
   const [isCameraReady, setIsCameraReady] = useState(withCamera);
   const [sessionMeta, setSessionMeta] = useState<{
@@ -897,9 +896,9 @@ export default function TimerRunScreen() {
   }
 
   useEffect(() => {
-    if (prevPhaseRef.current === 'countdown' && phase === 'running' && !withCamera) setShowGo(true);
+    if (prevPhaseRef.current === 'countdown' && phase === 'running') setShowGo(true);
     prevPhaseRef.current = phase;
-  }, [phase, withCamera]);
+  }, [phase]);
 
   function playBeep(type: 'tick' | 'go' | 'done') {
     if (!displayOptsRef.current.bipsEnabled || !soundReadyRef.current) return;
@@ -1808,7 +1807,7 @@ export default function TimerRunScreen() {
                     {saving
                       ? <><ActivityIndicator color={axVeil.ink} size="small" /><Text style={[axTypography.label, { color: axVeil.ink }]}>Sauvegarde vidéo…</Text></>
                       : savedUri
-                        ? <><CheckCircle color={theme.ax.accent} size={18} /><Text testID="timer-video-saved" style={[axTypography.label, { color: axVeil.ink }]}>Vidéo enregistrée ✓</Text></>
+                        ? <><Check testID="timer-video-saved-icon" color={theme.ax.accent} size={18} strokeWidth={3} /><Text testID="timer-video-saved" style={[axTypography.label, { color: axVeil.ink }]}>{t('timer.camera.videoSaved')}</Text></>
                         : null}
                   </View>
                 )}
@@ -1826,15 +1825,13 @@ export default function TimerRunScreen() {
                 )}
                 {withCamera && (
                   <AxButton testID="timer-save-card" veil variant="outline" fullWidth loading={savingCard}
-                    icon={cardSaved ? CheckCircle : Download}
-                    label={cardSaved ? 'Carte sauvegardée ✓' : 'Sauvegarder la carte'}
+                    icon={cardSaved ? Check : Download}
+                    label={cardSaved ? t('timer.camera.cardSaved') : t('timer.camera.saveCard')}
                     onPress={saveCard} />
                 )}
                 {withCamera && (
-                  <TouchableOpacity style={[styles.ytBtn, { width: '100%', justifyContent: 'center' }]} activeOpacity={0.85} onPress={() => setShowYT(true)}>
-                    <Youtube color="#fff" size={18} />
-                    <Text style={styles.ytBtnTxt}>Partager sur YouTube</Text>
-                  </TouchableOpacity>
+                  <AxButton testID="timer-yt-share" veil variant="accent" fullWidth icon={Youtube}
+                    label={t('timer.youtube.share')} onPress={() => setShowYT(true)} />
                 )}
                 {withCamera ? (
                   <AxButton testID="timer-close" veil variant="outline" fullWidth label="Fermer" onPress={handleClose} />
@@ -2293,17 +2290,14 @@ export default function TimerRunScreen() {
         <View testID="timer-cam-dim" style={[StyleSheet.absoluteFill, styles.cameraDim, camState === 4 && { backgroundColor: axVeil.background }]} />
         {renderContent()}
         {/* Overlay décompte — top-level pour éviter z-index/elevation Android */}
-        {phase === 'countdown' && countdownVal > 0 && (() => {
-          const cdSize = isLandscape ? Math.min(winH * 0.5, SW * 0.42) : SW * 0.55;
-          return (
-          <View style={[StyleSheet.absoluteFill, styles.camCdOverlay, isLandscape && { paddingBottom: 90 }]} pointerEvents="none">
-            <Text style={[axTypography.titleM, styles.camCdLabel]}>PRÉPARER</Text>
-            <View testID="timer-cam-cd-frame" style={[styles.camCdCircle, { width: cdSize, height: cdSize, borderRadius: cdSize / 2 }]}>
-              <Text testID="timer-cam-cd-value" style={[styles.camCdNum, { fontSize: cdSize * 0.5, color: axVeil.ink }]}>{countdownVal}</Text>
-            </View>
+        {phase === 'countdown' && countdownVal > 0 && (
+          <View testID="timer-cam-cd" style={[StyleSheet.absoluteFill, styles.camCdOverlay, isLandscape && { paddingBottom: 90 }]} pointerEvents="none">
+            <CountdownView value={countdownVal} title={videoTitle} digitColor={axVeil.ink}
+              accent={timerAccent} bg={axVeil.countdownFloor}
+              size={Math.round(isLandscape ? Math.min(winH * 0.5, SW * 0.42) : SW * 0.55)} />
           </View>
-          );
-        })()}
+        )}
+        {showGo && <GoFlash accent={timerAccent} bg={axVeil.countdownFloor} onDone={hideGo} />}
         {renderYTModal()}
       </View>
     );
@@ -2317,55 +2311,17 @@ export default function TimerRunScreen() {
   function renderYTModal() {
     return (
       <Modal visible={showYT} transparent animationType="slide" onRequestClose={() => setShowYT(false)}>
-        <KeyboardAvoidingView
-          style={styles.ytModal}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+        <View style={styles.ytModal}>
           <View testID="timer-yt-sheet" style={[styles.ytSheet, { backgroundColor: theme.ax.surface, borderColor: theme.ax.border }]}>
-            <Text style={[axTypography.titleM, styles.ytSheetTitle, { color: theme.ax.text }]}>🎬 Partager sur YouTube</Text>
-            <Text style={[axTypography.bodySmall, styles.ytSheetSub, { color: theme.ax.textMuted }]}>Upload ta vidéo puis colle le lien pour générer l'analyse</Text>
-
-            <TouchableOpacity
-              style={[styles.ytActionBtn, { borderColor: theme.ax.border }]}
-              activeOpacity={0.8}
-              onPress={() => Linking.openURL('https://studio.youtube.com/channel/UC/videos/upload')}
-            >
-              <ExternalLink color="#FF0000" size={18} />
-              <Text style={[axTypography.label, { color: theme.ax.text }]}>Ouvrir YouTube Studio</Text>
-            </TouchableOpacity>
-
-            <TextInput
-              style={[axTypography.body, styles.ytInput, { color: theme.ax.text, backgroundColor: theme.ax.background, borderColor: theme.ax.fieldBorder }]}
-              value={ytLink}
-              onChangeText={setYtLink}
-              placeholder="Colle ton lien YouTube ici…"
-              placeholderTextColor={theme.ax.textMuted}
-              autoCapitalize="none"
-              keyboardType="url"
-            />
-
-            <TouchableOpacity
-              style={[styles.ytAnalyseBtn, { backgroundColor: theme.ax.accent }]}
-              activeOpacity={0.85}
-              onPress={() => {
-                if (!ytLink.trim()) {
-                  Alert.alert('Lien manquant', 'Colle d\'abord le lien YouTube de ta vidéo.');
-                  return;
-                }
-                const prompt = `Analyse cette vidéo Functional AthleX :\n\n🔗 Lien : ${ytLink.trim()}\n⏱ Temps : ${mainTime}\n🏋️ Type : ${displayLabel}\n\nAnalyse les points suivants :\n1. Technique des mouvements (qualité, erreurs)\n2. Gestion de l'effort et du rythme\n3. Points forts observés\n4. Axes d'amélioration prioritaires\n5. Conseils pour progresser`;
-                Clipboard.setString(prompt);
-                Alert.alert('✅ Prompt copié !', 'Colle-le dans ChatGPT ou Claude pour analyser ta performance.');
-              }}
-            >
-              <Copy color={theme.ax.onAccent} size={16} />
-              <Text style={[axTypography.label, { color: theme.ax.onAccent }]}>Copier le prompt d'analyse</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.ytCloseBtn} onPress={() => setShowYT(false)}>
-              <Text style={[axTypography.label, { color: theme.ax.textMuted }]}>Fermer</Text>
-            </TouchableOpacity>
+            <Text style={[axTypography.titleM, styles.ytSheetTitle, { color: theme.ax.text }]}>{t('timer.youtube.share')}</Text>
+            <Text style={[axTypography.bodySmall, styles.ytSheetSub, { color: theme.ax.textMuted }]}>{t('timer.youtube.hint')}</Text>
+            <AxButton testID="timer-yt-studio" variant="accent" fullWidth icon={ExternalLink}
+              label={t('timer.youtube.openStudio')}
+              onPress={() => Linking.openURL('https://studio.youtube.com/channel/UC/videos/upload')} />
+            <AxButton testID="timer-yt-close" variant="outline" fullWidth label={t('common.close')}
+              onPress={() => setShowYT(false)} />
           </View>
-        </KeyboardAvoidingView>
+        </View>
       </Modal>
     );
   }
@@ -2374,7 +2330,7 @@ export default function TimerRunScreen() {
     <View style={[styles.containerDark, { backgroundColor: phaseBg }]}>
       <StatusBar hidden />
       {renderContent()}
-      {showGo && !withCamera && <GoFlash accent={timerAccent} bg={currentBg} onDone={hideGo} />}
+      {showGo && <GoFlash accent={timerAccent} bg={currentBg} onDone={hideGo} />}
       {showSettings && (
         <TimerSettingsModal opts={displayOpts} onUpdate={setDisplayOpts} onClose={() => setShowSettings(false)} />
       )}
@@ -2406,20 +2362,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', zIndex: 99,
   },
   camCdOverlay: {
-    justifyContent: 'center', alignItems: 'center',
-  },
-  camCdCircle: {
-    width: SW * 0.55, height: SW * 0.55, borderRadius: SW * 0.275,
-    backgroundColor: axVeil.background,
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 2, borderColor: axVeil.border,
-  },
-  camCdNum: {
-    fontSize: SW * 0.28, fontFamily: axFonts.oswaldMedium, letterSpacing: -4, fontVariant: ['tabular-nums'],
-  },
-  camCdLabel: {
-    color: axVeil.ink, marginBottom: axSpacing.lg, letterSpacing: 4,
-    textShadowColor: CAM_SHADOW, textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+    justifyContent: 'center', alignItems: 'center', backgroundColor: axVeil.countdown,
   },
   camPrimaryWrap: { width: '100%', maxWidth: 320, paddingHorizontal: axSpacing.xl },
   camPrimaryWrapLandscape: { width: 280 },
@@ -2533,12 +2476,6 @@ const styles = StyleSheet.create({
   stopVideoBtnText: {
     fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: 0.3,
   },
-  ytBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: '#FF0000', borderRadius: 16, padding: 12,
-    borderWidth: 1, borderColor: '#CC0000',
-  },
-  ytBtnTxt: { fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
   ytModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'flex-end' },
   ytSheet: {
     borderTopLeftRadius: axRadius.card, borderTopRightRadius: axRadius.card, borderWidth: 1,
@@ -2546,18 +2483,6 @@ const styles = StyleSheet.create({
   },
   ytSheetTitle: { textAlign: 'center', marginBottom: axSpacing.xs },
   ytSheetSub: { textAlign: 'center', marginBottom: axSpacing.xs },
-  ytActionBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: axSpacing.sm,
-    borderRadius: axRadius.control, minHeight: 46, paddingHorizontal: axSpacing.lg, borderWidth: 1,
-  },
-  ytInput: {
-    borderRadius: axRadius.control, paddingHorizontal: axSpacing.md, paddingVertical: axSpacing.md, borderWidth: 1,
-  },
-  ytAnalyseBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: axSpacing.sm,
-    borderRadius: axRadius.control, minHeight: 46, paddingHorizontal: axSpacing.lg,
-  },
-  ytCloseBtn: { alignItems: 'center', justifyContent: 'center', minHeight: 44 },
   recLogoWrap: {
     position: 'absolute', bottom: 100, right: 16,
     backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 14, padding: 6,
