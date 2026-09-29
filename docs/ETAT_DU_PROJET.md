@@ -439,6 +439,10 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   Contact your box to activate your membership. ») pour le refus `NO_ACTIVE_PLAN`, que ce soit une réservation
   ou une inscription en liste d'attente, au lieu du message brut. L'impayé passe par le même mapping
   (`reservationRefusal`), avec un texte inchangé.
+- App, type de score traduit dans la saisie du score (sans migration, **à diffuser au prochain build**) :
+  WODDetail affichait le type brut (« WEIGHT », « TIME »…) ; il affiche « Charge », « Temps », « Reps »,
+  « Tours » (EN : Load, Time, Reps, Rounds) et « Type de score », clés `wod.scoreType.*`. Premier lot du
+  chantier « Saisie des charges en musculation ».
 - App, pièces jointes enregistrées par leur chemin (sans migration, **à diffuser au prochain build** ; la base
   est fermée par `20270137`, PR séparée) : un dépôt enregistre `<groupe>/<uid>_…` dans
   `group_messages.attachment_url` au lieu de l'URL publique (`src/lib/messageAttachments.ts`). L'affichage

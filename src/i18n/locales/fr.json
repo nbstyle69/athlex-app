@@ -1118,6 +1118,13 @@
   },
   "wod": {
     "title": "WOD",
+    "scoreType": {
+      "label": "Type de score",
+      "time": "Temps",
+      "reps": "Reps",
+      "weight": "Charge",
+      "rounds": "Tours"
+    },
     "subtitle": "Workouts of the Day",
     "generate": "Générer",
     "all": "Tous"
