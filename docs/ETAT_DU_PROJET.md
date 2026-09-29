@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**R6c (C) : décompte incrusté dans la vidéo au même rendu qu'à l'écran (app et module natif, aucune migration).**
+- Dans la vidéo : « PRÉPARE-TOI » + chiffre blanc dans un anneau au-dessus de 3, « PRÊT ? » + chiffre et halo d'accent à
+  3-2-1, bande d'accent inclinée « GO ! » à 0 ; Oswald Medium embarquée dans `realtime-recorder` (iOS et Android) ;
+  textes traduits et couleurs contrastées calculés en JS (`src/lib/timerCountdownOverlay.ts`), dessin natif
+  (`drawCountdown`, `drawGoBand`). Synchro de l'incrustation déplacée après `displayOpts` dans `TimerRunScreen`.
+- Tests : `r6c.rn.test.tsx` (11), `npx jest` 1976, `npm run test:rn` 468, `tsc` vert ; Kotlin compilé ; 14 mutations
+  tuées, 1 équivalente. Swift compilé par le build EAS de test.
+
 **Refonte R6b : feuille YouTube réduite, partage en action principale et nouveau décompte en mode caméra (app seule, aucune migration).**
 - Feuille « Partager sur YouTube » : titre sans emoji, « Publie ta vidéo depuis YouTube Studio », `AxButton` accent
   « Ouvrir YouTube Studio » (même lien) et outline « Fermer » ; retirés : champ du lien, « Copier le prompt d'analyse »,
