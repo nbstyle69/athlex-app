@@ -4,7 +4,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { Dimensions, Modal, StyleSheet } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
-import '../i18n';
+import i18n from '../i18n';
 import { lightTheme, darkTheme } from '../theme/palette';
 import { contrast } from '../theme/contrast';
 import { axFonts } from '../theme/axTokens';
@@ -232,8 +232,8 @@ describe('R5a : capture', () => {
   });
 });
 
-const LOGIC_SHA = '6d7b9d202af8044ad0163b0a08574477603798b848ee12929ba701f8b1763c29';
-const THEMES_SHA = '368247cce29b53bfebc26c1ba9a7ebee68d5da578ccdbbe73deab970ff7a1d4c';
+const LOGIC_SHA = '1041dd2f625b4dca7aef596260eec738457808105feae5f56912d121632992ed';
+const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
 const MODAL_SHA = '48d210edde52dc6c61eefc919547338ded563c6ac4e8405c748e9c748a47c566';
 const LAUNCH_SHA = 'e4567887b4ed3745b56790f362ad063d475f82f5d770b1ab62783ff38c5f7dc2';
 const MAIN_AT_GO = '00:00';
@@ -256,6 +256,14 @@ const TYPES = [
 ];
 function normalizeBefore(name: string, list: string[]): string[] {
   let out = list.filter((t) => !GLYPHS.has(t)).map((t) => t.replace(EMOJI_PREFIX, '').toUpperCase());
+  if (name === 'design-du-minuteur') {
+    // R5b : thèmes AthleX en tête, noms traduits, réglage « Suivre le thème de l'app ».
+    const a = out.indexOf('DESIGN DU MINUTEUR');
+    const b = out.indexOf('COULEUR DES CHIFFRES');
+    const up = (k: string) => i18n.t(k).toUpperCase();
+    out = [...out.slice(0, a + 1), up('timer.themes.athlex2'), 'THÈME', up('timer.followAppTheme'), up('timer.followAppThemeHint'),
+      ...TIMER_THEMES.flatMap((t) => ['01:30', up(t.labelKey)]), ...out.slice(b)];
+  }
   if (name.startsWith('réglages-')) {
     const i = out.indexOf('TYPE DE MINUTEUR');
     const type = TYPES.find((t) => t.label === out[i + 1])!;
@@ -399,11 +407,11 @@ function srcRegion(file: string, from: string, to: string): string {
 const sha = (s: string) => crypto.createHash('sha256').update(s).digest('hex');
 
 describe('R5a : aucun calcul, bip ni thème touché', () => {
-  it('logique de TimerRunScreen (phases, tics, bips, enregistrement) identique à master', () => {
+  it('logique de TimerRunScreen (phases, tics, bips, enregistrement) figée (R5b : suivi du thème de l’app, vibration et GO du décompte)', () => {
     const logic = srcRegion('screens/timer/TimerRunScreen.tsx', 'export default function TimerRunScreen()', '// Phase-aware accent color');
     expect(sha(logic)).toBe(LOGIC_SHA);
   });
-  it('TIMER_THEMES, noms et emoji inchangés (R5b)', () => {
+  it('TIMER_THEMES figé (état R5b)', () => {
     expect(sha(JSON.stringify(TIMER_THEMES))).toBe(THEMES_SHA);
   });
   it('fenêtre : réinitialisation à 3 s et launch identiques', () => {
@@ -499,8 +507,8 @@ describe('R5a : feuille « Design du minuteur »', () => {
     await openSettings(r);
     const sheet = r.findAll((n) => n.props.testID === 'timer-design-sheet')[0];
     expect(sheet.findAllByType(AxChip).map((ch) => ch.props.testID)).toEqual(['timer-style-arc', 'timer-style-bar', 'timer-style-digits']);
-    expect(sheet.findAllByType(AxSwitch).map((sw) => sw.props.testID)).toEqual(['timer-sounds-switch', 'timer-rotation-switch']);
-    for (const t of TIMER_THEMES) expect(structure(sheet).join('|')).toContain(t.label.toUpperCase());
+    expect(sheet.findAllByType(AxSwitch).map((sw) => sw.props.testID)).toEqual(['timer-follow-app-switch', 'timer-sounds-switch', 'timer-rotation-switch']);
+    for (const t of TIMER_THEMES) expect(structure(sheet).join('|')).toContain(i18n.t(t.labelKey).toUpperCase());
     expect(sheet.findAllByType(AxButton).filter((b) => b.props.variant === 'accent')).toHaveLength(1);
   });
   it('choisir « Cercle » sélectionne ce style', async () => {

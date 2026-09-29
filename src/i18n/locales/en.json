@@ -1891,5 +1891,28 @@
     "maxLoadShort": "Max load",
     "cardValidated": "Validated",
     "resumeEntry": "Resume my entry"
+  },
+  "timer": {
+    "themes": {
+      "athlex": "AthleX",
+      "athlex2": "AthleX 2",
+      "noir": "Black",
+      "blanc": "White",
+      "emerald": "Lime",
+      "fire": "Orange",
+      "electric": "Blue",
+      "midnight": "Purple",
+      "ocean": "Cyan",
+      "solar": "Yellow",
+      "neon": "Pink",
+      "rage": "Red"
+    },
+    "followAppTheme": "Follow the app theme",
+    "followAppThemeHint": "AthleX in dark, AthleX 2 in light",
+    "countdown": {
+      "prepare": "GET READY",
+      "ready": "READY?",
+      "go": "GO!"
+    }
   }
 }

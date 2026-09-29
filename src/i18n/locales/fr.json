@@ -1891,5 +1891,28 @@
     "maxLoadShort": "Charge max",
     "cardValidated": "Validée",
     "resumeEntry": "Reprendre ma saisie"
+  },
+  "timer": {
+    "themes": {
+      "athlex": "AthleX",
+      "athlex2": "AthleX 2",
+      "noir": "Noir",
+      "blanc": "Blanc",
+      "emerald": "Citron vert",
+      "fire": "Orange",
+      "electric": "Bleu",
+      "midnight": "Violet",
+      "ocean": "Cyan",
+      "solar": "Jaune",
+      "neon": "Rose",
+      "rage": "Rouge"
+    },
+    "followAppTheme": "Suivre le thème de l'app",
+    "followAppThemeHint": "AthleX en sombre, AthleX 2 en clair",
+    "countdown": {
+      "prepare": "PRÉPARE-TOI",
+      "ready": "PRÊT ?",
+      "go": "GO !"
+    }
   }
 }
