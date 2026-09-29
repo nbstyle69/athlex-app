@@ -232,6 +232,8 @@ function baseState() {
   };
 }
 
+// Premier montage du profil (≈ 2 000 lignes + i18n) lent sur les runners CI.
+jest.setTimeout(30000);
 let renderer: TestRenderer.ReactTestRenderer | null = null;
 beforeAll(async () => { await i18n.changeLanguage('fr'); });
 beforeEach(() => {
