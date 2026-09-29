@@ -1,26 +1,26 @@
-import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState } from 'react';
-import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput,
-} from 'react-native';
-import { ChevronLeft, Timer, Video, Plus, Minus, Trash2, Type, Clock, Camera } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Timer, Video, Plus, Minus, Trash2, Type, Clock, Camera, Pause } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 import { HomeStackParamList, TimerType, SeqBlock, BlockType } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxButton, AxCard, AxChip, AxIconButton, AxSwitch, AxTag, AxTextField } from '../../components/ax';
+import { axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Timer'>;
 
-const TABS: { key: TimerType; label: string; emoji: string; desc: string }[] = [
-  { key: 'for-time',  label: 'FOR TIME',     emoji: '⏱',  desc: 'Chrono montant avec cap optionnel' },
-  { key: 'amrap',     label: 'AMRAP',        emoji: '🔄',  desc: 'As Many Rounds As Possible' },
-  { key: 'emom',      label: 'EMOM',         emoji: '📡',  desc: 'Every Minute On the Minute' },
-  { key: 'tabata',    label: 'TABATA',       emoji: '⚡',  desc: 'Intervalles travail / repos' },
-  { key: 'ywyr',      label: 'YWYR',         emoji: '💪',  desc: 'Your Work Your Rest' },
-  { key: 'splits',    label: 'SPLITS',       emoji: '✂️',  desc: 'Rounds chronométrés séparément' },
-  { key: 'libre',     label: 'PERSONNALISÉ', emoji: '🔧',  desc: 'Séquence de blocs sur mesure' },
+const TABS: { key: TimerType; label: string; desc: string }[] = [
+  { key: 'for-time',  label: 'FOR TIME',     desc: 'Chrono montant avec cap optionnel' },
+  { key: 'amrap',     label: 'AMRAP',        desc: 'As Many Rounds As Possible' },
+  { key: 'emom',      label: 'EMOM',         desc: 'Every Minute On the Minute' },
+  { key: 'tabata',    label: 'TABATA',       desc: 'Intervalles travail / repos' },
+  { key: 'ywyr',      label: 'YWYR',         desc: 'Your Work Your Rest' },
+  { key: 'splits',    label: 'SPLITS',       desc: 'Rounds chronométrés séparément' },
+  { key: 'libre',     label: 'PERSONNALISÉ', desc: 'Séquence de blocs sur mesure' },
 ];
 
 const BLOCK_TYPES: { key: BlockType; label: string }[] = [
@@ -53,44 +53,31 @@ function Stepper({
   value, onDec, onInc, unit, minVal = 0,
 }: { value: number; onDec: () => void; onInc: () => void; unit: string; minVal?: number }) {
   const { theme } = useTheme();
-  const S = createStyles(theme);
+  const S = createStyles(theme.ax);
   return (
     <View style={S.stepperRow}>
-      <TouchableOpacity onPress={onDec} style={S.stepperBtn} disabled={value <= minVal} activeOpacity={0.7}>
-        <Minus color={value <= minVal ? theme.textMuted : theme.text} size={22} />
-      </TouchableOpacity>
+      <AxIconButton icon={Minus} onPress={onDec} disabled={value <= minVal} accessibilityLabel={`Moins (${unit})`} />
       <View style={S.stepperValueBox}>
         <Text style={S.stepperValue}>{value}</Text>
         <Text style={S.stepperUnit}>{unit}</Text>
       </View>
-      <TouchableOpacity onPress={onInc} style={S.stepperBtn} activeOpacity={0.7}>
-        <Plus color={theme.text} size={22} />
-      </TouchableOpacity>
+      <AxIconButton icon={Plus} onPress={onInc} accessibilityLabel={`Plus (${unit})`} />
     </View>
   );
 }
 
 function CountdownPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
   const { theme } = useTheme();
-  const S = createStyles(theme);
+  const S = createStyles(theme.ax);
   return (
-    <View style={S.card}>
-      <Text style={S.cardLabel}>COMPTE À REBOURS</Text>
-      <View style={S.cdRow}>
+    <AxCard>
+      <Text style={S.overline}>COMPTE À REBOURS</Text>
+      <View style={S.chipRow}>
         {COUNTDOWN_OPTS.map((v) => (
-          <TouchableOpacity
-            key={v}
-            onPress={() => onChange(v)}
-            style={[S.cdChip, value === v && S.cdChipActive]}
-            activeOpacity={0.7}
-          >
-            <Text style={[S.cdChipText, value === v && S.cdChipTextActive]}>
-              {v === 0 ? '—' : `${v}s`}
-            </Text>
-          </TouchableOpacity>
+          <AxChip key={v} label={v === 0 ? '—' : `${v}s`} selected={value === v} onPress={() => onChange(v)} />
         ))}
       </View>
-    </View>
+    </AxCard>
   );
 }
 
@@ -98,9 +85,9 @@ export default function TimerScreen() {
   const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const { theme } = useTheme();
-  const S = createStyles(theme);
+  const c = theme.ax;
+  const S = createStyles(c);
   const [activeTab, setActiveTab] = useState<TimerType>('for-time');
-  const [showTypePicker, setShowTypePicker] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [seqBlocks, setSeqBlocks] = useState<SeqBlock[]>([makeTypedBlock('for-time')]);
   const [videoTitle, setVideoTitle] = useState('');
@@ -169,47 +156,45 @@ export default function TimerScreen() {
 
   // Splits config card — render directly without SeqBlock plumbing
   const renderSplitsConfig = () => (
-    <View style={S.seqCard}>
+    <AxCard>
       <View style={S.seqCardHeader}>
         <View style={S.seqBlockNum}>
           <Text style={S.seqBlockNumText}>1</Text>
         </View>
-        <View style={S.seqTypeBadge}>
-          <Text style={S.seqTypeBadgeText}>SPLITS</Text>
-        </View>
+        <AxTag label="SPLITS" />
       </View>
 
       <View style={S.seqConfigRow}>
-        <Text style={S.seqConfigLabel}>DURÉE PAR ROUND</Text>
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <View style={{ flex: 1 }}>
+        <Text style={S.overline}>DURÉE PAR ROUND</Text>
+        <View style={S.stepperPair}>
+          <View style={S.flex1}>
             <Stepper value={splitsMin} unit="min" minVal={0}
               onDec={() => setSplitsMin(v => Math.max(0, v - 1))}
               onInc={() => setSplitsMin(v => Math.min(60, v + 1))}
             />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={S.flex1}>
             <Stepper value={splitsSec} unit="sec" minVal={0}
               onDec={() => setSplitsSec(v => v % 5 === 0 ? Math.max(0, v - 5) : Math.floor(v / 5) * 5)}
               onInc={() => setSplitsSec(v => Math.min(55, v % 5 === 0 ? v + 5 : Math.ceil(v / 5) * 5))}
             />
           </View>
         </View>
-        <Text style={S.seqConfigLabel}>ROUNDS</Text>
+        <Text style={S.overline}>ROUNDS</Text>
         <Stepper value={splitsRounds} unit="rounds" minVal={1}
           onDec={() => setSplitsRounds(v => Math.max(1, v - 1))}
           onInc={() => setSplitsRounds(v => v + 1)}
         />
         <Text style={S.cardHint}>Tap entre rounds · Récup libre</Text>
       </View>
-    </View>
+    </AxCard>
   );
 
   const renderBlockConfig = (blk: SeqBlock) => (
     <>
       {(blk.type === 'amrap' || blk.type === 'for-time') && (
         <View style={S.seqConfigRow}>
-          <Text style={S.seqConfigLabel}>{blk.type === 'amrap' ? 'DURÉE' : 'CAP MAX (0 = ∞)'}</Text>
+          <Text style={S.overline}>{blk.type === 'amrap' ? 'DURÉE' : 'CAP MAX (0 = ∞)'}</Text>
           <Stepper value={blk.durationMin} unit="min" minVal={0}
             onDec={() => updateBlock(blk.id, { durationMin: Math.max(0, blk.durationMin - 1) })}
             onInc={() => updateBlock(blk.id, { durationMin: blk.durationMin + 1 })}
@@ -229,39 +214,33 @@ export default function TimerScreen() {
         const totalSs = totalSec % 60;
         return (
         <View style={S.seqConfigRow}>
-          <Text style={S.seqConfigLabel}>TYPE</Text>
-          <View style={[S.chipRow, { marginTop: 0 }]}>
+          <Text style={S.overline}>TYPE</Text>
+          <View style={S.chipRow}>
             {[1,2,3,4,5].map(iv => (
-              <TouchableOpacity key={iv} onPress={() => {
-                // Conserve la durée totale lors du changement d'interval, ajuste les rounds
-                const prevIvSec = isPerso ? customSec : blk.emomInterval * 60;
-                const totalMinPrev = (prevIvSec * blk.emomRounds) / 60;
-                const newRounds = Math.max(1, Math.round(totalMinPrev / iv));
-                updateBlock(blk.id, { emomInterval: iv, emomRounds: newRounds });
-              }}
-                style={[S.chip, blk.emomInterval === iv && S.chipActive]} activeOpacity={0.7}>
-                <Text style={[S.chipText, blk.emomInterval === iv && S.chipTextActive]}>
-                  {iv === 1 ? 'EMOM' : `E${iv}MOM`}
-                </Text>
-              </TouchableOpacity>
+              <AxChip key={iv} label={iv === 1 ? 'EMOM' : `E${iv}MOM`} selected={blk.emomInterval === iv}
+                onPress={() => {
+                  // Conserve la durée totale lors du changement d'interval, ajuste les rounds
+                  const prevIvSec = isPerso ? customSec : blk.emomInterval * 60;
+                  const totalMinPrev = (prevIvSec * blk.emomRounds) / 60;
+                  const newRounds = Math.max(1, Math.round(totalMinPrev / iv));
+                  updateBlock(blk.id, { emomInterval: iv, emomRounds: newRounds });
+                }}
+              />
             ))}
-            <TouchableOpacity onPress={() => updateBlock(blk.id, { emomInterval: 0 })}
-              style={[S.chip, isPerso && S.chipActive]} activeOpacity={0.7}>
-              <Text style={[S.chipText, isPerso && S.chipTextActive]}>PERSO</Text>
-            </TouchableOpacity>
+            <AxChip label="PERSO" selected={isPerso} onPress={() => updateBlock(blk.id, { emomInterval: 0 })} />
           </View>
 
           {isPerso && (
             <>
-              <Text style={S.seqConfigLabel}>INTERVALLE PERSO</Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <View style={{ flex: 1 }}>
+              <Text style={S.overline}>INTERVALLE PERSO</Text>
+              <View style={S.stepperPair}>
+                <View style={S.flex1}>
                   <Stepper value={customMin} unit="min" minVal={0}
                     onDec={() => updateBlock(blk.id, { emomCustomSec: Math.max(1, customSec - 60) })}
                     onInc={() => updateBlock(blk.id, { emomCustomSec: customSec + 60 })}
                   />
                 </View>
-                <View style={{ flex: 1 }}>
+                <View style={S.flex1}>
                   <Stepper value={customSs} unit="sec" minVal={0}
                     onDec={() => updateBlock(blk.id, { emomCustomSec: Math.max(1, customSec % 5 === 0 ? customSec - 5 : Math.floor(customSec / 5) * 5) })}
                     onInc={() => updateBlock(blk.id, { emomCustomSec: customSec % 5 === 0 ? customSec + 5 : Math.ceil(customSec / 5) * 5 })}
@@ -271,7 +250,7 @@ export default function TimerScreen() {
             </>
           )}
 
-          <Text style={S.seqConfigLabel}>ROUNDS</Text>
+          <Text style={S.overline}>ROUNDS</Text>
           <Stepper value={blk.emomRounds} unit="rounds" minVal={1}
             onDec={() => updateBlock(blk.id, { emomRounds: Math.max(1, blk.emomRounds - 1) })}
             onInc={() => updateBlock(blk.id, { emomRounds: blk.emomRounds + 1 })}
@@ -284,17 +263,17 @@ export default function TimerScreen() {
       })()}
       {blk.type === 'tabata' && (
         <View style={S.seqConfigRow}>
-          <Text style={S.seqConfigLabel}>TRAVAIL</Text>
+          <Text style={S.overline}>TRAVAIL</Text>
           <Stepper value={blk.workSec} unit="sec" minVal={5}
             onDec={() => updateBlock(blk.id, { workSec: Math.max(5, blk.workSec - 5) })}
             onInc={() => updateBlock(blk.id, { workSec: blk.workSec + 5 })}
           />
-          <Text style={S.seqConfigLabel}>REPOS</Text>
+          <Text style={S.overline}>REPOS</Text>
           <Stepper value={blk.restSec} unit="sec" minVal={5}
             onDec={() => updateBlock(blk.id, { restSec: Math.max(5, blk.restSec - 5) })}
             onInc={() => updateBlock(blk.id, { restSec: blk.restSec + 5 })}
           />
-          <Text style={S.seqConfigLabel}>ROUNDS</Text>
+          <Text style={S.overline}>ROUNDS</Text>
           <Stepper value={blk.tabRounds} unit="rounds" minVal={1}
             onDec={() => updateBlock(blk.id, { tabRounds: Math.max(1, blk.tabRounds - 1) })}
             onInc={() => updateBlock(blk.id, { tabRounds: blk.tabRounds + 1 })}
@@ -311,31 +290,26 @@ export default function TimerScreen() {
   const renderBlocks = () => (
     <>
       {seqBlocks.map((blk, idx) => (
-        <View key={blk.id} style={S.seqCard}>
+        <AxCard key={blk.id}>
           <View style={S.seqCardHeader}>
             <View style={S.seqBlockNum}>
               <Text style={S.seqBlockNumText}>{idx + 1}</Text>
             </View>
             {activeTab === 'libre' ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flex: 1 }}>
-                <View style={S.seqTypeRow}>
-                  {BLOCK_TYPES.map(bt => (
-                    <TouchableOpacity key={bt.key} onPress={() => updateBlock(blk.id, { type: bt.key })}
-                      style={[S.seqTypeChip, blk.type === bt.key && S.seqTypeChipActive]} activeOpacity={0.7}>
-                      <Text style={[S.seqTypeText, blk.type === bt.key && S.seqTypeTextActive]}>{bt.label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
+              <View style={[S.chipRow, S.flex1]}>
+                {BLOCK_TYPES.map(bt => (
+                  <AxChip key={bt.key} label={bt.label} selected={blk.type === bt.key}
+                    onPress={() => updateBlock(blk.id, { type: bt.key })} />
+                ))}
+              </View>
             ) : (
-              <View style={[S.seqTypeBadge]}>
-                <Text style={S.seqTypeBadgeText}>{blk.type.toUpperCase().replace('-', ' ')}</Text>
+              <View style={S.flex1}>
+                <AxTag label={blk.type.toUpperCase().replace('-', ' ')} />
               </View>
             )}
             {seqBlocks.length > 1 && (
-              <TouchableOpacity onPress={() => removeBlock(blk.id)} style={S.seqRemoveBtn} activeOpacity={0.7}>
-                <Trash2 color={theme.error} size={16} />
-              </TouchableOpacity>
+              <AxIconButton icon={Trash2} onPress={() => removeBlock(blk.id)}
+                accessibilityLabel={`Supprimer le bloc ${idx + 1}`} />
             )}
           </View>
 
@@ -343,384 +317,115 @@ export default function TimerScreen() {
 
           {seqBlocks.length > 1 && (
             <View style={S.seqPauseRow}>
-              <Text style={S.seqPauseLabel}>⏸ Pause après</Text>
-              <View style={S.seqPauseChips}>
+              <View style={S.seqPauseTitle}>
+                <Pause color={c.textMuted} size={14} />
+                <Text style={S.seqPauseLabel}>Pause après</Text>
+              </View>
+              <View style={S.chipRow}>
                 {[0, 30, 60, 90, 120].map(sec => (
-                  <TouchableOpacity key={sec} onPress={() => updateBlock(blk.id, { pauseSec: sec })}
-                    style={[S.cdChip, blk.pauseSec === sec && S.cdChipActive]} activeOpacity={0.7}>
-                    <Text style={[S.cdChipText, blk.pauseSec === sec && S.cdChipTextActive]}>
-                      {sec === 0 ? 'Aucune' : `${sec}s`}
-                    </Text>
-                  </TouchableOpacity>
+                  <AxChip key={sec} label={sec === 0 ? 'Aucune' : `${sec}s`} selected={blk.pauseSec === sec}
+                    onPress={() => updateBlock(blk.id, { pauseSec: sec })} />
                 ))}
               </View>
             </View>
           )}
-        </View>
+        </AxCard>
       ))}
-      <TouchableOpacity style={S.addBlockBtn} onPress={addBlock} activeOpacity={0.8}>
-        <Plus color={theme.accentText} size={18} />
-        <Text style={S.addBlockBtnText}>Ajouter un bloc</Text>
-      </TouchableOpacity>
+      <AxButton label="Ajouter un bloc" icon={Plus} variant="dashed" fullWidth onPress={addBlock} />
     </>
   );
+
 
   return (
     <View style={S.container}>
       <GlassBackground />
       <AxScreenHeader title="Minuteur" />
 
-      {/* Sélecteur de type de minuteur */}
-      <View style={S.typeSelector}>
-        <Text style={S.typeSelectorLabel}>TYPE DE MINUTEUR</Text>
-        <TouchableOpacity 
-          style={S.typeSelectorButton}
-          onPress={() => setShowTypePicker(true)}
-          activeOpacity={0.8}
-        >
-          <Text style={S.typeSelectorText}>
-            {TABS.find(t => t.key === activeTab)?.emoji} {TABS.find(t => t.key === activeTab)?.label || 'FOR TIME'}
-          </Text>
-          <ChevronLeft color={theme.accentText} size={20} style={{ transform: [{ rotate: '-90deg' }] }} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Modal de sélection */}
-      {showTypePicker && (
-        <View style={S.pickerOverlay}>
-          <TouchableOpacity 
-            style={S.pickerBackdrop}
-            onPress={() => setShowTypePicker(false)}
-          />
-          <View style={S.pickerSheet}>
-            <View style={S.pickerHandle} />
-            <Text style={S.pickerTitle}>Choisir un format</Text>
-            {TABS.map(({ key, label, emoji, desc }) => (
-              <TouchableOpacity
-                key={key}
-                style={[S.pickerItem, activeTab === key && S.pickerItemActive]}
-                onPress={() => {
-                  switchTab(key);
-                  setShowTypePicker(false);
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-                  <Text style={{ fontSize: 20 }}>{emoji}</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[S.pickerItemText, activeTab === key && S.pickerItemTextActive]}>
-                      {label}
-                    </Text>
-                    <Text style={{ fontSize: 11, color: activeTab === key ? theme.accentText : theme.textMuted, marginTop: 1 }}>
-                      {desc}
-                    </Text>
-                  </View>
-                </View>
-                {activeTab === key && (
-                  <View style={S.pickerCheck}>
-                    <Text style={{ color: theme.onAccent, fontSize: 12, fontWeight: '900' }}>✓</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+      <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
+        {/* Sélecteur de type de minuteur */}
+        <View style={S.typeSelector} testID="timer-type-selector">
+          <Text style={S.overline}>TYPE DE MINUTEUR</Text>
+          <View style={S.chipRow}>
+            {TABS.map(({ key, label }) => (
+              <AxChip key={key} label={label} selected={activeTab === key} onPress={() => switchTab(key)}
+                testID={`timer-type-${key}`} />
             ))}
-            <View style={{ height: 40 }} />
           </View>
         </View>
-      )}
 
-      <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
         {activeTab !== 'splits' && (
           <CountdownPicker value={countdown} onChange={setCountdown} />
         )}
 
         {/* Caméra toggle */}
-        <View style={S.card}>
+        <AxCard>
           <View style={S.recOptRow}>
-            <View style={S.recOptIcon}>
-              <Camera color={theme.textSecondary} size={16} />
-            </View>
-            <View style={{ flex: 1 }}>
+            <Camera color={c.textMuted} size={16} />
+            <View style={S.flex1}>
               <Text style={S.recOptLabel}>Enregistrer avec caméra</Text>
               <Text style={S.recOptHint}>Active la vidéo pendant le chrono</Text>
             </View>
-            <TouchableOpacity
-              onPress={() => setWithCamera(v => !v)}
-              style={[S.toggle, withCamera && S.toggleOn]}
-              activeOpacity={0.8}
-            >
-              <View style={[S.toggleThumb, withCamera && S.toggleThumbOn]} />
-            </TouchableOpacity>
+            <AxSwitch value={withCamera} onValueChange={setWithCamera}
+              accessibilityLabel="Enregistrer avec caméra" testID="timer-camera-switch" />
           </View>
           {withCamera && (
             <>
               <View style={S.recOptRow}>
-                <View style={S.recOptIcon}><Type color={theme.textSecondary} size={16} /></View>
-                <View style={{ flex: 1 }}>
+                <Type color={c.textMuted} size={16} />
+                <View style={S.flex1}>
                   <Text style={S.recOptLabel}>Titre</Text>
-                  <TextInput
-                    style={S.titleInput} value={videoTitle} onChangeText={setVideoTitle}
-                    placeholder="Ex: Fran Sprint · Rx · 3 min 12s"
-                    placeholderTextColor={theme.textMuted} maxLength={60} returnKeyType="done"
-                  />
+                  <AxTextField value={videoTitle} onChangeText={setVideoTitle} compact
+                    placeholder="Ex: Fran Sprint · Rx · 3 min 12s" maxLength={60} testID="timer-video-title" />
                 </View>
               </View>
               <View style={S.recOptRow}>
-                <View style={S.recOptIcon}><Clock color={theme.textSecondary} size={16} /></View>
-                <View style={{ flex: 1 }}>
+                <Clock color={c.textMuted} size={16} />
+                <View style={S.flex1}>
                   <Text style={S.recOptLabel}>Timestamp</Text>
                   <Text style={S.recOptHint}>Date &amp; heure en overlay</Text>
                 </View>
-                <TouchableOpacity onPress={() => setWithTimestamp(v => !v)} style={[S.toggle, withTimestamp && S.toggleOn]} activeOpacity={0.8}>
-                  <View style={[S.toggleThumb, withTimestamp && S.toggleThumbOn]} />
-                </TouchableOpacity>
+                <AxSwitch value={withTimestamp} onValueChange={setWithTimestamp}
+                  accessibilityLabel="Timestamp" testID="timer-timestamp-switch" />
               </View>
             </>
           )}
-        </View>
+        </AxCard>
 
         {activeTab === 'splits' ? renderSplitsConfig() : renderBlocks()}
 
-        <View style={{ height: 16 }} />
-        <TouchableOpacity style={S.btnPrimary} onPress={launch} activeOpacity={0.85}>
-          {withCamera ? <Video color={theme.text} size={20} /> : <Timer color={theme.text} size={20} />}
-          <Text style={S.btnPrimaryText}>DÉMARRER</Text>
-        </TouchableOpacity>
-        <View style={{ height: 20 }} />
+        <View style={S.spacer} />
+        <AxButton label="DÉMARRER" variant="accent" icon={withCamera ? Video : Timer} fullWidth onPress={launch}
+          testID="timer-start" />
       </ScrollView>
     </View>
   );
 }
 
-function createStyles(theme: AppTheme) { return StyleSheet.create({
+function createStyles(c: AxColors) { return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    paddingTop: 56, paddingHorizontal: 20, paddingBottom: 14,
-    backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-  },
-  back: {},
-  headerTitle: { fontSize: 20, fontWeight: '900', color: theme.text },
-  content: { padding: 16, paddingTop: 20, paddingBottom: 140, gap: 14 },
-  card: {
-    backgroundColor: theme.card, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: theme.border, gap: 10,
-  },
-  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  cardLabel: { fontSize: 12, fontWeight: '800', color: theme.textMuted, letterSpacing: 1 },
-  setMaxBtn: {
-    alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 12,
-    borderRadius: 8, borderWidth: 1, borderColor: theme.border,
-    backgroundColor: theme.surface,
-  },
-  setMaxBtnText: { fontSize: 12, fontWeight: '700', color: theme.accentText },
-  cardHint: { fontSize: 12, color: theme.textMuted, textAlign: 'center' },
-  infoCard: {
-    backgroundColor: theme.card, borderRadius: 16, padding: 24,
-    borderWidth: 1, borderColor: theme.border, alignItems: 'center', gap: 12,
-  },
-  infoTitle: { fontSize: 15, fontWeight: '900', color: theme.text, textAlign: 'center', letterSpacing: 0.5 },
-  infoDesc: { fontSize: 13, color: theme.textSecondary, textAlign: 'center', lineHeight: 20 },
+  content: { paddingHorizontal: axSpacing.xl, paddingTop: axSpacing.lg, gap: axSpacing.lg },
+  flex1: { flex: 1 },
+  spacer: { height: axSpacing.sm },
+  overline: { ...axTypography.overline, color: c.textMuted },
+  cardHint: { ...axTypography.bodySmall, color: c.textMuted },
+  typeSelector: { gap: axSpacing.md },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm },
   stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  stepperBtn: {
-    width: 44, height: 44, borderRadius: 12,
-    backgroundColor: theme.surface, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1, borderColor: theme.border,
-  },
-  stepperValueBox: { alignItems: 'center', flexDirection: 'row', gap: 6 },
-  stepperValue: { fontSize: 32, fontWeight: '900', color: theme.text },
-  stepperUnit: { fontSize: 16, fontWeight: '600', color: theme.textMuted },
-  chipRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  chip: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
-    backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-  },
-  chipActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-  chipText: { fontSize: 12, fontWeight: '800', color: theme.textMuted },
-  chipTextActive: { color: theme.onAccent },
-  cdRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  cdChip: {
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10,
-    backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-  },
-  cdChipActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-  cdChipText: { fontSize: 12, fontWeight: '700', color: theme.textMuted },
-  cdChipTextActive: { color: theme.onAccent },
-  seqCard: {
-    backgroundColor: theme.card, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: theme.border, gap: 10,
-  },
-  seqCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  stepperPair: { flexDirection: 'row', gap: axSpacing.md },
+  stepperValueBox: { alignItems: 'baseline', flexDirection: 'row', gap: axSpacing.xs },
+  stepperValue: { ...axTypography.numberM, color: c.text },
+  stepperUnit: { ...axTypography.bodySmall, color: c.textMuted },
+  seqCardHeader: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
   seqBlockNum: {
     width: 26, height: 26, borderRadius: 13,
-    backgroundColor: theme.accent, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: c.accent, justifyContent: 'center', alignItems: 'center',
   },
-  seqBlockNumText: { fontSize: 12, fontWeight: '900', color: theme.onAccent },
-  seqTypeRow: { flexDirection: 'row', gap: 6, paddingRight: 4 },
-  seqTypeChip: {
-    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8,
-    backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-  },
-  seqTypeChipActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-  seqTypeText: { fontSize: 10, fontWeight: '800', color: theme.textMuted },
-  seqTypeTextActive: { color: theme.onAccent },
-  seqTypeBadge: {
-    flex: 1, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8,
-    backgroundColor: theme.accent + '20', borderWidth: 1, borderColor: theme.accent + '60',
-    alignSelf: 'flex-start',
-  },
-  seqTypeBadgeText: { fontSize: 11, fontWeight: '900', color: theme.accentText, letterSpacing: 1 },
-  seqRemoveBtn: {
-    width: 32, height: 32, borderRadius: 8, justifyContent: 'center', alignItems: 'center',
-    backgroundColor: `${theme.error}12`, borderWidth: 1, borderColor: `${theme.error}30`,
-  },
-  seqConfigRow: { gap: 8 },
-  seqConfigLabel: { fontSize: 11, fontWeight: '800', color: theme.textMuted, letterSpacing: 0.8 },
-  seqPauseRow: { gap: 6, borderTopWidth: 1, borderTopColor: theme.border, paddingTop: 10, marginTop: 2 },
-  seqPauseLabel: { fontSize: 11, fontWeight: '700', color: theme.textMuted, letterSpacing: 0.5 },
-  seqPauseChips: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
-  addBlockBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    borderRadius: 14, padding: 16,
-    borderWidth: 2, borderColor: theme.accent, borderStyle: 'dashed',
-  },
-  addBlockBtnText: { fontSize: 14, fontWeight: '800', color: theme.accentText },
-  btnPrimary: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: `${theme.accent}28`,
-    borderRadius: 16, paddingVertical: 18, paddingHorizontal: 28, gap: 10,
-    borderWidth: 2, borderColor: `${theme.accent}CC`,
-  },
-  btnPrimaryText: { color: theme.text, fontSize: 16, fontWeight: '900', letterSpacing: 0.5 },
-  btnSecondary: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    backgroundColor: theme.card, borderRadius: 16, padding: 18, gap: 10,
-    borderWidth: 2, borderColor: theme.ctaBorder, marginTop: 10,
-  },
-  btnSecondaryText: { color: theme.accentText, fontSize: 16, fontWeight: '900' },
-  recOptRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  recOptIcon: {
-    width: 32, height: 32, borderRadius: 8,
-    backgroundColor: theme.surface, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1, borderColor: theme.border,
-  },
-  recOptLabel: { fontSize: 13, fontWeight: '700', color: theme.text, marginBottom: 4 },
-  recOptHint: { fontSize: 11, color: theme.textMuted },
-  titleInput: {
-    backgroundColor: theme.surface, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
-    fontSize: 13, color: theme.text, borderWidth: 1, borderColor: theme.border,
-  },
-  toggle: {
-    width: 46, height: 26, borderRadius: 13,
-    backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-    justifyContent: 'center', paddingHorizontal: 3,
-  },
-  toggleOn: { backgroundColor: theme.accent, borderColor: theme.accent },
-  toggleThumb: {
-    width: 20, height: 20, borderRadius: 10,
-    backgroundColor: theme.textMuted, alignSelf: 'flex-start',
-  },
-  toggleThumbOn: { backgroundColor: theme.onAccent, alignSelf: 'flex-end' },
-
-  // Type Selector Styles
-  typeSelector: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: 'transparent',
-  },
-  typeSelectorLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: theme.textMuted,
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  typeSelectorButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: theme.card,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: theme.border,
-  },
-  typeSelectorText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: theme.accentText,
-    letterSpacing: 0.5,
-  },
-  
-  // Picker Modal Styles
-  pickerOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 100,
-    justifyContent: 'flex-end',
-  },
-  pickerBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-  },
-  pickerSheet: {
-    backgroundColor: theme.modalCard || theme.card,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 50,
-    maxHeight: '70%',
-  },
-  pickerHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: theme.textMuted,
-    alignSelf: 'center',
-    marginBottom: 16,
-  },
-  pickerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: theme.text,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  pickerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-  pickerItemActive: {
-    backgroundColor: `${theme.accent}20`,
-  },
-  pickerItemText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: theme.text,
-  },
-  pickerItemTextActive: {
-    fontWeight: '800',
-    color: theme.accentText,
-  },
-  pickerCheck: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: theme.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  seqBlockNumText: { ...axTypography.labelSmall, color: c.onAccent },
+  seqConfigRow: { gap: axSpacing.sm },
+  seqPauseRow: { gap: axSpacing.sm, borderTopWidth: 1, borderTopColor: c.border, paddingTop: axSpacing.md },
+  seqPauseTitle: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+  seqPauseLabel: { ...axTypography.labelSmall, color: c.textMuted },
+  recOptRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+  recOptLabel: { ...axTypography.label, color: c.text },
+  recOptHint: { ...axTypography.caption, color: c.textMuted },
 }); }

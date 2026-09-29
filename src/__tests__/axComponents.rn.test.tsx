@@ -363,6 +363,10 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     ...R3C_SCREENS.map((s) => path.join(SRC, 'screens', s.file)),
     // R4a : générateur et résultats au nouveau design.
     path.join(SRC, 'components', 'wod', 'SessionContextCard.tsx'),
+    // R5a : minuteur au nouveau design.
+    path.join(SRC, 'screens', 'timer', 'TimerScreen.tsx'),
+    path.join(SRC, 'screens', 'timer', 'TimerRunScreen.tsx'),
+    path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
   ];
 
   it('R4a : dans src/screens/wod et src/components/wod, seuls les fichiers du générateur et des résultats consomment ax', () => {
@@ -373,6 +377,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     expect(wod).toEqual([
       path.join('components', 'wod', 'SessionContextCard.tsx'),
       path.join('components', 'wod', 'StrengthSetGrid.tsx'),
+      // R5a : fenêtre « Lancer le chrono ».
+      path.join('components', 'wod', 'TimerLaunchModal.tsx'),
       path.join('screens', 'wod', 'MuscuSessionCard.tsx'),
       path.join('screens', 'wod', 'WodGeneratorScreen.tsx'),
       // Adoptant R3c (AxScreenHeader seul), hors périmètre R4a.
@@ -390,6 +396,14 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       'BoxInfoScreen.tsx', 'ChangelogScreen.tsx', 'FriendsScreen.tsx', 'HomeExplorerBlock.tsx',
       'HomeNewsCard.tsx', 'HomeScreen.tsx', 'OneRMCalculatorScreen.tsx',
     ]);
+  });
+
+  it('R5a : dans src/screens/timer, seuls le réglage et l’écran en cours consomment ax', () => {
+    const timer = walk(path.join(SRC, 'screens', 'timer'))
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.basename(f))
+      .sort();
+    expect(timer).toEqual(['TimerRunScreen.tsx', 'TimerScreen.tsx']);
   });
 
   it('R4b : dans src/screens/programs, seul l’écran Programme consomme ax', () => {

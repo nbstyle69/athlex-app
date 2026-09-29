@@ -12,9 +12,10 @@ jest.mock('@react-navigation/native', () => ({
   useRoute: () => ({ params: mockParams }),
 }));
 jest.mock('../context/AuthContext', () => ({ useAuth: () => ({ user: null, currentBox: null }) }));
-jest.mock('../context/ThemeContext', () => ({ useTheme: () => ({ theme: { tabBar: '#000', tabBarBorder: '#333' } }) }));
+jest.mock('../context/ThemeContext', () => ({ useTheme: () => ({ theme: { tabBar: '#000', tabBarBorder: '#333', ax: jest.requireActual('../theme/palette').darkTheme.ax } }) }));
 jest.mock('../services/gamification', () => ({ incrementCounter: jest.fn(async () => {}) }));
 jest.mock('expo-keep-awake', () => ({ useKeepAwake: () => {} }));
+jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('expo-camera', () => ({
   useCameraPermissions: () => [{ granted: true }, jest.fn()],
   useMicrophonePermissions: () => [{ granted: true }, jest.fn()],

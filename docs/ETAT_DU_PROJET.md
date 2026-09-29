@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R5a : minuteur au nouveau design (app seule, aucune migration, apparence seule).**
+- `TimerScreen` (types en `AxChip`, réglages − / + en `AxIconButton`, options en `AxSwitch`, `DÉMARRER` seule action
+  accent), `TimerLaunchModal` (6 types en `AxChip` sur plusieurs lignes, plus de défilement horizontal ; « Avec caméra »
+  en `AxButton` accent, « Sans caméra » en contour — validés par Nab) et `TimerRunScreen` hors caméra (format en `AxTag`,
+  chiffres Oswald, bloc suivant en `AxCard`, feuille « Design du minuteur » en `AxChip` / `AxSwitch`, temps final) ;
+  logique du chrono (phases, tics, bips, enregistrement), `launch()` et `TIMER_THEMES` figés par empreinte dans
+  `r5a.rn.test.tsx` ; thèmes, noms et décompte réservés à R5b ; ordre des textes comparé à un relevé de master.
+
 **Refonte R4b : historique, calculateur 1RM et programmes au nouveau design (app seule, aucune migration, apparence seule).**
 - `WodHistoryScreen` (compteurs en `AxCard`, filtres `AxChip`, entrées `AxCard`), `OneRMCalculatorScreen` (Barres /
   Gymnastique en `AxChip`, `AxTextField`, `AxSwitch` kg / lbs, zones dans une `AxCard` à filets `border`, couleurs de
