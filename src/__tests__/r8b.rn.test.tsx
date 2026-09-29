@@ -495,6 +495,14 @@ describe('R8b : une seule action accent par écran et par fenêtre', () => {
     expect(counts.screen).toBeLessThanOrEqual(1);
     for (const m of counts.modals) expect(m).toBeLessThanOrEqual(1);
   });
+  it('WODs inter-box sans score : plusieurs « Soumettre mon score », au plus un accent', async () => {
+    interDetail(COMP, LEAGUE);
+    mockDb.inter_scores = [];
+    const root = await mount(<InterCompetitionDetailScreen />);
+    await pressText(root, 'WODs');
+    expect(root.findAll((n) => typeof n.props.testID === 'string' && n.props.testID.startsWith('inter-wod-submit-') && n.type === AxButton)).toHaveLength(2);
+    expect(accentCounts(root).screen).toBeLessThanOrEqual(1);
+  });
   it('soumission de score inter-box : l’envoi est l’unique accent', async () => {
     const root = await variant('inter-score').run();
     expect(root.findAllByType(AxButton).map((b) => [b.props.label, b.props.variant ?? 'accent']))
