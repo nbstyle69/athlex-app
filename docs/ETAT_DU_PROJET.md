@@ -205,6 +205,18 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R10 : réservation au nouveau design (app seule, aucune migration, apparence seule).**
+- `ReservationScreen` : semaine en `AxDayItem` (nouveau `ReservationWeekPicker`, options rétrocompatibles `today` /
+  `disabled` d'`AxDayItem`), créneaux en `AxCard` (vedette si réservé, filet warning si en attente), heure en `numberM`
+  Oswald, discipline en `AxTag` (option `numberOfLines`), coach / places en caption, « Réservé » / « Attente #n » /
+  « Complet » en `AxStatusDot`, « Réserver » accent, « File d'attente » contour, « Se désinscrire » / « Quitter la file d'attente »
+  en stop, bandeau « Abonnement suspendu » en ton warning avec « Mettre à jour mon paiement » accent (Stripe seulement).
+  `MyReservationsScreen` : onglets en `AxChip`, cartes `AxCard`, statut `AxStatusDot`, « Annuler » en stop ; `AxScreenHeader`
+  et `useTabBarScrollSpace` gardés, emoji du coach remplacé par l'icône Lucide `User`.
+- Règles inchangées (limites hebdo / jour, file d'attente, fenêtres 15 / 20 min, 14 jours, refus, rappels) : logique figée
+  par empreinte relevée sur master ; ordre des textes comparé à un relevé de master (10 états).
+- Tests : `r10.rn.test.tsx` (35), `npx jest` 1976, `npm run test:rn` 523, `tsc` vert ; 36 mutations tuées.
+
 **R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).**
 - `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps,
   micro activé / coupé ; enregistrés dans `bwod_timer_display_opts_v2` (`src/lib/timerVideoOpts.ts`). Défauts inchangés
