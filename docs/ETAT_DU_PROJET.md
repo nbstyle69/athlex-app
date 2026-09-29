@@ -205,6 +205,16 @@ Supabase/Resend.
 
 ## En cours
 
+**R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).**
+- `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps,
+  micro activé / coupé ; enregistrés dans `bwod_timer_display_opts_v2` (`src/lib/timerVideoOpts.ts`). Défauts inchangés
+  (1080p, 30 fps, micro).
+- `realtime-recorder` : `getSupportedQualities`, `prepareQuality` (caméra, chauffe, essai à blanc de 1,5 s au-delà de
+  1080p, redescente si moins de 90 % des images), `getLastRecordingStats` ; iOS préréglages et 2K = 4K réduite, Android
+  taille Camera2 / encodeur / cadence GL ; micro coupé = ni permission ni capture ni piste son.
+- Tests : `r6cOptionsVideo.rn.test.tsx` (16), `VideoQualityTest.kt` (6, JVM), `npx jest` 1976, `npm run test:rn` 473,
+  `tsc` vert ; 37 mutations tuées (27 JS, 10 Kotlin). Swift compilé par le build EAS de test.
+
 **Refonte R6b : feuille YouTube réduite, partage en action principale et nouveau décompte en mode caméra (app seule, aucune migration).**
 - Feuille « Partager sur YouTube » : titre sans emoji, « Publie ta vidéo depuis YouTube Studio », `AxButton` accent
   « Ouvrir YouTube Studio » (même lien) et outline « Fermer » ; retirés : champ du lien, « Copier le prompt d'analyse »,
