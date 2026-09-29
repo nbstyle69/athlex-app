@@ -12,6 +12,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { HomeStackParamList } from '../../navigation';
 import { Partner, PartnerCategory } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -31,6 +32,7 @@ const CATEGORY_ORDER: PartnerCategory[] = [
 ];
 
 export default function PartnersScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
   const s = createStyles(theme);
@@ -129,7 +131,7 @@ export default function PartnersScreen() {
           renderSectionHeader={({ section }) => (
             <Text style={s.sectionHeader}>{section.title}</Text>
           )}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace }}
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
           stickySectionHeadersEnabled={false}
         />

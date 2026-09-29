@@ -18,6 +18,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { CompetitionStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'InterTeam'>;
 type Route = RouteProp<CompetitionStackParamList, 'InterTeam'>;
@@ -32,6 +33,7 @@ interface Member {
 }
 
 export default function InterTeamScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const route      = useRoute<Route>();
   const { competitionId, teamSize } = route.params;
@@ -259,7 +261,7 @@ export default function InterTeamScreen() {
           </View>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={S.content} keyboardShouldPersistTaps="handled">
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} keyboardShouldPersistTaps="handled">
 
           {/* ── No team: invitation pending ── */}
           {!team && myInvite && myInvite.status === 'pending' && (

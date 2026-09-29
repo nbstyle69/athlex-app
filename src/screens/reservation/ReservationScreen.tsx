@@ -18,6 +18,7 @@ import { scheduleClassReminder, cancelClassReminder } from '../../services/notif
 import { getMyMemberships } from '../../services/membership';
 import { WEB_URL } from '../../lib/urls';
 import { reservationRefusal } from '../../utils/refusals';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 interface ClassSchedule {
   id: string;
@@ -79,6 +80,7 @@ function minutesUntilSlot(scheduled_date: string, start_time: string): number {
 }
 
 export default function ReservationScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
   const { t } = useTranslation();
@@ -402,7 +404,7 @@ export default function ReservationScreen() {
           });
           return (
             <ScrollView
-              contentContainerStyle={{ paddingBottom: 140 }}
+              contentContainerStyle={{ paddingBottom: tabSpace }}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={theme.accent} />}
             >
               <View style={S.dayBlock}>

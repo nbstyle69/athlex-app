@@ -39,6 +39,7 @@ import type { TFunction } from 'i18next';
 import i18n from '../../i18n';
 import { tournamentRefusal } from '../../utils/refusals';
 import { libelleEtape } from '../../utils/bracketWods';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'Tournament'>;
 type Route = RouteProp<CompetitionStackParamList, 'Tournament'>;
@@ -64,6 +65,7 @@ function wodStatusLabel(status: string, t: TFunction) {
 }
 
 export default function TournamentScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const route      = useRoute<Route>();
   const { tournamentId } = route.params;
@@ -509,7 +511,7 @@ export default function TournamentScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={S.content}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}>
 
         {/* ══ INFOS ══ */}

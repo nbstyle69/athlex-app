@@ -29,6 +29,7 @@ import { trackDailyTournamentJoin, trackDailyTournamentScoreSubmit } from '../..
 import { HomeStackParamList, TimerType } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { fetchMyProfile } from '../../services/myProfile';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 type Route = RouteProp<{ DailyTournamentDetail: { tournamentId: string } }, 'DailyTournamentDetail'>;
@@ -72,6 +73,7 @@ function formatScore(value: number, mode: string, capped?: boolean | null): stri
 }
 
 export default function DailyTournamentDetailScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const S = createStyles(theme);
   const navigation = useNavigation<Nav>();
@@ -573,7 +575,7 @@ export default function DailyTournamentDetailScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={S.content}
+        contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
       >
         {/* Status + badges */}

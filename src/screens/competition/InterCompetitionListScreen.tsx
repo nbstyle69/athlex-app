@@ -14,6 +14,7 @@ import { CompetitionStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<CompetitionStackParamList, 'InterCompetitionList'>;
 
@@ -37,6 +38,7 @@ interface InterComp {
 }
 
 export default function InterCompetitionListScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -101,7 +103,7 @@ export default function InterCompetitionListScreen() {
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={S.content}
+          contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
         >
           {comps.length === 0 ? (

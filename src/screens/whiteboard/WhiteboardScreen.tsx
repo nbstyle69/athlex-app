@@ -36,6 +36,7 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import { StrengthWodCardStatus, strengthCardLinkKey } from '../../components/wod/StrengthSetGrid';
 import { fetchStrengthSummaries } from '../../services/strengthSets';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 function toISO(d: Date): string {
   const y = d.getFullYear();
@@ -57,6 +58,7 @@ interface BoxMember {
 interface WeekWodRow { id: string; track: string | null; wod_type: string | null }
 
 export default function WhiteboardScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { user, currentBox, boxRole, joinBox } = useAuth();
   const { theme } = useTheme();
   const { t } = useTranslation();
@@ -564,7 +566,7 @@ export default function WhiteboardScreen() {
         />
 
         <ScrollView
-          contentContainerStyle={{ paddingBottom: 140 }}
+          contentContainerStyle={{ paddingBottom: tabSpace }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadPersonalWODs().finally(() => setRefreshing(false)); }} />}
         >
@@ -801,7 +803,7 @@ export default function WhiteboardScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 140 }}
+        contentContainerStyle={{ paddingBottom: tabSpace }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); refetchWods(); }} />}
       >
         <View style={S.section}>

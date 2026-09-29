@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R2b : barre d'onglets flottante en verre (app seule, aucune migration, apparence seule).**
+- Barre de l'athlète `AxTabBar` : flottante, centrée (écran − 40, 64 de haut, rayon 24) à inset bas + 12,
+  `AxGlass` `theme.ax.background` à 0.80 (flou iOS, 0.96 sur Android), bordure `theme.ax.border` ;
+  onglet actif en `accentText` avec point, inactifs en `textMuted` ; masquée clavier ouvert. Onglets,
+  libellés, icônes, ordre et comportement inchangés ; barres gérant et coach inchangées.
+- Espace bas commun `useTabBarScrollSpace()` (64 + 12 + inset + 16) sur tous les écrans des piles de
+  l'athlète ; éléments fixés en bas (carte de la carte des box, commentaire d'article) posés au-dessus.
+
 **Refonte R2a : onglet Entraînement à la place d'Explorer (app seule, aucune migration).**
 - 2e onglet « Entraînement » (icône Dumbbell) : écran ax `TrainingScreen` (génération en un tap par
   `generateForUser` avec les réglages mémorisés, lien vers le générateur complet, tuiles Minuteur / 1RM /
@@ -370,6 +378,14 @@ Supabase/Resend.
   Manager bannit par sa route, qui arrête l'abonnement) ; `reactivate_box_member` refuse un membre dont
   l'abonnement Stripe court encore (`REACTIVATION_ABONNEMENT_EN_COURS`). Ni `status` (hors ce cas) ni
   `role` ne sont gardés. Refus à traduire dans l'app (`BOMembersScreen`).
+- Rôle co-gérant réservé au gérant principal (écart A du lot sécurité Manager ; migration `20270139`,
+  **appliquée en prod le 29/09/2026 à 08:05 UTC**, dump
+  `db-dumps/2026-09-29/athlex-prod-public-internal-20260929T080359Z.dump` ; audit 37/37) : seul `boxes.owner_id` donne ou retire le rôle `owner` d'une ligne de
+  `box_members` (insertion, changement de rôle, de statut, de personne ou de box, suppression de la ligne
+  d'un autre), refus 42501 `MEMBRE_ROLE_COGERANT_RESERVE`. Un co-gérant gère toujours membres et coachs,
+  renonce à son propre rôle et quitte la box ; clé serveur et fonctions SECURITY DEFINER non concernées.
+  Parcours du Manager « nommer un co-gérant » (rétrogradation puis promotion par le gérant principal)
+  inchangé. Contrôle T12 de l'audit des droits. Refus à traduire côté Manager (`/members`).
 - Réservation sans formule refusée (chantier « argent », lot 1 de « Rejoindre une box en payant » ;
   migration `20270133000000_reservation_sans_formule_bloquee.sql`, **appliquée en prod le 27/09/2026 à
   10:18 UTC** ; dump

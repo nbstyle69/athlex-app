@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { formatScoreValue } from '../../utils/scoreFormat';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 const TABS = ['Scores', 'Daily WOD', 'Changelog'];
 
@@ -57,6 +58,7 @@ interface ContestedDaily {
 }
 
 export default function AdminScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { user, signOut } = useAuth();
   const { theme, mode } = useTheme();
   const S = createStyles(theme);
@@ -316,7 +318,7 @@ export default function AdminScreen() {
         ))}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={S.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {activeTab === 0 && (
           <>
             {loadingScores ? (

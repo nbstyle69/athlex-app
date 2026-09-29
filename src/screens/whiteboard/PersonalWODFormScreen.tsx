@@ -17,6 +17,7 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import DateField from '../../components/DateField';
 import { formatCap, parseCap } from '../../utils/scoreFormat';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<WhiteboardStackParamList, 'PersonalWODForm'>;
 type Rt = RouteProp<WhiteboardStackParamList, 'PersonalWODForm'>;
@@ -43,6 +44,7 @@ function toISO(d: Date): string {
 }
 
 export default function PersonalWODFormScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { user } = useAuth();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
@@ -179,7 +181,7 @@ export default function PersonalWODFormScreen() {
         )}
       </View>
 
-      <ScrollView contentContainerStyle={S.body} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[S.body, { paddingBottom: tabSpace }]} keyboardShouldPersistTaps="handled">
         <View style={S.row}>
           <View style={{ flex: 1 }}>
             <Text style={S.label}>DATE *</Text>

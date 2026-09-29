@@ -12,6 +12,7 @@ import { CHANGELOG_WINDOW } from '../../lib/changelog';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 interface ChangelogEntry {
   id: string;
@@ -29,6 +30,7 @@ const TYPE_META: Record<string, { icon: string; label: string; color: string }> 
 };
 
 export default function ChangelogScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { user } = useAuth();
   const { theme } = useTheme();
   const navigation = useNavigation();
@@ -129,7 +131,7 @@ export default function ChangelogScreen() {
           data={entries}
           keyExtractor={e => e.id}
           renderItem={renderEntry}
-          contentContainerStyle={{ padding: 16, paddingBottom: 140 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: tabSpace }}
           showsVerticalScrollIndicator={false}
         />
       )}

@@ -4,10 +4,12 @@ import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft } from 'lucide-react-native';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Tab = 'cgu' | 'privacy';
 
 export default function LegalScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const nav = useNavigation();
   const { theme, mode } = useTheme();
   const isDark = mode === 'dark';
@@ -34,7 +36,7 @@ export default function LegalScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={S.scroll} contentContainerStyle={S.content}>
+      <ScrollView style={S.scroll} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {tab === 'cgu' ? <CGUContent theme={theme} S={S} /> : <PrivacyContent theme={theme} S={S} />}
       </ScrollView>
     </View>

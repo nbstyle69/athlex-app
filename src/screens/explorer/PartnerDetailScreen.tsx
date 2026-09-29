@@ -14,6 +14,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { HomeStackParamList } from '../../navigation';
 import { Partner } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 type Route = RouteProp<HomeStackParamList, 'PartnerDetail'>;
@@ -25,6 +26,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export default function PartnerDetailScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
@@ -88,7 +90,7 @@ export default function PartnerDetailScreen() {
         <Text style={s.headerTitle} numberOfLines={1}>{partner.name}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: tabSpace }}>
         {/* Logo + info */}
         <View style={s.heroSection}>
           {partner.logo_url ? (

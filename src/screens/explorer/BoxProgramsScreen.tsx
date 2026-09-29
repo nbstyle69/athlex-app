@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { WEB_URL } from '../../lib/urls';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -32,6 +33,7 @@ interface ProgramItem {
 const SITE_BASE_URL = WEB_URL;
 
 export default function BoxProgramsScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
   const s = createStyles(theme);
@@ -112,7 +114,7 @@ export default function BoxProgramsScreen() {
         <SectionList
           sections={sections}
           keyExtractor={item => item.id}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140, paddingTop: 8 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace, paddingTop: 8 }}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
           ListEmptyComponent={

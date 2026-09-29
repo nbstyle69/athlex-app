@@ -35,6 +35,7 @@ import { fetchMyStrengthSets, groupStrengthSessions } from '../../services/stren
 import { inkOn } from '../../theme/ink';
 import { programWeekAt, toLocalIso } from '../../utils/programSchedule';
 import { getMyMemberships, membershipState, membershipStateText, MembershipState } from '../../services/membership';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Profile'>;
 
@@ -110,6 +111,7 @@ const CATEGORY_ORDER = ['activity', 'tournament', 'wod', 'elo', 'Classement', 's
 const ATHLETE_LEVELS: readonly AthleteLevel[] = ['scaled', 'inter', 'rx', 'rx+', 'elite', 'pro'];
 
 export default function ProfileScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { t } = useTranslation();
   const { user, signOut, deleteAccount, currentBox, joinBox, leaveBox, updateUser, myBoxes, switchBox, boxRole, boxSubscription, daysLeftTrial } = useAuth();
   const { theme, mode, toggleTheme } = useTheme();
@@ -804,7 +806,7 @@ export default function ProfileScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={S.content}
+        contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}
         refreshControl={
           <RefreshControl
             refreshing={isFetching}

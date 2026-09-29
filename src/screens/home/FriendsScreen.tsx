@@ -16,6 +16,7 @@ import { incrementCounter } from '../../services/gamification';
 import { HomeStackParamList } from '../../navigation';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -42,6 +43,7 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 export default function FriendsScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
@@ -199,7 +201,7 @@ export default function FriendsScreen() {
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={S.content}
+          contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
         >
           {tab === 'friends' && (

@@ -14,6 +14,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { HomeStackParamList } from '../../navigation';
 import { Box } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -30,6 +31,7 @@ const SPORT_LABELS: Record<string, string> = {
 };
 
 export default function BoxDirectoryScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
   const s = createStyles(theme);
@@ -220,7 +222,7 @@ export default function BoxDirectoryScreen() {
           data={filtered}
           keyExtractor={b => b.id}
           renderItem={renderBox}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 140 }}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace }}
           ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         />
       )}

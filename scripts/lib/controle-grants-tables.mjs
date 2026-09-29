@@ -45,6 +45,47 @@ const TABLES_ECRITURE_SERVEUR = new Map([
     + 'résolues par resoudre_alerte_membre()'],
 ]);
 
+/** Bits de `pg_trigger.tgtype`. */
+const TG = { ROW: 1, BEFORE: 2, INSERT: 4, DELETE: 8, UPDATE: 16 };
+
+/**
+ * T11, T12… : les gardes par déclencheur qui ferment une écriture que la RLS
+ * laisse passer (`authenticated` a l'écriture de la table et la règle y
+ * autorise le gérant ou le co-gérant). Chacune doit exister, être active,
+ * s'exécuter BEFORE, ligne par ligne, sur ses événements et ses colonnes
+ * (`colonnes` vide : toutes les colonnes, aucun `UPDATE OF`), avoir une
+ * fonction qu'aucun client n'exécute et un corps qui contrôle encore ce qu'il
+ * doit. Lu par oid, sans résoudre de nom dans `internal` (le rôle d'audit n'y a
+ * pas l'USAGE).
+ */
+const GARDES_DECLENCHEUR = [
+  {
+    id: 'T11',
+    table: 'boxes',
+    declencheur: 'trg_boxes_garde_archivage',
+    evenements: ['UPDATE'],
+    colonnes: ['archive_scheduled_at', 'archive_scheduled_by', 'archived_at', 'archived_by'],
+    corps: ['BOX_ARCHIVAGE_RESERVE', 'NEW.archive_scheduled_at', 'NEW.archive_scheduled_by',
+      'NEW.archived_at', 'NEW.archived_by'],
+    libelle: 'l\'état d\'archivage de `boxes` n\'est écrit que par le serveur',
+    risque: 'un gérant programme, lève ou efface l\'archivage de sa box depuis le '
+      + 'navigateur. Rejoue 20270130.',
+  },
+  {
+    id: 'T12',
+    table: 'box_members',
+    declencheur: 'trg_box_members_garde_cogerant',
+    evenements: ['INSERT', 'UPDATE', 'DELETE'],
+    colonnes: [],
+    // Le tuple gardé en entier : `NEW.status` apparaît aussi dans la renonciation.
+    corps: ['MEMBRE_ROLE_COGERANT_RESERVE', 'is_box_owner(',
+      'ROW(NEW.role, NEW.member_id, NEW.box_id, NEW.status)'],
+    libelle: 'seul le gérant principal donne ou retire le rôle co-gérant',
+    risque: 'un co-gérant nomme un autre co-gérant, qui aura accès à l\'argent, ou '
+      + 'retire ce rôle à un autre. Rejoue 20270139.',
+  },
+];
+
 /**
  * Nombre d'assertions exécutées par ce contrôle.
  *
@@ -52,7 +93,7 @@ const TABLES_ECRITURE_SERVEUR = new Map([
  * en ait qu'un : deux propriétaires feraient dépasser l'attendu, et le
  * décompte le dirait au lieu de le taire.
  */
-export const ASSERTIONS_GRANTS_TABLES = 10 + TABLES_ECRITURE_SERVEUR.size; // T1..T9, T10 par table, T11
+export const ASSERTIONS_GRANTS_TABLES = 9 + TABLES_ECRITURE_SERVEUR.size + GARDES_DECLENCHEUR.length; // T1..T9, T10 par table, T11+ par garde
 
 const PRIV_LISTE = privs => privs.map(p => `'${p}'`).join(', ');
 
@@ -298,57 +339,7 @@ export function controlerGrantsTables(query, assert) {
   );
 
   controlerTablesEcritureServeur(query, assert);
-  controlerGardeArchivageBox(query, assert);
-}
-
-/** Les colonnes d'état d'archivage de `boxes` que seul le serveur écrit (20270130). */
-const COLONNES_ARCHIVAGE = ['archive_scheduled_at', 'archive_scheduled_by', 'archived_at', 'archived_by'];
-
-/**
- * T11 : la garde des colonnes d'archivage de `boxes`. `authenticated` a UPDATE
- * sur toute la table et le gérant y écrit par la RLS : seul le déclencheur
- * `trg_boxes_garde_archivage` l'empêche de programmer, lever ou effacer
- * l'archivage de sa box. Il doit exister, être actif, s'exécuter BEFORE UPDATE
- * sur les quatre colonnes, et sa fonction ne pas être appelable par un client.
- * Lu par oid, sans résoudre de nom dans `internal` (le rôle d'audit n'y a pas
- * l'USAGE).
- */
-function controlerGardeArchivageBox(query, assert) {
-  const lignes = query(`
-    select t.tgenabled::text,
-           ((t.tgtype & 1) <> 0 and (t.tgtype & 2) <> 0 and (t.tgtype & 16) <> 0)::text,
-           coalesce((select string_agg(a.attname, ',' order by a.attname)
-                     from pg_attribute a
-                     where a.attrelid = t.tgrelid and a.attnum = any(t.tgattr::int2[])), ''),
-           n.nspname || '.' || p.proname,
-           (has_function_privilege('anon', p.oid, 'EXECUTE')
-            or has_function_privilege('authenticated', p.oid, 'EXECUTE'))::text,
-           (p.prosrc like '%BOX_ARCHIVAGE_RESERVE%'
-            and ${COLONNES_ARCHIVAGE.map(c => `p.prosrc like '%NEW.${c}%'`).join(' and ')})::text
-    from pg_trigger t
-    join pg_proc p on p.oid = t.tgfoid
-    join pg_namespace n on n.oid = p.pronamespace
-    where t.tgrelid = to_regclass('public.boxes') and t.tgname = 'trg_boxes_garde_archivage'
-  `);
-
-  const [actif, beforeUpdate, colonnes, fonction, execClient, corps] = lignes[0] ?? [];
-  const manquantes = COLONNES_ARCHIVAGE.filter(c => !(colonnes ?? '').split(',').includes(c));
-  const ecarts = lignes.length !== 1 ? ['déclencheur absent']
-    : [
-      ...(['O', 'A'].includes(actif) ? [] : [`désactivé (tgenabled=${actif})`]),
-      ...(beforeUpdate === 'true' ? [] : ['pas BEFORE UPDATE FOR EACH ROW']),
-      ...(manquantes.length ? [`colonnes non couvertes : ${manquantes.join(', ')}`] : []),
-      ...(execClient === 'false' ? [] : [`${fonction} exécutable par un rôle client`]),
-      ...(corps === 'true' ? [] : [`${fonction} ne contrôle plus les quatre colonnes (BOX_ARCHIVAGE_RESERVE)`]),
-    ];
-
-  assert(
-    'T11 — l\'état d\'archivage de `boxes` n\'est écrit que par le serveur (trg_boxes_garde_archivage)',
-    ecarts.length === 0,
-    ecarts.join(' ; ') + '\n'
-      + '       → sans cette garde, un gérant programme, lève ou efface l\'archivage '
-      + 'de sa box depuis le navigateur. Rejoue 20270130.',
-  );
+  for (const garde of GARDES_DECLENCHEUR) controlerGardeDeclencheur(query, assert, garde);
 }
 
 /**
@@ -382,6 +373,46 @@ function controlerTablesEcritureServeur(query, assert) {
             + `ON public.${table} FROM anon, authenticated.`,
     );
   }
+}
+
+function controlerGardeDeclencheur(query, assert, g) {
+  const bits = TG.ROW | TG.BEFORE | g.evenements.reduce((m, e) => m | TG[e], 0);
+  const lignes = query(`
+    select t.tgenabled::text,
+           ((t.tgtype & ${bits}) = ${bits})::text,
+           coalesce((select string_agg(a.attname, ',' order by a.attname)
+                     from pg_attribute a
+                     where a.attrelid = t.tgrelid and a.attnum = any(t.tgattr::int2[])), ''),
+           n.nspname || '.' || p.proname,
+           (has_function_privilege('anon', p.oid, 'EXECUTE')
+            or has_function_privilege('authenticated', p.oid, 'EXECUTE'))::text,
+           (${g.corps.map(c => `strpos(p.prosrc, '${c}') > 0`).join(' and ')})::text
+    from pg_trigger t
+    join pg_proc p on p.oid = t.tgfoid
+    join pg_namespace n on n.oid = p.pronamespace
+    where t.tgrelid = to_regclass('public.${g.table}') and t.tgname = '${g.declencheur}'
+  `);
+
+  const [actif, forme, colonnes, fonction, execClient, corps] = lignes[0] ?? [];
+  const couvertes = colonnes ? colonnes.split(',') : [];
+  const manquantes = g.colonnes.filter(c => !couvertes.includes(c));
+  const ecarts = lignes.length !== 1 ? ['déclencheur absent']
+    : [
+      ...(['O', 'A'].includes(actif) ? [] : [`désactivé (tgenabled=${actif})`]),
+      ...(forme === 'true' ? [] : [`pas BEFORE ${g.evenements.join(' OR ')} FOR EACH ROW`]),
+      ...(manquantes.length ? [`colonnes non couvertes : ${manquantes.join(', ')}`] : []),
+      ...(g.colonnes.length === 0 && couvertes.length
+        ? [`limité à UPDATE OF ${colonnes} (attendu : toutes les colonnes)`] : []),
+      ...(execClient === 'false' ? [] : [`${fonction} exécutable par un rôle client`]),
+      ...(corps === 'true' ? [] : [`${fonction} ne contrôle plus ${g.corps.join(', ')}`]),
+    ];
+
+  assert(
+    `${g.id} — ${g.libelle} (${g.declencheur})`,
+    ecarts.length === 0,
+    ecarts.join(' ; ') + '\n'
+      + `       → sans cette garde, ${g.risque}`,
+  );
 }
 
 /**
