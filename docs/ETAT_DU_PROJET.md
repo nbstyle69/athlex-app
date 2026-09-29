@@ -205,6 +205,12 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R3b : Accueil au nouveau design (app seule, aucune migration, apparence seule).**
+- `HomeScreen` et ses blocs (`HomeNewsCard`, `HomeExplorerBlock`) en composants ax et `theme.ax` /
+  `axTypography` / `axRadius` / `axSpacing` : en-tête titleXL, carte ELO numberL accentText, palier en
+  couleur `LevelColors` tenue AA (`levelInk`), Amis / Profil en `AxButton` outline, titres de section titleM.
+  Blocs, ordre, libellés, données et navigation inchangés ; plus de couleur en dur ni d'emoji littéral.
+
 **Refonte R3a : Accueil — actu de la box, outils retirés, accès au classement (app seule, aucune migration).**
 - Carte ax « Actu de ta box » sous Amis / Profil : dernier article `box_articles` de la box active de
   moins de 14 jours, avec likes et commentaires en une requête (`fetchHomeNews`), « Nouveau » sous 48 h,

@@ -17,12 +17,14 @@ export function statusColor(tone: AxStatusTone, c: AxColors): string {
 interface Props {
   label: string;
   tone?: AxStatusTone;
+  /** Couleur de domaine (palier…) à la place du ton. */
+  color?: string;
   testID?: string;
 }
 
-export function AxStatusDot({ label, tone = 'active', testID }: Props) {
+export function AxStatusDot({ label, tone = 'active', color: override, testID }: Props) {
   const { theme } = useTheme();
-  const color = statusColor(tone, theme.ax);
+  const color = override ?? statusColor(tone, theme.ax);
   return (
     <View testID={testID} style={styles.row}>
       <View testID={testID ? `${testID}-dot` : undefined} style={[styles.dot, { backgroundColor: color }]} />

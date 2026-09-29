@@ -868,6 +868,7 @@
       "programs": "Programs",
       "partners": "Partners"
     },
+    "whatsNew": "What's new",
     "rankOpen": "Rank #{{rank}}, open the leaderboard",
     "rankOpenNoValue": "Rank, open the leaderboard",
     "news": {
