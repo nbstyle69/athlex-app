@@ -36,6 +36,8 @@ class VideoEncoder {
     fps: Int = 30,
     iFrameInterval: Int = 2
   ) {
+    // Level 4 caps at 1080p30: above 1080p the encoder picks its own level.
+    val above1080 = maxOf(width, height) > 1920
     val format = MediaFormat.createVideoFormat(MIME, width, height).apply {
       setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
       setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
@@ -43,7 +45,7 @@ class VideoEncoder {
       setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, iFrameInterval)
       // Baseline profile for fastest HW encoding & universal playback
       setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline)
-      setInteger(MediaFormat.KEY_LEVEL, MediaCodecInfo.CodecProfileLevel.AVCLevel4)
+      if (!above1080) setInteger(MediaFormat.KEY_LEVEL, MediaCodecInfo.CodecProfileLevel.AVCLevel4)
     }
 
     encoder = MediaCodec.createEncoderByType(MIME).apply {

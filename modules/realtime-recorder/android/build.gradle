@@ -56,6 +56,9 @@ dependencies {
 
   // Core KTX
   implementation "androidx.core:core-ktx:1.13.1"
+
+  // JVM unit tests of the pure rules (VideoQuality…): ./gradlew :realtime-recorder:testDebugUnitTest
+  testImplementation "junit:junit:4.13.2"
 }
 
 def getKotlinVersion() {

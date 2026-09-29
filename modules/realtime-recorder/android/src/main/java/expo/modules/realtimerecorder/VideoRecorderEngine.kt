@@ -4,11 +4,15 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
+import android.hardware.camera2.CameraManager
+import android.media.MediaCodecList
+import android.media.MediaFormat
 import android.opengl.EGL14
 import android.opengl.EGLSurface
 import android.os.Build
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.PowerManager
 import android.util.Log
 import android.view.Surface
 import android.view.TextureView
@@ -22,10 +26,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Orchestrates the full recording pipeline:
  *
- *   Camera2 → SurfaceTexture (OES) → GL thread 30 FPS
+ *   Camera2 → SurfaceTexture (OES) → GL thread 25 / 30 FPS
  *       → dual render: preview TextureView + encoder EGLSurface
  *       → H.264 HW encoder → MediaMuxer → MP4
- *       + AudioRecord → AAC → same MediaMuxer
+ *       + AudioRecord → AAC → same MediaMuxer (only when the mic is on)
  *
  * Coordinates [EglCore], [CameraTextureRenderer], [OverlayRenderer],
  * [CameraController], [VideoEncoder], [AudioEncoder], and [VideoMuxer].
@@ -34,10 +38,7 @@ class VideoRecorderEngine private constructor() {
 
   companion object {
     private const val TAG = "RealtimeRecorder"
-    private const val BASE_SHORT = 1080
-    private const val BASE_LONG = 1920
-    private const val FPS = 30
-    private const val FRAME_INTERVAL_NS = 1_000_000_000L / FPS
+    private const val DRY_RUN_MS = 1500L
 
     val shared = VideoRecorderEngine()
   }
@@ -45,8 +46,19 @@ class VideoRecorderEngine private constructor() {
   // Landscape mode — set before startRecording, swaps encoder dimensions
   var isLandscape = false
 
-  private val videoWidth: Int get() = if (isLandscape) BASE_LONG else BASE_SHORT
-  private val videoHeight: Int get() = if (isLandscape) BASE_SHORT else BASE_LONG
+  // Video options (R6c). Defaults = former fixed behaviour: 1080p, 30 fps, mic on.
+  @Volatile var quality = VideoQuality.DEFAULT
+  @Volatile var fps = 30
+  @Volatile var micEnabled = true
+
+  private val videoWidth: Int get() = VideoQuality.size(quality).let { if (isLandscape) it.first else it.second }
+  private val videoHeight: Int get() = VideoQuality.size(quality).let { if (isLandscape) it.second else it.first }
+  private val frameIntervalNs: Long get() = 1_000_000_000L / fps
+
+  // Frames that reached the muxer during the last recording (dry run or real).
+  @Volatile private var writtenFrames = 0
+  @Volatile private var firstPtsUs = -1L
+  @Volatile private var lastPtsUs = -1L
 
   // Overlay state (updated from JS thread)
   var overlayState = OverlayState()
@@ -283,7 +295,7 @@ class VideoRecorderEngine private constructor() {
     }
 
     val st = cameraSurfaceTexture ?: return
-    cameraController?.openCamera(context, useFrontCamera, st, handler, isLandscape)
+    cameraController?.openCamera(context, useFrontCamera, st, handler, isLandscape, quality, fps)
   }
 
   // ================================================================
@@ -355,7 +367,7 @@ class VideoRecorderEngine private constructor() {
     }
 
     val elapsed = System.nanoTime() - frameStart
-    val delayMs = maxOf(1L, (FRAME_INTERVAL_NS - elapsed) / 1_000_000)
+    val delayMs = maxOf(1L, (frameIntervalNs - elapsed) / 1_000_000)
     glHandler?.postDelayed({ renderFrame() }, delayMs)
   }
 
@@ -406,14 +418,19 @@ class VideoRecorderEngine private constructor() {
 
     try {
       // 1. Video encoder (landscape swaps dimensions)
-      videoEncoder = VideoEncoder().apply { configure(width = videoWidth, height = videoHeight) }
+      videoEncoder = VideoEncoder().apply {
+        configure(width = videoWidth, height = videoHeight, bitrate = VideoQuality.bitrate(quality), fps = fps)
+      }
+      writtenFrames = 0
+      firstPtsUs = -1L
+      lastPtsUs = -1L
 
       // 2. Muxer
       muxer = VideoMuxer()
 
-      // 3. Audio encoder (optional)
-      hasAudio = true
-      audioEncoder = try {
+      // 3. Audio encoder (optional; never touches the mic when it is off)
+      hasAudio = micEnabled
+      audioEncoder = if (!micEnabled) null else try {
         AudioEncoder().apply { configure() }
       } catch (e: Exception) {
         Log.w(TAG, "Audio encoder setup failed, recording without audio", e)
@@ -490,6 +507,11 @@ class VideoRecorderEngine private constructor() {
         onData = { buffer, info ->
           val m = muxer ?: return@drainOutput
           m.writeSampleData(m.videoTrackIndex, buffer, info)
+          if (m.isStarted()) {
+            writtenFrames++
+            if (firstPtsUs < 0) firstPtsUs = info.presentationTimeUs
+            lastPtsUs = info.presentationTimeUs
+          }
         }
       )
     }
@@ -567,6 +589,107 @@ class VideoRecorderEngine private constructor() {
         callback(Result.failure(e))
       }
     }.start()
+  }
+
+  // ================================================================
+  //  QUALITY (R6c)
+  // ================================================================
+
+  /** (frames expected from the first to the last muxed frame, frames muxed). */
+  fun lastRecordingStats(): Pair<Int, Int> {
+    val expected = if (firstPtsUs < 0) 0
+      else ((lastPtsUs - firstPtsUs) * fps / 1_000_000L).toInt() + 1
+    return expected to writtenFrames
+  }
+
+  /** Qualities of the front and back cameras (camera sizes x AVC encoder). */
+  fun supportedQualities(context: Context): Map<String, List<String>> {
+    val manager = context.getSystemService(Context.CAMERA_SERVICE) as CameraManager
+    return mapOf("front" to true, "back" to false).mapValues { (_, front) ->
+      try {
+        val id = CameraController.chooseCameraId(manager, front) ?: return@mapValues BASIC_QUALITIES
+        VideoQuality.supported(CameraController.outputSizes(manager.getCameraCharacteristics(id))) { w, h -> encoderSupports(w, h) }
+      } catch (e: Exception) {
+        Log.w(TAG, "supportedQualities failed", e)
+        BASIC_QUALITIES
+      }
+    }
+  }
+
+  private val BASIC_QUALITIES = listOf("720p", "1080p")
+
+  private fun encoderSupports(w: Int, h: Int): Boolean =
+    MediaCodecList(MediaCodecList.REGULAR_CODECS).codecInfos.any { info ->
+      info.isEncoder && info.supportedTypes.any { it.equals(MediaFormat.MIMETYPE_VIDEO_AVC, ignoreCase = true) } &&
+        try {
+          info.getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_AVC)
+            .videoCapabilities?.areSizeAndRateSupported(w, h, 30.0) == true
+        } catch (_: Exception) { false }
+    }
+
+  private fun isHot(context: Context): Boolean {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return false
+    val pm = context.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return false
+    return pm.currentThermalStatus >= PowerManager.THERMAL_STATUS_SEVERE
+  }
+
+  /**
+   * Settles the quality before recording: highest one the current camera
+   * supports, 1080p when the phone is hot, and above 1080p a 1.5 s dry run
+   * through the real pipeline (overlay included) that steps down while fewer
+   * than 90 % of the frames reach the file. Blocking — call off the main thread.
+   * Returns (applied quality, reason or null).
+   */
+  fun prepareQuality(context: Context): Pair<String, String?> {
+    val requested = quality
+    val supported = supportedQualities(context)[if (useFrontCamera) "front" else "back"] ?: BASIC_QUALITIES
+
+    var q = VideoQuality.clamp(requested, supported)
+    var reason: String? = if (q != requested) "camera" else null
+    if (VideoQuality.isAbove1080(q) && isHot(context)) { q = VideoQuality.DEFAULT; reason = "thermal" }
+
+    while (VideoQuality.isAbove1080(q)) {
+      quality = q
+      if (dryRunKeepsUp(context)) break
+      q = VideoQuality.lower(q) ?: VideoQuality.DEFAULT
+      reason = "performance"
+    }
+    val reopen = quality != q || VideoQuality.isAbove1080(requested)
+    quality = q
+    // Reopen the camera at the settled size for the preview and the real recording.
+    if (reopen) reopenAndWait(context)
+    Log.i(TAG, "prepareQuality requested=$requested applied=$q reason=$reason")
+    return q to reason
+  }
+
+  private fun reopenAndWait(context: Context): Boolean {
+    val latch = CountDownLatch(1)
+    setReadyCallback { latch.countDown() }
+    setupSession(context)
+    val ok = latch.await(10, TimeUnit.SECONDS)
+    setReadyCallback(null)
+    return ok
+  }
+
+  private fun dryRunKeepsUp(context: Context): Boolean {
+    if (!reopenAndWait(context)) return false
+    val file = File(context.cacheDir, "realtime_recorder_dry_run.mp4")
+    // Video only: the dry run never opens the mic.
+    val mic = micEnabled
+    micEnabled = false
+    try {
+      if (!startRecording(file.absolutePath)) return false
+      Thread.sleep(DRY_RUN_MS)
+      val done = CountDownLatch(1)
+      stopRecording { done.countDown() }
+      done.await(5, TimeUnit.SECONDS)
+    } finally {
+      micEnabled = mic
+    }
+    file.delete()
+    val (expected, written) = lastRecordingStats()
+    Log.i(TAG, "dry run $quality: $written/$expected frames")
+    return VideoQuality.keepsUp(written, expected)
   }
 
   // ================================================================

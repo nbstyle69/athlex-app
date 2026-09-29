@@ -47,6 +47,7 @@ class RealtimeRecorderModule : Module() {
 
         engine.useFrontCamera = (facing == "front")
         engine.isLandscape = landscape
+        applyVideoOptions(options)
 
         // Clean path (remove file:// prefix if present)
         val cleanPath = if (outputPath.startsWith("file://")) {
@@ -102,6 +103,37 @@ class RealtimeRecorderModule : Module() {
         Log.e(TAG, "startRecording failed", e)
         promise.reject("ERR", e.message ?: "Unknown error", null)
       }
+    }
+
+    Function("getSupportedQualities") {
+      val context = appContext.reactContext ?: return@Function mapOf(
+        "front" to listOf("720p", "1080p"), "back" to listOf("720p", "1080p"))
+      engine.supportedQualities(context)
+    }
+
+    AsyncFunction("prepareQuality") { options: Map<String, Any?>, promise: Promise ->
+      val context = appContext.currentActivity ?: appContext.reactContext ?: run {
+        promise.reject("ERR", "No context available", null)
+        return@AsyncFunction
+      }
+      (options["facing"] as? String)?.let { engine.useFrontCamera = (it == "front") }
+      applyVideoOptions(options)
+      val requested = engine.quality
+      // Blocking (camera reopen + dry run): off the JS and main threads.
+      Thread {
+        try {
+          val (applied, reason) = engine.prepareQuality(context)
+          promise.resolve(mapOf("requested" to requested, "applied" to applied, "reason" to reason))
+        } catch (e: Exception) {
+          Log.e(TAG, "prepareQuality failed", e)
+          promise.reject("ERR", e.message ?: "Unknown error", e)
+        }
+      }.start()
+    }
+
+    Function("getLastRecordingStats") {
+      val (expected, written) = engine.lastRecordingStats()
+      mapOf("expectedFrames" to expected, "writtenFrames" to written)
     }
 
     AsyncFunction("stopRecording") { promise: Promise ->
@@ -163,5 +195,12 @@ class RealtimeRecorderModule : Module() {
         }
       }
     }
+  }
+
+  /** quality / fps / mic from JS; missing keys keep the defaults (1080p, 30 fps, mic on). */
+  private fun applyVideoOptions(options: Map<String, Any?>) {
+    engine.quality = (options["quality"] as? String)?.takeIf { it in VideoQuality.ORDER } ?: VideoQuality.DEFAULT
+    engine.fps = if ((options["fps"] as? Number)?.toInt() == 25) 25 else 30
+    engine.micEnabled = options["mic"] as? Boolean ?: true
   }
 }

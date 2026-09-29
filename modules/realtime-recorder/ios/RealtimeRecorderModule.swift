@@ -41,6 +41,16 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
   /// `true` to compare two phones.
   static let orientationDebugLog = false
 
+  // Video options (R6c). Defaults = former fixed behaviour: 1080p, 30 fps, mic on.
+  var quality = VideoQuality.defaultQuality
+  var fps: Int32 = 30
+  var micEnabled = true
+
+  // Frames appended to the writer during the last recording (dry run or real).
+  private var writtenFrames = 0
+  private var firstFrameTime = CMTime.invalid
+  private var lastFrameTime = CMTime.invalid
+
   private let renderer = OverlayRenderer()
   var overlayState = OverlayState()
   let stateLock = NSLock()
@@ -184,10 +194,17 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
       // Configure audio session BEFORE capture session to ensure iOS locks the correct audio route
       let audioSession = AVAudioSession.sharedInstance()
       do {
-        try audioSession.setCategory(.playAndRecord, mode: .videoRecording, options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
-        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-        try audioSession.overrideOutputAudioPort(.speaker)
-        print("[RealtimeRecorder] Audio session configured (videoRecording mode)")
+        if self.micEnabled {
+          try audioSession.setCategory(.playAndRecord, mode: .videoRecording, options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
+          try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+          try audioSession.overrideOutputAudioPort(.speaker)
+          print("[RealtimeRecorder] Audio session configured (videoRecording mode)")
+        } else {
+          // Mic off: playback only, no input route (no orange mic indicator).
+          try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+          try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+          print("[RealtimeRecorder] Audio session configured (playback only, mic off)")
+        }
       } catch {
         print("[RealtimeRecorder] Audio session config error: \(error)")
       }
@@ -209,7 +226,16 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
       session.addInput(videoInput)
       self.currentDevice = camera
 
-      if let mic = AVCaptureDevice.default(for: .audio),
+      if self.quality != VideoQuality.defaultQuality {
+        // Step down until this camera accepts the preset (2K captures 4K).
+        var q: String? = self.quality
+        while let cur = q, !session.canSetSessionPreset(VideoQuality.preset(cur)) { q = VideoQuality.lower(cur) }
+        self.quality = q ?? VideoQuality.defaultQuality
+        session.sessionPreset = VideoQuality.preset(self.quality)
+      }
+
+      if self.micEnabled,
+         let mic = AVCaptureDevice.default(for: .audio),
          let audioInput = try? AVCaptureDeviceInput(device: mic),
          session.canAddInput(audioInput) {
         session.addInput(audioInput)
@@ -229,11 +255,23 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         connection.isVideoMirrored = true
       }
 
-      let aOutput = AVCaptureAudioDataOutput()
-      aOutput.setSampleBufferDelegate(self, queue: self.captureQueue)
-      if session.canAddOutput(aOutput) { session.addOutput(aOutput) }
+      var aOutput: AVCaptureAudioDataOutput?
+      if self.micEnabled {
+        let out = AVCaptureAudioDataOutput()
+        out.setSampleBufferDelegate(self, queue: self.captureQueue)
+        if session.canAddOutput(out) { session.addOutput(out); aOutput = out }
+      }
 
       session.commitConfiguration()
+
+      // 25 fps: fixed frame duration when the active format allows it (30 = format default, untouched).
+      if self.fps != 30,
+         camera.activeFormat.videoSupportedFrameRateRanges.contains(where: { $0.minFrameRate <= Double(self.fps) && Double(self.fps) <= $0.maxFrameRate }),
+         (try? camera.lockForConfiguration()) != nil {
+        camera.activeVideoMinFrameDuration = CMTime(value: 1, timescale: self.fps)
+        camera.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: self.fps)
+        camera.unlockForConfiguration()
+      }
 
       self.captureSession = session
       self.videoOutput = vOutput
@@ -274,26 +312,32 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
     let writer = try AVAssetWriter(url: url, fileType: .mp4)
 
-    let vidW = isLandscape ? 1920 : 1080
-    let vidH = isLandscape ? 1080 : 1920
+    let size = VideoQuality.size(quality)
+    let vidW = isLandscape ? size.width : size.height
+    let vidH = isLandscape ? size.height : size.width
 
-    let videoSettings: [String: Any] = [
+    var videoSettings: [String: Any] = [
       AVVideoCodecKey: AVVideoCodecType.h264,
       AVVideoWidthKey: vidW,
       AVVideoHeightKey: vidH,
       AVVideoCompressionPropertiesKey: [
-        AVVideoAverageBitRateKey: 6_000_000,
+        AVVideoAverageBitRateKey: VideoQuality.bitrate(quality),
         AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
       ]
     ]
+    // 2K: 4K camera buffers, scaled down to 2560 x 1440 by the writer.
+    let scaled = quality == "2k"
+    if scaled { videoSettings[AVVideoScalingModeKey] = AVVideoScalingModeResizeAspect }
     let vInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings)
     vInput.expectsMediaDataInRealTime = true
 
-    let adaptorAttrs: [String: Any] = [
+    var adaptorAttrs: [String: Any] = [
       kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
-      kCVPixelBufferWidthKey as String: vidW,
-      kCVPixelBufferHeightKey as String: vidH,
     ]
+    if !scaled {
+      adaptorAttrs[kCVPixelBufferWidthKey as String] = vidW
+      adaptorAttrs[kCVPixelBufferHeightKey as String] = vidH
+    }
     let adaptor = AVAssetWriterInputPixelBufferAdaptor(
       assetWriterInput: vInput,
       sourcePixelBufferAttributes: adaptorAttrs
@@ -309,12 +353,16 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     aInput.expectsMediaDataInRealTime = true
 
     if writer.canAdd(vInput) { writer.add(vInput) }
-    if writer.canAdd(aInput) { writer.add(aInput) }
+    // Mic off: no audio track at all.
+    if micEnabled, writer.canAdd(aInput) { writer.add(aInput) }
 
     self.assetWriter = writer
     self.videoWriterInput = vInput
-    self.audioWriterInput = aInput
+    self.audioWriterInput = micEnabled ? aInput : nil
     self.pixelBufferAdaptor = adaptor
+    self.writtenFrames = 0
+    self.firstFrameTime = .invalid
+    self.lastFrameTime = .invalid
     self.isRecording = true
 
     // Prevent screen from auto-locking during recording
@@ -391,12 +439,87 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
       stateLock.unlock()
 
       renderer.render(onto: imageBuffer, state: currentState)
-      pixelBufferAdaptor?.append(imageBuffer, withPresentationTime: timestamp)
+      if pixelBufferAdaptor?.append(imageBuffer, withPresentationTime: timestamp) == true {
+        writtenFrames += 1
+        if !firstFrameTime.isValid { firstFrameTime = timestamp }
+        lastFrameTime = timestamp
+      }
 
     } else if output == audioOutput {
       guard let audioInput = audioWriterInput, audioInput.isReadyForMoreMediaData else { return }
       audioInput.append(sampleBuffer)
     }
+  }
+
+  // MARK: Quality (R6c)
+
+  /// (frames expected from the first to the last appended frame, frames appended).
+  func lastRecordingStats() -> (expected: Int, written: Int) {
+    guard firstFrameTime.isValid, lastFrameTime.isValid else { return (0, writtenFrames) }
+    let span = CMTimeGetSeconds(CMTimeSubtract(lastFrameTime, firstFrameTime))
+    return (Int((span * Double(fps)).rounded(.down)) + 1, writtenFrames)
+  }
+
+  /// Qualities the camera at `position` records natively (2K = 4K scaled down).
+  func supportedQualities(position: AVCaptureDevice.Position) -> [String] {
+    guard let device = findCamera(position: position) else { return ["720p", "1080p"] }
+    let dims = device.formats
+      .filter { $0.videoSupportedFrameRateRanges.contains(where: { $0.maxFrameRate >= 30 }) }
+      .map { CMVideoFormatDescriptionGetDimensions($0.formatDescription) }
+    let has4k = dims.contains { $0.width == 3840 && $0.height == 2160 }
+    return VideoQuality.order.filter { VideoQuality.isAbove1080($0) ? has4k : true }
+  }
+
+  /// Settles the quality before recording: highest one the current camera
+  /// supports, 1080p when the phone is hot, and above 1080p a 1.5 s dry run
+  /// through the real pipeline (overlay included, mic off) that steps down
+  /// while fewer than 90 % of the frames reach the file.
+  func prepareQuality(completion: @escaping (_ applied: String, _ reason: String?) -> Void) {
+    let requested = quality
+    var q = VideoQuality.clamp(requested, supportedQualities(position: currentFacing))
+    var reason: String? = q != requested ? "camera" : nil
+    let thermal = ProcessInfo.processInfo.thermalState
+    if VideoQuality.isAbove1080(q), thermal == .serious || thermal == .critical {
+      q = VideoQuality.defaultQuality
+      reason = "thermal"
+    }
+    let mic = micEnabled
+
+    func finish(_ applied: String) {
+      quality = applied
+      micEnabled = mic
+      if applied != requested || VideoQuality.isAbove1080(requested) { setupSession() }
+      print("[RealtimeRecorder] prepareQuality requested=\(requested) applied=\(applied) reason=\(reason ?? "-")")
+      completion(applied, reason)
+    }
+
+    func dryRun(_ candidate: String) {
+      guard VideoQuality.isAbove1080(candidate) else { finish(candidate); return }
+      quality = candidate
+      micEnabled = false
+      setupSession()
+      let url = FileManager.default.temporaryDirectory.appendingPathComponent("realtime_recorder_dry_run.mp4")
+      DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        do { try self.startRecording(url: url) } catch { finish(VideoQuality.defaultQuality); return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+          self.stopRecording { _ in
+            try? FileManager.default.removeItem(at: url)
+            let stats = self.lastRecordingStats()
+            print("[RealtimeRecorder] dry run \(candidate): \(stats.written)/\(stats.expected) frames")
+            // An unsupported preset was stepped down by setupSession: keep what it settled on.
+            let ran = self.quality
+            if VideoQuality.keepsUp(written: stats.written, expected: stats.expected) {
+              DispatchQueue.main.async { finish(ran) }
+            } else {
+              reason = "performance"
+              DispatchQueue.main.async { dryRun(VideoQuality.lower(ran) ?? VideoQuality.defaultQuality) }
+            }
+          }
+        }
+      }
+    }
+
+    dryRun(q)
   }
 
   // MARK: Helpers
@@ -434,6 +557,7 @@ public class RealtimeRecorderModule: Module {
     AsyncFunction("startRecording") { (options: [String: Any], promise: Promise) in
       let outputPath = options["outputPath"] as? String ?? ""
       let facing = options["facing"] as? String ?? "back"
+      self.applyVideoOptions(options)
       // `isLandscape` from JS is ignored on purpose: the writer geometry is
       // derived from the rotation angle actually applied by the engine.
 
@@ -461,6 +585,27 @@ public class RealtimeRecorderModule: Module {
           promise.reject("ERR", error.localizedDescription)
         }
       }
+    }
+
+    Function("getSupportedQualities") { () -> [String: [String]] in
+      ["front": self.engine.supportedQualities(position: .front),
+       "back": self.engine.supportedQualities(position: .back)]
+    }
+
+    AsyncFunction("prepareQuality") { (options: [String: Any], promise: Promise) in
+      if let facing = options["facing"] as? String { self.engine.currentFacing = facing == "front" ? .front : .back }
+      self.applyVideoOptions(options)
+      let requested = self.engine.quality
+      DispatchQueue.main.async {
+        self.engine.prepareQuality { applied, reason in
+          promise.resolve(["requested": requested, "applied": applied, "reason": reason.map { $0 as Any } ?? NSNull()])
+        }
+      }
+    }
+
+    Function("getLastRecordingStats") { () -> [String: Int] in
+      let stats = self.engine.lastRecordingStats()
+      return ["expectedFrames": stats.expected, "writtenFrames": stats.written]
     }
 
     AsyncFunction("stopRecording") { (promise: Promise) in
@@ -498,6 +643,67 @@ public class RealtimeRecorderModule: Module {
         }
       }
     }
+  }
+
+  /// quality / fps / mic from JS; missing keys keep the defaults (1080p, 30 fps, mic on).
+  private func applyVideoOptions(_ options: [String: Any]) {
+    let q = options["quality"] as? String ?? VideoQuality.defaultQuality
+    engine.quality = VideoQuality.order.contains(q) ? q : VideoQuality.defaultQuality
+    engine.fps = (options["fps"] as? Int) == 25 ? 25 : 30
+    engine.micEnabled = options["mic"] as? Bool ?? true
+  }
+}
+
+// MARK: - Video quality rules (R6c)
+
+enum VideoQuality {
+  static let order = ["720p", "1080p", "2k", "4k"]
+  static let defaultQuality = "1080p"
+
+  /// Landscape output size.
+  static func size(_ q: String) -> (width: Int, height: Int) {
+    switch q {
+    case "720p": return (1280, 720)
+    case "2k": return (2560, 1440)
+    case "4k": return (3840, 2160)
+    default: return (1920, 1080)
+    }
+  }
+
+  /// 1080p keeps the former 6 Mb/s.
+  static func bitrate(_ q: String) -> Int {
+    switch q {
+    case "720p": return 4_000_000
+    case "2k": return 10_000_000
+    case "4k": return 20_000_000
+    default: return 6_000_000
+    }
+  }
+
+  /// 2K has no native preset on iPhone: it captures 4K.
+  static func preset(_ q: String) -> AVCaptureSession.Preset {
+    switch q {
+    case "720p": return .hd1280x720
+    case "2k", "4k": return .hd4K3840x2160
+    default: return .hd1920x1080
+    }
+  }
+
+  static func isAbove1080(_ q: String) -> Bool { q == "2k" || q == "4k" }
+
+  static func lower(_ q: String) -> String? {
+    guard let i = order.firstIndex(of: q), i > 0 else { return nil }
+    return order[i - 1]
+  }
+
+  static func clamp(_ requested: String, _ supported: [String]) -> String {
+    var q: String? = order.contains(requested) ? requested : defaultQuality
+    while let cur = q, !supported.contains(cur) { q = lower(cur) }
+    return q ?? defaultQuality
+  }
+
+  static func keepsUp(written: Int, expected: Int) -> Bool {
+    expected > 0 && written * 10 >= expected * 9
   }
 }
 

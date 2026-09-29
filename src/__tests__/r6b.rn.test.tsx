@@ -74,6 +74,8 @@ jest.mock('realtime-recorder', () => ({
   startRecording: (o: unknown) => mockStartRec(o),
   stopRecording: () => mockStopRec(),
   updateOverlayState: (s: unknown) => mockOverlay(s),
+  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
+  getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
 }));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
 jest.mock('react-native-view-shot', () => {
@@ -386,13 +388,15 @@ describe('R6b : chrono et natif intacts', () => {
       .replace("  const [showYT, setShowYT] = useState(false);\n", "  const [showYT, setShowYT] = useState(false);\n  const [ytLink, setYtLink] = useState('');\n")
       .replace("phase === 'running') setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase]);",
         "phase === 'running' && !withCamera) setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase, withCamera]);");
-    expect(sha(back)).toBe('1041dd2f625b4dca7aef596260eec738457808105feae5f56912d121632992ed');
+    // R6c (A) : + options vidéo, couvertes par r6cOptionsVideo.rn.test.tsx.
+    expect(sha(back)).toBe('c3932652975b01a7420cd1c542ef22c9cde27a34efe1da945a1592b1ce8c06e1');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');
     const files = execSync('git ls-files modules/realtime-recorder', { cwd: root }).toString().trim().split('\n');
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
-    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('13a70926cacff27e9cdb575810f9da599703c39eb381e1317e6e18c7c4a15e64');
+    // R6c (A) : qualité, fps et micro dans le module, couverts par r6cOptionsVideo.rn.test.tsx et VideoQualityTest.kt.
+    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('90ad20bfd3710bf0352f59548fc4c2a679d69f414bebe5b80f868ca1e75d64f5');
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
       .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');

@@ -63,7 +63,11 @@ jest.mock('expo-screen-orientation', () => ({
   OrientationLock: { PORTRAIT_UP: 0, ALL: 1, LANDSCAPE: 2 },
   lockAsync: jest.fn(async () => {}), unlockAsync: jest.fn(async () => {}),
 }));
-jest.mock('realtime-recorder', () => ({ RealtimeRecorderView: 'Recorder' }));
+jest.mock('realtime-recorder', () => ({
+  RealtimeRecorderView: 'Recorder',
+  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
+  getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
+}));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
 jest.mock('react-native-view-shot', () => 'ViewShot');
 
@@ -232,8 +236,11 @@ describe('R5a : capture', () => {
   });
 });
 
-/** R6b : état du lien YouTube retiré, « GO ! » aussi en mode caméra (écart prouvé dans r6b.rn.test.tsx). */
-const LOGIC_SHA = '678f9be5481f4bf3dec1922dc497644a214ab9b0b215366a01d0ca86b48251cd';
+/**
+ * R6b : état du lien YouTube retiré, « GO ! » aussi en mode caméra (écart prouvé dans r6b.rn.test.tsx).
+ * R6c (A) : options vidéo (qualité vérifiée, fps, micro, saccades), couvertes par r6cOptionsVideo.rn.test.tsx.
+ */
+const LOGIC_SHA = '3e5e55c24d7e02a8b55b373db214e99579c037d4cfdf02af20fb5cc5bf77dd41';
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
 const MODAL_SHA = '48d210edde52dc6c61eefc919547338ded563c6ac4e8405c748e9c748a47c566';
 const LAUNCH_SHA = 'e4567887b4ed3745b56790f362ad063d475f82f5d770b1ab62783ff38c5f7dc2';
@@ -269,6 +276,14 @@ function normalizeBefore(name: string, list: string[]): string[] {
     const i = out.indexOf('TYPE DE MINUTEUR');
     const type = TYPES.find((t) => t.label === out[i + 1])!;
     out = [...out.slice(0, i + 2), type.desc.toUpperCase(), ...out.slice(i + 2)];
+  }
+  if (name.endsWith('-caméra')) {
+    // R6c : qualité (720p et 1080p sans module natif), images par seconde et micro après le timestamp.
+    const k = out.indexOf('DATE & HEURE EN OVERLAY');
+    const up = (key: string, o?: Record<string, string>) => i18n.t(key, o).toUpperCase();
+    out = [...out.slice(0, k + 1), up('timer.video.quality'), up('timer.video.qualityHint'), '720P', '1080P',
+      up('timer.video.fps'), up('timer.video.fpsValue', { fps: '25' }), up('timer.video.fpsValue', { fps: '30' }),
+      up('timer.video.mic'), up('timer.video.micHint'), ...out.slice(k + 1)];
   }
   return out;
 }

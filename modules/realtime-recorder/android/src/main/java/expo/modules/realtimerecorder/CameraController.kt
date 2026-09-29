@@ -8,7 +8,6 @@ import android.hardware.camera2.*
 import android.os.Handler
 import android.util.Log
 import android.util.Range
-import android.util.Size
 import android.view.Surface
 import androidx.core.content.ContextCompat
 
@@ -23,6 +22,31 @@ class CameraController {
 
   companion object {
     private const val TAG = "CameraController"
+
+    /** First camera with the requested facing (fallback: the first camera). */
+    fun chooseCameraId(manager: CameraManager, useFront: Boolean): String? {
+      val targetLensFacing = if (useFront) {
+        CameraCharacteristics.LENS_FACING_FRONT
+      } else {
+        CameraCharacteristics.LENS_FACING_BACK
+      }
+
+      for (id in manager.cameraIdList) {
+        val chars = manager.getCameraCharacteristics(id)
+        val facing = chars.get(CameraCharacteristics.LENS_FACING)
+        if (facing == targetLensFacing) return id
+      }
+
+      // Fallback: return first available camera
+      return manager.cameraIdList.firstOrNull()
+    }
+
+    /** SurfaceTexture output sizes of a camera (no permission needed). */
+    fun outputSizes(characteristics: CameraCharacteristics): List<Pair<Int, Int>> =
+      characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
+        ?.getOutputSizes(SurfaceTexture::class.java)
+        ?.map { it.width to it.height }
+        ?: emptyList()
   }
 
   private var cameraDevice: CameraDevice? = null
@@ -52,7 +76,9 @@ class CameraController {
     useFront: Boolean,
     surfaceTexture: SurfaceTexture,
     handler: Handler,
-    isLandscape: Boolean = false
+    isLandscape: Boolean = false,
+    quality: String = VideoQuality.DEFAULT,
+    fps: Int = 30
   ) {
     if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA)
         != PackageManager.PERMISSION_GRANTED) {
@@ -72,18 +98,18 @@ class CameraController {
 
     // Pick best resolution for the SurfaceTexture (orientation-aware)
     val characteristics = manager.getCameraCharacteristics(cameraId)
-    val bestSize = chooseBestSize(characteristics, isLandscape)
-    surfaceTexture.setDefaultBufferSize(bestSize.width, bestSize.height)
-    bufferWidth = bestSize.width
-    bufferHeight = bestSize.height
-    Log.i(TAG, "Camera $cameraId selected, output size: ${bestSize.width}x${bestSize.height} (landscape=$isLandscape)")
+    val (bestW, bestH) = VideoQuality.bufferSize(outputSizes(characteristics), quality, isLandscape)
+    surfaceTexture.setDefaultBufferSize(bestW, bestH)
+    bufferWidth = bestW
+    bufferHeight = bestH
+    Log.i(TAG, "Camera $cameraId selected, output size: ${bestW}x${bestH} (quality=$quality, landscape=$isLandscape)")
 
     try {
       manager.openCamera(cameraId, object : CameraDevice.StateCallback() {
         override fun onOpened(camera: CameraDevice) {
           cameraDevice = camera
           Log.i(TAG, "Camera opened: $cameraId")
-          createCaptureSession(camera, surfaceTexture, handler, context)
+          createCaptureSession(camera, surfaceTexture, handler, context, fps)
         }
 
         override fun onDisconnected(camera: CameraDevice) {
@@ -108,7 +134,8 @@ class CameraController {
     camera: CameraDevice,
     surfaceTexture: SurfaceTexture,
     handler: Handler,
-    context: Context? = null
+    context: Context? = null,
+    fps: Int = 30
   ) {
     val glSurface = Surface(surfaceTexture)
     val targets = listOf(glSurface)
@@ -118,7 +145,7 @@ class CameraController {
         override fun onConfigured(session: CameraCaptureSession) {
           captureSession = session
 
-          val fpsRange = chooseBestFpsRange(context, camera.id)
+          val fpsRange = chooseBestFpsRange(context, camera.id, fps)
           val request = camera.createCaptureRequest(CameraDevice.TEMPLATE_RECORD).apply {
             addTarget(glSurface)
             set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO)
@@ -162,56 +189,12 @@ class CameraController {
   //  Camera selection helpers
   // ================================================================
 
-  private fun chooseCameraId(manager: CameraManager, useFront: Boolean): String? {
-    val targetLensFacing = if (useFront) {
-      CameraCharacteristics.LENS_FACING_FRONT
-    } else {
-      CameraCharacteristics.LENS_FACING_BACK
-    }
-
-    for (id in manager.cameraIdList) {
-      val chars = manager.getCameraCharacteristics(id)
-      val facing = chars.get(CameraCharacteristics.LENS_FACING)
-      if (facing == targetLensFacing) return id
-    }
-
-    // Fallback: return first available camera
-    return manager.cameraIdList.firstOrNull()
-  }
-
-  /**
-   * Pick the best output size from the camera's stream configuration map.
-   * Prefers 1920×1080 in landscape mode, 1080×1920 in portrait — so that
-   * the SurfaceTexture buffer orientation matches the TextureView viewport
-   * and the camera frame isn't stretched/squished on rotation.
-   */
-  private fun chooseBestSize(characteristics: CameraCharacteristics, isLandscape: Boolean): Size {
-    val defaultSize = if (isLandscape) Size(1920, 1080) else Size(1080, 1920)
-    val map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP)
-      ?: return defaultSize
-
-    val sizes = map.getOutputSizes(SurfaceTexture::class.java) ?: return defaultSize
-
-    val preferredW = if (isLandscape) 1920 else 1080
-    val preferredH = if (isLandscape) 1080 else 1920
-
-    // Prefer the exact preferred size for the current orientation
-    sizes.find { it.width == preferredW && it.height == preferredH }?.let { return it }
-    // Fall back to the opposite orientation if preferred isn't available
-    sizes.find { it.width == preferredH && it.height == preferredW }?.let { return it }
-
-    // Otherwise pick the largest that fits within 1920px on the longer side
-    return sizes
-      .filter { maxOf(it.width, it.height) <= 1920 }
-      .maxByOrNull { it.width.toLong() * it.height.toLong() }
-      ?: sizes.first()
-  }
-
   /**
    * Pick the best FPS range from device capabilities.
-   * Prefers [30,30], then any range containing 30, then the highest available.
+   * Prefers [fps,fps], then any range whose upper is fps, then any range
+   * containing fps (the GL loop paces the frames), then the highest available.
    */
-  private fun chooseBestFpsRange(context: Context?, cameraId: String): Range<Int> {
+  private fun chooseBestFpsRange(context: Context?, cameraId: String, fps: Int = 30): Range<Int> {
     val fallback = Range(24, 30)
     if (context == null) return fallback
     try {
@@ -220,19 +203,24 @@ class CameraController {
       val ranges = chars.get(CameraCharacteristics.CONTROL_AE_AVAILABLE_TARGET_FPS_RANGES)
         ?: return fallback
 
-      // 1. Exact [30,30]
-      ranges.find { it.lower == 30 && it.upper == 30 }?.let {
-        Log.i(TAG, "FPS range: [30,30]")
+      // 1. Exact [fps,fps]
+      ranges.find { it.lower == fps && it.upper == fps }?.let {
+        Log.i(TAG, "FPS range: [$fps,$fps]")
         return it
       }
-      // 2. Any range whose upper is 30 (e.g. [15,30], [24,30])
-      val containing30 = ranges.filter { it.upper == 30 }
+      // 2. Any range whose upper is fps (e.g. [15,30], [24,30])
+      val upperIsFps = ranges.filter { it.upper == fps }
         .maxByOrNull { it.lower }
-      if (containing30 != null) {
-        Log.i(TAG, "FPS range: [${containing30.lower},${containing30.upper}]")
-        return containing30
+      if (upperIsFps != null) {
+        Log.i(TAG, "FPS range: [${upperIsFps.lower},${upperIsFps.upper}]")
+        return upperIsFps
       }
-      // 3. Highest upper FPS
+      // 3. Any range containing fps
+      ranges.filter { fps in it.lower..it.upper }.minByOrNull { it.upper }?.let {
+        Log.i(TAG, "FPS range: [${it.lower},${it.upper}] (contains $fps)")
+        return it
+      }
+      // 4. Highest upper FPS
       val best = ranges.maxByOrNull { it.upper }
       if (best != null) {
         Log.i(TAG, "FPS range fallback: [${best.lower},${best.upper}]")
