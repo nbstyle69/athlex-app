@@ -67,6 +67,15 @@ export const axColors: { dark: AxColors; light: AxColors } = {
   },
 };
 
+/** Voile posé sur l'image de la caméra : encre claire lisible (AA) même sur une image blanche. */
+export const axVeil = {
+  background: 'rgba(0,0,0,0.6)',
+  ink: '#F2F4F4',
+  border: 'rgba(242,244,244,0.3)',
+  rec: '#F87171',
+  stop: '#B91C1C',
+} as const;
+
 export const axRadius = {
   /** Boutons, champs, pastilles. */
   control: 5,

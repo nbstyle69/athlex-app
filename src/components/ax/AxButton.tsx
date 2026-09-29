@@ -3,7 +3,7 @@ import { ActivityIndicator, LayoutChangeEvent, Pressable, StyleSheet, Text, View
 import Svg, { Rect } from 'react-native-svg';
 import type { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
-import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
+import { axRadius, axSpacing, axTypography, axVeil, type AxColors } from '../../theme/axTokens';
 import { AxGlass } from './AxGlass';
 
 export type AxButtonVariant = 'accent' | 'outline' | 'light' | 'dashed' | 'stop';
@@ -18,6 +18,8 @@ interface Props {
   fullWidth?: boolean;
   /** Encre du contour posé hors des surfaces de l'app (fond du chrono) : texte, icône et filet. */
   ink?: string;
+  /** Posé sur l'image de la caméra : voile sombre et encre claire. */
+  veil?: boolean;
   testID?: string;
 }
 
@@ -46,14 +48,20 @@ export function axButtonStyle(variant: AxButtonVariant, c: AxColors): VariantSty
   }
 }
 
+function veilButtonStyle(variant: AxButtonVariant, c: AxColors): VariantStyle {
+  if (variant === 'accent') return axButtonStyle('accent', c);
+  if (variant === 'stop') return { background: axVeil.stop, foreground: axVeil.ink };
+  return { background: axVeil.background, border: { width: 1, color: axVeil.border }, foreground: axVeil.ink };
+}
+
 const DASH_WIDTH = 1.5;
 
 export function AxButton({
-  label, onPress, variant = 'accent', icon: Icon, disabled = false, loading = false, fullWidth = false, ink, testID,
+  label, onPress, variant = 'accent', icon: Icon, disabled = false, loading = false, fullWidth = false, ink, veil = false, testID,
 }: Props) {
   const { theme } = useTheme();
   const base = axButtonStyle(variant, theme.ax);
-  const v: VariantStyle = ink && variant === 'outline'
+  const v: VariantStyle = veil ? veilButtonStyle(variant, theme.ax) : ink && variant === 'outline'
     ? { glass: { color: ink, opacity: 0.08 }, border: { width: 1, color: ink }, foreground: ink }
     : base;
   const [size, setSize] = useState({ width: 0, height: 0 });

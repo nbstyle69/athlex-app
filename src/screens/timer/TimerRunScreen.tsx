@@ -25,7 +25,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { appTimerThemeId, ensureContrast, inkOn, inkOnSecondary, TIMER_THEMES } from '../../theme/timerInk';
 import { AxButton, AxCard, AxChip, AxIconButton, AxSwitch, AxTag, withAlpha } from '../../components/ax';
-import { axFonts, axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { axColors, axFonts, axRadius, axSpacing, axTypography, axVeil } from '../../theme/axTokens';
 import { incrementCounter } from '../../services/gamification';
 import * as Notifications from 'expo-notifications';
 import { spacing, borderRadius, typography } from '../../theme/designTokens';
@@ -205,6 +205,8 @@ const DIGIT_COLORS = [
   '#FFFFFF', '#000000', '#7B2FFF', '#00FF80',
 ];
 
+const CAM_SHADOW = 'rgba(0,0,0,0.6)';
+
 // ─── ARC clock (SVG) ─────────────────────────────────────────────────────────
 function ArcTimer({ time, progress, color, fontSize, strokeColor, landscape, customSize, flat }: { time: string; progress: number; color: string; fontSize?: number; strokeColor?: string; landscape?: boolean; customSize?: number; flat?: boolean }) {
   const { width: aw, height: ah } = useWindowDimensions();
@@ -224,8 +226,8 @@ function ArcTimer({ time, progress, color, fontSize, strokeColor, landscape, cus
         <Circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={sc} strokeWidth={14}
           strokeLinecap="round" strokeDasharray={`${circ} ${circ}`} strokeDashoffset={dash} />
       </Svg>
-      <Text style={{ fontSize: fs, fontWeight: '200', color, letterSpacing: -2,
-        textShadowColor: color, textShadowOffset: { width: 0, height: 0 }, textShadowRadius: flat ? 0 : 22, fontVariant: ['tabular-nums'] }}>
+      <Text testID="timer-cam-time" style={{ fontSize: fs, fontFamily: axFonts.oswaldMedium, color, letterSpacing: -2,
+        textShadowColor: flat ? CAM_SHADOW : color, textShadowOffset: { width: 0, height: flat ? 1 : 0 }, textShadowRadius: flat ? 6 : 22, fontVariant: ['tabular-nums'] }}>
         {time}
       </Text>
     </View>
@@ -244,8 +246,8 @@ function BarTimer({ time, progress, color, fontSize, strokeColor, landscape, fla
       <View style={{ width: isLandscapeBar ? bw * 0.45 : bw * 0.75, height: landscape ? 18 : 14, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 9, overflow: 'hidden', position: 'relative' }}>
         <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%` as `${number}%`, backgroundColor: sc, borderRadius: 9 }} />
       </View>
-      <Text style={{ fontSize: fs, fontWeight: '200', color, letterSpacing: -2,
-        textShadowColor: color, textShadowOffset: { width: 0, height: 0 }, textShadowRadius: flat ? 0 : 18, fontVariant: ['tabular-nums'] }}>
+      <Text testID="timer-cam-time" style={{ fontSize: fs, fontFamily: axFonts.oswaldMedium, color, letterSpacing: -2,
+        textShadowColor: flat ? CAM_SHADOW : color, textShadowOffset: { width: 0, height: flat ? 1 : 0 }, textShadowRadius: flat ? 6 : 18, fontVariant: ['tabular-nums'] }}>
         {time}
       </Text>
     </View>
@@ -257,8 +259,8 @@ function DigitsTimer({ time, color, fontSize, landscape, flat }: { time: string;
   const { height: dh } = useWindowDimensions();
   const fs = landscape ? Math.max(fontSize, Math.round(dh * 0.4)) : fontSize;
   return (
-    <Text style={{ fontSize: fs, fontWeight: '200', color, letterSpacing: -2,
-      textShadowColor: color, textShadowOffset: { width: 0, height: 0 }, textShadowRadius: flat ? 0 : 22, fontVariant: ['tabular-nums'] }}>
+    <Text testID="timer-cam-time" style={{ fontSize: fs, fontFamily: axFonts.oswaldMedium, color, letterSpacing: -2,
+      textShadowColor: flat ? CAM_SHADOW : color, textShadowOffset: { width: 0, height: flat ? 1 : 0 }, textShadowRadius: flat ? 6 : 22, fontVariant: ['tabular-nums'] }}>
       {time}
     </Text>
   );
@@ -1659,6 +1661,14 @@ export default function TimerRunScreen() {
     camState === 2 ? handleStop :
     stopVideoAndFinish;
 
+  const renderCamPrimary = () => (
+    <AxButton testID="timer-cam-primary" veil fullWidth
+      variant={camState === 2 || camState === 3 ? 'stop' : 'accent'}
+      label={camState === 0 && !isCameraReady ? 'Initialisation…' : camPrimaryLabel}
+      disabled={camState === 0 && !isCameraReady}
+      onPress={camPrimaryAction} />
+  );
+
   const renderRoundBubbles = (forLandscape = false) => {
     if (!hasRounds || curTotalRounds <= 0) return null;
     const winSize = Math.min(curTotalRounds, 10);
@@ -1702,19 +1712,18 @@ export default function TimerRunScreen() {
     <View style={[styles.topBar, extraPadTop > 0 && { paddingTop: extraPadTop }]}>
       {hideUI
         ? <View style={{ width: 44 }} />
-        : <TouchableOpacity onPress={handleClose} style={styles.iconBtn}>
-            <X color="rgba(255,255,255,0.8)" size={24} />
-          </TouchableOpacity>
+        : withCamera
+          ? <AxIconButton testID="timer-cam-close" icon={X} veil accessibilityLabel="Fermer" onPress={handleClose} />
+          : <TouchableOpacity onPress={handleClose} style={styles.iconBtn}>
+              <X color="rgba(255,255,255,0.8)" size={24} />
+            </TouchableOpacity>
       }
       <View style={[styles.topCenter, isLandscape && { flexDirection: 'row', gap: 10 }]}>
         {/* In camera mode the native overlay already burns `videoTitle` at the top
             of the preview. Skipping the React label avoids a duplicate row. */}
         {/* modeLabel supprimé — géré par le header de chaque layout */}
         {withCamera && camState >= 1 && camState <= 3 && (
-          <View style={styles.recIndicator}>
-            <View style={styles.recDot} />
-            <Text style={styles.recText}>REC</Text>
-          </View>
+          <AxTag testID="timer-rec" label="REC" tone="danger" dot veil />
         )}
       </View>
       {hideUI
@@ -1724,12 +1733,8 @@ export default function TimerRunScreen() {
             // Once recording starts, both camera facing and orientation are locked
             // (orientation lock is handled in the ScreenOrientation effect above).
             camState === 0
-              ? <TouchableOpacity
-                  onPress={() => setFacing(f => f === 'front' ? 'back' : 'front')}
-                  style={styles.iconBtn} activeOpacity={0.7}
-                >
-                  <RefreshCw color="rgba(255,255,255,0.8)" size={22} />
-                </TouchableOpacity>
+              ? <AxIconButton testID="timer-cam-flip" icon={RefreshCw} veil accessibilityLabel="Retourner la caméra"
+                  onPress={() => setFacing(f => f === 'front' ? 'back' : 'front')} />
               : <View style={{ width: 44 }} />
           : <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.iconBtn} activeOpacity={0.7}>
               <Settings color="rgba(255,255,255,0.8)" size={20} />
@@ -1759,13 +1764,7 @@ export default function TimerRunScreen() {
                   />
                 </View>
                 {withCamera ? (
-                  <View style={[styles.sessionBadge, {
-                    backgroundColor: `${accentColor}22`,
-                    borderColor: `${accentColor}55`,
-                    paddingHorizontal: 20, paddingVertical: 7,
-                  }]}>
-                    <Text style={[styles.sessionBadgeText, { color: accentColor, fontSize: 13, letterSpacing: 2 }]}>{displayLabel}</Text>
-                  </View>
+                  <AxTag testID="timer-final-tag" label={displayLabel} veil />
                 ) : (
                   <AxTag testID="timer-final-tag" label={displayLabel} color={onBg1} />
                 )}
@@ -1773,12 +1772,10 @@ export default function TimerRunScreen() {
 
               {/* ── CENTRE : temps final ── */}
               <View style={{ alignItems: 'center', gap: 4 }}>
-                <Text style={withCamera
-                  ? { fontSize: 10, fontWeight: '800', color: onBg2, letterSpacing: 4, textTransform: 'uppercase' }
-                  : [axTypography.overline, { color: onBg2 }]}>TEMPS FINAL</Text>
+                <Text style={[axTypography.overline, { color: withCamera ? axVeil.ink : onBg2 }]}>TEMPS FINAL</Text>
                 <Text testID="timer-final-time" adjustsFontSizeToFit numberOfLines={1}
-                  style={[styles.sessionTime, !withCamera && styles.finalDigits, { color: withCamera ? '#FFFFFF' : onBg1 }]}>{mainTime}</Text>
-                {videoTitle ? <Text style={[styles.sessionTitle, !withCamera && axTypography.label, { color: onBg1 }]} numberOfLines={2}>{videoTitle}</Text> : null}
+                  style={[styles.sessionTime, styles.finalDigits, { color: withCamera ? axVeil.ink : onBg1 }]}>{mainTime}</Text>
+                {videoTitle ? <Text style={[styles.sessionTitle, axTypography.label, { color: withCamera ? axVeil.ink : onBg1 }]} numberOfLines={2}>{videoTitle}</Text> : null}
                 {splitLog.length > 0 && (
                   <ScrollView style={{ maxHeight: 150, marginTop: 6, alignSelf: 'stretch' }} contentContainerStyle={{ alignItems: 'center' }}>
                     {splitLog.map((sp, i) => (
@@ -1788,19 +1785,19 @@ export default function TimerRunScreen() {
                     ))}
                   </ScrollView>
                 )}
-                {withCamera && <Text style={[styles.sessionDate, { color: onBg2 }]}>{clockStr}</Text>}
+                {withCamera && <Text testID="timer-final-date" style={[axTypography.caption, styles.sessionDate]}>{clockStr}</Text>}
                 {withCamera && (
                   <View style={[styles.sessionQRWrap, { marginTop: 6, padding: 10 }]}>
                     <QRCode value={qrData} size={70} color="#111111" backgroundColor="#FFFFFF" />
-                    <Text style={styles.sessionQRHint}>Scanner pour les détails</Text>
+                    <Text style={[axTypography.caption, styles.sessionQRHint]}>Scanner pour les détails</Text>
                   </View>
                 )}
                 {/* Bouton recommencer centré sous le timer */}
                 <TouchableOpacity testID="timer-reset" onPress={handleReset} style={[styles.resetBtn, { marginTop: 8,
-                  backgroundColor: isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
-                  borderColor: withCamera ? (isLightBg ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)') : onBg1 }]} activeOpacity={0.8}
+                  backgroundColor: withCamera ? axVeil.background : isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
+                  borderColor: withCamera ? axVeil.border : onBg1 }]} activeOpacity={0.8}
                   accessibilityRole="button" accessibilityLabel="Recommencer">
-                  <RotateCcw color={withCamera ? iconColor : onBg1} size={26} />
+                  <RotateCcw color={withCamera ? axVeil.ink : onBg1} size={26} />
                 </TouchableOpacity>
               </View>
 
@@ -1809,14 +1806,14 @@ export default function TimerRunScreen() {
                 {withCamera && (
                   <View style={styles.savedBanner}>
                     {saving
-                      ? <><ActivityIndicator color="#fff" size="small" /><Text style={styles.savedText}>Sauvegarde vidéo…</Text></>
+                      ? <><ActivityIndicator color={axVeil.ink} size="small" /><Text style={[axTypography.label, { color: axVeil.ink }]}>Sauvegarde vidéo…</Text></>
                       : savedUri
-                        ? <><CheckCircle color="#4ADE80" size={18} /><Text style={[styles.savedText, { color: '#4ADE80' }]}>Vidéo enregistrée ✓</Text></>
+                        ? <><CheckCircle color={theme.ax.accent} size={18} /><Text testID="timer-video-saved" style={[axTypography.label, { color: axVeil.ink }]}>Vidéo enregistrée ✓</Text></>
                         : null}
                   </View>
                 )}
                 {sessionMeta && (
-                  <TouchableOpacity
+                  <AxButton testID="timer-play-video" veil variant="outline" fullWidth icon={Play} label="Lire la vidéo"
                     onPress={() => navigation.navigate('VideoPlayback', {
                       videoURL: sessionMeta.videoURL,
                       title: sessionMeta.title || undefined,
@@ -1825,22 +1822,13 @@ export default function TimerRunScreen() {
                       timerStopOffset: sessionMeta.timerStopOffset,
                       countdownDuration: sessionMeta.countdownDuration,
                       overlaysBurned: sessionMeta.overlaysBurned ?? false,
-                    })}
-                    style={[styles.playbackBtn, { width: '100%', justifyContent: 'center' }]}
-                    activeOpacity={0.85}
-                  >
-                    <Play color="#fff" size={16} fill="#fff" />
-                    <Text style={styles.playbackBtnText}>Lire la vidéo</Text>
-                  </TouchableOpacity>
+                    })} />
                 )}
                 {withCamera && (
-                  <TouchableOpacity onPress={saveCard} style={[styles.saveCardBtn, { width: '100%' }]} activeOpacity={0.85}>
-                    {savingCard
-                      ? <ActivityIndicator color="#fff" size="small" />
-                      : cardSaved
-                        ? <><CheckCircle color="#4ADE80" size={18} /><Text style={[styles.saveCardBtnText, { color: '#4ADE80' }]}>Carte sauvegardée ✓</Text></>
-                        : <><Download color="#fff" size={18} /><Text style={styles.saveCardBtnText}>Sauvegarder la carte</Text></>}
-                  </TouchableOpacity>
+                  <AxButton testID="timer-save-card" veil variant="outline" fullWidth loading={savingCard}
+                    icon={cardSaved ? CheckCircle : Download}
+                    label={cardSaved ? 'Carte sauvegardée ✓' : 'Sauvegarder la carte'}
+                    onPress={saveCard} />
                 )}
                 {withCamera && (
                   <TouchableOpacity style={[styles.ytBtn, { width: '100%', justifyContent: 'center' }]} activeOpacity={0.85} onPress={() => setShowYT(true)}>
@@ -1849,12 +1837,7 @@ export default function TimerRunScreen() {
                   </TouchableOpacity>
                 )}
                 {withCamera ? (
-                  <TouchableOpacity onPress={handleClose} style={[styles.closeResultBtn, { width: '100%', alignItems: 'center',
-                    borderRadius: 16, paddingVertical: 12,
-                    backgroundColor: withCamera ? 'rgba(255,255,255,0.15)' : (isLightBg ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.15)'),
-                    borderColor: withCamera ? 'rgba(255,255,255,0.25)' : (isLightBg ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)') }]} activeOpacity={0.8}>
-                    <Text style={[styles.closeResultText, { color: withCamera ? '#FFFFFF' : onBg1 }]}>Fermer</Text>
-                  </TouchableOpacity>
+                  <AxButton testID="timer-close" veil variant="outline" fullWidth label="Fermer" onPress={handleClose} />
                 ) : (
                   <AxButton testID="timer-close" label="Fermer" variant="outline" ink={onBg1} fullWidth onPress={handleClose} />
                 )}
@@ -2031,16 +2014,7 @@ export default function TimerRunScreen() {
                     </View>
                   )}
                   <View style={{ position: 'absolute', bottom: 12, left: 0, right: 0, alignItems: 'center' }} pointerEvents="box-none">
-                    <TouchableOpacity onPress={camPrimaryAction} disabled={camState === 0 && !isCameraReady}
-                      style={[styles.camPrimaryBtn, { paddingHorizontal: 28, paddingVertical: 12, minWidth: 200 },
-                        camState === 0 && !isCameraReady && { opacity: 0.4 },
-                        camState === 1 && styles.camPrimaryBtnGo,
-                        (camState === 2 || camState === 3) && styles.camPrimaryBtnStop,
-                      ]} activeOpacity={0.85}>
-                      <Text style={[styles.camPrimaryBtnText, { fontSize: 15 }]}>
-                        {camState === 0 && !isCameraReady ? 'Initialisation…' : camPrimaryLabel}
-                      </Text>
-                    </TouchableOpacity>
+                    <View style={styles.camPrimaryWrapLandscape}>{renderCamPrimary()}</View>
                   </View>
                 </>
               )}
@@ -2266,23 +2240,14 @@ export default function TimerRunScreen() {
 
                 {/* Bouton principal en bas (Démarrer / Lancer le chrono / Arrêter) */}
                 <View style={{ position: 'absolute', bottom: 28, left: 0, right: 0, alignItems: 'center' }} pointerEvents="box-none">
-                  <TouchableOpacity onPress={camPrimaryAction} disabled={camState === 0 && !isCameraReady}
-                    style={[styles.camPrimaryBtn, { paddingHorizontal: 40, paddingVertical: 16, minWidth: 240 },
-                      camState === 0 && !isCameraReady && { opacity: 0.4 },
-                      camState === 1 && styles.camPrimaryBtnGo,
-                      (camState === 2 || camState === 3) && styles.camPrimaryBtnStop,
-                    ]} activeOpacity={0.85}>
-                    <Text style={[styles.camPrimaryBtnText, { fontSize: 17 }]}>
-                      {camState === 0 && !isCameraReady ? 'Initialisation…' : camPrimaryLabel}
-                    </Text>
-                  </TouchableOpacity>
+                  <View style={styles.camPrimaryWrap}>{renderCamPrimary()}</View>
                 </View>
 
                 {/* INFOBAR — titre/timestamp */}
                 {(videoTitle || withTimestamp) && phase === 'running' && camState >= 2 && (
                   <View style={styles.infoBar}>
-                    {videoTitle ? <Text style={styles.infoTitle} numberOfLines={1}>{videoTitle}</Text> : null}
-                    {withTimestamp ? <Text style={styles.infoTimestamp}>{clockStr}</Text> : null}
+                    {videoTitle ? <Text style={[axTypography.caption, styles.infoTitle]} numberOfLines={1}>{videoTitle}</Text> : null}
+                    {withTimestamp ? <Text testID="timer-cam-clock" style={[axTypography.caption, styles.infoTimestamp]}>{clockStr}</Text> : null}
                   </View>
                 )}
               </>
@@ -2325,17 +2290,16 @@ export default function TimerRunScreen() {
             />
           : <View style={[StyleSheet.absoluteFill, styles.noCamera]}><Text style={styles.noCameraText}>Caméra non disponible</Text></View>
         }
-        <View style={[StyleSheet.absoluteFill, styles.cameraDim]} />
+        <View testID="timer-cam-dim" style={[StyleSheet.absoluteFill, styles.cameraDim, camState === 4 && { backgroundColor: axVeil.background }]} />
         {renderContent()}
         {/* Overlay décompte — top-level pour éviter z-index/elevation Android */}
         {phase === 'countdown' && countdownVal > 0 && (() => {
           const cdSize = isLandscape ? Math.min(winH * 0.5, SW * 0.42) : SW * 0.55;
           return (
           <View style={[StyleSheet.absoluteFill, styles.camCdOverlay, isLandscape && { paddingBottom: 90 }]} pointerEvents="none">
-            <Text style={[styles.phaseLabelGiant, { color: '#FFFFFF', marginBottom: 16,
-              textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 }]}>PRÉPARER</Text>
-            <View style={[styles.camCdCircle, { width: cdSize, height: cdSize, borderRadius: cdSize / 2, borderColor: 'rgba(255,255,255,0.5)' }]}>
-              <Text style={[styles.camCdNum, { fontSize: cdSize * 0.5, color: '#FFFFFF' }]}>{countdownVal}</Text>
+            <Text style={[axTypography.titleM, styles.camCdLabel]}>PRÉPARER</Text>
+            <View testID="timer-cam-cd-frame" style={[styles.camCdCircle, { width: cdSize, height: cdSize, borderRadius: cdSize / 2 }]}>
+              <Text testID="timer-cam-cd-value" style={[styles.camCdNum, { fontSize: cdSize * 0.5, color: axVeil.ink }]}>{countdownVal}</Text>
             </View>
           </View>
           );
@@ -2357,31 +2321,31 @@ export default function TimerRunScreen() {
           style={styles.ytModal}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View style={styles.ytSheet}>
-            <Text style={styles.ytSheetTitle}>🎬 Partager sur YouTube</Text>
-            <Text style={styles.ytSheetSub}>Upload ta vidéo puis colle le lien pour générer l'analyse</Text>
+          <View testID="timer-yt-sheet" style={[styles.ytSheet, { backgroundColor: theme.ax.surface, borderColor: theme.ax.border }]}>
+            <Text style={[axTypography.titleM, styles.ytSheetTitle, { color: theme.ax.text }]}>🎬 Partager sur YouTube</Text>
+            <Text style={[axTypography.bodySmall, styles.ytSheetSub, { color: theme.ax.textMuted }]}>Upload ta vidéo puis colle le lien pour générer l'analyse</Text>
 
             <TouchableOpacity
-              style={[styles.ytActionBtn, { backgroundColor: '#1a1a1a', borderColor: '#333' }]}
+              style={[styles.ytActionBtn, { borderColor: theme.ax.border }]}
               activeOpacity={0.8}
               onPress={() => Linking.openURL('https://studio.youtube.com/channel/UC/videos/upload')}
             >
               <ExternalLink color="#FF0000" size={18} />
-              <Text style={[styles.ytActionTxt, { color: '#FF0000' }]}>Ouvrir YouTube Studio</Text>
+              <Text style={[axTypography.label, { color: theme.ax.text }]}>Ouvrir YouTube Studio</Text>
             </TouchableOpacity>
 
             <TextInput
-              style={styles.ytInput}
+              style={[axTypography.body, styles.ytInput, { color: theme.ax.text, backgroundColor: theme.ax.background, borderColor: theme.ax.fieldBorder }]}
               value={ytLink}
               onChangeText={setYtLink}
               placeholder="Colle ton lien YouTube ici…"
-              placeholderTextColor="#444"
+              placeholderTextColor={theme.ax.textMuted}
               autoCapitalize="none"
               keyboardType="url"
             />
 
             <TouchableOpacity
-              style={styles.ytAnalyseBtn}
+              style={[styles.ytAnalyseBtn, { backgroundColor: theme.ax.accent }]}
               activeOpacity={0.85}
               onPress={() => {
                 if (!ytLink.trim()) {
@@ -2393,12 +2357,12 @@ export default function TimerRunScreen() {
                 Alert.alert('✅ Prompt copié !', 'Colle-le dans ChatGPT ou Claude pour analyser ta performance.');
               }}
             >
-              <Copy color="#0A0A0A" size={16} />
-              <Text style={styles.ytAnalyseTxt}>Copier le prompt d'analyse</Text>
+              <Copy color={theme.ax.onAccent} size={16} />
+              <Text style={[axTypography.label, { color: theme.ax.onAccent }]}>Copier le prompt d'analyse</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.ytCloseBtn} onPress={() => setShowYT(false)}>
-              <Text style={styles.ytCloseTxt}>Fermer</Text>
+              <Text style={[axTypography.label, { color: theme.ax.textMuted }]}>Fermer</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -2435,13 +2399,6 @@ const styles = StyleSheet.create({
   iconBtnDisabled: { opacity: 0.4 },
   topCenter: { alignItems: 'center', gap: spacing.xxs },
   modeLabel: { ...typography.label, color: '#FFFFFF', letterSpacing: 1.5 },
-  recIndicator: {
-    flexDirection: 'row', alignItems: 'center', gap: spacing.xxs,
-    backgroundColor: 'rgba(220,38,38,0.85)', borderRadius: borderRadius.sm,
-    paddingHorizontal: spacing.sm, paddingVertical: spacing.xxs,
-  },
-  recDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff' },
-  recText: { ...typography.overline, color: '#fff', fontSize: 10 },
   totalLabel: { ...typography.bodySmall, color: 'rgba(255,255,255,0.5)', minWidth: 44, textAlign: 'right' },
   timerCenter: { alignItems: 'center', justifyContent: 'center', flex: 1, gap: spacing.sm },
   countdownOverlay: {
@@ -2453,13 +2410,19 @@ const styles = StyleSheet.create({
   },
   camCdCircle: {
     width: SW * 0.55, height: SW * 0.55, borderRadius: SW * 0.275,
-    backgroundColor: 'rgba(0,0,0,0.75)',
+    backgroundColor: axVeil.background,
     justifyContent: 'center', alignItems: 'center',
-    borderWidth: 3, borderColor: 'rgba(255,255,255,0.3)',
+    borderWidth: 2, borderColor: axVeil.border,
   },
   camCdNum: {
-    fontSize: SW * 0.28, fontWeight: '200', letterSpacing: -4,
+    fontSize: SW * 0.28, fontFamily: axFonts.oswaldMedium, letterSpacing: -4, fontVariant: ['tabular-nums'],
   },
+  camCdLabel: {
+    color: axVeil.ink, marginBottom: axSpacing.lg, letterSpacing: 4,
+    textShadowColor: CAM_SHADOW, textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+  },
+  camPrimaryWrap: { width: '100%', maxWidth: 320, paddingHorizontal: axSpacing.xl },
+  camPrimaryWrapLandscape: { width: 280 },
   timerDisplay: { fontSize: SW * 0.22, fontWeight: '200', color: '#FFFFFF', letterSpacing: -2 },
   countdownBig: { fontSize: SW * 0.42, fontWeight: '200', letterSpacing: -4 },
   goText: { fontSize: SW * 0.22, fontWeight: '900', color: '#FFFFFF', letterSpacing: 6 },
@@ -2469,7 +2432,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: 12,
     paddingHorizontal: 16, paddingVertical: 8, marginTop: 2,
   },
-  savedText: { fontSize: 13, fontWeight: '600', color: '#fff' },
   controls: { alignItems: 'center', paddingHorizontal: 24, paddingBottom: 8 },
   ctrlGroup: { alignItems: 'center', gap: 14 },
   playBtn: {
@@ -2500,12 +2462,6 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center', alignItems: 'center',
   },
-  closeResultBtn: {
-    backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 14,
-    paddingHorizontal: 28, paddingVertical: 11,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
-  },
-  closeResultText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
   innerPhaseLabel: { fontSize: 20, fontWeight: '900', letterSpacing: 2 },
   workColor: { color: '#4ADE80' },
   restColor: { color: '#60A5FA' },
@@ -2532,18 +2488,13 @@ const styles = StyleSheet.create({
   },
   infoBar: {
     marginHorizontal: 20, marginBottom: 6,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: axVeil.background,
+    borderRadius: axRadius.card, paddingHorizontal: axSpacing.sm, paddingVertical: axSpacing.xs,
+    borderWidth: 1, borderColor: axVeil.border,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8,
   },
-  infoTitle: {
-    fontSize: 11, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.2, flex: 1,
-  },
-  infoTimestamp: {
-    fontSize: 9, fontWeight: '500', color: 'rgba(255,255,255,0.5)',
-    fontVariant: ['tabular-nums'],
-  },
+  infoTitle: { color: axVeil.ink, flex: 1 },
+  infoTimestamp: { color: axVeil.ink, fontVariant: ['tabular-nums'] },
   // ── Session Card
   sessionScroll: {
     flexGrow: 1, paddingHorizontal: 20, paddingTop: 16, paddingBottom: 32, gap: 14,
@@ -2560,14 +2511,6 @@ const styles = StyleSheet.create({
     fontSize: 11, fontWeight: '900', color: 'rgba(255,255,255,0.35)',
     letterSpacing: 2.5, textTransform: 'uppercase',
   },
-  sessionBadge: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 4,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
-  },
-  sessionBadgeText: {
-    fontSize: 11, fontWeight: '900', color: 'rgba(255,255,255,0.6)', letterSpacing: 1.5,
-  },
   sessionTime: {
     fontSize: SW * 0.25, fontWeight: '900', letterSpacing: -4,
     marginVertical: 4,
@@ -2576,22 +2519,12 @@ const styles = StyleSheet.create({
     fontSize: 15, fontWeight: '800', color: '#FFFFFF', textAlign: 'center',
     letterSpacing: 0.2,
   },
-  sessionDate: {
-    fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.45)',
-    fontVariant: ['tabular-nums'],
-  },
+  sessionDate: { color: axVeil.ink, fontVariant: ['tabular-nums'] },
   sessionQRWrap: {
     marginTop: 8, alignItems: 'center', gap: 6,
     backgroundColor: '#FFFFFF', borderRadius: 14, padding: 14,
   },
-  sessionQRHint: {
-    fontSize: 9, fontWeight: '600', color: '#555555', letterSpacing: 0.5,
-  },
-  saveCardBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 16, padding: 12,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
-  },
+  sessionQRHint: { color: axColors.light.textMuted },
   stopVideoBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: 'rgba(239,68,68,0.85)', borderRadius: 14,
@@ -2599,35 +2532,6 @@ const styles = StyleSheet.create({
   },
   stopVideoBtnText: {
     fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: 0.3,
-  },
-  camPrimaryBtn: {
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    borderRadius: 20, paddingHorizontal: 36, paddingVertical: 18,
-    borderWidth: 2, borderColor: 'rgba(255,255,255,0.35)',
-    minWidth: 220,
-  },
-  camPrimaryBtnGo: {
-    backgroundColor: 'rgba(74,222,128,0.22)',
-    borderColor: 'rgba(74,222,128,0.6)',
-  },
-  camPrimaryBtnStop: {
-    backgroundColor: 'rgba(239,68,68,0.22)',
-    borderColor: 'rgba(239,68,68,0.6)',
-  },
-  camPrimaryBtnText: {
-    fontSize: 17, fontWeight: '800', color: '#fff', letterSpacing: 0.3,
-  },
-  playbackBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 16, padding: 12,
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)',
-  },
-  playbackBtnText: {
-    fontSize: 15, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.3,
-  },
-  saveCardBtnText: {
-    fontSize: 15, fontWeight: '800', color: '#FFFFFF', letterSpacing: 0.3,
   },
   ytBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
@@ -2637,27 +2541,23 @@ const styles = StyleSheet.create({
   ytBtnTxt: { fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
   ytModal: { flex: 1, backgroundColor: 'rgba(0,0,0,0.92)', justifyContent: 'flex-end' },
   ytSheet: {
-    backgroundColor: '#111', borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 24, paddingBottom: 40, gap: 14,
+    borderTopLeftRadius: axRadius.card, borderTopRightRadius: axRadius.card, borderWidth: 1,
+    padding: axSpacing['2xl'], paddingBottom: 40, gap: axSpacing.md,
   },
-  ytSheetTitle: { fontSize: 18, fontWeight: '900', color: '#fff', textAlign: 'center', marginBottom: 4 },
-  ytSheetSub: { fontSize: 12, color: '#555', textAlign: 'center', marginBottom: 4 },
+  ytSheetTitle: { textAlign: 'center', marginBottom: axSpacing.xs },
+  ytSheetSub: { textAlign: 'center', marginBottom: axSpacing.xs },
   ytActionBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    borderRadius: 14, padding: 15, borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: axSpacing.sm,
+    borderRadius: axRadius.control, minHeight: 46, paddingHorizontal: axSpacing.lg, borderWidth: 1,
   },
-  ytActionTxt: { fontSize: 14, fontWeight: '800' },
   ytInput: {
-    backgroundColor: '#1a1a1a', borderRadius: 12, padding: 14,
-    fontSize: 13, color: '#fff', borderWidth: 1, borderColor: '#333',
+    borderRadius: axRadius.control, paddingHorizontal: axSpacing.md, paddingVertical: axSpacing.md, borderWidth: 1,
   },
   ytAnalyseBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: '#00ff88', borderRadius: 14, padding: 15,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: axSpacing.sm,
+    borderRadius: axRadius.control, minHeight: 46, paddingHorizontal: axSpacing.lg,
   },
-  ytAnalyseTxt: { fontSize: 14, fontWeight: '900', color: '#0A0A0A' },
-  ytCloseBtn: { alignItems: 'center', paddingVertical: 8 },
-  ytCloseTxt: { fontSize: 13, color: '#555', fontWeight: '700' },
+  ytCloseBtn: { alignItems: 'center', justifyContent: 'center', minHeight: 44 },
   recLogoWrap: {
     position: 'absolute', bottom: 100, right: 16,
     backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 14, padding: 6,

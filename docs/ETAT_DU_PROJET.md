@@ -205,6 +205,16 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R6a : écrans du mode caméra au nouveau design (app seule, aucune migration, apparence seule).**
+- `TimerRunScreen` en mode caméra : pastille REC en `AxTag` danger à point rouge, retourner / fermer en `AxIconButton` sur
+  voile, « Démarrer » / « Lancer le chrono » en `AxButton` accent, « Arrêter le chrono » / « Arrêter la vidéo » en stop ;
+  chiffres Oswald, date et heure en caption, voiles `axVeil` (encre claire AA même sur une image blanche) ; temps final
+  avec vidéo (`AxTag`, overline, « Lire la vidéo », « Sauvegarder la carte », « Fermer » en outline, YouTube inchangé).
+  `VideoPlaybackScreen` : contrôles en `AxIconButton`, temps en caption, barre à l'accent, lecteur non touché.
+- Module `realtime-recorder`, `updateOverlayState` et incrustations, enregistrement, horodatage, partage, callbacks,
+  texte du décompte caméra et contenu de la feuille YouTube inchangés (empreintes et mocks dans `r6a.rn.test.tsx`).
+- Tests : `r6a.rn.test.tsx` (17), `npx jest` 1976, `npm run test:rn` 442, `tsc` vert ; 40 mutations tuées.
+
 **Refonte R5b : thèmes AthleX liés au thème de l'app, noms traduits et nouveau décompte (app seule, aucune migration serveur).**
 - `TIMER_THEMES` : `athlex` et `athlex2` en tête, ordre AthleX, AthleX 2, Noir, Blanc, Citron vert, Orange, Bleu, Violet, Cyan,
   Jaune, Rose, Rouge ; identifiants existants inchangés ; noms par clés `timer.themes.*` (FR / EN), champ `emoji` retiré.
