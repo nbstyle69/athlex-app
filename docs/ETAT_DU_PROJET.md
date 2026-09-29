@@ -205,6 +205,15 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R4b : historique, calculateur 1RM et programmes au nouveau design (app seule, aucune migration, apparence seule).**
+- `WodHistoryScreen` (compteurs en `AxCard`, filtres `AxChip`, entrées `AxCard`), `OneRMCalculatorScreen` (Barres /
+  Gymnastique en `AxChip`, `AxTextField`, `AxSwitch` kg / lbs, zones dans une `AxCard` à filets `border`, couleurs de
+  zone rapprochées de l'encre du thème par `readableInk` jusqu'à l'AA) et `ProgramDetailScreen` (jours en overline,
+  séances en `AxCard`, « Notes coach » en `AxCard`, `AxButton` accent unique) ; la séance de programme reste dans
+  `WODDetailScreen` (grille et boutons déjà en ax depuis R4a) ; formules 1RM, `gymZones.ts`, services programme /
+  musculation, filtres, favoris, mémorisation et date de début inchangés ; emoji des filtres retirés ; ordre des textes
+  comparé à un relevé de master ; tests `r4b.rn.test.tsx` + suites existantes verts.
+
 **Refonte R4a : générateur et résultats au nouveau design (app seule, aucune migration, apparence seule).**
 - `WodGeneratorScreen` (Functional / Hybrid / Musculation), `WodResultScreen` (WOD et séance de musculation),
   `MuscuSessionCard`, `StrengthSetGrid` et `SessionContextCard` en composants ax (`AxChip`, `AxSwitch`, `AxTextField`

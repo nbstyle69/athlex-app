@@ -4,7 +4,9 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl,
   ActivityIndicator, Alert,
 } from 'react-native';
-import { Heart, Clock, Zap, Trash2, ChevronDown, ChevronUp, CheckCircle2, ChevronRight } from 'lucide-react-native';
+import {
+  Heart, Clock, Zap, Trash2, ChevronDown, ChevronUp, CheckCircle2, ChevronRight, Flame, Lightbulb, ClipboardList,
+} from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
@@ -12,10 +14,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
-import { LevelColors } from '../../theme/designTokens';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { AxButton, AxCard, AxChip, AxTag, withAlpha } from '../../components/ax';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
+import { levelInk } from '../home/homeLevelColor';
 import { HomeStackParamList } from '../../navigation';
-import { AthleteLevel } from '../../types';
 import { formatScoreValue } from '../../utils/scoreFormat';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { buildHistoryEntries, countScores, HistoryEntry, BoxScoreRow, CompletionRow } from '../../lib/wodHistoryEntries';
@@ -82,7 +85,8 @@ export default function WodHistoryScreen() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const S = createStyles(theme);
+  const c = theme.ax;
+  const S = createStyles(c);
 
   const [entries, setEntries] = useState<Entry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -186,41 +190,34 @@ export default function WodHistoryScreen() {
     const title = entry.wod?.title ?? t('wodHistory.boxWodFallback');
     const wodType = entry.wod?.wod_type ?? null;
     return (
-      <TouchableOpacity
+      <AxCard
         style={S.wodCard}
         onPress={() => navigation.navigate('WODDetail', { wodId: entry.wodId })}
-        activeOpacity={0.8}
         testID={`history-${entry.kind}-${entry.wodId}`}
       >
         <View style={S.wodTop}>
           <View style={S.wodBadges}>
-            <View style={[S.badge, { backgroundColor: `${theme.accent}18` }]}>
-              <Text style={[S.badgeTxt, { color: theme.accent }]}>{t('wodHistory.boxTag')}</Text>
-            </View>
-            {wodType && (
-              <View style={[S.badge, { backgroundColor: theme.surface }]}>
-                <Text style={[S.badgeTxt, { color: theme.textMuted }]}>{wodType.toUpperCase()}</Text>
-              </View>
-            )}
+            <AxTag label={t('wodHistory.boxTag')} tone="accent" />
+            {wodType && <AxTag label={wodType.toUpperCase()} tone="muted" />}
           </View>
-          <ChevronRight color={theme.textMuted} size={16} />
+          <ChevronRight color={c.textMuted} size={16} />
         </View>
         <Text style={S.wodName}>{title}</Text>
         <Text style={S.wodDate}>{formatDate(entry.date)}</Text>
         {entry.kind === 'boxScore' ? (
           <View style={S.bestScoreRow}>
-            <Zap color={theme.gold} size={12} />
+            <Zap color={c.warning} size={12} />
             <Text style={S.bestScoreTxt}>
               {formatScoreValue(entry.score.score_value, entry.score.score_type ?? 'time')} {entry.score.rx ? t('wodHistory.rxTag') : t('wodHistory.scaledTag')}
             </Text>
           </View>
         ) : (
           <View style={S.bestScoreRow}>
-            <CheckCircle2 color={theme.textMuted} size={12} />
+            <CheckCircle2 color={c.textMuted} size={12} />
             <Text style={S.completedTxt}>{t('wodHistory.completedNoScore')}</Text>
           </View>
         )}
-      </TouchableOpacity>
+      </AxCard>
     );
   }
 
@@ -231,43 +228,43 @@ export default function WodHistoryScreen() {
 
   function renderWod(item: SavedWOD) {
     const isExpanded = expandedId === item.id;
-    const levelColor = LevelColors[item.level as AthleteLevel] ?? theme.textMuted;
+    const levelColor = levelInk(item.level, c);
     const bestScore = item.scores && item.scores.length > 0
       ? item.scores.sort((a, b) => item.wod_type === 'For Time' ? a.score_value - b.score_value : b.score_value - a.score_value)[0]
       : null;
 
     return (
-      <TouchableOpacity
+      <AxCard
         style={S.wodCard}
         onPress={() => setExpandedId(isExpanded ? null : item.id)}
-        activeOpacity={0.8}
+        testID={`history-generated-${item.id}`}
       >
         {/* Top row */}
         <View style={S.wodTop}>
           <View style={S.wodBadges}>
-            <View style={[S.badge, { backgroundColor: `${theme.accent}18` }]}>
-              <Text style={[S.badgeTxt, { color: theme.accent }]}>{item.wod_type}</Text>
-            </View>
-            <View style={[S.badge, { backgroundColor: `${levelColor}20` }]}>
+            <AxTag label={item.wod_type} tone="accent" />
+            <View style={[S.badge, { borderColor: levelColor }]} testID={`history-level-${item.id}`}>
               <Text style={[S.badgeTxt, { color: levelColor }]}>{item.level.toUpperCase()}</Text>
             </View>
-            {item.is_benchmark && (
-              <View style={[S.badge, { backgroundColor: '#F59E0B20' }]}>
-                <Text style={[S.badgeTxt, { color: '#F59E0B' }]}>BM</Text>
-              </View>
-            )}
+            {item.is_benchmark && <AxTag label="BM" tone="accent" />}
             {item.duration > 0 && (
-              <View style={[S.badge, { backgroundColor: theme.surface }]}>
-                <Clock color={theme.textMuted} size={10} />
-                <Text style={[S.badgeTxt, { color: theme.textMuted }]}>{item.duration}m</Text>
+              <View style={[S.badge, { borderColor: c.border }]}>
+                <Clock color={c.textMuted} size={10} />
+                <Text style={[S.badgeTxt, { color: c.textMuted }]}>{item.duration}m</Text>
               </View>
             )}
           </View>
           <View style={S.wodActions}>
-            <TouchableOpacity onPress={() => toggleFav(item)} hitSlop={8}>
-              <Heart color={item.is_favorite ? '#EF4444' : theme.textMuted} size={16} fill={item.is_favorite ? '#EF4444' : 'transparent'} />
+            <TouchableOpacity
+              onPress={() => toggleFav(item)}
+              hitSlop={14}
+              accessibilityRole="button"
+              accessibilityState={{ selected: item.is_favorite }}
+              testID={`history-fav-${item.id}`}
+            >
+              <Heart color={item.is_favorite ? c.danger : c.textMuted} size={16} fill={item.is_favorite ? c.danger : 'transparent'} />
             </TouchableOpacity>
-            {isExpanded ? <ChevronUp color={theme.textMuted} size={16} /> : <ChevronDown color={theme.textMuted} size={16} />}
+            {isExpanded ? <ChevronUp color={c.textMuted} size={16} /> : <ChevronDown color={c.textMuted} size={16} />}
           </View>
         </View>
 
@@ -278,7 +275,7 @@ export default function WodHistoryScreen() {
         {/* Best score if any */}
         {bestScore && (
           <View style={S.bestScoreRow}>
-            <Zap color={theme.gold} size={12} />
+            <Zap color={c.warning} size={12} />
             <Text style={S.bestScoreTxt}>{t('wodHistory.best', { score: formatScore(bestScore), tag: bestScore.rx ? t('wodHistory.rxTag') : t('wodHistory.scaledTag') })}</Text>
           </View>
         )}
@@ -293,13 +290,14 @@ export default function WodHistoryScreen() {
             </View>
             {item.scoring && (
               <View style={S.scoringRow}>
-                <Zap color={theme.gold} size={13} />
+                <Zap color={c.warning} size={13} />
                 <Text style={S.scoringTxt}>{item.scoring}</Text>
               </View>
             )}
             {item.coach_tip && (
               <View style={S.coachBox}>
-                <Text style={S.coachTxt}>💡 {item.coach_tip}</Text>
+                <Lightbulb color={c.accentText} size={14} />
+                <Text style={S.coachTxt}>{item.coach_tip}</Text>
               </View>
             )}
 
@@ -319,13 +317,18 @@ export default function WodHistoryScreen() {
             )}
 
             {/* Delete */}
-            <TouchableOpacity style={S.deleteBtn} onPress={() => deleteWod(item)} activeOpacity={0.7}>
-              <Trash2 color="#EF4444" size={14} />
-              <Text style={S.deleteTxt}>{t('common.delete')}</Text>
-            </TouchableOpacity>
+            <View style={S.deleteRow}>
+              <AxButton
+                variant="stop"
+                icon={Trash2}
+                label={t('common.delete')}
+                onPress={() => deleteWod(item)}
+                testID={`history-delete-${item.id}`}
+              />
+            </View>
           </View>
         )}
-      </TouchableOpacity>
+      </AxCard>
     );
   }
 
@@ -336,34 +339,42 @@ export default function WodHistoryScreen() {
       <AxScreenHeader title={t('wodHistory.title')} />
 
       {/* Stats row */}
-      <View style={S.statsRow}>
-        <View style={S.statBox}>
-          <Text style={S.statNum}>{totalWods}</Text>
-          <Text style={S.statLabel}>{t('wodHistory.statWods')}</Text>
+      <AxCard style={S.statsCard} testID="history-stats">
+        <View style={S.statsRow}>
+          <View style={S.statBox}>
+            <Text style={S.statNum} testID="history-stat-wods">{totalWods}</Text>
+            <Text style={S.statLabel}>{t('wodHistory.statWods')}</Text>
+          </View>
+          <View style={S.statBox}>
+            <Text style={S.statNum} testID="history-stat-scores">{totalScores}</Text>
+            <Text style={S.statLabel}>{t('wodHistory.statScores')}</Text>
+          </View>
+          <View style={S.statBox}>
+            <View style={S.streakRow}>
+              <Text style={[S.statNum, streak >= 3 && { color: c.orange }]} testID="history-stat-streak">{streak}</Text>
+              <Flame color={streak >= 3 ? c.orange : c.textMuted} size={18} />
+            </View>
+            <Text style={S.statLabel}>{t('wodHistory.statStreak')}</Text>
+          </View>
         </View>
-        <View style={S.statBox}>
-          <Text style={S.statNum}>{totalScores}</Text>
-          <Text style={S.statLabel}>{t('wodHistory.statScores')}</Text>
-        </View>
-        <View style={S.statBox}>
-          <Text style={[S.statNum, streak >= 3 && { color: '#EF4444' }]}>{streak}🔥</Text>
-          <Text style={S.statLabel}>{t('wodHistory.statStreak')}</Text>
-        </View>
-      </View>
+      </AxCard>
 
       {/* Filter tabs */}
       <View style={S.filterRow}>
         {([['all', t('wodHistory.filterAll')], ['favorites', t('wodHistory.filterFavorites')], ['benchmark', t('wodHistory.filterBenchmark')]] as const).map(([key, label]) => (
-          <TouchableOpacity key={key} onPress={() => setFilter(key)} activeOpacity={0.7}
-            style={[S.filterChip, filter === key && S.filterChipSel]}>
-            <Text style={[S.filterTxt, filter === key && S.filterTxtSel]}>{label}</Text>
-          </TouchableOpacity>
+          <AxChip
+            key={key}
+            label={label}
+            selected={filter === key}
+            onPress={() => setFilter(key)}
+            testID={`history-filter-${key}`}
+          />
         ))}
       </View>
 
       {loading ? (
         <View style={S.center}>
-          <ActivityIndicator size="large" color={theme.accent} />
+          <ActivityIndicator size="large" color={c.accentText} />
         </View>
       ) : (
         <FlatList
@@ -376,7 +387,7 @@ export default function WodHistoryScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
           ListEmptyComponent={
             <View style={S.empty}>
-              <Text style={S.emptyEmoji}>📋</Text>
+              <ClipboardList color={c.textMuted} size={40} />
               <Text style={S.emptyTitle}>{t('wodHistory.emptyTitle')}</Text>
               <Text style={S.emptySub}>{t('wodHistory.emptySub')}</Text>
             </View>
@@ -387,64 +398,51 @@ export default function WodHistoryScreen() {
   );
 }
 
-function createStyles(t: AppTheme) { return StyleSheet.create({
+function createStyles(c: AxColors) { return StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 60, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: t.border,
-  },
-  headerTitle: { fontSize: 18, fontWeight: '900', color: t.text },
-  statsRow: {
-    flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 16,
-    borderBottomWidth: 1, borderBottomColor: t.border,
-  },
-  statBox: { alignItems: 'center' },
-  statNum: { fontSize: 22, fontWeight: '900', color: t.text },
-  statLabel: { fontSize: 11, fontWeight: '600', color: t.textMuted, marginTop: 2 },
-  filterRow: { flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingVertical: 12 },
-  filterChip: {
-    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-    borderWidth: 1.5, borderColor: t.border, backgroundColor: t.surface,
-  },
-  filterChipSel: { backgroundColor: `${t.accent}15`, borderColor: t.accent },
-  filterTxt: { fontSize: 12, fontWeight: '700', color: t.textMuted },
-  filterTxtSel: { color: t.accent, fontWeight: '900' },
-  list: { padding: 16, gap: 12, paddingBottom: 140 },
+  statsCard: { marginHorizontal: axSpacing.xl, marginTop: axSpacing.sm, paddingVertical: axSpacing.md },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-around' },
+  statBox: { alignItems: 'center', flex: 1, minWidth: 0 },
+  streakRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+  statNum: { ...axTypography.numberM, color: c.text },
+  statLabel: { ...axTypography.caption, color: c.textMuted },
+  filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm, paddingHorizontal: axSpacing.xl, paddingVertical: axSpacing.md },
+  list: { paddingHorizontal: axSpacing.xl, gap: axSpacing.md },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty: { alignItems: 'center', paddingTop: 60, gap: 8 },
-  emptyEmoji: { fontSize: 48 },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: t.text },
-  emptySub: { fontSize: 13, color: t.textMuted, textAlign: 'center', paddingHorizontal: 40 },
-  wodCard: {
-    backgroundColor: t.card, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: t.border, gap: 6,
+  empty: { alignItems: 'center', paddingTop: 60, gap: axSpacing.sm },
+  emptyTitle: { ...axTypography.label, color: c.text },
+  emptySub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center', paddingHorizontal: 40 },
+  wodCard: { gap: 6 },
+  wodTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.sm },
+  wodBadges: { flexDirection: 'row', gap: axSpacing.xs, flexWrap: 'wrap', flex: 1, minWidth: 0 },
+  badge: {
+    flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: axSpacing.sm, paddingVertical: axSpacing.xs,
+    borderRadius: axRadius.badge, borderWidth: 1,
   },
-  wodTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  wodBadges: { flexDirection: 'row', gap: 5, flexWrap: 'wrap', flex: 1 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 5 },
-  badgeTxt: { fontSize: 9, fontWeight: '800' },
-  wodActions: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  wodName: { fontSize: 17, fontWeight: '900', color: t.text },
-  wodDate: { fontSize: 11, fontWeight: '600', color: t.textMuted },
-  bestScoreRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
-  bestScoreTxt: { fontSize: 12, fontWeight: '700', color: t.gold },
-  completedTxt: { fontSize: 12, fontWeight: '700', color: t.textMuted },
-  expandedContent: { gap: 10, marginTop: 8, borderTopWidth: 1, borderTopColor: t.border, paddingTop: 10 },
-  movBox: { backgroundColor: t.surface, borderRadius: 8, padding: 10, gap: 2 },
-  movHeader: { fontSize: 11, fontWeight: '800', color: t.textSecondary },
-  movLine: { fontSize: 12, fontWeight: '600', color: t.text },
+  badgeTxt: { ...axTypography.labelSmall, textTransform: 'uppercase' },
+  wodActions: { flexDirection: 'row', gap: axSpacing.md, alignItems: 'center' },
+  wodName: { ...axTypography.label, color: c.text },
+  wodDate: { ...axTypography.overline, color: c.textMuted },
+  bestScoreRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+  bestScoreTxt: { ...axTypography.bodySmall, color: c.text, flexShrink: 1 },
+  completedTxt: { ...axTypography.bodySmall, color: c.textMuted, flexShrink: 1 },
+  expandedContent: { gap: 10, marginTop: axSpacing.sm, borderTopWidth: 1, borderTopColor: c.border, paddingTop: 10 },
+  movBox: { backgroundColor: c.field, borderRadius: axRadius.control, padding: 10, gap: 2 },
+  movHeader: { ...axTypography.labelSmall, color: c.textMuted },
+  movLine: { ...axTypography.bodySmall, color: c.text },
   scoringRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  scoringTxt: { fontSize: 11, fontWeight: '700', color: t.textSecondary, flex: 1 },
-  coachBox: { backgroundColor: `${t.gold}12`, borderRadius: 8, padding: 8 },
-  coachTxt: { fontSize: 11, color: t.textSecondary, lineHeight: 16 },
-  scoresSection: { gap: 4 },
-  scoresTitle: { fontSize: 12, fontWeight: '800', color: t.text },
-  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4, borderBottomWidth: 0.5, borderBottomColor: t.border },
-  scoreDate: { fontSize: 11, fontWeight: '600', color: t.textMuted, width: 60 },
-  scoreValue: { fontSize: 14, fontWeight: '900', color: t.text },
-  scoreRx: { fontSize: 10, fontWeight: '800', color: t.accent, backgroundColor: `${t.accent}15`, paddingHorizontal: 5, paddingVertical: 2, borderRadius: 4 },
-  scoreNotes: { fontSize: 10, color: t.textMuted, flex: 1 },
-  deleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-end', paddingVertical: 6 },
-  deleteTxt: { fontSize: 12, fontWeight: '700', color: '#EF4444' },
+  scoringTxt: { ...axTypography.caption, color: c.textMuted, flex: 1 },
+  coachBox: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: axSpacing.sm,
+    backgroundColor: withAlpha(c.accent, 0.12), borderRadius: axRadius.control, padding: axSpacing.sm,
+  },
+  coachTxt: { ...axTypography.caption, color: c.text, flex: 1 },
+  scoresSection: { gap: axSpacing.xs },
+  scoresTitle: { ...axTypography.labelSmall, color: c.accentText },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, paddingVertical: axSpacing.xs, borderBottomWidth: 1, borderBottomColor: c.border },
+  scoreDate: { ...axTypography.caption, color: c.textMuted, width: 60 },
+  scoreValue: { ...axTypography.label, color: c.text },
+  scoreRx: { ...axTypography.labelSmall, color: c.accentText },
+  scoreNotes: { ...axTypography.caption, color: c.textMuted, flex: 1 },
+  deleteRow: { alignItems: 'flex-end' },
 }); }

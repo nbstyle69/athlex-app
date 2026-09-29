@@ -1,19 +1,20 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput,
-  ScrollView, Switch,
+  View, Text, StyleSheet, TouchableOpacity, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronDown, ChevronUp, Dumbbell } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import GlassBackground from '../../components/glass/GlassBackground';
-import GlassCard from '../../components/glass/GlassCard';
+import { AxCard, AxChip, AxSwitch, AxTextField } from '../../components/ax';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
+import { readableInk } from './homeLevelColor';
 import { prKey, readPr } from '../profile/prStorage';
 import { fetchMyPersonalRecords } from '../../services/myProfile';
 import { GYM_PR_MOVEMENTS, GYM_ZONES, gymRepsAt } from './gymZones';
@@ -64,7 +65,8 @@ export default function OneRMCalculatorScreen() {
   const navigation = useNavigation();
   const { theme } = useTheme();
   const { user } = useAuth();
-  const S = createStyles(theme);
+  const c = theme.ax;
+  const S = createStyles(c);
   const [input, setInput] = useState('');
   const [isLbs, setIsLbs] = useState(false);
   const [selectedMovement, setSelectedMovement] = useState<string | null>(null);
@@ -152,15 +154,13 @@ export default function OneRMCalculatorScreen() {
         {/* B8 : Barres ou Gymnastique */}
         <View style={S.sectionRow}>
           {([['barbell', 'Barres'], ['gym', 'Gymnastique']] as const).map(([key, label]) => (
-            <TouchableOpacity
+            <AxChip
               key={key}
-              style={[S.sectionChip, section === key && S.sectionChipActive]}
+              label={label}
+              selected={section === key}
               onPress={() => { setSection(key); setShowPRList(false); }}
-              activeOpacity={0.8}
               testID={`onerm-section-${key}`}
-            >
-              <Text style={[S.sectionChipText, section === key && { color: theme.success }]}>{label}</Text>
-            </TouchableOpacity>
+            />
           ))}
         </View>
 
@@ -168,76 +168,58 @@ export default function OneRMCalculatorScreen() {
           <>
             {savedGymPRs.length > 0 && (
               <View style={S.prSection}>
-                <GlassCard radius={14} variant="emerald">
-                  <TouchableOpacity style={S.prToggle} onPress={() => setShowPRList(!showPRList)} activeOpacity={0.7}>
-                    <Dumbbell color={theme.accent} size={16} />
-                    <Text style={S.prToggleText}>{gymMovement ?? 'Choisir un mouvement (mes PR)'}</Text>
-                    {showPRList ? <ChevronUp color={theme.textMuted} size={16} /> : <ChevronDown color={theme.textMuted} size={16} />}
-                  </TouchableOpacity>
-                </GlassCard>
+                <AxCard style={S.prToggleCard} onPress={() => setShowPRList(!showPRList)} testID="onerm-pr-toggle">
+                  <View style={S.prToggle}>
+                    <Dumbbell color={c.accentText} size={16} />
+                    <Text style={S.prToggleText} numberOfLines={1}>{gymMovement ?? 'Choisir un mouvement (mes PR)'}</Text>
+                    {showPRList ? <ChevronUp color={c.textMuted} size={16} /> : <ChevronDown color={c.textMuted} size={16} />}
+                  </View>
+                </AxCard>
                 {showPRList && (
-                  <GlassCard radius={14} style={{ marginTop: 6 }}>
-                    <View>
-                      {savedGymPRs.map(pr => (
-                        <TouchableOpacity
-                          key={pr.key}
-                          style={[S.prItem, gymMovement === pr.name && S.prItemActive]}
-                          onPress={() => { setGymMovement(pr.name); setGymInput(String(Math.round(pr.num))); setShowPRList(false); }}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={[S.prItemName, gymMovement === pr.name && { color: theme.accent }]}>{pr.name}</Text>
-                          <Text style={S.prItemValue}>{Math.round(pr.num)} reps</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </GlassCard>
+                  <AxCard style={S.prListCard} testID="onerm-pr-list">
+                    {savedGymPRs.map((pr, i) => (
+                      <TouchableOpacity
+                        key={pr.key}
+                        style={[S.prItem, i > 0 && S.prItemSep]}
+                        onPress={() => { setGymMovement(pr.name); setGymInput(String(Math.round(pr.num))); setShowPRList(false); }}
+                        activeOpacity={0.7}
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: gymMovement === pr.name }}
+                        testID={`onerm-pr-${pr.key}`}
+                      >
+                        <Text style={[S.prItemName, gymMovement === pr.name && { color: c.accentText }]} numberOfLines={1}>{pr.name}</Text>
+                        <Text style={S.prItemValue}>{Math.round(pr.num)} reps</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </AxCard>
                 )}
               </View>
             )}
 
-            <GlassCard radius={16} style={{ marginTop: 20, marginBottom: 20 }}>
-              <View style={S.inputCardInner}>
-                <Text style={S.inputLabel}>{gymMovement ? `RECORD — ${gymMovement.toUpperCase()}` : 'TON RECORD (REPS)'}</Text>
-                <View style={S.inputRow}>
-                  <TextInput
-                    style={S.input}
+            <AxCard style={S.inputCard} testID="onerm-input-card">
+              <Text style={S.inputLabel} numberOfLines={1}>{gymMovement ? `RECORD — ${gymMovement.toUpperCase()}` : 'TON RECORD (REPS)'}</Text>
+              <View style={S.inputRow}>
+                <View style={S.inputField}>
+                  <AxTextField
                     value={gymInput}
                     onChangeText={(v) => { setGymInput(v); setGymMovement(null); }}
                     keyboardType="number-pad"
                     placeholder="ex: 20"
-                    placeholderTextColor={theme.textMuted}
                     maxLength={4}
                     testID="onerm-gym-input"
                   />
-                  <Text style={S.inputUnit}>reps</Text>
                 </View>
+                <Text style={S.inputUnit}>reps</Text>
               </View>
-            </GlassCard>
+            </AxCard>
 
-            <GlassCard radius={10} style={{ marginBottom: 4 }}>
-              <View style={S.tableHeader}>
-                <Text style={[S.thTxt, { flex: 0.7 }]}>%</Text>
-                <Text style={[S.thTxt, { flex: 1 }]}>Reps</Text>
-                <Text style={[S.thTxt, { flex: 1.5 }]}>Zone</Text>
-                <Text style={[S.thTxt, { flex: 1.3 }]}>Usage</Text>
-              </View>
-            </GlassCard>
-            {GYM_ZONES.map((z) => {
-              const reps = gymValid ? gymRepsAt(gymRecord, z.pct) : null;
-              const bgGlass = z.bg + '40';
-              return (
-                <View key={z.pct} style={[S.row, { backgroundColor: bgGlass, borderColor: z.color + '40' }]}>
-                  <View style={[S.pctBadge, { borderColor: z.color }]}>
-                    <Text style={[S.pctTxt, { color: z.color }]}>{z.pct}%</Text>
-                  </View>
-                  <Text style={[S.loadTxt, { flex: 1, color: reps != null ? theme.text : theme.textMuted }]}>
-                    {reps != null ? `${reps} reps` : '—'}
-                  </Text>
-                  <Text style={[S.zoneTxt, { flex: 1.5, color: z.color }]}>{z.zone}</Text>
-                  <Text style={[S.repsTxt, { flex: 1.3 }]}>{z.usage}</Text>
-                </View>
-              );
-            })}
+            <ZoneTable
+              headers={['%', 'Reps', 'Zone', 'Usage']}
+              rows={GYM_ZONES.map((z) => {
+                const reps = gymValid ? gymRepsAt(gymRecord, z.pct) : null;
+                return { pct: z.pct, value: reps != null ? `${reps} reps` : null, zone: z.zone, detail: z.usage, color: z.color };
+              })}
+            />
             <View style={S.footer}>
               <Text style={S.footerTxt}>
                 Reps arrondies à l'entier. 60 % du record : le plafond que le générateur s'impose sur un WOD.
@@ -250,104 +232,74 @@ export default function OneRMCalculatorScreen() {
         {/* PR Quick Select */}
         {savedPRs.length > 0 && (
           <View style={S.prSection}>
-            <GlassCard radius={14} variant="emerald">
-              <TouchableOpacity
-                style={S.prToggle}
-                onPress={() => setShowPRList(!showPRList)}
-                activeOpacity={0.7}
-              >
-                <Dumbbell color={theme.accent} size={16} />
-                <Text style={S.prToggleText}>
+            <AxCard style={S.prToggleCard} onPress={() => setShowPRList(!showPRList)} testID="onerm-pr-toggle">
+              <View style={S.prToggle}>
+                <Dumbbell color={c.accentText} size={16} />
+                <Text style={S.prToggleText} numberOfLines={1}>
                   {selectedMovement ?? 'Choisir un mouvement (mes PR)'}
                 </Text>
                 {showPRList
-                  ? <ChevronUp color={theme.textMuted} size={16} />
-                  : <ChevronDown color={theme.textMuted} size={16} />}
-              </TouchableOpacity>
-            </GlassCard>
+                  ? <ChevronUp color={c.textMuted} size={16} />
+                  : <ChevronDown color={c.textMuted} size={16} />}
+              </View>
+            </AxCard>
 
             {showPRList && (
-              <GlassCard radius={14} style={{ marginTop: 6 }}>
-                <View>
-                  {savedPRs.map(pr => (
-                    <TouchableOpacity
-                      key={pr.key}
-                      style={[S.prItem, selectedMovement === pr.name && S.prItemActive]}
-                      onPress={() => selectPR(pr)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[S.prItemName, selectedMovement === pr.name && { color: theme.accent }]}>
-                        {pr.name}
-                      </Text>
-                      <Text style={S.prItemValue}>{pr.value} kg</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </GlassCard>
+              <AxCard style={S.prListCard} testID="onerm-pr-list">
+                {savedPRs.map((pr, i) => (
+                  <TouchableOpacity
+                    key={pr.key}
+                    style={[S.prItem, i > 0 && S.prItemSep]}
+                    onPress={() => selectPR(pr)}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: selectedMovement === pr.name }}
+                    testID={`onerm-pr-${pr.key}`}
+                  >
+                    <Text style={[S.prItemName, selectedMovement === pr.name && { color: c.accentText }]} numberOfLines={1}>
+                      {pr.name}
+                    </Text>
+                    <Text style={S.prItemValue}>{pr.value} kg</Text>
+                  </TouchableOpacity>
+                ))}
+              </AxCard>
             )}
           </View>
         )}
 
         {/* Input */}
-        <GlassCard radius={16} style={{ marginTop: 20, marginBottom: 20 }}>
-          <View style={S.inputCardInner}>
-            <Text style={S.inputLabel}>
-              {selectedMovement ? `1RM — ${selectedMovement}` : 'TON 1RM'}
-            </Text>
-            <View style={S.inputRow}>
-              <TextInput
-                style={S.input}
+        <AxCard style={S.inputCard} testID="onerm-input-card">
+          <Text style={S.inputLabel} numberOfLines={1}>
+            {selectedMovement ? `1RM — ${selectedMovement}` : 'TON 1RM'}
+          </Text>
+          <View style={S.inputRow}>
+            <View style={S.inputField}>
+              <AxTextField
                 value={input}
                 onChangeText={(v) => { setInput(v); setSelectedMovement(null); }}
                 keyboardType="decimal-pad"
                 placeholder="ex: 100"
-                placeholderTextColor={theme.textMuted}
                 maxLength={6}
+                testID="onerm-barbell-input"
               />
-              <Text style={S.inputUnit}>{unit}</Text>
             </View>
-
-            <View style={S.toggleRow}>
-              <Text style={[S.toggleLabel, !isLbs && { color: theme.success, fontWeight: '800' }]}>KG</Text>
-              <Switch
-                value={isLbs}
-                onValueChange={setIsLbs}
-                trackColor={{ false: theme.success, true: '#FF3B30' }}
-                thumbColor="#fff"
-              />
-              <Text style={[S.toggleLabel, isLbs && { color: '#FF3B30', fontWeight: '800' }]}>LBS</Text>
-            </View>
+            <Text style={S.inputUnit}>{unit}</Text>
           </View>
-        </GlassCard>
 
-        {/* Table header */}
-        <GlassCard radius={10} style={{ marginBottom: 4 }}>
-          <View style={S.tableHeader}>
-            <Text style={[S.thTxt, { flex: 0.7 }]}>%</Text>
-            <Text style={[S.thTxt, { flex: 1 }]}>Charge</Text>
-            <Text style={[S.thTxt, { flex: 1.5 }]}>Zone</Text>
-            <Text style={[S.thTxt, { flex: 1.3 }]}>Reps</Text>
+          <View style={S.toggleRow}>
+            <Text style={[S.toggleLabel, { color: isLbs ? c.textMuted : c.accentText }]}>KG</Text>
+            <AxSwitch value={isLbs} onValueChange={setIsLbs} accessibilityLabel="Afficher en livres" testID="onerm-unit-switch" />
+            <Text style={[S.toggleLabel, { color: isLbs ? c.accentText : c.textMuted }]}>LBS</Text>
           </View>
-        </GlassCard>
+        </AxCard>
 
-        {/* Table rows */}
-        {ZONES.map((z) => {
-          const load = valid ? round(raw * z.pct / 100, step) : null;
-          // Convertir les couleurs hex en rgba pour glassmorphism
-          const bgGlass = z.bg + '40'; // 25% opacité
-          return (
-            <View key={z.pct} style={[S.row, { backgroundColor: bgGlass, borderColor: z.color + '40' }]}>
-              <View style={[S.pctBadge, { borderColor: z.color }]}>
-                <Text style={[S.pctTxt, { color: z.color }]}>{z.pct}%</Text>
-              </View>
-              <Text style={[S.loadTxt, { flex: 1, color: load ? theme.text : theme.textMuted }]}>
-                {load != null ? `${load} ${unit}` : '—'}
-              </Text>
-              <Text style={[S.zoneTxt, { flex: 1.5, color: z.color }]}>{z.zone}</Text>
-              <Text style={[S.repsTxt, { flex: 1.3 }]}>{z.reps}</Text>
-            </View>
-          );
-        })}
+        <ZoneTable
+          headers={['%', 'Charge', 'Zone', 'Reps']}
+          rows={ZONES.map((z) => {
+            const load = valid ? round(raw * z.pct / 100, step) : null;
+            return { pct: z.pct, value: load != null ? `${load} ${unit}` : null, zone: z.zone, detail: z.reps, color: z.color };
+          })}
+        />
 
         <View style={S.footer}>
           <Text style={S.footerTxt}>
@@ -361,91 +313,81 @@ export default function OneRMCalculatorScreen() {
   );
 }
 
-function createStyles(theme: AppTheme) { return StyleSheet.create({
+type ZoneRow = { pct: number; value: string | null; zone: string; detail: string; color: string };
+
+/** Tableau des zones : une AxCard, lignes séparées d'un filet, couleur de zone lisible (AA) dans le thème. */
+function ZoneTable({ headers, rows }: { headers: [string, string, string, string]; rows: ZoneRow[] }) {
+  const { theme } = useTheme();
+  const c = theme.ax;
+  const S = createStyles(c);
+  return (
+    <AxCard style={S.tableCard} testID="onerm-zones">
+      <View style={S.tableHeader}>
+        <Text style={[S.thTxt, S.colPct]}>{headers[0]}</Text>
+        <Text style={[S.thTxt, S.colValue]}>{headers[1]}</Text>
+        <Text style={[S.thTxt, S.colZone]}>{headers[2]}</Text>
+        <Text style={[S.thTxt, S.colDetail]}>{headers[3]}</Text>
+      </View>
+      {rows.map((z) => {
+        const ink = readableInk(z.color, c);
+        return (
+          <View key={z.pct} style={S.row} testID={`onerm-zone-${z.pct}`}>
+            <View style={[S.pctBadge, S.colPct, { borderColor: ink }]}>
+              <Text style={[S.pctTxt, { color: ink }]} testID={`onerm-zone-pct-${z.pct}`}>{z.pct}%</Text>
+            </View>
+            <Text style={[S.loadTxt, S.colValue, { color: z.value != null ? c.text : c.textMuted }]} numberOfLines={1} adjustsFontSizeToFit testID={`onerm-zone-value-${z.pct}`}>
+              {z.value ?? '—'}
+            </Text>
+            <Text style={[S.zoneTxt, S.colZone, { color: ink }]} testID={`onerm-zone-name-${z.pct}`}>{z.zone}</Text>
+            <Text style={[S.repsTxt, S.colDetail]}>{z.detail}</Text>
+          </View>
+        );
+      })}
+    </AxCard>
+  );
+}
+
+function createStyles(c: AxColors) { return StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: theme.border,
-  },
-  backBtn: { width: 38, height: 38, justifyContent: 'center', alignItems: 'center' },
-  headerCenter: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle: { fontSize: 16, fontWeight: '900', color: theme.text, letterSpacing: 0.2 },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 16, paddingBottom: 140 },
-  inputCard: {
-    backgroundColor: theme.card, borderRadius: 16, padding: 20,
-    marginTop: 20, marginBottom: 20,
-    borderWidth: 1, borderColor: theme.border,
-  },
-  inputCardInner: { padding: 20 },
-  inputLabel: {
-    fontSize: 10, fontWeight: '800', color: theme.success,
-    letterSpacing: 1.5, marginBottom: 12,
-  },
-  inputRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16,
-  },
-  input: {
-    flex: 1, backgroundColor: theme.surface, borderRadius: 12,
-    paddingHorizontal: 16, paddingVertical: 14,
-    fontSize: 28, fontWeight: '900', color: theme.text,
-    borderWidth: 1, borderColor: theme.border,
-  },
-  inputUnit: { fontSize: 20, fontWeight: '800', color: theme.textMuted },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12, justifyContent: 'center' },
-  toggleLabel: { fontSize: 14, fontWeight: '700', color: theme.textMuted, letterSpacing: 1 },
-  tableHeader: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 8, paddingVertical: 8,
-    borderRadius: 10,
-  },
-  thTxt: { fontSize: 9, fontWeight: '800', color: theme.textMuted, letterSpacing: 1, textTransform: 'uppercase' },
+  scrollContent: { paddingHorizontal: axSpacing.xl },
+  inputCard: { marginTop: axSpacing.xl, marginBottom: axSpacing.xl },
+  inputLabel: { ...axTypography.overline, color: c.textMuted },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+  inputField: { flex: 1, minWidth: 0 },
+  inputUnit: { ...axTypography.numberM, color: c.textMuted },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, justifyContent: 'center' },
+  toggleLabel: { ...axTypography.label, letterSpacing: 1 },
+  tableCard: { padding: 0, gap: 0, overflow: 'hidden' },
+  tableHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: axSpacing.md, paddingVertical: 10 },
+  thTxt: { ...axTypography.overline, color: c.textMuted },
+  colPct: { flex: 0.8 },
+  colValue: { flex: 1.1 },
+  colZone: { flex: 1.4 },
+  colDetail: { flex: 1.3 },
   row: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 12,
-    borderRadius: 12, marginBottom: 6,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: axSpacing.md, paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: c.border,
   },
-  pctBadge: {
-    flex: 0.7, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderRadius: 8, paddingVertical: 4, marginRight: 6,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  pctTxt: { fontSize: 12, fontWeight: '900' },
-  loadTxt: { fontSize: 13, fontWeight: '800' },
-  zoneTxt: { fontSize: 12, fontWeight: '800', letterSpacing: 0.3 },
-  repsTxt: { fontSize: 11, fontWeight: '600', color: theme.textSecondary },
-  footer: { marginTop: 20, paddingHorizontal: 4 },
-  footerTxt: { fontSize: 11, color: theme.textMuted, lineHeight: 18, textAlign: 'center' },
-  sectionRow: { flexDirection: 'row', gap: 8, marginTop: 16 },
-  sectionChip: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card },
-  sectionChipActive: { borderColor: theme.success, backgroundColor: `${theme.success}14` },
-  sectionChipText: { fontSize: 13, fontWeight: '800', color: theme.textSecondary, letterSpacing: 0.3 },
-  prSection: { marginTop: 20, marginBottom: 0 },
-  prToggle: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    padding: 14,
-  },
-  prToggleText: {
-    flex: 1, fontSize: 14, fontWeight: '700', color: theme.text,
-  },
-  prList: { overflow: 'hidden' },
+  pctBadge: { alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: axRadius.badge, paddingVertical: 3 },
+  pctTxt: { ...axTypography.labelSmall },
+  loadTxt: { ...axTypography.numberM, fontSize: 16, lineHeight: 20 },
+  zoneTxt: { ...axTypography.labelSmall },
+  repsTxt: { ...axTypography.caption, color: c.textMuted },
+  footer: { marginTop: axSpacing.xl, paddingHorizontal: axSpacing.xs },
+  footerTxt: { ...axTypography.caption, color: c.textMuted, lineHeight: 18, textAlign: 'center' },
+  sectionRow: { flexDirection: 'row', gap: axSpacing.sm, marginTop: axSpacing.lg },
+  prSection: { marginTop: axSpacing.xl },
+  prToggleCard: { paddingVertical: 14 },
+  prToggle: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  prToggleText: { ...axTypography.label, flex: 1, color: c.text },
+  prListCard: { marginTop: 6, padding: 0, gap: 0, overflow: 'hidden' },
   prItem: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingVertical: 13,
-    borderBottomWidth: 1, borderBottomColor: theme.border,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.md,
+    paddingHorizontal: axSpacing.lg, paddingVertical: 13, minHeight: 44,
   },
-  prItemActive: {
-    backgroundColor: `${theme.accent}12`,
-  },
-  prItemName: {
-    fontSize: 14, fontWeight: '700', color: theme.text,
-  },
-  prItemValue: {
-    fontSize: 14, fontWeight: '900', color: theme.success,
-  },
+  prItemSep: { borderTopWidth: 1, borderTopColor: c.border },
+  prItemName: { ...axTypography.label, color: c.text, flex: 1 },
+  prItemValue: { ...axTypography.numberM, fontSize: 16, lineHeight: 20, color: c.accentText },
 }); }
