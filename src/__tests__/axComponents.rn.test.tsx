@@ -415,6 +415,24 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     expect(programs).toEqual(['ProgramDetailScreen.tsx']);
   });
 
+  it('R8b : dans src/screens/tournament et src/screens/competition, seuls les écrans R8b adoptent la bibliothèque complète', () => {
+    const BARREL = /from\s*['"]\.\.\/\.\.\/components\/ax['"]/;
+    const lot = [...walk(path.join(SRC, 'screens', 'tournament')), ...walk(path.join(SRC, 'screens', 'competition'))]
+      .filter((f) => BARREL.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.relative(path.join(SRC, 'screens'), f))
+      .sort();
+    expect(lot).toEqual([
+      path.join('competition', 'CompetitionRankingCard.tsx'),
+      path.join('competition', 'InterCompetitionDetailScreen.tsx'),
+      path.join('competition', 'InterCompetitionListScreen.tsx'),
+      path.join('competition', 'InterScoreSubmitScreen.tsx'),
+      path.join('competition', 'InterTeamScreen.tsx'),
+      path.join('competition', 'PhysicalCompetitionScreen.tsx'),
+      path.join('tournament', 'DailyTournamentDetailScreen.tsx'),
+      path.join('tournament', 'DailyTournamentsScreen.tsx'),
+    ].sort());
+  });
+
   it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {
     const files = [...walk(path.join(SRC, 'screens')), ...walk(path.join(SRC, 'components'))]
       .filter((f) => f !== CATALOG && !ADOPTERS.includes(f) && !f.startsWith(AX_DIR + path.sep));

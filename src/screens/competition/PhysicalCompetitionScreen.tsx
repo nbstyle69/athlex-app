@@ -1,11 +1,12 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
-import { AxIconButton } from '../../components/ax/AxIconButton';
 import React, { useState, useCallback, useRef } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, FlatList,
-  ActivityIndicator, RefreshControl, Image, Linking, TextInput, Share,
+  View, Text, StyleSheet, FlatList,
+  ActivityIndicator, RefreshControl, Image, Linking, Share,
 } from 'react-native';
-import { ChevronRight, MapPin, Calendar, Video, Clock, Zap, Play, ExternalLink, Info, DollarSign, Search, Share2, Filter, Users } from 'lucide-react-native';
+import { ChevronRight, MapPin, Calendar, Video, Clock, Zap, Play, ExternalLink, Info, DollarSign, Search, Share2, Dumbbell, ClipboardList } from 'lucide-react-native';
+import { AxButton, AxCard, AxChip, AxIconButton, AxStatusDot, AxTag, AxTextField } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -59,16 +60,10 @@ const TIMER_TYPES: { key: TimerType; label: string }[] = [
   { key: 'tabata',   label: 'Tabata' },
 ];
 
-const STATUS_COLORS: Record<string, string> = {
-  open:   '#10B981',
-  active: '#F59E0B',
-  closed: '#6B7280',
-};
-
-const MODE_COLORS: Record<string, string> = {
-  qualification: '#8B5CF6',
-  info:          '#3B82F6',
-};
+/** Libellé traduit sans son pictogramme de tête. */
+function stripGlyph(label: string): string {
+  return label.replace(/^[^\p{L}\p{N}]+/u, '');
+}
 
 export default function PhysicalCompetitionScreen() {
   const tabSpace = useTabBarScrollSpace();
@@ -79,6 +74,7 @@ export default function PhysicalCompetitionScreen() {
   const modeFilter = route.params.mode;
   const selectedId = route.params?.selectedId;
   const S = createStyles(theme);
+  const ax = theme.ax;
 
   const [competitions, setCompetitions] = useState<PhysComp[]>([]);
   const [loading,      setLoading]      = useState(true);
@@ -157,7 +153,6 @@ export default function PhysicalCompetitionScreen() {
   // ── Detail view (selected competition)
   if (selected) {
     const isQualif = selected.mode === 'qualification';
-    const modeColor = MODE_COLORS[selected.mode] ?? theme.accent;
 
     return (
       <View style={S.container}>
@@ -175,52 +170,47 @@ export default function PhysicalCompetitionScreen() {
           )}
         >
             <View style={S.metaRow}>
-              {selected.location ? <><MapPin color={theme.textMuted} size={12} /><Text style={S.metaTxt}>{selected.location}</Text></> : null}
+              {selected.location ? <><MapPin color={ax.textMuted} size={12} /><Text style={S.metaTxt}>{selected.location}</Text></> : null}
               {selected.mode === 'qualification' && selected.start_date ? (
-                <><Calendar color={theme.textMuted} size={12} /><Text style={S.metaTxt}>{selected.start_date}{selected.end_date ? ` → ${selected.end_date}` : ''}</Text></>
+                <><Calendar color={ax.textMuted} size={12} /><Text style={S.metaTxt}>{selected.start_date}{selected.end_date ? ` → ${selected.end_date}` : ''}</Text></>
               ) : selected.date ? (
-                <><Calendar color={theme.textMuted} size={12} /><Text style={S.metaTxt}>{selected.date}</Text></>
+                <><Calendar color={ax.textMuted} size={12} /><Text style={S.metaTxt}>{selected.date}</Text></>
               ) : null}
             </View>
         </AxScreenHeader>
 
         {/* Mode + Format badges */}
         <View style={S.badgeRow}>
-          <View style={[S.modeBadge, { backgroundColor: `${modeColor}20` }]}>
-            {isQualif ? <Zap color={modeColor} size={11} /> : <Info color={modeColor} size={11} />}
-            <Text style={[S.modeBadgeTxt, { color: modeColor }]}>
-              {isQualif ? t('phys.qualifBadge') : t('phys.noQualifBadge')}
-            </Text>
+          <View style={S.iconTag}>
+            {isQualif ? <Zap color={ax.accentText} size={12} /> : <Info color={ax.accentText} size={12} />}
+            <AxTag label={isQualif ? t('phys.qualifBadge') : t('phys.noQualifBadge')} testID="phys-mode-tag" />
           </View>
-          <View style={[S.modeBadge, { backgroundColor: `${theme.textMuted}15` }]}>
-            <Text style={[S.modeBadgeTxt, { color: theme.textMuted }]}>
-              {selected.format === 'team' ? t('phys.team') : t('phys.individual')}
-            </Text>
-          </View>
+          <AxTag label={selected.format === 'team' ? t('phys.team') : t('phys.individual')} tone="muted" testID="phys-format-tag" />
           {selected.price ? (
-            <View style={[S.modeBadge, { backgroundColor: '#F59E0B20' }]}>
-              <DollarSign color="#F59E0B" size={11} />
-              <Text style={[S.modeBadgeTxt, { color: '#F59E0B' }]}>{selected.price}</Text>
+            <View style={S.iconTag}>
+              <DollarSign color={ax.textMuted} size={12} />
+              <AxTag label={selected.price} tone="muted" />
             </View>
           ) : null}
         </View>
 
         {selected.description ? (
-          <View style={[S.descBox, { borderLeftColor: modeColor }]}>
+          <AxCard style={S.descBox}>
             <Text style={S.descText}>{selected.description}</Text>
-          </View>
+          </AxCard>
         ) : null}
 
         {/* Registration URL button */}
         {selected.registration_url ? (
-          <TouchableOpacity
-            style={[S.registerBtn, { backgroundColor: modeColor }]}
-            onPress={() => openURL(selected.registration_url!)}
-            activeOpacity={0.85}
-          >
-            <ExternalLink color="#fff" size={16} />
-            <Text style={S.registerBtnTxt}>{t('phys.registerEvent')}</Text>
-          </TouchableOpacity>
+          <View style={S.registerBtn}>
+            <AxButton
+              label={t('phys.registerEvent')}
+              icon={ExternalLink}
+              fullWidth
+              onPress={() => openURL(selected.registration_url!)}
+              testID="phys-register"
+            />
+          </View>
         ) : null}
 
         <FlatList
@@ -230,36 +220,35 @@ export default function PhysicalCompetitionScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={S.emptyBox}>
-              <Text style={S.emptyEmoji}>{isQualif ? '🏋️' : '📋'}</Text>
+              {isQualif ? <Dumbbell color={ax.textMuted} size={40} /> : <ClipboardList color={ax.textMuted} size={40} />}
               <Text style={S.emptyText}>
                 {isQualif ? t('phys.wodsSoon') : t('phys.noWod')}
               </Text>
             </View>
           }
           renderItem={({ item: wod, index }) => (
-            <View style={S.wodCard}>
+            <AxCard style={S.wodCard} testID={`phys-wod-${wod.id}`}>
               <View style={S.wodTop}>
-                <View style={[S.wodIndexCircle, { backgroundColor: `${modeColor}20` }]}>
-                  <Text style={[S.wodIndexText, { color: modeColor }]}>{index + 1}</Text>
+                <View style={S.wodIndexCircle}>
+                  <Text style={S.wodIndexText}>{index + 1}</Text>
                 </View>
-                <View style={{ flex: 1 }}>
+                <View style={S.flexText}>
                   <Text style={S.wodName}>{wod.name}</Text>
                   {wod.description ? <Text style={S.wodDescText}>{wod.description}</Text> : null}
                 </View>
               </View>
               <View style={S.wodMeta}>
-                <View style={[S.timerBadge, { backgroundColor: `${modeColor}20` }]}>
-                  <Clock color={modeColor} size={11} />
-                  <Text style={[S.timerBadgeTxt, { color: modeColor }]}>
-                    {TIMER_TYPES.find(tt => tt.key === wod.timer_type)?.label ?? wod.timer_type}
-                    {' · '}
-                    {formatDurationLabel(wod.total_seconds || 0)}
-                  </Text>
+                <View style={S.iconTag}>
+                  <Clock color={ax.textMuted} size={12} />
+                  <AxTag
+                    label={`${TIMER_TYPES.find(tt => tt.key === wod.timer_type)?.label ?? wod.timer_type} · ${formatDurationLabel(wod.total_seconds || 0)}`}
+                    testID={`phys-wod-timer-${wod.id}`}
+                  />
                 </View>
                 {wod.with_camera && (
-                  <View style={[S.timerBadge, { backgroundColor: '#EF444420' }]}>
-                    <Video color="#EF4444" size={11} />
-                    <Text style={[S.timerBadgeTxt, { color: '#EF4444' }]}>{t('phys.camera')}</Text>
+                  <View style={S.iconTag}>
+                    <Video color={ax.danger} size={12} />
+                    <AxTag label={t('phys.camera')} tone="danger" />
                   </View>
                 )}
               </View>
@@ -269,20 +258,24 @@ export default function PhysicalCompetitionScreen() {
                 const after = selected.end_date && now > selected.end_date;
                 const outsidePeriod = before || after;
                 return outsidePeriod ? (
-                  <View style={[S.launchBtn, { backgroundColor: theme.textMuted + '30' }]}>
-                    <Clock color={theme.textMuted} size={15} />
-                    <Text style={[S.launchBtnTxt, { color: theme.textMuted }]}>
+                  <View style={S.launchBtn}>
+                    <Clock color={ax.textMuted} size={15} />
+                    <Text style={S.launchBtnTxt}>
                       {before ? t('phys.availableOn', { date: selected.start_date }) : t('phys.periodEnded')}
                     </Text>
                   </View>
                 ) : (
-                  <TouchableOpacity style={[S.launchBtn, { backgroundColor: modeColor }]} onPress={() => launchWOD(wod, selected)} activeOpacity={0.85}>
-                    <Play color="#fff" size={15} />
-                    <Text style={S.launchBtnTxt}>{t('phys.launchWod')}</Text>
-                  </TouchableOpacity>
+                  <AxButton
+                    label={t('phys.launchWod')}
+                    icon={Play}
+                    variant="outline"
+                    fullWidth
+                    onPress={() => launchWOD(wod, selected)}
+                    testID={`phys-launch-${wod.id}`}
+                  />
                 );
               })()}
-            </View>
+            </AxCard>
           )}
         />
       </View>
@@ -315,14 +308,14 @@ export default function PhysicalCompetitionScreen() {
       </AxScreenHeader>
 
       <View style={S.searchBar}>
-        <Search color={theme.textMuted} size={16} />
-        <TextInput
-          style={S.searchInput}
+        <AxTextField
+          icon={Search}
           placeholder={t('phys.searchPlaceholder')}
-          placeholderTextColor={theme.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
-          autoCorrect={false}
+          accessibilityLabel={t('phys.searchPlaceholder')}
+          compact
+          testID="phys-search"
         />
       </View>
 
@@ -332,27 +325,24 @@ export default function PhysicalCompetitionScreen() {
           { key: 'individual', label: t('phys.individual') },
           { key: 'team',       label: t('phys.team') },
         ].map(f => (
-          <TouchableOpacity
+          <AxChip
             key={f.key}
+            label={f.label}
+            selected={filterFormat === f.key}
             onPress={() => setFilterFormat(f.key as any)}
-            style={[S.filterChip, filterFormat === f.key && S.filterChipActive]}
-            activeOpacity={0.7}
-          >
-            <Text style={[S.filterChipTxt, filterFormat === f.key && S.filterChipTxtActive]}>{f.label}</Text>
-          </TouchableOpacity>
+            testID={`phys-filter-${f.key}`}
+          />
         ))}
-        <TouchableOpacity
+        <AxChip
+          label={t('phys.filterPrice')}
+          selected={filterPrice}
           onPress={() => setFilterPrice(v => !v)}
-          style={[S.filterChip, filterPrice && S.filterChipActive]}
-          activeOpacity={0.7}
-        >
-          <DollarSign size={12} color={filterPrice ? '#fff' : theme.textMuted} />
-          <Text style={[S.filterChipTxt, filterPrice && S.filterChipTxtActive]}>{t('phys.filterPrice')}</Text>
-        </TouchableOpacity>
+          testID="phys-filter-price"
+        />
       </View>
 
       {loading ? (
-        <View style={S.center}><ActivityIndicator size="large" color={theme.accent} /></View>
+        <View style={S.center}><ActivityIndicator size="large" color={ax.accent} /></View>
       ) : (
         <FlatList
           data={filteredComps}
@@ -362,7 +352,7 @@ export default function PhysicalCompetitionScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
           ListEmptyComponent={
             <View style={S.emptyBox}>
-              <Text style={S.emptyEmoji}>{isQualifList ? '�️' : '📋'}</Text>
+              {isQualifList ? <Dumbbell color={ax.textMuted} size={40} /> : <ClipboardList color={ax.textMuted} size={40} />}
               <Text style={S.emptyText}>
                 {isQualifList
                   ? t('phys.emptyQualif')
@@ -370,47 +360,50 @@ export default function PhysicalCompetitionScreen() {
               </Text>
             </View>
           }
-          renderItem={({ item: comp }) => {
-            const modeColor = MODE_COLORS[comp.mode] ?? theme.accent;
-            return (
-              <TouchableOpacity style={S.compCard} onPress={() => loadWods(comp)} activeOpacity={0.8}>
+          renderItem={({ item: comp }) => (
+              <AxCard
+                style={S.compCard}
+                onPress={() => loadWods(comp)}
+                accessibilityLabel={comp.name}
+                variant={comp.status === 'active' ? 'featured' : 'standard'}
+                testID={`phys-card-${comp.id}`}
+              >
                 <View style={S.compTop}>
                   {comp.logo_url ? (
                     <Image source={{ uri: comp.logo_url }} style={S.compLogo} />
                   ) : null}
-                  <View style={{ flex: 1 }}>
+                  <View style={S.flexText}>
                     <Text style={S.compName}>{comp.name}</Text>
                     <View style={[S.compBadges]}>
-                      <View style={[S.statusBadge, { backgroundColor: `${STATUS_COLORS[comp.status]}20` }]}>
-                        <Text style={[S.statusTxt, { color: STATUS_COLORS[comp.status] }]}>
-                          {comp.status === 'open' ? t('phys.statusOpen') : comp.status === 'active' ? t('phys.statusLive') : t('phys.statusClosed')}
-                        </Text>
-                      </View>
+                      <AxStatusDot
+                        label={stripGlyph(comp.status === 'open' ? t('phys.statusOpen') : comp.status === 'active' ? t('phys.statusLive') : t('phys.statusClosed'))}
+                        tone={comp.status === 'closed' ? 'muted' : comp.status === 'active' ? 'warning' : 'active'}
+                        testID={`phys-status-${comp.id}`}
+                      />
                     </View>
                   </View>
                 </View>
                 {comp.description ? <Text style={S.compDesc} numberOfLines={2}>{comp.description}</Text> : null}
                 <View style={S.compMeta}>
-                  {comp.location ? <View style={S.metaPill}><MapPin color={theme.textMuted} size={12} /><Text style={S.metaTxt}>{comp.location}</Text></View> : null}
-                  {comp.date ? <View style={S.metaPill}><Calendar color={theme.textMuted} size={12} /><Text style={S.metaTxt}>{comp.date}</Text></View> : null}
-                  {comp.price ? <View style={S.metaPill}><DollarSign color="#F59E0B" size={12} /><Text style={[S.metaTxt, { color: '#F59E0B' }]}>{comp.price}</Text></View> : null}
+                  {comp.location ? <View style={S.metaPill}><MapPin color={ax.textMuted} size={12} /><Text style={S.metaTxt}>{comp.location}</Text></View> : null}
+                  {comp.date ? <View style={S.metaPill}><Calendar color={ax.textMuted} size={12} /><Text style={S.metaTxt}>{comp.date}</Text></View> : null}
+                  {comp.price ? <View style={S.metaPill}><DollarSign color={ax.textMuted} size={12} /><Text style={S.metaTxt}>{comp.price}</Text></View> : null}
                 </View>
                 <View style={S.compFooter}>
                   <View style={S.metaPill}>
                     {comp.logo_url ? (
-                      <Image source={{ uri: comp.logo_url }} style={{ width: 20, height: 20, borderRadius: 5 }} />
+                      <Image source={{ uri: comp.logo_url }} style={S.footerLogo} />
                     ) : (
-                      <Zap color={modeColor} size={12} />
+                      <Zap color={ax.accentText} size={12} />
                     )}
-                    <Text style={[S.metaTxt, { color: modeColor }]}>
+                    <Text style={S.footerTxt}>
                       {isQualifList ? t('phys.seeWods') : t('phys.seeDetails')}
                     </Text>
                   </View>
-                  <ChevronRight color={theme.textMuted} size={16} />
+                  <ChevronRight color={ax.textMuted} size={16} />
                 </View>
-              </TouchableOpacity>
-            );
-          }}
+              </AxCard>
+          )}
         />
       )}
     </View>
@@ -418,84 +411,49 @@ export default function PhysicalCompetitionScreen() {
 }
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    center:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    header: {
-      paddingTop: 56, paddingHorizontal: 16, paddingBottom: 14,
-      backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-    },
-    backBtn:     { padding: 4 },
-    headerTitle: { fontSize: 20, fontWeight: '900', color: theme.text },
-    headerSub:   { fontSize: 11, color: theme.textMuted, marginTop: 1 },
-    headerLogo:  { width: 40, height: 40, borderRadius: 10 },
-    badgeRow:    { flexDirection: 'row', gap: 8, flexWrap: 'wrap', paddingHorizontal: 16, paddingTop: 12 },
-    modeBadge:   { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
-    modeBadgeTxt:{ fontSize: 11, fontWeight: '700' },
-    descBox: { backgroundColor: `${theme.accent}10`, marginHorizontal: 16, marginTop: 12, borderRadius: 10, padding: 12, borderLeftWidth: 3 },
-    descText: { fontSize: 13, color: theme.textSecondary, lineHeight: 18 },
-    registerBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      marginHorizontal: 16, marginTop: 12, borderRadius: 12, padding: 14,
-    },
-    registerBtnTxt: { color: '#fff', fontSize: 13, fontWeight: '900', letterSpacing: 0.5 },
-    list: { padding: 16, gap: 12, paddingBottom: 140 },
-    emptyBox:  { alignItems: 'center', paddingTop: 60, gap: 12 },
-    emptyEmoji:{ fontSize: 40 },
-    emptyText: { fontSize: 14, color: theme.textMuted, textAlign: 'center', paddingHorizontal: 32 },
-    compCard: {
-      backgroundColor: theme.card, borderRadius: 16, padding: 16,
-      borderWidth: 1, borderColor: theme.border, gap: 10,
-    },
-    compTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-    compLogo: { width: 44, height: 44, borderRadius: 10 },
-    compName:  { fontSize: 16, fontWeight: '900', color: theme.text, marginBottom: 4 },
-    compBadges:{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
-    compDesc:  { fontSize: 12, color: theme.textSecondary, lineHeight: 17 },
-    compMeta:  { flexDirection: 'row', gap: 10, flexWrap: 'wrap' },
-    compFooter:{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4, borderTopWidth: 1, borderTopColor: theme.border, paddingTop: 10 },
-    statusBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-    statusTxt:   { fontSize: 11, fontWeight: '700' },
-    metaPill:    { flexDirection: 'row', alignItems: 'center', gap: 5 },
-    metaRow:     { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 },
-    metaTxt:     { fontSize: 11, color: theme.textMuted },
-    wodCard: {
-      backgroundColor: theme.card, borderRadius: 16, padding: 16,
-      borderWidth: 1, borderColor: theme.border, gap: 10,
-    },
-    wodTop:         { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-    wodIndexCircle: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
-    wodIndexText:   { fontSize: 14, fontWeight: '900' },
-    wodName:        { fontSize: 15, fontWeight: '800', color: theme.text },
-    wodDescText:    { fontSize: 12, color: theme.textSecondary, marginTop: 3, lineHeight: 17 },
-    wodMeta: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-    timerBadge:    { flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-    timerBadgeTxt: { fontSize: 11, fontWeight: '700' },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    headerSub: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+    headerLogo: { width: 40, height: 40, borderRadius: axRadius.control },
+    badgeRow: { flexDirection: 'row', gap: axSpacing.sm, flexWrap: 'wrap', alignItems: 'center', paddingHorizontal: axSpacing.lg, paddingTop: axSpacing.md },
+    iconTag: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+    descBox: { marginHorizontal: axSpacing.lg, marginTop: axSpacing.md },
+    descText: { ...axTypography.bodySmall, color: c.textMuted },
+    registerBtn: { marginHorizontal: axSpacing.lg, marginTop: axSpacing.md },
+    list: { padding: axSpacing.lg, gap: axSpacing.md },
+    emptyBox: { alignItems: 'center', paddingTop: 60, gap: axSpacing.md },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center', paddingHorizontal: 32 },
+    flexText: { flex: 1, minWidth: 0 },
+    compCard: { gap: axSpacing.sm },
+    compTop: { flexDirection: 'row', alignItems: 'flex-start', gap: axSpacing.md },
+    compLogo: { width: 44, height: 44, borderRadius: axRadius.control },
+    compName: { ...axTypography.titleM, color: c.text, marginBottom: axSpacing.xs },
+    compBadges: { flexDirection: 'row', gap: 6, flexWrap: 'wrap' },
+    compDesc: { ...axTypography.bodySmall, color: c.textMuted },
+    compMeta: { flexDirection: 'row', gap: axSpacing.md, flexWrap: 'wrap' },
+    compFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.sm, borderTopWidth: 1, borderTopColor: c.border, paddingTop: axSpacing.sm },
+    metaPill: { flexDirection: 'row', alignItems: 'center', gap: 5, flexShrink: 1 },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, marginTop: 2, flexWrap: 'wrap' },
+    metaTxt: { ...axTypography.caption, color: c.textMuted, flexShrink: 1 },
+    footerLogo: { width: 20, height: 20, borderRadius: axRadius.badge },
+    footerTxt: { ...axTypography.label, color: c.accentText, flexShrink: 1 },
+    wodCard: { gap: axSpacing.sm },
+    wodTop: { flexDirection: 'row', alignItems: 'flex-start', gap: axSpacing.md },
+    wodIndexCircle: { width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: c.border, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+    wodIndexText: { ...axTypography.label, color: c.accentText },
+    wodName: { ...axTypography.label, color: c.text },
+    wodDescText: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 3 },
+    wodMeta: { flexDirection: 'row', gap: axSpacing.sm, flexWrap: 'wrap' },
     launchBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      borderRadius: 12, padding: 13,
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: axSpacing.sm,
+      borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border, padding: axSpacing.md,
     },
-    launchBtnTxt: { color: '#fff', fontSize: 13, fontWeight: '900', letterSpacing: 0.5 },
-    searchBar: {
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      marginHorizontal: 16, marginTop: 12, marginBottom: 4,
-      backgroundColor: theme.card, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10,
-      borderWidth: 1, borderColor: theme.border,
-    },
-    searchInput: { flex: 1, fontSize: 14, color: theme.text, padding: 0 },
+    launchBtnTxt: { ...axTypography.caption, color: c.textMuted, flexShrink: 1 },
+    searchBar: { marginHorizontal: axSpacing.lg, marginTop: axSpacing.md, marginBottom: axSpacing.xs },
     filterRow: {
-      flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginTop: 10, marginBottom: 4, flexWrap: 'wrap',
+      flexDirection: 'row', gap: axSpacing.sm, paddingHorizontal: axSpacing.lg, marginTop: axSpacing.sm, marginBottom: axSpacing.xs, flexWrap: 'wrap',
     },
-    filterChip: {
-      flexDirection: 'row', alignItems: 'center', gap: 4,
-      backgroundColor: theme.card, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7,
-      borderWidth: 1, borderColor: theme.border,
-    },
-    filterChipActive: {
-      backgroundColor: theme.accent, borderColor: theme.accent,
-    },
-    filterChipTxt: { fontSize: 12, fontWeight: '700', color: theme.textMuted },
-    filterChipTxtActive: { color: '#fff' },
   });
 }

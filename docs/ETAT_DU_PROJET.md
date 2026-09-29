@@ -205,6 +205,16 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R8b : mini-tournois, inter-box et compétition physique au nouveau design (app seule, aucune migration, apparence seule).**
+- `DailyTournamentsScreen`, `DailyTournamentDetailScreen`, `InterCompetitionListScreen`, `InterCompetitionDetailScreen`,
+  `InterScoreSubmitScreen`, `InterTeamScreen`, `PhysicalCompetitionScreen` : cartes `AxCard`, statuts `AxStatusDot`,
+  formats / niveaux `AxTag`, métadonnées en `caption`, formulaires `AxTextField` / `AxChip` / `AxSwitch` (CAP), actions
+  `AxButton` (une seule accent par écran et par fenêtre) ; podiums et états vides en icônes Lucide (plus d'emoji).
+  Requêtes, payloads, validations, navigation et ordre des blocs inchangés.
+- Tests : `r8b.rn.test.tsx` (37 instantanés avant / après pris sur master + emoji, accent, couleurs et typographies dans
+  les deux thèmes, navigation et callbacks, textes longs), isolement R1 élargi aux 7 écrans du lot ; `npx jest` 1976,
+  `npm run test:rn` 671, `tsc` vert ; 19 mutations tuées.
+
 **R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).**
 - `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps,
   micro activé / coupé ; enregistrés dans `bwod_timer_display_opts_v2` (`src/lib/timerVideoOpts.ts`). Défauts inchangés
