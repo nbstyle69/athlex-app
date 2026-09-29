@@ -16,7 +16,7 @@ import { axColors } from '../theme/axTokens';
 import { contrast } from '../theme/contrast';
 import { R3C_SCREENS } from './r3cScreens';
 import {
-  AxButton, AxCard, AxCheckbox, AxChip, AxDayItem, AxGlass, AxSwitch, AxTextField, withAlpha,
+  AxButton, AxCard, AxCheckbox, AxChip, AxDayItem, AxGlass, AxSwitch, AxTag, AxTextField, withAlpha,
   resolveGlassOpacity, type AxButtonVariant,
 } from '../components/ax';
 
@@ -231,6 +231,41 @@ describe('AxDayItem', () => {
   }
 });
 
+describe('AxDayItem : options R10 (jour courant, jour indisponible)', () => {
+  for (const theme of THEMES) {
+    it(`${theme.mode} : today en accentText, disabled atténué et inerte`, async () => {
+      const onPress = jest.fn();
+      let root = await mount(<AxDayItem dayLabel="LUN" dayNumber={21} today onPress={onPress} />, theme);
+      expect([textColor(root, 0), textColor(root, 1)]).toEqual([theme.ax.accentText, theme.ax.accentText]);
+      await act(async () => renderer!.unmount());
+      root = await mount(<AxDayItem dayLabel="LUN" dayNumber={21} today selected onPress={onPress} />, theme);
+      expect([textColor(root, 0), textColor(root, 1)]).toEqual([theme.ax.onAccent, theme.ax.onAccent]);
+      await act(async () => renderer!.unmount());
+      root = await mount(<AxDayItem dayLabel="LUN" dayNumber={21} disabled onPress={onPress} />, theme);
+      expect(flat(pressable(root))).toMatchObject({ opacity: 0.35 });
+      expect(pressable(root).props.accessibilityState).toEqual({ selected: false, disabled: true });
+      expect(pressable(root).props.onPress).toBeUndefined();
+      expect(onPress).not.toHaveBeenCalled();
+    });
+  }
+});
+
+describe('AxTag : option numberOfLines (R10)', () => {
+  it('sans option : ni coupe ni rétrécissement ; avec : coupe, rétrécit et borne la largeur', async () => {
+    let root = await mount(<AxTag label="WOD" />, THEMES[0]);
+    let text = root.findByType(Text);
+    expect(text.props.numberOfLines).toBeUndefined();
+    expect(StyleSheet.flatten(text.props.style).flexShrink).toBeUndefined();
+    expect(StyleSheet.flatten(root.findAllByType(View)[0].props.style).maxWidth).toBeUndefined();
+    await act(async () => renderer!.unmount());
+    root = await mount(<AxTag label="WOD" numberOfLines={2} />, THEMES[0]);
+    text = root.findByType(Text);
+    expect(text.props.numberOfLines).toBe(2);
+    expect(StyleSheet.flatten(text.props.style).flexShrink).toBe(1);
+    expect(StyleSheet.flatten(root.findAllByType(View)[0].props.style).maxWidth).toBe('100%');
+  });
+});
+
 describe('AxCard', () => {
   for (const theme of THEMES) {
     it(`${theme.mode} : standard, vedette (filet accent 3 px en bas) et verre`, async () => {
@@ -369,6 +404,9 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
     // R6a : écrans du mode caméra (lecture de la vidéo).
     path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'),
+    // R10 : réservation au nouveau design (Mes réservations est déjà adoptant R3c).
+    path.join(SRC, 'screens', 'reservation', 'ReservationScreen.tsx'),
+    path.join(SRC, 'screens', 'reservation', 'ReservationWeekPicker.tsx'),
   ];
 
   it('R4a : dans src/screens/wod et src/components/wod, seuls les fichiers du générateur et des résultats consomment ax', () => {
@@ -413,6 +451,14 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
       .map((f) => path.basename(f));
     expect(programs).toEqual(['ProgramDetailScreen.tsx']);
+  });
+
+  it('R10 : dans src/screens/reservation, seuls Réservation, son sélecteur de semaine et Mes réservations consomment ax', () => {
+    const reservation = walk(path.join(SRC, 'screens', 'reservation'))
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.basename(f))
+      .sort();
+    expect(reservation).toEqual(['MyReservationsScreen.tsx', 'ReservationScreen.tsx', 'ReservationWeekPicker.tsx']);
   });
 
   it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {
