@@ -11,11 +11,12 @@ interface Props {
   /** Obligatoire : le bouton n'a pas de libellé visible. */
   accessibilityLabel: string;
   disabled?: boolean;
+  radius?: number;
   testID?: string;
 }
 
 /** Bouton carré 44 × 44. */
-export function AxIconButton({ icon: Icon, onPress, accessibilityLabel, disabled = false, testID }: Props) {
+export function AxIconButton({ icon: Icon, onPress, accessibilityLabel, disabled = false, radius = axRadius.card, testID }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
   return (
@@ -26,9 +27,9 @@ export function AxIconButton({ icon: Icon, onPress, accessibilityLabel, disabled
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityState={{ disabled }}
-      style={[styles.base, { borderColor: c.border }, disabled ? styles.disabled : null]}
+      style={[styles.base, { borderColor: c.border, borderRadius: radius }, disabled ? styles.disabled : null]}
     >
-      <AxGlass color={c.surface} opacity={0.85} radius={axRadius.card} />
+      <AxGlass color={c.surface} opacity={0.85} radius={radius} />
       <Icon size={18} color={c.text} strokeWidth={2} />
     </Pressable>
   );

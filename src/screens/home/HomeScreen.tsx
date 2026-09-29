@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import {
   Trophy, User, Users, Bell, ChevronDown,
-  Building2, Check, Flame,
+  Building2, Check, Flame, Medal,
 } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,8 +19,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
-import { LevelColors } from '../../theme/designTokens';
-import { spacing, borderRadius, typography, shadows } from '../../theme/designTokens';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { HomeStackParamList, CompetitionSummary } from '../../navigation';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
@@ -29,15 +28,13 @@ import { countUnreadChangelog } from '../../lib/changelog';
 import { formatScoreValue } from '../../utils/scoreFormat';
 import { getStreak, StreakInfo, readBadgeQueue, clearBadgeQueue, BadgeQueueItem } from '../../services/gamification';
 import AutoScrollCarousel from '../../components/AutoScrollCarousel';
-import GlassBackground from '../../components/glass/GlassBackground';
-import GlassCard from '../../components/glass/GlassCard';
-import GlassButton from '../../components/glass/GlassButton';
-import GlassIconBox from '../../components/glass/GlassIconBox';
+import { AxButton, AxCard, AxCounterBadge, AxIconButton, AxStatusDot, withAlpha } from '../../components/ax';
 import InteractiveTour from '../../components/InteractiveTour';
 import HomeNewsCard from './HomeNewsCard';
 import { fetchHomeNews, type HomeNews } from '../../services/homeNews';
 import { fetchEloRank } from '../../services/eloRank';
 import HomeExplorerBlock from './HomeExplorerBlock';
+import { levelInk } from './homeLevelColor';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'HomeList'>;
@@ -60,7 +57,7 @@ export default function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const level = user?.level ?? 'scaled';
   const S = createStyles(theme);
-  const isDark = theme.mode === 'dark';
+  const c = theme.ax;
 
 
   const [competitions,   setCompetitions]   = useState<CompetitionSummary[]>([]);
@@ -273,7 +270,7 @@ export default function HomeScreen() {
       const bestScoresMapped = Object.entries(byType).map(([, v]) => ({
         name: v.name,
         value: formatScoreValue(v.value, v.type),
-        type: v.type === 'time' ? '⏱' : v.type === 'reps' ? '🔄' : v.type === 'weight' ? '🏋️' : '🔁',
+        type: v.type,
       })).slice(0, 4);
 
       const { data: scores } = await supabase
@@ -396,130 +393,125 @@ export default function HomeScreen() {
     }, [user])
   );
 
-  const levelColor = LevelColors[level] ?? theme.text;
+  const levelColor = levelInk(level, c);
   const friendsCount = pendingFriends + unreadAccepted;
 
   return (
     <View style={S.root}>
-      {/* Animated emerald background */}
-      <GlassBackground />
-
       <ScrollView
         style={S.container}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: tabSpace, paddingHorizontal: 16, paddingTop: insets.top + 16 }}
+        contentContainerStyle={[S.content, { paddingBottom: tabSpace, paddingTop: insets.top + axSpacing.lg }]}
         refreshControl={
           <RefreshControl
             refreshing={homeDataLoading}
             onRefresh={refetchHome}
-            tintColor={theme.accent}
-            colors={[theme.accent]}
+            tintColor={c.accentText}
+            colors={[c.accent]}
           />
         }
       >
         {/* ── Header row ──────────────────────────────────────────────── */}
-        <View style={S.headerRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={S.username}>{user?.username ?? 'Athlète'}</Text>
+        <View style={S.headerRow} testID="home-header">
+          <View style={S.headerText}>
+            <Text style={S.username} numberOfLines={1} testID="home-username">{user?.username ?? 'Athlète'}</Text>
             {currentBox && (
               <TouchableOpacity
                 onPress={() => myBoxes.length > 1 ? setBoxPickerVisible(true) : null}
                 activeOpacity={myBoxes.length > 1 ? 0.7 : 1}
                 style={S.boxSwitchBtn}
               >
-                <Building2 size={12} color={isDark ? '#9ca3af' : '#6b7280'} />
-                <Text style={S.boxSwitchText} numberOfLines={1}>{currentBox.name}</Text>
-                {myBoxes.length > 1 && <ChevronDown size={12} color={isDark ? '#9ca3af' : '#6b7280'} />}
+                <Building2 size={16} color={c.textMuted} />
+                <Text style={S.boxSwitchText} numberOfLines={1} testID="home-box-name">{currentBox.name}</Text>
+                {myBoxes.length > 1 && <ChevronDown size={16} color={c.textMuted} />}
               </TouchableOpacity>
             )}
           </View>
           {currentBox?.logo_url && (
-            <TouchableOpacity onPress={() => navigation.navigate('BoxInfo')} activeOpacity={0.8} style={{ marginRight: 10 }}>
-              <Image source={{ uri: currentBox.logo_url }} style={S.boxLogo} />
+            <TouchableOpacity onPress={() => navigation.navigate('BoxInfo')} activeOpacity={0.8} testID="home-box-logo">
+              <Image source={{ uri: currentBox.logo_url }} style={[S.boxLogo, { backgroundColor: c.surface }]} />
             </TouchableOpacity>
           )}
-          <TouchableOpacity
-            onPress={() => navigation.navigate('Changelog' as never)}
-            activeOpacity={0.7}
-            style={{ position: 'relative' }}
-          >
-            <GlassIconBox size={44} radius={14}>
-              <Bell size={20} color={isDark ? '#f9fafb' : '#111827'} />
-            </GlassIconBox>
+          <View>
+            <AxIconButton
+              icon={Bell}
+              radius={HEADER_RADIUS}
+              onPress={() => navigation.navigate('Changelog' as never)}
+              accessibilityLabel={t('home.whatsNew')}
+              testID="home-bell"
+            />
             {unreadChangelog > 0 && (
               <View style={S.bellBadge} pointerEvents="none">
-                <Text style={S.bellBadgeText}>{unreadChangelog > 9 ? '9+' : unreadChangelog}</Text>
+                <AxCounterBadge count={unreadChangelog} testID="home-bell-badge" />
               </View>
             )}
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── Hero ELO card ─────────────────────────────────────────── */}
-        <GlassCard style={{ marginTop: 18 }}>
-          <View style={S.heroInner}>
-            <View style={S.heroTop}>
-              <TouchableOpacity onPress={() => navigation.navigate('EloHistory' as never)} activeOpacity={0.7} style={{ alignItems: 'center', flex: 1.2 }}>
-                <Text style={S.heroEloNum}>{user?.elo ?? 1000}</Text>
-                <Text style={S.heroEloLabel}>{t('home.elo')} ›</Text>
-              </TouchableOpacity>
-              <View style={S.heroDivider} />
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Leaderboard')}
-                activeOpacity={0.7}
-                style={S.heroStat}
-                accessibilityRole="button"
-                accessibilityLabel={rank !== null ? t('home.rankOpen', { rank }) : t('home.rankOpenNoValue')}
-                testID="home-rank"
-              >
-                <Text style={S.heroStatNum}>{rank !== null ? `#${rank}` : '—'}</Text>
-                <Text style={S.heroStatLabel}>{t('home.rank')} ›</Text>
-              </TouchableOpacity>
-              <View style={S.heroDivider} />
-              <View style={S.heroStat}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Flame size={14} color="#f59e0b" />
-                  <Text style={S.heroStatNum}>{streak.current_streak}</Text>
-                </View>
-                <Text style={S.heroStatLabel}>{streak.week_session_count}/{streak.max_sessions_per_week ?? '∞'} sem.</Text>
+        <AxCard style={S.eloCard} testID="home-elo-card">
+          <View style={S.heroTop}>
+            <TouchableOpacity onPress={() => navigation.navigate('EloHistory' as never)} activeOpacity={0.7} style={S.heroElo} testID="home-elo">
+              <Text style={S.heroEloNum} numberOfLines={1} testID="home-elo-value">{user?.elo ?? 1000}</Text>
+              <Text style={S.heroEloLabel}>{t('home.elo')} ›</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Leaderboard')}
+              activeOpacity={0.7}
+              style={S.heroStat}
+              accessibilityRole="button"
+              accessibilityLabel={rank !== null ? t('home.rankOpen', { rank }) : t('home.rankOpenNoValue')}
+              testID="home-rank"
+            >
+              <Text style={S.heroStatNum} numberOfLines={1} testID="home-stat-value">{rank !== null ? `#${rank}` : '—'}</Text>
+              <Text style={S.heroStatLabel} numberOfLines={1}>{t('home.rank')} ›</Text>
+            </TouchableOpacity>
+            <View style={S.heroStat}>
+              <View style={S.streakValue}>
+                <Flame size={14} color={c.warning} />
+                <Text style={S.heroStatNum} numberOfLines={1} testID="home-stat-value">{streak.current_streak}</Text>
               </View>
-              <View style={S.heroDivider} />
-              <View style={S.heroStat}>
-                <Text style={S.heroStatNum}>{user?.wins ?? 0}</Text>
-                <Text style={S.heroStatLabel}>{t('home.wins')}</Text>
-              </View>
+              <Text style={S.heroStatLabel} numberOfLines={1}>{streak.week_session_count}/{streak.max_sessions_per_week ?? '∞'} sem.</Text>
             </View>
-
-            <View style={S.heroLevelRow}>
-              <View style={[S.levelDot, { backgroundColor: levelColor }]} />
-              <Text style={[S.levelTxt, { color: levelColor }]}>{level.toUpperCase()}</Text>
-              <Text style={S.matchesTxt}>{user?.total_matches ?? 0} matchs</Text>
+            <View style={S.heroStat}>
+              <Text style={S.heroStatNum} numberOfLines={1} testID="home-stat-value">{user?.wins ?? 0}</Text>
+              <Text style={S.heroStatLabel} numberOfLines={1}>{t('home.wins')}</Text>
             </View>
           </View>
-        </GlassCard>
+
+          <View style={S.heroLevelRow}>
+            <AxStatusDot label={level.toUpperCase()} color={levelColor} testID="home-level" />
+            <Text style={S.matchesTxt} numberOfLines={1}>{user?.total_matches ?? 0} matchs</Text>
+          </View>
+        </AxCard>
 
         {/* ── Action buttons ─────────────────────────────────────────── */}
-        <View style={S.actionRow}>
-          <GlassButton
-            style={{ flex: 1 }}
-            onPress={() => navigation.navigate('Friends')}
-            icon={
-              <View style={{ position: 'relative' }}>
-                <Users size={17} color={isDark ? '#f9fafb' : '#111827'} />
-                {friendsCount > 0 && (
-                  <View style={S.notifDot}>
-                    <Text style={S.notifDotTxt}>{friendsCount > 9 ? '9+' : friendsCount}</Text>
-                  </View>
-                )}
+        <View style={S.actionRow} testID="home-actions">
+          <View style={S.actionCell}>
+            <AxButton
+              variant="outline"
+              fullWidth
+              icon={Users}
+              onPress={() => navigation.navigate('Friends')}
+              label={t('home.friends')}
+              testID="home-friends"
+            />
+            {friendsCount > 0 && (
+              <View style={S.actionBadge} pointerEvents="none">
+                <AxCounterBadge count={friendsCount} testID="home-friends-badge" />
               </View>
-            }
-            label={t('home.friends')}
-          />
-          <GlassButton
-            style={{ flex: 1 }}
-            onPress={() => navigation.navigate('Profile')}
-            icon={<User size={17} color={isDark ? '#f9fafb' : '#111827'} />}
-            label={t('tabs.profile')}
-          />
+            )}
+          </View>
+          <View style={S.actionCell}>
+            <AxButton
+              variant="outline"
+              fullWidth
+              icon={User}
+              onPress={() => navigation.navigate('Profile')}
+              label={t('tabs.profile')}
+              testID="home-profile"
+            />
+          </View>
         </View>
 
         {/* ── Actu de ta box ──────────────────────────────────────────── */}
@@ -530,142 +522,138 @@ export default function HomeScreen() {
 
         {/* ── Cette semaine ──────────────────────────────────────────── */}
         {(totalWods > 0 || genStreak > 0 || totalReservations > 0 || weekReservations.some(r => r > 0)) && (
-          <GlassCard style={{ marginTop: 16 }}>
-            <View style={S.sectionInner}>
-              <View style={S.sectionHeader}>
-                <View style={S.weekTitleRow}>
-                  <Text style={S.sectionTitle}>{t('home.thisWeek')}</Text>
-                  {activeDayStreak >= 3 && (
-                    <View style={S.streakBadge}>
-                      <Flame color={theme.accent} size={12} />
-                      <Text style={S.streakTxt}>{t('home.dayStreak', { count: activeDayStreak })}</Text>
+          <AxCard style={S.weekCard} testID="home-week">
+            <View style={S.sectionHeader}>
+              <View style={S.weekTitleRow}>
+                <Text style={S.sectionTitle} numberOfLines={1} testID="home-section-title">{t('home.thisWeek')}</Text>
+                {activeDayStreak >= 3 && (
+                  <View style={S.streakBadge}>
+                    <Flame color={c.accentText} size={12} />
+                    <Text style={S.streakTxt}>{t('home.dayStreak', { count: activeDayStreak })}</Text>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('WodHistory')} activeOpacity={0.7} testID="home-history">
+                <Text style={S.linkText}>{t('home.history')}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={S.weekRow}>
+              {['L','M','M','J','V','S','D'].map((day, i) => {
+                const wods = weekActivity[i];
+                const res = weekReservations[i];
+                const maxAll = Math.max(...weekActivity, ...weekReservations, 1);
+                const hWod = wods > 0 ? Math.max(4, (wods / maxAll) * 32) : 0;
+                const hRes = res > 0 ? Math.max(4, (res / maxAll) * 32) : 0;
+                const isToday = i === (new Date().getDay() + 6) % 7;
+                const isSelected = selectedDay === i;
+                const hasActivity = wods > 0 || res > 0;
+                return (
+                  <TouchableOpacity
+                    key={i}
+                    style={[S.weekCol, isSelected && S.weekColSelected]}
+                    activeOpacity={0.7}
+                    onPress={() => setSelectedDay(isSelected ? null : i)}
+                  >
+                    <View style={S.weekBars}>
+                      {hRes > 0 && <View style={[S.weekBar, { height: hRes, backgroundColor: c.accent }]} />}
+                      {hWod > 0 && <View style={[S.weekBar, { height: hWod, backgroundColor: c.text }]} />}
+                      {!hasActivity && <View testID="home-week-track" style={[S.weekBar, { height: 4, backgroundColor: c.border }]} />}
                     </View>
-                  )}
-                </View>
-                <TouchableOpacity onPress={() => navigation.navigate('WodHistory')} activeOpacity={0.7}>
-                  <Text style={S.linkText}>{t('home.history')}</Text>
-                </TouchableOpacity>
-              </View>
+                    <Text style={isToday ? S.weekDayToday : S.weekDayTxt}>{day}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
 
-              <View style={S.weekRow}>
-                {['L','M','M','J','V','S','D'].map((day, i) => {
-                  const wods = weekActivity[i];
-                  const res = weekReservations[i];
-                  const maxAll = Math.max(...weekActivity, ...weekReservations, 1);
-                  const hWod = wods > 0 ? Math.max(4, (wods / maxAll) * 32) : 0;
-                  const hRes = res > 0 ? Math.max(4, (res / maxAll) * 32) : 0;
-                  const isToday = i === (new Date().getDay() + 6) % 7;
-                  const isSelected = selectedDay === i;
-                  const hasActivity = wods > 0 || res > 0;
-                  return (
-                    <TouchableOpacity
-                      key={i}
-                      style={[S.weekCol, isSelected && S.weekColSelected]}
-                      activeOpacity={0.7}
-                      onPress={() => setSelectedDay(isSelected ? null : i)}
-                    >
-                      <View style={{ alignItems: 'center', gap: 2 }}>
-                        {hRes > 0 && <View style={[S.weekBar, { height: hRes, backgroundColor: theme.accent }]} />}
-                        {hWod > 0 && <View style={[S.weekBar, { height: hWod, backgroundColor: isToday ? theme.accentLight : (isDark ? '#f9fafb' : '#111827') }]} />}
-                        {!hasActivity && <View style={[S.weekBar, { height: 4, backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' }]} />}
-                      </View>
-                      <Text style={[S.weekDayTxt, isToday && { fontWeight: '900', color: isDark ? '#f9fafb' : '#111827' }]}>{day}</Text>
-                    </TouchableOpacity>
-                  );
+            {selectedDay !== null && (
+              <Text style={S.dayDetailTxt}>
+                {t('home.dayDetail', {
+                  day: (t('home.dayNamesFull', { returnObjects: true }) as string[])[selectedDay],
+                  res: weekReservations[selectedDay],
+                  wods: weekActivity[selectedDay],
                 })}
+              </Text>
+            )}
+
+            <View style={S.legendRow}>
+              <View style={S.legendItem}>
+                <View style={[S.legendDot, { backgroundColor: c.text }]} />
+                <Text style={S.legendText}>{t('home.wodsCompleted')}</Text>
               </View>
-
-              {selectedDay !== null && (
-                <Text style={S.dayDetailTxt}>
-                  {t('home.dayDetail', {
-                    day: (t('home.dayNamesFull', { returnObjects: true }) as string[])[selectedDay],
-                    res: weekReservations[selectedDay],
-                    wods: weekActivity[selectedDay],
-                  })}
-                </Text>
-              )}
-
-              <View style={S.legendRow}>
-                <View style={S.legendItem}>
-                  <View style={[S.legendDot, { backgroundColor: isDark ? '#f9fafb' : '#111827' }]} />
-                  <Text style={S.legendText}>{t('home.wodsCompleted')}</Text>
-                </View>
-                <View style={S.legendItem}>
-                  <View style={[S.legendDot, { backgroundColor: theme.accent }]} />
-                  <Text style={S.legendText}>{t('home.reservations')}</Text>
-                </View>
+              <View style={S.legendItem}>
+                <View style={[S.legendDot, { backgroundColor: c.accent }]} />
+                <Text style={S.legendText}>{t('home.reservations')}</Text>
               </View>
+            </View>
 
-              <Text style={S.weekTotalTxt}>{t('home.weekTotal', { res: weekResTotal, wods: weekWodsTotal })}</Text>
+            <Text style={S.weekTotalTxt}>{t('home.weekTotal', { res: weekResTotal, wods: weekWodsTotal })}</Text>
 
-              <View style={S.progStrip}>
-                {[
-                  { val: totalWods, lbl: 'WODs' },
-                  { val: totalScoresGen, lbl: 'Scores' },
-                  { val: genStreak, lbl: 'Streak' },
-                  { val: totalReservations, lbl: t('home.reservations') },
-                ].map(s => (
-                  <View key={s.lbl} style={S.progItem}>
-                    <Text style={S.progItemNum}>{s.val}</Text>
-                    <Text style={S.progItemLbl}>{s.lbl}</Text>
+            <View style={S.progStrip}>
+              {[
+                { val: totalWods, lbl: 'WODs' },
+                { val: totalScoresGen, lbl: 'Scores' },
+                { val: genStreak, lbl: 'Streak' },
+                { val: totalReservations, lbl: t('home.reservations') },
+              ].map(s => (
+                <View key={s.lbl} style={S.progItem}>
+                  <Text style={S.progItemNum} numberOfLines={1}>{s.val}</Text>
+                  <Text style={S.progItemLbl} numberOfLines={1}>{s.lbl}</Text>
+                </View>
+              ))}
+            </View>
+
+            {bestScores.length > 0 && (
+              <View style={S.prBlock}>
+                <Text style={S.prBlockTitle}>{t('home.personalRecords')}</Text>
+                {bestScores.map((pr, i) => (
+                  <View key={i} style={S.prLine}>
+                    <Medal size={16} color={c.accentText} />
+                    <Text style={S.prLineName} numberOfLines={2}>{pr.name}</Text>
+                    <Text style={S.prLineVal}>{pr.value}</Text>
                   </View>
                 ))}
               </View>
-
-              {bestScores.length > 0 && (
-                <View style={S.prBlock}>
-                  <Text style={S.prBlockTitle}>{t('home.personalRecords')}</Text>
-                  {bestScores.map((pr, i) => (
-                    <View key={i} style={S.prLine}>
-                      <Text style={S.prLineIcon}>{pr.type}</Text>
-                      <Text style={S.prLineName} numberOfLines={1}>{pr.name}</Text>
-                      <Text style={S.prLineVal}>{pr.value}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          </GlassCard>
+            )}
+          </AxCard>
         )}
 
         {/* ── Explorer ────────────────────────────────────────────────── */}
-        <Text style={S.sectionTitleOutside}>{t('home.explorer.title')}</Text>
+        <Text style={S.sectionTitle} testID="home-section-title">{t('home.explorer.title')}</Text>
         <HomeExplorerBlock onOpen={(route) => navigation.navigate(route)} />
 
         {/* ── Box Picker Modal ──────────────────────────────────────── */}
         <Modal visible={boxPickerVisible} transparent animationType="slide" onRequestClose={() => setBoxPickerVisible(false)}>
           <Pressable style={S.boxPickerOverlay} onPress={() => setBoxPickerVisible(false)}>
-            <Pressable onPress={() => {}} style={{ paddingHorizontal: 16 }}>
-              <GlassCard radius={24}>
-                <View style={S.boxPickerSheet}>
-                  <View style={S.boxPickerHandle} />
-                  <Text style={S.boxPickerTitle}>{t('home.myBoxes')}</Text>
-                  {myBoxes.map(entry => {
-                    const isActive = entry.box.id === currentBox?.id;
-                    return (
-                      <TouchableOpacity
-                        key={entry.box.id}
-                        style={[S.boxPickerRow, isActive && S.boxPickerRowActive]}
-                        onPress={() => { switchBox(entry.box.id); setBoxPickerVisible(false); }}
-                        activeOpacity={0.7}
-                      >
-                        {entry.box.logo_url ? (
-                          <Image source={{ uri: entry.box.logo_url }} style={S.boxPickerLogo} />
-                        ) : (
-                          <GlassIconBox size={40} radius={12}>
-                            <Building2 size={18} color={isDark ? '#9ca3af' : '#6b7280'} />
-                          </GlassIconBox>
-                        )}
-                        <View style={{ flex: 1 }}>
-                          <Text style={[S.boxPickerName, isActive && { color: theme.accent }]}>{entry.box.name}</Text>
-                          <Text style={S.boxPickerRole}>{entry.role === 'owner' ? 'Propriétaire' : entry.role === 'coach' ? 'Coach' : 'Membre'}</Text>
+            <Pressable onPress={() => {}} style={S.boxPickerSheetWrap}>
+              <View style={S.boxPickerSheet}>
+                <View style={S.boxPickerHandle} />
+                <Text style={S.boxPickerTitle}>{t('home.myBoxes')}</Text>
+                {myBoxes.map(entry => {
+                  const isActive = entry.box.id === currentBox?.id;
+                  return (
+                    <TouchableOpacity
+                      key={entry.box.id}
+                      style={[S.boxPickerRow, isActive && S.boxPickerRowActive]}
+                      onPress={() => { switchBox(entry.box.id); setBoxPickerVisible(false); }}
+                      activeOpacity={0.7}
+                    >
+                      {entry.box.logo_url ? (
+                        <Image source={{ uri: entry.box.logo_url }} style={S.boxPickerLogo} />
+                      ) : (
+                        <View style={[S.boxPickerLogo, S.pastille]}>
+                          <Building2 size={18} color={c.textMuted} />
                         </View>
-                        {isActive && <Check size={18} color={theme.accent} />}
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </GlassCard>
+                      )}
+                      <View style={S.flexShrink}>
+                        <Text style={[S.boxPickerName, isActive && { color: c.accentText }]} numberOfLines={1}>{entry.box.name}</Text>
+                        <Text style={S.boxPickerRole}>{entry.role === 'owner' ? 'Propriétaire' : entry.role === 'coach' ? 'Coach' : 'Membre'}</Text>
+                      </View>
+                      {isActive && <Check size={18} color={c.accentText} />}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             </Pressable>
           </Pressable>
         </Modal>
@@ -683,8 +671,11 @@ export default function HomeScreen() {
           <TouchableOpacity onPress={dismissBadgePopup} activeOpacity={0.9} style={S.badgePopupCard}>
             <View style={S.badgePopupIconRow}>
               <Text style={S.badgePopupIcon}>{badgePopup.icon}</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={S.badgePopupHeader}>🏅 Badge débloqué !</Text>
+              <View style={S.flexShrink}>
+                <View style={S.badgePopupHeaderRow}>
+                  <Medal size={12} color={c.accentText} />
+                  <Text style={S.badgePopupHeader}>Badge débloqué !</Text>
+                </View>
                 <Text style={S.badgePopupTitle}>{badgePopup.title}</Text>
                 <Text style={S.badgePopupDesc} numberOfLines={2}>{badgePopup.description}</Text>
               </View>
@@ -701,14 +692,15 @@ export default function HomeScreen() {
         {/* ── Compétitions physiques ─────────────────────────────────── */}
         {physComps.length > 0 && (
           <>
-            <View style={[S.sectionHeader, { marginTop: 28, marginBottom: 12 }]}>
-              <Text style={S.sectionTitleOutside}>{t('home.competitions')}</Text>
+            <View style={S.sectionHeader}>
+              <Text style={S.sectionTitle} numberOfLines={1} testID="home-section-title">{t('home.competitions')}</Text>
               <TouchableOpacity
                 onPress={() => {
                   const nav = navigation.getParent?.();
                   if (nav) nav.navigate('Competitions', { screen: 'CompetitionList', params: { initialTab: 2 } });
                 }}
                 activeOpacity={0.7}
+                testID="home-see-competitions"
               >
                 <Text style={S.linkText}>{t('home.seeList')} ›</Text>
               </TouchableOpacity>
@@ -725,17 +717,18 @@ export default function HomeScreen() {
                     const nav = navigation.getParent?.();
                     if (nav) nav.navigate('Competitions', { screen: 'PhysicalCompetition', params: { mode: item.mode as any, selectedId: item.id } });
                   }}
+                  testID="home-competition-card"
                 >
-                  <GlassCard radius={16} style={{ width: 140, height: 160 }}>
-                    <View style={S.compPhysInner}>
-                      {item.logo_url ? (
-                        <Image source={{ uri: item.logo_url }} style={{ width: 72, height: 72, borderRadius: 12 }} resizeMode="contain" />
-                      ) : (
-                        <GlassIconBox size={72} radius={16}><Trophy color={theme.accent} size={32} /></GlassIconBox>
-                      )}
-                      <Text numberOfLines={2} style={S.compPhysName}>{item.name}</Text>
-                    </View>
-                  </GlassCard>
+                  <AxCard style={S.compPhysCard}>
+                    {item.logo_url ? (
+                      <Image source={{ uri: item.logo_url }} style={[S.compPhysPastille, { backgroundColor: c.background }]} resizeMode="contain" />
+                    ) : (
+                      <View style={[S.compPhysPastille, S.pastille]}>
+                        <Trophy color={c.accentText} size={32} />
+                      </View>
+                    )}
+                    <Text numberOfLines={2} style={S.compPhysName}>{item.name}</Text>
+                  </AxCard>
                 </TouchableOpacity>
               )}
             />
@@ -745,8 +738,8 @@ export default function HomeScreen() {
         {/* ── Tournois ────────────────────────────────────────────────── */}
         {competitions.length > 0 && (
           <>
-            <View style={[S.sectionHeader, { marginTop: 28, marginBottom: 12 }]}>
-              <Text style={S.sectionTitleOutside}>{t('home.tournaments')}</Text>
+            <View style={S.sectionHeader}>
+              <Text style={S.sectionTitle} numberOfLines={1} testID="home-section-title">{t('home.tournaments')}</Text>
               <TouchableOpacity
                 onPress={() => {
                   const nav = navigation.getParent?.();
@@ -755,28 +748,28 @@ export default function HomeScreen() {
                 activeOpacity={0.7}
                 accessibilityRole="button"
                 accessibilityLabel={t('home.seeAllTournaments')}
+                testID="home-see-tournaments"
               >
                 <Text style={S.linkText}>{t('home.seeAllTournaments')} ›</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={S.hList}>
               {competitions.map((comp: CompetitionSummary) => (
                 <TouchableOpacity
                   key={comp.id}
                   onPress={() => navigation.navigate('CompetitionDetail', { competition: comp })}
                   activeOpacity={0.85}
+                  testID="home-tournament-card"
                 >
-                  <GlassCard radius={16} style={{ width: 170 }}>
-                    <View style={S.compInner}>
-                      <View style={S.compBadgeRow}>
-                        <View style={[S.compDot, { backgroundColor: comp.status === 'open' ? theme.accent : '#9ca3af' }]} />
-                        <Text style={S.compStatus}>{comp.status === 'open' ? t('home.tournamentStatus.open') : comp.status === 'active' ? t('home.tournamentStatus.active') : t('home.tournamentStatus.closed')}</Text>
-                      </View>
-                      <Text style={S.compName} numberOfLines={2}>{comp.name}</Text>
-                      <Text style={S.compMeta}>{t('home.tournamentParticipants', { n: comp.participants, max: comp.maxParticipants })}</Text>
-                      <Text style={S.compDate}>{comp.startDate}</Text>
+                  <AxCard style={S.compCard}>
+                    <View style={[S.compPastille, S.pastille]}>
+                      <Trophy color={c.accentText} size={20} />
                     </View>
-                  </GlassCard>
+                    <Text style={S.compStatus} numberOfLines={1}>{comp.status === 'open' ? t('home.tournamentStatus.open') : comp.status === 'active' ? t('home.tournamentStatus.active') : t('home.tournamentStatus.closed')}</Text>
+                    <Text style={S.compName} numberOfLines={2}>{comp.name}</Text>
+                    <Text style={S.compMeta} numberOfLines={1}>{t('home.tournamentParticipants', { n: comp.participants, max: comp.maxParticipants })}</Text>
+                    <Text style={S.compMeta} numberOfLines={1}>{comp.startDate}</Text>
+                  </AxCard>
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -784,37 +777,33 @@ export default function HomeScreen() {
         )}
 
         {/* ── Résultats récents ─────────────────────────────────────── */}
-        <Text style={S.sectionTitleOutside}>{t('home.recentResults')}</Text>
+        <Text style={S.sectionTitle} testID="home-section-title">{t('home.recentResults')}</Text>
         {recentScores.length === 0 ? (
-          <GlassCard radius={16}>
-            <View style={{ padding: 16 }}>
-              <Text style={S.emptyText}>{t('home.noScores')}</Text>
-            </View>
-          </GlassCard>
+          <AxCard testID="home-results-empty">
+            <Text style={S.emptyText}>{t('home.noScores')}</Text>
+          </AxCard>
         ) : (
-          <View style={{ gap: 8 }}>
+          <View style={S.resultList}>
             {recentScores.map(r => (
-              <GlassCard key={r.id} radius={16}>
-                <View style={S.resultRow}>
-                  <GlassIconBox size={40} radius={12}>
-                    <Text style={S.resultAvatarTxt}>{r.wod_title[0]}</Text>
-                  </GlassIconBox>
-                  <View style={{ flex: 1 }}>
-                    <Text style={S.resultTitle}>{r.wod_title}</Text>
-                    <Text style={S.resultDate}>
-                      {new Date(r.submitted_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                    </Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={[S.resultStatus, {
-                      color: r.status === 'approved' ? theme.success : r.status === 'rejected' ? theme.error : theme.textMuted,
-                    }]}>
-                      {r.status === 'approved' ? 'Validé' : r.status === 'rejected' ? 'Rejeté' : 'En attente'}
-                    </Text>
-                    <Text style={S.resultScore}>{r.score_value}</Text>
-                  </View>
+              <AxCard key={r.id} style={S.resultRow} testID="home-result">
+                <View style={[S.resultAvatar, S.pastille]}>
+                  <Text style={S.resultAvatarTxt}>{r.wod_title[0]}</Text>
                 </View>
-              </GlassCard>
+                <View style={S.flexShrink}>
+                  <Text style={S.resultTitle} numberOfLines={1}>{r.wod_title}</Text>
+                  <Text style={S.resultDate}>
+                    {new Date(r.submitted_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                  </Text>
+                </View>
+                <View style={S.resultRight}>
+                  <Text testID="home-result-status" style={[S.resultStatus, {
+                    color: r.status === 'approved' ? c.success : r.status === 'rejected' ? c.danger : c.textMuted,
+                  }]}>
+                    {r.status === 'approved' ? 'Validé' : r.status === 'rejected' ? 'Rejeté' : 'En attente'}
+                  </Text>
+                  <Text style={S.resultScore} numberOfLines={1}>{r.score_value}</Text>
+                </View>
+              </AxCard>
             ))}
           </View>
         )}
@@ -826,146 +815,136 @@ export default function HomeScreen() {
   );
 }
 
+const HEADER_RADIUS = 12;
+
 function createStyles(t: AppTheme) {
-  const isDark = t.mode === 'dark';
-  const textPrimary = t.text;
-  const textSecondary = t.textSecondary;
-  const textOnGlass = textPrimary;
+  const c = t.ax;
 
   return StyleSheet.create({
-    root: { flex: 1, backgroundColor: t.background },
+    root: { flex: 1, backgroundColor: c.background },
     container: { flex: 1, backgroundColor: 'transparent' },
+    content: { paddingHorizontal: axSpacing.xl, gap: axSpacing.lg },
+    flexShrink: { flex: 1, minWidth: 0 },
+    pastille: { alignItems: 'center', justifyContent: 'center', backgroundColor: c.background, borderWidth: 1, borderColor: c.border },
 
     // Header row
-    headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs },
-    username: { ...typography.h2, color: textPrimary },
-    boxLogo: { width: 40, height: 40, borderRadius: borderRadius.md },
-    boxSwitchBtn: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs },
-    boxSwitchText: { ...typography.caption, color: textSecondary, maxWidth: 180 },
-    bellBadge: {
-      position: 'absolute', top: -6, right: -6,
-      backgroundColor: t.error, borderRadius: 9,
-      minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center',
-      paddingHorizontal: 3, borderWidth: 2, borderColor: t.background,
-    },
-    bellBadgeText: { ...typography.caption, color: '#fff' },
+    headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    headerText: { flex: 1, minWidth: 0, gap: axSpacing.xs },
+    username: { ...axTypography.titleXL, color: c.text },
+    boxLogo: { width: 44, height: 44, borderRadius: HEADER_RADIUS },
+    boxSwitchBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', maxWidth: '100%' },
+    boxSwitchText: { ...axTypography.bodySmall, color: c.textMuted, flexShrink: 1 },
+    bellBadge: { position: 'absolute', top: -5, right: -5 },
 
     // Hero ELO card
-    heroInner: { padding: spacing.md },
+    eloCard: { borderRadius: axRadius.card, padding: axSpacing.lg, gap: axSpacing.md },
     heroTop: { flexDirection: 'row', alignItems: 'center' },
-    heroEloNum: { ...typography.h1, color: t.accent, letterSpacing: -1 },
-    heroEloLabel: { ...typography.overline, color: textSecondary, marginTop: spacing.xxs },
-    heroDivider: { width: 1, height: 30, backgroundColor: t.border },
-    heroStat: { flex: 1, alignItems: 'center' },
-    heroStatNum: { ...typography.h4, color: textOnGlass },
-    heroStatLabel: { ...typography.caption, color: textSecondary, marginTop: spacing.xxs },
-    heroLevelRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.md },
-    levelDot: { width: 8, height: 8, borderRadius: 4 },
-    levelTxt: { ...typography.label, textTransform: 'none' },
-    matchesTxt: { ...typography.caption, color: textSecondary, marginLeft: 'auto' },
+    heroElo: { alignItems: 'center', minWidth: 96 },
+    heroEloNum: { ...axTypography.numberL, color: c.accentText },
+    heroEloLabel: { ...axTypography.overlineSmall, color: c.textMuted },
+    heroStat: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2 },
+    streakValue: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+    heroStatNum: { ...axTypography.numberM, color: c.text },
+    heroStatLabel: { ...axTypography.caption, color: c.textMuted },
+    heroLevelRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.sm },
+    matchesTxt: { ...axTypography.bodySmall, color: c.textMuted, flexShrink: 1 },
 
     // Action row
-    actionRow: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-    notifDot: {
-      position: 'absolute', top: -3, right: -3,
-      backgroundColor: t.error, borderRadius: 9,
-      minWidth: 18, height: 18, justifyContent: 'center', alignItems: 'center',
-      paddingHorizontal: 3, borderWidth: 2, borderColor: t.background,
-    },
-    notifDotTxt: { ...typography.caption, color: '#fff' },
+    actionRow: { flexDirection: 'row', gap: axSpacing.md },
+    actionCell: { flex: 1 },
+    actionBadge: { position: 'absolute', top: -5, right: -5 },
 
     // Section header
-    sectionInner: { padding: spacing.md },
-    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    sectionTitle: { ...typography.h4, color: textPrimary },
-    sectionTitleOutside: { ...typography.h4, color: textPrimary, marginTop: spacing.xl, marginBottom: spacing.sm },
-    linkText: { ...typography.button, color: t.accent },
-    emptyText: { ...typography.body, color: textSecondary },
+    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.md },
+    sectionTitle: { ...axTypography.titleM, color: c.text, flexShrink: 1 },
+    linkText: { ...axTypography.labelSmall, color: c.accentText },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted },
 
     // Week activity
-    weekTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, flexShrink: 1 },
-    streakBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: `${t.accent}15`, borderRadius: borderRadius.sm, paddingHorizontal: 8, paddingVertical: 3 },
-    streakTxt: { ...typography.caption, color: t.accent, fontWeight: '800' },
-    weekRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 60, marginTop: spacing.md, marginBottom: spacing.sm },
-    weekCol: { alignItems: 'center', flex: 1, gap: spacing.xs, paddingVertical: 4, borderRadius: borderRadius.sm },
-    weekColSelected: { backgroundColor: `${t.accent}12` },
-    weekBar: { width: 22, borderRadius: borderRadius.sm, minHeight: 4 },
-    weekDayTxt: { ...typography.caption, color: textSecondary },
-    dayDetailTxt: { ...typography.caption, color: t.text, fontWeight: '700', textAlign: 'center', marginBottom: spacing.sm },
-    weekTotalTxt: { ...typography.caption, color: textSecondary, textAlign: 'center', marginBottom: spacing.sm },
+    weekCard: { padding: axSpacing.lg, gap: 14 },
+    weekTitleRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, flexShrink: 1 },
+    streakBadge: { flexDirection: 'row', alignItems: 'center', gap: 3, borderWidth: 1, borderColor: c.accentText, borderRadius: axRadius.badge, paddingHorizontal: 6, paddingVertical: 2 },
+    streakTxt: { ...axTypography.labelSmall, color: c.accentText },
+    weekRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+    weekCol: { alignItems: 'center', flex: 1, gap: axSpacing.sm, paddingVertical: axSpacing.xs, borderRadius: axRadius.control },
+    weekColSelected: { backgroundColor: withAlpha(c.accent, 0.12) },
+    weekBars: { alignItems: 'center', justifyContent: 'flex-end', gap: 2, minHeight: 36 },
+    weekBar: { width: 22, borderRadius: 2, minHeight: 4 },
+    weekDayTxt: { ...axTypography.bodySmall, color: c.textMuted },
+    weekDayToday: { ...axTypography.labelSmall, color: c.text },
+    dayDetailTxt: { ...axTypography.bodySmall, color: c.text, textAlign: 'center' },
+    weekTotalTxt: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
 
     // Legend
-    legendRow: { flexDirection: 'row', gap: spacing.md, justifyContent: 'center', marginBottom: spacing.sm },
-    legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-    legendDot: { width: 8, height: 8, borderRadius: 2 },
-    legendText: { ...typography.caption, color: textSecondary },
+    legendRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 14, justifyContent: 'center' },
+    legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    legendDot: { width: 9, height: 9, borderRadius: 2 },
+    legendText: { ...axTypography.caption, color: c.textMuted },
 
     // Progression strip
-    progStrip: {
-      flexDirection: 'row', borderTopWidth: 1, borderTopColor: t.border,
-      paddingTop: spacing.sm, marginTop: spacing.xs,
-    },
-    progItem: { flex: 1, alignItems: 'center' },
-    progItemNum: { ...typography.h4, color: textPrimary },
-    progItemLbl: { ...typography.caption, color: textSecondary, marginTop: spacing.xxs },
+    progStrip: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: c.border, paddingTop: axSpacing.md },
+    progItem: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2 },
+    progItemNum: { ...axTypography.numberM, color: c.text },
+    progItemLbl: { ...axTypography.caption, color: c.textMuted },
 
     // PRs
-    prBlock: { borderTopWidth: 1, borderTopColor: t.border, paddingTop: spacing.sm, gap: spacing.sm, marginTop: spacing.sm },
-    prBlockTitle: { ...typography.button, color: textPrimary, marginBottom: spacing.xxs },
-    prLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    prLineIcon: { fontSize: 14, width: 20, textAlign: 'center' },
-    prLineName: { flex: 1, ...typography.bodySmall, color: textSecondary },
-    prLineVal: { ...typography.button, color: textPrimary },
-
-    // Tools
+    prBlock: { borderTopWidth: 1, borderTopColor: c.border, paddingTop: axSpacing.md, gap: axSpacing.sm },
+    prBlockTitle: { ...axTypography.label, color: c.text },
+    prLine: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    prLineName: { flex: 1, minWidth: 0, ...axTypography.bodySmall, color: c.textMuted },
+    prLineVal: { ...axTypography.label, color: c.text },
 
     // Comps
-    compInner: { padding: spacing.sm, gap: spacing.xs },
-    compBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xxs },
-    compDot: { width: 6, height: 6, borderRadius: 3 },
-    compStatus: { ...typography.overline, color: textSecondary },
-    compName: { ...typography.button, color: textPrimary, lineHeight: 17 },
-    compMeta: { ...typography.caption, color: textSecondary },
-    compDate: { ...typography.caption, color: textSecondary },
-    compPhysInner: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.sm, gap: spacing.xs },
-    compPhysName: { color: textPrimary, ...typography.caption, textAlign: 'center' },
+    hList: { gap: axSpacing.md },
+    compCard: { width: 170, padding: axSpacing.lg, gap: 6 },
+    compPastille: { width: 44, height: 44, borderRadius: HEADER_RADIUS },
+    compStatus: { ...axTypography.labelSmall, color: c.accentText },
+    compName: { ...axTypography.label, color: c.text },
+    compMeta: { ...axTypography.caption, color: c.textMuted },
+    compPhysCard: { width: 140, height: 160, paddingVertical: 14, paddingHorizontal: axSpacing.lg, gap: axSpacing.sm, alignItems: 'center' },
+    compPhysPastille: { width: 72, height: 72, borderRadius: 20 },
+    compPhysName: { ...axTypography.labelSmall, color: c.text, textAlign: 'center' },
 
     // Results
-    resultRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm },
-    resultAvatarTxt: { ...typography.button, color: t.accent },
-    resultTitle: { ...typography.button, color: textPrimary },
-    resultDate: { ...typography.caption, color: textSecondary, marginTop: spacing.xxs },
-    resultStatus: { ...typography.overline },
-    resultScore: { ...typography.caption, color: textSecondary, marginTop: spacing.xxs },
+    resultList: { gap: axSpacing.lg },
+    resultRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, paddingVertical: axSpacing.md, paddingHorizontal: axSpacing.lg },
+    resultAvatar: { width: 40, height: 40, borderRadius: 20 },
+    resultAvatarTxt: { ...axTypography.label, color: c.text },
+    resultTitle: { ...axTypography.label, color: c.text },
+    resultDate: { ...axTypography.caption, color: c.textMuted },
+    resultRight: { alignItems: 'flex-end', maxWidth: '45%' },
+    resultStatus: { ...axTypography.labelSmall },
+    resultScore: { ...axTypography.numberM, color: c.text },
 
     // Badge unlock popup
     badgePopupWrap: {
-      position: 'absolute', bottom: 100, left: 16, right: 16, zIndex: 99,
+      position: 'absolute', bottom: 100, left: axSpacing.lg, right: axSpacing.lg, zIndex: 99,
     },
     badgePopupCard: {
-      backgroundColor: isDark ? 'rgba(10,20,15,0.97)' : 'rgba(241,245,249,0.97)',
-      borderRadius: 20, padding: 16,
-      borderWidth: 1.5, borderColor: t.accent,
-      shadowColor: t.accent, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12,
+      backgroundColor: c.surface,
+      borderRadius: axRadius.card, padding: axSpacing.lg,
+      borderWidth: 1, borderColor: c.accentText,
       elevation: 10,
     },
     badgePopupIconRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 10 },
     badgePopupIcon: { fontSize: 44 },
-    badgePopupHeader: { fontSize: 10, fontWeight: '800', color: t.accent, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 },
-    badgePopupTitle: { fontSize: 16, fontWeight: '900', color: t.text, marginBottom: 2 },
-    badgePopupDesc: { fontSize: 12, color: t.textSecondary, lineHeight: 16 },
-    badgeProgressTrack: { height: 3, backgroundColor: t.surface, borderRadius: 2, overflow: 'hidden' },
-    badgeProgressFill: { height: '100%', backgroundColor: t.accent, borderRadius: 2 },
+    badgePopupHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, marginBottom: 2 },
+    badgePopupHeader: { ...axTypography.overlineSmall, color: c.accentText },
+    badgePopupTitle: { ...axTypography.label, color: c.text, marginBottom: 2 },
+    badgePopupDesc: { ...axTypography.caption, color: c.textMuted },
+    badgeProgressTrack: { height: 3, backgroundColor: c.border, borderRadius: 2, overflow: 'hidden' },
+    badgeProgressFill: { height: '100%', backgroundColor: c.accent, borderRadius: 2 },
 
     // Box picker modal
-    boxPickerOverlay: { flex: 1, backgroundColor: t.modalBackdrop, justifyContent: 'flex-end', paddingBottom: spacing.xl },
-    boxPickerSheet: { backgroundColor: t.modalCard, borderTopLeftRadius: borderRadius.xl, borderTopRightRadius: borderRadius.xl, paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, paddingTop: spacing.md },
-    boxPickerHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: t.border, alignSelf: 'center', marginBottom: spacing.md },
-    boxPickerTitle: { ...typography.h3, color: textPrimary, marginBottom: spacing.md },
-    boxPickerRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.sm, paddingHorizontal: spacing.sm, borderRadius: borderRadius.lg, marginBottom: spacing.xs },
-    boxPickerRowActive: { backgroundColor: `${t.accent}15` },
-    boxPickerLogo: { width: 40, height: 40, borderRadius: borderRadius.md },
-    boxPickerName: { ...typography.button, color: textPrimary },
-    boxPickerRole: { fontSize: 11, fontWeight: '500', color: textSecondary, marginTop: 1 },
+    boxPickerOverlay: { flex: 1, backgroundColor: t.modalBackdrop, justifyContent: 'flex-end', paddingBottom: axSpacing.xl },
+    boxPickerSheetWrap: { paddingHorizontal: axSpacing.lg },
+    boxPickerSheet: { backgroundColor: c.surface, borderWidth: 1, borderColor: c.border, borderRadius: axRadius.card, paddingHorizontal: axSpacing.lg, paddingBottom: axSpacing.xl, paddingTop: axSpacing.md },
+    boxPickerHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: c.border, alignSelf: 'center', marginBottom: axSpacing.md },
+    boxPickerTitle: { ...axTypography.titleM, color: c.text, marginBottom: axSpacing.md },
+    boxPickerRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, padding: axSpacing.sm, borderRadius: axRadius.control, marginBottom: axSpacing.xs },
+    boxPickerRowActive: { backgroundColor: withAlpha(c.accent, 0.12) },
+    boxPickerLogo: { width: 40, height: 40, borderRadius: HEADER_RADIUS },
+    boxPickerName: { ...axTypography.label, color: c.text },
+    boxPickerRole: { ...axTypography.caption, color: c.textMuted },
   });
 }

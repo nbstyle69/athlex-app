@@ -356,7 +356,17 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'screens', 'home', 'HomeExplorerBlock.tsx'),
     path.join(SRC, 'screens', 'home', 'HomeNewsCard.tsx'),
     path.join(SRC, 'screens', 'competition', 'CompetitionRankingCard.tsx'),
+    // R3b : l'Accueil de l'athlète passe au nouveau design.
+    path.join(SRC, 'screens', 'home', 'HomeScreen.tsx'),
   ];
+
+  it('R3b : dans src/screens/home, seuls l’Accueil et ses blocs consomment ax', () => {
+    const home = walk(path.join(SRC, 'screens', 'home'))
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.basename(f))
+      .sort();
+    expect(home).toEqual(['HomeExplorerBlock.tsx', 'HomeNewsCard.tsx', 'HomeScreen.tsx']);
+  });
 
   it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {
     const files = [...walk(path.join(SRC, 'screens')), ...walk(path.join(SRC, 'components'))]

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, View, ViewStyle } from 'react-native';
+import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { axRadius, axSpacing } from '../../theme/axTokens';
 import { AxGlass } from './AxGlass';
@@ -12,6 +12,8 @@ interface Props {
   /** Rend la carte entière cliquable. */
   onPress?: () => void;
   accessibilityLabel?: string;
+  /** Ajustements de mise en page (padding, écart, taille), posés après ceux de la variante. */
+  style?: StyleProp<ViewStyle>;
   testID?: string;
 }
 
@@ -23,7 +25,7 @@ const PADDING: Record<AxCardVariant, ViewStyle> = {
   glass: { padding: axSpacing.lg },
 };
 
-export function AxCard({ variant = 'standard', children, onPress, accessibilityLabel, testID }: Props) {
+export function AxCard({ variant = 'standard', children, onPress, accessibilityLabel, style: override, testID }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
   const style = [
@@ -31,6 +33,7 @@ export function AxCard({ variant = 'standard', children, onPress, accessibilityL
     { borderColor: c.border },
     variant === 'glass' ? null : { backgroundColor: c.surface },
     PADDING[variant],
+    override,
   ];
   const content = (
     <>
