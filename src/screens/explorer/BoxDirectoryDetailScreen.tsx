@@ -14,12 +14,12 @@ import { supabase } from '../../lib/supabase';
 import { BOX_COLUMNS } from '../../lib/boxColumns';
 import { captureError } from '../../lib/sentry';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
-import { ExplorerStackParamList } from '../../navigation';
+import { HomeStackParamList } from '../../navigation';
 import { Box } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
 
-type Nav = NativeStackNavigationProp<ExplorerStackParamList>;
-type Route = RouteProp<ExplorerStackParamList, 'BoxDirectoryDetail'>;
+type Nav = NativeStackNavigationProp<HomeStackParamList>;
+type Route = RouteProp<HomeStackParamList, 'BoxDirectoryDetail'>;
 
 const SPORT_LABELS: Record<string, string> = {
   crossfit: 'Functional', weightlifting: 'Haltérophilie', gymnastics: 'Gymnastique',

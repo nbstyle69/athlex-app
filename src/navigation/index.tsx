@@ -28,7 +28,7 @@ import { useTranslation } from 'react-i18next';
 import OnboardingTutorialScreen from '../screens/onboarding/OnboardingTutorialScreen';
 import { ONBOARDING_KEY, readOnboardingCache, resolveOnboardingDone } from '../lib/onboardingStatus';
 import OnboardingErrorBoundary from '../components/OnboardingErrorBoundary';
-import { Dumbbell, Trophy, Layout, User, Building2, ClipboardList, Users, MessageCircle, Home, CalendarClock, Compass } from 'lucide-react-native';
+import { Dumbbell, Trophy, Layout, User, Building2, ClipboardList, Users, MessageCircle, Home, CalendarClock } from 'lucide-react-native';
 import KettlebellIcon from '../components/KettlebellIcon';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -110,7 +110,6 @@ import EloHistoryScreen from '../screens/profile/EloHistoryScreen';
 import LegalScreen from '../screens/documents/LegalScreen';
 import BlockedUsersScreen from '../screens/profile/BlockedUsersScreen';
 import ChangelogScreen from '../screens/home/ChangelogScreen';
-import ExplorerScreen from '../screens/explorer/ExplorerScreen';
 import ProgrammationScreen from '../screens/explorer/ProgrammationScreen';
 import BoxDirectoryScreen from '../screens/explorer/BoxDirectoryScreen';
 import BoxDirectoryMapScreen from '../screens/explorer/BoxDirectoryMapScreen';
@@ -119,6 +118,7 @@ import PartnersScreen from '../screens/explorer/PartnersScreen';
 import PartnerDetailScreen from '../screens/explorer/PartnerDetailScreen';
 import BoxProgramsScreen from '../screens/explorer/BoxProgramsScreen';
 import BoxInfoScreen from '../screens/home/BoxInfoScreen';
+import TrainingScreen from '../screens/training/TrainingScreen';
 import BOBoxInfoScreen from '../screens/backoffice/BOBoxInfoScreen';
 import BOSubscriptionScreen from '../screens/backoffice/BOSubscriptionScreen';
 import BOPaywallScreen from '../screens/backoffice/BOPaywallScreen';
@@ -205,21 +205,19 @@ export type AuthStackParamList = {
 export type MainTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList>;
   Competitions: NavigatorScreenParams<CompetitionStackParamList>;
-  Explorer: NavigatorScreenParams<ExplorerStackParamList>;
+  Training: NavigatorScreenParams<TrainingStackParamList>;
   Whiteboard: NavigatorScreenParams<WhiteboardStackParamList>;
   Reservation: NavigatorScreenParams<ReservationStackParamList>;
 };
 
-export type ExplorerStackParamList = {
-  ExplorerMain: undefined;
-  Programmation: undefined;
-  BoxDirectory: undefined;
-  BoxDirectoryMap: { boxes: any[] };
-  BoxDirectoryDetail: { boxId: string };
-  Partners: undefined;
-  PartnerDetail: { partnerId: string };
-  BoxPrograms: undefined;
-};
+/**
+ * Onglet Entraînement : écrans partagés avec la pile Accueil, mêmes paramètres.
+ * Profil, détail de WOD et leurs écrans liés y sont aussi pour que les liens
+ * du générateur, du résultat et de l'historique restent dans l'onglet.
+ */
+export type TrainingStackParamList = { TrainingMain: undefined } & Pick<HomeStackParamList,
+  | 'WodGenerator' | 'WodResult' | 'WodHistory' | 'OneRMCalculator' | 'Timer' | 'TimerRun' | 'VideoPlayback'
+  | 'Profile' | 'WODDetail' | 'EloHistory' | 'NotificationSettings' | 'BlockedUsers' | 'Legal' | 'ProgramDetail' | 'PublicProfile'>;
 
 export type TimerType = 'for-time' | 'amrap' | 'emom' | 'tabata' | 'ywyr' | 'splits' | 'libre';
 export type BlockType = Exclude<TimerType, 'libre' | 'splits'> | 'split';
@@ -282,6 +280,13 @@ export type HomeStackParamList = {
   Friends: undefined;
   CompetitionDetail: { competition: CompetitionSummary };
   PublicProfile: { userId: string };
+  Programmation: undefined;
+  BoxDirectory: undefined;
+  BoxDirectoryMap: { boxes: any[] };
+  BoxDirectoryDetail: { boxId: string };
+  Partners: undefined;
+  PartnerDetail: { partnerId: string };
+  BoxPrograms: undefined;
   VideoPlayback: {
     videoURL: string;
     title?: string;
@@ -451,7 +456,7 @@ const HomeStack       = createNativeStackNavigator<HomeStackParamList>();
 const WhiteboardStack  = createNativeStackNavigator<WhiteboardStackParamList>();
 const CommunityStack   = createNativeStackNavigator<CommunityStackParamList>();
 const ResStack          = createNativeStackNavigator<ReservationStackParamList>();
-const ExplStack         = createNativeStackNavigator<ExplorerStackParamList>();
+const TrainingStack     = createNativeStackNavigator<TrainingStackParamList>();
 const BOProfileStack    = createNativeStackNavigator<BOProfileStackParamList>();
 const CoachTab          = createBottomTabNavigator<CoachTabParamList>();
 
@@ -506,6 +511,13 @@ function HomeNavigator() {
       <HomeStack.Screen name="WODDetail" component={WODDetailScreen} />
       <HomeStack.Screen name="Legal" component={LegalScreen} />
       <HomeStack.Screen name="ProgramDetail" component={ProgramDetailScreen} />
+      <HomeStack.Screen name="Programmation" component={ProgrammationScreen} />
+      <HomeStack.Screen name="BoxDirectory" component={BoxDirectoryScreen} />
+      <HomeStack.Screen name="BoxDirectoryMap" component={BoxDirectoryMapScreen} />
+      <HomeStack.Screen name="BoxDirectoryDetail" component={BoxDirectoryDetailScreen} />
+      <HomeStack.Screen name="Partners" component={PartnersScreen} />
+      <HomeStack.Screen name="PartnerDetail" component={PartnerDetailScreen} />
+      <HomeStack.Screen name="BoxPrograms" component={BoxProgramsScreen} />
     </HomeStack.Navigator>
   );
 }
@@ -548,19 +560,28 @@ function ReservationNavigator() {
   );
 }
 
-function ExplorerNavigator() {
+function TrainingNavigator() {
+  const { user } = useAuth();
   const shell = useShellScreenOptions();
   return (
-    <ExplStack.Navigator screenOptions={shell}>
-      <ExplStack.Screen name="ExplorerMain" component={ExplorerScreen} />
-      <ExplStack.Screen name="Programmation" component={ProgrammationScreen} />
-      <ExplStack.Screen name="BoxDirectory" component={BoxDirectoryScreen} />
-      <ExplStack.Screen name="BoxDirectoryMap" component={BoxDirectoryMapScreen} />
-      <ExplStack.Screen name="BoxDirectoryDetail" component={BoxDirectoryDetailScreen} />
-      <ExplStack.Screen name="Partners" component={PartnersScreen} />
-      <ExplStack.Screen name="PartnerDetail" component={PartnerDetailScreen} />
-      <ExplStack.Screen name="BoxPrograms" component={BoxProgramsScreen} />
-    </ExplStack.Navigator>
+    <TrainingStack.Navigator screenOptions={shell}>
+      <TrainingStack.Screen name="TrainingMain" component={TrainingScreen} />
+      <TrainingStack.Screen name="WodGenerator" component={WodGeneratorScreen} />
+      <TrainingStack.Screen name="WodResult" component={WodResultScreen} />
+      <TrainingStack.Screen name="WodHistory" component={WodHistoryScreen} />
+      <TrainingStack.Screen name="OneRMCalculator" component={OneRMCalculatorScreen} />
+      <TrainingStack.Screen name="Timer" component={TimerScreen} />
+      <TrainingStack.Screen name="TimerRun" component={TimerRunScreen} />
+      <TrainingStack.Screen name="VideoPlayback" component={VideoPlaybackScreen} />
+      <TrainingStack.Screen name="Profile" component={user?.role === 'admin' || user?.role === 'super_admin' ? AdminScreen : ProfileScreen} />
+      <TrainingStack.Screen name="WODDetail" component={WODDetailScreen} />
+      <TrainingStack.Screen name="EloHistory" component={EloHistoryScreen} />
+      <TrainingStack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+      <TrainingStack.Screen name="BlockedUsers" component={BlockedUsersScreen} />
+      <TrainingStack.Screen name="Legal" component={LegalScreen} />
+      <TrainingStack.Screen name="ProgramDetail" component={ProgramDetailScreen} />
+      <TrainingStack.Screen name="PublicProfile" component={PublicProfileScreen} />
+    </TrainingStack.Navigator>
   );
 }
 
@@ -761,7 +782,7 @@ function MainTabs() {
           const icons: Record<string, React.ReactNode> = {
             Competitions: <Trophy color={color} size={iconSize} />,
             Home:         <Home color={color} size={iconSize} />,
-            Explorer:     <Compass color={color} size={iconSize} />,
+            Training:     <Dumbbell color={color} size={iconSize} />,
             Whiteboard:   <Layout color={color} size={iconSize} />,
             Reservation:  <CalendarClock color={color} size={iconSize} />,
           };
@@ -780,7 +801,7 @@ function MainTabs() {
       })}
     >
       <Tab.Screen name="Competitions" component={CompetitionNavigator} options={{ tabBarLabel: t('tabs.competition') }} listeners={tabListeners} />
-      <Tab.Screen name="Explorer"     component={ExplorerNavigator}     options={{ tabBarLabel: t('tabs.explorer') }} listeners={tabListeners} />
+      <Tab.Screen name="Training"     component={TrainingNavigator}     options={{ tabBarLabel: t('tabs.training') }} listeners={tabListeners} />
       <Tab.Screen name="Home"         component={HomeNavigator}         options={{ tabBarLabel: t('tabs.home') }} listeners={tabListeners} />
       <Tab.Screen name="Whiteboard"   component={WhiteboardNavigator}
         options={{ tabBarLabel: t('tabs.myBox'), tabBarBadge: unreadMessages > 0 ? unreadMessages : undefined }} listeners={tabListeners} />

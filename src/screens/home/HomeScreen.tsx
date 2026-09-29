@@ -35,6 +35,7 @@ import GlassButton from '../../components/glass/GlassButton';
 import GlassIconBox from '../../components/glass/GlassIconBox';
 import InteractiveTour from '../../components/InteractiveTour';
 import { homeTools } from './homeTools';
+import HomeExplorerBlock from './HomeExplorerBlock';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'HomeList'>;
 
@@ -609,6 +610,10 @@ export default function HomeScreen() {
             </View>
           </GlassCard>
         )}
+
+        {/* ── Explorer ────────────────────────────────────────────────── */}
+        <Text style={S.sectionTitleOutside}>{t('home.explorer.title')}</Text>
+        <HomeExplorerBlock onOpen={(route) => navigation.navigate(route)} />
 
         {/* ── Outils ──────────────────────────────────────────────────── */}
         <Text style={S.sectionTitleOutside}>{t('home.tools.title')}</Text>

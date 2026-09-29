@@ -11,12 +11,12 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
-import { ExplorerStackParamList } from '../../navigation';
+import { HomeStackParamList } from '../../navigation';
 import { Partner } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
 
-type Nav = NativeStackNavigationProp<ExplorerStackParamList>;
-type Route = RouteProp<ExplorerStackParamList, 'PartnerDetail'>;
+type Nav = NativeStackNavigationProp<HomeStackParamList>;
+type Route = RouteProp<HomeStackParamList, 'PartnerDetail'>;
 
 const CATEGORY_LABELS: Record<string, string> = {
   nutrition: 'Nutrition', equipment: 'Équipement', apparel: 'Vêtements',

@@ -9,11 +9,11 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
-import { ExplorerStackParamList } from '../../navigation';
+import { HomeStackParamList } from '../../navigation';
 import { Partner, PartnerCategory } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
 
-type Nav = NativeStackNavigationProp<ExplorerStackParamList>;
+type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
 const CATEGORY_LABELS: Record<PartnerCategory, string> = {
   nutrition: 'Nutrition',

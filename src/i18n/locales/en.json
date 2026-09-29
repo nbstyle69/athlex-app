@@ -818,7 +818,7 @@
     "reservation": "Booking",
     "wod": "WOD",
     "community": "Community",
-    "explorer": "Explore",
+    "training": "Training",
     "boTracking": "Tracking",
     "myBox": "My Box"
   },
@@ -867,7 +867,49 @@
       "active": "In progress",
       "closed": "Finished"
     },
-    "tournamentParticipants": "{{n}}/{{max}} participants"
+    "tournamentParticipants": "{{n}}/{{max}} participants",
+    "explorer": {
+      "title": "Explore",
+      "findBox": "Find a box",
+      "programs": "Programs",
+      "partners": "Partners"
+    }
+  },
+  "training": {
+    "title": "Training",
+    "subtitle": "Generate, time and find your sessions",
+    "generate": {
+      "title": "Generate my session",
+      "express": "Express WOD",
+      "afterClass": "After my class",
+      "button": "Generate my WOD",
+      "moreOptions": "More options: format, intention, equipment",
+      "noValidWodTitle": "No valid WOD",
+      "noValidWodBody": "Try another duration, another format or fewer exclusions.",
+      "noValidSessionTitle": "No valid session",
+      "noValidSessionBody": "Try another duration, another target or fewer exclusions."
+    },
+    "disciplines": {
+      "functional": "Functional",
+      "hybrid": "Hybrid",
+      "musculation": "Musculation"
+    },
+    "tools": {
+      "title": "Tools",
+      "timer": "Timer",
+      "oneRm": "1RM",
+      "history": "History",
+      "favorites": "Favorites"
+    },
+    "last": {
+      "title": "Last session",
+      "relaunch": "Relaunch",
+      "score": "Score: {{score}}",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo_one": "{{count}} day ago",
+      "daysAgo_other": "{{count}} days ago"
+    }
   },
   "profile": {
     "appearance": "Appearance",
@@ -1779,8 +1821,8 @@
         "description": "Here you'll find the available competitions."
       },
       {
-        "label": "Explore",
-        "description": "Info about boxes and partners."
+        "label": "Training",
+        "description": "Generate your WODs, start the timer and find your sessions."
       },
       {
         "label": "My box",

@@ -14,7 +14,7 @@ export const DOUBLE_TAP_MS = 350;
 export const TAB_ROOTS = {
   Home: 'HomeList',
   Competitions: 'CompetitionList',
-  Explorer: 'ExplorerMain',
+  Training: 'TrainingMain',
   Whiteboard: 'WhiteboardMain',
   Reservation: 'ReservationMain',
 } as const;

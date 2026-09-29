@@ -39,13 +39,13 @@ describe('tabPressAction', () => {
 
 describe('navigateur principal', () => {
   it('les cinq onglets partagent le même listener, aucun ne force sa racine à chaque appui', () => {
-    expect(navigateur).not.toMatch(/tabPress: \(\) => navigation\.navigate\('(Home|Competitions|Explorer|Whiteboard|Reservation)'/);
+    expect(navigateur).not.toMatch(/tabPress: \(\) => navigation\.navigate\('(Home|Competitions|Training|Whiteboard|Reservation)'/);
     expect((navigateur.match(/listeners=\{tabListeners\}/g) ?? []).length).toBe(5);
     expect(navigateur).toContain("if (r.action === 'root') navigation.navigate(route.name, { screen: TAB_ROOTS[route.name as TabName] });");
   });
 
   it('chaque onglet connaît sa racine', () => {
-    expect(TAB_ROOTS).toEqual({ Home: 'HomeList', Competitions: 'CompetitionList', Explorer: 'ExplorerMain', Whiteboard: 'WhiteboardMain', Reservation: 'ReservationMain' });
+    expect(TAB_ROOTS).toEqual({ Home: 'HomeList', Competitions: 'CompetitionList', Training: 'TrainingMain', Whiteboard: 'WhiteboardMain', Reservation: 'ReservationMain' });
     for (const root of Object.values(TAB_ROOTS)) expect(navigateur).toContain(`name="${root}"`);
   });
 });

@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R2a : onglet Entraînement à la place d'Explorer (app seule, aucune migration).**
+- 2e onglet « Entraînement » (icône Dumbbell) : écran ax `TrainingScreen` (génération en un tap par
+  `generateForUser` avec les réglages mémorisés, lien vers le générateur complet, tuiles Minuteur / 1RM /
+  Historique / Favoris, « Dernière séance » depuis le brouillon ou `generated_wods`). Pile Entraînement :
+  écrans WOD et minuteur, aussi conservés dans Accueil.
+- Explorer supprimé : ses sept routes passent dans la pile Accueil, bloc ax « Explorer » sous « Cette
+  semaine » (Trouver une box, Programmes, Partenaires). Barre d'onglets inchangée (verre flottant : R2b).
+
 **Saisie des charges en musculation, PR 2 « Whiteboard » (app seule, aucune migration).**
 - Séance de musculation du Whiteboard : la grille se recharge depuis le serveur (`strength_sessions` et
   `strength_set_logs`, migration `20270138` déjà en prod), sinon depuis la prescription ; brouillon
@@ -466,6 +474,12 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   pour que `unschedule_box_archive` appelée par un super-admin avec son jeton passe. Restent autorisés :
   la clé serveur (routes super-admin du Manager), `unschedule_box_archive`, l'archivage automatique.
   Remplace la garde de #378 (`internal.garder_archivage_box`, `trg_boxes_garde_archivage`).
+- Contrôles de l'archivage (sans migration) : `scripts/test-box-archivage.mjs`, jamais branché
+  jusqu'ici, devient la suite `box-archivage` d'`integration.yml` (21 assertions : masquage,
+  réactivation, et le gérant connecté refusé en `BOX_ARCHIVAGE_RESERVE` sur `archive_scheduled_at`
+  et `archived_at`, avec mutation inverse déclencheur désactivé). Contrôle T11 de l'audit des
+  droits (CI, rejeu, prod nocturne) : `trg_boxes_garde_archivage` présent, actif, BEFORE UPDATE
+  sur les quatre colonnes, fonction non exécutable par un client.
 - App (sans migration, s'appuie sur `20270125`, `20270127` et `20270128`, **à diffuser au prochain build**,
   lancé par Nab ; aucun build EAS dans ce lot) : inscription à un tournoi décidée par la base
   (`can_join_tournament`, donc aussi pendant le tournoi quand l'option le permet), pastille et indice
