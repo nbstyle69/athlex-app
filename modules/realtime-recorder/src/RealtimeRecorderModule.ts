@@ -7,6 +7,15 @@ export interface OverlayState {
   timestamp: string;
   isRecording: boolean;
   countdownValue: number;
+  /** « PRÉPARE-TOI » / « PRÊT ? », déjà traduit ; vide hors décompte. */
+  countdownLabel: string;
+  /** Décompte à 3-2-1 : libellé, chiffre et halo en couleur d'accent. */
+  countdownTense: boolean;
+  /** « GO ! » dans une bande d'accent ; vide = pas de bande. */
+  goLabel: string;
+  /** Accent déjà contrasté (#RRGGBB) et encre du texte posé sur l'accent. */
+  accentColor: string;
+  goInk: string;
   showTimer: boolean;
   boxLogoUrl: string;
   competitionLogoUrl: string;

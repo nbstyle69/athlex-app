@@ -232,8 +232,11 @@ describe('R5a : capture', () => {
   });
 });
 
-/** R6b : état du lien YouTube retiré, « GO ! » aussi en mode caméra (écart prouvé dans r6b.rn.test.tsx). */
-const LOGIC_SHA = '678f9be5481f4bf3dec1922dc497644a214ab9b0b215366a01d0ca86b48251cd';
+/**
+ * R6b : état du lien YouTube retiré, « GO ! » aussi en mode caméra (écart prouvé dans r6b.rn.test.tsx).
+ * R6c : synchro de l'incrustation déplacée après displayOpts, champs du décompte envoyés (écart prouvé dans r6c.rn.test.tsx).
+ */
+const LOGIC_SHA = '4e98aa7bd29ca634486d0008ea6a1f6273b5dc369a22deae7fca53e0ddfaa66d';
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
 const MODAL_SHA = '48d210edde52dc6c61eefc919547338ded563c6ac4e8405c748e9c748a47c566';
 const LAUNCH_SHA = 'e4567887b4ed3745b56790f362ad063d475f82f5d770b1ab62783ff38c5f7dc2';

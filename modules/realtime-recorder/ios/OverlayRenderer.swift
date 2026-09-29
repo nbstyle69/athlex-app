@@ -11,6 +11,11 @@ struct OverlayState {
   var timestamp: String = ""
   var isRecording: Bool = false
   var countdownValue: Int = 0         // >0 means countdown is visible
+  var countdownLabel: String = ""     // « PRÉPARE-TOI » / « PRÊT ? », already translated
+  var countdownTense: Bool = false    // 3-2-1: label, digit and halo in accent
+  var goLabel: String = ""            // « GO ! » band, empty = hidden
+  var accentColor: String = "#FFFFFF" // accent, contrast already ensured by JS
+  var goInk: String = "#101214"       // text ink on the accent band
   var showTimer: Bool = false         // true when chrono is running/frozen
   var boxLogoUrl: String = ""         // URL of the box logo (empty = no box)
   var competitionLogoUrl: String = "" // URL of competition logo (top-left overlay)
@@ -29,11 +34,13 @@ final class OverlayRenderer {
   private var compLogoLoading = false
   private var dsDigitalFont: UIFont?
   private var oswaldFont: UIFont?
+  private var oswaldMediumFont: UIFont?
 
   init() {
     loadAthlexLogo()
     loadDSDigitalFont()
     loadOswaldFont()
+    oswaldMediumFont = loadBundledFont(file: "Oswald-Medium", postScriptName: "Oswald-Medium")
   }
 
   // MARK: - Logo loading
@@ -97,6 +104,19 @@ final class OverlayRenderer {
     } else {
       print("[OverlayRenderer] Oswald-Bold font not available after registration")
     }
+  }
+
+  private func loadBundledFont(file: String, postScriptName: String) -> UIFont? {
+    guard let bundleURL = Bundle.main.url(forResource: "RealtimeRecorderResources", withExtension: "bundle"),
+          let resBundle = Bundle(url: bundleURL),
+          let fontURL = resBundle.url(forResource: file, withExtension: "ttf") else {
+      print("[OverlayRenderer] \(file).ttf not found in resource bundle")
+      return nil
+    }
+    CTFontManagerRegisterFontsForURL(fontURL as CFURL, .process, nil)
+    let font = UIFont(name: postScriptName, size: 40)
+    if font == nil { print("[OverlayRenderer] \(postScriptName) not available after registration") }
+    return font
   }
 
   private func loadBoxLogoIfNeeded(url: String) {
@@ -205,14 +225,9 @@ final class OverlayRenderer {
       UIGraphicsPopContext()
     }
 
-    // ─── 3. Countdown (center, extra large, bold) ───
+    // ─── 3. Countdown (center) — same look as the on-screen CountdownView (R5b/R6b) ───
     if state.countdownValue > 0 {
-      let cdStr = "\(state.countdownValue)"
-      let cdFontSize: CGFloat = isLandscape ? 180 * scale : 260 * scale
-      let cdH: CGFloat = isLandscape ? 220 * scale : 320 * scale
-      drawText(context: context, text: cdStr,
-               rect: CGRect(x: 0, y: (size.height - cdH) / 2, width: size.width, height: cdH),
-               fontSize: cdFontSize, bold: true, color: .white, alignment: .center, weight: .bold)
+      drawCountdown(context: context, size: size, refDim: refDim, isLandscape: isLandscape, state: state)
     }
 
     // ════════════════════════════════════════════
@@ -267,6 +282,72 @@ final class OverlayRenderer {
                fontSize: 24 * scale, bold: false, color: UIColor.white.withAlphaComponent(0.8),
                alignment: .right, shadow: true)
     }
+
+    // ─── 7. « GO ! » band (on top of the running timer) — same look as the on-screen GoFlash ───
+    if !state.goLabel.isEmpty {
+      drawGoBand(context: context, size: size, refDim: refDim, state: state)
+    }
+  }
+
+  // MARK: - Countdown
+
+  /// Label above a circle of diameter `d`: « PRÉPARE-TOI » + white digit in a
+  /// 35 % ring above 3, « PRÊT ? » + accent digit on a 12 % accent halo at 3-2-1.
+  private func drawCountdown(context: CGContext, size: CGSize, refDim: CGFloat, isLandscape: Bool, state: OverlayState) {
+    let accent = UIColor(hex: state.accentColor) ?? .white
+    let tense = state.countdownTense
+    let d = refDim * (isLandscape ? 0.5 : 0.55)
+    let circle = CGRect(x: (size.width - d) / 2, y: (size.height - d) / 2, width: d, height: d)
+
+    let labelSize = d * 0.07
+    let labelH = lineHeight(labelSize)
+    drawText(context: context, text: state.countdownLabel,
+             rect: CGRect(x: 0, y: circle.minY - d * 0.04 - labelH, width: size.width, height: labelH),
+             fontSize: labelSize, bold: false, color: tense ? accent : UIColor.white.withAlphaComponent(0.8),
+             alignment: .center, weight: .medium, shadow: true, tracking: labelSize * 0.33)
+
+    context.saveGState()
+    if tense {
+      context.setFillColor(accent.withAlphaComponent(0.12).cgColor)
+      context.fillEllipse(in: circle)
+    } else {
+      let w = d * 0.01
+      context.setStrokeColor(UIColor.white.withAlphaComponent(0.35).cgColor)
+      context.setLineWidth(w)
+      context.strokeEllipse(in: circle.insetBy(dx: w / 2, dy: w / 2))
+    }
+    context.restoreGState()
+
+    let digitSize = d * (tense ? 0.7 : 0.55)
+    let digitH = lineHeight(digitSize, oswaldMedium: true)
+    drawText(context: context, text: "\(state.countdownValue)",
+             rect: CGRect(x: circle.minX - d * 0.25, y: circle.midY - digitH / 2, width: d * 1.5, height: digitH),
+             fontSize: digitSize, bold: false, color: tense ? accent : .white, alignment: .center,
+             shadow: !tense, oswaldMedium: true,
+             glow: tense ? accent.withAlphaComponent(0.5) : nil, glowRadius: d * 0.11)
+  }
+
+  /// Accent band tilted by -4° across the frame, « GO ! » centered in `goInk`.
+  private func drawGoBand(context: CGContext, size: CGSize, refDim: CGFloat, state: OverlayState) {
+    let accent = UIColor(hex: state.accentColor) ?? .white
+    let ink = UIColor(hex: state.goInk) ?? .black
+    let goSize = refDim * 0.16
+    let textH = lineHeight(goSize, oswaldMedium: true)
+    let bandH = textH + goSize * 0.75
+    context.saveGState()
+    context.translateBy(x: size.width / 2, y: size.height / 2)
+    context.rotate(by: -4 * .pi / 180)
+    context.setFillColor(accent.cgColor)
+    context.fill(CGRect(x: -size.width * 0.6, y: -bandH / 2, width: size.width * 1.2, height: bandH))
+    drawText(context: context, text: state.goLabel,
+             rect: CGRect(x: -size.width / 2, y: -textH / 2, width: size.width, height: textH),
+             fontSize: goSize, bold: false, color: ink, alignment: .center, oswaldMedium: true)
+    context.restoreGState()
+  }
+
+  private func lineHeight(_ fontSize: CGFloat, oswaldMedium: Bool = false) -> CGFloat {
+    let font = oswaldMedium ? oswaldMediumFont?.withSize(fontSize) : nil
+    return (font ?? UIFont.systemFont(ofSize: fontSize, weight: .medium)).lineHeight
   }
 
   // MARK: - Text drawing helper
@@ -284,10 +365,15 @@ final class OverlayRenderer {
     monospace: Bool = false,
     dsDigital: Bool = false,
     oswald: Bool = false,
-    tracking: CGFloat = 0
+    tracking: CGFloat = 0,
+    oswaldMedium: Bool = false,
+    glow: UIColor? = nil,
+    glowRadius: CGFloat = 0
   ) {
     let font: UIFont
-    if oswald, let osFont = oswaldFont?.withSize(fontSize) {
+    if oswaldMedium, let omFont = oswaldMediumFont?.withSize(fontSize) {
+      font = omFont
+    } else if oswald, let osFont = oswaldFont?.withSize(fontSize) {
       font = osFont
     } else if dsDigital, let dsFont = dsDigitalFont?.withSize(fontSize) {
       font = dsFont
@@ -321,10 +407,29 @@ final class OverlayRenderer {
       attributes[.shadow] = s
     }
 
+    if let glow = glow {
+      let s = NSShadow()
+      s.shadowColor = glow
+      s.shadowOffset = .zero
+      s.shadowBlurRadius = glowRadius
+      attributes[.shadow] = s
+    }
+
     let attrString = NSAttributedString(string: text, attributes: attributes)
 
     UIGraphicsPushContext(context)
     attrString.draw(in: rect)
     UIGraphicsPopContext()
+  }
+}
+
+private extension UIColor {
+  /// "#RRGGBB" (as sent by JS); nil when malformed.
+  convenience init?(hex: String) {
+    var h = hex.trimmingCharacters(in: .whitespaces)
+    if h.hasPrefix("#") { h.removeFirst() }
+    guard h.count == 6, let v = UInt32(h, radix: 16) else { return nil }
+    self.init(red: CGFloat((v >> 16) & 0xFF) / 255, green: CGFloat((v >> 8) & 0xFF) / 255,
+              blue: CGFloat(v & 0xFF) / 255, alpha: 1)
   }
 }

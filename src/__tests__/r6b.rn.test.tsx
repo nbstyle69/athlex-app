@@ -386,13 +386,15 @@ describe('R6b : chrono et natif intacts', () => {
       .replace("  const [showYT, setShowYT] = useState(false);\n", "  const [showYT, setShowYT] = useState(false);\n  const [ytLink, setYtLink] = useState('');\n")
       .replace("phase === 'running') setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase]);",
         "phase === 'running' && !withCamera) setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase, withCamera]);");
-    expect(sha(back)).toBe('1041dd2f625b4dca7aef596260eec738457808105feae5f56912d121632992ed');
+    // R6c : + synchro de l'incrustation déplacée et champs du décompte (écart prouvé dans r6c.rn.test.tsx).
+    expect(sha(back)).toBe('1e6097383e9ca1ae32013c6835853ea45ab1e3a02b0d225861e417f413d174ed');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');
     const files = execSync('git ls-files modules/realtime-recorder', { cwd: root }).toString().trim().split('\n');
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
-    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('13a70926cacff27e9cdb575810f9da599703c39eb381e1317e6e18c7c4a15e64');
+    // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
+    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('2e4680f2aba8ceb953e809a7300795ba84d869f0c00726bb91f8e35fb408ef9e');
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
       .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');
