@@ -369,6 +369,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
     // R6a : écrans du mode caméra (lecture de la vidéo).
     path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'),
+    // R12 : profil (écran racine de l'onglet) au nouveau design.
+    path.join(SRC, 'screens', 'profile', 'ProfileScreen.tsx'),
   ];
 
   it('R4a : dans src/screens/wod et src/components/wod, seuls les fichiers du générateur et des résultats consomment ax', () => {
@@ -413,6 +415,21 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
       .map((f) => path.basename(f));
     expect(programs).toEqual(['ProgramDetailScreen.tsx']);
+  });
+
+  it('R12 : dans src/screens/profile et src/screens/settings, seuls le profil et ses écrans sociaux consomment ax', () => {
+    const r12 = [...walk(path.join(SRC, 'screens', 'profile')), ...walk(path.join(SRC, 'screens', 'settings'))]
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.relative(path.join(SRC, 'screens'), f))
+      .sort();
+    expect(r12).toEqual([
+      path.join('profile', 'BlockedUsersScreen.tsx'),
+      // Adoptant R3c (AxScreenHeader seul), hors périmètre R12.
+      path.join('profile', 'EloHistoryScreen.tsx'),
+      path.join('profile', 'ProfileScreen.tsx'),
+      path.join('profile', 'PublicProfileScreen.tsx'),
+      path.join('settings', 'NotificationSettingsScreen.tsx'),
+    ].sort());
   });
 
   it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {

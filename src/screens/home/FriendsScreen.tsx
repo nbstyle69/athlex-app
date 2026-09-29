@@ -1,10 +1,11 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxButton, AxCard, AxChip } from '../../components/ax';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl, TextInput,
 } from 'react-native';
-import { ChevronLeft, UserPlus, Check, X, Search, UserCheck } from 'lucide-react-native';
+import { ChevronRight, UserPlus, Check, X, Search, UserCheck, Users, Inbox } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,6 +19,8 @@ import { HomeStackParamList } from '../../navigation';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { readableInk } from './homeLevelColor';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -49,6 +52,7 @@ export default function FriendsScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
   const S = createStyles(theme);
+  const levelInk = (level?: string) => readableInk(LEVEL_COLORS[level ?? ''] ?? '#6B7280', theme.ax);
 
   const [tab, setTab] = useState<'friends' | 'requests' | 'search'>('friends');
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -172,26 +176,25 @@ export default function FriendsScreen() {
           <Text style={S.headerSub}>{friends.length} ami{friends.length > 1 ? 's' : ''}</Text>
       </AxScreenHeader>
 
-      <View style={S.tabRow}>
+      <View style={S.tabRow} testID="friends-tabs">
         {([
-          { key: 'friends',  label: 'Mes amis',    Icon: UserCheck },
-          { key: 'requests', label: `Invitations${pendingCount > 0 ? ` (${pendingCount})` : ''}`, Icon: UserPlus },
-          { key: 'search',   label: 'Rechercher',  Icon: Search },
-        ] as const).map(({ key, label, Icon }) => (
-          <TouchableOpacity
+          { key: 'friends',  label: 'Mes amis' },
+          { key: 'requests', label: `Invitations${pendingCount > 0 ? ` (${pendingCount})` : ''}` },
+          { key: 'search',   label: 'Rechercher' },
+        ] as const).map(({ key, label }) => (
+          <AxChip
             key={key}
-            style={[S.tab, tab === key && S.tabActive]}
+            label={label}
+            selected={tab === key}
             onPress={() => setTab(key)}
-          >
-            <Icon size={14} color={tab === key ? theme.accent : theme.textMuted} />
-            <Text style={[S.tabText, tab === key && S.tabTextActive]}>{label}</Text>
-          </TouchableOpacity>
+            testID={`friends-tab-${key}`}
+          />
         ))}
       </View>
 
       {loading ? (
         <View style={S.center}>
-          <ActivityIndicator size="large" color={theme.accent} />
+          <ActivityIndicator size="large" color={theme.ax.accentText} />
         </View>
       ) : (
         <ScrollView
@@ -202,36 +205,34 @@ export default function FriendsScreen() {
           {tab === 'friends' && (
             <>
               {friends.length === 0 ? (
-                <View style={S.emptyCard}>
-                  <Text style={S.emptyEmoji}>👥</Text>
+                <AxCard style={S.emptyCard} testID="friends-empty">
+                  <Users color={theme.ax.textMuted} size={40} />
                   <Text style={S.emptyTitle}>Pas encore d'amis</Text>
                   <Text style={S.emptySub}>Recherche des athlètes et envoie des invitations !</Text>
-                  <TouchableOpacity style={S.emptyBtn} onPress={() => setTab('search')}>
-                    <Search color="#fff" size={16} />
-                    <Text style={S.emptyBtnText}>Rechercher</Text>
-                  </TouchableOpacity>
-                </View>
+                  <AxButton label="Rechercher" icon={Search} onPress={() => setTab('search')} testID="friends-empty-search" />
+                </AxCard>
               ) : (
                 friends.map(friend => (
-                  <TouchableOpacity
+                  <AxCard
                     key={friend.id}
                     style={S.friendRow}
                     onPress={() => navigation.navigate('PublicProfile', { userId: friend.id })}
-                    activeOpacity={0.75}
+                    accessibilityLabel={friend.username}
+                    testID={`friend-${friend.id}`}
                   >
-                    <UserAvatar uri={(friend as any).avatar_url} name={friend.username} size={44} backgroundColor={theme.accentShadow} />
+                    <UserAvatar uri={(friend as any).avatar_url} name={friend.username} size={44} backgroundColor={theme.ax.field} textColor={theme.ax.text} />
                     <View style={S.friendInfo}>
-                      <Text style={S.friendName}>{friend.username}</Text>
+                      <Text style={S.friendName} numberOfLines={1}>{friend.username}</Text>
                       <View style={S.levelPill}>
-                        <View style={[S.levelDot, { backgroundColor: LEVEL_COLORS[friend.level] ?? '#6B7280' }]} />
-                        <Text style={[S.levelText, { color: LEVEL_COLORS[friend.level] ?? '#6B7280' }]}>
+                        <View style={[S.levelDot, { backgroundColor: levelInk(friend.level) }]} />
+                        <Text style={[S.levelText, { color: levelInk(friend.level) }]}>
                           {friend.level?.toUpperCase()}
                         </Text>
                         <Text style={S.eloText}>· {friend.elo} ELO</Text>
                       </View>
                     </View>
-                    <ChevronLeft color={theme.textMuted} size={16} style={{ transform: [{ rotate: '180deg' }] }} />
-                  </TouchableOpacity>
+                    <ChevronRight color={theme.ax.textMuted} size={16} />
+                  </AxCard>
                 ))
               )}
             </>
@@ -245,32 +246,32 @@ export default function FriendsScreen() {
                   {pendingReceived.map(req => {
                     const sender = req.requester as any;
                     return (
-                      <View key={req.id} style={S.requestRow}>
+                      <AxCard key={req.id} style={S.requestRow} testID={`request-${req.id}`}>
                         <TouchableOpacity
                           style={S.requestInfoTouchable}
                           activeOpacity={0.7}
                           onPress={() => sender?.id && navigation.navigate('PublicProfile', { userId: sender.id })}
                         >
-                          <UserAvatar uri={sender?.avatar_url} name={sender?.username ?? '?'} size={44} backgroundColor={theme.accentShadow} />
+                          <UserAvatar uri={sender?.avatar_url} name={sender?.username ?? '?'} size={44} backgroundColor={theme.ax.field} textColor={theme.ax.text} />
                           <View style={S.friendInfo}>
-                            <Text style={S.friendName}>{sender?.username ?? 'Athlète'}</Text>
+                            <Text style={S.friendName} numberOfLines={1}>{sender?.username ?? 'Athlète'}</Text>
                             <View style={S.levelPill}>
-                              <View style={[S.levelDot, { backgroundColor: LEVEL_COLORS[sender?.level] ?? '#6B7280' }]} />
-                              <Text style={[S.levelText, { color: LEVEL_COLORS[sender?.level] ?? '#6B7280' }]}>
+                              <View style={[S.levelDot, { backgroundColor: levelInk(sender?.level) }]} />
+                              <Text style={[S.levelText, { color: levelInk(sender?.level) }]}>
                                 {sender?.level?.toUpperCase()}
                               </Text>
                             </View>
                           </View>
                         </TouchableOpacity>
                         <View style={S.actionBtns}>
-                          <TouchableOpacity style={S.acceptBtn} onPress={() => handleAccept(req.id)}>
-                            <Check color="#fff" size={16} />
+                          <TouchableOpacity style={S.acceptBtn} onPress={() => handleAccept(req.id)} accessibilityRole="button" accessibilityLabel="Accepter" testID={`accept-${req.id}`}>
+                            <Check color={theme.ax.onAccent} size={16} />
                           </TouchableOpacity>
-                          <TouchableOpacity style={S.declineBtn} onPress={() => handleDecline(req.id)}>
-                            <X color="#fff" size={16} />
+                          <TouchableOpacity style={S.declineBtn} onPress={() => handleDecline(req.id)} accessibilityRole="button" accessibilityLabel="Refuser" testID={`decline-${req.id}`}>
+                            <X color={theme.ax.danger} size={16} />
                           </TouchableOpacity>
                         </View>
-                      </View>
+                      </AxCard>
                     );
                   })}
                 </>
@@ -281,32 +282,32 @@ export default function FriendsScreen() {
                   {pendingSent.map(req => {
                     const receiver = req.addressee as any;
                     return (
-                      <View key={req.id} style={S.requestRow}>
+                      <AxCard key={req.id} style={S.requestRow} testID={`request-${req.id}`}>
                         <TouchableOpacity
                           style={S.requestInfoTouchable}
                           activeOpacity={0.7}
                           onPress={() => receiver?.id && navigation.navigate('PublicProfile', { userId: receiver.id })}
                         >
-                          <UserAvatar uri={receiver?.avatar_url} name={receiver?.username ?? '?'} size={44} backgroundColor={theme.accentShadow} />
+                          <UserAvatar uri={receiver?.avatar_url} name={receiver?.username ?? '?'} size={44} backgroundColor={theme.ax.field} textColor={theme.ax.text} />
                           <View style={S.friendInfo}>
-                            <Text style={S.friendName}>{receiver?.username ?? 'Athlète'}</Text>
+                            <Text style={S.friendName} numberOfLines={1}>{receiver?.username ?? 'Athlète'}</Text>
                             <Text style={S.pendingLabel}>En attente…</Text>
                           </View>
                         </TouchableOpacity>
-                        <TouchableOpacity style={S.cancelBtn} onPress={() => handleCancelRequest(req.id)}>
+                        <TouchableOpacity style={S.cancelBtn} onPress={() => handleCancelRequest(req.id)} testID={`cancel-${req.id}`}>
                           <Text style={S.cancelBtnText}>Annuler</Text>
                         </TouchableOpacity>
-                      </View>
+                      </AxCard>
                     );
                   })}
                 </>
               )}
               {pendingReceived.length === 0 && pendingSent.length === 0 && (
-                <View style={S.emptyCard}>
-                  <Text style={S.emptyEmoji}>📬</Text>
+                <AxCard style={S.emptyCard} testID="requests-empty">
+                  <Inbox color={theme.ax.textMuted} size={40} />
                   <Text style={S.emptyTitle}>Aucune invitation</Text>
                   <Text style={S.emptySub}>Quand quelqu'un t'enverra une invitation, elle apparaîtra ici.</Text>
-                </View>
+                </AxCard>
               )}
             </>
           )}
@@ -317,33 +318,34 @@ export default function FriendsScreen() {
                 <TextInput
                   style={S.searchInput}
                   placeholder="Rechercher un athlète…"
-                  placeholderTextColor={theme.textMuted}
+                  placeholderTextColor={theme.ax.textMuted}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   onSubmitEditing={handleSearch}
                   returnKeyType="search"
                   autoCapitalize="none"
                 />
-                <TouchableOpacity style={S.searchBtn} onPress={handleSearch} disabled={searching}>
-                  {searching ? <ActivityIndicator color="#fff" size="small" /> : <Search color="#fff" size={18} />}
+                <TouchableOpacity style={S.searchBtn} onPress={handleSearch} disabled={searching} accessibilityRole="button" accessibilityLabel="Rechercher" testID="friends-search-submit">
+                  {searching ? <ActivityIndicator color={theme.ax.onAccent} size="small" /> : <Search color={theme.ax.onAccent} size={18} />}
                 </TouchableOpacity>
               </View>
               {searchResults.map(result => {
                 const alreadyFriend = isAlreadyFriend(result.id);
                 const pending = hasPendingRequest(result.id);
                 return (
-                  <TouchableOpacity
+                  <AxCard
                     key={result.id}
                     style={S.friendRow}
                     onPress={() => navigation.navigate('PublicProfile', { userId: result.id })}
-                    activeOpacity={0.75}
+                    accessibilityLabel={result.username}
+                    testID={`result-${result.id}`}
                   >
-                    <UserAvatar uri={(result as any).avatar_url} name={result.username} size={44} backgroundColor={theme.accentShadow} />
+                    <UserAvatar uri={(result as any).avatar_url} name={result.username} size={44} backgroundColor={theme.ax.field} textColor={theme.ax.text} />
                     <View style={S.friendInfo}>
-                      <Text style={S.friendName}>{result.username}</Text>
+                      <Text style={S.friendName} numberOfLines={1}>{result.username}</Text>
                       <View style={S.levelPill}>
-                        <View style={[S.levelDot, { backgroundColor: LEVEL_COLORS[result.level] ?? '#6B7280' }]} />
-                        <Text style={[S.levelText, { color: LEVEL_COLORS[result.level] ?? '#6B7280' }]}>
+                        <View style={[S.levelDot, { backgroundColor: levelInk(result.level) }]} />
+                        <Text style={[S.levelText, { color: levelInk(result.level) }]}>
                           {result.level?.toUpperCase()}
                         </Text>
                         <Text style={S.eloText}>· {result.elo} ELO</Text>
@@ -351,24 +353,25 @@ export default function FriendsScreen() {
                     </View>
                     {alreadyFriend ? (
                       <View style={S.alreadyFriendTag}>
-                        <UserCheck size={14} color={theme.success} />
-                        <Text style={[S.alreadyFriendText, { color: theme.success }]}>Ami</Text>
+                        <UserCheck size={14} color={theme.ax.accentText} />
+                        <Text style={[S.alreadyFriendText, { color: theme.ax.accentText }]}>Ami</Text>
                       </View>
                     ) : pending ? (
                       <View style={S.alreadyFriendTag}>
-                        <Text style={[S.alreadyFriendText, { color: theme.textMuted }]}>En attente</Text>
+                        <Text style={[S.alreadyFriendText, { color: theme.ax.textMuted }]}>En attente</Text>
                       </View>
                     ) : (
                       <TouchableOpacity
                         style={S.addBtn}
                         onPress={(e) => { e.stopPropagation(); sendFriendRequest(result.id); }}
                         activeOpacity={0.8}
+                        testID={`add-${result.id}`}
                       >
-                        <UserPlus size={15} color="#fff" />
+                        <UserPlus size={15} color={theme.ax.onAccent} />
                         <Text style={S.addBtnText}>Ajouter</Text>
                       </TouchableOpacity>
                     )}
-                  </TouchableOpacity>
+                  </AxCard>
                 );
               })}
             </>
@@ -380,106 +383,66 @@ export default function FriendsScreen() {
 }
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16,
-      backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
-      flexDirection: 'row', alignItems: 'center', gap: 14,
-    },
-    back: { padding: 4 },
-    headerTitle: { fontSize: 22, fontWeight: '900', color: theme.text },
-    headerSub: { fontSize: 12, color: theme.textMuted, marginTop: 1 },
+    headerSub: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 1 },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     tabRow: {
-      flexDirection: 'row', backgroundColor: theme.card,
-      borderBottomWidth: 1, borderBottomColor: theme.border,
+      flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm,
+      paddingHorizontal: axSpacing.lg, paddingVertical: axSpacing.md,
     },
-    tab: {
-      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-      gap: 4, paddingVertical: 12,
-      borderBottomWidth: 2, borderBottomColor: 'transparent',
-    },
-    tabActive: { borderBottomColor: theme.accent },
-    tabText: { fontSize: 11, fontWeight: '700', color: theme.textMuted },
-    tabTextActive: { color: theme.accent },
-    content: { padding: 16, gap: 10, paddingBottom: 140 },
-    subTitle: { fontSize: 13, fontWeight: '800', color: theme.textMuted, letterSpacing: 0.5, marginBottom: 4 },
-    emptyCard: {
-      backgroundColor: theme.card, borderRadius: 20, padding: 32,
-      borderWidth: 1, borderColor: theme.border, alignItems: 'center', gap: 10, marginTop: 20,
-    },
-    emptyEmoji: { fontSize: 40 },
-    emptyTitle: { fontSize: 17, fontWeight: '900', color: theme.text },
-    emptySub: { fontSize: 13, color: theme.textMuted, textAlign: 'center', lineHeight: 18 },
-    emptyBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 6,
-      backgroundColor: theme.accent, borderRadius: 12,
-      paddingHorizontal: 20, paddingVertical: 12, marginTop: 4,
-    },
-    emptyBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
-    friendRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      backgroundColor: theme.card, borderRadius: 14, padding: 14,
-      borderWidth: 1, borderColor: theme.border,
-    },
-    requestInfoTouchable: {
-      flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12,
-    },
-    requestRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      backgroundColor: theme.card, borderRadius: 14, padding: 14,
-      borderWidth: 1, borderColor: theme.border,
-    },
-    avatar: {
-      width: 44, height: 44, borderRadius: 22,
-      backgroundColor: theme.accentShadow,
-      justifyContent: 'center', alignItems: 'center',
-    },
-    avatarText: { fontSize: 16, fontWeight: '900', color: '#fff' },
-    friendInfo: { flex: 1 },
-    friendName: { fontSize: 15, fontWeight: '800', color: theme.text },
-    levelPill: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+    content: { padding: axSpacing.lg, gap: 10, paddingBottom: 140 },
+    subTitle: { ...axTypography.overline, color: c.textMuted, marginBottom: 4 },
+    emptyCard: { alignItems: 'center', gap: 10, marginTop: 20, padding: 32 },
+    emptyTitle: { ...axTypography.titleM, color: c.text, textAlign: 'center' },
+    emptySub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+    friendRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    requestInfoTouchable: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 12 },
+    requestRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    friendInfo: { flex: 1, minWidth: 0 },
+    friendName: { ...axTypography.label, color: c.text },
+    levelPill: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, flexWrap: 'wrap' },
     levelDot: { width: 6, height: 6, borderRadius: 3 },
-    levelText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
-    eloText: { fontSize: 10, color: theme.textMuted, fontWeight: '600' },
-    pendingLabel: { fontSize: 11, color: theme.textMuted, marginTop: 2, fontStyle: 'italic' },
+    levelText: { ...axTypography.labelSmall, letterSpacing: 0.5 },
+    eloText: { ...axTypography.bodySmall, color: c.textMuted },
+    pendingLabel: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2, fontStyle: 'italic' },
     actionBtns: { flexDirection: 'row', gap: 8 },
     acceptBtn: {
-      width: 36, height: 36, borderRadius: 10,
-      backgroundColor: theme.success, justifyContent: 'center', alignItems: 'center',
+      width: 36, height: 36, borderRadius: axRadius.control,
+      backgroundColor: c.accent, justifyContent: 'center', alignItems: 'center',
     },
     declineBtn: {
-      width: 36, height: 36, borderRadius: 10,
-      backgroundColor: '#EF4444', justifyContent: 'center', alignItems: 'center',
+      width: 36, height: 36, borderRadius: axRadius.control,
+      borderWidth: 1, borderColor: c.danger, justifyContent: 'center', alignItems: 'center',
     },
     cancelBtn: {
-      paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10,
-      backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
+      paddingHorizontal: 12, paddingVertical: 6, borderRadius: axRadius.control,
+      borderWidth: 1, borderColor: c.border,
     },
-    cancelBtnText: { fontSize: 12, color: theme.textMuted, fontWeight: '700' },
+    cancelBtnText: { ...axTypography.labelSmall, color: c.text },
     searchRow: { flexDirection: 'row', gap: 10, marginBottom: 4 },
     searchInput: {
-      flex: 1, backgroundColor: theme.card, borderRadius: 12,
-      borderWidth: 1, borderColor: theme.border,
+      flex: 1, backgroundColor: c.field, borderRadius: axRadius.control,
+      borderWidth: 1, borderColor: c.fieldBorder,
       paddingHorizontal: 14, paddingVertical: 12,
-      fontSize: 15, color: theme.text,
+      ...axTypography.body, color: c.text,
     },
     searchBtn: {
-      width: 48, height: 48, borderRadius: 12,
-      backgroundColor: theme.accent, justifyContent: 'center', alignItems: 'center',
+      width: 48, height: 48, borderRadius: axRadius.control,
+      backgroundColor: c.accent, justifyContent: 'center', alignItems: 'center',
     },
     addBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
-      backgroundColor: theme.accent, borderRadius: 10,
+      backgroundColor: c.accent, borderRadius: axRadius.control,
       paddingHorizontal: 12, paddingVertical: 7,
     },
-    addBtnText: { fontSize: 12, color: '#fff', fontWeight: '800' },
+    addBtnText: { ...axTypography.labelSmall, color: c.onAccent },
     alreadyFriendTag: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
-      backgroundColor: theme.surface, borderRadius: 10,
+      borderRadius: axRadius.badge, borderWidth: 1, borderColor: c.border,
       paddingHorizontal: 10, paddingVertical: 6,
     },
-    alreadyFriendText: { fontSize: 12, fontWeight: '700' },
+    alreadyFriendText: { ...axTypography.labelSmall },
   });
 }
