@@ -233,7 +233,8 @@ describe('R5a : capture', () => {
       fs.writeFileSync(file, JSON.stringify(all, null, 2));
     }
     expect(current.length).toBeGreaterThan(0);
-  });
+  // Premier test du fichier : il paie le chargement à froid des écrans (≈ 3 s en local, plus en CI).
+  }, 30000);
 });
 
 /**
