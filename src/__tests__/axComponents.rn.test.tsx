@@ -367,6 +367,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'screens', 'timer', 'TimerScreen.tsx'),
     path.join(SRC, 'screens', 'timer', 'TimerRunScreen.tsx'),
     path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
+    // R6a : écrans du mode caméra (lecture de la vidéo).
+    path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'),
   ];
 
   it('R4a : dans src/screens/wod et src/components/wod, seuls les fichiers du générateur et des résultats consomment ax', () => {
@@ -398,12 +400,12 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     ]);
   });
 
-  it('R5a : dans src/screens/timer, seuls le réglage et l’écran en cours consomment ax', () => {
+  it('R5a / R6a : dans src/screens/timer, seuls le réglage, l’écran en cours et la lecture vidéo consomment ax', () => {
     const timer = walk(path.join(SRC, 'screens', 'timer'))
       .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
       .map((f) => path.basename(f))
       .sort();
-    expect(timer).toEqual(['TimerRunScreen.tsx', 'TimerScreen.tsx']);
+    expect(timer).toEqual(['TimerRunScreen.tsx', 'TimerScreen.tsx', 'VideoPlaybackScreen.tsx']);
   });
 
   it('R4b : dans src/screens/programs, seul l’écran Programme consomme ax', () => {

@@ -8,6 +8,8 @@ import { HomeStackParamList } from '../../navigation';
 import { X, Play, Pause, Share2 } from 'lucide-react-native';
 import * as Sharing from 'expo-sharing';
 import { useTheme } from '../../context/ThemeContext';
+import { AxIconButton } from '../../components/ax';
+import { axFonts, axSpacing, axTypography, axVeil } from '../../theme/axTokens';
 
 type Route = RouteProp<HomeStackParamList, 'VideoPlayback'>;
 type Nav   = NativeStackNavigationProp<HomeStackParamList, 'VideoPlayback'>;
@@ -135,16 +137,13 @@ export default function VideoPlaybackScreen() {
         {/* TOP — titre + timestamp + bouton fermer */}
         <View style={styles.topRow} pointerEvents="box-none">
           <View style={styles.topLeft} pointerEvents="none">
-            {!overlaysBurned && title ? <Text style={styles.titleText} numberOfLines={2}>{title}</Text> : null}
-            {!overlaysBurned && recordedAt ? <Text style={styles.timestampText}>{formatRecordedAt(recordedAt)}</Text> : null}
+            {!overlaysBurned && title ? <Text style={[axTypography.titleM, styles.titleText]} numberOfLines={2}>{title}</Text> : null}
+            {!overlaysBurned && recordedAt ? <Text style={[axTypography.caption, styles.timestampText]}>{formatRecordedAt(recordedAt)}</Text> : null}
           </View>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity style={styles.closeBtn} onPress={async () => { if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(videoURL); }} activeOpacity={0.8}>
-              <Share2 color="#fff" size={22} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.closeBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
-              <X color="#fff" size={22} />
-            </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: axSpacing.md }}>
+            <AxIconButton testID="playback-share" icon={Share2} veil accessibilityLabel="Partager"
+              onPress={async () => { if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(videoURL); }} />
+            <AxIconButton testID="playback-close" icon={X} veil accessibilityLabel="Fermer" onPress={() => navigation.goBack()} />
           </View>
         </View>
 
@@ -159,24 +158,20 @@ export default function VideoPlaybackScreen() {
         <View style={{ flex: 1 }} pointerEvents="none">
           {controlsVisible && (
             <View style={styles.playPauseWrap} pointerEvents="box-none">
-              <TouchableOpacity style={styles.playPauseBtn} onPress={togglePlayPause} activeOpacity={0.8}>
-                {isPlaying
-                  ? <Pause color="#fff" size={28} fill="#fff" />
-                  : <Play  color="#fff" size={28} fill="#fff" />
-                }
-              </TouchableOpacity>
+              <AxIconButton testID="playback-toggle" icon={isPlaying ? Pause : Play} veil
+                accessibilityLabel={isPlaying ? 'Pause' : 'Lecture'} onPress={togglePlayPause} />
             </View>
           )}
         </View>
 
         {/* BAS — seek bar + chrono */}
         <View style={styles.bottomRow}>
-          {!overlaysBurned && chronoVisible && <Text style={styles.chronoText}>{chronoDisplay}</Text>}
+          {!overlaysBurned && chronoVisible && <Text testID="playback-chrono" style={styles.chronoText}>{chronoDisplay}</Text>}
 
           {/* Seek bar */}
           {durationMs > 0 && (
             <View style={styles.seekSection}>
-              <Text style={styles.seekTime}>{formatChronoTime(currentMs)}</Text>
+              <Text testID="playback-current" style={[axTypography.caption, styles.seekTime]}>{formatChronoTime(currentMs)}</Text>
               <TouchableOpacity
                 style={[styles.seekBarTrack, { width: seekBarWidth - 120 }]}
                 activeOpacity={1}
@@ -191,13 +186,13 @@ export default function VideoPlaybackScreen() {
                 }}
               >
                 <View style={styles.seekBarBg} />
-                <View style={[styles.seekBarFill, { width: `${durationMs > 0 ? (currentMs / durationMs) * 100 : 0}%` }]} />
+                <View testID="playback-fill" style={[styles.seekBarFill, { backgroundColor: theme.ax.accent, width: `${durationMs > 0 ? (currentMs / durationMs) * 100 : 0}%` }]} />
                 <View style={[
-                  styles.seekBarThumb,
+                  styles.seekBarThumb, { backgroundColor: theme.ax.accent },
                   { left: `${durationMs > 0 ? (currentMs / durationMs) * 100 : 0}%` },
                 ]} />
               </TouchableOpacity>
-              <Text style={styles.seekTime}>{formatChronoTime(durationMs)}</Text>
+              <Text testID="playback-duration" style={[axTypography.caption, styles.seekTime]}>{formatChronoTime(durationMs)}</Text>
             </View>
           )}
         </View>
@@ -229,38 +224,28 @@ const styles = StyleSheet.create({
   },
   topLeft: { flex: 1, paddingRight: 12 },
   titleText: {
-    fontSize: 20, fontWeight: '800', color: '#FFFFFF',
+    color: axVeil.ink,
     textShadowColor: 'rgba(0,0,0,0.85)',
     textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4, marginBottom: 4,
   },
   timestampText: {
-    fontSize: 13, fontWeight: '400', color: 'rgba(255,255,255,0.8)',
+    color: axVeil.ink,
     textShadowColor: 'rgba(0,0,0,0.85)',
     textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
   },
-  closeBtn: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center', alignItems: 'center',
-  },
   playPauseWrap: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  playPauseBtn: {
-    width: 56, height: 56, borderRadius: 28,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center', alignItems: 'center',
-  },
   countdownOverlay: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     justifyContent: 'center', alignItems: 'center',
   },
   countdownBigText: {
-    fontSize: 120, fontWeight: '100', color: '#FFFFFF',
+    fontSize: 120, fontFamily: axFonts.oswaldMedium, color: axVeil.ink,
     textShadowColor: 'rgba(0,0,0,0.9)',
     textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 10,
   },
   bottomRow: { alignItems: 'center', paddingBottom: 40 },
   chronoText: {
-    fontSize: 42, fontWeight: '700', color: '#FFFFFF',
+    fontSize: 42, fontFamily: axFonts.oswaldMedium, color: axVeil.ink,
     textShadowColor: 'rgba(0,0,0,0.9)',
     textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6,
     fontVariant: ['tabular-nums'],
@@ -284,17 +269,17 @@ const styles = StyleSheet.create({
   },
   seekBarFill: {
     position: 'absolute', left: 0, top: 8, height: 4,
-    backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 2,
+    borderRadius: 2,
   },
   seekBarThumb: {
     position: 'absolute', top: 4, width: 12, height: 12,
-    borderRadius: 6, backgroundColor: '#fff',
+    borderRadius: 6,
     marginLeft: -6,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.5, shadowRadius: 3, elevation: 4,
   },
   seekTime: {
-    fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.7)',
+    color: axVeil.ink,
     fontVariant: ['tabular-nums'], width: 52, textAlign: 'center',
   },
 });
