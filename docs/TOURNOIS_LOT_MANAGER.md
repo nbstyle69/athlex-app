@@ -8,7 +8,25 @@ Ce document réunit en une seule liste ce que chaque PR demandait au Manager, cl
 
 Mise à jour du 25/09/2026 : la priorité 0 ci-dessous passe **en premier**, et la règle de suppression change (migration `20270124` : un résultat validé ne disparaît jamais, on archive).
 
+## État au 29/09/2026
+
+Relevé en lecture seule sur `origin/main` d'AthleX-Manager (dernier commit `64155d6`, #409). Les numéros de ligne sont ceux de ce commit.
+
+| Priorité | État | PR Manager |
+|---|---|---|
+| 0 | **FAIT** | #398 (mergée le 26/09/2026 à 12:36 UTC) à #403 (26/09/2026) |
+| 1 | **FAIT** | #400 (26/09/2026 à 13:56 UTC), complétée par #401 et #403 |
+| 2 | **FAIT** | #399 (26/09/2026 à 13:02 UTC) |
+| 2 bis | **FAIT** | #402 (26/09/2026 à 14:42 UTC) |
+| 3 | **À FAIRE** | — |
+| 4 | **À FAIRE** (seuls la capacité et le remplissage existent) | — |
+| 5 | **En partie** : suppression, refus de la base faits ; « Max participants » et message de clôture à faire | #354, #398 |
+
+Le détail est sous chaque priorité.
+
 ## Priorité 0 — à faire en premier
+
+**FAIT** — AthleX-Manager #398 (archivage, régénération par la base, case « Inscriptions ouvertes pendant le tournoi », archivés masqués, mergée le 26/09/2026 à 12:36 UTC), puis #399 à #403 le même jour. Preuves : `lib/tournaments/archive.ts:41` (`archive_tournament` / `unarchive_tournament`), `components/tournaments/DeleteTournamentButton.tsx` (« Archiver », « Désarchiver », repli sur `TOURNOI_AVEC_RESULTATS`), `lib/tournaments/refusals.ts` (refus traduits).
 
 ### Format converti en « simple » à l'édition (défaut, constaté le 25/09)
 
@@ -50,6 +68,11 @@ La base démarre désormais seule un tournoi « open » : à sa date de début, 
 
 Aucun tournoi `swiss` (double élimination) n'existe en prod aujourd'hui. **Le premier ne doit pas commencer avant ces points** : sans eux, le tableau des perdants reste bloqué après la finale du tableau des gagnants.
 
+**FAIT** — AthleX-Manager #400 (mergée le 26/09/2026 à 13:56 UTC). Preuves :
+- « Tour suivant » par la base : `app/(dashboard)/tournaments/[id]/bracket/actions.ts:49` (`advance_bracket_round`) ; dernier tour tous tableaux confondus en `swiss`, bouton gardé après la grande finale jusqu'au match décisif : `lib/tournaments/bracketRounds.ts:14-34` (`lastRound`, `canAdvance`), `components/tournaments/BracketManager.tsx:450`.
+- Grande finale : plus de `createGrandFinalAction` (absent de `origin/main`), `bracket/actions.ts:151` ; lignes `grand_final` par tour croissant, « Grande finale » puis « Grande finale — match décisif » : `bracketRounds.ts:38-43`.
+- Tableau des perdants numéroté depuis 1 : `bracketRounds.ts:45-48` ; exemptions affichées « Exempté » : `BracketManager.tsx:634` et `:704`.
+
 ### Bouton « Tour suivant » (`BracketManager.tsx`, autour des lignes 425–450)
 
 - Aujourd'hui, il avance sur le **dernier tour du tableau des gagnants**.
@@ -75,6 +98,8 @@ Aucun tournoi `swiss` (double élimination) n'existe en prod aujourd'hui. **Le p
 
 Les tableaux simples (`bracket`) existent déjà en prod, et le Manager y décide les matchs avec l'ancienne règle, où **un athlète au CAP peut battre un finisher**. C'est à brancher au plus tôt.
 
+**FAIT** — AthleX-Manager #399 (mergée le 26/09/2026 à 13:02 UTC). Preuves : `app/(dashboard)/tournaments/[id]/bracket/actions.ts:79` (`decide_bracket_round`) ; motifs des matchs laissés à la main dans `lib/tournaments/bracketDecision.ts:11-17`, affichés par `components/tournaments/BracketManager.tsx:473-476` ; nombre de matchs décidés lu dans le retour (`BracketManager.tsx:257`). `winnerFromScores` et `applyDecisionsAction` n'existent plus. `parseScoreVal` reste (`lib/tournamentScoring.ts:6`), mais ne sert plus qu'à lire un score saisi (`scores/ScoresClient.tsx:93`), pas à décider un match. Depuis #400, en double élimination, aucun WOD de tour n'est envoyé : chaque match est décidé sur son propre WOD (`lib/tournaments/bracketRounds.ts:67-72`).
+
 - **« Décider selon les scores »** (`autoResolveRound`) : remplacer `winnerFromScores` et `applyDecisionsAction` par un seul appel :
   ```ts
   supabase.rpc('decide_bracket_round', { p_tournament_id, p_round, p_wod_id })
@@ -95,6 +120,8 @@ Les tableaux simples (`bracket`) existent déjà en prod, et le Manager y décid
 Décision du 24/09/2026 : le barème de référence est celui de l'app (table CF Games 100, 97, 95, 93, 91…). Sur un WOD, le tie-break départage d'abord ; s'il reste une égalité, rang partagé et mêmes points, le rang suivant sauté. **La base est la seule source du calcul** : l'app ne classe plus rien depuis #361, et le Manager doit faire de même.
 
 Aujourd'hui, le Manager calcule son propre classement avec un barème linéaire (100, 97, 94…, égalités départagées par `athlete_id`) et l'écrit dans `tournament_participants.score`. Une fois #359 appliquée, ce chiffre ne correspond plus à celui de la base, ni à la clôture ELO.
+
+**FAIT** — AthleX-Manager #402 (mergée le 26/09/2026 à 14:42 UTC). Preuves : `app/(dashboard)/tournaments/[id]/leaderboard/page.tsx:52-54` lit `tournament_ligue_standings` (ligue, saison choisie), sinon `tournament_classique_standings`, et `tournament_classique_wod_ranks` ; `lib/tournaments/standings.ts`. `recalcLeaderboard`, `rankClassique` et `rankWodScores` n'existent plus, et plus aucun code n'écrit `tournament_participants.score`. Reste, facultatif : l'édition manuelle des points de division (`components/tournaments/DivisionsManager.tsx:131`, `updatePoints`) est gardée ; la base l'écrase au prochain score validé.
 
 - **Cesser d'écrire `tournament_participants.score`** :
   - retirer `recalcLeaderboard` de `app/(dashboard)/tournaments/[id]/scores/ScoresClient.tsx` (autour de la ligne 55) et ses appels, à la validation comme sur le bouton de recalcul : il n'y a plus rien à recalculer ;
@@ -128,6 +155,8 @@ Décisions du 24/09/2026 :
 
 ## Priorité 3 — nouvelles possibilités du tableau
 
+**À FAIRE.** Sur `origin/main`, aucun bouton « Forfait » : `forfeit` n'apparaît que dans un décompte de la fiche du tournoi (`app/(dashboard)/tournaments/[id]/page.tsx:24`), et le type des matchs de `components/tournaments/BracketManager.tsx:53` ne connaît pas ce statut. Aucune trace de `third_place_match` ni de la petite finale (`side = 'third_place'`) dans le formulaire ni dans le tableau.
+
 ### Forfait (#355)
 
 - **Bouton « Forfait »** sur un match à deux athlètes : choisir l'absent, puis écrire directement, sur le modèle de `setMatchWinnerAction` :
@@ -146,6 +175,12 @@ Décisions du 24/09/2026 :
 - **Clôture** : la petite finale doit être jouée avant (sinon `TABLEAU_NON_TERMINE`). Le classement distingue alors le 3e du 4e.
 
 ## Priorité 4 — ligues à divisions
+
+**À FAIRE**, sauf la capacité et le remplissage. Sur `origin/main`, `components/tournaments/DivisionsManager.tsx` :
+- existe déjà : le champ « Max » (`max_members`, `:276-277`) et l'affichage « n / max athlètes » (`:272`) ;
+- manque : le bouton « Répartir par ELO » (aucun appel à `affecter_divisions`), la pastille « placé à la main » et « Rendre à l'automatique » (aucune lecture de `placement`), la division du score (`tournament_scores.division_id` n'est ni affichée ni modifiable) ;
+- fin de saison : `end_season_and_advance` est appelée **sans** `p_saison_attendue` (`:153`), sans message « Saison déjà close ».
+- Doublons à l'ajout (`addMember`, `:87-99`) : non vérifié, l'insertion ne filtre pas elle-même.
 
 ### Capacité et affectation par ELO (#357)
 
@@ -174,6 +209,13 @@ Décisions du 24/09/2026 :
 - Clore une saison **sans aucun score** : confirmation explicite, puis l'appel avec `p_saison_attendue`.
 
 ## Priorité 5 — avertissements et confort
+
+**En partie.**
+- **FAIT** — suppression d'un tournoi : la fenêtre se ferme après succès (`components/tournaments/DeleteTournamentButton.tsx:50`, `lib/tournaments/deleteTournament.ts`, AthleX-Manager #354 puis #398) et ne parle plus d'ELO retiré.
+- **FAIT** — refus de la base nommés : `MATCH_TERMINE` (`lib/tournaments/refusals.ts:16`), `FORMAT_FIGE` (`:22`) ; `STATUT_RECUL`, `TOURNOI_CLOTURE` s'affichent par le texte de la base (`:12-13`). #398.
+- **À FAIRE** — « Max participants » vidé : toujours `parseInt(e.target.value)` (`components/tournaments/TournamentForm.tsx:297`), donc `NaN`.
+- **À FAIRE** — clôture : aucun message propre à `TABLEAU_NON_TERMINE` (le code n'apparaît nulle part dans le Manager).
+- Facultatif, non fait : écart d'ELO du match (`tournament_match_elo_history.elo_delta`) dans la fiche.
 
 - **Supprimer un tournoi** (`DeleteTournamentButton`) : **mis à jour le 25/09** — la suppression ne retire plus aucun ELO ; elle n'est possible que sans résultat validé (sinon « Archiver », priorité 0). La fenêtre doit se fermer après la suppression.
 - **Supprimer un match du tableau**, si l'action existe : refusée par la base pour un match terminé ou forfait (`MATCH_TERMINE`) ; la correction passe par la réinitialisation ou le choix du vainqueur.
