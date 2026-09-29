@@ -248,6 +248,15 @@ export default function CompetitionScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {activeTab === 0 && (
           <>
+            {user && (
+              <CompetitionRankingCard
+                rank={eloRank ?? null}
+                elo={user.elo ?? 1000}
+                level={user.level ?? 'scaled'}
+                onOpen={() => navigation.navigate('Leaderboard')}
+              />
+            )}
+
             <Text style={S.sectionTitle}>{t('competition.availableTournaments')}</Text>
             {tLoading ? (
               <ActivityIndicator color={theme.accent} style={{ marginTop: 32 }} />
@@ -341,15 +350,6 @@ export default function CompetitionScreen() {
                   </View>
                 </View>
               </TouchableOpacity>
-            )}
-
-            {user && (
-              <CompetitionRankingCard
-                rank={eloRank ?? null}
-                elo={user.elo ?? 1000}
-                level={user.level ?? 'scaled'}
-                onOpen={() => navigation.navigate('Leaderboard')}
-              />
             )}
 
             <View style={S.miniInfo}>

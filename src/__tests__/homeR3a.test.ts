@@ -141,11 +141,16 @@ describe('Compétitions', () => {
     expect(body).toContain('<CompStack.Screen name="PublicProfile" component={PublicProfileScreen} />');
   });
 
-  it('la carte Classement est sous le WOD du jour et ouvre Leaderboard', () => {
-    const wod = comp.indexOf("t('competition.wodOfDay')");
+  it('la carte Classement est en tête de l’onglet Tournois (ouvert par défaut), unique, et ouvre Leaderboard', () => {
+    expect(comp).toContain('useState(route.params?.initialTab ?? 0)');
+    const tab0 = comp.indexOf('{activeTab === 0 && (');
+    const tab1 = comp.indexOf('{activeTab === 1 && (');
     const card = comp.indexOf('<CompetitionRankingCard');
-    expect(card).toBeGreaterThan(wod);
-    expect(comp.indexOf("t('competition.miniInfo')")).toBeGreaterThan(card);
+    expect(comp.split('<CompetitionRankingCard').length).toBe(2);
+    expect(card).toBeGreaterThan(tab0);
+    expect(card).toBeLessThan(tab1);
+    expect(comp.slice(tab0, card)).toMatch(/^\{activeTab === 0 && \(\s*<>\s*\{user && \(\s*$/);
+    expect(comp.indexOf("t('competition.availableTournaments')")).toBeGreaterThan(card);
     expect(comp.slice(card, comp.indexOf('/>', card))).toContain("onOpen={() => navigation.navigate('Leaderboard')}");
   });
 });
