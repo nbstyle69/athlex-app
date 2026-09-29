@@ -205,6 +205,20 @@ Supabase/Resend.
 
 ## En cours
 
+**Saisie des charges en musculation, PR 2 « Whiteboard » (app seule, aucune migration).**
+- Séance de musculation du Whiteboard : la grille se recharge depuis le serveur (`strength_sessions` et
+  `strength_set_logs`, migration `20270138` déjà en prod), sinon depuis la prescription ; brouillon
+  enregistré 0,8 s après la dernière frappe et bouton « Enregistrer et continuer plus tard » ; état
+  « En cours · n / N séries » et « Enregistré il y a … ».
+- Hors connexion : copie locale renvoyée au retour du réseau, jamais au-dessus d'une version serveur
+  plus récente ni d'une séance validée.
+- Plus de champ POIDS : « Charge max (score) · calculée » depuis les séries valides. « Valider la
+  séance » appelle `validate_strength_session` (séries, charge max, score et 1RM, calculés avec
+  `estimateOneRepMax`, en une transaction) ; compteurs, streak, crédit et notifications seulement si
+  `premiere_validation`. Séance validée : charges enregistrées et « Modifier mes charges ».
+- Saisie décimale iOS : virgule et point acceptés (102,5 → 102.5).
+- Séances générées (`MuscuSessionCard`) : PR 3, après le merge de celle-ci (elle réutilise son service).
+
 **Refonte visuelle mobile, lot R1 « Composants » (aucun écran modifié).**
 - Bibliothèque `src/components/ax/` : verre (`AxGlass`, flou 24 sur iOS, opacités 0.80 / 0.85 portées
   à 0.96 sur Android), boutons (accent, contour, clair, pointillé, arrêt), bouton carré, pastille,

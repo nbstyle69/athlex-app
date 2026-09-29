@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Modal, TextInput, KeyboardAvoidingView, Platform,
-  ActivityIndicator, Alert, RefreshControl, FlatList, Share,
+  ActivityIndicator, Alert, RefreshControl, FlatList, Share, AppState,
 } from 'react-native';
 import { ChevronLeft, Clock, Plus, RotateCcw, MessageSquare, Trophy, Heart, Send, X, Smile, Share2, Play } from 'lucide-react-native';
 import WebView from 'react-native-webview';
@@ -27,9 +27,16 @@ import { formatScoreValue, normalizeScore, mapForTimeScore, formatCap } from '..
 import { computeCompletedMovements } from '../../utils/movementParser';
 import { annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
-import { buildStrengthGrid, logStrengthSets, StrengthSetDraft } from '../../services/strengthSets';
+import {
+  buildStrengthGrid, logStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
+  loadStrengthGrid, saveStrengthDraft, gridFromServer, fetchStrengthSession, submitStrengthValidation,
+  strengthProgress, computedMaxLoad, validationErrorCode,
+} from '../../services/strengthSets';
 import i18n from '../../i18n';
-import StrengthSetGrid from '../../components/wod/StrengthSetGrid';
+import StrengthSetGrid, {
+  StrengthMaxLoadRow, StrengthSavedLoads, StrengthSaveState, StrengthSessionStatus,
+} from '../../components/wod/StrengthSetGrid';
+import { AxButton } from '../../components/ax';
 import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
 import { recordStrengthPRs } from '../../services/strengthPR';
 import { computeMaxScore } from '../../utils/computeMaxScore';
@@ -68,6 +75,11 @@ function allowedScoreTypes(wodType?: string | null): { types: ScoreType[]; defau
     default:         return { types: ['time', 'reps', 'weight', 'rounds'], default: 'reps' };
   }
 }
+
+/** Délai d'enregistrement du brouillon après la dernière frappe. */
+export const DRAFT_SAVE_DELAY_MS = 800;
+/** Nouvel essai d'envoi d'une copie locale restée hors connexion. */
+const OFFLINE_RETRY_MS = 15000;
 
 function formatScore(score: WODScore): string {
   return formatScoreValue(score.score_value, score.score_type, score.capped);
@@ -111,6 +123,21 @@ export default function WODDetailScreen() {
   // prescrite, pré-remplie. C'est cette saisie — pas la prescription — qui
   // alimente le journal ET les 1RM.
   const [strengthDrafts, setStrengthDrafts] = useState<StrengthSetDraft[]>([]);
+
+  // Séance de musculation (WOD « strength ») : brouillon côté serveur, repris
+  // sur n'importe quel appareil, validé par validate_strength_session.
+  const [strengthServer, setStrengthServer] = useState<ServerStrengthSession | null>(null);
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const [draftSaveState, setDraftSaveState] = useState<StrengthSaveState>('idle');
+  const [draftDirtyTick, setDraftDirtyTick] = useState(0);
+  const [clock, setClock] = useState(() => Date.now());
+  const draftsRef = useRef<StrengthSetDraft[]>([]);
+  const editedAtRef = useRef<string | null>(null);
+  const baseUpdatedAtRef = useRef<string | null>(null);
+  const strengthOriginRef = useRef<'server' | 'local' | 'prescription' | null>(null);
+  const saveChainRef = useRef<Promise<unknown>>(Promise.resolve());
+  const strengthLoadedFor = useRef<string | null>(null);
+  draftsRef.current = strengthDrafts;
 
   // Score detail modal
   const [selectedScore, setSelectedScore] = useState<WODScore | null>(null);
@@ -219,11 +246,146 @@ export default function WODDetailScreen() {
       .filter((e): e is StrengthEntry => e !== null)
   ), [wod?.description]);
 
+  const isStrengthSession = wod?.wod_type === 'strength' && strengthEntries.length > 0;
+  const strengthValidated = strengthServer?.session?.status === 'validated';
+  const strengthPrescription = useMemo(
+    () => buildStrengthGrid(strengthEntries, oneRepMaxFor),
+    [strengthEntries, oneRepMaxFor],
+  );
+  const strengthKey: StrengthSourceKey | null = useMemo(
+    () => (isStrengthSession && wod && user ? { userId: user.id, sourceType: 'whiteboard', sourceId: wod.id } : null),
+    [isStrengthSession, wod?.id, user?.id], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+
   // La prescription pré-remplit la saisie ; l'athlète corrige ce qu'il a
   // réellement fait. Un %1RM sans 1RM connu reste vide plutôt qu'inventé.
+  // Une séance de musculation garde sa grille : elle vient du serveur.
   const prefillStrengthLoads = useCallback(() => {
-    setStrengthDrafts(buildStrengthGrid(strengthEntries, oneRepMaxFor));
-  }, [strengthEntries, oneRepMaxFor]);
+    if (isStrengthSession) return;
+    setStrengthDrafts(strengthPrescription);
+  }, [isStrengthSession, strengthPrescription]);
+
+  const applyServerSession = useCallback((server: ServerStrengthSession) => {
+    setStrengthServer(server);
+    baseUpdatedAtRef.current = server.session?.updatedAt ?? null;
+    setDraftSavedAt(server.session?.updatedAt ?? null);
+  }, []);
+
+  /** Envoie le brouillon (les envois se suivent : jamais deux en parallèle). */
+  const saveDraftNow = useCallback((): Promise<string> => {
+    const run = async (): Promise<string> => {
+      if (!strengthKey || !wod) return 'saved';
+      const editedAt = editedAtRef.current;
+      if (!editedAt) return 'saved';
+      setDraftSaveState('saving');
+      const res = await saveStrengthDraft({
+        ...strengthKey,
+        sourceTitle: wod.title,
+        drafts: draftsRef.current,
+        editedAt,
+        baseUpdatedAt: baseUpdatedAtRef.current,
+      });
+      if (res.status === 'saved') {
+        if (editedAtRef.current === editedAt) editedAtRef.current = null;
+        baseUpdatedAtRef.current = res.updatedAt;
+        setDraftSavedAt(res.updatedAt);
+        setStrengthServer(prev => ({
+          session: { status: 'draft', plannedSets: draftsRef.current.length, maxLoadKg: null, firstValidatedAt: null, ...prev?.session, updatedAt: res.updatedAt },
+          sets: prev?.sets ?? [],
+        }));
+        setDraftSaveState('idle');
+      } else if (res.status === 'server_newer') {
+        editedAtRef.current = null;
+        applyServerSession(res.server);
+        setStrengthDrafts(gridFromServer(strengthPrescription, res.server.sets));
+        setDraftSaveState('serverNewer');
+      } else {
+        setDraftSaveState('offline');
+      }
+      return res.status;
+    };
+    const next = saveChainRef.current.then(run, run);
+    saveChainRef.current = next;
+    return next;
+  }, [strengthKey, wod, strengthPrescription, applyServerSession]);
+
+  // Chargement : séance et séries du serveur ; à défaut, la prescription. Une
+  // copie locale restée hors connexion repart si le serveur n'a pas plus récent.
+  useEffect(() => {
+    if (!strengthKey || strengthLoadedFor.current === strengthKey.sourceId) return;
+    strengthLoadedFor.current = strengthKey.sourceId;
+    loadStrengthGrid(strengthKey, strengthPrescription).then(res => {
+      strengthOriginRef.current = res.origin;
+      setStrengthDrafts(res.drafts);
+      if (res.server) applyServerSession(res.server);
+      if (res.pending) {
+        editedAtRef.current = res.pending.editedAt;
+        baseUpdatedAtRef.current = res.pending.baseUpdatedAt;
+        if (res.offline) setDraftSaveState('offline');
+        else saveDraftNow();
+      }
+    }).catch(e => captureError(e, { screen: 'WODDetail', action: 'loadStrengthGrid' }));
+  }, [strengthKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Les 1RM du profil arrivent après : une grille encore issue de la
+  // prescription, pas touchée, reprend les charges résolues.
+  useEffect(() => {
+    if (strengthOriginRef.current === 'prescription' && !editedAtRef.current) setStrengthDrafts(strengthPrescription);
+  }, [strengthPrescription]);
+
+  // Brouillon enregistré ~0,8 s après la dernière frappe.
+  useEffect(() => {
+    if (!strengthKey || strengthValidated || !editedAtRef.current) return undefined;
+    const id = setTimeout(() => { saveDraftNow(); }, DRAFT_SAVE_DELAY_MS);
+    return () => clearTimeout(id);
+  }, [draftDirtyTick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Hors connexion : nouvel essai au retour au premier plan et à intervalle.
+  useEffect(() => {
+    if (draftSaveState !== 'offline') return undefined;
+    const id = setInterval(() => { saveDraftNow(); }, OFFLINE_RETRY_MS);
+    const sub = AppState.addEventListener('change', st => { if (st === 'active') saveDraftNow(); });
+    return () => { clearInterval(id); sub.remove(); };
+  }, [draftSaveState, saveDraftNow]);
+
+  // « Enregistré il y a … » avance tout seul.
+  useEffect(() => {
+    if (!isStrengthSession) return undefined;
+    const id = setInterval(() => setClock(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, [isStrengthSession]);
+
+  // Une saisie pas encore partie part quand on quitte l'écran.
+  const saveDraftNowRef = useRef(saveDraftNow);
+  saveDraftNowRef.current = saveDraftNow;
+  useEffect(() => () => { if (editedAtRef.current) saveDraftNowRef.current(); }, []);
+
+  function onStrengthDraftChange(index: number, patch: Partial<StrengthSetDraft>) {
+    setStrengthDrafts(prev => prev.map((d, i) => (i === index ? { ...d, ...patch } : d)));
+    if (isStrengthSession && !strengthValidated) {
+      editedAtRef.current = new Date().toISOString();
+      setDraftDirtyTick(t => t + 1);
+    }
+  }
+
+  /** Fermer sans valider : une séance validée revient à ses charges enregistrées. */
+  function closeScoreModal() {
+    if (strengthValidated && strengthServer) setStrengthDrafts(gridFromServer(strengthPrescription, strengthServer.sets));
+    setModalOpen(false);
+  }
+
+  async function saveStrengthLater() {
+    if (!strengthKey) return;
+    if (!editedAtRef.current) editedAtRef.current = new Date().toISOString();
+    setSubmitting(true);
+    const status = await saveDraftNow();
+    setSubmitting(false);
+    setClock(Date.now());
+    if (status === 'offline') {
+      Alert.alert(i18n.t('strengthSession.offlineSavedTitle'), i18n.t('strengthSession.offline'));
+    }
+    setModalOpen(false);
+  }
 
   function openEditModal() {
     prefillStrengthLoads();
@@ -310,32 +472,8 @@ export default function WODDetailScreen() {
     }, { onConflict: 'wod_id,member_id' });
 
     if (error) { setSubmitting(false); Alert.alert('Erreur', error.message); return; }
-    trackScoreSubmit(wod.id, scoreType);
 
-    // Dedup: if user already marked this WOD as "réalisé", the activity was already counted.
-    // Remove the completion row (score is authoritative) and skip double-counting the streak.
-    const { data: existingCompletion } = await supabase
-      .from('wod_completions')
-      .select('id')
-      .eq('wod_id', wod.id)
-      .eq('member_id', user.id)
-      .maybeSingle();
-    const alreadyCounted = !!existingCompletion;
-    if (alreadyCounted) {
-      await supabase.from('wod_completions').delete().eq('wod_id', wod.id).eq('member_id', user.id);
-    }
-
-    incrementCounter(user.id, 'total_scores_submitted', 1, currentBox?.id, { skipStreak: alreadyCounted })
-      .catch(e => captureError(e, { action: 'incrementScores' }));
-    cancelTodayScoreReminder().catch(e => captureError(e, { action: 'cancelScoreReminder' }));
-
-    // Log movement reps for badges (parse description as movement lines)
-    if (wod.description) {
-      const lines = wod.description.split('\n').filter(Boolean);
-      const wodFormat = wod.wod_type === 'for-time' ? 'For Time' : wod.wod_type === 'amrap' ? 'AMRAP' : wod.wod_type === 'emom' ? 'EMOM' : wod.wod_type ?? 'For Time';
-      const completed = computeCompletedMovements(lines, wodFormat, value, scoreType, { gender: user.gender });
-      logMovementReps(user.id, completed, 'whiteboard', wod.id).catch(e => captureError(e, { action: 'logMovementReps' }));
-    }
+    await creditScoreSubmission(value, scoreType);
 
     // Les séries réellement réalisées sont journalisées, et ce sont ELLES qui
     // alimentent les 1RM — jamais les reps prescrites. Le journal d'abord :
@@ -358,6 +496,47 @@ export default function WODDetailScreen() {
         .catch(e => captureError(e, { action: 'logStrengthSets' }));
     }
 
+    await refreshScoresAfterSubmit(true);
+    finishSubmit();
+  }
+
+  /**
+   * Compteurs, streak et crédit de mouvements d'un score posé. Pour une séance de
+   * musculation, n'est appelé qu'à la première validation.
+   */
+  async function creditScoreSubmission(value: number, submittedType: ScoreType) {
+    if (!wod || !user) return;
+    trackScoreSubmit(wod.id, submittedType);
+
+    // Dedup: if user already marked this WOD as "réalisé", the activity was already counted.
+    // Remove the completion row (score is authoritative) and skip double-counting the streak.
+    const { data: existingCompletion } = await supabase
+      .from('wod_completions')
+      .select('id')
+      .eq('wod_id', wod.id)
+      .eq('member_id', user.id)
+      .maybeSingle();
+    const alreadyCounted = !!existingCompletion;
+    if (alreadyCounted) {
+      await supabase.from('wod_completions').delete().eq('wod_id', wod.id).eq('member_id', user.id);
+    }
+
+    incrementCounter(user.id, 'total_scores_submitted', 1, currentBox?.id, { skipStreak: alreadyCounted })
+      .catch(e => captureError(e, { action: 'incrementScores' }));
+    cancelTodayScoreReminder().catch(e => captureError(e, { action: 'cancelScoreReminder' }));
+
+    // Log movement reps for badges (parse description as movement lines)
+    if (wod.description) {
+      const lines = wod.description.split('\n').filter(Boolean);
+      const wodFormat = wod.wod_type === 'for-time' ? 'For Time' : wod.wod_type === 'amrap' ? 'AMRAP' : wod.wod_type === 'emom' ? 'EMOM' : wod.wod_type ?? 'For Time';
+      const completed = computeCompletedMovements(lines, wodFormat, value, submittedType, { gender: user.gender });
+      logMovementReps(user.id, completed, 'whiteboard', wod.id).catch(e => captureError(e, { action: 'logMovementReps' }));
+    }
+  }
+
+  /** Recharge le classement ; prévient les athlètes dépassés si demandé. */
+  async function refreshScoresAfterSubmit(notifyOvertaken: boolean) {
+    if (!wod || !user) return;
     // Snapshot old rankings before reload
     const oldScores = [...scores];
 
@@ -371,7 +550,7 @@ export default function WODDetailScreen() {
 
     // Detect overtaken users: users who were ranked above my new position before
     const myNewIdx = list.findIndex(s => s.member_id === user.id);
-    if (myNewIdx >= 0 && oldScores.length > 0) {
+    if (notifyOvertaken && myNewIdx >= 0 && oldScores.length > 0) {
       const overtaken = list
         .slice(myNewIdx + 1)
         .filter(s => {
@@ -388,7 +567,9 @@ export default function WODDetailScreen() {
     setMyScore(list.find(sc => sc.member_id === user.id) ?? null);
 
     // ELO is now computed lazily after WOD closes (past midnight)
+  }
 
+  function finishSubmit() {
     hapticSuccess();
     setSubmitting(false);
     setModalOpen(false);
@@ -399,6 +580,68 @@ export default function WODDetailScreen() {
     setDnf(false);
     setCapReps('');
     setShareModal(true);
+  }
+
+  /**
+   * « Valider la séance » / « Enregistrer mes charges » : une transaction côté
+   * serveur (séries, charge max = score, 1RM). Compteurs, badges et
+   * notifications ne partent qu'à la première validation.
+   */
+  async function validateStrength() {
+    if (!wod || !user || !strengthKey) return;
+    setSubmitting(true);
+    let first = false;
+    try {
+      const result = await submitStrengthValidation({
+        userId: user.id,
+        sourceType: 'whiteboard',
+        sourceId: wod.id,
+        sourceTitle: wod.title,
+        drafts: strengthDrafts,
+        rx: isRx,
+        previousSets: strengthServer?.sets ?? [],
+      }, async r => {
+        first = true;
+        await creditScoreSubmission(r.maxLoadKg, 'weight');
+      });
+      editedAtRef.current = null;
+      setDraftSaveState('idle');
+
+      const notes = noteInput.trim() || null;
+      if (notes !== (myScore?.notes ?? null)) {
+        const { error: nErr } = await supabase.from('wod_scores').update({ notes })
+          .eq('wod_id', wod.id).eq('member_id', user.id);
+        if (nErr) captureError(nErr, { screen: 'WODDetail', action: 'strengthNotes' });
+      }
+
+      fetchStrengthSession(strengthKey)
+        .then(server => { applyServerSession(server); setStrengthDrafts(gridFromServer(strengthPrescription, server.sets)); })
+        .catch(e => captureError(e, { screen: 'WODDetail', action: 'reloadStrengthSession' }));
+
+      const beaten = result.records.filter(r => r.kg != null && (r.precedent == null || r.kg > r.precedent));
+      if (beaten.length > 0) {
+        Alert.alert(i18n.t('strengthSession.newRecordTitle'), beaten.map(b => (b.precedent != null
+          ? i18n.t('strengthSession.recordLinePrevious', { label: b.label, kg: b.kg, previous: b.precedent })
+          : i18n.t('strengthSession.recordLine', { label: b.label, kg: b.kg }))).join('\n'));
+      }
+
+      await refreshScoresAfterSubmit(first);
+      finishSubmit();
+    } catch (e) {
+      setSubmitting(false);
+      const code = validationErrorCode(e);
+      const body = code === 'SEANCE_VIDE' ? i18n.t('strengthSession.errorEmpty')
+        : code === 'SCORE_AUTRE_TYPE' ? i18n.t('strengthSession.errorOtherScoreType')
+        : code === 'SERIES_EN_DOUBLE' ? i18n.t('strengthSession.errorDuplicate')
+        : code && code.startsWith('RECORD_') ? i18n.t('strengthSession.errorRecord')
+        : i18n.t('strengthSession.errorOffline');
+      if (!code) captureError(e, { screen: 'WODDetail', action: 'validateStrength' });
+      if (!code && !strengthValidated) {
+        if (!editedAtRef.current) editedAtRef.current = new Date().toISOString();
+        saveDraftNow();
+      }
+      Alert.alert(i18n.t('strengthSession.errorTitle'), body);
+    }
   }
 
   async function openScoreDetail(sc: WODScore) {
@@ -608,7 +851,7 @@ export default function WODDetailScreen() {
                   <Share2 color={theme.accent} size={14} />
                   <Text style={S.editScoreBtnText}>Partager</Text>
                 </TouchableOpacity>
-                {!isExpired && (
+                {!isExpired && !isStrengthSession && (
                   <TouchableOpacity style={S.editScoreBtn} onPress={openEditModal} activeOpacity={0.7}>
                     <RotateCcw color={theme.accent} size={14} />
                     <Text style={S.editScoreBtnText}>Modifier</Text>
@@ -622,20 +865,49 @@ export default function WODDetailScreen() {
                 </View>
               ) : null}
             </View>
-          ) : isExpired ? (
+          ) : null}
+          {myScore && isStrengthSession && (
+            <View>
+              <StrengthSavedLoads drafts={strengthValidated ? strengthDrafts : []} />
+              {!isExpired && (
+                <View style={{ marginTop: 12 }}>
+                  <AxButton
+                    variant="outline"
+                    label={i18n.t('strengthSession.editLoads')}
+                    onPress={openEditModal}
+                    fullWidth
+                    testID="strength-edit-loads"
+                  />
+                </View>
+              )}
+            </View>
+          )}
+          {myScore ? null : isExpired ? (
             <View style={S.expiredBanner}>
               <Clock color={theme.textMuted} size={14} />
               <Text style={S.expiredText}>Soumission de score terminée (minuit passé)</Text>
             </View>
           ) : (
-            <EmeraldCTAButton
-              icon={<Plus color={theme.ctaText} size={18} />}
-              size="md"
-              onPress={() => { prefillStrengthLoads(); setModalOpen(true); }}
-              style={{ marginTop: 4 }}
-            >
-              Entrer mon score
-            </EmeraldCTAButton>
+            <>
+              {isStrengthSession && (strengthServer?.session?.status === 'draft' || draftSaveState === 'offline') && (
+                <View style={{ marginBottom: 12 }}>
+                  <StrengthSessionStatus
+                    {...strengthProgress(strengthDrafts)}
+                    savedAt={draftSavedAt}
+                    saveState={draftSaveState}
+                    now={clock}
+                  />
+                </View>
+              )}
+              <EmeraldCTAButton
+                icon={<Plus color={theme.ctaText} size={18} />}
+                size="md"
+                onPress={() => { prefillStrengthLoads(); setModalOpen(true); }}
+                style={{ marginTop: 4 }}
+              >
+                Entrer mon score
+              </EmeraldCTAButton>
+            </>
           )}
         </View>
 
@@ -715,12 +987,12 @@ export default function WODDetailScreen() {
       </ScrollView>
 
       {/* Score Modal */}
-      <Modal visible={modalOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalOpen(false)}>
+      <Modal visible={modalOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={closeScoreModal}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <View style={S.modalContainer}>
             <View style={S.modalHeader}>
               <Text style={S.modalTitle}>Entrer mon score</Text>
-              <TouchableOpacity onPress={() => setModalOpen(false)}>
+              <TouchableOpacity onPress={closeScoreModal}>
                 <Text style={S.modalCloseText}>Annuler</Text>
               </TouchableOpacity>
             </View>
@@ -776,7 +1048,9 @@ export default function WODDetailScreen() {
                 </TouchableOpacity>
               )}
 
-              {scoreType === 'time' && dnf ? (
+              {isStrengthSession ? (
+                <StrengthMaxLoadRow maxLoadKg={computedMaxLoad(strengthDrafts)} />
+              ) : scoreType === 'time' && dnf ? (
                 <>
                   <Text style={S.modalLabel}>NOMBRE DE RÉPÉTITIONS COMPLÉTÉES</Text>
                   <TextInput
@@ -836,12 +1110,16 @@ export default function WODDetailScreen() {
                 </>
               )}
 
-              <StrengthSetGrid
-                drafts={strengthDrafts}
-                onChange={(index, patch) => setStrengthDrafts(prev =>
-                  prev.map((d, i) => (i === index ? { ...d, ...patch } : d)),
-                )}
-              />
+              {isStrengthSession && !strengthValidated && (
+                <StrengthSessionStatus
+                  {...strengthProgress(strengthDrafts)}
+                  savedAt={draftSavedAt}
+                  saveState={draftSaveState}
+                  now={clock}
+                />
+              )}
+
+              <StrengthSetGrid drafts={strengthDrafts} onChange={onStrengthDraftChange} />
 
               <Text style={S.modalLabel}>NIVEAU</Text>
               <View style={S.rxRow}>
@@ -863,14 +1141,38 @@ export default function WODDetailScreen() {
                 multiline
               />
 
-              <EmeraldCTAButton
-                loading={submitting}
-                disabled={!(dnf ? capReps.trim() : scoreType === 'time' ? (timeMin.trim() || timeSec.trim()) : scoreInput.trim())}
-                onPress={submitScore}
-                style={{ marginTop: 8 }}
-              >
-                Valider le score
-              </EmeraldCTAButton>
+              {isStrengthSession ? (
+                <View style={{ gap: 12, marginTop: 8 }}>
+                  <AxButton
+                    variant="accent"
+                    label={i18n.t(strengthValidated ? 'strengthSession.saveChanges' : 'strengthSession.validate')}
+                    onPress={validateStrength}
+                    loading={submitting}
+                    disabled={computedMaxLoad(strengthDrafts) == null}
+                    fullWidth
+                    testID="strength-validate"
+                  />
+                  {!strengthValidated && (
+                    <AxButton
+                      variant="outline"
+                      label={i18n.t('strengthSession.saveLater')}
+                      onPress={saveStrengthLater}
+                      disabled={submitting}
+                      fullWidth
+                      testID="strength-save-later"
+                    />
+                  )}
+                </View>
+              ) : (
+                <EmeraldCTAButton
+                  loading={submitting}
+                  disabled={!(dnf ? capReps.trim() : scoreType === 'time' ? (timeMin.trim() || timeSec.trim()) : scoreInput.trim())}
+                  onPress={submitScore}
+                  style={{ marginTop: 8 }}
+                >
+                  Valider le score
+                </EmeraldCTAButton>
+              )}
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
