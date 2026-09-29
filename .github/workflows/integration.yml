@@ -60,6 +60,7 @@ on:
           - onboarding
           - phys-served
           - auto-programming
+          - box-archivage
           - grants
 
 concurrency:
@@ -352,6 +353,17 @@ jobs:
         if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'auto-programming' }}
         continue-on-error: true
         run: node scripts/test-auto-programming.mjs
+
+      # Archivage d'une box (20261224, 20270130) : masquage sous de vraies
+      # identités (membre, gérant, anon), réactivation intacte, et le gérant
+      # connecté ne pose ni archivage programmé ni archivage (BOX_ARCHIVAGE_RESERVE).
+      # Deux mutations inverses : policy retirée, déclencheur désactivé.
+      # Avant la suite grants : son T11 verrait un déclencheur resté désactivé.
+      - name: Suite — Archivage d'une box (masquage, réactivation, garde des colonnes)
+        id: s_box_archivage
+        if: ${{ steps.flags.outputs.suite == 'all' || steps.flags.outputs.suite == 'box-archivage' }}
+        continue-on-error: true
+        run: node scripts/test-box-archivage.mjs
 
       # Contrôle de catalogue : ce que la base accorde réellement, pas ce que
       # les migrations avaient l'intention d'accorder.

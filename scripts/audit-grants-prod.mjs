@@ -115,7 +115,7 @@ const ASSERTIONS_ATTENDUES = ASSERTIONS_FIXES
   + SONDES_ANONYMES.length
   + SONDES_ANONYMES_MUTANTES.length // jugées sur le catalogue, jamais appelées
   + 2 // lectures REST publiques (boxes, profiles)
-  + ASSERTIONS_GRANTS_TABLES // T1..T9 : les grants de tables (lot 5-E)
+  + ASSERTIONS_GRANTS_TABLES // T1..T11 : les grants de tables (lot 5-E), écritures serveur
   + ASSERTIONS_SCHEMA_INTERNAL // I1..I3 : le schéma `internal`
   + ASSERTIONS_STOCKAGE_DOCUMENTS // S1..S3 : le stockage `documents` (20270136)
   + ASSERTIONS_STOCKAGE_PIECES_JOINTES // S4, S5 : le stockage `message-attachments` (20270137)

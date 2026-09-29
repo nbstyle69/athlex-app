@@ -18,7 +18,10 @@
  *   4. `service_role` continue de la voir — sans quoi on ne pourrait pas la
  *      rouvrir depuis le back-office ;
  *   5. rien n'est perdu : réactivation → tout revient à l'identique ;
- *   6. MUTATION INVERSE de la policy.
+ *   6. MUTATION INVERSE de la policy ;
+ *   7. le gérant connecté ne pose ni `archive_scheduled_at` ni `archived_at`
+ *      (42501 BOX_ARCHIVAGE_RESERVE, migration 20270130), et le même geste
+ *      passe déclencheur désactivé : le refus vient bien de la garde.
  *
  * Usage : ./scripts/test-stack.sh up && node scripts/test-box-archivage.mjs
  * Cible fournie par TEST_SUPABASE_* + TEST_ADMIN_DB_URL (jamais la prod).
@@ -91,6 +94,23 @@ async function main() {
   const avantAdmin = await asOwner.rpc('get_my_admin_boxes');
   const avantIds = await asMember.rpc('get_user_box_ids');
 
+  // ── 7. Garde des colonnes d'archivage, box encore active ──────────────────
+  // La RLS laisse le gérant écrire sa box : seul le déclencheur refuse.
+  const lireEtat = () => sql(`select coalesce(archive_scheduled_at::text,'-') || '|' || coalesce(archived_at::text,'-') from public.boxes where id='${boxId}'`);
+  const maintenant = new Date().toISOString();
+  const refusProgramme = await asOwner.from('boxes').update({ archive_scheduled_at: maintenant }).eq('id', boxId).select('id');
+  const refusArchive = await asOwner.from('boxes').update({ archived_at: maintenant }).eq('id', boxId).select('id');
+  const etatApresRefus = lireEtat();
+  let sansGarde;
+  sql('ALTER TABLE public.boxes DISABLE TRIGGER trg_boxes_garde_archivage;');
+  try {
+    sansGarde = await asOwner.from('boxes').update({ archive_scheduled_at: maintenant }).eq('id', boxId).select('id');
+  } finally {
+    sql('ALTER TABLE public.boxes ENABLE TRIGGER trg_boxes_garde_archivage;');
+  }
+  const etatSansGarde = lireEtat();
+  await db.from('boxes').update({ archive_scheduled_at: null, archive_scheduled_by: null }).eq('id', boxId);
+
   // ── 2. Archivage (comme la route admin : service_role) ────────────────────
   await db.from('boxes')
     .update({ archived_at: new Date().toISOString(), archived_by: ownerId })
@@ -148,6 +168,16 @@ async function main() {
 
     ['mutation inverse : sans la policy, le membre revoit la box archivée', n(sansPolicy) === 1, `rows=${n(sansPolicy)}`],
     ['mutation inverse : migration rejouée, il ne la voit plus', n(policyRejouee) === 0, `rows=${n(policyRejouee)}`],
+
+    ['garde : le gérant ne programme pas l’archivage (BOX_ARCHIVAGE_RESERVE)',
+      refusProgramme.error?.code === '42501' && msg(refusProgramme).includes('BOX_ARCHIVAGE_RESERVE') && etatApresRefus === '-|-',
+      `${refusProgramme.error?.code ?? 'aucune erreur'} ${msg(refusProgramme)} · état ${etatApresRefus}`],
+    ['garde : le gérant n’archive pas sa box (BOX_ARCHIVAGE_RESERVE)',
+      refusArchive.error?.code === '42501' && msg(refusArchive).includes('BOX_ARCHIVAGE_RESERVE') && etatApresRefus === '-|-',
+      `${refusArchive.error?.code ?? 'aucune erreur'} ${msg(refusArchive)} · état ${etatApresRefus}`],
+    ['mutation inverse : déclencheur désactivé, la même écriture passe',
+      !sansGarde?.error && n(sansGarde) === 1 && etatSansGarde.split('|')[0] !== '-',
+      `${msg(sansGarde) || `rows=${n(sansGarde ?? {})}`} · état ${etatSansGarde}`],
   ];
 
   ATTENDU = ASSERTIONS.length;
