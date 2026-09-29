@@ -262,6 +262,8 @@ Supabase/Resend.
   prescription (« 6 au lieu de 7 », en `accentText`), tonnage et charge max, puis « Modifier mes charges »
   qui rouvre la saisie pré-remplie et repasse par `validate_strength_session` sans recomptage.
 
+**Écran Membres du gérant (`BOMembersScreen`) : règle du co-gérant (app seule, aucune migration).** Un co-gérant ne voit plus d'action sur la ligne d'un autre co-gérant ni du gérant principal (`boxes.owner_id` de la box active, sans nouvelle lecture) et lit « Seul le gérant principal de la box peut nommer ou retirer un co-gérant. » ; le choix du rôle ne propose jamais co-gérant ; tout refus (42501, `MEMBRE_ROLE_COGERANT_RESERVE`, aucune ligne modifiée, RPC à `false`) affiche un message traduit et la liste est relue depuis la base.
+
 **Refonte visuelle mobile, lot R1 « Composants » (aucun écran modifié).**
 - Bibliothèque `src/components/ax/` : verre (`AxGlass`, flou 24 sur iOS, opacités 0.80 / 0.85 portées
   à 0.96 sur Android), boutons (accent, contour, clair, pointillé, arrêt), bouton carré, pastille,
