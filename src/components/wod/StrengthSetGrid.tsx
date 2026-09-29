@@ -14,14 +14,14 @@
  */
 
 import React from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import {
   StrengthCardSummary, StrengthSetDraft, normalizeDecimalInput, normalizeRepsInput, savedAgo,
   strengthSetDeviation, strengthTonnage, validStrengthSets,
 } from '../../services/strengthSets';
-import { AxCard, AxStatusDot } from '../ax';
+import { AxCard, AxStatusDot, AxTextField } from '../ax';
 import { axSpacing, axTypography } from '../../theme/axTokens';
 import i18n from '../../i18n';
 
@@ -52,25 +52,27 @@ export default function StrengthSetGrid({ drafts, onChange }: Props) {
             {first && <Text style={S.movement}>{d.name}</Text>}
             <View style={S.row}>
               <Text style={S.setLabel}>Série {d.setIndex}</Text>
-              <TextInput
-                style={S.input}
-                placeholder="reps"
-                placeholderTextColor={theme.textMuted}
-                value={d.reps}
-                onChangeText={txt => onChange(i, { reps: normalizeRepsInput(txt) })}
-                testID={`strength-reps-${i}`}
-                keyboardType="number-pad"
-              />
+              <View style={S.input}>
+                <AxTextField
+                  compact
+                  placeholder="reps"
+                  value={d.reps}
+                  onChangeText={txt => onChange(i, { reps: normalizeRepsInput(txt) })}
+                  testID={`strength-reps-${i}`}
+                  keyboardType="number-pad"
+                />
+              </View>
               <Text style={S.times}>×</Text>
-              <TextInput
-                style={S.input}
-                placeholder="kg"
-                placeholderTextColor={theme.textMuted}
-                value={d.loadKg}
-                onChangeText={txt => onChange(i, { loadKg: normalizeDecimalInput(txt) })}
-                testID={`strength-kg-${i}`}
-                keyboardType="decimal-pad"
-              />
+              <View style={S.input}>
+                <AxTextField
+                  compact
+                  placeholder="kg"
+                  value={d.loadKg}
+                  onChangeText={txt => onChange(i, { loadKg: normalizeDecimalInput(txt) })}
+                  testID={`strength-kg-${i}`}
+                  keyboardType="decimal-pad"
+                />
+              </View>
               <Text style={[S.prescribed, deviates && S.prescribedDeviates]}>
                 {d.prescribedLoadKg != null
                   ? `prévu ${d.prescribedReps} × ${d.prescribedLoadKg}`
@@ -229,22 +231,16 @@ const axStyles = StyleSheet.create({
 });
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
-    label: {
-      fontSize: 11, fontWeight: '900', color: theme.textMuted,
-      letterSpacing: 1, marginTop: 16, marginBottom: 4,
-    },
-    hint: { fontSize: 11, color: theme.textMuted, marginBottom: 8, lineHeight: 15 },
-    movement: { fontSize: 13, fontWeight: '900', color: theme.text, marginTop: 10, marginBottom: 4 },
+    label: { ...axTypography.overline, color: c.textMuted, marginTop: axSpacing.lg, marginBottom: axSpacing.xs },
+    hint: { ...axTypography.caption, color: c.textMuted, marginBottom: axSpacing.sm },
+    movement: { ...axTypography.label, color: c.text, marginTop: 10, marginBottom: axSpacing.xs },
     row: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-    setLabel: { fontSize: 12, color: theme.textMuted, width: 62 },
-    input: {
-      flex: 1, minWidth: 52, backgroundColor: theme.surface, color: theme.text,
-      borderWidth: 1, borderColor: theme.border, borderRadius: 8,
-      paddingHorizontal: 8, paddingVertical: 8, fontSize: 14, textAlign: 'center',
-    },
-    times: { fontSize: 12, color: theme.textMuted },
-    prescribed: { fontSize: 10, color: theme.textMuted, width: 80, textAlign: 'right' },
-    prescribedDeviates: { color: theme.accent, fontWeight: '700' },
+    setLabel: { ...axTypography.caption, color: c.textMuted, width: 62 },
+    input: { flex: 1, minWidth: 52 },
+    times: { ...axTypography.caption, color: c.textMuted },
+    prescribed: { ...axTypography.caption, color: c.textMuted, width: 80, textAlign: 'right' },
+    prescribedDeviates: { ...axTypography.labelSmall, color: c.accentText },
   });
 }

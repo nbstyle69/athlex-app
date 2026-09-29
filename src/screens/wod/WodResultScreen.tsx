@@ -10,7 +10,7 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Share,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, ActivityIndicator, Alert, Share,
   KeyboardAvoidingView, Platform, Pressable, AppState,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -21,15 +21,13 @@ import { ChevronRight, ChevronDown, ChevronUp, RefreshCw, Bookmark, Heart, Check
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import GlassBackground from '../../components/glass/GlassBackground';
-import GlassCard from '../../components/glass/GlassCard';
-import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
-import WodTypeBadge from '../../components/wod/WodTypeBadge';
+import { AxButton, AxCard, AxChip, AxGlass, AxTag, AxTextField } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import TimerLaunchModal, { TimerRunParams } from '../../components/wod/TimerLaunchModal';
 import DateField from '../../components/DateField';
 import i18n from '../../i18n';
 import { captureError } from '../../lib/sentry';
 import { hapticSuccess } from '../../lib/haptics';
-import { spacing, typography } from '../../theme/designTokens';
 import { maskTimeInput, timeStringToSeconds } from '../../utils/tournamentUtils';
 import { buildFullSeqBlockFromWOD, buildMuscuSplitBlock } from '../../utils/wodToTimer';
 import { clearWodDraft, saveWodDraft } from '../../services/wodDraft';
@@ -51,8 +49,7 @@ import {
 } from '../../services/strengthSets';
 import { draftsToPerformed, performedToDrafts, validateMuscuSession } from '../../services/muscuSession';
 import type { StrengthSaveState } from '../../components/wod/StrengthSetGrid';
-import { HYBRID_ORANGE } from './wodGeneratorOptions';
-import { MUSCU_BLUE, muscuDisplayedFor } from './muscuOptions';
+import { muscuDisplayedFor } from './muscuOptions';
 import MuscuSessionCard, { initialPerformed } from './MuscuSessionCard';
 
 export type WodResultParams = {
@@ -159,7 +156,8 @@ export default function WodResultScreen() {
     }
     return parts.length ? parts.join(' ') : null;
   })();
-  const accent = muscu ? MUSCU_BLUE : wod.discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;
+  const c = theme.ax;
+  const accent = c.accentText;
   const categories: readonly Category[] = wod.discipline === 'hybrid' ? HYBRID_CATEGORIES : FUNCTIONAL_CATEGORIES;
 
   const [redrawing, setRedrawing] = useState(false);
@@ -563,18 +561,18 @@ export default function WodResultScreen() {
 
       <ScrollView contentContainerStyle={[S.content, { paddingBottom: bottomBarPadding + 150 }]} showsVerticalScrollIndicator={false}>
         {formatRelache && (
-          <GlassCard radius={12} style={{ marginBottom: 12, padding: 12 }} testID="wodresult-format-relache">
-            <Text style={{ fontSize: 13, color: theme.text, fontWeight: '600' }}>{formatRelache}</Text>
-          </GlassCard>
+          <AxCard style={S.relache} testID="wodresult-format-relache">
+            <Text style={[axTypography.bodySmall, { color: c.text }]}>{formatRelache}</Text>
+          </AxCard>
         )}
         {/* Carte WOD (Whiteboard) */}
-        <GlassCard radius={16} style={S.wodCard} testID="wodresult-card">
+        <AxCard variant="featured" style={S.wodCard} testID="wodresult-card">
           <View style={S.wodCardInner}>
           <View style={S.wodCardTop}>
-            <WodTypeBadge type="generated" label="Généré" color={accent} />
+            <AxTag label="Généré" tone="accent" testID="wodresult-generated-tag" />
             {wod.time_cap_seconds != null && (
               <View style={S.timeCap}>
-                <Clock color={theme.textMuted} size={12} />
+                <Clock color={c.textMuted} size={12} />
                 <Text style={S.timeCapText}>{borneParDuree ? 'Durée' : 'Cap'} {mmss(wod.time_cap_seconds)}</Text>
               </View>
             )}
@@ -599,7 +597,7 @@ export default function WodResultScreen() {
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => setTimerOpen(true)}
-              style={[S.timerBtn, { backgroundColor: `${accent}18`, borderColor: `${accent}35` }]}
+              style={S.timerBtn}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               activeOpacity={0.8}
               accessibilityRole="button"
@@ -610,7 +608,7 @@ export default function WodResultScreen() {
             </TouchableOpacity>
           </View>
           </View>
-        </GlassCard>
+        </AxCard>
 
         {/* Catégorie affichée */}
         <View style={S.displayedFor}>
@@ -636,7 +634,7 @@ export default function WodResultScreen() {
               onPerformedChange={onPerformedChange}
               draft={{ saveState: draftSaveState, savedAt: draftSavedAt, validated: strengthValidated, onSaveLater: onSaveMuscuLater }}
             />
-            <GlassCard radius={16} style={S.card}>
+            <AxCard style={S.card}>
               <View style={S.cardInner}>
               <View style={S.estRow}>
                 <Text style={S.estBig} testID="wodresult-estimate">{minutesText(muscu.estimate.minutes)}</Text>
@@ -650,13 +648,13 @@ export default function WodResultScreen() {
                 <Text style={S.afterClass}>Après ma classe : muscles évités {muscu.after_class.excluded_muscles.join(', ')}.</Text>
               )}
               </View>
-            </GlassCard>
+            </AxCard>
           </>
         )}
 
         {/* Mouvements */}
         {metcon && (<>
-        <GlassCard radius={16} style={S.card}>
+        <AxCard style={S.card} testID="wodresult-movements">
           <View style={S.cardInner}>
           {metcon.blocks[0].movements.map((m, i) => {
             const open = openRows.has(i);
@@ -667,6 +665,7 @@ export default function WodResultScreen() {
                 style={[S.moveRow, i === 0 && S.moveRowFirst, i === metcon.blocks[0].movements.length - 1 && S.moveRowLast, i > 0 && S.moveRowBorder]}
               >
                 <TouchableOpacity style={S.moveHead} onPress={() => toggleRow(i)} activeOpacity={0.8} testID={`wodresult-move-${i}`}>
+                  <View style={S.bullet} />
                   <View style={{ flex: 1 }}>
                     <Text style={S.moveText}>
                       {m.round != null ? <Text style={S.moveRound}>R{m.round} · </Text> : null}
@@ -675,14 +674,14 @@ export default function WodResultScreen() {
                     <Text style={S.moveSub}>{line ?? 'Toutes catégories'}</Text>
                   </View>
                   {open
-                    ? <ChevronUp color={theme.textSecondary} size={18} />
-                    : <ChevronDown color={theme.textSecondary} size={18} />}
+                    ? <ChevronUp color={c.textMuted} size={18} />
+                    : <ChevronDown color={c.textMuted} size={18} />}
                 </TouchableOpacity>
                 {open && (
                   <View style={S.catTable}>
                     {categories.map((c) => (
                       <View key={c} style={S.catRow}>
-                        <Text style={[S.catName, c === category && { color: accent, fontWeight: '800' }]}>{CATEGORY_LABEL[c]}</Text>
+                        <Text style={[S.catName, c === category && S.catCurrent]}>{CATEGORY_LABEL[c]}</Text>
                         <Text style={S.catVal}>{categoryLine(m, c, false) ?? '—'}</Text>
                       </View>
                     ))}
@@ -692,10 +691,10 @@ export default function WodResultScreen() {
             );
           })}
           </View>
-        </GlassCard>
+        </AxCard>
 
         {/* Durée estimée */}
-        <GlassCard radius={16} style={S.card}>
+        <AxCard style={S.card} testID="wodresult-estimate-card">
           <View style={S.cardInner}>
           <View style={S.estRow}>
             <Text style={S.estBig} testID="wodresult-estimate">
@@ -716,7 +715,7 @@ export default function WodResultScreen() {
                 const e = metcon.estimate.by_category[c];
                 return e ? (
                   <View key={c} style={S.catRow}>
-                    <Text style={[S.catName, c === category && { color: accent, fontWeight: '800' }]}>{CATEGORY_LABEL[c]}</Text>
+                    <Text style={[S.catName, c === category && S.catCurrent]}>{CATEGORY_LABEL[c]}</Text>
                     <Text style={S.catVal}>{minutesText(e.minutes)} · {e.target}</Text>
                   </View>
                 ) : null;
@@ -728,12 +727,13 @@ export default function WodResultScreen() {
             <Text style={S.afterClass}>Complément : évite {[...metcon.after_class.excluded_patterns, ...metcon.after_class.excluded_families].join(', ')}.</Text>
           )}
           </View>
-        </GlassCard>
+        </AxCard>
         </>)}
       </ScrollView>
 
       {/* Barre d'actions fixe au-dessus de la tab bar */}
-      <GlassCard radius={0} style={S.bottomBar} testID="wodresult-actions">
+      <View style={S.bottomBar} testID="wodresult-actions">
+        <AxGlass color={c.background} opacity={0.8} radius={0} />
         <View style={[S.bottomBarInner, { paddingBottom: bottomBarPadding + ROW_PAD }]}>
         <View style={S.iconRow}>
           <TouchableOpacity style={S.iconBtn} onPress={onRedraw} disabled={redrawing} activeOpacity={0.8} testID="wodresult-redraw">
@@ -741,68 +741,70 @@ export default function WodResultScreen() {
             <Text style={S.iconText}>Re-tirer</Text>
           </TouchableOpacity>
           <TouchableOpacity style={S.iconBtn} onPress={onSave} disabled={saving || !!savedId} activeOpacity={0.8} testID="wodresult-save">
-            {saving ? <ActivityIndicator color={theme.text} size="small" /> : savedId ? <Check size={18} color={accent} /> : <Bookmark size={18} color={theme.text} />}
+            {saving ? <ActivityIndicator color={c.text} size="small" /> : savedId ? <Check size={18} color={accent} /> : <Bookmark size={18} color={c.text} />}
             <Text style={S.iconText}>{savedId ? 'Enregistré' : 'Enregistrer'}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={S.iconBtn} onPress={onFavorite} activeOpacity={0.8} testID="wodresult-favorite">
-            <Heart size={18} color={theme.error} fill={favorite ? theme.error : 'transparent'} />
+            <Heart size={18} color={c.danger} fill={favorite ? c.danger : 'transparent'} />
             <Text style={S.iconText}>Favori</Text>
           </TouchableOpacity>
           <TouchableOpacity style={S.iconBtn} onPress={() => setTimerOpen(true)} activeOpacity={0.8} testID="wodresult-timer-bar">
-            <TimerIcon size={18} color={theme.text} />
+            <TimerIcon size={18} color={c.text} />
             <Text style={S.iconText}>Minuteur</Text>
           </TouchableOpacity>
           <TouchableOpacity style={S.iconBtn} onPress={() => setMenu(true)} activeOpacity={0.8} testID="wodresult-more">
-            <MoreHorizontal size={18} color={theme.text} />
+            <MoreHorizontal size={18} color={c.text} />
             <Text style={S.iconText}>Plus</Text>
           </TouchableOpacity>
         </View>
         <View style={S.ctaRow}>
-          <EmeraldCTAButton
-            size="md"
-            style={{ flex: 1 }}
-            icon={boxWodId ? <Check size={16} color={theme.ctaText} /> : <ClipboardList size={16} color={theme.ctaText} />}
-            onPress={onAddToWhiteboard}
-            loading={adding}
-          >
-            {boxWodId ? 'Sur le Whiteboard' : 'Ajouter au Whiteboard'}
-          </EmeraldCTAButton>
-          <EmeraldCTAButton
-            size="md"
-            style={{ flex: 1 }}
-            icon={<Trophy size={16} color={theme.ctaText} />}
-            onPress={() => setScoreModal(true)}
-          >
-            {submittedScore ? 'Modifier mon score' : 'Saisir mon score'}
-          </EmeraldCTAButton>
+          <View style={S.ctaCell}>
+            <AxButton
+              variant="outline"
+              icon={boxWodId ? Check : ClipboardList}
+              label={boxWodId ? 'Sur le Whiteboard' : 'Ajouter au Whiteboard'}
+              onPress={onAddToWhiteboard}
+              loading={adding}
+              fullWidth
+              testID="wodresult-whiteboard"
+            />
+          </View>
+          <View style={S.ctaCell}>
+            <AxButton
+              variant="accent"
+              icon={Trophy}
+              label={submittedScore ? 'Modifier mon score' : 'Saisir mon score'}
+              onPress={() => setScoreModal(true)}
+              fullWidth
+              testID="wodresult-score"
+            />
+          </View>
         </View>
         </View>
-      </GlassCard>
+      </View>
 
       {/* B7 : date d'ajout au Whiteboard */}
       <Modal visible={wbModal} transparent animationType="fade" onRequestClose={() => setWbModal(false)}>
         <TouchableOpacity style={S.modalBg} activeOpacity={1} onPress={() => setWbModal(false)}>
           <TouchableOpacity activeOpacity={1} style={S.modalSheet} onPress={() => {}}>
             <Text style={S.modalTitle}>Ajouter au Whiteboard</Text>
-            <Text style={{ fontSize: 13, color: theme.textSecondary, marginTop: 4, marginBottom: 12 }}>
+            <Text style={S.modalText}>
               {muscu ? 'Un bloc par exercice, à valider et scorer un par un.' : 'Le WOD rejoint « Mes WODs perso » à la date choisie.'}
             </Text>
             <DateField style={S.input} value={wbDate} onChangeText={setWbDate} theme={theme} />
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+            <View style={S.dayRow}>
               {([[-1, 'Hier'], [0, "Aujourd'hui"], [1, 'Demain']] as const).map(([d, label]) => (
-                <TouchableOpacity
+                <AxChip
                   key={label}
-                  style={S.chip}
-                  activeOpacity={0.8}
+                  label={label}
                   onPress={() => { const x = new Date(); x.setDate(x.getDate() + d); setWbDate(x.toISOString().slice(0, 10)); }}
-                >
-                  <Text style={S.chipText}>{label}</Text>
-                </TouchableOpacity>
+                  testID={`wodresult-wb-day-${d}`}
+                />
               ))}
             </View>
-            <EmeraldCTAButton size="md" style={{ marginTop: 16 }} onPress={onConfirmWhiteboard} disabled={!DATE_ISO.test(wbDate)}>
-              Ajouter
-            </EmeraldCTAButton>
+            <View style={S.modalCta}>
+              <AxButton label="Ajouter" onPress={onConfirmWhiteboard} disabled={!DATE_ISO.test(wbDate)} fullWidth testID="wodresult-wb-confirm" />
+            </View>
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
@@ -820,11 +822,11 @@ export default function WodResultScreen() {
         <Pressable style={S.modalBg} onPress={() => setMenu(false)}>
           <Pressable style={[S.menuSheet, { paddingBottom: insets.bottom + 16 }]} onPress={() => {}}>
             <TouchableOpacity style={S.menuItem} onPress={onCopy} activeOpacity={0.7} testID="wodresult-copy">
-              <Copy size={18} color={theme.text} />
+              <Copy size={18} color={c.text} />
               <Text style={S.menuItemText}>Copier le WOD</Text>
             </TouchableOpacity>
             <TouchableOpacity style={S.menuItem} onPress={onShare} activeOpacity={0.7} testID="wodresult-share">
-              <Share2 size={18} color={theme.text} />
+              <Share2 size={18} color={c.text} />
               <Text style={S.menuItemText}>Partager</Text>
             </TouchableOpacity>
           </Pressable>
@@ -837,7 +839,7 @@ export default function WodResultScreen() {
           <View style={S.modalSheet}>
             <View style={S.modalHead}>
               <Text style={S.modalTitle}>Mon score</Text>
-              <TouchableOpacity onPress={() => setScoreModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><X size={20} color={theme.textSecondary} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => setScoreModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><X size={20} color={c.textMuted} /></TouchableOpacity>
             </View>
             {muscu ? (
               <>
@@ -848,46 +850,45 @@ export default function WodResultScreen() {
             ) : (<>
             <Text style={S.modalLabel}>Catégorie réalisée</Text>
             <View style={S.chipRow}>
-              {categories.map((c) => (
-                <TouchableOpacity key={c} style={[S.chip, scoreCategory === c && { borderColor: accent, backgroundColor: `${accent}20` }]} onPress={() => setScoreCategory(c)} activeOpacity={0.8} testID={`wodresult-score-cat-${c}`}>
-                  <Text style={S.chipText}>{CATEGORY_LABEL[c]}</Text>
-                </TouchableOpacity>
+              {categories.map((cat) => (
+                <AxChip key={cat} label={CATEGORY_LABEL[cat]} selected={scoreCategory === cat} onPress={() => setScoreCategory(cat)} testID={`wodresult-score-cat-${cat}`} />
               ))}
             </View>
             <Text style={S.modalLabel}>Type de score</Text>
             <View style={S.chipRow}>
               {SCORE_TYPES.map((s) => (
-                <TouchableOpacity key={s.key} style={[S.chip, scoreType === s.key && { borderColor: accent, backgroundColor: `${accent}20` }]} onPress={() => { setScoreType(s.key); setScoreInput(''); }} activeOpacity={0.8}>
-                  <Text style={S.chipText}>{s.label}</Text>
-                </TouchableOpacity>
+                <AxChip key={s.key} label={s.label} selected={scoreType === s.key} onPress={() => { setScoreType(s.key); setScoreInput(''); }} testID={`wodresult-score-type-${s.key}`} />
               ))}
             </View>
-            <TextInput
-              style={S.input}
-              placeholder={scoreType === 'time' ? 'mm:ss' : scoreType === 'rounds' ? 'Rounds (ex. 7)' : scoreType === 'weight' ? 'kg' : 'Reps totales'}
-              placeholderTextColor={theme.textMuted}
-              keyboardType="numeric"
-              value={scoreInput}
-              onChangeText={(v) => setScoreInput(scoreType === 'time' ? maskTimeInput(v) : v)}
-              testID="wodresult-score-input"
-            />
+            <View style={S.field}>
+              <AxTextField
+                placeholder={scoreType === 'time' ? 'mm:ss' : scoreType === 'rounds' ? 'Rounds (ex. 7)' : scoreType === 'weight' ? 'kg' : 'Reps totales'}
+                keyboardType="numeric"
+                value={scoreInput}
+                onChangeText={(v) => setScoreInput(scoreType === 'time' ? maskTimeInput(v) : v)}
+                testID="wodresult-score-input"
+              />
+            </View>
             </>)}
-            <TextInput
-              style={S.input}
-              placeholder="Notes (optionnel)"
-              placeholderTextColor={theme.textMuted}
-              value={scoreNotes}
-              onChangeText={setScoreNotes}
-            />
-            <EmeraldCTAButton
-              onPress={onSubmitScore}
-              loading={submitting}
-              disabled={submitting}
-              icon={<Trophy size={18} color={theme.ctaText} />}
-              style={{ marginTop: 16 }}
-            >
-              Enregistrer mon score
-            </EmeraldCTAButton>
+            <View style={S.field}>
+              <AxTextField
+                placeholder="Notes (optionnel)"
+                value={scoreNotes}
+                onChangeText={setScoreNotes}
+                testID="wodresult-score-notes"
+              />
+            </View>
+            <View style={S.modalCta}>
+              <AxButton
+                label="Enregistrer mon score"
+                onPress={onSubmitScore}
+                loading={submitting}
+                disabled={submitting}
+                icon={Trophy}
+                fullWidth
+                testID="wodresult-score-submit"
+              />
+            </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -901,79 +902,87 @@ const CARD_PAD = 20;
 const ROW_PAD = 14;
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: theme.background },
-    header: { paddingHorizontal: 20, paddingBottom: 8, flexDirection: 'row', alignItems: 'center', gap: 12 },
-    headerLabel: { fontSize: 17, fontWeight: '800', color: theme.text },
-    content: { padding: 16 },
+    container: { flex: 1, backgroundColor: c.background },
+    content: { paddingHorizontal: axSpacing.xl, paddingTop: axSpacing.lg },
+    relache: { marginBottom: axSpacing.md, padding: axSpacing.md },
 
-    wodCard: { marginBottom: 0 },
+    wodCard: { marginBottom: 0, padding: 0 },
     wodCardInner: { padding: CARD_PAD, gap: 10 },
-    wodCardTop: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-    timeCap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    timeCapText: { fontSize: 11, color: theme.textMuted },
-    wodTitle: { fontSize: 17, fontWeight: '700', color: theme.text },
-    wodDesc: { fontSize: 13, color: theme.textSecondary, lineHeight: 19 },
+    wodCardTop: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, flexWrap: 'wrap' },
+    timeCap: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+    timeCapText: { ...axTypography.caption, color: c.textMuted },
+    wodTitle: { ...axTypography.titleL, color: c.text },
+    wodDesc: { ...axTypography.bodySmall, color: c.textMuted },
     wodCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
-    wodCardAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    wodCardActionText: { fontSize: 12, fontWeight: '700' },
+    wodCardAction: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, flexShrink: 1 },
+    wodCardActionText: { ...axTypography.labelSmall },
     timerBtn: {
-      width: 34, height: 34, borderRadius: 10,
+      width: 44, height: 44, borderRadius: axRadius.control,
       alignItems: 'center', justifyContent: 'center',
-      borderWidth: 1,
+      borderWidth: 1, borderColor: c.border, backgroundColor: c.field,
     },
 
     displayedFor: { paddingHorizontal: CARD_PAD, paddingVertical: 14 },
-    displayedForText: { ...typography.bodySmall, color: theme.textSecondary },
-    displayedForLink: { fontWeight: '700', textDecorationLine: 'underline' },
+    displayedForText: { ...axTypography.bodySmall, color: c.textMuted },
+    displayedForLink: { ...axTypography.labelSmall, textDecorationLine: 'underline' },
 
-    card: { marginBottom: 14 },
+    card: { marginBottom: 14, padding: 0 },
     cardInner: { padding: CARD_PAD },
 
     moveRow: { paddingVertical: ROW_PAD },
     moveRowFirst: { paddingTop: 0 },
     moveRowLast: { paddingBottom: 0 },
-    moveRowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border },
-    moveHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-    moveText: { fontSize: 15, fontWeight: '700', color: theme.text, lineHeight: 21 },
-    moveRound: { fontSize: 12, color: theme.textSecondary, fontWeight: '700' },
-    moveQty: { fontWeight: '900' },
-    moveSub: { ...typography.bodySmall, color: theme.textSecondary, marginTop: spacing.xxs },
-    catTable: { marginTop: spacing.sm, gap: spacing.xs },
-    catRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, paddingVertical: spacing.xxs },
-    catName: { ...typography.bodySmall, fontWeight: '600', color: theme.textSecondary, width: 84 },
-    catVal: { ...typography.bodySmall, color: theme.textSecondary, flex: 1, textAlign: 'right' },
+    moveRowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
+    moveHead: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+    bullet: { width: 6, height: 6, borderRadius: 3, backgroundColor: c.accent },
+    moveText: { ...axTypography.label, color: c.text },
+    moveRound: { ...axTypography.caption, color: c.textMuted },
+    moveQty: { ...axTypography.label },
+    moveSub: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2 },
+    catTable: { marginTop: axSpacing.sm, gap: axSpacing.xs },
+    catRow: { flexDirection: 'row', justifyContent: 'space-between', gap: axSpacing.sm, paddingVertical: 2 },
+    catName: { ...axTypography.caption, color: c.textMuted, width: 84 },
+    catCurrent: { ...axTypography.labelSmall, color: c.accentText },
+    catVal: { ...axTypography.caption, color: c.textMuted, flex: 1, textAlign: 'right' },
 
-    estRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    estBig: { fontSize: 30, fontWeight: '900', color: theme.text, letterSpacing: -0.5 },
-    estLabel: { ...typography.bodySmall, fontWeight: '600', color: theme.text },
-    estTarget: { ...typography.bodySmall, color: theme.textSecondary, marginTop: spacing.xxs },
-    estLink: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: spacing.sm, alignSelf: 'flex-start' },
-    estLinkText: { fontSize: 12, fontWeight: '700' },
-    stimulus: { ...typography.bodySmall, color: theme.text, marginTop: ROW_PAD },
-    afterClass: { ...typography.caption, color: theme.textSecondary, marginTop: spacing.xs },
+    estRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+    estBig: { ...axTypography.numberM, color: c.text },
+    estLabel: { ...axTypography.label, color: c.text },
+    estTarget: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2 },
+    estLink: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, marginTop: axSpacing.sm, alignSelf: 'flex-start' },
+    estLinkText: { ...axTypography.labelSmall },
+    stimulus: { ...axTypography.bodySmall, color: c.text, marginTop: ROW_PAD },
+    afterClass: { ...axTypography.caption, color: c.textMuted, marginTop: axSpacing.xs },
 
-    bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0 },
-    bottomBarInner: { paddingHorizontal: CARD_PAD, paddingTop: ROW_PAD, gap: 12 },
+    bottomBar: {
+      position: 'absolute', left: 0, right: 0, bottom: 0,
+      borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border, overflow: 'hidden',
+    },
+    bottomBarInner: { paddingHorizontal: CARD_PAD, paddingTop: ROW_PAD, gap: axSpacing.md },
     iconRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    iconBtn: { flex: 1, alignItems: 'center', gap: 3, paddingVertical: 4 },
-    iconText: { fontSize: 10, fontWeight: '700', color: theme.textSecondary },
+    iconBtn: { flex: 1, alignItems: 'center', gap: 3, paddingVertical: axSpacing.xs, minHeight: 44 },
+    iconText: { ...axTypography.tab, color: c.textMuted },
     ctaRow: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
+    ctaCell: { flex: 1, minWidth: 0 },
 
     modalBg: { flex: 1, backgroundColor: theme.modalBackdrop, justifyContent: 'flex-end' },
-    menuSheet: { backgroundColor: theme.modalCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 16 },
-    menuItem: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 8 },
-    menuItemText: { fontSize: 15, fontWeight: '600', color: theme.text },
-    modalSheet: { backgroundColor: theme.modalCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
-    modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-    modalTitle: { fontSize: 18, fontWeight: '900', color: theme.text },
-    modalLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textSecondary, marginTop: 12, marginBottom: 8 },
-    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card },
-    chipText: { fontSize: 13, color: theme.text, fontWeight: '600' },
+    menuSheet: { backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: axSpacing.lg },
+    menuItem: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, paddingVertical: 14, paddingHorizontal: axSpacing.sm },
+    menuItemText: { ...axTypography.label, color: c.text },
+    modalSheet: { backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: axSpacing['2xl'], paddingBottom: 40 },
+    modalHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: axSpacing.md },
+    modalTitle: { ...axTypography.titleM, color: c.text },
+    modalText: { ...axTypography.bodySmall, color: c.textMuted, marginTop: axSpacing.xs, marginBottom: axSpacing.md },
+    modalLabel: { ...axTypography.overline, color: c.textMuted, marginTop: axSpacing.md, marginBottom: axSpacing.sm },
+    modalCta: { marginTop: axSpacing.lg },
+    chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm },
+    dayRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm, marginTop: axSpacing.sm },
+    field: { marginTop: axSpacing.md },
     input: {
-      borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface,
-      borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: theme.text, fontSize: 14, marginTop: 12,
+      borderWidth: 1, borderColor: c.fieldBorder, backgroundColor: c.field,
+      borderRadius: axRadius.control, paddingHorizontal: 14, paddingVertical: axSpacing.md, color: c.text, ...axTypography.body, marginTop: axSpacing.md,
     },
   });
 }

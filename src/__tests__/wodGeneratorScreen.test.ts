@@ -86,7 +86,7 @@ describe('page résultat', () => {
     expect(result).toContain("boxWodId ? 'Sur le Whiteboard' : 'Ajouter au Whiteboard'");
     expect(result).toContain("submittedScore ? 'Modifier mon score' : 'Saisir mon score'");
     expect(result).toContain('<TimerLaunchModal');
-    expect(result).toContain('<WodTypeBadge type="generated" label="Généré"');
+    expect(result).toContain('<AxTag label="Généré" tone="accent"');
     expect(result).toContain("navigation.navigate('Profile', { editLevel: true })");
     expect(result).not.toContain('theme.textMuted, marginTop');
     expect(result).toContain('Catégorie réalisée');

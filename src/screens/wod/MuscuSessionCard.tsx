@@ -7,22 +7,19 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ChevronDown, ChevronUp, Check, Timer as TimerIcon } from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
-import GlassCard from '../../components/glass/GlassCard';
-import { spacing, typography } from '../../theme/designTokens';
 import { loadText, sideLabel } from '../../../packages/wod-engine/src';
 import type { MuscuExercise, MuscuWod } from '../../../packages/wod-engine/src';
 import { PerformedExercise, PerformedSet, setTonnage, totalTonnage } from '../../services/wodGenerator';
 import { initialPerformed, performedToDrafts } from '../../services/muscuSession';
 import { normalizeDecimalInput, normalizeRepsInput, parseDecimal, strengthProgress } from '../../services/strengthSets';
 import { StrengthSaveState, StrengthSessionStatus } from '../../components/wod/StrengthSetGrid';
-import { AxButton } from '../../components/ax';
-import { axSpacing } from '../../theme/axTokens';
+import { AxButton, AxCard, AxTextField } from '../../components/ax';
+import { axSpacing, axTypography } from '../../theme/axTokens';
 import i18n from '../../i18n';
-import { MUSCU_BLUE_DARK } from './muscuOptions';
 
 export { initialPerformed };
 
@@ -78,6 +75,7 @@ interface Props {
 export default function MuscuSessionCard({ wod, accent, performed, onPerformedChange, draft }: Props) {
   const { theme } = useTheme();
   const S = useMemo(() => styles(theme), [theme]);
+  const c = theme.ax;
   const exercises = wod.blocks[0].exercises;
 
   const [open, setOpen] = useState<Set<number>>(new Set());
@@ -144,7 +142,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
   const current = cursor ? exercises[cursor.exercise] : null;
 
   return (
-    <GlassCard radius={16} style={S.card}>
+    <AxCard style={S.card} testID="muscu-session-card">
       <View style={S.cardInner}>
       <Text style={S.section}>Séance</Text>
       {exercises.map((e, i) => {
@@ -155,7 +153,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
         return (
           <View key={`${e.id}-${i}`} style={[S.row, i > 0 && S.rowBorder]} testID={`muscu-exercise-${i}`}>
             <TouchableOpacity style={S.rowHead} onPress={() => toggle(i)} activeOpacity={0.7}>
-              <View style={[S.dot, { backgroundColor: done >= e.sets ? theme.success : isCurrent ? accent : theme.border }]} />
+              <View style={[S.dot, { backgroundColor: done >= e.sets ? c.success : isCurrent ? accent : c.border }]} />
               <View style={{ flex: 1 }}>
                 <Text style={[S.name, isCurrent && { color: accent }]}>
                   {e.name}
@@ -166,7 +164,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
                   {[restText(e.rest_s), `${Math.min(done, e.sets)}/${e.sets} séries`].filter(Boolean).join(' · ')}
                 </Text>
               </View>
-              {isOpen ? <ChevronUp size={18} color={theme.textSecondary} /> : <ChevronDown size={18} color={theme.textSecondary} />}
+              {isOpen ? <ChevronUp size={18} color={c.textMuted} /> : <ChevronDown size={18} color={c.textMuted} />}
             </TouchableOpacity>
             {isOpen && (
               <View style={S.detail}>
@@ -176,18 +174,20 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
                     <Text style={[S.setLabel, cursor?.exercise === i && cursor.set === si && { color: accent }]}>
                       Série {si + 1}
                     </Text>
-                    <TextInput
-                      style={S.input}
-                      value={s.reps ? String(s.reps) : ''}
-                      onChangeText={(v) => updateSet(i, si, { reps: Math.floor(parseNum(normalizeRepsInput(v))) })}
-                      keyboardType="number-pad"
-                      placeholder={e.reps_unit === 'reps' ? 'reps' : e.reps_unit}
-                      placeholderTextColor={theme.textMuted}
-                      testID={`muscu-reps-${i}-${si}`}
-                    />
+                    <View style={S.input}>
+                      <AxTextField
+                        compact
+                        value={s.reps ? String(s.reps) : ''}
+                        onChangeText={(v) => updateSet(i, si, { reps: Math.floor(parseNum(normalizeRepsInput(v))) })}
+                        keyboardType="number-pad"
+                        placeholder={e.reps_unit === 'reps' ? 'reps' : e.reps_unit}
+                        testID={`muscu-reps-${i}-${si}`}
+                      />
+                    </View>
                     <Text style={S.unit}>×</Text>
-                    <TextInput
-                      style={S.input}
+                    <View style={S.input}>
+                    <AxTextField
+                      compact
                       value={kgText[`${i}-${si}`] ?? (s.load_kg ? fmtKg(s.load_kg) : '')}
                       onChangeText={(v) => {
                         const text = normalizeDecimalInput(v);
@@ -201,9 +201,9 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
                       })}
                       keyboardType="decimal-pad"
                       placeholder="kg"
-                      placeholderTextColor={theme.textMuted}
                       testID={`muscu-kg-${i}-${si}`}
                     />
+                    </View>
                     <Text style={S.tonnage}>{setTonnage(s) ? `${fmtKg(setTonnage(s))} kg` : '—'}</Text>
                   </View>
                 ))}
@@ -220,19 +220,16 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
         </View>
         {restLeft != null && (
           <View style={S.rest} testID="muscu-rest">
-            <TimerIcon size={16} color={restLeft > 0 ? accent : theme.success} />
-            <Text style={[S.restText, { color: restLeft > 0 ? accent : theme.success }]}>
+            <TimerIcon size={16} color={restLeft > 0 ? accent : c.success} />
+            <Text style={[S.restText, { color: restLeft > 0 ? accent : c.success }]}>
               {restLeft > 0 ? `Repos ${Math.floor(restLeft / 60)}:${(restLeft % 60).toString().padStart(2, '0')}` : 'Go !'}
             </Text>
           </View>
         )}
         {current ? (
-          <TouchableOpacity style={[S.nextBtn, { backgroundColor: MUSCU_BLUE_DARK }]} onPress={nextSet} activeOpacity={0.85} testID="muscu-next-set">
-            <Check size={16} color="#fff" />
-            <Text style={S.nextText}>Série suivante</Text>
-          </TouchableOpacity>
+          <AxButton variant="outline" icon={Check} label="Série suivante" onPress={nextSet} testID="muscu-next-set" />
         ) : (
-          <Text style={[S.restText, { color: theme.success }]}>Séance terminée</Text>
+          <Text style={[S.restText, { color: c.success }]}>Séance terminée</Text>
         )}
       </View>
       {draft && !draft.validated && (
@@ -254,7 +251,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
         </View>
       )}
       </View>
-    </GlassCard>
+    </AxCard>
   );
 }
 
@@ -266,38 +263,34 @@ const axStyles = StyleSheet.create({
 const CARD_PAD = 20;
 const ROW_PAD = 14;
 
-const styles = (t: AppTheme) => StyleSheet.create({
-  // Le padding va dans un conteneur intérieur : GlassCard applique `style` à son enveloppe,
-  // hors de la bordure verre (comme S.card / S.cardInner de WodResultScreen).
-  card: { marginBottom: ROW_PAD },
+const styles = (t: AppTheme) => {
+  const c = t.ax;
+  return StyleSheet.create({
+  card: { marginBottom: ROW_PAD, padding: 0 },
   cardInner: { padding: CARD_PAD },
-  section: { ...typography.caption, color: t.textSecondary, textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 },
+  section: { ...axTypography.overline, color: c.textMuted, marginBottom: 10 },
   row: { paddingVertical: ROW_PAD },
-  rowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.border },
-  rowHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  rowBorder: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border },
+  rowHead: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  name: { fontSize: 15, fontWeight: '700', color: t.text, lineHeight: 21 },
-  optional: { ...typography.caption, color: t.textSecondary, fontWeight: '400' },
-  scheme: { ...typography.bodySmall, color: t.textSecondary, marginTop: spacing.xxs },
-  meta: { ...typography.caption, color: t.textSecondary, marginTop: spacing.xxs },
-  detail: { marginTop: 10, marginLeft: 22, gap: 8 },
-  notes: { ...typography.bodySmall, color: t.textSecondary, fontStyle: 'italic' },
-  setRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  setLabel: { ...typography.bodySmall, color: t.textSecondary, width: 64 },
-  input: {
-    width: 64, height: 36, borderRadius: 8, borderWidth: 1, borderColor: t.border, color: t.text,
-    paddingHorizontal: 8, textAlign: 'center', ...typography.body,
-  },
-  unit: { ...typography.bodySmall, color: t.textSecondary },
-  tonnage: { ...typography.bodySmall, color: t.textSecondary, marginLeft: 'auto' },
+  name: { ...axTypography.label, color: c.text },
+  optional: { ...axTypography.caption, color: c.textMuted },
+  scheme: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2 },
+  meta: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+  detail: { marginTop: 10, marginLeft: 22, gap: axSpacing.sm },
+  notes: { ...axTypography.bodySmall, color: c.textMuted, fontStyle: 'italic' },
+  setRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+  setLabel: { ...axTypography.caption, color: c.textMuted, width: 56 },
+  input: { width: 64 },
+  unit: { ...axTypography.caption, color: c.textMuted },
+  tonnage: { ...axTypography.caption, color: c.textMuted, marginLeft: 'auto', flexShrink: 1, textAlign: 'right' },
   footer: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: ROW_PAD, paddingTop: ROW_PAD,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: t.border,
+    flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: axSpacing.md, marginTop: ROW_PAD, paddingTop: ROW_PAD,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border,
   },
-  footerLabel: { ...typography.caption, color: t.textSecondary },
-  footerValue: { ...typography.body, color: t.text, fontWeight: '700' },
+  footerLabel: { ...axTypography.caption, color: c.textMuted },
+  footerValue: { ...axTypography.numberM, color: c.text },
   rest: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  restText: { ...typography.bodySmall, fontWeight: '600', fontVariant: ['tabular-nums'] },
-  nextBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, height: 40, borderRadius: 12 },
-  nextText: { ...typography.bodySmall, color: '#fff', fontWeight: '700' },
-});
+  restText: { ...axTypography.labelSmall, fontVariant: ['tabular-nums'] },
+  });
+};

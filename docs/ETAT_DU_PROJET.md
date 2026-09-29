@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R4a : générateur et résultats au nouveau design (app seule, aucune migration, apparence seule).**
+- `WodGeneratorScreen` (Functional / Hybrid / Musculation), `WodResultScreen` (WOD et séance de musculation),
+  `MuscuSessionCard`, `StrengthSetGrid` et `SessionContextCard` en composants ax (`AxChip`, `AxSwitch`, `AxTextField`
+  compact, `AxButton` accent unique « Générer mon WOD » / « Saisir mon score », `AxCard featured`, `AxTag`) ; emoji des
+  disciplines remplacés par des icônes Lucide ; champs, options, libellés, ordre des blocs, génération, brouillon,
+  validation musculation, Whiteboard, favoris et re-tirer inchangés (ordre des textes comparé à un relevé de master) ;
+  écarts maquette / code listés dans la PR ; tests `wodR4a.rn.test.tsx` + suites existantes verts.
+
 **Refonte R3c : en-tête « ‹ Retour » uniforme sur les écrans secondaires (app seule, aucune migration, apparence de l'en-tête seule).**
 - Nouveau `AxScreenHeader` (rangée 44, marges 20, chevron 16 + « Retour » label textMuted, titre titleM une ligne
   centré, emplacement droit de même largeur) sur 37 écrans secondaires de l'athlète ; titres, actions de droite et

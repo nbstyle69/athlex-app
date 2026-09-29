@@ -8,6 +8,8 @@ interface Props {
   label: string;
   selected?: boolean;
   onPress: () => void;
+  /** Choix indisponible : non appuyable, libellé en textMuted. */
+  disabled?: boolean;
   testID?: string;
 }
 
@@ -15,17 +17,18 @@ interface Props {
 const HIT_SLOP = { top: 2, bottom: 2, left: 0, right: 0 };
 
 /** Pastille de filtre ou de choix. */
-export function AxChip({ label, selected = false, onPress, testID }: Props) {
+export function AxChip({ label, selected = false, onPress, disabled = false, testID }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
   return (
     <Pressable
       testID={testID}
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
       hitSlop={HIT_SLOP}
       accessibilityRole="button"
       accessibilityLabel={label}
-      accessibilityState={{ selected }}
+      accessibilityState={disabled ? { selected, disabled } : { selected }}
       style={[styles.base, { borderColor: selected ? 'transparent' : c.border }]}
     >
       {selected ? (
@@ -33,7 +36,7 @@ export function AxChip({ label, selected = false, onPress, testID }: Props) {
       ) : (
         <AxGlass color={c.text} opacity={0.08} radius={axRadius.control} />
       )}
-      <Text style={[axTypography.label, { color: selected ? c.onAccent : c.text }]}>{label}</Text>
+      <Text style={[axTypography.label, { color: selected ? c.onAccent : disabled ? c.textMuted : c.text }]}>{label}</Text>
     </Pressable>
   );
 }
