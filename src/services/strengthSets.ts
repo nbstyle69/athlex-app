@@ -386,6 +386,71 @@ export function computedMaxLoad(drafts: StrengthSetDraft[]): number | null {
   return loads.length ? Math.max(...loads) : null;
 }
 
+/** Tonnage des séries valides : somme reps × charge. */
+export function strengthTonnage(drafts: StrengthSetDraft[]): number {
+  const t = validStrengthSets(drafts)
+    .reduce((sum, d) => sum + (validReps(d.reps) as number) * (validLoad(d.loadKg) as number), 0);
+  return Math.round(t * 100) / 100;
+}
+
+/** Écart d'une série à sa prescription (reps et charge), null quand elle la suit. */
+export interface StrengthSetDeviation {
+  reps: { done: number; planned: number } | null;
+  loadKg: { done: number; planned: number } | null;
+}
+
+export function strengthSetDeviation(d: StrengthSetDraft): StrengthSetDeviation {
+  const reps = validReps(d.reps);
+  const load = validLoad(d.loadKg);
+  return {
+    reps: reps != null && d.prescribedReps >= 1 && reps !== d.prescribedReps
+      ? { done: reps, planned: d.prescribedReps } : null,
+    loadKg: load != null && d.prescribedLoadKg != null && d.prescribedLoadKg > 0 && load !== d.prescribedLoadKg
+      ? { done: load, planned: d.prescribedLoadKg } : null,
+  };
+}
+
+/** État d'une séance pour une carte de liste : brouillon (n / N) ou validée. */
+export interface StrengthCardSummary {
+  status: StrengthSessionStatus;
+  done: number;
+  total: number;
+}
+
+/**
+ * États des séances de l'athlète pour une liste de sources (les WOD de la
+ * semaine) : une lecture groupée pour toute la liste, jamais une par carte.
+ */
+export async function fetchStrengthSummaries(
+  userId: string,
+  sourceType: StrengthSourceType,
+  sourceIds: string[],
+): Promise<Record<string, StrengthCardSummary>> {
+  const ids = [...new Set(sourceIds)];
+  if (ids.length === 0) return {};
+  const [{ data: sessions, error: e1 }, { data: sets, error: e2 }] = await Promise.all([
+    db.from('strength_sessions')
+      .select('source_id, status, planned_sets')
+      .eq('user_id', userId).eq('source_type', sourceType).in('source_id', ids),
+    db.from('strength_set_logs')
+      .select('source_id, reps, load_kg')
+      .eq('user_id', userId).eq('source_type', sourceType).in('source_id', ids),
+  ]);
+  if (e1 || e2) throw e1 ?? e2;
+  const out: Record<string, StrengthCardSummary> = {};
+  for (const s of sessions ?? []) {
+    const rows = (sets ?? []).filter(r => r.source_id === s.source_id);
+    const done = rows.filter(r => validReps(r.reps == null ? '' : String(r.reps)) != null
+      && validLoad(r.load_kg == null ? '' : String(r.load_kg)) != null).length;
+    out[s.source_id] = {
+      status: s.status === 'validated' ? 'validated' : 'draft',
+      done,
+      total: Math.max(s.planned_sets ?? rows.length, done),
+    };
+  }
+  return out;
+}
+
 const pendingKey = (k: StrengthSourceKey) => `@athlex:strengthDraft:${k.userId}:${k.sourceType}:${k.sourceId}`;
 
 export async function loadPendingStrengthDraft(k: StrengthSourceKey): Promise<PendingStrengthDraft | null> {

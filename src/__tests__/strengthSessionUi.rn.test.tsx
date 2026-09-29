@@ -9,7 +9,7 @@ import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { lightTheme, darkTheme, type AppTheme } from '../theme/palette';
 import i18n from '../i18n';
 import StrengthSetGrid, {
-  StrengthMaxLoadRow, StrengthSavedLoads, StrengthSessionStatus,
+  StrengthMaxLoadRow, StrengthSessionStatus,
 } from '../components/wod/StrengthSetGrid';
 import { AxStatusDot } from '../components/ax';
 import type { StrengthSetDraft } from '../services/strengthSets';
@@ -78,12 +78,5 @@ describe('charge max calculée', () => {
     expect(root.findByProps({ testID: 'strength-max-load' }).props.accessibilityLabel)
       .toBe('Charge max (score) · calculée : 102.5 kg');
     expect(root.findAllByType(TextInput)).toHaveLength(0);
-  });
-});
-
-describe('charges enregistrées', () => {
-  it('liste les séries enregistrées, pas la prescription', async () => {
-    const root = await mount(<StrengthSavedLoads drafts={[draft(1, '4', '102.5'), draft(2, '', '')]} />);
-    expect(texts(root)).toEqual(['Mes charges enregistrées', 'Back Squat', 'Série 1 · 4 × 102.5 kg', 'Série 2 · —']);
   });
 });

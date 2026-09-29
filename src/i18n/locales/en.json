@@ -1858,10 +1858,8 @@
     "validate": "Validate session",
     "saveChanges": "Save my loads",
     "editLoads": "Edit my loads",
-    "savedLoadsTitle": "My saved loads",
     "validated": "Session validated",
     "setLine": "Set {{index}} · {{reps}} × {{kg}} kg",
-    "setLineEmpty": "Set {{index}} · —",
     "errorTitle": "Session not validated",
     "errorEmpty": "Fill in at least one set with reps and load.",
     "errorOtherScoreType": "This WOD already has a score of another type: it can't be scored by load.",
@@ -1871,6 +1869,13 @@
     "offlineSavedTitle": "Entries kept on this phone",
     "newRecordTitle": "New 1RM",
     "recordLine": "{{label}}: {{kg}} kg",
-    "recordLinePrevious": "{{label}}: {{kg}} kg (was {{previous}} kg)"
+    "recordLinePrevious": "{{label}}: {{kg}} kg (was {{previous}} kg)",
+    "myLoadsTitle": "My loads",
+    "deviationReps": "{{done}} instead of {{planned}}",
+    "deviationLoad": "{{done}} kg instead of {{planned}} kg",
+    "tonnageLabel": "Tonnage",
+    "maxLoadShort": "Max load",
+    "cardValidated": "Validated",
+    "resumeEntry": "Resume my entry"
   }
 }

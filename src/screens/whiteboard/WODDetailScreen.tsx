@@ -34,7 +34,7 @@ import {
 } from '../../services/strengthSets';
 import i18n from '../../i18n';
 import StrengthSetGrid, {
-  StrengthMaxLoadRow, StrengthSavedLoads, StrengthSaveState, StrengthSessionStatus,
+  StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSaveState, StrengthSessionStatus,
 } from '../../components/wod/StrengthSetGrid';
 import { AxButton } from '../../components/ax';
 import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
@@ -868,9 +868,12 @@ export default function WODDetailScreen() {
               ) : null}
             </View>
           ) : null}
-          {myScore && isStrengthSession && (
-            <View>
-              <StrengthSavedLoads drafts={strengthValidated ? strengthDrafts : []} />
+          {isStrengthSession && strengthValidated && (
+            <View style={{ marginTop: 12 }}>
+              <StrengthMyLoadsCard
+                drafts={strengthDrafts}
+                maxLoadKg={strengthServer?.session?.maxLoadKg ?? computedMaxLoad(strengthDrafts)}
+              />
               {!isExpired && (
                 <View style={{ marginTop: 12 }}>
                   <AxButton

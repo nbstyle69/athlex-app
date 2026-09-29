@@ -1858,10 +1858,8 @@
     "validate": "Valider la séance",
     "saveChanges": "Enregistrer mes charges",
     "editLoads": "Modifier mes charges",
-    "savedLoadsTitle": "Mes charges enregistrées",
     "validated": "Séance validée",
     "setLine": "Série {{index}} · {{reps}} × {{kg}} kg",
-    "setLineEmpty": "Série {{index}} · —",
     "errorTitle": "Séance non validée",
     "errorEmpty": "Renseigne au moins une série avec reps et charge.",
     "errorOtherScoreType": "Ce WOD porte déjà un score d'un autre type : il ne peut pas être scoré en charge.",
@@ -1871,6 +1869,13 @@
     "offlineSavedTitle": "Saisie gardée sur ce téléphone",
     "newRecordTitle": "Nouveau 1RM",
     "recordLine": "{{label}} : {{kg}} kg",
-    "recordLinePrevious": "{{label}} : {{kg}} kg (avant {{previous}} kg)"
+    "recordLinePrevious": "{{label}} : {{kg}} kg (avant {{previous}} kg)",
+    "myLoadsTitle": "Mes charges",
+    "deviationReps": "{{done}} au lieu de {{planned}}",
+    "deviationLoad": "{{done}} kg au lieu de {{planned}} kg",
+    "tonnageLabel": "Tonnage",
+    "maxLoadShort": "Charge max",
+    "cardValidated": "Validée",
+    "resumeEntry": "Reprendre ma saisie"
   }
 }

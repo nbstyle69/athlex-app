@@ -18,9 +18,10 @@ import { View, Text, TextInput, StyleSheet } from 'react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import {
-  StrengthSetDraft, normalizeDecimalInput, normalizeRepsInput, savedAgo,
+  StrengthCardSummary, StrengthSetDraft, normalizeDecimalInput, normalizeRepsInput, savedAgo,
+  strengthSetDeviation, strengthTonnage, validStrengthSets,
 } from '../../services/strengthSets';
-import { AxStatusDot } from '../ax';
+import { AxCard, AxStatusDot } from '../ax';
 import { axSpacing, axTypography } from '../../theme/axTokens';
 import i18n from '../../i18n';
 
@@ -149,33 +150,82 @@ export function StrengthMaxLoadRow({ maxLoadKg }: { maxLoadKg: number | null }) 
   );
 }
 
-/** Charges enregistrées d'une séance validée (pas la prescription). */
-export function StrengthSavedLoads({ drafts }: { drafts: StrengthSetDraft[] }) {
+/**
+ * « Mes charges » d'une séance validée : les séries enregistrées (pas la
+ * prescription), l'écart à la prescription, tonnage et charge max.
+ */
+export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
+  drafts: StrengthSetDraft[];
+  maxLoadKg: number | null;
+}) {
   const { theme } = useTheme();
-  if (drafts.length === 0) return null;
+  const c = theme.ax;
+  const sets = validStrengthSets(drafts);
+  if (sets.length === 0) return null;
   return (
-    <View style={axStyles.saved} testID="strength-saved-loads">
-      <Text style={[axTypography.overline, { color: theme.ax.textMuted }]}>{i18n.t('strengthSession.savedLoadsTitle')}</Text>
-      {drafts.map((d, i) => {
-        const first = i === 0 || drafts[i - 1].entryIndex !== d.entryIndex;
-        const line = d.reps.trim() && d.loadKg.trim()
-          ? i18n.t('strengthSession.setLine', { index: d.setIndex, reps: d.reps, kg: d.loadKg })
-          : i18n.t('strengthSession.setLineEmpty', { index: d.setIndex });
+    <AxCard testID="strength-my-loads">
+      <Text style={[axTypography.overline, { color: c.textMuted }]}>{i18n.t('strengthSession.myLoadsTitle')}</Text>
+      {sets.map((d, i) => {
+        const first = i === 0 || sets[i - 1].entryIndex !== d.entryIndex;
+        const dev = strengthSetDeviation(d);
+        const gaps = [
+          dev.reps && i18n.t('strengthSession.deviationReps', { done: dev.reps.done, planned: dev.reps.planned }),
+          dev.loadKg && i18n.t('strengthSession.deviationLoad', { done: fmtKg(dev.loadKg.done), planned: fmtKg(dev.loadKg.planned) }),
+        ].filter(Boolean).join(' · ');
         return (
-          <View key={`${d.entryIndex}-${d.setIndex}`}>
-            {first && <Text style={[axTypography.label, { color: theme.ax.text }]}>{d.name}</Text>}
-            <Text style={[axTypography.bodySmall, { color: theme.ax.textMuted }]}>{line}</Text>
+          <View key={`${d.entryIndex}-${d.setIndex}`} testID={`strength-my-loads-set-${i}`}>
+            {first && <Text style={[axTypography.label, { color: c.text }]}>{d.name}</Text>}
+            <View style={axStyles.setLine}>
+              <Text style={[axTypography.bodySmall, { color: c.text }]}>
+                {i18n.t('strengthSession.setLine', { index: d.setIndex, reps: d.reps, kg: d.loadKg })}
+              </Text>
+              {gaps ? (
+                <Text style={[axTypography.labelSmall, { color: c.accentText }]} testID={`strength-my-loads-gap-${i}`}>{gaps}</Text>
+              ) : null}
+            </View>
           </View>
         );
       })}
-    </View>
+      <View style={axStyles.totals}>
+        <View>
+          <Text style={[axTypography.overlineSmall, { color: c.textMuted }]}>{i18n.t('strengthSession.tonnageLabel')}</Text>
+          <Text style={[axTypography.numberM, { color: c.text }]} testID="strength-my-loads-tonnage">{`${fmtKg(strengthTonnage(sets))} kg`}</Text>
+        </View>
+        <View>
+          <Text style={[axTypography.overlineSmall, { color: c.textMuted }]}>{i18n.t('strengthSession.maxLoadShort')}</Text>
+          <Text style={[axTypography.numberM, { color: c.text }]} testID="strength-my-loads-max">
+            {maxLoadKg == null ? '—' : `${fmtKg(maxLoadKg)} kg`}
+          </Text>
+        </View>
+      </View>
+    </AxCard>
   );
+}
+
+/** Mention d'une carte de WOD de musculation : « En cours · n / N séries » ou « Validée ». */
+export function StrengthWodCardStatus({ summary }: { summary: StrengthCardSummary | null | undefined }) {
+  if (!summary) return null;
+  return summary.status === 'validated'
+    ? <AxStatusDot tone="active" label={i18n.t('strengthSession.cardValidated')} testID="strength-card-status" />
+    : (
+      <AxStatusDot
+        tone="warning"
+        label={i18n.t('strengthSession.inProgress', { done: summary.done, total: summary.total })}
+        testID="strength-card-status"
+      />
+    );
+}
+
+/** Libellé du lien d'une carte : « Reprendre ma saisie » quand un brouillon attend. */
+export function strengthCardLinkKey(summary: StrengthCardSummary | null | undefined): string {
+  return summary?.status === 'draft' ? 'strengthSession.resumeEntry' : 'whiteboard.seeDetails';
 }
 
 const axStyles = StyleSheet.create({
   status: { gap: axSpacing.xs, marginTop: axSpacing.lg },
   maxLoad: { gap: axSpacing.xs, marginTop: axSpacing.lg },
-  saved: { gap: axSpacing.xs, marginTop: axSpacing.md },
+  setLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: axSpacing.sm },
+  totals: { flexDirection: 'row', gap: axSpacing['2xl'] },
 });
 
 function createStyles(theme: AppTheme) {
