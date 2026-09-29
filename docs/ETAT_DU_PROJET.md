@@ -337,7 +337,8 @@ Supabase/Resend.
   l'abonnement Stripe court encore (`REACTIVATION_ABONNEMENT_EN_COURS`). Ni `status` (hors ce cas) ni
   `role` ne sont gardés. Refus à traduire dans l'app (`BOMembersScreen`).
 - Rôle co-gérant réservé au gérant principal (écart A du lot sécurité Manager ; migration `20270139`,
-  **non appliquée**) : seul `boxes.owner_id` donne ou retire le rôle `owner` d'une ligne de
+  **appliquée en prod le 29/09/2026 à 08:05 UTC**, dump
+  `db-dumps/2026-09-29/athlex-prod-public-internal-20260929T080359Z.dump` ; audit 37/37) : seul `boxes.owner_id` donne ou retire le rôle `owner` d'une ligne de
   `box_members` (insertion, changement de rôle, de statut, de personne ou de box, suppression de la ligne
   d'un autre), refus 42501 `MEMBRE_ROLE_COGERANT_RESERVE`. Un co-gérant gère toujours membres et coachs,
   renonce à son propre rôle et quitte la box ; clé serveur et fonctions SECURITY DEFINER non concernées.

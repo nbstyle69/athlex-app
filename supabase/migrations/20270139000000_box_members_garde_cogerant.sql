@@ -2,7 +2,22 @@
 -- Le rôle co-gérant ne se donne et ne se retire que par le gérant principal
 -- (écart A du lot sécurité Manager)
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 29/09/2026 à 08:05 UTC, avec PGCLIENTENCODING=UTF8,
+-- sur GO de Nab. Dump des schémas public et internal avec droits
+-- db-dumps/2026-09-29/athlex-prod-public-internal-20260929T080359Z.dump,
+-- sha256 6dba4543cb39c0dfe82e477b09c149b0e1df216e14cb4da0078072d2b8bcde1d vérifié
+-- après aller-retour, 135 TABLE DATA, 448 ACL, 346 POLICY ; précontrôles (trois
+-- passages identiques) : garde absente, déclencheurs (528c2857…), règles
+-- (0b66f3cd…, search_path vide) et droits (e831e5d7…, colonnes 32d8b04f…) de
+-- box_members identiques au relevé de la PR, is_box_owner au md5 aa018646…,
+-- 176 member / 1 owner (gérant principal) / 4 coach ; vérifications : garde
+-- au md5 du rejeu a3f6d592e30b88f0099e3e3e0f27e08f (sans CR), SECURITY INVOKER,
+-- EXECUTE pour son propriétaire seulement, déclencheur O / tgtype 31 / sans
+-- colonnes, autres déclencheurs, règles, droits et comptages par rôle
+-- inchangés ; tests réels en transaction annulée sur une box jetable (co-gérant
+-- qui promeut → MEMBRE_ROLE_COGERANT_RESERVE ; gérant principal qui promeut
+-- puis rétrograde → accepté ; co-gérant qui passe un membre coach → accepté),
+-- sans trace ; audit des droits en prod 37/37 (T12 compris).
 --
 -- La faille (relevé du 29/09/2026 en prod, lecture seule) : `authenticated` a
 -- INSERT, UPDATE et DELETE sur `box_members`, et `box_members_coowner_manage`
