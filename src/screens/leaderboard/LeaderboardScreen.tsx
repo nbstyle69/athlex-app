@@ -1,10 +1,11 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useFocusQuery } from '../../hooks/useFocusQuery';
 import {
   View, Text, ScrollView, FlatList, StyleSheet, TouchableOpacity,
   ActivityIndicator,
 } from 'react-native';
-import { Users, MapPin, ChevronLeft } from 'lucide-react-native';
+import { Users, MapPin } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { HomeStackParamList } from '../../navigation';
@@ -204,11 +205,7 @@ export default function LeaderboardScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn}>
-          <ChevronLeft color={theme.textSecondary} size={24} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Classement</Text>
+      <AxScreenHeader title="Classement">
         <Text style={S.headerSub}>Qui domine AthleX ?</Text>
 
         <View style={S.podium}>
@@ -235,7 +232,7 @@ export default function LeaderboardScreen() {
             );
           })}
         </View>
-      </View>
+      </AxScreenHeader>
 
       <View style={S.mainTabs}>
         {MAIN_TABS.map((t, i) => (

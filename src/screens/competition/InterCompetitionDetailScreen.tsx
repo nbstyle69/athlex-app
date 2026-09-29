@@ -1,13 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
-import {
-  ChevronRight, Globe2, Users, Calendar, Trophy,
-  Dumbbell, Lock, Clock, CheckCircle2, XCircle, UserPlus,
-  GitBranch, Shield, Swords,
-} from 'lucide-react-native';
+import { Globe2, Users, Calendar, Trophy, Dumbbell, Lock, Clock, CheckCircle2, XCircle, UserPlus, GitBranch, Swords, Shield } from 'lucide-react-native';
 import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -272,20 +269,11 @@ export default function InterCompetitionDetailScreen() {
     <View style={S.container}>
       <GlassBackground />
       {/* Header */}
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn}>
-          <ChevronRight size={22} color={theme.textMuted} style={{ transform: [{ rotate: '180deg' }] }} />
-        </TouchableOpacity>
-        <View style={S.headerIcon}>
-          <Globe2 size={18} color={theme.accent} />
-        </View>
-        <View style={{ flex: 1 }}>
-          <Text style={S.headerTitle} numberOfLines={1}>{comp.title}</Text>
+      <AxScreenHeader title={comp.title}>
           <Text style={S.headerSub}>
             {FORMAT_LABEL[comp.format] ?? comp.format} · {comp.type === 'individual' ? t('interComp.individual') : t('interComp.team', { n: comp.team_size })}
           </Text>
-        </View>
-      </View>
+      </AxScreenHeader>
 
       {/* Tab bar */}
       <View style={S.tabBar}>

@@ -1,12 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, ActivityIndicator, Linking,
 } from 'react-native';
-import {
-  ChevronLeft, MapPin, Globe, Mail, Phone, Users, Calendar,
-  Instagram, Clock, Dumbbell, ExternalLink,
-} from 'lucide-react-native';
+import { MapPin, Globe, Mail, Phone, Users, Calendar, Instagram, Dumbbell, ExternalLink, Clock } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -78,12 +76,7 @@ export default function BoxDirectoryDetailScreen() {
     return (
       <View style={s.container}>
         <GlassBackground />
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} accessibilityLabel={t('common.back')}>
-            <ChevronLeft color={theme.text} size={22} />
-          </TouchableOpacity>
-          <Text style={s.headerTitle} numberOfLines={1}>{t('boxAccess.notFoundTitle')}</Text>
-        </View>
+        <AxScreenHeader title={t('boxAccess.notFoundTitle')} />
         <View style={[s.center, { paddingHorizontal: 32 }]}>
           <Text style={[s.emptyText, { textAlign: 'center' }]}>{t('boxAccess.notFoundBody')}</Text>
         </View>
@@ -102,12 +95,7 @@ export default function BoxDirectoryDetailScreen() {
     <View style={s.container}>
       <GlassBackground />
       {/* Header */}
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <ChevronLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={s.headerTitle} numberOfLines={1}>{box.name}</Text>
-      </View>
+      <AxScreenHeader title={box.name} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: tabSpace }}>
         {/* Cover / Logo */}

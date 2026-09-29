@@ -1,3 +1,4 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput,
@@ -367,13 +368,7 @@ export default function TimerScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.back}>
-          <ChevronLeft color={theme.textSecondary} size={24} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Minuteur</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <AxScreenHeader title="Minuteur" />
 
       {/* Sélecteur de type de minuteur */}
       <View style={S.typeSelector}>

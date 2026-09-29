@@ -1,9 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { ChevronRight, Timer, Video, Send, Dumbbell, Clock } from 'lucide-react-native';
+import { Timer, Video, Send, Dumbbell, Clock } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -119,15 +120,9 @@ export default function InterScoreSubmitScreen() {
       <View style={S.container}>
       <GlassBackground />
         {/* Header */}
-        <View style={S.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn}>
-            <ChevronRight size={22} color={theme.textMuted} style={{ transform: [{ rotate: '180deg' }] }} />
-          </TouchableOpacity>
-          <View>
-            <Text style={S.headerTitle}>{t('interScore.title')}</Text>
+        <AxScreenHeader title={t('interScore.title')}>
             <Text style={S.headerSub}>{wodTitle}</Text>
-          </View>
-        </View>
+        </AxScreenHeader>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} keyboardShouldPersistTaps="handled">
 

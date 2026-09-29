@@ -1,12 +1,12 @@
+import i18n from '../../i18n';
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxIconButton } from '../../components/ax/AxIconButton';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl,
   ActivityIndicator, Modal, TextInput, Alert, KeyboardAvoidingView, Platform, Linking, Share,
 } from 'react-native';
-import {
-  ArrowLeft, Users, Clock, Zap, Trophy, Crown, Medal, Check, X, Play, Edit3,
-  Youtube, AlertTriangle, ThumbsUp, Link, Share2, Flame,
-} from 'lucide-react-native';
+import { Users, Clock, Zap, Trophy, Crown, Medal, Check, X, Play, Edit3, Youtube, AlertTriangle, ThumbsUp, Link, Share2, Flame } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -563,15 +563,10 @@ export default function DailyTournamentDetailScreen() {
     <View style={S.screen}>
       <GlassBackground />
       {/* Header */}
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <ArrowLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle} numberOfLines={1}>{tournament.wod_name}</Text>
-        <TouchableOpacity onPress={() => Share.share({ message: `${tournament.wod_name} — Rejoins le mini-tournoi sur AthleX ! athlex://daily/${tournamentId}` })} hitSlop={12}>
-          <Share2 color={theme.text} size={20} />
-        </TouchableOpacity>
-      </View>
+      <AxScreenHeader
+        title={tournament.wod_name}
+        right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: `${tournament.wod_name} — Rejoins le mini-tournoi sur AthleX ! athlex://daily/${tournamentId}` })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

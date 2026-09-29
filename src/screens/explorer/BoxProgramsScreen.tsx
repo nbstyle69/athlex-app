@@ -1,9 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, SectionList,
   Image, ActivityIndicator, Linking,
 } from 'react-native';
-import { ChevronLeft, Building2, ExternalLink, Calendar } from 'lucide-react-native';
+import { Building2, ExternalLink, Calendar } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
@@ -96,15 +97,9 @@ export default function BoxProgramsScreen() {
   return (
     <View style={s.container}>
       <GlassBackground />
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.back}>
-          <ChevronLeft color={theme.text} size={24} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.headerTitle}>Programmes des Boxs</Text>
+      <AxScreenHeader title="Programmes des Boxs">
           <Text style={s.headerSub}>{programs.length} programme{programs.length > 1 ? 's' : ''} disponible{programs.length > 1 ? 's' : ''}</Text>
-        </View>
-      </View>
+      </AxScreenHeader>
 
       {loading ? (
         <View style={s.center}>

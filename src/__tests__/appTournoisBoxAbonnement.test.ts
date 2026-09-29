@@ -80,7 +80,7 @@ describe('box archivée ou en archivage programmé', () => {
     const introuvable = src.slice(src.indexOf('if (!box) {'), src.indexOf('function openLink'));
     expect(introuvable).toContain("t('boxAccess.notFoundTitle')");
     expect(introuvable).toContain("t('boxAccess.notFoundBody')");
-    expect(introuvable).toContain('navigation.goBack()');
+    expect(introuvable).toContain("<AxScreenHeader title={t('boxAccess.notFoundTitle')} />");
     expect(src).not.toContain('>Box introuvable<');
   });
 });

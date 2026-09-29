@@ -1,8 +1,9 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Image,
 } from 'react-native';
-import { ChevronLeft, Calendar, Users, Zap, Clock, Timer } from 'lucide-react-native';
+import { Calendar, Users, Zap, Clock, Timer } from 'lucide-react-native';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
@@ -91,20 +92,13 @@ export default function CompetitionDetailScreen({ navigation, route }: Props) {
     <View style={S.container}>
       <GlassBackground />
       {/* Header */}
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn}>
-          <ChevronLeft color={theme.text} size={24} />
-        </TouchableOpacity>
-        <View style={S.headerCenter}>
-          <Text style={S.headerTitle} numberOfLines={1}>{competition.name}</Text>
+      <AxScreenHeader title={competition.name}>
           <View style={[S.statusPill, { backgroundColor: competition.status === 'open' ? `${theme.success}20` : `${theme.warning}20` }]}>
             <Text style={[S.statusText, { color: competition.status === 'open' ? theme.success : theme.warning }]}>
               {competition.status === 'open' ? t('compDetail.registrationOpen') : competition.status === 'active' ? t('compDetail.inProgress') : t('compDetail.finished')}
             </Text>
           </View>
-        </View>
-        <View style={{ width: 36 }} />
-      </View>
+      </AxScreenHeader>
 
       {/* Tabs */}
       <View style={S.tabs}>

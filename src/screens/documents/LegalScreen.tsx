@@ -1,7 +1,8 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft } from 'lucide-react-native';
+
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
@@ -19,13 +20,7 @@ export default function LegalScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => nav.goBack()} hitSlop={12}>
-          <ArrowLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Mentions légales</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <AxScreenHeader title="Mentions légales" onBack={() => nav.goBack()} />
 
       <View style={S.tabs}>
         <TouchableOpacity style={[S.tab, tab === 'cgu' && S.tabActive]} onPress={() => setTab('cgu')}>

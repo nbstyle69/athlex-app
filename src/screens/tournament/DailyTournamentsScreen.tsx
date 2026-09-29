@@ -1,12 +1,13 @@
+import i18n from '../../i18n';
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxIconButton } from '../../components/ax/AxIconButton';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl,
   ActivityIndicator, Modal, TextInput, Alert, KeyboardAvoidingView, Platform,
   ScrollView,
 } from 'react-native';
-import {
-  ArrowLeft, Plus, Users, Clock, Zap, Trophy, ChevronRight, Flame,
-} from 'lucide-react-native';
+import { Plus, Users, Clock, Zap, Trophy, ChevronRight, Flame } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -266,15 +267,10 @@ export default function DailyTournamentsScreen() {
     <View style={S.screen}>
       <GlassBackground />
       {/* Header */}
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <ArrowLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Mini-Tournois</Text>
-        <TouchableOpacity onPress={() => setCreateModal(true)} hitSlop={12}>
-          <Plus color={theme.accent} size={22} />
-        </TouchableOpacity>
-      </View>
+      <AxScreenHeader
+        title="Mini-Tournois"
+        right={<AxIconButton icon={Plus} onPress={() => setCreateModal(true)} accessibilityLabel={i18n.t('common.create')} testID="header-create" />}
+      />
 
       {/* Stats */}
       <View style={S.statsRow}>

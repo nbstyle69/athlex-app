@@ -1,3 +1,4 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
@@ -167,15 +168,9 @@ export default function FriendsScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.back}>
-          <ChevronLeft color={theme.textSecondary} size={24} />
-        </TouchableOpacity>
-        <View>
-          <Text style={S.headerTitle}>Amis</Text>
+      <AxScreenHeader title="Amis">
           <Text style={S.headerSub}>{friends.length} ami{friends.length > 1 ? 's' : ''}</Text>
-        </View>
-      </View>
+      </AxScreenHeader>
 
       <View style={S.tabRow}>
         {([

@@ -16,4 +16,5 @@ export { AxDayItem } from './AxDayItem';
 export { AxStatusDot, statusColor } from './AxStatusDot';
 export type { AxStatusTone } from './AxStatusDot';
 export { AxPageHeader } from './AxPageHeader';
+export { AxScreenHeader, AX_SCREEN_HEADER } from './AxScreenHeader';
 export { withAlpha } from './color';

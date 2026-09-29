@@ -1,9 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator,
   TouchableOpacity, TextInput, Image, KeyboardAvoidingView, Platform, FlatList,
 } from 'react-native';
-import { Newspaper, Heart, MessageCircle, Send, Trash2, ArrowLeft } from 'lucide-react-native';
+import { Heart, MessageCircle, Send, Trash2 } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
@@ -192,12 +193,7 @@ export default function ArticlesScreen() {
     return (
       <KeyboardAvoidingView style={S.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <GlassBackground />
-        <View style={S.header}>
-          <TouchableOpacity onPress={() => { setSelectedArticle(null); setComments([]); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <ArrowLeft color={theme.text} size={22} />
-          </TouchableOpacity>
-          <Text style={S.headerTitle} numberOfLines={1}>{selectedArticle.title}</Text>
-        </View>
+        <AxScreenHeader title={selectedArticle.title} onBack={() => { setSelectedArticle(null); setComments([]); }} />
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 80 + tabFootprint }}>
           {selectedArticle.image_url && (
@@ -272,13 +268,7 @@ export default function ArticlesScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <ArrowLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Newspaper color={theme.accent} size={22} />
-        <Text style={S.headerTitle}>Actualités</Text>
-      </View>
+      <AxScreenHeader title="Actualités" />
 
       <ScrollView
         showsVerticalScrollIndicator={false}

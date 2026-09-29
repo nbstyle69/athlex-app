@@ -1,9 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   ActivityIndicator, RefreshControl,
 } from 'react-native';
-import { Globe2, Users, Calendar, Trophy, ChevronRight, Zap } from 'lucide-react-native';
+import { Globe2, Users, Calendar, ChevronRight, Zap, Trophy } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -88,15 +89,9 @@ export default function InterCompetitionListScreen() {
     <View style={S.container}>
       <GlassBackground />
       {/* Header */}
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn}>
-          <ChevronRight size={22} color={theme.textMuted} style={{ transform: [{ rotate: '180deg' }] }} />
-        </TouchableOpacity>
-        <View>
-          <Text style={S.headerTitle}>{t('interComp.title')}</Text>
+      <AxScreenHeader title={t('interComp.title')}>
           <Text style={S.headerSub}>{t('interComp.subtitle')}</Text>
-        </View>
-      </View>
+      </AxScreenHeader>
 
       {loading ? (
         <ActivityIndicator color={theme.accent} style={{ marginTop: 60 }} />

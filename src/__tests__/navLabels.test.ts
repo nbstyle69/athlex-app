@@ -67,7 +67,7 @@ describe('libellés back-office : Marketplace vs Programmes athlètes', () => {
 describe('libellés côté athlète', () => {
   it('l’écran d’exploration s’appelle « Programmes », pas « Programmation »', () => {
     const screen = read('src', 'screens', 'explorer', 'ProgrammationScreen.tsx');
-    expect(screen).toContain('>Programmes</Text>');
+    expect(screen).toContain('<AxScreenHeader title="Programmes">');
     expect(screen).not.toContain('>Programmation</Text>');
   });
 

@@ -13,7 +13,7 @@ const contextCard = fs.readFileSync(path.join(__dirname, '..', 'components/wod/S
 
 describe('B1 — titre et discipline', () => {
   it('deux lignes centrées, la discipline toujours nommée, Functional compris', () => {
-    expect(generateur).toContain("<Text style={S.headerTitle}>Générateur de WOD</Text>");
+    expect(generateur).toContain('<AxScreenHeader title="Générateur de WOD">');
     expect(generateur).toMatch(/isMuscu \? 'Musculation' : sport === 'hybrid' \? 'Hybrid' : 'Functional'/);
     expect(generateur).toMatch(/headerTitle: \{[^}]*textAlign: 'center'/);
     expect(generateur).toMatch(/headerDiscipline: \{[^}]*textAlign: 'center'/);

@@ -1,3 +1,4 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
@@ -5,7 +6,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
-  ChevronLeft, Youtube, Clock, Zap, CheckCircle,
+  Youtube, Clock, Zap, CheckCircle,
   AlertTriangle, Play, FileText, Info,
 } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -215,13 +216,10 @@ export default function TournamentWODScreen() {
   if (phase === 'detail') return (
     <View style={S.container}>
       <GlassBackground />
+      <AxScreenHeader title={wod.title} />
       <LinearGradient colors={['#12121A', '#0A0A0F']} style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.back}>
-          <ChevronLeft color="rgba(255,255,255,0.6)" size={24} />
-        </TouchableOpacity>
         <View style={S.headerInfo}>
           <Text style={S.headerSub}>{tournamentName}</Text>
-          <Text style={S.headerTitle}>{wod.title}</Text>
           <View style={S.headerBadges}>
             <View style={S.typeBadge}><Text style={S.typeBadgeText}>{wod.type}</Text></View>
             <View style={S.durationBadge}>
@@ -307,13 +305,10 @@ export default function TournamentWODScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
+      <AxScreenHeader title={wod.title} onBack={() => setPhase('detail')} />
       <LinearGradient colors={['#12121A', '#0A0A0F']} style={S.header}>
-        <TouchableOpacity onPress={() => setPhase('detail')} style={S.back}>
-          <ChevronLeft color="rgba(255,255,255,0.6)" size={24} />
-        </TouchableOpacity>
         <View style={S.headerInfo}>
           <Text style={S.headerSub}>{tournamentName}</Text>
-          <Text style={S.headerTitle}>{wod.title}</Text>
           <View style={[S.countdownRow, { backgroundColor: `${countdown.color}15` }]}>
             <Clock color={countdown.color} size={14} />
             <Text style={[S.countdownText, { color: countdown.color }]}>{countdown.text}</Text>
@@ -459,7 +454,7 @@ export default function TournamentWODScreen() {
 
 function createStyles(theme: AppTheme) { return StyleSheet.create({
   container:   { flex: 1, backgroundColor: 'transparent' },
-  header:      { paddingTop: 60, paddingHorizontal: 16, paddingBottom: 20, flexDirection: 'row', gap: 12 },
+  header:      { paddingTop: 16, paddingHorizontal: 16, paddingBottom: 20, flexDirection: 'row', gap: 12 },
   back:        { paddingTop: 4 },
   headerInfo:  { flex: 1 },
   headerSub:   { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: 1, marginBottom: 4 },

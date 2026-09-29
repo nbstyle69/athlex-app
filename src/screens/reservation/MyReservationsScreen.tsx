@@ -1,9 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, Alert,
 } from 'react-native';
-import { ChevronLeft, Calendar, Clock, Check, Timer, X as XIcon } from 'lucide-react-native';
+import { Calendar, Clock, Check, Timer, X as XIcon } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
@@ -91,15 +92,9 @@ export default function MyReservationsScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12} style={S.back}>
-          <ChevronLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <View>
-          <Text style={S.headerTitle}>{t('myReservations.title')}</Text>
+      <AxScreenHeader title={t('myReservations.title')}>
           <Text style={S.headerSub}>{t('myReservations.summary', { upcoming: upcoming.length, past: past.length })}</Text>
-        </View>
-      </View>
+      </AxScreenHeader>
 
       {/* Tabs */}
       <View style={S.tabs}>

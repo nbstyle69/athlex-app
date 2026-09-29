@@ -1,3 +1,4 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
@@ -157,18 +158,10 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.back}>
-          <ChevronLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={S.headerTitle} numberOfLines={1}>{programTitle}</Text>
-          <Text style={S.headerSub}>
-            {progType === 'fixed' ? `${durationWeeks ?? semaines.length} semaines · ${dpw}j/sem` : `Ongoing · ${dpw}j/sem`}
-            {startDate ? ` · depuis le ${libelleDate(startDate)}` : ''}
-            {doneCount > 0 ? ` · ${doneCount} WOD${doneCount > 1 ? 's' : ''} fait${doneCount > 1 ? 's' : ''}` : ''}
-          </Text>
-        </View>
+      <AxScreenHeader
+        title={programTitle}
+        right={(
+          <>
         {startDate && !loading && (
           <TouchableOpacity
             style={S.dateBtn}
@@ -181,7 +174,15 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
               : <CalendarDays color={theme.accent} size={18} />}
           </TouchableOpacity>
         )}
-      </View>
+          </>
+        )}
+      >
+          <Text style={S.headerSub}>
+            {progType === 'fixed' ? `${durationWeeks ?? semaines.length} semaines · ${dpw}j/sem` : `Ongoing · ${dpw}j/sem`}
+            {startDate ? ` · depuis le ${libelleDate(startDate)}` : ''}
+            {doneCount > 0 ? ` · ${doneCount} WOD${doneCount > 1 ? 's' : ''} fait${doneCount > 1 ? 's' : ''}` : ''}
+          </Text>
+      </AxScreenHeader>
 
       {startDate && semaines.length > 0 && (
         <View style={S.weekNav}>

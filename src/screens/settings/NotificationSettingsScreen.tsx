@@ -1,12 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert,
   ActivityIndicator,
 } from 'react-native';
-import {
-  ArrowLeft, Bell, BellOff, Clock, Users, Trophy, Zap, MessageCircle, Heart,
-  Dumbbell, CalendarClock, TrendingUp, Megaphone, Award,
-} from 'lucide-react-native';
+import { Bell, BellOff, Clock, Users, Trophy, Zap, MessageCircle, Heart, Dumbbell, CalendarClock, TrendingUp, Megaphone, Award } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
@@ -160,13 +158,7 @@ export default function NotificationSettingsScreen() {
   return (
     <View style={S.screen}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <ArrowLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Notifications</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <AxScreenHeader title="Notifications" />
 
       <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {/* Interrupteur maître */}

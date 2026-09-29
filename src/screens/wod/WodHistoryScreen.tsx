@@ -1,9 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl,
   ActivityIndicator, Alert,
 } from 'react-native';
-import { ArrowLeft, Heart, Clock, Zap, Trash2, ChevronDown, ChevronUp, CheckCircle2, ChevronRight } from 'lucide-react-native';
+import { Heart, Clock, Zap, Trash2, ChevronDown, ChevronUp, CheckCircle2, ChevronRight } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
@@ -332,13 +333,7 @@ export default function WodHistoryScreen() {
     <View style={S.screen}>
       <GlassBackground />
       {/* Header */}
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-          <ArrowLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>{t('wodHistory.title')}</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <AxScreenHeader title={t('wodHistory.title')} />
 
       {/* Stats row */}
       <View style={S.statsRow}>

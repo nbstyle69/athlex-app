@@ -1,9 +1,12 @@
+import i18n from '../../i18n';
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxIconButton } from '../../components/ax/AxIconButton';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Share, Dimensions,
 } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line, Text as SvgText } from 'react-native-svg';
-import { ChevronLeft, UserPlus, Check, Clock, Trophy, Zap, TrendingUp, Share2, MapPin } from 'lucide-react-native';
+import { UserPlus, Check, Clock, Trophy, Zap, TrendingUp, Share2, MapPin } from 'lucide-react-native';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -220,15 +223,11 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn}>
-          <ChevronLeft color={theme.text} size={24} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Profil</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <TouchableOpacity onPress={() => Share.share({ message: `Découvre mon profil sur AthleX ! athlex://profile/${route.params.userId}` })} style={S.backBtn}>
-            <Share2 color={theme.text} size={20} />
-          </TouchableOpacity>
+      <AxScreenHeader
+        title="Profil"
+        right={(
+          <>
+            <AxIconButton icon={Share2} onPress={() => Share.share({ message: `Découvre mon profil sur AthleX ! athlex://profile/${route.params.userId}` })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />
           {me?.id !== route.params.userId && (
             <View style={S.backBtn}>
               <ReportMenu
@@ -240,8 +239,9 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
               />
             </View>
           )}
-        </View>
-      </View>
+          </>
+        )}
+      />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {/* Avatar + name */}
