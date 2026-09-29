@@ -205,6 +205,15 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte visuelle mobile, lot R1 « Composants » (aucun écran modifié).**
+- Bibliothèque `src/components/ax/` : verre (`AxGlass`, flou 24 sur iOS, opacités 0.80 / 0.85 portées
+  à 0.96 sur Android), boutons (accent, contour, clair, pointillé, arrêt), bouton carré, pastille,
+  étiquette, badge compteur, cartes (standard, vedette, verre), champ, interrupteur, case à cocher, jour,
+  pastille d'état, en-tête de page. Couleurs, typographie, rayons et espacements tirés des jetons R0.
+- Catalogue `src/screens/dev/AxCatalogScreen.tsx`, enregistré dans la navigation seulement en
+  développement (`__DEV__`). Aucun écran existant ni ancien composant ne l'importe (vérifié par test).
+- La barre d'onglets flottante vient au lot R2 ; les écrans adopteront les composants aux lots R2 à R11.
+
 **Refonte visuelle mobile, lot R0 « Fondations » (aucun écran modifié).**
 - Jetons du nouveau design posés dans `src/theme/axTokens.ts` (source Figma, collections « AthleX —
   Couleurs » et « AthleX — Dimensions ») : couleurs sombre et clair, rayons, espacements, flou du verre,
