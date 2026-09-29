@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte visuelle mobile, lot R0 « Fondations » (aucun écran modifié).**
+- Jetons du nouveau design posés dans `src/theme/axTokens.ts` (source Figma, collections « AthleX —
+  Couleurs » et « AthleX — Dimensions ») : couleurs sombre et clair, rayons, espacements, flou du verre,
+  13 styles typographiques. Couleurs exposées dans `theme.ax` ; aucune valeur existante du thème ne change.
+- Police Oswald (`Oswald_500Medium`) chargée au démarrage, pas encore utilisée.
+- Contraste AA vérifié par test dans les deux modes. Les écrans passeront au nouveau design dans les lots
+  suivants (R1 : fond translucide du verre et repli Android).
+
 **Intégration au vert sur master** (tests et CI seulement, sans migration ni code de production).
 - `integration.yml` joue désormais toutes les suites. Chacune est en `continue-on-error`, et une étape
   finale (`scripts/bilan-suites.mjs`) publie le résumé par suite et fait échouer le job s'il y a eu un échec
@@ -431,6 +439,10 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   Contact your box to activate your membership. ») pour le refus `NO_ACTIVE_PLAN`, que ce soit une réservation
   ou une inscription en liste d'attente, au lieu du message brut. L'impayé passe par le même mapping
   (`reservationRefusal`), avec un texte inchangé.
+- App, type de score traduit dans la saisie du score (sans migration, **à diffuser au prochain build**) :
+  WODDetail affichait le type brut (« WEIGHT », « TIME »…) ; il affiche « Charge », « Temps », « Reps »,
+  « Tours » (EN : Load, Time, Reps, Rounds) et « Type de score », clés `wod.scoreType.*`. Premier lot du
+  chantier « Saisie des charges en musculation ».
 - App, pièces jointes enregistrées par leur chemin (sans migration, **à diffuser au prochain build** ; la base
   est fermée par `20270137`, PR séparée) : un dépôt enregistre `<groupe>/<uid>_…` dans
   `group_messages.attachment_url` au lieu de l'URL publique (`src/lib/messageAttachments.ts`). L'affichage
@@ -449,7 +461,7 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   back-office). Déclaration App Privacy / Data Safety : la ligne « Documents (PDF) » tombe au prochain envoi.
 - App, nettoyage : écran `WODScreen` (WODs fictifs écrits en dur) et pile `WODNavigator` supprimés (sans
   migration, sans effet visible : la pile n'était montée nulle part). Route `WODList`, type `WODStackParamList`
-  et clés de traduction `wod.*` retirés (FR/EN) ; `WodGenerator`, `WodResult`, `WodHistory`, `TimerRun`,
+  et clés de traduction `wod.title`, `wod.subtitle`, `wod.generate`, `wod.all` retirées (FR/EN, `wod.scoreType` gardé) ; `WodGenerator`, `WodResult`, `WodHistory`, `TimerRun`,
   `VideoPlayback` restent déclarés dans les piles utilisées. Test `wodScreenRetire`.
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans

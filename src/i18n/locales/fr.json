@@ -1116,6 +1116,15 @@
     "cancelWaitingBody": "Tu seras retiré(e) de la liste d'attente.",
     "yesCancel": "Oui, annuler"
   },
+  "wod": {
+    "scoreType": {
+      "label": "Type de score",
+      "time": "Temps",
+      "reps": "Reps",
+      "weight": "Charge",
+      "rounds": "Tours"
+    }
+  },
   "wodHistory": {
     "title": "Historique WODs",
     "statWods": "WODs",

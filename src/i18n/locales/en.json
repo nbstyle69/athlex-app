@@ -1116,6 +1116,15 @@
     "cancelWaitingBody": "You'll be removed from the waitlist.",
     "yesCancel": "Yes, cancel"
   },
+  "wod": {
+    "scoreType": {
+      "label": "Score type",
+      "time": "Time",
+      "reps": "Reps",
+      "weight": "Load",
+      "rounds": "Rounds"
+    }
+  },
   "wodHistory": {
     "title": "WOD history",
     "statWods": "WODs",
