@@ -361,7 +361,25 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'screens', 'home', 'HomeScreen.tsx'),
     // R3c : en-tête « ‹ Retour » des écrans secondaires de l'athlète.
     ...R3C_SCREENS.map((s) => path.join(SRC, 'screens', s.file)),
+    // R4a : générateur et résultats au nouveau design.
+    path.join(SRC, 'components', 'wod', 'SessionContextCard.tsx'),
   ];
+
+  it('R4a : dans src/screens/wod et src/components/wod, seuls les fichiers du générateur et des résultats consomment ax', () => {
+    const wod = [...walk(path.join(SRC, 'screens', 'wod')), ...walk(path.join(SRC, 'components', 'wod'))]
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.relative(SRC, f))
+      .sort();
+    expect(wod).toEqual([
+      path.join('components', 'wod', 'SessionContextCard.tsx'),
+      path.join('components', 'wod', 'StrengthSetGrid.tsx'),
+      path.join('screens', 'wod', 'MuscuSessionCard.tsx'),
+      path.join('screens', 'wod', 'WodGeneratorScreen.tsx'),
+      // Adoptant R3c (AxScreenHeader seul), hors périmètre R4a.
+      path.join('screens', 'wod', 'WodHistoryScreen.tsx'),
+      path.join('screens', 'wod', 'WodResultScreen.tsx'),
+    ].sort());
+  });
 
   it('R3b / R3c : dans src/screens/home, seuls l’Accueil, ses blocs et les écrans secondaires R3c consomment ax', () => {
     const home = walk(path.join(SRC, 'screens', 'home'))

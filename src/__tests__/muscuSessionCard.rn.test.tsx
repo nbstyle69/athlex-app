@@ -58,7 +58,7 @@ describe('brouillon serveur', () => {
     const dot = root.findByType(AxStatusDot);
     expect(dot.props.tone).toBe('warning');
     expect(dot.props.label).toBe('En cours · 2 / 2 séries');
-    const btn = root.findByType(AxButton);
+    const btn = root.findAllByType(AxButton).find((b) => b.props.testID === 'muscu-save-later')!;
     expect(btn.props.variant).toBe('outline');
     expect(btn.props.label).toBe('Enregistrer et continuer plus tard');
     await act(async () => btn.props.onPress());
@@ -68,13 +68,13 @@ describe('brouillon serveur', () => {
   it('séance validée : ni état de brouillon ni bouton d’enregistrement', async () => {
     const root = await mount(<Harness draft={{ saveState: 'idle', savedAt: null, validated: true, onSaveLater: jest.fn() }} />);
     expect(root.findAllByType(AxStatusDot)).toHaveLength(0);
-    expect(root.findAllByType(AxButton)).toHaveLength(0);
+    expect(root.findAllByType(AxButton).filter((b) => b.props.testID === 'muscu-save-later')).toHaveLength(0);
     expect(root.findAllByProps({ testID: 'muscu-draft' })).toHaveLength(0);
   });
 
   it('sans brouillon suivi, la carte historique reste telle quelle', async () => {
     const root = await mount(<Harness />);
-    expect(root.findAllByType(AxButton)).toHaveLength(0);
+    expect(root.findAllByType(AxButton).filter((b) => b.props.testID === 'muscu-save-later')).toHaveLength(0);
   });
 });
 

@@ -13,16 +13,17 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Switch,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronDown, ChevronUp, Sparkles, X, History, Heart, BookOpen, Zap, GraduationCap, Dumbbell } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Sparkles, X, History, Heart, BookOpen, Zap, GraduationCap, Dumbbell, Flag, BicepsFlexed } from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import GlassBackground from '../../components/glass/GlassBackground';
-import GlassCard from '../../components/glass/GlassCard';
+import { AxButton, AxChip, AxSwitch, AxTextField } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import SessionContextCard from '../../components/wod/SessionContextCard';
 import i18n from '../../i18n';
 import type {
@@ -30,10 +31,10 @@ import type {
 } from '../../../packages/wod-engine/src';
 import { availableTargets, muscuLevelFor, feasibleFormats } from '../../../packages/wod-engine/src';
 import {
-  HYBRID_ORANGE, FORMATS, INTENTIONS, VESTS, avoidedText, equipmentOptions,
+  FORMATS, INTENTIONS, VESTS, avoidedText, equipmentOptions,
 } from './wodGeneratorOptions';
 import {
-  MUSCU_BLUE, MUSCU_EQUIPMENTS, MUSCU_OBJECTIVES, muscuEquipmentOptions,
+  MUSCU_EQUIPMENTS, MUSCU_OBJECTIVES, muscuEquipmentOptions,
   muscuOneRepMax, objectiveDisabled, oneRepMaxLine, targetLabel, targetOrderFor, targetOrderHint,
 } from './muscuOptions';
 import { equipmentLabel } from '../../utils/wod/equipmentLabels';
@@ -210,21 +211,9 @@ export default function WodGeneratorScreen() {
     }
   }
 
-  const accent = isMuscu ? MUSCU_BLUE : discipline === 'hybrid' ? HYBRID_ORANGE : theme.accent;
-
-  const Chip = ({ label, selected, onPress, disabled, testID }: {
-    label: string; selected: boolean; onPress: () => void; disabled?: boolean; testID?: string;
-  }) => (
-    <TouchableOpacity
-      style={[S.chip, selected && { backgroundColor: `${accent}25`, borderColor: accent }, disabled && S.chipDisabled]}
-      onPress={onPress}
-      disabled={disabled}
-      activeOpacity={0.8}
-      testID={testID}
-    >
-      <Text style={[S.chipText, selected && { fontWeight: '800' }, disabled && S.chipTextDisabled]}>{label}</Text>
-    </TouchableOpacity>
-  );
+  const c = theme.ax;
+  const accent = c.accentText;
+  const Chip = AxChip;
 
   const ChipScroll = ({ children }: { children: React.ReactNode }) => (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={S.chipScroll} style={S.chipScrollOuter}>
@@ -238,15 +227,15 @@ export default function WodGeneratorScreen() {
       <AxScreenHeader title="Générateur de WOD">
           <View style={S.menu}>
             <TouchableOpacity style={S.menuBtn} onPress={() => navigation.navigate('WodHistory')} activeOpacity={0.8} testID="wodgen-menu-history">
-              <History color={theme.text} size={15} />
+              <History color={c.text} size={15} />
               <Text style={S.menuText}>{i18n.t('wodGenerator.history')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={S.menuBtn} onPress={() => navigation.navigate('WodHistory', { filter: 'favorites' })} activeOpacity={0.8} testID="wodgen-menu-favorites">
-              <Heart color={theme.error} size={15} />
+              <Heart color={c.danger} size={15} />
               <Text style={S.menuText}>{i18n.t('wodGenerator.favorites')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={S.menuBtn} onPress={() => navigation.navigate('Home', { screen: 'Programmation' })} activeOpacity={0.8} testID="wodgen-menu-programs">
-              <BookOpen color={theme.text} size={15} />
+              <BookOpen color={c.text} size={15} />
               <Text style={S.menuText}>{i18n.t('wodGenerator.programming')}</Text>
             </TouchableOpacity>
           </View>
@@ -266,12 +255,14 @@ export default function WodGeneratorScreen() {
           ] as { key: Entry; label: string; sub: string; Icon: typeof Zap }[]).map(({ key, label, sub, Icon }) => (
             <TouchableOpacity
               key={key}
-              style={[S.entryCard, entry === key && { borderColor: accent, backgroundColor: `${accent}10` }]}
+              style={[S.entryCard, entry === key && S.cardSelected]}
               onPress={() => chooseEntry(key)}
               activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityState={{ selected: entry === key }}
               testID={`wodgen-entry-${key}`}
             >
-              <Icon size={20} color={entry === key ? accent : theme.textSecondary} />
+              <Icon size={20} color={entry === key ? accent : c.textMuted} />
               <Text style={S.entryLabel}>{label}</Text>
               <Text style={S.entrySub}>{sub}</Text>
             </TouchableOpacity>
@@ -281,20 +272,20 @@ export default function WodGeneratorScreen() {
         {/* Discipline */}
         <View style={S.cardRow}>
           {(['functional', 'hybrid', 'musculation'] as Sport[]).map((d) => {
-            const color = d === 'hybrid' ? HYBRID_ORANGE : d === 'musculation' ? MUSCU_BLUE : theme.accent;
             const selected = sport === d;
+            const SportIcon = d === 'musculation' ? BicepsFlexed : d === 'hybrid' ? Flag : Dumbbell;
             return (
               <TouchableOpacity
                 key={d}
-                style={[S.sportCard, selected && { borderColor: color, backgroundColor: `${color}10` }]}
+                style={[S.sportCard, selected && S.cardSelected]}
                 onPress={() => chooseSport(d)}
                 activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
                 testID={`wodgen-discipline-${d}`}
               >
-                {d === 'musculation'
-                  ? <View style={S.sportIcon}><Dumbbell size={22} color={selected ? MUSCU_BLUE : theme.textSecondary} /></View>
-                  : <Text style={S.sportEmoji}>{d === 'functional' ? '🏋️' : '🏁'}</Text>}
-                <Text style={[S.sportLabel, selected && { color }]}>
+                <View style={S.sportIcon}><SportIcon size={22} color={selected ? accent : c.textMuted} /></View>
+                <Text style={[S.sportLabel, selected && { color: accent }]} numberOfLines={1}>
                   {d === 'functional' ? 'Functional' : d === 'hybrid' ? 'Hybrid' : 'Musculation'}
                 </Text>
               </TouchableOpacity>
@@ -423,7 +414,7 @@ export default function WodGeneratorScreen() {
         {/* Options avancées */}
         <TouchableOpacity style={S.advToggle} onPress={() => setAdvanced((v) => !v)} activeOpacity={0.8} testID="wodgen-advanced">
           <Text style={S.advToggleText}>Options avancées{exclude.length ? ` · ${exclude.length} exclu${exclude.length > 1 ? 's' : ''}` : ''}</Text>
-          {advanced ? <ChevronUp size={18} color={theme.textSecondary} /> : <ChevronDown size={18} color={theme.textSecondary} />}
+          {advanced ? <ChevronUp size={18} color={c.textMuted} /> : <ChevronDown size={18} color={c.textMuted} />}
         </TouchableOpacity>
         {advanced && (
           <View style={S.advBox}>
@@ -435,12 +426,11 @@ export default function WodGeneratorScreen() {
                     {adaptToPr ? 'Gym : substitutions et 50 % du record par série.' : 'Mode challenge : catégorie seule, sans adaptation aux PR gym.'}
                   </Text>
                 </View>
-                <Switch
+                <AxSwitch
                   value={adaptToPr}
                   onValueChange={chooseAdaptToPr}
                   disabled={!prPreferenceReady}
                   accessibilityLabel="Adapter à mes PR"
-                  trackColor={{ false: theme.border, true: accent }}
                   testID="wodgen-adapt-pr"
                 />
               </View>
@@ -451,7 +441,7 @@ export default function WodGeneratorScreen() {
                 {excludedMovements.map((m) => (
                   <TouchableOpacity key={m.id} style={S.exclChip} onPress={() => toggleExclude(m.id)} activeOpacity={0.8}>
                     <Text style={S.exclChipText}>{m.name}</Text>
-                    <X size={12} color={theme.error} />
+                    <X size={12} color={c.danger} />
                   </TouchableOpacity>
                 ))}
                 {equipment.map((e) => (
@@ -462,20 +452,20 @@ export default function WodGeneratorScreen() {
                     activeOpacity={0.8}
                   >
                     <Text style={[S.chipText, exclude.includes(e) && S.exclChipText]}>{equipmentLabel(e)}</Text>
-                    {exclude.includes(e) && <X size={12} color={theme.error} />}
+                    {exclude.includes(e) && <X size={12} color={c.danger} />}
                   </TouchableOpacity>
                 ))}
               </ChipScroll>
             )}
-            <TextInput
-              style={S.input}
-              placeholder="Exclure du matériel ou un mouvement…"
-              placeholderTextColor={theme.textMuted}
-              value={search}
-              onChangeText={setSearch}
-              autoCapitalize="none"
-              testID="wodgen-exclude-search"
-            />
+            <View style={S.input}>
+              <AxTextField
+                placeholder="Exclure du matériel ou un mouvement…"
+                value={search}
+                onChangeText={setSearch}
+                autoCapitalize="none"
+                testID="wodgen-exclude-search"
+              />
+            </View>
             {exclusionHits.length > 0 && (
               <View style={S.chipRow}>
                 {exclusionHits.map((m) => (
@@ -488,20 +478,18 @@ export default function WodGeneratorScreen() {
           </View>
         )}
 
-        <GlassCard radius={16} variant={sport === 'functional' ? 'emerald' : 'default'} style={S.generateCard}>
-          <TouchableOpacity
-            style={[S.generateBtn, { borderColor: accent, backgroundColor: `${accent}1A` }]}
+        <View style={S.generateCard}>
+          <AxButton
+            variant="accent"
+            icon={Sparkles}
+            label={entry === 'express' ? (isMuscu ? 'Générer ma séance' : 'Générer mon WOD') : 'Générer mon complément'}
             onPress={generate}
-            disabled={generating || !user || (!isMuscu && !prPreferenceReady)}
-            activeOpacity={0.9}
+            loading={generating}
+            disabled={!user || (!isMuscu && !prPreferenceReady)}
+            fullWidth
             testID="wodgen-generate"
-          >
-            {generating ? <ActivityIndicator color={accent} /> : <Sparkles size={18} color={accent} />}
-            <Text style={S.generateText}>
-              {entry === 'express' ? (isMuscu ? 'Générer ma séance' : 'Générer mon WOD') : 'Générer mon complément'}
-            </Text>
-          </TouchableOpacity>
-        </GlassCard>
+          />
+        </View>
       </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -517,78 +505,68 @@ function Section({ title, children, S }: { title: string; children: React.ReactN
   );
 }
 
-function createStyles(theme: AppTheme) { return StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.background },
-  header: { paddingHorizontal: 20, paddingBottom: 12 },
+function createStyles(theme: AppTheme) { const c = theme.ax; return StyleSheet.create({
+  container: { flex: 1, backgroundColor: c.background },
+  header: { paddingHorizontal: axSpacing.xl, paddingBottom: axSpacing.md },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { fontSize: 24, fontWeight: '900', color: theme.text, marginTop: 12, textAlign: 'center' },
-  headerDiscipline: { fontSize: 15, fontWeight: '800', letterSpacing: 0.4, textAlign: 'center', marginTop: 2 },
-  menu: { flexDirection: 'row', gap: 6 },
+  headerTitle: { ...axTypography.titleM, color: c.text, marginTop: axSpacing.md, textAlign: 'center' },
+  headerDiscipline: { ...axTypography.label, textAlign: 'center', marginTop: 2 },
+  menu: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, paddingHorizontal: axSpacing.xl },
   menuBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6,
-    borderRadius: 10, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
+    borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface,
   },
-  menuText: { fontSize: 12, fontWeight: '700', color: theme.text },
-  content: { padding: 16 },
+  menuText: { ...axTypography.labelSmall, color: c.text },
+  content: { paddingHorizontal: axSpacing.xl, paddingTop: axSpacing.lg },
 
-  cardRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
+  cardRow: { flexDirection: 'row', gap: 10, marginBottom: axSpacing.lg },
   entryCard: {
-    flex: 1, borderRadius: 16, padding: 14, gap: 4,
-    backgroundColor: theme.card, borderWidth: 2, borderColor: theme.border,
+    flex: 1, minWidth: 0, borderRadius: axRadius.card, padding: 14, gap: axSpacing.xs,
+    backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
   },
-  entryLabel: { fontSize: 14, fontWeight: '800', color: theme.text, marginTop: 4 },
-  entrySub: { fontSize: 11, color: theme.textMuted },
+  cardSelected: { borderColor: c.accentText, borderWidth: 1.5 },
+  entryLabel: { ...axTypography.label, color: c.text, marginTop: axSpacing.xs },
+  entrySub: { ...axTypography.bodySmall, color: c.textMuted },
   sportCard: {
-    flex: 1, borderRadius: 16, padding: 12, alignItems: 'center', gap: 4,
-    backgroundColor: theme.card, borderWidth: 2, borderColor: theme.border,
+    flex: 1, minWidth: 0, borderRadius: axRadius.card, paddingVertical: axSpacing.md, paddingHorizontal: axSpacing.xs,
+    alignItems: 'center', gap: axSpacing.xs, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border,
   },
-  sportEmoji: { fontSize: 22 },
   sportIcon: { height: 30, justifyContent: 'center' },
-  sportLabel: { fontSize: 13, fontWeight: '800', color: theme.textSecondary },
-  hint: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-  hintLink: { fontWeight: '800' },
-  prOption: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+  sportLabel: { ...axTypography.label, color: c.text },
+  hint: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+  hintLink: { ...axTypography.labelSmall },
+  prOption: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, marginBottom: axSpacing.lg },
 
   section: { marginBottom: 18 },
-  sectionTitle: { fontSize: 13, fontWeight: '800', letterSpacing: 0.8, textTransform: 'uppercase', color: theme.textSecondary, marginBottom: 10 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 },
-  chipScrollOuter: { marginHorizontal: -16, marginBottom: 8 },
-  chipScroll: { flexDirection: 'row', gap: 8, paddingHorizontal: 16 },
+  sectionTitle: { ...axTypography.overline, color: c.textMuted, marginBottom: 10 },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm, marginTop: axSpacing.sm },
+  chipScrollOuter: { marginHorizontal: -axSpacing.xl, marginBottom: axSpacing.sm },
+  chipScroll: { flexDirection: 'row', gap: axSpacing.sm, paddingHorizontal: axSpacing.xl },
   chip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12,
-    borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
+    flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs,
+    paddingHorizontal: 14, paddingVertical: 9, borderRadius: axRadius.control,
+    borderWidth: 1, borderColor: c.border, backgroundColor: c.surface,
   },
-  chipText: { fontSize: 13, color: theme.text, fontWeight: '600' },
-  chipDisabled: { opacity: 0.4 },
-  chipTextDisabled: { color: theme.textMuted },
+  chipText: { ...axTypography.label, color: c.text },
   exclChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12,
-    borderWidth: 1, borderColor: theme.error, backgroundColor: `${theme.error}12`,
+    paddingHorizontal: axSpacing.md, paddingVertical: 9, borderRadius: axRadius.control,
+    borderWidth: 1, borderColor: c.danger, backgroundColor: c.surface,
   },
-  exclChipText: { fontSize: 13, fontWeight: '700', color: theme.text },
+  exclChipText: { ...axTypography.label, color: c.text },
 
   advToggle: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14,
-    borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
+    paddingVertical: 14, paddingHorizontal: axSpacing.lg, borderRadius: axRadius.card,
+    borderWidth: 1, borderColor: c.border, backgroundColor: c.surface,
   },
-  advToggleText: { fontSize: 14, fontWeight: '800', color: theme.text },
+  advToggleText: { ...axTypography.label, color: c.text, flexShrink: 1 },
   advBox: {
-    marginTop: 12, padding: 16, borderRadius: 14,
-    borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface,
+    marginTop: axSpacing.md, padding: axSpacing.lg, borderRadius: axRadius.card,
+    borderWidth: 1, borderColor: c.border, backgroundColor: c.surface,
   },
-  advLabel: { fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: theme.textSecondary, marginBottom: 10 },
-  input: {
-    borderWidth: 1, borderColor: theme.border, backgroundColor: theme.card,
-    borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, color: theme.text, fontSize: 14, marginTop: 6,
-  },
+  advLabel: { ...axTypography.overline, color: c.textMuted, marginBottom: 10 },
+  input: { marginTop: 6 },
 
-  generateCard: { marginTop: 24, overflow: 'hidden' },
-  generateBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    borderRadius: 16, borderWidth: 1, padding: 18,
-  },
-  generateText: { fontSize: 16, fontWeight: '900', letterSpacing: 0.6, color: theme.text },
+  generateCard: { marginTop: axSpacing['2xl'] },
 }); }

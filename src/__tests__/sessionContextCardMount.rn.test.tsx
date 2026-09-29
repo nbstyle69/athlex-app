@@ -1,12 +1,12 @@
 import React, { useEffect as mockUseEffect } from 'react';
-import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import { BANK_V1 as mockBank, CATALOG_SNAPSHOT as mockCatalog, generateBlocC, GenerateParams } from '../../packages/wod-engine/src';
 import { lightTheme, darkTheme } from '../theme/palette';
 import type { WodDraft } from '../services/wodDraft';
 import WodGeneratorScreen from '../screens/wod/WodGeneratorScreen';
 import SessionContextCard from '../components/wod/SessionContextCard';
-import GlassCard from '../components/glass/GlassCard';
+import { AxButton, AxCard } from '../components/ax';
 
 const mockNavigate = jest.fn();
 let mockTheme = lightTheme;
@@ -68,17 +68,18 @@ for (const os of ['ios', 'android'] as const) {
       expect(cards.map((card) => card.props.label)).toEqual([
         'Dernière séance générée', 'Classe du jour · AthleX Fitness',
       ]);
-      expect(cards[0].findAllByType(TouchableOpacity)).toHaveLength(1);
-      expect(cards[1].findAllByType(TouchableOpacity)).toHaveLength(0);
+      expect(cards[0].findAllByType(AxButton)).toHaveLength(1);
+      expect(cards[0].findByType(AxButton).props.variant).toBe('outline');
+      expect(cards[1].findAllByType(AxButton)).toHaveLength(0);
       for (const card of cards) {
-        const glass = card.findByType(GlassCard);
-        expect(glass.props.radius).toBe(14);
-        expect(StyleSheet.flatten(glass.props.style).padding).toBeUndefined();
+        const glass = card.findByType(AxCard);
+        expect(glass.props.variant ?? 'standard').toBe('standard');
+        expect(StyleSheet.flatten(glass.props.style).padding).toBe(0);
         const content = glass.findAll((node) => node.type === View && node.props.testID === `${card.props.testID}-content`)[0];
         expect(StyleSheet.flatten(content.props.style).padding).toBe(16);
         const texts = content.findAllByType(Text);
         expect(StyleSheet.flatten(texts[0].props.style).textTransform).toBe('uppercase');
-        expect(StyleSheet.flatten(texts[1].props.style).color).toBe(theme.text);
+        expect(StyleSheet.flatten(texts[1].props.style).color).toBe(theme.ax.text);
         expect(texts.every((text) => text.props.numberOfLines === undefined)).toBe(true);
       }
       const resume = cards[0].findAll((node) => node.props.testID === 'wodgen-draft-resume' && typeof node.props.onPress === 'function')[0];
