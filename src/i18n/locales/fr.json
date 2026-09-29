@@ -1913,6 +1913,16 @@
       "prepare": "PRÉPARE-TOI",
       "ready": "PRÊT ?",
       "go": "GO !"
+    },
+    "camera": {
+      "videoSaved": "Vidéo enregistrée",
+      "saveCard": "Sauvegarder la carte",
+      "cardSaved": "Carte sauvegardée"
+    },
+    "youtube": {
+      "share": "Partager sur YouTube",
+      "hint": "Publie ta vidéo depuis YouTube Studio",
+      "openStudio": "Ouvrir YouTube Studio"
     }
   }
 }

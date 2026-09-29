@@ -74,6 +74,10 @@ export const axVeil = {
   border: 'rgba(242,244,244,0.3)',
   rec: '#F87171',
   stop: '#B91C1C',
+  /** Voile plus dense du décompte caméra. */
+  countdown: 'rgba(0,0,0,0.75)',
+  /** Fond le plus clair que donne ce voile (posé sur une image blanche) : base du contraste du décompte. */
+  countdownFloor: '#404040',
 } as const;
 
 export const axRadius = {

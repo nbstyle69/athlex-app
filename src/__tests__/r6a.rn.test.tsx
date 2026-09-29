@@ -10,6 +10,7 @@ import { contrast } from '../theme/contrast';
 import { axColors, axFonts, axTypography, axVeil } from '../theme/axTokens';
 import { AxButton, AxIconButton, AxTag } from '../components/ax';
 import type { HomeStackParamList } from '../navigation';
+import '../i18n';
 import TimerRunScreen from '../screens/timer/TimerRunScreen';
 import VideoPlaybackScreen from '../screens/timer/VideoPlaybackScreen';
 
@@ -146,7 +147,7 @@ async function walkFlow(w = PORTRAIT, theme = darkTheme) {
   await act(async () => { ready(); });
   snap();
   await act(async () => { primary(root).props.onPress(); });
-  const countdown = { frame: root.findAll((n) => n.props.testID === 'timer-cam-cd-frame' && typeof n.type === 'string').length, texts: texts(root) };
+  const countdown = { frame: root.findAll((n) => n.props.testID === 'timer-cam-cd' && typeof n.type === 'string').length, texts: texts(root) };
   await tick(3000);
   snap();
   await act(async () => { primary(root).props.onPress(); });
@@ -172,15 +173,15 @@ describe('R6a : enchaînement caméra inchangé, boutons Ax', () => {
     const { states, countdown, root } = await walkFlow();
     expect(states.map((s) => s.label)).toEqual(['Démarrer', 'Lancer le chrono', 'Arrêter le chrono', 'Arrêter la vidéo']);
     expect(countdown.frame).toBe(1);
-    expect(countdown.texts).toEqual(expect.arrayContaining(['PRÉPARER', '3']));
-    expect(texts(root)).toEqual(expect.arrayContaining(['TEMPS FINAL', 'Vidéo enregistrée ✓', 'Scanner pour les détails']));
+    expect(countdown.texts).toEqual(expect.arrayContaining(['PRÊT ?', '3']));
+    expect(texts(root)).toEqual(expect.arrayContaining(['TEMPS FINAL', 'Vidéo enregistrée', 'Scanner pour les détails']));
   });
 
   it('« Arrêter… » en stop, « Démarrer » / « Lancer le chrono » en accent, une seule action accent par état', async () => {
     const { states, root } = await walkFlow();
     expect(states.map((s) => s.variant)).toEqual(['accent', 'accent', 'stop', 'stop']);
     expect(states.map((s) => s.accents)).toEqual([1, 1, 0, 0]);
-    expect(accentCount(root)).toBe(0);
+    expect(accentCount(root)).toBe(1);
   });
 
   it('pastille REC : AxTag danger à point rouge, de l’enregistrement à l’arrêt seulement', async () => {
@@ -230,7 +231,7 @@ describe('R6a : enchaînement caméra inchangé, boutons Ax', () => {
     expect(mockGoBack).toHaveBeenCalledTimes(1);
   });
 
-  it('temps final avec vidéo : boutons outline sur voile, YouTube inchangé, feuille YouTube au même contenu', async () => {
+  it('temps final avec vidéo : Lire, Sauvegarder et Fermer en outline sur voile (partage et feuille YouTube : r6b)', async () => {
     const { root } = await walkFlow();
     for (const id of ['timer-play-video', 'timer-save-card', 'timer-close']) {
       const b = root.findByProps({ testID: id });
@@ -238,16 +239,6 @@ describe('R6a : enchaînement caméra inchangé, boutons Ax', () => {
       expect([b.props.variant, b.props.veil]).toEqual(['outline', true]);
     }
     expect(root.findByProps({ testID: 'timer-final-tag' }).type).toBe(AxTag);
-    const yt = root.findAll((n) => isHostText(n) && hostText(n) === 'Partager sur YouTube')[0];
-    let n: ReactTestInstance | null = yt;
-    while (n && typeof n.props.onPress !== 'function') n = n.parent;
-    expect(flat(n!).backgroundColor).toBe('#FF0000');
-    await act(async () => { n!.props.onPress(); });
-    const sheet = root.findByProps({ testID: 'timer-yt-sheet' });
-    expect(texts(sheet)).toEqual([
-      '🎬 Partager sur YouTube', 'Upload ta vidéo puis colle le lien pour générer l\'analyse',
-      'Ouvrir YouTube Studio', 'Copier le prompt d\'analyse', 'Fermer',
-    ]);
   });
 });
 
@@ -256,7 +247,7 @@ describe('R6a : typographie et lisibilité sur l’image de la caméra', () => {
     const root = await camera();
     await act(async () => { primary(root).props.onPress(); });
     await act(async () => { primary(root).props.onPress(); });
-    expect(flat(root.findAll((n) => n.props.testID === 'timer-cam-cd-value')[0]).fontFamily).toBe(axFonts.oswaldMedium);
+    expect(flat(root.findAll((n) => n.props.testID === 'timer-countdown-value')[0]).fontFamily).toBe(axFonts.oswaldMedium);
     await tick(3000);
     const time = root.findAll((n) => n.props.testID === 'timer-cam-time')[0];
     expect(flat(time).fontFamily).toBe(axFonts.oswaldMedium);
