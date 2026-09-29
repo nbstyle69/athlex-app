@@ -13,7 +13,8 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { LevelColors } from '../../theme/designTokens';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
-import { memberActionRefusal } from '../../utils/refusals';
+import { memberWriteRefusal } from '../../utils/refusals';
+import { assignableRoles, memberRowPermissions, MemberViewer } from '../../utils/memberPermissions';
 
 interface MemberRow {
   id: string;
@@ -60,7 +61,8 @@ interface MemberReservation {
 }
 
 export default function BOMembersScreen({ navigation }: any) {
-  const { currentBox } = useAuth();
+  const { user, currentBox } = useAuth();
+  const viewer: MemberViewer = { userId: user?.id, principalId: currentBox?.owner_id };
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
@@ -149,8 +151,17 @@ export default function BOMembersScreen({ navigation }: any) {
     setResLoading(false);
   }
 
+  function refuseReserved(member: MemberRow): boolean {
+    if (!memberRowPermissions(viewer, member).reservedToPrincipal) return false;
+    setSelectedMember(null);
+    Alert.alert(t('common.error'), t('bo.members.refusal.coOwnerReserved'));
+    return true;
+  }
+
   async function toggleCoach(member: MemberRow) {
-    const newRole = member.role === 'coach' ? 'member' : 'coach';
+    if (refuseReserved(member)) return;
+    const [plain, coach] = assignableRoles();
+    const newRole = member.role === coach ? plain : coach;
     const label = newRole === 'coach' ? t('bo.members.promoteCoach') : t('bo.members.demoteCoach');
     Alert.alert(
       t('bo.members.confirmTitle', { label }),
@@ -162,9 +173,13 @@ export default function BOMembersScreen({ navigation }: any) {
         {
           text: label,
           onPress: async () => {
-            await supabase.from('box_members').update({ role: newRole }).eq('id', member.id);
-            load();
+            const { data, error } = await supabase.from('box_members')
+              .update({ role: newRole }).eq('id', member.id).select('id');
             setSelectedMember(null);
+            const refusal = memberWriteRefusal({ data, error });
+            if (error) captureError(error, { screen: 'BOMembers', action: 'role' });
+            if (refusal) Alert.alert(t('common.error'), refusal);
+            load();
           },
         },
       ]
@@ -172,6 +187,7 @@ export default function BOMembersScreen({ navigation }: any) {
   }
 
   async function toggleBan(member: MemberRow) {
+    if (refuseReserved(member)) return;
     const newStatus = member.status === 'active' ? 'banned' : 'active';
     const label = newStatus === 'banned' ? t('bo.members.ban') : t('bo.members.reactivate');
     Alert.alert(
@@ -187,14 +203,18 @@ export default function BOMembersScreen({ navigation }: any) {
               // Réactivation : passe par la RPC serveur, qui remet à zéro
               // l'abonnement comme le fait la ré-adhésion par code d'invitation.
               // Un UPDATE direct ressusciterait l'ancien forfait.
-              const { error } = await supabase.rpc('reactivate_box_member', {
+              const { data, error } = await supabase.rpc('reactivate_box_member', {
                 p_box_id: member.box_id, p_member_id: member.member_id,
               });
-              if (error) { captureError(error, { screen: 'BOMembers', action: 'reactivate' }); Alert.alert(t('common.error'), memberActionRefusal(error.message)); return; }
+              if (error) captureError(error, { screen: 'BOMembers', action: 'reactivate' });
+              const refusal = memberWriteRefusal({ data, error });
+              if (refusal) Alert.alert(t('common.error'), refusal);
             } else {
-              const { error } = await supabase.from('box_members')
-                .update({ status: newStatus }).eq('id', member.id);
-              if (error) { captureError(error, { screen: 'BOMembers', action: 'ban' }); Alert.alert(t('common.error'), memberActionRefusal(error.message)); return; }
+              const { data, error } = await supabase.from('box_members')
+                .update({ status: newStatus }).eq('id', member.id).select('id');
+              if (error) captureError(error, { screen: 'BOMembers', action: 'ban' });
+              const refusal = memberWriteRefusal({ data, error });
+              if (refusal) Alert.alert(t('common.error'), refusal);
             }
             load();
           },
@@ -369,8 +389,12 @@ export default function BOMembersScreen({ navigation }: any) {
             })()}
 
             {/* Coach promote/demote + Ban/Unban actions */}
-            {selectedMember && selectedMember.status === 'active' && selectedMember.role !== 'owner' && (
+            {selectedMember && memberRowPermissions(viewer, selectedMember).reservedToPrincipal && (
+              <Text style={S.reservedNote} testID="members-coowner-reserved">{t('bo.members.refusal.coOwnerReserved')}</Text>
+            )}
+            {selectedMember && selectedMember.status === 'active' && memberRowPermissions(viewer, selectedMember).canToggleCoach && (
               <TouchableOpacity
+                testID="members-toggle-coach"
                 style={[S.banBtn, { backgroundColor: 'rgba(59,130,246,0.1)', borderColor: 'rgba(59,130,246,0.25)' }]}
                 onPress={() => toggleCoach(selectedMember)}
                 activeOpacity={0.8}
@@ -381,8 +405,9 @@ export default function BOMembersScreen({ navigation }: any) {
                 </Text>
               </TouchableOpacity>
             )}
-            {selectedMember && (
+            {selectedMember && memberRowPermissions(viewer, selectedMember).canChangeStatus && (
               <TouchableOpacity
+                testID="members-toggle-status"
                 style={[S.banBtn, selectedMember.status === 'banned' && S.unbanBtn]}
                 onPress={() => { setSelectedMember(null); toggleBan(selectedMember); }}
                 activeOpacity={0.8}
@@ -515,6 +540,7 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
     backgroundColor: `${theme.success}15`, borderColor: `${theme.success}30`,
   },
   banBtnText: { fontSize: 13, fontWeight: '700', color: theme.error },
+  reservedNote: { marginHorizontal: 20, marginTop: 14, fontSize: 13, lineHeight: 18, color: theme.textSecondary },
 
   resSection: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 },
   resSectionTitle: { fontSize: 15, fontWeight: '800', color: theme.text },

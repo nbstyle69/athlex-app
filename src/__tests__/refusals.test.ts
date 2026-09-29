@@ -125,8 +125,8 @@ describe.each([
 describe('BOMembersScreen : les refus de bannir et de réactiver sont traduits', () => {
   const src = fs.readFileSync(path.join(__dirname, '../screens/backoffice/BOMembersScreen.tsx'), 'utf8');
   const toggleBan = src.slice(src.indexOf('async function toggleBan'), src.indexOf('function formatDate'));
-  it('les deux branches passent par memberActionRefusal, jamais par le message brut', () => {
-    expect(toggleBan.match(/Alert\.alert\(t\('common\.error'\), memberActionRefusal\(error\.message\)\)/g)).toHaveLength(2);
+  it('les deux branches passent par memberWriteRefusal, jamais par le message brut', () => {
+    expect(toggleBan.match(/const refusal = memberWriteRefusal\(\{ data, error \}\);\s*if \(refusal\) Alert\.alert\(t\('common\.error'\), refusal\)/g)).toHaveLength(2);
     expect(toggleBan).not.toMatch(/Alert\.alert\([^)]*, error\.message\)/);
   });
 });

@@ -30,13 +30,32 @@ export function tournamentRefusal(message: string | null | undefined, status: st
 const MEMBER_REFUSALS: Record<string, string> = {
   MEMBRE_ABONNEMENT_EN_COURS: 'bo.members.refusal.banActiveMembership',
   REACTIVATION_ABONNEMENT_EN_COURS: 'bo.members.refusal.reactivateActiveMembership',
+  MEMBRE_ROLE_COGERANT_RESERVE: 'bo.members.refusal.coOwnerReserved',
 };
 
-/** Refus d'une action sur un membre (bannir, réactiver), traduit ; texte générique pour tout autre refus. */
-export function memberActionRefusal(message: string | null | undefined): string {
-  const code = refusalCode(message);
-  const key = code ? MEMBER_REFUSALS[code] : undefined;
-  return i18n.t(key ?? 'auth.errors.generic');
+type RefusalError = { code?: string; message?: string };
+
+/**
+ * Refus d'une action sur un membre (rôle, bannir, réactiver), traduit. Un 42501 sans code connu
+ * (RLS, droits) a son propre texte ; tout autre refus, le texte générique.
+ */
+export function memberActionRefusal(error: string | RefusalError | null | undefined): string {
+  const err: RefusalError = typeof error === 'string' ? { message: error } : error ?? {};
+  const code = refusalCode(err.message);
+  const key = (code ? MEMBER_REFUSALS[code] : undefined)
+    ?? (err.code === '42501' ? 'bo.members.refusal.notAllowed' : 'auth.errors.generic');
+  return i18n.t(key);
+}
+
+/**
+ * Résultat d'une écriture sur un membre : null si elle est enregistrée, sinon le message à afficher.
+ * Aucune ligne rendue (RLS qui filtre sans erreur) ou `false` d'une RPC vaut échec.
+ */
+export function memberWriteRefusal(result: { data: unknown; error: RefusalError | null }): string | null {
+  if (result.error) return memberActionRefusal(result.error);
+  const d = result.data;
+  if (d == null || d === false || (Array.isArray(d) && d.length === 0)) return i18n.t('bo.members.refusal.notSaved');
+  return null;
 }
 
 const RESERVATION_REFUSALS: Record<string, string> = {

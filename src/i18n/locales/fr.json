@@ -381,7 +381,10 @@
       },
       "refusal": {
         "banActiveMembership": "Ce membre a un abonnement en cours : bannis-le depuis le Manager, qui arrête aussi son abonnement.",
-        "reactivateActiveMembership": "Ce membre a encore un abonnement en cours : il ne peut pas être réactivé pour l'instant."
+        "reactivateActiveMembership": "Ce membre a encore un abonnement en cours : il ne peut pas être réactivé pour l'instant.",
+        "coOwnerReserved": "Seul le gérant principal de la box peut nommer ou retirer un co-gérant.",
+        "notAllowed": "Tu n'as pas les droits pour cette action : rien n'a été enregistré.",
+        "notSaved": "La modification n'a pas été enregistrée. Actualise la liste et réessaie."
       }
     },
     "gamification": {
