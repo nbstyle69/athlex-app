@@ -205,6 +205,20 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R8a : tournois au nouveau design (apparence seule, aucune migration).**
+- `CompetitionScreen`, `TournamentScreen` (infos, classement, WODs, participants, validation staff, divisions),
+  `TournamentBracketView`, `TournamentDivisionsView`, `TournamentWODScreen` (détail, soumission, envoyé) en
+  composants `src/components/ax` et jetons `theme.ax` / `axTypography` / `axSpacing` / `axRadius` ; en-tête de tournoi en
+  `AxCard` featured (statut `AxStatusDot`, niveau et format `AxTag`), onglets `AxChip`, promus / relégués en `AxTag`
+  success / danger, scores en `numberM`, une seule `AxButton` accent par écran, « Quitter » et « Rejeter » en `stop` ;
+  icônes Lucide, plus aucun emoji (libellés FR / EN des clés `tournament.*`, `tourWod.*`, `divisions.*`,
+  `competition.*` nettoyés). `AxTag` gagne les tons `success` / `warning` et l'option `wrap` (rétrocompatibles).
+- Données, requêtes, navigation, callbacks, états et règles inchangés ; « Comment ça marche » garde les 4 étapes du code.
+- Tests : `r8a.rn.test.tsx` (144, 27 états sur une base Supabase simulée : ordre des textes identique à la capture
+  d'avant dans les deux thèmes, aucun emoji, une action accent, adoption ax, navigation, écritures, couleurs et
+  typographies, espace bas, textes longs à 390 px) ; isolement R1 élargi aux 5 écrans ; `npx jest`, `npm run test:rn`,
+  `tsc` verts ; 22 mutations tuées.
+
 **R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).**
 - `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps,
   micro activé / coupé ; enregistrés dans `bwod_timer_display_opts_v2` (`src/lib/timerVideoOpts.ts`). Défauts inchangés

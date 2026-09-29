@@ -81,7 +81,7 @@ export async function pressText(root: ReactTestInstance, text: string) {
 export const T0 = {
   id: 't1', name: LONG, level: 'rx', status: 'open', max_participants: 8, prize: 'Un t-shirt AthleX',
   start_date: '2026-10-10', format: 'simple', description: 'Trois WODs à faire en une semaine.',
-  require_video_proof: true, archived_at: null, current_season: 1, type: 'box',
+  require_video_proof: true, archived_at: null as string | null, current_season: 1, type: 'box',
 };
 export const W1 = {
   id: 'w1', tournament_id: 't1', title: LONG_WOD, type: 'For Time', status: 'active', duration_minutes: 12,

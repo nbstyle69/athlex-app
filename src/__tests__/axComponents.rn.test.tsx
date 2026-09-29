@@ -334,6 +334,11 @@ describe('contraste AA des couples texte / fond', () => {
   }
 });
 
+const R8A_SCREENS = [
+  'CompetitionScreen.tsx', 'TournamentScreen.tsx', 'TournamentBracketView.tsx',
+  'TournamentDivisionsView.tsx', 'TournamentWODScreen.tsx',
+];
+
 describe('isolement : rien d’existant ne consomme src/components/ax', () => {
   const SRC = path.join(__dirname, '..');
   const AX_DIR = path.join(SRC, 'components', 'ax');
@@ -369,6 +374,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
     // R6a : écrans du mode caméra (lecture de la vidéo).
     path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'),
+    // R8a : écrans des tournois.
+    ...R8A_SCREENS.map((f) => path.join(SRC, 'screens', 'competition', f)),
   ];
 
   it('R4a : dans src/screens/wod et src/components/wod, seuls les fichiers du générateur et des résultats consomment ax', () => {

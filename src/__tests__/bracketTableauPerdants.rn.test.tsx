@@ -27,6 +27,7 @@ function mockRequete(data: any[]): any {
   return requete;
 }
 
+jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('../lib/supabase', () => ({
   supabase: { from: (table: string) => mockRequete(table === 'tournament_bracket_matches' ? mockMatchs : []) },
 }));
