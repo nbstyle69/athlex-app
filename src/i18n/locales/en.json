@@ -1117,17 +1117,13 @@
     "yesCancel": "Yes, cancel"
   },
   "wod": {
-    "title": "WOD",
     "scoreType": {
       "label": "Score type",
       "time": "Time",
       "reps": "Reps",
       "weight": "Load",
       "rounds": "Rounds"
-    },
-    "subtitle": "Workouts of the Day",
-    "generate": "Generate",
-    "all": "All"
+    }
   },
   "wodHistory": {
     "title": "WOD history",

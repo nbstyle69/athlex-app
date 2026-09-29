@@ -482,6 +482,10 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   retirées. Les builds déjà installés gardent l'écran jusqu'à la mise à jour : une fois `20270136` appliquée,
   il affiche une liste vide et un dépôt est refusé (message d'erreur). `expo-document-picker` reste (import de WOD du
   back-office). Déclaration App Privacy / Data Safety : la ligne « Documents (PDF) » tombe au prochain envoi.
+- App, nettoyage : écran `WODScreen` (WODs fictifs écrits en dur) et pile `WODNavigator` supprimés (sans
+  migration, sans effet visible : la pile n'était montée nulle part). Route `WODList`, type `WODStackParamList`
+  et clés de traduction `wod.title`, `wod.subtitle`, `wod.generate`, `wod.all` retirées (FR/EN, `wod.scoreType` gardé) ; `WodGenerator`, `WodResult`, `WodHistory`, `TimerRun`,
+  `VideoPlayback` restent déclarés dans les piles utilisées. Test `wodScreenRetire`.
 
 **Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
 [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
