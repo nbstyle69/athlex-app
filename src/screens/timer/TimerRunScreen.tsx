@@ -13,7 +13,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system/legacy';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
-import { Square, Play, X, RotateCcw, CheckCircle, RefreshCw, Download, Settings, Youtube, Copy, ExternalLink, RotateCw } from 'lucide-react-native';
+import { Square, Play, X, RotateCcw, CheckCircle, RefreshCw, Download, Settings, Youtube, Copy, ExternalLink, RotateCw, Palette, Volume2, VolumeX, Minus, Plus, Check } from 'lucide-react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -23,6 +23,8 @@ import { blockDurationSec } from '../../utils/wodToTimer';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { ensureContrast, inkOn, inkOnSecondary, TIMER_THEMES } from '../../theme/timerInk';
+import { AxButton, AxCard, AxChip, AxIconButton, AxSwitch, AxTag, withAlpha } from '../../components/ax';
+import { axFonts, axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { incrementCounter } from '../../services/gamification';
 import * as Notifications from 'expo-notifications';
 import { spacing, borderRadius, typography } from '../../theme/designTokens';
@@ -212,56 +214,55 @@ function ProgressRing({ progress, color, size }: { progress: number; color: stri
 function TimerSettingsModal({ opts, onUpdate, onClose }: {
   opts: TimerDisplayOpts; onUpdate: (u: Partial<TimerDisplayOpts>) => void; onClose: () => void;
 }) {
+  const { theme } = useTheme();
+  const c = theme.ax;
   const cardW = Math.floor((SW - 48 - 30) / 4);
   const SLabel = ({ label }: { label: string }) => (
-    <Text style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', letterSpacing: 3, marginBottom: 12, textTransform: 'uppercase', fontWeight: '800' }}>{label}</Text>
+    <Text style={[axTypography.overline, { color: c.textMuted, marginBottom: axSpacing.md }]}>{label}</Text>
   );
   function applyTheme(t: typeof TIMER_THEMES[number]) {
     onUpdate({ themeId: t.id, digitColor: t.digitColor, bgCountdown: t.bgCountdown, bgRunning: t.bgRunning, bgDone: t.bgDone });
   }
   const activeTheme = TIMER_THEMES.find(t => t.id === opts.themeId) ?? TIMER_THEMES[0];
-  // Couleur d'accent pour l'UI du panneau (boutons, slider, FERMER) : garantit un
-  // contraste lisible sur le fond sombre du modal même quand la couleur choisie est
-  // noire (#000000) ou très sombre.
-  const uiColor = ensureContrast(opts.digitColor, '#0a0a0a');
+  const section = { marginBottom: axSpacing['2xl'] };
+  const trackStyle = { flex: 1, height: 6, backgroundColor: c.border, borderRadius: 3, overflow: 'hidden' as const };
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)' }} activeOpacity={1} onPress={onClose} />
-      <View style={{ backgroundColor: '#0a0a0a', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 8, maxHeight: '90%', borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}>
-        <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.18)', alignSelf: 'center', marginBottom: 20 }} />
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 44 }} showsVerticalScrollIndicator={false}>
+      <TouchableOpacity style={{ flex: 1, backgroundColor: withAlpha(c.background, 0.8) }} activeOpacity={1} onPress={onClose} />
+      <View testID="timer-design-sheet" style={{ backgroundColor: c.surface, borderTopLeftRadius: axRadius.card, borderTopRightRadius: axRadius.card, paddingTop: axSpacing.sm, maxHeight: '90%', borderTopWidth: 1, borderColor: c.border }}>
+        <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: c.border, alignSelf: 'center', marginBottom: axSpacing.xl }} />
+        <ScrollView contentContainerStyle={{ paddingHorizontal: axSpacing['2xl'], paddingBottom: 44 }} showsVerticalScrollIndicator={false}>
 
           {/* Header */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 }}>🎨 Design du minuteur</Text>
-            {(() => { const hc = ensureContrast(activeTheme.accent, '#0a0a0a'); return (
-            <View style={{ backgroundColor: `${hc}20`, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: `${hc}50` }}>
-              <Text style={{ color: hc, fontSize: 11, fontWeight: '900', letterSpacing: 1 }}>{activeTheme.emoji} {activeTheme.label.toUpperCase()}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.md, marginBottom: axSpacing['2xl'] }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, flexShrink: 1 }}>
+              <Palette color={c.accentText} size={20} />
+              <Text style={[axTypography.titleM, { color: c.text, flexShrink: 1 }]} numberOfLines={1}>Design du minuteur</Text>
             </View>
-            ); })()}
+            <AxTag label={`${activeTheme.emoji} ${activeTheme.label.toUpperCase()}`} />
           </View>
 
           {/* ── THÈME */}
           <SLabel label="Thème" />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 28 }}>
+          <View style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, section]}>
             {TIMER_THEMES.map(t => {
               const isActive = opts.themeId === t.id;
               return (
                 <TouchableOpacity key={t.id} onPress={() => applyTheme(t)} activeOpacity={0.75}
-                  style={{ width: cardW, borderRadius: 16, overflow: 'hidden', borderWidth: 2.5,
-                    borderColor: isActive ? t.accent : 'rgba(255,255,255,0.06)',
-                    shadowColor: t.accent, shadowOpacity: isActive ? 0.6 : 0, shadowRadius: 12, shadowOffset: { width: 0, height: 0 } }}>
+                  accessibilityRole="button" accessibilityLabel={t.label} accessibilityState={{ selected: isActive }}
+                  style={{ width: cardW, borderRadius: axRadius.card, overflow: 'hidden', borderWidth: 2,
+                    borderColor: isActive ? c.accentText : c.border }}>
                   <View style={{ backgroundColor: t.bgRunning, paddingVertical: 12, alignItems: 'center', gap: 6 }}>
                     <View style={{ width: cardW - 22, height: cardW - 22, borderRadius: (cardW - 22) / 2, borderWidth: 3,
                       borderColor: t.accent, justifyContent: 'center', alignItems: 'center',
                       backgroundColor: `${t.accent}15` }}>
-                      <Text style={{ color: t.digitColor, fontSize: 10, fontWeight: '200', letterSpacing: -0.5 }}>01:30</Text>
+                      <Text style={{ color: t.digitColor, fontSize: 10, fontFamily: axFonts.oswaldMedium }}>01:30</Text>
                     </View>
                     <Text style={{ color: t.accent, fontSize: 8, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>{t.label}</Text>
                     {isActive && (
                       <View style={{ position: 'absolute', top: 5, right: 5, width: 16, height: 16, borderRadius: 8,
-                        backgroundColor: t.accent, justifyContent: 'center', alignItems: 'center' }}>
-                        <Text style={{ color: '#000', fontSize: 9, fontWeight: '900' }}>✓</Text>
+                        backgroundColor: c.accent, justifyContent: 'center', alignItems: 'center' }}>
+                        <Check color={c.onAccent} size={10} strokeWidth={3} />
                       </View>
                     )}
                   </View>
@@ -272,18 +273,17 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
 
           {/* ── COULEUR DES CHIFFRES */}
           <SLabel label="Couleur des chiffres" />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 28 }}>
-            {DIGIT_COLORS.map(c => {
-              const isActive = opts.digitColor === c;
+          <View style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, section]}>
+            {DIGIT_COLORS.map(dc => {
+              const isActive = opts.digitColor === dc;
               return (
-                <TouchableOpacity key={c} onPress={() => onUpdate({ digitColor: c })} activeOpacity={0.75}
-                  style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: c,
-                    borderWidth: isActive ? 3 : (c === '#000000' ? 2 : 1.5),
-                    borderColor: isActive ? '#fff' : (c === '#000000' ? 'rgba(255,255,255,0.65)' : 'rgba(255,255,255,0.1)'),
-                    shadowColor: c === '#000000' ? '#fff' : c, shadowOpacity: isActive ? 0.9 : (c === '#000000' ? 0.25 : 0.3),
-                    shadowRadius: isActive ? 12 : 4, shadowOffset: { width: 0, height: 0 },
+                <TouchableOpacity key={dc} onPress={() => onUpdate({ digitColor: dc })} activeOpacity={0.75}
+                  accessibilityRole="button" accessibilityLabel={dc} accessibilityState={{ selected: isActive }}
+                  style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: dc,
+                    borderWidth: isActive ? 3 : 1.5,
+                    borderColor: isActive ? c.text : c.border,
                     justifyContent: 'center', alignItems: 'center' }}>
-                  {isActive && <Text style={{ color: c === '#000000' ? '#fff' : '#0a0a0a', fontSize: 14, fontWeight: '900' }}>✓</Text>}
+                  {isActive && <Check color={inkOn(dc)} size={14} strokeWidth={3} />}
                 </TouchableOpacity>
               );
             })}
@@ -291,100 +291,67 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
 
           {/* ── STYLE D'HORLOGE */}
           <SLabel label="Style d'affichage" />
-          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 28 }}>
+          <View style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm }, section]}>
             {([
-              { id: 'arc',    label: 'Cercle', icon: '◯' },
-              { id: 'bar',    label: 'Barre',  icon: '▬' },
-              { id: 'digits', label: 'Digits', icon: '99' },
-            ] as { id: ClockStyle; label: string; icon: string }[]).map(s => {
-              const active = opts.clockStyle === s.id;
-              return (
-                <TouchableOpacity key={s.id} onPress={() => onUpdate({ clockStyle: s.id })} activeOpacity={0.8}
-                  style={{ flex: 1, paddingVertical: 14, borderRadius: 14, alignItems: 'center', gap: 4,
-                    backgroundColor: active ? `${uiColor}20` : 'rgba(255,255,255,0.04)',
-                    borderWidth: 1.5, borderColor: active ? uiColor : 'rgba(255,255,255,0.08)' }}>
-                  <Text style={{ color: active ? uiColor : 'rgba(255,255,255,0.35)', fontSize: 20 }}>{s.icon}</Text>
-                  <Text style={{ color: active ? uiColor : 'rgba(255,255,255,0.35)', fontSize: 10, fontWeight: '900', letterSpacing: 1 }}>{s.label.toUpperCase()}</Text>
-                </TouchableOpacity>
-              );
-            })}
+              { id: 'arc',    label: 'Cercle' },
+              { id: 'bar',    label: 'Barre' },
+              { id: 'digits', label: 'Digits' },
+            ] as { id: ClockStyle; label: string }[]).map(st => (
+              <AxChip key={st.id} label={st.label.toUpperCase()} selected={opts.clockStyle === st.id}
+                onPress={() => onUpdate({ clockStyle: st.id })} testID={`timer-style-${st.id}`} />
+            ))}
           </View>
 
           {/* ── TAILLE */}
           <SLabel label={`Taille des chiffres · ${opts.fontSize}px`} />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 28 }}>
-            <TouchableOpacity onPress={() => onUpdate({ fontSize: Math.max(20, opts.fontSize - 8) })} activeOpacity={0.8}
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.06)',
-                justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }}>
-              <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>−</Text>
-            </TouchableOpacity>
-            <View style={{ flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+          <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 14 }, section]}>
+            <AxIconButton icon={Minus} accessibilityLabel="Réduire la taille des chiffres" testID="timer-size-minus"
+              onPress={() => onUpdate({ fontSize: Math.max(20, opts.fontSize - 8) })} />
+            <View style={trackStyle}>
               <View style={{ width: `${Math.round(((opts.fontSize - 20) / 120) * 100)}%` as `${number}%`,
-                height: '100%', backgroundColor: uiColor, borderRadius: 3 }} />
+                height: '100%', backgroundColor: c.accent, borderRadius: 3 }} />
             </View>
-            <TouchableOpacity onPress={() => onUpdate({ fontSize: Math.min(140, opts.fontSize + 8) })} activeOpacity={0.8}
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.06)',
-                justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }}>
-              <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>+</Text>
-            </TouchableOpacity>
+            <AxIconButton icon={Plus} accessibilityLabel="Agrandir les chiffres" testID="timer-size-plus"
+              onPress={() => onUpdate({ fontSize: Math.min(140, opts.fontSize + 8) })} />
           </View>
 
           {/* ── SONS + ROTATION */}
-          <View style={{ flexDirection: 'row', gap: 10, marginBottom: 28 }}>
-            <TouchableOpacity onPress={() => onUpdate({ bipsEnabled: !opts.bipsEnabled })} activeOpacity={0.8}
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 14,
-                backgroundColor: opts.bipsEnabled ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
-                borderWidth: 1, borderColor: opts.bipsEnabled ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)' }}>
-              <Text style={{ fontSize: 18 }}>{opts.bipsEnabled ? '🔊' : '🔇'}</Text>
-              <Text style={{ color: opts.bipsEnabled ? '#fff' : 'rgba(255,255,255,0.35)', fontWeight: '700', fontSize: 12 }}>
-                Sons {opts.bipsEnabled ? 'ON' : 'OFF'}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => onUpdate({ allowRotation: !opts.allowRotation })} activeOpacity={0.8}
-              style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14, borderRadius: 14,
-                backgroundColor: opts.allowRotation ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)',
-                borderWidth: 1, borderColor: opts.allowRotation ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.06)' }}>
-              <RotateCw size={18} color={opts.allowRotation ? '#fff' : 'rgba(255,255,255,0.35)'} />
-              <Text style={{ color: opts.allowRotation ? '#fff' : 'rgba(255,255,255,0.35)', fontWeight: '700', fontSize: 12 }}>
-                {opts.allowRotation ? 'Rotation' : 'Portrait'}
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <AxCard style={[{ gap: axSpacing.md }, section]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: axSpacing.md }}>
+              {opts.bipsEnabled ? <Volume2 color={c.text} size={18} /> : <VolumeX color={c.textMuted} size={18} />}
+              <Text style={[axTypography.label, { flex: 1, color: c.text }]}>Sons {opts.bipsEnabled ? 'ON' : 'OFF'}</Text>
+              <AxSwitch value={opts.bipsEnabled} onValueChange={() => onUpdate({ bipsEnabled: !opts.bipsEnabled })}
+                accessibilityLabel="Sons" testID="timer-sounds-switch" />
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: axSpacing.md }}>
+              <RotateCw size={18} color={opts.allowRotation ? c.text : c.textMuted} />
+              <Text style={[axTypography.label, { flex: 1, color: c.text }]}>{opts.allowRotation ? 'Rotation' : 'Portrait'}</Text>
+              <AxSwitch value={opts.allowRotation} onValueChange={() => onUpdate({ allowRotation: !opts.allowRotation })}
+                accessibilityLabel="Rotation" testID="timer-rotation-switch" />
+            </View>
+          </AxCard>
 
           {/* ── VOLUME DES BIPS */}
           {opts.bipsEnabled && (
             <>
               <SLabel label={`Volume des bips · ${Math.round(opts.beepVolume * 100)}%`} />
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 28 }}>
-                <TouchableOpacity onPress={() => onUpdate({ beepVolume: Math.max(0, Math.round((opts.beepVolume - 0.1) * 10) / 10) })} activeOpacity={0.8}
-                  style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.06)',
-                    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }}>
-                  <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>−</Text>
-                </TouchableOpacity>
-                <View style={{ flex: 1, height: 6, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 3, overflow: 'hidden' }}>
+              <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 14 }, section]}>
+                <AxIconButton icon={Minus} accessibilityLabel="Baisser le volume des bips" testID="timer-volume-minus"
+                  onPress={() => onUpdate({ beepVolume: Math.max(0, Math.round((opts.beepVolume - 0.1) * 10) / 10) })} />
+                <View style={trackStyle}>
                   <View style={{ width: `${Math.round(opts.beepVolume * 100)}%` as `${number}%`,
-                    height: '100%', backgroundColor: uiColor, borderRadius: 3 }} />
+                    height: '100%', backgroundColor: c.accent, borderRadius: 3 }} />
                 </View>
-                <TouchableOpacity onPress={() => onUpdate({ beepVolume: Math.min(1, Math.round((opts.beepVolume + 0.1) * 10) / 10) })} activeOpacity={0.8}
-                  style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.06)',
-                    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }}>
-                  <Text style={{ color: '#fff', fontSize: 24, fontWeight: '700' }}>+</Text>
-                </TouchableOpacity>
+                <AxIconButton icon={Plus} accessibilityLabel="Monter le volume des bips" testID="timer-volume-plus"
+                  onPress={() => onUpdate({ beepVolume: Math.min(1, Math.round((opts.beepVolume + 0.1) * 10) / 10) })} />
               </View>
             </>
           )}
 
           {/* ── RÉINITIALISER + FERMER */}
           <View style={{ gap: 10 }}>
-            <TouchableOpacity onPress={() => onUpdate({ ...DEFAULT_DISPLAY })} activeOpacity={0.8}
-              style={{ paddingVertical: 13, borderRadius: 14, alignItems: 'center',
-                backgroundColor: 'rgba(255,255,255,0.04)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
-              <Text style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12, fontWeight: '700', letterSpacing: 1.5 }}>RÉINITIALISER</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onClose} activeOpacity={0.85}
-              style={{ paddingVertical: 16, borderRadius: 14, alignItems: 'center', backgroundColor: uiColor }}>
-              <Text style={{ color: '#0a0a0a', fontSize: 14, fontWeight: '900', letterSpacing: 1.5 }}>FERMER</Text>
-            </TouchableOpacity>
+            <AxButton label="RÉINITIALISER" variant="outline" fullWidth onPress={() => onUpdate({ ...DEFAULT_DISPLAY })} testID="timer-design-reset" />
+            <AxButton label="FERMER" variant="accent" fullWidth onPress={onClose} testID="timer-design-close" />
           </View>
         </ScrollView>
       </View>
@@ -1541,6 +1508,11 @@ export default function TimerRunScreen() {
   const showYwyrEndBtn = isYwyrSolo && !withCamera && phase === 'running';
   // Le gros bouton n'est "stop" (rouge) que s'il arrête vraiment ; en YWYR solo il bascule travail/repos
   const mainBtnStop = isActive && !(isYwyrSolo && phase === 'running');
+  // Bouton principal : aplat de la couleur des chiffres au repos, contour pendant l'effort.
+  const mainInk = mainBtnStop ? ctrlInk : inkOn(accentColor);
+  const mainBtnLook = mainBtnStop
+    ? { backgroundColor: 'transparent', borderWidth: 2, borderColor: ctrlInk }
+    : { backgroundColor: accentColor, borderWidth: 0 };
   const showEndBlockBtn = phase === 'running' && !seqPausing &&
     timerType === 'libre' && curBlk?.type === 'for-time' && innerPhase === 'work' && seqBlocksRef.current.length > 1;
   // B5 : bouton « Série terminée » du mode Split (« Round terminé » pour un metcon splitté, « Passer le repos » pendant le repos)
@@ -1676,20 +1648,27 @@ export default function TimerRunScreen() {
                     style={{ width: 62, height: 62, resizeMode: 'contain' }}
                   />
                 </View>
-                <View style={[styles.sessionBadge, {
-                  backgroundColor: `${accentColor}22`,
-                  borderColor: `${accentColor}55`,
-                  paddingHorizontal: 20, paddingVertical: 7,
-                }]}>
-                  <Text style={[styles.sessionBadgeText, { color: accentColor, fontSize: 13, letterSpacing: 2 }]}>{displayLabel}</Text>
-                </View>
+                {withCamera ? (
+                  <View style={[styles.sessionBadge, {
+                    backgroundColor: `${accentColor}22`,
+                    borderColor: `${accentColor}55`,
+                    paddingHorizontal: 20, paddingVertical: 7,
+                  }]}>
+                    <Text style={[styles.sessionBadgeText, { color: accentColor, fontSize: 13, letterSpacing: 2 }]}>{displayLabel}</Text>
+                  </View>
+                ) : (
+                  <AxTag testID="timer-final-tag" label={displayLabel} color={onBg1} />
+                )}
               </View>
 
               {/* ── CENTRE : temps final ── */}
               <View style={{ alignItems: 'center', gap: 4 }}>
-                <Text style={{ fontSize: 10, fontWeight: '800', color: onBg2, letterSpacing: 4, textTransform: 'uppercase' }}>TEMPS FINAL</Text>
-                <Text testID="timer-final-time" style={[styles.sessionTime, { color: withCamera ? '#FFFFFF' : onBg1 }]}>{mainTime}</Text>
-                {videoTitle ? <Text style={[styles.sessionTitle, { color: onBg1 }]} numberOfLines={2}>{videoTitle}</Text> : null}
+                <Text style={withCamera
+                  ? { fontSize: 10, fontWeight: '800', color: onBg2, letterSpacing: 4, textTransform: 'uppercase' }
+                  : [axTypography.overline, { color: onBg2 }]}>TEMPS FINAL</Text>
+                <Text testID="timer-final-time" adjustsFontSizeToFit numberOfLines={1}
+                  style={[styles.sessionTime, !withCamera && styles.finalDigits, { color: withCamera ? '#FFFFFF' : onBg1 }]}>{mainTime}</Text>
+                {videoTitle ? <Text style={[styles.sessionTitle, !withCamera && axTypography.label, { color: onBg1 }]} numberOfLines={2}>{videoTitle}</Text> : null}
                 {splitLog.length > 0 && (
                   <ScrollView style={{ maxHeight: 150, marginTop: 6, alignSelf: 'stretch' }} contentContainerStyle={{ alignItems: 'center' }}>
                     {splitLog.map((sp, i) => (
@@ -1709,8 +1688,9 @@ export default function TimerRunScreen() {
                 {/* Bouton recommencer centré sous le timer */}
                 <TouchableOpacity testID="timer-reset" onPress={handleReset} style={[styles.resetBtn, { marginTop: 8,
                   backgroundColor: isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
-                  borderColor: isLightBg ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)' }]} activeOpacity={0.8}>
-                  <RotateCcw color={iconColor} size={26} />
+                  borderColor: withCamera ? (isLightBg ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)') : onBg1 }]} activeOpacity={0.8}
+                  accessibilityRole="button" accessibilityLabel="Recommencer">
+                  <RotateCcw color={withCamera ? iconColor : onBg1} size={26} />
                 </TouchableOpacity>
               </View>
 
@@ -1758,12 +1738,16 @@ export default function TimerRunScreen() {
                     <Text style={styles.ytBtnTxt}>Partager sur YouTube</Text>
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity onPress={handleClose} style={[styles.closeResultBtn, { width: '100%', alignItems: 'center',
-                  borderRadius: 16, paddingVertical: 12,
-                  backgroundColor: withCamera ? 'rgba(255,255,255,0.15)' : (isLightBg ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.15)'),
-                  borderColor: withCamera ? 'rgba(255,255,255,0.25)' : (isLightBg ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)') }]} activeOpacity={0.8}>
-                  <Text style={[styles.closeResultText, { color: withCamera ? '#FFFFFF' : onBg1 }]}>Fermer</Text>
-                </TouchableOpacity>
+                {withCamera ? (
+                  <TouchableOpacity onPress={handleClose} style={[styles.closeResultBtn, { width: '100%', alignItems: 'center',
+                    borderRadius: 16, paddingVertical: 12,
+                    backgroundColor: withCamera ? 'rgba(255,255,255,0.15)' : (isLightBg ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.15)'),
+                    borderColor: withCamera ? 'rgba(255,255,255,0.25)' : (isLightBg ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.3)') }]} activeOpacity={0.8}>
+                    <Text style={[styles.closeResultText, { color: withCamera ? '#FFFFFF' : onBg1 }]}>Fermer</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <AxButton testID="timer-close" label="Fermer" variant="outline" ink={onBg1} fullWidth onPress={handleClose} />
+                )}
               </View>
 
             </View>
@@ -1785,16 +1769,9 @@ export default function TimerRunScreen() {
                     <TouchableOpacity onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]}>
                       <X color={iconColor} size={24} />
                     </TouchableOpacity>
-                    <View style={{ backgroundColor: pillBg, paddingHorizontal: 14,
-                      paddingVertical: 5, borderRadius: 14,
-                      shadowColor: pillBg, shadowOpacity: 0.45, shadowRadius: 8,
-                      shadowOffset: { width: 0, height: 0 } }}>
-                      <Text style={{ color: pillFg, fontSize: 12, fontWeight: '900', letterSpacing: 1.5 }}>
-                        {seqPausing ? 'PAUSE' : displayLabel}
-                      </Text>
-                    </View>
+                    <AxTag testID="timer-format-tag" label={seqPausing ? 'PAUSE' : displayLabel} color={onBg1} />
                     {hasRounds && !seqPausing && (
-                      <Text style={{ color: onBg1, fontSize: 14, fontWeight: '800', letterSpacing: 1.5 }}>
+                      <Text style={[styles.roundText, { color: onBg1 }]}>
                         ROUND {currentRound} / {curTotalRounds}
                       </Text>
                     )}
@@ -1808,8 +1785,7 @@ export default function TimerRunScreen() {
                       </View>
                     )}
                     <View style={{ flex: 1 }} />
-                    <Text testID="timer-total" style={{ color: onBg2, fontSize: 13, fontWeight: '600',
-                      letterSpacing: 0.5, fontVariant: ['tabular-nums'] as any }}>
+                    <Text testID="timer-total" style={[styles.totalText, { color: onBg2 }]}>
                       {hasSplit ? 'TOTAL ' : ''}
                       {formatTime(totalElapsed)}
                     </Text>
@@ -1829,14 +1805,13 @@ export default function TimerRunScreen() {
                   {/* MAIN TIMER */}
                   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     {phase === 'countdown' ? (
-                      <Text style={{ fontSize: Math.round(winH * 0.62), fontWeight: '900',
-                        color: accentColor, letterSpacing: -6 }}>
+                      <Text style={[styles.bigDigits, { fontSize: Math.round(winH * 0.62), color: accentColor }]}>
                         {countdownVal}
                       </Text>
                     ) : (
                       <Text testID="timer-main-time"
-                        style={{ fontSize: Math.round(winH * 0.58),
-                          fontWeight: '900', color: accentColor, letterSpacing: -6 }}>
+                        adjustsFontSizeToFit numberOfLines={1}
+                        style={[styles.bigDigits, { fontSize: Math.round(winH * 0.58), color: accentColor }]}>
                         {mainTime}
                       </Text>
                     )}
@@ -1864,8 +1839,7 @@ export default function TimerRunScreen() {
                             width: `${Math.round(totalProgress * 100)}%` as `${number}%`,
                             backgroundColor: accentColor, borderRadius: 4 }} />
                         </View>
-                        <Text style={{ color: accentColor, fontSize: 15, fontWeight: '900',
-                          letterSpacing: -0.5, minWidth: 44, textAlign: 'right' }}>
+                        <Text style={[styles.pctText, { color: accentColor, minWidth: 44, textAlign: 'right' }]}>
                           {Math.round(totalProgress * 100)}%
                         </Text>
                       </View>
@@ -1910,12 +1884,10 @@ export default function TimerRunScreen() {
 
                   {/* FIXED PLAY/STOP — bottom-right corner (never moves between play↔stop) */}
                   <TouchableOpacity
-                    style={[styles.newBigPlayBtn, mainBtnStop && styles.newBigPlayBtnStop,
+                    testID="timer-start-stop"
+                    style={[styles.roundBtn, mainBtnLook,
                       { position: 'absolute', right: 18, bottom: 20,
-                        width: 70, height: 70, borderRadius: 35,
-                        shadowColor: mainBtnStop ? '#EF4444' : accentColor,
-                        shadowOpacity: 0.5, shadowRadius: 16, shadowOffset: { width: 0, height: 0 },
-                        borderColor: mainBtnStop ? 'rgba(239,68,68,0.6)' : `${accentColor}99` }]}
+                        width: 70, height: 70, borderRadius: 35 }]}
                     onPress={
                       phase === 'ready' ? handleStart
                       : isYwyrSolo && phase === 'running' ? ywyrMainPress
@@ -1925,9 +1897,9 @@ export default function TimerRunScreen() {
                   >
                     {isYwyrSolo && phase === 'running'
                       ? (innerPhase === 'work'
-                          ? <RotateCcw color={ctrlInk} size={24} />
-                          : <Play color={ctrlInk} size={26} fill={ctrlInk} />)
-                      : isActive ? <Square color={ctrlInk} size={24} fill={ctrlInk} /> : <Play color={ctrlInk} size={26} fill={ctrlInk} />}
+                          ? <RotateCcw color={mainInk} size={24} />
+                          : <Play color={mainInk} size={26} fill={mainInk} />)
+                      : isActive ? <Square color={mainInk} size={24} fill={mainInk} /> : <Play color={mainInk} size={26} fill={mainInk} />}
                   </TouchableOpacity>
 
                 </View>
@@ -1975,33 +1947,24 @@ export default function TimerRunScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center',
                   justifyContent: 'space-between', paddingHorizontal: 16,
                   paddingTop: 52, paddingBottom: 8 }}>
-                  <TouchableOpacity onPress={handleClose} style={styles.iconBtn}>
+                  <TouchableOpacity onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel="Fermer">
                     <X color={iconColor} size={24} />
                   </TouchableOpacity>
                   <View style={{ alignItems: 'center', gap: 4 }}>
-                    <View style={{ backgroundColor: pillBg, paddingHorizontal: 20,
-                      paddingVertical: 6, borderRadius: 20,
-                      shadowColor: pillBg, shadowOpacity: 0.45, shadowRadius: 10,
-                      shadowOffset: { width: 0, height: 0 } }}>
-                      <Text style={{ color: pillFg, fontSize: 13, fontWeight: '900', letterSpacing: 1.5 }}>
-                        {seqPausing ? 'PAUSE' : displayLabel}
-                      </Text>
-                    </View>
-                    <Text testID="timer-total" style={{ color: onBg2, fontSize: 13, fontWeight: '600',
-                      letterSpacing: 0.5, fontVariant: ['tabular-nums'] as any }}>
+                    <AxTag testID="timer-format-tag" label={seqPausing ? 'PAUSE' : displayLabel} color={onBg1} />
+                    <Text testID="timer-total" style={[styles.totalText, { color: onBg2 }]}>
                       {hasSplit ? 'TOTAL ' : ''}
                       {formatTime(totalElapsed)}
                     </Text>
                   </View>
-                  <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.iconBtn} activeOpacity={0.7}>
+                  <TouchableOpacity onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Design du minuteur">
                     <Settings color={iconColor} size={20} />
                   </TouchableOpacity>
                 </View>
 
                 {/* ROUND LABEL */}
                 {hasRounds && !seqPausing && (
-                  <Text style={{ textAlign: 'center', color: onBg1, fontSize: 16,
-                    fontWeight: '800', letterSpacing: 2, marginBottom: 2 }}>
+                  <Text style={[styles.roundText, { textAlign: 'center', color: onBg1, marginBottom: 2 }]}>
                     ROUND {currentRound} / {curTotalRounds}
                   </Text>
                 )}
@@ -2037,14 +2000,12 @@ export default function TimerRunScreen() {
                     </Text>
                   )}
                   {phase === 'countdown' ? (
-                    <Text style={{ fontSize: Math.round(SW * 0.42), fontWeight: '900',
-                      color: accentColor, letterSpacing: -4, fontVariant: ['tabular-nums'] }}>
+                    <Text style={[styles.bigDigits, { fontSize: Math.round(SW * 0.42), color: accentColor }]}>
                       {countdownVal}
                     </Text>
                   ) : (
                     <Text testID="timer-main-time" adjustsFontSizeToFit numberOfLines={1}
-                      style={{ fontSize: displayOpts.fontSize, fontWeight: '900',
-                        color: accentColor, letterSpacing: -4, fontVariant: ['tabular-nums'] }}>
+                      style={[styles.bigDigits, { fontSize: displayOpts.fontSize, color: accentColor }]}>
                       {mainTime}
                     </Text>
                   )}
@@ -2084,8 +2045,7 @@ export default function TimerRunScreen() {
                           width: `${Math.round(totalProgress * 100)}%` as `${number}%`,
                           backgroundColor: accentColor, borderRadius: 5 }} />
                       </View>
-                      <Text style={{ color: accentColor, fontSize: 14, fontWeight: '800',
-                        textAlign: 'center', letterSpacing: 1 }}>
+                      <Text style={[styles.pctText, { color: accentColor, textAlign: 'center' }]}>
                         {Math.round(totalProgress * 100)}%
                       </Text>
                     </View>
@@ -2097,12 +2057,11 @@ export default function TimerRunScreen() {
 
                 {/* SUIVANT CARD */}
                 {!!nextExercise && (
-                  <View style={{ marginHorizontal: 20, marginTop: 8, padding: 14, borderRadius: 14,
-                    backgroundColor: 'rgba(245,158,11,0.1)', borderWidth: 1,
-                    borderColor: 'rgba(245,158,11,0.3)' }}>
-                    <Text style={{ color: ensureContrast('#F59E0B', currentBg), fontSize: 10, fontWeight: '900',
-                      letterSpacing: 2, marginBottom: 3 }}>SUIVANT</Text>
-                    <Text style={{ color: onBg1, fontSize: 15, fontWeight: '700' }}>{nextExercise}</Text>
+                  <View style={styles.nextCardWrap}>
+                    <AxCard testID="timer-next-card" style={styles.nextCard}>
+                      <Text style={[axTypography.overline, { color: theme.ax.accentText }]}>SUIVANT</Text>
+                      <Text style={[axTypography.label, { color: theme.ax.text }]}>{nextExercise}</Text>
+                    </AxCard>
                   </View>
                 )}
 
@@ -2110,11 +2069,7 @@ export default function TimerRunScreen() {
                 <View style={{ alignItems: 'center', paddingBottom: 40, paddingTop: 14, gap: 8 }}>
                   <TouchableOpacity
                     testID="timer-start-stop"
-                    style={[styles.newBigPlayBtn, mainBtnStop && styles.newBigPlayBtnStop,
-                      { width: 80, height: 80, borderRadius: 40,
-                        shadowColor: mainBtnStop ? '#EF4444' : accentColor,
-                        shadowOpacity: 0.5, shadowRadius: 18, shadowOffset: { width: 0, height: 0 },
-                        borderColor: mainBtnStop ? 'rgba(239,68,68,0.6)' : `${accentColor}99` }]}
+                    style={[styles.roundBtn, mainBtnLook, { width: 80, height: 80, borderRadius: 40 }]}
                     onPress={
                       phase === 'ready' ? handleStart
                       : isYwyrSolo && phase === 'running' ? ywyrMainPress
@@ -2124,9 +2079,9 @@ export default function TimerRunScreen() {
                   >
                     {isYwyrSolo && phase === 'running'
                       ? (innerPhase === 'work'
-                          ? <RotateCcw color={ctrlInk} size={28} />
-                          : <Play color={ctrlInk} size={30} fill={ctrlInk} />)
-                      : isActive ? <Square color={ctrlInk} size={28} fill={ctrlInk} /> : <Play color={ctrlInk} size={30} fill={ctrlInk} />}
+                          ? <RotateCcw color={mainInk} size={28} />
+                          : <Play color={mainInk} size={30} fill={mainInk} />)
+                      : isActive ? <Square color={mainInk} size={28} fill={mainInk} /> : <Play color={mainInk} size={30} fill={mainInk} />}
                   </TouchableOpacity>
                   {/* fixed-height hint slot so the button stays put between play↔stop */}
                   <View style={{ height: 18, justifyContent: 'center' }}>
@@ -2781,6 +2736,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
   },
+  roundBtn: { justifyContent: 'center', alignItems: 'center' },
+  bigDigits: { fontFamily: axFonts.oswaldMedium, letterSpacing: -2, fontVariant: ['tabular-nums'] },
+  finalDigits: { fontFamily: axFonts.oswaldMedium, fontWeight: 'normal', letterSpacing: -2 },
+  roundText: { fontFamily: axFonts.oswaldMedium, fontSize: 16, letterSpacing: 1.5 },
+  totalText: { fontFamily: axFonts.oswaldMedium, fontSize: 14, letterSpacing: 0.5, fontVariant: ['tabular-nums'] },
+  pctText: { fontFamily: axFonts.oswaldMedium, fontSize: 15 },
+  nextCardWrap: { marginHorizontal: axSpacing.xl, marginTop: axSpacing.sm },
+  nextCard: { gap: axSpacing.xs },
   newBigPlayBtn: {
     width: 88,
     height: 88,

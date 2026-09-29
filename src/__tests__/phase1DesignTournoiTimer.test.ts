@@ -29,11 +29,10 @@ describe('minuteur — encre des commandes', () => {
     expect(contrast('#FFFFFF', darkTheme.accent)).toBeLessThan(TEXT_MIN);
     expect(contrast(lightTheme.onAccent, lightTheme.accent)).toBeGreaterThanOrEqual(TEXT_MIN);
     expect(contrast(darkTheme.onAccent, darkTheme.accent)).toBeGreaterThanOrEqual(TEXT_MIN);
-    expect(TIMER).toMatch(/chipTextActive: \{ color: theme\.onAccent \}/);
-    expect(TIMER).toMatch(/cdChipTextActive: \{ color: theme\.onAccent \}/);
-    expect(TIMER).toMatch(/seqTypeTextActive: \{ color: theme\.onAccent \}/);
-    expect(TIMER).toMatch(/seqBlockNumText: \{[^}]*color: theme\.onAccent/);
-    expect(TIMER).toMatch(/toggleThumbOn: \{ backgroundColor: theme\.onAccent/);
+    // R5a : les choix passent par AxChip / AxSwitch, dont l'encre sur accent est onAccent.
+    expect(TIMER).toMatch(/<AxChip /);
+    expect(TIMER).toMatch(/<AxSwitch /);
+    expect(TIMER).toMatch(/seqBlockNumText: \{[^}]*color: c\.onAccent/);
   });
 
   it('DÉMARRER est posé sur un CTA translucide : son encre est theme.text', () => {
@@ -42,7 +41,8 @@ describe('minuteur — encre des commandes', () => {
     expect(contrast('#FFFFFF', cta, GRAD_LIGHT)).toBeLessThan(2);
     expect(contrast(lightTheme.text, cta, GRAD_LIGHT)).toBeGreaterThanOrEqual(TEXT_MIN);
     expect(contrast(darkTheme.text, `${darkTheme.accent}28`, GRAD_DARK)).toBeGreaterThanOrEqual(TEXT_MIN);
-    expect(TIMER).toMatch(/btnPrimaryText: \{ color: theme\.text/);
+    // R5a : DÉMARRER est un AxButton accent plein (encre onAccent, prouvée AA dans axComponents).
+    expect(TIMER).toMatch(/<AxButton label="DÉMARRER" variant="accent"/);
   });
 
   it('l’accent ne sert plus d’encre : accentText sur carte et sur dégradé', () => {

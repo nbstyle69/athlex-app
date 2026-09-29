@@ -8,13 +8,15 @@ export type AxTagTone = 'accent' | 'muted';
 interface Props {
   label: string;
   tone?: AxTagTone;
+  /** Encre imposée quand l'étiquette est posée hors des surfaces de l'app (fond du chrono). */
+  color?: string;
   testID?: string;
 }
 
 /** Étiquette non interactive, en capitales. */
-export function AxTag({ label, tone = 'accent', testID }: Props) {
+export function AxTag({ label, tone = 'accent', color: ink, testID }: Props) {
   const { theme } = useTheme();
-  const color = tone === 'accent' ? theme.ax.accentText : theme.ax.textMuted;
+  const color = ink ?? (tone === 'accent' ? theme.ax.accentText : theme.ax.textMuted);
   return (
     <View testID={testID} style={[styles.base, { borderColor: color }]}>
       <Text style={[axTypography.labelSmall, styles.text, { color }]}>{label}</Text>

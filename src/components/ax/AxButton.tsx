@@ -16,6 +16,8 @@ interface Props {
   disabled?: boolean;
   loading?: boolean;
   fullWidth?: boolean;
+  /** Encre du contour posé hors des surfaces de l'app (fond du chrono) : texte, icône et filet. */
+  ink?: string;
   testID?: string;
 }
 
@@ -47,10 +49,13 @@ export function axButtonStyle(variant: AxButtonVariant, c: AxColors): VariantSty
 const DASH_WIDTH = 1.5;
 
 export function AxButton({
-  label, onPress, variant = 'accent', icon: Icon, disabled = false, loading = false, fullWidth = false, testID,
+  label, onPress, variant = 'accent', icon: Icon, disabled = false, loading = false, fullWidth = false, ink, testID,
 }: Props) {
   const { theme } = useTheme();
-  const v = axButtonStyle(variant, theme.ax);
+  const base = axButtonStyle(variant, theme.ax);
+  const v: VariantStyle = ink && variant === 'outline'
+    ? { glass: { color: ink, opacity: 0.08 }, border: { width: 1, color: ink }, foreground: ink }
+    : base;
   const [size, setSize] = useState({ width: 0, height: 0 });
   const inactive = disabled || loading;
 
