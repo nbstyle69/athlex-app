@@ -14,7 +14,6 @@ const SCREENS = [
   'src/screens/whiteboard/PersonalWODFormScreen.tsx',
   'src/screens/whiteboard/ArticlesScreen.tsx',
   'src/screens/competition/CompetitionScreen.tsx',
-  'src/screens/explorer/ExplorerScreen.tsx',
   'src/screens/profile/ProfileScreen.tsx',
   'src/screens/profile/PublicProfileScreen.tsx',
   'src/screens/reservation/MyReservationsScreen.tsx',

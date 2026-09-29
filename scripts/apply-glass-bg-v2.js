@@ -27,7 +27,6 @@ const SCREENS = [
   'src/screens/tournament/DailyTournamentsScreen.tsx',
   'src/screens/tournament/DailyTournamentDetailScreen.tsx',
   // Explorer
-  'src/screens/explorer/ExplorerScreen.tsx',
   'src/screens/explorer/ProgrammationScreen.tsx',
   'src/screens/explorer/BoxDirectoryScreen.tsx',
   'src/screens/explorer/BoxProgramsScreen.tsx',

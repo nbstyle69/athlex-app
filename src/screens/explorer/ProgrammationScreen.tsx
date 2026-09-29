@@ -4,10 +4,10 @@ import { ChevronLeft, Building2 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
-import { ExplorerStackParamList } from '../../navigation';
+import { HomeStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
 
-type Nav = NativeStackNavigationProp<ExplorerStackParamList>;
+type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
 export default function ProgrammationScreen() {
   const { theme } = useTheme();

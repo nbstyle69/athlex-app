@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import {
   TrendingUp, Users, Trophy, Video, Sparkles, Calculator,
-  Swords, Compass, Building2, CalendarClock,
+  Swords, Dumbbell, Building2, CalendarClock,
 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTranslation } from 'react-i18next';
@@ -38,7 +38,7 @@ const TAB_H = 65;
 // Rendu en cartes centrées, textes i18n (voir clé "tour" dans les locales).
 // L'ordre des icônes suit l'ordre du tableau tour.steps.
 const HOME_ICONS: IconCmp[] = [TrendingUp, Users, Trophy, Video, Sparkles, Calculator];
-const NAV_ICONS: IconCmp[] = [Swords, Compass, Building2, CalendarClock];
+const NAV_ICONS: IconCmp[] = [Swords, Dumbbell, Building2, CalendarClock];
 
 // ── Box Owner tabs: Dashboard | WODs | Horaires | Membres | Messages | Profil (6 tabs)
 const BO_W = W / 6;
@@ -83,7 +83,7 @@ export default function InteractiveTour({ steps, onComplete }: Props) {
       description: s.description,
       icon: i < HOME_ICONS.length
         ? HOME_ICONS[i]
-        : (NAV_ICONS[i - HOME_ICONS.length] ?? Compass),
+        : (NAV_ICONS[i - HOME_ICONS.length] ?? Dumbbell),
       section: i < HOME_ICONS.length ? sectionHome : sectionNav,
     }));
   }, [spotlight, t]);

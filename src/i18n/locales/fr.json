@@ -818,7 +818,7 @@
     "reservation": "Réservation",
     "wod": "WOD",
     "community": "Communauté",
-    "explorer": "Explorer",
+    "training": "Entraînement",
     "boTracking": "Suivi",
     "myBox": "Ma Box"
   },
@@ -867,7 +867,49 @@
       "active": "En cours",
       "closed": "Terminé"
     },
-    "tournamentParticipants": "{{n}}/{{max}} participants"
+    "tournamentParticipants": "{{n}}/{{max}} participants",
+    "explorer": {
+      "title": "Explorer",
+      "findBox": "Trouver une box",
+      "programs": "Programmes",
+      "partners": "Partenaires"
+    }
+  },
+  "training": {
+    "title": "Entraînement",
+    "subtitle": "Génère, chronomètre et retrouve tes séances",
+    "generate": {
+      "title": "Générer ma séance",
+      "express": "WOD express",
+      "afterClass": "Après ma classe",
+      "button": "Générer mon WOD",
+      "moreOptions": "Plus d'options : format, intention, matériel",
+      "noValidWodTitle": "Aucun WOD valide",
+      "noValidWodBody": "Essaie une autre durée, un autre format ou moins d'exclusions.",
+      "noValidSessionTitle": "Aucune séance valide",
+      "noValidSessionBody": "Essaie une autre durée, une autre cible ou moins d'exclusions."
+    },
+    "disciplines": {
+      "functional": "Functional",
+      "hybrid": "Hybrid",
+      "musculation": "Musculation"
+    },
+    "tools": {
+      "title": "Outils",
+      "timer": "Minuteur",
+      "oneRm": "1RM",
+      "history": "Historique",
+      "favorites": "Favoris"
+    },
+    "last": {
+      "title": "Dernière séance",
+      "relaunch": "Relancer",
+      "score": "Score : {{score}}",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "daysAgo_one": "Il y a {{count}} jour",
+      "daysAgo_other": "Il y a {{count}} jours"
+    }
   },
   "profile": {
     "appearance": "Apparence",
@@ -1779,8 +1821,8 @@
         "description": "Ici tu retrouveras les différentes compétitions disponibles."
       },
       {
-        "label": "Explorer",
-        "description": "Des informations concernant les boxs et les partenaires."
+        "label": "Entraînement",
+        "description": "Génère tes WODs, lance le minuteur et retrouve tes séances."
       },
       {
         "label": "Ma box",

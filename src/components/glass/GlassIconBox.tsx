@@ -30,7 +30,7 @@ export default function GlassIconBox({ size = 56, variant = 'default', children,
       : (isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.55)');
   const reflectionColor = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.55)';
 
-  // Android : simple themed icon tile (same look as ExplorerScreen's sectionIcon).
+  // Android : simple themed icon tile (flat themed tile).
   if (Platform.OS === 'android') {
     const bg = variant === 'emerald' ? `${theme.accent}15` : theme.surface;
     const brd = variant === 'emerald' ? `${theme.accent}30` : theme.border;
