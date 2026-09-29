@@ -36,6 +36,7 @@ import GlassIconBox from '../../components/glass/GlassIconBox';
 import InteractiveTour from '../../components/InteractiveTour';
 import { homeTools } from './homeTools';
 import HomeExplorerBlock from './HomeExplorerBlock';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'HomeList'>;
 
@@ -48,6 +49,7 @@ interface RecentScore {
 }
 
 export default function HomeScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { t } = useTranslation();
   const { user, currentBox, myBoxes, switchBox } = useAuth();
   const [boxPickerVisible, setBoxPickerVisible] = useState(false);
@@ -403,7 +405,7 @@ export default function HomeScreen() {
       <ScrollView
         style={S.container}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 140, paddingHorizontal: 16, paddingTop: insets.top + 16 }}
+        contentContainerStyle={{ paddingBottom: tabSpace, paddingHorizontal: 16, paddingTop: insets.top + 16 }}
         refreshControl={
           <RefreshControl
             refreshing={homeDataLoading}
@@ -677,6 +679,7 @@ export default function HomeScreen() {
       {badgePopup && (
         <Animated.View
           style={[S.badgePopupWrap, {
+            bottom: tabSpace,
             transform: [{ translateY: popupAnim }],
             opacity: popupOpacity,
           }]}

@@ -18,10 +18,12 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import {
   EloEntry, MatchEloRow, matchEloRowToEntry, sortEloEntries, eloCurvePoints,
 } from '../../utils/eloHistoryEntries';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
 export default function EloHistoryScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const nav = useNavigation<Nav>();
   const { user } = useAuth();
   const { t } = useTranslation();
@@ -199,7 +201,7 @@ export default function EloHistoryScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={S.scroll}
+        contentContainerStyle={[S.scroll, { paddingBottom: tabSpace }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
       >
         {/* Current ELO card */}

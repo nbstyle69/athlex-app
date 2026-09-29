@@ -15,6 +15,7 @@ import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<CompetitionStackParamList, 'CompetitionList'>;
 
@@ -56,6 +57,7 @@ interface Tournament {
 }
 
 export default function CompetitionScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const route = useRoute<RouteProp<CompetitionStackParamList, 'CompetitionList'>>();
   const { theme } = useTheme();
@@ -235,7 +237,7 @@ export default function CompetitionScreen() {
         ))}
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={S.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {activeTab === 0 && (
           <>
             <Text style={S.sectionTitle}>{t('competition.availableTournaments')}</Text>

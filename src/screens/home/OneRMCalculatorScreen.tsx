@@ -16,6 +16,7 @@ import GlassCard from '../../components/glass/GlassCard';
 import { prKey, readPr } from '../profile/prStorage';
 import { fetchMyPersonalRecords } from '../../services/myProfile';
 import { GYM_PR_MOVEMENTS, GYM_ZONES, gymRepsAt } from './gymZones';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 const STORAGE_KEY = '@athlex:1rm_calc';
 
@@ -58,6 +59,7 @@ function round(val: number, step: number): number {
 }
 
 export default function OneRMCalculatorScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation();
   const { theme } = useTheme();
   const { user } = useAuth();
@@ -153,7 +155,7 @@ export default function OneRMCalculatorScreen() {
         <View style={S.backBtn} />
       </View>
 
-      <ScrollView style={S.scroll} contentContainerStyle={S.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView style={S.scroll} contentContainerStyle={[S.scrollContent, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
 
         {/* B8 : Barres ou Gymnastique */}
         <View style={S.sectionRow}>

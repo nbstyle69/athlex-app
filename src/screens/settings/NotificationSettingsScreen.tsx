@@ -20,6 +20,7 @@ import {
   savePushToken,
 } from '../../services/notifications';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
@@ -78,6 +79,7 @@ const GROUPS: { title: string; toggles: Toggle[] }[] = [
 ];
 
 export default function NotificationSettingsScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation();
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -166,7 +168,7 @@ export default function NotificationSettingsScreen() {
         <View style={{ width: 22 }} />
       </View>
 
-      <ScrollView contentContainerStyle={S.content}>
+      <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {/* Interrupteur maître */}
         <View style={S.section}>
           <View style={S.row}>

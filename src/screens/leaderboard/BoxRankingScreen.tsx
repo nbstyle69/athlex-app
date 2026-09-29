@@ -15,6 +15,7 @@ import UserAvatar from '../../components/UserAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { useFocusQuery } from '../../hooks/useFocusQuery';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<WhiteboardStackParamList, 'BoxRanking'>;
 
@@ -40,6 +41,7 @@ function RankBadge({ rank }: { rank: number }) {
 }
 
 export default function BoxRankingScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const { theme } = useTheme();
   const { user, currentBox } = useAuth();
@@ -115,7 +117,7 @@ export default function BoxRankingScreen() {
           style={{ flex: 1 }}
           data={rows}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={S.list}
+          contentContainerStyle={[S.list, { paddingBottom: tabSpace }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={{ alignItems: 'center', paddingTop: 40 }}>

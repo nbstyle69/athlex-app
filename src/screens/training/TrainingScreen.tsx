@@ -22,6 +22,7 @@ import { saveWodDraft } from '../../services/wodDraft';
 import { generateForUser, loadAdaptToPr, loadExcludes, loadMuscuEquipment } from '../../services/wodGenerator';
 import { quickScreenParams, Sport } from './quickGenerate';
 import { daysAgo, LastSession, loadLastSession } from './lastSession';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<TrainingStackParamList, 'TrainingMain'>;
 
@@ -32,6 +33,7 @@ const ENTRIES: { key: Entry; labelKey: string }[] = [
 const SPORTS: Sport[] = ['functional', 'hybrid', 'musculation'];
 
 export default function TrainingScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
@@ -111,7 +113,7 @@ export default function TrainingScreen() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: c.background }}
-      contentContainerStyle={{ paddingTop: insets.top + axSpacing.lg, paddingBottom: insets.bottom + 120 }}
+      contentContainerStyle={{ paddingTop: insets.top + axSpacing.lg, paddingBottom: tabSpace }}
       showsVerticalScrollIndicator={false}
       testID="training-screen"
     >

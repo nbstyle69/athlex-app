@@ -13,6 +13,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { CommunityStackParamList } from '../../navigation';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<CommunityStackParamList, 'CommunityMain'>;
 
@@ -32,6 +33,7 @@ const LEVEL_COLORS: Record<string, string> = {
 };
 
 export default function CommunityScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
@@ -123,7 +125,7 @@ export default function CommunityScreen() {
         <FlatList
           data={filtered}
           keyExtractor={m => m.id}
-          contentContainerStyle={S.list}
+          contentContainerStyle={[S.list, { paddingBottom: tabSpace }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />

@@ -36,6 +36,8 @@ import * as NavigationBar from 'expo-navigation-bar';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import GlassTabBarBackground from '../components/glass/GlassTabBarBackground';
+import { AxTabBar } from './AxTabBar';
+import { tabBarFootprint } from './tabBarLayout';
 
 // Edge-to-edge is enabled by default on Expo SDK 54 (Android 15 / targetSdk 35).
 // `NavigationBar.setBackgroundColorAsync` is unsupported in that mode: it is a
@@ -745,7 +747,6 @@ function MainTabs() {
   const { theme, mode } = useTheme();
   const unreadMessages = useUnreadMessages();
   const insets = useSafeAreaInsets();
-  const bottomInset = Platform.OS === 'android' ? insets.bottom : 0;
   useAndroidNavBar(theme.tabBar, mode);
   // B4 : chaque onglet garde sa pile (la barre ne navigue pas quand l'onglet est
   // déjà actif) ; un double appui sur l'onglet actif ramène à sa racine.
@@ -760,43 +761,20 @@ function MainTabs() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
+      tabBar={(props) => <AxTabBar {...props} />}
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: {
-          position: 'absolute',
-          backgroundColor: 'transparent',
-          borderTopColor: 'transparent',
-          borderTopWidth: 0,
-          height: Platform.OS === 'ios' ? 84 : 60 + bottomInset,
-          paddingBottom: Platform.OS === 'ios' ? 24 : 10 + bottomInset,
-          paddingTop: 8,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
-        tabBarBackground: () => <GlassTabBarBackground />,
-        tabBarActiveTintColor: theme.tabBarActive,
-        tabBarInactiveTintColor: theme.tabBarInactive,
-        tabBarLabelStyle: { fontSize: 10, fontWeight: '700', letterSpacing: 0.2 },
-        tabBarIcon: ({ color, size, focused }) => {
-          const iconSize = 22;
+        tabBarHideOnKeyboard: true,
+        tabBarStyle: { height: tabBarFootprint(insets.bottom) },
+        tabBarIcon: ({ color, size }) => {
           const icons: Record<string, React.ReactNode> = {
-            Competitions: <Trophy color={color} size={iconSize} />,
-            Home:         <Home color={color} size={iconSize} />,
-            Training:     <Dumbbell color={color} size={iconSize} />,
-            Whiteboard:   <Layout color={color} size={iconSize} />,
-            Reservation:  <CalendarClock color={color} size={iconSize} />,
+            Competitions: <Trophy color={color} size={size} />,
+            Home:         <Home color={color} size={size} />,
+            Training:     <Dumbbell color={color} size={size} />,
+            Whiteboard:   <Layout color={color} size={size} />,
+            Reservation:  <CalendarClock color={color} size={size} />,
           };
-          return (
-            <View style={{ alignItems: 'center', gap: 3 }}>
-              {icons[route.name] ?? null}
-              {focused && (
-                <View style={{
-                  width: 4, height: 4, borderRadius: 2,
-                  backgroundColor: theme.tabBarActive,
-                }} />
-              )}
-            </View>
-          );
+          return icons[route.name] ?? null;
         },
       })}
     >

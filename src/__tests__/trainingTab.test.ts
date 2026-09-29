@@ -30,7 +30,7 @@ describe('onglet Entraînement', () => {
   it('2e onglet de la barre athlète, icône Dumbbell, libellé tabs.training', () => {
     const tabs = stackScreens('MainTabs', 'Tab');
     expect(tabs).toEqual(['Competitions', 'Training', 'Home', 'Whiteboard', 'Reservation']);
-    expect(nav).toMatch(/Training:\s+<Dumbbell color=\{color\} size=\{iconSize\} \/>/);
+    expect(nav).toMatch(/Training:\s+<Dumbbell color=\{color\} size=\{size\} \/>/);
     expect(nav).toContain('<Tab.Screen name="Training"     component={TrainingNavigator}     options={{ tabBarLabel: t(\'tabs.training\') }}');
   });
 

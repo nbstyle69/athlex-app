@@ -16,6 +16,7 @@ import { getBadgesCatalog, BadgeDef } from '../../services/gamification';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import ReportMenu from '../../components/ReportMenu';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, 'PublicProfile'>;
@@ -47,6 +48,7 @@ interface BoxInfo {
 }
 
 export default function PublicProfileScreen({ navigation, route }: Props) {
+  const tabSpace = useTabBarScrollSpace();
   const { userId } = route.params;
   const { user: me } = useAuth();
   const { theme } = useTheme();
@@ -241,7 +243,7 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
         </View>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={S.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {/* Avatar + name */}
         <View style={S.heroCard}>
           <UserAvatar
