@@ -15,12 +15,16 @@ import GlassCard from '../../components/glass/GlassCard';
 import { spacing, typography } from '../../theme/designTokens';
 import { loadText, sideLabel } from '../../../packages/wod-engine/src';
 import type { MuscuExercise, MuscuWod } from '../../../packages/wod-engine/src';
-import { PerformedExercise, PerformedSet, plannedSets, setTonnage, totalTonnage } from '../../services/wodGenerator';
+import { PerformedExercise, PerformedSet, setTonnage, totalTonnage } from '../../services/wodGenerator';
+import { initialPerformed, performedToDrafts } from '../../services/muscuSession';
+import { normalizeDecimalInput, normalizeRepsInput, parseDecimal, strengthProgress } from '../../services/strengthSets';
+import { StrengthSaveState, StrengthSessionStatus } from '../../components/wod/StrengthSetGrid';
+import { AxButton } from '../../components/ax';
+import { axSpacing } from '../../theme/axTokens';
+import i18n from '../../i18n';
 import { MUSCU_BLUE_DARK } from './muscuOptions';
 
-export function initialPerformed(wod: MuscuWod): PerformedExercise[] {
-  return wod.blocks[0].exercises.map((e) => ({ exercise_id: e.id, name: e.name, sets: plannedSets(e) }));
-}
+export { initialPerformed };
 
 /** « 4 × 8 / jambe », « 3 × 30 s » */
 export function schemeText(e: MuscuExercise): string {
@@ -40,8 +44,8 @@ export function restText(rest_s: number): string {
 
 const fmtKg = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, ''));
 const parseNum = (s: string) => {
-  const n = parseFloat(s.replace(',', '.'));
-  return Number.isFinite(n) && n >= 0 ? n : 0;
+  const n = parseDecimal(s);
+  return n != null && n >= 0 ? n : 0;
 };
 
 export interface Cursor {
@@ -62,9 +66,16 @@ interface Props {
   accent: string;
   performed: PerformedExercise[];
   onPerformedChange: (next: PerformedExercise[]) => void;
+  /** Brouillon serveur : état de l'enregistrement (absent tant que la séance n'est pas suivie). */
+  draft?: {
+    saveState: StrengthSaveState;
+    savedAt: string | null;
+    validated: boolean;
+    onSaveLater: () => void;
+  };
 }
 
-export default function MuscuSessionCard({ wod, accent, performed, onPerformedChange }: Props) {
+export default function MuscuSessionCard({ wod, accent, performed, onPerformedChange, draft }: Props) {
   const { theme } = useTheme();
   const S = useMemo(() => styles(theme), [theme]);
   const exercises = wod.blocks[0].exercises;
@@ -73,6 +84,15 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
   const [cursor, setCursor] = useState<Cursor | null>(exercises.length ? { exercise: 0, set: 0 } : null);
   const [restLeft, setRestLeft] = useState<number | null>(null);
   const restEndRef = useRef<number>(0);
+  // Texte des charges en cours de frappe (« 102, » avant « 102,5 ») : la valeur numérique seule le perdrait.
+  const [kgText, setKgText] = useState<Record<string, string>>({});
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!draft) return undefined;
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, [!!draft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (restLeft == null) return undefined;
@@ -159,7 +179,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
                     <TextInput
                       style={S.input}
                       value={s.reps ? String(s.reps) : ''}
-                      onChangeText={(v) => updateSet(i, si, { reps: Math.floor(parseNum(v)) })}
+                      onChangeText={(v) => updateSet(i, si, { reps: Math.floor(parseNum(normalizeRepsInput(v))) })}
                       keyboardType="number-pad"
                       placeholder={e.reps_unit === 'reps' ? 'reps' : e.reps_unit}
                       placeholderTextColor={theme.textMuted}
@@ -168,8 +188,17 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
                     <Text style={S.unit}>×</Text>
                     <TextInput
                       style={S.input}
-                      value={s.load_kg ? fmtKg(s.load_kg) : ''}
-                      onChangeText={(v) => updateSet(i, si, { load_kg: parseNum(v) })}
+                      value={kgText[`${i}-${si}`] ?? (s.load_kg ? fmtKg(s.load_kg) : '')}
+                      onChangeText={(v) => {
+                        const text = normalizeDecimalInput(v);
+                        setKgText((prev) => ({ ...prev, [`${i}-${si}`]: text }));
+                        updateSet(i, si, { load_kg: parseNum(text) });
+                      }}
+                      onBlur={() => setKgText((prev) => {
+                        const next = { ...prev };
+                        delete next[`${i}-${si}`];
+                        return next;
+                      })}
                       keyboardType="decimal-pad"
                       placeholder="kg"
                       placeholderTextColor={theme.textMuted}
@@ -206,10 +235,32 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
           <Text style={[S.restText, { color: theme.success }]}>Séance terminée</Text>
         )}
       </View>
+      {draft && !draft.validated && (
+        <View style={axStyles.draft} testID="muscu-draft">
+          <StrengthSessionStatus
+            {...strengthProgress(performedToDrafts(wod, performed))}
+            savedAt={draft.savedAt}
+            saveState={draft.saveState}
+            now={now}
+          />
+          <AxButton
+            variant="outline"
+            label={i18n.t('strengthSession.saveLater')}
+            onPress={draft.onSaveLater}
+            loading={draft.saveState === 'saving'}
+            fullWidth
+            testID="muscu-save-later"
+          />
+        </View>
+      )}
       </View>
     </GlassCard>
   );
 }
+
+const axStyles = StyleSheet.create({
+  draft: { marginTop: axSpacing.lg, gap: axSpacing.md },
+});
 
 /** Padding intérieur des cartes et espace entre deux lignes : mêmes valeurs que WodResultScreen (vue metcon). */
 const CARD_PAD = 20;

@@ -503,6 +503,22 @@ export async function fetchStrengthSession(k: StrengthSourceKey): Promise<Server
   };
 }
 
+/** Dernière séance en brouillon de l'athlète pour ce type de source (reprise sur un autre appareil). */
+export async function latestStrengthDraft(
+  userId: string,
+  sourceType: StrengthSourceType,
+): Promise<{ sourceId: string; updatedAt: string } | null> {
+  const { data, error } = await db
+    .from('strength_sessions')
+    .select('source_id, updated_at')
+    .eq('user_id', userId).eq('source_type', sourceType).eq('status', 'draft')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? { sourceId: data.source_id, updatedAt: data.updated_at } : null;
+}
+
 export interface LoadedStrengthGrid {
   drafts: StrengthSetDraft[];
   origin: StrengthGridOrigin;

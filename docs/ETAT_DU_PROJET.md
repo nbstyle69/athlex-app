@@ -219,6 +219,16 @@ Supabase/Resend.
 - Saisie décimale iOS : virgule et point acceptés (102,5 → 102.5).
 - Séances générées (`MuscuSessionCard`) : PR 3, après le merge de celle-ci (elle réutilise son service).
 
+**Saisie des charges en musculation, PR 3 « Séances générées » (app seule, aucune migration).**
+- Carte Séance du générateur (`MuscuSessionCard`, `WodResultScreen`) : brouillon côté serveur
+  (`strength_sessions` / `strength_set_logs`, source `generated`, clé = WOD enregistré dans
+  `generated_wods`) 0,8 s après la dernière frappe, bouton « Enregistrer et continuer plus tard »
+  (`AxButton` contour) et « En cours · n / N séries » ; copie locale hors connexion, jamais au-dessus
+  d'une version serveur plus récente ; reprise sur un autre appareil depuis le générateur.
+- Validation par `validate_strength_session` ; le score reste le tonnage (`generated_wod_scores`) ;
+  compteur, rappel et crédit `movement_logs` seulement si `premiere_validation`. « Modifier mon
+  score » repasse par la RPC et ne remplace que le tonnage.
+
 **Refonte visuelle mobile, lot R1 « Composants » (aucun écran modifié).**
 - Bibliothèque `src/components/ax/` : verre (`AxGlass`, flou 24 sur iOS, opacités 0.80 / 0.85 portées
   à 0.96 sur Android), boutons (accent, contour, clair, pointillé, arrêt), bouton carré, pastille,

@@ -40,6 +40,8 @@ import {
 import { equipmentLabel } from '../../utils/wod/equipmentLabels';
 import { searchExclusions } from '../../utils/wod/exclusionSearch';
 import { loadWodDraft, saveWodDraft, WodDraft } from '../../services/wodDraft';
+import { ResumableMuscuSession, findResumableMuscuSession } from '../../services/muscuSession';
+import { captureError } from '../../lib/sentry';
 import { loadEngineData } from '../../services/wodEngineData';
 import { fetchMyPersonalRecords } from '../../services/myProfile';
 import {
@@ -88,6 +90,17 @@ export default function WodGeneratorScreen() {
   useFocusEffect(useCallback(() => {
     let alive = true;
     if (user?.id) loadWodDraft(user.id).then((d) => { if (alive) setDraft(d); }); else setDraft(null);
+    return () => { alive = false; };
+  }, [user?.id]));
+  // Séance Musculation en brouillon sur le serveur (commencée sur un autre appareil).
+  const [serverMuscu, setServerMuscu] = useState<ResumableMuscuSession | null>(null);
+  useFocusEffect(useCallback(() => {
+    let alive = true;
+    if (user?.id) {
+      findResumableMuscuSession(user.id)
+        .then((r) => { if (alive) setServerMuscu(r); })
+        .catch((e) => captureError(e, { screen: 'WodGenerator', action: 'findResumableMuscu' }));
+    } else setServerMuscu(null);
     return () => { alive = false; };
   }, [user?.id]));
 
@@ -305,6 +318,20 @@ export default function WodGeneratorScreen() {
               label: 'Reprendre la séance',
               testID: 'wodgen-draft-resume',
               onPress: () => navigation.navigate('WodResult', { screen: draft.screen, result: draft.result, draft: { performed: draft.performed, submittedScore: draft.submittedScore } }),
+            }}
+          />
+        )}
+        {!draft && serverMuscu && (
+          <SessionContextCard
+            testID="wodgen-server-draft"
+            label="Dernière séance générée"
+            title={serverMuscu.result.wod.title}
+            action={{
+              label: 'Reprendre la séance',
+              testID: 'wodgen-server-draft-resume',
+              onPress: () => navigation.navigate('WodResult', {
+                screen: serverMuscu.screen, result: serverMuscu.result, savedId: serverMuscu.savedId,
+              }),
             }}
           />
         )}
