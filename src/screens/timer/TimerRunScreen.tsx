@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, ScrollView, Modal,
-  TextInput, Linking, Clipboard, Alert, useWindowDimensions, Image, KeyboardAvoidingView, Platform, Vibration, AppState,
+  TextInput, Linking, Clipboard, Alert, useWindowDimensions, Image, KeyboardAvoidingView, Platform, Vibration, AppState, Animated,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Circle } from 'react-native-svg';
 import QRCode from 'react-native-qrcode-svg';
@@ -22,7 +23,7 @@ import { HomeStackParamList, SeqBlock } from '../../navigation';
 import { blockDurationSec } from '../../utils/wodToTimer';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { ensureContrast, inkOn, inkOnSecondary, TIMER_THEMES } from '../../theme/timerInk';
+import { appTimerThemeId, ensureContrast, inkOn, inkOnSecondary, TIMER_THEMES } from '../../theme/timerInk';
 import { AxButton, AxCard, AxChip, AxIconButton, AxSwitch, AxTag, withAlpha } from '../../components/ax';
 import { axFonts, axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { incrementCounter } from '../../services/gamification';
@@ -108,13 +109,84 @@ interface TimerDisplayOpts {
   clockStyle: ClockStyle; fontSize: number; digitColor: string;
   bgCountdown: string; bgRunning: string; bgDone: string; bipsEnabled: boolean;
   allowRotation: boolean; themeId: string; beepVolume: number;
+  /** Le thème du chrono suit le thème de l'app (AthleX en sombre, AthleX 2 en clair). */
+  followAppTheme: boolean;
 }
 const DISPLAY_OPTS_KEY = 'bwod_timer_display_opts_v2';
 const DEFAULT_DISPLAY: TimerDisplayOpts = {
-  clockStyle: 'bar', fontSize: Math.round(SW * 0.22), digitColor: '#39FF14',
-  bgCountdown: '#000000', bgRunning: '#000000', bgDone: '#111111',
-  bipsEnabled: true, allowRotation: false, themeId: 'noir', beepVolume: 1,
+  clockStyle: 'bar', fontSize: Math.round(SW * 0.22), digitColor: '#9AE6D2',
+  bgCountdown: '#101214', bgRunning: '#101214', bgDone: '#1C2023',
+  bipsEnabled: true, allowRotation: false, themeId: 'athlex', beepVolume: 1,
+  followAppTheme: true,
 };
+
+/** Options réellement affichées : tant que le réglage est actif, le thème de l'app impose celui du chrono. */
+function resolveDisplayOpts(opts: TimerDisplayOpts, mode: 'light' | 'dark' | undefined): TimerDisplayOpts {
+  if (!opts.followAppTheme) return opts;
+  const th = TIMER_THEMES.find(x => x.id === appTimerThemeId(mode))!;
+  return { ...opts, themeId: th.id, digitColor: th.digitColor, bgCountdown: th.bgCountdown, bgRunning: th.bgRunning, bgDone: th.bgDone };
+}
+
+const CD_TENSE_FROM = 3;
+const VIBRATE_TICK_MS = 40;
+const VIBRATE_GO_MS = 200;
+
+/** Décompte : « PRÉPARE-TOI » au-dessus de 3, « PRÊT ? » à 3-2-1. */
+function CountdownView({ value, title, digitColor, accent, bg, size }: {
+  value: number; title?: string; digitColor: string; accent: string; bg: string; size: number;
+}) {
+  const { t } = useTranslation();
+  const tense = value <= CD_TENSE_FROM;
+  const accentInk = ensureContrast(accent, bg);
+  const digitInk = ensureContrast(digitColor, bg);
+  const ink = tense ? accentInk : digitInk;
+  return (
+    <View testID="timer-countdown" style={{ alignItems: 'center', gap: axSpacing.sm }}>
+      <Text testID="timer-countdown-label"
+        style={[axTypography.overline, { color: tense ? accentInk : inkOnSecondary(bg), letterSpacing: 4 }]}>
+        {tense ? t('timer.countdown.ready') : t('timer.countdown.prepare')}
+      </Text>
+      {!tense && !!title && (
+        <Text testID="timer-countdown-title" numberOfLines={1}
+          style={[axTypography.label, { color: inkOnSecondary(bg), maxWidth: size * 1.4 }]}>{title}</Text>
+      )}
+      <View testID={tense ? 'timer-countdown-halo' : 'timer-countdown-ring'}
+        style={{ width: size, height: size, borderRadius: size / 2, justifyContent: 'center', alignItems: 'center',
+          borderWidth: tense ? 0 : 2, borderColor: withAlpha(digitInk, 0.35),
+          backgroundColor: tense ? withAlpha(accentInk, 0.12) : 'transparent' }}>
+        <Text testID="timer-countdown-value" adjustsFontSizeToFit numberOfLines={1}
+          style={[styles.bigDigits, { fontSize: Math.round(size * (tense ? 0.7 : 0.55)), color: ink },
+            tense && { textShadowColor: withAlpha(accentInk, 0.5), textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 24 }]}>
+          {value}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+/** « GO ! » : éclair de 200 ms puis bande inclinée qui s'efface par-dessus le chrono lancé. */
+function GoFlash({ accent, bg, onDone }: { accent: string; bg: string; onDone: () => void }) {
+  const { t } = useTranslation();
+  const flash = useRef(new Animated.Value(0.6)).current;
+  const band = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    Animated.timing(flash, { toValue: 0, duration: 200, useNativeDriver: true }).start();
+    Animated.sequence([
+      Animated.delay(500),
+      Animated.timing(band, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start(() => onDone());
+  }, [flash, band, onDone]);
+  const bandBg = ensureContrast(accent, bg);
+  return (
+    <View testID="timer-go" pointerEvents="none" style={[StyleSheet.absoluteFill, { justifyContent: 'center' }]}>
+      <Animated.View testID="timer-go-flash" style={[StyleSheet.absoluteFill, { backgroundColor: bandBg, opacity: flash }]} />
+      <Animated.View testID="timer-go-band"
+        style={{ backgroundColor: bandBg, paddingVertical: axSpacing.lg, transform: [{ rotate: '-4deg' }], opacity: band }}>
+        <Text style={[styles.bigDigits, { fontSize: 64, textAlign: 'center', color: inkOn(bandBg) }]}>{t('timer.countdown.go')}</Text>
+      </Animated.View>
+    </View>
+  );
+}
 
 // Phase-specific accent colors for visual feedback
 const PHASE_COLORS = {
@@ -215,14 +287,19 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
   opts: TimerDisplayOpts; onUpdate: (u: Partial<TimerDisplayOpts>) => void; onClose: () => void;
 }) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const c = theme.ax;
   const cardW = Math.floor((SW - 48 - 30) / 4);
   const SLabel = ({ label }: { label: string }) => (
     <Text style={[axTypography.overline, { color: c.textMuted, marginBottom: axSpacing.md }]}>{label}</Text>
   );
-  function applyTheme(t: typeof TIMER_THEMES[number]) {
-    onUpdate({ themeId: t.id, digitColor: t.digitColor, bgCountdown: t.bgCountdown, bgRunning: t.bgRunning, bgDone: t.bgDone });
+  function applyTheme(th: typeof TIMER_THEMES[number]) {
+    onUpdate({ followAppTheme: false, themeId: th.id, digitColor: th.digitColor, bgCountdown: th.bgCountdown, bgRunning: th.bgRunning, bgDone: th.bgDone });
   }
+  // Choisir une couleur de chiffres fige le thème affiché : sans ça, le suivi du thème de l'app l'écraserait.
+  const freezeTheme: Partial<TimerDisplayOpts> = opts.followAppTheme
+    ? { followAppTheme: false, themeId: opts.themeId, bgCountdown: opts.bgCountdown, bgRunning: opts.bgRunning, bgDone: opts.bgDone }
+    : {};
   const activeTheme = TIMER_THEMES.find(t => t.id === opts.themeId) ?? TIMER_THEMES[0];
   const section = { marginBottom: axSpacing['2xl'] };
   const trackStyle = { flex: 1, height: 6, backgroundColor: c.border, borderRadius: 3, overflow: 'hidden' as const };
@@ -239,26 +316,36 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
               <Palette color={c.accentText} size={20} />
               <Text style={[axTypography.titleM, { color: c.text, flexShrink: 1 }]} numberOfLines={1}>Design du minuteur</Text>
             </View>
-            <AxTag label={`${activeTheme.emoji} ${activeTheme.label.toUpperCase()}`} />
+            <AxTag testID="timer-active-theme" label={t(activeTheme.labelKey).toUpperCase()} />
           </View>
 
           {/* ── THÈME */}
           <SLabel label="Thème" />
+          <AxCard style={{ marginBottom: axSpacing.md }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: axSpacing.md }}>
+              <View style={{ flex: 1 }}>
+                <Text style={[axTypography.label, { color: c.text }]}>{t('timer.followAppTheme')}</Text>
+                <Text style={[axTypography.caption, { color: c.textMuted }]}>{t('timer.followAppThemeHint')}</Text>
+              </View>
+              <AxSwitch value={opts.followAppTheme} onValueChange={(v) => onUpdate({ followAppTheme: v })}
+                accessibilityLabel={t('timer.followAppTheme')} testID="timer-follow-app-switch" />
+            </View>
+          </AxCard>
           <View style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, section]}>
-            {TIMER_THEMES.map(t => {
-              const isActive = opts.themeId === t.id;
+            {TIMER_THEMES.map(th => {
+              const isActive = opts.themeId === th.id;
               return (
-                <TouchableOpacity key={t.id} onPress={() => applyTheme(t)} activeOpacity={0.75}
-                  accessibilityRole="button" accessibilityLabel={t.label} accessibilityState={{ selected: isActive }}
+                <TouchableOpacity key={th.id} testID={`timer-theme-${th.id}`} onPress={() => applyTheme(th)} activeOpacity={0.75}
+                  accessibilityRole="button" accessibilityLabel={t(th.labelKey)} accessibilityState={{ selected: isActive }}
                   style={{ width: cardW, borderRadius: axRadius.card, overflow: 'hidden', borderWidth: 2,
                     borderColor: isActive ? c.accentText : c.border }}>
-                  <View style={{ backgroundColor: t.bgRunning, paddingVertical: 12, alignItems: 'center', gap: 6 }}>
+                  <View style={{ backgroundColor: th.bgRunning, paddingVertical: 12, alignItems: 'center', gap: 6 }}>
                     <View style={{ width: cardW - 22, height: cardW - 22, borderRadius: (cardW - 22) / 2, borderWidth: 3,
-                      borderColor: t.accent, justifyContent: 'center', alignItems: 'center',
-                      backgroundColor: `${t.accent}15` }}>
-                      <Text style={{ color: t.digitColor, fontSize: 10, fontFamily: axFonts.oswaldMedium }}>01:30</Text>
+                      borderColor: th.accent, justifyContent: 'center', alignItems: 'center',
+                      backgroundColor: withAlpha(th.accent, 0.08) }}>
+                      <Text style={{ color: th.digitColor, fontSize: 10, fontFamily: axFonts.oswaldMedium }}>01:30</Text>
                     </View>
-                    <Text style={{ color: t.accent, fontSize: 8, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>{t.label}</Text>
+                    <Text numberOfLines={1} style={{ color: inkOn(th.bgRunning), fontSize: 8, fontWeight: '900', letterSpacing: 0.5, textTransform: 'uppercase' }}>{t(th.labelKey)}</Text>
                     {isActive && (
                       <View style={{ position: 'absolute', top: 5, right: 5, width: 16, height: 16, borderRadius: 8,
                         backgroundColor: c.accent, justifyContent: 'center', alignItems: 'center' }}>
@@ -277,7 +364,7 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
             {DIGIT_COLORS.map(dc => {
               const isActive = opts.digitColor === dc;
               return (
-                <TouchableOpacity key={dc} onPress={() => onUpdate({ digitColor: dc })} activeOpacity={0.75}
+                <TouchableOpacity key={dc} onPress={() => onUpdate({ ...freezeTheme, digitColor: dc })} activeOpacity={0.75}
                   accessibilityRole="button" accessibilityLabel={dc} accessibilityState={{ selected: isActive }}
                   style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: dc,
                     borderWidth: isActive ? 3 : 1.5,
@@ -489,7 +576,13 @@ export default function TimerRunScreen() {
   const sndGoRef          = useRef<Audio.Sound | null>(null);
   const sndDoneRef        = useRef<Audio.Sound | null>(null);
 
-  const [displayOpts, setDisplayOptsRaw] = useState<TimerDisplayOpts>(DEFAULT_DISPLAY);
+  const [storedOpts, setDisplayOptsRaw] = useState<TimerDisplayOpts>(DEFAULT_DISPLAY);
+  const appMode = useTheme().theme.mode;
+  const { t } = useTranslation();
+  const displayOpts = useMemo(() => resolveDisplayOpts(storedOpts, appMode), [storedOpts, appMode]);
+  const [showGo, setShowGo] = useState(false);
+  const hideGo = useCallback(() => setShowGo(false), []);
+  const prevPhaseRef = useRef<Phase>('ready');
   const [showSettings, setShowSettings]  = useState(false);
   const displayOptsRef = useRef<TimerDisplayOpts>(DEFAULT_DISPLAY);
   displayOptsRef.current = displayOpts;
@@ -731,7 +824,8 @@ export default function TimerRunScreen() {
               digitColor: isCustomDigit ? stored.digitColor : theme.digitColor,
               bgCountdown: theme.bgCountdown, bgRunning: theme.bgRunning, bgDone: theme.bgDone }
           : { ...DEFAULT_DISPLAY, ...stored };
-        setDisplayOptsRaw(migrated);
+        // Préférence enregistrée avant le réglage : le thème choisi est conservé.
+        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });
       } catch (e) { captureError(e, { screen: 'TimerRun', action: 'parseDisplayOpts' }); }
     });
   }, []);
@@ -792,6 +886,18 @@ export default function TimerRunScreen() {
       return next;
     });
   }
+
+  /** Vibration du décompte : courte à 3, 2, 1, longue à GO ; coupée avec les sons. */
+  function countdownVibrate(count: number) {
+    if (!displayOptsRef.current.bipsEnabled) return;
+    if (count <= 0) Vibration.vibrate(VIBRATE_GO_MS);
+    else if (count <= CD_TENSE_FROM) Vibration.vibrate(VIBRATE_TICK_MS);
+  }
+
+  useEffect(() => {
+    if (prevPhaseRef.current === 'countdown' && phase === 'running' && !withCamera) setShowGo(true);
+    prevPhaseRef.current = phase;
+  }, [phase, withCamera]);
 
   function playBeep(type: 'tick' | 'go' | 'done') {
     if (!displayOptsRef.current.bipsEnabled || !soundReadyRef.current) return;
@@ -939,17 +1045,20 @@ export default function TimerRunScreen() {
       // Android : bips dès 5 (5, 4, 3, 2, 1 + go à 0). iOS : 3, 2, 1 + go à 0.
       const tickFrom = Platform.OS === 'android' ? 5 : 3;
       if (count <= tickFrom) playBeep('tick');
+      countdownVibrate(count);
       intervalRef.current = setInterval(() => {
         count--;
         if (count <= 0) {
           clearTimer();
           setCountdownVal(0);
           playBeep('go');
+          countdownVibrate(0);
           if (withCamera) timerStartOffsetRef.current = Date.now() - videoStartTimeRef.current;
           setPhase('running');
         } else {
           setCountdownVal(count);
           if (count <= tickFrom) playBeep('tick');
+          countdownVibrate(count);
         }
       }, 1000);
     }
@@ -1388,6 +1497,7 @@ export default function TimerRunScreen() {
   // accentColor = toujours la couleur choisie par l'utilisateur (digits)
   // phaseColor = uniquement pour labels, arc stroke, badges, total bar
   const accentColor = displayOpts.digitColor;
+  const timerAccent = (TIMER_THEMES.find(x => x.id === displayOpts.themeId) ?? TIMER_THEMES[0]).accent;
   const onBg1 = inkOn(currentBg);
   // Les surfaces translucides suivent la même encre que le texte : sans ça, un
   // fond vif de mi-échelle recevait un film blanc et un texte noir.
@@ -1413,7 +1523,7 @@ export default function TimerRunScreen() {
   // Phase label text — only show TRAVAIL/REPOS for types with work/rest phases
   const hasWorkRest = timerType === 'tabata' || timerType === 'ywyr'
     || (timerType === 'libre' && curBlk && (curBlk.type === 'tabata' || curBlk.type === 'ywyr' || curBlk.type === 'split'));
-  const phaseLabel = phase === 'countdown' ? 'PRÉPARER'
+  const phaseLabel = phase === 'countdown' ? t('timer.countdown.prepare')
     : phase === 'running' && seqPausing ? 'PAUSE'
     : phase === 'running' && hasWorkRest && innerPhase === 'rest' ? 'REPOS'
     : phase === 'running' && hasWorkRest ? 'TRAVAIL'
@@ -1805,9 +1915,8 @@ export default function TimerRunScreen() {
                   {/* MAIN TIMER */}
                   <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                     {phase === 'countdown' ? (
-                      <Text style={[styles.bigDigits, { fontSize: Math.round(winH * 0.62), color: accentColor }]}>
-                        {countdownVal}
-                      </Text>
+                      <CountdownView value={countdownVal} title={videoTitle} digitColor={accentColor}
+                        accent={timerAccent} bg={currentBg} size={Math.round(winH * 0.42)} />
                     ) : (
                       <Text testID="timer-main-time"
                         adjustsFontSizeToFit numberOfLines={1}
@@ -2000,9 +2109,8 @@ export default function TimerRunScreen() {
                     </Text>
                   )}
                   {phase === 'countdown' ? (
-                    <Text style={[styles.bigDigits, { fontSize: Math.round(SW * 0.42), color: accentColor }]}>
-                      {countdownVal}
-                    </Text>
+                    <CountdownView value={countdownVal} title={videoTitle} digitColor={accentColor}
+                      accent={timerAccent} bg={currentBg} size={Math.round(SW * 0.62)} />
                   ) : (
                     <Text testID="timer-main-time" adjustsFontSizeToFit numberOfLines={1}
                       style={[styles.bigDigits, { fontSize: displayOpts.fontSize, color: accentColor }]}>
@@ -2302,6 +2410,7 @@ export default function TimerRunScreen() {
     <View style={[styles.containerDark, { backgroundColor: phaseBg }]}>
       <StatusBar hidden />
       {renderContent()}
+      {showGo && !withCamera && <GoFlash accent={timerAccent} bg={currentBg} onDone={hideGo} />}
       {showSettings && (
         <TimerSettingsModal opts={displayOpts} onUpdate={setDisplayOpts} onClose={() => setShowSettings(false)} />
       )}

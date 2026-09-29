@@ -9,7 +9,7 @@ const PHASES = ['bgCountdown', 'bgRunning', 'bgDone'] as const;
 
 describe('encre du minuteur plein écran', () => {
   const cases = TIMER_THEMES.flatMap(t =>
-    PHASES.map(phase => [`${t.label} · ${phase}`, t[phase]] as [string, string]),
+    PHASES.map(phase => [`${t.id} · ${phase}`, t[phase]] as [string, string]),
   );
 
   it.each(cases)('%s — l\'encre principale est lisible', (_name, bg) => {

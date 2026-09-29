@@ -205,6 +205,17 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R5b : thèmes AthleX liés au thème de l'app, noms traduits et nouveau décompte (app seule, aucune migration serveur).**
+- `TIMER_THEMES` : `athlex` et `athlex2` en tête, ordre AthleX, AthleX 2, Noir, Blanc, Citron vert, Orange, Bleu, Violet, Cyan,
+  Jaune, Rose, Rouge ; identifiants existants inchangés ; noms par clés `timer.themes.*` (FR / EN), champ `emoji` retiré.
+- Réglage « Suivre le thème de l'app » (`followAppTheme`, même clé AsyncStorage `bwod_timer_display_opts_v2`) : activé sans
+  préférence enregistrée (sombre → AthleX, clair → AthleX 2, change en direct) ; désactivé pour une préférence d'avant R5b
+  et dès qu'on touche une vignette ou une couleur de chiffres.
+- Décompte : « PRÉPARE-TOI » (+ nom du WOD, anneau) au-dessus de 3, « PRÊT ? » en accent avec halo à 3-2-1, bande « GO ! »
+  inclinée et éclair de 200 ms par-dessus le chrono lancé ; vibration 40 ms à 3-2-1 et 200 ms à GO, coupée avec les sons.
+  Bips, calculs, démarrage au même tic et écran caméra (décompte distinct, inchangé) non touchés.
+- Tests : `r5b.rn.test.tsx` (23), `npx jest` 1976, `npm run test:rn` 425, `tsc` vert ; 30 mutations tuées.
+
 **Refonte R5a : minuteur au nouveau design (app seule, aucune migration, apparence seule).**
 - `TimerScreen` (sélecteur « TYPE DE MINUTEUR » en `AxCard` + feuille des 7 types avec leur description, icônes Lucide ; réglages − / + en `AxIconButton`, options en `AxSwitch`, `DÉMARRER` seule action
   accent), `TimerLaunchModal` (6 types en `AxChip` sur plusieurs lignes, plus de défilement horizontal ; « Avec caméra »
