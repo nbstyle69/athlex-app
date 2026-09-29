@@ -34,6 +34,8 @@ import { TrackTab, filterByTab, resolveTab, visibleTabs, whiteboardTrackKey } fr
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
+import { StrengthWodCardStatus, strengthCardLinkKey } from '../../components/wod/StrengthSetGrid';
+import { fetchStrengthSummaries } from '../../services/strengthSets';
 
 function toISO(d: Date): string {
   const y = d.getFullYear();
@@ -51,6 +53,8 @@ interface BoxMember {
   elo: number;
   avatar_url?: string | null;
 }
+
+interface WeekWodRow { id: string; track: string | null; wod_type: string | null }
 
 export default function WhiteboardScreen() {
   const { user, currentBox, boxRole, joinBox } = useAuth();
@@ -185,19 +189,30 @@ export default function WhiteboardScreen() {
     async () => {
       if (!currentBox) return [];
       const isStaff = boxRole === 'owner' || boxRole === 'coach' || user?.id === currentBox.owner_id;
-      let q = supabase.from('box_wods').select('track')
+      let q = supabase.from('box_wods').select('id, track, wod_type')
         .eq('box_id', currentBox.id)
         .gte('scheduled_date', weekBounds.from)
         .lte('scheduled_date', weekBounds.to);
       if (!isStaff) q = q.eq('is_published', true);
       const { data, error } = await q;
       if (error) return [];
-      return (data ?? []).map((r: any) => r.track as string | null);
+      return (data ?? []) as unknown as WeekWodRow[];
     },
     { enabled: !!currentBox },
   );
 
-  const trackTabs = useMemo(() => visibleTabs(weekTracks ?? []), [weekTracks]);
+  const trackTabs = useMemo(() => visibleTabs((weekTracks ?? []).map(r => r.track)), [weekTracks]);
+
+  // États des séances de musculation de l'athlète pour toute la semaine affichée.
+  const weekStrengthIds = useMemo(
+    () => (weekTracks ?? []).filter(r => r.wod_type === 'strength').map(r => r.id).sort(),
+    [weekTracks],
+  );
+  const { data: strengthByWod } = useFocusQuery(
+    ['whiteboard-strength', user?.id, weekStrengthIds.join(',')],
+    () => fetchStrengthSummaries(user!.id, 'whiteboard', weekStrengthIds),
+    { enabled: !!user && weekStrengthIds.length > 0 },
+  );
 
   // Le choix courant tient s'il a encore du contenu ; sinon Functional, sinon
   // « Tout ». Même règle pour l'athlète neuf, dont le choix mémorisé est vide.
@@ -829,6 +844,7 @@ export default function WhiteboardScreen() {
                       >
                         <View style={S.wodCardTop}>
                           <WodTypeBadge type={wod.wod_type} />
+                          <StrengthWodCardStatus summary={strengthByWod?.[wod.id]} />
 
                           {wod.video_url && (
                             <View style={[S.timeCap, { backgroundColor: '#EF444418', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }]}>
@@ -880,7 +896,7 @@ export default function WhiteboardScreen() {
                           activeOpacity={0.7}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                         >
-                          <Text style={S.wodCardActionText}>{t('whiteboard.seeDetails')}</Text>
+                          <Text style={S.wodCardActionText}>{t(strengthCardLinkKey(strengthByWod?.[wod.id]))}</Text>
                           <ChevronRight color={theme.accent} size={14} />
                         </TouchableOpacity>
                         <TouchableOpacity

@@ -237,6 +237,15 @@ Supabase/Resend.
   compteur, rappel et crédit `movement_logs` seulement si `premiere_validation`. « Modifier mon
   score » repasse par la RPC et ne remplace que le tonnage.
 
+**Saisie des charges en musculation, PR 4 « Ma Box et mes charges » (app seule, aucune migration).**
+- Carte d'un WOD de musculation dans Ma Box (`WhiteboardScreen`) : « En cours · n / N séries »
+  (`AxStatusDot` warning) et lien « Reprendre ma saisie » quand un brouillon existe, « Validée » (ton
+  actif) quand la séance est validée, rien sinon. États de toute la semaine lus en une lecture groupée
+  (`fetchStrengthSummaries`, une requête par table pour la semaine, jamais une par carte).
+- Séance validée (`WODDetailScreen`) : bloc « Mes charges » (`AxCard`) série par série, écart à la
+  prescription (« 6 au lieu de 7 », en `accentText`), tonnage et charge max, puis « Modifier mes charges »
+  qui rouvre la saisie pré-remplie et repasse par `validate_strength_session` sans recomptage.
+
 **Refonte visuelle mobile, lot R1 « Composants » (aucun écran modifié).**
 - Bibliothèque `src/components/ax/` : verre (`AxGlass`, flou 24 sur iOS, opacités 0.80 / 0.85 portées
   à 0.96 sur Android), boutons (accent, contour, clair, pointillé, arrêt), bouton carré, pastille,
