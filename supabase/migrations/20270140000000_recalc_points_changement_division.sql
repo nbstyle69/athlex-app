@@ -1,7 +1,20 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Les points de division sont recalculés quand la division d'un score change
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 29/09/2026 à 15:41:48 UTC, avec PGCLIENTENCODING=UTF8,
+-- en une transaction, sur GO de Nab. Dump des schémas public et internal avec
+-- droits db-dumps/2026-09-29/athlex-prod-public-internal-20260929T154044Z.dump,
+-- sha256 8fba31115be3b3cffce67c3b5102ec5bc95385a02fb630095df760f3d0552b0e vérifié
+-- après aller-retour, 135 TABLE DATA, 449 ACL, 346 POLICY ; précontrôles (trois
+-- passages identiques, search_path de la prod) : déclencheur au md5 10e94e68…
+-- (UPDATE OF status, score_value), fonctions fbeaa152… et 6dedca85… et leurs
+-- droits, déclencheurs de tournament_scores e3629460… (4), aucune ligue à
+-- divisions ; vérifications : déclencheur au md5 du rejeu e306d2d9… (O, tgtype
+-- 29, UPDATE OF status, score_value, division_id), ensemble des déclencheurs
+-- 46d18dd4… comme au rejeu, fonctions et droits inchangés, tournament_scores et
+-- tournament_division_members identiques avant et après ; test réel en
+-- transaction annulée (R2 à R4, sans la mutation R1), sans trace ; audit des
+-- droits en prod 37/37.
 --
 -- Le Manager (#413) permet au staff de corriger `tournament_scores.division_id`
 -- (division figée du score de ligue, 20270108). Le déclencheur

@@ -647,7 +647,8 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
 - PR 3, divisions figées au moment du WOD (migration `20270108`, **appliquée en prod le 24/09/2026 à 12:20 UTC**) : la division est
   enregistrée avec le score (`tournament_scores.division_id`, posée par le serveur, réservée au staff) ;
   les points se classent dans cette division, sur la saison en cours seulement.
-- Recalcul des points quand la division d'un score change (migration `20270140`, **non appliquée**) :
+- Recalcul des points quand la division d'un score change (migration `20270140`, **appliquée en prod le 29/09/2026 à 15:41 UTC**,
+  dump `db-dumps/2026-09-29/athlex-prod-public-internal-20260929T154044Z.dump` ; audit 37/37) :
   `trg_recalc_division_points_on_scores` réagit aussi à `division_id` (correction du Manager #413) ;
   le tournoi entier, donc l'ancienne et la nouvelle division, est recalculé. Fonction inchangée.
 - PR 4, suppression d'un tournoi (migration `20270109`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : l'ELO qu'il a apporté
