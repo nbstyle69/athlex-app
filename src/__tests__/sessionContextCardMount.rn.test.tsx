@@ -36,6 +36,7 @@ jest.mock('../context/AuthContext', () => ({
 jest.mock('../context/ThemeContext', () => ({ useTheme: () => ({ theme: mockTheme }) }));
 jest.mock('../services/wodEngineData', () => ({ loadEngineData: async () => ({ catalog: mockCatalog, bank: mockBank }) }));
 jest.mock('../services/wodDraft', () => ({ loadWodDraft: async () => mockDraft }));
+jest.mock('../services/muscuSession', () => ({ findResumableMuscuSession: async () => null }));
 jest.mock('../services/myProfile', () => ({ fetchMyPersonalRecords: async () => ({}) }));
 jest.mock('../services/wodGenerator', () => ({
   loadExcludes: async () => [], loadMuscuEquipment: async () => 'box',

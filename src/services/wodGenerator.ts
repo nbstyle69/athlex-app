@@ -637,6 +637,34 @@ export async function submitMuscuScore(
   return tonnage;
 }
 
+/**
+ * Modification d'une séance déjà validée : le tonnage remplace celui du score
+ * existant, sans compteur, rappel ni crédit de badges (déjà faits une fois).
+ */
+export async function updateMuscuScore(
+  user: Pick<User, 'id'>,
+  wod: MuscuWod,
+  s: MuscuScoreSubmission,
+): Promise<number> {
+  const tonnage = totalTonnage(s.performed);
+  const row = {
+    score_value: tonnage,
+    rx: wod.level !== 'debutant',
+    notes: scoreNotes(wod, { category: 'rx', notes: s.notes }),
+  };
+  const { data, error } = await supabase.from('generated_wod_scores')
+    .update(row)
+    .eq('wod_id', s.wodId).eq('user_id', user.id).eq('score_type', 'weight')
+    .select('id');
+  if (error) throw error;
+  if ((data ?? []).length === 0) {
+    const { error: insErr } = await supabase.from('generated_wod_scores')
+      .insert({ ...row, wod_id: s.wodId, user_id: user.id, score_type: 'weight' });
+    if (insErr) throw insErr;
+  }
+  return tonnage;
+}
+
 /** Score + compteurs + crédit de badges par mouvement (grammaire du rendu texte). */
 export async function submitGeneratedScore(
   user: Pick<User, 'id' | 'gender'>,

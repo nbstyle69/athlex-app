@@ -7,10 +7,10 @@
  * Ajouter au Whiteboard, Saisir mon score, menu ⋯ (Copier / Partager).
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Share,
-  KeyboardAvoidingView, Platform, Pressable,
+  KeyboardAvoidingView, Platform, Pressable, AppState,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -44,9 +44,15 @@ import type { SkeletonFormat } from '../../../packages/wod-engine/src';
 import { FORMATS, INTENTIONS } from './wodGeneratorOptions';
 import {
   GenerateResult, PerformedExercise, ScoreInputType, ScoreSubmission, ScreenParams, addToWhiteboard, editorFieldsOf,
-  isMuscuWod, redraw, saveGeneratedWod, scoreInputTypeFor, setFavorite, submitGeneratedScore, submitMuscuScore,
+  isMuscuWod, redraw, saveGeneratedWod, scoreInputTypeFor, setFavorite, submitGeneratedScore,
   totalTonnage,
 } from '../../services/wodGenerator';
+import {
+  ServerStrengthSession, StrengthSourceKey, fetchStrengthSession, gridFromServer, loadStrengthGrid, saveStrengthDraft,
+  validationErrorCode,
+} from '../../services/strengthSets';
+import { draftsToPerformed, performedToDrafts, validateMuscuSession } from '../../services/muscuSession';
+import type { StrengthSaveState } from '../../components/wod/StrengthSetGrid';
 import { HYBRID_ORANGE } from './wodGeneratorOptions';
 import { MUSCU_BLUE, muscuDisplayedFor } from './muscuOptions';
 import MuscuSessionCard, { initialPerformed } from './MuscuSessionCard';
@@ -56,7 +62,13 @@ export type WodResultParams = {
   result: GenerateResult;
   /** B6 : reprise du brouillon local — charges saisies et score déjà posé. */
   draft?: { performed?: PerformedExercise[]; submittedScore?: ScoreSubmission | null };
+  /** Séance Musculation reprise depuis le serveur : WOD déjà enregistré (`generated_wods.id`). */
+  savedId?: string;
 };
+
+/** Brouillon de la séance Musculation enregistré ~0,8 s après la dernière frappe. */
+export const MUSCU_DRAFT_SAVE_DELAY_MS = 800;
+const OFFLINE_RETRY_MS = 15000;
 type Route = RouteProp<{ WodResult: WodResultParams }, 'WodResult'>;
 
 const fmtNum = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, ''));
@@ -153,7 +165,7 @@ export default function WodResultScreen() {
   const categories: readonly Category[] = wod.discipline === 'hybrid' ? HYBRID_CATEGORIES : FUNCTIONAL_CATEGORIES;
 
   const [redrawing, setRedrawing] = useState(false);
-  const [savedId, setSavedId] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<string | null>(route.params.savedId ?? null);
   const [saving, setSaving] = useState(false);
   const [favorite, setFav] = useState(false);
   const [openRows, setOpenRows] = useState<ReadonlySet<number>>(() => new Set());
@@ -180,6 +192,145 @@ export default function WodResultScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [submittedScore, setSubmittedScore] = useState<ScoreSubmission | null>(route.params.draft?.submittedScore ?? null);
   const [performed, setPerformed] = useState<PerformedExercise[]>(() => route.params.draft?.performed ?? (muscu ? initialPerformed(muscu) : []));
+
+  // Séance Musculation côté serveur (source `generated`, clé = WOD enregistré).
+  const [strengthServer, setStrengthServer] = useState<ServerStrengthSession | null>(null);
+  const [draftSaveState, setDraftSaveState] = useState<StrengthSaveState>('idle');
+  const [draftSavedAt, setDraftSavedAt] = useState<string | null>(null);
+  const [draftDirtyTick, setDraftDirtyTick] = useState(0);
+  const strengthValidated = strengthServer?.session?.status === 'validated';
+  const performedRef = useRef(performed);
+  performedRef.current = performed;
+  const savedIdRef = useRef(savedId);
+  savedIdRef.current = savedId;
+  const editedAtRef = useRef<string | null>(null);
+  const baseUpdatedAtRef = useRef<string | null>(null);
+  const saveChainRef = useRef<Promise<string>>(Promise.resolve('saved'));
+  const strengthKeyFor = useCallback(
+    (sourceId: string): StrengthSourceKey | null => (user ? { userId: user.id, sourceType: 'generated', sourceId } : null),
+    [user],
+  );
+
+  const applyServerSession = useCallback((m: MuscuWod, server: ServerStrengthSession) => {
+    setStrengthServer(server);
+    baseUpdatedAtRef.current = server.session?.updatedAt ?? null;
+    setDraftSavedAt(server.session?.updatedAt ?? null);
+    const base = initialPerformed(m);
+    setPerformed(draftsToPerformed(base, gridFromServer(performedToDrafts(m, base), server.sets)));
+  }, []);
+
+  /**
+   * Envoie le brouillon (jamais deux envois en parallèle). Le WOD est enregistré
+   * au premier envoi : son id est la clé de la séance, retrouvée sur un autre appareil.
+   */
+  const saveDraftNow = useCallback((): Promise<string> => {
+    const run = async (): Promise<string> => {
+      const editedAt = editedAtRef.current;
+      if (!user || !muscu || !editedAt) return 'saved';
+      setDraftSaveState('saving');
+      let id = savedIdRef.current;
+      if (!id) {
+        try {
+          id = await saveGeneratedWod(user.id, muscu, category);
+        } catch (e) {
+          captureError(e, { screen: 'WodResult', action: 'saveForDraft' });
+          setDraftSaveState('offline');
+          return 'offline';
+        }
+        savedIdRef.current = id;
+        setSavedId(id);
+        clearWodDraft(user.id);
+      }
+      const res = await saveStrengthDraft({
+        userId: user.id,
+        sourceType: 'generated',
+        sourceId: id,
+        sourceTitle: muscu.title,
+        drafts: performedToDrafts(muscu, performedRef.current),
+        editedAt,
+        baseUpdatedAt: baseUpdatedAtRef.current,
+      });
+      if (res.status === 'saved') {
+        if (editedAtRef.current === editedAt) editedAtRef.current = null;
+        baseUpdatedAtRef.current = res.updatedAt;
+        setDraftSavedAt(res.updatedAt);
+        setDraftSaveState('idle');
+      } else if (res.status === 'server_newer') {
+        editedAtRef.current = null;
+        applyServerSession(muscu, res.server);
+        setDraftSaveState('serverNewer');
+      } else {
+        setDraftSaveState('offline');
+      }
+      return res.status;
+    };
+    const next = saveChainRef.current.then(run, run);
+    saveChainRef.current = next;
+    return next;
+  }, [user, muscu, category, applyServerSession]);
+
+  // Reprise : séance et séries du serveur ; une copie locale restée hors
+  // connexion repart si le serveur n'a pas plus récent.
+  const resumedFor = useRef<string | null>(null);
+  useEffect(() => {
+    const id = route.params.savedId;
+    const key = id ? strengthKeyFor(id) : null;
+    if (!muscu || !key || resumedFor.current === key.sourceId) return;
+    resumedFor.current = key.sourceId;
+    const base = initialPerformed(muscu);
+    loadStrengthGrid(key, performedToDrafts(muscu, base)).then((res) => {
+      if (res.server) {
+        setStrengthServer(res.server);
+        baseUpdatedAtRef.current = res.server.session?.updatedAt ?? null;
+        setDraftSavedAt(res.server.session?.updatedAt ?? null);
+      }
+      if (res.origin !== 'prescription') setPerformed(draftsToPerformed(base, res.drafts));
+      if (res.server?.session?.status === 'validated') {
+        const value = totalTonnage(draftsToPerformed(base, res.drafts));
+        setSubmittedScore((prev) => prev ?? { wodId: key.sourceId, scoreType: 'weight', value, category: 'rx', notes: '' });
+      }
+      if (res.pending) {
+        editedAtRef.current = res.pending.editedAt;
+        baseUpdatedAtRef.current = res.pending.baseUpdatedAt;
+        if (res.offline) setDraftSaveState('offline');
+        else saveDraftNow();
+      }
+    }).catch((e) => captureError(e, { screen: 'WodResult', action: 'loadStrengthGrid' }));
+  }, [muscu, route.params.savedId, strengthKeyFor, saveDraftNow]);
+
+  useEffect(() => {
+    if (!muscu || strengthValidated || !editedAtRef.current) return undefined;
+    const id = setTimeout(() => { saveDraftNow(); }, MUSCU_DRAFT_SAVE_DELAY_MS);
+    return function cancelDraftSave() { clearTimeout(id); };
+  }, [draftDirtyTick]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Hors connexion : nouvel essai au retour au premier plan et à intervalle.
+  useEffect(() => {
+    if (draftSaveState !== 'offline') return undefined;
+    const id = setInterval(() => { saveDraftNow(); }, OFFLINE_RETRY_MS);
+    const sub = AppState.addEventListener('change', (st) => { if (st === 'active') saveDraftNow(); });
+    return function stopOfflineRetry() { clearInterval(id); sub.remove(); };
+  }, [draftSaveState, saveDraftNow]);
+
+  // Une saisie pas encore partie part quand on quitte l'écran.
+  const saveDraftNowRef = useRef(saveDraftNow);
+  saveDraftNowRef.current = saveDraftNow;
+  useEffect(() => () => { if (editedAtRef.current) saveDraftNowRef.current(); }, []);
+
+  function onPerformedChange(next: PerformedExercise[]) {
+    performedRef.current = next;
+    setPerformed(next);
+    if (muscu && !strengthValidated) {
+      editedAtRef.current = new Date().toISOString();
+      setDraftDirtyTick((t) => t + 1);
+    }
+  }
+
+  async function onSaveMuscuLater() {
+    if (!editedAtRef.current) editedAtRef.current = new Date().toISOString();
+    const status = await saveDraftNow();
+    if (status === 'offline') Alert.alert(i18n.t('strengthSession.offlineSavedTitle'), i18n.t('strengthSession.offline'));
+  }
 
   // B6 : brouillon local tant que la séance n'est pas enregistrée — écrit à
   // chaque changement (tirage, charges saisies, score), effacé à l'enregistrement.
@@ -208,6 +359,11 @@ export default function WodResultScreen() {
     setScoreType(isMuscuWod(next.wod) ? 'weight' : scoreInputTypeFor(next.wod));
     setScoreCategory(next.category);
     setPerformed(isMuscuWod(next.wod) ? initialPerformed(next.wod) : []);
+    editedAtRef.current = null;
+    baseUpdatedAtRef.current = null;
+    setStrengthServer(null);
+    setDraftSaveState('idle');
+    setDraftSavedAt(null);
   }
 
   async function onRedraw() {
@@ -338,16 +494,31 @@ export default function WodResultScreen() {
     }
   }
 
-  /** Musculation : tonnage des séries saisies (charge × reps), badges d'après les reps réelles. */
+  /**
+   * Musculation : séance validée par validate_strength_session, score = tonnage
+   * des séries saisies ; compteur et crédit movement_logs à la première validation seulement.
+   */
   async function onSubmitMuscuScore(m: MuscuWod) {
     if (!user) return;
     const tonnage = totalTonnage(performed);
     if (tonnage <= 0) { Alert.alert('Aucune série chargée', 'Renseigne les reps et la charge de tes séries dans la carte Séance.'); return; }
     const id = await onSave();
     if (!id) return;
+    const key = strengthKeyFor(id);
     setSubmitting(true);
     try {
-      await submitMuscuScore(user, currentBox?.id, m, { wodId: id, performed, notes: scoreNotes });
+      await saveChainRef.current;
+      await validateMuscuSession(user, currentBox?.id, m, { wodId: id, performed, notes: scoreNotes }, strengthServer?.sets ?? []);
+      editedAtRef.current = null;
+      setDraftSaveState('idle');
+      setStrengthServer((prev) => ({
+        session: {
+          plannedSets: null, maxLoadKg: null, firstValidatedAt: null, updatedAt: new Date().toISOString(),
+          ...prev?.session, status: 'validated',
+        },
+        sets: prev?.sets ?? [],
+      }));
+      if (key) fetchStrengthSession(key).then(setStrengthServer).catch((e) => captureError(e, { screen: 'WodResult', action: 'refreshStrength' }));
       setSubmittedScore({ wodId: id, scoreType: 'weight', value: tonnage, category: 'rx', notes: scoreNotes });
       hapticSuccess();
       setScoreModal(false);
@@ -362,8 +533,24 @@ export default function WodResultScreen() {
         ],
       );
     } catch (e) {
-      captureError(e, { screen: 'WodResult', action: 'submitScore' });
-      Alert.alert('Erreur', "Impossible d'enregistrer le score.");
+      const code = validationErrorCode(e);
+      if (!code) {
+        captureError(e, { screen: 'WodResult', action: 'submitScore' });
+        if (!strengthValidated) {
+          if (!editedAtRef.current) editedAtRef.current = new Date().toISOString();
+          saveDraftNow();
+        }
+        Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t('strengthSession.errorOffline'));
+      } else if (code === 'SEANCE_VIDE') {
+        Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t('strengthSession.errorEmpty'));
+      } else if (code === 'SERIES_EN_DOUBLE') {
+        Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t('strengthSession.errorDuplicate'));
+      } else if (code.startsWith('RECORD_')) {
+        Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t('strengthSession.errorRecord'));
+      } else {
+        captureError(e, { screen: 'WodResult', action: 'submitScore' });
+        Alert.alert('Erreur', "Impossible d'enregistrer le score.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -449,7 +636,13 @@ export default function WodResultScreen() {
 
         {muscu && (
           <>
-            <MuscuSessionCard wod={muscu} accent={accent} performed={performed} onPerformedChange={setPerformed} />
+            <MuscuSessionCard
+              wod={muscu}
+              accent={accent}
+              performed={performed}
+              onPerformedChange={onPerformedChange}
+              draft={{ saveState: draftSaveState, savedAt: draftSavedAt, validated: strengthValidated, onSaveLater: onSaveMuscuLater }}
+            />
             <GlassCard radius={16} style={S.card}>
               <View style={S.cardInner}>
               <View style={S.estRow}>

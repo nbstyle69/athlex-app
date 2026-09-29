@@ -351,6 +351,7 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
   const ADOPTERS = [
     path.join(SRC, 'screens', 'whiteboard', 'WODDetailScreen.tsx'),
     path.join(SRC, 'components', 'wod', 'StrengthSetGrid.tsx'),
+    path.join(SRC, 'screens', 'wod', 'MuscuSessionCard.tsx'),
     path.join(SRC, 'screens', 'training', 'TrainingScreen.tsx'),
     path.join(SRC, 'screens', 'home', 'HomeExplorerBlock.tsx'),
   ];
