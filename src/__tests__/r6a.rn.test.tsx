@@ -71,6 +71,8 @@ jest.mock('realtime-recorder', () => ({
   startRecording: (o: unknown) => mockStartRec(o),
   stopRecording: () => mockStopRec(),
   updateOverlayState: (s: unknown) => mockOverlay(s),
+  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
+  getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
 }));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
 jest.mock('react-native-view-shot', () => 'ViewShot');
@@ -314,8 +316,9 @@ describe('R6a : module natif et incrustation dans la vidéo inchangés', () => {
     const files = execSync('git ls-files modules/realtime-recorder', { cwd: root }).toString().trim().split('\n');
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
     // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
+    // R6c (A) : qualité, fps et micro dans le module, couverts par r6cOptionsVideo.rn.test.tsx et VideoQualityTest.kt.
     expect(crypto.createHash('sha256').update(all).digest('hex'))
-      .toBe('2e4680f2aba8ceb953e809a7300795ba84d869f0c00726bb91f8e35fb408ef9e');
+      .toBe('851b904afd0af86dc3a7a4e8c5a1abdf94c390ee7bc6c2551c90736076626e1a');
   });
 
   it('l’état d’incrustation suit toujours l’enregistrement', async () => {

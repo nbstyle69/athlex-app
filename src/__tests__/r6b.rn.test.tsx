@@ -74,6 +74,8 @@ jest.mock('realtime-recorder', () => ({
   startRecording: (o: unknown) => mockStartRec(o),
   stopRecording: () => mockStopRec(),
   updateOverlayState: (s: unknown) => mockOverlay(s),
+  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
+  getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
 }));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
 jest.mock('react-native-view-shot', () => {
@@ -387,14 +389,16 @@ describe('R6b : chrono et natif intacts', () => {
       .replace("phase === 'running') setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase]);",
         "phase === 'running' && !withCamera) setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase, withCamera]);");
     // R6c : + synchro de l'incrustation déplacée et champs du décompte (écart prouvé dans r6c.rn.test.tsx).
-    expect(sha(back)).toBe('1e6097383e9ca1ae32013c6835853ea45ab1e3a02b0d225861e417f413d174ed');
+    // R6c (A) : + options vidéo, couvertes par r6cOptionsVideo.rn.test.tsx.
+    expect(sha(back)).toBe('f3f57e450485f275a15ad9103004b02542ddaf1584369cd9ccfc179af0af07d4');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');
     const files = execSync('git ls-files modules/realtime-recorder', { cwd: root }).toString().trim().split('\n');
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
     // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
-    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('2e4680f2aba8ceb953e809a7300795ba84d869f0c00726bb91f8e35fb408ef9e');
+    // R6c (A) : qualité, fps et micro dans le module, couverts par r6cOptionsVideo.rn.test.tsx et VideoQualityTest.kt.
+    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('851b904afd0af86dc3a7a4e8c5a1abdf94c390ee7bc6c2551c90736076626e1a');
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
       .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');

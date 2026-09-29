@@ -61,6 +61,8 @@ jest.mock('realtime-recorder', () => ({
   startRecording: jest.fn(async () => {}),
   stopRecording: jest.fn(async () => '/docs/video.mp4'),
   updateOverlayState: (s: unknown) => mockOverlay(s),
+  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
+  getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
 }));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
 jest.mock('react-native-view-shot', () => {
@@ -251,10 +253,10 @@ describe('R6c : logique du chrono', () => {
       .replace('          ...countdownOverlay(phase === \'countdown\' ? countdownVal : 0, showGo, displayOpts.themeId, t),\n',
         '          countdownValue: phase === \'countdown\' ? countdownVal : 0,\n')
       .replace(', showGo, displayOpts.themeId, t]);', ']);');
-    const anchor = "  const [facing, setFacing] = useState<'front' | 'back'>('back');\n";
+    const anchor = '  }, [withCamera, isCameraReady, videoOpts, facing]);\n';
     const back = now.replace(block, '').replace(anchor, `${anchor}\n${oldBlock.slice(0, -1)}`);
     const sha = crypto.createHash('sha256').update(back).digest('hex');
-    // État R6b de la logique (LOGIC_SHA de r5a.rn.test.tsx avant R6c).
-    expect(sha).toBe('678f9be5481f4bf3dec1922dc497644a214ab9b0b215366a01d0ca86b48251cd');
+    // État R6c (A) de la logique (LOGIC_SHA de r5a.rn.test.tsx avant R6c C).
+    expect(sha).toBe('3e5e55c24d7e02a8b55b373db214e99579c037d4cfdf02af20fb5cc5bf77dd41');
   });
 });

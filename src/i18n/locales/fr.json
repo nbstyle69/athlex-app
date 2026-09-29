@@ -1919,6 +1919,21 @@
       "saveCard": "Sauvegarder la carte",
       "cardSaved": "Carte sauvegardée"
     },
+    "video": {
+      "quality": "Qualité",
+      "qualityHint": "1080p recommandé · 2K et 4K selon ton téléphone, fichiers plus lourds",
+      "fps": "Images par seconde",
+      "fpsValue": "{{fps}} fps",
+      "mic": "Micro",
+      "micHint": "Enregistre le son pendant la vidéo",
+      "checking": "Vérification {{quality}}…",
+      "notice": {
+        "camera": "{{requested}} indisponible sur cette caméra : vidéo en {{applied}}",
+        "performance": "Ton téléphone ne tient pas la {{requested}} avec l'incrustation : vidéo en {{applied}}",
+        "thermal": "Téléphone trop chaud pour la {{requested}} : vidéo en {{applied}}"
+      },
+      "jerky": "La vidéo peut saccader : le téléphone n'a pas tenu la cadence."
+    },
     "youtube": {
       "share": "Partager sur YouTube",
       "hint": "Publie ta vidéo depuis YouTube Studio",
