@@ -17,7 +17,12 @@ import React from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
-import { StrengthSetDraft } from '../../services/strengthSets';
+import {
+  StrengthSetDraft, normalizeDecimalInput, normalizeRepsInput, savedAgo,
+} from '../../services/strengthSets';
+import { AxStatusDot } from '../ax';
+import { axSpacing, axTypography } from '../../theme/axTokens';
+import i18n from '../../i18n';
 
 interface Props {
   drafts: StrengthSetDraft[];
@@ -51,7 +56,8 @@ export default function StrengthSetGrid({ drafts, onChange }: Props) {
                 placeholder="reps"
                 placeholderTextColor={theme.textMuted}
                 value={d.reps}
-                onChangeText={txt => onChange(i, { reps: txt })}
+                onChangeText={txt => onChange(i, { reps: normalizeRepsInput(txt) })}
+                testID={`strength-reps-${i}`}
                 keyboardType="number-pad"
               />
               <Text style={S.times}>×</Text>
@@ -60,7 +66,8 @@ export default function StrengthSetGrid({ drafts, onChange }: Props) {
                 placeholder="kg"
                 placeholderTextColor={theme.textMuted}
                 value={d.loadKg}
-                onChangeText={txt => onChange(i, { loadKg: txt })}
+                onChangeText={txt => onChange(i, { loadKg: normalizeDecimalInput(txt) })}
+                testID={`strength-kg-${i}`}
                 keyboardType="decimal-pad"
               />
               <Text style={[S.prescribed, deviates && S.prescribedDeviates]}>
@@ -75,6 +82,101 @@ export default function StrengthSetGrid({ drafts, onChange }: Props) {
     </View>
   );
 }
+
+const fmtKg = (n: number) => String(Math.round(n * 100) / 100);
+
+const SAVED_AGO_KEYS = {
+  justNow: 'strengthSession.savedJustNow',
+  minutes: 'strengthSession.savedMinutes',
+  hours: 'strengthSession.savedHours',
+  days: 'strengthSession.savedDays',
+} as const;
+
+export type StrengthSaveState = 'idle' | 'saving' | 'offline' | 'serverNewer';
+
+interface StatusProps {
+  done: number;
+  total: number;
+  savedAt: string | null;
+  saveState: StrengthSaveState;
+  now: number;
+}
+
+/** « En cours · n / N séries » et état de l'enregistrement du brouillon. */
+export function StrengthSessionStatus({ done, total, savedAt, saveState, now }: StatusProps) {
+  const { theme } = useTheme();
+  let saved: string;
+  if (saveState === 'saving') saved = i18n.t('strengthSession.saving');
+  else if (saveState === 'offline') saved = i18n.t('strengthSession.offline');
+  else if (saveState === 'serverNewer') saved = i18n.t('strengthSession.serverNewer');
+  else if (!savedAt) saved = i18n.t('strengthSession.notSavedYet');
+  else {
+    const ago = savedAgo(savedAt, now);
+    saved = i18n.t(SAVED_AGO_KEYS[ago.key], { count: ago.count });
+  }
+  return (
+    <View
+      style={axStyles.status}
+      accessible
+      accessibilityLabel={`${i18n.t('strengthSession.statusA11y', { done, total })}. ${saved}`}
+      testID="strength-status"
+    >
+      <AxStatusDot tone="warning" label={i18n.t('strengthSession.inProgress', { done, total })} testID="strength-progress" />
+      <Text style={[axTypography.caption, { color: theme.ax.textMuted }]} testID="strength-saved">{saved}</Text>
+    </View>
+  );
+}
+
+/** Charge max (score) calculée depuis les séries valides, à la place du champ POIDS. */
+export function StrengthMaxLoadRow({ maxLoadKg }: { maxLoadKg: number | null }) {
+  const { theme } = useTheme();
+  const value = maxLoadKg == null ? i18n.t('strengthSession.maxLoadEmpty') : `${fmtKg(maxLoadKg)} kg`;
+  return (
+    <View
+      style={axStyles.maxLoad}
+      accessible
+      accessibilityLabel={`${i18n.t('strengthSession.maxLoadLabel')} : ${value}`}
+      testID="strength-max-load"
+    >
+      <Text style={[axTypography.overline, { color: theme.ax.textMuted }]}>{i18n.t('strengthSession.maxLoadLabel')}</Text>
+      <Text
+        style={[maxLoadKg == null ? axTypography.bodySmall : axTypography.numberM, { color: theme.ax.text }]}
+        testID="strength-max-load-value"
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+/** Charges enregistrées d'une séance validée (pas la prescription). */
+export function StrengthSavedLoads({ drafts }: { drafts: StrengthSetDraft[] }) {
+  const { theme } = useTheme();
+  if (drafts.length === 0) return null;
+  return (
+    <View style={axStyles.saved} testID="strength-saved-loads">
+      <Text style={[axTypography.overline, { color: theme.ax.textMuted }]}>{i18n.t('strengthSession.savedLoadsTitle')}</Text>
+      {drafts.map((d, i) => {
+        const first = i === 0 || drafts[i - 1].entryIndex !== d.entryIndex;
+        const line = d.reps.trim() && d.loadKg.trim()
+          ? i18n.t('strengthSession.setLine', { index: d.setIndex, reps: d.reps, kg: d.loadKg })
+          : i18n.t('strengthSession.setLineEmpty', { index: d.setIndex });
+        return (
+          <View key={`${d.entryIndex}-${d.setIndex}`}>
+            {first && <Text style={[axTypography.label, { color: theme.ax.text }]}>{d.name}</Text>}
+            <Text style={[axTypography.bodySmall, { color: theme.ax.textMuted }]}>{line}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+const axStyles = StyleSheet.create({
+  status: { gap: axSpacing.xs, marginTop: axSpacing.lg },
+  maxLoad: { gap: axSpacing.xs, marginTop: axSpacing.lg },
+  saved: { gap: axSpacing.xs, marginTop: axSpacing.md },
+});
 
 function createStyles(theme: AppTheme) {
   return StyleSheet.create({

@@ -347,9 +347,15 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     });
   }
 
-  it('aucun écran de src/screens (hors catalogue) ni ancien composant de src/components n’importe ax', () => {
+  // Adoption écran par écran : seuls les fichiers listés ici, pour leurs éléments nouveaux.
+  const ADOPTERS = [
+    path.join(SRC, 'screens', 'whiteboard', 'WODDetailScreen.tsx'),
+    path.join(SRC, 'components', 'wod', 'StrengthSetGrid.tsx'),
+  ];
+
+  it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {
     const files = [...walk(path.join(SRC, 'screens')), ...walk(path.join(SRC, 'components'))]
-      .filter((f) => f !== CATALOG && !f.startsWith(AX_DIR + path.sep));
+      .filter((f) => f !== CATALOG && !ADOPTERS.includes(f) && !f.startsWith(AX_DIR + path.sep));
     expect(files.length).toBeGreaterThan(50);
     const offenders = files.filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')));
     expect(offenders.map((f) => path.relative(SRC, f))).toEqual([]);
