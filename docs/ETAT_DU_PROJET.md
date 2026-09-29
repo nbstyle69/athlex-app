@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R2a : onglet Entraînement à la place d'Explorer (app seule, aucune migration).**
+- 2e onglet « Entraînement » (icône Dumbbell) : écran ax `TrainingScreen` (génération en un tap par
+  `generateForUser` avec les réglages mémorisés, lien vers le générateur complet, tuiles Minuteur / 1RM /
+  Historique / Favoris, « Dernière séance » depuis le brouillon ou `generated_wods`). Pile Entraînement :
+  écrans WOD et minuteur, aussi conservés dans Accueil.
+- Explorer supprimé : ses sept routes passent dans la pile Accueil, bloc ax « Explorer » sous « Cette
+  semaine » (Trouver une box, Programmes, Partenaires). Barre d'onglets inchangée (verre flottant : R2b).
+
 **Saisie des charges en musculation, PR 2 « Whiteboard » (app seule, aucune migration).**
 - Séance de musculation du Whiteboard : la grille se recharge depuis le serveur (`strength_sessions` et
   `strength_set_logs`, migration `20270138` déjà en prod), sinon depuis la prescription ; brouillon

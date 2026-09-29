@@ -235,7 +235,7 @@ export default function WodGeneratorScreen() {
               <Heart color={theme.error} size={15} />
               <Text style={S.menuText}>{i18n.t('wodGenerator.favorites')}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={S.menuBtn} onPress={() => navigation.navigate('Explorer', { screen: 'Programmation' })} activeOpacity={0.8} testID="wodgen-menu-programs">
+            <TouchableOpacity style={S.menuBtn} onPress={() => navigation.navigate('Home', { screen: 'Programmation' })} activeOpacity={0.8} testID="wodgen-menu-programs">
               <BookOpen color={theme.text} size={15} />
               <Text style={S.menuText}>{i18n.t('wodGenerator.programming')}</Text>
             </TouchableOpacity>

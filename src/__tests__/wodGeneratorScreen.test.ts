@@ -73,7 +73,7 @@ describe('options du formulaire', () => {
     expect(screen).toContain('Générateur de WOD');
     expect(screen).toContain("navigation.navigate('WodHistory')");
     expect(screen).toContain("navigation.navigate('WodHistory', { filter: 'favorites' })");
-    expect(screen).toContain("navigation.navigate('Explorer', { screen: 'Programmation' })");
+    expect(screen).toContain("navigation.navigate('Home', { screen: 'Programmation' })");
     expect(screen).toContain("entry === 'express' ? (isMuscu ? 'Générer ma séance' : 'Générer mon WOD') : 'Générer mon complément'");
   });
 });

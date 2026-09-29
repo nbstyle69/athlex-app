@@ -6,12 +6,12 @@ import { ChevronLeft, MapPin, Users, Navigation } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
-import { ExplorerStackParamList } from '../../navigation';
+import { HomeStackParamList } from '../../navigation';
 import { Box } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
 
-type Nav = NativeStackNavigationProp<ExplorerStackParamList>;
-type Route = RouteProp<ExplorerStackParamList, 'BoxDirectoryMap'>;
+type Nav = NativeStackNavigationProp<HomeStackParamList>;
+type Route = RouteProp<HomeStackParamList, 'BoxDirectoryMap'>;
 
 let MapView: any = null;
 let Marker: any = null;
