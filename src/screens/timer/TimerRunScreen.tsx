@@ -28,6 +28,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { appTimerThemeId, ensureContrast, inkOn, inkOnSecondary, TIMER_THEMES } from '../../theme/timerInk';
 import { AxButton, AxCard, AxChip, AxIconButton, AxSwitch, AxTag, withAlpha } from '../../components/ax';
 import { axColors, axFonts, axRadius, axSpacing, axTypography, axVeil } from '../../theme/axTokens';
+import { CD_TENSE_FROM, countdownOverlay } from '../../lib/timerCountdownOverlay';
 import { incrementCounter } from '../../services/gamification';
 import * as Notifications from 'expo-notifications';
 import { spacing, borderRadius, typography } from '../../theme/designTokens';
@@ -128,7 +129,6 @@ function resolveDisplayOpts(opts: TimerDisplayOpts, mode: 'light' | 'dark' | und
   return { ...opts, themeId: th.id, digitColor: th.digitColor, bgCountdown: th.bgCountdown, bgRunning: th.bgRunning, bgDone: th.bgDone };
 }
 
-const CD_TENSE_FROM = 3;
 const VIBRATE_TICK_MS = 40;
 const VIBRATE_GO_MS = 200;
 
@@ -556,34 +556,6 @@ export default function TimerRunScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [withCamera, isCameraReady, videoOpts, facing]);
 
-
-  // Sync overlay state to native module on every render tick
-  useEffect(() => {
-    if (!withCamera || !isRecordingActive) return;
-    const id = setInterval(() => {
-      try {
-        // Compute precise timer with hundredths
-        const baseDisplay = mainTimeRef.current; // e.g. "02:35"
-        const msSinceTick = Date.now() - lastTickTimeRef.current;
-        const hundredths = Math.min(99, Math.floor(msSinceTick / 10));
-        const preciseDisplay = `${baseDisplay}.${String(hundredths).padStart(2, '0')}`;
-
-        updateOverlayState({
-          timerType: timerType,
-          timerDisplay: baseDisplay,
-          title: videoTitle || '',
-          timestamp: clockStr,
-          isRecording: true,
-          countdownValue: phase === 'countdown' ? countdownVal : 0,
-          showTimer: phase === 'running' || phase === 'stopped',
-          boxLogoUrl: currentBox?.logo_url || '',
-          competitionLogoUrl: competitionLogoUrl || '',
-        });
-      } catch (e) { /* overlay update — silent to avoid flooding Sentry */ }
-    }, 100); // 10Hz — timer & timestamp only change at 1Hz, no visual loss
-    return () => clearInterval(id);
-  }, [withCamera, isRecordingActive, timerType, videoTitle, clockStr, phase, countdownVal, currentBox, competitionLogoUrl]);
-
   async function saveCard() {
     if (savingCard || cardSaved) return;
     try {
@@ -616,6 +588,34 @@ export default function TimerRunScreen() {
   const [showSettings, setShowSettings]  = useState(false);
   const displayOptsRef = useRef<TimerDisplayOpts>(DEFAULT_DISPLAY);
   displayOptsRef.current = displayOpts;
+
+  // Sync overlay state to native module on every render tick
+  useEffect(() => {
+    if (!withCamera || !isRecordingActive) return;
+    const id = setInterval(() => {
+      try {
+        // Compute precise timer with hundredths
+        const baseDisplay = mainTimeRef.current; // e.g. "02:35"
+        const msSinceTick = Date.now() - lastTickTimeRef.current;
+        const hundredths = Math.min(99, Math.floor(msSinceTick / 10));
+        const preciseDisplay = `${baseDisplay}.${String(hundredths).padStart(2, '0')}`;
+
+        updateOverlayState({
+          timerType: timerType,
+          timerDisplay: baseDisplay,
+          title: videoTitle || '',
+          timestamp: clockStr,
+          isRecording: true,
+          ...countdownOverlay(phase === 'countdown' ? countdownVal : 0, showGo, displayOpts.themeId, t),
+          showTimer: phase === 'running' || phase === 'stopped',
+          boxLogoUrl: currentBox?.logo_url || '',
+          competitionLogoUrl: competitionLogoUrl || '',
+        });
+      } catch (e) { /* overlay update — silent to avoid flooding Sentry */ }
+    }, 100); // 10Hz — timer & timestamp only change at 1Hz, no visual loss
+    return () => clearInterval(id);
+  }, [withCamera, isRecordingActive, timerType, videoTitle, clockStr, phase, countdownVal, currentBox, competitionLogoUrl, showGo, displayOpts.themeId, t]);
+
   const roundTimeLeftRef  = useRef(initRTL);
   const currentRoundRef   = useRef(1);
   const innerPhaseRef     = useRef<'work' | 'rest'>('work');

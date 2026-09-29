@@ -388,15 +388,17 @@ describe('R6b : chrono et natif intacts', () => {
       .replace("  const [showYT, setShowYT] = useState(false);\n", "  const [showYT, setShowYT] = useState(false);\n  const [ytLink, setYtLink] = useState('');\n")
       .replace("phase === 'running') setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase]);",
         "phase === 'running' && !withCamera) setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase, withCamera]);");
+    // R6c : + synchro de l'incrustation déplacée et champs du décompte (écart prouvé dans r6c.rn.test.tsx).
     // R6c (A) : + options vidéo, couvertes par r6cOptionsVideo.rn.test.tsx.
-    expect(sha(back)).toBe('c3932652975b01a7420cd1c542ef22c9cde27a34efe1da945a1592b1ce8c06e1');
+    expect(sha(back)).toBe('f3f57e450485f275a15ad9103004b02542ddaf1584369cd9ccfc179af0af07d4');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');
     const files = execSync('git ls-files modules/realtime-recorder', { cwd: root }).toString().trim().split('\n');
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
+    // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
     // R6c (A) : qualité, fps et micro dans le module, couverts par r6cOptionsVideo.rn.test.tsx et VideoQualityTest.kt.
-    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('90ad20bfd3710bf0352f59548fc4c2a679d69f414bebe5b80f868ca1e75d64f5');
+    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('851b904afd0af86dc3a7a4e8c5a1abdf94c390ee7bc6c2551c90736076626e1a');
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
       .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');

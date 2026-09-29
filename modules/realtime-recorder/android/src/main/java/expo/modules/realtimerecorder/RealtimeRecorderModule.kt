@@ -25,6 +25,11 @@ class RealtimeRecorderModule : Module() {
           (dict["timestamp"] as? String)?.let { engine.overlayState.timestamp = it }
           (dict["isRecording"] as? Boolean)?.let { engine.overlayState.isRecording = it }
           (dict["countdownValue"] as? Double)?.let { engine.overlayState.countdownValue = it.toInt() }
+          (dict["countdownLabel"] as? String)?.let { engine.overlayState.countdownLabel = it }
+          (dict["countdownTense"] as? Boolean)?.let { engine.overlayState.countdownTense = it }
+          (dict["goLabel"] as? String)?.let { engine.overlayState.goLabel = it }
+          (dict["accentColor"] as? String)?.let { engine.overlayState.accentColor = it }
+          (dict["goInk"] as? String)?.let { engine.overlayState.goInk = it }
           (dict["showTimer"] as? Boolean)?.let { engine.overlayState.showTimer = it }
           (dict["boxLogoUrl"] as? String)?.let { engine.overlayState.boxLogoUrl = it }
           (dict["competitionLogoUrl"] as? String)?.let { engine.overlayState.competitionLogoUrl = it }

@@ -239,9 +239,10 @@ describe('R5a : capture', () => {
 
 /**
  * R6b : état du lien YouTube retiré, « GO ! » aussi en mode caméra (écart prouvé dans r6b.rn.test.tsx).
+ * R6c (C) : synchro de l'incrustation déplacée après displayOpts, champs du décompte envoyés (écart prouvé dans r6c.rn.test.tsx).
  * R6c (A) : options vidéo (qualité vérifiée, fps, micro, saccades), couvertes par r6cOptionsVideo.rn.test.tsx.
  */
-const LOGIC_SHA = '3e5e55c24d7e02a8b55b373db214e99579c037d4cfdf02af20fb5cc5bf77dd41';
+const LOGIC_SHA = '8c521a0038f8265b15e38ae2f0b40bab29d97660600caff3a1dd8f041f1de1d8';
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
 const MODAL_SHA = '48d210edde52dc6c61eefc919547338ded563c6ac4e8405c748e9c748a47c566';
 const LAUNCH_SHA = 'e4567887b4ed3745b56790f362ad063d475f82f5d770b1ab62783ff38c5f7dc2';
