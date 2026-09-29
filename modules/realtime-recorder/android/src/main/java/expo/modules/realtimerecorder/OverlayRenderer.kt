@@ -15,7 +15,8 @@ import java.net.URL
  * - Competition logo: top left (rounded square)
  * - Title: top center (28pt bold)
  * - Box logo: top right (circle)
- * - Countdown: center screen (260pt bold)
+ * - Countdown: center screen, same look as the on-screen CountdownView (R5b/R6b)
+ * - « GO ! »: accent band tilted by -4°, same look as the on-screen GoFlash
  * - Bottom row (all vertically centered):
  *   - Left: ATHLEX logo (160px)
  *   - Center: Timer DS-Digital (180pt)
@@ -32,11 +33,13 @@ class OverlayRenderer(private val context: Context) {
   @Volatile private var compLogoLoading = false
   private var dsDigitalTypeface: Typeface? = null
   private var oswaldTypeface: Typeface? = null
+  private var oswaldMediumTypeface: Typeface? = null
 
   // Pre-allocated objects to avoid GC pressure on every frame
   private val textPaint = TextPaint(Paint.ANTI_ALIAS_FLAG)
   private val bitmapPaint = Paint(Paint.FILTER_BITMAP_FLAG)
   private val reusableClipPath = Path()
+  private val shapePaint = Paint(Paint.ANTI_ALIAS_FLAG)
 
   init {
     loadAthlexLogo()
@@ -75,6 +78,11 @@ class OverlayRenderer(private val context: Context) {
       oswaldTypeface = Typeface.createFromAsset(context.assets, "realtime-recorder/Oswald-Bold.ttf")
     } catch (e: Exception) {
       oswaldTypeface = Typeface.DEFAULT_BOLD
+    }
+    oswaldMediumTypeface = try {
+      Typeface.createFromAsset(context.assets, "realtime-recorder/Oswald-Medium.ttf")
+    } catch (e: Exception) {
+      Typeface.DEFAULT_BOLD
     }
   }
 
@@ -176,18 +184,9 @@ class OverlayRenderer(private val context: Context) {
       canvas.restore()
     }
 
-    // ─── 3. Countdown (center, extra large, bold) ───
+    // ─── 3. Countdown (center) — same look as the on-screen CountdownView ───
     if (state.countdownValue > 0) {
-      val cdStr = "${state.countdownValue}"
-      val cdFontSize = if (isLandscape) 180f * scale else 260f * scale
-      val cdH = if (isLandscape) 220f * scale else 320f * scale
-      val cdY = (height - cdH) / 2f
-      drawText(
-        canvas, cdStr,
-        RectF(0f, cdY, width, cdY + cdH),
-        fontSize = cdFontSize, bold = true, color = Color.WHITE,
-        alignment = Layout.Alignment.ALIGN_CENTER
-      )
+      drawCountdown(canvas, width, height, refDim, isLandscape, state)
     }
 
     // ════════════════════════════════════════════
@@ -249,7 +248,88 @@ class OverlayRenderer(private val context: Context) {
         alignment = Layout.Alignment.ALIGN_OPPOSITE, shadow = true
       )
     }
+
+    // ─── 7. « GO ! » band (on top of the running timer) ───
+    if (state.goLabel.isNotEmpty()) {
+      drawGoBand(canvas, width, height, refDim, state)
+    }
   }
+
+  // MARK: - Countdown
+
+  /**
+   * Label above a circle of diameter `d`: « PRÉPARE-TOI » + white digit in a
+   * 35 % ring above 3, « PRÊT ? » + accent digit on a 12 % accent halo at 3-2-1.
+   */
+  private fun drawCountdown(canvas: Canvas, width: Float, height: Float, refDim: Float, isLandscape: Boolean, state: OverlayState) {
+    val accent = parseColor(state.accentColor, Color.WHITE)
+    val tense = state.countdownTense
+    val d = refDim * (if (isLandscape) 0.5f else 0.55f)
+    val cx = width / 2f
+    val cy = height / 2f
+
+    val labelSize = d * 0.07f
+    val labelH = labelSize * 1.4f
+    val labelBottom = cy - d / 2f - d * 0.04f
+    drawText(
+      canvas, state.countdownLabel,
+      RectF(0f, labelBottom - labelH, width, labelBottom),
+      fontSize = labelSize, bold = false,
+      color = if (tense) accent else Color.argb(204, 255, 255, 255),
+      alignment = Layout.Alignment.ALIGN_CENTER, shadow = true, letterSpacing = 0.33f
+    )
+
+    shapePaint.reset()
+    shapePaint.isAntiAlias = true
+    if (tense) {
+      shapePaint.style = Paint.Style.FILL
+      shapePaint.color = withAlpha(accent, 0.12f)
+      canvas.drawCircle(cx, cy, d / 2f, shapePaint)
+    } else {
+      val w = d * 0.01f
+      shapePaint.style = Paint.Style.STROKE
+      shapePaint.strokeWidth = w
+      shapePaint.color = Color.argb(89, 255, 255, 255)
+      canvas.drawCircle(cx, cy, d / 2f - w / 2f, shapePaint)
+    }
+
+    val digitSize = d * (if (tense) 0.7f else 0.55f)
+    drawText(
+      canvas, "${state.countdownValue}",
+      RectF(cx - d * 0.75f, cy - d / 2f, cx + d * 0.75f, cy + d / 2f),
+      fontSize = digitSize, bold = false, color = if (tense) accent else Color.WHITE,
+      alignment = Layout.Alignment.ALIGN_CENTER,
+      shadow = !tense, oswaldMedium = true,
+      glowColor = if (tense) withAlpha(accent, 0.5f) else null, glowRadius = d * 0.11f
+    )
+  }
+
+  /** Accent band tilted by -4° across the frame, « GO ! » centered in `goInk`. */
+  private fun drawGoBand(canvas: Canvas, width: Float, height: Float, refDim: Float, state: OverlayState) {
+    val accent = parseColor(state.accentColor, Color.WHITE)
+    val goSize = refDim * 0.16f
+    val bandH = goSize * 1.9f
+    canvas.save()
+    canvas.translate(width / 2f, height / 2f)
+    canvas.rotate(-4f)
+    shapePaint.reset()
+    shapePaint.style = Paint.Style.FILL
+    shapePaint.color = accent
+    canvas.drawRect(-width * 0.6f, -bandH / 2f, width * 0.6f, bandH / 2f, shapePaint)
+    drawText(
+      canvas, state.goLabel,
+      RectF(-width / 2f, -bandH / 2f, width / 2f, bandH / 2f),
+      fontSize = goSize, bold = false, color = parseColor(state.goInk, Color.BLACK),
+      alignment = Layout.Alignment.ALIGN_CENTER, oswaldMedium = true
+    )
+    canvas.restore()
+  }
+
+  private fun parseColor(hex: String, fallback: Int): Int =
+    try { Color.parseColor(hex) } catch (_: Exception) { fallback }
+
+  private fun withAlpha(color: Int, alpha: Float): Int =
+    Color.argb((alpha * 255).toInt(), Color.red(color), Color.green(color), Color.blue(color))
 
   // MARK: - Text drawing helper
 
@@ -261,7 +341,10 @@ class OverlayRenderer(private val context: Context) {
     monospace: Boolean = false,
     dsDigital: Boolean = false,
     oswald: Boolean = false,
-    letterSpacing: Float = 0f
+    letterSpacing: Float = 0f,
+    oswaldMedium: Boolean = false,
+    glowColor: Int? = null,
+    glowRadius: Float = 0f
   ) {
     textPaint.reset()
     textPaint.isAntiAlias = true
@@ -269,6 +352,7 @@ class OverlayRenderer(private val context: Context) {
     textPaint.textSize = fontSize
     textPaint.letterSpacing = letterSpacing
     textPaint.typeface = when {
+      oswaldMedium -> oswaldMediumTypeface ?: Typeface.DEFAULT_BOLD
       oswald -> oswaldTypeface ?: Typeface.DEFAULT_BOLD
       dsDigital -> dsDigitalTypeface ?: Typeface.create(Typeface.MONOSPACE, Typeface.NORMAL)
       monospace -> Typeface.create(Typeface.MONOSPACE, if (bold) Typeface.BOLD else Typeface.NORMAL)
@@ -277,6 +361,9 @@ class OverlayRenderer(private val context: Context) {
     }
     if (shadow) {
       textPaint.setShadowLayer(4f, 1f, 1f, Color.argb(179, 0, 0, 0))
+    }
+    if (glowColor != null) {
+      textPaint.setShadowLayer(glowRadius, 0f, 0f, glowColor)
     }
 
     // Use StaticLayout for proper alignment

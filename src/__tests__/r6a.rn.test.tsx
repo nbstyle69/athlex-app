@@ -313,8 +313,9 @@ describe('R6a : module natif et incrustation dans la vidéo inchangés', () => {
     const root = path.join(SRC, '..');
     const files = execSync('git ls-files modules/realtime-recorder', { cwd: root }).toString().trim().split('\n');
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
+    // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
     expect(crypto.createHash('sha256').update(all).digest('hex'))
-      .toBe('13a70926cacff27e9cdb575810f9da599703c39eb381e1317e6e18c7c4a15e64');
+      .toBe('2e4680f2aba8ceb953e809a7300795ba84d869f0c00726bb91f8e35fb408ef9e');
   });
 
   it('l’état d’incrustation suit toujours l’enregistrement', async () => {
