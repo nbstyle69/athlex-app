@@ -4,7 +4,7 @@ import {
   Modal, TextInput, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert, RefreshControl, FlatList, Share, AppState,
 } from 'react-native';
-import { ChevronLeft, Clock, Plus, RotateCcw, MessageSquare, Trophy, Heart, Send, X, Smile, Share2, Play } from 'lucide-react-native';
+import { Clock, Plus, RotateCcw, MessageSquare, Trophy, Heart, Send, X, Smile, Share2, Play } from 'lucide-react-native';
 import WebView from 'react-native-webview';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -37,6 +37,8 @@ import StrengthSetGrid, {
   StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSaveState, StrengthSessionStatus,
 } from '../../components/wod/StrengthSetGrid';
 import { AxButton } from '../../components/ax';
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxIconButton } from '../../components/ax/AxIconButton';
 import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
 import { recordStrengthPRs } from '../../services/strengthPR';
 import { computeMaxScore } from '../../utils/computeMaxScore';
@@ -747,12 +749,7 @@ export default function WODDetailScreen() {
     return (
       <View style={S.container}>
       <GlassBackground />
-        <View style={S.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn}>
-            <ChevronLeft color={theme.text} size={22} />
-          </TouchableOpacity>
-          <Text style={S.headerTitle}>WOD introuvable</Text>
-        </View>
+        <AxScreenHeader title="WOD introuvable" />
       </View>
     );
   }
@@ -764,15 +761,10 @@ export default function WODDetailScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn}>
-          <ChevronLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle} numberOfLines={1}>{wod.title}</Text>
-        <TouchableOpacity onPress={() => Share.share({ message: `${wod.title} — Rejoins le WOD sur AthleX ! athlex://wod/${wodId}` })} style={S.backBtn}>
-          <Share2 color={theme.text} size={20} />
-        </TouchableOpacity>
-      </View>
+      <AxScreenHeader
+        title={wod.title}
+        right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: `${wod.title} — Rejoins le WOD sur AthleX ! athlex://wod/${wodId}` })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
+      />
 
       <ScrollView
         ref={scrollRef}

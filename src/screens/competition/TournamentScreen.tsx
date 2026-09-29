@@ -1,13 +1,12 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxIconButton } from '../../components/ax/AxIconButton';
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl, Share,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import {
-  ChevronLeft, Users, Calendar, Zap, CheckCircle,
-  Lock, Clock, Timer, UserX, Shield, Star, XCircle, MessageSquare, Share2,
-} from 'lucide-react-native';
+import { Users, Calendar, Zap, CheckCircle, Lock, Clock, Timer, UserX, Shield, Star, XCircle, MessageSquare, Share2 } from 'lucide-react-native';
 import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -402,15 +401,12 @@ export default function TournamentScreen() {
     <View style={S.container}>
       <GlassBackground />
       {/* ── Header ── */}
+      <AxScreenHeader
+        title={tournament.name}
+        right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: t('tournament.shareMessage', { name: tournament?.name ?? t('tournament.defaultName'), id: tournamentId }) })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
+      />
       <LinearGradient colors={HEADER_GRADIENT} style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.back}>
-          <ChevronLeft color="rgba(255,255,255,0.7)" size={24} />
-        </TouchableOpacity>
         <View style={S.headerInfo}>
-          <TouchableOpacity onPress={() => Share.share({ message: t('tournament.shareMessage', { name: tournament?.name ?? t('tournament.defaultName'), id: tournamentId }) })} style={{ position: 'absolute', right: 0, top: 0, padding: 4 }}>
-            <Share2 color="rgba(255,255,255,0.7)" size={20} />
-          </TouchableOpacity>
-          <Text style={S.headerTitle} numberOfLines={1}>{tournament.name}</Text>
           <View style={S.headerMeta}>
             <View style={[S.levelBadge, { backgroundColor: `${levelColor}20` }]}>
               <Text style={[S.levelBadgeText, { color: levelColor }]}>
@@ -1080,7 +1076,7 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   container:        { flex: 1, backgroundColor: 'transparent' },
   loadingContainer: { flex: 1, backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' },
   errorText:        { fontSize: 14, color: theme.textMuted },
-  header:      { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 18, flexDirection: 'row', gap: 12 },
+  header:      { paddingTop: 16, paddingHorizontal: 20, paddingBottom: 18, flexDirection: 'row', gap: 12 },
   back:        { paddingTop: 6 },
   headerInfo:  { flex: 1 },
   headerTitle: { fontSize: 24, fontWeight: '900', color: '#fff', letterSpacing: -0.3, marginBottom: 10 },

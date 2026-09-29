@@ -205,6 +205,11 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R3c : en-tête « ‹ Retour » uniforme sur les écrans secondaires (app seule, aucune migration, apparence de l'en-tête seule).**
+- Nouveau `AxScreenHeader` (rangée 44, marges 20, chevron 16 + « Retour » label textMuted, titre titleM une ligne
+  centré, emplacement droit de même largeur) sur 37 écrans secondaires de l'athlète ; titres, actions de droite et
+  retours propres conservés ; chevron de retour retiré de l'écran racine Réservation ; écrans racine, plein écran, fenêtres, gérant / coach / connexion inchangés.
+
 **Refonte R3b : Accueil au nouveau design (app seule, aucune migration, apparence seule).**
 - `HomeScreen` et ses blocs (`HomeNewsCard`, `HomeExplorerBlock`) en composants ax et `theme.ax` /
   `axTypography` / `axRadius` / `axSpacing` : en-tête titleXL, carte ELO numberL accentText, palier en

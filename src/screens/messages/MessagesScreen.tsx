@@ -1,3 +1,4 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TextInput, TouchableOpacity,
@@ -539,6 +540,11 @@ export default function MessagesScreen() {
     >
       <GlassBackground />
       {/* Header */}
+      {canGoBack ? (
+        <AxScreenHeader title="Messages">
+            <Text style={S.headerSub}>{currentBox.name}</Text>
+        </AxScreenHeader>
+      ) : (
       <View style={S.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           {canGoBack && (
@@ -552,6 +558,7 @@ export default function MessagesScreen() {
           </View>
         </View>
       </View>
+      )}
 
       {/* Group tabs */}
       {groups.length > 0 && (

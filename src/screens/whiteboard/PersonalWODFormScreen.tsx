@@ -1,10 +1,13 @@
+import i18n from '../../i18n';
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxIconButton } from '../../components/ax/AxIconButton';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   TextInput, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert,
 } from 'react-native';
-import { ChevronLeft, Trash2 } from 'lucide-react-native';
+import { Trash2 } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -167,19 +170,10 @@ export default function PersonalWODFormScreen() {
       style={S.container}
     >
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.back}>
-          <ChevronLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>{editId ? 'Modifier mon WOD' : 'Créer un WOD'}</Text>
-        {editId ? (
-          <TouchableOpacity onPress={remove} style={S.back}>
-            <Trash2 color={theme.error} size={20} />
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 26 }} />
-        )}
-      </View>
+      <AxScreenHeader
+        title={editId ? 'Modifier mon WOD' : 'Créer un WOD'}
+        right={editId ? <AxIconButton icon={Trash2} onPress={remove} accessibilityLabel={i18n.t('common.delete')} testID="header-delete" /> : undefined}
+      />
 
       <ScrollView contentContainerStyle={[S.body, { paddingBottom: tabSpace }]} keyboardShouldPersistTaps="handled">
         <View style={S.row}>

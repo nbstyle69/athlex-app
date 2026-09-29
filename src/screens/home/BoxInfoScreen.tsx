@@ -1,9 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, ActivityIndicator, Linking,
 } from 'react-native';
-import { ArrowLeft, MapPin, Globe, Mail, Users, Calendar, Trophy, Building2, Phone, Navigation, User } from 'lucide-react-native';
+import { MapPin, Globe, Mail, Users, Calendar, Trophy, Building2, Phone, Navigation, User } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
@@ -121,13 +122,7 @@ export default function BoxInfoScreen({ navigation }: any) {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <ArrowLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Informations</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <AxScreenHeader title="Informations" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {/* Logo + Name */}

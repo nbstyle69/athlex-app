@@ -1,8 +1,9 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
-import { ArrowLeft, Sparkles, Bug, RefreshCw } from 'lucide-react-native';
+import { Sparkles, Bug, RefreshCw } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
@@ -111,13 +112,7 @@ export default function ChangelogScreen() {
     <View style={S.container}>
       <GlassBackground />
       {/* Header */}
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <ArrowLeft size={24} color={theme.text} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Nouveautés</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      <AxScreenHeader title="Nouveautés" />
 
       {loading ? (
         <ActivityIndicator size="large" color={theme.accent} style={{ marginTop: 40 }} />

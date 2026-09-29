@@ -1,8 +1,9 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React from 'react';
 import {
   View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator,
 } from 'react-native';
-import { ChevronLeft, Trophy } from 'lucide-react-native';
+import { Trophy } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { WhiteboardStackParamList } from '../../navigation';
@@ -102,13 +103,9 @@ export default function BoxRankingScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn}>
-          <ChevronLeft color={theme.textSecondary} size={24} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Classement de la box</Text>
+      <AxScreenHeader title="Classement de la box">
         <Text style={S.headerSub}>ELO propre à {currentBox?.name ?? 'la box'} — WODs de la box uniquement</Text>
-      </View>
+      </AxScreenHeader>
 
       {isLoading ? (
         <ActivityIndicator style={{ marginTop: 40 }} color={theme.accent} />

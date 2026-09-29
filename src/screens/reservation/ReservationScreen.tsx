@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, RefreshControl, Alert, Modal, FlatList, Linking,
 } from 'react-native';
-import { CalendarClock, ChevronLeft, ChevronRight, Users, Check, Clock, Timer, X, CalendarCheck, AlertTriangle, ExternalLink } from 'lucide-react-native';
+import { CalendarClock, ChevronRight, Users, Check, Clock, Timer, X, CalendarCheck, AlertTriangle, ExternalLink } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
@@ -339,9 +339,6 @@ export default function ReservationScreen() {
       <GlassBackground />
       <View style={S.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={12}>
-            <ChevronLeft color={theme.text} size={22} />
-          </TouchableOpacity>
           <View>
             <Text style={S.headerTitle}>{t('reservation.title')}</Text>
             <Text style={S.headerSub}>{currentBox.name}</Text>

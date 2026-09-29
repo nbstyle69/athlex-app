@@ -1,10 +1,11 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
   ScrollView, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft, Target, ChevronDown, ChevronUp, Dumbbell } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Dumbbell } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { captureError } from '../../lib/sentry';
@@ -144,16 +145,7 @@ export default function OneRMCalculatorScreen() {
   return (
     <SafeAreaView style={S.screen}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn} activeOpacity={0.7}>
-          <ArrowLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <View style={S.headerCenter}>
-          <Target color={theme.success} size={18} />
-          <Text style={S.headerTitle}>Calculateur 1RM</Text>
-        </View>
-        <View style={S.backBtn} />
-      </View>
+      <AxScreenHeader title="Calculateur 1RM" safeArea={false} />
 
       <ScrollView style={S.scroll} contentContainerStyle={[S.scrollContent, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
 

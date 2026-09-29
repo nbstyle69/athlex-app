@@ -1,12 +1,11 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxIconButton } from '../../components/ax/AxIconButton';
 import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList,
   ActivityIndicator, RefreshControl, Image, Linking, TextInput, Share,
 } from 'react-native';
-import {
-  ChevronLeft, ChevronRight, MapPin, Calendar,
-  Video, Clock, Zap, Play, ExternalLink, Info, DollarSign, Search, Share2, Users, Filter,
-} from 'lucide-react-native';
+import { ChevronRight, MapPin, Calendar, Video, Clock, Zap, Play, ExternalLink, Info, DollarSign, Search, Share2, Filter, Users } from 'lucide-react-native';
 import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -163,12 +162,18 @@ export default function PhysicalCompetitionScreen() {
     return (
       <View style={S.container}>
       <GlassBackground />
-        <View style={S.header}>
-          <TouchableOpacity onPress={() => setSelected(null)} style={S.backBtn} activeOpacity={0.7}>
-            <ChevronLeft color={theme.text} size={24} />
-          </TouchableOpacity>
-          <View style={{ flex: 1 }}>
-            <Text style={S.headerTitle} numberOfLines={1}>{selected.name}</Text>
+        <AxScreenHeader
+          title={selected.name}
+          onBack={() => setSelected(null)}
+          right={(
+            <>
+              <AxIconButton icon={Share2} onPress={() => Share.share({ message: t('phys.shareMessage', { name: selected.name, id: selected.id }) })} accessibilityLabel={t('common.share')} testID="header-share" />
+          {selected.logo_url ? (
+            <Image source={{ uri: selected.logo_url }} style={S.headerLogo} />
+          ) : null}
+            </>
+          )}
+        >
             <View style={S.metaRow}>
               {selected.location ? <><MapPin color={theme.textMuted} size={12} /><Text style={S.metaTxt}>{selected.location}</Text></> : null}
               {selected.mode === 'qualification' && selected.start_date ? (
@@ -177,14 +182,7 @@ export default function PhysicalCompetitionScreen() {
                 <><Calendar color={theme.textMuted} size={12} /><Text style={S.metaTxt}>{selected.date}</Text></>
               ) : null}
             </View>
-          </View>
-          <TouchableOpacity onPress={() => Share.share({ message: t('phys.shareMessage', { name: selected.name, id: selected.id }) })} style={{ padding: 4 }}>
-            <Share2 color={theme.text} size={20} />
-          </TouchableOpacity>
-          {selected.logo_url ? (
-            <Image source={{ uri: selected.logo_url }} style={S.headerLogo} />
-          ) : null}
-        </View>
+        </AxScreenHeader>
 
         {/* Mode + Format badges */}
         <View style={S.badgeRow}>
@@ -310,19 +308,11 @@ export default function PhysicalCompetitionScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn} activeOpacity={0.7}>
-          <ChevronLeft color={theme.text} size={24} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={S.headerTitle}>
-            {isQualifList ? t('phys.qualifTitle') : t('phys.noQualifTitle')}
-          </Text>
+      <AxScreenHeader title={isQualifList ? t('phys.qualifTitle') : t('phys.noQualifTitle')}>
           <Text style={S.headerSub}>
             {isQualifList ? t('phys.qualifSub') : t('phys.noQualifSub')}
           </Text>
-        </View>
-      </View>
+      </AxScreenHeader>
 
       <View style={S.searchBar}>
         <Search color={theme.textMuted} size={16} />

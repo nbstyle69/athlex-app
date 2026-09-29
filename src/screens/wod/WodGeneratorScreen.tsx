@@ -10,15 +10,14 @@
  * Le résultat s'ouvre sur `WodResult`.
  */
 
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, Switch,
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ChevronLeft, ChevronDown, ChevronUp, Sparkles, X, History, Heart, BookOpen, Zap, GraduationCap, Dumbbell,
-} from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Sparkles, X, History, Heart, BookOpen, Zap, GraduationCap, Dumbbell } from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -236,11 +235,7 @@ export default function WodGeneratorScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={[S.header, { paddingTop: insets.top + 12 }]}>
-        <View style={S.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <ChevronLeft color={theme.textSecondary} size={24} />
-          </TouchableOpacity>
+      <AxScreenHeader title="Générateur de WOD">
           <View style={S.menu}>
             <TouchableOpacity style={S.menuBtn} onPress={() => navigation.navigate('WodHistory')} activeOpacity={0.8} testID="wodgen-menu-history">
               <History color={theme.text} size={15} />
@@ -255,13 +250,10 @@ export default function WodGeneratorScreen() {
               <Text style={S.menuText}>{i18n.t('wodGenerator.programming')}</Text>
             </TouchableOpacity>
           </View>
-        </View>
-        {/* B1 : deux lignes centrées, la discipline toujours nommée — Functional comme les autres */}
-        <Text style={S.headerTitle}>Générateur de WOD</Text>
         <Text style={[S.headerDiscipline, { color: accent }]} testID="wodgen-discipline">
           {isMuscu ? 'Musculation' : sport === 'hybrid' ? 'Hybrid' : 'Functional'}
         </Text>
-      </View>
+      </AxScreenHeader>
 
       {/* B3 : le champ de recherche reste au-dessus du clavier (iOS ; Android redimensionne la fenêtre) */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>

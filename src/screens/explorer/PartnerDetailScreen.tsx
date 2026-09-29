@@ -1,11 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, ActivityIndicator, Linking, Alert,
 } from 'react-native';
-import {
-  ChevronLeft, Globe, Instagram, Tag, Copy, ExternalLink, Handshake,
-} from 'lucide-react-native';
+import { Globe, Instagram, Tag, Copy, ExternalLink, Handshake } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -83,12 +82,7 @@ export default function PartnerDetailScreen() {
     <View style={s.container}>
       <GlassBackground />
       {/* Header */}
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <ChevronLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={s.headerTitle} numberOfLines={1}>{partner.name}</Text>
-      </View>
+      <AxScreenHeader title={partner.name} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: tabSpace }}>
         {/* Logo + info */}

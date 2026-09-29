@@ -14,6 +14,7 @@ import { Play } from 'lucide-react-native';
 import { lightTheme, darkTheme, type AppTheme } from '../theme/palette';
 import { axColors } from '../theme/axTokens';
 import { contrast } from '../theme/contrast';
+import { R3C_SCREENS } from './r3cScreens';
 import {
   AxButton, AxCard, AxCheckbox, AxChip, AxDayItem, AxGlass, AxSwitch, AxTextField, withAlpha,
   resolveGlassOpacity, type AxButtonVariant,
@@ -358,14 +359,19 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'screens', 'competition', 'CompetitionRankingCard.tsx'),
     // R3b : l'Accueil de l'athlète passe au nouveau design.
     path.join(SRC, 'screens', 'home', 'HomeScreen.tsx'),
+    // R3c : en-tête « ‹ Retour » des écrans secondaires de l'athlète.
+    ...R3C_SCREENS.map((s) => path.join(SRC, 'screens', s.file)),
   ];
 
-  it('R3b : dans src/screens/home, seuls l’Accueil et ses blocs consomment ax', () => {
+  it('R3b / R3c : dans src/screens/home, seuls l’Accueil, ses blocs et les écrans secondaires R3c consomment ax', () => {
     const home = walk(path.join(SRC, 'screens', 'home'))
       .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
       .map((f) => path.basename(f))
       .sort();
-    expect(home).toEqual(['HomeExplorerBlock.tsx', 'HomeNewsCard.tsx', 'HomeScreen.tsx']);
+    expect(home).toEqual([
+      'BoxInfoScreen.tsx', 'ChangelogScreen.tsx', 'FriendsScreen.tsx', 'HomeExplorerBlock.tsx',
+      'HomeNewsCard.tsx', 'HomeScreen.tsx', 'OneRMCalculatorScreen.tsx',
+    ]);
   });
 
   it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {

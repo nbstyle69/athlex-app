@@ -1,6 +1,7 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { ChevronLeft, Building2 } from 'lucide-react-native';
+import { Building2 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
@@ -17,15 +18,9 @@ export default function ProgrammationScreen() {
   return (
     <View style={s.container}>
       <GlassBackground />
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.back}>
-          <ChevronLeft color={theme.text} size={24} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.headerTitle}>Programmes</Text>
+      <AxScreenHeader title="Programmes">
           <Text style={s.headerSub}>Choisis ton type d'entraînement</Text>
-        </View>
-      </View>
+      </AxScreenHeader>
 
       <View style={s.content}>
         {/* Programmes des Boxes */}

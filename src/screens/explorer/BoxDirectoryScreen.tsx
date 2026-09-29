@@ -1,9 +1,12 @@
+import i18n from '../../i18n';
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxIconButton } from '../../components/ax/AxIconButton';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   TextInput, Image, ActivityIndicator,
 } from 'react-native';
-import { ChevronLeft, Search, MapPin, Users, Map, X } from 'lucide-react-native';
+import { Search, MapPin, Users, Map, X } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -152,21 +155,12 @@ export default function BoxDirectoryScreen() {
     <View style={s.container}>
       <GlassBackground />
       {/* Header */}
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <ChevronLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.headerTitle}>Annuaire des Boxs</Text>
+      <AxScreenHeader
+        title="Annuaire des Boxs"
+        right={<AxIconButton icon={Map} onPress={() => navigation.navigate('BoxDirectoryMap', { boxes: filtered.filter(b => b.latitude && b.longitude) })} accessibilityLabel={i18n.t('common.map')} testID="header-map" />}
+      >
           <Text style={s.headerSub}>{filtered.length} box{filtered.length > 1 ? 's' : ''} référencée{filtered.length > 1 ? 's' : ''}</Text>
-        </View>
-        <TouchableOpacity
-          style={s.mapBtn}
-          onPress={() => navigation.navigate('BoxDirectoryMap', { boxes: filtered.filter(b => b.latitude && b.longitude) })}
-        >
-          <Map size={18} color={theme.accent} />
-        </TouchableOpacity>
-      </View>
+      </AxScreenHeader>
 
       {/* Search */}
       <View style={s.searchWrap}>

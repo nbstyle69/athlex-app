@@ -1,3 +1,4 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
@@ -7,7 +8,7 @@ import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line, Text as SvgText } 
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, Trophy, Dumbbell, Zap, Swords, ChevronRight } from 'lucide-react-native';
+import { TrendingUp, TrendingDown, Trophy, Dumbbell, Zap, Swords, ChevronRight, Minus } from 'lucide-react-native';
 import { HomeStackParamList } from '../../navigation';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
@@ -192,13 +193,7 @@ export default function EloHistoryScreen() {
     <View style={S.container}>
       <GlassBackground />
       {/* Header */}
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => nav.goBack()} style={S.backBtn}>
-          <ArrowLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Historique ELO</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <AxScreenHeader title="Historique ELO" onBack={() => nav.goBack()} />
 
       <ScrollView
         contentContainerStyle={[S.scroll, { paddingBottom: tabSpace }]}

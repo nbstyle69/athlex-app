@@ -1,9 +1,10 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, SectionList, TouchableOpacity,
   Image, ActivityIndicator,
 } from 'react-native';
-import { ChevronLeft, ChevronRight, Handshake, Tag } from 'lucide-react-native';
+import { ChevronRight, Handshake, Tag } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -104,15 +105,9 @@ export default function PartnersScreen() {
     <View style={s.container}>
       <GlassBackground />
       {/* Header */}
-      <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <ChevronLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.headerTitle}>Partenaires</Text>
+      <AxScreenHeader title="Partenaires">
           <Text style={s.headerSub}>Offres exclusives pour les athlètes AthleX</Text>
-        </View>
-      </View>
+      </AxScreenHeader>
 
       {loading ? (
         <View style={s.center}>

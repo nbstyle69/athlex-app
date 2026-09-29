@@ -7,6 +7,7 @@
  * Ajouter au Whiteboard, Saisir mon score, menu ⋯ (Copier / Partager).
  */
 
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator, Alert, Share,
@@ -15,10 +16,7 @@ import {
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  ChevronLeft, ChevronRight, ChevronDown, ChevronUp, RefreshCw, Bookmark, Heart, Check, Copy, Trophy, X,
-  Timer as TimerIcon, Clock, MoreHorizontal, Share2, ClipboardList,
-} from 'lucide-react-native';
+import { ChevronRight, ChevronDown, ChevronUp, RefreshCw, Bookmark, Heart, Check, Copy, Trophy, X, Timer as TimerIcon, Clock, MoreHorizontal, Share2, ClipboardList } from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -561,12 +559,7 @@ export default function WodResultScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={[S.header, { paddingTop: insets.top + 12 }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-          <ChevronLeft color={theme.textSecondary} size={24} />
-        </TouchableOpacity>
-        <Text style={S.headerLabel}>Ton WOD</Text>
-      </View>
+      <AxScreenHeader title="Ton WOD" />
 
       <ScrollView contentContainerStyle={[S.content, { paddingBottom: bottomBarPadding + 150 }]} showsVerticalScrollIndicator={false}>
         {formatRelache && (

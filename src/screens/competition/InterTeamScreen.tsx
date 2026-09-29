@@ -1,3 +1,4 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
@@ -246,20 +247,11 @@ export default function InterTeamScreen() {
       <View style={S.container}>
       <GlassBackground />
         {/* Header */}
-        <View style={S.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={S.backBtn}>
-            <ChevronRight size={22} color={theme.textMuted} style={{ transform: [{ rotate: '180deg' }] }} />
-          </TouchableOpacity>
-          <View style={S.headerIcon}>
-            <Users size={18} color={theme.accent} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={S.headerTitle}>{team ? team.name : t('interTeam.myTeam')}</Text>
+        <AxScreenHeader title={team ? team.name : t('interTeam.myTeam')}>
             <Text style={S.headerSub}>
               {team ? t('interTeam.membersCount', { count: acceptedCount, max: teamSize }) : t('interTeam.teamOf', { n: teamSize })}
             </Text>
-          </View>
-        </View>
+        </AxScreenHeader>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} keyboardShouldPersistTaps="handled">
 

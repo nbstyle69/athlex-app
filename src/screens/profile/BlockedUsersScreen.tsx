@@ -1,8 +1,9 @@
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Alert,
 } from 'react-native';
-import { ArrowLeft, UserX } from 'lucide-react-native';
+import { UserX } from 'lucide-react-native';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { getMyBlockedUsers, unblockUser } from '../../services/moderation';
 import UserAvatar from '../../components/UserAvatar';
@@ -46,13 +47,7 @@ export default function BlockedUsersScreen({ navigation }: any) {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <ArrowLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={S.headerTitle}>Utilisateurs bloqués</Text>
-        <View style={{ width: 22 }} />
-      </View>
+      <AxScreenHeader title="Utilisateurs bloqués" />
 
       {loading ? (
         <View style={S.center}><ActivityIndicator color={theme.accent} /></View>
