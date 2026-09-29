@@ -852,15 +852,6 @@
     "noScores": "No score submitted yet.",
     "seeList": "See list",
     "seeAll": "See all",
-    "tools": {
-      "title": "Tools",
-      "leaderboard": "Leaderboard",
-      "leaderboardDesc": "Individual · Teams · Box",
-      "timer": "Video timer",
-      "wodGenerator": "WOD generator",
-      "oneRM": "1RM calculator",
-      "oneRMDesc": "50% → 130% · Zones"
-    },
     "seeAllTournaments": "All tournaments",
     "tournamentStatus": {
       "open": "Open",
@@ -873,6 +864,24 @@
       "findBox": "Find a box",
       "programs": "Programs",
       "partners": "Partners"
+    },
+    "rankOpen": "Rank #{{rank}}, open the leaderboard",
+    "rankOpenNoValue": "Rank, open the leaderboard",
+    "news": {
+      "title": "Your box news",
+      "new": "New",
+      "open": "Open your box news: {{title}}",
+      "likes_one": "{{count}} like",
+      "likes_other": "{{count}} likes",
+      "comments_one": "{{count}} comment",
+      "comments_other": "{{count}} comments",
+      "ago": {
+        "now": "Just now",
+        "minutes": "{{count}} min ago",
+        "hours": "{{count}} h ago",
+        "days_one": "{{count}} day ago",
+        "days_other": "{{count}} days ago"
+      }
     }
   },
   "training": {
@@ -1325,7 +1334,13 @@
     "interBoxInfo": "Take on athletes from every box.\n3 WODs revealed progressively. Submit your scores with video proof. The Super Admin validates the results.",
     "finished": "Finished",
     "alreadyJoined": "Already registered",
-    "alreadyParticipating": "You are already participating."
+    "alreadyParticipating": "You are already participating.",
+    "ranking": {
+      "overline": "Leaderboard",
+      "summary": "#{{rank}} · ELO {{elo}} · {{level}}",
+      "see": "See",
+      "open": "Open the leaderboard"
+    }
   },
   "compDetail": {
     "tabInfos": "Info",
@@ -1802,19 +1817,11 @@
       },
       {
         "label": "Leaderboard",
-        "description": "Check out the different rankings."
+        "description": "Tap your rank to check out the different rankings."
       },
       {
-        "label": "Video Timer",
-        "description": "A timer with video recording — perfect for online qualifiers."
-      },
-      {
-        "label": "WOD Generator",
-        "description": "We suggest WODs based on what you want!"
-      },
-      {
-        "label": "1RM Calculator",
-        "description": "Find the load matching a % of your exercise."
+        "label": "Your box news",
+        "description": "Your box's latest article shows up here when it is less than two weeks old."
       },
       {
         "label": "Competition",
@@ -1822,7 +1829,7 @@
       },
       {
         "label": "Training",
-        "description": "Generate your WODs, start the timer and find your sessions."
+        "description": "Generate your WODs, start the timer, work out your 1RM and find your sessions."
       },
       {
         "label": "My box",

@@ -109,7 +109,6 @@ describe('remplacement de l’ancien générateur', () => {
     for (const old of ['WODGenerator', 'WODGenPro', 'WODSuggestions']) expect(nav).not.toContain(old);
     expect(nav).toMatch(/<HomeStack\.Screen name="WodGenerator" component=\{WodGeneratorScreen\} \/>/);
     expect(nav).toMatch(/<HomeStack\.Screen name="WodResult" component=\{WodResultScreen\} \/>/);
-    expect(read('src', 'screens', 'home', 'homeTools.ts')).toContain("screen: 'WodGenerator'");
   });
 
   it('le moteur ne dépend ni de Supabase ni du réseau ni d’une IA', () => {
