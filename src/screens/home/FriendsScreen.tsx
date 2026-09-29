@@ -1,10 +1,11 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxCard } from '../../components/ax/AxCard';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl, TextInput,
 } from 'react-native';
-import { ChevronLeft, UserPlus, Check, X, Search, UserCheck } from 'lucide-react-native';
+import { ChevronLeft, UserPlus, Check, X, Search, UserCheck, Users } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -18,6 +19,7 @@ import { HomeStackParamList } from '../../navigation';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import EmptyState from '../../components/EmptyState';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -202,15 +204,15 @@ export default function FriendsScreen() {
           {tab === 'friends' && (
             <>
               {friends.length === 0 ? (
-                <View style={S.emptyCard}>
-                  <Text style={S.emptyEmoji}>👥</Text>
-                  <Text style={S.emptyTitle}>Pas encore d'amis</Text>
-                  <Text style={S.emptySub}>Recherche des athlètes et envoie des invitations !</Text>
-                  <TouchableOpacity style={S.emptyBtn} onPress={() => setTab('search')}>
-                    <Search color="#fff" size={16} />
-                    <Text style={S.emptyBtnText}>Rechercher</Text>
-                  </TouchableOpacity>
-                </View>
+                <AxCard style={S.emptyFriends}>
+                  <EmptyState
+                    testID="friends-empty"
+                    icon={Users}
+                    title="Pas encore d'amis"
+                    text="Recherche des athlètes et envoie des invitations !"
+                    action={{ label: 'Rechercher', icon: Search, onPress: () => setTab('search') }}
+                  />
+                </AxCard>
               ) : (
                 friends.map(friend => (
                   <TouchableOpacity
@@ -412,12 +414,7 @@ function createStyles(theme: AppTheme) {
     emptyEmoji: { fontSize: 40 },
     emptyTitle: { fontSize: 17, fontWeight: '900', color: theme.text },
     emptySub: { fontSize: 13, color: theme.textMuted, textAlign: 'center', lineHeight: 18 },
-    emptyBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 6,
-      backgroundColor: theme.accent, borderRadius: 12,
-      paddingHorizontal: 20, paddingVertical: 12, marginTop: 4,
-    },
-    emptyBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+    emptyFriends: { marginTop: 20 },
     friendRow: {
       flexDirection: 'row', alignItems: 'center', gap: 12,
       backgroundColor: theme.card, borderRadius: 14, padding: 14,

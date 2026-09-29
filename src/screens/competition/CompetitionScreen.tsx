@@ -19,6 +19,7 @@ import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { useFocusQuery } from '../../hooks/useFocusQuery';
 import { fetchEloRank } from '../../services/eloRank';
 import CompetitionRankingCard from './CompetitionRankingCard';
+import EmptyState from '../../components/EmptyState';
 
 type Nav = NativeStackNavigationProp<CompetitionStackParamList, 'CompetitionList'>;
 
@@ -261,10 +262,7 @@ export default function CompetitionScreen() {
             {tLoading ? (
               <ActivityIndicator color={theme.accent} style={{ marginTop: 32 }} />
             ) : tournaments.length === 0 ? (
-              <View style={S.emptyBox}>
-                <Text style={S.emptyEmoji}>🏆</Text>
-                <Text style={S.emptyText}>{t('competition.noTournament')}</Text>
-              </View>
+              <EmptyState testID="competition-no-tournament" style={S.emptyBox} icon={Trophy} title={t('competition.noTournament')} />
             ) : (
               tournaments.map(tour => {
                 const participants = participantCounts[tour.id] ?? 0;
@@ -370,10 +368,7 @@ export default function CompetitionScreen() {
             {miniLoading ? (
               <ActivityIndicator color={theme.accent} style={{ marginTop: 32 }} />
             ) : miniTournaments.length === 0 ? (
-              <View style={S.emptyBox}>
-                <Text style={S.emptyEmoji}>⚡</Text>
-                <Text style={S.emptyText}>{t('competition.noMini')}</Text>
-              </View>
+              <EmptyState testID="competition-no-mini" style={S.emptyBox} icon={Zap} title={t('competition.noMini')} />
             ) : (
               miniTournaments.map(m => {
                 const levelColor = LevelColors[m.level] ?? theme.textMuted;
@@ -616,9 +611,7 @@ function createStyles(theme: AppTheme) {
     backgroundColor: theme.accent, marginTop: 4,
   },
   joinButtonText: { color: theme.onAccent, fontWeight: '700', fontSize: 13, letterSpacing: 0.5 },
-  emptyBox:   { alignItems: 'center', paddingTop: 48, gap: 10 },
-  emptyEmoji: { fontSize: 36 },
-  emptyText:  { fontSize: 14, color: theme.textMuted, textAlign: 'center' },
+  emptyBox:   { paddingTop: 48 },
   physInfoBox: {
     backgroundColor: `#8B5CF610`, borderRadius: 14, padding: 16,
     borderWidth: 1, borderColor: `#8B5CF625`, marginTop: 8,

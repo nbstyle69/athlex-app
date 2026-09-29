@@ -20,12 +20,21 @@ interface Props {
   /** Champ compact centré (grilles de séries). */
   compact?: boolean;
   maxLength?: number;
+  autoComplete?: TextInputProps['autoComplete'];
+  textContentType?: TextInputProps['textContentType'];
+  returnKeyType?: TextInputProps['returnKeyType'];
+  onSubmitEditing?: () => void;
+  autoCorrect?: boolean;
+  autoFocus?: boolean;
+  /** Élément posé à droite du champ (bouton afficher / masquer le mot de passe). */
+  trailing?: React.ReactNode;
   testID?: string;
 }
 
 export function AxTextField({
   value, onChangeText, placeholder, icon: Icon, error, keyboardType, secureTextEntry, multiline,
-  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, testID = 'ax-text-field',
+  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, autoComplete, textContentType, returnKeyType,
+  onSubmitEditing, autoCorrect, autoFocus, trailing, testID = 'ax-text-field',
 }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
@@ -48,11 +57,18 @@ export function AxTextField({
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); onBlur?.(); }}
           autoCapitalize={autoCapitalize}
+          autoComplete={autoComplete}
+          textContentType={textContentType}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          autoCorrect={autoCorrect}
+          autoFocus={autoFocus}
           accessibilityLabel={accessibilityLabel ?? placeholder}
           accessibilityHint={error}
           style={[axTypography.body, styles.input, { color: c.text }, multiline ? styles.multiline : null, compact ? styles.compactInput : null]}
         />
         {Icon && <Icon size={18} color={c.textMuted} strokeWidth={2} />}
+        {trailing}
       </View>
       {!!error && (
         <Text testID={`${testID}-error`} style={[axTypography.caption, { color: c.danger }]}>

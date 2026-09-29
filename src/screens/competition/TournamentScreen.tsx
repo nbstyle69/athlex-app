@@ -39,6 +39,7 @@ import i18n from '../../i18n';
 import { tournamentRefusal } from '../../utils/refusals';
 import { libelleEtape } from '../../utils/bracketWods';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { useConfirmDialog } from '../../components/ConfirmDialog';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'Tournament'>;
 type Route = RouteProp<CompetitionStackParamList, 'Tournament'>;
@@ -73,6 +74,7 @@ export default function TournamentScreen() {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const S = createStyles(theme);
+  const dialog = useConfirmDialog();
 
   const [activeTab,    setActiveTab]    = useState<'infos' | 'wods' | 'scores' | 'participants' | 'validate' | 'bracket' | 'divisions'>('infos');
   const [tournament,   setTournament]   = useState<any>(null);
@@ -327,7 +329,7 @@ export default function TournamentScreen() {
 
   async function handleKick(athleteId: string, username: string) {
     if (!isAdmin) return;
-    Alert.alert(
+    dialog.show(
       t('tournament.kickTitle'),
       t('tournament.kickMsg', { username }),
       [
@@ -347,7 +349,7 @@ export default function TournamentScreen() {
 
   async function handleLeave() {
     if (!user) return;
-    Alert.alert(
+    dialog.show(
       t('tournament.leaveTitle'),
       t('tournament.leaveMsg'),
       [
@@ -1068,6 +1070,7 @@ export default function TournamentScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      {dialog.element}
     </View>
   );
 }

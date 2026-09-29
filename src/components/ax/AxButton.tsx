@@ -20,6 +20,8 @@ interface Props {
   ink?: string;
   /** Posé sur l'image de la caméra : voile sombre et encre claire. */
   veil?: boolean;
+  /** Libellé lu par le lecteur d'écran quand il diffère du texte affiché. */
+  accessibilityLabel?: string;
   testID?: string;
 }
 
@@ -57,7 +59,7 @@ function veilButtonStyle(variant: AxButtonVariant, c: AxColors): VariantStyle {
 const DASH_WIDTH = 1.5;
 
 export function AxButton({
-  label, onPress, variant = 'accent', icon: Icon, disabled = false, loading = false, fullWidth = false, ink, veil = false, testID,
+  label, onPress, variant = 'accent', icon: Icon, disabled = false, loading = false, fullWidth = false, ink, veil = false, accessibilityLabel, testID,
 }: Props) {
   const { theme } = useTheme();
   const base = axButtonStyle(variant, theme.ax);
@@ -78,7 +80,7 @@ export function AxButton({
       onPress={inactive ? undefined : onPress}
       disabled={inactive}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ disabled: inactive, busy: loading }}
       onLayout={v.dashed ? onLayout : undefined}
       style={[

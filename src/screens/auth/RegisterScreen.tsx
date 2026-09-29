@@ -1,18 +1,23 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
-  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert, Linking,
+  View, Text, TouchableOpacity, StyleSheet, Image,
+  KeyboardAvoidingView, Platform, ScrollView, Alert, Linking,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Eye, EyeOff } from 'lucide-react-native';
+import { ChevronLeft, Eye, EyeOff, Mail, Lock, AtSign, User, UserRound } from 'lucide-react-native';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { AuthStackParamList } from '../../navigation';
 import { Gender } from '../../types';
-import { spacing, borderRadius, typography, shadows } from '../../theme/designTokens';
+import { AxButton } from '../../components/ax/AxButton';
+import { AxCard } from '../../components/ax/AxCard';
+import { AxCheckbox } from '../../components/ax/AxCheckbox';
+import { AxTextField } from '../../components/ax/AxTextField';
+import { withAlpha } from '../../components/ax/color';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
+import { useConfirmDialog } from '../../components/ConfirmDialog';
 import { OWNER_ONBOARDING_URL } from '../../lib/urls';
 import { translateAuthError } from '../../lib/authErrorMessage';
 
@@ -21,8 +26,10 @@ type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Regist
 export default function RegisterScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { signUp } = useAuth();
-  const { theme, mode } = useTheme();
-  const S = createStyles(theme);
+  const { theme } = useTheme();
+  const c = theme.ax;
+  const S = createStyles(c);
+  const dialog = useConfirmDialog();
   const [email,       setEmail]       = useState('');
   const [username,    setUsername]    = useState('');
   const [password,    setPassword]    = useState('');
@@ -43,14 +50,15 @@ export default function RegisterScreen({ navigation }: Props) {
     // Inform the user if their pseudo was auto-suffixed because the requested one was taken
     const pseudoChanged = !!finalUsername && finalUsername !== requestedUsername;
     const pseudoNotice = pseudoChanged
-      ? `\n\nℹ️ Le pseudo « ${requestedUsername} » était déjà pris, le tien est devenu « ${finalUsername} ». Tu peux le changer plus tard dans ton profil.`
+      ? `\n\nLe pseudo « ${requestedUsername} » était déjà pris, le tien est devenu « ${finalUsername} ». Tu peux le changer plus tard dans ton profil.`
       : '';
 
     if (error === 'CONFIRM_EMAIL') {
-      Alert.alert(
-        '📧 Confirme ton email',
+      dialog.show(
+        'Confirme ton email',
         `Un lien de confirmation a été envoyé à ${email.trim()}.\n\nClique sur le lien dans l'email pour activer ton compte, puis connecte-toi.${pseudoNotice}`,
-        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }],
+        { icon: Mail },
       );
     } else if (error) {
       Alert.alert(t('auth.registerFailed'), translateAuthError(t, error));
@@ -65,7 +73,7 @@ export default function RegisterScreen({ navigation }: Props) {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={S.flex}>
         <ScrollView contentContainerStyle={S.container} keyboardShouldPersistTaps="handled">
           <TouchableOpacity onPress={() => navigation.goBack()} style={S.back}>
-            <ChevronLeft color={theme.textSecondary} size={24} />
+            <ChevronLeft color={c.textMuted} size={24} />
             <Text style={S.backText}>{t('common.back')}</Text>
           </TouchableOpacity>
 
@@ -77,15 +85,16 @@ export default function RegisterScreen({ navigation }: Props) {
             <Text style={S.appName}>AthleX</Text>
           </View>
 
-          <View style={S.form}>
+          <AxCard style={S.form}>
             <Text style={S.title}>{t('auth.registerTitle')}</Text>
 
             <View style={S.inputContainer}>
               <Text style={S.label}>{t('auth.username')}</Text>
-              <TextInput
-                style={S.input}
+              <AxTextField
+                testID="register-username"
+                icon={AtSign}
                 placeholder="TonPseudo"
-                placeholderTextColor={theme.textMuted}
+                accessibilityLabel={t('auth.username')}
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
@@ -97,10 +106,11 @@ export default function RegisterScreen({ navigation }: Props) {
 
             <View style={S.inputContainer}>
               <Text style={S.label}>{t('auth.email')}</Text>
-              <TextInput
-                style={S.input}
+              <AxTextField
+                testID="register-email"
+                icon={Mail}
                 placeholder="ton@email.com"
-                placeholderTextColor={theme.textMuted}
+                accessibilityLabel={t('auth.email')}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -113,48 +123,54 @@ export default function RegisterScreen({ navigation }: Props) {
 
             <View style={S.inputContainer}>
               <Text style={S.label}>{t('auth.password')}</Text>
-              <View style={{ position: 'relative' }}>
-                <TextInput
-                  style={[S.input, { paddingRight: 48 }]}
-                  placeholder="••••••••"
-                  placeholderTextColor={theme.textMuted}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoComplete="new-password"
-                  textContentType="newPassword"
-                  returnKeyType="done"
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityLabel={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                >
-                  {showPassword
-                    ? <EyeOff color={theme.textMuted} size={20} />
-                    : <Eye color={theme.textMuted} size={20} />}
-                </TouchableOpacity>
-              </View>
+              <AxTextField
+                testID="register-password"
+                icon={Lock}
+                placeholder="••••••••"
+                accessibilityLabel={t('auth.password')}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoComplete="new-password"
+                textContentType="newPassword"
+                returnKeyType="done"
+                trailing={(
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityLabel={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  >
+                    {showPassword
+                      ? <EyeOff color={c.textMuted} size={20} />
+                      : <Eye color={c.textMuted} size={20} />}
+                  </TouchableOpacity>
+                )}
+              />
             </View>
 
             <View style={S.inputContainer}>
               <Text style={S.label}>{t('auth.gender')}</Text>
               <View style={S.roleRow}>
                 <TouchableOpacity
+                  testID="register-gender-male"
                   style={[S.roleCard, gender === 'male' && S.roleCardActive]}
                   onPress={() => setGender('male')}
                   activeOpacity={0.8}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: gender === 'male' }}
                 >
-                  <Text style={{ fontSize: 22 }}>♂</Text>
+                  <User color={gender === 'male' ? c.accentText : c.textMuted} size={22} strokeWidth={2} />
                   <Text style={[S.roleLabel, gender === 'male' && S.roleLabelActive]}>{t('auth.male')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
+                  testID="register-gender-female"
                   style={[S.roleCard, gender === 'female' && S.roleCardActive]}
                   onPress={() => setGender('female')}
                   activeOpacity={0.8}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: gender === 'female' }}
                 >
-                  <Text style={{ fontSize: 22 }}>♀</Text>
+                  <UserRound color={gender === 'female' ? c.accentText : c.textMuted} size={22} strokeWidth={2} />
                   <Text style={[S.roleLabel, gender === 'female' && S.roleLabelActive]}>{t('auth.female')}</Text>
                 </TouchableOpacity>
               </View>
@@ -162,21 +178,27 @@ export default function RegisterScreen({ navigation }: Props) {
 
 
             <View style={S.cguRow}>
-              <TouchableOpacity onPress={() => setAcceptedCGU(!acceptedCGU)} style={S.cguCheckbox} accessibilityLabel={acceptedCGU ? 'Décocher les CGU' : 'Accepter les CGU'} accessibilityRole="checkbox">
-                {acceptedCGU && <View style={S.cguChecked} />}
-              </TouchableOpacity>
+              <AxCheckbox
+                testID="register-cgu"
+                checked={acceptedCGU}
+                onChange={() => setAcceptedCGU(!acceptedCGU)}
+                accessibilityLabel={acceptedCGU ? 'Décocher les CGU' : 'Accepter les CGU'}
+              />
               <Text style={S.cguText}>
                 {t('auth.acceptPrefix')}{' '}
                 <Text style={S.cguLink} onPress={() => navigation.navigate('Legal' as never)}>{t('auth.cguLink')}</Text>
               </Text>
             </View>
 
-            <TouchableOpacity onPress={handleRegister} disabled={loading || !acceptedCGU} activeOpacity={0.8} accessibilityLabel="Créer un compte" accessibilityRole="button"
-              style={[S.button, { backgroundColor: theme.ctaBg, borderWidth: 2, borderColor: theme.ctaBorder }, !acceptedCGU && { opacity: 0.5 }]}>
-              {loading
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={S.buttonText}>{t('auth.joinBattle')}</Text>}
-            </TouchableOpacity>
+            <AxButton
+              testID="register-submit"
+              label={t('auth.joinBattle')}
+              accessibilityLabel="Créer un compte"
+              onPress={handleRegister}
+              loading={loading}
+              disabled={!acceptedCGU}
+              fullWidth
+            />
 
             <TouchableOpacity
               style={S.ownerRow}
@@ -190,136 +212,47 @@ export default function RegisterScreen({ navigation }: Props) {
                 <Text style={S.ownerLink}>{t('auth.ownerLink')}</Text>
               </Text>
             </TouchableOpacity>
-          </View>
+          </AxCard>
         </ScrollView>
       </KeyboardAvoidingView>
+      {dialog.element}
     </View>
   );
 }
 
-function createStyles(theme: AppTheme) {
-  const isDark = theme.mode === 'dark';
+function createStyles(c: AxColors) {
   return StyleSheet.create({
     gradient: { flex: 1, backgroundColor: 'transparent' },
     flex: { flex: 1 },
-    container: { flexGrow: 1, padding: spacing.xl, paddingTop: spacing.xxxl },
-    back: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.lg },
-    backText: { color: theme.textSecondary, ...typography.body },
-    logoContainer: { alignItems: 'center', marginBottom: spacing.xl },
-    logo: {
-      width: 80, height: 80, resizeMode: 'contain', marginBottom: spacing.sm,
-    },
-    appName: { 
-      ...typography.h2, 
-      fontFamily: 'Barlow_900Black', 
-      color: theme.text, 
-      letterSpacing: 2,
-    },
-    form: {
-      backgroundColor: theme.card,
-      borderRadius: borderRadius.xl,
-      padding: spacing.xl,
-      borderWidth: 1,
-      borderColor: theme.border,
-      ...shadows.md,
-    },
-    title: { 
-      ...typography.h3, 
-      color: theme.text, 
-      marginBottom: spacing.lg,
-    },
-    inputContainer: { marginBottom: spacing.md },
-    label: { 
-      ...typography.label, 
-      color: theme.textSecondary, 
-      marginBottom: spacing.xs,
-      textTransform: 'none',
-    },
-    input: {
-      backgroundColor: isDark ? theme.surface : theme.background,
-      borderRadius: borderRadius.lg,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.md,
-      color: theme.text,
-      ...typography.body,
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    roleRow: { flexDirection: 'row', gap: spacing.sm },
+    container: { flexGrow: 1, padding: axSpacing.xl, paddingTop: 48 },
+    back: { flexDirection: 'row', alignItems: 'center', marginBottom: axSpacing.lg },
+    backText: { ...axTypography.labelSmall, color: c.textMuted },
+    logoContainer: { alignItems: 'center', marginBottom: axSpacing.xl },
+    logo: { width: 72, height: 72, resizeMode: 'contain', marginBottom: axSpacing.sm },
+    appName: { ...axTypography.titleL, color: c.text },
+    form: { gap: axSpacing.md },
+    title: { ...axTypography.titleM, color: c.text },
+    inputContainer: { gap: axSpacing.xs },
+    label: { ...axTypography.labelSmall, color: c.textMuted },
+    roleRow: { flexDirection: 'row', gap: axSpacing.sm },
     roleCard: {
       flex: 1,
-      padding: spacing.md,
-      borderRadius: borderRadius.lg,
+      padding: axSpacing.md,
+      borderRadius: axRadius.control,
       borderWidth: 1,
-      borderColor: theme.border,
-      backgroundColor: isDark ? theme.surface : theme.background,
+      borderColor: c.fieldBorder,
+      backgroundColor: c.field,
       alignItems: 'center',
-      gap: spacing.xs,
+      gap: axSpacing.xs,
     },
-    roleCardActive: { 
-      borderColor: theme.accent, 
-      backgroundColor: `${theme.accent}15`,
-    },
-    roleLabel: { 
-      ...typography.buttonSmall, 
-      color: theme.textMuted, 
-      textAlign: 'center',
-    },
-    roleLabelActive: { color: theme.accent },
-    ownerRow: {
-      marginTop: spacing.md,
-      alignItems: 'center',
-    },
-    ownerText: {
-      ...typography.bodySmall,
-      color: theme.textMuted,
-      textAlign: 'center',
-    },
-    ownerLink: {
-      color: theme.accent,
-      fontWeight: '700',
-      textDecorationLine: 'underline',
-    },
-    button: { 
-      borderRadius: borderRadius.lg, 
-      padding: spacing.md, 
-      alignItems: 'center', 
-      marginTop: spacing.sm,
-    },
-    buttonText: { 
-      color: '#fff', 
-      ...typography.buttonLarge,
-    },
-    cguRow: { 
-      flexDirection: 'row', 
-      alignItems: 'flex-start', 
-      gap: spacing.sm, 
-      marginTop: spacing.md,
-    },
-    cguCheckbox: {
-      width: 22, height: 22, 
-      borderRadius: borderRadius.sm, 
-      borderWidth: 2,
-      borderColor: theme.accent, 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      marginTop: spacing.xxs,
-    },
-    cguChecked: { 
-      width: 12, height: 12, 
-      borderRadius: 3, 
-      backgroundColor: theme.accent,
-    },
-    cguText: { 
-      flex: 1, 
-      ...typography.bodySmall, 
-      color: theme.textMuted, 
-      lineHeight: 18,
-    },
-    cguLink: { 
-      color: theme.accent, 
-      fontWeight: '700', 
-      textDecorationLine: 'underline',
-    },
+    roleCardActive: { borderColor: c.accentText, backgroundColor: withAlpha(c.accent, 0.12) },
+    roleLabel: { ...axTypography.labelSmall, color: c.textMuted, textAlign: 'center' },
+    roleLabelActive: { color: c.accentText },
+    ownerRow: { alignItems: 'center' },
+    ownerText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+    ownerLink: { ...axTypography.labelSmall, color: c.accentText, textDecorationLine: 'underline' },
+    cguRow: { flexDirection: 'row', alignItems: 'flex-start', gap: axSpacing.sm },
+    cguText: { flex: 1, ...axTypography.bodySmall, color: c.textMuted },
+    cguLink: { ...axTypography.labelSmall, color: c.accentText, textDecorationLine: 'underline' },
   });
 }

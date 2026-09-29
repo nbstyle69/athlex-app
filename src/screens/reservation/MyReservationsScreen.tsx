@@ -13,6 +13,8 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { cancelClassReminder } from '../../services/notifications';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { useConfirmDialog } from '../../components/ConfirmDialog';
+import EmptyState from '../../components/EmptyState';
 
 interface ReservationRow {
   id: string;
@@ -42,6 +44,7 @@ export default function MyReservationsScreen() {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation();
   const S = createStyles(theme);
+  const dialog = useConfirmDialog();
 
   const [reservations, setReservations] = useState<ReservationRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -127,15 +130,13 @@ export default function MyReservationsScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={theme.accent} />
           }
           ListEmptyComponent={
-            <View style={S.empty}>
-              <Calendar color={theme.textMuted} size={40} strokeWidth={1.5} />
-              <Text style={S.emptyTitle}>
-                {tab === 'upcoming' ? t('myReservations.emptyUpcomingTitle') : t('myReservations.emptyPastTitle')}
-              </Text>
-              <Text style={S.emptySub}>
-                {tab === 'upcoming' ? t('myReservations.emptyUpcomingSub') : t('myReservations.emptyPastSub')}
-              </Text>
-            </View>
+            <EmptyState
+              testID="my-reservations-empty"
+              style={S.empty}
+              icon={Calendar}
+              title={tab === 'upcoming' ? t('myReservations.emptyUpcomingTitle') : t('myReservations.emptyPastTitle')}
+              text={tab === 'upcoming' ? t('myReservations.emptyUpcomingSub') : t('myReservations.emptyPastSub')}
+            />
           }
           renderItem={({ item }) => {
             const s = item.schedule;
@@ -174,13 +175,13 @@ export default function MyReservationsScreen() {
                       onPress={() => {
                         const minsLeft = minutesUntilSlot(s.scheduled_date, s.start_time);
                         if (minsLeft < CANCEL_CUTOFF_MIN) {
-                          Alert.alert(
+                          dialog.show(
                             t('reservation.tooLateTitle'),
                             t('reservation.cancelTooLate', { min: CANCEL_CUTOFF_MIN }),
                           );
                           return;
                         }
-                        Alert.alert(
+                        dialog.show(
                           isConfirmed ? t('reservation.cancelReservationTitle') : t('reservation.leaveWaitlistTitle'),
                           isConfirmed
                             ? t('myReservations.cancelConfirmedBody')
@@ -216,6 +217,7 @@ export default function MyReservationsScreen() {
           }}
         />
       )}
+      {dialog.element}
     </View>
   );
 }
@@ -246,9 +248,7 @@ function createStyles(t: AppTheme) {
     tabText: { fontSize: 13, fontWeight: '700', color: t.textMuted },
     tabTextActive: { color: t.accent },
 
-    empty: { alignItems: 'center', paddingTop: 60, gap: 10 },
-    emptyTitle: { fontSize: 16, fontWeight: '800', color: t.text },
-    emptySub: { fontSize: 13, color: t.textMuted, textAlign: 'center', paddingHorizontal: 32 },
+    empty: { paddingTop: 60 },
 
     card: {
       flexDirection: 'row', alignItems: 'stretch',

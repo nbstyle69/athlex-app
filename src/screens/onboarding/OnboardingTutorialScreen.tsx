@@ -1,12 +1,16 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity,
-  Animated, ViewToken, Image, TextInput, Alert, ActivityIndicator,
+  Animated, ViewToken, Image, Alert,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { Dumbbell, Clock, Trophy, Building2, Camera, ChevronRight, Hash, ArrowRight, Zap } from 'lucide-react-native';
+import { Dumbbell, Clock, Trophy, Building2, Camera, Hash, ArrowRight, Zap, Rocket } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { AxButton } from '../../components/ax/AxButton';
+import { AxTextField } from '../../components/ax/AxTextField';
+import { withAlpha } from '../../components/ax/color';
+import { axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { useAuth } from '../../context/AuthContext';
 import { awardLevelBadge } from '../../services/gamification';
 import { trackOnboardingStep, trackOnboardingComplete, trackOnboardingBoxJoin, trackOnboardingSkipBox } from '../../lib/analytics';
@@ -138,7 +142,7 @@ function SlideIcon({ type, color, badgeScale }: { type: Slide['icon']; color: st
       return (
         <Animated.View style={badgeScale ? { transform: [{ scale: badgeScale }] } : undefined}>
           <View style={{ alignItems: 'center' }}>
-            <Text style={{ fontSize: 80 }}>🚀</Text>
+            <Rocket testID="tutorial-badge-icon" size={80} color={color} strokeWidth={1.5} />
           </View>
         </Animated.View>
       );
@@ -148,6 +152,8 @@ function SlideIcon({ type, color, badgeScale }: { type: Slide['icon']; color: st
 // ── ELO animated counter ──────────────────────────────────
 
 function EloCounter() {
+  const { theme } = useTheme();
+  const ink = theme.ax.warning;
   const [display, setDisplay] = useState(1000);
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -166,8 +172,8 @@ function EloCounter() {
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-      <Zap size={16} color="#F59E0B" />
-      <Text style={{ fontSize: 18, fontWeight: '900', color: '#F59E0B', fontVariant: ['tabular-nums'] }}>
+      <Zap size={16} color={ink} />
+      <Text style={[axTypography.titleM, { color: ink, fontVariant: ['tabular-nums'] }]}>
         ELO {display}
       </Text>
     </View>
@@ -185,10 +191,8 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
   const { theme } = useTheme();
   const { user, joinBox, skipBox, currentBox } = useAuth();
   const isLoggedIn = !!user;
-  const S = createStyles(theme);
-  // The welcome/badge slides use the app brand accent (emerald in dark, silver in light).
-  const slideColor = (raw?: string) =>
-    raw === '#059669' || raw === '#10b981' ? theme.accent : (raw ?? theme.accent);
+  const c = theme.ax;
+  const S = createStyles(c);
   const flatListRef = useRef<FlatList>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -291,7 +295,7 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
 
       {/* Skip button */}
       {!isLast && (
-        <TouchableOpacity style={S.skipBtn} onPress={handleDone} activeOpacity={0.7}>
+        <TouchableOpacity testID="tutorial-skip" style={S.skipBtn} onPress={handleDone} activeOpacity={0.7} accessibilityRole="button">
           <Text style={S.skipText}>{t('onboarding.tutorial.skip')}</Text>
         </TouchableOpacity>
       )}
@@ -334,8 +338,8 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
               <View style={S.slide}>
                 <Animated.View style={[S.slideContent, { opacity, transform: [{ translateY }] }]}>
                   {/* Icon with parallax */}
-                  <Animated.View style={[S.iconCircle, { backgroundColor: slideColor(item.color) + '18', transform: [{ translateX: iconTranslateX }] }]}>
-                    <SlideIcon type={item.icon} color={slideColor(item.color)} badgeScale={item.icon === 'badge' ? badgeScale : undefined} />
+                  <Animated.View style={[S.iconCircle, { transform: [{ translateX: iconTranslateX }] }]}>
+                    <SlideIcon type={item.icon} color={c.accentText} badgeScale={item.icon === 'badge' ? badgeScale : undefined} />
                   </Animated.View>
                   <Text style={S.title}>{t(`onboarding.slides.${item.key}.title`)}</Text>
                   <Text style={S.description}>{t(`onboarding.slides.${item.key}.description`)}</Text>
@@ -350,31 +354,27 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
                       ) : (
                         <>
                           <View style={S.boxInputRow}>
-                            <TextInput
-                              style={S.boxCodeInput}
-                              placeholder="ABC123"
-                              placeholderTextColor={theme.textMuted}
-                              value={boxCode}
-                              onChangeText={v => setBoxCode(v.toUpperCase())}
-                              autoCapitalize="characters"
-                              maxLength={6}
-                            />
-                            <TouchableOpacity
-                              style={[S.boxJoinBtn, (boxCode.length !== 6 || joining) && { opacity: 0.4 }]}
+                            <View style={S.boxCodeField}>
+                              <AxTextField
+                                testID="tutorial-box-code"
+                                placeholder="ABC123"
+                                value={boxCode}
+                                onChangeText={v => setBoxCode(v.toUpperCase())}
+                                autoCapitalize="characters"
+                                maxLength={6}
+                              />
+                            </View>
+                            <AxButton
+                              testID="tutorial-box-join"
+                              label={t('onboarding.tutorial.join')}
                               onPress={handleJoinBox}
-                              disabled={boxCode.length !== 6 || joining}
-                              activeOpacity={0.85}
-                            >
-                              {joining ? (
-                                <ActivityIndicator color="#fff" size="small" />
-                              ) : (
-                                <Text style={S.boxJoinBtnText}>{t('onboarding.tutorial.join')}</Text>
-                              )}
-                            </TouchableOpacity>
+                              loading={joining}
+                              disabled={boxCode.length !== 6}
+                            />
                           </View>
-                          <TouchableOpacity onPress={handleSkipBox} style={S.skipBoxBtn} activeOpacity={0.7}>
+                          <TouchableOpacity testID="tutorial-skip-box" onPress={handleSkipBox} style={S.skipBoxBtn} activeOpacity={0.7}>
                             <Text style={S.skipBoxText}>{t('onboarding.tutorial.continueWithoutBox')}</Text>
-                            <ArrowRight size={14} color={theme.textMuted} />
+                            <ArrowRight size={14} color={c.accentText} />
                           </TouchableOpacity>
                         </>
                       )}
@@ -405,7 +405,7 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
             return (
               <Animated.View
                 key={i}
-                style={[S.dot, { width: dotWidth, opacity: dotOpacity, backgroundColor: slideColor(SLIDES[currentIndex]?.color) }]}
+                style={[S.dot, { width: dotWidth, opacity: dotOpacity, backgroundColor: c.accentText }]}
               />
             );
           })}
@@ -413,35 +413,28 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
 
         {/* CTA Button — hidden on box slide when logged in (buttons are inline) */}
         {(!isBoxSlide || !isLoggedIn) && (
-          <TouchableOpacity
-            style={[S.ctaBtn, { backgroundColor: slideColor(SLIDES[currentIndex]?.color) }]}
-            onPress={handleNext}
-            activeOpacity={0.85}
-          >
-            <Text style={S.ctaText}>
-              {isLast ? t('onboarding.tutorial.discoverApp') : currentIndex === 0 ? t('onboarding.tutorial.letsGo') : t('onboarding.tutorial.next')}
-            </Text>
-            {!isLast && <ChevronRight size={20} color="#fff" style={{ marginLeft: 4 }} />}
-          </TouchableOpacity>
+          <View style={S.cta}>
+            <AxButton
+              testID="tutorial-next"
+              label={isLast ? t('onboarding.tutorial.discoverApp') : currentIndex === 0 ? t('onboarding.tutorial.letsGo') : t('onboarding.tutorial.next')}
+              onPress={handleNext}
+              fullWidth
+            />
+          </View>
         )}
 
         {/* Box slide: show "Suivant" only if box was joined */}
         {isBoxSlide && boxJoined && (
-          <TouchableOpacity
-            style={[S.ctaBtn, { backgroundColor: SLIDES[currentIndex]?.color ?? '#8B5CF6' }]}
-            onPress={handleNext}
-            activeOpacity={0.85}
-          >
-            <Text style={S.ctaText}>{t('onboarding.tutorial.next')}</Text>
-            <ChevronRight size={20} color="#fff" style={{ marginLeft: 4 }} />
-          </TouchableOpacity>
+          <View style={S.cta}>
+            <AxButton testID="tutorial-next-box" label={t('onboarding.tutorial.next')} onPress={handleNext} fullWidth />
+          </View>
         )}
       </View>
     </View>
   );
 }
 
-function createStyles(t: AppTheme) { return StyleSheet.create({
+function createStyles(c: AxColors) { return StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'transparent',
@@ -451,14 +444,10 @@ function createStyles(t: AppTheme) { return StyleSheet.create({
     top: 60,
     right: 24,
     zIndex: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: axSpacing.lg,
+    paddingVertical: axSpacing.sm,
   },
-  skipText: {
-    color: t.textMuted,
-    fontSize: 15,
-    fontWeight: '500',
-  },
+  skipText: { ...axTypography.labelSmall, color: c.accentText },
   slide: {
     width,
     flex: 1,
@@ -474,91 +463,42 @@ function createStyles(t: AppTheme) { return StyleSheet.create({
     width: 160,
     height: 160,
     borderRadius: 80,
+    backgroundColor: withAlpha(c.accent, 0.12),
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 32,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: t.text,
-    textAlign: 'center',
-    marginBottom: 14,
-  },
-  description: {
-    fontSize: 15,
-    lineHeight: 23,
-    color: t.textSecondary,
-    textAlign: 'center',
-    maxWidth: 320,
-  },
+  title: { ...axTypography.titleXL, color: c.text, textAlign: 'center', marginBottom: 14 },
+  description: { ...axTypography.body, color: c.textMuted, textAlign: 'center', maxWidth: 320 },
   bottomContainer: {
     paddingBottom: 60,
+    paddingHorizontal: 32,
     alignItems: 'center',
-    gap: 24,
+    gap: axSpacing['2xl'],
   },
   dotsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: axSpacing.sm,
   },
   dot: {
     height: 8,
     borderRadius: 4,
   },
-  ctaBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 48,
-    borderRadius: 16,
-    minWidth: 220,
-  },
-  ctaText: {
-    color: '#FFFFFF',
-    fontSize: 17,
-    fontWeight: '700',
-  },
+  cta: { alignSelf: 'stretch' },
 
   // Box slide
   boxSection: {
     width: '100%',
-    marginTop: 24,
-    gap: 12,
+    marginTop: axSpacing['2xl'],
+    gap: axSpacing.md,
   },
   boxInputRow: {
     flexDirection: 'row',
     gap: 10,
     alignItems: 'center',
   },
-  boxCodeInput: {
-    flex: 1,
-    fontSize: 22,
-    fontWeight: '900',
-    color: t.text,
-    letterSpacing: 8,
-    textAlign: 'center',
-    backgroundColor: t.card,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: t.border,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  boxJoinBtn: {
-    backgroundColor: '#8B5CF6',
-    borderRadius: 14,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  boxJoinBtnText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
+  boxCodeField: { flex: 1 },
   skipBoxBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -566,18 +506,10 @@ function createStyles(t: AppTheme) { return StyleSheet.create({
     gap: 6,
     paddingVertical: 10,
   },
-  skipBoxText: {
-    fontSize: 14,
-    color: t.textMuted,
-    textDecorationLine: 'underline',
-  },
+  skipBoxText: { ...axTypography.labelSmall, color: c.accentText, flexShrink: 1, textAlign: 'center' },
   boxJoinedRow: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: axSpacing.lg,
   },
-  boxJoinedText: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: t.success,
-  },
+  boxJoinedText: { ...axTypography.titleM, color: c.success, textAlign: 'center' },
 }); }

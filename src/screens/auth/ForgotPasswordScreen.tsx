@@ -1,25 +1,28 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
+  View, Text, TouchableOpacity, StyleSheet,
+  KeyboardAvoidingView, Platform, ScrollView, Alert,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Mail, CheckCircle } from 'lucide-react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { AuthStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
-import { spacing, borderRadius, typography, shadows } from '../../theme/designTokens';
+import { AxButton } from '../../components/ax/AxButton';
+import { AxCard } from '../../components/ax/AxCard';
+import { AxTextField } from '../../components/ax/AxTextField';
+import { axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 
 type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'ForgotPassword'> };
 
 export default function ForgotPasswordScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { resetPassword } = useAuth();
-  const { theme, mode } = useTheme();
-  const S = createStyles(theme);
+  const { theme } = useTheme();
+  const c = theme.ax;
+  const S = createStyles(c);
 
   const [email,   setEmail]   = useState('');
   const [loading, setLoading] = useState(false);
@@ -48,14 +51,14 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={S.container} keyboardShouldPersistTaps="handled">
 
           <TouchableOpacity onPress={() => navigation.goBack()} style={S.back}>
-            <ChevronLeft color={theme.textSecondary} size={24} />
+            <ChevronLeft color={c.textMuted} size={24} />
             <Text style={S.backText}>{t('common.back')}</Text>
           </TouchableOpacity>
 
           {sent ? (
-            <View style={S.form}>
-              <View style={S.successIcon}>
-                <CheckCircle color={theme.accent} size={52} strokeWidth={1.5} />
+            <AxCard style={S.form}>
+              <View style={S.iconRow}>
+                <CheckCircle color={c.accentText} size={52} strokeWidth={1.5} />
               </View>
               <Text style={S.title}>{t('forgot.sentTitle')}</Text>
               <Text style={S.subtitle}>
@@ -65,16 +68,12 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
               <Text style={S.hint}>
                 {t('forgot.sentHint')}
               </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Login')} activeOpacity={0.8}>
-                <LinearGradient colors={[theme.accent, theme.accentDark]} style={S.button}>
-                  <Text style={S.buttonText}>{t('forgot.backToLogin')}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
+              <AxButton testID="forgot-back-to-login" label={t('forgot.backToLogin')} onPress={() => navigation.navigate('Login')} fullWidth />
+            </AxCard>
           ) : (
-            <View style={S.form}>
+            <AxCard style={S.form}>
               <View style={S.iconRow}>
-                <Mail color={theme.accent} size={36} strokeWidth={1.5} />
+                <Mail color={c.accentText} size={36} strokeWidth={1.5} />
               </View>
               <Text style={S.title}>{t('forgot.title')}</Text>
               <Text style={S.subtitle}>
@@ -83,10 +82,11 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 
               <View style={S.inputContainer}>
                 <Text style={S.label}>{t('auth.email')}</Text>
-                <TextInput
-                  style={S.input}
+                <AxTextField
+                  testID="forgot-email"
+                  icon={Mail}
                   placeholder="ton@email.com"
-                  placeholderTextColor={theme.textMuted}
+                  accessibilityLabel={t('auth.email')}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -97,14 +97,8 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
                 />
               </View>
 
-              <TouchableOpacity onPress={handleReset} disabled={loading} activeOpacity={0.8}>
-                <LinearGradient colors={[theme.accent, theme.accentDark]} style={S.button}>
-                  {loading
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={S.buttonText}>{t('forgot.sendLink')}</Text>}
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
+              <AxButton testID="forgot-submit" label={t('forgot.sendLink')} onPress={handleReset} loading={loading} fullWidth />
+            </AxCard>
           )}
 
         </ScrollView>
@@ -113,73 +107,20 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   );
 }
 
-function createStyles(theme: AppTheme) {
-  const isDark = theme.mode === 'dark';
+function createStyles(c: AxColors) {
   return StyleSheet.create({
     gradient: { flex: 1, backgroundColor: 'transparent' },
     flex: { flex: 1 },
-    container: { flexGrow: 1, justifyContent: 'center', padding: spacing.xl },
-    back: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xl },
-    backText: { ...typography.body, color: theme.textSecondary },
-
-    form: {
-      backgroundColor: theme.card,
-      borderRadius: borderRadius.xl,
-      padding: spacing.xl,
-      borderWidth: 1,
-      borderColor: theme.border,
-      ...shadows.md,
-    },
-    iconRow: { alignItems: 'center', marginBottom: spacing.md },
-    successIcon: { alignItems: 'center', marginBottom: spacing.lg },
-    title: { 
-      ...typography.h3, 
-      color: theme.text, 
-      marginBottom: spacing.sm, 
-      textAlign: 'center',
-    },
-    subtitle: { 
-      ...typography.body, 
-      color: theme.textSecondary, 
-      textAlign: 'center', 
-      lineHeight: 22, 
-      marginBottom: spacing.lg,
-    },
-    emailHighlight: { color: theme.accent, fontWeight: '700' },
-    hint: { 
-      ...typography.bodySmall, 
-      color: theme.textMuted, 
-      textAlign: 'center', 
-      lineHeight: 18, 
-      marginBottom: spacing.lg, 
-      fontStyle: 'italic',
-    },
-
-    inputContainer: { marginBottom: spacing.lg },
-    label: { 
-      ...typography.label, 
-      color: theme.textSecondary, 
-      marginBottom: spacing.xs,
-      textTransform: 'none',
-    },
-    input: {
-      backgroundColor: isDark ? theme.surface : theme.background,
-      borderRadius: borderRadius.lg,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.md,
-      color: theme.text,
-      ...typography.body,
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    button: { 
-      borderRadius: borderRadius.lg, 
-      padding: spacing.md, 
-      alignItems: 'center',
-    },
-    buttonText: { 
-      color: '#fff', 
-      ...typography.buttonLarge,
-    },
+    container: { flexGrow: 1, justifyContent: 'center', padding: axSpacing.xl },
+    back: { flexDirection: 'row', alignItems: 'center', marginBottom: axSpacing.xl },
+    backText: { ...axTypography.labelSmall, color: c.textMuted },
+    form: { gap: axSpacing.md },
+    iconRow: { alignItems: 'center' },
+    title: { ...axTypography.titleM, color: c.text, textAlign: 'center' },
+    subtitle: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+    emailHighlight: { ...axTypography.labelSmall, color: c.accentText },
+    hint: { ...axTypography.caption, color: c.textMuted, textAlign: 'center' },
+    inputContainer: { gap: axSpacing.xs },
+    label: { ...axTypography.labelSmall, color: c.textMuted },
   });
 }

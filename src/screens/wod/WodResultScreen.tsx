@@ -51,6 +51,7 @@ import { draftsToPerformed, performedToDrafts, validateMuscuSession } from '../.
 import type { StrengthSaveState } from '../../components/wod/StrengthSetGrid';
 import { muscuDisplayedFor } from './muscuOptions';
 import MuscuSessionCard, { initialPerformed } from './MuscuSessionCard';
+import { useConfirmDialog } from '../../components/ConfirmDialog';
 
 export type WodResultParams = {
   screen: ScreenParams;
@@ -129,6 +130,7 @@ export default function WodResultScreen() {
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
   const S = createStyles(theme);
+  const dialog = useConfirmDialog();
 
   const [result, setResult] = useState<GenerateResult>(route.params.result);
   const { wod, category } = result;
@@ -472,9 +474,10 @@ export default function WodResultScreen() {
       setSubmittedScore(submission);
       hapticSuccess();
       setScoreModal(false);
+      dialog.afterModalClose();
       setScoreInput('');
       setScoreNotes('');
-      Alert.alert(
+      dialog.show(
         i18n.t('wodGenerator.scoreSavedTitle'),
         i18n.t('wodGenerator.scoreSavedBody'),
         [
@@ -518,9 +521,10 @@ export default function WodResultScreen() {
       setSubmittedScore({ wodId: id, scoreType: 'weight', value: tonnage, category: 'rx', notes: scoreNotes });
       hapticSuccess();
       setScoreModal(false);
+      dialog.afterModalClose();
       setScoreInput('');
       setScoreNotes('');
-      Alert.alert(
+      dialog.show(
         i18n.t('wodGenerator.scoreSavedTitle'),
         i18n.t('wodGenerator.scoreSavedBody'),
         [
@@ -892,6 +896,7 @@ export default function WodResultScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      {dialog.element}
     </View>
   );
 }

@@ -19,6 +19,8 @@ import { getMyMemberships } from '../../services/membership';
 import { WEB_URL } from '../../lib/urls';
 import { reservationRefusal } from '../../utils/refusals';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { useConfirmDialog } from '../../components/ConfirmDialog';
+import EmptyState from '../../components/EmptyState';
 
 interface ClassSchedule {
   id: string;
@@ -86,6 +88,7 @@ export default function ReservationScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const S = createStyles(theme);
+  const dialog = useConfirmDialog();
 
   const [schedules,  setSchedules]  = useState<ClassSchedule[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -208,7 +211,7 @@ export default function ReservationScreen() {
 
     if (item.my_status) {
       if (minsLeft < CANCEL_CUTOFF_MIN) {
-        Alert.alert(
+        dialog.show(
           t('reservation.tooLateTitle'),
           t('reservation.cancelTooLate', { min: CANCEL_CUTOFF_MIN }),
         );
@@ -218,7 +221,7 @@ export default function ReservationScreen() {
       const label = item.my_status === 'confirmed'
         ? t('reservation.cancelConfirmed')
         : t('reservation.leaveWaitlistConfirm');
-      Alert.alert(
+      dialog.show(
         item.my_status === 'confirmed' ? t('reservation.cancelReservationTitle') : t('reservation.leaveWaitlistTitle'),
         label,
         [
@@ -242,7 +245,7 @@ export default function ReservationScreen() {
       );
     } else {
       if (minsLeft < REGISTER_CUTOFF_MIN) {
-        Alert.alert(
+        dialog.show(
           t('reservation.tooLateTitle'),
           t('reservation.registerTooLate', { min: REGISTER_CUTOFF_MIN }),
         );
@@ -257,7 +260,7 @@ export default function ReservationScreen() {
         });
         const wl = limitData as { allowed: boolean; max: number; used: number } | null;
         if (wl && !wl.allowed) {
-          Alert.alert(
+          dialog.show(
             t('reservation.limitReachedTitle'),
             t('reservation.limitReachedBody', { max: wl.max, used: wl.used }),
           );
@@ -273,7 +276,7 @@ export default function ReservationScreen() {
         });
         const dl = dailyData as { allowed: boolean } | null;
         if (dl && !dl.allowed) {
-          Alert.alert(
+          dialog.show(
             t('reservation.dailyLimitTitle'),
             t('reservation.dailyLimitBody'),
           );
@@ -293,7 +296,7 @@ export default function ReservationScreen() {
         }).select('status').single();
         if (error) {
           const refusal = reservationRefusal(error);
-          if (refusal) Alert.alert(refusal.title, refusal.body);
+          if (refusal) dialog.show(refusal.title, refusal.body);
           else Alert.alert(t('common.error'), error.message);
         }
         else if (data?.status === 'waiting') {
@@ -307,7 +310,7 @@ export default function ReservationScreen() {
       };
 
       if (wantsWaiting) {
-        Alert.alert(
+        dialog.show(
           t('reservation.slotFullTitle'),
           t('reservation.slotFullBody', { pos: item.waiting_count + 1 }),
           [
@@ -327,9 +330,7 @@ export default function ReservationScreen() {
     return (
       <View style={S.emptyContainer}>
         <GlassBackground />
-        <CalendarClock color={theme.textMuted} size={48} strokeWidth={1.5} />
-        <Text style={S.emptyTitle}>{t('reservation.noBoxTitle')}</Text>
-        <Text style={S.emptySubtitle}>{t('reservation.noBoxSubtitle')}</Text>
+        <EmptyState testID="reservation-no-box" icon={CalendarClock} title={t('reservation.noBoxTitle')} text={t('reservation.noBoxSubtitle')} />
       </View>
     );
   }
@@ -515,11 +516,7 @@ export default function ReservationScreen() {
               </View>
 
               {dayItems.length === 0 && (
-                <View style={S.emptyWeek}>
-                  <CalendarClock color={theme.textMuted} size={40} strokeWidth={1.5} />
-                  <Text style={S.emptyWeekTitle}>{t('reservation.emptyTitle')}</Text>
-                  <Text style={S.emptyWeekSub}>{t('reservation.emptySubtitle')}</Text>
-                </View>
+                <EmptyState testID="reservation-empty-week" style={S.emptyWeek} icon={CalendarClock} title={t('reservation.emptyTitle')} text={t('reservation.emptySubtitle')} />
               )}
             </ScrollView>
           );
@@ -588,7 +585,7 @@ export default function ReservationScreen() {
             {/* Action buttons */}
             {detailItem && !detailItem.my_status && detailItem.available_spots > 0 && (
               <EmeraldCTAButton
-                onPress={() => { setDetailItem(null); toggleBooking(detailItem); }}
+                onPress={() => { setDetailItem(null); dialog.afterModalClose(); toggleBooking(detailItem); }}
                 size="md"
               >
                 {t('reservation.bookThisSlot')}
@@ -597,7 +594,7 @@ export default function ReservationScreen() {
             {detailItem && detailItem.my_status && (
               <TouchableOpacity
                 style={[S.modalActionBtn, { backgroundColor: 'rgba(239,68,68,0.15)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)' }]}
-                onPress={() => { setDetailItem(null); toggleBooking(detailItem); }}
+                onPress={() => { setDetailItem(null); dialog.afterModalClose(); toggleBooking(detailItem); }}
               >
                 <Text style={[S.modalActionBtnText, { color: '#ef4444' }]}>
                   {detailItem.my_status === 'confirmed' ? t('reservation.unsubscribe') : t('reservation.leaveWaitlist')}
@@ -607,6 +604,7 @@ export default function ReservationScreen() {
           </View>
         </View>
       </Modal>
+      {dialog.element}
     </View>
   );
 }
@@ -614,9 +612,7 @@ export default function ReservationScreen() {
 function createStyles(t: AppTheme) {
   return StyleSheet.create({
     container:          { flex: 1, backgroundColor: 'transparent' },
-    emptyContainer:     { flex: 1, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32, gap: 12 },
-    emptyTitle:         { fontSize: 20, fontWeight: '800', color: t.text },
-    emptySubtitle:      { fontSize: 14, color: t.textMuted, textAlign: 'center' },
+    emptyContainer:     { flex: 1, backgroundColor: 'transparent', justifyContent: 'center' },
 
     myResBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
@@ -688,9 +684,7 @@ function createStyles(t: AppTheme) {
     bookBtnTextBooked:  { color: '#C9A227' },
     bookBtnTextWaiting: { color: '#f59e0b' },
 
-    emptyWeek:          { alignItems: 'center', paddingTop: 60, gap: 12 },
-    emptyWeekTitle:     { fontSize: 18, fontWeight: '800', color: t.text },
-    emptyWeekSub:       { fontSize: 13, color: t.textMuted, textAlign: 'center', paddingHorizontal: 32 },
+    emptyWeek:          { paddingTop: 60 },
 
     modalOverlay:       { flex: 1, backgroundColor: t.modalBackdrop, justifyContent: 'flex-end' },
     modalSheet:         { backgroundColor: t.modalCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 34, maxHeight: '75%' },

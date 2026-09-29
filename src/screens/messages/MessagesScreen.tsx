@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Send, Megaphone, ImagePlus, X, Search, ChevronLeft } from 'lucide-react-native';
+import { Send, Megaphone, ImagePlus, X, Search, ChevronLeft, Dumbbell } from 'lucide-react-native';
 
 // Marqueur repérable dans le bundle publié (ota.yml, verify:ipa/aab) : le
 // préfixe suit la clé inlinée au moment du bundle, comme l'URL Supabase.
@@ -31,6 +31,7 @@ import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import ReportMenu from '../../components/ReportMenu';
 import { getBlockedUserIds } from '../../services/moderation';
+import EmptyState from '../../components/EmptyState';
 
 const REACTION_EMOJIS = ['❤️', '🔥', '💪', '😂', '👏', '👀'];
 const SCREEN_W = Dimensions.get('window').width;
@@ -497,7 +498,7 @@ export default function MessagesScreen() {
       <View style={S.container}>
       <GlassBackground />
         <View style={S.header}><Text style={S.headerTitle}>Messages</Text></View>
-        <View style={S.empty}><Text style={S.emptyText}>Rejoins une box pour accéder aux messages 🏋️</Text></View>
+        <View style={S.empty}><EmptyState testID="messages-no-box" icon={Dumbbell} title="Rejoins une box pour accéder aux messages" /></View>
       </View>
     );
   }
