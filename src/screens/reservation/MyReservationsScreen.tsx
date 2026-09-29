@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { cancelClassReminder } from '../../services/notifications';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 interface ReservationRow {
   id: string;
@@ -34,6 +35,7 @@ function minutesUntilSlot(scheduled_date: string, start_time: string): number {
 }
 
 export default function MyReservationsScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
   const { t, i18n } = useTranslation();
@@ -125,7 +127,7 @@ export default function MyReservationsScreen() {
         <FlatList
           data={displayed}
           keyExtractor={r => r.id}
-          contentContainerStyle={{ padding: 16, gap: 8, paddingBottom: 140 }}
+          contentContainerStyle={{ padding: 16, gap: 8, paddingBottom: tabSpace }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={theme.accent} />
           }

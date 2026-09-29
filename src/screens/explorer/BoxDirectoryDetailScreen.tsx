@@ -17,6 +17,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { HomeStackParamList } from '../../navigation';
 import { Box } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 type Route = RouteProp<HomeStackParamList, 'BoxDirectoryDetail'>;
@@ -34,6 +35,7 @@ const SERVICE_LABELS: Record<string, string> = {
 };
 
 export default function BoxDirectoryDetailScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
@@ -107,7 +109,7 @@ export default function BoxDirectoryDetailScreen() {
         <Text style={s.headerTitle} numberOfLines={1}>{box.name}</Text>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 140 }}>
+      <ScrollView contentContainerStyle={{ paddingBottom: tabSpace }}>
         {/* Cover / Logo */}
         <View style={s.heroWrap}>
           {box.cover_url ? (

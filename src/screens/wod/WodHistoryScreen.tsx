@@ -18,6 +18,7 @@ import { AthleteLevel } from '../../types';
 import { formatScoreValue } from '../../utils/scoreFormat';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { buildHistoryEntries, countScores, HistoryEntry, BoxScoreRow, CompletionRow } from '../../lib/wodHistoryEntries';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -74,6 +75,7 @@ function formatDateShort(iso: string): string {
 }
 
 export default function WodHistoryScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const route = useRoute<RouteProp<{ WodHistory: { filter?: 'favorites' } | undefined }, 'WodHistory'>>();
   const { user } = useAuth();
@@ -373,7 +375,7 @@ export default function WodHistoryScreen() {
           data={visibleEntries}
           keyExtractor={e => e.id}
           renderItem={renderEntry}
-          contentContainerStyle={S.list}
+          contentContainerStyle={[S.list, { paddingBottom: tabSpace }]}
           onEndReached={loadMore}
           onEndReachedThreshold={0.3}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}

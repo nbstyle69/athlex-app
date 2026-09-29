@@ -21,6 +21,7 @@ import {
   upcomingMondays, isRestDay, RestDay,
 } from '../../utils/programSchedule';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 const WOD_TYPE_COLORS: Record<string, string> = {
   'for-time': '#EF4444',
@@ -45,6 +46,7 @@ function libelleSemaine(lundi: string): string {
 }
 
 export default function ProgramDetailScreen({ navigation, route }: any) {
+  const tabSpace = useTabBarScrollSpace();
   const { programId, programTitle, progType, durationWeeks, daysPerWeek } = route.params;
   const { user } = useAuth();
   // La date de début est celle de l'athlète, choisie après l'achat : elle
@@ -236,7 +238,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingBottom: 40 }}
+          contentContainerStyle={{ paddingBottom: tabSpace }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
         >
           {DAY_LABELS.map((label, i) => {

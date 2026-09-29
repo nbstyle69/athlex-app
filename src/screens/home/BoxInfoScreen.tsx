@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 interface BoxInfo {
   name: string;
@@ -30,6 +31,7 @@ interface BoxInfo {
 }
 
 export default function BoxInfoScreen({ navigation }: any) {
+  const tabSpace = useTabBarScrollSpace();
   const { currentBox, user } = useAuth();
   const { theme } = useTheme();
   const S = createStyles(theme);
@@ -127,7 +129,7 @@ export default function BoxInfoScreen({ navigation }: any) {
         <View style={{ width: 22 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={S.content}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {/* Logo + Name */}
         <View style={S.heroSection}>
           {info.logo_url ? (

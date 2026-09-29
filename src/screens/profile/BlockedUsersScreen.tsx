@@ -8,8 +8,10 @@ import { getMyBlockedUsers, unblockUser } from '../../services/moderation';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 export default function BlockedUsersScreen({ navigation }: any) {
+  const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const S = createStyles(theme);
   const [users, setUsers] = useState<{ id: string; username: string; avatar_url: string | null }[]>([]);
@@ -66,7 +68,7 @@ export default function BlockedUsersScreen({ navigation }: any) {
         <FlatList
           data={users}
           keyExtractor={(u) => u.id}
-          contentContainerStyle={{ padding: 16 }}
+          contentContainerStyle={{ padding: 16, paddingBottom: tabSpace }}
           renderItem={({ item }) => (
             <View style={S.row}>
               <UserAvatar size={42} name={item.username} uri={item.avatar_url ?? undefined} />

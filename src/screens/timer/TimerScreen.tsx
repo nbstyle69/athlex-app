@@ -8,6 +8,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { HomeStackParamList, TimerType, SeqBlock, BlockType } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Timer'>;
 
@@ -93,6 +94,7 @@ function CountdownPicker({ value, onChange }: { value: number; onChange: (v: num
 }
 
 export default function TimerScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const { theme } = useTheme();
   const S = createStyles(theme);
@@ -431,7 +433,7 @@ export default function TimerScreen() {
         </View>
       )}
 
-      <ScrollView contentContainerStyle={S.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
         {activeTab !== 'splits' && (
           <CountdownPicker value={countdown} onChange={setCountdown} />
         )}

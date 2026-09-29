@@ -16,6 +16,7 @@ import { CompetitionStackParamList, TimerType } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { formatDurationLabel } from '../../utils/wodToTimer';
 import { useTranslation } from 'react-i18next';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<CompetitionStackParamList, 'PhysicalCompetition'>;
 
@@ -71,6 +72,7 @@ const MODE_COLORS: Record<string, string> = {
 };
 
 export default function PhysicalCompetitionScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
@@ -226,7 +228,7 @@ export default function PhysicalCompetitionScreen() {
         <FlatList
           data={selected.wods ?? []}
           keyExtractor={w => w.id}
-          contentContainerStyle={S.list}
+          contentContainerStyle={[S.list, { paddingBottom: tabSpace }]}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={S.emptyBox}>
@@ -365,7 +367,7 @@ export default function PhysicalCompetitionScreen() {
         <FlatList
           data={filteredComps}
           keyExtractor={c => c.id}
-          contentContainerStyle={S.list}
+          contentContainerStyle={[S.list, { paddingBottom: tabSpace }]}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
           ListEmptyComponent={

@@ -17,6 +17,7 @@ import { captureError } from '../../lib/sentry';
 import UserAvatar from '../../components/UserAvatar';
 import { useAuth } from '../../context/AuthContext';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 const LEVELS: (AthleteLevel | 'all')[] = ['all', 'scaled', 'inter', 'rx', 'rx+', 'elite', 'pro'];
 const MAIN_TABS = ['Individuel', 'Équipes', 'Box'];
@@ -33,6 +34,7 @@ function RankBadge({ rank }: { rank: number }) {
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Leaderboard'>;
 
 export default function LeaderboardScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const { theme } = useTheme();
   const { user } = useAuth();
@@ -285,7 +287,7 @@ export default function LeaderboardScreen() {
               style={{ flex: 1 }}
               data={filtered}
               keyExtractor={(item: any) => item.id}
-              contentContainerStyle={S.list}
+              contentContainerStyle={[S.list, { paddingBottom: tabSpace }]}
               showsVerticalScrollIndicator={false}
               onEndReached={selectedLevel === 'all' ? loadMoreAthletes : undefined}
               onEndReachedThreshold={0.3}
@@ -346,7 +348,7 @@ export default function LeaderboardScreen() {
         loadingTeams ? (
           <ActivityIndicator style={{ marginTop: 40 }} color={theme.accent} />
         ) : (
-          <ScrollView contentContainerStyle={S.list} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[S.list, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
             {teams.length === 0 ? (
               <View style={{ alignItems: 'center', paddingTop: 40 }}>
                 <Users size={40} color={theme.textMuted} />
@@ -383,7 +385,7 @@ export default function LeaderboardScreen() {
         loadingBoxes ? (
           <ActivityIndicator style={{ marginTop: 40 }} color={theme.accent} />
         ) : (
-          <ScrollView contentContainerStyle={S.list} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={[S.list, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
             <Text style={S.sectionHint}>Classement des boxs par ELO moyen de leurs athlètes</Text>
             {boxes.length === 0 ? (
               <View style={{ alignItems: 'center', paddingTop: 40 }}>

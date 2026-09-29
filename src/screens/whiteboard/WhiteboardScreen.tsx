@@ -34,6 +34,7 @@ import { TrackTab, filterByTab, resolveTab, visibleTabs, whiteboardTrackKey } fr
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 function toISO(d: Date): string {
   const y = d.getFullYear();
@@ -53,6 +54,7 @@ interface BoxMember {
 }
 
 export default function WhiteboardScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { user, currentBox, boxRole, joinBox } = useAuth();
   const { theme } = useTheme();
   const { t } = useTranslation();
@@ -549,7 +551,7 @@ export default function WhiteboardScreen() {
         />
 
         <ScrollView
-          contentContainerStyle={{ paddingBottom: 140 }}
+          contentContainerStyle={{ paddingBottom: tabSpace }}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadPersonalWODs().finally(() => setRefreshing(false)); }} />}
         >
@@ -786,7 +788,7 @@ export default function WhiteboardScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 140 }}
+        contentContainerStyle={{ paddingBottom: tabSpace }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); refetchWods(); }} />}
       >
         <View style={S.section}>

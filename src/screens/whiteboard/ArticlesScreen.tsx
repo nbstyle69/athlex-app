@@ -11,6 +11,7 @@ import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarFootprint, useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 interface Article {
   id: string;
@@ -33,6 +34,8 @@ interface Comment {
 }
 
 export default function ArticlesScreen() {
+  const tabSpace = useTabBarScrollSpace();
+  const tabFootprint = useTabBarFootprint();
   const navigation = useNavigation();
   const { currentBox, user } = useAuth();
   const { theme } = useTheme();
@@ -196,7 +199,7 @@ export default function ArticlesScreen() {
           <Text style={S.headerTitle} numberOfLines={1}>{selectedArticle.title}</Text>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 80 }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 80 + tabFootprint }}>
           {selectedArticle.image_url && (
             <Image source={{ uri: selectedArticle.image_url }} style={S.detailImage} resizeMode="cover" />
           )}
@@ -249,7 +252,7 @@ export default function ArticlesScreen() {
         </ScrollView>
 
         {/* Comment input */}
-        <View style={S.commentInput}>
+        <View style={[S.commentInput, tabFootprint > 0 && { bottom: tabFootprint, paddingBottom: 10 }]}>
           <TextInput
             style={S.commentTextInput}
             placeholder="Écrire un commentaire..."
@@ -279,7 +282,7 @@ export default function ArticlesScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 140 }}
+        contentContainerStyle={{ paddingBottom: tabSpace }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
       >
         {articles.length === 0 ? (

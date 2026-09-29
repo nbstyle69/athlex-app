@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R2b : barre d'onglets flottante en verre (app seule, aucune migration, apparence seule).**
+- Barre de l'athlète `AxTabBar` : flottante, centrée (écran − 40, 64 de haut, rayon 24) à inset bas + 12,
+  `AxGlass` `theme.ax.background` à 0.80 (flou iOS, 0.96 sur Android), bordure `theme.ax.border` ;
+  onglet actif en `accentText` avec point, inactifs en `textMuted` ; masquée clavier ouvert. Onglets,
+  libellés, icônes, ordre et comportement inchangés ; barres gérant et coach inchangées.
+- Espace bas commun `useTabBarScrollSpace()` (64 + 12 + inset + 16) sur tous les écrans des piles de
+  l'athlète ; éléments fixés en bas (carte de la carte des box, commentaire d'article) posés au-dessus.
+
 **Refonte R2a : onglet Entraînement à la place d'Explorer (app seule, aucune migration).**
 - 2e onglet « Entraînement » (icône Dumbbell) : écran ax `TrainingScreen` (génération en un tap par
   `generateForUser` avec les réglages mémorisés, lien vers le générateur complet, tuiles Minuteur / 1RM /

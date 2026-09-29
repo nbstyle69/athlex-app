@@ -46,10 +46,12 @@ import {
   DayClass, ScreenParams, generateForUser, loadExcludes, loadMuscuEquipment, saveExcludes, saveMuscuEquipment, todayClass,
   loadAdaptToPr, saveAdaptToPr,
 } from '../../services/wodGenerator';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Sport = Discipline | 'musculation';
 
 export default function WodGeneratorScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const { user, currentBox } = useAuth();
@@ -250,7 +252,7 @@ export default function WodGeneratorScreen() {
 
       {/* B3 : le champ de recherche reste au-dessus du clavier (iOS ; Android redimensionne la fenêtre) */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={[S.content, { paddingBottom: insets.bottom + 120 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Entrée */}
         <View style={S.cardRow}>
           {([

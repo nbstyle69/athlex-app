@@ -9,6 +9,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { HomeStackParamList } from '../../navigation';
 import { Box } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 type Route = RouteProp<HomeStackParamList, 'BoxDirectoryMap'>;
@@ -30,6 +31,7 @@ export default function BoxDirectoryMapScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const s = createStyles(theme);
+  const tabSpace = useTabBarScrollSpace();
 
   const boxes: Box[] = (route.params?.boxes ?? []) as Box[];
   const [selected, setSelected] = useState<Box | null>(null);
@@ -103,7 +105,7 @@ export default function BoxDirectoryMapScreen() {
 
       {/* Bottom sheet when selected */}
       {selected && (
-        <View style={s.sheet}>
+        <View style={[s.sheet, { paddingBottom: tabSpace }]}>
           <TouchableOpacity
             style={s.sheetCard}
             activeOpacity={0.85}

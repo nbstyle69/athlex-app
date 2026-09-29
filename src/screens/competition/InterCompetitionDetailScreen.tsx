@@ -19,6 +19,7 @@ import { trackInterCompRegister, trackInterCompScoreSubmit } from '../../lib/ana
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'InterCompetitionDetail'>;
 type Route = RouteProp<CompetitionStackParamList, 'InterCompetitionDetail'>;
@@ -26,6 +27,7 @@ type Route = RouteProp<CompetitionStackParamList, 'InterCompetitionDetail'>;
 type Tab = 'Infos' | 'WODs' | 'Inscription' | 'Classement' | 'Bracket' | 'Ligue' | 'Poules' | 'Suisse';
 
 export default function InterCompetitionDetailScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const route      = useRoute<Route>();
   const { competitionId } = route.params;
@@ -304,7 +306,7 @@ export default function InterCompetitionDetailScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={S.content}
+        contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={theme.accent} />}
       >
 

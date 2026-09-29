@@ -47,6 +47,7 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import ReportMenu from '../../components/ReportMenu';
 import { readRows } from '../../lib/db';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 const DAY_LABELS_LONG = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
@@ -90,6 +91,7 @@ function formatScore(score: WODScore): string {
 // ─────────────────────────────────────────────────────────────────────────
 
 export default function WODDetailScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
@@ -774,7 +776,7 @@ export default function WODDetailScreen() {
 
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={{ paddingBottom: 140 }}
+        contentContainerStyle={{ paddingBottom: tabSpace }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
       >
         {/* WOD info card */}

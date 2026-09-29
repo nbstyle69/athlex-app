@@ -9,7 +9,6 @@ import {
   AlertTriangle, Play, FileText, Info,
 } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -21,6 +20,7 @@ import {
   isRepsScoredType, isTimeScoredType, repsPerRoundFromMovements, formatScoreDisplay,
 } from '../../utils/tournamentUtils';
 import ScoreEntryFields, { ScoreKind } from '../../components/score/ScoreEntryFields';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'TournamentWOD'>;
 type Route = RouteProp<CompetitionStackParamList, 'TournamentWOD'>;
@@ -39,15 +39,15 @@ function formatCountdown(ms: number, theme: AppTheme, expiredLabel: string): { t
 }
 
 export default function TournamentWODScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const route      = useRoute<Route>();
   const { tournamentId, tournamentName, wod, existingScore, requireVideoProof = false } = route.params;
   const { user } = useAuth();
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
   const S = createStyles(theme);
-  const scrollPadBottom = insets.bottom + 90;
+  const scrollPadBottom = tabSpace;
 
   const [phase,         setPhase]         = useState<'detail' | 'submit' | 'success'>('detail');
   const [youtubeUrl,    setYoutubeUrl]    = useState(existingScore?.video_url ?? '');

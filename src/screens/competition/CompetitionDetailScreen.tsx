@@ -15,6 +15,7 @@ import { captureError } from '../../lib/sentry';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, 'CompetitionDetail'>;
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export default function CompetitionDetailScreen({ navigation, route }: Props) {
+  const tabSpace = useTabBarScrollSpace();
   const { competition } = route.params;
   const { theme } = useTheme();
   const { t } = useTranslation();
@@ -113,7 +115,7 @@ export default function CompetitionDetailScreen({ navigation, route }: Props) {
         ))}
       </View>
 
-      <ScrollView contentContainerStyle={S.content} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
         {tab === 0 && (
           <>
             {/* Hero */}

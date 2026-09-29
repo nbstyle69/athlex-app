@@ -9,7 +9,7 @@ module.exports = {
   testMatch: ['**/__tests__/**/*.rn.test.tsx'],
   transform: { '^.+\\.[jt]sx?$': ['babel-jest', { presets: ['babel-preset-expo'] }] },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|expo|expo-.*|@expo|lucide-react-native|react-native-svg)/)',
+    'node_modules/(?!(react-native|@react-native|@react-navigation|expo|expo-.*|@expo|lucide-react-native|react-native-svg)/)',
   ],
   moduleNameMapper: {
     '^@react-native-async-storage/async-storage$': '<rootDir>/src/__mocks__/async-storage.js',

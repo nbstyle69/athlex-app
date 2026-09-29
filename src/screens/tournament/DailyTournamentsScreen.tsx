@@ -18,6 +18,7 @@ import { GenderTarget } from '../../types';
 import { trackDailyTournamentJoin, trackDailyTournamentCreate } from '../../lib/analytics';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { fetchMyProfile } from '../../services/myProfile';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<any>;
 
@@ -52,6 +53,7 @@ const SCORE_MODES: { key: string; label: string }[] = [
 ];
 
 export default function DailyTournamentsScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const { user } = useAuth();
   const { theme } = useTheme();
@@ -299,7 +301,7 @@ export default function DailyTournamentsScreen() {
           data={tournaments}
           keyExtractor={t => t.id}
           renderItem={renderTournament}
-          contentContainerStyle={S.list}
+          contentContainerStyle={[S.list, { paddingBottom: tabSpace }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
           ListEmptyComponent={
             <View style={S.empty}>

@@ -15,11 +15,13 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
 import ScoreEntryFields, { ScoreKind } from '../../components/score/ScoreEntryFields';
 import { secondsToTimeString } from '../../utils/tournamentUtils';
+import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'InterScoreSubmit'>;
 type Route = RouteProp<CompetitionStackParamList, 'InterScoreSubmit'>;
 
 export default function InterScoreSubmitScreen() {
+  const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const route      = useRoute<Route>();
   const { competitionId, wodId, wodTitle, wodDescription, timeCap, scoringType, existingScore } = route.params;
@@ -127,7 +129,7 @@ export default function InterScoreSubmitScreen() {
           </View>
         </View>
 
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={S.content} keyboardShouldPersistTaps="handled">
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} keyboardShouldPersistTaps="handled">
 
           {/* WOD info */}
           <View style={S.wodCard}>
