@@ -318,8 +318,9 @@ Supabase/Resend.
   n'écrit la table (contrôle T10 de l'audit des droits). Affichage Manager et message traduit dans l'app :
   lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à
   venir).
-- Saisie des charges en musculation, base (migration `20270138`, **appliquée en prod : non**) : séances de
-  musculation gardées côté serveur. PR 1 du chantier ; les écrans suivent (PR 2 à 4).
+- Saisie des charges en musculation, base (migration `20270138`, **appliquée en prod le 29/09/2026 à
+  05:36 UTC** ; dump `db-dumps/2026-09-29/athlex-prod-public-internal-storage-20260929T053550Z.dump` ;
+  audit 35/35) : séances de musculation gardées côté serveur. PR 1 du chantier ; les écrans suivent (PR 2 à 4).
   - `strength_sessions` : une séance par athlète et par source (WOD du Whiteboard ou de programme, séance
     générée), en brouillon ou validée, avec les séries prévues, la charge max et la date de première
     validation. L'athlète écrit ses brouillons ; lui seul les voit (le staff ne lit que les séances validées).

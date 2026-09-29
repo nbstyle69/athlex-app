@@ -1,7 +1,22 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Séances de musculation : brouillon côté serveur, validation en une transaction
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 29/09/2026 à 05:36 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public, internal et storage avec droits
+-- db-dumps/2026-09-29/athlex-prod-public-internal-storage-20260929T053550Z.dump,
+-- sha256 66e071eef9778cb14a20dedeb616599e49485d568f4e3c780659fea4c8e0aa6e vérifié
+-- après aller-retour, 142 TABLE DATA, 458 ACL, 374 POLICY ; précontrôle (md5
+-- calculés avec le search_path de la prod) : 4 policies de strength_set_logs à
+-- 3a807491…, list_athlete_strength_sets 871558a8…, reps obligatoire, CHECK
+-- source_type (whiteboard, program), strength_sessions absente, 50 séries et 5
+-- séances, seul lecteur de la table en prod : list_athlete_strength_sets (aucune
+-- vue) ; vérifications : 5 séances validées, 50 séries rattachées, séries,
+-- scores et records identiques (md5 6e95fd6b…, 5b51210d…, f0703d81… avant/après),
+-- policies et fonctions aux empreintes du rejeu (strength_sessions 8f4ddf51… /
+-- f7de91c9…, strength_set_logs 2d19da73…, validate_strength_session 51768bb3…,
+-- list_athlete_strength_sets 17c26f33…, internal.estimation_1rm 89c832ca…),
+-- anon sans droit ni EXECUTE, aucun droit de colonne ; audit des droits
+-- grants-prod.yml 35/35.)
 --
 -- Chantier « Saisie des charges en musculation », PR 1 (base). Décisions de Nab et
 -- de Claude (conception), 28-29/09/2026.
