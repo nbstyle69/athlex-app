@@ -97,16 +97,14 @@ describe('Explorer : plus d’onglet ni d’écran, contenus dans Accueil', () =
     expect(read('screens', 'wod', 'WodGeneratorScreen.tsx')).toContain("navigation.navigate('Home', { screen: 'Programmation' })");
   });
 
-  it('le bloc Explorer de l’Accueil est placé après « Cette semaine » et avant « Outils »', () => {
+  it('le bloc Explorer de l’Accueil est placé après « Cette semaine »', () => {
     const home = read('screens', 'home', 'HomeScreen.tsx');
     const week = home.indexOf("t('home.thisWeek");
     const explorer = home.indexOf("t('home.explorer.title')");
     const block = home.indexOf('<HomeExplorerBlock onOpen={(route) => navigation.navigate(route)} />');
-    const tools = home.indexOf("t('home.tools.title')");
     expect(week).toBeGreaterThan(-1);
     expect(explorer).toBeGreaterThan(week);
     expect(block).toBeGreaterThan(explorer);
-    expect(tools).toBeGreaterThan(block);
   });
 });
 

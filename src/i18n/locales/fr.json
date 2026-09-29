@@ -852,15 +852,6 @@
     "noScores": "Aucun score soumis pour l'instant.",
     "seeList": "Voir la liste",
     "seeAll": "Voir tout",
-    "tools": {
-      "title": "Outils",
-      "leaderboard": "Classement",
-      "leaderboardDesc": "Individuel · Équipes · Box",
-      "timer": "Minuteur vidéo",
-      "wodGenerator": "Générateur WOD",
-      "oneRM": "Calculateur 1RM",
-      "oneRMDesc": "50% → 130% · Zones"
-    },
     "seeAllTournaments": "Tous les tournois",
     "tournamentStatus": {
       "open": "Ouvert",
@@ -873,6 +864,24 @@
       "findBox": "Trouver une box",
       "programs": "Programmes",
       "partners": "Partenaires"
+    },
+    "rankOpen": "Rang #{{rank}}, ouvrir le classement",
+    "rankOpenNoValue": "Rang, ouvrir le classement",
+    "news": {
+      "title": "Actu de ta box",
+      "new": "Nouveau",
+      "open": "Ouvrir les actualités de ta box : {{title}}",
+      "likes_one": "{{count}} j'aime",
+      "likes_other": "{{count}} j'aime",
+      "comments_one": "{{count}} commentaire",
+      "comments_other": "{{count}} commentaires",
+      "ago": {
+        "now": "À l'instant",
+        "minutes": "Il y a {{count}} min",
+        "hours": "Il y a {{count}} h",
+        "days_one": "Il y a {{count}} jour",
+        "days_other": "Il y a {{count}} jours"
+      }
     }
   },
   "training": {
@@ -1325,7 +1334,13 @@
     "interBoxInfo": "Affronte des athlètes de toutes les boxs.\n3 WODs révélés progressivement. Soumets tes scores avec preuve vidéo. Le Super Admin valide les résultats.",
     "finished": "Terminé",
     "alreadyJoined": "Déjà inscrit",
-    "alreadyParticipating": "Tu participes déjà."
+    "alreadyParticipating": "Tu participes déjà.",
+    "ranking": {
+      "overline": "Classement",
+      "summary": "#{{rank}} · ELO {{elo}} · {{level}}",
+      "see": "Voir",
+      "open": "Ouvrir le classement"
+    }
   },
   "compDetail": {
     "tabInfos": "Infos",
@@ -1802,19 +1817,11 @@
       },
       {
         "label": "Classement",
-        "description": "Consulte les différents classements."
+        "description": "Appuie sur ton rang pour consulter les différents classements."
       },
       {
-        "label": "Minuteur Vidéo",
-        "description": "Un chronomètre à disposition avec enregistrement vidéo — idéal pour les qualifications en ligne."
-      },
-      {
-        "label": "Générateur de WOD",
-        "description": "On te propose des WODs selon tes envies !"
-      },
-      {
-        "label": "Calculateur 1RM",
-        "description": "Pour trouver la charge correspondant à un % de ton exercice."
+        "label": "Actu de ta box",
+        "description": "Le dernier article de ta box apparaît ici quand il a moins de deux semaines."
       },
       {
         "label": "Compétition",
@@ -1822,7 +1829,7 @@
       },
       {
         "label": "Entraînement",
-        "description": "Génère tes WODs, lance le minuteur et retrouve tes séances."
+        "description": "Génère tes WODs, lance le minuteur, calcule ton 1RM et retrouve tes séances."
       },
       {
         "label": "Ma box",

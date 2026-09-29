@@ -318,6 +318,8 @@ export type HomeStackParamList = {
 
 export type CompetitionStackParamList = {
   CompetitionList: { initialTab?: number } | undefined;
+  Leaderboard: undefined;
+  PublicProfile: { userId: string };
   PhysicalCompetition: { mode: 'qualification' | 'info'; selectedId?: string };
   DailyTournaments: undefined;
   DailyTournamentDetail: { tournamentId: string };
@@ -603,6 +605,8 @@ function CompetitionNavigator() {
       <CompStack.Screen name="InterCompetitionDetail" component={InterCompetitionDetailScreen} />
       <CompStack.Screen name="InterScoreSubmit" component={InterScoreSubmitScreen} />
       <CompStack.Screen name="InterTeam" component={InterTeamScreen} />
+      <CompStack.Screen name="Leaderboard" component={LeaderboardScreen} />
+      <CompStack.Screen name="PublicProfile" component={PublicProfileScreen} />
     </CompStack.Navigator>
   );
 }

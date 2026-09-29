@@ -16,6 +16,9 @@ import { useAuth } from '../../context/AuthContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { useFocusQuery } from '../../hooks/useFocusQuery';
+import { fetchEloRank } from '../../services/eloRank';
+import CompetitionRankingCard from './CompetitionRankingCard';
 
 type Nav = NativeStackNavigationProp<CompetitionStackParamList, 'CompetitionList'>;
 
@@ -75,6 +78,11 @@ export default function CompetitionScreen() {
   const [miniLoading, setMiniLoading] = useState(false);
   const [officialWod, setOfficialWod] = useState<OfficialWod | null>(null);
   const { user } = useAuth();
+  const { data: eloRank } = useFocusQuery(
+    ['eloRank', user?.id, user?.elo],
+    () => fetchEloRank(user?.elo ?? 0),
+    { enabled: !!user },
+  );
 
   useEffect(() => {
     if (route.params?.initialTab !== undefined) setActiveTab(route.params.initialTab);
@@ -240,6 +248,15 @@ export default function CompetitionScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {activeTab === 0 && (
           <>
+            {user && (
+              <CompetitionRankingCard
+                rank={eloRank ?? null}
+                elo={user.elo ?? 1000}
+                level={user.level ?? 'scaled'}
+                onOpen={() => navigation.navigate('Leaderboard')}
+              />
+            )}
+
             <Text style={S.sectionTitle}>{t('competition.availableTournaments')}</Text>
             {tLoading ? (
               <ActivityIndicator color={theme.accent} style={{ marginTop: 32 }} />

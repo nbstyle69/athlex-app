@@ -354,6 +354,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'screens', 'wod', 'MuscuSessionCard.tsx'),
     path.join(SRC, 'screens', 'training', 'TrainingScreen.tsx'),
     path.join(SRC, 'screens', 'home', 'HomeExplorerBlock.tsx'),
+    path.join(SRC, 'screens', 'home', 'HomeNewsCard.tsx'),
+    path.join(SRC, 'screens', 'competition', 'CompetitionRankingCard.tsx'),
   ];
 
   it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {

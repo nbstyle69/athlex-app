@@ -34,7 +34,9 @@ import GlassCard from '../../components/glass/GlassCard';
 import GlassButton from '../../components/glass/GlassButton';
 import GlassIconBox from '../../components/glass/GlassIconBox';
 import InteractiveTour from '../../components/InteractiveTour';
-import { homeTools } from './homeTools';
+import HomeNewsCard from './HomeNewsCard';
+import { fetchHomeNews, type HomeNews } from '../../services/homeNews';
+import { fetchEloRank } from '../../services/eloRank';
 import HomeExplorerBlock from './HomeExplorerBlock';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
@@ -60,11 +62,11 @@ export default function HomeScreen() {
   const S = createStyles(theme);
   const isDark = theme.mode === 'dark';
 
-  const TOOLS = homeTools(t);
 
   const [competitions,   setCompetitions]   = useState<CompetitionSummary[]>([]);
   const [recentScores,   setRecentScores]   = useState<RecentScore[]>([]);
   const [rank,           setRank]           = useState<number | null>(null);
+  const [news,           setNews]           = useState<HomeNews | null>(null);
   const [streak,         setStreak]         = useState<StreakInfo>({ current_streak: 0, longest_streak: 0, week_session_count: 0, week_start: '', max_sessions_per_week: null });
   const [pendingFriends, setPendingFriends] = useState(0);
   const [unreadAccepted, setUnreadAccepted] = useState(0);
@@ -121,10 +123,8 @@ export default function HomeScreen() {
     async () => {
       if (!user) return null;
 
-      const { count } = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .gt('elo', user.elo ?? 0);
+      const rankValue = await fetchEloRank(user.elo ?? 0);
+      const newsValue = await fetchHomeNews(currentBox?.id);
       const streakData = await getStreak(user.id, currentBox?.id);
 
       const unreadCl = await countUnreadChangelog(user.id, { screen: 'Home', action: 'countUnreadChangelog' });
@@ -297,7 +297,8 @@ export default function HomeScreen() {
         .limit(20);
 
       return {
-        rank: (count ?? 0) + 1,
+        rank: rankValue,
+        news: newsValue,
         streak: streakData,
         unreadChangelog: unreadCl,
         competitions: mapped,
@@ -324,6 +325,7 @@ export default function HomeScreen() {
     if (!homeData) return;
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setRank(homeData.rank);
+    setNews(homeData.news);
     setStreak(homeData.streak);
     setUnreadChangelog(homeData.unreadChangelog);
     setCompetitions(homeData.competitions);
@@ -461,10 +463,17 @@ export default function HomeScreen() {
                 <Text style={S.heroEloLabel}>{t('home.elo')} ›</Text>
               </TouchableOpacity>
               <View style={S.heroDivider} />
-              <View style={S.heroStat}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('Leaderboard')}
+                activeOpacity={0.7}
+                style={S.heroStat}
+                accessibilityRole="button"
+                accessibilityLabel={rank !== null ? t('home.rankOpen', { rank }) : t('home.rankOpenNoValue')}
+                testID="home-rank"
+              >
                 <Text style={S.heroStatNum}>{rank !== null ? `#${rank}` : '—'}</Text>
-                <Text style={S.heroStatLabel}>{t('home.rank')}</Text>
-              </View>
+                <Text style={S.heroStatLabel}>{t('home.rank')} ›</Text>
+              </TouchableOpacity>
               <View style={S.heroDivider} />
               <View style={S.heroStat}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -512,6 +521,12 @@ export default function HomeScreen() {
             label={t('tabs.profile')}
           />
         </View>
+
+        {/* ── Actu de ta box ──────────────────────────────────────────── */}
+        <HomeNewsCard
+          news={currentBox ? news : null}
+          onOpen={() => navigation.getParent?.()?.navigate('Whiteboard', { screen: 'Articles' })}
+        />
 
         {/* ── Cette semaine ──────────────────────────────────────────── */}
         {(totalWods > 0 || genStreak > 0 || totalReservations > 0 || weekReservations.some(r => r > 0)) && (
@@ -616,26 +631,6 @@ export default function HomeScreen() {
         {/* ── Explorer ────────────────────────────────────────────────── */}
         <Text style={S.sectionTitleOutside}>{t('home.explorer.title')}</Text>
         <HomeExplorerBlock onOpen={(route) => navigation.navigate(route)} />
-
-        {/* ── Outils ──────────────────────────────────────────────────── */}
-        <Text style={S.sectionTitleOutside}>{t('home.tools.title')}</Text>
-        <View style={{ gap: 10 }}>
-          {TOOLS.map(t => (
-            <TouchableOpacity key={t.label} onPress={() => navigation.navigate(t.screen as any)} activeOpacity={0.85}>
-              <GlassCard radius={18}>
-                <View style={S.toolRow}>
-                  <GlassIconBox size={48} variant="emerald" radius={14}>
-                    <t.icon color={theme.accent} size={22} />
-                  </GlassIconBox>
-                  <View style={{ flex: 1 }}>
-                    <Text style={S.toolLabel}>{t.label}</Text>
-                    <Text style={S.toolDesc}>{t.desc}</Text>
-                  </View>
-                </View>
-              </GlassCard>
-            </TouchableOpacity>
-          ))}
-        </View>
 
         {/* ── Box Picker Modal ──────────────────────────────────────── */}
         <Modal visible={boxPickerVisible} transparent animationType="slide" onRequestClose={() => setBoxPickerVisible(false)}>
@@ -923,9 +918,6 @@ function createStyles(t: AppTheme) {
     prLineVal: { ...typography.button, color: textPrimary },
 
     // Tools
-    toolRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, padding: spacing.sm },
-    toolLabel: { ...typography.button, color: textPrimary },
-    toolDesc: { ...typography.caption, color: textSecondary, marginTop: spacing.xxs },
 
     // Comps
     compInner: { padding: spacing.sm, gap: spacing.xs },

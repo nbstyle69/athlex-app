@@ -205,6 +205,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R3a : Accueil — actu de la box, outils retirés, accès au classement (app seule, aucune migration).**
+- Carte ax « Actu de ta box » sous Amis / Profil : dernier article `box_articles` de la box active de
+  moins de 14 jours, avec likes et commentaires en une requête (`fetchHomeNews`), « Nouveau » sous 48 h,
+  ouvre `Articles` (onglet Ma Box) ; masquée sans box ou sans article récent, aucune requête sans box.
+- Section « Outils » retirée de l'Accueil (`homeTools.ts` et clés `home.tools` supprimés, outils dans
+  Entraînement) ; tutoriel sans étape d'outil. Rang de la carte ELO → `Leaderboard` ; carte ax
+  « Classement » en tête de l'onglet Tournois (ouvert par défaut) de Compétitions ; `Leaderboard` et `PublicProfile` dans la pile.
+
 **Refonte R2b : barre d'onglets flottante en verre (app seule, aucune migration, apparence seule).**
 - Barre de l'athlète `AxTabBar` : flottante, centrée (écran − 40, 64 de haut, rayon 24) à inset bas + 12,
   `AxGlass` `theme.ax.background` à 0.80 (flou iOS, 0.96 sur Android), bordure `theme.ax.border` ;
