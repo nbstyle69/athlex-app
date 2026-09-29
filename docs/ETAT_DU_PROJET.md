@@ -213,7 +213,7 @@ Supabase/Resend.
   heures en `AxChip`, interrupteurs en `AxSwitch`, couleurs de niveau et de type rendues lisibles (`readableInk`).
 - Thème, langue, code de box, abonnement, déconnexion, suppression (deux confirmations), requêtes et navigation inchangés.
 - Tests : `r12.rn.test.tsx` (51, dont ordre des blocs sur 22 états figés sur master), isolement R1 élargi au seul
-  `ProfileScreen` ; `npx jest` 1976, `npm run test:rn` 536, `tsc` vert ; 27 mutations tuées.
+  `ProfileScreen` ; `npx jest` 1976, `npm run test:rn` 536, `tsc` vert ; 28 mutations tuées.
 
 **R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).**
 - `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps,
