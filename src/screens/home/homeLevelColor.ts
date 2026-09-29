@@ -21,11 +21,15 @@ function mix(from: string, to: string, t: number): string {
   return `#${out.map((v) => v.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
 }
 
-export function levelInk(level: string, c: AxColors): string {
-  const base = LevelColors[level] ?? c.text;
+/** `base` rapprochée de l'encre du thème juste assez pour tenir l'AA sur la surface. */
+export function readableInk(base: string, c: AxColors): string {
   for (let step = 0; step <= 20; step++) {
     const candidate = mix(base, c.text, step / 20);
     if (contrast(candidate, c.surface) >= TEXT_MIN) return candidate;
   }
   return c.text;
+}
+
+export function levelInk(level: string, c: AxColors): string {
+  return readableInk(LevelColors[level] ?? c.text, c);
 }

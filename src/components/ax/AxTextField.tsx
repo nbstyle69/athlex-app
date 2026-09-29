@@ -19,12 +19,13 @@ interface Props {
   onBlur?: () => void;
   /** Champ compact centré (grilles de séries). */
   compact?: boolean;
+  maxLength?: number;
   testID?: string;
 }
 
 export function AxTextField({
   value, onChangeText, placeholder, icon: Icon, error, keyboardType, secureTextEntry, multiline,
-  accessibilityLabel, autoCapitalize, onBlur, compact = false, testID = 'ax-text-field',
+  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, testID = 'ax-text-field',
 }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
@@ -43,6 +44,7 @@ export function AxTextField({
           keyboardType={keyboardType}
           secureTextEntry={secureTextEntry}
           multiline={multiline}
+          maxLength={maxLength}
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); onBlur?.(); }}
           autoCapitalize={autoCapitalize}

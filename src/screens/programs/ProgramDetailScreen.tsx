@@ -8,7 +8,9 @@ import { ChevronLeft, ChevronRight, Check, Clock, StickyNote, CalendarDays, Lock
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { AxButton, AxCard, AxTag } from '../../components/ax';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { WODScore } from '../../types';
 import { formatCap, formatScoreValue } from '../../utils/scoreFormat';
 import { annotateStrengthLoads } from '../../utils/strengthBlock';
@@ -23,14 +25,6 @@ import {
 } from '../../utils/programSchedule';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
-
-const WOD_TYPE_COLORS: Record<string, string> = {
-  'for-time': '#EF4444',
-  amrap: '#3B82F6',
-  emom: '#8B5CF6',
-  strength: '#16A34A',
-  custom: '#6B7280',
-};
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
@@ -58,7 +52,8 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
   const [erreurDate, setErreurDate] = useState<string | null>(null);
   const [restDays, setRestDays] = useState<RestDay[]>([]);
   const { theme } = useTheme();
-  const S = createStyles(theme);
+  const c = theme.ax;
+  const S = createStyles(c);
   const oneRepMaxFor = useMyOneRepMax();
 
   const dpw = daysPerWeek ?? 5;
@@ -167,17 +162,19 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
             style={S.dateBtn}
             disabled={dateVerrouillee}
             onPress={() => { setDateEnCours(startDate); setChoixDate(true); }}
+            accessibilityRole="button"
             accessibilityLabel={dateVerrouillee ? 'Date de début verrouillée' : 'Modifier ma date de début'}
+            testID="program-date-edit"
           >
             {dateVerrouillee
-              ? <Lock color={theme.textMuted} size={16} />
-              : <CalendarDays color={theme.accent} size={18} />}
+              ? <Lock color={c.textMuted} size={16} />
+              : <CalendarDays color={c.accentText} size={18} />}
           </TouchableOpacity>
         )}
           </>
         )}
       >
-          <Text style={S.headerSub}>
+          <Text style={S.headerSub} numberOfLines={2}>
             {progType === 'fixed' ? `${durationWeeks ?? semaines.length} semaines · ${dpw}j/sem` : `Ongoing · ${dpw}j/sem`}
             {startDate ? ` · depuis le ${libelleDate(startDate)}` : ''}
             {doneCount > 0 ? ` · ${doneCount} WOD${doneCount > 1 ? 's' : ''} fait${doneCount > 1 ? 's' : ''}` : ''}
@@ -186,11 +183,18 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
 
       {startDate && semaines.length > 0 && (
         <View style={S.weekNav}>
-          <TouchableOpacity onPress={() => setWeekIdx(w => Math.max(0, w - 1))} style={S.weekArrow} disabled={weekIdx === 0}>
-            <ChevronLeft color={weekIdx === 0 ? theme.textMuted : theme.text} size={20} />
+          <TouchableOpacity
+            onPress={() => setWeekIdx(w => Math.max(0, w - 1))}
+            style={S.weekArrow}
+            disabled={weekIdx === 0}
+            accessibilityRole="button"
+            accessibilityLabel="Semaine précédente"
+            testID="program-week-prev"
+          >
+            <ChevronLeft color={weekIdx === 0 ? c.textMuted : c.text} size={20} />
           </TouchableOpacity>
-          <View style={{ alignItems: 'center' }}>
-            <Text style={S.weekLabel}>
+          <View style={S.weekCenter}>
+            <Text style={S.weekLabel} numberOfLines={1}>
               {semaine.week != null
                 ? `Semaine ${semaine.week}${durationWeeks ? ` / ${durationWeeks}` : ''}`
                 : `Semaine ${weekIdx + 1} / ${semaines.length} · ${libelleSemaine(semaine.monday ?? lundiAujourdhui)}`}
@@ -201,33 +205,37 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
             onPress={() => setWeekIdx(w => Math.min(semaines.length - 1, w + 1))}
             style={S.weekArrow}
             disabled={weekIdx >= semaines.length - 1}
+            accessibilityRole="button"
+            accessibilityLabel="Semaine suivante"
+            testID="program-week-next"
           >
-            <ChevronRight color={weekIdx >= semaines.length - 1 ? theme.textMuted : theme.text} size={20} />
+            <ChevronRight color={weekIdx >= semaines.length - 1 ? c.textMuted : c.text} size={20} />
           </TouchableOpacity>
         </View>
       )}
 
       {loading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} size="large" color={theme.accent} />
+        <ActivityIndicator style={S.loader} size="large" color={c.accentText} />
       ) : erreur ? (
         <View style={S.emptyBlock}>
           <Text style={S.emptyTitle}>Programmation indisponible</Text>
           <Text style={S.emptyText}>{erreur}</Text>
-          <TouchableOpacity style={S.retryBtn} onPress={() => { setLoading(true); load(); }}>
-            <Text style={S.retryText}>Réessayer</Text>
-          </TouchableOpacity>
+          <AxButton variant="outline" label="Réessayer" onPress={() => { setLoading(true); load(); }} testID="program-retry" />
         </View>
       ) : !startDate ? (
         <View style={S.emptyBlock}>
-          <CalendarDays color={theme.accent} size={32} />
+          <CalendarDays color={c.accentText} size={32} />
           <Text style={S.emptyTitle}>Choisir ma date de début</Text>
           <Text style={S.emptyText}>
             Ton programme démarre un lundi : la semaine 1 fait sept jours pleins. Choisis le lundi
             qui te convient, tu pourras le changer tant que tu n'as pas enregistré de résultat.
           </Text>
-          <TouchableOpacity style={S.logBtn} onPress={() => { setDateEnCours(lundisProposes[0] ?? null); setChoixDate(true); }}>
-            <Text style={S.logBtnText}>Choisir ma date de début</Text>
-          </TouchableOpacity>
+          <AxButton
+            label="Choisir ma date de début"
+            onPress={() => { setDateEnCours(lundisProposes[0] ?? null); setChoixDate(true); }}
+            fullWidth
+            testID="program-date-choose"
+          />
         </View>
       ) : semaines.length === 0 ? (
         <View style={S.emptyBlock}>
@@ -239,7 +247,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={{ paddingBottom: tabSpace }}
+          contentContainerStyle={[S.list, { paddingBottom: tabSpace }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
         >
           {DAY_LABELS.map((label, i) => {
@@ -248,33 +256,33 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
             // simple absence de séance : un jour vide reste un jour vide.
             const isRest = semaine.week != null && isRestDay(restDays, semaine.week, i + 1);
             return (
-              <View key={label} style={[S.dayBlock, isRest && S.dayBlockRest]}>
+              <View key={label} style={[S.dayBlock, i > 0 && S.daySep]} testID={`program-day-${i + 1}`}>
                 <View style={S.dayHeader}>
                   <Text style={S.dayLabel}>{label}</Text>
                   {isRest && <Text style={S.restBadge}>Repos</Text>}
                 </View>
                 {dayWods.map(w => {
-                  const tc = WOD_TYPE_COLORS[w.wod_type ?? 'custom'] ?? '#6B7280';
                   const score = scores[w.id];
                   return (
-                    <TouchableOpacity key={w.id} style={S.wodRow} onPress={() => setSelected(w)} activeOpacity={0.7}>
-                      <View style={[S.wodTypeBar, { backgroundColor: tc }]} />
-                      <View style={S.wodContent}>
-                        <Text style={S.wodType}>{(w.wod_type ?? 'WOD').toUpperCase()}</Text>
-                        <Text style={S.wodTitle}>{w.title}</Text>
-                        <Text style={S.wodDesc} numberOfLines={2}>{w.description}</Text>
-                      </View>
-                      {score ? (
-                        <View style={S.doneChip}>
-                          <Check color={theme.success} size={12} />
-                          <Text style={S.doneText}>
-                            {formatScoreValue(score.score_value, score.score_type, score.capped)}
-                          </Text>
+                    <AxCard key={w.id} style={S.wodRow} onPress={() => setSelected(w)} testID={`program-wod-${w.id}`}>
+                      <View style={S.wodLine}>
+                        <View style={S.wodContent}>
+                          <Text style={S.wodType}>{(w.wod_type ?? 'WOD').toUpperCase()}</Text>
+                          <Text style={S.wodTitle} numberOfLines={2}>{w.title}</Text>
+                          <Text style={S.wodDesc} numberOfLines={2}>{w.description}</Text>
                         </View>
-                      ) : (
-                        <ChevronRight color={theme.textMuted} size={16} />
-                      )}
-                    </TouchableOpacity>
+                        {score ? (
+                          <View style={S.doneChip} testID={`program-done-${w.id}`}>
+                            <Check color={c.success} size={12} />
+                            <Text style={S.doneText}>
+                              {formatScoreValue(score.score_value, score.score_type, score.capped)}
+                            </Text>
+                          </View>
+                        ) : (
+                          <ChevronRight color={c.textMuted} size={16} />
+                        )}
+                      </View>
+                    </AxCard>
                   );
                 })}
               </View>
@@ -287,13 +295,13 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
         <View style={S.modalContainer}>
           <View style={S.modalHeader}>
             <Text style={S.modalTitle}>Ma date de début</Text>
-            <TouchableOpacity onPress={() => setChoixDate(false)}>
+            <TouchableOpacity onPress={() => setChoixDate(false)} hitSlop={12} accessibilityRole="button">
               <Text style={S.modalCancel}>Fermer</Text>
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={S.modalBody}>
             <Text style={S.emptyText}>Un lundi, pour que la semaine 1 fasse sept jours pleins.</Text>
-            <View style={{ marginTop: 16, gap: 8 }}>
+            <View style={S.lundiList}>
               {lundisProposes.map(lundi => {
                 const actif = lundi === dateEnCours;
                 return (
@@ -303,23 +311,18 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
                     onPress={() => setDateEnCours(lundi)}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: actif }}
+                    testID={`program-monday-${lundi}`}
                   >
-                    <Text style={[S.lundiTxt, actif && { color: theme.accent }]}>
+                    <Text style={[S.lundiTxt, actif && { color: c.accentText }]}>
                       Lundi {libelleDate(lundi)}{lundi === lundiAujourdhui ? ' · cette semaine' : ''}
                     </Text>
-                    {actif && <Check color={theme.accent} size={16} />}
+                    {actif && <Check color={c.accentText} size={16} />}
                   </TouchableOpacity>
                 );
               })}
             </View>
             {erreurDate && <Text style={S.erreurTxt}>{erreurDate}</Text>}
-            <TouchableOpacity
-              style={[S.logBtn, !dateEnCours && { opacity: 0.5 }]}
-              disabled={!dateEnCours}
-              onPress={validerDate}
-            >
-              <Text style={S.logBtnText}>Valider</Text>
-            </TouchableOpacity>
+            <AxButton label="Valider" onPress={validerDate} disabled={!dateEnCours} fullWidth testID="program-date-validate" />
           </ScrollView>
         </View>
       </Modal>
@@ -328,20 +331,16 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
         <View style={S.modalContainer}>
           <View style={S.modalHeader}>
             <Text style={S.modalTitle} numberOfLines={1}>{selected?.title}</Text>
-            <TouchableOpacity onPress={() => setSelected(null)}>
+            <TouchableOpacity onPress={() => setSelected(null)} hitSlop={12} accessibilityRole="button">
               <Text style={S.modalCancel}>Fermer</Text>
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={S.modalBody}>
             <View style={S.detailBadges}>
-              <View style={[S.typeBadge, { backgroundColor: `${WOD_TYPE_COLORS[selected?.wod_type ?? 'custom'] ?? '#6B7280'}22` }]}>
-                <Text style={[S.typeBadgeText, { color: WOD_TYPE_COLORS[selected?.wod_type ?? 'custom'] ?? '#6B7280' }]}>
-                  {(selected?.wod_type ?? 'WOD').toUpperCase()}
-                </Text>
-              </View>
+              <AxTag label={(selected?.wod_type ?? 'WOD').toUpperCase()} tone="accent" />
               {!!selected?.time_cap_seconds && (
                 <View style={S.metaBadge}>
-                  <Clock color={theme.textSecondary} size={13} />
+                  <Clock color={c.textMuted} size={13} />
                   <Text style={S.metaBadgeText}>Cap {formatCap(selected.time_cap_seconds)}</Text>
                 </View>
               )}
@@ -353,17 +352,17 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
             </Text>
 
             {!!selected?.notes && (
-              <>
+              <AxCard style={S.notesCard} testID="program-notes">
                 <View style={S.noteHeader}>
-                  <StickyNote color={theme.accent} size={14} />
-                  <Text style={S.sectionLabel}>NOTES COACH</Text>
+                  <StickyNote color={c.accentText} size={14} />
+                  <Text style={S.notesLabel}>NOTES COACH</Text>
                 </View>
                 <Text style={S.detailNotes}>{selected.notes}</Text>
-              </>
+              </AxCard>
             )}
 
             {selected && scores[selected.id] && (
-              <View style={S.myScoreCard}>
+              <AxCard style={S.myScoreCard} testID="program-my-score">
                 <Text style={S.myScoreLabel}>TON RÉSULTAT</Text>
                 <Text style={S.myScoreValue}>
                   {formatScoreValue(
@@ -372,25 +371,22 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
                     scores[selected.id].capped,
                   )}{scores[selected.id].rx ? ' · RX' : ''}
                 </Text>
-              </View>
+              </AxCard>
             )}
 
             {/* La saisie de score, la grille de force, les 1RM et le classement
                 vivent dans l'écran de WOD : un seul chemin de score, celui du
                 contenu canonique. Dupliquer ici ferait diverger les deux. */}
-            <TouchableOpacity
-              style={S.logBtn}
-              activeOpacity={0.85}
+            <AxButton
+              label={selected && scores[selected.id] ? 'Voir / modifier mon résultat' : 'Ouvrir la séance'}
+              fullWidth
+              testID="program-open-session"
               onPress={() => {
                 const wodId = selected?.id;
                 setSelected(null);
                 if (wodId) navigation.navigate('WODDetail', { wodId });
               }}
-            >
-              <Text style={S.logBtnText}>
-                {selected && scores[selected.id] ? 'Voir / modifier mon résultat' : 'Ouvrir la séance'}
-              </Text>
-            </TouchableOpacity>
+            />
           </ScrollView>
         </View>
       </Modal>
@@ -398,68 +394,75 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
   );
 }
 
-function createStyles(t: AppTheme) {
+function createStyles(c: AxColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
+    headerSub: { ...axTypography.caption, color: c.textMuted, textAlign: 'center', paddingHorizontal: axSpacing.xl },
+    dateBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 
-    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingTop: 50, paddingBottom: 12, gap: 6, borderBottomWidth: 1, borderBottomColor: t.border },
-    back: { padding: 6 },
-    headerTitle: { fontSize: 17, fontWeight: '800', color: t.text },
-    headerSub: { fontSize: 12, color: t.textMuted, marginTop: 2 },
-    dateBtn: { padding: 8 },
-    lundiRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: t.border, backgroundColor: t.card },
-    lundiRowActif: { borderColor: t.accent },
-    lundiTxt: { fontSize: 15, fontWeight: '600', color: t.text },
-    erreurTxt: { color: t.error, fontSize: 13, marginTop: 12 },
+    weekNav: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      marginHorizontal: axSpacing.xl, marginTop: axSpacing.sm, paddingVertical: axSpacing.xs,
+      borderBottomWidth: 1, borderBottomColor: c.border,
+    },
+    weekArrow: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    weekCenter: { alignItems: 'center', flex: 1, minWidth: 0 },
+    weekLabel: { ...axTypography.label, color: c.text },
+    weekNow: { ...axTypography.labelSmall, color: c.accentText },
 
-    weekNav: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: t.border },
-    weekArrow: { padding: 8 },
-    weekLabel: { fontSize: 15, fontWeight: '800', color: t.text },
-    weekNow: { fontSize: 11, color: t.accent, fontWeight: '700', marginTop: 2 },
+    loader: { marginTop: 40 },
+    emptyBlock: { alignItems: 'center', padding: 32, gap: axSpacing.md },
+    emptyTitle: { ...axTypography.titleM, color: c.text, textAlign: 'center' },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
 
-    emptyBlock: { padding: 24, alignItems: 'center', gap: 8 },
-    emptyTitle: { fontSize: 16, fontWeight: '800', color: t.text, marginTop: 24 },
-    emptyText: { fontSize: 14, color: t.textSecondary, textAlign: 'center', lineHeight: 20 },
-    retryBtn: { marginTop: 12, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: t.border },
-    retryText: { color: t.text, fontWeight: '700', fontSize: 14 },
+    list: { paddingHorizontal: axSpacing.xl, paddingTop: axSpacing.sm },
+    dayBlock: { paddingVertical: axSpacing.md, gap: axSpacing.sm },
+    daySep: { borderTopWidth: 1, borderTopColor: c.border },
+    dayHeader: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+    dayLabel: { ...axTypography.overline, color: c.textMuted },
+    restBadge: { ...axTypography.bodySmall, color: c.textMuted },
+    wodRow: { paddingVertical: axSpacing.md },
+    wodLine: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+    wodContent: { flex: 1, minWidth: 0, gap: 2 },
+    wodType: { ...axTypography.labelSmall, color: c.accentText, letterSpacing: 1 },
+    wodTitle: { ...axTypography.label, color: c.text },
+    wodDesc: { ...axTypography.caption, color: c.textMuted },
+    doneChip: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, maxWidth: 110 },
+    doneText: { ...axTypography.labelSmall, color: c.success },
 
-    dayBlock: { paddingHorizontal: 16, paddingTop: 16 },
-    dayBlockRest: { opacity: 0.6 },
-    dayHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-    dayLabel: { fontSize: 13, fontWeight: '800', color: t.textSecondary, letterSpacing: 0.3 },
-    restBadge: { fontSize: 11, color: t.textMuted, fontWeight: '600' },
+    modalContainer: { flex: 1, backgroundColor: c.background },
+    modalHeader: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.md,
+      paddingHorizontal: axSpacing.xl, paddingVertical: axSpacing.lg, borderBottomWidth: 1, borderBottomColor: c.border,
+    },
+    modalTitle: { ...axTypography.titleM, color: c.text, flex: 1, minWidth: 0 },
+    modalCancel: { ...axTypography.label, color: c.accentText },
+    modalBody: { padding: axSpacing.xl, gap: axSpacing.md, paddingBottom: 60 },
 
-    wodRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: t.card, borderRadius: 12, marginBottom: 8, overflow: 'hidden', borderWidth: 1, borderColor: t.border },
-    wodTypeBar: { width: 4, alignSelf: 'stretch' },
-    wodContent: { flex: 1, padding: 12 },
-    wodType: { fontSize: 10, fontWeight: '800', color: t.textMuted, letterSpacing: 0.5 },
-    wodTitle: { fontSize: 15, fontWeight: '700', color: t.text, marginTop: 2 },
-    wodDesc: { fontSize: 13, color: t.textSecondary, marginTop: 2 },
-    doneChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: `${t.success}18`, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginRight: 12 },
-    doneText: { fontSize: 12, fontWeight: '700', color: t.success },
+    lundiList: { gap: axSpacing.sm },
+    lundiRow: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44,
+      paddingHorizontal: axSpacing.lg, paddingVertical: axSpacing.md,
+      borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface,
+    },
+    lundiRowActif: { borderColor: c.accentText },
+    lundiTxt: { ...axTypography.label, color: c.text },
+    erreurTxt: { ...axTypography.bodySmall, color: c.danger },
 
-    modalContainer: { flex: 1, backgroundColor: t.background },
-    modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, paddingTop: 20, borderBottomWidth: 1, borderBottomColor: t.border, gap: 12 },
-    modalTitle: { flex: 1, fontSize: 18, fontWeight: '800', color: t.text },
-    modalCancel: { fontSize: 15, color: t.accent, fontWeight: '600' },
-    modalBody: { padding: 16, paddingBottom: 60 },
-
-    detailBadges: { flexDirection: 'row', gap: 8, marginBottom: 16 },
-    typeBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-    typeBadgeText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
-    metaBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: t.surface, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-    metaBadgeText: { fontSize: 12, fontWeight: '600', color: t.textSecondary },
-
-    sectionLabel: { fontSize: 11, fontWeight: '700', color: t.textMuted, letterSpacing: 0.5, marginBottom: 6 },
-    detailDesc: { fontSize: 15, color: t.text, lineHeight: 22, marginBottom: 16 },
-    noteHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-    detailNotes: { fontSize: 14, color: t.textSecondary, lineHeight: 20, marginBottom: 16, fontStyle: 'italic' },
-
-    myScoreCard: { backgroundColor: `${t.success}12`, borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: `${t.success}30` },
-    myScoreLabel: { fontSize: 11, fontWeight: '700', color: t.success, letterSpacing: 0.5 },
-    myScoreValue: { fontSize: 20, fontWeight: '800', color: t.text, marginTop: 2 },
-
-    logBtn: { backgroundColor: t.accent, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
-    logBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+    detailBadges: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm, alignItems: 'center' },
+    metaBadge: {
+      flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, paddingHorizontal: axSpacing.sm, paddingVertical: axSpacing.xs,
+      borderRadius: axRadius.badge, borderWidth: 1, borderColor: c.border,
+    },
+    metaBadgeText: { ...axTypography.labelSmall, color: c.textMuted },
+    sectionLabel: { ...axTypography.overline, color: c.textMuted },
+    detailDesc: { ...axTypography.body, color: c.text },
+    notesCard: { gap: axSpacing.sm },
+    noteHeader: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+    notesLabel: { ...axTypography.overline, color: c.accentText },
+    detailNotes: { ...axTypography.bodySmall, color: c.text },
+    myScoreCard: { gap: axSpacing.xs },
+    myScoreLabel: { ...axTypography.overline, color: c.success },
+    myScoreValue: { ...axTypography.numberM, color: c.text },
   });
 }

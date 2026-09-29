@@ -392,6 +392,13 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     ]);
   });
 
+  it('R4b : dans src/screens/programs, seul l’écran Programme consomme ax', () => {
+    const programs = walk(path.join(SRC, 'screens', 'programs'))
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.basename(f));
+    expect(programs).toEqual(['ProgramDetailScreen.tsx']);
+  });
+
   it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {
     const files = [...walk(path.join(SRC, 'screens')), ...walk(path.join(SRC, 'components'))]
       .filter((f) => f !== CATALOG && !ADOPTERS.includes(f) && !f.startsWith(AX_DIR + path.sep));
