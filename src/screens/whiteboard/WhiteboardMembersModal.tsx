@@ -1,9 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Modal, ActivityIndicator } from 'react-native';
 import { ChevronRight, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import UserAvatar from '../../components/UserAvatar';
+import { AxCard, AxIconButton } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { levelInk } from '../home/homeLevelColor';
 
 export interface WhiteboardMember {
   id: string;
@@ -27,18 +30,17 @@ export default function WhiteboardMembersModal({ visible, boxName, loading, memb
   const { t } = useTranslation();
   const { theme } = useTheme();
   const S = createStyles(theme);
+  const c = theme.ax;
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <View style={S.membersContainer}>
         <View style={S.membersHeader}>
-          <Text style={S.membersTitle}>{t('whiteboard.membersTitle', { name: boxName })}</Text>
-          <TouchableOpacity onPress={onClose} style={S.membersClose}>
-            <X color={theme.textSecondary} size={22} />
-          </TouchableOpacity>
+          <Text testID="members-title" style={S.membersTitle} numberOfLines={2}>{t('whiteboard.membersTitle', { name: boxName })}</Text>
+          <AxIconButton icon={X} onPress={onClose} accessibilityLabel={t('common.close')} testID="members-close" />
         </View>
         {loading ? (
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color={theme.accent} />
+            <ActivityIndicator size="large" color={c.accentText} />
           </View>
         ) : (
           <FlatList
@@ -46,20 +48,23 @@ export default function WhiteboardMembersModal({ visible, boxName, loading, memb
             keyExtractor={m => m.id}
             contentContainerStyle={S.membersList}
             renderItem={({ item, index }) => (
-              <TouchableOpacity
+              <AxCard
+                testID={`member-${item.id}`}
                 style={S.memberRow}
                 onPress={() => { onClose(); onOpenProfile(item.id); }}
-                activeOpacity={0.75}
+                accessibilityLabel={item.username}
               >
-                <Text style={S.memberRank}>{index + 1}</Text>
-                <UserAvatar uri={item.avatar_url} name={item.username} size={40} backgroundColor={theme.accentShadow} />
-                <View style={{ flex: 1 }}>
-                  <Text style={S.memberName}>{item.username}</Text>
-                  <Text style={S.memberLevel}>{item.level?.toUpperCase()}</Text>
+                <Text testID={`member-rank-${item.id}`} style={S.memberRank}>{index + 1}</Text>
+                <UserAvatar uri={item.avatar_url} name={item.username} size={40} borderRadius={axRadius.card} backgroundColor={c.background} textColor={c.text} />
+                <View style={S.memberInfo}>
+                  <Text testID={`member-name-${item.id}`} style={S.memberName} numberOfLines={1}>{item.username}</Text>
+                  <Text testID={`member-level-${item.id}`} style={[S.memberLevel, { color: levelInk(item.level, c) }]} numberOfLines={1}>{item.level?.toUpperCase()}</Text>
                 </View>
-                <Text style={S.memberElo}>{item.elo} ELO</Text>
-                <ChevronRight color={theme.textMuted} size={14} />
-              </TouchableOpacity>
+                <Text testID={`member-elo-${item.id}`} style={S.memberElo}>
+                  {item.elo}<Text style={S.memberEloUnit}> ELO</Text>
+                </Text>
+                <ChevronRight color={c.textMuted} size={14} />
+              </AxCard>
             )}
             ListEmptyComponent={<Text style={S.emptyText}>{t('whiteboard.noMembers')}</Text>}
           />
@@ -70,25 +75,23 @@ export default function WhiteboardMembersModal({ visible, boxName, loading, memb
 }
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
-    membersContainer: { flex: 1, backgroundColor: theme.background },
+    membersContainer: { flex: 1, backgroundColor: c.background },
     membersHeader: {
-      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-      paddingTop: 20, paddingHorizontal: 20, paddingBottom: 16,
-      borderBottomWidth: 1, borderBottomColor: theme.border, backgroundColor: theme.card,
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.md,
+      paddingTop: axSpacing.xl, paddingHorizontal: axSpacing.xl, paddingBottom: axSpacing.lg,
+      borderBottomWidth: 1, borderBottomColor: c.border, backgroundColor: c.surface,
     },
-    membersTitle: { fontSize: 18, fontWeight: '700', color: theme.text },
-    membersClose: { padding: 4 },
-    membersList: { padding: 16, gap: 10 },
-    memberRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      backgroundColor: theme.card, borderRadius: 14, padding: 14,
-      borderWidth: 1, borderColor: theme.border,
-    },
-    memberRank: { width: 22, fontSize: 13, color: theme.textMuted, fontWeight: '700', textAlign: 'center' },
-    memberName: { fontSize: 14, fontWeight: '700', color: theme.text },
-    memberLevel: { fontSize: 10, color: theme.textMuted, fontWeight: '600', marginTop: 1 },
-    memberElo: { fontSize: 13, fontWeight: '700', color: theme.textSecondary },
-    emptyText: { fontSize: 15, color: theme.textMuted, textAlign: 'center' },
+    membersTitle: { ...axTypography.titleM, color: c.text, flex: 1, minWidth: 0 },
+    membersList: { padding: axSpacing.lg, gap: axSpacing.sm },
+    memberRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, padding: axSpacing.md },
+    memberRank: { ...axTypography.labelSmall, width: 22, color: c.textMuted, textAlign: 'center' },
+    memberInfo: { flex: 1, minWidth: 0 },
+    memberName: { ...axTypography.label, color: c.text },
+    memberLevel: { ...axTypography.overlineSmall },
+    memberElo: { ...axTypography.numberM, color: c.text },
+    memberEloUnit: { ...axTypography.caption, color: c.textMuted },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
   });
 }

@@ -205,6 +205,17 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R9b : écrans secondaires de Ma Box au nouveau design (app seule, aucune migration, apparence seule).**
+- Actualités, Membres (fenêtre extraite telle quelle de `WhiteboardScreen` vers `WhiteboardMembersModal`), Séance perso
+  (formulaire), Classement de la box, Messages et Infos de la box : `AxCard` par ligne ou section, `AxTextField`, `AxChip`,
+  `AxButton`, typographies `axTypography` (overline / titleM / caption / label / numberM), `theme.ax`, AA dans les deux
+  thèmes ; médailles Lucide `Medal` au lieu de 🥇🥈🥉, 👈 et 💬 retirés. `AxTextField` : options `minInputHeight` /
+  `maxInputHeight` (rétrocompatibles). Requêtes, callbacks, navigation et pièces jointes inchangés.
+- Écarts maquette / code suivis côté code : pas de recherche ni de rôle dans Membres, pas de « Lire › », pas de bouton
+  « Annuler » dans le formulaire (absents du code).
+- Tests : `r9b.rn.test.tsx` (40, dont instantané avant / après sur 10 variantes), isolement R1 élargi à
+  `WhiteboardMembersModal`, `npx jest` 1976, `npm run test:rn` 525, `tsc` vert ; 26 mutations tuées.
+
 **R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).**
 - `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps,
   micro activé / coupé ; enregistrés dans `bwod_timer_display_opts_v2` (`src/lib/timerVideoOpts.ts`). Défauts inchangés
