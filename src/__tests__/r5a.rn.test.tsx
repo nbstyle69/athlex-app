@@ -199,15 +199,9 @@ const VARIANTS: Variant[] = [
 ];
 
 async function selectTimerType(root: ReactTestInstance, label: string) {
-  const chip = root.findAll((n) => n.props.testID === `timer-type-${label}` && typeof n.props.onPress === 'function')[0];
-  if (chip) { await act(async () => { chip.props.onPress(); }); return; }
-  // master : feuille de sélection ouverte depuis le bouton du type courant
-  await pressText(root, 'TYPE DE MINUTEUR'.length ? root.findAll((n) => isHostText(n) && /FOR TIME|AMRAP|EMOM|TABATA|YWYR|SPLITS|PERSONNALISÉ/.test(hostText(n)))[0] ? hostText(root.findAll((n) => isHostText(n) && /FOR TIME|AMRAP|EMOM|TABATA|YWYR|SPLITS|PERSONNALISÉ/.test(hostText(n)))[0]) : '' : '');
-  const items = root.findAll((n) => isHostText(n) && hostText(n) === label);
-  let n: ReactTestInstance | null = items[items.length - 1];
-  while (n && typeof n.props.onPress !== 'function') n = n.parent;
-  const target = n!;
-  await act(async () => { target.props.onPress(); });
+  await pressID(root, 'timer-type-selector');
+  const key = TYPES.find((t) => t.label === label)!.key;
+  await pressID(root, `timer-type-option-${key}`);
 }
 async function toggleCamera(root: ReactTestInstance) {
   const sw = root.findAll((n) => n.props.testID === 'timer-camera-switch' && typeof n.props.onPress === 'function')[0];
@@ -250,12 +244,22 @@ const BEFORE: Record<string, string[]> = JSON.parse(
 /** Glyphes texte remplacés par des icônes Lucide (−, +, coches, pictos de style, son). */
 const GLYPHS = new Set(['−', '+', '✓', '◯', '▬', '99', '🔊', '🔇']);
 const EMOJI_PREFIX = /^[\p{Extended_Pictographic}\uFE0F\u200D]+\s*/u;
-const TYPE_LABELS = ['FOR TIME', 'AMRAP', 'EMOM', 'TABATA', 'YWYR', 'SPLITS', 'PERSONNALISÉ'];
+/** Les 7 types et leur description, tels que sur master. */
+const TYPES = [
+  { key: 'for-time', label: 'FOR TIME', desc: 'Chrono montant avec cap optionnel' },
+  { key: 'amrap', label: 'AMRAP', desc: 'As Many Rounds As Possible' },
+  { key: 'emom', label: 'EMOM', desc: 'Every Minute On the Minute' },
+  { key: 'tabata', label: 'TABATA', desc: 'Intervalles travail / repos' },
+  { key: 'ywyr', label: 'YWYR', desc: 'Your Work Your Rest' },
+  { key: 'splits', label: 'SPLITS', desc: 'Rounds chronométrés séparément' },
+  { key: 'libre', label: 'PERSONNALISÉ', desc: 'Séquence de blocs sur mesure' },
+];
 function normalizeBefore(name: string, list: string[]): string[] {
   let out = list.filter((t) => !GLYPHS.has(t)).map((t) => t.replace(EMOJI_PREFIX, '').toUpperCase());
   if (name.startsWith('réglages-')) {
     const i = out.indexOf('TYPE DE MINUTEUR');
-    out = [...out.slice(0, i + 1), ...TYPE_LABELS, ...out.slice(i + 2)];
+    const type = TYPES.find((t) => t.label === out[i + 1])!;
+    out = [...out.slice(0, i + 2), type.desc.toUpperCase(), ...out.slice(i + 2)];
   }
   return out;
 }
@@ -318,16 +322,58 @@ describe('R5a : fenêtre « Lancer le chrono »', () => {
 });
 
 describe('R5a : réglages du minuteur', () => {
-  it.each(THEMES)('en-tête, types en AxChip, options en AxSwitch, une seule action accent (%s)', async (_, th) => {
+  it.each(THEMES)('en-tête, sélecteur de type, options en AxSwitch, une seule action accent (%s)', async (_, th) => {
     const root = await mount(<TimerScreen />, th);
     expect(root.findAllByType(AxScreenHeader)).toHaveLength(1);
-    const types = root.findAllByType(AxChip).filter((ch) => /^timer-type-/.test(ch.props.testID));
-    expect(types.map((ch) => ch.props.label)).toEqual(TYPE_LABELS);
+    const sel = root.findAll((n) => n.props.testID === 'timer-type-selector' && typeof n.props.onPress === 'function')[0];
+    expect(structure(sel)).toEqual(['FOR TIME', 'Chrono montant avec cap optionnel']);
+    expect(root.findAllByType(AxChip).filter((ch) => /^timer-type-/.test(ch.props.testID))).toHaveLength(0);
     expect(root.findAllByType(AxSwitch).map((sw) => sw.props.testID)).toEqual(
       expect.arrayContaining(['timer-camera-switch']),
     );
     const accents = root.findAllByType(AxButton).filter((b) => b.props.variant === 'accent');
     expect(accents.map((b) => b.props.label)).toEqual(['DÉMARRER']);
+  });
+
+  it.each(THEMES)('liste : 7 AxCard avec libellé et description d’origine, type actif en accentText (%s)', async (_, th) => {
+    const root = await mount(<TimerScreen />, th);
+    expect(root.findAll((n) => n.props.testID === 'timer-type-sheet')).toHaveLength(0);
+    await pressID(root, 'timer-type-selector');
+    const sheet = root.findAll((n) => n.props.testID === 'timer-type-sheet')[0];
+    expect(structure(sheet)).toEqual(['CHOISIR UN FORMAT', ...TYPES.flatMap((t) => [t.label, t.desc])]);
+    for (const t of TYPES) {
+      const card = sheet.findAll((n) => n.props.testID === `timer-type-option-${t.key}` && typeof n.props.onPress === 'function')[0];
+      const [label, desc] = card.findAll((n) => isHostText(n));
+      expect(StyleSheet.flatten(label.props.style)).toMatchObject({
+        fontFamily: axFonts.interSemiBold, fontSize: 14, color: t.key === 'for-time' ? th.ax.accentText : th.ax.text,
+      });
+      expect(StyleSheet.flatten(desc.props.style)).toMatchObject({ fontSize: 13, color: th.ax.textMuted });
+      expect(contrast(th.ax.accentText, th.ax.background)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it.each(TYPES.map((t) => [t.label, t] as const))('choisir %s met à jour le sélecteur et ferme la liste', async (_, t) => {
+    const root = await mount(<TimerScreen />);
+    await pressID(root, 'timer-type-selector');
+    await pressID(root, `timer-type-option-${t.key}`);
+    expect(root.findAll((n) => n.props.testID === 'timer-type-sheet')).toHaveLength(0);
+    const sel = root.findAll((n) => n.props.testID === 'timer-type-selector' && typeof n.props.onPress === 'function')[0];
+    expect(structure(sel)).toEqual([t.label, t.desc]);
+  });
+
+  it('fermer la liste sans choisir garde le type', async () => {
+    const root = await mount(<TimerScreen />);
+    await pressID(root, 'timer-type-selector');
+    await pressID(root, 'timer-type-backdrop');
+    expect(root.findAll((n) => n.props.testID === 'timer-type-sheet')).toHaveLength(0);
+    const sel = root.findAll((n) => n.props.testID === 'timer-type-selector' && typeof n.props.onPress === 'function')[0];
+    expect(structure(sel)).toEqual(['FOR TIME', 'Chrono montant avec cap optionnel']);
+  });
+
+  it('aucun emoji dans les réglages ni dans la liste', async () => {
+    const root = await mount(<TimerScreen />);
+    await pressID(root, 'timer-type-selector');
+    expect(structure(root).filter((t) => /\p{Extended_Pictographic}/u.test(t))).toEqual([]);
   });
 
   it('DÉMARRER navigue avec les mêmes paramètres', async () => {

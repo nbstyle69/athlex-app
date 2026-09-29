@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { Timer, Video, Plus, Minus, Trash2, Type, Clock, Camera, Pause } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
+import {
+  Timer, Video, Plus, Minus, Trash2, Type, Clock, Camera, Pause, ChevronDown, Check,
+  RefreshCw, Radio, Zap, BicepsFlexed, Scissors, Wrench, type LucideIcon,
+} from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../context/ThemeContext';
@@ -8,19 +11,19 @@ import { HomeStackParamList, TimerType, SeqBlock, BlockType } from '../../naviga
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
-import { AxButton, AxCard, AxChip, AxIconButton, AxSwitch, AxTag, AxTextField } from '../../components/ax';
-import { axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
+import { AxButton, AxCard, AxChip, AxIconButton, AxSwitch, AxTag, AxTextField, withAlpha } from '../../components/ax';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Timer'>;
 
-const TABS: { key: TimerType; label: string; desc: string }[] = [
-  { key: 'for-time',  label: 'FOR TIME',     desc: 'Chrono montant avec cap optionnel' },
-  { key: 'amrap',     label: 'AMRAP',        desc: 'As Many Rounds As Possible' },
-  { key: 'emom',      label: 'EMOM',         desc: 'Every Minute On the Minute' },
-  { key: 'tabata',    label: 'TABATA',       desc: 'Intervalles travail / repos' },
-  { key: 'ywyr',      label: 'YWYR',         desc: 'Your Work Your Rest' },
-  { key: 'splits',    label: 'SPLITS',       desc: 'Rounds chronométrés séparément' },
-  { key: 'libre',     label: 'PERSONNALISÉ', desc: 'Séquence de blocs sur mesure' },
+const TABS: { key: TimerType; label: string; icon: LucideIcon; desc: string }[] = [
+  { key: 'for-time',  label: 'FOR TIME',     icon: Timer,        desc: 'Chrono montant avec cap optionnel' },
+  { key: 'amrap',     label: 'AMRAP',        icon: RefreshCw,    desc: 'As Many Rounds As Possible' },
+  { key: 'emom',      label: 'EMOM',         icon: Radio,        desc: 'Every Minute On the Minute' },
+  { key: 'tabata',    label: 'TABATA',       icon: Zap,          desc: 'Intervalles travail / repos' },
+  { key: 'ywyr',      label: 'YWYR',         icon: BicepsFlexed, desc: 'Your Work Your Rest' },
+  { key: 'splits',    label: 'SPLITS',       icon: Scissors,     desc: 'Rounds chronométrés séparément' },
+  { key: 'libre',     label: 'PERSONNALISÉ', icon: Wrench,       desc: 'Séquence de blocs sur mesure' },
 ];
 
 const BLOCK_TYPES: { key: BlockType; label: string }[] = [
@@ -88,6 +91,7 @@ export default function TimerScreen() {
   const c = theme.ax;
   const S = createStyles(c);
   const [activeTab, setActiveTab] = useState<TimerType>('for-time');
+  const [showTypePicker, setShowTypePicker] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [seqBlocks, setSeqBlocks] = useState<SeqBlock[]>([makeTypedBlock('for-time')]);
   const [videoTitle, setVideoTitle] = useState('');
@@ -335,22 +339,55 @@ export default function TimerScreen() {
     </>
   );
 
+  const activeType = TABS.find(t => t.key === activeTab) ?? TABS[0];
+  const ActiveIcon = activeType.icon;
 
   return (
     <View style={S.container}>
       <GlassBackground />
       <AxScreenHeader title="Minuteur" />
 
+      {/* Liste de sélection */}
+      <Modal visible={showTypePicker} transparent animationType="slide" onRequestClose={() => setShowTypePicker(false)}>
+        <View style={S.pickerOverlay}>
+          <Pressable style={S.pickerBackdrop} onPress={() => setShowTypePicker(false)} testID="timer-type-backdrop" />
+          <View style={S.pickerSheet} testID="timer-type-sheet">
+            <View style={S.pickerHandle} />
+            <Text style={S.pickerTitle}>Choisir un format</Text>
+            {TABS.map(({ key, label, icon: Icon, desc }) => {
+              const active = activeTab === key;
+              return (
+                <AxCard key={key} testID={`timer-type-option-${key}`} accessibilityLabel={label} style={S.typeSelectorCard}
+                  onPress={() => {
+                    switchTab(key);
+                    setShowTypePicker(false);
+                  }}>
+                  <Icon color={active ? c.accentText : c.textMuted} size={20} />
+                  <View style={S.flex1}>
+                    <Text style={[S.typeLabel, active && S.typeLabelActive]}>{label}</Text>
+                    <Text style={S.typeDesc}>{desc}</Text>
+                  </View>
+                  {active && <Check color={c.accentText} size={18} />}
+                </AxCard>
+              );
+            })}
+          </View>
+        </View>
+      </Modal>
+
       <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
         {/* Sélecteur de type de minuteur */}
-        <View style={S.typeSelector} testID="timer-type-selector">
+        <View style={S.typeSelector}>
           <Text style={S.overline}>TYPE DE MINUTEUR</Text>
-          <View style={S.chipRow}>
-            {TABS.map(({ key, label }) => (
-              <AxChip key={key} label={label} selected={activeTab === key} onPress={() => switchTab(key)}
-                testID={`timer-type-${key}`} />
-            ))}
-          </View>
+          <AxCard onPress={() => setShowTypePicker(true)} accessibilityLabel={`Type de minuteur : ${activeType.label}`}
+            testID="timer-type-selector" style={S.typeSelectorCard}>
+            <ActiveIcon color={c.accentText} size={20} />
+            <View style={S.flex1}>
+              <Text style={S.typeLabel}>{activeType.label}</Text>
+              <Text style={S.typeDesc}>{activeType.desc}</Text>
+            </View>
+            <ChevronDown color={c.textMuted} size={20} />
+          </AxCard>
         </View>
 
         {activeTab !== 'splits' && (
@@ -409,6 +446,18 @@ function createStyles(c: AxColors) { return StyleSheet.create({
   overline: { ...axTypography.overline, color: c.textMuted },
   cardHint: { ...axTypography.bodySmall, color: c.textMuted },
   typeSelector: { gap: axSpacing.md },
+  typeSelectorCard: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, paddingVertical: axSpacing.md },
+  typeLabel: { ...axTypography.label, color: c.text },
+  typeLabelActive: { color: c.accentText },
+  typeDesc: { ...axTypography.bodySmall, color: c.textMuted },
+  pickerOverlay: { flex: 1, justifyContent: 'flex-end' },
+  pickerBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: withAlpha(c.background, 0.8) },
+  pickerSheet: {
+    backgroundColor: c.background, borderTopLeftRadius: axRadius.card, borderTopRightRadius: axRadius.card,
+    borderWidth: 1, borderColor: c.border, padding: axSpacing.xl, paddingBottom: 40, gap: axSpacing.sm,
+  },
+  pickerHandle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: c.border },
+  pickerTitle: { ...axTypography.titleM, color: c.text, marginBottom: axSpacing.xs },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm },
   stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   stepperPair: { flexDirection: 'row', gap: axSpacing.md },

@@ -206,7 +206,7 @@ Supabase/Resend.
 ## En cours
 
 **Refonte R5a : minuteur au nouveau design (app seule, aucune migration, apparence seule).**
-- `TimerScreen` (types en `AxChip`, réglages − / + en `AxIconButton`, options en `AxSwitch`, `DÉMARRER` seule action
+- `TimerScreen` (sélecteur « TYPE DE MINUTEUR » en `AxCard` + feuille des 7 types avec leur description, icônes Lucide ; réglages − / + en `AxIconButton`, options en `AxSwitch`, `DÉMARRER` seule action
   accent), `TimerLaunchModal` (6 types en `AxChip` sur plusieurs lignes, plus de défilement horizontal ; « Avec caméra »
   en `AxButton` accent, « Sans caméra » en contour — validés par Nab) et `TimerRunScreen` hors caméra (format en `AxTag`,
   chiffres Oswald, bloc suivant en `AxCard`, feuille « Design du minuteur » en `AxChip` / `AxSwitch`, temps final) ;
