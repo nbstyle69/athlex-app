@@ -1,14 +1,16 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
+  View, Text, ScrollView, StyleSheet,
   TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
   Modal, FlatList, SafeAreaView,
 } from 'react-native';
 import {
-  ChevronRight, Users, UserPlus, Trash2, Crown,
+  Users, UserPlus, Trash2, Crown,
   CheckCircle2, XCircle, Search, Shield, X,
 } from 'lucide-react-native';
+import { AxButton, AxCard, AxIconButton, AxStatusDot, AxTag, AxTextField } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -33,6 +35,11 @@ interface Member {
   invited_at: string;
 }
 
+/** Libellé traduit sans son pictogramme de tête. */
+function stripGlyph(label: string): string {
+  return label.replace(/^[^\p{L}\p{N}]+/u, '');
+}
+
 export default function InterTeamScreen() {
   const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
@@ -42,6 +49,7 @@ export default function InterTeamScreen() {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const S = createStyles(theme);
+  const ax = theme.ax;
 
   const [team,        setTeam]        = useState<any>(null);
   const [members,     setMembers]     = useState<Member[]>([]);
@@ -238,15 +246,16 @@ export default function InterTeamScreen() {
   if (loading) return (
     <View style={[S.container, { justifyContent: 'center', alignItems: 'center' }]}>
       <GlassBackground />
-      <ActivityIndicator color={theme.accent} size="large" />
+      <ActivityIndicator color={ax.accent} size="large" />
     </View>
   );
+
+  const statusTone = (s: string) => (s === 'accepted' ? 'active' : s === 'declined' ? 'danger' : 'warning');
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={S.container}>
       <GlassBackground />
-        {/* Header */}
         <AxScreenHeader title={team ? team.name : t('interTeam.myTeam')}>
             <Text style={S.headerSub}>
               {team ? t('interTeam.membersCount', { count: acceptedCount, max: teamSize }) : t('interTeam.teamOf', { n: teamSize })}
@@ -257,59 +266,39 @@ export default function InterTeamScreen() {
 
           {/* ── No team: invitation pending ── */}
           {!team && myInvite && myInvite.status === 'pending' && (
-            <View style={S.inviteCard}>
+            <AxCard variant="featured" testID="team-invite-card">
               <View style={S.inviteHeader}>
-                <Users size={22} color={theme.accent} />
+                <Users size={22} color={ax.accentText} />
                 <Text style={S.inviteTitle}>{t('interTeam.inviteReceived')}</Text>
               </View>
               <Text style={S.inviteTeamName}>« {myInvite.team?.name ?? '—'} »</Text>
               <Text style={S.inviteSub}>{t('interTeam.inviteSub')}</Text>
               <View style={S.inviteActions}>
-                <TouchableOpacity
-                  style={[S.answerBtn, { backgroundColor: `${theme.success}20`, borderColor: `${theme.success}40` }]}
-                  onPress={() => handleAnswerInvite('accepted')}
-                  disabled={saving}
-                >
-                  <CheckCircle2 size={16} color={theme.success} />
-                  <Text style={[S.answerBtnText, { color: theme.success }]}>{t('interTeam.accept')}</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[S.answerBtn, { backgroundColor: `${theme.error}15`, borderColor: `${theme.error}30` }]}
-                  onPress={() => handleAnswerInvite('declined')}
-                  disabled={saving}
-                >
-                  <XCircle size={16} color={theme.error} />
-                  <Text style={[S.answerBtnText, { color: theme.error }]}>{t('interTeam.decline')}</Text>
-                </TouchableOpacity>
+                <View style={S.flex1}>
+                  <AxButton label={t('interTeam.accept')} icon={CheckCircle2} fullWidth onPress={() => handleAnswerInvite('accepted')} disabled={saving} testID="team-accept" />
+                </View>
+                <View style={S.flex1}>
+                  <AxButton label={t('interTeam.decline')} icon={XCircle} variant="stop" fullWidth onPress={() => handleAnswerInvite('declined')} disabled={saving} testID="team-decline" />
+                </View>
               </View>
-            </View>
+            </AxCard>
           )}
 
           {/* ── No team: create form ── */}
           {!team && (!myInvite || myInvite.status === 'declined') && (
-            <View style={S.createCard}>
+            <AxCard testID="team-create-card">
               <Text style={S.sectionLabel}>{t('interTeam.createTeam')}</Text>
               <Text style={S.sectionHint}>{t('interTeam.createHint')}</Text>
-              <View style={S.inputRow}>
-                <View style={S.inputWrapper}>
-                  <Shield size={15} color={theme.textMuted} />
-                  <TextInput
-                    style={S.input}
-                    value={teamName}
-                    onChangeText={setTeamName}
-                    placeholder={t('interTeam.teamNamePlaceholder')}
-                    placeholderTextColor={theme.textMuted}
-                  />
-                </View>
-                <TouchableOpacity
-                  style={[S.createBtn, saving && { opacity: 0.6 }]}
-                  onPress={handleCreateTeam}
-                  disabled={saving}
-                >
-                  {saving ? <ActivityIndicator color="#fff" size="small" /> : <Text style={S.createBtnText}>{t('interTeam.create')}</Text>}
-                </TouchableOpacity>
-              </View>
-            </View>
+              <AxTextField
+                icon={Shield}
+                value={teamName}
+                onChangeText={setTeamName}
+                placeholder={t('interTeam.teamNamePlaceholder')}
+                accessibilityLabel={t('interTeam.teamNamePlaceholder')}
+                testID="team-name"
+              />
+              <AxButton label={t('interTeam.create')} fullWidth onPress={handleCreateTeam} disabled={saving} loading={saving} testID="team-create" />
+            </AxCard>
           )}
 
           {/* ── Team exists ── */}
@@ -320,132 +309,115 @@ export default function InterTeamScreen() {
                 <View style={S.sectionRow}>
                   <Text style={S.sectionLabel}>{t('interTeam.membersTitle', { count: acceptedCount, max: teamSize })}</Text>
                   {acceptedCount < teamSize && (
-                    <View style={[S.chip, { backgroundColor: `${theme.accent}15` }]}>
-                      <Text style={[S.chipText, { color: theme.accent }]}>{t('interTeam.freeSlots', { count: teamSize - acceptedCount })}</Text>
-                    </View>
+                    <AxTag label={t('interTeam.freeSlots', { count: teamSize - acceptedCount })} testID="team-free-slots" />
                   )}
                 </View>
 
                 {/* Captain row */}
-                <View style={S.memberRow}>
-                  <UserAvatar uri={user?.avatar_url} name={user?.username ?? '?'} size={34} borderRadius={10} backgroundColor={`${theme.accent}20`} textColor={theme.accent} fontSize={13} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={S.memberName}>{user?.username ?? '—'} {isCaptain ? t('interTeam.me') : ''}</Text>
+                <AxCard style={S.memberRow} testID="team-member-captain">
+                  <UserAvatar uri={user?.avatar_url} name={user?.username ?? '?'} size={34} borderRadius={axRadius.control} backgroundColor={ax.field} textColor={ax.accentText} fontSize={13} />
+                  <View style={S.memberInfo}>
+                    <Text style={S.memberName} numberOfLines={2}>{user?.username ?? '—'} {isCaptain ? t('interTeam.me') : ''}</Text>
                     <Text style={S.memberLevel}>{user?.level ?? ''}</Text>
                   </View>
-                  <View style={[S.statusBadge, { backgroundColor: `${theme.accent}20` }]}>
-                    <Crown size={10} color={theme.accent} />
-                    <Text style={[S.statusText, { color: theme.accent }]}>{t('interTeam.captain')}</Text>
+                  <View style={S.captainTag}>
+                    <Crown size={12} color={ax.accentText} />
+                    <AxTag label={t('interTeam.captain')} />
                   </View>
-                </View>
+                </AxCard>
 
                 {/* Members */}
                 {members.map(m => (
-                  <View key={m.id} style={[S.memberRow, m.status === 'declined' && { opacity: 0.5 }]}>
-                    <UserAvatar uri={(m as any).avatar_url} name={m.username ?? '?'} size={34} borderRadius={10} backgroundColor={`${theme.accent}20`} textColor={theme.accent} fontSize={13} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={S.memberName}>{m.username}</Text>
+                  <AxCard key={m.id} style={[S.memberRow, m.status === 'declined' && S.declined]} testID={`team-member-${m.id}`}>
+                    <UserAvatar uri={(m as any).avatar_url} name={m.username ?? '?'} size={34} borderRadius={axRadius.control} backgroundColor={ax.field} textColor={ax.accentText} fontSize={13} />
+                    <View style={S.memberInfo}>
+                      <Text style={S.memberName} numberOfLines={2}>{m.username}</Text>
                       <Text style={S.memberLevel}>{m.level}</Text>
                     </View>
                     <View style={S.memberRight}>
-                      <View style={[S.statusBadge, {
-                        backgroundColor: m.status === 'accepted' ? `${theme.success}15` : m.status === 'declined' ? `${theme.error}15` : `${theme.gold}15`,
-                      }]}>
-                        <Text style={[S.statusText, {
-                          color: m.status === 'accepted' ? theme.success : m.status === 'declined' ? theme.error : theme.gold,
-                        }]}>
-                          {m.status === 'accepted' ? t('interTeam.accepted') : m.status === 'declined' ? t('interTeam.declined') : t('interTeam.pending')}
-                        </Text>
-                      </View>
+                      <AxStatusDot
+                        label={stripGlyph(m.status === 'accepted' ? t('interTeam.accepted') : m.status === 'declined' ? t('interTeam.declined') : t('interTeam.pending'))}
+                        tone={statusTone(m.status)}
+                        testID={`team-member-status-${m.id}`}
+                      />
                       {isCaptain && (
-                        <TouchableOpacity onPress={() => handleRemoveMember(m.id)} style={S.removeBtn}>
-                          <Trash2 size={14} color={theme.error} />
-                        </TouchableOpacity>
+                        <AxIconButton icon={Trash2} onPress={() => handleRemoveMember(m.id)} accessibilityLabel={t('common.delete')} testID={`team-remove-${m.id}`} />
                       )}
                     </View>
-                  </View>
+                  </AxCard>
                 ))}
               </View>
 
               {/* Invite */}
               {isCaptain && acceptedCount < teamSize && (
-                <View style={S.section}>
+                <AxCard testID="team-invite-section">
                   <Text style={S.sectionLabel}>{t('interTeam.inviteAthlete')}</Text>
                   <Text style={S.sectionHint}>{t('interTeam.inviteAthleteHint')}</Text>
-                  <TouchableOpacity style={S.openMembersBtn} onPress={openMembersModal}>
-                    <Users size={16} color="#fff" />
-                    <Text style={S.openMembersBtnText}>{t('interTeam.seeBoxMembers')}</Text>
-                    <ChevronRight size={16} color="#fff" />
-                  </TouchableOpacity>
-                </View>
+                  <AxButton label={t('interTeam.seeBoxMembers')} icon={Users} fullWidth onPress={openMembersModal} testID="team-open-members" />
+                </AxCard>
               )}
 
               {/* Members picker modal */}
               <Modal visible={showMembersModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowMembersModal(false)}>
-                <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
-                  {/* Modal header */}
+                <SafeAreaView style={{ flex: 1, backgroundColor: ax.background }}>
                   <View style={S.modalHeader}>
-                    <View style={{ flex: 1 }}>
+                    <View style={S.memberInfo}>
                       <Text style={S.modalTitle}>{t('interTeam.membersModalTitle', { name: currentBox?.name ?? t('interTeam.athletes') })}</Text>
                     </View>
-                    <TouchableOpacity onPress={() => setShowMembersModal(false)} style={S.modalClose}>
-                      <X size={20} color={theme.text} />
-                    </TouchableOpacity>
+                    <AxIconButton icon={X} onPress={() => setShowMembersModal(false)} accessibilityLabel={t('common.close')} testID="team-modal-close" />
                   </View>
 
-                  {/* Search bar */}
                   <View style={S.modalSearchBar}>
-                    <Search size={15} color={theme.textMuted} />
+                    <Search size={15} color={ax.textMuted} />
                     <TextInput
-                      style={[S.input, { flex: 1 }]}
+                      style={S.input}
                       value={memberSearch}
                       onChangeText={setMemberSearch}
                       placeholder={t('interTeam.searchByUsername')}
-                      placeholderTextColor={theme.textMuted}
+                      placeholderTextColor={ax.textMuted}
                       autoFocus
                     />
                   </View>
 
                   {loadingMembers ? (
-                    <ActivityIndicator style={{ marginTop: 40 }} color={theme.accent} />
+                    <ActivityIndicator style={{ marginTop: 40 }} color={ax.accent} />
                   ) : (
                     <FlatList
                       data={allBoxMembers.filter(p =>
                         !memberSearch.trim() || p.username?.toLowerCase().includes(memberSearch.toLowerCase())
                       )}
                       keyExtractor={item => item.id}
-                      contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8 }}
+                      contentContainerStyle={S.modalList}
                       ListEmptyComponent={
-                        <View style={{ alignItems: 'center', marginTop: 60 }}>
-                          <Users size={40} color={theme.textMuted} />
-                          <Text style={{ color: theme.textMuted, marginTop: 12, fontWeight: '600' }}>{t('interTeam.noMemberFound')}</Text>
+                        <View style={S.modalEmpty}>
+                          <Users size={40} color={ax.textMuted} />
+                          <Text style={S.modalEmptyText}>{t('interTeam.noMemberFound')}</Text>
                         </View>
                       }
                       renderItem={({ item, index }) => (
-                        <View style={[S.modalMemberRow, index === 0 && { borderTopWidth: 0 }]}>
+                        <AxCard style={S.memberRow} testID={`team-candidate-${item.id}`}>
                           <View style={S.modalRank}>
                             <Text style={S.modalRankText}>{index + 1}</Text>
                           </View>
-                          <UserAvatar uri={(item as any).avatar_url} name={item.username ?? '?'} size={34} borderRadius={10} backgroundColor={`${theme.accent}20`} textColor={theme.accent} fontSize={13} />
-                          <View style={{ flex: 1 }}>
-                            <Text style={S.memberName}>{item.username}</Text>
+                          <UserAvatar uri={(item as any).avatar_url} name={item.username ?? '?'} size={34} borderRadius={axRadius.control} backgroundColor={ax.field} textColor={ax.accentText} fontSize={13} />
+                          <View style={S.memberInfo}>
+                            <Text style={S.memberName} numberOfLines={2}>{item.username}</Text>
                             <Text style={S.memberLevel}>{item.level?.toUpperCase() ?? ''}</Text>
                           </View>
                           <Text style={S.modalElo}>{t('interTeam.eloValue', { elo: item.elo ?? 1000 })}</Text>
-                          <TouchableOpacity
-                            style={[S.inviteBtn, inviting === item.id && { opacity: 0.5 }]}
+                          <AxButton
+                            label={t('interTeam.invite')}
+                            icon={UserPlus}
+                            variant="outline"
+                            loading={inviting === item.id}
+                            disabled={!!inviting}
+                            testID={`team-invite-${item.id}`}
                             onPress={async () => {
                               await handleInvite(item.id);
                               setAllBoxMembers(prev => prev.filter(p => p.id !== item.id));
                             }}
-                            disabled={!!inviting}
-                          >
-                            {inviting === item.id
-                              ? <ActivityIndicator color="#fff" size="small" />
-                              : <><UserPlus size={13} color="#fff" /><Text style={S.inviteBtnText}>{t('interTeam.invite')}</Text></>
-                            }
-                          </TouchableOpacity>
-                        </View>
+                          />
+                        </AxCard>
                       )}
                     />
                   )}
@@ -454,12 +426,12 @@ export default function InterTeamScreen() {
 
               {/* Team complete */}
               {acceptedCount >= teamSize && (
-                <View style={[S.infoBox, { borderColor: `${theme.success}30`, backgroundColor: `${theme.success}10` }]}>
-                  <CheckCircle2 size={18} color={theme.success} />
-                  <Text style={[S.infoText, { color: theme.success }]}>
+                <AxCard style={S.infoBox} testID="team-complete">
+                  <CheckCircle2 size={18} color={ax.success} />
+                  <Text style={S.infoText}>
                     {t('interTeam.teamComplete')}
                   </Text>
-                </View>
+                </AxCard>
               )}
             </>
           )}
@@ -472,109 +444,49 @@ export default function InterTeamScreen() {
 }
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
-    container:   { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingTop: 56, paddingHorizontal: 16, paddingBottom: 14,
-      backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
-    },
-    backBtn:    { padding: 4 },
-    headerIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: `${theme.accent}20`, justifyContent: 'center', alignItems: 'center' },
-    headerTitle:{ fontSize: 18, fontWeight: '800', color: theme.text },
-    headerSub:  { fontSize: 11, color: theme.textMuted, marginTop: 1 },
-    content:    { padding: 16, gap: 16, paddingBottom: 140 },
-    sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-    sectionLabel:{ fontSize: 13, fontWeight: '800', color: theme.text, marginBottom: 4 },
-    sectionHint: { fontSize: 11, color: theme.textMuted, marginBottom: 10 },
-    section:    { backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.border, padding: 16 },
-    createCard: { backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.border, padding: 16 },
-    inputRow:   { flexDirection: 'row', gap: 8 },
-    inputWrapper: {
-      flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8,
-      backgroundColor: theme.surface, borderRadius: 12,
-      borderWidth: 1, borderColor: theme.border,
-      paddingHorizontal: 12, paddingVertical: 10,
-    },
-    input: { flex: 1, fontSize: 14, color: theme.text },
-    createBtn: {
-      backgroundColor: theme.accent, borderRadius: 12,
-      paddingHorizontal: 16, justifyContent: 'center', alignItems: 'center',
-    },
-    createBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-    memberRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: theme.border,
-    },
-    memberAvatar: {
-      width: 34, height: 34, borderRadius: 10,
-      backgroundColor: `${theme.accent}20`,
-      justifyContent: 'center', alignItems: 'center',
-    },
-    memberAvatarText: { fontSize: 13, fontWeight: '800', color: theme.accent },
-    memberName:   { fontSize: 13, fontWeight: '700', color: theme.text },
-    memberLevel:  { fontSize: 11, color: theme.textMuted, textTransform: 'uppercase' },
-    memberRight:  { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    statusBadge:  { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-    statusText:   { fontSize: 10, fontWeight: '700' },
-    removeBtn:    { padding: 6 },
-    searchRow:    { flexDirection: 'row', gap: 8, marginBottom: 10 },
-    searchBtn:    { backgroundColor: theme.accent, borderRadius: 12, paddingHorizontal: 14, justifyContent: 'center' },
-    searchBtnText:{ color: '#fff', fontWeight: '700', fontSize: 13 },
-    resultRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: theme.border,
-    },
-    inviteBtn:  { flexDirection: 'row', gap: 4, alignItems: 'center', backgroundColor: theme.accent, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6 },
-    inviteBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
-    openMembersBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      backgroundColor: theme.accent, borderRadius: 12,
-      paddingHorizontal: 16, paddingVertical: 13,
-    },
-    openMembersBtnText: { flex: 1, color: '#fff', fontWeight: '700', fontSize: 14 },
+    container: { flex: 1, backgroundColor: 'transparent' },
+    headerSub: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+    content: { padding: axSpacing.lg, gap: axSpacing.lg },
+    flex1: { flex: 1 },
+    section: { gap: axSpacing.sm },
+    sectionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.sm, flexWrap: 'wrap' },
+    sectionLabel: { ...axTypography.overline, color: c.textMuted, flexShrink: 1 },
+    sectionHint: { ...axTypography.caption, color: c.textMuted },
+    input: { ...axTypography.body, flex: 1, color: c.text, padding: 0 },
+    memberRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, padding: axSpacing.md },
+    declined: { opacity: 0.5 },
+    memberInfo: { flex: 1, minWidth: 0 },
+    memberName: { ...axTypography.label, color: c.text },
+    memberLevel: { ...axTypography.caption, color: c.textMuted, textTransform: 'uppercase' },
+    memberRight: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+    captainTag: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
     modalHeader: {
-      flexDirection: 'row', alignItems: 'center',
-      paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12,
-      borderBottomWidth: 1, borderBottomColor: theme.border,
+      flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm,
+      paddingHorizontal: axSpacing.lg, paddingTop: axSpacing.lg, paddingBottom: axSpacing.md,
+      borderBottomWidth: 1, borderBottomColor: c.border,
     },
-    modalTitle: { fontSize: 16, fontWeight: '800', color: theme.text },
-    modalClose: { padding: 6, backgroundColor: theme.surface, borderRadius: 10 },
+    modalTitle: { ...axTypography.titleM, color: c.text },
     modalSearchBar: {
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      marginHorizontal: 16, marginVertical: 10,
-      backgroundColor: theme.card, borderRadius: 12,
-      borderWidth: 1, borderColor: theme.border,
-      paddingHorizontal: 12, paddingVertical: 10,
+      flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm,
+      marginHorizontal: axSpacing.lg, marginVertical: axSpacing.md,
+      backgroundColor: c.field, borderRadius: axRadius.control,
+      borderWidth: 1, borderColor: c.fieldBorder,
+      paddingHorizontal: axSpacing.md, paddingVertical: axSpacing.md,
     },
-    modalMemberRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingVertical: 12, borderTopWidth: 1, borderTopColor: theme.border,
-    },
+    modalList: { paddingHorizontal: axSpacing.lg, paddingTop: axSpacing.sm, gap: axSpacing.sm },
+    modalEmpty: { alignItems: 'center', marginTop: 60, gap: axSpacing.md },
+    modalEmptyText: { ...axTypography.bodySmall, color: c.textMuted },
     modalRank: { width: 22, alignItems: 'center' },
-    modalRankText: { fontSize: 12, fontWeight: '700', color: theme.textMuted },
-    modalElo: { fontSize: 12, fontWeight: '700', color: theme.textMuted, marginRight: 8 },
-    inviteCard: {
-      backgroundColor: theme.card, borderRadius: 16,
-      borderWidth: 1, borderColor: `${theme.accent}30`,
-      padding: 16,
-    },
-    inviteHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-    inviteTitle:  { fontSize: 16, fontWeight: '800', color: theme.text },
-    inviteTeamName:{ fontSize: 18, fontWeight: '900', color: theme.accent, marginBottom: 4 },
-    inviteSub:    { fontSize: 13, color: theme.textMuted, marginBottom: 14 },
-    inviteActions:{ flexDirection: 'row', gap: 10 },
-    answerBtn: {
-      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-      gap: 6, borderRadius: 12, borderWidth: 1, padding: 12,
-    },
-    answerBtnText: { fontWeight: '700', fontSize: 14 },
-    chip:  { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-    chipText: { fontSize: 11, fontWeight: '700' },
-    infoBox: {
-      flexDirection: 'row', gap: 10, alignItems: 'flex-start',
-      borderRadius: 14, borderWidth: 1, padding: 14,
-    },
-    infoText: { flex: 1, fontSize: 13, fontWeight: '600', lineHeight: 18 },
+    modalRankText: { ...axTypography.label, color: c.textMuted },
+    modalElo: { ...axTypography.caption, color: c.textMuted },
+    inviteHeader: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+    inviteTitle: { ...axTypography.label, color: c.text, flex: 1 },
+    inviteTeamName: { ...axTypography.titleM, color: c.accentText },
+    inviteSub: { ...axTypography.bodySmall, color: c.textMuted },
+    inviteActions: { flexDirection: 'row', gap: axSpacing.sm },
+    infoBox: { flexDirection: 'row', gap: axSpacing.md, alignItems: 'flex-start' },
+    infoText: { ...axTypography.bodySmall, flex: 1, color: c.text },
   });
 }
