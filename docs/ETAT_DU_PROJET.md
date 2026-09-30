@@ -220,7 +220,7 @@ Supabase/Resend.
   `onSubmitEditing`, `autoCorrect`, `autoFocus`, `trailing`, `accessibilityLabel`).
 - Tests : `r11.rn.test.tsx` (instantané avant / après `r11StructureBefore.json`, navigation, callbacks, conditions,
   couleurs et typographies dans les deux thèmes, 390 px, aucun emoji, 92 tests) ; isolement R1 élargi aux fichiers du
-  lot ; `npx jest` 1976, `npm run test:rn` 576, `tsc` vert ; 28 mutations tuées.
+  lot ; `npx jest` 1976, `npm run test:rn` 618, `tsc` vert ; 28 mutations tuées.
 
 **Refonte R7 : historique ELO par paliers (app seule, aucune migration, lecture seule).**
 - `EloHistoryScreen` au nouveau design (`AxCard`, `AxChip`, `theme.ax`, Oswald) ; carte ELO avec palier actuel, « encore N pts
