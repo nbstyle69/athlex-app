@@ -307,7 +307,7 @@ Supabase/Resend.
 **Retours iPhone (build 1.0.58) : minuteur, caméra, en-têtes, boutons, profil et outils (app seule, aucune migration, écrans seuls).**
 - Minuteur : compte à rebours en six pastilles `AxChip equal` sur une ligne à 390 px ; décompte PRÉPARE-TOI / PRÊT ? /
   GO ! centré plein écran (avec et sans caméra, portrait et paysage), chiffre centré dans son cercle, halo circulaire
-  sans ombre de texte ; temps final sans vidéo avec `assets/athex-logo.png` (120 px), croix et Réglages à la place du
+  sans ombre de texte ; à 3-2-1 même cercle, même taille et même position du chiffre (seuls couleurs et halo changent) ; temps final sans vidéo avec `assets/athex-logo.png` (120 px), croix et Réglages à la place du
   chrono, couleur du thème de chrono ; paysage sans vidéo : chiffres centrés, place du bouton réservée des deux côtés.
 - Caméra : rangée REC 40 px sous la zone sûre, point rouge clignotant à droite pendant l'enregistrement (`RecBlinkDot`,
   fixe si « réduire les animations »), date et heure sous « Arrêter le chrono ». Module natif, sons et enregistrement
@@ -317,11 +317,12 @@ Supabase/Resend.
 - `AxScreenHeader` : titre dans une boîte bornée entre Retour et l'action de droite (plus de chevauchement, titre court
   entier) ; titres d'écran courts (WOD du jour, Programme, Tournoi, Mini-tournoi, Compétition, WOD du tournoi, Mon
   équipe, Box, Partenaire, Article), nom long en tête du contenu (`AxContentTitle`, retour à la ligne).
-- Ton WOD : « Au Whiteboard » / « Ajouté » et « Mon score » / « Modifier » sur une ligne, même hauteur, libellés
+- Ton WOD : « Au Whiteboard » / « Ajouté » et « Mon score » / « Modifier » sur une ligne, même hauteur (`AxButton`
+  bordé : bordure comprise dans la hauteur), libellés
   complets en accessibilité ; Profil : onglets centrés ; Entraînement : tuiles Outils centrées.
-- Tests : `retoursIphoneTimer.rn.test.tsx` (19) + cas ajoutés à R6c, R4a, R9a, R12, Entraînement ; instantanés R4b / R8a /
+- Tests : `retoursIphoneTimer.rn.test.tsx` (20) + cas ajoutés à R6c, R4a, R9a, R12, Entraînement ; instantanés R4b / R8a /
   R8b / R9a / R9b / R13 et contrats R3c / R5a / R6b / R6c mis à jour pour les titres courts ; `npx jest` 1987,
-  `npm run test:rn` 1330, `tsc` vert ; 16 mutations tuées.
+  `npm run test:rn` 1331, `tsc` vert ; 20 mutations tuées.
 
 **Refonte R14c : finitions des écrans athlète — logo, boutons, types traduits, membres, champs (app seule, aucune migration).**
 - Connexion, Créer un compte et écran de démarrage : `assets/athex-logo.png` (120 px, centré) à la place de

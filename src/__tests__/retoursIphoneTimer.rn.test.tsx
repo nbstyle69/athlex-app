@@ -94,6 +94,7 @@ const one = (root: ReactTestInstance, id: string) => {
   if (!n) throw new Error(`absent : ${id}`);
   return n;
 };
+const hostText = (n: ReactTestInstance): string => [n.props.children].flat().join('');
 async function tick(s: number) { await act(async () => { jest.advanceTimersByTime(s * 1000); }); }
 async function press(root: ReactTestInstance, id: string) {
   const n = root.findAll((x) => x.props.testID === id && typeof x.props.onPress === 'function')[0];
@@ -145,10 +146,27 @@ describe('Retours iPhone (2) : décompte centré, chiffre au centre du cercle, h
     expect(st.lineHeight).toBeLessThan(ring.height as number);
     expect(v.props.adjustsFontSizeToFit).toBeFalsy();
   });
+  it('3-2-1 : même cercle, même taille et même position du chiffre que le reste du décompte', async () => {
+    const r = await run(params({ countdown: 5 }));
+    await press(r, 'timer-start-stop');
+    await tick(1);
+    expect(hostText(one(r, 'timer-countdown-value'))).toBe('4');
+    const geo = () => {
+      const ring = flat(one(r, 'timer-countdown-ring'));
+      const v = flat(one(r, 'timer-countdown-value'));
+      const title = one(r, 'timer-countdown-title');
+      return { w: ring.width, h: ring.height, radius: ring.borderRadius, border: ring.borderWidth,
+        fontSize: v.fontSize, lineHeight: v.lineHeight, vw: v.width, titleLines: title.props.numberOfLines };
+    };
+    const calm = geo();
+    await tick(1);
+    expect(hostText(one(r, 'timer-countdown-value'))).toBe('3');
+    expect(geo()).toEqual(calm);
+  });
   it('« PRÊT ? » : halo circulaire, aucune ombre de texte (rognée en rectangle sur iOS)', async () => {
     const r = await run(params({ countdown: 3 }));
     await press(r, 'timer-start-stop');
-    const halo = flat(one(r, 'timer-countdown-halo'));
+    const halo = flat(one(r, 'timer-countdown-ring'));
     const glow = flat(one(r, 'timer-countdown-glow'));
     expect(halo.borderRadius).toBe((halo.width as number) / 2);
     expect(glow.borderRadius).toBe((glow.width as number) / 2);
@@ -232,6 +250,10 @@ describe('Retours iPhone (4) : temps final sans vidéo', () => {
   const final = async (theme = lightTheme, w = PORTRAIT) => {
     const r = await run(params(), theme, w);
     const running = { ...flat(one(r, 'timer-controls')) };
+    if (w === PORTRAIT) for (const id of ['timer-ctrl-close', 'timer-ctrl-settings']) {
+      const btn = host(r, id).find((n) => isAncestor(one(r, 'timer-controls'), n))!;
+      expect(flat(btn).alignSelf).toBe('flex-start');
+    }
     await press(r, 'timer-start-stop'); await tick(3); await press(r, 'timer-start-stop');
     return { r, running };
   };

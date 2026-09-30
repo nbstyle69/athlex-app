@@ -373,5 +373,10 @@ describe('Retours iPhone (8) : boutons Whiteboard et score de « Ton WOD »', ()
       expect(b.props.accessibilityLabel).toMatch(/Whiteboard|score/);
     }
     expect(btns.map((b) => b.props.accessibilityLabel)).toEqual(['Ajouter au Whiteboard', 'Saisir mon score']);
+    const boxH = btns.map((b) => {
+      const st = StyleSheet.flatten(b.findAll((n) => typeof n.type === 'string' && n.props.accessibilityRole === 'button')[0].props.style);
+      return 2 * ((st.paddingVertical as number) + ((st.borderWidth as number) ?? 0));
+    });
+    expect(boxH[0]).toBe(boxH[1]);
   });
 });

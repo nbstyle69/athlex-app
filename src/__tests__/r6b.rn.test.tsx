@@ -289,9 +289,9 @@ describe('R6b : décompte à l’écran en mode caméra', () => {
     expect([cdLabel(root), hostText(cdValue(root))]).toEqual(['PRÉPARE-TOI', '4']);
     await tick(1000);
     expect([cdLabel(root), hostText(cdValue(root))]).toEqual(['PRÊT ?', '3']);
-    expect(hosts(root, 'timer-countdown-halo')).toHaveLength(1);
-    expect(hosts(root, 'timer-countdown-ring')).toHaveLength(0);
-    expect(hosts(root, 'timer-countdown-title')).toHaveLength(0);
+    expect(hosts(root, 'timer-countdown-glow')).toHaveLength(1);
+    expect(hosts(root, 'timer-countdown-ring')).toHaveLength(1);
+    expect(flat(hosts(root, 'timer-countdown-title')[0]).opacity).toBe(0);
     expect(root.findAll((n) => n.props.testID === 'timer-go')).toHaveLength(0);
     await tick(2000);
     expect([cdLabel(root), hostText(cdValue(root))]).toEqual(['PRÊT ?', '1']);

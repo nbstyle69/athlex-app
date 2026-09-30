@@ -111,21 +111,22 @@ function CountdownView({ value, title, digitColor, accent, bg, size }: {
   const accentInk = ensureContrast(accent, bg);
   const digitInk = ensureContrast(digitColor, bg);
   const ink = tense ? accentInk : digitInk;
-  const digitSize = Math.round(size * (tense ? 0.6 : String(value).length > 1 ? 0.45 : 0.55));
+  const digitSize = Math.round(size * (String(value).length > 1 ? 0.45 : 0.55));
   const glowSize = Math.round(size * 0.72);
+  // Mêmes cercle, taille et position du chiffre sur tout le décompte : 3-2-1 ne change que les couleurs et le halo.
   return (
     <View testID="timer-countdown" style={{ alignItems: 'center', gap: axSpacing.sm }}>
       <Text testID="timer-countdown-label"
         style={[axTypography.overline, { color: tense ? accentInk : inkOnSecondary(bg), letterSpacing: 4 }]}>
         {tense ? t('timer.countdown.ready') : t('timer.countdown.prepare')}
       </Text>
-      {!tense && !!title && (
+      {!!title && (
         <Text testID="timer-countdown-title" numberOfLines={1}
-          style={[axTypography.label, { color: inkOnSecondary(bg), maxWidth: size * 1.4 }]}>{title}</Text>
+          style={[axTypography.label, { color: inkOnSecondary(bg), maxWidth: size * 1.4, opacity: tense ? 0 : 1 }]}>{title}</Text>
       )}
-      <View testID={tense ? 'timer-countdown-halo' : 'timer-countdown-ring'}
+      <View testID="timer-countdown-ring"
         style={{ width: size, height: size, borderRadius: size / 2, justifyContent: 'center', alignItems: 'center',
-          borderWidth: tense ? 0 : 2, borderColor: withAlpha(digitInk, 0.35),
+          borderWidth: 2, borderColor: withAlpha(tense ? accentInk : digitInk, 0.35),
           backgroundColor: tense ? withAlpha(accentInk, 0.12) : 'transparent' }}>
         {/* Halo circulaire : une ombre de texte est rognée en rectangle sur iOS. */}
         {tense && (
@@ -2110,7 +2111,7 @@ export default function TimerRunScreen() {
                 {/* HEADER: X | badge mode | Settings */}
                 <View testID="timer-controls" style={[{ flexDirection: 'row', alignItems: 'center',
                   justifyContent: 'space-between' }, ctrlRowStyle]}>
-                  <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel="Fermer">
+                  <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, styles.ctrlTop, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel="Fermer">
                     <X color={iconColor} size={24} />
                   </TouchableOpacity>
                   <View style={{ alignItems: 'center', gap: 4 }}>
@@ -2120,7 +2121,7 @@ export default function TimerRunScreen() {
                       {formatTime(totalElapsed)}
                     </Text>
                   </View>
-                  <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Design du minuteur">
+                  <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, styles.ctrlTop, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Design du minuteur">
                     <Settings color={iconColor} size={20} />
                   </TouchableOpacity>
                 </View>
@@ -2439,6 +2440,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center', alignItems: 'center',
   },
+  // Croix et Réglages calés en haut de leur rangée : même hauteur pendant le chrono et sur le temps final.
+  ctrlTop: { alignSelf: 'flex-start' },
   iconBtnDisabled: { opacity: 0.4 },
   topCenter: { alignItems: 'center', gap: spacing.xxs },
   modeLabel: { ...typography.label, color: '#FFFFFF', letterSpacing: 1.5 },

@@ -59,6 +59,8 @@ function veilButtonStyle(variant: AxButtonVariant, c: AxColors): VariantStyle {
 }
 
 const DASH_WIDTH = 1.5;
+/** Bordure comprise : un bouton bordé garde la hauteur d'un bouton plein. */
+const BUTTON_PAD_V = 13;
 
 export function AxButton({
   label, onPress, variant = 'accent', icon: Icon, disabled = false, loading = false, fullWidth = false, ink, veil = false, accessibilityLabel, numberOfLines, testID,
@@ -89,7 +91,7 @@ export function AxButton({
         styles.base,
         { alignSelf: fullWidth ? 'stretch' : 'flex-start' },
         v.background ? { backgroundColor: v.background } : null,
-        v.border ? { borderWidth: v.border.width, borderColor: v.border.color } : null,
+        v.border ? { borderWidth: v.border.width, borderColor: v.border.color, paddingVertical: BUTTON_PAD_V - v.border.width } : null,
         disabled ? styles.disabled : null,
       ]}
     >
@@ -129,7 +131,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: axSpacing.sm,
-    paddingVertical: 13,
+    paddingVertical: BUTTON_PAD_V,
     paddingHorizontal: axSpacing.lg,
     borderRadius: axRadius.control,
     overflow: 'hidden',
