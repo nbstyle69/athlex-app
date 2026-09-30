@@ -28,13 +28,17 @@ interface Props {
   autoFocus?: boolean;
   /** Élément posé à droite du champ (bouton afficher / masquer le mot de passe). */
   trailing?: React.ReactNode;
+  /** Hauteur minimale de la zone de saisie (champ multiligne). */
+  minInputHeight?: number;
+  /** Hauteur maximale de la zone de saisie : au-delà, le texte défile dans le champ. */
+  maxInputHeight?: number;
   testID?: string;
 }
 
 export function AxTextField({
   value, onChangeText, placeholder, icon: Icon, error, keyboardType, secureTextEntry, multiline,
-  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, autoComplete, textContentType, returnKeyType,
-  onSubmitEditing, autoCorrect, autoFocus, trailing, testID = 'ax-text-field',
+  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight, autoComplete,
+  textContentType, returnKeyType, onSubmitEditing, autoCorrect, autoFocus, trailing, testID = 'ax-text-field',
 }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
@@ -65,7 +69,8 @@ export function AxTextField({
           autoFocus={autoFocus}
           accessibilityLabel={accessibilityLabel ?? placeholder}
           accessibilityHint={error}
-          style={[axTypography.body, styles.input, { color: c.text }, multiline ? styles.multiline : null, compact ? styles.compactInput : null]}
+          style={[axTypography.body, styles.input, { color: c.text }, multiline ? styles.multiline : null, compact ? styles.compactInput : null,
+            minInputHeight != null || maxInputHeight != null ? { minHeight: minInputHeight, maxHeight: maxInputHeight } : null]}
         />
         {Icon && <Icon size={18} color={c.textMuted} strokeWidth={2} />}
         {trailing}

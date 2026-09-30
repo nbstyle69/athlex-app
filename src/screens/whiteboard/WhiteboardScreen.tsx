@@ -3,11 +3,11 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusQuery } from '../../hooks/useFocusQuery';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList,
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Modal, TextInput, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
-import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, X, MessageCircle, FileText, Trophy, Sparkles, Newspaper, Play, BookOpen, Check, Timer as TimerIcon, Pencil } from 'lucide-react-native';
+import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, MessageCircle, FileText, Trophy, Sparkles, Newspaper, Play, BookOpen, Check, Timer as TimerIcon, Pencil } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -31,12 +31,12 @@ import TimerLaunchModal, { TimerRunParams } from '../../components/wod/TimerLaun
 import WeekDayPicker, { getWeekDates } from '../../components/WeekDayPicker';
 import WhiteboardTrackTabs from '../../components/WhiteboardTrackTabs';
 import { TrackTab, filterByTab, resolveTab, visibleTabs, whiteboardTrackKey } from '../../utils/whiteboardTracks';
-import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import { StrengthWodCardStatus, strengthCardLinkKey } from '../../components/wod/StrengthSetGrid';
 import { fetchStrengthSummaries } from '../../services/strengthSets';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import WhiteboardMembersModal, { WhiteboardMember } from './WhiteboardMembersModal';
 
 function toISO(d: Date): string {
   const y = d.getFullYear();
@@ -47,13 +47,7 @@ function toISO(d: Date): string {
 
 type Nav = NativeStackNavigationProp<WhiteboardStackParamList>;
 
-interface BoxMember {
-  id: string;
-  username: string;
-  level: string;
-  elo: number;
-  avatar_url?: string | null;
-}
+type BoxMember = WhiteboardMember;
 
 interface WeekWodRow { id: string; track: string | null; wod_type: string | null }
 
@@ -1052,45 +1046,14 @@ export default function WhiteboardScreen() {
 
       {timerModal}
 
-      {/* Members Modal */}
-      <Modal visible={membersModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setMembersModal(false)}>
-        <View style={S.membersContainer}>
-          <View style={S.membersHeader}>
-            <Text style={S.membersTitle}>{t('whiteboard.membersTitle', { name: currentBox.name })}</Text>
-            <TouchableOpacity onPress={() => setMembersModal(false)} style={S.membersClose}>
-              <X color={theme.textSecondary} size={22} />
-            </TouchableOpacity>
-          </View>
-          {membersLoading ? (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-              <ActivityIndicator size="large" color={theme.accent} />
-            </View>
-          ) : (
-            <FlatList
-              data={members}
-              keyExtractor={m => m.id}
-              contentContainerStyle={S.membersList}
-              renderItem={({ item, index }) => (
-                <TouchableOpacity
-                  style={S.memberRow}
-                  onPress={() => { setMembersModal(false); navigation.navigate('PublicProfile', { userId: item.id }); }}
-                  activeOpacity={0.75}
-                >
-                  <Text style={S.memberRank}>{index + 1}</Text>
-                  <UserAvatar uri={item.avatar_url} name={item.username} size={40} backgroundColor={theme.accentShadow} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={S.memberName}>{item.username}</Text>
-                    <Text style={S.memberLevel}>{item.level?.toUpperCase()}</Text>
-                  </View>
-                  <Text style={S.memberElo}>{item.elo} ELO</Text>
-                  <ChevronRight color={theme.textMuted} size={14} />
-                </TouchableOpacity>
-              )}
-              ListEmptyComponent={<Text style={S.emptyText}>{t('whiteboard.noMembers')}</Text>}
-            />
-          )}
-        </View>
-      </Modal>
+      <WhiteboardMembersModal
+        visible={membersModal}
+        boxName={currentBox.name}
+        loading={membersLoading}
+        members={members}
+        onClose={() => setMembersModal(false)}
+        onOpenProfile={(userId) => navigation.navigate('PublicProfile', { userId })}
+      />
     </View>
   );
 }
@@ -1128,30 +1091,6 @@ function createStyles(theme: AppTheme) {
     paddingHorizontal: 2, borderWidth: 1.5, borderColor: isDark ? theme.surface : theme.card,
   } as any,
   unreadDotTxt: { fontSize: 8, fontWeight: '900' as const, color: '#fff' },
-  membersContainer: { flex: 1, backgroundColor: theme.background },
-  membersHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingTop: 20, paddingHorizontal: 20, paddingBottom: 16,
-    borderBottomWidth: 1, borderBottomColor: theme.border, backgroundColor: theme.card,
-  },
-  membersTitle: { fontSize: 18, fontWeight: '700', color: theme.text },
-  membersClose: { padding: 4 },
-  membersList: { padding: 16, gap: 10 },
-  memberRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: isDark ? theme.card : theme.card, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: theme.border,
-    ...cardShadow,
-  },
-  memberRank: { width: 22, fontSize: 13, color: theme.textMuted, fontWeight: '700', textAlign: 'center' },
-  memberAvatar: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: theme.accentShadow, justifyContent: 'center', alignItems: 'center',
-  },
-  memberAvatarText: { fontSize: 15, fontWeight: '900', color: '#fff' },
-  memberName: { fontSize: 14, fontWeight: '700', color: theme.text },
-  memberLevel: { fontSize: 10, color: theme.textMuted, fontWeight: '600', marginTop: 1 },
-  memberElo: { fontSize: 13, fontWeight: '700', color: theme.textSecondary },
   section:      { paddingHorizontal: 16, marginTop: 20 },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: theme.text, marginBottom: 12, letterSpacing: -0.2 },
   dayGroup:     { gap: 10 },

@@ -1,12 +1,12 @@
-import i18n from '../../i18n';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
-import { AxIconButton } from '../../components/ax/AxIconButton';
+import i18n from '../../i18n';
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, KeyboardAvoidingView, Platform,
+  View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert,
 } from 'react-native';
+import { AxButton, AxChip, AxIconButton, AxTextField } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { Trash2 } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,7 +17,6 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { BoxWODType } from '../../types';
 import { WhiteboardStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
-import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import DateField from '../../components/DateField';
 import { formatCap, parseCap } from '../../utils/scoreFormat';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
@@ -34,11 +33,6 @@ const WOD_TYPES: { value: BoxWODType; label: string }[] = [
   { value: 'custom',   label: 'Custom' },
 ];
 
-const TYPE_COLORS: Record<string, string> = {
-  'for-time': '#EF4444', amrap: '#3B82F6', emom: '#8B5CF6',
-  tabata: '#F59E0B', strength: '#16A34A', custom: '#6B7280',
-};
-
 function toISO(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -53,6 +47,7 @@ export default function PersonalWODFormScreen() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Rt>();
   const S = createStyles(theme);
+  const c = theme.ax;
 
   const editId = route.params?.wodId ?? null;
   const initialDate = route.params?.date ?? toISO(new Date());
@@ -159,7 +154,7 @@ export default function PersonalWODFormScreen() {
     return (
       <View style={[S.container, { justifyContent: 'center', alignItems: 'center' }]}>
       <GlassBackground />
-        <ActivityIndicator size="large" color={theme.accent} />
+        <ActivityIndicator size="large" color={c.accentText} />
       </View>
     );
   }
@@ -177,74 +172,68 @@ export default function PersonalWODFormScreen() {
 
       <ScrollView contentContainerStyle={[S.body, { paddingBottom: tabSpace }]} keyboardShouldPersistTaps="handled">
         <View style={S.row}>
-          <View style={{ flex: 1 }}>
+          <View style={S.col}>
             <Text style={S.label}>DATE *</Text>
             <DateField
-              style={S.input}
+              style={S.dateInput}
               value={date}
               onChangeText={setDate}
               theme={theme}
+              placeholderTextColor={c.textMuted}
             />
           </View>
         </View>
 
         <Text style={S.label}>TITRE *</Text>
-        <TextInput
-          style={S.input}
+        <AxTextField
+          testID="pwod-title"
           value={title}
           onChangeText={setTitle}
           placeholder="Fran, Cindy, mon WOD perso…"
-          placeholderTextColor={theme.textMuted}
         />
 
         <Text style={S.label}>TYPE</Text>
         <View style={S.typeGrid}>
           {WOD_TYPES.map(t => (
-            <TouchableOpacity
+            <AxChip
               key={t.value}
-              style={[
-                S.typeChip,
-                wodType === t.value && { backgroundColor: TYPE_COLORS[t.value], borderColor: TYPE_COLORS[t.value] },
-              ]}
+              testID={`pwod-type-${t.value}`}
+              label={t.label}
+              selected={wodType === t.value}
               onPress={() => setWodType(t.value)}
-              activeOpacity={0.8}
-            >
-              <Text style={[S.typeChipText, wodType === t.value && { color: '#fff' }]}>{t.label}</Text>
-            </TouchableOpacity>
+            />
           ))}
         </View>
 
         <Text style={S.label}>DESCRIPTION</Text>
-        <TextInput
-          style={[S.input, S.textarea]}
+        <AxTextField
+          testID="pwod-description"
           value={description}
           onChangeText={setDescription}
           placeholder="21-15-9 Thrusters + Pull-ups…"
-          placeholderTextColor={theme.textMuted}
           multiline
+          minInputHeight={80}
         />
 
         <View style={S.row}>
-          <View style={{ flex: 1 }}>
+          <View style={S.col}>
             <Text style={S.label}>TIME CAP (mm:ss)</Text>
-            <TextInput
-              style={S.input}
+            <AxTextField
+              testID="pwod-timecap"
               value={timeCap}
               onChangeText={setTimeCap}
               keyboardType="numbers-and-punctuation"
               placeholder="12:30"
-              placeholderTextColor={theme.textMuted}
             />
           </View>
-          <View style={{ flex: 1 }}>
+          <View style={S.col}>
             <Text style={S.label}>ROUNDS</Text>
-            <TextInput
-              style={S.input}
+            <AxTextField
+              testID="pwod-rounds"
               value={rounds}
               onChangeText={setRounds}
               keyboardType="numeric"
               placeholder="5"
-              placeholderTextColor={theme.textMuted}
             />
           </View>
         </View>
@@ -252,98 +241,81 @@ export default function PersonalWODFormScreen() {
         {wodType === 'emom' && (
           <>
             <Text style={S.label}>INTERVALLE EMOM (min)</Text>
-            <TextInput
-              style={S.input}
+            <AxTextField
+              testID="pwod-emom"
               value={emomInterval}
               onChangeText={setEmomInterval}
               keyboardType="numeric"
               placeholder="1"
-              placeholderTextColor={theme.textMuted}
             />
           </>
         )}
 
         {wodType === 'tabata' && (
           <View style={S.row}>
-            <View style={{ flex: 1 }}>
+            <View style={S.col}>
               <Text style={S.label}>WORK (sec)</Text>
-              <TextInput
-                style={S.input}
+              <AxTextField
+                testID="pwod-tabata-work"
                 value={tabataWork}
                 onChangeText={setTabataWork}
                 keyboardType="numeric"
                 placeholder="20"
-                placeholderTextColor={theme.textMuted}
               />
             </View>
-            <View style={{ flex: 1 }}>
+            <View style={S.col}>
               <Text style={S.label}>REST (sec)</Text>
-              <TextInput
-                style={S.input}
+              <AxTextField
+                testID="pwod-tabata-rest"
                 value={tabataRest}
                 onChangeText={setTabataRest}
                 keyboardType="numeric"
                 placeholder="10"
-                placeholderTextColor={theme.textMuted}
               />
             </View>
           </View>
         )}
 
         <Text style={S.label}>NOTES</Text>
-        <TextInput
-          style={[S.input, S.textarea]}
+        <AxTextField
+          testID="pwod-notes"
           value={notes}
           onChangeText={setNotes}
           placeholder="Scaling, conseils, intentions…"
-          placeholderTextColor={theme.textMuted}
           multiline
+          minInputHeight={80}
         />
 
-        <EmeraldCTAButton
-          onPress={save}
-          disabled={!title.trim()}
-          loading={submitting}
-          style={{ marginTop: 8 }}
-        >
-          {editId ? 'Enregistrer' : 'Créer le WOD'}
-        </EmeraldCTAButton>
+        <View style={S.actions}>
+          <AxButton
+            testID="pwod-save"
+            variant="accent"
+            label={editId ? 'Enregistrer' : 'Créer le WOD'}
+            onPress={save}
+            disabled={!title.trim()}
+            loading={submitting}
+            fullWidth
+          />
+        </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      paddingTop: 56, paddingHorizontal: 16, paddingBottom: 14,
-      backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    body: { padding: axSpacing.xl, gap: axSpacing.sm },
+    label: { ...axTypography.overline, color: c.textMuted, marginTop: axSpacing.sm },
+    dateInput: {
+      ...axTypography.body, color: c.text,
+      backgroundColor: c.field, borderRadius: axRadius.control,
+      borderWidth: 1, borderColor: c.fieldBorder, padding: 14,
     },
-    back: { padding: 2, width: 26 },
-    headerTitle: { fontSize: 18, fontWeight: '900', color: theme.text },
-    body: { padding: 20, gap: 10, paddingBottom: 140 },
-    label: { fontSize: 10, fontWeight: '800', color: theme.textMuted, letterSpacing: 1 },
-    input: {
-      backgroundColor: theme.card, borderRadius: 10,
-      borderWidth: 1, borderColor: theme.border,
-      paddingHorizontal: 12, paddingVertical: 11,
-      fontSize: 14, color: theme.text,
-    },
-    textarea: { minHeight: 80, textAlignVertical: 'top' },
-    row: { flexDirection: 'row', gap: 10 },
-    typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    typeChip: {
-      paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8,
-      backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-    },
-    typeChipText: { fontSize: 12, fontWeight: '700', color: theme.textSecondary },
-    saveBtn: {
-      backgroundColor: theme.accent, borderRadius: 14,
-      padding: 18, alignItems: 'center', marginTop: 8,
-    },
-    saveBtnDisabled: { opacity: 0.4 },
-    saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '900' },
+    row: { flexDirection: 'row', gap: axSpacing.md },
+    col: { flex: 1, minWidth: 0, gap: axSpacing.sm },
+    typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm },
+    actions: { marginTop: axSpacing.lg },
   });
 }
