@@ -15,8 +15,10 @@ import java.net.URL
  * - Competition logo: top left (rounded square)
  * - Title: top center (28pt bold)
  * - Box logo: top right (circle)
- * - Countdown: center screen, same look as the on-screen CountdownView (R5b/R6b)
- * - « GO ! »: accent band tilted by -4°, same look as the on-screen GoFlash
+ * - Countdown: label + ring centered in the frame, digit centered in the ring
+ *   ([CountdownLayout]), same look as the on-screen CountdownView (R5b/R6b)
+ * - « GO ! »: accent band tilted by -4° through the center, text centered in it,
+ *   same look as the on-screen GoFlash
  * - Bottom row (all vertically centered):
  *   - Left: ATHLEX logo (160px)
  *   - Center: Timer DS-Digital (180pt)
@@ -40,6 +42,7 @@ class OverlayRenderer(private val context: Context) {
   private val bitmapPaint = Paint(Paint.FILTER_BITMAP_FLAG)
   private val reusableClipPath = Path()
   private val shapePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+  private val inkBounds = Rect()
 
   init {
     loadAthlexLogo()
@@ -260,24 +263,23 @@ class OverlayRenderer(private val context: Context) {
   /**
    * Label above a circle of diameter `d`: « PRÉPARE-TOI » + white digit in a
    * 35 % ring above 3, « PRÊT ? » + accent digit on a 12 % accent halo at 3-2-1.
+   * The label + ring group is centered in the frame, each text by its ink.
    */
   private fun drawCountdown(canvas: Canvas, width: Float, height: Float, refDim: Float, isLandscape: Boolean, state: OverlayState) {
     val accent = parseColor(state.accentColor, Color.WHITE)
     val tense = state.countdownTense
-    val d = refDim * (if (isLandscape) 0.5f else 0.55f)
-    val cx = width / 2f
-    val cy = height / 2f
+    val layout = CountdownLayout.countdown(width, height, isLandscape, hasLabel = state.countdownLabel.isNotEmpty())
+    val d = layout.ringDiameter
+    val cx = layout.centerX
+    val cy = layout.ringCenterY
 
-    val labelSize = d * 0.07f
-    val labelH = labelSize * 1.4f
-    val labelBottom = cy - d / 2f - d * 0.04f
-    drawText(
-      canvas, state.countdownLabel,
-      RectF(0f, labelBottom - labelH, width, labelBottom),
-      fontSize = labelSize, bold = false,
-      color = if (tense) accent else Color.argb(204, 255, 255, 255),
-      alignment = Layout.Alignment.ALIGN_CENTER, shadow = true, letterSpacing = 0.33f
-    )
+    if (state.countdownLabel.isNotEmpty()) {
+      configurePaint(
+        CountdownLayout.labelSize(d), if (tense) accent else Color.argb(204, 255, 255, 255),
+        shadow = true, letterSpacing = 0.33f
+      )
+      drawInkCentered(canvas, state.countdownLabel, cx, layout.labelCenterY)
+    }
 
     shapePaint.reset()
     shapePaint.isAntiAlias = true
@@ -293,22 +295,19 @@ class OverlayRenderer(private val context: Context) {
       canvas.drawCircle(cx, cy, d / 2f - w / 2f, shapePaint)
     }
 
-    val digitSize = d * (if (tense) 0.7f else 0.55f)
-    drawText(
-      canvas, "${state.countdownValue}",
-      RectF(cx - d * 0.75f, cy - d / 2f, cx + d * 0.75f, cy + d / 2f),
-      fontSize = digitSize, bold = false, color = if (tense) accent else Color.WHITE,
-      alignment = Layout.Alignment.ALIGN_CENTER,
+    configurePaint(
+      CountdownLayout.digitSize(d, tense), if (tense) accent else Color.WHITE,
       shadow = !tense, oswaldMedium = true,
       glowColor = if (tense) withAlpha(accent, 0.5f) else null, glowRadius = d * 0.11f
     )
+    drawInkCentered(canvas, "${state.countdownValue}", cx, cy)
   }
 
-  /** Accent band tilted by -4° across the frame, « GO ! » centered in `goInk`. */
+  /** Accent band tilted by -4° through the center of the frame, « GO ! » ink-centered in `goInk`. */
   private fun drawGoBand(canvas: Canvas, width: Float, height: Float, refDim: Float, state: OverlayState) {
     val accent = parseColor(state.accentColor, Color.WHITE)
-    val goSize = refDim * 0.16f
-    val bandH = goSize * 1.9f
+    val goSize = CountdownLayout.goSize(refDim)
+    val bandH = CountdownLayout.goBandHeight(goSize)
     canvas.save()
     canvas.translate(width / 2f, height / 2f)
     canvas.rotate(-4f)
@@ -316,13 +315,44 @@ class OverlayRenderer(private val context: Context) {
     shapePaint.style = Paint.Style.FILL
     shapePaint.color = accent
     canvas.drawRect(-width * 0.6f, -bandH / 2f, width * 0.6f, bandH / 2f, shapePaint)
-    drawText(
-      canvas, state.goLabel,
-      RectF(-width / 2f, -bandH / 2f, width / 2f, bandH / 2f),
-      fontSize = goSize, bold = false, color = parseColor(state.goInk, Color.BLACK),
-      alignment = Layout.Alignment.ALIGN_CENTER, oswaldMedium = true
-    )
+    configurePaint(goSize, parseColor(state.goInk, Color.BLACK), oswaldMedium = true)
+    drawInkCentered(canvas, state.goLabel, 0f, 0f)
     canvas.restore()
+  }
+
+  // MARK: - Ink-centered text (countdown, « GO ! »)
+
+  /** Sets `textPaint` for [inkOf] / [drawInkCentered] (same typefaces and effects as [drawText]). */
+  private fun configurePaint(
+    fontSize: Float, color: Int, shadow: Boolean = false, letterSpacing: Float = 0f,
+    oswaldMedium: Boolean = false, glowColor: Int? = null, glowRadius: Float = 0f
+  ) {
+    textPaint.reset()
+    textPaint.isAntiAlias = true
+    textPaint.color = color
+    textPaint.textSize = fontSize
+    textPaint.letterSpacing = letterSpacing
+    textPaint.textAlign = Paint.Align.LEFT
+    textPaint.typeface = if (oswaldMedium) oswaldMediumTypeface ?: Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+    if (shadow) textPaint.setShadowLayer(4f, 1f, 1f, Color.argb(179, 0, 0, 0))
+    if (glowColor != null) textPaint.setShadowLayer(glowRadius, 0f, 0f, glowColor)
+  }
+
+  /** Ink bounds of `text` with the current paint, relative to (x = 0, baseline = 0). */
+  private fun inkOf(text: String): Rect {
+    textPaint.getTextBounds(text, 0, text.length, inkBounds)
+    return inkBounds
+  }
+
+  /** Draws `text` (current paint) so that its ink is centered on (cx, cy). */
+  private fun drawInkCentered(canvas: Canvas, text: String, cx: Float, cy: Float) {
+    val ink = inkOf(text)
+    canvas.drawText(
+      text,
+      CountdownLayout.originXFor(cx, ink.left.toFloat(), ink.right.toFloat()),
+      CountdownLayout.baselineFor(cy, ink.top.toFloat(), ink.bottom.toFloat()),
+      textPaint
+    )
   }
 
   private fun parseColor(hex: String, fallback: Int): Int =

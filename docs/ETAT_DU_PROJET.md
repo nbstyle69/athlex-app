@@ -206,6 +206,18 @@ Supabase/Resend.
 
 ## En cours
 
+**Décompte incrusté centré dans la vidéo (module natif, aucune migration).** Retour de Nab sur le build 1.0.58.
+- Cause, identique iOS et Android : l'anneau seul était centré (le libellé au-dessus remontait tout le groupe), et le chiffre,
+  le libellé et « GO ! » étaient centrés sur leur boîte de ligne (ascendante / descendante de la police) et non sur leurs
+  glyphes ; l'espacement des lettres du libellé le décalait sur le côté.
+- `CountdownLayout` (Kotlin, testé sur JVM ; même géométrie en Swift) : groupe « libellé + anneau » centré, bloc du libellé
+  de hauteur fixe (« PRÉPARE-TOI » → « PRÊT ? » ne déplace pas l'anneau) ; chaque texte centré sur son encre
+  (`getTextBounds` sur Android, `usesDeviceMetrics` sur iOS) ; bande « GO ! » centrée, texte centré dans la bande.
+  Portrait et paysage, caméra avant et arrière (l'incrustation n'est jamais miroir). Apparence inchangée sinon.
+- Tests : `CountdownLayoutTest.kt` (5, JVM), `decompteVideoCentre.test.ts` (9 : mêmes nombres des deux côtés, chemins de
+  dessin), 9 mutations tuées ; Kotlin compilé, Swift par un build simulateur EAS.
+  Protocole manuel : [`audits/protocole-decompte-video-centre.md`](./audits/protocole-decompte-video-centre.md).
+
 **Correctif musculation : même mouvement dans deux blocs (app seule, aucune migration).** Retours de Nab sur le
 build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).
 - Cause, prouvée en prod (lecture seule) et sur la base rejouée : chaque bloc numérotait ses séries à partir de 1,
