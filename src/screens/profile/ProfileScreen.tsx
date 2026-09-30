@@ -3,9 +3,13 @@ import { useFocusQuery } from '../../hooks/useFocusQuery';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert,
   TextInput, Modal, KeyboardAvoidingView, Platform, ActivityIndicator,
-  Image, Share, Switch, Linking, RefreshControl,
+  Image, Share, Linking, RefreshControl,
 } from 'react-native';
-import { Trophy, Zap, TrendingUp, Award, LogOut, Star, Flame, ChevronRight, Hash, Building2, Edit3, Check, X, Camera, Copy, Share2, Bell, BookOpen, Search, ExternalLink, Lock, CreditCard } from 'lucide-react-native';
+import {
+  Trophy, Zap, TrendingUp, Award, LogOut, Star, Flame, ChevronRight, Hash, Building2, Edit3, Check, X, Camera, Copy,
+  Share2, Bell, BookOpen, Search, ExternalLink, Lock, CreditCard, Dumbbell, PersonStanding, Timer, Moon, Sun, Users, Medal,
+  type LucideIcon,
+} from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -32,10 +36,12 @@ import { prKey, normalizePrRecords, PrCategorySlug, WEIGHTLIFTING_PR_MOVEMENTS, 
 import { formatTimeValue, isTimeUnit, parseTimeInput } from './timeValue';
 import StrengthHistory from '../../components/profile/StrengthHistory';
 import { fetchMyStrengthSets, groupStrengthSessions } from '../../services/strengthSets';
-import { inkOn } from '../../theme/ink';
 import { programWeekAt, toLocalIso } from '../../utils/programSchedule';
 import { getMyMemberships, membershipState, membershipStateText, MembershipState } from '../../services/membership';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { AxButton, AxCard, AxChip, AxSwitch } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { levelInk } from '../home/homeLevelColor';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Profile'>;
 
@@ -45,7 +51,7 @@ const PR_CATEGORIES = [
   {
     label: 'Haltérophilie',
     titleKey: 'weightlifting',
-    icon: '🏋️',
+    icon: Dumbbell,
     // Une seule liste de libellés : c'est elle qui compose les clés en base et
     // que l'alimentation automatique des 1RM (services/strengthPR) vise.
     items: WEIGHTLIFTING_PR_MOVEMENTS.map(movement => ({ movement, value: '', unit: 'kg', date: '' })),
@@ -53,7 +59,7 @@ const PR_CATEGORIES = [
   {
     label: 'Gymnastics',
     titleKey: 'gymnastics',
-    icon: '🤸',
+    icon: PersonStanding,
     items: [
       { movement: 'Toes To Bar', value: '', unit: 'reps', date: '' },
       { movement: 'Pull-ups', value: '', unit: 'reps', date: '' },
@@ -71,7 +77,7 @@ const PR_CATEGORIES = [
   {
     label: 'Benchmarks CrossFit',
     titleKey: 'benchmarks',
-    icon: '🏆',
+    icon: Trophy,
     items: [
       { movement: 'Fran', value: '', unit: 'min', date: '' },
       { movement: 'Grace', value: '', unit: 'min', date: '' },
@@ -85,7 +91,7 @@ const PR_CATEGORIES = [
   {
     label: 'Cardio & Endurance',
     titleKey: 'cardio',
-    icon: '🏃',
+    icon: Timer,
     items: [
       { movement: '500m Row', value: '', unit: 'min', date: '' },
       { movement: '2km Row', value: '', unit: 'min', date: '' },
@@ -680,6 +686,7 @@ export default function ProfileScreen() {
   }
 
   const levelColor = LevelColors[user?.level ?? 'scaled'];
+  const levelText = levelInk(user?.level ?? 'scaled', theme.ax);
 
   const roleLabel = user?.role === 'box_owner'  ? t('profile.roles.boxOwner')
                   : user?.role === 'admin'       ? t('profile.roles.admin')
@@ -744,24 +751,24 @@ export default function ProfileScreen() {
             fontSize={28}
           />
           <View style={S.userInfo}>
-            <Text style={S.username}>{user?.username ?? 'Athlète'}</Text>
-            <Text style={S.email}>{user?.email}</Text>
-            <View style={[S.levelBadge, { backgroundColor: `${levelColor}18`, borderColor: `${levelColor}40` }]}>
-              <View style={[S.levelDot, { backgroundColor: levelColor }]} />
-              <Text style={[S.levelText, { color: levelColor }]}>
+            <Text style={S.username} numberOfLines={2} testID="profile-username">{user?.username ?? 'Athlète'}</Text>
+            <Text style={S.email} numberOfLines={1}>{user?.email}</Text>
+            <View style={[S.levelBadge, { borderColor: levelText }]} testID="profile-level">
+              <View style={[S.levelDot, { backgroundColor: levelText }]} />
+              <Text style={[S.levelText, { color: levelText }]}>
                 {(user?.level ?? 'scaled').toUpperCase()}
               </Text>
             </View>
           </View>
-          <TouchableOpacity onPress={handleSignOut} style={S.logoutBtn}>
-            <LogOut color={theme.textMuted} size={20} />
+          <TouchableOpacity onPress={handleSignOut} style={S.logoutBtn} accessibilityRole="button" accessibilityLabel={t('profile.alerts.signOutTitle')} testID="profile-sign-out">
+            <LogOut color={theme.ax.textMuted} size={20} />
           </TouchableOpacity>
         </View>
 
         <View style={S.statsRow}>
           <TouchableOpacity onPress={() => navigation.navigate('EloHistory' as never)}
-            style={[S.statPill, S.statPillBorder]} activeOpacity={0.6}>
-            <Text style={S.statPillValue}>{user?.elo ?? 1000}</Text>
+            style={[S.statPill, S.statPillBorder]} activeOpacity={0.6} testID="profile-elo">
+            <Text style={S.statPillValue} testID="profile-elo-value">{user?.elo ?? 1000}</Text>
             <Text style={S.statPillLabel}>ELO ›</Text>
           </TouchableOpacity>
           {[
@@ -778,13 +785,16 @@ export default function ProfileScreen() {
 
         <View style={S.progressSection}>
           <View style={S.progressHeader}>
-            <Text style={S.progressLabel}>
-              {nextStep ? t('profile.elo.toward', { level: nextStep.label }) : `🏆 ${t('profile.elo.maxLevel')}`}
-            </Text>
+            <View style={S.progressLabelRow}>
+              {!nextStep && <Trophy color={theme.ax.textMuted} size={12} />}
+              <Text style={S.progressLabel}>
+                {nextStep ? t('profile.elo.toward', { level: nextStep.label }) : t('profile.elo.maxLevel')}
+              </Text>
+            </View>
             <Text style={S.progressPct}>{eloProgress}%</Text>
           </View>
           <View style={S.progressTrack}>
-            <View style={[S.progressFill, { width: `${eloProgress}%` as any, backgroundColor: levelColor }]} />
+            <View style={[S.progressFill, { width: `${eloProgress}%` as any, backgroundColor: levelText }]} />
           </View>
           <Text style={S.progressNote}>
             {nextStep
@@ -794,13 +804,15 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      <View style={S.tabs}>
+      <View style={S.tabs} testID="profile-tabs">
         {TAB_KEYS.map((tab, i) => (
-          <TouchableOpacity key={tab} onPress={() => setActiveTab(i)}
-            style={[S.tab, activeTab === i && S.tabActive]}
-            accessibilityRole="tab" accessibilityState={{ selected: activeTab === i }}>
-            <Text style={[S.tabText, activeTab === i && S.tabTextActive]}>{t(`profile.tabs.${tab}`)}</Text>
-          </TouchableOpacity>
+          <AxChip
+            key={tab}
+            label={t(`profile.tabs.${tab}`)}
+            selected={activeTab === i}
+            onPress={() => setActiveTab(i)}
+            testID={`profile-tab-${tab}`}
+          />
         ))}
       </View>
 
@@ -819,13 +831,13 @@ export default function ProfileScreen() {
         {TAB_KEYS[activeTab] === 'stats' && (
           <>
             {(user?.total_matches ?? 0) === 0 && (
-              <View style={S.emptyBanner}>
-                <Trophy color={theme.textMuted} size={22} />
+              <AxCard style={S.emptyBanner} testID="profile-stats-empty">
+                <Trophy color={theme.ax.textMuted} size={22} />
                 <View style={{ flex: 1 }}>
                   <Text style={S.emptyBannerTitle}>{t('profile.stats.emptyTitle')}</Text>
                   <Text style={S.emptyBannerSub}>{t('profile.stats.emptySub')}</Text>
                 </View>
-              </View>
+              </AxCard>
             )}
             <View style={S.gridRow}>
               {[
@@ -836,12 +848,12 @@ export default function ProfileScreen() {
                 { label: t('profile.stats.currentStreak'), value: streak.current_streak, icon: Flame },
                 { label: t('profile.stats.badgesEarned'), value: `${earnedCount}/${totalBadges}`, icon: Award },
                 ...(currentBox ? [{ label: t('profile.stats.wodsDone'), value: wodCount, icon: Zap }] : []),
-              ].map((s) => (
-                <View key={s.label} style={S.gridCard}>
-                  <s.icon color={theme.text} size={18} />
-                  <Text style={S.gridValue}>{s.value}</Text>
-                  <Text style={S.gridLabel}>{s.label}</Text>
-                </View>
+              ].map((s, i) => (
+                <AxCard key={s.label} style={S.gridCard} testID={`profile-stat-${i}`}>
+                  <s.icon color={s.icon === Flame ? theme.ax.orange : theme.ax.textMuted} size={18} />
+                  <Text style={S.gridValue} testID={`profile-stat-${i}-value`}>{s.value}</Text>
+                  <Text style={S.gridLabel} numberOfLines={2}>{s.label}</Text>
+                </AxCard>
               ))}
             </View>
           </>
@@ -879,17 +891,17 @@ export default function ProfileScreen() {
             {filtered.map(({ cat, items }) => {
               const isOpen = searching || expandedPR === cat.titleKey;
               return (  
-                <View key={cat.titleKey} style={S.prCategory}>
+                <AxCard key={cat.titleKey} style={S.prCategory} testID={`profile-pr-${cat.titleKey}`}>
                   <TouchableOpacity
                     style={S.prCategoryHeader}
                     onPress={() => !searching && setExpandedPR(isOpen ? null : cat.titleKey)}
                     activeOpacity={searching ? 1 : 0.7}
                   >
-                    <Text style={S.prCategoryIcon}>{cat.icon}</Text>
-                    <Text style={S.prCategoryLabel}>{t(`profile.pr.categories.${cat.titleKey}`)}</Text>
+                    <cat.icon color={theme.ax.accentText} size={18} />
+                    <Text style={S.prCategoryLabel} numberOfLines={1}>{t(`profile.pr.categories.${cat.titleKey}`)}</Text>
                     <Text style={S.prCategoryCount}>{t('profile.pr.recordsCount', { count: items.length })}</Text>
                     <ChevronRight
-                      color={theme.textMuted} size={16}
+                      color={theme.ax.textMuted} size={16}
                       style={{ transform: [{ rotate: isOpen ? '90deg' : '0deg' }] }}
                     />
                   </TouchableOpacity>
@@ -899,7 +911,7 @@ export default function ProfileScreen() {
                     return (
                       <View key={i} style={[S.prRow, i === items.length - 1 && { borderBottomWidth: 0 }]}>
                         <View style={{ flex: 1 }}>
-                          <Text style={S.prMovement}>{pr.movement}</Text>
+                          <Text style={S.prMovement} numberOfLines={2}>{pr.movement}</Text>
                           <Text style={S.prDate}>
                             {prValues[`${key}_date`] ?? (prValues[key] ? '' : pr.date)}
                           </Text>
@@ -938,18 +950,18 @@ export default function ProfileScreen() {
                             </TouchableOpacity>
                           </View>
                         ) : (
-                          <TouchableOpacity onPress={() => setEditingPR(key)} style={S.prValueBtn}>
-                            <Text style={[S.prValue, !prValues[key] && { color: theme.textMuted }]}>
+                          <TouchableOpacity onPress={() => setEditingPR(key)} style={S.prValueBtn} testID={`profile-pr-value-${key}`}>
+                            <Text style={[S.prValue, !prValues[key] && { color: theme.ax.textMuted }]}>
                               {prValues[key] ? (isTimeUnit(pr.unit) ? formatTimeValue(prValues[key]) : prValues[key]) : '—'}{' '}
                               <Text style={S.prUnit}>{prValues[key] ? (isTimeUnit(pr.unit) ? 'min' : pr.unit) : ''}</Text>
                             </Text>
-                            <Edit3 color={theme.textMuted} size={12} />
+                            <Edit3 color={theme.ax.textMuted} size={12} />
                           </TouchableOpacity>
                         )}
                       </View>
                     );
                   })}
-                </View>
+                </AxCard>
               );
             })}
             {!searching && (
@@ -970,13 +982,14 @@ export default function ProfileScreen() {
                 {' '}{t('profile.badges.earnedOf')}{' '}
                 <Text style={{ fontWeight: '900' }}>{totalBadges}</Text>
               </Text>
-              <Text style={{ fontSize: 11, color: theme.accent, fontWeight: '700' }}>
-                ⭐ {t('profile.badges.pinnedCount', { count: featuredBadges.length })}
-              </Text>
+              <View style={S.pinnedRow}>
+                <Star color={theme.ax.accentText} size={12} />
+                <Text style={S.pinnedText}>{t('profile.badges.pinnedCount', { count: featuredBadges.length })}</Text>
+              </View>
             </View>
             {/* Streak widget */}
-            <View style={S.streakWidget}>
-              <Text style={S.streakFire}>🔥</Text>
+            <AxCard style={S.streakWidget} testID="profile-streak">
+              <Flame color={theme.ax.orange} size={32} />
               <View style={{ flex: 1 }}>
                 <Text style={S.streakTitle}>{t('profile.badges.week', { count: streak.current_streak })}</Text>
                 <Text style={S.streakSub}>{t('profile.badges.sessionsThisWeek', { done: streak.week_session_count, total: streak.max_sessions_per_week ?? '∞' })}</Text>
@@ -984,9 +997,9 @@ export default function ProfileScreen() {
                   <View style={[S.streakBarFill, { width: `${Math.min(100, (streak.week_session_count / (streak.max_sessions_per_week ?? 3)) * 100)}%` }]} />
                 </View>
               </View>
-            </View>
+            </AxCard>
 
-            <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 8, marginTop: -4 }}>
+            <Text style={S.pinHint}>
               {t('profile.badges.pinHint')}
             </Text>
 
@@ -999,22 +1012,26 @@ export default function ProfileScreen() {
                     const isFeatured = featuredBadges.includes(badge.badge_key);
                     const canFeature = earned && (isFeatured || featuredBadges.length < 3);
                     return (
-                      <TouchableOpacity
-                        key={badge.badge_key}
-                        style={[S.badgeCard, !earned && S.badgeCardLocked, isFeatured && { borderColor: theme.accent, borderWidth: 2 }]}
-                        onPress={() => canFeature && toggleFeaturedBadge(badge.badge_key)}
-                        activeOpacity={earned ? 0.75 : 1}
-                      >
-                        {isFeatured && (
-                          <Text style={{ position: 'absolute', top: 4, right: 4, fontSize: 12 }}>⭐</Text>
-                        )}
-                        <Text style={S.badgeIcon}>{earned ? badge.icon : '🔒'}</Text>
-                        <Text style={[S.badgeName, !earned && { color: theme.textMuted }]}>
-                          {badge.title}
-                        </Text>
-                        <Text style={S.badgeDesc}>{badge.description}</Text>
-                        {earned && <View style={S.earnedBar} />}
-                      </TouchableOpacity>
+                      <View key={badge.badge_key} style={S.badgeCell}>
+                        <AxCard
+                          style={[S.badgeCard, !earned && S.badgeCardLocked, isFeatured && S.badgeCardFeatured]}
+                          onPress={() => canFeature && toggleFeaturedBadge(badge.badge_key)}
+                          accessibilityLabel={badge.title}
+                          testID={`profile-badge-${badge.badge_key}`}
+                        >
+                          {isFeatured && (
+                            <View style={S.badgePin} testID={`profile-badge-${badge.badge_key}-pin`}>
+                              <Star color={theme.ax.accentText} size={12} />
+                            </View>
+                          )}
+                          <BadgeIcon category={badge.category} earned={earned} color={earned ? theme.ax.accentText : theme.ax.textMuted} />
+                          <Text style={[S.badgeName, !earned && { color: theme.ax.textMuted }]} numberOfLines={3}>
+                            {badge.title}
+                          </Text>
+                          <Text style={S.badgeDesc} numberOfLines={3}>{badge.description}</Text>
+                          {earned && <View style={S.earnedBar} />}
+                        </AxCard>
+                      </View>
                     );
                   })}
                 </View>
@@ -1026,7 +1043,7 @@ export default function ProfileScreen() {
           <View style={S.compteSection}>
 
             {/* ── Mes Boxes ─────────────────────────────────── */}
-            <View style={S.compteCard}>
+            <AxCard style={S.compteCard} testID="profile-card-boxes">
               <Text style={S.compteCardTitle}>{t('profile.account.myBoxes')}</Text>
               {myBoxes.length > 0 ? (
                 <>
@@ -1034,10 +1051,10 @@ export default function ProfileScreen() {
                     const isActive = entry.box.id === currentBox?.id;
                     return (
                       <View key={entry.box.id} style={[S.boxRow, { marginBottom: 8 }]}>
-                        <Building2 color={isActive ? theme.accent : theme.text} size={20} />
+                        <Building2 color={isActive ? theme.ax.accentText : theme.ax.text} size={20} />
                         <TouchableOpacity style={{ flex: 1 }} onPress={() => switchBox(entry.box.id)} activeOpacity={0.7}>
-                          <Text style={[S.boxName, isActive && { color: theme.accent }]}>{entry.box.name}</Text>
-                          <Text style={{ fontSize: 11, color: theme.textMuted, marginTop: 1 }}>
+                          <Text style={[S.boxName, isActive && { color: theme.ax.accentText }]} numberOfLines={2}>{entry.box.name}</Text>
+                          <Text style={S.rowValue}>
                             {entry.role === 'owner' ? t('profile.account.roleOwner') : entry.role === 'coach' ? t('profile.account.roleCoach') : t('profile.account.roleMember')}
                           </Text>
                         </TouchableOpacity>
@@ -1060,7 +1077,7 @@ export default function ProfileScreen() {
                             style={{ padding: 6 }}
                             activeOpacity={0.7}
                           >
-                            <Text style={{ fontSize: 11, fontWeight: '600', color: theme.error }}>{t('profile.account.leave')}</Text>
+                            <Text style={S.leaveText}>{t('profile.account.leave')}</Text>
                           </TouchableOpacity>
                         )}
                       </View>
@@ -1071,13 +1088,13 @@ export default function ProfileScreen() {
                 <Text style={S.noBoxText}>{t('profile.account.noBox')}</Text>
               )}
               <TouchableOpacity style={S.joinBtn} onPress={() => setJoinModal(true)} activeOpacity={0.8}>
-                <Hash color={theme.text} size={16} />
+                <Hash color={theme.ax.text} size={16} />
                 <Text style={S.joinBtnText}>{t('profile.account.joinBox')}</Text>
               </TouchableOpacity>
               {membershipStates.map(m => (
                 <View key={m.boxId} style={S.subStateRow}>
                   {m.name ? <Text style={S.subStateBox}>{m.name}</Text> : null}
-                  <Text style={[S.subStateText, (m.state.key === 'suspended' || m.state.key === 'pastDue') && { color: theme.error }]}>
+                  <Text style={[S.subStateText, (m.state.key === 'suspended' || m.state.key === 'pastDue') && { color: theme.ax.danger }]}>
                     {membershipStateText(m.state)}
                   </Text>
                 </View>
@@ -1089,16 +1106,16 @@ export default function ProfileScreen() {
                     onPress={() => Linking.openURL(`${WEB_URL}/compte`)}
                     activeOpacity={0.8}
                   >
-                    <ExternalLink color={theme.accent} size={16} />
+                    <ExternalLink color={theme.ax.accentText} size={16} />
                     <Text style={S.manageSubBtnText}>{t('profile.account.manageSubscription')}</Text>
                   </TouchableOpacity>
                   <Text style={S.manageSubHint}>{t('profile.account.manageSubscriptionSub')}</Text>
                 </>
               )}
-            </View>
+            </AxCard>
 
             {/* ── Mes Programmes ─────────────────────────── */}
-            <View style={S.compteCard}>
+            <AxCard style={S.compteCard} testID="profile-card-programs">
               <Text style={S.compteCardTitle}>{t('profile.account.myPrograms')}</Text>
               {myPrograms.length > 0 ? (
                 <>
@@ -1118,10 +1135,10 @@ export default function ProfileScreen() {
                           daysPerWeek: prog.days_per_week,
                         })}
                       >
-                        <BookOpen color={theme.accent} size={20} />
-                        <View style={{ flex: 1, marginLeft: 10 }}>
-                          <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>{prog.title}</Text>
-                          <Text style={{ fontSize: 11, color: theme.textSecondary }}>
+                        <BookOpen color={theme.ax.accentText} size={20} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={S.rowLabel} numberOfLines={2}>{prog.title}</Text>
+                          <Text style={S.rowValue}>
                             {!prog.start_date
                               ? t('profile.account.progChooseStart')
                               : prog.type === 'fixed'
@@ -1129,10 +1146,10 @@ export default function ProfileScreen() {
                               : t('profile.account.progOngoing', { days: prog.days_per_week })}
                           </Text>
                         </View>
-                        <View style={{ backgroundColor: `${theme.success}18`, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-                          <Text style={{ fontSize: 10, fontWeight: '700', color: theme.success }}>{t('profile.account.active')}</Text>
+                        <View style={S.activeTag}>
+                          <Text style={S.activeTagText}>{t('profile.account.active')}</Text>
                         </View>
-                        <ChevronRight color={theme.textMuted} size={16} style={{ marginLeft: 6 }} />
+                        <ChevronRight color={theme.ax.textMuted} size={16} />
                       </TouchableOpacity>
                     );
                   })}
@@ -1141,24 +1158,24 @@ export default function ProfileScreen() {
                 <Text style={S.noBoxText}>{t('profile.account.noProgram')}</Text>
               )}
               <TouchableOpacity style={S.joinBtn} onPress={() => setProgModal(true)} activeOpacity={0.8}>
-                <BookOpen color={theme.text} size={16} />
+                <BookOpen color={theme.ax.text} size={16} />
                 <Text style={S.joinBtnText}>{t('profile.account.joinProgram')}</Text>
               </TouchableOpacity>
-            </View>
+            </AxCard>
 
             {/* ── Edit profile ─────────────────────────── */}
-            <View style={S.compteCard}>
+            <AxCard style={S.compteCard} testID="profile-card-info">
               <View style={S.compteCardHeader}>
                 <Text style={S.compteCardTitle}>{t('profile.account.myInfo')}</Text>
                 {!editing ? (
                   <TouchableOpacity onPress={() => setEditing(true)} style={S.editIconBtn}>
-                    <Edit3 color={theme.text} size={16} />
+                    <Edit3 color={theme.ax.accentText} size={16} />
                     <Text style={S.editIconText}>{t('common.edit')}</Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity onPress={() => setEditing(false)} style={S.editIconBtn}>
-                    <X color={theme.textMuted} size={16} />
-                    <Text style={[S.editIconText, { color: theme.textMuted }]}>{t('common.cancel')}</Text>
+                    <X color={theme.ax.textMuted} size={16} />
+                    <Text style={[S.editIconText, { color: theme.ax.textMuted }]}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -1234,7 +1251,6 @@ export default function ProfileScreen() {
                         onPress={() => setEditGender(editGender === g ? null : g)}
                         activeOpacity={0.8}
                       >
-                        <Text style={{ fontSize: 20 }}>{g === 'male' ? '♂' : '♀'}</Text>
                         <Text style={[S.genderLabel, editGender === g && S.genderLabelActive]}>
                           {t(g === 'male' ? 'auth.male' : 'auth.female')}
                         </Text>
@@ -1298,9 +1314,9 @@ export default function ProfileScreen() {
                   </TouchableOpacity>
                 </View>
               )}
-            </View>
+            </AxCard>
             {/* ── Mes amis ─────────────────────────────── */}
-            <View style={S.compteCard}>
+            <AxCard style={S.compteCard} testID="profile-card-friends">
               <Text style={S.compteCardTitle}>{t('profile.account.myFriends', { count: friends.length })}</Text>
               {friends.length === 0 ? (
                 <Text style={S.friendsEmpty}>{t('profile.account.noFriends')}</Text>
@@ -1308,12 +1324,14 @@ export default function ProfileScreen() {
                 <View style={S.friendsList}>
                   {friends.map(f => {
                     const fc = LevelColors[f.level as keyof typeof LevelColors] ?? theme.accent;
+                    const fInk = f.level ? levelInk(f.level, theme.ax) : theme.ax.accentText;
                     return (
                       <TouchableOpacity
                         key={f.id}
                         style={S.friendRow}
                         onPress={() => navigation.navigate('PublicProfile', { userId: f.id })}
                         activeOpacity={0.8}
+                        testID={`profile-friend-${f.id}`}
                       >
                         <UserAvatar
                           uri={f.avatar_url}
@@ -1323,35 +1341,33 @@ export default function ProfileScreen() {
                           borderWidth={2}
                           borderColor={fc}
                           backgroundColor={`${fc}20`}
-                          textColor={fc}
+                          textColor={fInk}
                           fontSize={14}
                         />
                         <View style={{ flex: 1 }}>
-                          <Text style={S.friendName}>{f.username}</Text>
-                          <Text style={[S.friendLevel, { color: fc }]}>{f.level?.toUpperCase()}</Text>
+                          <Text style={S.friendName} numberOfLines={1}>{f.username}</Text>
+                          <Text style={[S.friendLevel, { color: fInk }]}>{f.level?.toUpperCase()}</Text>
                         </View>
-                        <ChevronRight color={theme.textMuted} size={16} />
+                        <ChevronRight color={theme.ax.textMuted} size={16} />
                       </TouchableOpacity>
                     );
                   })}
                 </View>
               )}
-            </View>
+            </AxCard>
 
             {/* ── Abonnement AthleX (gérant) ─────────── */}
             {isOwnerAdmin && (
-              <TouchableOpacity
+              <AxCard
                 style={S.compteCard}
                 onPress={() => navigation.getParent()?.navigate('BODashboard', { screen: 'BOSubscription' })}
-                activeOpacity={0.8}
-                accessibilityRole="button"
                 accessibilityLabel={hasAthlexSub ? t('profile.athlexSub.manage') : t('profile.athlexSub.subscribe')}
                 testID={hasAthlexSub ? 'profile-athlex-sub' : 'profile-athlex-sub-empty'}
               >
                 <Text style={S.compteCardTitle}>{t('profile.athlexSub.title')}</Text>
                 <View style={S.themeRow}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}>
-                    <CreditCard color={theme.accentText} size={18} />
+                    <CreditCard color={theme.ax.accentText} size={18} />
                     <View style={{ flex: 1 }}>
                       {hasAthlexSub ? (
                         <>
@@ -1365,106 +1381,102 @@ export default function ProfileScreen() {
                   </View>
                   <View style={S.athlexSubBtn}>
                     <Text style={S.athlexSubBtnText}>{hasAthlexSub ? t('profile.athlexSub.manage') : t('profile.athlexSub.subscribe')}</Text>
-                    <ChevronRight color={theme.accentText} size={16} />
+                    <ChevronRight color={theme.ax.accentText} size={16} />
                   </View>
                 </View>
-              </TouchableOpacity>
+              </AxCard>
             )}
 
             {/* ── Mes entraînements ───────────────────── */}
-            <TouchableOpacity
+            <AxCard
               style={S.compteCard}
               onPress={() => navigation.navigate('WodHistory' as never)}
-              activeOpacity={0.8}
+              accessibilityLabel={t('profile.myTrainings')}
               testID="profile-my-trainings"
             >
               <View style={S.themeRow}>
                 <Text style={S.compteCardTitle}>{t('profile.myTrainings')}</Text>
-                <ChevronRight color={theme.textMuted} size={16} />
+                <ChevronRight color={theme.ax.textMuted} size={16} />
               </View>
-            </TouchableOpacity>
+            </AxCard>
 
             {/* ── CGU + Confidentialité ──────────────── */}
-            <TouchableOpacity
+            <AxCard
               style={S.compteCard}
               onPress={() => navigation.navigate('Legal' as never)}
-              activeOpacity={0.8}
+              accessibilityLabel={t('profile.legal')}
+              testID="profile-legal"
             >
               <View style={S.themeRow}>
                 <Text style={S.compteCardTitle}>{t('profile.legal')}</Text>
-                <ChevronRight color={theme.textMuted} size={16} />
+                <ChevronRight color={theme.ax.textMuted} size={16} />
               </View>
-            </TouchableOpacity>
+            </AxCard>
 
             {/* ── Apparence ───────────────────────────── */}
-            <View style={S.compteCard}>
+            <AxCard style={S.compteCard} testID="profile-card-appearance">
               <Text style={S.compteCardTitle}>{t('profile.appearance')}</Text>
               <View style={S.themeRow}>
-                <Text style={S.themeLabel}>{mode === 'dark' ? `🌙 ${t('profile.darkMode')}` : `☀️ ${t('profile.lightMode')}`}</Text>
-                <Switch
+                <View style={S.rowStart}>
+                  {mode === 'dark' ? <Moon color={theme.ax.text} size={18} /> : <Sun color={theme.ax.text} size={18} />}
+                  <Text style={S.themeLabel}>{mode === 'dark' ? t('profile.darkMode') : t('profile.lightMode')}</Text>
+                </View>
+                <AxSwitch
                   value={mode === 'dark'}
                   onValueChange={toggleTheme}
-                  trackColor={{ false: theme.border, true: theme.text }}
-                  thumbColor={theme.background}
-                  ios_backgroundColor={theme.border}
+                  accessibilityLabel={mode === 'dark' ? t('profile.darkMode') : t('profile.lightMode')}
+                  testID="profile-theme-switch"
                 />
               </View>
-            </View>
+            </AxCard>
 
             {/* ── Langue ──────────────────────────────── */}
-            <View style={S.compteCard}>
+            <AxCard style={S.compteCard} testID="profile-card-language">
               <Text style={S.compteCardTitle}>{t('profile.language')}</Text>
-              <View style={[S.themeRow, { gap: 10 }]}>
-                {(['fr', 'en'] as const).map(lng => {
-                  const active = i18n.language === lng;
-                  return (
-                    <TouchableOpacity
-                      key={lng}
-                      onPress={() => setLanguage(lng)}
-                      activeOpacity={0.8}
-                      style={[
-                        S.langBtn,
-                        { borderColor: active ? theme.accent : theme.border, backgroundColor: active ? theme.ctaBg : 'transparent' },
-                      ]}
-                    >
-                      <Text style={[S.langBtnText, { color: active ? theme.accent : theme.textMuted }]}>
-                        {lng === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+              <View style={S.langRow}>
+                {(['fr', 'en'] as const).map(lng => (
+                  <AxChip
+                    key={lng}
+                    label={lng === 'fr' ? 'Français' : 'English'}
+                    selected={i18n.language === lng}
+                    onPress={() => setLanguage(lng)}
+                    testID={`profile-lang-${lng}`}
+                  />
+                ))}
               </View>
-            </View>
+            </AxCard>
 
             {/* ── Utilisateurs bloqués ──────────────────── */}
-            <TouchableOpacity
+            <AxCard
               style={S.compteCard}
               onPress={() => navigation.navigate('BlockedUsers' as never)}
-              activeOpacity={0.8}
+              accessibilityLabel={t('profile.blockedUsers')}
+              testID="profile-blocked"
             >
               <View style={S.themeRow}>
                 <Text style={S.compteCardTitle}>{t('profile.blockedUsers')}</Text>
-                <ChevronRight color={theme.textMuted} size={16} />
+                <ChevronRight color={theme.ax.textMuted} size={16} />
               </View>
-            </TouchableOpacity>
+            </AxCard>
 
             {/* ── Notifications ─────────────────────────── */}
-            <TouchableOpacity
+            <AxCard
               style={S.compteCard}
               onPress={() => navigation.navigate('NotificationSettings')}
-              activeOpacity={0.8}
+              accessibilityLabel={t('profile.notifications')}
+              testID="profile-notifications"
             >
               <View style={S.themeRow}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                  <Bell color={theme.text} size={18} />
+                <View style={S.rowStart}>
+                  <Bell color={theme.ax.text} size={18} />
                   <Text style={S.themeLabel}>{t('profile.notifications')}</Text>
                 </View>
-                <ChevronRight color={theme.textMuted} size={16} />
+                <ChevronRight color={theme.ax.textMuted} size={16} />
               </View>
-            </TouchableOpacity>
+            </AxCard>
 
             {/* ── Referral code ────────────────────────── */}
-            <View style={S.compteCard}>
+            <AxCard style={S.compteCard} testID="profile-card-referral">
               <Text style={S.compteCardTitle}>{t('profile.referralCode')}</Text>
               <Text style={S.referralDesc}>
                 {t('profile.referralDesc')}
@@ -1478,35 +1490,32 @@ export default function ProfileScreen() {
               )}
               <View style={S.referralBtns}>
                 <TouchableOpacity style={S.referralBtn} onPress={handleCopyReferral} disabled={!referralCode} activeOpacity={0.8}>
-                  <Copy color={theme.textSecondary} size={15} />
+                  <Copy color={theme.ax.text} size={15} />
                   <Text style={S.referralBtnText}>{t('profile.referral.copy')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={[S.referralBtn, S.referralBtnShare]} onPress={handleShareReferral} disabled={!referralCode} activeOpacity={0.8}>
-                  <Share2 color={theme.onAccent} size={15} />
-                  <Text style={[S.referralBtnText, { color: theme.onAccent }]}>{t('profile.referral.share')}</Text>
+                  <Share2 color={theme.ax.onAccent} size={15} />
+                  <Text style={[S.referralBtnText, { color: theme.ax.onAccent }]}>{t('profile.referral.share')}</Text>
                 </TouchableOpacity>
               </View>
-            </View>
+            </AxCard>
 
             {/* ── Supprimer le compte ───────────────────── */}
-            <View style={S.compteCard}>
-              <Text style={S.compteCardTitle}>{t('profile.account.dangerZone')}</Text>
-              <Text style={{ fontSize: 12, color: theme.textMuted, lineHeight: 18 }}>
+            <AxCard style={[S.compteCard, S.dangerCard]} testID="profile-card-danger">
+              <Text style={[S.compteCardTitle, S.dangerTitle]}>{t('profile.account.dangerZone')}</Text>
+              <Text style={S.dangerText}>
                 {t('profile.account.deleteWarning')}
               </Text>
-              <TouchableOpacity
-                style={S.deleteAccountBtn}
+              <AxButton
+                variant="stop"
+                label={t('profile.deleteAccount')}
                 onPress={handleDeleteAccount}
                 disabled={deleting}
-                activeOpacity={0.8}
-              >
-                {deleting ? (
-                  <ActivityIndicator color={inkOn(theme.error)} size="small" />
-                ) : (
-                  <Text style={S.deleteAccountText}>{t('profile.deleteAccount')}</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+                loading={deleting}
+                fullWidth
+                testID="profile-delete-account"
+              />
+            </AxCard>
           </View>
         )}
 
@@ -1637,310 +1646,272 @@ function InfoRow({ label, value, S }: { label: string; value: string; S: ReturnT
   );
 }
 
+const BADGE_ICONS: Record<string, LucideIcon> = {
+  activity: Flame,
+  tournament: Trophy,
+  social: Users,
+  wod: Dumbbell,
+  elo: TrendingUp,
+  Classement: Medal,
+};
+
+function BadgeIcon({ category, earned, color }: { category: string; earned: boolean; color: string }) {
+  const Icon = earned ? (BADGE_ICONS[category] ?? Award) : Lock;
+  return <Icon color={color} size={26} />;
+}
+
 function createStyles(t: AppTheme) {
-  const isDark = t.mode === 'dark';
-  const cardShadow = isDark ? {} : {
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
-  };
+  const c = t.ax;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
   header: {
-    paddingTop: 58, paddingHorizontal: 20, paddingBottom: 20,
-    backgroundColor: t.card,
-    borderBottomWidth: isDark ? 1 : 0, borderBottomColor: t.border,
-    ...(isDark ? {} : { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 }),
+    paddingTop: 58, paddingHorizontal: axSpacing.xl, paddingBottom: axSpacing.xl,
+    backgroundColor: c.surface,
+    borderBottomWidth: 1, borderBottomColor: c.border,
   },
-  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
-  avatar: {
-    width: 60, height: 60, borderRadius: 20,
-    backgroundColor: t.accentShadow, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 2,
-  },
-  avatarText: { fontSize: 22, fontWeight: '900', color: '#fff' },
-  userInfo: { flex: 1 },
-  username: { fontSize: 20, fontWeight: '900', color: t.text, letterSpacing: -0.5 },
-  email: { fontSize: 11, color: t.textMuted, marginBottom: 6 },
+  headerTop: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: axSpacing.xl },
+  userInfo: { flex: 1, minWidth: 0, gap: 2 },
+  username: { ...axTypography.titleXL, color: c.text },
+  email: { ...axTypography.bodySmall, color: c.textMuted, marginBottom: 6 },
   levelBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: axRadius.badge, paddingHorizontal: axSpacing.sm, paddingVertical: 3,
     alignSelf: 'flex-start', borderWidth: 1,
   },
-  levelDot: { width: 5, height: 5, borderRadius: 3 },
-  levelText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+  levelDot: { width: 6, height: 6, borderRadius: 3 },
+  levelText: { ...axTypography.labelSmall, letterSpacing: 0.5 },
   logoutBtn: { padding: 8 },
   statsRow: { flexDirection: 'row', marginBottom: 16 },
   statPill: { flex: 1, alignItems: 'center', paddingVertical: 4 },
-  statPillBorder: { borderRightWidth: 1, borderRightColor: t.border },
-  statPillValue: { fontSize: 20, fontWeight: '900', color: t.text },
-  statPillLabel: { fontSize: 9, color: t.textMuted, fontWeight: '600', marginTop: 2, letterSpacing: 0.3 },
+  statPillBorder: { borderRightWidth: 1, borderRightColor: c.border },
+  statPillValue: { ...axTypography.numberM, color: c.text },
+  statPillLabel: { ...axTypography.overlineSmall, color: c.textMuted, marginTop: 2, textAlign: 'center' },
   progressSection: {},
-  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  progressLabel: { fontSize: 11, color: t.textMuted, fontWeight: '500' },
-  progressPct: { fontSize: 11, fontWeight: '700', color: t.accent },
-  progressTrack: { height: 3, backgroundColor: t.surface, borderRadius: 2, overflow: 'hidden', marginBottom: 4 },
-  progressFill: { height: '100%', backgroundColor: t.accent, borderRadius: 2 },
-  progressNote: { fontSize: 10, color: t.textMuted },
+  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: axSpacing.sm, marginBottom: 6 },
+  progressLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 },
+  progressLabel: { ...axTypography.caption, color: c.textMuted, flexShrink: 1 },
+  progressPct: { ...axTypography.caption, fontFamily: axTypography.label.fontFamily, color: c.accentText },
+  progressTrack: { height: 4, backgroundColor: c.field, borderRadius: 2, overflow: 'hidden', marginBottom: 4 },
+  progressFill: { height: '100%', borderRadius: 2 },
+  progressNote: { ...axTypography.caption, color: c.textMuted },
   tabs: {
-    flexDirection: 'row', backgroundColor: t.card,
-    borderBottomWidth: 1, borderBottomColor: t.border,
+    flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm,
+    paddingHorizontal: axSpacing.xl, paddingVertical: axSpacing.md,
   },
-  tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabActive: { borderBottomColor: t.accent },
-  tabText: { fontSize: 13, fontWeight: '600', color: t.textMuted },
-  tabTextActive: { color: t.text, fontWeight: '700' },
-  content: { padding: 20, paddingBottom: 120 },
+  content: { padding: axSpacing.xl, paddingBottom: 120 },
   gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  gridCard: {
-    width: '47%', backgroundColor: isDark ? t.surface : t.card, borderRadius: 14,
-    padding: 16, alignItems: 'center', gap: 6,
-    borderWidth: 1, borderColor: t.border,
-    ...cardShadow,
-  },
-  gridValue: { fontSize: 22, fontWeight: '900', color: t.text },
-  gridLabel: { fontSize: 10, color: t.textMuted, fontWeight: '600', textAlign: 'center' },
-  emptyBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: isDark ? t.surface : t.card, borderRadius: 14,
-    padding: 14, marginBottom: 14,
-    borderWidth: 1, borderColor: t.border,
-    ...cardShadow,
-  },
-  emptyBannerTitle: { fontSize: 13, fontWeight: '800', color: t.text },
-  emptyBannerSub: { fontSize: 11, color: t.textMuted, marginTop: 2, lineHeight: 15 },
+  gridCard: { width: '47%', flexGrow: 1, alignItems: 'center', gap: 6 },
+  gridValue: { ...axTypography.numberM, color: c.text },
+  gridLabel: { ...axTypography.caption, color: c.textMuted, textAlign: 'center' },
+  emptyBanner: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
+  emptyBannerTitle: { ...axTypography.label, color: c.text },
+  emptyBannerSub: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2 },
   prSearchRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: isDark ? t.surface : t.card, borderRadius: 12,
+    backgroundColor: c.field, borderRadius: axRadius.control,
     paddingHorizontal: 12, marginBottom: 12,
-    borderWidth: 1, borderColor: t.border,
+    borderWidth: 1, borderColor: c.fieldBorder,
   },
-  prSearchInput: { flex: 1, paddingVertical: 10, fontSize: 14, color: t.text },
-  prNoResults: { fontSize: 13, color: t.textMuted, textAlign: 'center', paddingVertical: 24 },
-  prCategory: {
-    backgroundColor: isDark ? t.card : t.card, borderRadius: 14,
-    borderWidth: 1, borderColor: t.border, marginBottom: 10, overflow: 'hidden',
-    ...cardShadow,
-  },
-  prCategoryHeader: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    padding: 14,
-  },
-  prCategoryIcon: { fontSize: 18 },
-  prCategoryLabel: { flex: 1, fontSize: 14, fontWeight: '700', color: t.text },
-  prCategoryCount: { fontSize: 11, color: t.textMuted },
+  prSearchInput: { flex: 1, paddingVertical: 10, ...axTypography.body, color: c.text },
+  prNoResults: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center', paddingVertical: 24 },
+  prCategory: { padding: 0, gap: 0, marginBottom: 10 },
+  prCategoryHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 14 },
+  prCategoryLabel: { flex: 1, ...axTypography.label, color: c.text },
+  prCategoryCount: { ...axTypography.bodySmall, color: c.textMuted },
   prRow: {
-    flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10,
-    borderTopWidth: 1, borderTopColor: t.border,
+    flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, paddingHorizontal: 14, paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: c.border,
   },
-  prMovement: { flex: 1, fontSize: 13, fontWeight: '500', color: t.textSecondary },
-  prDate: { fontSize: 10, color: t.textMuted, marginRight: 12 },
-  prValue: { fontSize: 15, fontWeight: '900', color: t.text },
-  prUnit: { fontSize: 11, color: t.textMuted, fontWeight: '400' },
-  streakWidget: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: isDark ? t.surface : t.card, borderRadius: 14,
-    padding: 16, marginBottom: 20,
-    borderWidth: 1, borderColor: t.border,
-    ...cardShadow,
-  },
-  streakFire: { fontSize: 36 },
-  streakTitle: { fontSize: 16, fontWeight: '900', color: t.text },
-  streakSub: { fontSize: 12, color: t.textMuted, marginTop: 2, marginBottom: 6 },
-  streakBar: { height: 6, backgroundColor: t.border, borderRadius: 3, overflow: 'hidden' as const },
-  streakBarFill: { height: 6, backgroundColor: t.accent, borderRadius: 3 },
-  badgeSummary: { marginBottom: 16 },
-  badgeSummaryText: { fontSize: 13, color: t.textSecondary },
+  prMovement: { ...axTypography.label, color: c.text },
+  prDate: { ...axTypography.caption, color: c.textMuted },
+  prValue: { ...axTypography.numberM, color: c.text },
+  prUnit: { ...axTypography.bodySmall, color: c.textMuted },
+  streakWidget: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 20 },
+  streakTitle: { ...axTypography.titleM, color: c.text },
+  streakSub: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2, marginBottom: 6 },
+  streakBar: { height: 6, backgroundColor: c.field, borderRadius: 3, overflow: 'hidden' as const },
+  streakBarFill: { height: 6, backgroundColor: c.accent, borderRadius: 3 },
+  badgeSummary: { marginBottom: 16, gap: 4 },
+  badgeSummaryText: { ...axTypography.bodySmall, color: c.textMuted },
+  pinnedRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  pinnedText: { ...axTypography.labelSmall, color: c.accentText },
+  pinHint: { ...axTypography.caption, color: c.textMuted, marginBottom: 8, marginTop: -4 },
   badgeCategoryBlock: { marginBottom: 24 },
-  badgeCategoryTitle: { fontSize: 11, fontWeight: '700', color: t.textMuted, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 1 },
+  badgeCategoryTitle: { ...axTypography.overline, color: c.textMuted, marginBottom: 10 },
   badgesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  badgeCard: {
-    width: '47%', backgroundColor: isDark ? t.surface : t.card, borderRadius: 14,
-    padding: 14, alignItems: 'center', gap: 4,
-    borderWidth: 1, borderColor: t.border,
-    ...cardShadow,
-  },
-  badgeCardLocked: { opacity: 0.3 },
-  badgeIcon: { fontSize: 26, marginBottom: 4 },
-  badgeName: { fontSize: 12, fontWeight: '700', color: t.text, textAlign: 'center' },
-  badgeDesc: { fontSize: 10, color: t.textMuted, textAlign: 'center', lineHeight: 14 },
-  earnedBar: { height: 2, width: 24, backgroundColor: t.accent, borderRadius: 1, marginTop: 4 },
+  badgeCell: { width: '47%', flexGrow: 1 },
+  badgeCard: { alignItems: 'center', gap: 4, flex: 1 },
+  badgeCardLocked: { borderStyle: 'dashed' },
+  badgeCardFeatured: { borderColor: c.accentText, borderWidth: 2 },
+  badgePin: { position: 'absolute', top: 8, right: 8 },
+  badgeName: { ...axTypography.label, color: c.text, textAlign: 'center' },
+  badgeDesc: { ...axTypography.caption, color: c.textMuted, textAlign: 'center' },
+  earnedBar: { height: 2, width: 24, backgroundColor: c.accent, borderRadius: 1, marginTop: 4 },
 
   compteSection: { gap: 16, paddingBottom: 8 },
-  compteCard: {
-    backgroundColor: isDark ? t.surface : t.card, borderRadius: 16,
-    borderWidth: 1, borderColor: t.border, padding: 16, gap: 14,
-    ...cardShadow,
-  },
+  compteCard: { gap: 14 },
   compteCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  compteCardTitle: { fontSize: 11, fontWeight: '700', color: t.textMuted, textTransform: 'uppercase', letterSpacing: 1 },
+  compteCardTitle: { ...axTypography.overline, color: c.textMuted, flexShrink: 1 },
   editIconBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  editIconText: { fontSize: 12, fontWeight: '700', color: t.accent },
-  themeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  themeLabel: { fontSize: 14, fontWeight: '600', color: t.text },
-  athlexSubStatus:  { fontSize: 12, fontWeight: '600', marginTop: 2 },
+  editIconText: { ...axTypography.labelSmall, color: c.accentText },
+  themeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.sm },
+  rowStart: { flexDirection: 'row', alignItems: 'center', gap: 10, flexShrink: 1 },
+  themeLabel: { ...axTypography.label, color: c.text, flexShrink: 1 },
+  rowLabel: { ...axTypography.label, color: c.text },
+  rowValue: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 1 },
+  athlexSubStatus:  { ...axTypography.bodySmall, marginTop: 2 },
   athlexSubBtn:     { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  athlexSubBtnText: { fontSize: 13, fontWeight: '700', color: t.accentText },
-  langBtn: { flex: 1, borderWidth: 1.5, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
-  langBtnText: { fontSize: 14, fontWeight: '700' },
+  athlexSubBtnText: { ...axTypography.labelSmall, color: c.accentText },
+  langRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm },
 
   boxRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  boxName: { fontSize: 15, fontWeight: '700', color: t.text },
-  boxDesc: { fontSize: 12, color: t.textMuted, marginTop: 2 },
+  boxName: { ...axTypography.label, color: c.text },
   activeTag: {
-    backgroundColor: `${t.accent}12`, borderRadius: 8,
-    paddingHorizontal: 8, paddingVertical: 3, borderWidth: 1, borderColor: `${t.accent}25`,
+    borderRadius: axRadius.badge, paddingHorizontal: 8, paddingVertical: 3,
+    borderWidth: 1, borderColor: c.accentText,
   },
-  activeTagText: { fontSize: 10, fontWeight: '700', color: t.accent },
-  noBoxText: { fontSize: 13, color: t.textMuted },
+  activeTagText: { ...axTypography.labelSmall, color: c.accentText },
+  leaveText: { ...axTypography.labelSmall, color: c.danger },
+  noBoxText: { ...axTypography.bodySmall, color: c.textMuted },
   joinBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: t.ctaBg, borderRadius: 14, padding: 14,
-    borderWidth: 1.5, borderColor: t.ctaBorder,
+    gap: 8, backgroundColor: c.field, borderRadius: axRadius.control, padding: 14,
+    borderWidth: 1, borderColor: c.border,
   },
-  joinBtnText: { color: t.text, fontSize: 14, fontWeight: '700' },
+  joinBtnText: { ...axTypography.label, color: c.text },
   manageSubBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: 'transparent', borderRadius: 14, padding: 13,
-    borderWidth: 1.5, borderColor: t.accent,
+    gap: 8, backgroundColor: 'transparent', borderRadius: axRadius.control, padding: 13,
+    borderWidth: 1, borderColor: c.accentText,
   },
-  manageSubBtnText: { color: t.accent, fontSize: 14, fontWeight: '700' },
-  manageSubHint: { fontSize: 11, color: t.textMuted, marginTop: 6, textAlign: 'center' },
+  manageSubBtnText: { ...axTypography.label, color: c.accentText },
+  manageSubHint: { ...axTypography.caption, color: c.textMuted, marginTop: 6, textAlign: 'center' },
   subStateRow: { marginTop: 10, gap: 2 },
-  subStateBox: { fontSize: 12, fontWeight: '700', color: t.text },
-  subStateText: { fontSize: 13, color: t.textMuted, lineHeight: 18 },
-  leaveBtn: {
-    borderWidth: 1.5, borderColor: t.border, borderRadius: 14,
-    padding: 12, alignItems: 'center',
-  },
-  leaveBtnText: { color: t.textSecondary, fontSize: 13, fontWeight: '600' },
+  subStateBox: { ...axTypography.labelSmall, color: c.text },
+  subStateText: { ...axTypography.bodySmall, color: c.textMuted },
 
   infoRows: { gap: 0 },
   infoRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: t.border,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.md,
+    paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: c.border,
   },
-  infoRowLabel: { fontSize: 13, color: t.textMuted, fontWeight: '500' },
-  infoRowValue: { fontSize: 13, fontWeight: '700', color: t.text, maxWidth: '60%' },
+  infoRowLabel: { ...axTypography.label, color: c.text },
+  infoRowValue: { ...axTypography.bodySmall, color: c.textMuted, flexShrink: 1, maxWidth: '60%', textAlign: 'right' },
 
   editForm: { gap: 12 },
   editRow: { flexDirection: 'row', gap: 10 },
   editField: { flex: 1, gap: 4 },
-  editLabel: { fontSize: 11, fontWeight: '700', color: t.textMuted, textTransform: 'uppercase', letterSpacing: 0.4 },
+  editLabel: { ...axTypography.overlineSmall, color: c.textMuted },
   editInput: {
-    backgroundColor: isDark ? t.card : t.background, borderRadius: 12, borderWidth: 1,
-    borderColor: t.border, paddingHorizontal: 12, paddingVertical: 10,
-    fontSize: 14, color: t.text,
+    backgroundColor: c.field, borderRadius: axRadius.control, borderWidth: 1,
+    borderColor: c.fieldBorder, paddingHorizontal: 12, paddingVertical: 10,
+    ...axTypography.body, color: c.text,
   },
   saveBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: t.accent, borderRadius: 14, padding: 14, marginTop: 4,
+    gap: 8, backgroundColor: c.accent, borderRadius: axRadius.control, padding: 14, marginTop: 4,
   },
-  saveBtnText: { color: t.onAccent, fontSize: 14, fontWeight: '700' },
+  saveBtnText: { ...axTypography.label, color: c.onAccent },
 
   genderRow: { flexDirection: 'row', gap: 10 },
   genderCard: {
     flex: 1, alignItems: 'center', gap: 4, paddingVertical: 10,
-    borderRadius: 12, borderWidth: 1, borderColor: t.border,
-    backgroundColor: isDark ? t.card : t.background,
+    borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border,
+    backgroundColor: c.field,
   },
-  genderCardActive: { borderColor: t.accent, backgroundColor: t.surface },
-  genderLabel: { fontSize: 12, fontWeight: '600', color: t.textMuted },
-  genderLabelActive: { color: t.text },
+  genderCardActive: { borderColor: c.accentText },
+  genderLabel: { ...axTypography.labelSmall, color: c.textMuted },
+  genderLabelActive: { color: c.text },
   levelRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   levelChip: {
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: t.border,
-    backgroundColor: isDark ? t.card : t.background,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border,
+    backgroundColor: c.field,
   },
-  levelChipText: { fontSize: 12, fontWeight: '700', color: t.textSecondary, letterSpacing: 0.4 },
-  levelHint: { fontSize: 11, color: t.textSecondary, marginTop: 6 },
+  levelChipText: { ...axTypography.labelSmall, color: c.textMuted, letterSpacing: 0.4 },
+  levelHint: { ...axTypography.caption, color: c.textMuted, marginTop: 6 },
 
   pwdBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    borderRadius: 14, borderWidth: 1, borderColor: t.border, padding: 12,
+    borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border, padding: 12,
   },
-  pwdBtnText: { color: t.text, fontSize: 13, fontWeight: '700' },
+  pwdBtnText: { ...axTypography.label, color: c.text },
 
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: t.modalBackdrop },
   modalSheet: {
-    backgroundColor: t.modalCard, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24,
     padding: 24, gap: 14, paddingBottom: 40,
   },
-  modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: t.border, alignSelf: 'center', marginBottom: 4 },
-  modalTitle: { fontSize: 20, fontWeight: '700', color: t.text, textAlign: 'center' },
-  modalSub: { fontSize: 13, color: t.textMuted, textAlign: 'center' },
+  modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: c.border, alignSelf: 'center', marginBottom: 4 },
+  modalTitle: { ...axTypography.titleM, color: c.text, textAlign: 'center' },
+  modalSub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
   codeInput: {
-    backgroundColor: t.surface, borderRadius: 14, borderWidth: 1.5,
-    borderColor: t.border, paddingHorizontal: 16, paddingVertical: 14,
-    fontSize: 22, fontWeight: '700', color: t.text, textAlign: 'center', letterSpacing: 6,
+    backgroundColor: c.field, borderRadius: axRadius.control, borderWidth: 1,
+    borderColor: c.fieldBorder, paddingHorizontal: 16, paddingVertical: 14,
+    ...axTypography.numberM, color: c.text, textAlign: 'center', letterSpacing: 6,
   },
   modalCancel: { alignItems: 'center', paddingVertical: 8 },
-  modalCancelText: { fontSize: 13, color: t.textMuted, fontWeight: '600' },
+  modalCancelText: { ...axTypography.label, color: c.textMuted },
 
   photoPickerRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  photoPreview: { width: 64, height: 64, borderRadius: 20, borderWidth: 2, borderColor: t.border },
+  photoPreview: { width: 64, height: 64, borderRadius: 20, borderWidth: 2, borderColor: c.border },
   photoPlaceholder: {
     width: 64, height: 64, borderRadius: 20,
-    backgroundColor: t.surface, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 2, borderColor: t.border,
+    backgroundColor: c.field, justifyContent: 'center', alignItems: 'center',
+    borderWidth: 2, borderColor: c.border,
   },
-  photoPlaceholderText: { fontSize: 24, fontWeight: '900', color: t.textSecondary },
+  photoPlaceholderText: { ...axTypography.titleL, color: c.textMuted },
   photoPickerBtns: { flex: 1, gap: 8 },
   photoBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: t.surface, borderRadius: 12, paddingVertical: 8, paddingHorizontal: 12,
-    borderWidth: 1, borderColor: t.border,
+    backgroundColor: c.field, borderRadius: axRadius.control, paddingVertical: 8, paddingHorizontal: 12,
+    borderWidth: 1, borderColor: c.border,
   },
-  photoBtnText: { fontSize: 12, fontWeight: '700', color: t.textSecondary },
+  photoBtnText: { ...axTypography.labelSmall, color: c.text },
 
   bioInput: { minHeight: 70, textAlignVertical: 'top' },
 
-  friendsEmpty: { fontSize: 12, color: t.textMuted, lineHeight: 17 },
+  friendsEmpty: { ...axTypography.bodySmall, color: c.textMuted },
   friendsList: { gap: 8 },
   friendRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: isDark ? t.card : t.card, borderRadius: 14,
-    padding: 10, borderWidth: 1, borderColor: t.border,
-    ...cardShadow,
+    backgroundColor: c.field, borderRadius: axRadius.control,
+    padding: 10, borderWidth: 1, borderColor: c.border,
   },
-  friendAvatar: { width: 40, height: 40, borderRadius: 14, borderWidth: 2 },
-  friendAvatarLetter: { fontSize: 16, fontWeight: '900' },
-  friendName: { fontSize: 14, fontWeight: '700', color: t.text },
-  friendLevel: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5, marginTop: 1 },
+  friendName: { ...axTypography.label, color: c.text },
+  friendLevel: { ...axTypography.labelSmall, letterSpacing: 0.5, marginTop: 1 },
 
   prValueBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   prEditRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   prEditInput: {
-    backgroundColor: isDark ? t.card : t.background, borderRadius: 8, borderWidth: 1,
-    borderColor: t.accent, paddingHorizontal: 8, paddingVertical: 4,
-    fontSize: 16, fontWeight: '700', color: t.text, width: 70, textAlign: 'right',
+    backgroundColor: c.field, borderRadius: 8, borderWidth: 1,
+    borderColor: c.accentText, paddingHorizontal: 8, paddingVertical: 4,
+    ...axTypography.label, color: c.text, width: 70, textAlign: 'right',
   },
   prEditConfirm: {
     width: 28, height: 28, borderRadius: 10,
-    backgroundColor: t.surface, justifyContent: 'center', alignItems: 'center',
+    backgroundColor: c.field, justifyContent: 'center', alignItems: 'center',
   },
 
-  referralDesc: { fontSize: 12, color: t.textMuted, lineHeight: 17 },
+  referralDesc: { ...axTypography.bodySmall, color: c.textMuted },
   referralBox: {
-    backgroundColor: isDark ? t.card : t.background, borderRadius: 14, borderWidth: 1.5,
-    borderColor: t.border, paddingVertical: 14, alignItems: 'center',
+    backgroundColor: c.field, borderRadius: axRadius.control, borderWidth: 1,
+    borderColor: c.border, paddingVertical: 14, alignItems: 'center',
     borderStyle: 'dashed',
   },
-  referralCode: { fontSize: 26, fontWeight: '900', color: t.text, letterSpacing: 6 },
+  referralCode: { ...axTypography.numberM, color: c.text, letterSpacing: 6 },
   referralBtns: { flexDirection: 'row', gap: 10 },
   referralBtn: {
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, borderRadius: 14, paddingVertical: 11,
-    backgroundColor: t.surface, borderWidth: 1, borderColor: t.border,
+    gap: 6, borderRadius: axRadius.control, paddingVertical: 11,
+    backgroundColor: c.field, borderWidth: 1, borderColor: c.border,
   },
-  referralBtnShare: { backgroundColor: t.accent, borderColor: t.accent },
-  referralBtnText: { fontSize: 13, fontWeight: '700', color: t.textSecondary },
-  roleBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1, backgroundColor: t.surface, borderColor: t.border },
-  roleBadgeText: { fontSize: 12, fontWeight: '700' as const, color: t.textSecondary },
+  referralBtnShare: { backgroundColor: c.accent, borderColor: c.accent },
+  referralBtnText: { ...axTypography.label, color: c.text },
+  roleBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: axRadius.badge, borderWidth: 1, borderColor: c.border },
+  roleBadgeText: { ...axTypography.bodySmall, color: c.textMuted },
   inviteCodeRow: { flexDirection: 'row' as const, alignItems: 'center' as const },
-  inviteCodeText: { fontSize: 14, fontWeight: '700' as const, letterSpacing: 2, color: t.text },
-  deleteAccountBtn: {
-    backgroundColor: t.error, borderRadius: 14, padding: 14,
-    alignItems: 'center' as const, justifyContent: 'center' as const,
-  },
-  deleteAccountText: { color: '#fff', fontSize: 14, fontWeight: '700' as const },
+  inviteCodeText: { ...axTypography.label, letterSpacing: 2, color: c.text },
+  dangerCard: { borderColor: c.danger },
+  dangerTitle: { color: c.danger },
+  dangerText: { ...axTypography.bodySmall, color: c.textMuted },
 }); }

@@ -1,9 +1,10 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxCard } from '../../components/ax';
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator,
+  View, Text, StyleSheet, FlatList, ActivityIndicator,
 } from 'react-native';
-import { Sparkles, Bug, RefreshCw } from 'lucide-react-native';
+import { Sparkles, Bug, RefreshCw, type LucideIcon } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
@@ -14,6 +15,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { readableInk } from './homeLevelColor';
 
 interface ChangelogEntry {
   id: string;
@@ -24,10 +27,10 @@ interface ChangelogEntry {
   isRead: boolean;
 }
 
-const TYPE_META: Record<string, { icon: string; label: string; color: string }> = {
-  feature: { icon: '✨', label: 'Nouveauté', color: '#10B981' },
-  fix:     { icon: '🐛', label: 'Correction', color: '#EF4444' },
-  update:  { icon: '🔄', label: 'Mise à jour', color: '#3B82F6' },
+const TYPE_META: Record<string, { icon: LucideIcon; label: string; color: string }> = {
+  feature: { icon: Sparkles,  label: 'Nouveauté', color: '#10B981' },
+  fix:     { icon: Bug,       label: 'Correction', color: '#EF4444' },
+  update:  { icon: RefreshCw, label: 'Mise à jour', color: '#3B82F6' },
 };
 
 export default function ChangelogScreen() {
@@ -93,18 +96,20 @@ export default function ChangelogScreen() {
 
   function renderEntry({ item }: { item: ChangelogEntry }) {
     const meta = TYPE_META[item.type] ?? TYPE_META.update;
+    const ink = readableInk(meta.color, theme.ax);
     return (
-      <View style={[S.card, !item.isRead && S.cardUnread]}>
+      <AxCard style={[S.card, !item.isRead && S.cardUnread]} testID={`changelog-${item.id}`}>
         <View style={S.cardHeader}>
-          <View style={[S.typeBadge, { backgroundColor: meta.color + '22' }]}>
-            <Text style={S.typeBadgeText}>{meta.icon} {meta.label}</Text>
+          <View style={[S.typeBadge, { borderColor: ink }]} testID={`changelog-${item.id}-type`}>
+            <meta.icon color={ink} size={12} />
+            <Text style={[S.typeBadgeText, { color: ink }]}>{meta.label}</Text>
           </View>
           <Text style={S.date}>{formatDate(item.created_at)}</Text>
-          {!item.isRead && <View style={S.unreadDot} />}
+          {!item.isRead && <View style={S.unreadDot} testID={`changelog-${item.id}-unread`} />}
         </View>
         <Text style={S.title}>{item.title}</Text>
         {item.body ? <Text style={S.body}>{item.body}</Text> : null}
-      </View>
+      </AxCard>
     );
   }
 
@@ -115,10 +120,10 @@ export default function ChangelogScreen() {
       <AxScreenHeader title="Nouveautés" />
 
       {loading ? (
-        <ActivityIndicator size="large" color={theme.accent} style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color={theme.ax.accentText} style={{ marginTop: 40 }} />
       ) : entries.length === 0 ? (
         <View style={S.empty}>
-          <Sparkles size={48} color={theme.textSecondary} />
+          <Sparkles size={48} color={theme.ax.textMuted} />
           <Text style={S.emptyText}>Aucune nouveauté pour le moment</Text>
         </View>
       ) : (
@@ -135,35 +140,22 @@ export default function ChangelogScreen() {
 }
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 16, paddingTop: 56, paddingBottom: 12,
-      backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
-    },
-    headerTitle: { fontSize: 18, fontWeight: '700', color: theme.text },
-    card: {
-      backgroundColor: theme.card, borderRadius: 14, padding: 16, marginBottom: 12,
-      borderWidth: 1, borderColor: theme.border,
-    },
-    cardUnread: {
-      borderLeftWidth: 3, borderLeftColor: theme.accent,
-    },
-    cardHeader: {
-      flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 8,
-    },
+    card: { marginBottom: axSpacing.md, gap: 4 },
+    cardUnread: { borderLeftWidth: 3, borderLeftColor: c.accent },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 4, gap: 8 },
     typeBadge: {
-      paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8,
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      paddingHorizontal: 8, paddingVertical: 3, borderRadius: axRadius.badge, borderWidth: 1,
     },
-    typeBadgeText: { fontSize: 12, fontWeight: '600', color: theme.text },
-    date: { fontSize: 12, color: theme.textSecondary, flex: 1, textAlign: 'right' },
-    unreadDot: {
-      width: 8, height: 8, borderRadius: 4, backgroundColor: theme.accent, marginLeft: 4,
-    },
-    title: { fontSize: 16, fontWeight: '700', color: theme.text, marginBottom: 4 },
-    body: { fontSize: 14, color: theme.textSecondary, lineHeight: 20 },
-    empty: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-    emptyText: { fontSize: 15, color: theme.textSecondary },
+    typeBadgeText: { ...axTypography.labelSmall },
+    date: { ...axTypography.caption, color: c.textMuted, flex: 1, textAlign: 'right' },
+    unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: c.accent, marginLeft: 4 },
+    title: { ...axTypography.label, color: c.text },
+    body: { ...axTypography.bodySmall, color: c.textMuted },
+    empty: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, padding: 24 },
+    emptyText: { ...axTypography.body, color: c.textMuted, textAlign: 'center' },
   });
 }
