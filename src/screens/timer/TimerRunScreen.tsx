@@ -23,6 +23,7 @@ import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
 import { Square, Play, X, RotateCcw, RefreshCw, Download, Settings, Youtube, ExternalLink, RotateCw, Palette, Volume2, VolumeX, Minus, Plus, Check } from 'lucide-react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useKeepAwake } from 'expo-keep-awake';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { HomeStackParamList, SeqBlock } from '../../navigation';
@@ -37,6 +38,7 @@ import { incrementCounter } from '../../services/gamification';
 import * as Notifications from 'expo-notifications';
 import { spacing, borderRadius, typography } from '../../theme/designTokens';
 import { captureError } from '../../lib/sentry';
+import { RecBlinkDot } from '../../components/timer/RecBlinkDot';
 import { hapticLight, hapticMedium, hapticHeavy } from '../../lib/haptics';
 
 type Route = RouteProp<HomeStackParamList, 'TimerRun'>;
@@ -109,23 +111,31 @@ function CountdownView({ value, title, digitColor, accent, bg, size }: {
   const accentInk = ensureContrast(accent, bg);
   const digitInk = ensureContrast(digitColor, bg);
   const ink = tense ? accentInk : digitInk;
+  const digitSize = Math.round(size * (String(value).length > 1 ? 0.45 : 0.55));
+  const glowSize = Math.round(size * 0.72);
+  // Mêmes cercle, taille et position du chiffre sur tout le décompte : 3-2-1 ne change que les couleurs et le halo.
   return (
     <View testID="timer-countdown" style={{ alignItems: 'center', gap: axSpacing.sm }}>
       <Text testID="timer-countdown-label"
         style={[axTypography.overline, { color: tense ? accentInk : inkOnSecondary(bg), letterSpacing: 4 }]}>
         {tense ? t('timer.countdown.ready') : t('timer.countdown.prepare')}
       </Text>
-      {!tense && !!title && (
+      {!!title && (
         <Text testID="timer-countdown-title" numberOfLines={1}
-          style={[axTypography.label, { color: inkOnSecondary(bg), maxWidth: size * 1.4 }]}>{title}</Text>
+          style={[axTypography.label, { color: inkOnSecondary(bg), maxWidth: size * 1.4, opacity: tense ? 0 : 1 }]}>{title}</Text>
       )}
-      <View testID={tense ? 'timer-countdown-halo' : 'timer-countdown-ring'}
+      <View testID="timer-countdown-ring"
         style={{ width: size, height: size, borderRadius: size / 2, justifyContent: 'center', alignItems: 'center',
-          borderWidth: tense ? 0 : 2, borderColor: withAlpha(digitInk, 0.35),
+          borderWidth: 2, borderColor: withAlpha(tense ? accentInk : digitInk, 0.35),
           backgroundColor: tense ? withAlpha(accentInk, 0.12) : 'transparent' }}>
-        <Text testID="timer-countdown-value" adjustsFontSizeToFit numberOfLines={1}
-          style={[styles.bigDigits, { fontSize: Math.round(size * (tense ? 0.7 : 0.55)), color: ink },
-            tense && { textShadowColor: withAlpha(accentInk, 0.5), textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 24 }]}>
+        {/* Halo circulaire : une ombre de texte est rognée en rectangle sur iOS. */}
+        {tense && (
+          <View testID="timer-countdown-glow" pointerEvents="none"
+            style={{ position: 'absolute', width: glowSize, height: glowSize,
+              borderRadius: glowSize / 2, backgroundColor: withAlpha(accentInk, 0.14) }} />
+        )}
+        <Text testID="timer-countdown-value" numberOfLines={1}
+          style={[styles.countdownDigits, { width: size, fontSize: digitSize, lineHeight: Math.round(digitSize * 1.2), color: ink }]}>
           {value}
         </Text>
       </View>
@@ -175,6 +185,16 @@ const DIGIT_COLORS = [
 ];
 
 const CAM_SHADOW = 'rgba(0,0,0,0.6)';
+/** Écart minimal entre le bas de la zone sûre et la pastille REC. */
+export const CAM_REC_GAP = 40;
+/** Logo du temps final sans vidéo : même taille que sur Connexion. */
+const FINAL_LOGO_SIZE = 120;
+/** Caméra en portrait : écart entre les éléments du bas, et entre « Arrêter le chrono » et la date. */
+const CAM_STACK_GAP = 10;
+export const CAM_INFO_GAP = 16;
+const CAM_BOTTOM_PAD = 28;
+/** Paysage sans vidéo : place du bouton Play/Stop (70) + marge (18) + respiration, réservée des deux côtés pour centrer les chiffres. */
+export const LANDSCAPE_SIDE_ROOM = 70 + 18 + 12;
 
 // ─── ARC clock (SVG) ─────────────────────────────────────────────────────────
 function ArcTimer({ time, progress, color, fontSize, strokeColor, landscape, customSize, flat }: { time: string; progress: number; color: string; fontSize?: number; strokeColor?: string; landscape?: boolean; customSize?: number; flat?: boolean }) {
@@ -834,8 +854,9 @@ export default function TimerRunScreen() {
               digitColor: isCustomDigit ? stored.digitColor : theme.digitColor,
               bgCountdown: theme.bgCountdown, bgRunning: theme.bgRunning, bgDone: theme.bgDone }
           : { ...DEFAULT_DISPLAY, ...stored };
-        // Préférence enregistrée avant le réglage : le thème choisi est conservé.
-        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });
+        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit
+        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.
+        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });
       } catch (e) { captureError(e, { screen: 'TimerRun', action: 'parseDisplayOpts' }); }
     });
   }, []);
@@ -1508,6 +1529,14 @@ export default function TimerRunScreen() {
     return 0;
   })();
   // Phase-aware accent color
+  const insets = useSafeAreaInsets();
+  // Croix et Réglages : même rangée pendant le chrono et sur le temps final, sous la zone sûre.
+  const ctrlRowStyle = isLandscape
+    ? { paddingHorizontal: 12, paddingTop: Math.max(10, insets.top), paddingBottom: 4 }
+    : { paddingHorizontal: 16, paddingTop: Math.max(52, insets.top + axSpacing.sm), paddingBottom: 8 };
+  // Caméra en portrait : la rangée REC démarre 40 px sous la zone sûre (îlot dynamique).
+  const camTopPad = insets.top + CAM_REC_GAP;
+
   const phaseColor = phase === 'countdown' ? PHASE_COLORS.prepare
     : phase === 'running' && seqPausing ? PHASE_COLORS.rest
     : phase === 'running' && innerPhase === 'rest' ? PHASE_COLORS.rest
@@ -1739,7 +1768,7 @@ export default function TimerRunScreen() {
   };
 
   const renderTopBar = (extraPadTop = 0) => (
-    <View style={[styles.topBar, extraPadTop > 0 && { paddingTop: extraPadTop }]}>
+    <View testID="timer-cam-topbar" style={[styles.topBar, extraPadTop > 0 && { paddingTop: extraPadTop }]}>
       {hideUI
         ? <View style={{ width: 44 }} />
         : withCamera
@@ -1757,7 +1786,9 @@ export default function TimerRunScreen() {
         )}
       </View>
       {hideUI
-        ? <View style={{ width: 44 }} />
+        ? <View style={{ width: 44, alignItems: 'center' }}>
+            <RecBlinkDot />
+          </View>
         : withCamera
           ? // Camera flip is allowed ONLY before "Démarrer" is pressed (camState === 0).
             // Once recording starts, both camera facing and orientation are locked
@@ -1765,7 +1796,9 @@ export default function TimerRunScreen() {
             camState === 0
               ? <AxIconButton testID="timer-cam-flip" icon={RefreshCw} veil accessibilityLabel="Retourner la caméra"
                   onPress={() => setFacing(f => f === 'front' ? 'back' : 'front')} />
-              : <View style={{ width: 44 }} />
+              : <View style={{ width: 44, alignItems: 'center' }}>
+                  {camState >= 1 && camState <= 3 && <RecBlinkDot />}
+                </View>
           : <TouchableOpacity onPress={() => setShowSettings(true)} style={styles.iconBtn} activeOpacity={0.7}>
               <Settings color="rgba(255,255,255,0.8)" size={20} />
             </TouchableOpacity>
@@ -1773,26 +1806,46 @@ export default function TimerRunScreen() {
     </View>
   );
 
+  // Rangée Croix / Réglages du chrono sans vidéo, reprise telle quelle sur le temps final.
+  const renderCtrlRow = (testID: string) => (
+    <View testID={testID} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, ctrlRowStyle]}>
+      <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel="Fermer">
+        <X color={iconColor} size={24} />
+      </TouchableOpacity>
+      <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Design du minuteur">
+        <Settings color={iconColor} size={20} />
+      </TouchableOpacity>
+    </View>
+  );
+
   const renderContent = () => (
-    <View style={[styles.overlay, withCamera && isLandscape && { paddingVertical: 20 }, withCamera && !isLandscape && phase === 'done' && { paddingTop: 20, paddingBottom: 8 }, !withCamera && { paddingVertical: 0 }]}>
-      {!(!withCamera && phase !== 'done') && renderTopBar(0)}
+    <View testID="timer-overlay" style={[styles.overlay, withCamera && isLandscape && { paddingVertical: 20 }, withCamera && !isLandscape && { paddingTop: camTopPad }, withCamera && !isLandscape && phase === 'done' && { paddingBottom: 8 }, !withCamera && { paddingVertical: 0 }]}>
+      {withCamera && renderTopBar(0)}
 
       {phase === 'done' ? (
         /* ── RÉSULTAT PLEIN ÉCRAN ──────────────────────────────── */
         <View style={{ flex: 1 }}>
           <ViewShot ref={cardRef} options={{ format: 'png', quality: 1 }} style={{ flex: 1 }}>
+            {!withCamera && renderCtrlRow('timer-final-controls')}
             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 28, paddingBottom: 16, paddingTop: 0 }}>
 
               {/* ── TOP : logo + badge ── */}
               <View style={{ alignItems: 'center', gap: 10, paddingTop: 2 }}>
-                <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: '#FFFFFF',
-                  justifyContent: 'center', alignItems: 'center',
-                  shadowColor: '#ffffff', shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 0 } }}>
-                  <Image
+                {withCamera ? (
+                  <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: '#FFFFFF',
+                    justifyContent: 'center', alignItems: 'center',
+                    shadowColor: '#ffffff', shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 0 } }}>
+                    <Image
+                      source={require('../../../assets/athex-logo.png')}
+                      style={{ width: 62, height: 62, resizeMode: 'contain' }}
+                    />
+                  </View>
+                ) : (
+                  <Image testID="timer-final-logo" accessibilityLabel="AthleX"
                     source={require('../../../assets/athex-logo.png')}
-                    style={{ width: 62, height: 62, resizeMode: 'contain' }}
+                    style={{ width: FINAL_LOGO_SIZE, height: FINAL_LOGO_SIZE, resizeMode: 'contain' }}
                   />
-                </View>
+                )}
                 {withCamera ? (
                   <AxTag testID="timer-final-tag" label={displayLabel} veil />
                 ) : (
@@ -1890,9 +1943,8 @@ export default function TimerRunScreen() {
                 <View style={{ flex: 1, backgroundColor: currentBg }}>
 
                   {/* TOP BAR */}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10,
-                    paddingHorizontal: 12, paddingTop: 10, paddingBottom: 4 }}>
-                    <TouchableOpacity onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]}>
+                  <View testID="timer-controls" style={[{ flexDirection: 'row', alignItems: 'center', gap: 10 }, ctrlRowStyle]}>
+                    <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel="Fermer">
                       <X color={iconColor} size={24} />
                     </TouchableOpacity>
                     <AxTag testID="timer-format-tag" label={seqPausing ? 'PAUSE' : displayLabel} color={onBg1} />
@@ -1915,7 +1967,7 @@ export default function TimerRunScreen() {
                       {hasSplit ? 'TOTAL ' : ''}
                       {formatTime(totalElapsed)}
                     </Text>
-                    <TouchableOpacity onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7}>
+                    <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Design du minuteur">
                       <Settings color={iconColor} size={20} />
                     </TouchableOpacity>
                   </View>
@@ -1929,14 +1981,11 @@ export default function TimerRunScreen() {
                   )}
 
                   {/* MAIN TIMER */}
-                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                    {phase === 'countdown' ? (
-                      <CountdownView value={countdownVal} title={videoTitle} digitColor={accentColor}
-                        accent={timerAccent} bg={currentBg} size={Math.round(winH * 0.42)} />
-                    ) : (
+                  <View testID="timer-main-landscape" style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: LANDSCAPE_SIDE_ROOM }}>
+                    {phase === 'countdown' ? null : (
                       <Text testID="timer-main-time"
                         adjustsFontSizeToFit numberOfLines={1}
-                        style={[styles.bigDigits, { fontSize: Math.round(winH * 0.58), color: accentColor }]}>
+                        style={[styles.bigDigits, { alignSelf: 'stretch', textAlign: 'center', fontSize: Math.round(winH * 0.58), color: accentColor }]}>
                         {mainTime}
                       </Text>
                     )}
@@ -2060,10 +2109,9 @@ export default function TimerRunScreen() {
               <View style={{ flex: 1, backgroundColor: currentBg }}>
 
                 {/* HEADER: X | badge mode | Settings */}
-                <View style={{ flexDirection: 'row', alignItems: 'center',
-                  justifyContent: 'space-between', paddingHorizontal: 16,
-                  paddingTop: 52, paddingBottom: 8 }}>
-                  <TouchableOpacity onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel="Fermer">
+                <View testID="timer-controls" style={[{ flexDirection: 'row', alignItems: 'center',
+                  justifyContent: 'space-between' }, ctrlRowStyle]}>
+                  <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, styles.ctrlTop, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel="Fermer">
                     <X color={iconColor} size={24} />
                   </TouchableOpacity>
                   <View style={{ alignItems: 'center', gap: 4 }}>
@@ -2073,7 +2121,7 @@ export default function TimerRunScreen() {
                       {formatTime(totalElapsed)}
                     </Text>
                   </View>
-                  <TouchableOpacity onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Design du minuteur">
+                  <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, styles.ctrlTop, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Design du minuteur">
                     <Settings color={iconColor} size={20} />
                   </TouchableOpacity>
                 </View>
@@ -2115,10 +2163,7 @@ export default function TimerRunScreen() {
                       PAUSE
                     </Text>
                   )}
-                  {phase === 'countdown' ? (
-                    <CountdownView value={countdownVal} title={videoTitle} digitColor={accentColor}
-                      accent={timerAccent} bg={currentBg} size={Math.round(SW * 0.62)} />
-                  ) : (
+                  {phase === 'countdown' ? null : (
                     <Text testID="timer-main-time" adjustsFontSizeToFit numberOfLines={1}
                       style={[styles.bigDigits, { fontSize: displayOpts.fontSize, color: accentColor }]}>
                       {mainTime}
@@ -2250,9 +2295,10 @@ export default function TimerRunScreen() {
                   </View>
                 )}
 
-                {/* Boutons contextuels FIN DU TRAVAIL / FIN DU BLOC */}
+                {/* BAS : boutons contextuels, bouton principal puis date et heure, empilés sans chevauchement */}
+                <View testID="timer-cam-bottom" style={[styles.camBottomStack, { bottom: CAM_BOTTOM_PAD }]} pointerEvents="box-none">
                 {(showEndWorkBtn || showEndBlockBtn || showSplitBtn) && (
-                  <View style={{ position: 'absolute', bottom: 96, left: 0, right: 0, alignItems: 'center' }} pointerEvents="box-none">
+                  <View style={{ alignItems: 'center' }} pointerEvents="box-none">
                     {showEndWorkBtn && (
                       <TouchableOpacity onPress={ywyrEndWork} style={styles.ywyrBtn} activeOpacity={0.8}>
                         <Text style={styles.ywyrBtnText}>FIN DU TRAVAIL</Text>
@@ -2271,18 +2317,17 @@ export default function TimerRunScreen() {
                   </View>
                 )}
 
-                {/* Bouton principal en bas (Démarrer / Lancer le chrono / Arrêter) */}
-                <View style={{ position: 'absolute', bottom: 28, left: 0, right: 0, alignItems: 'center' }} pointerEvents="box-none">
-                  <View style={styles.camPrimaryWrap}>{renderCamPrimary()}</View>
-                </View>
+                {/* Bouton principal (Démarrer / Lancer le chrono / Arrêter) */}
+                <View testID="timer-cam-primary-wrap" style={styles.camPrimaryWrap}>{renderCamPrimary()}</View>
 
-                {/* INFOBAR — titre/timestamp */}
+                {/* INFOBAR — titre/timestamp, sous le bouton */}
                 {(videoTitle || withTimestamp) && phase === 'running' && camState >= 2 && (
-                  <View style={styles.infoBar}>
+                  <View testID="timer-cam-infobar" style={[styles.infoBar, { marginTop: CAM_INFO_GAP - CAM_STACK_GAP }]}>
                     {videoTitle ? <Text style={[axTypography.caption, styles.infoTitle]} numberOfLines={1}>{videoTitle}</Text> : null}
                     {withTimestamp ? <Text testID="timer-cam-clock" style={[axTypography.caption, styles.infoTimestamp]}>{clockStr}</Text> : null}
                   </View>
                 )}
+                </View>
               </>
             )}
           </View>
@@ -2327,7 +2372,7 @@ export default function TimerRunScreen() {
         {renderContent()}
         {/* Overlay décompte — top-level pour éviter z-index/elevation Android */}
         {phase === 'countdown' && countdownVal > 0 && (
-          <View testID="timer-cam-cd" style={[StyleSheet.absoluteFill, styles.camCdOverlay, isLandscape && { paddingBottom: 90 }]} pointerEvents="none">
+          <View testID="timer-cam-cd" style={[StyleSheet.absoluteFill, styles.camCdOverlay]} pointerEvents="none">
             <CountdownView value={countdownVal} title={videoTitle} digitColor={axVeil.ink}
               accent={timerAccent} bg={axVeil.countdownFloor}
               size={Math.round(isLandscape ? Math.min(winH * 0.5, SW * 0.42) : SW * 0.55)} />
@@ -2366,6 +2411,13 @@ export default function TimerRunScreen() {
     <View style={[styles.containerDark, { backgroundColor: phaseBg }]}>
       <StatusBar hidden />
       {renderContent()}
+      {/* Décompte centré dans l'écran, au-dessus de la mise en page (en-tête et bouton restent en place). */}
+      {phase === 'countdown' && (
+        <View testID="timer-cd-overlay" style={[StyleSheet.absoluteFill, styles.cdOverlay]} pointerEvents="none">
+          <CountdownView value={countdownVal} title={videoTitle} digitColor={accentColor}
+            accent={timerAccent} bg={currentBg} size={Math.round(isLandscape ? winH * 0.42 : SW * 0.62)} />
+        </View>
+      )}
       {showGo && <GoFlash accent={timerAccent} bg={currentBg} onDone={hideGo} />}
       {showSettings && (
         <TimerSettingsModal opts={displayOpts} onUpdate={setDisplayOpts} onClose={() => setShowSettings(false)} />
@@ -2388,6 +2440,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center', alignItems: 'center',
   },
+  // Croix et Réglages calés en haut de leur rangée : même hauteur pendant le chrono et sur le temps final.
+  ctrlTop: { alignSelf: 'flex-start' },
   iconBtnDisabled: { opacity: 0.4 },
   topCenter: { alignItems: 'center', gap: spacing.xxs },
   modeLabel: { ...typography.label, color: '#FFFFFF', letterSpacing: 1.5 },
@@ -2400,6 +2454,8 @@ const styles = StyleSheet.create({
   camCdOverlay: {
     justifyContent: 'center', alignItems: 'center', backgroundColor: axVeil.countdown,
   },
+  cdOverlay: { justifyContent: 'center', alignItems: 'center' },
+  camBottomStack: { position: 'absolute', left: 0, right: 0, alignItems: 'center', gap: CAM_STACK_GAP },
   camPrimaryWrap: { width: '100%', maxWidth: 320, paddingHorizontal: axSpacing.xl },
   camPrimaryWrapLandscape: { width: 280 },
   timerDisplay: { fontSize: SW * 0.22, fontWeight: '200', color: '#FFFFFF', letterSpacing: -2 },
@@ -2686,6 +2742,8 @@ const styles = StyleSheet.create({
   },
   roundBtn: { justifyContent: 'center', alignItems: 'center' },
   bigDigits: { fontFamily: axFonts.oswaldMedium, letterSpacing: -2, fontVariant: ['tabular-nums'] },
+  // Sans approche négative ni marge de police : le chiffre tombe au centre exact du cercle.
+  countdownDigits: { fontFamily: axFonts.oswaldMedium, fontVariant: ['tabular-nums'], letterSpacing: 0, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false },
   finalDigits: { fontFamily: axFonts.oswaldMedium, fontWeight: 'normal', letterSpacing: -2 },
   roundText: { fontFamily: axFonts.oswaldMedium, fontSize: 16, letterSpacing: 1.5 },
   totalText: { fontFamily: axFonts.oswaldMedium, fontSize: 14, letterSpacing: 0.5, fontVariant: ['tabular-nums'] },

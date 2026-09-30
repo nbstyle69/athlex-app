@@ -101,6 +101,7 @@
   ],
   "mini-détail": [
     "Retour",
+    "MINI-TOURNOI",
     "FLASH BURNER",
     "For Time",
     "RX",
@@ -143,6 +144,7 @@
   ],
   "mini-détail-saisie": [
     "Retour",
+    "MINI-TOURNOI",
     "FLASH BURNER",
     "For Time",
     "RX",
@@ -194,6 +196,7 @@
   ],
   "mini-détail-saisie-reps": [
     "Retour",
+    "MINI-TOURNOI",
     "FLASH BURNER",
     "AMRAP",
     "RX",
@@ -243,6 +246,7 @@
   ],
   "mini-détail-contestation": [
     "Retour",
+    "MINI-TOURNOI",
     "FLASH BURNER",
     "For Time",
     "RX",
@@ -291,6 +295,7 @@
   ],
   "mini-détail-rejoindre": [
     "Retour",
+    "MINI-TOURNOI",
     "FLASH BURNER",
     "For Time",
     "RX",
@@ -326,6 +331,7 @@
   ],
   "mini-détail-officiel": [
     "Retour",
+    "MINI-TOURNOI",
     "WOD DU JOUR",
     "WOD DU JOUR",
     "For Time",
@@ -355,6 +361,7 @@
   ],
   "mini-détail-terminé": [
     "Retour",
+    "MINI-TOURNOI",
     "FLASH BURNER",
     "For Time",
     "RX",
@@ -427,6 +434,7 @@
   ],
   "inter-détail-infos": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Ligue · Individuel",
     "Infos",
@@ -452,6 +460,7 @@
   ],
   "inter-détail-wods": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Ligue · Individuel",
     "Infos",
@@ -478,6 +487,7 @@
   ],
   "inter-détail-inscription": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Ligue · Individuel",
     "Infos",
@@ -497,6 +507,7 @@
   ],
   "inter-détail-inscription-ouverte": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Ligue · Individuel",
     "Infos",
@@ -514,6 +525,7 @@
   ],
   "inter-détail-inscription-équipe": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Ligue · Équipe ×3",
     "Infos",
@@ -534,6 +546,7 @@
   ],
   "inter-détail-inscription-équipe-libre": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Ligue · Équipe ×3",
     "Infos",
@@ -551,6 +564,7 @@
   ],
   "inter-détail-classement": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Ligue · Individuel",
     "Infos",
@@ -578,6 +592,7 @@
   ],
   "inter-détail-ligue": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Ligue · Individuel",
     "Infos",
@@ -612,6 +627,7 @@
   ],
   "inter-détail-bracket": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Élimination · Individuel",
     "Infos",
@@ -636,6 +652,7 @@
   ],
   "inter-détail-poules": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Poules · Individuel",
     "Infos",
@@ -666,6 +683,7 @@
   ],
   "inter-détail-suisse": [
     "Retour",
+    "COMPÉTITION",
     "BATTLE DES BOX",
     "Suisse · Individuel",
     "Infos",
@@ -767,6 +785,7 @@
   ],
   "inter-équipe-capitaine": [
     "Retour",
+    "MON ÉQUIPE",
     "LES FOUS DU RACK",
     "2/3 membres",
     "Membres (2/3)",
@@ -793,6 +812,7 @@
   ],
   "inter-équipe-membres-box": [
     "Retour",
+    "MON ÉQUIPE",
     "LES FOUS DU RACK",
     "2/3 membres",
     "Membres (2/3)",
@@ -833,6 +853,7 @@
   ],
   "inter-équipe-complète": [
     "Retour",
+    "MON ÉQUIPE",
     "LES FOUS DU RACK",
     "3/3 membres",
     "Membres (3/3)",
@@ -922,6 +943,7 @@
   ],
   "physique-détail": [
     "Retour",
+    "COMPÉTITION",
     "LYON THROWDOWN",
     "Lyon",
     "2026-09-01 → 2026-10-30",
@@ -943,6 +965,7 @@
   ],
   "physique-détail-hors-période": [
     "Retour",
+    "COMPÉTITION",
     "UN INTITULÉ PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390 PX",
     "Un intitulé particulièrement long pour vérifier qu’aucun texte ne déborde à 390 px",
     "2026-10-15 → 2026-11-15",
@@ -962,6 +985,7 @@
   ],
   "physique-détail-info-sans-wod": [
     "Retour",
+    "COMPÉTITION",
     "RHÔNE GAMES",
     "Villeurbanne",
     "2026-12-05",

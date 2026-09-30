@@ -1,4 +1,5 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, Image,
@@ -92,7 +93,8 @@ export default function CompetitionDetailScreen({ navigation, route }: Props) {
     <View style={S.container}>
       <GlassBackground />
       {/* Header */}
-      <AxScreenHeader title={competition.name}>
+      <AxScreenHeader title={t('screenTitles.competition')}>
+          <AxContentTitle title={competition.name} testID="comp-detail-title" />
           <View style={[S.statusPill, { backgroundColor: competition.status === 'open' ? `${theme.success}20` : `${theme.warning}20` }]}>
             <Text style={[S.statusText, { color: competition.status === 'open' ? theme.success : theme.warning }]}>
               {competition.status === 'open' ? t('compDetail.registrationOpen') : competition.status === 'active' ? t('compDetail.inProgress') : t('compDetail.finished')}

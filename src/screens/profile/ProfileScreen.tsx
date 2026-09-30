@@ -1692,7 +1692,7 @@ function createStyles(t: AppTheme) {
   progressFill: { height: '100%', borderRadius: 2 },
   progressNote: { ...axTypography.caption, color: c.textMuted },
   tabs: {
-    flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm,
+    flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: axSpacing.sm,
     paddingHorizontal: axSpacing.xl, paddingVertical: axSpacing.md,
   },
   content: { padding: axSpacing.xl, paddingBottom: 120 },

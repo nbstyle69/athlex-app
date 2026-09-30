@@ -1,5 +1,6 @@
 import i18n from '../../i18n';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import { AxIconButton } from '../../components/ax/AxIconButton';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
@@ -552,7 +553,7 @@ export default function DailyTournamentDetailScreen() {
     <View style={S.screen}>
       <GlassBackground />
       <AxScreenHeader
-        title={tournament.wod_name}
+        title={i18n.t('screenTitles.miniTournament')}
         right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: `${tournament.wod_name} — Rejoins le mini-tournoi sur AthleX ! athlex://daily/${tournamentId}` })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
       />
 
@@ -561,6 +562,7 @@ export default function DailyTournamentDetailScreen() {
         contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
       >
+        <AxContentTitle title={tournament.wod_name} testID="mini-detail-title" />
         <View style={S.badges}>
           {isOfficial && <AxTag label="WOD DU JOUR" dot testID="mini-official-tag" />}
           <AxTag label={tournament.wod_type} testID="mini-detail-type" />

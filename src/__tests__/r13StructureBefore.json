@@ -83,7 +83,7 @@
   ],
   "fiche-box": [
     "Retour",
-    "CROSSFIT LUMIÈRE",
+    "BOX",
     "C",
     "CrossFit Lumière",
     "La box du centre-ville",
@@ -116,7 +116,7 @@
   ],
   "fiche-box-minimale": [
     "Retour",
-    "BOX SANS VILLE",
+    "BOX",
     "B",
     "Box Sans Ville",
     "0",
@@ -184,7 +184,7 @@
   ],
   "fiche-partenaire": [
     "Retour",
-    "NUTRIFUEL",
+    "PARTENAIRE",
     "NutriFuel",
     "Nutrition",
     "À propos",
@@ -198,7 +198,7 @@
   ],
   "fiche-partenaire-minimale": [
     "Retour",
-    "RÉCUP+",
+    "PARTENAIRE",
     "Récup+",
     "Récupération",
     "Liens"

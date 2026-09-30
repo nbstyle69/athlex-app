@@ -404,7 +404,7 @@ describe('R13 : couleurs et typographies clés, dans les deux thèmes', () => {
       expect(card.type).toBe(AxCard);
       expect(card.props.variant).toBe('featured');
       expect(inside(texts(root, 'CrossFit Lumière').find((n) => inside(n, AxCard))!, AxCard)).toBe(card);
-      expect(flat(texts(root, 'CrossFit Lumière')[1])).toMatchObject({ fontFamily: axTypography.titleL.fontFamily, color: c.text });
+      expect(flat(texts(root, 'CrossFit Lumière').find((n) => inside(n, AxCard))!)).toMatchObject({ fontFamily: axTypography.titleL.fontFamily, color: c.text });
       expect(flat(texts(root, 'La box du centre-ville')[0])).toMatchObject({ ...BODY_SMALL, color: c.textMuted });
       expect(flat(texts(root, 'Contact')[0])).toMatchObject({ ...axTypography.overline, color: c.textMuted });
       expect(root.findAllByType(AxTag).map((t) => [t.props.label, t.props.tone ?? 'accent'])).toEqual([

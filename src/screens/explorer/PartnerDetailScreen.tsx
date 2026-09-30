@@ -1,4 +1,6 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
+import i18n from '../../i18n';
 import { AxButton, AxCard, AxTag } from '../../components/ax';
 import React, { useEffect, useState } from 'react';
 import {
@@ -85,7 +87,7 @@ export default function PartnerDetailScreen() {
     <View style={s.container}>
       <GlassBackground />
       {/* Header */}
-      <AxScreenHeader title={partner.name} />
+      <AxScreenHeader title={i18n.t('screenTitles.partner')} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: tabSpace }}>
         {/* Logo + info */}

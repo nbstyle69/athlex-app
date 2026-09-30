@@ -327,6 +327,26 @@ build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).
 - Tests : `r12.rn.test.tsx` (51, dont ordre des blocs sur 22 états figés sur master), isolement R1 élargi au seul
   `ProfileScreen` ; `npx jest` 1976, `npm run test:rn` 536, `tsc` vert ; 28 mutations tuées.
 
+**Retours iPhone (build 1.0.58) : minuteur, caméra, en-têtes, boutons, profil et outils (app seule, aucune migration, écrans seuls).**
+- Minuteur : compte à rebours en six pastilles `AxChip equal` sur une ligne à 390 px ; décompte PRÉPARE-TOI / PRÊT ? /
+  GO ! centré plein écran (avec et sans caméra, portrait et paysage), chiffre centré dans son cercle, halo circulaire
+  sans ombre de texte ; à 3-2-1 même cercle, même taille et même position du chiffre (seuls couleurs et halo changent) ; temps final sans vidéo avec `assets/athex-logo.png` (120 px), croix et Réglages à la place du
+  chrono, couleur du thème de chrono ; paysage sans vidéo : chiffres centrés, place du bouton réservée des deux côtés.
+- Caméra : rangée REC 40 px sous la zone sûre, point rouge clignotant à droite pendant l'enregistrement (`RecBlinkDot`,
+  fixe si « réduire les animations »), date et heure sous « Arrêter le chrono ». Module natif, sons et enregistrement
+  inchangés.
+- « Suivre le thème de l'app » : des options enregistrées sans ce champ (réglages vidéo écrits avant) le désactivaient
+  (`?? false`) ; il suit désormais le thème par défaut quand aucun thème de chrono n'est choisi.
+- `AxScreenHeader` : titre dans une boîte bornée entre Retour et l'action de droite (plus de chevauchement, titre court
+  entier) ; titres d'écran courts (WOD du jour, Programme, Tournoi, Mini-tournoi, Compétition, WOD du tournoi, Mon
+  équipe, Box, Partenaire, Article), nom long en tête du contenu (`AxContentTitle`, retour à la ligne).
+- Ton WOD : « Au Whiteboard » / « Ajouté » et « Mon score » / « Modifier » sur une ligne, même hauteur (`AxButton`
+  bordé : bordure comprise dans la hauteur), libellés
+  complets en accessibilité ; Profil : onglets centrés ; Entraînement : tuiles Outils centrées.
+- Tests : `retoursIphoneTimer.rn.test.tsx` (20) + cas ajoutés à R6c, R4a, R9a, R12, Entraînement ; instantanés R4b / R8a /
+  R8b / R9a / R9b / R13 et contrats R3c / R5a / R6b / R6c mis à jour pour les titres courts ; `npx jest` 1987,
+  `npm run test:rn` 1331, `tsc` vert ; 20 mutations tuées.
+
 **Refonte R14c : finitions des écrans athlète — logo, boutons, types traduits, membres, champs (app seule, aucune migration).**
 - Connexion, Créer un compte et écran de démarrage : `assets/athex-logo.png` (120 px, centré) à la place de
   `assets/logo.png` ; titre texte « AthleX » retiré (le logo le contient), slogan conservé.

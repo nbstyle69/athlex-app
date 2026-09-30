@@ -38,6 +38,7 @@ jest.mock('expo-screen-orientation', () => ({
   lockAsync: jest.fn(async () => {}), unlockAsync: jest.fn(async () => {}),
 }));
 jest.mock('realtime-recorder', () => ({ RealtimeRecorderView: 'Recorder' }));
+jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }) }));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
 jest.mock('react-native-view-shot', () => 'ViewShot');
 jest.mock('expo-notifications', () => ({

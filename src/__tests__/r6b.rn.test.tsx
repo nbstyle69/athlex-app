@@ -203,6 +203,9 @@ async function inLanguage(lng: string, fn: () => Promise<void>) {
 /** Pire lecture possible du décompte : voile posé sur une image blanche ou noire. */
 const worst = (ink: string) => Math.min(contrast(ink, axVeil.countdown, '#FFFFFF'), contrast(ink, axVeil.countdown, '#000000'));
 
+// Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
+const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
+
 describe('R6b : feuille « Partager sur YouTube » réduite', () => {
   async function openSheet(theme = darkTheme) {
     const { root } = await walkFlow(PORTRAIT, theme);
@@ -286,9 +289,9 @@ describe('R6b : décompte à l’écran en mode caméra', () => {
     expect([cdLabel(root), hostText(cdValue(root))]).toEqual(['PRÉPARE-TOI', '4']);
     await tick(1000);
     expect([cdLabel(root), hostText(cdValue(root))]).toEqual(['PRÊT ?', '3']);
-    expect(hosts(root, 'timer-countdown-halo')).toHaveLength(1);
-    expect(hosts(root, 'timer-countdown-ring')).toHaveLength(0);
-    expect(hosts(root, 'timer-countdown-title')).toHaveLength(0);
+    expect(hosts(root, 'timer-countdown-glow')).toHaveLength(1);
+    expect(hosts(root, 'timer-countdown-ring')).toHaveLength(1);
+    expect(flat(hosts(root, 'timer-countdown-title')[0]).opacity).toBe(0);
     expect(root.findAll((n) => n.props.testID === 'timer-go')).toHaveLength(0);
     await tick(2000);
     expect([cdLabel(root), hostText(cdValue(root))]).toEqual(['PRÊT ?', '1']);
@@ -385,6 +388,7 @@ describe('R6b : chrono et natif intacts', () => {
     const timer = read('screens/timer/TimerRunScreen.tsx');
     const now = region(timer, 'export default function TimerRunScreen()', '// Phase-aware accent color');
     const back = now
+      .replace(...IPHONE_FOLLOW_FIX)
       .replace("  const [showYT, setShowYT] = useState(false);\n", "  const [showYT, setShowYT] = useState(false);\n  const [ytLink, setYtLink] = useState('');\n")
       .replace("phase === 'running') setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase]);",
         "phase === 'running' && !withCamera) setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase, withCamera]);");

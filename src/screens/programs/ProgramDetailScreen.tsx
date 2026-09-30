@@ -1,4 +1,6 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
+import i18n from '../../i18n';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
@@ -155,7 +157,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
     <View style={S.container}>
       <GlassBackground />
       <AxScreenHeader
-        title={programTitle}
+        title={i18n.t('screenTitles.program')}
         right={(
           <>
         {startDate && !loading && (
@@ -175,6 +177,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
           </>
         )}
       >
+          <AxContentTitle title={programTitle} testID="program-detail-title" />
           <Text style={S.headerSub} numberOfLines={2}>
             {progType === 'fixed' ? `${durationWeeks ?? semaines.length} semaines · ${dpw}j/sem` : `Ongoing · ${dpw}j/sem`}
             {startDate ? ` · depuis le ${libelleDate(startDate)}` : ''}
