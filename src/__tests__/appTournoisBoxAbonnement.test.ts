@@ -55,7 +55,7 @@ describe('TournamentScreen : la base décide de l\'inscription', () => {
 
   it('« Se désinscrire » reste réservé aux tournois ouverts', () => {
     const i = src.indexOf("t('tournament.unregister')");
-    expect(src.slice(src.lastIndexOf('{', src.lastIndexOf('<TouchableOpacity', i)) , i)).toContain("tournament.status === 'open' &&");
+    expect(src.slice(src.lastIndexOf('{', src.lastIndexOf('<AxButton', i)) , i)).toContain("tournament.status === 'open' &&");
   });
 });
 

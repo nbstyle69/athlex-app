@@ -15,7 +15,6 @@ const GLYPH_MIN = 3;
 const GRAD_LIGHT = '#f1f5f9';
 const GRAD_DARK = '#0d1f17';
 /** Arrêt le plus clair de l'en-tête du tournoi : celui qui laisse le moins de marge. */
-const HEADER_STOP = '#0d1f17';
 
 describe('minuteur — encre des commandes', () => {
   it('aucune encre blanche en dur ne subsiste', () => {
@@ -66,21 +65,18 @@ describe('minuteur — encre des commandes', () => {
 });
 
 describe('détail tournoi — en-tête', () => {
-  it('les arrêts viennent de la famille du dégradé de la coque, plus du bleu-noir', () => {
-    expect(TOURNOI).toMatch(/const HEADER_GRADIENT: \[string, string\] = \['#0d1f17', '#022c22'\]/);
-    expect(TOURNOI).not.toMatch(/#12121A|#0A0A0F/);
+  it('R8a : l’en-tête est une carte ax mise en avant, plus un dégradé codé en dur', () => {
+    expect(TOURNOI).toMatch(/<AxCard variant="featured" testID="tournament-header"/);
+    expect(TOURNOI).not.toMatch(/HEADER_GRADIENT|LinearGradient|#0d1f17|#022c22|#12121A|#0A0A0F/);
   });
 
-  it('l’encre des pastilles vient du thème sombre, comme le reste de l’en-tête', () => {
-    // Le contrôle mord : les valeurs claires, qui étaient utilisées, échouent ici.
-    expect(contrast(lightTheme.success, HEADER_STOP)).toBeLessThan(TEXT_MIN);
-    expect(contrast(lightTheme.error, HEADER_STOP)).toBeLessThan(TEXT_MIN);
-    expect(contrast(lightTheme.gold, HEADER_STOP)).toBeLessThan(TEXT_MIN);
-    expect(contrast(darkTheme.success, HEADER_STOP)).toBeGreaterThanOrEqual(TEXT_MIN);
-    expect(contrast(darkTheme.error, HEADER_STOP)).toBeGreaterThanOrEqual(TEXT_MIN);
-    expect(contrast(darkTheme.gold, HEADER_STOP)).toBeGreaterThanOrEqual(TEXT_MIN);
-    expect(TOURNOI).not.toMatch(/theme\.success\}22/);
-    expect(TOURNOI).toMatch(/prize: *\{[^}]*color: darkTheme\.gold/);
+  it('R8a : l’encre de l’en-tête vient des jetons ax, lisible (AA) sur la carte dans les deux thèmes', () => {
+    expect(TOURNOI).not.toMatch(/darkTheme\./);
+    for (const th of [lightTheme, darkTheme]) {
+      expect(contrast(th.ax.text, th.ax.surface)).toBeGreaterThanOrEqual(TEXT_MIN);
+      expect(contrast(th.ax.textMuted, th.ax.surface)).toBeGreaterThanOrEqual(TEXT_MIN);
+      expect(contrast(th.ax.accentText, th.ax.surface)).toBeGreaterThanOrEqual(TEXT_MIN);
+    }
   });
 
   it('le corps de l’écran reste sur la coque de verre', () => {

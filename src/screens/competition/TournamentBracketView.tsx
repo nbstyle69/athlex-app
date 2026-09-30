@@ -4,6 +4,8 @@ import { Crown, GitBranch, Trophy } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { AxCard, AxTag } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { toursGagnants, wodColonne, wodEtapeGagnants } from '../../utils/bracketWods';
 
 type Match = {
@@ -32,6 +34,7 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
   const { theme } = useTheme();
   const { t } = useTranslation();
   const S = createStyles(theme);
+  const c = theme.ax;
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState<Match[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
@@ -94,7 +97,7 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
   if (loading) {
     return (
       <View style={S.center}>
-        <ActivityIndicator color={theme.accent} />
+        <ActivityIndicator color={c.accentText} />
       </View>
     );
   }
@@ -102,7 +105,7 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
   if (matches.length === 0) {
     return (
       <View style={S.center}>
-        <GitBranch color={theme.textMuted} size={32} />
+        <GitBranch color={theme.ax.textMuted} size={32} />
         <Text style={S.empty}>{t('bracket.notGenerated')}</Text>
       </View>
     );
@@ -117,7 +120,7 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
   const tours = toursGagnants(matches);
   function WodPill({ col, secours }: { col: Match[]; secours?: WodLite }) {
     const nom = wodColonne(col, wods, secours)?.title;
-    return nom ? <View style={S.wodPill}><Text style={S.wodPillText} numberOfLines={1}>🏋️ {nom}</Text></View> : null;
+    return nom ? <View style={S.wodPill}><AxTag label={nom} tone="muted" wrap testID="bracket-wod" /></View> : null;
   }
 
   function name(id: string | null) {
@@ -130,19 +133,19 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
     const won = currentUserId && m.winner_id === currentUserId;
     const lost = currentUserId && m.loser_id === currentUserId;
     return (
-      <View style={[S.match, involvesMe && S.matchMine, won && S.matchWon, lost && S.matchLost]}>
+      <AxCard testID={`bracket-match-${m.id}`} style={[S.match, involvesMe && S.matchMine, won && S.matchWon, lost && S.matchLost]}>
         <Text style={S.matchNum}>#{m.match_number}{m.status === 'bye' ? ' · BYE' : m.status === 'forfeit' ? ` · ${t('bracket.forfeit')}` : ''}</Text>
         <PlayerRow id={m.participant1_id} winner={m.winner_id === m.participant1_id} loser={m.loser_id === m.participant1_id} name={name} S={S} />
         <PlayerRow id={m.participant2_id} winner={m.winner_id === m.participant2_id} loser={m.loser_id === m.participant2_id} name={name} S={S} />
-      </View>
+      </AxCard>
     );
   }
 
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
-      <Text style={S.sectionTitle}><Crown color="#F5C518" size={14} />  {format === 'swiss' ? t('bracket.winnerBracket') : t('bracket.bracket')}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
+      <View style={S.sectionRow}><Crown color={c.accentText} size={14} /><Text style={S.sectionTitle}>{format === 'swiss' ? t('bracket.winnerBracket') : t('bracket.bracket')}</Text></View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={S.hScroll}>
+        <View style={S.columns}>
           {wbRounds.map(r => (
             <View key={`wb-${r}`} style={S.column}>
               <Text style={S.colTitle}>{t('bracket.round', { n: r })}</Text>
@@ -155,9 +158,9 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
 
       {format === 'swiss' && lbRounds.length > 0 && (
         <>
-          <Text style={S.sectionTitle}>{t('bracket.loserBracket')}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={S.sectionRow}><Text style={S.sectionTitle}>{t('bracket.loserBracket')}</Text></View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={S.hScroll}>
+            <View style={S.columns}>
               {/* Le tableau des perdants commence au tour 2 du serveur : ses colonnes se numérotent depuis 1. */}
               {lbRounds.map((r, i) => (
                 <View key={`lb-${r}`} style={S.column}>
@@ -174,8 +177,8 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
       {/* Petite finale (élimination simple, option du tournoi). */}
       {grouped.tp.map(m => (
         <React.Fragment key={m.id}>
-          <Text style={S.sectionTitle}>{t('bracket.thirdPlace')}</Text>
-          <View style={[S.column, { width: 220 }]}>
+          <View style={S.sectionRow}><Text style={S.sectionTitle}>{t('bracket.thirdPlace')}</Text></View>
+          <View style={[S.column, S.columnFinal]}>
             <WodPill col={[m]} />
             <MatchBox m={m} />
           </View>
@@ -185,8 +188,8 @@ export default function TournamentBracketView({ tournamentId, format, currentUse
       {/* Grande finale, puis le match décisif si le vainqueur du tableau des perdants l'a gagnée. */}
       {format === 'swiss' && grouped.gf.map((m, i) => (
         <React.Fragment key={m.id}>
-          <Text style={[S.sectionTitle, { color: '#F5C518' }]}><Trophy color="#F5C518" size={14} />  {t(i === 0 ? 'bracket.grandFinal' : 'bracket.grandFinalReset')}</Text>
-          <View style={[S.column, { width: 220 }]}>
+          <View style={S.sectionRow}><Trophy color={c.accentText} size={14} /><Text style={[S.sectionTitle, S.sectionTitleFinal]}>{t(i === 0 ? 'bracket.grandFinal' : 'bracket.grandFinalReset')}</Text></View>
+          <View style={[S.column, S.columnFinal]}>
             <WodPill col={[m]} />
             <MatchBox m={m} />
           </View>
@@ -202,28 +205,35 @@ function PlayerRow({ id, winner, loser, name, S }: { id: string | null; winner: 
       <Text style={[S.playerName, winner && S.playerNameWinner, loser && S.playerNameLoser]} numberOfLines={1}>
         {name(id)}
       </Text>
-      {winner && <Crown color="#F5C518" size={11} />}
+      {winner && <Crown testID="bracket-winner" color={S.playerNameWinner.color} size={12} />}
     </View>
   );
 }
 
-const createStyles = (theme: AppTheme) => StyleSheet.create({
-  center: { paddingVertical: 60, alignItems: 'center', justifyContent: 'center', gap: 12 },
-  empty: { color: theme.textMuted, fontSize: 13, textAlign: 'center', paddingHorizontal: 20 },
-  sectionTitle: { color: theme.textPrimary, fontSize: 12, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 8, marginBottom: 12, flexDirection: 'row', alignItems: 'center' },
-  column: { width: 200, gap: 10 },
-  colTitle: { color: theme.textMuted, fontSize: 10, fontWeight: '900', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 6 },
-  wodPill: { alignSelf: 'flex-start', backgroundColor: 'rgba(168,85,247,0.15)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 8 },
-  wodPillText: { color: '#C4A0F5', fontSize: 10, fontWeight: '800' },
-  match: { backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 12, padding: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' },
-  matchMine: { borderColor: theme.accent + '60' },
-  matchWon: { backgroundColor: 'rgba(34,197,94,0.08)' },
+const createStyles = (theme: AppTheme) => {
+  const c = theme.ax;
+  return StyleSheet.create({
+  center: { paddingVertical: 60, alignItems: 'center', justifyContent: 'center', gap: axSpacing.md },
+  empty: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center', paddingHorizontal: axSpacing.xl },
+  sectionRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, marginTop: axSpacing.sm, marginBottom: axSpacing.md },
+  sectionTitle: { ...axTypography.overline, color: c.text, flexShrink: 1 },
+  sectionTitleFinal: { color: c.accentText },
+  hScroll: { marginBottom: axSpacing.lg },
+  columns: { flexDirection: 'row', gap: axSpacing.md },
+  column: { width: 200, gap: axSpacing.sm },
+  columnFinal: { width: 220 },
+  colTitle: { ...axTypography.overlineSmall, color: c.textMuted },
+  wodPill: { alignSelf: 'flex-start', maxWidth: '100%' },
+  match: { padding: axSpacing.sm, gap: axSpacing.xs },
+  matchMine: { borderColor: c.accentText },
+  matchWon: { borderColor: c.success },
   matchLost: { opacity: 0.55 },
-  matchNum: { color: theme.textMuted, fontSize: 9, fontWeight: '700', marginBottom: 4 },
-  player: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.03)', marginBottom: 4 },
-  playerWinner: { backgroundColor: 'rgba(245,197,24,0.12)' },
-  playerLoser: { backgroundColor: 'rgba(255,255,255,0.02)' },
-  playerName: { color: theme.textPrimary, fontSize: 12, fontWeight: '600', flex: 1 },
-  playerNameWinner: { color: '#F5C518', fontWeight: '900' },
-  playerNameLoser: { color: theme.textMuted, textDecorationLine: 'line-through' },
-});
+  matchNum: { ...axTypography.caption, color: c.textMuted },
+  player: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.xs, paddingHorizontal: axSpacing.sm, paddingVertical: 6, borderRadius: axRadius.control, backgroundColor: c.background },
+  playerWinner: { borderWidth: 1, borderColor: c.accentText },
+  playerLoser: { opacity: 0.8 },
+  playerName: { ...axTypography.bodySmall, color: c.text, flex: 1 },
+  playerNameWinner: { ...axTypography.label, color: c.accentText },
+  playerNameLoser: { color: c.textMuted, textDecorationLine: 'line-through' },
+  });
+};
