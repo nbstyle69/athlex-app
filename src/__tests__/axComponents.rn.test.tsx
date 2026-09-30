@@ -15,6 +15,9 @@ import { lightTheme, darkTheme, type AppTheme } from '../theme/palette';
 import { axColors } from '../theme/axTokens';
 import { contrast } from '../theme/contrast';
 import { R3C_SCREENS } from './r3cScreens';
+
+/** Fichiers du lot R9b (écrans secondaires de Ma Box) autorisés à consommer ax en plus de R3c. */
+const R9B_FILES = ['whiteboard/WhiteboardMembersModal.tsx'];
 import {
   AxButton, AxCard, AxCheckbox, AxChip, AxDayItem, AxGlass, AxSwitch, AxTag, AxTextField, withAlpha,
   resolveGlassOpacity, type AxButtonVariant,
@@ -407,9 +410,22 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     // R10 : réservation au nouveau design (Mes réservations est déjà adoptant R3c).
     path.join(SRC, 'screens', 'reservation', 'ReservationScreen.tsx'),
     path.join(SRC, 'screens', 'reservation', 'ReservationWeekPicker.tsx'),
+    // R9b : écrans secondaires de Ma Box (fenêtre Membres).
+    ...R9B_FILES.map((f) => path.join(SRC, 'screens', f)),
     // R7 : historique ELO par paliers.
     path.join(SRC, 'screens', 'profile', 'EloHistoryScreen.tsx'),
   ];
+
+  it('R9b : les écrans secondaires de Ma Box consomment ax, rien d’autre dans src/screens/whiteboard', () => {
+    const whiteboard = walk(path.join(SRC, 'screens', 'whiteboard'))
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.basename(f))
+      .sort();
+    expect(whiteboard).toEqual([
+      'ArticlesScreen.tsx', 'PersonalWODFormScreen.tsx', 'WODDetailScreen.tsx', 'WhiteboardMembersModal.tsx',
+    ]);
+    for (const f of R9B_FILES) expect(IMPORTS_AX.test(fs.readFileSync(path.join(SRC, 'screens', f), 'utf8'))).toBe(true);
+  });
 
   it('R4a : dans src/screens/wod et src/components/wod, seuls les fichiers du générateur et des résultats consomment ax', () => {
     const wod = [...walk(path.join(SRC, 'screens', 'wod')), ...walk(path.join(SRC, 'components', 'wod'))]
