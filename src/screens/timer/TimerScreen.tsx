@@ -79,9 +79,9 @@ function CountdownPicker({ value, onChange }: { value: number; onChange: (v: num
   return (
     <AxCard>
       <Text style={S.overline}>COMPTE À REBOURS</Text>
-      <View style={S.chipRow}>
+      <View testID="timer-countdown-opts" style={S.countdownRow}>
         {COUNTDOWN_OPTS.map((v) => (
-          <AxChip key={v} label={v === 0 ? '—' : `${v}s`} selected={value === v} onPress={() => onChange(v)} />
+          <AxChip key={v} equal testID={`timer-countdown-opt-${v}`} label={v === 0 ? '—' : `${v}s`} selected={value === v} onPress={() => onChange(v)} />
         ))}
       </View>
     </AxCard>
@@ -513,6 +513,7 @@ function createStyles(c: AxColors) { return StyleSheet.create({
   pickerHandle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: c.border },
   pickerTitle: { ...axTypography.titleM, color: c.text, marginBottom: axSpacing.xs },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm },
+  countdownRow: { flexDirection: 'row', flexWrap: 'nowrap', gap: axSpacing.xs },
   stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   stepperPair: { flexDirection: 'row', gap: axSpacing.md },
   stepperValueBox: { alignItems: 'baseline', flexDirection: 'row', gap: axSpacing.xs },

@@ -4,7 +4,7 @@
  * bloc Explorer de l'Accueil.
  */
 import React, { useEffect as mockUseEffect } from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import { BANK_V1 as mockBank, CATALOG_SNAPSHOT as mockCatalog, generateBlocC, GenerateParams } from '../../packages/wod-engine/src';
 import { lightTheme as mockTheme } from '../theme/palette';
@@ -162,5 +162,17 @@ describe('HomeExplorerBlock', () => {
       await act(async () => { byId(`home-explorer-${r}`).props.onPress(); });
     }
     expect(onOpen.mock.calls).toEqual([['BoxDirectory'], ['Programmation'], ['Partners']]);
+  });
+});
+
+describe('Retours iPhone (10) : tuiles Outils centrées', () => {
+  it('icône et texte centrés dans les quatre tuiles', async () => {
+    await mount();
+    for (const key of ['timer', 'onerm', 'history', 'favorites']) {
+      const tile = renderer.root.findAll((n) => n.props.testID === `training-tool-${key}` && typeof n.type !== 'string')[0];
+      expect(StyleSheet.flatten(tile.props.style)).toMatchObject({ alignItems: 'center', justifyContent: 'center' });
+      const label = tile.findAllByType(Text)[0];
+      expect(StyleSheet.flatten(label.props.style).textAlign).toBe('center');
+    }
   });
 });

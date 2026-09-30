@@ -1,4 +1,5 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import { AxCard, AxTag } from '../../components/ax';
 import React, { useEffect, useState } from 'react';
 import {
@@ -98,7 +99,7 @@ export default function BoxDirectoryDetailScreen() {
     <View style={s.container}>
       <GlassBackground />
       {/* Header */}
-      <AxScreenHeader title={box.name} />
+      <AxScreenHeader title={t('screenTitles.box')} />
 
       <ScrollView contentContainerStyle={{ paddingBottom: tabSpace }}>
         {/* Cover / Logo */}

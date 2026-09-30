@@ -1,4 +1,5 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator,
@@ -198,7 +199,7 @@ export default function ArticlesScreen() {
     return (
       <KeyboardAvoidingView style={S.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <GlassBackground />
-        <AxScreenHeader title={selectedArticle.title} onBack={() => { setSelectedArticle(null); setComments([]); }} />
+        <AxScreenHeader title={t('screenTitles.article')} onBack={() => { setSelectedArticle(null); setComments([]); }} />
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 80 + tabFootprint }}>
           {selectedArticle.image_url && (

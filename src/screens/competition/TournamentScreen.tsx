@@ -8,6 +8,7 @@ import {
   UserPlus, Swords, Dumbbell, Layers, Trophy, Video, ClipboardList, type LucideIcon,
 } from 'lucide-react-native';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import { AxButton, AxCard, AxChip, AxIconButton, AxStatusDot, AxTag } from '../../components/ax';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navigation/native';
@@ -410,11 +411,12 @@ export default function TournamentScreen() {
       <GlassBackground />
       {/* ── Header ── */}
       <AxScreenHeader
-        title={tournament.name}
+        title={t('screenTitles.tournament')}
         right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: t('tournament.shareMessage', { name: tournament?.name ?? t('tournament.defaultName'), id: tournamentId }) })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
       />
       <View style={S.headerWrap}>
         <AxCard variant="featured" testID="tournament-header" style={S.headerCard}>
+          <AxContentTitle title={tournament.name} testID="tournament-name-title" />
           <View style={S.headerMeta}>
             <AxTag label={(tournament.level ?? 'RX').toUpperCase()} tone="accent" testID="tournament-level" />
             <AxStatusDot

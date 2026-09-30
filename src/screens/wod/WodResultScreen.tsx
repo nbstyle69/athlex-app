@@ -766,7 +766,9 @@ export default function WodResultScreen() {
             <AxButton
               variant="outline"
               icon={boxWodId ? Check : ClipboardList}
-              label={boxWodId ? 'Sur le Whiteboard' : 'Ajouter au Whiteboard'}
+              label={boxWodId ? 'Ajouté' : 'Au Whiteboard'}
+              accessibilityLabel={boxWodId ? 'Sur le Whiteboard' : 'Ajouter au Whiteboard'}
+              numberOfLines={1}
               onPress={onAddToWhiteboard}
               loading={adding}
               fullWidth
@@ -777,7 +779,9 @@ export default function WodResultScreen() {
             <AxButton
               variant="accent"
               icon={Trophy}
-              label={submittedScore ? 'Modifier mon score' : 'Saisir mon score'}
+              label={submittedScore ? 'Modifier' : 'Mon score'}
+              accessibilityLabel={submittedScore ? 'Modifier mon score' : 'Saisir mon score'}
+              numberOfLines={1}
               onPress={() => setScoreModal(true)}
               fullWidth
               testID="wodresult-score"

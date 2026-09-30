@@ -22,6 +22,8 @@ interface Props {
   veil?: boolean;
   /** Libellé lu par le lecteur d'écran quand il diffère du texte affiché. */
   accessibilityLabel?: string;
+  /** Nombre de lignes du libellé (1 : jamais replié sur deux lignes). */
+  numberOfLines?: number;
   testID?: string;
 }
 
@@ -59,7 +61,7 @@ function veilButtonStyle(variant: AxButtonVariant, c: AxColors): VariantStyle {
 const DASH_WIDTH = 1.5;
 
 export function AxButton({
-  label, onPress, variant = 'accent', icon: Icon, disabled = false, loading = false, fullWidth = false, ink, veil = false, accessibilityLabel, testID,
+  label, onPress, variant = 'accent', icon: Icon, disabled = false, loading = false, fullWidth = false, ink, veil = false, accessibilityLabel, numberOfLines, testID,
 }: Props) {
   const { theme } = useTheme();
   const base = axButtonStyle(variant, theme.ax);
@@ -115,7 +117,7 @@ export function AxButton({
       ) : (
         Icon && <Icon testID="ax-button-icon" size={16} color={v.foreground} strokeWidth={2} />
       )}
-      <Text style={[axTypography.label, styles.label, { color: v.foreground }]}>{label}</Text>
+      <Text numberOfLines={numberOfLines} style={[axTypography.label, styles.label, { color: v.foreground }]}>{label}</Text>
     </Pressable>
   );
 }

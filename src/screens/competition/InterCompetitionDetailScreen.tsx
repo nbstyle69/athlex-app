@@ -1,4 +1,5 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
@@ -281,7 +282,8 @@ export default function InterCompetitionDetailScreen() {
     <View style={S.container}>
       <GlassBackground />
       {/* Header */}
-      <AxScreenHeader title={comp.title}>
+      <AxScreenHeader title={t('screenTitles.competition')}>
+          <AxContentTitle title={comp.title} testID="intercomp-detail-title" />
           <Text style={S.headerSub}>
             {FORMAT_LABEL[comp.format] ?? comp.format} · {comp.type === 'individual' ? t('interComp.individual') : t('interComp.team', { n: comp.team_size })}
           </Text>

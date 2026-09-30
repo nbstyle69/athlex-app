@@ -633,3 +633,13 @@ describe('R12 : navigation et callbacks inchangés', () => {
     expect(mockInvalidate).toHaveBeenCalledWith({ queryKey: ['home'] });
   });
 });
+
+describe('Retours iPhone (9) : onglets du Profil centrés', () => {
+  it('Compte / PR / Stats / Badges centrés sur la page', async () => {
+    const root = await mount(<ProfileScreen />);
+    const tabs = root.findAll((n) => n.props.testID === 'profile-tabs' && typeof n.type === 'string')[0];
+    expect(StyleSheet.flatten(tabs.props.style).justifyContent).toBe('center');
+    const labels = tabs.findAllByType(AxChip).map((c) => c.props.label);
+    expect(labels).toEqual(['Compte', 'PR', 'Stats', 'Badges']);
+  });
+});

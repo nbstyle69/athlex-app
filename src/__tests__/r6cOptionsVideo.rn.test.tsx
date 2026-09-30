@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions, Vibration } from 'react-native';
+import { Dimensions, StyleSheet, Text, Vibration } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from '../i18n';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
@@ -302,5 +302,25 @@ describe('R6c (A) : options transmises au module', () => {
       await act(async () => renderer!.unmount()); renderer = null;
       jest.useRealTimers();
     }
+  });
+});
+
+/** Largeur estimée d'un libellé Inter demi-gras (0,58 em par caractère, borne haute). */
+const estTextWidth = (s: string, fontSize: number) => Math.ceil(s.length * fontSize * 0.58);
+
+describe('Retours iPhone (1) : compte à rebours sur une seule ligne à 390 px', () => {
+  it('six pastilles de largeur égale, sans retour à la ligne, qui tiennent dans la carte', async () => {
+    const root = await mount(<TimerScreen />);
+    const row = byId(root, 'timer-countdown-opts')[0];
+    expect(StyleSheet.flatten(row.props.style)).toMatchObject({ flexDirection: 'row', flexWrap: 'nowrap' });
+    const opts = root.findAllByType(AxChip).filter((c) => /^timer-countdown-opt-/.test(c.props.testID ?? ''));
+    expect(opts.map((c) => c.props.label)).toEqual(['—', '3s', '5s', '10s', '15s', '30s']);
+    const styles = opts.map((c) => StyleSheet.flatten(c.findByProps({ testID: c.props.testID, accessibilityLabel: c.props.label }).props.style));
+    for (const st of styles) expect(st).toMatchObject({ flexGrow: 1, flexShrink: 1, flexBasis: 0, minWidth: 0 });
+    const gap = (StyleSheet.flatten(row.props.style).gap as number) ?? 0;
+    const available = 390 - 2 * 20 - 2 * 16;
+    const need = styles.reduce((acc, st, i) => acc + 2 * (st.paddingHorizontal as number) + 2 + estTextWidth(opts[i].props.label, 14), 0) + gap * 5;
+    expect(need).toBeLessThanOrEqual(available);
+    for (const c of opts) expect(c.findAllByType(Text)[0].props.numberOfLines).toBe(1);
   });
 });

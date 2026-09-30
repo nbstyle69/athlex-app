@@ -350,3 +350,28 @@ describe('R4a — aucun débordement à 390 px, textes longs', () => {
   }
 });
 
+
+/** Largeur estimée d'un libellé Inter demi-gras (0,58 em par caractère, borne haute). */
+const estTextWidth = (s: string, fontSize: number) => Math.ceil(s.length * fontSize * 0.58);
+
+describe('Retours iPhone (8) : boutons Whiteboard et score de « Ton WOD »', () => {
+  it('même hauteur, une seule ligne à 390 px, icônes alignées de la même façon', async () => {
+    const root = await mountResult('functional');
+    const btns = ['wodresult-whiteboard', 'wodresult-score'].map((id) => root.findAllByType(AxButton).find((b) => b.props.testID === id)!);
+    expect(btns.every(Boolean)).toBe(true);
+    const cells = btns.map((b) => StyleSheet.flatten(b.parent!.props.style));
+    for (const cell of cells) expect(cell).toMatchObject({ flex: 1, minWidth: 0 });
+    let row = btns[0].parent!.parent!;
+    while (typeof row.type !== 'string') row = row.parent!;
+    expect(StyleSheet.flatten(row.props.style)).toMatchObject({ flexDirection: 'row', alignItems: 'stretch' });
+    const cellW = (390 - 2 * 20 - 10) / 2;
+    for (const b of btns) {
+      expect(b.props.numberOfLines).toBe(1);
+      expect(b.props.fullWidth).toBe(true);
+      expect(b.findAllByProps({ testID: 'ax-button-icon' }).filter((n) => typeof n.type !== 'string')[0].props.size).toBe(16);
+      for (const label of [b.props.label]) expect(estTextWidth(label, 14) + 16 + 8 + 2 * 16 + 2).toBeLessThanOrEqual(cellW);
+      expect(b.props.accessibilityLabel).toMatch(/Whiteboard|score/);
+    }
+    expect(btns.map((b) => b.props.accessibilityLabel)).toEqual(['Ajouter au Whiteboard', 'Saisir mon score']);
+  });
+});

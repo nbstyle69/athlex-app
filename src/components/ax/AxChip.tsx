@@ -12,6 +12,8 @@ interface Props {
   disabled?: boolean;
   /** Rôle lu par les lecteurs d'écran : « tab » pour une barre d'onglets. */
   accessibilityRole?: 'button' | 'tab';
+  /** Pastille compacte de largeur égale à ses voisines : partage la rangée en parts égales. */
+  equal?: boolean;
   testID?: string;
 }
 
@@ -21,7 +23,7 @@ const HIT_SLOP = { top: 2, bottom: 2, left: 0, right: 0 };
 export const AX_CHIP_HEIGHT = 9 + (axTypography.label.lineHeight ?? 20) + 9 + 2;
 
 /** Pastille de filtre ou de choix. */
-export function AxChip({ label, selected = false, onPress, disabled = false, accessibilityRole = 'button', testID }: Props) {
+export function AxChip({ label, selected = false, onPress, disabled = false, accessibilityRole = 'button', equal = false, testID }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
   return (
@@ -33,14 +35,14 @@ export function AxChip({ label, selected = false, onPress, disabled = false, acc
       accessibilityRole={accessibilityRole}
       accessibilityLabel={label}
       accessibilityState={disabled ? { selected, disabled } : { selected }}
-      style={[styles.base, { borderColor: selected ? 'transparent' : c.border }]}
+      style={[styles.base, equal && styles.equal, { borderColor: selected ? 'transparent' : c.border }]}
     >
       {selected ? (
         <AxGlass color={c.accent} opacity={0.88} radius={axRadius.control} />
       ) : (
         <AxGlass color={c.text} opacity={0.08} radius={axRadius.control} />
       )}
-      <Text style={[axTypography.label, { color: selected ? c.onAccent : disabled ? c.textMuted : c.text }]}>{label}</Text>
+      <Text numberOfLines={equal ? 1 : undefined} style={[axTypography.label, equal && styles.equalLabel, { color: selected ? c.onAccent : disabled ? c.textMuted : c.text }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -56,4 +58,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
   },
+  equal: { flexGrow: 1, flexShrink: 1, flexBasis: 0, alignSelf: 'auto', minWidth: 0, paddingHorizontal: 4, alignItems: 'center' },
+  equalLabel: { textAlign: 'center' },
 });

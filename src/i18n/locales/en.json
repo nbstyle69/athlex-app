@@ -1969,5 +1969,17 @@
     "tabata": "Tabata",
     "strength": "Strength",
     "custom": "Custom"
+  },
+  "screenTitles": {
+    "wodOfDay": "WOD of the day",
+    "wod": "WOD",
+    "article": "Article",
+    "program": "Program",
+    "miniTournament": "Mini-tournament",
+    "partner": "Partner",
+    "box": "Box",
+    "competition": "Competition",
+    "tournament": "Tournament",
+    "tournamentWod": "Tournament WOD"
   }
 }

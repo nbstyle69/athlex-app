@@ -136,8 +136,8 @@
     "Favori",
     "Minuteur",
     "Plus",
-    "Ajouter au Whiteboard",
-    "Saisir mon score"
+    "Au Whiteboard",
+    "Mon score"
   ],
   "résultat-hybrid": [
     "Retour",
@@ -161,8 +161,8 @@
     "Favori",
     "Minuteur",
     "Plus",
-    "Ajouter au Whiteboard",
-    "Saisir mon score"
+    "Au Whiteboard",
+    "Mon score"
   ],
   "résultat-musculation": [
     "Retour",
@@ -206,7 +206,7 @@
     "Favori",
     "Minuteur",
     "Plus",
-    "Ajouter au Whiteboard",
-    "Saisir mon score"
+    "Au Whiteboard",
+    "Mon score"
   ]
 }
