@@ -205,6 +205,15 @@ Supabase/Resend.
 
 ## En cours
 
+**Ma Box : recherche et rôles des membres, lien Lire des actualités, Annuler de la séance perso (app seule, aucune migration ; ajouts validés par Nab le 29/09).**
+- Membres : `AxTextField` « Rechercher un membre » en haut de la liste, filtre local sur pseudo et nom (casse et accents ignorés,
+  aucune requête), « Aucun membre trouvé », croix d'effacement (`AxTextField` : option rétrocompatible `onClear`) ; `AxTag`
+  Gérant (`boxes.owner_id`, accent), Co-gérant (`role = 'owner'`, accent), Coach (muted) — `box_members.role` et `full_name`
+  ajoutés à la requête existante de `WhiteboardScreen`.
+- Actualités : lien « Lire › » (labelSmall accentText, rôle link) qui appelle le même `openArticle` que la carte.
+- Séance perso : `AxButton` outline « Annuler » à côté de l'action ; retour direct sans saisie, sinon « Abandonner la saisie ? »
+  (Abandonner / Continuer). Tests : `r9b.rn.test.tsx` (blocs « Ma Box (29/09) »), chacun prouvé par mutation.
+
 **Refonte R9b : écrans secondaires de Ma Box au nouveau design (app seule, aucune migration, apparence seule).**
 - Actualités, Membres (fenêtre extraite telle quelle de `WhiteboardScreen` vers `WhiteboardMembersModal`), Séance perso
   (formulaire), Classement de la box, Messages et Infos de la box : `AxCard` par ligne ou section, `AxTextField`, `AxChip`,

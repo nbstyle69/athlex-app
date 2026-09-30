@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { KeyboardTypeOptions, StyleSheet, TextInputProps, Text, TextInput, View } from 'react-native';
-import type { LucideIcon } from 'lucide-react-native';
+import { KeyboardTypeOptions, Pressable, StyleSheet, TextInputProps, Text, TextInput, View } from 'react-native';
+import { X, type LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 
@@ -24,12 +24,17 @@ interface Props {
   minInputHeight?: number;
   /** Hauteur maximale de la zone de saisie : au-delà, le texte défile dans le champ. */
   maxInputHeight?: number;
+  /** Croix d'effacement affichée tant que le champ n'est pas vide. */
+  onClear?: () => void;
+  /** Libellé lu par le lecteur d'écran pour la croix d'effacement. */
+  clearAccessibilityLabel?: string;
   testID?: string;
 }
 
 export function AxTextField({
   value, onChangeText, placeholder, icon: Icon, error, keyboardType, secureTextEntry, multiline,
-  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight, testID = 'ax-text-field',
+  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight,
+  onClear, clearAccessibilityLabel, testID = 'ax-text-field',
 }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
@@ -58,6 +63,17 @@ export function AxTextField({
             minInputHeight != null || maxInputHeight != null ? { minHeight: minInputHeight, maxHeight: maxInputHeight } : null]}
         />
         {Icon && <Icon size={18} color={c.textMuted} strokeWidth={2} />}
+        {onClear && value.length > 0 && (
+          <Pressable
+            testID={`${testID}-clear`}
+            onPress={onClear}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={clearAccessibilityLabel}
+          >
+            <X size={18} color={c.textMuted} strokeWidth={2} />
+          </Pressable>
+        )}
       </View>
       {!!error && (
         <Text testID={`${testID}-error`} style={[axTypography.caption, { color: c.danger }]}>

@@ -1,6 +1,7 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import i18n from '../../i18n';
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View, Text, StyleSheet, ScrollView, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert,
@@ -48,6 +49,7 @@ export default function PersonalWODFormScreen() {
   const route = useRoute<Rt>();
   const S = createStyles(theme);
   const c = theme.ax;
+  const { t } = useTranslation();
 
   const editId = route.params?.wodId ?? null;
   const initialDate = route.params?.date ?? toISO(new Date());
@@ -63,6 +65,10 @@ export default function PersonalWODFormScreen() {
   const [tabataWork, setTabataWork]     = useState('20');
   const [tabataRest, setTabataRest]     = useState('10');
   const [notes, setNotes]               = useState('');
+
+  const form = { title, description, wodType, date, timeCap, rounds, emomInterval, tabataWork, tabataRest, notes };
+  const [pristine, setPristine] = useState<typeof form | null>(editId ? null : form);
+  const dirty = pristine != null && (Object.keys(form) as (keyof typeof form)[]).some((k) => form[k] !== pristine[k]);
 
   const [loading, setLoading]       = useState(!!editId);
   const [submitting, setSubmitting] = useState(false);
@@ -88,6 +94,18 @@ export default function PersonalWODFormScreen() {
       setTabataWork(data.tabata_work_seconds ? String(data.tabata_work_seconds) : '20');
       setTabataRest(data.tabata_rest_seconds ? String(data.tabata_rest_seconds) : '10');
       setNotes(data.notes ?? '');
+      setPristine({
+        title: data.title ?? '',
+        description: data.description ?? '',
+        wodType: (data.wod_type as BoxWODType) ?? 'amrap',
+        date: data.scheduled_date,
+        timeCap: formatCap(data.time_cap_seconds),
+        rounds: data.rounds ? String(data.rounds) : '',
+        emomInterval: data.emom_interval_minutes ? String(data.emom_interval_minutes) : '1',
+        tabataWork: data.tabata_work_seconds ? String(data.tabata_work_seconds) : '20',
+        tabataRest: data.tabata_rest_seconds ? String(data.tabata_rest_seconds) : '10',
+        notes: data.notes ?? '',
+      });
       setLoading(false);
     })();
   }, [editId]);
@@ -133,6 +151,14 @@ export default function PersonalWODFormScreen() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function cancel() {
+    if (!dirty) { navigation.goBack(); return; }
+    Alert.alert(t('whiteboard.discardTitle'), undefined, [
+      { text: t('whiteboard.keepEditing'), style: 'cancel' },
+      { text: t('whiteboard.discard'), style: 'destructive', onPress: () => navigation.goBack() },
+    ]);
   }
 
   async function remove() {
@@ -194,13 +220,13 @@ export default function PersonalWODFormScreen() {
 
         <Text style={S.label}>TYPE</Text>
         <View style={S.typeGrid}>
-          {WOD_TYPES.map(t => (
+          {WOD_TYPES.map(type => (
             <AxChip
-              key={t.value}
-              testID={`pwod-type-${t.value}`}
-              label={t.label}
-              selected={wodType === t.value}
-              onPress={() => setWodType(t.value)}
+              key={type.value}
+              testID={`pwod-type-${type.value}`}
+              label={type.label}
+              selected={wodType === type.value}
+              onPress={() => setWodType(type.value)}
             />
           ))}
         </View>
@@ -287,15 +313,27 @@ export default function PersonalWODFormScreen() {
         />
 
         <View style={S.actions}>
-          <AxButton
-            testID="pwod-save"
-            variant="accent"
-            label={editId ? 'Enregistrer' : 'Créer le WOD'}
-            onPress={save}
-            disabled={!title.trim()}
-            loading={submitting}
-            fullWidth
-          />
+          <View style={S.action}>
+            <AxButton
+              testID="pwod-cancel"
+              variant="outline"
+              label={t('common.cancel')}
+              onPress={cancel}
+              disabled={submitting}
+              fullWidth
+            />
+          </View>
+          <View style={S.action}>
+            <AxButton
+              testID="pwod-save"
+              variant="accent"
+              label={editId ? 'Enregistrer' : 'Créer le WOD'}
+              onPress={save}
+              disabled={!title.trim()}
+              loading={submitting}
+              fullWidth
+            />
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -316,6 +354,7 @@ function createStyles(theme: AppTheme) {
     row: { flexDirection: 'row', gap: axSpacing.md },
     col: { flex: 1, minWidth: 0, gap: axSpacing.sm },
     typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm },
-    actions: { marginTop: axSpacing.lg },
+    actions: { flexDirection: 'row', gap: axSpacing.md, marginTop: axSpacing.lg },
+    action: { flex: 1, minWidth: 0 },
   });
 }
