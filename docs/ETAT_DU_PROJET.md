@@ -216,6 +216,21 @@ Supabase/Resend.
 - Tests : `r6cBips.rn.test.tsx` (19), `BeepMixerTest.kt` (9, JVM), `VideoQualityTest.kt` complété (7) ; mutations JS et
   Kotlin tuées ; Kotlin compilé en local, Swift par un build simulateur EAS.
 
+**Refonte R9a : Ma Box et détail du WOD au nouveau design, page Ma Box entièrement défilante (app seule, aucune migration).**
+- `WhiteboardScreen` : tout l'écran (en-tête, Membres / Messages / Actualités / Classement de la box, onglets de piste,
+  jours, « Entrer mon score » / « Classement », séances) dans un seul `ScrollView` avec « tirer pour actualiser » (même
+  action) ; sans box, l'écran perso défile aussi et garde son actualisation. `AxButton`, `AxCounterBadge`, `AxChip`
+  (onglets, `WhiteboardTrackTabs`), `AxDayItem` (`WeekDayPicker` variante `ax`), `AxCard` / `AxTag` / `AxIconButton`
+  pour les séances ; états musculation et « Reprendre ma saisie » inchangés ; 📋 remplacé par l'icône Lucide.
+- `WODDetailScreen` : carte du WOD `AxCard` featured, « Notes coach » en overline accentText, « Mon score » en `AxCard`
+  (score `numberM`, « Partager » / « Modifier » outline, « Ma note »), « Entrer mon score » `AxButton` accent, classement
+  en liste d'`AxCard` (médailles Lucide `Medal`), commentaires en `AxCard` + `AxTextField` ; fenêtre de saisie : `AxChip`
+  (type, niveau), `AxTextField`, `AxButton` accent « Valider le score ». Saisie, brouillon et validation musculation inchangés.
+- Options rétrocompatibles : `AxChip.accessibilityRole`, `AxTextField.autoFocus` / `inputRef`, `AxCounterBadge.readableInk`
+  (encre lisible sur le rouge en thème sombre).
+- Tests : `r9a.rn.test.tsx` (54, instantané avant / après sur 9 variantes `r9aStructureBefore.json`), isolement R1
+  élargi aux fichiers du lot, `npx jest` 1976, `npm run test:rn` 664, `tsc` vert ; 25 mutations tuées.
+
 **Ma Box : recherche et rôles des membres, lien Lire des actualités, Annuler de la séance perso (app seule, aucune migration ; ajouts validés par Nab le 29/09).**
 - Membres : `AxTextField` « Rechercher un membre » en haut de la liste, filtre local sur pseudo et nom (casse et accents ignorés,
   aucune requête), « Aucun membre trouvé », croix d'effacement (option `trailing` d'`AxTextField`) ; `AxTag`

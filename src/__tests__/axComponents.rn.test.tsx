@@ -372,6 +372,14 @@ describe('contraste AA des couples texte / fond', () => {
   }
 });
 
+// R9a : Ma Box et ses composants propres ; le détail du WOD adoptait déjà ax.
+const R9A_FILES = [
+  path.join('screens', 'whiteboard', 'WhiteboardScreen.tsx'),
+  path.join('screens', 'whiteboard', 'WODDetailScreen.tsx'),
+  path.join('components', 'WhiteboardTrackTabs.tsx'),
+  path.join('components', 'WeekDayPicker.tsx'),
+];
+
 const R8A_SCREENS = [
   'CompetitionScreen.tsx', 'TournamentScreen.tsx', 'TournamentBracketView.tsx',
   'TournamentDivisionsView.tsx', 'TournamentWODScreen.tsx',
@@ -423,6 +431,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     ...R9B_FILES.map((f) => path.join(SRC, 'screens', f)),
     // R7 : historique ELO par paliers.
     path.join(SRC, 'screens', 'profile', 'EloHistoryScreen.tsx'),
+    // R9a : Ma Box et ses composants propres (onglets de piste, sélecteur de jours).
+    ...R9A_FILES.map((f) => path.join(SRC, f)),
     // R12 : profil (écran racine de l'onglet) au nouveau design.
     path.join(SRC, 'screens', 'profile', 'ProfileScreen.tsx'),
   ];
@@ -434,7 +444,10 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       .sort();
     expect(whiteboard).toEqual([
       'ArticlesScreen.tsx', 'PersonalWODFormScreen.tsx', 'WODDetailScreen.tsx', 'WhiteboardMembersModal.tsx',
+      // R9a : Ma Box.
+      'WhiteboardScreen.tsx',
     ]);
+    for (const f of R9A_FILES) expect(IMPORTS_AX.test(fs.readFileSync(path.join(SRC, f), 'utf8'))).toBe(true);
     for (const f of R9B_FILES) expect(IMPORTS_AX.test(fs.readFileSync(path.join(SRC, 'screens', f), 'utf8'))).toBe(true);
   });
 

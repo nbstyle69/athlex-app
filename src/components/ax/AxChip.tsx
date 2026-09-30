@@ -10,6 +10,8 @@ interface Props {
   onPress: () => void;
   /** Choix indisponible : non appuyable, libellé en textMuted. */
   disabled?: boolean;
+  /** Rôle lu par les lecteurs d'écran : « tab » pour une barre d'onglets. */
+  accessibilityRole?: 'button' | 'tab';
   testID?: string;
 }
 
@@ -17,7 +19,7 @@ interface Props {
 const HIT_SLOP = { top: 2, bottom: 2, left: 0, right: 0 };
 
 /** Pastille de filtre ou de choix. */
-export function AxChip({ label, selected = false, onPress, disabled = false, testID }: Props) {
+export function AxChip({ label, selected = false, onPress, disabled = false, accessibilityRole = 'button', testID }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
   return (
@@ -26,7 +28,7 @@ export function AxChip({ label, selected = false, onPress, disabled = false, tes
       onPress={disabled ? undefined : onPress}
       disabled={disabled}
       hitSlop={HIT_SLOP}
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={label}
       accessibilityState={disabled ? { selected, disabled } : { selected }}
       style={[styles.base, { borderColor: selected ? 'transparent' : c.border }]}
