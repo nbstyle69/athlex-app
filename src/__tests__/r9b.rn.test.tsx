@@ -1,5 +1,8 @@
 import React from 'react';
-import { Modal, StyleSheet } from 'react-native';
+import { Alert, Modal, StyleSheet } from 'react-native';
+import * as fs from 'fs';
+import * as path from 'path';
+import i18n from '../i18n';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { lightTheme, darkTheme } from '../theme/palette';
@@ -11,7 +14,7 @@ import PersonalWODFormScreen from '../screens/whiteboard/PersonalWODFormScreen';
 import BoxRankingScreen from '../screens/leaderboard/BoxRankingScreen';
 import MessagesScreen from '../screens/messages/MessagesScreen';
 import BoxInfoScreen from '../screens/home/BoxInfoScreen';
-import WhiteboardMembersModal, { WhiteboardMember } from '../screens/whiteboard/WhiteboardMembersModal';
+import WhiteboardMembersModal, { WhiteboardMember, filterMembers, memberRoleTag } from '../screens/whiteboard/WhiteboardMembersModal';
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -95,10 +98,13 @@ const COMMENTS = [
   { id: 'c2', user_id: 'u2', content: 'Top', created_at: '2026-09-27T09:30:00Z', profile: { username: 'Julie' } },
 ];
 const MEMBERS: WhiteboardMember[] = [
-  { id: 'u2', username: LONG_NAME, level: 'rx', elo: 1420, avatar_url: null },
-  { id: 'u3', username: 'Julie', level: 'scaled', elo: 1100, avatar_url: null },
-  { id: 'u4', username: 'Karim', level: 'elite', elo: 980, avatar_url: null },
+  { id: 'u2', username: LONG_NAME, level: 'rx', elo: 1420, avatar_url: null, full_name: 'Maximilien Dupont', role: 'owner' },
+  { id: 'u3', username: 'Julie', level: 'scaled', elo: 1100, avatar_url: null, full_name: 'Julie Béranger', role: 'owner' },
+  { id: 'u4', username: 'Karim', level: 'elite', elo: 980, avatar_url: null, full_name: null, role: 'coach' },
 ];
+const ELODIE: WhiteboardMember = { id: 'u5', username: 'Élodie', level: 'rx', elo: 900, avatar_url: null, full_name: 'Élodie Marchand', role: 'member' };
+/** Gérant principal de la box fictive (`boxes.owner_id`). */
+const OWNER_ID = 'u2';
 const RANK_MEMBERS = [
   { member_id: 'u2', profiles: { id: 'u2', username: LONG_NAME, avatar_url: null, level: 'rx' } },
   { member_id: 'me', profiles: { id: 'me', username: 'Moi', avatar_url: null, level: 'inter' } },
@@ -223,7 +229,7 @@ const withQuery = (el: React.ReactElement) => (
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}>{el}</QueryClientProvider>
 );
 const membersModal = (members = MEMBERS, onClose = jest.fn(), onOpenProfile = jest.fn()) => (
-  <WhiteboardMembersModal visible boxName="CrossFit Fictif" loading={false} members={members} onClose={onClose} onOpenProfile={onOpenProfile} />
+  <WhiteboardMembersModal visible boxName="CrossFit Fictif" ownerId={OWNER_ID} loading={false} members={members} onClose={onClose} onOpenProfile={onOpenProfile} />
 );
 
 type Variant = { name: string; run: (theme?: typeof lightTheme) => Promise<ReactTestInstance> };
@@ -255,6 +261,15 @@ const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu;
 /** Casse et emoji mis à part : les surtitres passent en capitales, les emoji deviennent des icônes Lucide. */
 const normalize = (xs: string[]) => xs.map((x) => x.replace(EMOJI, '').trim().toUpperCase()).filter((x) => x.length > 0);
 
+/** Contenus ajoutés le 29/09 (validés par Nab) : tout le reste garde l'ordre relevé sur master. */
+const ADDED: Record<string, string[]> = {
+  'actualites-liste': ['Lire', 'Lire'],
+  membres: ['Gérant', 'Co-gérant', 'Coach'],
+  'seance-creer': ['Annuler'],
+  'seance-modifier': ['Annuler'],
+  'seance-tabata': ['Annuler'],
+};
+
 describe('R9b : ordre des blocs et libellés inchangés (instantané pris sur master)', () => {
   it.each(VARIANTS.map((v) => [v.name, v] as const))('%s', async (name, v) => {
     const root = await v.run();
@@ -269,7 +284,14 @@ describe('R9b : ordre des blocs et libellés inchangés (instantané pris sur ma
     }
     const before = (BEFORE as Record<string, string[]>)[name];
     expect(before).toBeDefined();
-    expect(normalize(current)).toEqual(normalize(before));
+    const added = normalize(ADDED[name] ?? []);
+    const rest = normalize(current);
+    for (const a of added) {
+      const i = rest.indexOf(a);
+      expect({ ajout: a, present: i >= 0 }).toEqual({ ajout: a, present: true });
+      rest.splice(i, 1);
+    }
+    expect(rest).toEqual(normalize(before));
   });
 });
 
@@ -548,5 +570,241 @@ describe('R9b : aucun emoji dans les zones refondues', () => {
   it.each(VARIANTS.map((v) => [v.name, v] as const))('%s', async (_n, v) => {
     const root = await v.run();
     expect(chromeTexts(root).filter((t) => EMOJI_TEST.test(t))).toEqual([]);
+  });
+});
+
+/** Premier ancêtre natif (View, Text…) : les composants intermédiaires ne comptent pas. */
+function hostParent(n: ReactTestInstance): ReactTestInstance {
+  let cur = n.parent;
+  while (cur && typeof cur.type !== 'string') cur = cur.parent;
+  if (!cur) throw new Error('aucun parent natif');
+  return cur;
+}
+
+describe('Ma Box (29/09) : recherche des membres', () => {
+  const ALL = [...MEMBERS, ELODIE];
+  const input = (root: ReactTestInstance) => root.findAll((x) => x.props.testID === 'members-search' && String(x.type) === 'TextInput')[0];
+  const shownIds = (root: ReactTestInstance) =>
+    root.findAll((x) => /^member-u\d+$/.test(String(x.props.testID)) && typeof x.type === 'string').map((x) => x.props.testID);
+  async function type(root: ReactTestInstance, q: string) {
+    await act(async () => { input(root).props.onChangeText(q); });
+  }
+
+  it('filtre local : pseudo, nom, casse, accents, vide, aucun résultat', () => {
+    expect(filterMembers(ALL, 'kar').map((m) => m.id)).toEqual(['u4']);
+    expect(filterMembers(ALL, 'dupont').map((m) => m.id)).toEqual(['u2']);
+    expect(filterMembers(ALL, 'JULIE').map((m) => m.id)).toEqual(['u3']);
+    expect(filterMembers(ALL, 'beranger').map((m) => m.id)).toEqual(['u3']);
+    expect(filterMembers(ALL, 'élo').map((m) => m.id)).toEqual(['u5']);
+    expect(filterMembers(ALL, 'ELODIE').map((m) => m.id)).toEqual(['u5']);
+    expect(filterMembers(ALL, '   ')).toBe(ALL);
+    expect(filterMembers(ALL, '')).toBe(ALL);
+    expect(filterMembers(ALL, 'zzz')).toEqual([]);
+  });
+
+  it('champ en haut de la liste, filtre instantané sans requête, rang conservé', async () => {
+    const root = await mount(membersModal(ALL));
+    const field = hostByID(root, 'members-search');
+    expect(field).toBeDefined();
+    const container = hostParent(hostParent(hostByID(root, 'members-title')));
+    const slot = (id: string) => container.children.findIndex((ch) => typeof ch !== 'string' && ch.findAll((y) => y.props.testID === id).length > 0);
+    expect({ titre: slot('members-title'), champ: slot('members-search'), liste: slot('member-u2') }).toEqual({ titre: 0, champ: 1, liste: 2 });
+    expect(input(root).props.placeholder).toBe('Rechercher un membre');
+    expect(shownIds(root)).toEqual(['member-u2', 'member-u3', 'member-u4', 'member-u5']);
+    mockCalls.length = 0;
+    await type(root, 'julie');
+    expect(shownIds(root)).toEqual(['member-u3']);
+    expect(hostText(hostByID(root, 'member-rank-u3'))).toBe('2');
+    expect(mockCalls).toEqual([]);
+    await type(root, '');
+    expect(shownIds(root)).toEqual(['member-u2', 'member-u3', 'member-u4', 'member-u5']);
+  });
+
+  it('aucun résultat → « Aucun membre trouvé » ; la croix vide le champ', async () => {
+    const root = await mount(membersModal(ALL));
+    expect(root.findAll((x) => x.props.testID === 'members-search-clear').length).toBe(0);
+    await type(root, 'zzz');
+    expect(shownIds(root)).toEqual([]);
+    expect(hostText(hostByID(root, 'members-empty'))).toBe('Aucun membre trouvé');
+    expect(hostByID(root, 'members-search-clear').props.accessibilityLabel).toBe('Effacer la recherche');
+    await press(root, 'members-search-clear');
+    expect(input(root).props.value).toBe('');
+    expect(shownIds(root)).toHaveLength(4);
+    expect(root.findAll((x) => x.props.testID === 'members-search-clear').length).toBe(0);
+  });
+
+  it('box sans membre : message d’origine, pas de champ', async () => {
+    const root = await mount(membersModal([]));
+    expect(hostText(hostByID(root, 'members-empty'))).toBe('Aucun membre trouvé.');
+    expect(root.findAll((x) => x.props.testID === 'members-search').length).toBe(0);
+  });
+
+  it('le rôle vient de la requête existante (une seule, élargie)', () => {
+    const src = fs.readFileSync(path.join(__dirname, '../screens/whiteboard/WhiteboardScreen.tsx'), 'utf8');
+    const body = src.slice(src.indexOf('const loadMembers'), src.indexOf('}, [currentBox]);', src.indexOf('const loadMembers')));
+    expect(body.match(/\.from\(/g)).toHaveLength(1);
+    expect(body).toContain(".select('member_id, role, profiles:member_id(id, username, full_name, level, elo, avatar_url)')");
+    expect(body).toContain('role: row.role');
+    expect(src).toMatch(/ownerId=\{currentBox\.owner_id\}/);
+  });
+});
+
+describe('Ma Box (29/09) : étiquettes de rôle', () => {
+  it('gérant principal, co-gérant, coach ; rien pour un membre', () => {
+    expect(memberRoleTag({ id: 'u2', role: 'owner' }, 'u2')).toEqual({ key: 'whiteboard.roleOwner', tone: 'accent' });
+    expect(memberRoleTag({ id: 'u2', role: 'member' }, 'u2')).toEqual({ key: 'whiteboard.roleOwner', tone: 'accent' });
+    expect(memberRoleTag({ id: 'u3', role: 'owner' }, 'u2')).toEqual({ key: 'whiteboard.roleCoOwner', tone: 'accent' });
+    expect(memberRoleTag({ id: 'u4', role: 'coach' }, 'u2')).toEqual({ key: 'whiteboard.roleCoach', tone: 'muted' });
+    expect(memberRoleTag({ id: 'u5', role: 'member' }, 'u2')).toBeNull();
+    expect(memberRoleTag({ id: 'u5', role: null }, null)).toBeNull();
+  });
+
+  it.each(THEMES)('thème %s : libellés, tons et lisibilité à côté du nom', async (_n, theme) => {
+    const root = await mount(membersModal([...MEMBERS, ELODIE]), theme);
+    const c = theme.ax;
+    const label = (u: string) => hostByID(root, `member-role-${u}`).findAll(isHostText)[0];
+    expect(hostText(label('u2'))).toBe('Gérant');
+    expect(hostText(label('u3'))).toBe('Co-gérant');
+    expect(hostText(label('u4'))).toBe('Coach');
+    expect(root.findAll((x) => x.props.testID === 'member-role-u5').length).toBe(0);
+    expect(flat(label('u2')).color).toBe(c.accentText);
+    expect(flat(label('u3')).color).toBe(c.accentText);
+    expect(flat(label('u4')).color).toBe(c.textMuted);
+    for (const u of ['u2', 'u3', 'u4']) {
+      expectReadable(root, label(u), theme);
+      const nameRow = hostParent(hostByID(root, `member-name-${u}`));
+      expect(flat(nameRow).flexDirection).toBe('row');
+      expect(nameRow.findAll((x) => x.props.testID === `member-role-${u}`).length).toBeGreaterThan(0);
+    }
+    expectNoOverflow(hostByID(root, 'member-name-u2'));
+  });
+});
+
+describe('Ma Box (29/09) : « Lire › » des actualités', () => {
+  it.each(THEMES)('thème %s : labelSmall accentText, rôle link, lisible', async (_n, theme) => {
+    const root = await mount(<ArticlesScreen />, theme);
+    for (const id of ['a1', 'a2']) {
+      const link = hostByID(root, `article-read-${id}`);
+      expect(link.props.accessibilityRole).toBe('link');
+      const label = hostByID(root, `article-read-label-${id}`);
+      expect(hostText(label)).toBe('Lire');
+      typo(label, 'labelSmall');
+      expect(flat(label).color).toBe(theme.ax.accentText);
+      expectReadable(root, label, theme);
+      const card = hostByID(root, `article-${id}`);
+      expect(card.findAll((x) => x.props.testID === `article-read-${id}`).length).toBeGreaterThan(0);
+    }
+  });
+
+  it('« Lire » ouvre exactement comme la carte, une seule fois', async () => {
+    const viaCard = await mount(<ArticlesScreen />);
+    mockCalls.length = 0;
+    await press(viaCard, 'article-a1');
+    const cardCalls = [...mockCalls];
+    expect(hostText(byID(viaCard, 'article-detail-title'))).toBe(LONG);
+    await act(async () => renderer.unmount());
+    mockCalls.length = 0;
+    const viaLink = await mount(<ArticlesScreen />);
+    mockCalls.length = 0;
+    await press(viaLink, 'article-read-a1');
+    expect(hostText(byID(viaLink, 'article-detail-title'))).toBe(LONG);
+    expect(mockCalls).toEqual(cardCalls);
+    expect(cardCalls.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Ma Box (29/09) : « Annuler » de la séance perso', () => {
+  let alert: jest.SpyInstance;
+  beforeEach(() => { alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {}); });
+  afterEach(() => { alert.mockRestore(); });
+  const titleInput = (root: ReactTestInstance) => root.findAll((x) => x.props.testID === 'pwod-title' && String(x.type) === 'TextInput')[0];
+  const noSave = () => expect(mockCalls.filter((x) => x.table === 'box_wods' && ['insert', 'update', 'delete'].includes(x.method))).toEqual([]);
+  const buttons = () => alert.mock.calls[0][2] as { text: string; style?: string; onPress?: () => void }[];
+
+  it.each(THEMES)('thème %s : outline à côté de l’action principale, sans débordement', async (_n, theme) => {
+    const root = await mount(<PersonalWODFormScreen />, theme);
+    const cancel = byID(root, 'pwod-cancel');
+    const save = byID(root, 'pwod-save');
+    expect(root.findAll((x) => x.props.testID === 'pwod-cancel' && x.props.variant === 'outline').length).toBe(1);
+    const row = hostParent(hostParent(hostByID(root, 'pwod-cancel')));
+    expect(flat(row).flexDirection).toBe('row');
+    expect(row.findAll((x) => x.props.testID === 'pwod-save').length).toBeGreaterThan(0);
+    for (const slot of [hostParent(hostByID(root, 'pwod-cancel')), hostParent(hostByID(root, 'pwod-save'))]) {
+      expect(flat(slot)).toEqual(expect.objectContaining({ flex: 1, minWidth: 0 }));
+    }
+    const label = cancel.findAll((x) => isHostText(x))[0];
+    expect(hostText(label)).toBe('Annuler');
+    expectReadable(root, label, theme);
+    expect(save.props.variant ?? 'accent').toBe('accent');
+  });
+
+  it('sans saisie → retour direct, sans confirmation ni sauvegarde', async () => {
+    const root = await mount(<PersonalWODFormScreen />);
+    await press(root, 'pwod-cancel');
+    expect(alert).not.toHaveBeenCalled();
+    expect(mockGoBack).toHaveBeenCalledTimes(1);
+    noSave();
+  });
+
+  it('modification chargée non retouchée → retour direct', async () => {
+    mockRouteParams = { wodId: 'w1' };
+    const root = await mount(<PersonalWODFormScreen />);
+    await press(root, 'pwod-cancel');
+    expect(alert).not.toHaveBeenCalled();
+    expect(mockGoBack).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    ['titre saisi', async (root: ReactTestInstance) => { await act(async () => { titleInput(root).props.onChangeText('Fran'); }); }],
+    ['type changé', async (root: ReactTestInstance) => { await press(root, 'pwod-type-tabata'); }],
+  ])('%s → confirmation ; Continuer garde le formulaire, Abandonner revient', async (_n, edit) => {
+    const root = await mount(<PersonalWODFormScreen />);
+    await edit(root);
+    await press(root, 'pwod-cancel');
+    expect(mockGoBack).not.toHaveBeenCalled();
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(alert.mock.calls[0][0]).toBe('Abandonner la saisie ?');
+    expect(buttons().map((b) => [b.text, b.style])).toEqual([['Continuer', 'cancel'], ['Abandonner', 'destructive']]);
+    await act(async () => { buttons()[0].onPress?.(); });
+    expect(mockGoBack).not.toHaveBeenCalled();
+    expect(root.findAll((x) => x.props.testID === 'pwod-save').length).toBeGreaterThan(0);
+    await act(async () => { buttons()[1].onPress?.(); });
+    expect(mockGoBack).toHaveBeenCalledTimes(1);
+    noSave();
+  });
+
+  it('modification retouchée → confirmation', async () => {
+    mockRouteParams = { wodId: 'w1' };
+    const root = await mount(<PersonalWODFormScreen />);
+    await act(async () => { titleInput(root).props.onChangeText('Cindy bis'); });
+    await press(root, 'pwod-cancel');
+    expect(alert).toHaveBeenCalledTimes(1);
+    expect(mockGoBack).not.toHaveBeenCalled();
+    noSave();
+  });
+});
+
+describe('Ma Box (29/09) : textes FR / EN', () => {
+  afterEach(async () => { await act(async () => { await i18n.changeLanguage('fr'); }); });
+  it('clés présentes dans les deux langues', async () => {
+    const keys = ['memberSearch', 'memberSearchEmpty', 'memberSearchClear', 'roleOwner', 'roleCoOwner', 'roleCoach', 'readArticle', 'discardTitle', 'discard', 'keepEditing'];
+    const fr = keys.map((k) => i18n.t(`whiteboard.${k}`, { lng: 'fr' }));
+    const en = keys.map((k) => i18n.t(`whiteboard.${k}`, { lng: 'en' }));
+    expect(fr).toEqual(['Rechercher un membre', 'Aucun membre trouvé', 'Effacer la recherche', 'Gérant', 'Co-gérant', 'Coach', 'Lire', 'Abandonner la saisie ?', 'Abandonner', 'Continuer']);
+    expect(en).toEqual(['Search a member', 'No member found', 'Clear search', 'Owner', 'Co-owner', 'Coach', 'Read', 'Discard your changes?', 'Discard', 'Keep editing']);
+    expect(i18n.t('common.cancel', { lng: 'fr' })).toBe('Annuler');
+    expect(i18n.t('common.cancel', { lng: 'en' })).toBe('Cancel');
+  });
+  it('les écrans suivent la langue', async () => {
+    await act(async () => { await i18n.changeLanguage('en'); });
+    const members = await mount(membersModal());
+    expect(members.findAll((x) => x.props.testID === 'members-search' && String(x.type) === 'TextInput')[0].props.placeholder).toBe('Search a member');
+    expect(hostText(hostByID(members, 'member-role-u2').findAll(isHostText)[0])).toBe('Owner');
+    await act(async () => renderer.unmount());
+    const articles = await mount(<ArticlesScreen />);
+    expect(hostText(hostByID(articles, 'article-read-label-a1'))).toBe('Read');
+    await act(async () => renderer.unmount());
+    const form = await mount(<PersonalWODFormScreen />);
+    expect(hostText(byID(form, 'pwod-cancel').findAll(isHostText)[0])).toBe('Cancel');
   });
 });
