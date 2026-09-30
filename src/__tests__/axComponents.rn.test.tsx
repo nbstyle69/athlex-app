@@ -369,6 +369,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
     // R6a : écrans du mode caméra (lecture de la vidéo).
     path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'),
+    // R7 : historique ELO par paliers.
+    path.join(SRC, 'screens', 'profile', 'EloHistoryScreen.tsx'),
     // R12 : profil (écran racine de l'onglet) au nouveau design.
     path.join(SRC, 'screens', 'profile', 'ProfileScreen.tsx'),
   ];
@@ -417,6 +419,18 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     expect(programs).toEqual(['ProgramDetailScreen.tsx']);
   });
 
+  it('R7 : dans src/screens/profile, seul l’historique ELO passe aux cartes ax ; les paliers restent sans ax', () => {
+    const profile = walk(path.join(SRC, 'screens', 'profile'))
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.basename(f))
+      .sort();
+    // BlockedUsers et PublicProfile : adoptants R3c ; eux et ProfileScreen passent aux cartes au lot R12.
+    expect(profile).toEqual(['BlockedUsersScreen.tsx', 'EloHistoryScreen.tsx', 'ProfileScreen.tsx', 'PublicProfileScreen.tsx']);
+    const withCards = profile.filter((f) => /\bAxCard\b/.test(fs.readFileSync(path.join(SRC, 'screens', 'profile', f), 'utf8')));
+    expect(withCards).toEqual(['BlockedUsersScreen.tsx', 'EloHistoryScreen.tsx', 'ProfileScreen.tsx', 'PublicProfileScreen.tsx']);
+    expect(IMPORTS_AX.test(fs.readFileSync(path.join(SRC, 'utils', 'eloTiers.ts'), 'utf8'))).toBe(false);
+  });
+
   it('R12 : dans src/screens/profile et src/screens/settings, seuls le profil et ses écrans sociaux consomment ax', () => {
     const r12 = [...walk(path.join(SRC, 'screens', 'profile')), ...walk(path.join(SRC, 'screens', 'settings'))]
       .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
@@ -424,7 +438,7 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       .sort();
     expect(r12).toEqual([
       path.join('profile', 'BlockedUsersScreen.tsx'),
-      // Adoptant R3c (AxScreenHeader seul), hors périmètre R12.
+      // Adoptant R7, hors périmètre R12.
       path.join('profile', 'EloHistoryScreen.tsx'),
       path.join('profile', 'ProfileScreen.tsx'),
       path.join('profile', 'PublicProfileScreen.tsx'),
