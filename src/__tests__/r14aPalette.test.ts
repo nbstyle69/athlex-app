@@ -8,12 +8,12 @@ import { contrast } from '../theme/contrast';
 
 /**
  * R14a : fond uni et palette du nouveau design partout. Plus aucune couleur de
- * l'ancienne identité émeraude dans src/, sauf le chrono plein écran (TimerRun)
- * qui garde les couleurs de son thème.
+ * l'ancienne identité émeraude dans src/, chrono plein écran compris ; seules les
+ * définitions de TIMER_THEMES (thèmes de chrono choisis par l'athlète) sont exclues.
  */
 
 const SRC = path.resolve(__dirname, '..');
-const EXEMPT = [path.join(SRC, 'screens', 'timer', 'TimerRunScreen.tsx'), path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx')];
+const TIMER_INK = path.join(SRC, 'theme', 'timerInk.ts');
 const TEXT_MIN = 4.5;
 const GLYPH_MIN = 3;
 
@@ -31,16 +31,35 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/** Retire le tableau TIMER_THEMES de timerInk.ts ; le reste du fichier est scanné. */
+export function withoutTimerThemes(src: string): string {
+  const start = src.indexOf('export const TIMER_THEMES');
+  if (start < 0) return src;
+  const end = src.indexOf('\n];', start);
+  return src.slice(0, start) + src.slice(end + 3);
+}
+
+const scanned = (f: string) => {
+  const src = fs.readFileSync(f, 'utf8');
+  return f === TIMER_INK ? withoutTimerThemes(src) : src;
+};
+
 describe('R14a : plus aucune couleur émeraude de l\'ancienne identité dans src/', () => {
-  const files = walk(SRC).filter((f) => !EXEMPT.includes(f));
+  const files = walk(SRC);
 
   it('la recherche couvre bien src/', () => {
     expect(files.length).toBeGreaterThan(200);
   });
 
-  it('aucun fichier (hors chrono plein écran) ne contient d\'émeraude', () => {
+  it('le chrono plein écran et la vidéo sont scannés', () => {
+    expect(files).toContain(path.join(SRC, 'screens', 'timer', 'TimerRunScreen.tsx'));
+    expect(files).toContain(path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'));
+    expect(files).toContain(TIMER_INK);
+  });
+
+  it('aucun fichier (hors définitions de TIMER_THEMES) ne contient d\'émeraude', () => {
     const offenders = files
-      .filter((f) => LEGACY_EMERALD.test(fs.readFileSync(f, 'utf8')))
+      .filter((f) => LEGACY_EMERALD.test(scanned(f)))
       .map((f) => path.relative(SRC, f));
     expect(offenders).toEqual([]);
   });
@@ -50,6 +69,15 @@ describe('R14a : plus aucune couleur émeraude de l\'ancienne identité dans src
       expect(LEGACY_EMERALD.test(v)).toBe(true);
     }
     expect(LEGACY_EMERALD.test("'#9AE6D2'")).toBe(false);
+  });
+
+  it('seul le tableau TIMER_THEMES est exclu de timerInk.ts', () => {
+    const src = "const A = '#10b981';\nexport const TIMER_THEMES: T[] = [\n  { accent: '#10b981' },\n];\nconst B = 1;";
+    const kept = withoutTimerThemes(src);
+    expect(kept).toContain("const A = '#10b981';");
+    expect(kept).toContain('const B = 1;');
+    expect(kept).not.toContain("{ accent: '#10b981' }");
+    expect(withoutTimerThemes(fs.readFileSync(TIMER_INK, 'utf8'))).toContain('export function appTimerThemeId');
   });
 });
 
