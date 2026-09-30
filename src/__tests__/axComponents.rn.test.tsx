@@ -337,6 +337,13 @@ describe('contraste AA des couples texte / fond', () => {
   }
 });
 
+// R9a : Ma Box et ses composants propres ; le détail du WOD adoptait déjà ax.
+const R9A_FILES = [
+  path.join('screens', 'whiteboard', 'WhiteboardScreen.tsx'),
+  path.join('components', 'WhiteboardTrackTabs.tsx'),
+  path.join('components', 'WeekDayPicker.tsx'),
+];
+
 describe('isolement : rien d’existant ne consomme src/components/ax', () => {
   const SRC = path.join(__dirname, '..');
   const AX_DIR = path.join(SRC, 'components', 'ax');
@@ -376,6 +383,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     ...R9B_FILES.map((f) => path.join(SRC, 'screens', f)),
     // R7 : historique ELO par paliers.
     path.join(SRC, 'screens', 'profile', 'EloHistoryScreen.tsx'),
+    // R9a : Ma Box et ses composants propres (onglets de piste, sélecteur de jours).
+    ...R9A_FILES.map((f) => path.join(SRC, f)),
   ];
 
   it('R9b : les écrans secondaires de Ma Box consomment ax, rien d’autre dans src/screens/whiteboard', () => {
@@ -385,7 +394,10 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       .sort();
     expect(whiteboard).toEqual([
       'ArticlesScreen.tsx', 'PersonalWODFormScreen.tsx', 'WODDetailScreen.tsx', 'WhiteboardMembersModal.tsx',
+      // R9a : Ma Box.
+      'WhiteboardScreen.tsx',
     ]);
+    for (const f of R9A_FILES) expect(IMPORTS_AX.test(fs.readFileSync(path.join(SRC, f), 'utf8'))).toBe(true);
     for (const f of R9B_FILES) expect(IMPORTS_AX.test(fs.readFileSync(path.join(SRC, 'screens', f), 'utf8'))).toBe(true);
   });
 

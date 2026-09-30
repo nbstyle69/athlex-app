@@ -1,7 +1,9 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Pressable, StyleSheet } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { AppTheme } from '../context/ThemeContext';
+import i18n from '../i18n';
+import { AxDayItem } from './ax';
 
 const DAY_LABELS = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
 
@@ -34,9 +36,11 @@ interface Props {
   theme: AppTheme;
   /** Optional ISO date (YYYY-MM-DD): hide/disable days strictly after this date. */
   maxDate?: string;
+  /** « ax » : jours en `AxDayItem` (nouveau design, Ma Box). Par défaut : rendu historique. */
+  variant?: 'legacy' | 'ax';
 }
 
-export default function WeekDayPicker({ weekOffset, setWeekOffset, selectedDate, onSelectDate, theme, maxDate }: Props) {
+export default function WeekDayPicker({ weekOffset, setWeekOffset, selectedDate, onSelectDate, theme, maxDate, variant = 'legacy' }: Props) {
   const weekDates = getWeekDates(weekOffset);
   const todayISO = toISO(new Date());
   // Disable forward arrow when the next week is fully beyond maxDate
@@ -46,6 +50,50 @@ export default function WeekDayPicker({ weekOffset, setWeekOffset, selectedDate,
     return toISO(d);
   })();
   const forwardDisabled = !!maxDate && nextWeekFirstISO > maxDate;
+
+  if (variant === 'ax') {
+    const muted = theme.ax.textMuted;
+    return (
+      <View style={axStyles.row} testID="week-day-picker">
+        <Pressable
+          onPress={() => setWeekOffset(w => w - 1)}
+          style={axStyles.arrow}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={i18n.t('common.back')}
+          testID="week-prev"
+        >
+          <ChevronLeft color={muted} size={18} />
+        </Pressable>
+        {weekDates.map((d, i) => {
+          const iso = toISO(d);
+          const isOverHorizon = !!maxDate && iso > maxDate;
+          return (
+            <View key={iso} style={isOverHorizon ? { opacity: 0.25 } : null}>
+              <AxDayItem
+                dayLabel={DAY_LABELS[i]}
+                dayNumber={d.getDate()}
+                selected={iso === selectedDate}
+                onPress={() => { if (!isOverHorizon) onSelectDate(iso); }}
+                testID={`week-day-${iso}`}
+              />
+            </View>
+          );
+        })}
+        <Pressable
+          onPress={() => { if (!forwardDisabled) setWeekOffset(w => w + 1); }}
+          disabled={forwardDisabled}
+          style={[axStyles.arrow, forwardDisabled && { opacity: 0.25 }]}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={i18n.t('common.next')}
+          testID="week-next"
+        >
+          <ChevronRight color={muted} size={18} />
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: theme.card, borderBottomColor: theme.border }]}>
@@ -102,6 +150,12 @@ export default function WeekDayPicker({ weekOffset, setWeekOffset, selectedDate,
     </View>
   );
 }
+
+// 7 × 44 + 2 × 28 = 364 : tient dans 390 − 2 × 8 sans rogner les jours.
+const axStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, marginVertical: 4 },
+  arrow: { width: 28, height: 44, alignItems: 'center', justifyContent: 'center' },
+});
 
 const styles = StyleSheet.create({
   container: {

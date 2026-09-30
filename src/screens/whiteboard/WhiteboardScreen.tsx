@@ -26,7 +26,6 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { BoxWOD } from '../../types';
 import { WhiteboardStackParamList } from '../../navigation';
 import { buildFullSeqBlockFromWOD } from '../../utils/wodToTimer';
-import WodTypeBadge, { getTypeColors } from '../../components/wod/WodTypeBadge';
 import TimerLaunchModal, { TimerRunParams } from '../../components/wod/TimerLaunchModal';
 import WeekDayPicker, { getWeekDates } from '../../components/WeekDayPicker';
 import WhiteboardTrackTabs from '../../components/WhiteboardTrackTabs';
@@ -36,6 +35,8 @@ import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import { StrengthWodCardStatus, strengthCardLinkKey } from '../../components/wod/StrengthSetGrid';
 import { fetchStrengthSummaries } from '../../services/strengthSets';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { AxButton, AxCard, AxCounterBadge, AxIconButton, AxTag } from '../../components/ax';
+import { axSpacing, axTypography } from '../../theme/axTokens';
 import WhiteboardMembersModal, { WhiteboardMember } from './WhiteboardMembersModal';
 
 function toISO(d: Date): string {
@@ -534,101 +535,96 @@ export default function WhiteboardScreen() {
 
   useFocusEffect(useCallback(() => { loadPersonalWODs(); }, [loadPersonalWODs]));
 
+  const c = theme.ax;
+  const refreshPersonal = () => { setRefreshing(true); loadPersonalWODs().finally(() => setRefreshing(false)); };
+  const dayTitle = (todayISO: string) => (selectedDate === todayISO
+    ? t('whiteboard.sessionOfDay')
+    : new Date(selectedDate + 'T00:00:00').toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' }));
+  const capOf = (secs: number | null | undefined) => secs != null && (
+    <View style={S.timeCap}>
+      <Clock color={c.textMuted} size={12} />
+      <Text style={S.timeCapText}>{t('whiteboard.cap', { cap: formatCap(secs) })}</Text>
+    </View>
+  );
+  const typeTag = (wod: { id: string; wod_type?: string | null }) => (
+    <AxTag label={(wod.wod_type ?? 'custom').toUpperCase()} tone="accent" testID={`wod-tag-${wod.id}`} />
+  );
+  const personalCard = (wod: BoxWOD, lines: number) => (
+    <AxCard key={wod.id} onPress={() => navigation.navigate('WODDetail', { wodId: wod.id })} style={S.wodCard} testID={`wod-card-${wod.id}`}>
+      <View style={S.wodCardTop}>
+        {typeTag(wod)}
+        {capOf(wod.time_cap_seconds)}
+      </View>
+      <Text style={S.wodTitle}>{wod.title}</Text>
+      {wod.description ? <Text style={S.wodDesc} numberOfLines={lines}>{wod.description}</Text> : null}
+      <View style={S.wodCardFooter}>
+        <View style={S.wodCardAction}>
+          <Text style={S.wodCardActionText}>{t('whiteboard.seeDetails')}</Text>
+          <ChevronRight color={c.accentText} size={14} />
+        </View>
+        <View style={S.wodCardBtns}>
+          <AxIconButton
+            icon={Pencil}
+            onPress={() => navigation.navigate('PersonalWODForm', { wodId: wod.id, date: selectedDate })}
+            accessibilityLabel={t('whiteboard.edit')}
+            testID={`wod-edit-${wod.id}`}
+          />
+          <AxIconButton
+            icon={TimerIcon}
+            onPress={() => openTimerModal(wod)}
+            accessibilityLabel={t('whiteboard.launchTimer')}
+            testID={`wod-timer-${wod.id}`}
+          />
+        </View>
+      </View>
+    </AxCard>
+  );
+  const addWodButton = (
+    <AxButton
+      variant="dashed"
+      icon={Sparkles}
+      label={t('whiteboard.addWod')}
+      onPress={() => navigation.navigate('PersonalWODForm', { date: selectedDate })}
+      fullWidth
+      testID="whiteboard-add-wod"
+    />
+  );
+
   if (!currentBox) {
     const todayISO = toISO(new Date());
     return (
       <View style={S.container}>
-      <GlassBackground />
-        <View style={S.header}>
-          <Text style={S.headerTitle}>{t('whiteboard.title')}</Text>
-        </View>
-
-        {/* Top CTA: rejoindre une box */}
-        <View style={S.topCtaRow}>
-          <TouchableOpacity style={S.topJoinBtn} onPress={() => setJoinModal(true)} activeOpacity={0.85}>
-            <Hash color="#fff" size={15} />
-            <Text style={S.topJoinBtnText}>{t('whiteboard.joinBox')}</Text>
-          </TouchableOpacity>
-        </View>
-
-        <WeekDayPicker
-          weekOffset={weekOffset}
-          setWeekOffset={setWeekOffset}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-          theme={theme}
-        />
-
+        <GlassBackground />
         <ScrollView
+          testID="whiteboard-scroll"
           contentContainerStyle={{ paddingBottom: tabSpace }}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadPersonalWODs().finally(() => setRefreshing(false)); }} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshPersonal} />}
         >
+          <View style={S.header} testID="whiteboard-header">
+            <Text style={S.headerTitle}>{t('whiteboard.title')}</Text>
+          </View>
+
+          <View style={S.topCtaRow}>
+            <AxButton icon={Hash} label={t('whiteboard.joinBox')} onPress={() => setJoinModal(true)} fullWidth testID="whiteboard-join-box" />
+          </View>
+
+          <WeekDayPicker
+            weekOffset={weekOffset}
+            setWeekOffset={setWeekOffset}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            theme={theme}
+            variant="ax"
+          />
+
           <View style={S.section}>
-            <Text style={S.sectionTitle}>
-              {selectedDate === todayISO
-                ? t('whiteboard.sessionOfDay')
-                : new Date(selectedDate + 'T00:00:00').toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
-            </Text>
+            <Text style={S.sectionTitle}>{dayTitle(todayISO)}</Text>
 
             {personalWODs.length > 0 ? (
               <View style={S.dayGroup}>
-                {personalWODs.map(wod => (
-                  <TouchableOpacity
-                    key={wod.id}
-                    style={S.wodCard}
-                    onPress={() => navigation.navigate('WODDetail', { wodId: wod.id })}
-                    activeOpacity={0.8}
-                  >
-                    <View style={S.wodCardTop}>
-                      <WodTypeBadge type={wod.wod_type} />
-                      {wod.time_cap_seconds != null && (
-                        <View style={S.timeCap}>
-                          <Clock color={theme.textMuted} size={12} />
-                          <Text style={S.timeCapText}>{t('whiteboard.cap', { cap: formatCap(wod.time_cap_seconds) })}</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={S.wodTitle}>{wod.title}</Text>
-                    {wod.description ? <Text style={S.wodDesc} numberOfLines={3}>{wod.description}</Text> : null}
-                    <View style={S.wodCardFooter}>
-                      <View style={S.wodCardAction}>
-                        <Text style={S.wodCardActionText}>{t('whiteboard.seeDetails')}</Text>
-                        <ChevronRight color={theme.accent} size={14} />
-                      </View>
-                      <View style={S.wodCardBtns}>
-                        <TouchableOpacity
-                          onPress={(e) => { e.stopPropagation(); navigation.navigate('PersonalWODForm', { wodId: wod.id, date: selectedDate }); }}
-                          style={S.timerBtn}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          activeOpacity={0.8}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('whiteboard.edit')}
-                        >
-                          <Pencil color={theme.accent} size={16} />
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          onPress={(e) => { e.stopPropagation(); openTimerModal(wod); }}
-                          style={S.timerBtn}
-                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          activeOpacity={0.8}
-                          accessibilityRole="button"
-                          accessibilityLabel={t('whiteboard.launchTimer')}
-                        >
-                          <TimerIcon color={theme.accent} size={16} />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-                <TouchableOpacity
-                  style={S.createWodBtn}
-                  onPress={() => navigation.navigate('PersonalWODForm', { date: selectedDate })}
-                  activeOpacity={0.85}
-                >
-                  <Sparkles size={16} color={theme.accent} />
-                  <Text style={S.createWodBtnText}>{t('whiteboard.addWod')}</Text>
-                </TouchableOpacity>
+                {personalWODs.map(wod => personalCard(wod, 3))}
+                {addWodButton}
               </View>
             ) : (
               <View style={S.noWodCard}>
@@ -645,7 +641,6 @@ export default function WhiteboardScreen() {
               </View>
             )}
           </View>
-
         </ScrollView>
 
         {timerModal}
@@ -691,126 +686,120 @@ export default function WhiteboardScreen() {
     );
   }
 
+  const mainWod =
+    shownWODs.find(w => w.block_name === 'wod') ??
+    shownWODs.find(w => (w as any).leaderboard_enabled === true) ??
+    shownWODs.find(w => w.wod_type === 'for-time' || w.wod_type === 'amrap') ??
+    shownWODs[0];
+
   return (
     <View style={S.container}>
       <GlassBackground />
-      {/* Header */}
-      <View style={S.header}>
-        <View style={S.headerRow}>
-          <View>
-            <Text style={S.headerTitle}>{t('whiteboard.title')}</Text>
-            <Text style={S.headerSub}>{currentBox.name}</Text>
-          </View>
-        </View>
-        <View style={S.headerBtns}>
-          <TouchableOpacity
-            style={[S.membersBtn, { flex: 1 }]}
-            onPress={() => { setMembersModal(true); loadMembers(); }}
-            activeOpacity={0.8}
-          >
-            <Users size={16} color={theme.accent} />
-            <Text style={S.membersBtnText}>{t('whiteboard.members')}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[S.membersBtn, { flex: 1 }]}
-            onPress={() => navigation.navigate('Messages')}
-            activeOpacity={0.8}
-          >
-            <View style={{ position: 'relative' }}>
-              <MessageCircle size={16} color={theme.accent} />
-              {unreadMessages > 0 && (
-                <View style={S.unreadDot}>
-                  <Text style={S.unreadDotTxt}>{unreadMessages > 9 ? '9+' : unreadMessages}</Text>
-                </View>
-              )}
-            </View>
-            <Text style={S.membersBtnText}>{t('whiteboard.messages')}</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={[S.headerBtns, { marginTop: 8 }]}>
-          <TouchableOpacity
-            style={[S.membersBtn, { flex: 1 }]}
-            onPress={() => navigation.navigate('Articles')}
-            activeOpacity={0.8}
-          >
-            <View style={{ position: 'relative' }}>
-              <Newspaper size={16} color={theme.accent} />
-              {unreadArticles > 0 && (
-                <View style={S.unreadDot}>
-                  <Text style={S.unreadDotTxt}>{unreadArticles > 9 ? '9+' : unreadArticles}</Text>
-                </View>
-              )}
-            </View>
-            <Text style={S.membersBtnText}>{t('whiteboard.news')}</Text>
-          </TouchableOpacity>
-        </View>
-        <View style={[S.headerBtns, { marginTop: 8 }]}>
-          <TouchableOpacity
-            style={[S.membersBtn, { flex: 1 }]}
-            onPress={() => navigation.navigate('BoxRanking')}
-            activeOpacity={0.8}
-          >
-            <Trophy size={16} color={theme.accent} />
-            <Text style={S.membersBtnText}>{t('whiteboard.boxRanking')}</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <WhiteboardTrackTabs tabs={trackTabs} value={track} onChange={choisirPiste} theme={theme} />
-
-      <WeekDayPicker
-        weekOffset={weekOffset}
-        setWeekOffset={setWeekOffset}
-        selectedDate={selectedDate}
-        onSelectDate={setSelectedDate}
-        theme={theme}
-      />
-
-      {/* Quick action buttons when a WOD block exists */}
-      {(() => {
-        const mainWod =
-          shownWODs.find(w => w.block_name === 'wod') ??
-          shownWODs.find(w => (w as any).leaderboard_enabled === true) ??
-          shownWODs.find(w => w.wod_type === 'for-time' || w.wod_type === 'amrap') ??
-          shownWODs[0];
-        if (!mainWod) return null;
-        return (
-          <View style={S.quickActions}>
-            <EmeraldCTAButton
-              icon={<Sparkles size={20} color={theme.ctaText} />}
-              onPress={() => navigation.navigate('WODDetail', { wodId: mainWod.id })}
-              textStyle={{ fontSize: 17 }}
-            >
-              {t('whiteboard.enterScore')}
-            </EmeraldCTAButton>
-            <TouchableOpacity
-              style={S.rankBtn}
-              onPress={() => navigation.navigate('WODDetail', { wodId: mainWod.id, scrollToLeaderboard: true })}
-              activeOpacity={0.85}
-            >
-              <Trophy size={18} color={theme.accent} />
-              <Text style={S.rankBtnText}>{t('whiteboard.ranking')}</Text>
-            </TouchableOpacity>
-          </View>
-        );
-      })()}
-
       <ScrollView
+        testID="whiteboard-scroll"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: tabSpace }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); refetchWods(); }} />}
       >
+        <View style={S.header} testID="whiteboard-header">
+          <Text style={S.headerTitle}>{t('whiteboard.title')}</Text>
+          <Text style={S.headerSub} numberOfLines={1}>{currentBox.name}</Text>
+          <View style={S.headerBtns}>
+            <View style={S.headerBtn}>
+              <AxButton
+                variant="outline"
+                icon={Users}
+                label={t('whiteboard.members')}
+                onPress={() => { setMembersModal(true); loadMembers(); }}
+                fullWidth
+                testID="whiteboard-members"
+              />
+            </View>
+            <View style={S.headerBtn}>
+              {unreadMessages > 0 && (
+                <View style={S.badge} pointerEvents="none">
+                  <AxCounterBadge count={unreadMessages} testID="whiteboard-messages-badge" />
+                </View>
+              )}
+              <AxButton
+                variant="outline"
+                icon={MessageCircle}
+                label={t('whiteboard.messages')}
+                onPress={() => navigation.navigate('Messages')}
+                fullWidth
+                testID="whiteboard-messages"
+              />
+            </View>
+          </View>
+          <View style={S.headerBtns}>
+            <View style={S.headerBtn}>
+              {unreadArticles > 0 && (
+                <View style={S.badge} pointerEvents="none">
+                  <AxCounterBadge count={unreadArticles} testID="whiteboard-news-badge" />
+                </View>
+              )}
+              <AxButton
+                variant="outline"
+                icon={Newspaper}
+                label={t('whiteboard.news')}
+                onPress={() => navigation.navigate('Articles')}
+                fullWidth
+                testID="whiteboard-news"
+              />
+            </View>
+          </View>
+          <View style={S.headerBtns}>
+            <View style={S.headerBtn}>
+              <AxButton
+                variant="outline"
+                icon={Trophy}
+                label={t('whiteboard.boxRanking')}
+                onPress={() => navigation.navigate('BoxRanking')}
+                fullWidth
+                testID="whiteboard-box-ranking"
+              />
+            </View>
+          </View>
+        </View>
+
+        <WhiteboardTrackTabs tabs={trackTabs} value={track} onChange={choisirPiste} />
+
+        <WeekDayPicker
+          weekOffset={weekOffset}
+          setWeekOffset={setWeekOffset}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          theme={theme}
+          variant="ax"
+        />
+
+        {mainWod && (
+          <View style={S.quickActions} testID="whiteboard-quick-actions">
+            <AxButton
+              icon={Sparkles}
+              label={t('whiteboard.enterScore')}
+              onPress={() => navigation.navigate('WODDetail', { wodId: mainWod.id })}
+              fullWidth
+              testID="whiteboard-enter-score"
+            />
+            <AxButton
+              variant="outline"
+              icon={Trophy}
+              label={t('whiteboard.ranking')}
+              onPress={() => navigation.navigate('WODDetail', { wodId: mainWod.id, scrollToLeaderboard: true })}
+              fullWidth
+              testID="whiteboard-ranking"
+            />
+          </View>
+        )}
+
         <View style={S.section}>
-          <Text style={S.sectionTitle}>
-            {selectedDate === toISO(new Date())
-              ? t('whiteboard.sessionOfDay')
-              : new Date(selectedDate + 'T00:00:00').toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
-          </Text>
+          <Text style={S.sectionTitle}>{dayTitle(toISO(new Date()))}</Text>
           {shownWODs.length > 0 ? (
             <View style={S.dayGroup}>
               {shownWODs.map((wod, idx) => {
-                const typeColors = getTypeColors(theme);
-                const tc = typeColors[wod.wod_type ?? 'custom'] ?? theme.textMuted;
+                const hasScore = scoredIds.has(wod.id);
+                const isDone = hasScore || completedIds.has(wod.id);
                 return (
                   <View key={wod.id} style={S.wodRow}>
                     {isStaff && shownWODs.length > 1 && (
@@ -820,65 +809,53 @@ export default function WhiteboardScreen() {
                           disabled={idx === 0}
                           style={[S.reorderBtn, idx === 0 && { opacity: 0.25 }]}
                           hitSlop={{ top: 8, bottom: 4, left: 8, right: 8 }}
+                          accessibilityRole="button"
+                          accessibilityLabel="↑"
                         >
-                          <ChevronUp color={theme.textSecondary} size={16} />
+                          <ChevronUp color={c.textMuted} size={16} />
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => moveWod(shownWODs, idx, 'down')}
                           disabled={idx === shownWODs.length - 1}
                           style={[S.reorderBtn, idx === shownWODs.length - 1 && { opacity: 0.25 }]}
                           hitSlop={{ top: 4, bottom: 8, left: 8, right: 8 }}
+                          accessibilityRole="button"
+                          accessibilityLabel="↓"
                         >
-                          <ChevronDown color={theme.textSecondary} size={16} />
+                          <ChevronDown color={c.textMuted} size={16} />
                         </TouchableOpacity>
                       </View>
                     )}
-                    <View style={[S.wodCard, { flex: 1 }]}>
+                    <AxCard style={[S.wodCard, { flex: 1 }]} testID={`wod-card-${wod.id}`}>
                       <TouchableOpacity
                         onPress={() => navigation.navigate('WODDetail', { wodId: wod.id })}
                         activeOpacity={0.8}
+                        style={S.wodCardBody}
+                        testID={`wod-open-${wod.id}`}
                       >
                         <View style={S.wodCardTop}>
-                          <WodTypeBadge type={wod.wod_type} />
+                          {typeTag(wod)}
                           <StrengthWodCardStatus summary={strengthByWod?.[wod.id]} />
-
-                          {wod.video_url && (
-                            <View style={[S.timeCap, { backgroundColor: '#EF444418', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }]}>
-                              <Play color="#EF4444" size={10} />
-                              <Text style={[S.timeCapText, { color: '#EF4444' }]}>{t('whiteboard.video')}</Text>
+                          {wod.video_url && <AxTag label={t('whiteboard.video')} tone="danger" />}
+                          {capOf(wod.time_cap_seconds)}
+                          <TouchableOpacity
+                            onPress={(e) => { e.stopPropagation(); toggleCompletion(wod.id); }}
+                            disabled={hasScore}
+                            style={S.checkboxRow}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            activeOpacity={0.7}
+                            accessibilityRole="checkbox"
+                            accessibilityState={{ checked: isDone, disabled: hasScore }}
+                            accessibilityLabel={isDone ? t('whiteboard.done') : t('whiteboard.markDone')}
+                            testID={`wod-done-${wod.id}`}
+                          >
+                            {isDone && (
+                              <Text style={S.checkboxLabel}>{hasScore ? t('whiteboard.scored') : t('whiteboard.done')}</Text>
+                            )}
+                            <View style={[S.checkbox, isDone && S.checkboxChecked]}>
+                              {isDone && <Check color={c.onAccent} size={14} strokeWidth={3} />}
                             </View>
-                          )}
-                          {wod.time_cap_seconds != null && (
-                            <View style={S.timeCap}>
-                              <Clock color={theme.textMuted} size={12} />
-                              <Text style={S.timeCapText}>
-                                {t('whiteboard.cap', { cap: formatCap(wod.time_cap_seconds) })}
-                              </Text>
-                            </View>
-                          )}
-                          {(() => {
-                            const hasScore = scoredIds.has(wod.id);
-                            const isDone = hasScore || completedIds.has(wod.id);
-                            return (
-                              <TouchableOpacity
-                                onPress={(e) => { e.stopPropagation(); toggleCompletion(wod.id); }}
-                                disabled={hasScore}
-                                style={S.checkboxRow}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                                activeOpacity={0.7}
-                                accessibilityRole="checkbox"
-                                accessibilityState={{ checked: isDone, disabled: hasScore }}
-                                accessibilityLabel={isDone ? t('whiteboard.done') : t('whiteboard.markDone')}
-                              >
-                                {isDone && (
-                                  <Text style={S.checkboxLabel}>{hasScore ? t('whiteboard.scored') : t('whiteboard.done')}</Text>
-                                )}
-                                <View style={[S.checkbox, isDone && S.checkboxChecked]}>
-                                  {isDone && <Check color="#fff" size={14} strokeWidth={3} />}
-                                </View>
-                              </TouchableOpacity>
-                            );
-                          })()}
+                          </TouchableOpacity>
                         </View>
                         <Text style={S.wodTitle}>{wod.title}</Text>
                         {wod.description && (
@@ -891,22 +868,19 @@ export default function WhiteboardScreen() {
                           onPress={() => navigation.navigate('WODDetail', { wodId: wod.id })}
                           activeOpacity={0.7}
                           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          testID={`wod-details-${wod.id}`}
                         >
                           <Text style={S.wodCardActionText}>{t(strengthCardLinkKey(strengthByWod?.[wod.id]))}</Text>
-                          <ChevronRight color={theme.accent} size={14} />
+                          <ChevronRight color={c.accentText} size={14} />
                         </TouchableOpacity>
-                        <TouchableOpacity
+                        <AxIconButton
+                          icon={TimerIcon}
                           onPress={() => openTimerModal(wod)}
-                          style={S.timerBtn}
-                          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                          activeOpacity={0.8}
-                          accessibilityRole="button"
                           accessibilityLabel={t('whiteboard.launchTimer')}
-                        >
-                          <TimerIcon color={theme.accent} size={16} />
-                        </TouchableOpacity>
+                          testID={`wod-timer-${wod.id}`}
+                        />
                       </View>
-                    </View>
+                    </AxCard>
                   </View>
                 );
               })}
@@ -919,90 +893,37 @@ export default function WhiteboardScreen() {
           )}
 
           {/* ── Mes WODs perso (générateur) ─────────────────── */}
-          <View style={{ marginTop: 20 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <Sparkles color={theme.accent} size={16} />
+          <View style={S.group}>
+            <View style={S.groupHead}>
+              <Sparkles color={c.accentText} size={16} />
               <Text style={[S.sectionTitle, { marginBottom: 0 }]}>{t('whiteboard.myPersonalSessions')}</Text>
             </View>
             <View style={S.dayGroup}>
-              {personalWODs.map(wod => (
-                <TouchableOpacity
-                  key={wod.id}
-                  style={[S.wodCard, { borderLeftWidth: 3, borderLeftColor: `${theme.accent}80` }]}
-                  onPress={() => navigation.navigate('WODDetail', { wodId: wod.id })}
-                  activeOpacity={0.8}
-                >
-                  <View style={S.wodCardTop}>
-                    <WodTypeBadge type={wod.wod_type} />
-                    {wod.time_cap_seconds != null && (
-                      <View style={S.timeCap}>
-                        <Clock color={theme.textMuted} size={12} />
-                        <Text style={S.timeCapText}>{t('whiteboard.cap', { cap: formatCap(wod.time_cap_seconds) })}</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={S.wodTitle}>{wod.title}</Text>
-                  {wod.description ? <Text style={S.wodDesc} numberOfLines={2}>{wod.description}</Text> : null}
-                  <View style={S.wodCardFooter}>
-                    <View style={S.wodCardAction}>
-                      <Text style={S.wodCardActionText}>{t('whiteboard.seeDetails')}</Text>
-                      <ChevronRight color={theme.accent} size={14} />
-                    </View>
-                    <View style={S.wodCardBtns}>
-                      <TouchableOpacity
-                        onPress={(e) => { e.stopPropagation(); navigation.navigate('PersonalWODForm', { wodId: wod.id, date: selectedDate }); }}
-                        style={S.timerBtn}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        activeOpacity={0.8}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('whiteboard.edit')}
-                      >
-                        <Pencil color={theme.accent} size={16} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={(e) => { e.stopPropagation(); openTimerModal(wod); }}
-                        style={S.timerBtn}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        activeOpacity={0.8}
-                      >
-                        <TimerIcon color={theme.accent} size={16} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                style={S.createWodBtn}
-                onPress={() => navigation.navigate('PersonalWODForm', { date: selectedDate })}
-                activeOpacity={0.85}
-              >
-                <Sparkles size={16} color={theme.accent} />
-                <Text style={S.createWodBtnText}>{t('whiteboard.addWod')}</Text>
-              </TouchableOpacity>
+              {personalWODs.map(wod => personalCard(wod, 2))}
+              {addWodButton}
             </View>
           </View>
 
           {/* ── Programmes : date de début à choisir / jour de repos ── */}
           {programAvis.map(a => (
-            <TouchableOpacity
+            <AxCard
               key={`${a.kind}-${a.programId}`}
-              style={[S.wodCard, { marginTop: 20, borderLeftWidth: 3, borderLeftColor: theme.accent, flexDirection: 'row', alignItems: 'center', gap: 10 }]}
-              activeOpacity={0.8}
-              onPress={() => navigation.navigate('ProgramDetail', {
+              style={S.programAvis}
+              onPress={a.kind === 'repos' ? undefined : () => navigation.navigate('ProgramDetail', {
                 programId: a.programId, programTitle: a.programTitle, startDate: null,
                 progType: a.progType, durationWeeks: a.durationWeeks, daysPerWeek: a.daysPerWeek,
               })}
-              disabled={a.kind === 'repos'}
+              testID={`program-avis-${a.programId}`}
             >
-              <BookOpen color={theme.accent} size={16} />
+              <BookOpen color={c.accentText} size={16} />
               <View style={{ flex: 1 }}>
                 <Text style={S.wodTitle}>{a.programTitle}</Text>
                 <Text style={S.wodDesc}>
                   {a.kind === 'sans_date' ? t('whiteboard.programChooseStart') : t('whiteboard.programRest', { week: a.weekNumber })}
                 </Text>
               </View>
-              {a.kind === 'sans_date' && <ChevronRight color={theme.textMuted} size={16} />}
-            </TouchableOpacity>
+              {a.kind === 'sans_date' && <ChevronRight color={c.textMuted} size={16} />}
+            </AxCard>
           ))}
 
           {/* ── Programme WODs ─────────────────────── */}
@@ -1012,32 +933,23 @@ export default function WhiteboardScreen() {
             else acc.push({ title: entry.programTitle, wods: [entry] });
             return acc;
           }, []).map(group => (
-            <View key={group.title} style={{ marginTop: 20 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <BookOpen color={theme.accent} size={16} />
-                <Text style={[S.sectionTitle, { marginBottom: 0 }]}>{group.title}</Text>
-                {group.wods[0] && <Text style={{ fontSize: 11, color: theme.textSecondary, fontWeight: '600' }}>{group.wods[0].dayLabel}</Text>}
+            <View key={group.title} style={S.group}>
+              <View style={S.groupHead}>
+                <BookOpen color={c.accentText} size={16} />
+                <Text style={[S.sectionTitle, { marginBottom: 0, flexShrink: 1 }]}>{group.title}</Text>
+                {group.wods[0] && <Text style={S.groupDay}>{group.wods[0].dayLabel}</Text>}
               </View>
               <View style={S.dayGroup}>
-                {group.wods.map(entry => {
-                  const typeColors = getTypeColors(theme);
-                  const tc = typeColors[entry.wod.wod_type ?? 'custom'] ?? theme.textMuted;
-                  return (
-                    <View key={entry.wod.id} style={[S.wodCard, { borderLeftWidth: 3, borderLeftColor: theme.accent }]}>
-                      <View style={S.wodCardTop}>
-                        <WodTypeBadge type={entry.wod.wod_type} />
-                        {entry.wod.time_cap_seconds != null && (
-                          <View style={S.timeCap}>
-                            <Clock color={theme.textMuted} size={12} />
-                            <Text style={S.timeCapText}>{t('whiteboard.cap', { cap: formatCap(entry.wod.time_cap_seconds) })}</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text style={S.wodTitle}>{entry.wod.title}</Text>
-                      {entry.wod.description ? <Text style={S.wodDesc} numberOfLines={3}>{entry.wod.description}</Text> : null}
+                {group.wods.map(entry => (
+                  <AxCard key={entry.wod.id} style={S.wodCard} testID={`program-wod-${entry.wod.id}`}>
+                    <View style={S.wodCardTop}>
+                      {typeTag(entry.wod)}
+                      {capOf(entry.wod.time_cap_seconds)}
                     </View>
-                  );
-                })}
+                    <Text style={S.wodTitle}>{entry.wod.title}</Text>
+                    {entry.wod.description ? <Text style={S.wodDesc} numberOfLines={3}>{entry.wod.description}</Text> : null}
+                  </AxCard>
+                ))}
               </View>
             </View>
           ))}
@@ -1058,84 +970,55 @@ export default function WhiteboardScreen() {
   );
 }
 
+
 function createStyles(theme: AppTheme) {
   const isDark = theme.mode === 'dark';
+  const c = theme.ax;
   const cardShadow = isDark ? {} : {
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
   };
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16,
-    backgroundColor: theme.card,
-    borderBottomWidth: isDark ? 1 : 0, borderBottomColor: theme.border,
-    ...(isDark ? {} : { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 }),
-  },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerBtns: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 12 },
-  headerTitle: { fontSize: 22, fontWeight: '900', color: theme.text, letterSpacing: -0.3 },
-  headerSub:   { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-  membersBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    backgroundColor: isDark ? `${theme.accent}15` : `${theme.accent}08`,
-    borderRadius: 12,
-    paddingHorizontal: 12, paddingVertical: 8,
-    borderWidth: 1, borderColor: `${theme.accent}25`,
-  },
-  membersBtnText: { fontSize: 13, fontWeight: '700', color: theme.accent },
-  unreadDot: {
-    position: 'absolute', top: -6, right: -8,
-    backgroundColor: theme.error ?? '#EF4444', borderRadius: 9,
-    minWidth: 16, height: 16, justifyContent: 'center', alignItems: 'center',
-    paddingHorizontal: 2, borderWidth: 1.5, borderColor: isDark ? theme.surface : theme.card,
-  } as any,
-  unreadDotTxt: { fontSize: 8, fontWeight: '900' as const, color: '#fff' },
-  section:      { paddingHorizontal: 16, marginTop: 20 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: theme.text, marginBottom: 12, letterSpacing: -0.2 },
-  dayGroup:     { gap: 10 },
-  wodRow:       { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  reorderCol:   { alignItems: 'center', justifyContent: 'center', gap: 2 },
-  reorderBtn:   { padding: 4, borderRadius: 8, backgroundColor: `${theme.surface}` },
-  wodCard: {
-    backgroundColor: isDark ? theme.card : theme.card, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: theme.border, gap: 10,
-    ...cardShadow,
-  },
+  header: { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 4 },
+  headerBtns: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, marginTop: axSpacing.sm },
+  headerBtn: { flex: 1, minWidth: 0 },
+  headerTitle: { ...axTypography.titleXL, color: c.text },
+  headerSub: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2, marginBottom: axSpacing.xs },
+  badge: { position: 'absolute', top: -6, right: -4, zIndex: 2, elevation: 2 },
+  section: { paddingHorizontal: 16, marginTop: 20 },
+  sectionTitle: { ...axTypography.overline, color: c.textMuted, marginBottom: 12 },
+  group: { marginTop: 20 },
+  groupHead: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  groupDay: { ...axTypography.labelSmall, color: c.textMuted },
+  dayGroup: { gap: 10 },
+  wodRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  reorderCol: { alignItems: 'center', justifyContent: 'center', gap: 2 },
+  reorderBtn: { padding: 4, borderRadius: 5, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border },
+  wodCard: { gap: 10 },
+  wodCardBody: { gap: 8 },
+  programAvis: { marginTop: 20, flexDirection: 'row', alignItems: 'center', gap: 10 },
   wodCardTop: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  blockBadge: {
-    borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
-    backgroundColor: `${theme.accent}12`, borderWidth: 1, borderColor: `${theme.accent}25`,
-  },
-  blockBadgeText: { fontSize: 10, fontWeight: '700', color: theme.accent },
   timeCap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  timeCapText: { fontSize: 11, color: theme.textMuted },
-  wodTitle: { fontSize: 17, fontWeight: '700', color: theme.text },
-  wodDesc: { fontSize: 13, color: theme.textSecondary, lineHeight: 19 },
-  wodCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 },
-  wodCardAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  wodCardActionText: { fontSize: 12, fontWeight: '700', color: theme.accent },
+  timeCapText: { ...axTypography.caption, color: c.textMuted },
+  wodTitle: { ...axTypography.titleM, color: c.text },
+  wodDesc: { ...axTypography.bodySmall, color: c.textMuted },
+  wodCardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  wodCardAction: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 },
+  wodCardActionText: { ...axTypography.labelSmall, color: c.accentText, flexShrink: 1 },
   wodCardBtns: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  timerBtn: {
-    width: 34, height: 34, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: `${theme.accent}18`,
-    borderWidth: 1, borderColor: `${theme.accent}35`,
-  },
   checkboxRow: {
     marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 6,
     paddingVertical: 2, paddingHorizontal: 2,
   },
   checkbox: {
-    width: 22, height: 22, borderRadius: 6,
-    borderWidth: 2, borderColor: theme.border,
+    width: 22, height: 22, borderRadius: 5,
+    borderWidth: 1.5, borderColor: c.fieldBorder,
     backgroundColor: 'transparent',
     justifyContent: 'center', alignItems: 'center',
   },
-  checkboxChecked: {
-    backgroundColor: theme.accent, borderColor: theme.accent,
-  },
-  checkboxLabel: { fontSize: 11, fontWeight: '700', color: theme.accent, letterSpacing: 0.3 },
+  checkboxChecked: { backgroundColor: c.accent, borderColor: c.accent },
+  checkboxLabel: { ...axTypography.labelSmall, color: c.accentText },
   noWodCard: {
     backgroundColor: isDark ? theme.card : theme.card, borderRadius: 16, padding: 32,
     borderWidth: 1, borderColor: theme.border, alignItems: 'center', gap: 10,
@@ -1159,25 +1042,7 @@ function createStyles(theme: AppTheme) {
   historyTitle: { fontSize: 14, fontWeight: '700', color: theme.text },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   emptyText: { fontSize: 15, color: theme.textMuted, textAlign: 'center' },
-  topCtaRow: {
-    flexDirection: 'row', gap: 10, justifyContent: 'center',
-    paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6,
-  },
-  topJoinBtn: {
-    flex: 1,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, paddingVertical: 12, paddingHorizontal: 14,
-    borderRadius: 12, backgroundColor: theme.accent,
-  },
-  topJoinBtnText: { fontSize: 13, fontWeight: '900', color: '#fff', letterSpacing: 0.3 },
-  createWodBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 14, paddingHorizontal: 18,
-    borderRadius: 14, borderWidth: 1.5, borderStyle: 'dashed', borderColor: theme.accent,
-    backgroundColor: 'rgba(74,222,128,0.08)',
-    marginTop: 6,
-  },
-  createWodBtnText: { fontSize: 14, fontWeight: '800', color: theme.accent, letterSpacing: 0.3 },
+  topCtaRow: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6 },
   createWodPrimary: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 14, paddingHorizontal: 22,
@@ -1215,25 +1080,5 @@ function createStyles(theme: AppTheme) {
     fontSize: 22, fontWeight: '700', color: theme.text,
     letterSpacing: 6, textAlign: 'center',
   },
-  quickActions: {
-    paddingHorizontal: 16, gap: 10, marginTop: 12,
-  },
-  scoreBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 10, backgroundColor: '#10B981', borderRadius: 16,
-    paddingVertical: 18, paddingHorizontal: 20,
-  },
-  scoreBtnText: {
-    color: '#fff', fontSize: 17, fontWeight: '900', letterSpacing: 0.5,
-  },
-  rankBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8,
-    backgroundColor: isDark ? `${theme.accent}15` : `${theme.accent}08`,
-    borderRadius: 14, paddingVertical: 14, paddingHorizontal: 20,
-    borderWidth: 1, borderColor: `${theme.accent}30`,
-  },
-  rankBtnText: {
-    fontSize: 14, fontWeight: '700', color: theme.accent,
-  },
+  quickActions: { paddingHorizontal: 16, gap: 10, marginTop: 12 },
 }); }
