@@ -372,6 +372,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
     // R6a : écrans du mode caméra (lecture de la vidéo).
     path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'),
+    // R13 : écrans ouverts depuis le bloc Explorer de l'Accueil.
+    path.join(SRC, 'screens', 'explorer', 'BoxDirectoryMapScreen.tsx'),
     // R9b : écrans secondaires de Ma Box (fenêtre Membres).
     ...R9B_FILES.map((f) => path.join(SRC, 'screens', f)),
     // R7 : historique ELO par paliers.
@@ -449,6 +451,17 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       path.join('tournament', 'DailyTournamentDetailScreen.tsx'),
       path.join('tournament', 'DailyTournamentsScreen.tsx'),
     ].sort());
+  });
+
+  it('R13 : dans src/screens/explorer, seuls les sept écrans du bloc Explorer consomment ax (pas la carte web)', () => {
+    const explorer = walk(path.join(SRC, 'screens', 'explorer'))
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.basename(f))
+      .sort();
+    expect(explorer).toEqual([
+      'BoxDirectoryDetailScreen.tsx', 'BoxDirectoryMapScreen.tsx', 'BoxDirectoryScreen.tsx', 'BoxProgramsScreen.tsx',
+      'PartnerDetailScreen.tsx', 'PartnersScreen.tsx', 'ProgrammationScreen.tsx',
+    ]);
   });
 
   it('R7 : dans src/screens/profile, seul l’historique ELO passe aux cartes ax ; les paliers restent sans ax', () => {

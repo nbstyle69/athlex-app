@@ -1,10 +1,12 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxCard } from '../../components/ax';
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Building2 } from 'lucide-react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Building2, ChevronRight } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { HomeStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
 
@@ -13,7 +15,8 @@ type Nav = NativeStackNavigationProp<HomeStackParamList>;
 export default function ProgrammationScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
-  const s = createStyles(theme);
+  const c = theme.ax;
+  const s = createStyles(c);
 
   return (
     <View style={s.container}>
@@ -24,53 +27,37 @@ export default function ProgrammationScreen() {
 
       <View style={s.content}>
         {/* Programmes des Boxes */}
-        <TouchableOpacity
+        <AxCard
           style={s.categoryBtn}
-          activeOpacity={0.8}
           onPress={() => navigation.navigate('BoxPrograms')}
+          accessibilityLabel="Programmes des Boxs"
+          testID="programmation-box-programs"
         >
-          <View style={[s.categoryIcon, { backgroundColor: '#3B82F615' }]}>
-            <Building2 color="#3B82F6" size={28} />
+          <View style={s.categoryIcon}>
+            <Building2 color={c.accentText} size={24} />
           </View>
           <View style={s.categoryContent}>
             <Text style={s.categoryTitle}>Programmes des Boxs</Text>
             <Text style={s.categoryDesc}>Découvre les programmations proposées par les boxs</Text>
           </View>
-          <View style={[s.categoryArrow, { backgroundColor: '#3B82F615' }]}>
-            <Text style={[s.categoryArrowTxt, { color: '#3B82F6' }]}>→</Text>
-          </View>
-        </TouchableOpacity>
+          <ChevronRight color={c.textMuted} size={20} />
+        </AxCard>
       </View>
     </View>
   );
 }
 
-function createStyles(t: AppTheme) { return StyleSheet.create({
+function createStyles(c: AxColors) { return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16,
-    backgroundColor: t.card, borderBottomWidth: 1, borderBottomColor: t.border,
-  },
-  back: { padding: 4 },
-  headerTitle: { fontSize: 20, fontWeight: '900', color: t.text },
-  headerSub: { fontSize: 11, color: t.textMuted, marginTop: 2 },
-  content: { flex: 1, paddingHorizontal: 20, paddingTop: 24, gap: 14 },
-  categoryBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 16,
-    backgroundColor: t.card, borderRadius: 18, padding: 20,
-    borderWidth: 1, borderColor: t.border,
-  },
+  headerSub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+  content: { flex: 1, paddingHorizontal: axSpacing.xl, paddingTop: axSpacing['2xl'], gap: axSpacing.md },
+  categoryBtn: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.lg },
   categoryIcon: {
-    width: 58, height: 58, borderRadius: 16,
+    width: 52, height: 52, borderRadius: axRadius.card,
+    backgroundColor: c.field, borderWidth: 1, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  categoryContent: { flex: 1 },
-  categoryTitle: { fontSize: 17, fontWeight: '900', color: t.text },
-  categoryDesc: { fontSize: 12, color: t.textMuted, marginTop: 4, lineHeight: 17 },
-  categoryArrow: {
-    width: 36, height: 36, borderRadius: 10,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  categoryArrowTxt: { fontSize: 18, fontWeight: '900' },
+  categoryContent: { flex: 1, minWidth: 0, gap: axSpacing.xs },
+  categoryTitle: { ...axTypography.titleM, color: c.text },
+  categoryDesc: { ...axTypography.bodySmall, color: c.textMuted },
 }); }
