@@ -219,6 +219,15 @@ Supabase/Resend.
   typographies, espace bas, textes longs à 390 px) ; isolement R1 élargi aux 5 écrans ; `npx jest`, `npm run test:rn`,
   `tsc` verts ; 22 mutations tuées.
 
+**Refonte R13 : annuaire, programmes et partenaires au nouveau design (app seule, aucune migration, apparence seule).**
+- `BoxDirectoryScreen` (recherche en `AxTextField`, sports en `AxChip`, boxs en `AxCard`, nom en `titleM`, ville et infos
+  en `bodySmall` `textMuted`, sports en `AxTag`), `BoxDirectoryMapScreen` (en-tête flottant et fiche basse `AxCard`
+  featured ; fond de carte et marqueurs inchangés ; toujours sans `AxScreenHeader`, écran plein écran), fiche box (identité
+  en `AxCard` featured, sports / services en `AxTag`, horaires en `AxCard`), Programmes, programmes des boxs, partenaires
+  et fiche partenaire (offre en `AxCard` featured, code en `AxButton` accent unique) ; `AxTextField` gagne l'option
+  rétrocompatible `trailing` (bouton d'effacement). Requêtes, navigation et liens inchangés ; ordre des textes comparé à un
+  relevé de master (`r13.rn.test.tsx`, `r13StructureBefore.json`).
+
 **Refonte R9b : écrans secondaires de Ma Box au nouveau design (app seule, aucune migration, apparence seule).**
 - Actualités, Membres (fenêtre extraite telle quelle de `WhiteboardScreen` vers `WhiteboardMembersModal`), Séance perso
   (formulaire), Classement de la box, Messages et Infos de la box : `AxCard` par ligne ou section, `AxTextField`, `AxChip`,
