@@ -53,6 +53,7 @@ class RealtimeRecorderModule : Module() {
         engine.useFrontCamera = (facing == "front")
         engine.isLandscape = landscape
         applyVideoOptions(options)
+        applyBeepOptions(options)
 
         // Clean path (remove file:// prefix if present)
         val cleanPath = if (outputPath.startsWith("file://")) {
@@ -136,6 +137,11 @@ class RealtimeRecorderModule : Module() {
       }.start()
     }
 
+    Function("markBeep") { type: String ->
+      try { engine.markBeep(type) } catch (e: Exception) { Log.e(TAG, "markBeep failed", e) }
+      null
+    }
+
     Function("getLastRecordingStats") {
       val (expected, written) = engine.lastRecordingStats()
       mapOf("expectedFrames" to expected, "writtenFrames" to written)
@@ -207,5 +213,15 @@ class RealtimeRecorderModule : Module() {
     engine.quality = (options["quality"] as? String)?.takeIf { it in VideoQuality.ORDER } ?: VideoQuality.DEFAULT
     engine.fps = if ((options["fps"] as? Number)?.toInt() == 25) 25 else 30
     engine.micEnabled = options["mic"] as? Boolean ?: true
+  }
+
+  /** beeps / beepFiles / beepLatencyMs from JS; missing = no beep in the video (former behaviour). */
+  private fun applyBeepOptions(options: Map<String, Any?>) {
+    val files = (options["beepFiles"] as? Map<*, *>)
+      ?.mapNotNull { (k, v) -> if (k is String && v is String) k to v else null }?.toMap()
+      ?: emptyMap()
+    engine.beepsEnabled = options["beeps"] as? Boolean == true && files.isNotEmpty()
+    engine.beepLatencyMs = (options["beepLatencyMs"] as? Number)?.toInt()?.coerceIn(0, 500) ?: 80
+    engine.loadBeeps(if (engine.beepsEnabled) files else emptyMap())
   }
 }

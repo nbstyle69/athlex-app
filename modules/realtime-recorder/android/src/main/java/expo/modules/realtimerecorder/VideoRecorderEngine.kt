@@ -51,6 +51,14 @@ class VideoRecorderEngine private constructor() {
   @Volatile var fps = 30
   @Volatile var micEnabled = true
 
+  // Beeps in the video (R6c): PCM per type (44.1 kHz, -6 dBFS peak), scheduled by markBeep.
+  @Volatile var beepsEnabled = false
+  /** Mic on: delay of the mixed beep so it lands on the speaker beep captured by the mic. */
+  @Volatile var beepLatencyMs = 80
+  @Volatile private var beepPcm: Map<String, FloatArray> = emptyMap()
+  @Volatile private var beepSchedule: BeepSchedule? = null
+  @Volatile private var micActive = false
+
   private val videoWidth: Int get() = VideoQuality.size(quality).let { if (isLandscape) it.first else it.second }
   private val videoHeight: Int get() = VideoQuality.size(quality).let { if (isLandscape) it.second else it.first }
   private val frameIntervalNs: Long get() = 1_000_000_000L / fps
@@ -428,15 +436,27 @@ class VideoRecorderEngine private constructor() {
       // 2. Muxer
       muxer = VideoMuxer()
 
-      // 3. Audio encoder (optional; never touches the mic when it is off)
-      hasAudio = micEnabled
-      audioEncoder = if (!micEnabled) null else try {
-        AudioEncoder().apply { configure() }
+      // 3. Audio encoder: mic (+ beeps), beeps alone (synthetic track), or none.
+      //    Never touches the mic when it is off.
+      val withBeeps = beepsEnabled && beepPcm.isNotEmpty()
+      beepSchedule = if (withBeeps) BeepSchedule() else null
+      micActive = false
+      audioEncoder = if (micEnabled) try {
+        AudioEncoder().apply { configure(useMic = true) }.also { micActive = true }
       } catch (e: Exception) {
-        Log.w(TAG, "Audio encoder setup failed, recording without audio", e)
-        hasAudio = false
+        Log.w(TAG, "Mic audio encoder setup failed", e)
         null
+      } else null
+      if (audioEncoder == null && withBeeps) {
+        audioEncoder = try {
+          AudioEncoder().apply { configure(useMic = false) }
+        } catch (e: Exception) {
+          Log.w(TAG, "Synthetic audio encoder setup failed", e)
+          null
+        }
       }
+      audioEncoder?.beeps = beepSchedule
+      hasAudio = audioEncoder != null
 
       muxer?.initialize(path, hasAudio)
 
@@ -674,9 +694,11 @@ class VideoRecorderEngine private constructor() {
   private fun dryRunKeepsUp(context: Context): Boolean {
     if (!reopenAndWait(context)) return false
     val file = File(context.cacheDir, "realtime_recorder_dry_run.mp4")
-    // Video only: the dry run never opens the mic.
+    // Video only: the dry run never opens the mic and mixes no beep.
     val mic = micEnabled
+    val beeps = beepsEnabled
     micEnabled = false
+    beepsEnabled = false
     try {
       if (!startRecording(file.absolutePath)) return false
       Thread.sleep(DRY_RUN_MS)
@@ -685,11 +707,38 @@ class VideoRecorderEngine private constructor() {
       done.await(5, TimeUnit.SECONDS)
     } finally {
       micEnabled = mic
+      beepsEnabled = beeps
     }
     file.delete()
     val (expected, written) = lastRecordingStats()
     Log.i(TAG, "dry run $quality: $written/$expected frames")
     return VideoQuality.keepsUp(written, expected)
+  }
+
+  // ================================================================
+  //  BEEPS IN THE VIDEO (R6c)
+  // ================================================================
+
+  /** Loads the beep WAVs sent by JS (same files as the speaker); missing or broken files are skipped. */
+  fun loadBeeps(files: Map<String, String>) {
+    beepPcm = files.mapNotNull { (type, path) ->
+      try {
+        val (rate, pcm) = BeepPcm.decodeWav(File(path.removePrefix("file://")).readBytes()) ?: return@mapNotNull null
+        type to BeepPcm.normalize(BeepPcm.resample(pcm, rate, AudioEncoder.SAMPLE_RATE))
+      } catch (e: Exception) {
+        Log.w(TAG, "Beep $type not loaded", e)
+        null
+      }
+    }.toMap()
+  }
+
+  /** Places a beep at "now" on the audio timeline (+ mic latency when the mic records). */
+  fun markBeep(type: String) {
+    val schedule = beepSchedule ?: return
+    if (!isRecording.get()) return
+    val pcm = beepPcm[type] ?: return
+    val latencyNanos = if (micActive) beepLatencyMs * 1_000_000L else 0L
+    schedule.add(BeepPcm.sampleAt(System.nanoTime() - recordingStartNanos + latencyNanos, AudioEncoder.SAMPLE_RATE), pcm)
   }
 
   // ================================================================
