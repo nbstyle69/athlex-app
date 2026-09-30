@@ -1,7 +1,8 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxCard } from '../../components/ax';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, SectionList, TouchableOpacity,
+  View, Text, StyleSheet, SectionList,
   Image, ActivityIndicator,
 } from 'react-native';
 import { ChevronRight, Handshake, Tag } from 'lucide-react-native';
@@ -9,7 +10,8 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { HomeStackParamList } from '../../navigation';
 import { Partner, PartnerCategory } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
@@ -36,7 +38,8 @@ export default function PartnersScreen() {
   const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
-  const s = createStyles(theme);
+  const c = theme.ax;
+  const s = createStyles(c);
 
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,31 +76,32 @@ export default function PartnersScreen() {
 
   function renderPartner({ item }: { item: Partner }) {
     return (
-      <TouchableOpacity
+      <AxCard
         style={s.card}
-        activeOpacity={0.8}
         onPress={() => navigation.navigate('PartnerDetail', { partnerId: item.id })}
+        accessibilityLabel={item.name}
+        testID={`partner-card-${item.id}`}
       >
         {item.logo_url ? (
           <Image source={{ uri: item.logo_url }} style={s.logo} />
         ) : (
           <View style={[s.logo, s.logoPlaceholder]}>
-            <Handshake size={20} color={theme.accent} />
+            <Handshake size={20} color={c.accentText} />
           </View>
         )}
         <View style={s.cardContent}>
           <Text style={s.cardName} numberOfLines={1}>{item.name}</Text>
           {item.offer_title ? (
             <View style={s.offerRow}>
-              <Tag size={11} color={theme.accent} />
+              <Tag size={12} color={c.accentText} />
               <Text style={s.offerText} numberOfLines={1}>{item.offer_title}</Text>
             </View>
           ) : item.description ? (
             <Text style={s.cardDesc} numberOfLines={1}>{item.description}</Text>
           ) : null}
         </View>
-        <ChevronRight size={16} color={theme.textMuted} />
-      </TouchableOpacity>
+        <ChevronRight size={16} color={c.textMuted} />
+      </AxCard>
     );
   }
 
@@ -111,11 +115,11 @@ export default function PartnersScreen() {
 
       {loading ? (
         <View style={s.center}>
-          <ActivityIndicator size="large" color={theme.accent} />
+          <ActivityIndicator size="large" color={c.accentText} />
         </View>
       ) : sections.length === 0 ? (
         <View style={s.center}>
-          <Handshake size={40} color={theme.textMuted} />
+          <Handshake size={40} color={c.textMuted} />
           <Text style={s.emptyText}>Aucun partenaire pour le moment</Text>
         </View>
       ) : (
@@ -126,8 +130,8 @@ export default function PartnersScreen() {
           renderSectionHeader={({ section }) => (
             <Text style={s.sectionHeader}>{section.title}</Text>
           )}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace }}
-          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+          contentContainerStyle={[s.list, { paddingBottom: tabSpace }]}
+          ItemSeparatorComponent={() => <View style={s.separator} />}
           stickySectionHeadersEnabled={false}
         />
       )}
@@ -135,40 +139,28 @@ export default function PartnersScreen() {
   );
 }
 
-function createStyles(t: AppTheme) {
+function createStyles(c: AxColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12,
-      backgroundColor: t.card, borderBottomWidth: 1, borderBottomColor: t.border,
-    },
-    backBtn: {
-      width: 36, height: 36, borderRadius: 10,
-      backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center',
-    },
-    headerTitle: { fontSize: 20, fontWeight: '900', color: t.text },
-    headerSub: { fontSize: 11, color: t.textMuted, marginTop: 1 },
+    headerSub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+    list: { paddingHorizontal: axSpacing.xl },
+    separator: { height: axSpacing.sm },
     sectionHeader: {
-      fontSize: 13, fontWeight: '800', color: t.textMuted,
-      textTransform: 'uppercase', letterSpacing: 1,
-      marginTop: 24, marginBottom: 10, paddingLeft: 2,
+      ...axTypography.overline, color: c.textMuted,
+      marginTop: axSpacing['2xl'], marginBottom: axSpacing.md,
     },
-    card: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      backgroundColor: t.card, borderRadius: 14, padding: 14,
-      borderWidth: 1, borderColor: t.border,
-    },
-    logo: { width: 48, height: 48, borderRadius: 12 },
+    card: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+    logo: { width: 48, height: 48, borderRadius: axRadius.card },
     logoPlaceholder: {
-      backgroundColor: `${t.accent}15`, alignItems: 'center', justifyContent: 'center',
+      backgroundColor: c.field, borderWidth: 1, borderColor: c.border,
+      alignItems: 'center', justifyContent: 'center',
     },
-    cardContent: { flex: 1 },
-    cardName: { fontSize: 15, fontWeight: '800', color: t.text },
-    cardDesc: { fontSize: 12, color: t.textSecondary, marginTop: 3 },
-    offerRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
-    offerText: { fontSize: 12, fontWeight: '600', color: t.accent },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-    emptyText: { fontSize: 14, color: t.textMuted },
+    cardContent: { flex: 1, minWidth: 0, gap: axSpacing.xs },
+    cardName: { ...axTypography.titleM, color: c.text },
+    cardDesc: { ...axTypography.bodySmall, color: c.textMuted },
+    offerRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+    offerText: { ...axTypography.bodySmall, color: c.accentText, flexShrink: 1 },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: axSpacing.md, paddingHorizontal: axSpacing['2xl'] },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
   });
 }

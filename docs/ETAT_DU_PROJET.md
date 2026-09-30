@@ -207,12 +207,21 @@ Supabase/Resend.
 
 **Ma Box : recherche et rôles des membres, lien Lire des actualités, Annuler de la séance perso (app seule, aucune migration ; ajouts validés par Nab le 29/09).**
 - Membres : `AxTextField` « Rechercher un membre » en haut de la liste, filtre local sur pseudo et nom (casse et accents ignorés,
-  aucune requête), « Aucun membre trouvé », croix d'effacement (`AxTextField` : option rétrocompatible `onClear`) ; `AxTag`
+  aucune requête), « Aucun membre trouvé », croix d'effacement (option `trailing` d'`AxTextField`) ; `AxTag`
   Gérant (`boxes.owner_id`, accent), Co-gérant (`role = 'owner'`, accent), Coach (muted) — `box_members.role` et `full_name`
   ajoutés à la requête existante de `WhiteboardScreen`.
 - Actualités : lien « Lire › » (labelSmall accentText, rôle link) qui appelle le même `openArticle` que la carte.
 - Séance perso : `AxButton` outline « Annuler » à côté de l'action ; retour direct sans saisie, sinon « Abandonner la saisie ? »
   (Abandonner / Continuer). Tests : `r9b.rn.test.tsx` (blocs « Ma Box (29/09) »), chacun prouvé par mutation.
+
+**Refonte R13 : annuaire, programmes et partenaires au nouveau design (app seule, aucune migration, apparence seule).**
+- `BoxDirectoryScreen` (recherche en `AxTextField`, sports en `AxChip`, boxs en `AxCard`, nom en `titleM`, ville et infos
+  en `bodySmall` `textMuted`, sports en `AxTag`), `BoxDirectoryMapScreen` (en-tête flottant et fiche basse `AxCard`
+  featured ; fond de carte et marqueurs inchangés ; toujours sans `AxScreenHeader`, écran plein écran), fiche box (identité
+  en `AxCard` featured, sports / services en `AxTag`, horaires en `AxCard`), Programmes, programmes des boxs, partenaires
+  et fiche partenaire (offre en `AxCard` featured, code en `AxButton` accent unique) ; `AxTextField` gagne l'option
+  rétrocompatible `trailing` (bouton d'effacement). Requêtes, navigation et liens inchangés ; ordre des textes comparé à un
+  relevé de master (`r13.rn.test.tsx`, `r13StructureBefore.json`).
 
 **Refonte R9b : écrans secondaires de Ma Box au nouveau design (app seule, aucune migration, apparence seule).**
 - Actualités, Membres (fenêtre extraite telle quelle de `WhiteboardScreen` vers `WhiteboardMembersModal`), Séance perso

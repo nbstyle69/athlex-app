@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Modal, ActivityIndicator, Pressable } from 'react-native';
 import { ChevronRight, Search, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
@@ -77,8 +77,17 @@ export default function WhiteboardMembersModal({ visible, boxName, ownerId, load
               onChangeText={setQuery}
               placeholder={t('whiteboard.memberSearch')}
               icon={query ? undefined : Search}
-              onClear={() => setQuery('')}
-              clearAccessibilityLabel={t('whiteboard.memberSearchClear')}
+              trailing={query.length > 0 ? (
+                <Pressable
+                  testID="members-search-clear"
+                  onPress={() => setQuery('')}
+                  hitSlop={12}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('whiteboard.memberSearchClear')}
+                >
+                  <X size={18} color={c.textMuted} strokeWidth={2} />
+                </Pressable>
+              ) : undefined}
               autoCapitalize="none"
             />
           </View>
