@@ -340,6 +340,7 @@ describe('contraste AA des couples texte / fond', () => {
 // R9a : Ma Box et ses composants propres ; le détail du WOD adoptait déjà ax.
 const R9A_FILES = [
   path.join('screens', 'whiteboard', 'WhiteboardScreen.tsx'),
+  path.join('screens', 'whiteboard', 'WODDetailScreen.tsx'),
   path.join('components', 'WhiteboardTrackTabs.tsx'),
   path.join('components', 'WeekDayPicker.tsx'),
 ];

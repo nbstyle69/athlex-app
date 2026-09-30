@@ -24,12 +24,15 @@ interface Props {
   minInputHeight?: number;
   /** Hauteur maximale de la zone de saisie : au-delà, le texte défile dans le champ. */
   maxInputHeight?: number;
+  autoFocus?: boolean;
+  /** Accès au champ natif (passer le focus au champ suivant). */
+  inputRef?: React.Ref<TextInput>;
   testID?: string;
 }
 
 export function AxTextField({
   value, onChangeText, placeholder, icon: Icon, error, keyboardType, secureTextEntry, multiline,
-  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight, testID = 'ax-text-field',
+  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight, autoFocus, inputRef, testID = 'ax-text-field',
 }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
@@ -40,7 +43,9 @@ export function AxTextField({
     <View style={styles.wrapper}>
       <View testID={`${testID}-box`} style={[styles.box, compact ? styles.compact : null, { backgroundColor: c.field, borderColor }]}>
         <TextInput
+          ref={inputRef}
           testID={testID}
+          autoFocus={autoFocus}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}

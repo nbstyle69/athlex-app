@@ -7,6 +7,9 @@ import { Modal, RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { lightTheme, darkTheme } from '../theme/palette';
+import { contrast } from '../theme/contrast';
+import { axTypography } from '../theme/axTokens';
+import { AxButton, AxChip } from '../components/ax';
 import BEFORE from './r9aStructureBefore.json';
 import WhiteboardScreen from '../screens/whiteboard/WhiteboardScreen';
 import WODDetailScreen from '../screens/whiteboard/WODDetailScreen';
@@ -74,9 +77,9 @@ jest.mock('../lib/supabase', () => {
 jest.mock('../lib/unreadMessages', () => ({ countUnreadMessages: jest.fn(async () => 3) }));
 jest.mock('../lib/analytics', () => ({ trackScoreSubmit: jest.fn() }));
 jest.mock('../services/notifications', () => ({
-  sendScoreNotification: jest.fn(), sendScoreOvertakenNotification: jest.fn(), cancelTodayScoreReminder: jest.fn(),
+  sendScoreNotification: jest.fn(async () => {}), sendScoreOvertakenNotification: jest.fn(async () => {}), cancelTodayScoreReminder: jest.fn(async () => {}),
 }));
-jest.mock('../services/gamification', () => ({ incrementCounter: jest.fn(), logMovementReps: jest.fn(async () => {}), recordActivity: jest.fn(async () => {}) }));
+jest.mock('../services/gamification', () => ({ incrementCounter: jest.fn(async () => {}), logMovementReps: jest.fn(async () => {}), recordActivity: jest.fn(async () => {}) }));
 jest.mock('../services/programContent', () => ({ listProgramWodsByProgram: jest.fn(async () => ({})), listProgramRestDaysByProgram: jest.fn(async () => ({})) }));
 jest.mock('../services/eloCompute', () => ({
   computeAndSaveElo: jest.fn(async () => {}),
@@ -99,7 +102,11 @@ jest.mock('../services/strengthSets', () => {
     fetchStrengthSession: jest.fn(async () => ({ session: null, sets: [] })),
   };
 });
-jest.mock('../components/wod/TimerLaunchModal', () => () => null);
+const mockTimerOpen: string[] = [];
+jest.mock('../components/wod/TimerLaunchModal', () => (p: { visible: boolean; title: string }) => {
+  if (p.visible) mockTimerOpen.push(p.title);
+  return null;
+});
 jest.mock('../components/ReportMenu', () => () => null);
 jest.mock('../components/ShareScoreCard', () => () => null);
 jest.mock('react-native-webview', () => 'WebView');
@@ -164,6 +171,7 @@ afterEach(async () => {
   jest.useRealTimers();
   jest.clearAllMocks();
   mockCalls.length = 0;
+  mockTimerOpen.length = 0;
 });
 
 const isHostText = (n: ReactTestInstance) => String(n.type) === 'Text';
@@ -281,5 +289,303 @@ describe('R9a : ordre des blocs et libellés inchangés (instantané pris sur ma
     const before = (BEFORE as Record<string, string[]>)[name];
     expect(before).toBeDefined();
     expect(normalize(current)).toEqual(normalize(before));
+  });
+});
+
+const flat = (n: ReactTestInstance) => (StyleSheet.flatten(n.props.style) ?? {}) as Record<string, unknown>;
+const byID = (root: ReactTestInstance, id: string) => {
+  const n = root.findAll((x) => x.props.testID === id && typeof x.type === 'string')[0]
+    ?? root.findAll((x) => x.props.testID === id)[0];
+  if (!n) throw new Error(`testID introuvable : ${id}`);
+  return n;
+};
+async function press(root: ReactTestInstance, id: string) {
+  const n = root.findAll((x) => x.props.testID === id && typeof x.props.onPress === 'function')[0];
+  if (!n) throw new Error(`rien d'appuyable : ${id}`);
+  await act(async () => { n.props.onPress({ stopPropagation: () => {} }); });
+  await settle();
+}
+const textNode = (root: ReactTestInstance, text: string) => {
+  const n = root.findAll((x) => isHostText(x) && hostText(x) === text)[0];
+  if (!n) throw new Error(`texte introuvable : ${text}`);
+  return n;
+};
+const insideModal = (n: ReactTestInstance) => {
+  for (let cur: ReactTestInstance | null = n; cur; cur = cur.parent) if (cur.type === Modal) return true;
+  return false;
+};
+const isAncestor = (a: ReactTestInstance, n: ReactTestInstance) => {
+  for (let cur: ReactTestInstance | null = n; cur; cur = cur.parent) if (cur === a) return true;
+  return false;
+};
+const verticalScrolls = (root: ReactTestInstance) =>
+  root.findAllByType(ScrollView).filter((x) => !x.props.horizontal && !insideModal(x));
+const accentButtons = (root: ReactTestInstance) =>
+  root.findAllByType(AxButton).filter((b) => (b.props.variant ?? 'accent') === 'accent' && !insideModal(b));
+const visibleModals = (root: ReactTestInstance) => root.findAllByType(Modal).filter((m) => m.props.visible);
+const typo = (n: ReactTestInstance, name: keyof typeof axTypography) => {
+  const st = flat(n);
+  expect({ text: hostText(n), fontFamily: st.fontFamily, fontSize: st.fontSize }).toEqual({
+    text: hostText(n), fontFamily: axTypography[name].fontFamily, fontSize: axTypography[name].fontSize,
+  });
+};
+function backgroundOf(n: ReactTestInstance, theme: typeof lightTheme): string {
+  for (let cur: ReactTestInstance | null = n; cur; cur = cur.parent) {
+    if (cur.type === AxChip) return cur.props.selected ? theme.ax.accent : theme.ax.background;
+    if (cur.type === AxButton && (cur.props.variant ?? 'accent') === 'accent') return theme.ax.accent;
+    const bg = typeof cur.type === 'string' ? flat(cur).backgroundColor : undefined;
+    if (typeof bg === 'string' && /^#[0-9A-Fa-f]{6}$/.test(bg)) return bg;
+  }
+  return theme.ax.background;
+}
+/** Un texte long ne déborde pas : dans chaque rangée qu'il traverse, sa branche peut rétrécir ou passer à la ligne. */
+function expectNoOverflow(n: ReactTestInstance) {
+  let child: ReactTestInstance = n;
+  for (let cur = n.parent; cur; cur = cur.parent) {
+    if (typeof cur.type === 'string' && flat(cur).flexDirection === 'row' && flat(cur).flexWrap !== 'wrap') {
+      const st = flat(child);
+      const shrinks = (Number(st.flex) >= 1 && (st.minWidth === 0 || child === n)) || Number(st.flexShrink) >= 1 || st.maxWidth != null;
+      expect({ text: hostText(n), shrinks }).toEqual({ text: hostText(n), shrinks: true });
+    }
+    if (typeof cur.type === 'string') child = cur;
+  }
+  expect(flat(n).width).toBeUndefined();
+}
+const EMOJI_TEST = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u;
+/** Réactions choisies par les membres : du contenu, pas de la décoration. */
+const REACTIONS = new Set(['❤️', '🔥', '💪', '👏', '🎯', '⚡']);
+const THEMES = [['clair', lightTheme], ['sombre', darkTheme]] as const;
+
+describe('R9a : toute la page Ma Box défile', () => {
+  it('un seul ScrollView vertical contient en-tête, boutons, onglets, jours, quick actions et séances', async () => {
+    const root = await mount(<WhiteboardScreen />);
+    const scrolls = verticalScrolls(root);
+    expect(scrolls).toHaveLength(1);
+    const [scroll] = scrolls;
+    for (const id of ['whiteboard-header', 'whiteboard-members', 'whiteboard-messages', 'whiteboard-news', 'whiteboard-box-ranking',
+      'whiteboard-track-tabs', 'week-day-picker', 'whiteboard-quick-actions', 'whiteboard-enter-score', 'whiteboard-ranking',
+      'wod-card-wA', 'wod-card-wS']) {
+      expect({ id, inScroll: isAncestor(scroll, byID(root, id)) }).toEqual({ id, inScroll: true });
+    }
+    expect(isAncestor(scroll, textNode(root, 'Ma Box'))).toBe(true);
+    expect(isAncestor(scroll, textNode(root, 'CrossFit Fictif'))).toBe(true);
+    // Les fenêtres restent hors du défilement.
+    for (const m of root.findAllByType(Modal)) expect(isAncestor(scroll, m)).toBe(false);
+  });
+
+  it('tirer pour actualiser recharge les séances de la box', async () => {
+    const root = await mount(<WhiteboardScreen />);
+    const [scroll] = verticalScrolls(root);
+    const rc = scroll.props.refreshControl;
+    expect(rc).toBeTruthy();
+    expect(rc.type).toBe(RefreshControl);
+    const before = mockCalls.filter((c) => c.table === 'box_wods' && c.method === 'select').length;
+    await act(async () => { rc.props.onRefresh(); });
+    await settle();
+    expect(mockCalls.filter((c) => c.table === 'box_wods' && c.method === 'select').length).toBeGreaterThan(before);
+  });
+
+  it('sans box : un seul ScrollView, « tirer pour actualiser » recharge les séances perso', async () => {
+    mockAuth.currentBox = null;
+    const root = await mount(<WhiteboardScreen />);
+    const scrolls = verticalScrolls(root);
+    expect(scrolls).toHaveLength(1);
+    expect(isAncestor(scrolls[0], byID(root, 'whiteboard-join-box'))).toBe(true);
+    const rc = scrolls[0].props.refreshControl;
+    const before = mockCalls.filter((c) => c.table === 'box_wods' && c.method === 'is').length;
+    await act(async () => { rc.props.onRefresh(); });
+    await settle();
+    expect(mockCalls.filter((c) => c.table === 'box_wods' && c.method === 'is').length).toBeGreaterThan(before);
+  });
+
+  it('la fenêtre de rejoindre une box reste au-dessus du défilement', async () => {
+    mockAuth.currentBox = null;
+    const root = await mount(<WhiteboardScreen />);
+    await press(root, 'whiteboard-join-box');
+    const open = visibleModals(root);
+    expect(open.length).toBeGreaterThan(0);
+    for (const m of open) expect(isAncestor(verticalScrolls(root)[0], m)).toBe(false);
+  });
+});
+
+describe('R9a : navigation et callbacks de Ma Box inchangés', () => {
+  it('Membres ouvre la fenêtre des membres', async () => {
+    const root = await mount(<WhiteboardScreen />);
+    expect(visibleModals(root)).toHaveLength(0);
+    await press(root, 'whiteboard-members');
+    expect(visibleModals(root).length).toBe(1);
+  });
+  it.each([
+    ['whiteboard-messages', ['Messages']],
+    ['whiteboard-news', ['Articles']],
+    ['whiteboard-box-ranking', ['BoxRanking']],
+    ['whiteboard-enter-score', ['WODDetail', { wodId: 'wA' }]],
+    ['whiteboard-ranking', ['WODDetail', { wodId: 'wA', scrollToLeaderboard: true }]],
+    ['wod-details-wA', ['WODDetail', { wodId: 'wA' }]],
+    ['wod-open-wA', ['WODDetail', { wodId: 'wA' }]],
+    ['wod-details-wS', ['WODDetail', { wodId: 'wS' }]],
+  ])('%s', async (id, args) => {
+    const root = await mount(<WhiteboardScreen />);
+    await press(root, id);
+    expect(mockNavigate).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledWith(...args);
+  });
+  it('compteur de messages non lus en AxCounterBadge', async () => {
+    const root = await mount(<WhiteboardScreen />);
+    const badge = byID(root, 'whiteboard-messages-badge');
+    const messages = byID(root, 'whiteboard-messages');
+    let box: ReactTestInstance | null = badge;
+    while (box && !isAncestor(box, messages)) box = box.parent;
+    expect(box).toBeTruthy();
+    expect(isAncestor(box!, byID(root, 'whiteboard-members'))).toBe(false);
+    expect(isAncestor(box!, byID(root, 'whiteboard-news'))).toBe(false);
+    expect(hostText(byID(root, 'whiteboard-messages-badge'))).toBe('3');
+  });
+  it('séance de musculation en brouillon : « Reprendre ma saisie » et statut « En cours »', async () => {
+    const root = await mount(<WhiteboardScreen />);
+    expect(isAncestor(byID(root, 'wod-details-wS'), textNode(root, 'Reprendre ma saisie'))).toBe(true);
+    expect(isAncestor(byID(root, 'wod-details-wA'), textNode(root, 'Voir détails & score'))).toBe(true);
+  });
+  it('le bouton chrono ouvre le minuteur de la séance', async () => {
+    const root = await mount(<WhiteboardScreen />);
+    await press(root, 'wod-timer-wA');
+    expect(mockTimerOpen).toContain(LONG);
+  });
+  it('onglets de piste : « Hybrid » ne montre que la séance hybrid, l’onglet actif est sélectionné', async () => {
+    const root = await mount(<WhiteboardScreen />);
+    await press(root, 'whiteboard-track-functional');
+    expect(root.findAll((x) => x.props.testID === 'wod-card-wH')).toHaveLength(0);
+    expect(root.findAll((x) => x.props.testID === 'wod-card-wA').length).toBeGreaterThan(0);
+    await press(root, 'whiteboard-track-hybrid');
+    expect(root.findAll((x) => x.props.testID === 'wod-card-wH').length).toBeGreaterThan(0);
+    expect(root.findAll((x) => x.props.testID === 'wod-card-wA')).toHaveLength(0);
+    const tab = root.findAll((x) => x.props.testID === 'whiteboard-track-hybrid' && x.props.accessibilityRole === 'tab' && typeof x.type === 'string')[0];
+    expect(tab.props.accessibilityState).toEqual(expect.objectContaining({ selected: true }));
+  });
+  it('sélecteur de jours : un appui change de jour et recharge', async () => {
+    const root = await mount(<WhiteboardScreen />);
+    const n = mockCalls.filter((c) => c.table === 'box_wods' && c.method === 'eq' && c.args[0] === 'scheduled_date').length;
+    await press(root, 'week-day-2026-09-29');
+    const days = mockCalls.filter((c) => c.table === 'box_wods' && c.method === 'eq' && c.args[0] === 'scheduled_date');
+    expect(days.length).toBeGreaterThan(n);
+    expect(days[days.length - 1].args[1]).toBe('2026-09-29');
+  });
+});
+
+describe('R9a : apparence Ma Box', () => {
+  it.each(THEMES)('thème %s : une seule action accent en haut, typographie, AA et pas de débordement', async (_n, theme) => {
+    const root = await mount(<WhiteboardScreen />, theme);
+    await press(root, 'whiteboard-track-functional');
+    const inCard = (b: ReactTestInstance) => {
+      for (let cur: ReactTestInstance | null = b; cur; cur = cur.parent) if (String(cur.props.testID ?? '').startsWith('wod-card-')) return true;
+      return false;
+    };
+    const accents = accentButtons(root).filter((b) => !inCard(b));
+    expect(accents.map((b) => String(b.props.label).toUpperCase())).toEqual(['ENTRER MON SCORE']);
+    typo(textNode(root, 'Ma Box'), 'titleXL');
+    typo(textNode(root, 'CrossFit Fictif'), 'bodySmall');
+    typo(textNode(root, LONG), 'titleM');
+    typo(textNode(root, '10 burpees\n15 wall balls'), 'bodySmall');
+    typo(textNode(root, 'Voir détails & score'), 'labelSmall');
+    expect(flat(textNode(root, 'CrossFit Fictif')).color).toBe(theme.ax.textMuted);
+    expect(flat(textNode(root, 'Voir détails & score')).color).toBe(theme.ax.accentText);
+    for (const t of root.findAll((x) => isHostText(x) && !insideModal(x) && hostText(x).trim().length > 0)) {
+      const color = flat(t).color;
+      if (typeof color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(color)) continue;
+      const bg = backgroundOf(t, theme);
+      expect({ text: hostText(t), color, bg, aa: contrast(color, bg) >= 4.5 }).toEqual({ text: hostText(t), color, bg, aa: true });
+    }
+    expectNoOverflow(textNode(root, LONG));
+    expectNoOverflow(textNode(root, 'CrossFit Fictif'));
+  });
+});
+
+describe('R9a : détail du WOD', () => {
+  it('« Mon score » affiche le score envoyé, sans saisie dans la page', async () => {
+    const root = await mount(detail(WOD_AMRAP));
+    expect(hostText(byID(root, 'my-score-value'))).toBe('180 reps');
+    typo(byID(root, 'my-score-value'), 'numberM');
+    expect(isAncestor(byID(root, 'my-score'), textNode(root, 'Wall balls à 6 kg'))).toBe(true);
+    expect(root.findAll((x) => x.props.testID === 'enter-score')).toHaveLength(0);
+    expect(root.findAll((x) => String(x.type) === 'TextInput' && !insideModal(x))).toHaveLength(0);
+    await press(root, 'my-score-edit');
+    expect(visibleModals(root)).toHaveLength(1);
+    await act(async () => { visibleModals(root)[0].props.onRequestClose(); });
+    await settle();
+    await press(root, 'my-score-share');
+    expect(visibleModals(root)).toHaveLength(1);
+  });
+
+  it('« Entrer mon score » ouvre la fenêtre de saisie, une seule action accent par écran', async () => {
+    mockTables.wod_scores = SCORES.filter((s) => s.member_id !== 'me');
+    const root = await mount(detail(WOD_AMRAP));
+    expect(accentButtons(root).map((b) => String(b.props.label).toUpperCase())).toEqual(['ENTRER MON SCORE']);
+    expect(visibleModals(root)).toHaveLength(0);
+    await press(root, 'enter-score');
+    const [modal] = visibleModals(root);
+    expect(modal).toBeTruthy();
+    const inModal = modal.findAllByType(AxButton).filter((b) => (b.props.variant ?? 'accent') === 'accent').map((b) => b.props.label);
+    expect(inModal).toEqual(['Valider le score']);
+  });
+
+  it('fenêtre de saisie : niveau et type en AxChip, valider envoie le score', async () => {
+    mockTables.wod_scores = SCORES.filter((s) => s.member_id !== 'me');
+    const root = await mount(detail(WOD_AMRAP));
+    await press(root, 'enter-score');
+    const chip = (id: string) => root.findAll((x) => x.props.testID === id && typeof x.type === 'string' && x.props.accessibilityState)[0];
+    expect(chip('score-level-rx').props.accessibilityState.selected).toBe(true);
+    await press(root, 'score-level-scaled');
+    expect(chip('score-level-scaled').props.accessibilityState.selected).toBe(true);
+    expect(chip('score-level-rx').props.accessibilityState.selected).toBe(false);
+    const field = root.findAll((x) => x.props.testID === 'score-value' && String(x.type) === 'TextInput')[0];
+    await act(async () => { field.props.onChangeText('190'); });
+    await press(root, 'score-submit');
+    const writes = mockCalls.filter((c) => c.table === 'wod_scores' && (c.method === 'upsert' || c.method === 'insert'));
+    expect(writes.length).toBe(1);
+    expect(writes[0].args[0]).toEqual(expect.objectContaining({ score_value: 190, rx: false }));
+  });
+
+  it('séance terminée : message conservé, pas de bouton accent', async () => {
+    mockTables.wod_scores = SCORES.filter((s) => s.member_id !== 'me');
+    const root = await mount(detail({ ...WOD_AMRAP, scheduled_date: '2026-09-20' }));
+    textNode(root, 'Soumission de score terminée (minuit passé)');
+    expect(accentButtons(root)).toHaveLength(0);
+  });
+
+  it('classement : une AxCard par score, médailles en icônes, un appui ouvre le détail et ses commentaires', async () => {
+    const root = await mount(detail(WOD_AMRAP));
+    for (const id of ['s1', 's2', 's3', 's4']) byID(root, `leader-row-${id}`);
+    for (const r of [1, 2, 3]) byID(root, `rank-medal-${r}`);
+    expect(root.findAll((x) => x.props.testID === 'rank-medal-4')).toHaveLength(0);
+    textNode(root, '4');
+    textNode(root, '1320 ELO');
+    textNode(root, 'Moi (moi)');
+    await press(root, 'leader-row-s1');
+    expect(visibleModals(root)).toHaveLength(1);
+    expect(root.findAll((x) => x.props.testID === 'comment-input' && String(x.type) === 'TextInput')).toHaveLength(1);
+  });
+
+  it.each(THEMES)('thème %s : carte featured, Notes coach en overline accentText, AA et pas de débordement', async (_n, theme) => {
+    const root = await mount(detail(WOD_AMRAP), theme);
+    expect(byID(root, 'wod-card').props.variant ?? root.findAll((x) => x.props.testID === 'wod-card' && x.props.variant)[0]?.props.variant).toBe('featured');
+    typo(textNode(root, 'Notes coach'), 'overline');
+    expect(flat(textNode(root, 'Notes coach')).color).toBe(theme.ax.accentText);
+    expect(root.findAll((x) => x.props.testID === 'wod-card' && x.props.variant === 'featured').length).toBe(1);
+    for (const t of root.findAll((x) => isHostText(x) && !insideModal(x) && hostText(x).trim().length > 0)) {
+      const color = flat(t).color;
+      if (typeof color !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(color)) continue;
+      const bg = backgroundOf(t, theme);
+      expect({ text: hostText(t), color, bg, aa: contrast(color, bg) >= 4.5 }).toEqual({ text: hostText(t), color, bg, aa: true });
+    }
+    expectNoOverflow(textNode(root, 'Moi (moi)'));
+  });
+});
+
+describe('R9a : aucun emoji dans Ma Box et le détail du WOD', () => {
+  it.each(VARIANTS.flatMap((v) => THEMES.map(([n, th]) => [`${v.name} (${n})`, v, th] as const)))('%s', async (_n, v, th) => {
+    const root = await v.run(th);
+    const offenders = root.findAll((x) => isHostText(x) && EMOJI_TEST.test(hostText(x)))
+      .map(hostText).filter((t) => t !== 'Bravo !' && !REACTIONS.has(t));
+    expect(offenders).toEqual([]);
   });
 });

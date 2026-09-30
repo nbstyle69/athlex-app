@@ -4,7 +4,7 @@ import {
   Modal, TextInput, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert, RefreshControl, FlatList, Share, AppState,
 } from 'react-native';
-import { Clock, Plus, RotateCcw, MessageSquare, Trophy, Heart, Send, X, Smile, Share2, Play } from 'lucide-react-native';
+import { Clock, Plus, RotateCcw, MessageSquare, Trophy, Heart, Send, X, Smile, Share2, Play, Medal, Check } from 'lucide-react-native';
 import WebView from 'react-native-webview';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -36,7 +36,8 @@ import i18n from '../../i18n';
 import StrengthSetGrid, {
   StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSaveState, StrengthSessionStatus,
 } from '../../components/wod/StrengthSetGrid';
-import { AxButton } from '../../components/ax';
+import { AxButton, AxCard, AxChip, AxTag, AxTextField } from '../../components/ax';
+import { axSpacing, axTypography } from '../../theme/axTokens';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import { AxIconButton } from '../../components/ax/AxIconButton';
 import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
@@ -55,18 +56,6 @@ const DAY_LABELS_LONG = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'sam
 
 type Nav   = NativeStackNavigationProp<WhiteboardStackParamList>;
 type Route = RouteProp<WhiteboardStackParamList, 'WODDetail'>;
-
-// Couleurs WOD types adaptées au thème
-function getTypeColors(theme: AppTheme): Record<string, string> {
-  return {
-    'for-time': theme.error,
-    amrap: '#3B82F6',
-    emom: '#8B5CF6',
-    tabata: theme.warning,
-    strength: theme.success,
-    custom: theme.textMuted,
-  };
-}
 
 function allowedScoreTypes(wodType?: string | null): { types: ScoreType[]; default: ScoreType } {
   switch (wodType) {
@@ -100,6 +89,8 @@ export default function WODDetailScreen() {
   const route = useRoute<Route>();
   const { wodId, scrollToLeaderboard } = route.params;
   const S = createStyles(theme);
+  const c = theme.ax;
+  const medalInk = [c.warning, c.textMuted, c.orange];
   const oneRepMaxFor = useMyOneRepMax();
   const scrollRef = useRef<ScrollView>(null);
   const leaderboardY = useRef(0);
@@ -754,8 +745,6 @@ export default function WODDetailScreen() {
     );
   }
 
-  const typeColors = getTypeColors(theme);
-  const color = typeColors[wod.wod_type ?? 'custom'] ?? theme.textMuted;
   const myRank = myScore ? scores.findIndex(s => s.id === myScore.id) + 1 : null;
 
   return (
@@ -772,15 +761,12 @@ export default function WODDetailScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
       >
         {/* WOD info card */}
-        <View style={S.wodCard}>
+        <AxCard variant="featured" style={S.wodCard} testID="wod-card">
           <View style={S.wodMeta}>
-            <View style={[S.typeBadge, { backgroundColor: `${color}18` }]}>
-              <Text style={[S.typeBadgeText, { color }]}>{(wod.wod_type ?? 'custom').toUpperCase()}</Text>
-            </View>
-            
+            <AxTag label={(wod.wod_type ?? 'custom').toUpperCase()} tone="accent" testID="wod-type-tag" />
             {wod.time_cap_seconds && (
               <View style={S.timeCap}>
-                <Clock color={theme.textMuted} size={12} />
+                <Clock color={c.textMuted} size={12} />
                 <Text style={S.timeCapText}>Cap {formatCap(wod.time_cap_seconds)}</Text>
               </View>
             )}
@@ -796,10 +782,10 @@ export default function WODDetailScreen() {
             <Text style={S.wodDesc}>{annotateCardioLines(annotateStrengthLoads(wod.description, oneRepMaxFor))}</Text>
           )}
           {wod.notes && (
-            <View style={S.notesBox}>
+            <AxCard style={S.notesBox} testID="wod-coach-notes">
               <Text style={S.notesLabel}>Notes coach</Text>
               <Text style={S.notesText}>{wod.notes}</Text>
-            </View>
+            </AxCard>
           )}
 
           {/* Video */}
@@ -810,7 +796,7 @@ export default function WODDetailScreen() {
             return (
               <View style={S.videoBox}>
                 <View style={S.videoLabel}>
-                  <Play color="#EF4444" size={13} />
+                  <Play color={c.danger} size={13} />
                   <Text style={S.videoLabelText}>Vidéo</Text>
                 </View>
                 <View style={S.videoWrapper}>
@@ -826,30 +812,31 @@ export default function WODDetailScreen() {
             );
           })()}
 
+        </AxCard>
+
+        <View style={S.below}>
           {/* My score */}
           {myScore ? (
-            <View style={S.myScoreWrapper}>
+            <AxCard style={S.myScoreWrapper} testID="my-score">
               <View style={S.myScoreRow}>
                 <Text style={S.myScoreLabel}>Mon score</Text>
-                <Text style={S.myScoreValue}>{formatScore(myScore)}</Text>
-                <Text style={S.myScoreRx}>{myScore.rx ? 'RX' : 'Scaled'}</Text>
+                <Text style={S.myScoreValue} testID="my-score-value">{formatScore(myScore)}</Text>
+                <AxTag label={myScore.rx ? 'RX' : 'Scaled'} tone={myScore.rx ? 'accent' : 'muted'} />
                 {leaderboardAvailable(wod) && myRank && (
                   <View style={S.myRankBadge}>
-                    <Trophy color={myRank <= 3 ? theme.gold : theme.textMuted} size={14} />
-                    <Text style={[S.myRankText, myRank <= 3 && { color: theme.gold }]}>#{myRank}</Text>
+                    <Trophy color={myRank <= 3 ? c.warning : c.textMuted} size={14} />
+                    <Text style={S.myRankText}>#{myRank}</Text>
                   </View>
                 )}
               </View>
               <View style={S.myScoreActions}>
-                <TouchableOpacity style={S.shareScoreBtn} onPress={() => setShareModal(true)} activeOpacity={0.7}>
-                  <Share2 color={theme.accent} size={14} />
-                  <Text style={S.editScoreBtnText}>Partager</Text>
-                </TouchableOpacity>
+                <View style={S.myScoreAction}>
+                  <AxButton variant="outline" icon={Share2} label="Partager" onPress={() => setShareModal(true)} fullWidth testID="my-score-share" />
+                </View>
                 {!isExpired && !isStrengthSession && (
-                  <TouchableOpacity style={S.editScoreBtn} onPress={openEditModal} activeOpacity={0.7}>
-                    <RotateCcw color={theme.accent} size={14} />
-                    <Text style={S.editScoreBtnText}>Modifier</Text>
-                  </TouchableOpacity>
+                  <View style={S.myScoreAction}>
+                    <AxButton variant="outline" icon={RotateCcw} label="Modifier" onPress={openEditModal} fullWidth testID="my-score-edit" />
+                  </View>
                 )}
               </View>
               {myScore.notes ? (
@@ -858,7 +845,7 @@ export default function WODDetailScreen() {
                   <Text style={S.myScoreNotesText}>{myScore.notes}</Text>
                 </View>
               ) : null}
-            </View>
+            </AxCard>
           ) : null}
           {isStrengthSession && strengthValidated && (
             <View style={{ marginTop: 12 }}>
@@ -881,7 +868,7 @@ export default function WODDetailScreen() {
           )}
           {myScore ? null : isExpired ? (
             <View style={S.expiredBanner}>
-              <Clock color={theme.textMuted} size={14} />
+              <Clock color={c.textMuted} size={14} />
               <Text style={S.expiredText}>Soumission de score terminée (minuit passé)</Text>
             </View>
           ) : (
@@ -896,14 +883,13 @@ export default function WODDetailScreen() {
                   />
                 </View>
               )}
-              <EmeraldCTAButton
-                icon={<Plus color={theme.ctaText} size={18} />}
-                size="md"
+              <AxButton
+                icon={Plus}
+                label="Entrer mon score"
                 onPress={() => { prefillStrengthLoads(); setModalOpen(true); }}
-                style={{ marginTop: 4 }}
-              >
-                Entrer mon score
-              </EmeraldCTAButton>
+                fullWidth
+                testID="enter-score"
+              />
             </>
           )}
         </View>
@@ -922,59 +908,58 @@ export default function WODDetailScreen() {
                 return scores.map((sc) => {
                 const globalRank = rankMap[sc.id] ?? 1;
                 const isMe = sc.member_id === user?.id;
-                const medal = globalRank === 1 ? '🥇' : globalRank === 2 ? '🥈' : globalRank === 3 ? '🥉' : null;
                 const elo = (sc.profile as any)?.elo ?? 1000;
                 return (
-                  <TouchableOpacity
+                  <AxCard
                     key={sc.id}
                     style={[S.leaderRow, isMe && S.leaderRowMe]}
                     onPress={() => openScoreDetail(sc)}
-                    activeOpacity={0.75}
+                    testID={`leader-row-${sc.id}`}
                   >
-                    <Text style={S.leaderRank}>{medal ?? `${globalRank}`}</Text>
+                    <View style={S.leaderRank}>
+                      {globalRank <= 3
+                        ? <Medal color={medalInk[globalRank - 1]} size={18} testID={`rank-medal-${globalRank}`} />
+                        : <Text style={S.leaderRankText}>{globalRank}</Text>}
+                    </View>
                     <UserAvatar
                       uri={(sc.profile as any)?.avatar_url}
                       name={(sc.profile as any)?.username ?? '?'}
                       size={32}
                       borderRadius={12}
-                      backgroundColor={theme.surface}
-                      textColor={theme.text}
+                      backgroundColor={c.background}
+                      textColor={c.text}
                       fontSize={13}
                     />
                     <View style={S.leaderMid}>
-                      <Text style={S.leaderName}>
+                      <Text style={S.leaderName} numberOfLines={1}>
                         {(sc.profile as any)?.username ?? 'Athlète'}{isMe ? ' (moi)' : ''}
                       </Text>
                       <View style={S.leaderSubRow}>
                         <Text style={S.leaderElo}>{elo} ELO</Text>
                         {isExpired && eloDeltas[sc.member_id] != null && (
-                          <Text style={{ fontSize: 10, fontWeight: '800', color: eloDeltas[sc.member_id] > 0 ? theme.success : eloDeltas[sc.member_id] < 0 ? theme.error : theme.textMuted }}>
+                          <Text style={[S.leaderDelta, { color: eloDeltas[sc.member_id] > 0 ? c.success : eloDeltas[sc.member_id] < 0 ? c.danger : c.textMuted }]}>
                             {eloDeltas[sc.member_id] > 0 ? '+' : ''}{eloDeltas[sc.member_id]}
                           </Text>
                         )}
                         {(scoreMeta[sc.id]?.reactions ?? 0) > 0 && (
                           <View style={S.leaderMetaChip}>
-                            <Heart color="#EC4899" size={10} fill="#EC4899" />
+                            <Heart color={c.danger} size={10} fill={c.danger} />
                             <Text style={S.leaderMetaCount}>{scoreMeta[sc.id].reactions}</Text>
                           </View>
                         )}
                         {(scoreMeta[sc.id]?.comments ?? 0) > 0 && (
                           <View style={S.leaderMetaChip}>
-                            <MessageSquare color="#3B82F6" size={10} />
+                            <MessageSquare color={c.info} size={10} />
                             <Text style={S.leaderMetaCount}>{scoreMeta[sc.id].comments}</Text>
                           </View>
                         )}
                       </View>
                     </View>
                     <View style={S.leaderRight}>
-                      <Text style={[S.leaderScore, globalRank === 1 && S.leaderScoreGold]}>{formatScore(sc)}</Text>
-                      <View style={[S.leaderRxBadge, { backgroundColor: sc.rx ? `${theme.success}18` : `${theme.warning}18` }]}>
-                        <Text style={{ fontSize: 9, fontWeight: '800', color: sc.rx ? theme.success : theme.warning }}>
-                          {sc.rx ? 'RX' : 'Scaled'}
-                        </Text>
-                      </View>
+                      <Text style={S.leaderScore}>{formatScore(sc)}</Text>
+                      <AxTag label={sc.rx ? 'RX' : 'Scaled'} tone={sc.rx ? 'accent' : 'muted'} />
                     </View>
-                  </TouchableOpacity>
+                  </AxCard>
                 );
               });
               })()}
@@ -989,7 +974,7 @@ export default function WODDetailScreen() {
           <View style={S.modalContainer}>
             <View style={S.modalHeader}>
               <Text style={S.modalTitle}>Entrer mon score</Text>
-              <TouchableOpacity onPress={closeScoreModal}>
+              <TouchableOpacity onPress={closeScoreModal} accessibilityRole="button" hitSlop={8} testID="score-cancel">
                 <Text style={S.modalCloseText}>Annuler</Text>
               </TouchableOpacity>
             </View>
@@ -1005,9 +990,7 @@ export default function WODDetailScreen() {
                     <>
                       <Text style={S.modalLabel}>{i18n.t('wod.scoreType.label').toUpperCase()}</Text>
                       <View style={S.typeRow}>
-                        <View style={[S.typeChip, S.typeChipActive]}>
-                          <Text style={[S.typeChipText, S.typeChipTextActive]}>{i18n.t(`wod.scoreType.${allowed.types[0]}`).toUpperCase()}</Text>
-                        </View>
+                        <AxChip label={i18n.t(`wod.scoreType.${allowed.types[0]}`).toUpperCase()} selected onPress={() => {}} testID={`score-type-${allowed.types[0]}`} />
                       </View>
                     </>
                   );
@@ -1017,15 +1000,13 @@ export default function WODDetailScreen() {
                     <Text style={S.modalLabel}>{i18n.t('wod.scoreType.label').toUpperCase()}</Text>
                     <View style={S.typeRow}>
                       {allowed.types.map(t => (
-                        <TouchableOpacity
+                        <AxChip
                           key={t}
-                          style={[S.typeChip, scoreType === t && S.typeChipActive]}
+                          label={i18n.t(`wod.scoreType.${t}`).toUpperCase()}
+                          selected={scoreType === t}
                           onPress={() => setScoreType(t)}
-                        >
-                          <Text style={[S.typeChipText, scoreType === t && S.typeChipTextActive]}>
-                            {i18n.t(`wod.scoreType.${t}`).toUpperCase()}
-                          </Text>
-                        </TouchableOpacity>
+                          testID={`score-type-${t}`}
+                        />
                       ))}
                     </View>
                   </>
@@ -1037,9 +1018,12 @@ export default function WODDetailScreen() {
                   style={S.dnfRow}
                   onPress={() => { setDnf(!dnf); setScoreInput(''); setCapReps(''); }}
                   activeOpacity={0.7}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: dnf }}
+                  testID="score-dnf"
                 >
                   <View style={[S.dnfCheck, dnf && S.dnfCheckActive]}>
-                    {dnf && <Text style={S.dnfCheckMark}>✓</Text>}
+                    {dnf && <Check color={c.onAccent} size={14} strokeWidth={3} />}
                   </View>
                   <Text style={S.dnfLabel}>WOD pas fini (CAP)</Text>
                 </TouchableOpacity>
@@ -1050,14 +1034,13 @@ export default function WODDetailScreen() {
               ) : scoreType === 'time' && dnf ? (
                 <>
                   <Text style={S.modalLabel}>NOMBRE DE RÉPÉTITIONS COMPLÉTÉES</Text>
-                  <TextInput
-                    style={S.scoreInput}
+                  <AxTextField
                     placeholder="Ex: 87"
-                    placeholderTextColor={theme.textMuted}
                     value={capReps}
                     onChangeText={setCapReps}
                     keyboardType="number-pad"
                     autoFocus
+                    testID="score-cap-reps"
                   />
                 </>
               ) : (
@@ -1067,10 +1050,10 @@ export default function WODDetailScreen() {
                   </Text>
                   {scoreType === 'time' ? (
                     <View style={S.timeRow}>
-                      <TextInput
-                        style={[S.scoreInput, S.timeInput]}
+                      <View style={S.timeInput}>
+                      <AxTextField
+                        compact
                         placeholder="MM"
-                        placeholderTextColor={theme.textMuted}
                         value={timeMin}
                         onChangeText={(t) => {
                           const d = t.replace(/\D/g, '').slice(0, 2);
@@ -1080,28 +1063,31 @@ export default function WODDetailScreen() {
                         keyboardType="number-pad"
                         maxLength={2}
                         autoFocus
+                        testID="score-time-min"
                       />
+                      </View>
                       <Text style={S.timeColon}>:</Text>
-                      <TextInput
-                        ref={secRef}
-                        style={[S.scoreInput, S.timeInput]}
+                      <View style={S.timeInput}>
+                      <AxTextField
+                        compact
+                        inputRef={secRef}
                         placeholder="SS"
-                        placeholderTextColor={theme.textMuted}
                         value={timeSec}
                         onChangeText={(t) => setTimeSec(t.replace(/\D/g, '').slice(0, 2))}
                         keyboardType="number-pad"
                         maxLength={2}
+                        testID="score-time-sec"
                       />
+                      </View>
                     </View>
                   ) : (
-                    <TextInput
-                      style={S.scoreInput}
+                    <AxTextField
                       placeholder="150"
-                      placeholderTextColor={theme.textMuted}
                       value={scoreInput}
                       onChangeText={setScoreInput}
                       keyboardType="number-pad"
                       autoFocus
+                      testID="score-value"
                     />
                   )}
                 </>
@@ -1120,22 +1106,18 @@ export default function WODDetailScreen() {
 
               <Text style={S.modalLabel}>NIVEAU</Text>
               <View style={S.rxRow}>
-                <TouchableOpacity style={[S.rxChip, isRx && S.rxChipActive]} onPress={() => setIsRx(true)}>
-                  <Text style={[S.rxChipText, isRx && S.rxChipTextActive]}>RX</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[S.rxChip, !isRx && S.rxChipActiveScaled]} onPress={() => setIsRx(false)}>
-                  <Text style={[S.rxChipText, !isRx && S.rxChipTextActive]}>Scaled</Text>
-                </TouchableOpacity>
+                <AxChip label="RX" selected={isRx} onPress={() => setIsRx(true)} testID="score-level-rx" />
+                <AxChip label="Scaled" selected={!isRx} onPress={() => setIsRx(false)} testID="score-level-scaled" />
               </View>
 
               <Text style={S.modalLabel}>NOTES (optionnel)</Text>
-              <TextInput
-                style={[S.scoreInput, { minHeight: 70, textAlignVertical: 'top' }]}
+              <AxTextField
                 placeholder="Commentaire, mouvements adaptés…"
-                placeholderTextColor={theme.textMuted}
                 value={noteInput}
                 onChangeText={setNoteInput}
                 multiline
+                minInputHeight={70}
+                testID="score-notes"
               />
 
               {isStrengthSession ? (
@@ -1161,14 +1143,17 @@ export default function WODDetailScreen() {
                   )}
                 </View>
               ) : (
-                <EmeraldCTAButton
-                  loading={submitting}
-                  disabled={!(dnf ? capReps.trim() : scoreType === 'time' ? (timeMin.trim() || timeSec.trim()) : scoreInput.trim())}
-                  onPress={submitScore}
-                  style={{ marginTop: 8 }}
-                >
-                  Valider le score
-                </EmeraldCTAButton>
+                <View style={{ marginTop: 8 }}>
+                  <AxButton
+                    label="Valider le score"
+                    variant="accent"
+                    loading={submitting}
+                    disabled={!(dnf ? capReps.trim() : scoreType === 'time' ? (timeMin.trim() || timeSec.trim()) : scoreInput.trim())}
+                    onPress={submitScore}
+                    fullWidth
+                    testID="score-submit"
+                  />
+                </View>
               )}
             </ScrollView>
           </View>
@@ -1354,7 +1339,7 @@ export default function WODDetailScreen() {
                   const ago = Math.floor((Date.now() - new Date(item.created_at).getTime()) / 60000);
                   const timeLabel = ago < 60 ? `${ago}min` : ago < 1440 ? `${Math.floor(ago / 60)}h` : `${Math.floor(ago / 1440)}j`;
                   return (
-                    <View style={[S.sdComment, isMyComment && S.sdCommentMine]}>
+                    <AxCard style={[S.sdComment, isMyComment && S.sdCommentMine]} testID={`comment-${item.id}`}>
                       <View style={S.sdCommentHeader}>
                         <UserAvatar
                           uri={author?.avatar_url}
@@ -1378,7 +1363,7 @@ export default function WODDetailScreen() {
                         )}
                       </View>
                       <Text style={S.sdCommentContent}>{item.content}</Text>
-                    </View>
+                    </AxCard>
                   );
                 }}
                 ListEmptyComponent={
@@ -1393,23 +1378,28 @@ export default function WODDetailScreen() {
 
             {/* Comment input */}
             <View style={S.sdInputRow}>
-              <TextInput
-                style={S.sdInput}
-                placeholder="Écrire un commentaire..."
-                placeholderTextColor={theme.textMuted}
-                value={commentText}
-                onChangeText={setCommentText}
-                multiline
-                maxLength={500}
-              />
+              <View style={S.sdInput}>
+                <AxTextField
+                  placeholder="Écrire un commentaire..."
+                  value={commentText}
+                  onChangeText={setCommentText}
+                  multiline
+                  maxLength={500}
+                  maxInputHeight={100}
+                  testID="comment-input"
+                />
+              </View>
               <TouchableOpacity
                 onPress={sendComment}
                 disabled={!commentText.trim() || sendingComment}
                 style={[S.sdSendBtn, (!commentText.trim() || sendingComment) && { opacity: 0.4 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Envoyer"
+                testID="comment-send"
               >
                 {sendingComment
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Send color="#fff" size={16} />}
+                  ? <ActivityIndicator color={c.onAccent} size="small" />
+                  : <Send color={c.onAccent} size={16} />}
               </TouchableOpacity>
             </View>
           </View>
@@ -1425,7 +1415,12 @@ function createStyles(theme: AppTheme) {
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
   };
+  const c = theme.ax;
   return StyleSheet.create({
+  below: { paddingHorizontal: 16, gap: axSpacing.md },
+  myScoreAction: { flex: 1 },
+  leaderRankText: { ...axTypography.label, color: c.textMuted, textAlign: 'center' },
+  leaderDelta: { ...axTypography.labelSmall },
   container: { flex: 1, backgroundColor: 'transparent' },
   header: {
     paddingTop: 56, paddingHorizontal: 16, paddingBottom: 14,
@@ -1436,131 +1431,73 @@ function createStyles(theme: AppTheme) {
   },
   backBtn: { padding: 2 },
   headerTitle: { fontSize: 18, fontWeight: '700', color: theme.text, flex: 1, textAlign: 'center' },
-  wodCard: {
-    margin: 16, backgroundColor: isDark ? theme.card : theme.card, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: theme.border, gap: 10,
-    ...cardShadow,
-  },
+  wodCard: { margin: 16, gap: 10 },
   wodMeta: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
-  typeBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  typeBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
   blockBadge: {
     borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3,
     backgroundColor: `${theme.accent}12`, borderWidth: 1, borderColor: `${theme.accent}25`,
   },
   blockBadgeText: { fontSize: 10, fontWeight: '700', color: theme.accent },
   timeCap: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  timeCapText: { fontSize: 11, color: theme.textMuted },
-  wodDate: { fontSize: 12, color: theme.textMuted, fontWeight: '500', textTransform: 'capitalize' },
-  wodDesc: { fontSize: 14, color: theme.textSecondary, lineHeight: 20 },
-  notesBox: { backgroundColor: theme.surface, borderRadius: 10, padding: 10, gap: 4 },
-  notesLabel: { fontSize: 10, fontWeight: '700', color: theme.textMuted, letterSpacing: 0.5 },
-  notesText: { fontSize: 12, color: theme.textSecondary, lineHeight: 18 },
-  myScoreNotesBox: { marginTop: 10, backgroundColor: theme.surface, borderRadius: 10, padding: 10, gap: 4, borderWidth: 1, borderColor: theme.border },
-  myScoreNotesLabel: { fontSize: 10, fontWeight: '700', color: theme.textMuted, letterSpacing: 0.5 },
-  myScoreNotesText: { fontSize: 13, color: theme.textSecondary, lineHeight: 18 },
+  timeCapText: { ...axTypography.caption, color: c.textMuted },
+  wodDate: { ...axTypography.caption, color: c.textMuted, textTransform: 'capitalize' },
+  wodDesc: { ...axTypography.body, color: c.text },
+  notesBox: { gap: axSpacing.xs, padding: axSpacing.md },
+  notesLabel: { ...axTypography.overline, color: c.accentText },
+  notesText: { ...axTypography.bodySmall, color: c.textMuted },
+  myScoreNotesBox: { gap: axSpacing.xs, paddingTop: axSpacing.sm, borderTopWidth: 1, borderTopColor: c.border },
+  myScoreNotesLabel: { ...axTypography.overline, color: c.textMuted },
+  myScoreNotesText: { ...axTypography.bodySmall, color: c.text },
   videoBox: { gap: 6, marginTop: 4 },
   videoLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  videoLabelText: { fontSize: 10, fontWeight: '700', color: theme.textMuted, letterSpacing: 0.5 },
+  videoLabelText: { ...axTypography.overline, color: c.textMuted },
   videoWrapper: { borderRadius: 12, overflow: 'hidden', height: 200, backgroundColor: '#000' },
-  myScoreWrapper: { gap: 8 },
+  myScoreWrapper: { gap: axSpacing.md },
   myScoreRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   myScoreBadge: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  myScoreActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  myScoreLabel: { fontSize: 12, color: theme.textMuted, fontWeight: '500' },
-  myScoreValue: { fontSize: 20, fontWeight: '900', color: theme.text },
-  myScoreRx: {
-    fontSize: 11, fontWeight: '700', color: theme.success,
-    backgroundColor: `${theme.success}12`, borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2,
-  },
-  myRankBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 8 },
-  myRankText: { fontSize: 16, fontWeight: '900', color: theme.text },
-  editScoreBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  shareScoreBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, marginRight: 8 },
-  editScoreBtnText: { fontSize: 12, color: theme.accent, fontWeight: '700' },
-  enterScoreBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, backgroundColor: theme.accent, borderRadius: 14, padding: 14, marginTop: 4,
-  },
-  enterScoreBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  expiredBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: theme.surface, borderRadius: 12, padding: 12, marginTop: 4,
-    borderWidth: 1, borderColor: theme.border,
-  },
-  expiredText: { fontSize: 12, color: theme.textMuted, fontWeight: '600', flex: 1 },
-  section: { paddingHorizontal: 16, marginTop: 8 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: theme.text, marginBottom: 12, letterSpacing: -0.2 },
-  leaderboard: {
-    backgroundColor: isDark ? theme.card : theme.card, borderRadius: 16,
-    borderWidth: 1, borderColor: theme.border, overflow: 'hidden',
-    ...cardShadow,
-  },
-  leaderRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 14, paddingVertical: 12,
-    borderBottomWidth: 1, borderBottomColor: theme.border,
-  },
-  leaderRowMe: { backgroundColor: `${theme.accent}08` },
-  leaderRank: { width: 24, fontSize: 16, textAlign: 'center' },
+  myScoreActions: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+  myScoreLabel: { ...axTypography.overline, color: c.textMuted },
+  myScoreValue: { ...axTypography.numberM, color: c.text },
+  myRankBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 'auto' },
+  myRankText: { ...axTypography.label, color: c.text },
+  expiredBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.surface, borderRadius: 8, padding: 12, borderWidth: 1, borderColor: c.border },
+  expiredText: { ...axTypography.bodySmall, color: c.textMuted, flex: 1 },
+  section: { paddingHorizontal: 16, marginTop: 20 },
+  sectionTitle: { ...axTypography.overline, color: c.textMuted, marginBottom: 12 },
+  leaderboard: { gap: axSpacing.sm },
+  leaderRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
+  leaderRowMe: { borderColor: c.accentText },
+  leaderRank: { width: 24, alignItems: 'center' },
   leaderAvatar: { width: 32, height: 32, borderRadius: 12, backgroundColor: theme.surface, justifyContent: 'center', alignItems: 'center' },
   leaderAvatarText: { fontSize: 13, fontWeight: '700', color: theme.text },
-  leaderMid: { flex: 1 },
-  leaderName: { fontSize: 13, fontWeight: '700', color: theme.text },
-  leaderElo: { fontSize: 10, color: theme.textSecondary, fontWeight: '700' },
+  leaderMid: { flex: 1, minWidth: 0 },
+  leaderName: { ...axTypography.label, color: c.text },
+  leaderElo: { ...axTypography.caption, color: c.textMuted },
   leaderSubRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
-  leaderMetaChip: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: theme.surface, borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1 },
-  leaderMetaCount: { fontSize: 10, fontWeight: '700', color: theme.textMuted },
-  leaderRight: { alignItems: 'flex-end', gap: 3 },
-  leaderScore: { fontSize: 15, fontWeight: '900', color: theme.text, fontVariant: ['tabular-nums'] },
-  leaderScoreGold: { color: theme.gold },
-  leaderRxBadge: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 1 },
-  modalContainer: { flex: 1, backgroundColor: theme.modalCard },
+  leaderMetaChip: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  leaderMetaCount: { ...axTypography.caption, color: c.textMuted },
+  leaderRight: { alignItems: 'flex-end', gap: 4 },
+  leaderScore: { ...axTypography.label, color: c.text, fontVariant: ['tabular-nums'] },
+  modalContainer: { flex: 1, backgroundColor: c.background },
   modalHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingTop: 20, paddingHorizontal: 20, paddingBottom: 16,
     borderBottomWidth: 1, borderBottomColor: theme.border, backgroundColor: theme.card,
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: theme.text },
-  modalCloseText: { fontSize: 14, color: theme.accent, fontWeight: '700' },
+  modalTitle: { ...axTypography.titleM, color: c.text },
+  modalCloseText: { ...axTypography.label, color: c.accentText },
   modalBody: { padding: 20, gap: 12 },
-  modalWodName: { fontSize: 16, fontWeight: '700', color: theme.text, marginBottom: 4 },
-  modalLabel: { fontSize: 11, fontWeight: '700', color: theme.textMuted, letterSpacing: 1 },
+  modalWodName: { ...axTypography.label, color: c.text, marginBottom: 4 },
+  modalLabel: { ...axTypography.overline, color: c.textMuted },
   typeRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  typeChip: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
-    backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-  },
-  typeChipActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-  typeChipText: { fontSize: 11, fontWeight: '700', color: theme.textMuted },
-  typeChipTextActive: { color: '#fff' },
-  scoreInput: {
-    backgroundColor: isDark ? theme.card : theme.background, borderRadius: 12,
-    borderWidth: 1, borderColor: theme.border,
-    paddingHorizontal: 14, paddingVertical: 13,
-    fontSize: 18, color: theme.text, fontWeight: '700',
-  },
   timeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  timeInput: { flex: 1, textAlign: 'center', fontSize: 22 },
-  timeColon: { fontSize: 24, fontWeight: '700', color: theme.text },
+  timeInput: { flex: 1 },
+  timeColon: { ...axTypography.numberM, color: c.text },
   dnfRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12, marginTop: 4 },
-  dnfCheck: {
-    width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: theme.border,
-    justifyContent: 'center', alignItems: 'center', backgroundColor: theme.surface,
-  },
-  dnfCheckActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-  dnfCheckMark: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  dnfLabel: { fontSize: 14, fontWeight: '600', color: theme.text },
+  dnfCheck: { width: 22, height: 22, borderRadius: 5, borderWidth: 1.5, borderColor: c.fieldBorder, justifyContent: 'center', alignItems: 'center' },
+  dnfCheckActive: { backgroundColor: c.accent, borderColor: c.accent },
+  dnfLabel: { ...axTypography.label, color: c.text },
   rxRow: { flexDirection: 'row', gap: 10 },
-  rxChip: {
-    flex: 1, paddingVertical: 12, borderRadius: 12,
-    backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-    alignItems: 'center',
-  },
-  rxChipActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-  rxChipActiveScaled: { backgroundColor: theme.warning, borderColor: theme.warning },
-  rxChipText: { fontSize: 13, fontWeight: '700', color: theme.textMuted },
-  rxChipTextActive: { color: '#fff' },
   submitBtn: {
     backgroundColor: theme.accent, borderRadius: 14,
     padding: 18, alignItems: 'center', marginTop: 8,
@@ -1640,11 +1577,8 @@ function createStyles(theme: AppTheme) {
     paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8,
   },
   sdCommentsList: { paddingHorizontal: 16, gap: 10, paddingBottom: 12 },
-  sdComment: {
-    backgroundColor: isDark ? theme.card : theme.card, borderRadius: 14, padding: 12,
-    borderWidth: 1, borderColor: theme.border,
-  },
-  sdCommentMine: { borderColor: `${theme.accent}30` },
+  sdComment: { padding: 12, gap: 0 },
+  sdCommentMine: { borderColor: c.accentText },
   sdCommentHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
   sdCommentAvatar: {
     width: 24, height: 24, borderRadius: 8, backgroundColor: theme.surface,
@@ -1665,15 +1599,8 @@ function createStyles(theme: AppTheme) {
     borderTopWidth: 1, borderTopColor: theme.border, backgroundColor: theme.card,
     paddingBottom: Platform.OS === 'ios' ? 30 : 12,
   },
-  sdInput: {
-    flex: 1, backgroundColor: theme.surface, borderRadius: 20,
-    paddingHorizontal: 16, paddingVertical: 10, maxHeight: 100,
-    fontSize: 14, color: theme.text, borderWidth: 1, borderColor: theme.border,
-  },
-  sdSendBtn: {
-    width: 40, height: 40, borderRadius: 14, backgroundColor: theme.accent,
-    justifyContent: 'center', alignItems: 'center',
-  },
+  sdInput: { flex: 1 },
+  sdSendBtn: { width: 46, height: 46, borderRadius: 5, backgroundColor: c.accent, justifyContent: 'center', alignItems: 'center' },
 
   // ── Share Modal ──
   shareOverlay: {

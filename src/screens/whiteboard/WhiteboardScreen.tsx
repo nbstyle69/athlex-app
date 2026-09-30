@@ -7,7 +7,7 @@ import {
   Modal, TextInput, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
-import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, MessageCircle, FileText, Trophy, Sparkles, Newspaper, Play, BookOpen, Check, Timer as TimerIcon, Pencil } from 'lucide-react-native';
+import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, MessageCircle, FileText, Trophy, Sparkles, Newspaper, Play, BookOpen, Check, Timer as TimerIcon, Pencil, ClipboardList } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -628,7 +628,7 @@ export default function WhiteboardScreen() {
               </View>
             ) : (
               <View style={S.noWodCard}>
-                <Text style={S.noWodEmoji}>📋</Text>
+                <ClipboardList color={c.textMuted} size={36} strokeWidth={1.5} />
                 <Text style={S.noWodText}>{t('whiteboard.noWod')}</Text>
                 <EmeraldCTAButton
                   icon={<Sparkles size={16} color={theme.ctaText} />}
@@ -718,7 +718,7 @@ export default function WhiteboardScreen() {
             <View style={S.headerBtn}>
               {unreadMessages > 0 && (
                 <View style={S.badge} pointerEvents="none">
-                  <AxCounterBadge count={unreadMessages} testID="whiteboard-messages-badge" />
+                  <AxCounterBadge count={unreadMessages} readableInk testID="whiteboard-messages-badge" />
                 </View>
               )}
               <AxButton
@@ -735,7 +735,7 @@ export default function WhiteboardScreen() {
             <View style={S.headerBtn}>
               {unreadArticles > 0 && (
                 <View style={S.badge} pointerEvents="none">
-                  <AxCounterBadge count={unreadArticles} testID="whiteboard-news-badge" />
+                  <AxCounterBadge count={unreadArticles} readableInk testID="whiteboard-news-badge" />
                 </View>
               )}
               <AxButton
@@ -826,7 +826,7 @@ export default function WhiteboardScreen() {
                         </TouchableOpacity>
                       </View>
                     )}
-                    <AxCard style={[S.wodCard, { flex: 1 }]} testID={`wod-card-${wod.id}`}>
+                    <AxCard style={[S.wodCard, S.wodCardFill]} testID={`wod-card-${wod.id}`}>
                       <TouchableOpacity
                         onPress={() => navigation.navigate('WODDetail', { wodId: wod.id })}
                         activeOpacity={0.8}
@@ -887,7 +887,7 @@ export default function WhiteboardScreen() {
             </View>
           ) : (
             <View style={S.noWodCard}>
-              <Text style={S.noWodEmoji}>📋</Text>
+              <ClipboardList color={c.textMuted} size={36} strokeWidth={1.5} />
               <Text style={S.noWodText}>{t('whiteboard.noWod')}</Text>
             </View>
           )}
@@ -996,6 +996,7 @@ function createStyles(theme: AppTheme) {
   reorderCol: { alignItems: 'center', justifyContent: 'center', gap: 2 },
   reorderBtn: { padding: 4, borderRadius: 5, backgroundColor: c.surface, borderWidth: 1, borderColor: c.border },
   wodCard: { gap: 10 },
+  wodCardFill: { flex: 1, minWidth: 0 },
   wodCardBody: { gap: 8 },
   programAvis: { marginTop: 20, flexDirection: 'row', alignItems: 'center', gap: 10 },
   wodCardTop: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
@@ -1024,7 +1025,6 @@ function createStyles(theme: AppTheme) {
     borderWidth: 1, borderColor: theme.border, alignItems: 'center', gap: 10,
     ...cardShadow,
   },
-  noWodEmoji: { fontSize: 36 },
   noWodText:  { fontSize: 14, color: theme.textMuted, textAlign: 'center' },
   historyGroup: { marginBottom: 16 },
   historyGroupDate: {
