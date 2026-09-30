@@ -206,6 +206,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Bips « sonar » pour le jeu AthleX (app seule, aucune migration, aucun changement natif).** Demande de Nab (1er octobre).
+- `src/lib/timerBeeps.ts` : pings sinusoïdaux (`decayMs` : attaque de 2 ms puis décroissance exponentielle ; `resonance` :
+  partiel désaccordé de +0,6 %, battement lent), crête normalisée ≤ 0,85 (aucune saturation). Tic vers 1 100 Hz (350 ms),
+  GO vers 1 500 Hz (800 ms), fin en trois pings descendants (1 500, 1 250, 1 050 Hz). Mêmes instants de déclenchement ;
+  même WAV au haut-parleur et dans la vidéo. « Classique » inchangé à l'octet près (empreintes).
+- Tests : `r6cBips.rn.test.tsx` (fréquences, durées, attaque, décroissance, résonance, descente, crête), 8 mutations tuées.
+  Protocole manuel : [`audits/protocole-bips-sonar.md`](./audits/protocole-bips-sonar.md).
+
 **Correctif musculation : même mouvement dans deux blocs (app seule, aucune migration).** Retours de Nab sur le
 build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).
 - Cause, prouvée en prod (lecture seule) et sur la base rejouée : chaque bloc numérotait ses séries à partir de 1,
