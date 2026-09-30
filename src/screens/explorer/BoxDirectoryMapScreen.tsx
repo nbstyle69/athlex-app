@@ -1,11 +1,14 @@
+import i18n from '../../i18n';
+import { AxCard, AxIconButton, withAlpha } from '../../components/ax';
 import React, { useState, useRef } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, Platform,
+  View, Text, StyleSheet, Pressable, Image, Dimensions, Platform,
 } from 'react-native';
 import { ChevronLeft, MapPin, Users, Navigation } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { HomeStackParamList } from '../../navigation';
 import { Box } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
@@ -30,7 +33,8 @@ export default function BoxDirectoryMapScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const s = createStyles(theme);
+  const c = theme.ax;
+  const s = createStyles(theme, c);
   const tabSpace = useTabBarScrollSpace();
 
   const boxes: Box[] = (route.params?.boxes ?? []) as Box[];
@@ -51,9 +55,7 @@ export default function BoxDirectoryMapScreen() {
       <View style={[s.container, s.center]}>
         <GlassBackground />
         <View style={s.headerAbs}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-            <ChevronLeft color={theme.text} size={22} />
-          </TouchableOpacity>
+          <AxIconButton icon={ChevronLeft} onPress={() => navigation.goBack()} accessibilityLabel={i18n.t('common.back')} testID="map-back" />
           <Text style={s.headerTitle}>Carte des Boxs</Text>
         </View>
         <Text style={s.emptyText}>
@@ -68,11 +70,9 @@ export default function BoxDirectoryMapScreen() {
       <GlassBackground />
       {/* Header floating */}
       <View style={s.headerAbs}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <ChevronLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Text style={s.headerTitle}>Carte des Boxs</Text>
-        <Text style={s.headerSub}>{boxes.length} box{boxes.length > 1 ? 's' : ''}</Text>
+        <AxIconButton icon={ChevronLeft} onPress={() => navigation.goBack()} accessibilityLabel={i18n.t('common.back')} testID="map-back" />
+        <Text style={s.headerTitle} numberOfLines={1}>Carte des Boxs</Text>
+        <Text style={s.headerSub} numberOfLines={1}>{boxes.length} box{boxes.length > 1 ? 's' : ''}</Text>
       </View>
 
       <MapView
@@ -106,13 +106,15 @@ export default function BoxDirectoryMapScreen() {
       {/* Bottom sheet when selected */}
       {selected && (
         <View style={[s.sheet, { paddingBottom: tabSpace }]}>
-          <TouchableOpacity
+          <AxCard
+            variant="featured"
             style={s.sheetCard}
-            activeOpacity={0.85}
             onPress={() => {
               setSelected(null);
               navigation.navigate('BoxDirectoryDetail', { boxId: selected.id });
             }}
+            accessibilityLabel={selected.name}
+            testID="map-sheet-card"
           >
             {selected.logo_url ? (
               <Image source={{ uri: selected.logo_url }} style={s.sheetLogo} />
@@ -122,23 +124,28 @@ export default function BoxDirectoryMapScreen() {
               </View>
             )}
             <View style={s.sheetContent}>
-              <Text style={s.sheetName}>{selected.name}</Text>
+              <Text style={s.sheetName} numberOfLines={2}>{selected.name}</Text>
               {selected.city ? (
                 <View style={s.metaRow}>
-                  <MapPin size={11} color={theme.textMuted} />
-                  <Text style={s.metaText}>{selected.city}</Text>
+                  <MapPin size={12} color={c.textMuted} />
+                  <Text style={s.metaText} numberOfLines={1}>{selected.city}</Text>
                 </View>
               ) : null}
               <View style={s.metaRow}>
-                <Users size={11} color={theme.textMuted} />
-                <Text style={s.metaText}>{selected.member_count ?? 0} membres</Text>
+                <Users size={12} color={c.textMuted} />
+                <Text style={s.metaText} numberOfLines={1}>{selected.member_count ?? 0} membres</Text>
               </View>
             </View>
-            <Navigation size={18} color={theme.accent} />
-          </TouchableOpacity>
-          <TouchableOpacity style={s.sheetClose} onPress={() => setSelected(null)}>
+            <Navigation size={18} color={c.accentText} />
+          </AxCard>
+          <Pressable
+            style={s.sheetClose}
+            onPress={() => setSelected(null)}
+            accessibilityRole="button"
+            testID="map-sheet-close"
+          >
             <Text style={s.sheetCloseText}>Fermer</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       )}
     </View>
@@ -153,47 +160,41 @@ const darkMapStyle = [
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0e0e0e' }] },
 ];
 
-function createStyles(t: AppTheme) {
+function createStyles(t: AppTheme, c: AxColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
     center: { alignItems: 'center', justifyContent: 'center' },
     headerAbs: {
       position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
-      paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12,
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      backgroundColor: `${t.card}E0`,
+      paddingTop: 56, paddingHorizontal: axSpacing.lg, paddingBottom: axSpacing.md,
+      flexDirection: 'row', alignItems: 'center', gap: axSpacing.md,
+      backgroundColor: withAlpha(c.background, 0.92),
+      borderBottomWidth: 1, borderBottomColor: c.border,
     },
-    backBtn: {
-      width: 36, height: 36, borderRadius: 10,
-      backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center',
-    },
-    headerTitle: { fontSize: 18, fontWeight: '900', color: t.text },
-    headerSub: { fontSize: 11, color: t.textMuted },
-    emptyText: { fontSize: 14, color: t.textMuted, textAlign: 'center', lineHeight: 22 },
+    headerTitle: { ...axTypography.titleM, color: c.text, flexShrink: 1 },
+    headerSub: { ...axTypography.bodySmall, color: c.textMuted },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center', paddingHorizontal: axSpacing['2xl'] },
     sheet: {
       position: 'absolute', bottom: 0, left: 0, right: 0,
-      paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+      paddingHorizontal: axSpacing.lg, paddingBottom: Platform.OS === 'ios' ? 40 : 20,
     },
-    sheetCard: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      backgroundColor: t.card, borderRadius: 16, padding: 14,
-      borderWidth: 1, borderColor: t.border,
-      ...Platform.select({
-        ios: { shadowColor: '#000', shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.15, shadowRadius: 12 },
-        android: { elevation: 8 },
-      }),
-    },
-    sheetLogo: { width: 48, height: 48, borderRadius: 12 },
+    sheetCard: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+    sheetLogo: { width: 48, height: 48, borderRadius: axRadius.card },
     sheetLogoPlaceholder: {
-      backgroundColor: `${t.accent}15`, alignItems: 'center', justifyContent: 'center',
+      backgroundColor: c.field, borderWidth: 1, borderColor: c.border,
+      alignItems: 'center', justifyContent: 'center',
     },
-    sheetLogoLetter: { fontSize: 20, fontWeight: '900', color: t.accent },
-    sheetContent: { flex: 1 },
-    sheetName: { fontSize: 15, fontWeight: '800', color: t.text },
-    metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
-    metaText: { fontSize: 11, color: t.textMuted },
-    sheetClose: { alignItems: 'center', paddingTop: 10 },
-    sheetCloseText: { fontSize: 12, fontWeight: '600', color: t.textMuted },
+    sheetLogoLetter: { ...axTypography.titleM, color: c.accentText },
+    sheetContent: { flex: 1, minWidth: 0, gap: axSpacing.xs },
+    sheetName: { ...axTypography.titleM, color: c.text },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+    metaText: { ...axTypography.bodySmall, color: c.textMuted, flexShrink: 1 },
+    sheetClose: {
+      alignSelf: 'center', minHeight: 44, justifyContent: 'center',
+      paddingHorizontal: axSpacing.lg, marginTop: axSpacing.xs,
+      borderRadius: axRadius.control, backgroundColor: withAlpha(c.background, 0.92),
+    },
+    sheetCloseText: { ...axTypography.labelSmall, color: c.textMuted },
     markerWrap: { alignItems: 'center' },
     markerLogo: {
       width: 40, height: 40, borderRadius: 10,
