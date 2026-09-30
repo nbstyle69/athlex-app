@@ -1,7 +1,7 @@
 import React from 'react';
 import fs from 'fs';
 import path from 'path';
-import { Alert, Linking, Modal, StyleSheet } from 'react-native';
+import { Linking, Modal, StyleSheet } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { lightTheme, darkTheme } from '../theme/palette';
 import '../i18n';
