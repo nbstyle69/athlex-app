@@ -69,10 +69,11 @@ export default function LoginScreen({ navigation }: Props) {
         <ScrollView contentContainerStyle={S.container} keyboardShouldPersistTaps="handled">
           <View style={S.logoContainer}>
             <Image
-              source={require('../../../assets/logo.png')}
+              source={require('../../../assets/athex-logo.png')}
               style={S.logo}
+              testID="entry-logo"
+              accessibilityLabel="AthleX"
             />
-            <Text style={S.appName}>AthleX</Text>
             <Text style={S.tagline}>{t('auth.tagline')}</Text>
           </View>
 
@@ -160,7 +161,7 @@ export default function LoginScreen({ navigation }: Props) {
               <Text style={S.forgotText}>{t('auth.forgotPassword')}</Text>
             </TouchableOpacity>
 
-            <AxButton testID="login-submit" label={t('auth.login').toUpperCase()} accessibilityLabel="Se connecter" onPress={handleLogin} loading={loading} fullWidth />
+            <AxButton testID="login-submit" label={t('auth.login')} accessibilityLabel="Se connecter" onPress={handleLogin} loading={loading} fullWidth />
 
             <TouchableOpacity onPress={() => navigation.navigate('Register')} style={S.registerLink} accessibilityLabel="Créer un compte" accessibilityRole="button">
               <Text style={S.registerText}>
@@ -190,8 +191,7 @@ function createStyles(c: AxColors) {
     flex: { flex: 1 },
     container: { flexGrow: 1, justifyContent: 'center', padding: axSpacing.xl },
     logoContainer: { alignItems: 'center', marginBottom: axSpacing['2xl'] },
-    logo: { width: 88, height: 88, resizeMode: 'contain', marginBottom: axSpacing.md },
-    appName: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text },
+    logo: { width: 120, height: 120, resizeMode: 'contain' },
     tagline: { ...axTypography.overline, color: c.textMuted, marginTop: axSpacing.xs, textAlign: 'center' },
     form: { gap: axSpacing.md },
     title: { ...axTypography.titleM, color: c.text },

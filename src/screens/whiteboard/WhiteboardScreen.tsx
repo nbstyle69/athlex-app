@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
+import { wodTypeLabel } from '../../utils/wodTypeLabel';
 import { supabase } from '../../lib/supabase';
 import { countUnreadMessages } from '../../lib/unreadMessages';
 import { captureError } from '../../lib/sentry';
@@ -547,7 +548,7 @@ export default function WhiteboardScreen() {
     </View>
   );
   const typeTag = (wod: { id: string; wod_type?: string | null }) => (
-    <AxTag label={(wod.wod_type ?? 'custom').toUpperCase()} tone="accent" testID={`wod-tag-${wod.id}`} />
+    <AxTag label={wodTypeLabel(wod.wod_type ?? 'custom')} tone="accent" testID={`wod-tag-${wod.id}`} />
   );
   const personalCard = (wod: BoxWOD, lines: number) => (
     <AxCard key={wod.id} onPress={() => navigation.navigate('WODDetail', { wodId: wod.id })} style={S.wodCard} testID={`wod-card-${wod.id}`}>

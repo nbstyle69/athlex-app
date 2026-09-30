@@ -485,7 +485,7 @@ export default function TimerScreen() {
         {activeTab === 'splits' ? renderSplitsConfig() : renderBlocks()}
 
         <View style={S.spacer} />
-        <AxButton label="DÉMARRER" variant="accent" icon={withCamera ? Video : Timer} fullWidth onPress={launch}
+        <AxButton label="Démarrer" variant="accent" icon={withCamera ? Video : Timer} fullWidth onPress={launch}
           testID="timer-start" />
       </ScrollView>
     </View>

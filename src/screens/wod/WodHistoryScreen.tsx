@@ -20,6 +20,7 @@ import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/ax
 import { levelInk } from '../home/homeLevelColor';
 import { HomeStackParamList } from '../../navigation';
 import { formatScoreValue } from '../../utils/scoreFormat';
+import { wodTypeLabel } from '../../utils/wodTypeLabel';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { buildHistoryEntries, countScores, HistoryEntry, BoxScoreRow, CompletionRow } from '../../lib/wodHistoryEntries';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
@@ -199,7 +200,7 @@ export default function WodHistoryScreen() {
         <View style={S.wodTop}>
           <View style={S.wodBadges}>
             <AxTag label={t('wodHistory.boxTag')} tone="accent" />
-            {wodType && <AxTag label={wodType.toUpperCase()} tone="muted" />}
+            {wodType && <AxTag testID={`history-type-${entry.wodId}`} label={wodTypeLabel(wodType)} tone="muted" />}
           </View>
           <ChevronRight color={c.textMuted} size={16} />
         </View>

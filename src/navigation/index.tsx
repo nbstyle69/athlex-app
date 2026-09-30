@@ -831,7 +831,7 @@ export default function AppNavigator() {
     return (
       <View style={{ flex: 1, backgroundColor: '#0A0A0F', justifyContent: 'center', alignItems: 'center', gap: 32 }}>
         <Image
-          source={require('../../assets/logo.png')}
+          source={require('../../assets/athex-logo.png')}
           style={{ width: 180, height: 180, resizeMode: 'contain' }}
         />
         <ActivityIndicator size="large" color={theme.accent} />
