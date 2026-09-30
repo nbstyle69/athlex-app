@@ -7,7 +7,7 @@ import React, { useEffect as mockUseEffect } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import { lightTheme, darkTheme, type AppTheme } from '../theme/palette';
-import { axTypography } from '../theme/axTokens';
+import { axAccentSafeLineHeight, axTypography } from '../theme/axTokens';
 import { LevelColors } from '../theme/designTokens';
 import { contrast } from '../theme/contrast';
 import { levelInk } from '../screens/home/homeLevelColor';
@@ -126,7 +126,7 @@ describe.each([['clair', lightTheme], ['sombre', darkTheme]])('thème %s', (_nam
 
   it('pseudo en titleXL, titres de section en Oswald 20 capitales', async () => {
     await mount(theme);
-    expect(flat(host('home-username')[0])).toMatchObject({ ...axTypography.titleXL, color: c.text });
+    expect(flat(host('home-username')[0])).toMatchObject({ ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text });
     for (const t of host('home-section-title').map(flat)) {
       expect(t).toMatchObject({ fontFamily: axTypography.titleM.fontFamily, fontSize: 20, textTransform: 'uppercase', color: c.text });
     }

@@ -13,6 +13,8 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { CommunityStackParamList } from '../../navigation';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { LevelColors } from '../../theme/designTokens';
+import { readableInk } from '../home/homeLevelColor';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<CommunityStackParamList, 'CommunityMain'>;
@@ -27,10 +29,6 @@ interface Member {
   avatar_url?: string | null;
 }
 
-const LEVEL_COLORS: Record<string, string> = {
-  scaled: '#6B7280', inter: '#3B82F6', rx: '#10B981',
-  'rx+': '#F59E0B', elite: '#7C3AED', pro: '#DC2626',
-};
 
 export default function CommunityScreen() {
   const tabSpace = useTabBarScrollSpace();
@@ -138,7 +136,7 @@ export default function CommunityScreen() {
           renderItem={({ item, index }) => {
             const isMe = item.id === user?.id;
             const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : null;
-            const levelColor = LEVEL_COLORS[item.level] ?? '#6B7280';
+            const levelColor = LevelColors[item.level] ?? '#6B7280';
             return (
               <TouchableOpacity
                 style={[S.row, isMe && S.rowMe]}
@@ -146,13 +144,13 @@ export default function CommunityScreen() {
                 activeOpacity={0.75}
               >
                 <Text style={S.rank}>{medal ?? `${index + 1}`}</Text>
-                <UserAvatar uri={item.avatar_url} name={item.username} size={40} borderRadius={20} backgroundColor={`${levelColor}30`} textColor={levelColor} />
+                <UserAvatar uri={item.avatar_url} name={item.username} size={40} borderRadius={20} backgroundColor={`${levelColor}30`} textColor={readableInk(levelColor, theme.ax)} />
                 <View style={S.info}>
                   <Text style={S.name}>{item.username}{isMe ? ' (moi)' : ''}</Text>
                   <View style={S.pills}>
                     <View style={[S.levelPill, { backgroundColor: `${levelColor}20` }]}>
                       <View style={[S.levelDot, { backgroundColor: levelColor }]} />
-                      <Text style={[S.levelText, { color: levelColor }]}>{item.level?.toUpperCase()}</Text>
+                      <Text style={[S.levelText, { color: readableInk(levelColor, theme.ax) }]}>{item.level?.toUpperCase()}</Text>
                     </View>
                     {(item.total_matches ?? 0) > 0 && (
                       <Text style={S.matchText}>{item.wins ?? 0}V/{item.total_matches ?? 0}M</Text>

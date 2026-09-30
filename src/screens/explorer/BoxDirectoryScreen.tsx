@@ -195,6 +195,7 @@ export default function BoxDirectoryScreen() {
             showsHorizontalScrollIndicator={false}
             data={allSports}
             keyExtractor={i => i}
+            style={s.filtersBar}
             contentContainerStyle={s.filtersList}
             renderItem={({ item: sp }) => (
               <AxChip
@@ -236,6 +237,7 @@ function createStyles(c: AxColors) {
     headerSub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
     searchWrap: { paddingHorizontal: axSpacing.xl, paddingTop: axSpacing.md, paddingBottom: axSpacing.md },
     filtersWrap: { marginBottom: axSpacing.md },
+    filtersBar: { flexGrow: 0, flexShrink: 0 },
     filtersList: { paddingHorizontal: axSpacing.xl, paddingVertical: 2, gap: axSpacing.sm },
     list: { paddingHorizontal: axSpacing.xl },
     separator: { height: axSpacing.md },

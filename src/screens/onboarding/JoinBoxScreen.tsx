@@ -10,7 +10,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { AxButton } from '../../components/ax/AxButton';
 import { AxTextField } from '../../components/ax/AxTextField';
 import { withAlpha } from '../../components/ax/color';
-import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
+import { axAccentSafeLineHeight, axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import GlassBackground from '../../components/glass/GlassBackground';
 
 export default function JoinBoxScreen({ navigation }: any) {
@@ -93,7 +93,7 @@ function createStyles(c: AxColors) { return StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     alignSelf: 'center',
   },
-  title: { ...axTypography.titleXL, color: c.text, textAlign: 'center' },
+  title: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text, textAlign: 'center' },
   subtitle: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
   hint: { ...axTypography.caption, color: c.textMuted, textAlign: 'center' },
 }); }

@@ -165,30 +165,41 @@ describe('axTokens — contraste AA', () => {
   });
 });
 
-describe('palette — aucune valeur préexistante modifiée', () => {
-  it('lightTheme hors ax identique à master, ax = couleurs claires', () => {
-    const { ax, ...rest } = lightTheme;
-    expect(rest).toStrictEqual(MASTER_LIGHT);
-    expect(ax).toBe(axColors.light);
+describe('palette R14a — les jetons historiques sont dérivés de ax', () => {
+  it.each([['light', lightTheme], ['dark', darkTheme]] as const)('%s : fond, cartes, bordures, encres et statuts = jetons ax', (mode, t) => {
+    const ax = axColors[mode];
+    expect(t.ax).toBe(ax);
+    expect(t.background).toBe(ax.background);
+    expect(t.card).toBe(ax.surface);
+    expect(t.surface).toBe(ax.surface);
+    expect(t.modalCard).toBe(ax.surface);
+    expect(t.tabBar).toBe(ax.surface);
+    expect(t.cardBorder).toBe(ax.border);
+    expect(t.border).toBe(ax.border);
+    expect(t.text).toBe(ax.text);
+    expect(t.textPrimary).toBe(ax.text);
+    expect(t.textMuted).toBe(ax.textMuted);
+    expect(t.textSecondary).toBe(ax.textMuted);
+    expect(t.accentText).toBe(ax.accentText);
+    expect(t.tabBarActive).toBe(ax.accentText);
+    expect(t.ctaBg).toBe(ax.accent);
+    expect(t.ctaText).toBe(ax.onAccent);
+    expect(t.success).toBe(ax.success);
+    expect(t.error).toBe(ax.danger);
+    expect(t.warning).toBe(ax.warning);
   });
 
-  it('darkTheme hors ax identique à master, ax = couleurs sombres', () => {
-    const { ax, ...rest } = darkTheme;
-    expect(rest).toStrictEqual(MASTER_DARK);
-    expect(ax).toBe(axColors.dark);
-  });
-});
-
-describe('App.tsx — police Oswald', () => {
-  const src = fs.readFileSync(path.join(__dirname, '..', '..', 'App.tsx'), 'utf8');
-
-  it('importe Oswald_500Medium depuis @expo-google-fonts/oswald', () => {
-    expect(src).toMatch(/import\s*\{[^}]*\bOswald_500Medium\b[^}]*\}\s*from\s*'@expo-google-fonts\/oswald'/);
+  it.each([['light', lightTheme], ['dark', darkTheme]] as const)('%s : plus aucun fond translucide de l\'ancien verre', (_m, t) => {
+    for (const v of [t.background, t.card, t.surface, t.surfaceAlt, t.modalCard, t.tabBar]) {
+      expect(v).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    }
   });
 
-  it('charge Oswald_500Medium dans useFonts', () => {
-    const block = src.match(/useFonts\(\{([\s\S]*?)\}\)/);
-    expect(block).not.toBeNull();
-    expect(block![1]).toMatch(/\bOswald_500Medium\b/);
+  it('le contrôle mord : master avait un fond noir, des cartes translucides et un accent émeraude', () => {
+    expect(darkTheme.background).not.toBe(MASTER_DARK.background);
+    expect(MASTER_DARK.card).toMatch(/^rgba/);
+    expect(MASTER_DARK.accent).toBe('#10b981');
+    expect(lightTheme.background).not.toBe(MASTER_LIGHT.background);
+    expect(MASTER_LIGHT.card).toMatch(/^rgba/);
   });
 });

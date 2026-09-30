@@ -54,7 +54,7 @@ describe('coque de navigation — le fond suit le thème', () => {
 });
 
 describe('écran Notifications — lisible sur le fond qu\'il reçoit', () => {
-  it('sa racine monte le dégradé et ne repeint pas un fond plein par-dessus', () => {
+  it('sa racine monte le fond de coque et ne repeint pas un fond plein par-dessus', () => {
     expect(NOTIF).toMatch(/screen: \{ flex: 1, backgroundColor: 'transparent' \}/);
     expect(NOTIF).toMatch(/<GlassBackground \/>/);
   });
@@ -75,40 +75,20 @@ describe('écran Notifications — lisible sur le fond qu\'il reçoit', () => {
   });
 });
 
-describe('le dégradé animé porte le texte des cartes', () => {
-  const stops = (mode: ThemeMode): string[] => {
-    const block = GLASS.split('const gradient')[1] ?? '';
-    const [dark, light] = block.split('?')[1].split(':');
-    const source = mode === 'dark' ? dark : light;
-    return source.match(/#[0-9a-fA-F]{6}/g) ?? [];
-  };
-
-  it('les trois arrêts de chaque thème sont bien lus', () => {
-    expect(stops('dark')).toHaveLength(3);
-    expect(stops('light')).toHaveLength(3);
+describe('R14a : GlassBackground est un fond uni theme.ax.background', () => {
+  it('plus de dégradé, de taches ni d\'animation dans le composant', () => {
+    expect(GLASS).not.toMatch(/LinearGradient|react-native-svg|Animated|RadialGradient|Circle/);
+    expect(GLASS).toMatch(/backgroundColor: theme\.ax\.background/);
   });
 
-  it.each(THEMES)(
-    'thème %s : sur chaque arrêt, une carte porte l\'encre atténuée et l\'encre d\'accent',
-    (mode, t) => {
-      for (const stop of stops(mode)) {
-        expect(contrast(t.text, stop)).toBeGreaterThanOrEqual(TEXT_MIN);
-        expect(contrast(t.textMuted, t.card, stop)).toBeGreaterThanOrEqual(TEXT_MIN);
-        expect(contrast(t.accentText, t.card, stop)).toBeGreaterThanOrEqual(TEXT_MIN);
-      }
-    },
-  );
-
-  it('le contrôle mord : l\'ancien arrêt sombre #14532d échouait sur carte', () => {
-    expect(stops('dark')).not.toContain('#14532d');
-    expect(contrast(darkTheme.textMuted, darkTheme.card, '#14532d')).toBeLessThan(TEXT_MIN);
+  it.each(THEMES)('thème %s : cartes et encres lisibles sur le fond uni', (_mode, t) => {
+    expect(contrast(t.text, t.ax.background)).toBeGreaterThanOrEqual(TEXT_MIN);
+    expect(contrast(t.textMuted, t.ax.background)).toBeGreaterThanOrEqual(TEXT_MIN);
+    expect(contrast(t.textMuted, t.card, t.ax.background)).toBeGreaterThanOrEqual(TEXT_MIN);
+    expect(contrast(t.accentText, t.card, t.ax.background)).toBeGreaterThanOrEqual(TEXT_MIN);
   });
 
-  it.each(THEMES)(
-    'thème %s : l\'encre atténuée écrite à même le dégradé n\'est pas garantie',
-    (mode, t) => {
-      const worstMuted = Math.min(...stops(mode).map((s) => contrast(t.textMuted, s)));
-      expect(worstMuted).toBeLessThan(TEXT_MIN + 1.5);
-    },
-  );
+  it('le contrôle mord : l\'ancien arrêt sombre #14532d échouait sur carte translucide', () => {
+    expect(contrast('#94a3b8', 'rgba(255,255,255,0.06)', '#14532d')).toBeLessThan(TEXT_MIN);
+  });
 });

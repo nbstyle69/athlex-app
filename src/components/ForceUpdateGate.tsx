@@ -3,6 +3,9 @@ import { View, Text, StyleSheet, Linking, Platform, ActivityIndicator } from 're
 import { TouchableOpacity } from 'react-native';
 import Constants from 'expo-constants';
 import { supabase } from '../lib/supabase';
+import { axColors } from '../theme/axTokens';
+
+const C = axColors.dark;
 
 const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 
@@ -57,7 +60,7 @@ export default function ForceUpdateGate({ children }: Props) {
   if (checking) {
     return (
       <View style={styles.container}>
-        <ActivityIndicator size="large" color="#10B981" />
+        <ActivityIndicator size="large" color={C.accent} />
       </View>
     );
   }
@@ -89,7 +92,7 @@ export default function ForceUpdateGate({ children }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A0F',
+    backgroundColor: C.background,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
@@ -101,24 +104,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: C.text,
     textAlign: 'center',
     marginBottom: 12,
   },
   subtitle: {
     fontSize: 15,
-    color: '#9CA3AF',
+    color: C.textMuted,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 16,
   },
   version: {
     fontSize: 12,
-    color: '#6B7280',
+    color: C.textMuted,
     marginBottom: 32,
   },
   button: {
-    backgroundColor: '#10B981',
+    backgroundColor: C.accent,
     paddingHorizontal: 32,
     paddingVertical: 16,
     borderRadius: 16,
@@ -126,7 +129,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: C.onAccent,
     fontSize: 16,
     fontWeight: '800',
   },

@@ -24,8 +24,10 @@ describe('minuteur — encre des commandes', () => {
   });
 
   it('les aplats d’accent portent onAccent, pas du blanc', () => {
-    expect(contrast('#FFFFFF', lightTheme.accent)).toBeLessThan(TEXT_MIN);
+    // Accent clair de master (#94a3b8) ; en R14a l'aplat d'accent des composants ax est la menthe.
+    expect(contrast('#FFFFFF', '#94a3b8')).toBeLessThan(TEXT_MIN);
     expect(contrast('#FFFFFF', darkTheme.accent)).toBeLessThan(TEXT_MIN);
+    expect(contrast('#FFFFFF', lightTheme.ax.accent)).toBeLessThan(TEXT_MIN);
     expect(contrast(lightTheme.onAccent, lightTheme.accent)).toBeGreaterThanOrEqual(TEXT_MIN);
     expect(contrast(darkTheme.onAccent, darkTheme.accent)).toBeGreaterThanOrEqual(TEXT_MIN);
     // R5a : les choix passent par AxChip / AxSwitch, dont l'encre sur accent est onAccent.
@@ -45,7 +47,7 @@ describe('minuteur — encre des commandes', () => {
   });
 
   it('l’accent ne sert plus d’encre : accentText sur carte et sur dégradé', () => {
-    expect(contrast(lightTheme.accent, lightTheme.card, GRAD_LIGHT)).toBeLessThan(GLYPH_MIN);
+    expect(contrast(lightTheme.ax.accent, lightTheme.card, GRAD_LIGHT)).toBeLessThan(GLYPH_MIN);
     expect(contrast(lightTheme.accentText, lightTheme.card, GRAD_LIGHT)).toBeGreaterThanOrEqual(TEXT_MIN);
     expect(contrast(darkTheme.accentText, darkTheme.card, GRAD_DARK)).toBeGreaterThanOrEqual(GLYPH_MIN);
     expect(TIMER).not.toMatch(/color: theme\.accent[,\s}]/);

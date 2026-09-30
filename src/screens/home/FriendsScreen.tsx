@@ -20,6 +20,7 @@ import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { LevelColors } from '../../theme/designTokens';
 import { readableInk } from './homeLevelColor';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
@@ -41,10 +42,6 @@ interface Friend {
   elo: number;
 }
 
-const LEVEL_COLORS: Record<string, string> = {
-  scaled: '#6B7280', inter: '#3B82F6', rx: '#10B981',
-  'rx+': '#F59E0B', elite: '#7C3AED', pro: '#DC2626',
-};
 
 export default function FriendsScreen() {
   const tabSpace = useTabBarScrollSpace();
@@ -52,7 +49,7 @@ export default function FriendsScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
   const S = createStyles(theme);
-  const levelInk = (level?: string) => readableInk(LEVEL_COLORS[level ?? ''] ?? '#6B7280', theme.ax);
+  const levelInk = (level?: string) => readableInk(LevelColors[level ?? ''] ?? '#6B7280', theme.ax);
 
   const [tab, setTab] = useState<'friends' | 'requests' | 'search'>('friends');
   const [friends, setFriends] = useState<Friend[]>([]);

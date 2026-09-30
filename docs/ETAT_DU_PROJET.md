@@ -304,6 +304,17 @@ Supabase/Resend.
 - Tests : `r12.rn.test.tsx` (51, dont ordre des blocs sur 22 états figés sur master), isolement R1 élargi au seul
   `ProfileScreen` ; `npx jest` 1976, `npm run test:rn` 536, `tsc` vert ; 28 mutations tuées.
 
+**Refonte R14a : fond uni et palette du nouveau design sur tous les écrans (app seule, aucune migration, apparence seule).**
+- `GlassBackground` (même API) rend un fond uni `theme.ax.background` (#101214 / #F3F5F4) : plus de dégradé, de taches
+  SVG ni d'animation ; `GlassCard` / `GlassButton` / `GlassIconBox` / fond de barre d'onglets en surfaces opaques `ax` ;
+  palette historique (`palette.ts`) dérivée des jetons `ax` ; plus aucune couleur émeraude dans `src/` hors chrono plein
+  écran ; teintes de domaine et palier elite ajustés AA ; `StatusBar` claire en sombre, foncée en clair.
+- `AxScreenHeader` mesure le seul contenu de Retour / action droite (« MINUTEUR » entier à 390 px) ; titres Oswald en
+  capitales avec interligne `axAccentSafeLineHeight` (accents de « RÉSERVATION », « COMPÉTITIONS » non rognés) ;
+  `AxChip` `minHeight` 40 non comprimable et rangées horizontales de pastilles `flexShrink: 0`.
+- Tests : `r14a.rn.test.tsx`, `r14aPalette.test.ts`, `shellBackground` réécrit, contrats historiques mis à jour ;
+  mutations listées dans la PR.
+
 **Refonte R13 : annuaire, programmes et partenaires au nouveau design (app seule, aucune migration, apparence seule).**
 - `BoxDirectoryScreen` (recherche en `AxTextField`, sports en `AxChip`, boxs en `AxCard`, nom en `titleM`, ville et infos
   en `bodySmall` `textMuted`, sports en `AxTag`), `BoxDirectoryMapScreen` (en-tête flottant et fiche basse `AxCard`

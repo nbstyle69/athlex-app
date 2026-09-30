@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { AxButton } from '../../components/ax/AxButton';
-import { axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
+import { axAccentSafeLineHeight, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { OWNER_ONBOARDING_URL } from '../../lib/urls';
 
@@ -70,7 +70,7 @@ function createStyles(c: AxColors) { return StyleSheet.create({
     flex: 1, justifyContent: 'center', alignItems: 'center',
     paddingHorizontal: axSpacing['2xl'], gap: axSpacing.lg,
   },
-  title: { ...axTypography.titleXL, color: c.text, textAlign: 'center' },
+  title: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text, textAlign: 'center' },
   subtitle: { ...axTypography.body, color: c.textMuted, textAlign: 'center' },
   actions: { width: '100%', gap: axSpacing.md, marginTop: axSpacing.sm },
   skipBtn: {

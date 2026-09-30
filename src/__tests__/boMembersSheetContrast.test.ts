@@ -22,7 +22,9 @@ const THEMES: [ThemeMode, AppTheme][] = [
 
 /** Fond réel de l'ancienne fiche : voile 60 % noir sur le fond du thème, puis theme.card. */
 function ancienneFiche(t: AppTheme): { bg: string; behind: string } {
-  return { bg: t.card, behind: `rgba(0,0,0,0.6)` };
+  // theme.card de master (translucide), avant R14a.
+  const card = t.mode === 'light' ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.06)';
+  return { bg: card, behind: `rgba(0,0,0,0.6)` };
 }
 
 describe.each(THEMES)('fiche adhérent BOMembers — thème %s', (mode, t) => {

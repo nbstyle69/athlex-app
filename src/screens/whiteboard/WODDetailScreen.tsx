@@ -1314,7 +1314,7 @@ export default function WODDetailScreen() {
                 </View>
               )}
               {!showEmojis && (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0 }} contentContainerStyle={{ gap: 6 }}>
                   {EMOJI_LIST.slice(0, 6).map(e => (
                     <TouchableOpacity key={e} onPress={() => toggleReaction(e)} style={S.sdQuickEmoji}>
                       <Text style={{ fontSize: 18 }}>{e}</Text>

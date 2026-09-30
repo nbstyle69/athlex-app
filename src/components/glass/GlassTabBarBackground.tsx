@@ -1,66 +1,16 @@
 import React from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
-import { BlurView } from 'expo-blur';
+import { View, StyleSheet } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 
-/**
- * Glass tab bar background — BlurView with emerald tint and top highlight.
- * Used via React Navigation's `tabBarBackground` prop.
- */
+/** Fond de la barre d'onglets : `ax.surface` uni, filet `ax.border` en haut. */
 export default function GlassTabBarBackground() {
   const { theme } = useTheme();
-  const dark = theme.mode === 'dark';
-
-  // On Android, BlurView has limited support → fallback to solid translucent layer
-  if (Platform.OS === 'android') {
-    return (
-      <View
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: dark ? 'rgba(10,10,10,0.95)' : 'rgba(255,255,255,0.96)' },
-        ]}
-      >
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute', top: 0, left: 0, right: 0, height: 1,
-            backgroundColor: dark ? 'rgba(16,185,129,0.25)' : 'rgba(148,163,184,0.30)',
-          }}
-        />
-      </View>
-    );
-  }
-
+  const c = theme.ax;
   return (
-    <View style={StyleSheet.absoluteFill}>
-      <BlurView
-        intensity={dark ? 60 : 80}
-        tint={dark ? 'dark' : 'light'}
-        style={StyleSheet.absoluteFill}
-      />
-      {/* Tint color overlay (emerald-tinted dark/light) */}
+    <View style={[StyleSheet.absoluteFill, { backgroundColor: c.surface }]}>
       <View
         pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          { backgroundColor: dark ? 'rgba(10,15,13,0.55)' : 'rgba(241,245,249,0.35)' },
-        ]}
-      />
-      {/* Top border highlight (emerald glow line) */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute', top: 0, left: 0, right: 0, height: 1,
-          backgroundColor: dark ? 'rgba(16,185,129,0.30)' : 'rgba(148,163,184,0.35)',
-        }}
-      />
-      {/* Subtle inner highlight strip */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute', top: 1, left: 0, right: 0, height: 1,
-          backgroundColor: dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.6)',
-        }}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, backgroundColor: c.border }}
       />
     </View>
   );

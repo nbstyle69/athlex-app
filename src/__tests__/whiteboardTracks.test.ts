@@ -136,12 +136,12 @@ describe('teintes des onglets — lisibles dans les deux thèmes', () => {
     });
   });
 
-  it('en thème sombre, les teintes sont exactement celles du générateur de WOD', () => {
-    // Le brief demande « la couleur de la discipline dans le générateur » :
-    // vert Functional, orange Hybrid, bleu Musculation.
+  it('en thème sombre, les teintes gardent le sens de la discipline (palette R14a)', () => {
+    // Menthe Functional, orange Hybrid, bleu Musculation — bleu éclairci en
+    // R14a pour tenir 4,5:1 sur la surface opaque ax.
     expect(tabAccent(darkTheme, 'hybrid')).toBe('#F97316');
-    expect(tabAccent(darkTheme, 'musculation')).toBe('#3B82F6');
-    expect(tabAccent(darkTheme, 'functional')).toBe('#10B981');
+    expect(tabAccent(darkTheme, 'musculation')).toBe('#60A5FA');
+    expect(tabAccent(darkTheme, 'functional')).toBe('#9AE6D2');
   });
 
   it('en thème clair, elles sont assombries — la teinte du sombre y serait illisible', () => {

@@ -132,6 +132,14 @@ type AxTextStyle = Pick<
   'fontFamily' | 'fontSize' | 'lineHeight' | 'letterSpacing' | 'textTransform'
 >;
 
+/**
+ * Interlignes des titres Oswald qui laissent passer les capitales accentuées
+ * (« É » monte à 1,066 em, la descente à 0,289 em) : ceil(taille × 1,355).
+ * iOS et Android posent la ligne de base en bas de la boîte et rognent ce qui
+ * dépasse en haut ; avec l'interligne de base, l'accent d'« É » est coupé.
+ */
+export const axAccentSafeLineHeight = { titleXL: 47, titleL: 36, titleM: 28 } as const;
+
 export const axTypography: Record<AxTypographyName, AxTextStyle> = {
   titleXL: { fontFamily: axFonts.oswaldMedium, fontSize: 34, lineHeight: 38, letterSpacing: -1, textTransform: 'uppercase' },
   titleL: { fontFamily: axFonts.oswaldMedium, fontSize: 26, lineHeight: 30, letterSpacing: -0.5, textTransform: 'uppercase' },

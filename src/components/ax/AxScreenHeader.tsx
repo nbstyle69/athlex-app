@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
-import { axSpacing, axTypography } from '../../theme/axTokens';
+import { axAccentSafeLineHeight, axSpacing, axTypography } from '../../theme/axTokens';
 
 export const AX_SCREEN_HEADER = {
   height: 44,
@@ -34,8 +34,9 @@ export function AxScreenHeader({ title, onBack, right, children, safeArea = true
   const { t } = useTranslation();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  // Les deux côtés prennent la largeur du plus large pour que le titre soit
-  // centré sur l'écran, même si l'action de droite est plus large que Retour.
+  // Les deux côtés prennent la largeur du CONTENU le plus large (Retour ou
+  // action) pour que le titre soit centré sur l'écran ; la colonne elle-même
+  // n'est pas mesurée, sa largeur étirée réserverait la place du titre.
   const [side, setSide] = useState(0);
   const measure = useCallback((e: LayoutChangeEvent) => {
     const w = Math.ceil(e.nativeEvent.layout.width);
@@ -47,30 +48,36 @@ export function AxScreenHeader({ title, onBack, right, children, safeArea = true
   return (
     <View testID={testID} style={[styles.wrap, { paddingTop: safeArea ? insets.top : 0 }, children ? styles.withChildren : null]}>
       <View style={styles.row}>
-        <View testID={`${testID}-left`} style={[styles.side, styles.left, { minWidth: side }]} onLayout={measure}>
-          <Pressable
-            testID={`${testID}-back`}
-            onPress={back}
-            accessibilityRole="button"
-            accessibilityLabel={label}
-            hitSlop={axSpacing.sm}
-            style={styles.back}
-          >
-            <ChevronLeft size={AX_SCREEN_HEADER.chevron} color={c.textMuted} strokeWidth={2} />
-            <Text style={[axTypography.label, { color: c.textMuted }]}>{label}</Text>
-          </Pressable>
+        <View testID={`${testID}-left`} style={[styles.side, styles.left, { minWidth: side }]}>
+          <View testID={`${testID}-left-content`} onLayout={measure}>
+            <Pressable
+              testID={`${testID}-back`}
+              onPress={back}
+              accessibilityRole="button"
+              accessibilityLabel={label}
+              hitSlop={axSpacing.sm}
+              style={styles.back}
+            >
+              <ChevronLeft size={AX_SCREEN_HEADER.chevron} color={c.textMuted} strokeWidth={2} />
+              <Text style={[axTypography.label, { color: c.textMuted }]}>{label}</Text>
+            </Pressable>
+          </View>
         </View>
         <Text
           testID={`${testID}-title`}
           accessibilityRole="header"
           numberOfLines={1}
           ellipsizeMode="tail"
-          style={[axTypography.titleM, styles.title, { color: c.text }]}
+          style={[axTypography.titleM, styles.title, { lineHeight: axAccentSafeLineHeight.titleM, color: c.text }]}
         >
           {title}
         </Text>
-        <View testID={`${testID}-right`} style={[styles.side, styles.right, { minWidth: side }]} onLayout={measure}>
-          {right}
+        <View testID={`${testID}-right`} style={[styles.side, styles.right, { minWidth: side }]}>
+          {right ? (
+            <View testID={`${testID}-right-content`} style={styles.rightContent} onLayout={measure}>
+              {right}
+            </View>
+          ) : null}
         </View>
       </View>
       {children}
@@ -85,6 +92,7 @@ const styles = StyleSheet.create({
   side: { flexGrow: 1, flexShrink: 0, flexBasis: 0, flexDirection: 'row', alignItems: 'center' },
   left: { justifyContent: 'flex-start' },
   right: { justifyContent: 'flex-end', gap: axSpacing.xs },
+  rightContent: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
   back: {
     minWidth: AX_SCREEN_HEADER.minTouch,
     minHeight: AX_SCREEN_HEADER.minTouch,

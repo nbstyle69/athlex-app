@@ -39,9 +39,9 @@ const ZONES: Array<{
 }> = [
   { pct: 50,  zone: 'Récupération',  reps: '20+ reps', color: '#60A5FA', bg: '#1E3A5F' },
   { pct: 55,  zone: 'Endurance',     reps: '16–20 reps', color: '#60A5FA', bg: '#1E3A5F' },
-  { pct: 60,  zone: 'Endurance',     reps: '12–16 reps', color: '#34D399', bg: '#1A3D2E' },
-  { pct: 65,  zone: 'Hypertrophie',  reps: '10–12 reps', color: '#34D399', bg: '#1A3D2E' },
-  { pct: 70,  zone: 'Hypertrophie',  reps: '8–10 reps',  color: '#34D399', bg: '#1A3D2E' },
+  { pct: 60,  zone: 'Endurance',     reps: '12–16 reps', color: '#4ADE80', bg: '#1C2023' },
+  { pct: 65,  zone: 'Hypertrophie',  reps: '10–12 reps', color: '#4ADE80', bg: '#1C2023' },
+  { pct: 70,  zone: 'Hypertrophie',  reps: '8–10 reps',  color: '#4ADE80', bg: '#1C2023' },
   { pct: 75,  zone: 'Hypertrophie',  reps: '6–8 reps',   color: '#FBBF24', bg: '#3D2E0F' },
   { pct: 80,  zone: 'Force',         reps: '4–6 reps',   color: '#FBBF24', bg: '#3D2E0F' },
   { pct: 85,  zone: 'Force',         reps: '3–5 reps',   color: '#F97316', bg: '#3D1A0A' },

@@ -28,9 +28,9 @@ interface ChangelogEntry {
 }
 
 const TYPE_META: Record<string, { icon: LucideIcon; label: string; color: string }> = {
-  feature: { icon: Sparkles,  label: 'Nouveauté', color: '#10B981' },
+  feature: { icon: Sparkles,  label: 'Nouveauté', color: '#4ADE80' },
   fix:     { icon: Bug,       label: 'Correction', color: '#EF4444' },
-  update:  { icon: RefreshCw, label: 'Mise à jour', color: '#3B82F6' },
+  update:  { icon: RefreshCw, label: 'Mise à jour', color: '#60A5FA' },
 };
 
 export default function ChangelogScreen() {

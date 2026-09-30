@@ -21,7 +21,7 @@ import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import ReportMenu from '../../components/ReportMenu';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
-import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { axAccentSafeLineHeight, axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { levelInk } from '../home/homeLevelColor';
 
 const TROPHY_ICONS: Record<string, LucideIcon> = {
@@ -335,7 +335,7 @@ function createStyles(theme: AppTheme) {
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   content: { padding: axSpacing.lg, gap: 14, paddingBottom: 120 },
   heroCard: { padding: 24, alignItems: 'center', gap: 8 },
-  username: { ...axTypography.titleXL, color: c.text, textAlign: 'center', alignSelf: 'stretch' },
+  username: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text, textAlign: 'center', alignSelf: 'stretch' },
   levelPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: axRadius.badge, borderWidth: 1,
     paddingHorizontal: 12, paddingVertical: 4,

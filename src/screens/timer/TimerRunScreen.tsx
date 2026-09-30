@@ -2594,12 +2594,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.08)',
   },
-  newHeaderType: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#10b981',
-    letterSpacing: 1.5,
-  },
   newHeaderTotal: {
     fontSize: 13,
     fontWeight: '700',
@@ -2641,26 +2635,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
   },
-  phaseZoneRoundText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#10b981',
-    letterSpacing: 1,
-  },
   statsZone: {
     backgroundColor: 'transparent',
     paddingVertical: 24,
     paddingHorizontal: 20,
-  },
-  newRoundRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: 'rgba(16,185,129,0.08)',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(16,185,129,0.2)',
   },
   newRoundBox: {
     alignItems: 'center',

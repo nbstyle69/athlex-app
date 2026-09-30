@@ -22,7 +22,7 @@ import EmptyState from '../../components/EmptyState';
 import { AxButton, AxCard, AxIconButton, AxStatusDot, AxTag, withAlpha } from '../../components/ax';
 import { hitSlopFor } from '../../components/ax/color';
 import ReservationWeekPicker from './ReservationWeekPicker';
-import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { axAccentSafeLineHeight, axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 
 interface ClassSchedule {
   id: string;
@@ -639,7 +639,7 @@ function createStyles(t: AppTheme) {
     emptySubtitle:      { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
 
     header:             { paddingHorizontal: axSpacing.lg, paddingTop: 56, paddingBottom: axSpacing.md },
-    headerTitle:        { ...axTypography.titleXL, color: c.text },
+    headerTitle:        { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text },
     headerSub:          { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2 },
 
     suspendedBanner: {
