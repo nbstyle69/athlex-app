@@ -1,14 +1,15 @@
-import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, Alert, Modal, Linking, ActivityIndicator,
+  TextInput, Alert, Modal, Linking,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import {
   Youtube, Clock, Zap, CheckCircle,
-  AlertTriangle, Play, FileText, Info,
+  AlertTriangle, Play, FileText, Info, Check,
 } from 'lucide-react-native';
+import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxButton, AxCard, AxTag } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -29,13 +30,13 @@ type Route = RouteProp<CompetitionStackParamList, 'TournamentWOD'>;
 const YOUTUBE_REGEX = /(youtube\.com\/(watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)/;
 
 function formatCountdown(ms: number, theme: AppTheme, expiredLabel: string): { text: string; color: string } {
-  if (ms <= 0) return { text: expiredLabel, color: theme.error };
+  if (ms <= 0) return { text: expiredLabel, color: theme.ax.danger };
   const totalSec = Math.floor(ms / 1000);
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
   const text = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-  const color = ms < 3600000 ? theme.error : ms < 7200000 ? theme.warning : theme.success;
+  const color = ms < 3600000 ? theme.ax.danger : ms < 7200000 ? theme.ax.warning : theme.ax.success;
   return { text, color };
 }
 
@@ -48,6 +49,7 @@ export default function TournamentWODScreen() {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const S = createStyles(theme);
+  const c = theme.ax;
   const scrollPadBottom = tabSpace;
 
   const [phase,         setPhase]         = useState<'detail' | 'submit' | 'success'>('detail');
@@ -184,32 +186,29 @@ export default function TournamentWODScreen() {
 
   // ══ PHASE : SUCCESS ═══════════════════════════════════════════════════════
   if (phase === 'success') return (
-    <LinearGradient colors={['#12121A', '#0A0A0F']} style={S.successContainer}>
-      <CheckCircle color={theme.success} size={72} />
+    <View style={S.successContainer}>
+      <GlassBackground />
+      <CheckCircle color={c.success} size={72} />
       <Text style={S.successTitle}>{t('tourWod.successTitle')}</Text>
       <Text style={S.successSub}>{t('tourWod.successSub')}</Text>
-      <View style={S.successCard}>
+      <AxCard style={S.successCard} testID="tourwod-success-card">
         <Text style={S.successLabel}>{t('tourWod.wod')}</Text>
         <Text style={S.successValue}>{wod.title}</Text>
-        <Text style={[S.successLabel, { marginTop: 12 }]}>{t('tourWod.score')}</Text>
-        <Text style={S.successValue}>{formatScoreDisplay(capped ? capReps : canonicalScore, wod.type, repsPerRound, capped)}</Text>
+        <Text style={[S.successLabel, S.successGap]}>{t('tourWod.score')}</Text>
+        <Text style={S.successScore}>{formatScoreDisplay(capped ? capReps : canonicalScore, wod.type, repsPerRound, capped)}</Text>
         {tiebreakValue ? (
           <>
-            <Text style={[S.successLabel, { marginTop: 12 }]}>{t('tourWod.tiebreak')}</Text>
+            <Text style={[S.successLabel, S.successGap]}>{t('tourWod.tiebreak')}</Text>
             <Text style={S.successValue}>{t('tourWod.reps', { n: tiebreakValue })}</Text>
           </>
         ) : null}
         <View style={S.successYtRow}>
-          <Youtube color="#FF0000" size={16} />
+          <Youtube color={c.success} size={16} />
           <Text style={S.successYtText}>{t('tourWod.ytSubmitted')}</Text>
         </View>
-      </View>
-      <TouchableOpacity style={S.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
-        <LinearGradient colors={[theme.accent, theme.secondary ?? theme.accent]} style={S.backBtnInner}>
-          <Text style={S.backBtnText}>{t('tourWod.backToTournament')}</Text>
-        </LinearGradient>
-      </TouchableOpacity>
-    </LinearGradient>
+      </AxCard>
+      <AxButton testID="tourwod-back" fullWidth onPress={() => navigation.goBack()} label={t('tourWod.backToTournament')} />
+    </View>
   );
 
   // ══ PHASE : DETAIL ═════════════════════════════════════════════════════
@@ -217,44 +216,42 @@ export default function TournamentWODScreen() {
     <View style={S.container}>
       <GlassBackground />
       <AxScreenHeader title={wod.title} />
-      <LinearGradient colors={['#12121A', '#0A0A0F']} style={S.header}>
-        <View style={S.headerInfo}>
-          <Text style={S.headerSub}>{tournamentName}</Text>
-          <View style={S.headerBadges}>
-            <View style={S.typeBadge}><Text style={S.typeBadgeText}>{wod.type}</Text></View>
-            <View style={S.durationBadge}>
-              <Clock color="rgba(255,255,255,0.4)" size={12} />
-              <Text style={S.durationText}>{t('tourWod.minutes', { n: wod.duration_minutes })}</Text>
-            </View>
-            <View style={S.scoringBadge}>
-              <Zap color={theme.gold} size={12} />
-              <Text style={S.scoringText}>{wod.scoring}</Text>
-            </View>
+      <View style={S.header} testID="tourwod-header">
+        <Text style={S.headerSub}>{tournamentName}</Text>
+        <View style={S.headerBadges}>
+          <AxTag label={wod.type} tone="accent" testID="tourwod-type" />
+          <View style={S.metaItem}>
+            <Clock color={c.textMuted} size={12} />
+            <Text style={S.durationText}>{t('tourWod.minutes', { n: wod.duration_minutes })}</Text>
+          </View>
+          <View style={S.metaItem}>
+            <Zap color={c.textMuted} size={12} />
+            <Text style={S.scoringText}>{wod.scoring}</Text>
           </View>
         </View>
-      </LinearGradient>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: scrollPadBottom }]}>
         {wod.description ? (
-          <View style={S.card}>
+          <AxCard style={S.card}>
             <Text style={S.cardLabel}>{t('tourWod.description')}</Text>
             <Text style={S.descText}>{wod.description}</Text>
-          </View>
+          </AxCard>
         ) : null}
 
         {Array.isArray(wod.movements) && wod.movements.length > 0 && (
-          <View style={S.card}>
+          <AxCard style={S.card}>
             <Text style={S.cardLabel}>{t('tourWod.movements')}</Text>
             {wod.movements.map((m, i) => (
               <View key={i} style={S.movRow}>
-                <View style={[S.movDot, { backgroundColor: theme.accent }]} />
+                <View style={S.movDot} />
                 <Text style={S.movText}>{m}</Text>
               </View>
             ))}
-          </View>
+          </AxCard>
         )}
 
-        <View style={S.card}>
+        <AxCard style={S.card}>
           <Text style={S.cardLabel}>{t('tourWod.filmingRules')}</Text>
           {[t('tourWod.rule1'),
             t('tourWod.rule2'),
@@ -262,41 +259,37 @@ export default function TournamentWODScreen() {
             t('tourWod.rule4', { h: wod.deadline_hours }),
             t('tourWod.rule5'),
           ].map((r, i) => <Text key={i} style={S.ruleText}>{r}</Text>)}
-        </View>
+        </AxCard>
 
         {existingScore && (
-          <View style={[S.card, { borderColor: `${theme.warning}40` }]}>
+          <AxCard style={[S.card, S.cardWarning]} testID="tourwod-prev-score">
             <Text style={S.cardLabel}>{t('tourWod.prevScore')}</Text>
             <Text style={S.prevScore}>{formatScoreDisplay(existingScore.score_value, wod.type, repsPerRound, existingScore.capped)}</Text>
             {existingScore.video_url ? (
-              <TouchableOpacity style={S.ytPrevBtn} onPress={() => Linking.openURL(existingScore.video_url!)}>
-                <Youtube color="#FF0000" size={16} />
+              <TouchableOpacity style={S.ytPrevBtn} onPress={() => Linking.openURL(existingScore.video_url!)} accessibilityRole="link">
+                <Youtube color={c.danger} size={16} />
                 <Text style={S.ytPrevText}>{t('tourWod.seeSubmittedVideo')}</Text>
               </TouchableOpacity>
             ) : null}
-          </View>
+          </AxCard>
         )}
 
-        <View style={[S.card, { borderColor: `${theme.warning}40`, backgroundColor: `${theme.warning}08` }]}>
+        <AxCard style={[S.card, S.cardWarning]}>
           <View style={S.warningRow}>
-            <AlertTriangle color={theme.warning} size={16} />
+            <AlertTriangle color={c.warning} size={16} />
             <Text style={S.warningText}>
               {t('tourWod.countdownWarning', { h: wod.deadline_hours })}
             </Text>
           </View>
+        </AxCard>
+
+        <View style={S.actions}>
+          <AxButton testID="tourwod-launch-camera" icon={Play} fullWidth onPress={launchTimer} label={t('tourWod.launchWithCamera')} />
+          <AxButton testID="tourwod-submit-manual" icon={FileText} variant="outline" fullWidth
+            onPress={() => { startCountdown(); setPhase('submit'); }} label={t('tourWod.submitScore')} />
         </View>
 
-        <TouchableOpacity style={[S.actionBtn, S.actionBtnInner, { backgroundColor: 'rgba(239,68,68,0.25)', borderColor: 'rgba(239,68,68,0.8)' }]} onPress={launchTimer} activeOpacity={0.85}>
-          <Play color="#fff" size={18} />
-          <Text style={S.actionBtnText}>{t('tourWod.launchWithCamera')}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={[S.actionBtn, S.actionBtnInner]} onPress={() => { startCountdown(); setPhase('submit'); }} activeOpacity={0.85}>
-          <FileText color="#fff" size={18} />
-          <Text style={S.actionBtnText}>{t('tourWod.submitScore')}</Text>
-        </TouchableOpacity>
-
-        <View style={{ height: 40 }} />
+        <View style={S.bottomGap} />
       </ScrollView>
     </View>
   );
@@ -306,20 +299,18 @@ export default function TournamentWODScreen() {
     <View style={S.container}>
       <GlassBackground />
       <AxScreenHeader title={wod.title} onBack={() => setPhase('detail')} />
-      <LinearGradient colors={['#12121A', '#0A0A0F']} style={S.header}>
-        <View style={S.headerInfo}>
-          <Text style={S.headerSub}>{tournamentName}</Text>
-          <View style={[S.countdownRow, { backgroundColor: `${countdown.color}15` }]}>
-            <Clock color={countdown.color} size={14} />
-            <Text style={[S.countdownText, { color: countdown.color }]}>{countdown.text}</Text>
-          </View>
+      <View style={S.header} testID="tourwod-header">
+        <Text style={S.headerSub}>{tournamentName}</Text>
+        <View style={[S.countdownRow, { borderColor: countdown.color }]} testID="tourwod-countdown">
+          <Clock color={countdown.color} size={14} />
+          <Text style={[S.countdownText, { color: countdown.color }]}>{countdown.text}</Text>
         </View>
-      </LinearGradient>
+      </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: scrollPadBottom }]}
         keyboardShouldPersistTaps="handled">
 
-        <View style={S.card}>
+        <AxCard style={S.card}>
           <Text style={S.cardLabel}>
             {wod.type === 'For Time' ? t('tourWod.finalTime') : t('tourWod.finalScore')}
           </Text>
@@ -328,10 +319,12 @@ export default function TournamentWODScreen() {
             <TouchableOpacity
               style={S.cappedRow}
               onPress={() => { setCapped(!capped); setCapReps(''); }}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: capped }}
               activeOpacity={0.8}
             >
               <View style={[S.cappedCheck, capped && S.cappedCheckActive]}>
-                {capped && <Text style={S.cappedCheckMark}>✓</Text>}
+                {capped && <Check color={c.onAccent} size={14} strokeWidth={3} />}
               </View>
               <Text style={S.cappedLabel}>{t('tourWod.cappedLabel')}</Text>
             </TouchableOpacity>
@@ -344,7 +337,7 @@ export default function TournamentWODScreen() {
               onChangeText={v => setCapReps(v.replace(/\D/g, ''))}
               keyboardType="number-pad"
               placeholder={t('tourWod.cappedPlaceholder')}
-              placeholderTextColor={theme.textMuted}
+              placeholderTextColor={c.textMuted}
             />
           ) : (
             <ScoreEntryFields
@@ -356,33 +349,33 @@ export default function TournamentWODScreen() {
               onChange={(canonical, valid) => { setCanonicalScore(canonical); setScoreValid(valid); }}
             />
           )}
-        </View>
+        </AxCard>
 
-        <View style={S.card}>
+        <AxCard style={S.card}>
           <Text style={S.cardLabel}>{t('tourWod.tiebreakLabel')}</Text>
           <Text style={S.cardHint}>
             {t('tourWod.tiebreakHint')}
           </Text>
           <TextInput
-            style={[S.scoreInput, { fontSize: 16 }]}
+            style={S.scoreInput}
             value={tiebreakValue}
             onChangeText={setTiebreakValue}
             placeholder={t('tourWod.phTiebreak')}
-            placeholderTextColor={theme.textMuted}
+            placeholderTextColor={c.textMuted}
             keyboardType="numeric"
           />
-        </View>
+        </AxCard>
 
-        <View style={S.card}>
+        <AxCard style={S.card}>
           <Text style={S.cardLabel}>{t('tourWod.youtubeLabel')}</Text>
           <View style={S.ytRow}>
-            <Youtube color={urlValid ? theme.success : '#FF0000'} size={20} />
+            <Youtube color={urlValid ? c.success : c.danger} size={20} />
             <TextInput
               style={S.ytInput}
               value={youtubeUrl}
               onChangeText={v => { setYoutubeUrl(v); setUrlValid(YOUTUBE_REGEX.test(v)); }}
               placeholder="https://youtube.com/watch?v=..."
-              placeholderTextColor={theme.textMuted}
+              placeholderTextColor={c.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
             />
@@ -390,44 +383,41 @@ export default function TournamentWODScreen() {
           {youtubeUrl.length > 0 && !urlValid && (
             <Text style={S.urlError}>{t('tourWod.urlError')}</Text>
           )}
-          <TouchableOpacity onPress={() => setShowYtHelp(true)} style={S.ytHelpLink}>
-            <Info color={theme.accent} size={13} />
+          <TouchableOpacity onPress={() => setShowYtHelp(true)} style={S.ytHelpLink} accessibilityRole="button">
+            <Info color={c.accentText} size={13} />
             <Text style={S.ytHelpText}>{t('tourWod.howToUpload')}</Text>
           </TouchableOpacity>
-        </View>
+        </AxCard>
 
-        <View style={S.card}>
+        <AxCard style={S.card}>
           <Text style={S.cardLabel}>{t('tourWod.notesLabel')}</Text>
           <TextInput
-            style={[S.scoreInput, { height: 80, textAlignVertical: 'top', fontSize: 13 }]}
+            style={[S.scoreInput, S.notesInput]}
             value={notes}
             onChangeText={setNotes}
             placeholder={t('tourWod.notesPlaceholder')}
-            placeholderTextColor={theme.textMuted}
+            placeholderTextColor={c.textMuted}
             multiline
           />
-        </View>
+        </AxCard>
 
-        <View style={[S.card, { backgroundColor: `${theme.warning}08`, borderColor: `${theme.warning}30` }]}>
+        <AxCard style={[S.card, S.cardWarning]}>
           <Text style={S.cardLabel}>{t('tourWod.honorLabel')}</Text>
           <Text style={S.honorText}>
             {t('tourWod.honorText')}
           </Text>
-        </View>
+        </AxCard>
 
-        <TouchableOpacity
-          style={[S.actionBtn, S.actionBtnInner, (submitting || remainingMs <= 0) && { opacity: 0.5 }]}
+        <AxButton
+          testID="tourwod-submit"
+          fullWidth
           onPress={handleSubmit}
+          loading={submitting}
           disabled={submitting || remainingMs <= 0}
-          activeOpacity={0.85}>
-          {submitting
-            ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={S.actionBtnText}>
-                {remainingMs <= 0 ? t('tourWod.deadlineExpired') : t('tourWod.submitScoreCta')}
-              </Text>}
-        </TouchableOpacity>
+          label={remainingMs <= 0 ? t('tourWod.deadlineExpired') : t('tourWod.submitScoreCta')}
+        />
 
-        <View style={{ height: 40 }} />
+        <View style={S.bottomGap} />
       </ScrollView>
 
       {/* YouTube help modal */}
@@ -437,12 +427,9 @@ export default function TournamentWODScreen() {
             <Text style={S.modalTitle}>{t('tourWod.uploadModalTitle')}</Text>
             {(t('tourWod.uploadSteps', { returnObjects: true }) as string[])
               .map((step, i) => <Text key={i} style={S.modalStep}>{step}</Text>)}
-            <TouchableOpacity style={S.ytStudioBtn}
-              onPress={() => Linking.openURL('https://studio.youtube.com')}>
-              <Youtube color="#FF0000" size={18} />
-              <Text style={S.ytStudioText}>{t('tourWod.openYtStudio')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={S.modalClose} onPress={() => setShowYtHelp(false)}>
+            <AxButton variant="outline" icon={Youtube} fullWidth
+              onPress={() => Linking.openURL('https://studio.youtube.com')} label={t('tourWod.openYtStudio')} />
+            <TouchableOpacity style={S.modalClose} onPress={() => setShowYtHelp(false)} accessibilityRole="button">
               <Text style={S.modalCloseTxt}>{t('tourWod.close')}</Text>
             </TouchableOpacity>
           </View>
@@ -452,86 +439,70 @@ export default function TournamentWODScreen() {
   );
 }
 
-function createStyles(theme: AppTheme) { return StyleSheet.create({
+function createStyles(theme: AppTheme) {
+  const c = theme.ax;
+  return StyleSheet.create({
   container:   { flex: 1, backgroundColor: 'transparent' },
-  header:      { paddingTop: 16, paddingHorizontal: 16, paddingBottom: 20, flexDirection: 'row', gap: 12 },
-  back:        { paddingTop: 4 },
-  headerInfo:  { flex: 1 },
-  headerSub:   { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.4)', letterSpacing: 1, marginBottom: 4 },
-  headerTitle: { fontSize: 20, fontWeight: '900', color: '#fff', marginBottom: 10 },
-  headerBadges:{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  typeBadge:     { backgroundColor: `${theme.accent}20`, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  typeBadgeText: { fontSize: 11, fontWeight: '800', color: theme.accent },
-  durationBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  durationText:  { fontSize: 11, color: 'rgba(255,255,255,0.5)' },
-  scoringBadge:  { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: `${theme.gold}15`, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-  scoringText:   { fontSize: 11, color: theme.gold, fontWeight: '700' },
-  countdownRow:  { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 7, marginTop: 4 },
-  countdownText: { fontSize: 16, fontWeight: '900', letterSpacing: 2 },
-  content: { padding: 16, paddingTop: 14 },
-  card:      { backgroundColor: theme.card, borderRadius: 14, padding: 16, borderWidth: 1, borderColor: theme.cardBorder, gap: 10, marginBottom: 14 },
-  cardLabel: { fontSize: 10, fontWeight: '800', color: theme.textMuted, letterSpacing: 1.5 },
-  cappedRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12, marginBottom: 4 },
+  header:      { paddingTop: axSpacing.sm, paddingHorizontal: axSpacing.lg, paddingBottom: axSpacing.lg, gap: axSpacing.sm },
+  headerSub:   { ...axTypography.overline, color: c.textMuted },
+  headerBadges:{ flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, flexWrap: 'wrap' },
+  metaItem:      { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, flexShrink: 1 },
+  durationText:  { ...axTypography.caption, color: c.textMuted },
+  scoringText:   { ...axTypography.caption, color: c.text, flexShrink: 1 },
+  countdownRow:  { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: axSpacing.sm, borderRadius: axRadius.control, borderWidth: 1, paddingHorizontal: axSpacing.md, paddingVertical: 7 },
+  countdownText: { ...axTypography.numberM },
+  content: { padding: axSpacing.lg, paddingTop: axSpacing.md },
+  card:      { marginBottom: axSpacing.md },
+  cardWarning: { borderColor: c.warning },
+  cardLabel: { ...axTypography.overline, color: c.textMuted },
+  cappedRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, marginTop: axSpacing.sm },
   cappedCheck: {
     width: 22, height: 22, borderRadius: 6, borderWidth: 2,
-    borderColor: theme.border, alignItems: 'center', justifyContent: 'center',
+    borderColor: c.fieldBorder, alignItems: 'center', justifyContent: 'center',
   },
-  cappedCheckActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-  cappedCheckMark: { color: '#fff', fontSize: 14, fontWeight: '700' },
-  cappedLabel: { fontSize: 14, fontWeight: '600', color: theme.text },
+  cappedCheckActive: { backgroundColor: c.accent, borderColor: c.accent },
+  cappedLabel: { ...axTypography.body, color: c.text, flexShrink: 1 },
   cappedInput: {
-    marginTop: 10, backgroundColor: theme.surface, borderRadius: 12,
-    borderWidth: 1, borderColor: theme.border, paddingHorizontal: 14,
-    paddingVertical: 12, color: theme.text, fontSize: 16, fontWeight: '700',
+    marginTop: axSpacing.sm, backgroundColor: c.field, borderRadius: axRadius.control,
+    borderWidth: 1, borderColor: c.fieldBorder, paddingHorizontal: axSpacing.lg,
+    paddingVertical: axSpacing.md, color: c.text, ...axTypography.label,
   },
-  cardHint:  { fontSize: 12, color: theme.textMuted, lineHeight: 18 },
-  descText:  { fontSize: 14, color: theme.textSecondary, lineHeight: 22 },
-  movRow:    { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  movDot:    { width: 7, height: 7, borderRadius: 4, marginTop: 7 },
-  movText:   { fontSize: 14, color: theme.textSecondary, flex: 1, lineHeight: 22 },
-  ruleText:  { fontSize: 13, color: theme.textSecondary, lineHeight: 22 },
-  warningRow:  { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  warningText: { fontSize: 13, color: theme.warning, lineHeight: 20, flex: 1 },
-  prevScore:  { fontSize: 22, fontWeight: '900', color: theme.text },
-  ytPrevBtn:  { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 },
-  ytPrevText: { fontSize: 13, color: '#FF0000', fontWeight: '600' },
-  scoreInput: { backgroundColor: theme.surface, borderRadius: 12, padding: 14, fontSize: 18, fontWeight: '900', color: theme.text, borderWidth: 1, borderColor: theme.border },
-  modeRow:   { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  modeBtn:   { flex: 1, paddingVertical: 9, borderRadius: 10, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, alignItems: 'center' },
-  modeBtnActive: { borderColor: theme.accent, backgroundColor: `${theme.accent}18` },
-  modeBtnText:   { fontSize: 13, fontWeight: '700', color: theme.textMuted },
-  modeBtnTextActive: { color: theme.accent },
-  repsRow:   { flexDirection: 'row', gap: 10 },
-  repsCol:   { flex: 1 },
-  repsFieldLabel: { fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.5 },
-  recapPerRound:  { fontSize: 12, color: theme.textMuted, marginTop: 10, lineHeight: 17 },
-  recapTotal:     { fontSize: 16, fontWeight: '900', color: theme.accent, marginTop: 6 },
-  ytRow:      { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: theme.surface, borderRadius: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: theme.border },
-  ytInput:    { flex: 1, padding: 14, fontSize: 13, color: theme.text },
-  urlError:   { fontSize: 12, color: theme.error },
-  ytHelpLink: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingTop: 4 },
-  ytHelpText: { fontSize: 12, color: theme.accent, fontWeight: '600' },
-  honorText:  { fontSize: 13, color: theme.textSecondary, lineHeight: 21 },
-  actionBtn:      { marginBottom: 12 },
-  actionBtnInner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, borderRadius: 16, paddingVertical: 18, backgroundColor: theme.ctaBg, borderWidth: 2, borderColor: theme.ctaBorder },
-  actionBtnText:  { color: '#fff', fontSize: 15, fontWeight: '900' },
-  successContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 16 },
-  successTitle:     { fontSize: 26, fontWeight: '900', color: '#fff' },
-  successSub:       { fontSize: 14, color: 'rgba(255,255,255,0.5)', textAlign: 'center' },
-  successCard:      { width: '100%', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 16, padding: 20, gap: 4, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', marginTop: 8 },
-  successLabel:     { fontSize: 10, fontWeight: '800', color: 'rgba(255,255,255,0.35)', letterSpacing: 1.5 },
-  successValue:     { fontSize: 18, fontWeight: '900', color: '#fff' },
-  successYtRow:     { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 },
-  successYtText:    { fontSize: 13, color: theme.success, fontWeight: '700' },
-  backBtn:          { width: '100%', marginTop: 8 },
-  backBtnInner:     { borderRadius: 16, paddingVertical: 18, alignItems: 'center' },
-  backBtnText:      { color: '#fff', fontSize: 15, fontWeight: '900', letterSpacing: 1 },
+  cardHint:  { ...axTypography.bodySmall, color: c.textMuted },
+  descText:  { ...axTypography.body, color: c.text },
+  movRow:    { flexDirection: 'row', alignItems: 'flex-start', gap: axSpacing.md },
+  movDot:    { width: 7, height: 7, borderRadius: 4, marginTop: 7, backgroundColor: c.accentText },
+  movText:   { ...axTypography.body, color: c.text, flex: 1 },
+  ruleText:  { ...axTypography.bodySmall, color: c.text },
+  warningRow:  { flexDirection: 'row', alignItems: 'flex-start', gap: axSpacing.md },
+  warningText: { ...axTypography.bodySmall, color: c.warning, flex: 1 },
+  prevScore:  { ...axTypography.numberM, color: c.text },
+  ytPrevBtn:  { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, minHeight: 44 },
+  ytPrevText: { ...axTypography.label, color: c.danger },
+  scoreInput: { backgroundColor: c.field, borderRadius: axRadius.control, padding: axSpacing.md, ...axTypography.body, color: c.text, borderWidth: 1, borderColor: c.fieldBorder },
+  notesInput: { height: 80, textAlignVertical: 'top' },
+  ytRow:      { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, backgroundColor: c.field, borderRadius: axRadius.control, paddingHorizontal: axSpacing.md, borderWidth: 1, borderColor: c.fieldBorder },
+  ytInput:    { flex: 1, minWidth: 0, paddingVertical: axSpacing.md, ...axTypography.bodySmall, color: c.text },
+  urlError:   { ...axTypography.caption, color: c.danger },
+  ytHelpLink: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
+  ytHelpText: { ...axTypography.label, color: c.accentText },
+  honorText:  { ...axTypography.bodySmall, color: c.text },
+  actions:        { gap: axSpacing.md },
+  bottomGap:      { height: 40 },
+  successContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: axSpacing.xl, gap: axSpacing.lg },
+  successTitle:     { ...axTypography.titleL, color: c.text, textAlign: 'center' },
+  successSub:       { ...axTypography.body, color: c.textMuted, textAlign: 'center' },
+  successCard:      { alignSelf: 'stretch', gap: axSpacing.xs },
+  successGap:       { marginTop: axSpacing.md },
+  successLabel:     { ...axTypography.overline, color: c.textMuted },
+  successValue:     { ...axTypography.label, color: c.text },
+  successScore:     { ...axTypography.numberM, color: c.text },
+  successYtRow:     { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, marginTop: axSpacing.md },
+  successYtText:    { ...axTypography.label, color: c.success, flexShrink: 1 },
   modalOverlay:  { flex: 1, backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'flex-end' },
-  modalSheet:    { backgroundColor: theme.card, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, gap: 12, borderWidth: 1, borderColor: theme.cardBorder },
-  modalTitle:    { fontSize: 17, fontWeight: '900', color: theme.text, marginBottom: 4 },
-  modalStep:     { fontSize: 14, color: theme.textSecondary, lineHeight: 24 },
-  ytStudioBtn:   { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: `${theme.error}15`, borderRadius: 12, padding: 14, marginTop: 4 },
-  ytStudioText:  { fontSize: 14, fontWeight: '800', color: '#FF0000' },
-  modalClose:    { alignItems: 'center', padding: 14 },
-  modalCloseTxt: { fontSize: 14, color: theme.textMuted, fontWeight: '700' },
-}); }
+  modalSheet:    { backgroundColor: c.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: axSpacing.xl, gap: axSpacing.md, borderWidth: 1, borderColor: c.border },
+  modalTitle:    { ...axTypography.titleM, color: c.text },
+  modalStep:     { ...axTypography.body, color: c.text },
+  modalClose:    { alignItems: 'center', justifyContent: 'center', minHeight: 44 },
+  modalCloseTxt: { ...axTypography.label, color: c.textMuted },
+  });
+}
