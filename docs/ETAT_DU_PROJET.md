@@ -220,6 +220,26 @@ Supabase/Resend.
 - Tests : `r9a.rn.test.tsx` (54, instantané avant / après sur 9 variantes `r9aStructureBefore.json`), isolement R1
   élargi aux fichiers du lot, `npx jest` 1976, `npm run test:rn` 664, `tsc` vert ; 25 mutations tuées.
 
+**Refonte R8b : mini-tournois, inter-box et compétition physique au nouveau design (app seule, aucune migration, apparence seule).**
+- `DailyTournamentsScreen`, `DailyTournamentDetailScreen`, `InterCompetitionListScreen`, `InterCompetitionDetailScreen`,
+  `InterScoreSubmitScreen`, `InterTeamScreen`, `PhysicalCompetitionScreen` : cartes `AxCard`, statuts `AxStatusDot`,
+  formats / niveaux `AxTag`, métadonnées en `caption`, formulaires `AxTextField` / `AxChip` / `AxSwitch` (CAP), actions
+  `AxButton` (une seule accent par écran et par fenêtre) ; podiums et états vides en icônes Lucide (plus d'emoji).
+  Requêtes, payloads, validations, navigation et ordre des blocs inchangés.
+- Tests : `r8b.rn.test.tsx` (37 instantanés avant / après pris sur master + emoji, accent, couleurs et typographies dans
+  les deux thèmes, navigation et callbacks, textes longs), isolement R1 élargi aux 7 écrans du lot ; `npx jest` 1976,
+  `npm run test:rn` 672, `tsc` vert ; 19 mutations tuées.
+
+**Refonte R12 : profil et écrans sociaux au nouveau design (app seule, aucune migration, apparence seule).**
+- `ProfileScreen` : en-tête (photo ou initiale, pseudo `titleXL`, box `bodySmall`, ELO `numberM`, palier `levelInk` AA),
+  onglets Compte / PR / Stats / Badges en `AxChip`, sections en `AxCard`, thème en `AxSwitch`, « Supprimer mon compte »
+  en `AxButton` stop, PR et stats en `numberM`, badges en grille de cartes, icônes Lucide à la place des emoji.
+- Amis, Profil public, Utilisateurs bloqués, Notifications, Nouveautés : lignes et blocs en `AxCard`, onglets / périodes /
+  heures en `AxChip`, interrupteurs en `AxSwitch`, couleurs de niveau et de type rendues lisibles (`readableInk`).
+- Thème, langue, code de box, abonnement, déconnexion, suppression (deux confirmations), requêtes et navigation inchangés.
+- Tests : `r12.rn.test.tsx` (51, dont ordre des blocs sur 22 états figés sur master), isolement R1 élargi au seul
+  `ProfileScreen` ; `npx jest` 1976, `npm run test:rn` 536, `tsc` vert ; 28 mutations tuées.
+
 **Refonte R13 : annuaire, programmes et partenaires au nouveau design (app seule, aucune migration, apparence seule).**
 - `BoxDirectoryScreen` (recherche en `AxTextField`, sports en `AxChip`, boxs en `AxCard`, nom en `titleM`, ville et infos
   en `bodySmall` `textMuted`, sports en `AxTag`), `BoxDirectoryMapScreen` (en-tête flottant et fiche basse `AxCard`

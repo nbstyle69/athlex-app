@@ -1,12 +1,13 @@
 import i18n from '../../i18n';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import { AxIconButton } from '../../components/ax/AxIconButton';
+import { AxButton, AxCard, AxChip } from '../../components/ax';
 import React, { useEffect, useState, useMemo } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Share, Dimensions,
+  View, Text, ScrollView, StyleSheet, Alert, ActivityIndicator, Share, Dimensions,
 } from 'react-native';
 import Svg, { Path, Circle, Defs, LinearGradient, Stop, Line, Text as SvgText } from 'react-native-svg';
-import { UserPlus, Check, Clock, Trophy, Zap, TrendingUp, Share2, MapPin } from 'lucide-react-native';
+import { UserPlus, Check, Clock, Trophy, Zap, TrendingUp, Share2, MapPin, Flame, Users, Dumbbell, Medal, Award, type LucideIcon } from 'lucide-react-native';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -20,6 +21,17 @@ import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import ReportMenu from '../../components/ReportMenu';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { levelInk } from '../home/homeLevelColor';
+
+const TROPHY_ICONS: Record<string, LucideIcon> = {
+  activity: Flame,
+  tournament: Trophy,
+  social: Users,
+  wod: Dumbbell,
+  elo: TrendingUp,
+  Classement: Medal,
+};
 
 type Props = {
   navigation: NativeStackNavigationProp<HomeStackParamList, 'PublicProfile'>;
@@ -176,7 +188,7 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
 
   if (loading) return (
     <View style={S.loadingContainer}>
-      <ActivityIndicator color={theme.accent} size="large" />
+      <ActivityIndicator color={theme.ax.accentText} size="large" />
     </View>
   );
 
@@ -188,35 +200,28 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
 
   const level = profile.level ?? 'scaled';
   const levelColor = LevelColors[level] ?? theme.accent;
+  const levelText = levelInk(level, theme.ax);
   const winRate = profile.total_matches ? Math.round((profile.wins / profile.total_matches) * 100) : 0;
 
   function FriendButton() {
     if (me?.id === userId) return null;
     if (friendStatus === 'friends') return (
-      <View style={S.friendsBadge}>
-        <Check color={theme.success} size={14} />
+      <View style={S.friendsBadge} testID="public-friends">
+        <Check color={theme.ax.accentText} size={14} />
         <Text style={S.friendsBadgeText}>Amis</Text>
       </View>
     );
     if (friendStatus === 'pending_sent') return (
-      <View style={S.pendingBadge}>
-        <Clock color={theme.textMuted} size={14} />
+      <View style={S.pendingBadge} testID="public-pending">
+        <Clock color={theme.ax.textMuted} size={14} />
         <Text style={S.pendingBadgeText}>Demande envoyée</Text>
       </View>
     );
     if (friendStatus === 'pending_received') return (
-      <TouchableOpacity style={S.acceptBtn} onPress={handleAcceptFriend} disabled={actionLoading}>
-        {actionLoading ? <ActivityIndicator color="#fff" size="small" /> : (
-          <><Check color="#fff" size={16} /><Text style={S.acceptBtnText}>Accepter</Text></>
-        )}
-      </TouchableOpacity>
+      <AxButton label="Accepter" icon={Check} onPress={handleAcceptFriend} loading={actionLoading} testID="public-accept" />
     );
     return (
-      <TouchableOpacity style={S.addFriendBtn} onPress={handleAddFriend} disabled={actionLoading}>
-        {actionLoading ? <ActivityIndicator color="#fff" size="small" /> : (
-          <><UserPlus color="#fff" size={16} /><Text style={S.addFriendBtnText}>Demander en ami</Text></>
-        )}
-      </TouchableOpacity>
+      <AxButton label="Demander en ami" icon={UserPlus} onPress={handleAddFriend} loading={actionLoading} testID="public-add-friend" />
     );
   }
 
@@ -235,7 +240,7 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
                 reportedUserId={route.params.userId}
                 onActionDone={() => navigation.goBack()}
                 size={20}
-                color={theme.text}
+                color={theme.ax.text}
               />
             </View>
           )}
@@ -245,7 +250,7 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {/* Avatar + name */}
-        <View style={S.heroCard}>
+        <AxCard style={S.heroCard} testID="public-hero">
           <UserAvatar
             uri={profile.avatar_url}
             name={profile.username ?? '?'}
@@ -253,58 +258,61 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
             borderRadius={40}
             borderWidth={3}
             borderColor={levelColor}
-            backgroundColor={theme.surface}
-            textColor={theme.text}
+            backgroundColor={theme.ax.field}
+            textColor={theme.ax.text}
             fontSize={32}
           />
-          <Text style={S.username}>{profile.username}</Text>
-          <View style={[S.levelPill, { backgroundColor: `${levelColor}20` }]}>
-            <View style={[S.levelDot, { backgroundColor: levelColor }]} />
-            <Text style={[S.levelText, { color: levelColor }]}>{level.toUpperCase()}</Text>
+          <Text style={S.username} numberOfLines={2} testID="public-username">{profile.username}</Text>
+          <View style={[S.levelPill, { borderColor: levelText }]} testID="public-level">
+            <View style={[S.levelDot, { backgroundColor: levelText }]} />
+            <Text style={[S.levelText, { color: levelText }]}>{level.toUpperCase()}</Text>
           </View>
           {profile.bio ? <Text style={S.bio}>{profile.bio}</Text> : null}
           <FriendButton />
-        </View>
+        </AxCard>
 
         {/* Featured badges trophy case */}
         {featuredBadges.length > 0 && (
-          <View style={S.trophyCase}>
+          <AxCard style={S.trophyCase} testID="public-trophies">
             <Text style={S.trophyCaseTitle}>Trophées</Text>
             <View style={S.trophyRow}>
-              {featuredBadges.map(b => (
-                <View key={b.badge_key} style={S.trophyCard}>
-                  <Text style={S.trophyIcon}>{b.icon}</Text>
-                  <Text style={S.trophyName} numberOfLines={2}>{b.title}</Text>
-                </View>
-              ))}
+              {featuredBadges.map(b => {
+                const Icon = TROPHY_ICONS[b.category] ?? Award;
+                return (
+                  <View key={b.badge_key} style={S.trophyCard}>
+                    <Icon color={theme.ax.accentText} size={28} />
+                    <Text style={S.trophyName} numberOfLines={2}>{b.title}</Text>
+                  </View>
+                );
+              })}
             </View>
-          </View>
+          </AxCard>
         )}
 
         {/* Stats */}
         <View style={S.statsRow}>
           {[
-            { icon: Zap, color: theme.accent, value: profile.elo, label: 'ELO' },
-            { icon: Trophy, color: theme.gold, value: profile.wins, label: 'Victoires' },
-            { icon: TrendingUp, color: theme.success, value: `${winRate}%`, label: 'Win Rate' },
-          ].map(({ icon: Icon, color, value, label }) => (
-            <View key={label} style={S.statCard}>
+            { icon: Zap, color: theme.ax.accentText, value: profile.elo, label: 'ELO' },
+            { icon: Trophy, color: theme.ax.textMuted, value: profile.wins, label: 'Victoires' },
+            { icon: TrendingUp, color: theme.ax.textMuted, value: `${winRate}%`, label: 'Win Rate' },
+          ].map(({ icon: Icon, color, value, label }, i) => (
+            <AxCard key={label} style={S.statCard} testID={`public-stat-${i}`}>
               <Icon color={color} size={16} />
-              <Text style={S.statValue}>{value}</Text>
-              <Text style={S.statLabel}>{label}</Text>
-            </View>
+              <Text style={S.statValue} numberOfLines={1} testID={`public-stat-${i}-value`}>{value}</Text>
+              <Text style={S.statLabel} numberOfLines={1}>{label}</Text>
+            </AxCard>
           ))}
         </View>
 
         {/* Box info */}
         {boxInfo && (
-          <View style={S.boxCard}>
-            <MapPin color={theme.accent} size={18} />
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <Text style={S.boxName}>{boxInfo.name}</Text>
-              {boxInfo.city ? <Text style={S.boxCity}>{boxInfo.city}</Text> : null}
+          <AxCard style={S.boxCard} testID="public-box">
+            <MapPin color={theme.ax.accentText} size={18} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={S.boxName} numberOfLines={2}>{boxInfo.name}</Text>
+              {boxInfo.city ? <Text style={S.boxCity} numberOfLines={1}>{boxInfo.city}</Text> : null}
             </View>
-          </View>
+          </AxCard>
         )}
 
         {/* ELO Chart */}
@@ -318,85 +326,51 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
   );
 }
 
-function createStyles(theme: AppTheme) { return StyleSheet.create({
+function createStyles(theme: AppTheme) {
+  const c = theme.ax;
+  return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.background },
-  notFound: { fontSize: 15, color: theme.textMuted },
-  header: {
-    flexDirection: 'row', alignItems: 'center', paddingTop: 56,
-    paddingHorizontal: 16, paddingBottom: 16,
-    backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
-  },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: c.background },
+  notFound: { ...axTypography.body, color: c.textMuted },
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { flex: 1, textAlign: 'center', fontSize: 17, fontWeight: '900', color: theme.text },
-  content: { padding: 16, gap: 14, paddingBottom: 120 },
-  heroCard: {
-    backgroundColor: theme.card, borderRadius: 18,
-    borderWidth: 1, borderColor: theme.border,
-    padding: 24, alignItems: 'center', gap: 8,
+  content: { padding: axSpacing.lg, gap: 14, paddingBottom: 120 },
+  heroCard: { padding: 24, alignItems: 'center', gap: 8 },
+  username: { ...axTypography.titleXL, color: c.text, textAlign: 'center', alignSelf: 'stretch' },
+  levelPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: axRadius.badge, borderWidth: 1,
+    paddingHorizontal: 12, paddingVertical: 4,
   },
-  avatarCircle: {
-    width: 80, height: 80, borderRadius: 40,
-    backgroundColor: theme.surface, borderWidth: 3,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  avatarLetter: { fontSize: 32, fontWeight: '900', color: theme.text },
-  username: { fontSize: 22, fontWeight: '900', color: theme.text },
-  levelPill: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 4 },
   levelDot: { width: 6, height: 6, borderRadius: 3 },
-  levelText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.8 },
-  bio: { fontSize: 13, color: theme.textSecondary, textAlign: 'center', lineHeight: 18, maxWidth: 240 },
-  addFriendBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: theme.accent, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10, marginTop: 4,
-  },
-  addFriendBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  acceptBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: theme.success, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10, marginTop: 4,
-  },
-  acceptBtnText: { color: '#fff', fontSize: 14, fontWeight: '800' },
+  levelText: { ...axTypography.labelSmall, letterSpacing: 0.8 },
+  bio: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center', maxWidth: 240 },
   friendsBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: `${theme.success}15`, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
-    borderWidth: 1, borderColor: `${theme.success}40`, marginTop: 4,
+    borderRadius: axRadius.control, paddingHorizontal: 14, paddingVertical: 8,
+    borderWidth: 1, borderColor: c.accentText, marginTop: 4,
   },
-  friendsBadgeText: { color: theme.success, fontSize: 13, fontWeight: '700' },
+  friendsBadgeText: { ...axTypography.label, color: c.accentText },
   pendingBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: theme.surface, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8,
-    borderWidth: 1, borderColor: theme.border, marginTop: 4,
+    borderRadius: axRadius.control, paddingHorizontal: 14, paddingVertical: 8,
+    borderWidth: 1, borderColor: c.border, marginTop: 4,
   },
-  pendingBadgeText: { color: theme.textMuted, fontSize: 13, fontWeight: '600' },
+  pendingBadgeText: { ...axTypography.label, color: c.textMuted },
   statsRow: { flexDirection: 'row', gap: 10 },
-  statCard: {
-    flex: 1, backgroundColor: theme.card, borderRadius: 14,
-    borderWidth: 1, borderColor: theme.border,
-    paddingVertical: 14, alignItems: 'center', gap: 4,
-  },
-  statValue: { fontSize: 18, fontWeight: '900', color: theme.text },
-  statLabel: { fontSize: 10, color: theme.textMuted, fontWeight: '700', textTransform: 'uppercase' },
-  boxCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: theme.card, borderRadius: 14,
-    borderWidth: 1, borderColor: theme.border,
-    padding: 14,
-  },
-  boxName: { fontSize: 14, fontWeight: '700', color: theme.text },
-  boxCity: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-  trophyCase: {
-    backgroundColor: theme.card, borderRadius: 16,
-    borderWidth: 1, borderColor: '#f59e0b40', padding: 16,
-  },
-  trophyCaseTitle: { fontSize: 11, fontWeight: '800', color: '#f59e0b', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
+  statCard: { flex: 1, minWidth: 0, paddingHorizontal: 8, alignItems: 'center', gap: 4 },
+  statValue: { ...axTypography.numberM, color: c.text },
+  statLabel: { ...axTypography.overlineSmall, color: c.textMuted },
+  boxCard: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  boxName: { ...axTypography.label, color: c.text },
+  boxCity: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2 },
+  trophyCase: { gap: 12 },
+  trophyCaseTitle: { ...axTypography.overline, color: c.textMuted },
   trophyRow: { flexDirection: 'row', gap: 10 },
   trophyCard: {
-    flex: 1, alignItems: 'center', backgroundColor: theme.surface,
-    borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#f59e0b30',
+    flex: 1, minWidth: 0, alignItems: 'center', backgroundColor: c.field,
+    borderRadius: axRadius.card, padding: 12, borderWidth: 1, borderColor: c.border,
     gap: 6,
   },
-  trophyIcon: { fontSize: 32 },
-  trophyName: { fontSize: 11, fontWeight: '700', color: theme.text, textAlign: 'center', lineHeight: 14 },
+  trophyName: { ...axTypography.labelSmall, color: c.text, textAlign: 'center' },
 }); }
 
 // ── ELO Chart for Public Profile ─────────────────────────────────────
@@ -462,29 +436,20 @@ function PublicEloChart({ points, currentElo, theme, period, setPeriod }: {
   const accentColor = trending ? '#22c55e' : '#ef4444';
 
   return (
-    <View style={{
-      backgroundColor: theme.card, borderRadius: 16,
-      borderWidth: 1, borderColor: theme.border, padding: 12,
-    }}>
-      <Text style={{ fontSize: 11, fontWeight: '700', color: theme.textMuted, letterSpacing: 1, marginBottom: 6, marginLeft: 2 }}>
+    <AxCard style={{ gap: 0, padding: 16 }} testID="public-elo-chart">
+      <Text style={[axTypography.overline, { color: theme.ax.textMuted, marginBottom: 8 }]}>
         PROGRESSION ELO
       </Text>
       {/* Period pills */}
-      <View style={{ flexDirection: 'row', gap: 6, marginBottom: 10 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
         {(['7d', '30d', '365d', 'all'] as const).map(p => (
-          <TouchableOpacity
+          <AxChip
             key={p}
+            label={p === '7d' ? '7j' : p === '30d' ? '30j' : p === '365d' ? '1an' : 'Tout'}
+            selected={period === p}
             onPress={() => setPeriod(p)}
-            style={{
-              flex: 1, paddingVertical: 6, borderRadius: 10, alignItems: 'center',
-              backgroundColor: period === p ? theme.accent : theme.surface,
-              borderWidth: 1, borderColor: period === p ? theme.accent : theme.border,
-            }}
-          >
-            <Text style={{ fontSize: 11, fontWeight: '700', color: period === p ? '#fff' : theme.textMuted }}>
-              {p === '7d' ? '7j' : p === '30d' ? '30j' : p === '365d' ? '1an' : 'Tout'}
-            </Text>
-          </TouchableOpacity>
+            testID={`public-period-${p}`}
+          />
         ))}
       </View>
       <Svg width={PUB_CHART_W} height={PUB_CHART_H}>
@@ -512,6 +477,6 @@ function PublicEloChart({ points, currentElo, theme, period, setPeriod }: {
         <SvgText x={linePoints[linePoints.length - 1].cx} y={linePoints[linePoints.length - 1].cy - 9}
           fontSize={11} fontWeight="800" fill={accentColor} textAnchor="middle">{currentElo}</SvgText>
       </Svg>
-    </View>
+    </AxCard>
   );
 }
