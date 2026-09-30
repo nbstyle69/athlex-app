@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { axRadius, axSpacing, axTypography, axVeil } from '../../theme/axTokens';
 
-export type AxTagTone = 'accent' | 'muted' | 'danger';
+export type AxTagTone = 'accent' | 'muted' | 'danger' | 'success' | 'warning';
 
 interface Props {
   label: string;
@@ -14,25 +14,29 @@ interface Props {
   dot?: boolean;
   /** Posée sur l'image de la caméra : voile sombre, texte clair. */
   veil?: boolean;
+  /** Libellé long : retour à la ligne dans la largeur du parent. */
+  wrap?: boolean;
   /** Libellé long (nom de séance…) : coupé à ce nombre de lignes, dans la largeur disponible. */
   numberOfLines?: number;
   testID?: string;
 }
 
 /** Étiquette non interactive, en capitales. */
-export function AxTag({ label, tone = 'accent', color: ink, dot = false, veil = false, numberOfLines, testID }: Props) {
+export function AxTag({ label, tone = 'accent', color: ink, dot = false, veil = false, wrap = false, numberOfLines, testID }: Props) {
   const { theme } = useTheme();
   const toneColor = tone === 'danger'
     ? (veil ? axVeil.rec : theme.ax.danger)
-    : tone === 'accent' ? theme.ax.accentText : theme.ax.textMuted;
+    : tone === 'accent' ? theme.ax.accentText
+    : tone === 'success' ? theme.ax.success
+    : tone === 'warning' ? theme.ax.warning : theme.ax.textMuted;
   const color = ink ?? (veil ? axVeil.ink : toneColor);
   const edge = ink ?? (veil && tone !== 'danger' ? axVeil.border : toneColor);
   return (
-    <View testID={testID} style={[styles.base, { borderColor: edge }, veil ? { backgroundColor: axVeil.background } : null, numberOfLines ? styles.bounded : null]}>
+    <View testID={testID} style={[styles.base, { borderColor: edge }, veil ? { backgroundColor: axVeil.background } : null, wrap || numberOfLines ? styles.bounded : null]}>
       {dot && <View testID={testID ? `${testID}-dot` : undefined} style={[styles.dot, { backgroundColor: toneColor }]} />}
       <Text
         numberOfLines={numberOfLines}
-        style={[axTypography.labelSmall, styles.text, { color }, numberOfLines ? styles.shrink : null]}
+        style={[axTypography.labelSmall, styles.text, { color }, wrap || numberOfLines ? styles.shrink : null]}
       >
         {label}
       </Text>

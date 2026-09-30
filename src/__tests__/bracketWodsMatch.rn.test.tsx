@@ -6,7 +6,6 @@
  * les participants du tour 1 ; le bracket simple d'avant s'affiche comme avant.
  */
 import React from 'react';
-import { Text } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 
 let mockMatchs: any[] = [];
@@ -18,6 +17,7 @@ function mockRequete(data: any[]): any {
   return requete;
 }
 
+jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('../lib/supabase', () => ({
   supabase: {
     from: (table: string) =>
@@ -45,9 +45,9 @@ async function pastilles(format: 'bracket' | 'swiss', matchs: any[], wods: any[]
   mockWods = wods;
   let r: TestRenderer.ReactTestRenderer;
   await act(async () => { r = TestRenderer.create(<TournamentBracketView tournamentId="t" format={format} />); });
-  const textes = r!.root.findAllByType(Text).map(t => [].concat(t.props.children).filter(c => typeof c === 'string' || typeof c === 'number').join('').trim());
+  const noms = r!.root.findAll(n => n.props.testID === 'bracket-wod' && typeof n.props.label === 'string').map(n => n.props.label as string);
   await act(async () => r!.unmount());
-  return textes.filter(x => x.startsWith('🏋️')).map(x => x.replace('🏋️', '').trim());
+  return noms;
 }
 
 describe('double élimination : le WOD de chaque match', () => {
