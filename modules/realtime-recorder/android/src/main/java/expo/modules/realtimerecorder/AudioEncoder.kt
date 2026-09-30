@@ -8,11 +8,15 @@ import android.media.MediaFormat
 import android.media.MediaRecorder
 import android.util.Log
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Captures PCM audio from the microphone via [AudioRecord] and encodes it
  * to AAC using a [MediaCodec] encoder on a dedicated thread.
+ *
+ * R6c: scheduled [beeps] are mixed into the PCM before encoding. Without the
+ * mic, a synthetic track (silence + beeps) is produced at the recording pace.
  *
  * Encoded buffers and the output format are delivered via callbacks so the
  * caller can forward them to a [VideoMuxer].
@@ -21,7 +25,8 @@ class AudioEncoder {
 
   companion object {
     private const val TAG = "AudioEncoder"
-    private const val SAMPLE_RATE = 44100
+    const val SAMPLE_RATE = 44100
+    private const val SYNTH_CHUNK = 1024
     private const val CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO
     private const val ENCODING = AudioFormat.ENCODING_PCM_16BIT
     private const val AAC_BITRATE = 128_000
@@ -31,6 +36,11 @@ class AudioEncoder {
   private var encoder: MediaCodec? = null
   private var captureThread: Thread? = null
   private val recording = AtomicBoolean(false)
+  private var useMic = true
+  private var startNanos = 0L
+
+  /** Beeps mixed into the track (null = none). */
+  @Volatile var beeps: BeepSchedule? = null
 
   // Total PCM samples (per channel) already queued to the encoder.
   // Used to compute PTS from sample count — guarantees the audio track
@@ -47,7 +57,8 @@ class AudioEncoder {
    * Configure the AAC encoder and the AudioRecord source.
    * @throws SecurityException if RECORD_AUDIO permission is missing.
    */
-  fun configure() {
+  fun configure(useMic: Boolean = true) {
+    this.useMic = useMic
     val format = MediaFormat.createAudioFormat(MediaFormat.MIMETYPE_AUDIO_AAC, SAMPLE_RATE, 1).apply {
       setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
       setInteger(MediaFormat.KEY_BIT_RATE, AAC_BITRATE)
@@ -56,6 +67,11 @@ class AudioEncoder {
     encoder = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC).apply {
       configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
       start()
+    }
+
+    if (!useMic) {
+      Log.i(TAG, "Configured (${SAMPLE_RATE}Hz mono, AAC ${AAC_BITRATE / 1000}kbps, synthetic: no mic)")
+      return
     }
 
     val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, ENCODING) * 2
@@ -78,16 +94,17 @@ class AudioEncoder {
 
   /**
    * Start capturing and encoding audio on a background thread.
-   * @param recordingStartNanos unused, kept for API compatibility with previous versions.
-   *                             PTS is now derived from the cumulative sample count.
+   * PTS is derived from the cumulative sample count; `recordingStartNanos`
+   * paces the synthetic track (no mic).
    */
-  fun start(@Suppress("UNUSED_PARAMETER") recordingStartNanos: Long) {
+  fun start(recordingStartNanos: Long) {
     recording.set(true)
     encodedSamples = 0L
+    startNanos = recordingStartNanos
     audioRecord?.startRecording()
 
     captureThread = Thread({
-      captureLoop()
+      if (useMic) captureLoop() else syntheticLoop()
     }, "AudioCaptureThread").apply { start() }
 
     Log.i(TAG, "Started")
@@ -96,13 +113,16 @@ class AudioEncoder {
   private fun captureLoop() {
     val enc = encoder ?: return
     val bufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, ENCODING) * 2
+    val shorts = ShortArray(bufferSize / 2)
     val pcmBuffer = ByteArray(bufferSize)
 
     try {
       while (recording.get()) {
-        val read = audioRecord?.read(pcmBuffer, 0, pcmBuffer.size) ?: -1
+        val read = audioRecord?.read(shorts, 0, shorts.size) ?: -1
         if (read > 0) {
-          feedEncoder(enc, pcmBuffer, read, false)
+          beeps?.mix(shorts, 0, read, encodedSamples)
+          toBytes(shorts, read, pcmBuffer)
+          feedEncoder(enc, pcmBuffer, read * 2, false)
           drainEncoder(enc, false)
         }
       }
@@ -126,6 +146,37 @@ class AudioEncoder {
    * wall-clock time so the MP4 audio track duration always matches the
    * actual PCM content fed to the encoder.
    */
+  /** No mic: silence + beeps, fed as fast as the recording clock advances. */
+  private fun syntheticLoop() {
+    val enc = encoder ?: return
+    val chunk = ShortArray(SYNTH_CHUNK)
+    val bytes = ByteArray(SYNTH_CHUNK * 2)
+    try {
+      while (recording.get()) {
+        val due = BeepPcm.sampleAt(System.nanoTime() - startNanos, SAMPLE_RATE)
+        while (encodedSamples < due && recording.get()) {
+          val n = minOf(SYNTH_CHUNK.toLong(), due - encodedSamples).toInt()
+          chunk.fill(0, 0, n)
+          beeps?.mix(chunk, 0, n, encodedSamples)
+          toBytes(chunk, n, bytes)
+          val before = encodedSamples
+          feedEncoder(enc, bytes, n * 2, false)
+          drainEncoder(enc, false)
+          if (encodedSamples == before) break // encoder busy: retry on next tick
+        }
+        Thread.sleep(20)
+      }
+      feedEncoder(enc, ByteArray(0), 0, true)
+      drainEncoder(enc, true)
+    } catch (e: Exception) {
+      Log.e(TAG, "Synthetic loop error", e)
+    }
+  }
+
+  private fun toBytes(src: ShortArray, count: Int, dst: ByteArray) {
+    ByteBuffer.wrap(dst).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().put(src, 0, count)
+  }
+
   private fun feedEncoder(enc: MediaCodec, data: ByteArray, size: Int, eos: Boolean) {
     // Special case: EOS with no data — just signal end-of-stream.
     if (size == 0 && eos) {

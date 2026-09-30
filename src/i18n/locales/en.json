@@ -1924,12 +1924,19 @@
       "saveCard": "Save the card",
       "cardSaved": "Card saved"
     },
+    "beeps": {
+      "label": "Beep set",
+      "athlex": "AthleX",
+      "classic": "Classic"
+    },
     "video": {
       "quality": "Quality",
       "qualityHint": "1080p recommended · 2K and 4K depending on your phone, larger files",
       "fps": "Frames per second",
       "fpsValue": "{{fps}} fps",
       "mic": "Microphone",
+      "beeps": "Beeps in the video",
+      "beepsHint": "The timer beeps are heard in the recording",
       "micHint": "Records sound during the video",
       "checking": "Checking {{quality}}…",
       "notice": {

@@ -30,10 +30,18 @@ export interface VideoOptions {
   mic?: boolean;
 }
 
+export type BeepType = 'tick' | 'go' | 'done';
+
 export interface RecordingOptions extends VideoOptions {
   outputPath: string;
   facing?: string;
   isLandscape?: boolean;
+  /** Bips mélangés dans la piste son (absent = non). */
+  beeps?: boolean;
+  /** WAV PCM 16 bits des bips (mêmes fichiers que le haut-parleur). */
+  beepFiles?: Record<BeepType, string>;
+  /** Android, micro activé : retard du bip mélangé (défaut natif 80 ms). */
+  beepLatencyMs?: number;
 }
 
 /** Qualité réellement retenue et pourquoi elle est plus basse que demandée. */
@@ -51,6 +59,7 @@ interface RealtimeRecorderNative {
   getSupportedQualities(): { front: VideoQuality[]; back: VideoQuality[] };
   prepareQuality(options: VideoOptions & { facing?: string }): Promise<QualityCheck>;
   getLastRecordingStats(): { expectedFrames: number; writtenFrames: number };
+  markBeep(type: BeepType): void;
 }
 
 let _module: RealtimeRecorderNative | null = null;
@@ -90,4 +99,9 @@ export async function prepareQuality(options: VideoOptions & { facing?: string }
 /** Images attendues / écrites pendant le dernier enregistrement. */
 export function getLastRecordingStats(): { expectedFrames: number; writtenFrames: number } {
   return getModule().getLastRecordingStats();
+}
+
+/** Place un bip dans la piste son de la vidéo, à l'instant présent (sans effet hors enregistrement). */
+export function markBeep(type: BeepType): void {
+  getModule().markBeep(type);
 }

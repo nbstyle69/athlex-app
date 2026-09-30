@@ -112,10 +112,10 @@ const en = (k: string, o?: Record<string, string>) => i18n.t(k, { lng: 'en', ...
 
 describe('R6c (A) : réglages vidéo enregistrés avec les options d’affichage', () => {
   it('défauts = comportement d’avant : 1080p, 30 i/s, micro activé', () => {
-    expect(DEFAULT_VIDEO_OPTS).toEqual({ videoQuality: '1080p', videoFps: 30, videoMic: true });
+    expect(DEFAULT_VIDEO_OPTS).toEqual({ videoQuality: '1080p', videoFps: 30, videoMic: true, videoBeeps: true }); // bips : R6c (B)
     expect(readVideoOpts(null)).toEqual(DEFAULT_VIDEO_OPTS);
     expect(readVideoOpts({ videoQuality: '8k', videoFps: 60, videoMic: 'non' })).toEqual(DEFAULT_VIDEO_OPTS);
-    expect(readVideoOpts({ videoQuality: '720p', videoFps: 25, videoMic: false })).toEqual({ videoQuality: '720p', videoFps: 25, videoMic: false });
+    expect(readVideoOpts({ videoQuality: '720p', videoFps: 25, videoMic: false })).toEqual({ videoQuality: '720p', videoFps: 25, videoMic: false, videoBeeps: true });
     expect(readVideoOpts({ videoQuality: '4k' }).videoQuality).toBe('4k');
     expect(readVideoOpts({ videoQuality: '2k' }).videoQuality).toBe('2k');
   });
@@ -125,7 +125,7 @@ describe('R6c (A) : réglages vidéo enregistrés avec les options d’affichage
     await saveVideoOpts({ videoQuality: '4k' });
     await saveVideoOpts({ videoMic: false });
     expect(await stored()).toEqual({ themeId: 'noir', bipsEnabled: false, videoQuality: '4k', videoMic: false });
-    expect(await loadVideoOpts()).toEqual({ videoQuality: '4k', videoFps: 30, videoMic: false });
+    expect(await loadVideoOpts()).toEqual({ videoQuality: '4k', videoFps: 30, videoMic: false, videoBeeps: true });
     await AsyncStorage.setItem(DISPLAY_OPTS_KEY, '{cassé');
     expect(await loadVideoOpts()).toEqual(DEFAULT_VIDEO_OPTS);
   });

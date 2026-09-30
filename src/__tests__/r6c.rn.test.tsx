@@ -256,7 +256,8 @@ describe('R6c : logique du chrono', () => {
     const anchor = '  }, [withCamera, isCameraReady, videoOpts, facing]);\n';
     const back = now.replace(block, '').replace(anchor, `${anchor}\n${oldBlock.slice(0, -1)}`);
     const sha = crypto.createHash('sha256').update(back).digest('hex');
-    // État R6c (A) de la logique (LOGIC_SHA de r5a.rn.test.tsx avant R6c C).
-    expect(sha).toBe('3e5e55c24d7e02a8b55b373db214e99579c037d4cfdf02af20fb5cc5bf77dd41');
+    // État R6c (A) de la logique (LOGIC_SHA de r5a.rn.test.tsx avant R6c C), plus R6c (B) : jeu de bips,
+    // markBeep et bips passés au module (r6cBips.rn.test.tsx).
+    expect(sha).toBe('db217fa97ed8e85ab2e7414f83e5e6d3bca50e23c57413de13469a83663f0448');
   });
 });

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
 import {
   Timer, Video, Plus, Minus, Trash2, Type, Clock, Camera, Pause, ChevronDown, Check,
-  RefreshCw, Radio, Zap, BicepsFlexed, Scissors, Wrench, Mic, type LucideIcon,
+  RefreshCw, Radio, Zap, BicepsFlexed, Scissors, Wrench, Mic, Volume2, type LucideIcon,
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -468,6 +468,15 @@ export default function TimerScreen() {
                 </View>
                 <AxSwitch value={videoOpts.videoMic} onValueChange={(v) => updateVideo({ videoMic: v })}
                   accessibilityLabel={t('timer.video.mic')} testID="timer-mic-switch" />
+              </View>
+              <View style={S.recOptRow}>
+                <Volume2 color={c.textMuted} size={16} />
+                <View style={S.flex1}>
+                  <Text style={S.recOptLabel}>{t('timer.video.beeps')}</Text>
+                  <Text style={S.recOptHint}>{t('timer.video.beepsHint')}</Text>
+                </View>
+                <AxSwitch value={videoOpts.videoBeeps} onValueChange={(v) => updateVideo({ videoBeeps: v })}
+                  accessibilityLabel={t('timer.video.beeps')} testID="timer-video-beeps-switch" />
               </View>
             </>
           )}
