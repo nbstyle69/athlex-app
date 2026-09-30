@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, Dimensions, TouchableOpacity,
-  Animated, ViewToken, Image, Alert,
+  Animated, ViewToken, Image, Alert, ScrollView, LayoutChangeEvent,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Dumbbell, Clock, Trophy, Building2, Camera, Hash, ArrowRight, Zap, Rocket } from 'lucide-react-native';
@@ -28,6 +28,12 @@ interface Slide {
   icon: 'logo' | 'wod' | 'comp' | 'box' | 'badge';
   color: string;
 }
+
+/** Stable pour toute la vie de la liste : FlatList refuse qu'on le change en cours de route. */
+export const TUTORIAL_VIEWABILITY_CONFIG = { viewAreaCoveragePercentThreshold: 50 };
+
+/** Marge haute et basse du bloc : dégage « Passer » (top 60) et garde le bloc centré sur l'écran. */
+export const TUTORIAL_BLOCK_PADDING_V = 104;
 
 const SLIDES: Slide[] = [
   { id: '1', key: 'welcome',  icon: 'logo',  color: '#9AE6D2' },
@@ -111,7 +117,8 @@ function SlideIcon({ type, color, badgeScale }: { type: Slide['icon']; color: st
     case 'logo':
       return (
         <Image
-          source={require('../../../assets/logo.png')}
+          testID="tutorial-logo"
+          source={require('../../../assets/athex-logo.png')}
           style={{ width: 120, height: 120, resizeMode: 'contain' }}
         />
       );
@@ -205,17 +212,24 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
   // Badge animation (slide 5)
   const badgeScale = useRef(new Animated.Value(0)).current;
   const [confettiActive, setConfettiActive] = useState(false);
-  const [badgeAwarded, setBadgeAwarded] = useState(false);
 
-  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+  const [pageHeight, setPageHeight] = useState(height);
+  const onPagesLayout = useCallback((e: LayoutChangeEvent) => setPageHeight(e.nativeEvent.layout.height), []);
+
+  // FlatList lève « Changing onViewableItemsChanged on the fly is not supported »
+  // si la fonction change entre deux rendus : elle reste la même et lit l'état
+  // courant par des refs.
+  const badgeAwardedRef = useRef(false);
+  const handleViewableRef = useRef<(info: { viewableItems: ViewToken[] }) => void>(() => {});
+  handleViewableRef.current = ({ viewableItems }) => {
     if (viewableItems.length > 0 && viewableItems[0].index != null) {
       const idx = viewableItems[0].index;
       setCurrentIndex(idx);
       trackOnboardingStep(idx + 1, SLIDES[idx]?.key ?? '');
 
       // Trigger badge animation on slide 5
-      if (idx === 4 && !badgeAwarded) {
-        setBadgeAwarded(true);
+      if (idx === 4 && !badgeAwardedRef.current) {
+        badgeAwardedRef.current = true;
         awardFirstStepBadge();
         badgeScale.setValue(0);
         Animated.spring(badgeScale, {
@@ -227,9 +241,9 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
         setTimeout(() => setConfettiActive(true), 200);
       }
     }
-  }, [badgeAwarded]);
+  };
+  const onViewableItemsChanged = useRef((info: { viewableItems: ViewToken[] }) => handleViewableRef.current(info)).current;
 
-  const viewabilityConfig = useRef({ viewAreaCoveragePercentThreshold: 50 }).current;
   // Chaque slide fait la largeur de l'écran : la position est connue sans mesure,
   // `scrollToIndex` n'a jamais à attendre le layout d'une cellule.
   const getItemLayout = useCallback(
@@ -305,6 +319,7 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
         keyboardVerticalOffset={0}
+        onLayout={onPagesLayout}
       >
         <Animated.FlatList
           ref={flatListRef}
@@ -320,7 +335,7 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
             { useNativeDriver: false },
           )}
           onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig}
+          viewabilityConfig={TUTORIAL_VIEWABILITY_CONFIG}
           getItemLayout={getItemLayout}
           onScrollToIndexFailed={({ index }) => flatListRef.current?.scrollToOffset({ offset: width * index, animated: true })}
           renderItem={({ item, index }) => {
@@ -335,10 +350,17 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
             });
 
             return (
-              <View style={S.slide}>
-                <Animated.View style={[S.slideContent, { opacity, transform: [{ translateY }] }]}>
+              <View style={[S.slide, { height: pageHeight }]} testID={`tutorial-page-${index + 1}`}>
+                <ScrollView
+                  testID={`tutorial-scroll-${index + 1}`}
+                  style={S.slideScroll}
+                  contentContainerStyle={S.slideScrollContent}
+                  showsVerticalScrollIndicator={false}
+                  keyboardShouldPersistTaps="handled"
+                >
+                <Animated.View testID={`tutorial-block-${index + 1}`} style={[S.slideContent, { opacity, transform: [{ translateY }] }]}>
                   {/* Icon with parallax */}
-                  <Animated.View style={[S.iconCircle, { transform: [{ translateX: iconTranslateX }] }]}>
+                  <Animated.View testID={`tutorial-illustration-${index + 1}`} style={[S.iconCircle, { transform: [{ translateX: iconTranslateX }] }]}>
                     <SlideIcon type={item.icon} color={c.accentText} badgeScale={item.icon === 'badge' ? badgeScale : undefined} />
                   </Animated.View>
                   <Text style={S.title}>{t(`onboarding.slides.${item.key}.title`)}</Text>
@@ -380,56 +402,41 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
                       )}
                     </View>
                   )}
+                  <View testID={`tutorial-dots-${index + 1}`} style={S.dotsRow}>
+                    {SLIDES.map((_, i) => (
+                      <View
+                        key={i}
+                        style={[S.dot, i === index ? { width: 24, backgroundColor: c.accentText } : { width: 8, backgroundColor: withAlpha(c.accentText, 0.3) }]}
+                      />
+                    ))}
+                  </View>
+
+                  {/* CTA — hidden on box slide when logged in (buttons are inline) */}
+                  {(item.icon !== 'box' || !isLoggedIn) && (
+                    <View style={S.cta}>
+                      <AxButton
+                        testID={index === currentIndex ? 'tutorial-next' : `tutorial-next-${index + 1}`}
+                        label={index === SLIDES.length - 1 ? t('onboarding.tutorial.discoverApp') : index === 0 ? t('onboarding.tutorial.letsGo') : t('onboarding.tutorial.next')}
+                        onPress={handleNext}
+                        fullWidth
+                      />
+                    </View>
+                  )}
+
+                  {/* Box slide: show "Suivant" only if box was joined */}
+                  {item.icon === 'box' && isLoggedIn && boxJoined && (
+                    <View style={S.cta}>
+                      <AxButton testID="tutorial-next-box" label={t('onboarding.tutorial.next')} onPress={handleNext} fullWidth />
+                    </View>
+                  )}
                 </Animated.View>
+                </ScrollView>
               </View>
             );
           }}
         />
       </KeyboardAvoidingView>
 
-      {/* Bottom: dots + button */}
-      <View style={S.bottomContainer}>
-        {/* Dots */}
-        <View style={S.dotsRow}>
-          {SLIDES.map((_, i) => {
-            const dotWidth = scrollX.interpolate({
-              inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-              outputRange: [8, 24, 8],
-              extrapolate: 'clamp',
-            });
-            const dotOpacity = scrollX.interpolate({
-              inputRange: [(i - 1) * width, i * width, (i + 1) * width],
-              outputRange: [0.3, 1, 0.3],
-              extrapolate: 'clamp',
-            });
-            return (
-              <Animated.View
-                key={i}
-                style={[S.dot, { width: dotWidth, opacity: dotOpacity, backgroundColor: c.accentText }]}
-              />
-            );
-          })}
-        </View>
-
-        {/* CTA Button — hidden on box slide when logged in (buttons are inline) */}
-        {(!isBoxSlide || !isLoggedIn) && (
-          <View style={S.cta}>
-            <AxButton
-              testID="tutorial-next"
-              label={isLast ? t('onboarding.tutorial.discoverApp') : currentIndex === 0 ? t('onboarding.tutorial.letsGo') : t('onboarding.tutorial.next')}
-              onPress={handleNext}
-              fullWidth
-            />
-          </View>
-        )}
-
-        {/* Box slide: show "Suivant" only if box was joined */}
-        {isBoxSlide && boxJoined && (
-          <View style={S.cta}>
-            <AxButton testID="tutorial-next-box" label={t('onboarding.tutorial.next')} onPress={handleNext} fullWidth />
-          </View>
-        )}
-      </View>
     </View>
   );
 }
@@ -450,10 +457,13 @@ function createStyles(c: AxColors) { return StyleSheet.create({
   skipText: { ...axTypography.labelSmall, color: c.accentText },
   slide: {
     width,
-    flex: 1,
+  },
+  slideScroll: { flex: 1 },
+  slideScrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     paddingHorizontal: 32,
+    paddingVertical: TUTORIAL_BLOCK_PADDING_V,
   },
   slideContent: {
     alignItems: 'center',
@@ -470,16 +480,12 @@ function createStyles(c: AxColors) { return StyleSheet.create({
   },
   title: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text, textAlign: 'center', marginBottom: 14 },
   description: { ...axTypography.body, color: c.textMuted, textAlign: 'center', maxWidth: 320 },
-  bottomContainer: {
-    paddingBottom: 60,
-    paddingHorizontal: 32,
-    alignItems: 'center',
-    gap: axSpacing['2xl'],
-  },
   dotsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: axSpacing.sm,
+    marginTop: axSpacing['2xl'],
+    marginBottom: axSpacing['2xl'],
   },
   dot: {
     height: 8,

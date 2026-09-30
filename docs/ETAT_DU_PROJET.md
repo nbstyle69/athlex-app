@@ -315,6 +315,16 @@ Supabase/Resend.
 - Tests : `r14a.rn.test.tsx`, `r14aPalette.test.ts`, `shellBackground` réécrit, contrats historiques mis à jour ;
   mutations listées dans la PR.
 
+**Refonte R14c (tutoriel) : plantage de la page 5 corrigé, un bloc centré par page, logo AthleX (app seule, aucune migration).**
+- `OnboardingTutorialScreen` : `onViewableItemsChanged` stable (ref, état lu par refs) et `viewabilityConfig` constant ;
+  la fonction changeait à l'arrivée sur la page 5 (état du badge) et FlatList levait « Changing onViewableItemsChanged on
+  the fly is not supported ». Badge « First Step » toujours décerné une seule fois.
+- Chaque page = un bloc (illustration dans son cercle, titre, texte, points, bouton « C'est parti ! » / « Suivant » /
+  « Découvrir l'app ») centré verticalement dans un `ScrollView` (marges symétriques 104 sous « Passer ») : défile en
+  entier sur petit écran. Page 1 : `assets/athex-logo.png`. Textes, ordre des pages et comportement inchangés.
+- Tests : `r14cTutorial.rn.test.tsx` (12), instantané R11 du tutoriel mis à jour (boutons dans chaque page) ; centre du
+  bloc mesuré en web à 390 × 844 et 390 × 667 (écart ≤ 25 px) ; 9 mutations tuées.
+
 **Seed de démo : `ON CONFLICT` du lot 4 aligné sur la contrainte de `movement_rep_counts` (script seul, aucune migration).**
 - `scripts/demo-seed/sql/40_lot4_social.sql` : `on conflict (athlete_id, movement_key, unit)`, clé unique posée par
   `20261204_movement_stats_unit.sql` (l'ancienne clé faisait échouer le lot 4 en `42P10`). Autres `ON CONFLICT` du script
