@@ -216,6 +216,18 @@ Supabase/Resend.
 - Tests : `r6cBips.rn.test.tsx` (19), `BeepMixerTest.kt` (9, JVM), `VideoQualityTest.kt` complété (7) ; mutations JS et
   Kotlin tuées ; Kotlin compilé en local, Swift par un build simulateur EAS.
 
+**Refonte R10 : réservation au nouveau design (app seule, aucune migration, apparence seule).**
+- `ReservationScreen` : semaine en `AxDayItem` (nouveau `ReservationWeekPicker`, options rétrocompatibles `today` /
+  `disabled` d'`AxDayItem`), créneaux en `AxCard` (vedette si réservé, filet warning si en attente), heure en `numberM`
+  Oswald, discipline en `AxTag` (option `numberOfLines`), coach / places en caption, « Réservé » / « Attente #n » /
+  « Complet » en `AxStatusDot`, « Réserver » accent, « File d'attente » contour, « Se désinscrire » / « Quitter la file d'attente »
+  en stop, bandeau « Abonnement suspendu » en ton warning avec « Mettre à jour mon paiement » accent (Stripe seulement).
+  `MyReservationsScreen` : onglets en `AxChip`, cartes `AxCard`, statut `AxStatusDot`, « Annuler » en stop ; `AxScreenHeader`
+  et `useTabBarScrollSpace` gardés, emoji du coach remplacé par l'icône Lucide `User`.
+- Règles inchangées (limites hebdo / jour, file d'attente, fenêtres 15 / 20 min, 14 jours, refus, rappels) : logique figée
+  par empreinte relevée sur master ; ordre des textes comparé à un relevé de master (10 états).
+- Tests : `r10.rn.test.tsx` (35), `npx jest` 1976, `npm run test:rn` 606, `tsc` vert ; 36 mutations tuées.
+
 **Refonte R8b : mini-tournois, inter-box et compétition physique au nouveau design (app seule, aucune migration, apparence seule).**
 - `DailyTournamentsScreen`, `DailyTournamentDetailScreen`, `InterCompetitionListScreen`, `InterCompetitionDetailScreen`,
   `InterScoreSubmitScreen`, `InterTeamScreen`, `PhysicalCompetitionScreen` : cartes `AxCard`, statuts `AxStatusDot`,
