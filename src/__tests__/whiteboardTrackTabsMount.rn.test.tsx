@@ -7,18 +7,24 @@
  *      de son style de base, et la colonne à hauteur fixe de l'écran l'écrasait ;
  *   2. l'onglet choisi s'élargissait (graisse 800) et décalait les autres.
  *
+ * R9a : chaque onglet est une `AxChip` ; même graisse choisi ou non.
+ *
  * react-test-renderer ne calcule pas la mise en page (pas de Yoga) : on vérifie
  * ici, dans CHAQUE état (chaque onglet choisi, aucun, clair et sombre, taille de
  * texte 1 / 1,3 / 2), les propriétés qui décident de la mise en page — et le
  * protocole visuel de la PR la constate sur l'iPhone.
  */
 import React from 'react';
-import { PixelRatio, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { PixelRatio, ScrollView, StyleSheet, Text } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import i18n from '../i18n';
 import WhiteboardTrackTabs from '../components/WhiteboardTrackTabs';
 import { lightTheme, darkTheme } from '../theme/palette';
 import { visibleTabs, TrackTab } from '../utils/whiteboardTracks';
+
+let mockTheme = lightTheme;
+jest.mock('../context/ThemeContext', () => ({ useTheme: () => ({ theme: mockTheme }) }));
+jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 
 const TABS = visibleTabs(['functional', 'hybrid', 'musculation']);
 let renderer: TestRenderer.ReactTestRenderer | null = null;
@@ -29,35 +35,41 @@ afterEach(async () => {
   jest.restoreAllMocks();
 });
 
-async function monter(value: TrackTab | null, theme = lightTheme, echelle = 1) {
+async function monter(value: TrackTab | null, theme = lightTheme, echelle = 1, onChange: (t: TrackTab) => void = () => {}) {
+  mockTheme = theme;
   jest.spyOn(PixelRatio, 'getFontScale').mockReturnValue(echelle);
   await act(async () => {
-    renderer = TestRenderer.create(
-      <WhiteboardTrackTabs tabs={TABS} value={value} onChange={() => {}} theme={theme} />,
-    );
+    renderer = TestRenderer.create(<WhiteboardTrackTabs tabs={TABS} value={value} onChange={onChange} />);
   });
   return renderer!.root;
 }
 
 const plat = (i: ReactTestInstance) => StyleSheet.flatten(i.props.style) ?? {};
 const onglet = (root: ReactTestInstance, tab: TrackTab) =>
-  root.findAll((n) => n.type === TouchableOpacity && n.props.testID === `whiteboard-track-${tab}`)[0];
+  root.findAll((n) => n.props.testID === `whiteboard-track-${tab}` && n.props.hitSlop !== undefined && typeof n.props.onPress === 'function')[0];
 const textes = (n: ReactTestInstance) => n.findAllByType(Text);
 
-/** Ce qui décide de la taille d'un onglet : sa boîte (hors couleurs) et son libellé réservé. */
+/** Ce qui décide de la taille d'un onglet : sa boîte et son libellé (hors couleurs). */
 function empreinteDeTaille(root: ReactTestInstance, tab: TrackTab) {
   const o = onglet(root, tab);
   const { backgroundColor, borderColor, ...boite } = plat(o);
-  const reserve = textes(o).find((t) => t.props.testID === `whiteboard-track-${tab}-reserve`)!;
-  const { color, ...police } = plat(reserve);
-  return JSON.stringify({ boite, police, libelle: reserve.props.children });
+  const [libelle] = textes(o);
+  const { color, ...police } = plat(libelle);
+  return JSON.stringify({ boite, police, libelle: libelle.props.children });
 }
 
 it('les onglets sont bien lus (contre-exemple) : ordre et libellés inchangés', async () => {
   expect(TABS).toEqual(['functional', 'hybrid', 'musculation', 'all']);
   const root = await monter('all');
   const lus = TABS.map((tab) => textes(onglet(root, tab)).map((t) => t.props.children));
-  expect(lus).toEqual(TABS.map((tab) => [i18n.t(`whiteboard.track.${tab}`), i18n.t(`whiteboard.track.${tab}`)]));
+  expect(lus).toEqual(TABS.map((tab) => [i18n.t(`whiteboard.track.${tab}`)]));
+});
+
+it('un appui choisit la piste de l’onglet', async () => {
+  const onChange = jest.fn();
+  const root = await monter('functional', lightTheme, 1, onChange);
+  await act(async () => onglet(root, 'hybrid').props.onPress());
+  expect(onChange).toHaveBeenCalledWith('hybrid');
 });
 
 for (const theme of [lightTheme, darkTheme]) {
@@ -74,24 +86,20 @@ for (const theme of [lightTheme, darkTheme]) {
         for (const tab of TABS) {
           const o = onglet(root, tab);
           const c = plat(o);
-          // Une hauteur MINIMALE, jamais fixe : l'onglet grandit avec la taille de texte.
-          expect(c.minHeight).toBe(44);
+          // Aucune hauteur imposée : l'onglet grandit avec la taille de texte (le rognage de
+          // la pastille ne coupe donc jamais le libellé).
           expect(c.height ?? c.maxHeight).toBeUndefined();
-          expect(c.overflow).not.toBe('hidden');
+          // 40 de haut + 2 de marge tactile en haut et en bas : 44.
+          expect(o.props.hitSlop).toMatchObject({ top: 2, bottom: 2 });
 
-          const [reserve, libelle] = textes(o);
-          // La réserve : toujours en gras, invisible, masquée aux lecteurs d'écran.
-          expect(plat(reserve)).toMatchObject({ fontWeight: '800', opacity: 0 });
-          expect(reserve.props.accessibilityElementsHidden).toBe(true);
-          // Le libellé visible, posé dessus ; gras seulement s'il est choisi.
-          expect(plat(libelle)).toMatchObject({ position: 'absolute', top: 0, left: 0, right: 0, textAlign: 'center' });
-          expect(plat(libelle).fontWeight).toBe(tab === value ? '800' : '600');
-          // La taille de texte du téléphone s'applique : ni plafond, ni désactivation.
-          for (const t of [reserve, libelle]) {
+          const [libelle] = textes(o);
+          for (const t of textes(o)) {
             expect(t.props.allowFontScaling).not.toBe(false);
             expect(t.props.maxFontSizeMultiplier).toBeUndefined();
             expect(t.props.numberOfLines).toBeUndefined();
           }
+          expect(plat(libelle).color).toBe(tab === value ? theme.ax.onAccent : theme.ax.text);
+          expect(o.props.accessibilityRole).toBe('tab');
           expect(o.props.accessibilityLabel).toBe(i18n.t(`whiteboard.track.${tab}`));
           expect(o.props.accessibilityState).toEqual({ selected: tab === value });
         }
