@@ -1,7 +1,8 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxCard, AxTag } from '../../components/ax';
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, Pressable,
   Image, ActivityIndicator, Linking,
 } from 'react-native';
 import { MapPin, Globe, Mail, Phone, Users, Calendar, Instagram, Dumbbell, ExternalLink, Clock } from 'lucide-react-native';
@@ -11,7 +12,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { BOX_COLUMNS } from '../../lib/boxColumns';
 import { captureError } from '../../lib/sentry';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { HomeStackParamList } from '../../navigation';
 import { Box } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
@@ -38,7 +40,8 @@ export default function BoxDirectoryDetailScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const s = createStyles(theme);
+  const c = theme.ax;
+  const s = createStyles(c);
 
   const boxId = route.params?.boxId;
   const [box, setBox] = useState<Box | null>(null);
@@ -66,7 +69,7 @@ export default function BoxDirectoryDetailScreen() {
     return (
       <View style={[s.container, s.center]}>
         <GlassBackground />
-        <ActivityIndicator size="large" color={theme.accent} />
+        <ActivityIndicator size="large" color={c.accentText} />
       </View>
     );
   }
@@ -77,8 +80,8 @@ export default function BoxDirectoryDetailScreen() {
       <View style={s.container}>
         <GlassBackground />
         <AxScreenHeader title={t('boxAccess.notFoundTitle')} />
-        <View style={[s.center, { paddingHorizontal: 32 }]}>
-          <Text style={[s.emptyText, { textAlign: 'center' }]}>{t('boxAccess.notFoundBody')}</Text>
+        <View style={s.center}>
+          <Text style={s.emptyText}>{t('boxAccess.notFoundBody')}</Text>
         </View>
       </View>
     );
@@ -103,7 +106,7 @@ export default function BoxDirectoryDetailScreen() {
           {box.cover_url ? (
             <Image source={{ uri: box.cover_url }} style={s.cover} />
           ) : (
-            <View style={[s.cover, { backgroundColor: `${theme.accent}10` }]} />
+            <View style={[s.cover, s.coverPlaceholder]} />
           )}
           <View style={s.logoWrap}>
             {box.logo_url ? (
@@ -117,32 +120,34 @@ export default function BoxDirectoryDetailScreen() {
         </View>
 
         <View style={s.body}>
-          {/* Name & tagline */}
-          <Text style={s.name}>{box.name}</Text>
-          {box.tagline ? <Text style={s.tagline}>{box.tagline}</Text> : null}
+          <AxCard variant="featured" testID="box-detail-card">
+            {/* Name & tagline */}
+            <Text style={s.name}>{box.name}</Text>
+            {box.tagline ? <Text style={s.tagline}>{box.tagline}</Text> : null}
 
-          {/* Stats row */}
-          <View style={s.statsRow}>
-            <View style={s.statItem}>
-              <Users size={14} color={theme.accent} />
-              <Text style={s.statVal}>{memberCount}</Text>
-              <Text style={s.statLabel}>membres</Text>
+            {/* Stats row */}
+            <View style={s.statsRow}>
+              <View style={s.statItem}>
+                <Users size={14} color={c.accentText} />
+                <Text style={s.statVal}>{memberCount}</Text>
+                <Text style={s.statLabel}>membres</Text>
+              </View>
+              {box.founded_at ? (
+                <View style={s.statItem}>
+                  <Calendar size={14} color={c.accentText} />
+                  <Text style={s.statVal}>{new Date(box.founded_at).getFullYear()}</Text>
+                  <Text style={s.statLabel}>fondée</Text>
+                </View>
+              ) : null}
+              {sports.length > 0 ? (
+                <View style={s.statItem}>
+                  <Dumbbell size={14} color={c.accentText} />
+                  <Text style={s.statVal}>{sports.length}</Text>
+                  <Text style={s.statLabel}>sports</Text>
+                </View>
+              ) : null}
             </View>
-            {box.founded_at ? (
-              <View style={s.statItem}>
-                <Calendar size={14} color={theme.accent} />
-                <Text style={s.statVal}>{new Date(box.founded_at).getFullYear()}</Text>
-                <Text style={s.statLabel}>fondée</Text>
-              </View>
-            ) : null}
-            {sports.length > 0 ? (
-              <View style={s.statItem}>
-                <Dumbbell size={14} color={theme.accent} />
-                <Text style={s.statVal}>{sports.length}</Text>
-                <Text style={s.statLabel}>sports</Text>
-              </View>
-            ) : null}
-          </View>
+          </AxCard>
 
           {/* Description */}
           {box.description ? (
@@ -158,9 +163,7 @@ export default function BoxDirectoryDetailScreen() {
               <Text style={s.sectionTitle}>Sports</Text>
               <View style={s.badgeRow}>
                 {sports.map(sp => (
-                  <View key={sp} style={s.badge}>
-                    <Text style={s.badgeText}>{sp}</Text>
-                  </View>
+                  <AxTag key={sp} label={sp} />
                 ))}
               </View>
             </View>
@@ -172,9 +175,7 @@ export default function BoxDirectoryDetailScreen() {
               <Text style={s.sectionTitle}>Services</Text>
               <View style={s.badgeRow}>
                 {services.map(sv => (
-                  <View key={sv} style={[s.badge, s.serviceBadge]}>
-                    <Text style={s.badgeText}>{sv}</Text>
-                  </View>
+                  <AxTag key={sv} tone="muted" label={sv} />
                 ))}
               </View>
             </View>
@@ -185,35 +186,35 @@ export default function BoxDirectoryDetailScreen() {
             <Text style={s.sectionTitle}>Contact</Text>
             <View style={s.infoList}>
               {box.address && (
-                <TouchableOpacity style={s.infoRow} onPress={() => openLink(box.google_maps_url)}>
-                  <MapPin size={15} color={theme.accent} />
+                <Pressable style={s.infoRow} onPress={() => openLink(box.google_maps_url)} accessibilityRole="link">
+                  <MapPin size={16} color={c.accentText} />
                   <Text style={s.infoText}>{box.address}{box.city ? `, ${box.city}` : ''}</Text>
-                  {box.google_maps_url && <ExternalLink size={13} color={theme.textMuted} />}
-                </TouchableOpacity>
+                  {box.google_maps_url && <ExternalLink size={14} color={c.textMuted} />}
+                </Pressable>
               )}
               {box.phone && (
-                <TouchableOpacity style={s.infoRow} onPress={() => Linking.openURL(`tel:${box.phone}`)}>
-                  <Phone size={15} color={theme.accent} />
+                <Pressable style={s.infoRow} onPress={() => Linking.openURL(`tel:${box.phone}`)} accessibilityRole="link">
+                  <Phone size={16} color={c.accentText} />
                   <Text style={s.infoText}>{box.phone}</Text>
-                </TouchableOpacity>
+                </Pressable>
               )}
               {box.contact_email && (
-                <TouchableOpacity style={s.infoRow} onPress={() => Linking.openURL(`mailto:${box.contact_email}`)}>
-                  <Mail size={15} color={theme.accent} />
+                <Pressable style={s.infoRow} onPress={() => Linking.openURL(`mailto:${box.contact_email}`)} accessibilityRole="link">
+                  <Mail size={16} color={c.accentText} />
                   <Text style={s.infoText}>{box.contact_email}</Text>
-                </TouchableOpacity>
+                </Pressable>
               )}
               {box.website_url && (
-                <TouchableOpacity style={s.infoRow} onPress={() => openLink(box.website_url)}>
-                  <Globe size={15} color={theme.accent} />
+                <Pressable style={s.infoRow} onPress={() => openLink(box.website_url)} accessibilityRole="link">
+                  <Globe size={16} color={c.accentText} />
                   <Text style={s.infoText}>{box.website_url}</Text>
-                </TouchableOpacity>
+                </Pressable>
               )}
               {box.instagram_url && (
-                <TouchableOpacity style={s.infoRow} onPress={() => openLink(box.instagram_url)}>
-                  <Instagram size={15} color={theme.accent} />
+                <Pressable style={s.infoRow} onPress={() => openLink(box.instagram_url)} accessibilityRole="link">
+                  <Instagram size={16} color={c.accentText} />
                   <Text style={s.infoText}>Instagram</Text>
-                </TouchableOpacity>
+                </Pressable>
               )}
             </View>
           </View>
@@ -222,12 +223,14 @@ export default function BoxDirectoryDetailScreen() {
           {box.opening_hours && Object.keys(box.opening_hours).length > 0 && (
             <View style={s.section}>
               <Text style={s.sectionTitle}>Horaires</Text>
-              {Object.entries(box.opening_hours).map(([day, hours]) => (
-                <View key={day} style={s.hoursRow}>
-                  <Text style={s.hoursDay}>{day}</Text>
-                  <Text style={s.hoursVal}>{hours}</Text>
-                </View>
-              ))}
+              <AxCard style={s.hoursCard} testID="box-detail-hours">
+                {Object.entries(box.opening_hours).map(([day, hours]) => (
+                  <View key={day} style={s.hoursRow}>
+                    <Text style={s.hoursDay}>{day}</Text>
+                    <Text style={s.hoursVal}>{hours}</Text>
+                  </View>
+                ))}
+              </AxCard>
             </View>
           )}
         </View>
@@ -237,59 +240,44 @@ export default function BoxDirectoryDetailScreen() {
 }
 
 
-function createStyles(t: AppTheme) {
+function createStyles(c: AxColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { fontSize: 14, color: t.textMuted },
-    header: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12,
-      backgroundColor: t.card, borderBottomWidth: 1, borderBottomColor: t.border,
-    },
-    backBtn: {
-      width: 36, height: 36, borderRadius: 10,
-      backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center',
-    },
-    headerTitle: { flex: 1, fontSize: 18, fontWeight: '900', color: t.text },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: axSpacing['2xl'] },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
     heroWrap: { position: 'relative' },
     cover: { width: '100%', height: 160 },
+    coverPlaceholder: { backgroundColor: c.surface },
     logoWrap: {
-      position: 'absolute', bottom: -30, left: 20,
-      borderRadius: 18, borderWidth: 3, borderColor: t.card,
+      position: 'absolute', bottom: -32, left: axSpacing.xl,
+      borderRadius: axRadius.card + 3, borderWidth: 3, borderColor: c.background,
       overflow: 'hidden',
     },
-    logo: { width: 64, height: 64, borderRadius: 16 },
+    logo: { width: 64, height: 64, borderRadius: axRadius.card },
     logoPlaceholder: {
-      backgroundColor: `${t.accent}15`, alignItems: 'center', justifyContent: 'center',
+      backgroundColor: c.field, alignItems: 'center', justifyContent: 'center',
     },
-    logoLetter: { fontSize: 26, fontWeight: '900', color: t.accent },
-    body: { paddingHorizontal: 20, paddingTop: 40 },
-    name: { fontSize: 24, fontWeight: '900', color: t.text },
-    tagline: { fontSize: 14, color: t.textSecondary, marginTop: 4 },
+    logoLetter: { ...axTypography.titleL, color: c.accentText },
+    body: { paddingHorizontal: axSpacing.xl, paddingTop: 44 },
+    name: { ...axTypography.titleL, color: c.text },
+    tagline: { ...axTypography.bodySmall, color: c.textMuted },
     statsRow: {
-      flexDirection: 'row', gap: 20, marginTop: 20,
-      paddingVertical: 16, borderTopWidth: 1, borderBottomWidth: 1,
-      borderColor: t.border,
+      flexDirection: 'row', flexWrap: 'wrap', columnGap: axSpacing.xl, rowGap: axSpacing.sm,
+      paddingTop: axSpacing.md, borderTopWidth: 1, borderColor: c.border,
     },
-    statItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    statVal: { fontSize: 15, fontWeight: '800', color: t.text },
-    statLabel: { fontSize: 12, color: t.textMuted },
-    section: { marginTop: 24 },
-    sectionTitle: { fontSize: 14, fontWeight: '800', color: t.text, marginBottom: 10 },
-    descText: { fontSize: 14, color: t.textSecondary, lineHeight: 22 },
-    badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-    badge: {
-      paddingHorizontal: 12, paddingVertical: 6,
-      borderRadius: 8, backgroundColor: `${t.accent}15`,
-    },
-    badgeText: { fontSize: 12, fontWeight: '700', color: t.textSecondary },
-    serviceBadge: { backgroundColor: t.surface },
-    infoList: { gap: 12 },
-    infoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    infoText: { fontSize: 13, color: t.textSecondary, flex: 1 },
-    hoursRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
-    hoursDay: { fontSize: 13, fontWeight: '600', color: t.text, textTransform: 'capitalize' },
-    hoursVal: { fontSize: 13, color: t.textSecondary },
+    statItem: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+    statVal: { ...axTypography.label, color: c.text },
+    statLabel: { ...axTypography.bodySmall, color: c.textMuted },
+    section: { marginTop: axSpacing['2xl'] },
+    sectionTitle: { ...axTypography.overline, color: c.textMuted, marginBottom: axSpacing.md },
+    descText: { ...axTypography.body, color: c.text },
+    badgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm },
+    infoList: { gap: axSpacing.xs },
+    infoRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, minHeight: 44 },
+    infoText: { ...axTypography.bodySmall, color: c.text, flex: 1, minWidth: 0 },
+    hoursCard: { gap: 0, paddingVertical: axSpacing.sm },
+    hoursRow: { flexDirection: 'row', justifyContent: 'space-between', gap: axSpacing.md, paddingVertical: 6 },
+    hoursDay: { ...axTypography.labelSmall, color: c.text, textTransform: 'capitalize' },
+    hoursVal: { ...axTypography.bodySmall, color: c.textMuted, flexShrink: 1, textAlign: 'right' },
   });
 }
