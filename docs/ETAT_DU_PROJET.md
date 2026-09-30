@@ -215,7 +215,16 @@ Supabase/Resend.
   et `useTabBarScrollSpace` gardés, emoji du coach remplacé par l'icône Lucide `User`.
 - Règles inchangées (limites hebdo / jour, file d'attente, fenêtres 15 / 20 min, 14 jours, refus, rappels) : logique figée
   par empreinte relevée sur master ; ordre des textes comparé à un relevé de master (10 états).
-- Tests : `r10.rn.test.tsx` (35), `npx jest` 1976, `npm run test:rn` 523, `tsc` vert ; 36 mutations tuées.
+- Tests : `r10.rn.test.tsx` (35), `npx jest` 1976, `npm run test:rn` 565, `tsc` vert ; 36 mutations tuées.
+
+**Refonte R7 : historique ELO par paliers (app seule, aucune migration, lecture seule).**
+- `EloHistoryScreen` au nouveau design (`AxCard`, `AxChip`, `theme.ax`, Oswald) ; carte ELO avec palier actuel, « encore N pts
+  avant <palier> » (rien pour Pro), barre et bornes ; graphique avec bandes de palier, seuils pointillés, points colorés,
+  repères « Passage <palier> · <date> » et « Meilleur · <valeur> » ; carte « Paliers » (six paliers, « Toi »). Logique pure
+  dans `src/utils/eloTiers.ts` (seuils de `eloLevels`), couleurs `levelInk` (AA dans les deux thèmes). Filtres, liste et
+  navigation inchangés ; médailles emoji du rang remplacées par l'icône Lucide `Medal`. Badge `level_inter` hors lot.
+- Tests : `r7.rn.test.tsx` (41, ordre des textes comparé à un relevé de master `r7StructureBefore.json`), isolement R1
+  étendu (`axComponents.rn.test.tsx`), `npx jest` 1976, `npm run test:rn` 526, `tsc` vert ; 31 mutations tuées.
 
 **R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).**
 - `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps,
