@@ -54,6 +54,13 @@ class VideoQualityTest {
     // No 1080p: largest size whose long side is at most 1920.
     assertEquals(1440 to 1080, VideoQuality.bufferSize(listOf(4000 to 3000, 1440 to 1080, 1280 to 720), "1080p", true))
     assertEquals(1080 to 1920, VideoQuality.bufferSize(emptyList(), "1080p", false))
+    // Opposite orientation beats a larger fallback size.
+    assertEquals(1920 to 1080, VideoQuality.bufferSize(listOf(1920 to 1440, 1920 to 1080), "1080p", false))
+  }
+
+  @Test fun fallbackStaysWithinTheRequestedQuality() {
+    // 720p without 1280 x 720: largest size whose long side is at most 1280, not 1920.
+    assertEquals(1280 to 960, VideoQuality.bufferSize(listOf(1920 to 1080, 1280 to 960), "720p", true))
   }
 
   @Test fun bufferSizeForOtherQualities() {

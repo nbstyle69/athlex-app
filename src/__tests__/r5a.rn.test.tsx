@@ -241,8 +241,9 @@ describe('R5a : capture', () => {
  * R6b : état du lien YouTube retiré, « GO ! » aussi en mode caméra (écart prouvé dans r6b.rn.test.tsx).
  * R6c (C) : synchro de l'incrustation déplacée après displayOpts, champs du décompte envoyés (écart prouvé dans r6c.rn.test.tsx).
  * R6c (A) : options vidéo (qualité vérifiée, fps, micro, saccades), couvertes par r6cOptionsVideo.rn.test.tsx.
+ * R6c (B) : jeu de bips chargé selon le réglage, markBeep dans playBeep, bips passés au module (r6cBips.rn.test.tsx).
  */
-const LOGIC_SHA = '8c521a0038f8265b15e38ae2f0b40bab29d97660600caff3a1dd8f041f1de1d8';
+const LOGIC_SHA = 'a4129be621739534063e20489172fd6886806486faf55e54867d3222d4385445';
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
 const MODAL_SHA = '48d210edde52dc6c61eefc919547338ded563c6ac4e8405c748e9c748a47c566';
 const LAUNCH_SHA = 'e4567887b4ed3745b56790f362ad063d475f82f5d770b1ab62783ff38c5f7dc2';
@@ -286,6 +287,15 @@ function normalizeBefore(name: string, list: string[]): string[] {
     out = [...out.slice(0, k + 1), up('timer.video.quality'), up('timer.video.qualityHint'), '720P', '1080P',
       up('timer.video.fps'), up('timer.video.fpsValue', { fps: '25' }), up('timer.video.fpsValue', { fps: '30' }),
       up('timer.video.mic'), up('timer.video.micHint'), ...out.slice(k + 1)];
+    // R6c (B) : « Bips dans la vidéo » après le micro.
+    const m = out.indexOf(up('timer.video.micHint'));
+    out = [...out.slice(0, m + 1), up('timer.video.beeps'), up('timer.video.beepsHint'), ...out.slice(m + 1)];
+  }
+  if (name === 'design-du-minuteur') {
+    // R6c (B) : jeu de bips (AthleX, Classique) après sons et rotation.
+    const p = out.indexOf('PORTRAIT');
+    const up = (key: string) => i18n.t(key).toUpperCase();
+    out = [...out.slice(0, p + 1), up('timer.beeps.label'), up('timer.beeps.athlex'), up('timer.beeps.classic'), ...out.slice(p + 1)];
   }
   return out;
 }
@@ -446,7 +456,7 @@ describe('R5a : aucun calcul, bip ni thème touché', () => {
     const av = jest.requireMock('expo-av') as { Audio: { Sound: { createAsync: jest.Mock } } };
     av.Audio.Sound.createAsync.mockImplementation(async (src: { uri: string }) => ({ sound: {
       setVolumeAsync: jest.fn(async () => {}), unloadAsync: jest.fn(async () => {}),
-      replayAsync: jest.fn(async () => { played.push(src.uri.replace(/^.*bwod_|\.wav$/g, '')); }),
+      replayAsync: jest.fn(async () => { played.push(src.uri.replace(/^.*bwod_(athlex_|classic_)?|\.wav$/g, '')); }),
     } }));
     const root = await run(runParams({ countdown: 3 }));
     await act(async () => { await Promise.resolve(); });
@@ -524,7 +534,8 @@ describe('R5a : feuille « Design du minuteur »', () => {
     const r = await run(runParams({}));
     await openSettings(r);
     const sheet = r.findAll((n) => n.props.testID === 'timer-design-sheet')[0];
-    expect(sheet.findAllByType(AxChip).map((ch) => ch.props.testID)).toEqual(['timer-style-arc', 'timer-style-bar', 'timer-style-digits']);
+    // R6c : + jeu de bips (AthleX, Classique), couvert par r6cBips.rn.test.tsx.
+    expect(sheet.findAllByType(AxChip).map((ch) => ch.props.testID)).toEqual(['timer-style-arc', 'timer-style-bar', 'timer-style-digits', 'timer-beeps-athlex', 'timer-beeps-classic']);
     expect(sheet.findAllByType(AxSwitch).map((sw) => sw.props.testID)).toEqual(['timer-follow-app-switch', 'timer-sounds-switch', 'timer-rotation-switch']);
     for (const t of TIMER_THEMES) expect(structure(sheet).join('|')).toContain(i18n.t(t.labelKey).toUpperCase());
     expect(sheet.findAllByType(AxButton).filter((b) => b.props.variant === 'accent')).toHaveLength(1);

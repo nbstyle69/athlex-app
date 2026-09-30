@@ -10,7 +10,11 @@ import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
 import { useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { RealtimeRecorderView, updateOverlayState, startRecording as nativeStartRec, stopRecording as nativeStopRec } from 'realtime-recorder';
-import { getLastRecordingStats, prepareQuality, type QualityCheck, type VideoQuality } from 'realtime-recorder';
+import { getLastRecordingStats, markBeep, prepareQuality, type QualityCheck, type VideoQuality } from 'realtime-recorder';
+import {
+  ANDROID_BEEP_MIC_LATENCY_MS, BEEP_SETS, BEEP_TYPES, DEFAULT_BEEP_SET, beepFileName, buildMultiWAV, isBeepSet,
+  type BeepSetId, type BeepType,
+} from '../../lib/timerBeeps';
 import { DISPLAY_OPTS_KEY, VIDEO_QUALITY_LABELS, isAbove1080, isJerky, loadVideoOpts, qualityNotice, type VideoOpts } from '../../lib/timerVideoOpts';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -48,44 +52,6 @@ function formatTime(totalSec: number): string {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-type WavSeg = { hz?: number; ms: number; silent?: boolean; fadeInMs?: number; fadeOutMs?: number; amp?: number };
-
-// ─── WAV PCM 16-bit mono 44100 Hz generator ─────────────────────────────────
-function buildMultiWAV(segs: WavSeg[]): string {
-  const sr = 44100;
-  const blockAlign = 2; // 16-bit mono
-  let totalSamples = 0;
-  for (const seg of segs) totalSamples += Math.floor(sr * seg.ms / 1000);
-  const dataBytes = totalSamples * blockAlign;
-  const ab = new ArrayBuffer(44 + dataBytes);
-  const dv = new DataView(ab);
-  const u8 = new Uint8Array(ab);
-  const ws = (o: number, v: string) => { for (let i = 0; i < v.length; i++) u8[o + i] = v.charCodeAt(i); };
-  ws(0, 'RIFF'); dv.setUint32(4, 36 + dataBytes, true); ws(8, 'WAVE');
-  ws(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true);
-  dv.setUint16(22, 1, true); dv.setUint32(24, sr, true); dv.setUint32(28, sr * blockAlign, true);
-  dv.setUint16(32, blockAlign, true); dv.setUint16(34, 16, true);
-  ws(36, 'data'); dv.setUint32(40, dataBytes, true);
-  let off = 44;
-  for (const seg of segs) {
-    const n       = Math.floor(sr * seg.ms / 1000);
-    const fadeIn  = Math.max(1, Math.floor(sr * (seg.fadeInMs  ?? 5)  / 1000));
-    const fadeOut = Math.max(1, Math.floor(sr * (seg.fadeOutMs ?? 8)  / 1000));
-    for (let i = 0; i < n; i++) {
-      let sample = 0;
-      if (!seg.silent && seg.hz) {
-        let amp = seg.amp ?? 0.85;
-        if (i < fadeIn)          amp *= i / fadeIn;
-        else if (i > n - fadeOut) amp *= (n - i) / fadeOut;
-        sample = Math.round(32767 * amp * Math.sin(2 * Math.PI * seg.hz * i / sr));
-      }
-      dv.setInt16(off, sample, true); off += 2;
-    }
-  }
-  let b = ''; for (let i = 0; i < u8.length; i++) b += String.fromCharCode(u8[i]);
-  return btoa(b);
-}
-
 // ─── One-shot tone: génère + joue + décharge automatiquement ─────────────────
 async function playTone(hz: number, ms: number, fadeOutMs = 20): Promise<void> {
   try {
@@ -114,12 +80,14 @@ interface TimerDisplayOpts {
   allowRotation: boolean; themeId: string; beepVolume: number;
   /** Le thème du chrono suit le thème de l'app (AthleX en sombre, AthleX 2 en clair). */
   followAppTheme: boolean;
+  /** Jeu de bips (haut-parleur et vidéo). */
+  beepSet: BeepSetId;
 }
 const DEFAULT_DISPLAY: TimerDisplayOpts = {
   clockStyle: 'bar', fontSize: Math.round(SW * 0.22), digitColor: '#9AE6D2',
   bgCountdown: '#101214', bgRunning: '#101214', bgDone: '#1C2023',
   bipsEnabled: true, allowRotation: false, themeId: 'athlex', beepVolume: 1,
-  followAppTheme: true,
+  followAppTheme: true, beepSet: DEFAULT_BEEP_SET,
 };
 
 /** Options réellement affichées : tant que le réglage est actif, le thème de l'app impose celui du chrono. */
@@ -421,6 +389,15 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
             </View>
           </AxCard>
 
+          {/* ── JEU DE BIPS (haut-parleur et vidéo, même si les sons sont coupés) */}
+          <SLabel label={t('timer.beeps.label')} />
+          <View style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm }, section]}>
+            {(['athlex', 'classic'] as BeepSetId[]).map(id => (
+              <AxChip key={id} label={t(`timer.beeps.${id}`)} selected={opts.beepSet === id}
+                onPress={() => onUpdate({ beepSet: id })} testID={`timer-beeps-${id}`} />
+            ))}
+          </View>
+
           {/* ── VOLUME DES BIPS */}
           {opts.bipsEnabled && (
             <>
@@ -534,6 +511,8 @@ export default function TimerRunScreen() {
   const [qualityCheck, setQualityCheck] = useState<QualityCheck | null>(null);
   const [checkingQuality, setCheckingQuality] = useState<VideoQuality | null>(null);
   const [jerky, setJerky] = useState(false);
+  const videoOptsRef = useRef<VideoOpts | null>(null);
+  videoOptsRef.current = videoOpts;
   useEffect(() => {
     if (withCamera) loadVideoOpts().then(setVideoOpts).catch(e => captureError(e, { action: 'loadVideoOpts' }));
   }, [withCamera]);
@@ -577,6 +556,7 @@ export default function TimerRunScreen() {
   const sndTickRef        = useRef<Audio.Sound[]>([]);
   const sndGoRef          = useRef<Audio.Sound | null>(null);
   const sndDoneRef        = useRef<Audio.Sound | null>(null);
+  const beepFilesRef      = useRef<Record<BeepType, string> | null>(null);
 
   const [storedOpts, setDisplayOptsRaw] = useState<TimerDisplayOpts>(DEFAULT_DISPLAY);
   const appMode = useTheme().theme.mode;
@@ -804,43 +784,44 @@ export default function TimerRunScreen() {
         if (!camPermission?.granted) requestCamPermission();
         if (!mediaPermission?.granted) requestMediaPermission();
       }
-      const cDir = FileSystem.cacheDirectory ?? '';
-      // fadeInMs >= 15ms to avoid audible click/pop at beep start
-      await FileSystem.writeAsStringAsync(cDir + 'bwod_tick.wav',
-        buildMultiWAV([{ hz: 860, ms: 180, fadeInMs: 15, fadeOutMs: 30 }]),
-        { encoding: FileSystem.EncodingType.Base64 });
-      await FileSystem.writeAsStringAsync(cDir + 'bwod_go.wav',
-        buildMultiWAV([{ hz: 1000, ms: 550, fadeInMs: 15, fadeOutMs: 50 }]),
-        { encoding: FileSystem.EncodingType.Base64 });
-      await FileSystem.writeAsStringAsync(cDir + 'bwod_done.wav',
-        buildMultiWAV([
-          { hz: 1000, ms: 550, fadeInMs: 15, fadeOutMs: 50 },
-          { silent: true, ms: 80 },
-          { hz: 1000, ms: 550, fadeInMs: 15, fadeOutMs: 50 },
-        ]), { encoding: FileSystem.EncodingType.Base64 });
-      // Une seule instance tick (les tics sont espacés d'≥1 s).
-      const { sound: tickSnd } = await Audio.Sound.createAsync({ uri: cDir + 'bwod_tick.wav' });
-      sndTickRef.current.push(tickSnd);
-      const { sound: goSnd } = await Audio.Sound.createAsync({ uri: cDir + 'bwod_go.wav' });
-      sndGoRef.current = goSnd;
-      const { sound: doneSnd } = await Audio.Sound.createAsync({ uri: cDir + 'bwod_done.wav' });
-      sndDoneRef.current = doneSnd;
-
-      const v0 = displayOptsRef.current.beepVolume ?? 1;
-      tickSnd.setVolumeAsync(v0).catch(() => {});
-      goSnd.setVolumeAsync(v0).catch(() => {});
-      doneSnd.setVolumeAsync(v0).catch(() => {});
-
-      soundReadyRef.current = true;
     }
     setup();
-    return () => {
-      sndTickRef.current.forEach(s => { s.unloadAsync().catch(e => captureError(e, { action: 'unloadTick' })); });
-      sndTickRef.current = [];
-      sndGoRef.current?.unloadAsync().catch(e => captureError(e, { action: 'unloadGo' }));
-      sndDoneRef.current?.unloadAsync().catch(e => captureError(e, { action: 'unloadDone' }));
-    };
   }, []);
+
+  // Jeu de bips (R6c) : WAV écrits en cache puis chargés, rechargés quand le jeu change.
+  // Les mêmes fichiers partent au module natif pour le mélange dans la vidéo.
+  const beepSet: BeepSetId = isBeepSet(displayOpts.beepSet) ? displayOpts.beepSet : DEFAULT_BEEP_SET;
+  useEffect(() => {
+    let alive = true;
+    const loaded: Audio.Sound[] = [];
+    (async () => {
+      try {
+        const cDir = FileSystem.cacheDirectory ?? '';
+        const files = {} as Record<BeepType, string>;
+        for (const type of BEEP_TYPES) {
+          files[type] = cDir + beepFileName(beepSet, type);
+          await FileSystem.writeAsStringAsync(files[type], buildMultiWAV(BEEP_SETS[beepSet][type]),
+            { encoding: FileSystem.EncodingType.Base64 });
+        }
+        // Une seule instance tick (les tics sont espacés d'≥1 s).
+        for (const type of BEEP_TYPES) loaded.push((await Audio.Sound.createAsync({ uri: files[type] })).sound);
+        if (!alive) return;
+        const [tickSnd, goSnd, doneSnd] = loaded;
+        sndTickRef.current = [tickSnd];
+        sndGoRef.current = goSnd;
+        sndDoneRef.current = doneSnd;
+        beepFilesRef.current = files;
+        const v0 = displayOptsRef.current.beepVolume ?? 1;
+        loaded.forEach(snd => snd.setVolumeAsync(v0).catch(() => {}));
+        soundReadyRef.current = true;
+      } catch (e) { captureError(e, { screen: 'TimerRun', action: 'loadBeeps', beepSet }); }
+    })();
+    return () => {
+      alive = false;
+      soundReadyRef.current = false;
+      loaded.forEach(snd => snd.unloadAsync().catch(e => captureError(e, { action: 'unloadBeep' })));
+    };
+  }, [beepSet]);
 
   useEffect(() => {
     AsyncStorage.getItem(DISPLAY_OPTS_KEY).then(v => {
@@ -928,7 +909,11 @@ export default function TimerRunScreen() {
     prevPhaseRef.current = phase;
   }, [phase]);
 
-  function playBeep(type: 'tick' | 'go' | 'done') {
+  function playBeep(type: BeepType) {
+    // Bips dans la vidéo : réglage indépendant des sons du téléphone (ignoré par le module hors enregistrement).
+    if (videoOptsRef.current?.videoBeeps) {
+      try { markBeep(type); } catch (e) { captureError(e, { screen: 'TimerRun', action: 'markBeep' }); }
+    }
     if (!displayOptsRef.current.bipsEnabled || !soundReadyRef.current) return;
     try {
       if (type === 'tick') {
@@ -991,7 +976,12 @@ export default function TimerRunScreen() {
     const outputPath = (FileSystem.documentDirectory ?? '') + `bwod_video_${videoStartTimeRef.current}.mp4`;
     // Sans vérification aboutie, jamais au-delà de 1080p.
     const quality = qualityCheck?.applied ?? (isAbove1080(videoOpts.videoQuality) ? '1080p' : videoOpts.videoQuality);
-    nativeStartRec({ outputPath, facing, isLandscape, quality, fps: videoOpts.videoFps, mic }).catch((err: any) => {
+    const beeps = videoOpts.videoBeeps && !!beepFilesRef.current;
+    nativeStartRec({
+      outputPath, facing, isLandscape, quality, fps: videoOpts.videoFps, mic,
+      beeps, beepFiles: beeps ? beepFilesRef.current! : undefined,
+      beepLatencyMs: Platform.OS === 'android' ? ANDROID_BEEP_MIC_LATENCY_MS : undefined,
+    }).catch((err: any) => {
       captureError(err, { screen: 'TimerRun', action: 'nativeStartRec' });
       recordingActiveRef.current = false;
       setIsRecordingActive(false);

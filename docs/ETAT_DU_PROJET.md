@@ -222,6 +222,17 @@ Supabase/Resend.
   couleurs et typographies dans les deux thèmes, 390 px, aucun emoji, 92 tests) ; isolement R1 élargi aux fichiers du
   lot ; `npx jest` 1976, `npm run test:rn` 659, `tsc` vert ; 28 mutations tuées.
 
+**R6c (B) : jeux de bips AthleX / Classique et bips mélangés dans la vidéo (app et module natif, aucune migration).**
+- `src/lib/timerBeeps.ts` : synthèse WAV sortie de `TimerRunScreen`, jeu « Classique » identique à l'octet près (empreintes),
+  jeu « AthleX » par défaut (tic 1046 Hz ~100 ms, GO montant ~400 ms, fin en trois notes descendantes) ; choix par puces
+  dans « Design du minuteur » (`beepSet`), mêmes instants de déclenchement (5-4-3-2-1 Android, 3-2-1 iOS).
+- « Bips dans la vidéo » (section caméra de `TimerScreen`, `videoBeeps`, défaut activé), indépendant des sons du téléphone :
+  `playBeep` appelle `markBeep`, le module mélange le WAV à −6 dBFS dans la piste son (tampons micro, ou piste synthétique
+  silence + bips si micro coupé ; aucune piste si les deux sont coupés). Calage du bip doublé micro activé : iOS
+  `outputLatency + inputLatency`, Android 80 ms envoyés par le JS (`ANDROID_BEEP_MIC_LATENCY_MS`).
+- Tests : `r6cBips.rn.test.tsx` (19), `BeepMixerTest.kt` (9, JVM), `VideoQualityTest.kt` complété (7) ; mutations JS et
+  Kotlin tuées ; Kotlin compilé en local, Swift par un build simulateur EAS.
+
 **Refonte R9a : Ma Box et détail du WOD au nouveau design, page Ma Box entièrement défilante (app seule, aucune migration).**
 - `WhiteboardScreen` : tout l'écran (en-tête, Membres / Messages / Actualités / Classement de la box, onglets de piste,
   jours, « Entrer mon score » / « Classement », séances) dans un seul `ScrollView` avec « tirer pour actualiser » (même

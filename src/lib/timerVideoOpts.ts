@@ -13,10 +13,12 @@ export interface VideoOpts {
   videoQuality: VideoQuality;
   videoFps: 25 | 30;
   videoMic: boolean;
+  /** Bips du chrono mélangés dans la piste son de la vidéo. */
+  videoBeeps: boolean;
 }
 
-/** Comportement d'avant R6c : 1080p, 30 i/s, micro activé. */
-export const DEFAULT_VIDEO_OPTS: VideoOpts = { videoQuality: '1080p', videoFps: 30, videoMic: true };
+/** Comportement d'avant R6c : 1080p, 30 i/s, micro activé ; bips dans la vidéo activés. */
+export const DEFAULT_VIDEO_OPTS: VideoOpts = { videoQuality: '1080p', videoFps: 30, videoMic: true, videoBeeps: true };
 
 /** Options vidéo lues dans l'objet stocké ; toute valeur inconnue retombe sur le défaut. */
 export function readVideoOpts(stored: unknown): VideoOpts {
@@ -25,6 +27,7 @@ export function readVideoOpts(stored: unknown): VideoOpts {
     videoQuality: VIDEO_QUALITIES.includes(s.videoQuality as VideoQuality) ? s.videoQuality as VideoQuality : DEFAULT_VIDEO_OPTS.videoQuality,
     videoFps: s.videoFps === 25 ? 25 : 30,
     videoMic: typeof s.videoMic === 'boolean' ? s.videoMic : DEFAULT_VIDEO_OPTS.videoMic,
+    videoBeeps: typeof s.videoBeeps === 'boolean' ? s.videoBeeps : DEFAULT_VIDEO_OPTS.videoBeeps,
   };
 }
 

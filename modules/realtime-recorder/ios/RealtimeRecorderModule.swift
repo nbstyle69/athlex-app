@@ -46,6 +46,18 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
   var fps: Int32 = 30
   var micEnabled = true
 
+  // Beeps in the video (R6c): PCM per type (44.1 kHz, -6 dBFS peak), placed on the
+  // capture clock by markBeep, mixed into the mic buffers or into a synthetic track.
+  var beepsEnabled = false
+  private var beepPcm: [String: [Float]] = [:]
+  private var beepPcmByRate: [String: [Float]] = [:]
+  private var scheduledBeeps: [(time: Double, type: String)] = []
+  private let beepLock = NSLock()
+  private var micActive = false
+  private var synthFormat: CMAudioFormatDescription?
+  private var synthStartTime = CMTime.invalid
+  private var synthSamples: Int64 = 0
+
   // Frames appended to the writer during the last recording (dry run or real).
   private var writtenFrames = 0
   private var firstFrameTime = CMTime.invalid
@@ -353,12 +365,19 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     aInput.expectsMediaDataInRealTime = true
 
     if writer.canAdd(vInput) { writer.add(vInput) }
-    // Mic off: no audio track at all.
-    if micEnabled, writer.canAdd(aInput) { writer.add(aInput) }
+    // Audio track: mic (+ beeps), beeps alone (synthetic), or none when both are off.
+    micActive = micEnabled && audioOutput != nil
+    let withBeeps = beepsEnabled && !beepPcm.isEmpty
+    let withAudio = (micActive || withBeeps) && writer.canAdd(aInput)
+    if withAudio { writer.add(aInput) }
+    beepLock.lock(); scheduledBeeps.removeAll(); beepLock.unlock()
+    beepPcmByRate.removeAll()
+    synthStartTime = .invalid
+    synthSamples = 0
 
     self.assetWriter = writer
     self.videoWriterInput = vInput
-    self.audioWriterInput = micEnabled ? aInput : nil
+    self.audioWriterInput = withAudio ? aInput : nil
     self.pixelBufferAdaptor = adaptor
     self.writtenFrames = 0
     self.firstFrameTime = .invalid
@@ -423,6 +442,7 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
       if writer.status == .unknown {
         writer.startWriting()
         writer.startSession(atSourceTime: timestamp)
+        synthStartTime = timestamp
         isSessionStarted = true
         print("[RealtimeRecorder] Writer session started at \(timestamp.seconds)s")
       }
@@ -444,9 +464,12 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         if !firstFrameTime.isValid { firstFrameTime = timestamp }
         lastFrameTime = timestamp
       }
+      // Mic off, beeps on: the audio track follows the video clock.
+      if !micActive, beepsEnabled { appendSyntheticAudio(upTo: timestamp) }
 
     } else if output == audioOutput {
       guard let audioInput = audioWriterInput, audioInput.isReadyForMoreMediaData else { return }
+      if beepsEnabled { mixBeeps(into: sampleBuffer) }
       audioInput.append(sampleBuffer)
     }
   }
@@ -484,10 +507,12 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
       reason = "thermal"
     }
     let mic = micEnabled
+    let beeps = beepsEnabled
 
     func finish(_ applied: String) {
       quality = applied
       micEnabled = mic
+      beepsEnabled = beeps
       if applied != requested || VideoQuality.isAbove1080(requested) { setupSession() }
       print("[RealtimeRecorder] prepareQuality requested=\(requested) applied=\(applied) reason=\(reason ?? "-")")
       completion(applied, reason)
@@ -497,6 +522,7 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
       guard VideoQuality.isAbove1080(candidate) else { finish(candidate); return }
       quality = candidate
       micEnabled = false
+      beepsEnabled = false
       setupSession()
       let url = FileManager.default.temporaryDirectory.appendingPathComponent("realtime_recorder_dry_run.mp4")
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
@@ -520,6 +546,158 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
 
     dryRun(q)
+  }
+
+  // MARK: Beeps in the video (R6c)
+
+  /// Loads the beep WAVs sent by JS (same files as the speaker); broken files are skipped.
+  func loadBeeps(files: [String: String]) {
+    var out: [String: [Float]] = [:]
+    for (type, path) in files {
+      let url = path.hasPrefix("file://") ? (URL(string: path) ?? URL(fileURLWithPath: path)) : URL(fileURLWithPath: path)
+      guard let data = try? Data(contentsOf: url), let decoded = BeepPcm.decodeWav(data) else {
+        print("[RealtimeRecorder] beep \(type) not loaded")
+        continue
+      }
+      out[type] = BeepPcm.normalize(BeepPcm.resample(decoded.1, from: decoded.0, to: 44100))
+    }
+    beepPcm = out
+  }
+
+  private var captureClock: CMClock {
+    if #available(iOS 15.4, *), let clock = captureSession?.synchronizationClock { return clock }
+    return CMClockGetHostTimeClock()
+  }
+
+  /// Places a beep at "now" on the capture clock (the sample buffers' clock). With the
+  /// mic on, it is delayed by the output + input latencies so it lands on the speaker
+  /// beep the mic captures instead of doubling it.
+  func markBeep(_ type: String) {
+    guard isRecording, beepsEnabled, beepPcm[type] != nil else { return }
+    var t = CMTimeGetSeconds(CMClockGetTime(captureClock))
+    if micActive {
+      let session = AVAudioSession.sharedInstance()
+      t += session.outputLatency + session.inputLatency
+    }
+    beepLock.lock()
+    scheduledBeeps.append((time: t, type: type))
+    beepLock.unlock()
+  }
+
+  /// Beep PCM at `rate` (resampled once per recording and rate).
+  private func beepPcm(_ type: String, rate: Double) -> [Float] {
+    let key = "\(type)@\(Int(rate))"
+    if let cached = beepPcmByRate[key] { return cached }
+    let pcm = BeepPcm.resample(beepPcm[type] ?? [], from: 44100, to: Int(rate))
+    beepPcmByRate[key] = pcm
+    return pcm
+  }
+
+  /// Adds the scheduled beeps overlapping [start, start + frames / rate) into interleaved
+  /// PCM (Float32 or Int16), saturating. Beeps fully in the past are dropped. captureQueue.
+  private func mixBeeps(into data: UnsafeMutableRawPointer, frames: Int, channels: Int, isFloat: Bool, rate: Double, start: Double) {
+    beepLock.lock()
+    let beeps = scheduledBeeps
+    beepLock.unlock()
+    var finished: [Double] = []
+    for beep in beeps {
+      let pcm = beepPcm(beep.type, rate: rate)
+      let first = Int(((beep.time - start) * rate).rounded())
+      if first + pcm.count <= 0 { finished.append(beep.time); continue }
+      let from = max(0, first), to = min(frames, first + pcm.count)
+      guard from < to else { continue }
+      for f in from..<to {
+        let v = pcm[f - first]
+        for c in 0..<channels {
+          let i = f * channels + c
+          if isFloat {
+            let p = data.assumingMemoryBound(to: Float.self)
+            p[i] = min(1, max(-1, p[i] + v))
+          } else {
+            let p = data.assumingMemoryBound(to: Int16.self)
+            p[i] = Int16(clamping: Int32(p[i]) + Int32(v * 32767))
+          }
+        }
+      }
+    }
+    if !finished.isEmpty {
+      beepLock.lock()
+      scheduledBeeps.removeAll { b in finished.contains(b.time) }
+      beepLock.unlock()
+    }
+  }
+
+  /// Mixes into a mic sample buffer in place (linear PCM only).
+  private func mixBeeps(into sampleBuffer: CMSampleBuffer) {
+    guard let desc = CMSampleBufferGetFormatDescription(sampleBuffer),
+          let asbd = CMAudioFormatDescriptionGetStreamBasicDescription(desc)?.pointee,
+          asbd.mFormatID == kAudioFormatLinearPCM else { return }
+    let isFloat = asbd.mFormatFlags & kAudioFormatFlagIsFloat != 0
+    guard (isFloat && asbd.mBitsPerChannel == 32) || (!isFloat && asbd.mBitsPerChannel == 16) else { return }
+    let frames = CMSampleBufferGetNumSamples(sampleBuffer)
+    let start = CMTimeGetSeconds(CMSampleBufferGetPresentationTimeStamp(sampleBuffer))
+    var blockBuffer: CMBlockBuffer?
+    var bufferList = AudioBufferList()
+    let status = CMSampleBufferGetAudioBufferListWithRetainedBlockBuffer(
+      sampleBuffer, bufferListSizeNeededOut: nil, bufferListOut: &bufferList,
+      bufferListSize: MemoryLayout<AudioBufferList>.size, blockBufferAllocator: nil,
+      blockBufferMemoryAllocator: nil, flags: 0, blockBufferOut: &blockBuffer)
+    guard status == noErr else { return }
+    let nonInterleaved = asbd.mFormatFlags & kAudioFormatFlagIsNonInterleaved != 0
+    withUnsafeMutablePointer(to: &bufferList) { list in
+      for buffer in UnsafeMutableAudioBufferListPointer(list) {
+        guard let data = buffer.mData else { continue }
+        mixBeeps(into: data, frames: frames, channels: nonInterleaved ? 1 : Int(buffer.mNumberChannels),
+                 isFloat: isFloat, rate: asbd.mSampleRate, start: start)
+      }
+    }
+  }
+
+  /// Mic off: appends silence + beeps (Int16 mono 44.1 kHz) up to `time`. captureQueue.
+  private func appendSyntheticAudio(upTo time: CMTime) {
+    guard let input = audioWriterInput, synthStartTime.isValid, input.isReadyForMoreMediaData else { return }
+    let rate = 44100.0
+    let due = Int64((CMTimeGetSeconds(CMTimeSubtract(time, synthStartTime)) * rate).rounded(.down))
+    let n = Int(min(due - synthSamples, 44100))
+    guard n > 0 else { return }
+    var pcm = [Int16](repeating: 0, count: n)
+    let start = CMTimeGetSeconds(synthStartTime) + Double(synthSamples) / rate
+    pcm.withUnsafeMutableBytes { raw in
+      mixBeeps(into: raw.baseAddress!, frames: n, channels: 1, isFloat: false, rate: rate, start: start)
+    }
+    let pts = CMTimeAdd(synthStartTime, CMTime(value: synthSamples, timescale: 44100))
+    if let sb = makeSyntheticSampleBuffer(pcm, pts: pts), input.append(sb) { synthSamples += Int64(n) }
+  }
+
+  private func makeSyntheticSampleBuffer(_ pcm: [Int16], pts: CMTime) -> CMSampleBuffer? {
+    if synthFormat == nil {
+      var asbd = AudioStreamBasicDescription(
+        mSampleRate: 44100, mFormatID: kAudioFormatLinearPCM,
+        mFormatFlags: kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked,
+        mBytesPerPacket: 2, mFramesPerPacket: 1, mBytesPerFrame: 2, mChannelsPerFrame: 1,
+        mBitsPerChannel: 16, mReserved: 0)
+      CMAudioFormatDescriptionCreate(allocator: kCFAllocatorDefault, asbd: &asbd, layoutSize: 0, layout: nil,
+                                     magicCookieSize: 0, magicCookie: nil, extensions: nil,
+                                     formatDescriptionOut: &synthFormat)
+    }
+    guard let format = synthFormat else { return nil }
+    let bytes = pcm.count * 2
+    var block: CMBlockBuffer?
+    guard CMBlockBufferCreateWithMemoryBlock(allocator: kCFAllocatorDefault, memoryBlock: nil, blockLength: bytes,
+                                             blockAllocator: kCFAllocatorDefault, customBlockSource: nil,
+                                             offsetToData: 0, dataLength: bytes,
+                                             flags: kCMBlockBufferAssureMemoryNowFlag, blockBufferOut: &block) == noErr,
+          let blockBuffer = block else { return nil }
+    let copied = pcm.withUnsafeBytes { raw in
+      CMBlockBufferReplaceDataBytes(with: raw.baseAddress!, blockBuffer: blockBuffer, offsetIntoDestination: 0, dataLength: bytes)
+    }
+    guard copied == noErr else { return nil }
+    var sampleBuffer: CMSampleBuffer?
+    guard CMAudioSampleBufferCreateReadyWithPacketDescriptions(
+      allocator: kCFAllocatorDefault, dataBuffer: blockBuffer, formatDescription: format,
+      sampleCount: pcm.count, presentationTimeStamp: pts, packetDescriptions: nil,
+      sampleBufferOut: &sampleBuffer) == noErr else { return nil }
+    return sampleBuffer
   }
 
   // MARK: Helpers
@@ -563,6 +741,7 @@ public class RealtimeRecorderModule: Module {
       let outputPath = options["outputPath"] as? String ?? ""
       let facing = options["facing"] as? String ?? "back"
       self.applyVideoOptions(options)
+      self.applyBeepOptions(options)
       // `isLandscape` from JS is ignored on purpose: the writer geometry is
       // derived from the rotation angle actually applied by the engine.
 
@@ -606,6 +785,10 @@ public class RealtimeRecorderModule: Module {
           promise.resolve(["requested": requested, "applied": applied, "reason": reason.map { $0 as Any } ?? NSNull()])
         }
       }
+    }
+
+    Function("markBeep") { (type: String) in
+      self.engine.markBeep(type)
     }
 
     Function("getLastRecordingStats") { () -> [String: Int] in
@@ -656,6 +839,14 @@ public class RealtimeRecorderModule: Module {
     engine.quality = VideoQuality.order.contains(q) ? q : VideoQuality.defaultQuality
     engine.fps = (options["fps"] as? Int) == 25 ? 25 : 30
     engine.micEnabled = options["mic"] as? Bool ?? true
+  }
+
+  /// beeps / beepFiles from JS; missing = no beep in the video (former behaviour).
+  /// `beepLatencyMs` is Android only: iOS reads its own latencies.
+  private func applyBeepOptions(_ options: [String: Any]) {
+    let files = options["beepFiles"] as? [String: String] ?? [:]
+    engine.beepsEnabled = (options["beeps"] as? Bool ?? false) && !files.isEmpty
+    engine.loadBeeps(files: engine.beepsEnabled ? files : [:])
   }
 }
 
@@ -709,6 +900,63 @@ enum VideoQuality {
 
   static func keepsUp(written: Int, expected: Int) -> Bool {
     expected > 0 && written * 10 >= expected * 9
+  }
+}
+
+// MARK: - Beep PCM (R6c), same rules as BeepMixer.kt
+
+enum BeepPcm {
+  /// Fixed beep peak in the video, about -6 dBFS.
+  static let level: Float = 0.5
+
+  /// 16-bit PCM WAV → (sample rate, mono samples in [-1, 1]); channels are averaged.
+  static func decodeWav(_ data: Data) -> (Int, [Float])? {
+    let b = [UInt8](data)
+    func u16(_ i: Int) -> Int { Int(b[i]) | (Int(b[i + 1]) << 8) }
+    func u32(_ i: Int) -> Int { u16(i) | (u16(i + 2) << 16) }
+    func tag(_ i: Int) -> String { String(bytes: b[i..<i + 4], encoding: .ascii) ?? "" }
+    guard b.count >= 12, tag(0) == "RIFF", tag(8) == "WAVE" else { return nil }
+    var rate = 0, channels = 0, bits = 0
+    var i = 12
+    while i + 8 <= b.count {
+      let id = tag(i), size = u32(i + 4), body = i + 8
+      if id == "fmt " {
+        guard body + 16 <= b.count, u16(body) == 1 else { return nil }
+        channels = u16(body + 2); rate = u32(body + 4); bits = u16(body + 14)
+      } else if id == "data" {
+        guard bits == 16, channels >= 1, rate > 0 else { return nil }
+        let end = min(b.count, body + size)
+        let frames = (end - body) / (2 * channels)
+        var out = [Float](repeating: 0, count: frames)
+        for f in 0..<frames {
+          var sum = 0
+          for c in 0..<channels { sum += Int(Int16(truncatingIfNeeded: u16(body + (f * channels + c) * 2))) }
+          out[f] = Float(sum) / Float(channels * 32768)
+        }
+        return (rate, out)
+      }
+      i = body + size + (size & 1)
+    }
+    return nil
+  }
+
+  static func normalize(_ pcm: [Float], peak: Float = level) -> [Float] {
+    let maxAbs = pcm.map { abs($0) }.max() ?? 0
+    guard maxAbs > 0 else { return pcm }
+    let g = peak / maxAbs
+    return pcm.map { $0 * g }
+  }
+
+  /// Linear-interpolation resampling (enough for tones).
+  static func resample(_ pcm: [Float], from: Int, to: Int) -> [Float] {
+    guard from != to, !pcm.isEmpty, from > 0, to > 0 else { return pcm }
+    let n = pcm.count * to / from
+    return (0..<n).map { k in
+      let x = Double(k) * Double(from) / Double(to)
+      let i = Int(x), t = Float(x - Double(i))
+      let a = pcm[min(i, pcm.count - 1)], c = pcm[min(i + 1, pcm.count - 1)]
+      return a + (c - a) * t
+    }
   }
 }
 

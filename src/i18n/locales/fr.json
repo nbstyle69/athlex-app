@@ -1934,12 +1934,19 @@
       "saveCard": "Sauvegarder la carte",
       "cardSaved": "Carte sauvegardée"
     },
+    "beeps": {
+      "label": "Jeu de bips",
+      "athlex": "AthleX",
+      "classic": "Classique"
+    },
     "video": {
       "quality": "Qualité",
       "qualityHint": "1080p recommandé · 2K et 4K selon ton téléphone, fichiers plus lourds",
       "fps": "Images par seconde",
       "fpsValue": "{{fps}} fps",
       "mic": "Micro",
+      "beeps": "Bips dans la vidéo",
+      "beepsHint": "Les bips du chrono s'entendent dans l'enregistrement",
       "micHint": "Enregistre le son pendant la vidéo",
       "checking": "Vérification {{quality}}…",
       "notice": {

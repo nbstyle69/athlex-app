@@ -390,7 +390,8 @@ describe('R6b : chrono et natif intacts', () => {
         "phase === 'running' && !withCamera) setShowGo(true);\n    prevPhaseRef.current = phase;\n  }, [phase, withCamera]);");
     // R6c : + synchro de l'incrustation déplacée et champs du décompte (écart prouvé dans r6c.rn.test.tsx).
     // R6c (A) : + options vidéo, couvertes par r6cOptionsVideo.rn.test.tsx.
-    expect(sha(back)).toBe('f3f57e450485f275a15ad9103004b02542ddaf1584369cd9ccfc179af0af07d4');
+    // R6c (B) : + jeu de bips et bips dans la vidéo, couverts par r6cBips.rn.test.tsx.
+    expect(sha(back)).toBe('2c76f8d0fe63db68e11edbbbbcbad51442897b97ec22eeed467212da13af0b81');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');
@@ -398,7 +399,7 @@ describe('R6b : chrono et natif intacts', () => {
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
     // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
     // R6c (A) : qualité, fps et micro dans le module, couverts par r6cOptionsVideo.rn.test.tsx et VideoQualityTest.kt.
-    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('851b904afd0af86dc3a7a4e8c5a1abdf94c390ee7bc6c2551c90736076626e1a');
+    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('7aebd9b87d0bc8daa85d2b57f75e7a01984bbf0a6244865c189e359157582bc6'); // R6c (B) : mélange des bips (BeepMixerTest.kt)
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
       .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');
