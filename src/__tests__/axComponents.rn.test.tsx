@@ -459,6 +459,7 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       path.join('competition', 'PhysicalCompetitionScreen.tsx'),
       path.join('tournament', 'DailyTournamentDetailScreen.tsx'),
       path.join('tournament', 'DailyTournamentsScreen.tsx'),
+      ...R8A_SCREENS.map((f) => path.join('competition', f)),
     ].sort());
   });
 
