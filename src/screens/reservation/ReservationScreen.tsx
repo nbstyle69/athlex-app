@@ -1,19 +1,17 @@
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, Pressable,
   ActivityIndicator, RefreshControl, Alert, Modal, FlatList, Linking,
 } from 'react-native';
-import { CalendarClock, ChevronRight, Users, Check, Clock, Timer, X, CalendarCheck, AlertTriangle, ExternalLink } from 'lucide-react-native';
+import { CalendarClock, Users, Timer, X, CalendarCheck, AlertTriangle, ExternalLink, User } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
-import WeekDayPicker from '../../components/WeekDayPicker';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
-import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import { scheduleClassReminder, cancelClassReminder } from '../../services/notifications';
 import { getMyMemberships } from '../../services/membership';
 import { WEB_URL } from '../../lib/urls';
@@ -21,6 +19,10 @@ import { reservationRefusal } from '../../utils/refusals';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { useConfirmDialog } from '../../components/ConfirmDialog';
 import EmptyState from '../../components/EmptyState';
+import { AxButton, AxCard, AxIconButton, AxStatusDot, AxTag, withAlpha } from '../../components/ax';
+import { hitSlopFor } from '../../components/ax/color';
+import ReservationWeekPicker from './ReservationWeekPicker';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 
 interface ClassSchedule {
   id: string;
@@ -89,6 +91,7 @@ export default function ReservationScreen() {
   const navigation = useNavigation<any>();
   const S = createStyles(theme);
   const dialog = useConfirmDialog();
+  const c = theme.ax;
 
   const [schedules,  setSchedules]  = useState<ClassSchedule[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -335,57 +338,64 @@ export default function ReservationScreen() {
     );
   }
 
+  const maxDate = toISO(getHorizonDate());
+  const nextWeekFirst = new Date(weekDates[0]);
+  nextWeekFirst.setDate(nextWeekFirst.getDate() + 7);
+  const forwardDisabled = toISO(nextWeekFirst) > maxDate;
+
   return (
     <View style={S.container}>
       <GlassBackground />
       <View style={S.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View>
-            <Text style={S.headerTitle}>{t('reservation.title')}</Text>
-            <Text style={S.headerSub}>{currentBox.name}</Text>
-          </View>
-        </View>
+        <Text style={S.headerTitle}>{t('reservation.title')}</Text>
+        <Text style={S.headerSub}>{currentBox.name}</Text>
       </View>
 
       {suspension && (
-        <View style={S.suspendedBanner} accessibilityRole="alert">
+        <View style={S.suspendedBanner} accessibilityRole="alert" testID="r10-suspended">
           <View style={S.suspendedHead}>
-            <AlertTriangle size={16} color={theme.error} />
+            <AlertTriangle size={16} color={c.warning} />
             <Text style={S.suspendedTitle}>{t('reservation.suspendedTitle')}</Text>
           </View>
           <Text style={S.suspendedBody}>
             {suspension.stripe ? t('reservation.suspendedBodyStripe') : t('reservation.suspendedBodyContact')}
           </Text>
           {suspension.stripe && (
-            <TouchableOpacity style={S.suspendedCta} onPress={() => Linking.openURL(`${WEB_URL}/compte`)} activeOpacity={0.8}>
-              <ExternalLink size={14} color={theme.error} />
-              <Text style={S.suspendedCtaText}>{t('reservation.suspendedCta')}</Text>
-            </TouchableOpacity>
+            <AxButton
+              testID="r10-suspended-cta"
+              variant="accent"
+              icon={ExternalLink}
+              onPress={() => Linking.openURL(`${WEB_URL}/compte`)}
+              label={t('reservation.suspendedCta')}
+            />
           )}
         </View>
       )}
 
-      <TouchableOpacity
-        style={S.myResBtn}
-        onPress={() => navigation.navigate('MyReservations')}
-        activeOpacity={0.8}
-      >
-        <CalendarCheck size={16} color={theme.accent} />
-        <Text style={S.myResBtnText}>{t('reservation.myReservations')}</Text>
-        <ChevronRight size={16} color={theme.accent} />
-      </TouchableOpacity>
+      <View style={S.myResWrap}>
+        <AxButton
+          testID="r10-my-reservations"
+          variant="outline"
+          icon={CalendarCheck}
+          fullWidth
+          label={t('reservation.myReservations')}
+          onPress={() => navigation.navigate('MyReservations')}
+        />
+      </View>
 
-      <WeekDayPicker
-        weekOffset={weekOffset}
-        setWeekOffset={setWeekOffset}
+      <ReservationWeekPicker
+        days={weekDates.map(d => ({ iso: toISO(d), dayNumber: d.getDate() }))}
         selectedDate={selectedDate}
+        todayISO={todayISO}
+        maxDate={maxDate}
+        forwardDisabled={forwardDisabled}
         onSelectDate={setSelectedDate}
-        theme={theme}
-        maxDate={toISO(getHorizonDate())}
+        onPrev={() => setWeekOffset(w => w - 1)}
+        onNext={() => setWeekOffset(w => w + 1)}
       />
 
       {loading
-        ? <ActivityIndicator style={{ marginTop: 60 }} size="large" color={theme.accent} />
+        ? <ActivityIndicator style={{ marginTop: 60 }} size="large" color={c.accentText} />
         : (() => {
           const isPast   = selectedDate < todayISO;
           const horizonMs = getHorizonDate().getTime();
@@ -403,7 +413,7 @@ export default function ReservationScreen() {
           return (
             <ScrollView
               contentContainerStyle={{ paddingBottom: tabSpace }}
-              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={theme.accent} />}
+              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={c.accentText} />}
             >
               <View style={S.dayBlock}>
 
@@ -417,99 +427,102 @@ export default function ReservationScreen() {
                     const isBusy    = booking === item.id;
                     const isWaiting = item.my_status === 'waiting';
                     const isFull    = item.available_spots === 0;
+                    const fullFree  = isFull && !item.my_status;
 
                     return (
-                      <TouchableOpacity
+                      <AxCard
                         key={item.id}
-                        activeOpacity={0.7}
+                        testID={`r10-slot-${item.id}`}
+                        variant={item.my_status === 'confirmed' ? 'featured' : 'standard'}
                         onPress={() => openParticipants(item)}
                         style={[
                           S.slotCard,
-                          item.my_status === 'confirmed' && S.slotCardBooked,
                           isWaiting && S.slotCardWaiting,
                           isPast && S.slotCardPast,
                         ]}
                       >
-                        <View style={S.slotLeft}>
-                          <View style={S.slotTimeRow}>
-                            <Clock color={item.my_status === 'confirmed' ? '#C9A227' : theme.textMuted} size={12} />
-                            <Text style={[S.slotTime, item.my_status === 'confirmed' && { color: '#C9A227' }]}>
+                        <View style={S.slotRow}>
+                          <View style={S.slotLeft}>
+                            <Text style={S.slotTime}>
                               {item.start_time} – {item.end_time}
                             </Text>
+                            <AxTag testID={`r10-tag-${item.id}`} label={item.title} numberOfLines={2} />
+                            {item.coach ? (
+                              <View style={S.metaRow}>
+                                <User color={c.textMuted} size={12} />
+                                <Text style={S.caption} numberOfLines={1}>{item.coach}</Text>
+                              </View>
+                            ) : null}
+                            {item.description ? <Text style={S.caption} numberOfLines={1}>{item.description}</Text> : null}
                           </View>
-                          <Text style={S.slotTitle}>{item.title}</Text>
-                          {item.coach ? <Text style={S.slotCoach}>👤 {item.coach}</Text> : null}
-                          {item.description ? <Text style={S.slotDesc} numberOfLines={1}>{item.description}</Text> : null}
-                        </View>
 
-                        <View style={S.slotRight}>
-                          {/* Capacity info */}
-                          <View style={S.capacityRow}>
-                            <View style={[S.capacityBadge, isFull && !item.my_status && S.capacityFull]}>
-                              <Users color={isFull && !item.my_status ? theme.error : theme.accent} size={11} />
-                              <Text style={[S.capacityText, isFull && !item.my_status && { color: theme.error }]}>
+                          <View style={S.slotRight}>
+                            {/* Capacity info */}
+                            <View style={S.metaRow}>
+                              <Users color={fullFree ? c.danger : c.textMuted} size={12} />
+                              <Text style={[S.caption, fullFree && S.captionDanger]}>
                                 {item.confirmed_count}/{item.max_capacity}
                               </Text>
+                              {item.waiting_count > 0 && (
+                                <>
+                                  <Timer color={c.warning} size={12} />
+                                  <Text style={[S.caption, S.captionWarning]}>{item.waiting_count}</Text>
+                                </>
+                              )}
                             </View>
-                            {item.waiting_count > 0 && (
-                              <View style={S.waitingBadge}>
-                                <Timer color="#f59e0b" size={10} />
-                                <Text style={S.waitingBadgeText}>{item.waiting_count}</Text>
-                              </View>
-                            )}
-                          </View>
 
-                          {/* Spots label */}
-                          {!isPast && !item.my_status && (
-                            <Text style={[S.spotsLabel, isFull && { color: theme.error }]}>
-                              {isFull
-                                ? (item.waiting_count > 0
+                            {/* Spots label */}
+                            {!isPast && !item.my_status && (isFull
+                              ? (
+                                <AxStatusDot
+                                  testID={`r10-full-${item.id}`}
+                                  tone="danger"
+                                  label={item.waiting_count > 0
                                     ? t('reservation.fullWithWaiting', { count: item.waiting_count })
-                                    : t('reservation.full'))
-                                : t('reservation.spotsAvailable', { count: item.available_spots })}
-                            </Text>
-                          )}
-                          {isWaiting && (
-                            <Text style={S.waitingPositionLabel}>
-                              {t('reservation.waitingPosition', { pos: item.my_waiting_position })}
-                            </Text>
-                          )}
+                                    : t('reservation.full')}
+                                />
+                              ) : (
+                                <Text style={[S.caption, S.captionAccent]}>
+                                  {t('reservation.spotsAvailable', { count: item.available_spots })}
+                                </Text>
+                              ))}
+                            {isWaiting && (
+                              <Text style={[S.caption, S.captionWarning]}>
+                                {t('reservation.waitingPosition', { pos: item.my_waiting_position })}
+                              </Text>
+                            )}
 
-                          {/* Action button */}
-                          {!isPast && (
-                            <TouchableOpacity
-                              style={[
-                                S.bookBtn,
-                                item.my_status === 'confirmed' && S.bookBtnBooked,
-                                isWaiting && S.bookBtnWaiting,
-                                isFull && !item.my_status && S.bookBtnQueue,
-                                isBusy && { opacity: 0.5 },
-                              ]}
-                              onPress={() => toggleBooking(item)}
-                              disabled={isBusy}
-                            >
-                              {item.my_status === 'confirmed' && <Check color={'#C9A227'} size={13} />}
-                              {isWaiting && <Timer color="#f59e0b" size={13} />}
-                              <Text style={[
-                                S.bookBtnText,
-                                item.my_status === 'confirmed' && S.bookBtnTextBooked,
-                                isWaiting && S.bookBtnTextWaiting,
-                                isFull && !item.my_status && { color: theme.textMuted },
-                              ]}>
-                                {isBusy
-                                  ? '…'
-                                  : item.my_status === 'confirmed'
-                                    ? t('reservation.booked')
+                            {/* Action button */}
+                            {!isPast && (item.my_status ? (
+                              <Pressable
+                                testID={`r10-action-${item.id}`}
+                                onPress={() => toggleBooking(item)}
+                                disabled={isBusy}
+                                accessibilityRole="button"
+                                hitSlop={hitSlopFor(80, 20)}
+                                style={[S.statusAction, isBusy && S.busy]}
+                              >
+                                <AxStatusDot
+                                  tone={isWaiting ? 'warning' : 'active'}
+                                  label={isBusy
+                                    ? '…'
                                     : isWaiting
                                       ? t('reservation.waitingShort', { pos: item.my_waiting_position })
-                                      : isFull
-                                        ? t('reservation.queue')
-                                        : t('reservation.book')}
-                              </Text>
-                            </TouchableOpacity>
-                          )}
+                                      : t('reservation.booked')}
+                                />
+                              </Pressable>
+                            ) : (
+                              <AxButton
+                                testID={`r10-action-${item.id}`}
+                                variant={isFull ? 'outline' : 'accent'}
+                                disabled={isBusy}
+                                label={isBusy ? '…' : isFull ? t('reservation.queue') : t('reservation.book')}
+                                onPress={() => toggleBooking(item)}
+                              />
+                            ))}
+                          </View>
                         </View>
-                      </TouchableOpacity>
+                      </AxCard>
                     );
                   })
                 )}
@@ -520,7 +533,7 @@ export default function ReservationScreen() {
               )}
             </ScrollView>
           );
-        })()    
+        })()
       }
 
       {/* Participant detail modal */}
@@ -530,22 +543,25 @@ export default function ReservationScreen() {
             {/* Modal header */}
             <View style={S.modalHeader}>
               <View style={{ flex: 1 }}>
-                <Text style={S.modalTitle}>{detailItem?.title}</Text>
+                <Text style={S.modalTitle} numberOfLines={2}>{detailItem?.title}</Text>
                 <Text style={S.modalSubtitle}>
                   {detailItem?.start_time} – {detailItem?.end_time}
                   {detailItem?.coach ? `  ·  ${detailItem.coach}` : ''}
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setDetailItem(null)} style={S.modalClose}>
-                <X color={theme.textMuted} size={20} />
-              </TouchableOpacity>
+              <AxIconButton
+                testID="r10-modal-close"
+                icon={X}
+                accessibilityLabel={t('common.close')}
+                onPress={() => setDetailItem(null)}
+              />
             </View>
 
             {detailLoading ? (
-              <ActivityIndicator style={{ marginVertical: 40 }} size="large" color={theme.accent} />
+              <ActivityIndicator style={{ marginVertical: 40 }} size="large" color={c.accentText} />
             ) : participants.length === 0 ? (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Users color={theme.textMuted} size={32} />
+                <Users color={c.textMuted} size={32} />
                 <Text style={[S.modalSubtitle, { marginTop: 12 }]}>{t('reservation.noParticipants')}</Text>
               </View>
             ) : (
@@ -553,29 +569,30 @@ export default function ReservationScreen() {
                 data={participants}
                 keyExtractor={p => p.member_id}
                 style={{ maxHeight: 350 }}
-                renderItem={({ item: p, index }) => {
+                renderItem={({ item: p }) => {
                   const isMe = p.member_id === user?.id;
                   const isConfirmed = p.status === 'confirmed';
+                  const ink = isConfirmed ? c.accentText : c.warning;
                   return (
                     <View style={S.participantRow}>
                       <UserAvatar
                         uri={(p as any).avatar_url}
                         name={p.username ?? '?'}
                         size={32}
-                        borderRadius={10}
-                        backgroundColor={isConfirmed ? `${theme.accent}20` : 'rgba(245,158,11,0.15)'}
-                        textColor={isConfirmed ? theme.accent : '#f59e0b'}
+                        borderRadius={axRadius.card}
+                        backgroundColor={withAlpha(isConfirmed ? c.accent : c.warning, 0.15)}
+                        textColor={ink}
                         fontSize={12}
                       />
                       <View style={{ flex: 1 }}>
-                        <Text style={[S.participantName, isMe && { color: theme.accent }]}>
+                        <Text style={[S.participantName, isMe && { color: c.accentText }]} numberOfLines={1}>
                           {p.username}{isMe ? ` ${t('reservation.you')}` : ''}
                         </Text>
                         <Text style={S.participantStatus}>
                           {isConfirmed ? t('reservation.registered') : t('reservation.waitingShort', { pos: participants.filter(x => x.status === 'waiting').indexOf(p) + 1 })}
                         </Text>
                       </View>
-                      <View style={[S.participantDot, { backgroundColor: isConfirmed ? theme.accent : '#f59e0b' }]} />
+                      <View style={[S.participantDot, { backgroundColor: ink }]} />
                     </View>
                   );
                 }}
@@ -584,22 +601,26 @@ export default function ReservationScreen() {
 
             {/* Action buttons */}
             {detailItem && !detailItem.my_status && detailItem.available_spots > 0 && (
-              <EmeraldCTAButton
-                onPress={() => { setDetailItem(null); dialog.afterModalClose(); toggleBooking(detailItem); }}
-                size="md"
-              >
-                {t('reservation.bookThisSlot')}
-              </EmeraldCTAButton>
+              <View style={S.modalAction}>
+                <AxButton
+                  testID="r10-modal-book"
+                  variant="accent"
+                  fullWidth
+                  label={t('reservation.bookThisSlot')}
+                  onPress={() => { setDetailItem(null); dialog.afterModalClose(); toggleBooking(detailItem); }}
+                />
+              </View>
             )}
             {detailItem && detailItem.my_status && (
-              <TouchableOpacity
-                style={[S.modalActionBtn, { backgroundColor: 'rgba(239,68,68,0.15)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)' }]}
-                onPress={() => { setDetailItem(null); dialog.afterModalClose(); toggleBooking(detailItem); }}
-              >
-                <Text style={[S.modalActionBtnText, { color: '#ef4444' }]}>
-                  {detailItem.my_status === 'confirmed' ? t('reservation.unsubscribe') : t('reservation.leaveWaitlist')}
-                </Text>
-              </TouchableOpacity>
+              <View style={S.modalAction}>
+                <AxButton
+                  testID="r10-modal-leave"
+                  variant="stop"
+                  fullWidth
+                  label={detailItem.my_status === 'confirmed' ? t('reservation.unsubscribe') : t('reservation.leaveWaitlist')}
+                  onPress={() => { setDetailItem(null); dialog.afterModalClose(); toggleBooking(detailItem); }}
+                />
+              </View>
             )}
           </View>
         </View>
@@ -610,97 +631,62 @@ export default function ReservationScreen() {
 }
 
 function createStyles(t: AppTheme) {
+  const c = t.ax;
   return StyleSheet.create({
     container:          { flex: 1, backgroundColor: 'transparent' },
-    emptyContainer:     { flex: 1, backgroundColor: 'transparent', justifyContent: 'center' },
+    emptyContainer:     { flex: 1, backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center', paddingHorizontal: axSpacing['2xl'], gap: axSpacing.md },
+    emptyTitle:         { ...axTypography.titleM, color: c.text, textAlign: 'center' },
+    emptySubtitle:      { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
 
-    myResBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      marginHorizontal: 20, marginTop: 8, marginBottom: 4,
-      backgroundColor: `${t.accent}15`,
-      borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
-      borderWidth: 1, borderColor: `${t.accent}25`,
-    },
-    myResBtnText: { fontSize: 13, fontWeight: '700' as const, color: t.accent },
+    header:             { paddingHorizontal: axSpacing.lg, paddingTop: 56, paddingBottom: axSpacing.md },
+    headerTitle:        { ...axTypography.titleXL, color: c.text },
+    headerSub:          { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2 },
 
     suspendedBanner: {
-      marginHorizontal: 20, marginTop: 4, marginBottom: 4, padding: 14, gap: 6,
-      backgroundColor: `${t.error}15`, borderRadius: 12, borderWidth: 1, borderColor: `${t.error}40`,
+      marginHorizontal: axSpacing.lg, marginBottom: axSpacing.sm, padding: axSpacing.lg, gap: axSpacing.sm,
+      backgroundColor: withAlpha(c.warning, 0.12), borderRadius: axRadius.card, borderWidth: 1, borderColor: c.warning,
     },
-    suspendedHead:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    suspendedTitle:   { fontSize: 14, fontWeight: '800', color: t.error },
-    suspendedBody:    { fontSize: 13, color: t.text, lineHeight: 18 },
-    suspendedCta:     { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginTop: 4, paddingVertical: 6 },
-    suspendedCtaText: { fontSize: 13, fontWeight: '700', color: t.error },
+    suspendedHead:    { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+    suspendedTitle:   { ...axTypography.label, color: c.warning, flexShrink: 1 },
+    suspendedBody:    { ...axTypography.bodySmall, color: c.text },
 
-    header:             { paddingHorizontal: 20, paddingTop: 56, paddingBottom: 12 },
-    headerTitle:        { fontSize: 26, fontWeight: '900', color: t.text, letterSpacing: -0.5 },
-    headerSub:          { fontSize: 13, color: t.textMuted, marginTop: 2 },
+    myResWrap:        { marginHorizontal: axSpacing.lg, marginBottom: axSpacing.sm },
 
-    weekNav:            { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: t.border },
-    weekArrow:          { padding: 8 },
-    weekLabelBtn:       { flex: 1, alignItems: 'center' },
-    weekLabel:          { fontSize: 13, fontWeight: '700', color: t.text, textAlign: 'center' },
 
-    dayBlock:           { marginHorizontal: 16, marginTop: 14 },
-    dayHeader:          { flexDirection: 'row', alignItems: 'center', backgroundColor: t.card, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, marginBottom: 6, borderWidth: 1, borderColor: t.border },
-    dayHeaderToday:     { backgroundColor: t.accent, borderColor: t.accent },
-    dayLabel:           { fontSize: 13, fontWeight: '700', color: t.text, flex: 1 },
-    dayLabelToday:      { color: '#fff' },
-    dayLabelPast:       { color: t.textMuted },
-    todayBadge:         { fontSize: 11, fontWeight: '700', color: '#fff', marginRight: 6 },
-    slotCount:          { fontSize: 11, color: t.textMuted },
-
+    dayBlock:           { marginHorizontal: axSpacing.lg, marginTop: axSpacing.md, gap: axSpacing.sm },
     noSlots:            { paddingVertical: 10, paddingHorizontal: 4 },
-    noSlotsText:        { fontSize: 12, color: t.textMuted, fontStyle: 'italic' },
+    noSlotsText:        { ...axTypography.caption, color: c.textMuted },
 
-    slotCard:           { flexDirection: 'row', alignItems: 'center', backgroundColor: t.card, borderRadius: 14, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: t.border },
-    slotCardBooked:     { borderColor: '#C9A227', backgroundColor: 'rgba(201,162,39,0.08)' },
-    slotCardWaiting:    { borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.05)' },
+    slotCard:           {},
+    slotCardWaiting:    { borderColor: c.warning },
     slotCardPast:       { opacity: 0.45 },
-    slotLeft:           { flex: 1 },
-    slotTimeRow:        { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 },
-    slotTime:           { fontSize: 12, fontWeight: '700', color: t.textMuted },
-    slotTitle:          { fontSize: 16, fontWeight: '800', color: t.text, marginBottom: 2 },
-    slotCoach:          { fontSize: 12, color: t.textMuted },
-    slotDesc:           { fontSize: 12, color: t.textMuted, marginTop: 2 },
-    slotRight:          { alignItems: 'flex-end', gap: 6, marginLeft: 12 },
+    slotRow:            { flexDirection: 'row', alignItems: 'flex-start', gap: axSpacing.md },
+    slotLeft:           { flex: 1, minWidth: 0, gap: axSpacing.xs },
+    slotTime:           { ...axTypography.numberM, color: c.text },
+    slotRight:          { alignItems: 'flex-end', gap: axSpacing.sm, flexShrink: 0, maxWidth: '45%' },
+    metaRow:            { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+    caption:            { ...axTypography.caption, color: c.textMuted, flexShrink: 1 },
+    captionAccent:      { color: c.accentText },
+    captionWarning:     { color: c.warning },
+    captionDanger:      { color: c.danger },
+    statusAction:       { minHeight: 44, justifyContent: 'center' },
+    busy:               { opacity: 0.5 },
 
-    capacityRow:        { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    capacityBadge:      { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: `${t.accent}12`, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
-    capacityFull:       { backgroundColor: `${t.error}12` },
-    capacityText:       { fontSize: 11, fontWeight: '700', color: t.accent },
-    waitingBadge:       { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: 'rgba(245,158,11,0.12)', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 4 },
-    waitingBadgeText:   { fontSize: 11, fontWeight: '700', color: '#f59e0b' },
-
-    spotsLabel:         { fontSize: 11, fontWeight: '600', color: t.accent },
-    waitingPositionLabel: { fontSize: 11, fontWeight: '700', color: '#f59e0b' },
-
-    bookBtn:            { backgroundColor: t.ctaBg, borderWidth: 1.5, borderColor: t.ctaBorder, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 4 },
-    bookBtnBooked:      { backgroundColor: 'rgba(201,162,39,0.15)', borderWidth: 1, borderColor: '#C9A227' },
-    bookBtnWaiting:     { backgroundColor: 'rgba(245,158,11,0.1)', borderWidth: 1, borderColor: '#f59e0b' },
-    bookBtnQueue:       { backgroundColor: t.card, borderWidth: 1, borderColor: t.border },
-    bookBtnText:        { fontSize: 12, fontWeight: '800', color: '#fff' },
-    bookBtnTextBooked:  { color: '#C9A227' },
-    bookBtnTextWaiting: { color: '#f59e0b' },
-
-    emptyWeek:          { paddingTop: 60 },
+    emptyWeek:          { alignItems: 'center', paddingTop: 60, gap: axSpacing.md },
+    emptyWeekTitle:     { ...axTypography.titleM, color: c.text, textAlign: 'center' },
+    emptyWeekSub:       { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center', paddingHorizontal: axSpacing['2xl'] },
 
     modalOverlay:       { flex: 1, backgroundColor: t.modalBackdrop, justifyContent: 'flex-end' },
-    modalSheet:         { backgroundColor: t.modalCard, borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingBottom: 34, maxHeight: '75%' },
-    modalHeader:        { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 20, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: t.border },
-    modalTitle:         { fontSize: 18, fontWeight: '900', color: t.text },
-    modalSubtitle:      { fontSize: 13, color: t.textMuted, marginTop: 2 },
-    modalClose:         { padding: 6 },
+    modalSheet:         { backgroundColor: c.surface, borderTopLeftRadius: axRadius.card, borderTopRightRadius: axRadius.card, borderWidth: 1, borderColor: c.border, paddingBottom: 34, maxHeight: '75%' },
+    modalHeader:        { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, paddingHorizontal: axSpacing.lg, paddingTop: axSpacing.lg, paddingBottom: axSpacing.md, borderBottomWidth: 1, borderBottomColor: c.border },
+    modalTitle:         { ...axTypography.titleM, color: c.text },
+    modalSubtitle:      { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
 
-    participantRow:     { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: t.border },
-    participantAvatar:  { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-    participantAvatarText: { fontSize: 14, fontWeight: '800' },
-    participantName:    { fontSize: 14, fontWeight: '700', color: t.text },
-    participantStatus:  { fontSize: 12, color: t.textMuted, marginTop: 1 },
+    participantRow:     { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, paddingHorizontal: axSpacing.lg, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: c.border },
+    participantName:    { ...axTypography.label, color: c.text },
+    participantStatus:  { ...axTypography.caption, color: c.textMuted, marginTop: 1 },
     participantDot:     { width: 8, height: 8, borderRadius: 4 },
 
-    modalActionBtn:     { marginHorizontal: 20, marginTop: 16, borderRadius: 14, paddingVertical: 14, alignItems: 'center' },
-    modalActionBtnText: { fontSize: 15, fontWeight: '800', color: '#fff' },
+    modalAction:        { marginHorizontal: axSpacing.lg, marginTop: axSpacing.lg },
   });
 }
