@@ -1,6 +1,6 @@
 # État du projet AthleX
 
-Dernière mise à jour : **30 septembre 2026**.
+Dernière mise à jour : **1er octobre 2026**.
 
 Ce fichier est écrit pour être lu en deux minutes, sans être développeur. Il dit ce qui
 marche aujourd'hui, ce qui est en train de se faire, ce qui vient ensuite, et ce qui est
@@ -205,6 +205,29 @@ Supabase/Resend.
 ---
 
 ## En cours
+
+**Correctif musculation : même mouvement dans deux blocs (app seule, aucune migration).** Retours de Nab sur le
+build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).
+- Cause, prouvée en prod (lecture seule) et sur la base rejouée : chaque bloc numérotait ses séries à partir de 1,
+  la clé (athlète, source, mouvement, série) se dédoublait — brouillon refusé en `21000` (~45 fois le 30/09),
+  validation en `SERIES_EN_DOUBLE`. Le refus était affiché « Hors connexion », et la séance écrite avant l'échec
+  des séries passait au tour suivant pour une version « plus récente d'un autre appareil » : la saisie était
+  remplacée par une grille vide.
+- Numéro de stockage continu par mouvement sur toute la séance (`numberSetsByMovement` : 1, 2 puis 3, 4), affichage
+  du rang dans le bloc (« Série 1, 2 » dans chaque bloc, `setRanks`, grille et « Mes charges ») ; plafond client de
+  50 séries par mouvement (CHECK `set_index ≤ 50`, commenté) ; une grille encore numérotée par bloc (copie locale
+  de la 1.0.58 comprise) est renumérotée avant écriture (brouillon, validation, ancien journal `logStrengthSets`) ;
+  séances générées : `performedToDrafts` numéroté pareil, `draftsToPerformed` par bloc et rang.
+- Un refus de la base n'est jamais classé « hors connexion » (`isNetworkError` : seule une coupure rend `code ''`) :
+  brouillon `refused` avec son code, « Enregistrement refusé par le serveur… » (FR / EN), copie locale gardée, pas
+  de boucle de nouvel essai ; même tri dans la validation des deux écrans. La copie locale reprend l'`updated_at`
+  de la séance dès qu'elle est écrite : plus d'écrasement par sa propre écriture.
+- Tests : faux clients fidèles à Postgres (`21000` sur doublon, `SERIES_EN_DOUBLE`, CHECK 1..50, codes d'erreur,
+  coupure en `code ''`) ; scénarios sur les deux séances réelles (brouillon, rechargement, validation, modification,
+  copie 1.0.58, refus, coupure) et un exercice présent deux fois dans une séance générée ; 6 mutations tuées
+  (numérotation par bloc ×2, sans reprise d'`updated_at`, tout « hors connexion », n° stocké affiché ×2).
+  Protocole manuel : [`audits/protocole-muscu-meme-mouvement-deux-blocs.md`](./audits/protocole-muscu-meme-mouvement-deux-blocs.md).
+  Les deux brouillons de test du 30/09 restent en l'état (décision de Nab : ressaisie sur une nouvelle séance).
 
 **Refonte R11 : entrée, tutoriel, états vides et fenêtres au nouveau design (apparence seule, aucune migration).**
 - Entrée (Connexion, Créer un compte, Mot de passe oublié / Email envoyé, Rejoindre une box, Rejoins ta box, Mentions
@@ -1579,6 +1602,7 @@ précise ; le faire avant casse quelque chose. Le détail technique est dans
 
 | Chantier | Déclencheur |
 | --- | --- |
+| **Brouillon de musculation atomique côté serveur** : séance et séries écrites en une transaction (une RPC, comme `validate_strength_session`), au lieu de deux écritures depuis l'app. Aujourd'hui la séance peut passer et les séries échouer ; l'app le rattrape (copie locale recalée sur l'`updated_at` écrit), mais la base garde un instant une séance sans ses séries. | Le prochain lot musculation qui touche la base (au plus tard avec la clé étrangère séries → séance). |
 | **L'ELO des défis 1 contre 1 (table `matches`) n'est pas annulé si le vainqueur change.** Le trigger `on_match_completed` (`update_elo_after_match`) n'applique l'ELO qu'au passage à `completed` : changer ensuite le vainqueur laisse l'ELO et les compteurs de l'ancien résultat, et rouvrir puis reclore le défi applique le nouveau sans retirer l'ancien. Correctif connu : le principe des matchs de tableau (migration `20270106`) — l'effet se déduit de l'état du match, et l'effet enregistré est défait avant d'appliquer le nouveau. Une seule ligne en prod au 24/09/2026. | Avant d'ouvrir la correction du résultat d'un défi, ou dès qu'un défi est corrigé en prod. |
 | **Rôle de l'audit nocturne `athlex_audit_ro` : droits hérités de la plateforme, puis nouveau mot de passe.** Par des grants `PUBLIC` que `supabase_admin` pose sur les extensions `pg_net` et `pg_cron`, ce rôle « lecture seule » peut écrire dans `net.http_request_queue` (donc faire émettre une requête HTTP par la base) et `net._http_response`, et supprimer dans `cron.job_run_details`. `postgres` ne peut pas révoquer un grant posé par `supabase_admin` : piste à instruire (rôle dédié sans `USAGE` sur `net`, ou support Supabase). Le mot de passe du rôle, dans le secret GitHub `PROD_DB_URL_RO`, est à réinitialiser. Relevé le 23/09/2026. | Fin du chantier des clés Supabase (révocation de l'ancien secret JWT) |
 | Contrôler en CI que l'en-tête « Appliquée en prod » de chaque fichier de `supabase/migrations/` dit vrai. Pour un fichier qui déclare **oui**, vérifier en base qu'un marqueur de son effet existe (colonne, contrainte ou ligne de seed) ; pour un fichier qui déclare **non**, vérifier que cet effet est absent. Rouge dans les deux sens : un fichier qui dit oui sans effet constaté, ou qui dit non alors que l'effet est là. L'en-tête est la seule trace dans le dépôt de ce qui est réellement en base, et le 17/09/2026 quatre migrations appliquées disaient encore non. | Le prochain lot qui touche `.github/workflows/grants-prod.yml` ou `scripts/audit-grants-prod.mjs` : l'audit a déjà les accès base en lecture seule, et rouvrir ces fichiers pour ce seul contrôle coûterait plus qu'il ne rapporte. |

@@ -1880,6 +1880,8 @@
     "saving": "Enregistrement…",
     "notSavedYet": "Pas encore enregistré",
     "offline": "Hors connexion : ta saisie est gardée sur ce téléphone et partira au retour du réseau.",
+    "refused": "Enregistrement refusé par le serveur : ta saisie est gardée sur ce téléphone. Réessaie, et préviens-nous si ça continue.",
+    "refusedTitle": "Enregistrement refusé",
     "serverNewer": "Une version plus récente a été enregistrée sur un autre appareil : c'est elle qui est affichée.",
     "maxLoadLabel": "Charge max (score) · calculée",
     "maxLoadEmpty": "Renseigne au moins une série (reps et charge)",

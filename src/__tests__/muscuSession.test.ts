@@ -17,14 +17,26 @@ interface Db {
   touched: string[];
   rpcCalls: Row[];
   offline: boolean;
+  /** Refus du serveur sur l'écriture d'une table (policy, contrainte…). */
+  refuse: { table: string; code: string; message: string } | null;
 }
 const mockDb: Db = {
-  strength_sessions: [], strength_set_logs: [], generated_wods: [], generated_wod_scores: [], touched: [], rpcCalls: [], offline: false,
+  strength_sessions: [], strength_set_logs: [], generated_wods: [], generated_wod_scores: [], touched: [], rpcCalls: [], offline: false, refuse: null,
 };
 let mockSeq = 0;
 
 jest.mock('../lib/supabase', () => {
-  const OFFLINE = { error: { message: 'TypeError: Network request failed' }, data: null };
+  // Contrat de postgrest-js : une coupure réseau rend status 0 et code '' ; un
+  // refus de la base porte toujours son code Postgres ou PostgREST.
+  const OFFLINE = { error: { message: 'TypeError: Network request failed', code: '' }, data: null, status: 0 };
+  const pgError = (code: string, message: string) => ({ data: null, error: { code, message } });
+  // Règles de Postgres que le client doit respecter (migration 20270138).
+  const SERIES_CHECK = (rows: Row[]) => {
+    if (rows.some(r => !(Number(r.set_index) >= 1 && Number(r.set_index) <= 50))) {
+      return pgError('23514', 'new row for relation "strength_set_logs" violates check constraint "strength_set_logs_set_index_check"');
+    }
+    return null;
+  };
   class Q {
     filters: [string, unknown][] = [];
     notIds: string[] | null = null;
@@ -70,6 +82,12 @@ jest.mock('../lib/supabase', () => {
       }
       const key = this.table === 'strength_sessions'
         ? ['user_id', 'source_type', 'source_id'] : ['user_id', 'source_type', 'source_id', 'movement', 'set_index'];
+      if (mockDb.refuse?.table === this.table) return pgError(mockDb.refuse.code, mockDb.refuse.message);
+      // Un INSERT … ON CONFLICT DO UPDATE ne peut pas toucher deux fois la même clé.
+      if (new Set(this.payload.map(p => key.map(k => String(p[k])).join('|'))).size !== this.payload.length) {
+        return pgError('21000', 'ON CONFLICT DO UPDATE command cannot affect row a second time');
+      }
+      if (this.table === 'strength_set_logs') { const bad = SERIES_CHECK(this.payload); if (bad) return bad; }
       const out = this.payload.map(p => {
         const ex = this.rows().find(r => key.every(k => r[k] === p[k]));
         if (ex) { Object.assign(ex, p); return ex; }
@@ -87,7 +105,12 @@ jest.mock('../lib/supabase', () => {
         if (mockDb.offline) return OFFLINE;
         mockDb.rpcCalls.push(a);
         const sets = a.p_sets as Row[];
-        if (sets.length === 0) return { data: null, error: { message: 'SEANCE_VIDE: aucune série valide' } };
+        if (sets.length === 0) return pgError('22023', 'SEANCE_VIDE: aucune série valide');
+        if (new Set(sets.map(x => `${x.movement}#${x.set_index}`)).size !== sets.length) {
+          return pgError('22023', 'SERIES_EN_DOUBLE: un mouvement a deux fois la même série');
+        }
+        const bad = SERIES_CHECK(sets);
+        if (bad) return bad;
         const k = { user_id: 'u1', source_type: a.p_source_type, source_id: a.p_source_id };
         let s = mockDb.strength_sessions.find(r => r.source_id === k.source_id && r.source_type === k.source_type);
         if (!s) { s = { id: `id-${++mockSeq}`, ...k, status: 'draft', first_validated_at: null }; mockDb.strength_sessions.push(s); }
@@ -143,7 +166,7 @@ const validate = (performed: PerformedExercise[]) =>
 
 beforeEach(async () => {
   Object.assign(mockDb, {
-    strength_sessions: [], strength_set_logs: [], generated_wods: [], generated_wod_scores: [], touched: [], rpcCalls: [], offline: false,
+    strength_sessions: [], strength_set_logs: [], generated_wods: [], generated_wod_scores: [], touched: [], rpcCalls: [], offline: false, refuse: null,
   });
   jest.clearAllMocks();
   await AsyncStorage.clear();
@@ -254,5 +277,37 @@ describe('écran résultat', () => {
   it('le brouillon serveur part ~0,8 s après la dernière frappe', () => {
     expect(screen).toContain('export const MUSCU_DRAFT_SAVE_DELAY_MS = 800;');
     expect(screen).toMatch(/setTimeout\(\(\) => \{ saveDraftNow\(\); \}, MUSCU_DRAFT_SAVE_DELAY_MS\)/);
+  });
+});
+
+describe('même exercice deux fois dans la séance', () => {
+  const TWICE = {
+    ...WOD,
+    blocks: [{ exercises: [exercise('hip_thrust', 'Hip Thrust', 2, 10, 60), exercise('rdl', 'Romanian Deadlift', 1, 8, 50), exercise('hip_thrust_2', 'Hip Thrust', 2, 8, 70)] }],
+  } as unknown as MuscuWod;
+  const typed = () => setLoad(setLoad(initialPerformed(TWICE), 0, 1, 65), 2, 0, 72.5);
+
+  it('numéro de stockage continu par exercice, séries relues par bloc et rang', () => {
+    const drafts = performedToDrafts(TWICE, typed());
+    expect(drafts.map(d => [d.entryIndex, d.name, d.setIndex])).toEqual([
+      [0, 'Hip Thrust', 1], [0, 'Hip Thrust', 2], [1, 'Romanian Deadlift', 1], [2, 'Hip Thrust', 3], [2, 'Hip Thrust', 4],
+    ]);
+    expect(draftsToPerformed(initialPerformed(TWICE), drafts)).toEqual(typed());
+  });
+
+  it('brouillon, rechargement puis validation : chaque bloc garde ses charges', async () => {
+    const res = await saveStrengthDraft({
+      ...KEY, sourceTitle: TWICE.title, drafts: performedToDrafts(TWICE, typed()), editedAt: new Date().toISOString(), baseUpdatedAt: null,
+    });
+    expect(res.status).toBe('saved');
+    expect(mockDb.strength_set_logs).toHaveLength(5);
+    await AsyncStorage.clear();
+    const base = initialPerformed(TWICE);
+    const loaded = await loadStrengthGrid(KEY, performedToDrafts(TWICE, base));
+    expect(draftsToPerformed(base, loaded.drafts)).toEqual(typed());
+    const v = await validateMuscuSession(user, 'box-1', TWICE, { wodId: 'gw-1', performed: typed(), notes: '' });
+    expect(v.result.seriesValides).toBe(5);
+    expect((mockDb.rpcCalls[0].p_sets as Row[]).filter(x => x.movement === 'Hip Thrust').map(x => [x.set_index, x.load_kg]))
+      .toEqual([[1, 60], [2, 65], [3, 72.5], [4, 70]]);
   });
 });
