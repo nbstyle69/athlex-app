@@ -116,6 +116,9 @@ const MY_RESERVATIONS = [
     schedule: { title: 'Hyrox', scheduled_date: '2026-09-21', start_time: '19:00', end_time: '20:00', coach: null } },
 ];
 
+// Premier montage lent sur les runners CI (chargement à froid de RN et des écrans).
+jest.setTimeout(30000);
+
 let renderer: TestRenderer.ReactTestRenderer | null = null;
 beforeEach(() => {
   jest.useFakeTimers({
@@ -184,9 +187,10 @@ async function pressText(root: ReactTestInstance, text: string, modal = false) {
 }
 async function mount(el: React.ReactElement, theme = lightTheme) {
   mockTheme = theme;
-  await act(async () => { renderer = TestRenderer.create(el); });
+  let r: TestRenderer.ReactTestRenderer | null = null;
+  await act(async () => { r = TestRenderer.create(el); renderer = r; });
   await settle();
-  return renderer!.root;
+  return r!.root;
 }
 
 type Variant = { name: string; run: (theme?: typeof lightTheme) => Promise<ReactTestInstance> };
