@@ -733,7 +733,12 @@
     "deletedDaily": "Deleted mini-tournament",
     "deletedMatch": "Deleted match",
     "unknownOpponent": "unknown opponent",
-    "versus": "vs {{opponent}}"
+    "versus": "vs {{opponent}}",
+    "remaining": "{{count}} pts to {{tier}}",
+    "tiers": "Tiers",
+    "you": "You",
+    "passage": "Reached {{tier}} · {{date}}",
+    "best": "Best · {{value}}"
   },
   "common": {
     "save": "Save",
