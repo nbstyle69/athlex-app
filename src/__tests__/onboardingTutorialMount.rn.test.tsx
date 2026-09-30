@@ -23,6 +23,7 @@ jest.mock('../context/AuthContext', () => ({
     currentBox: { id: 'b1' },
   }),
 }));
+jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('../services/gamification', () => ({ awardLevelBadge: jest.fn(async () => true) }));
 jest.mock('../lib/supabase', () => ({ supabase: { rpc: jest.fn(async () => ({ data: null, error: null })) } }));
 

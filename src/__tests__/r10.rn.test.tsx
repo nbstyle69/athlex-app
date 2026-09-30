@@ -1,7 +1,7 @@
 import React from 'react';
 import fs from 'fs';
 import path from 'path';
-import { Alert, Linking, Modal, StyleSheet } from 'react-native';
+import { Linking, Modal, StyleSheet } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { lightTheme, darkTheme } from '../theme/palette';
 import '../i18n';
@@ -271,7 +271,10 @@ const hostOf = (n: ReactTestInstance, type: string) => n.findAll((x) => String(x
 const typeName = (n: ReactTestInstance) => (typeof n.type === 'string' ? n.type : (n.type as { name?: string }).name ?? '');
 const comp = (root: ReactTestInstance, name: string) => root.findAll((n) => typeName(n) === name);
 const textNode = (root: ReactTestInstance, text: string) => root.findAll((n) => isHostText(n) && hostText(n) === text)[0];
-const alertButtons = (spy: jest.SpyInstance) => spy.mock.calls[spy.mock.calls.length - 1][2] as Array<{ text: string; style?: string; onPress?: () => unknown }>;
+const DIALOG_STYLE: Record<string, string> = { accent: 'default', outline: 'cancel', stop: 'destructive' };
+const alertButtons = (root: ReactTestInstance) => root.findByProps({ testID: 'confirm-dialog' })
+  .findAll((n) => typeName(n) === 'AxButton')
+  .map((b) => ({ text: b.props.label as string, style: DIALOG_STYLE[b.props.variant as string], onPress: b.props.onPress as () => unknown }));
 
 function lum(hex: string) {
   const v = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
@@ -389,11 +392,10 @@ describe('R10 : Réservation au nouveau design', () => {
   });
 
   it("callbacks : File d'attente demande confirmation puis insère « waiting »", async () => {
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const root = await mount(<ReservationScreen />);
     await pressText(root, "File d'attente");
-    const join = alertButtons(alert).find((b) => b.text === "Rejoindre la file")
-      ?? alertButtons(alert)[1];
+    const join = alertButtons(root).find((b) => b.text === "Rejoindre la file")
+      ?? alertButtons(root)[1];
     mockCalls.length = 0;
     await act(async () => { await join.onPress!(); });
     await settle();
@@ -401,10 +403,9 @@ describe('R10 : Réservation au nouveau design', () => {
   });
 
   it('callbacks : Réservé puis Oui supprime la réservation et annule le rappel', async () => {
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const root = await mount(<ReservationScreen />);
     await pressText(root, 'Réservé');
-    const yes = alertButtons(alert).find((b) => b.style === 'destructive')!;
+    const yes = alertButtons(root).find((b) => b.style === 'destructive')!;
     mockCalls.length = 0;
     await act(async () => { await yes.onPress!(); });
     await settle();
@@ -468,11 +469,10 @@ describe('R10 : Mes réservations au nouveau design', () => {
 
   it('callbacks : Annuler → Oui supprime par id et annule le rappel', async () => {
     mockTables.class_reservations = MY_RESERVATIONS;
-    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const root = await mount(<MyReservationsScreen />);
     const cancel = comp(root, 'AxButton')[0];
     await act(async () => { cancel.props.onPress(); });
-    const yes = alertButtons(alert).find((b) => b.style === 'destructive')!;
+    const yes = alertButtons(root).find((b) => b.style === 'destructive')!;
     mockCalls.length = 0;
     await act(async () => { await yes.onPress!(); });
     await settle();
@@ -518,7 +518,7 @@ describe('R10 : garde-fous', () => {
     const fp = (src: string, a: string, b: string) => {
       const i = src.indexOf(a); const j = src.indexOf(b, i);
       expect([a, i >= 0 && j >= 0]).toEqual([a, true]);
-      return require('crypto').createHash('sha256').update(src.slice(i, j + b.length).replace(/\s+/g, ' ')).digest('hex').slice(0, 16);
+      return require('crypto').createHash('sha256').update(src.slice(i, j + b.length).replace(/dialog\.show\(/g, 'Alert.alert(').replace(/dialog\.afterModalClose\(\); /g, '').replace(/\s+/g, ' ')).digest('hex').slice(0, 16);
     };
     const r = read('screens/reservation/ReservationScreen.tsx');
     const m = read('screens/reservation/MyReservationsScreen.tsx');

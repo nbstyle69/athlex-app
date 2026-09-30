@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Image,
+  View, Text, TouchableOpacity, StyleSheet, Image,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Eye, EyeOff } from 'lucide-react-native';
+import { Eye, EyeOff, Mail, Lock } from 'lucide-react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { AuthStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
-import { spacing, borderRadius, typography, shadows } from '../../theme/designTokens';
+import { AxButton } from '../../components/ax/AxButton';
+import { AxCard } from '../../components/ax/AxCard';
+import { AxTextField } from '../../components/ax/AxTextField';
+import { withAlpha } from '../../components/ax/color';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { versionDisplay } from '../../lib/buildIdentity';
 import { translateAuthError } from '../../lib/authErrorMessage';
 import { isEmailNotConfirmed, resendConfirmationMail } from '../../lib/loginConfirmation';
@@ -22,8 +25,9 @@ type Props = { navigation: NativeStackNavigationProp<AuthStackParamList, 'Login'
 export default function LoginScreen({ navigation }: Props) {
   const { t } = useTranslation();
   const { signIn, profileError } = useAuth();
-  const { theme, mode } = useTheme();
-  const S = createStyles(theme);
+  const { theme } = useTheme();
+  const c = theme.ax;
+  const S = createStyles(c);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -72,7 +76,7 @@ export default function LoginScreen({ navigation }: Props) {
             <Text style={S.tagline}>{t('auth.tagline')}</Text>
           </View>
 
-          <View style={S.form}>
+          <AxCard style={S.form}>
             <Text style={S.title}>{t('auth.loginTitle')}</Text>
 
             {/* Session ouverte, profil illisible : sans ce bandeau, l'écran de
@@ -96,7 +100,7 @@ export default function LoginScreen({ navigation }: Props) {
                   accessibilityRole="button"
                 >
                   {resending
-                    ? <ActivityIndicator color={theme.text} size="small" />
+                    ? <ActivityIndicator color={c.text} size="small" />
                     : <Text style={S.resendText}>{t('auth.resendMail')}</Text>}
                 </TouchableOpacity>
                 {resendFeedback && (
@@ -109,10 +113,11 @@ export default function LoginScreen({ navigation }: Props) {
 
             <View style={S.inputContainer}>
               <Text style={S.label}>{t('auth.email')}</Text>
-              <TextInput
-                style={S.input}
+              <AxTextField
+                testID="login-email"
+                icon={Mail}
                 placeholder="ton@email.com"
-                placeholderTextColor={theme.textMuted}
+                accessibilityLabel={t('auth.email')}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -125,49 +130,44 @@ export default function LoginScreen({ navigation }: Props) {
 
             <View style={S.inputContainer}>
               <Text style={S.label}>{t('auth.password')}</Text>
-              <View style={{ position: 'relative' }}>
-                <TextInput
-                  style={[S.input, { paddingRight: 48 }]}
-                  placeholder="••••••••"
-                  placeholderTextColor={theme.textMuted}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoComplete="password"
-                  textContentType="password"
-                  returnKeyType="done"
-                  onSubmitEditing={handleLogin}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={{ position: 'absolute', right: 14, top: 0, bottom: 0, justifyContent: 'center' }}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  accessibilityLabel={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
-                >
-                  {showPassword
-                    ? <EyeOff color={theme.textMuted} size={20} />
-                    : <Eye color={theme.textMuted} size={20} />}
-                </TouchableOpacity>
-              </View>
+              <AxTextField
+                testID="login-password"
+                icon={Lock}
+                placeholder="••••••••"
+                accessibilityLabel={t('auth.password')}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                autoComplete="password"
+                textContentType="password"
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
+                trailing={(
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityLabel={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                  >
+                    {showPassword
+                      ? <EyeOff color={c.textMuted} size={20} />
+                      : <Eye color={c.textMuted} size={20} />}
+                  </TouchableOpacity>
+                )}
+              />
             </View>
 
             <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={S.forgotLink} accessibilityLabel="Mot de passe oublié">
               <Text style={S.forgotText}>{t('auth.forgotPassword')}</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleLogin} disabled={loading} activeOpacity={0.8} accessibilityLabel="Se connecter" accessibilityRole="button"
-              style={[S.button, { backgroundColor: theme.ctaBg, borderWidth: 2, borderColor: theme.ctaBorder }]}>
-              {loading
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={S.buttonText}>{t('auth.login').toUpperCase()}</Text>}
-            </TouchableOpacity>
+            <AxButton testID="login-submit" label={t('auth.login').toUpperCase()} accessibilityLabel="Se connecter" onPress={handleLogin} loading={loading} fullWidth />
 
             <TouchableOpacity onPress={() => navigation.navigate('Register')} style={S.registerLink} accessibilityLabel="Créer un compte" accessibilityRole="button">
               <Text style={S.registerText}>
                 {t('auth.noAccount')} <Text style={S.registerHighlight}>{t('auth.registerTitle')}</Text>
               </Text>
             </TouchableOpacity>
-          </View>
+          </AxCard>
 
           <Text
             style={S.buildIdentity}
@@ -184,149 +184,54 @@ export default function LoginScreen({ navigation }: Props) {
   );
 }
 
-function createStyles(theme: AppTheme) {
-  const isDark = theme.mode === 'dark';
+function createStyles(c: AxColors) {
   return StyleSheet.create({
     gradient: { flex: 1, backgroundColor: 'transparent' },
     flex: { flex: 1 },
-    container: { flexGrow: 1, justifyContent: 'center', padding: spacing.xl },
-    logoContainer: { alignItems: 'center', marginBottom: spacing.xxxl },
-    logo: {
-      width: 100, height: 100, resizeMode: 'contain', marginBottom: spacing.md,
-    },
-    appName: { 
-      ...typography.h1, 
-      color: theme.text, 
-      letterSpacing: 2,
-      fontFamily: 'Barlow_900Black',
-    },
-    tagline: { 
-      ...typography.bodySmall, 
-      color: theme.textSecondary, 
-      marginTop: spacing.xs, 
-      letterSpacing: 0.5,
-      textTransform: 'uppercase',
-    },
-    form: {
-      backgroundColor: theme.card,
-      borderRadius: borderRadius.xl,
-      padding: spacing.xl,
-      borderWidth: 1,
-      borderColor: theme.border,
-      ...shadows.md,
-    },
-    title: { 
-      ...typography.h3, 
-      color: theme.text, 
-      marginBottom: spacing.lg,
-    },
-    inputContainer: { marginBottom: spacing.md },
-    label: { 
-      ...typography.label, 
-      color: theme.textSecondary, 
-      marginBottom: spacing.xs,
-      textTransform: 'none',
-    },
-    input: {
-      backgroundColor: isDark ? theme.surface : theme.background,
-      borderRadius: borderRadius.lg,
-      paddingVertical: spacing.md,
-      paddingHorizontal: spacing.md,
-      color: theme.text,
-      ...typography.body,
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    button: { 
-      borderRadius: borderRadius.lg, 
-      padding: spacing.md, 
-      alignItems: 'center', 
-      marginTop: spacing.sm,
-      justifyContent: 'center',
-    },
-    buttonText: { 
-      color: '#fff', 
-      ...typography.buttonLarge,
-    },
-    forgotLink: { 
-      alignSelf: 'flex-end', 
-      marginTop: spacing.sm, 
-      marginBottom: spacing.md,
-      paddingVertical: spacing.xs,
-    },
-    forgotText: { 
-      color: theme.accent, 
-      ...typography.button,
-    },
-    registerLink: { 
-      alignItems: 'center', 
-      marginTop: spacing.lg,
-      paddingVertical: spacing.sm,
-    },
-    registerText: { 
-      color: theme.textSecondary, 
-      ...typography.body,
-    },
-    registerHighlight: { 
-      color: theme.accent, 
-      fontWeight: '700',
-    },
+    container: { flexGrow: 1, justifyContent: 'center', padding: axSpacing.xl },
+    logoContainer: { alignItems: 'center', marginBottom: axSpacing['2xl'] },
+    logo: { width: 88, height: 88, resizeMode: 'contain', marginBottom: axSpacing.md },
+    appName: { ...axTypography.titleXL, color: c.text },
+    tagline: { ...axTypography.overline, color: c.textMuted, marginTop: axSpacing.xs, textAlign: 'center' },
+    form: { gap: axSpacing.md },
+    title: { ...axTypography.titleM, color: c.text },
+    inputContainer: { gap: axSpacing.xs },
+    label: { ...axTypography.labelSmall, color: c.textMuted },
+    forgotLink: { alignSelf: 'flex-end', paddingVertical: axSpacing.xs },
+    forgotText: { ...axTypography.labelSmall, color: c.accentText },
+    registerLink: { alignItems: 'center', paddingVertical: axSpacing.sm },
+    registerText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+    registerHighlight: { ...axTypography.labelSmall, color: c.accentText },
     profileErrorBox: {
-      backgroundColor: isDark ? 'rgba(220, 38, 38, 0.15)' : 'rgba(220, 38, 38, 0.08)',
+      backgroundColor: withAlpha(c.danger, 0.1),
       borderWidth: 1,
-      borderColor: 'rgba(220, 38, 38, 0.4)',
-      borderRadius: borderRadius.md,
-      padding: spacing.md,
-      marginBottom: spacing.md,
+      borderColor: c.danger,
+      borderRadius: axRadius.control,
+      padding: axSpacing.md,
     },
-    profileErrorText: {
-      ...typography.body,
-      color: theme.text,
-    },
-    profileErrorDetail: {
-      ...typography.caption,
-      color: theme.textSecondary,
-      marginTop: spacing.xs,
-    },
+    profileErrorText: { ...axTypography.bodySmall, color: c.text },
+    profileErrorDetail: { ...axTypography.caption, color: c.textMuted, marginTop: axSpacing.xs },
     confirmBox: {
-      backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : 'rgba(245, 158, 11, 0.10)',
+      backgroundColor: withAlpha(c.warning, 0.12),
       borderWidth: 1,
-      borderColor: 'rgba(245, 158, 11, 0.5)',
-      borderRadius: borderRadius.md,
-      padding: spacing.md,
-      marginBottom: spacing.md,
+      borderColor: c.warning,
+      borderRadius: axRadius.control,
+      padding: axSpacing.md,
     },
-    confirmTitle: {
-      ...typography.body,
-      fontWeight: '700',
-      color: theme.text,
-    },
-    confirmHint: {
-      ...typography.caption,
-      color: theme.textSecondary,
-      marginTop: spacing.xs,
-    },
+    confirmTitle: { ...axTypography.label, color: c.text },
+    confirmHint: { ...axTypography.caption, color: c.textMuted, marginTop: axSpacing.xs },
     resendButton: {
       alignSelf: 'flex-start',
-      marginTop: spacing.sm,
-      paddingVertical: spacing.xs,
-      paddingHorizontal: spacing.md,
-      borderRadius: borderRadius.md,
+      marginTop: axSpacing.sm,
+      paddingVertical: axSpacing.xs,
+      paddingHorizontal: axSpacing.md,
+      borderRadius: axRadius.control,
       borderWidth: 1,
-      borderColor: theme.text,
+      borderColor: c.text,
     },
-    resendText: {
-      ...typography.caption,
-      fontWeight: '700',
-      color: theme.text,
-    },
-    resendOk: { color: theme.text },
-    resendKo: { color: '#dc2626' },
-    buildIdentity: {
-      ...typography.caption,
-      color: theme.textMuted,
-      textAlign: 'center',
-      marginTop: spacing.lg,
-    },
+    resendText: { ...axTypography.labelSmall, color: c.text },
+    resendOk: { color: c.text },
+    resendKo: { color: c.danger },
+    buildIdentity: { ...axTypography.caption, color: c.textMuted, textAlign: 'center', marginTop: axSpacing.lg },
   });
 }

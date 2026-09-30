@@ -181,7 +181,7 @@ describe('ReservationScreen : le refus d’une réservation passe par reservatio
   const src = fs.readFileSync(path.join(__dirname, '../screens/reservation/ReservationScreen.tsx'), 'utf8');
   const insert = src.slice(src.indexOf('const insertReservation'), src.indexOf('if (wantsWaiting) {', src.indexOf('const insertReservation')));
   it('réservation et liste d’attente partagent ce chemin, qui affiche le refus traduit', () => {
-    expect(insert).toMatch(/const refusal = reservationRefusal\(error\);\s*if \(refusal\) Alert\.alert\(refusal\.title, refusal\.body\);/);
+    expect(insert).toMatch(/const refusal = reservationRefusal\(error\);\s*if \(refusal\) dialog\.show\(refusal\.title, refusal\.body\);/);
     expect(src.match(/from\('class_reservations'\)\.insert\(/g)).toHaveLength(1);
     expect(src).toMatch(/\{ text: t\('reservation\.joinWaitlist'\), onPress: insertReservation \}/);
   });

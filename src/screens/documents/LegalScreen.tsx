@@ -6,15 +6,15 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { axFonts, axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 
 type Tab = 'cgu' | 'privacy';
 
 export default function LegalScreen() {
   const tabSpace = useTabBarScrollSpace();
   const nav = useNavigation();
-  const { theme, mode } = useTheme();
-  const isDark = mode === 'dark';
-  const S = createStyles(theme, isDark);
+  const { theme } = useTheme();
+  const S = createStyles(theme.ax);
   const [tab, setTab] = useState<Tab>('cgu');
 
   return (
@@ -23,10 +23,10 @@ export default function LegalScreen() {
       <AxScreenHeader title="Mentions légales" onBack={() => nav.goBack()} />
 
       <View style={S.tabs}>
-        <TouchableOpacity style={[S.tab, tab === 'cgu' && S.tabActive]} onPress={() => setTab('cgu')}>
+        <TouchableOpacity style={[S.tab, tab === 'cgu' && S.tabActive]} onPress={() => setTab('cgu')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'cgu' }}>
           <Text style={[S.tabText, tab === 'cgu' && S.tabTextActive]}>CGU</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[S.tab, tab === 'privacy' && S.tabActive]} onPress={() => setTab('privacy')}>
+        <TouchableOpacity style={[S.tab, tab === 'privacy' && S.tabActive]} onPress={() => setTab('privacy')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'privacy' }}>
           <Text style={[S.tabText, tab === 'privacy' && S.tabTextActive]}>Confidentialité</Text>
         </TouchableOpacity>
       </View>
@@ -84,7 +84,7 @@ function CGUContent({ theme, S }: { theme: AppTheme; S: any }) {
       <Text style={S.p}>
         Tout utilisateur peut signaler un contenu ou un utilisateur via le menu ⋮ présent sur chaque
         message, vidéo, profil ou commentaire. AthleX s'engage à examiner chaque signalement sous{' '}
-        <Text style={{ fontWeight: '800' }}>24 heures ouvrées</Text> et à prendre les mesures appropriées :
+        <Text style={S.strong}>24 heures ouvrées</Text> et à prendre les mesures appropriées :
         suppression du contenu, suspension ou bannissement définitif du compte fautif.
       </Text>
       <Text style={S.p}>
@@ -230,31 +230,26 @@ function PrivacyContent({ theme, S }: { theme: AppTheme; S: any }) {
   );
 }
 
-function createStyles(t: AppTheme, isDark: boolean) {
+function createStyles(c: AxColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      paddingHorizontal: 16, paddingTop: 56, paddingBottom: 12,
-      borderBottomWidth: 1, borderBottomColor: t.border,
-    },
-    headerTitle: { fontSize: 17, fontWeight: '700', color: t.text },
     tabs: {
-      flexDirection: 'row', marginHorizontal: 16, marginTop: 12,
-      backgroundColor: isDark ? t.surface : t.card, borderRadius: 12,
-      padding: 4, borderWidth: 1, borderColor: t.border,
+      flexDirection: 'row', marginHorizontal: axSpacing.lg, marginTop: axSpacing.md,
+      backgroundColor: c.field, borderRadius: axRadius.control,
+      padding: axSpacing.xs, borderWidth: 1, borderColor: c.fieldBorder,
     },
-    tab: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
-    tabActive: { backgroundColor: t.accent },
-    tabText: { fontSize: 13, fontWeight: '700', color: t.textMuted },
-    tabTextActive: { color: '#fff' },
+    tab: { flex: 1, paddingVertical: 10, borderRadius: axRadius.control, alignItems: 'center' },
+    tabActive: { backgroundColor: c.accent },
+    tabText: { ...axTypography.labelSmall, color: c.textMuted },
+    tabTextActive: { color: c.onAccent },
     scroll: { flex: 1 },
-    content: { padding: 20, paddingBottom: 120 },
-    h1: { fontSize: 22, fontWeight: '900', color: t.text, marginBottom: 4 },
-    subtitle: { fontSize: 12, color: t.textMuted, marginBottom: 24 },
-    h2: { fontSize: 16, fontWeight: '700', color: t.accent, marginTop: 20, marginBottom: 8 },
-    p: { fontSize: 14, color: t.textSecondary, lineHeight: 22, marginBottom: 8 },
-    li: { fontSize: 14, color: t.textSecondary, lineHeight: 22, marginBottom: 4, paddingLeft: 8 },
-    footer: { fontSize: 12, color: t.textMuted, marginTop: 32, textAlign: 'center' },
+    content: { padding: axSpacing.xl },
+    h1: { ...axTypography.titleL, color: c.text, marginBottom: axSpacing.xs },
+    subtitle: { ...axTypography.caption, color: c.textMuted, marginBottom: axSpacing['2xl'] },
+    h2: { ...axTypography.titleM, color: c.accentText, marginTop: axSpacing.xl, marginBottom: axSpacing.sm },
+    p: { ...axTypography.bodySmall, color: c.textMuted, marginBottom: axSpacing.sm },
+    li: { ...axTypography.bodySmall, color: c.textMuted, marginBottom: axSpacing.xs, paddingLeft: axSpacing.sm },
+    strong: { fontFamily: axFonts.interSemiBold, color: c.text },
+    footer: { ...axTypography.caption, color: c.textMuted, marginTop: 32, textAlign: 'center' },
   });
 }

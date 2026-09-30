@@ -1,19 +1,24 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
-  KeyboardAvoidingView, Platform, Alert, ActivityIndicator,
+  View, Text, TouchableOpacity, StyleSheet,
+  KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { ChevronLeft, Hash, LogIn } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { AxButton } from '../../components/ax/AxButton';
+import { AxTextField } from '../../components/ax/AxTextField';
+import { withAlpha } from '../../components/ax/color';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import GlassBackground from '../../components/glass/GlassBackground';
 
 export default function JoinBoxScreen({ navigation }: any) {
   const { joinBox, user } = useAuth();
   const { t } = useTranslation();
   const { theme } = useTheme();
-  const S = createStyles(theme);
+  const c = theme.ax;
+  const S = createStyles(c);
   const [code, setCode]       = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -36,47 +41,38 @@ export default function JoinBoxScreen({ navigation }: any) {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={{ flex: 1 }}
     >
-      <TouchableOpacity onPress={() => navigation.goBack()} style={S.back}>
-        <ChevronLeft color={theme.textSecondary} size={22} />
+      <TouchableOpacity onPress={() => navigation.goBack()} style={S.back} accessibilityRole="button" accessibilityLabel={t('common.back')}>
+        <ChevronLeft color={c.textMuted} size={22} />
       </TouchableOpacity>
 
       <View style={S.inner}>
         <View style={S.iconWrap}>
-          <Hash color={theme.accent} size={32} />
+          <Hash color={c.accentText} size={32} />
         </View>
         <Text style={S.title}>{t('onboarding.join.title')}</Text>
         <Text style={S.subtitle}>
           {t('onboarding.join.subtitle')}
         </Text>
 
-        <View style={S.inputWrap}>
-          <TextInput
-            style={S.codeInput}
-            placeholder="ABC123"
-            placeholderTextColor={theme.textMuted}
-            value={code}
-            onChangeText={v => setCode(v.toUpperCase())}
-            autoCapitalize="characters"
-            maxLength={6}
-            autoFocus
-          />
-        </View>
+        <AxTextField
+          testID="join-code"
+          placeholder="ABC123"
+          value={code}
+          onChangeText={v => setCode(v.toUpperCase())}
+          autoCapitalize="characters"
+          maxLength={6}
+          autoFocus
+        />
 
-        <TouchableOpacity
-          style={[S.btn, code.length !== 6 && S.btnDisabled]}
+        <AxButton
+          testID="join-submit"
+          label={t('onboarding.join.button')}
+          icon={LogIn}
           onPress={handleJoin}
-          disabled={loading || code.length !== 6}
-          activeOpacity={0.85}
-        >
-          {loading
-            ? <ActivityIndicator color="#fff" />
-            : (
-              <>
-                <LogIn color="#fff" size={18} />
-                <Text style={S.btnText}>{t('onboarding.join.button')}</Text>
-              </>
-            )}
-        </TouchableOpacity>
+          loading={loading}
+          disabled={code.length !== 6}
+          fullWidth
+        />
 
         <Text style={S.hint}>
           {t('onboarding.join.hint', { username: user?.username ?? '' })}
@@ -87,33 +83,17 @@ export default function JoinBoxScreen({ navigation }: any) {
   );
 }
 
-function createStyles(theme: AppTheme) { return StyleSheet.create({
+function createStyles(c: AxColors) { return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
-  back: { paddingTop: 56, paddingLeft: 20, paddingBottom: 8 },
-  inner: { flex: 1, paddingHorizontal: 28, justifyContent: 'center', gap: 18, marginTop: -60 },
+  back: { paddingTop: 56, paddingLeft: axSpacing.xl, paddingBottom: axSpacing.sm, alignSelf: 'flex-start' },
+  inner: { flex: 1, paddingHorizontal: axSpacing['2xl'], justifyContent: 'center', gap: axSpacing.lg, marginTop: -60 },
   iconWrap: {
-    width: 64, height: 64, borderRadius: 18,
-    backgroundColor: `${theme.accent}10`,
+    width: 64, height: 64, borderRadius: axRadius.control,
+    backgroundColor: withAlpha(c.accent, 0.12),
     justifyContent: 'center', alignItems: 'center',
-    alignSelf: 'center', marginBottom: 8,
+    alignSelf: 'center',
   },
-  title: { fontSize: 26, fontWeight: '900', color: theme.text, textAlign: 'center' },
-  subtitle: { fontSize: 14, color: theme.textSecondary, textAlign: 'center', lineHeight: 20 },
-  inputWrap: { alignItems: 'center', marginVertical: 8 },
-  codeInput: {
-    fontSize: 32, fontWeight: '900', color: theme.text,
-    letterSpacing: 12, textAlign: 'center',
-    backgroundColor: theme.card, borderRadius: 16,
-    borderWidth: 1.5, borderColor: theme.border,
-    paddingHorizontal: 28, paddingVertical: 18,
-    width: '100%',
-  },
-  btn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: theme.accent,
-    borderRadius: 16, padding: 18,
-  },
-  btnDisabled: { opacity: 0.4 },
-  btnText: { color: '#fff', fontSize: 16, fontWeight: '900' },
-  hint: { fontSize: 12, color: theme.textMuted, textAlign: 'center', marginTop: 4 },
+  title: { ...axTypography.titleXL, color: c.text, textAlign: 'center' },
+  subtitle: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+  hint: { ...axTypography.caption, color: c.textMuted, textAlign: 'center' },
 }); }

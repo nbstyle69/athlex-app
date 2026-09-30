@@ -20,13 +20,18 @@ interface Props {
   /** Champ compact centré (grilles de séries). */
   compact?: boolean;
   maxLength?: number;
+  autoComplete?: TextInputProps['autoComplete'];
+  textContentType?: TextInputProps['textContentType'];
+  returnKeyType?: TextInputProps['returnKeyType'];
+  onSubmitEditing?: () => void;
+  autoCorrect?: boolean;
+  autoFocus?: boolean;
   /** Élément posé à droite du champ, après l'icône (bouton d'effacement…). */
   trailing?: ReactNode;
   /** Hauteur minimale de la zone de saisie (champ multiligne). */
   minInputHeight?: number;
   /** Hauteur maximale de la zone de saisie : au-delà, le texte défile dans le champ. */
   maxInputHeight?: number;
-  autoFocus?: boolean;
   /** Accès au champ natif (passer le focus au champ suivant). */
   inputRef?: React.Ref<TextInput>;
   testID?: string;
@@ -34,8 +39,8 @@ interface Props {
 
 export function AxTextField({
   value, onChangeText, placeholder, icon: Icon, error, keyboardType, secureTextEntry, multiline,
-  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight, trailing,
-  autoFocus, inputRef, testID = 'ax-text-field',
+  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight, autoComplete,
+  textContentType, returnKeyType, onSubmitEditing, autoCorrect, autoFocus, trailing, inputRef, testID = 'ax-text-field',
 }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
@@ -60,6 +65,11 @@ export function AxTextField({
           onFocus={() => setFocused(true)}
           onBlur={() => { setFocused(false); onBlur?.(); }}
           autoCapitalize={autoCapitalize}
+          autoComplete={autoComplete}
+          textContentType={textContentType}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
+          autoCorrect={autoCorrect}
           accessibilityLabel={accessibilityLabel ?? placeholder}
           accessibilityHint={error}
           style={[axTypography.body, styles.input, { color: c.text }, multiline ? styles.multiline : null, compact ? styles.compactInput : null,

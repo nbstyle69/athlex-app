@@ -205,6 +205,23 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R11 : entrée, tutoriel, états vides et fenêtres au nouveau design (apparence seule, aucune migration).**
+- Entrée (Connexion, Créer un compte, Mot de passe oublié / Email envoyé, Rejoindre une box, Rejoins ta box, Mentions
+  légales) : champs `AxTextField`, une seule action `AxButton` accent, liens `labelSmall` `accentText`, tokens ax ;
+  symboles ♂ / ♀ et emojis remplacés par des icônes Lucide. Tutoriel : titre `titleXL`, texte `body`, points de
+  progression, « Suivant » accent, « Passer » en texte ; cinq slides, défilement et callbacks inchangés.
+- États vides : `src/components/EmptyState.tsx` (icône Lucide, `titleM`, `bodySmall` `textMuted`, action `AxButton`) dans
+  Réservation, Mes réservations, Historique, Tournois / Mini-tournois, Amis, Messages sans box ; conditions inchangées.
+- Fenêtres : `src/components/ConfirmDialog.tsx` (`useConfirmDialog`, `AxCard` centrée sur `axVeil`, destructive = stop,
+  principale = accent, Annuler / Non = outline) à la place d'`Alert.alert` pour annuler la réservation, quitter la liste
+  d'attente, trop tard, abonnement impayé, créneau complet, limites journalière / hebdomadaire, quitter le tournoi,
+  exclure un participant (app et BO), score enregistré ; mêmes titres, textes, boutons et actions.
+- `AxTextField` / `AxButton` : options rétrocompatibles (`autoComplete`, `textContentType`, `returnKeyType`,
+  `onSubmitEditing`, `autoCorrect`, `autoFocus`, `trailing`, `accessibilityLabel`).
+- Tests : `r11.rn.test.tsx` (instantané avant / après `r11StructureBefore.json`, navigation, callbacks, conditions,
+  couleurs et typographies dans les deux thèmes, 390 px, aucun emoji, 92 tests) ; isolement R1 élargi aux fichiers du
+  lot ; `npx jest` 1976, `npm run test:rn` 659, `tsc` vert ; 28 mutations tuées.
+
 **R6c (B) : jeux de bips AthleX / Classique et bips mélangés dans la vidéo (app et module natif, aucune migration).**
 - `src/lib/timerBeeps.ts` : synthèse WAV sortie de `TimerRunScreen`, jeu « Classique » identique à l'octet près (empreintes),
   jeu « AthleX » par défaut (tic 1046 Hz ~100 ms, GO montant ~400 ms, fin en trois notes descendantes) ; choix par puces

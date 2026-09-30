@@ -21,6 +21,7 @@ import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { useFocusQuery } from '../../hooks/useFocusQuery';
 import { fetchEloRank } from '../../services/eloRank';
 import CompetitionRankingCard from './CompetitionRankingCard';
+import EmptyState from '../../components/EmptyState';
 
 type Nav = NativeStackNavigationProp<CompetitionStackParamList, 'CompetitionList'>;
 
@@ -262,10 +263,7 @@ export default function CompetitionScreen() {
             {tLoading ? (
               <ActivityIndicator color={c.accentText} style={S.loader} />
             ) : tournaments.length === 0 ? (
-              <View style={S.emptyBox}>
-                <Trophy color={c.textMuted} size={36} strokeWidth={1.75} />
-                <Text style={S.emptyText}>{t('competition.noTournament')}</Text>
-              </View>
+              <EmptyState testID="competition-no-tournament" style={S.emptyBox} icon={Trophy} title={t('competition.noTournament')} />
             ) : (
               tournaments.map(tour => {
                 const participants = participantCounts[tour.id] ?? 0;
@@ -363,10 +361,7 @@ export default function CompetitionScreen() {
             {miniLoading ? (
               <ActivityIndicator color={c.accentText} style={S.loader} />
             ) : miniTournaments.length === 0 ? (
-              <View style={S.emptyBox}>
-                <Zap color={c.textMuted} size={36} strokeWidth={1.75} />
-                <Text style={S.emptyText}>{t('competition.noMini')}</Text>
-              </View>
+              <EmptyState testID="competition-no-mini" style={S.emptyBox} icon={Zap} title={t('competition.noMini')} />
             ) : (
               miniTournaments.map(m => {
                 const isFull = m.participant_count >= m.max_players;

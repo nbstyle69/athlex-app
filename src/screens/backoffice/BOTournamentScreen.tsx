@@ -28,6 +28,7 @@ import {
 import { chargerClassement, classementGeneral, LigneClassement, RangWod } from '../../utils/classementTournoi';
 import { computeCompletedMovements, AthleteGender } from '../../utils/movementParser';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useConfirmDialog } from '../../components/ConfirmDialog';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function StatusPill({ status, theme: th }: { status: string; theme: AppTheme }) {
@@ -54,6 +55,7 @@ export default function BOTournamentScreen() {
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
   const s = createStyles(theme);
+  const dialog = useConfirmDialog();
 
   const [tournaments,     setTournaments]     = useState<any[]>([]);
   const [selectedId,      setSelectedId]      = useState<string | null>(null);
@@ -168,7 +170,7 @@ export default function BOTournamentScreen() {
 
   // ── Kick participant
   async function handleKick(athleteId: string, username: string) {
-    Alert.alert(
+    dialog.show(
       t('bo.tournament.kickTitle'),
       t('bo.tournament.kickMsg', { username }),
       [
@@ -812,6 +814,7 @@ export default function BOTournamentScreen() {
         </View>
       </Modal>
       */}
+      {dialog.element}
     </View>
   );
 }

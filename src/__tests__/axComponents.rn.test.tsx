@@ -420,6 +420,15 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
     // R6a : écrans du mode caméra (lecture de la vidéo).
     path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'),
+    // R11 : écrans d'entrée, tutoriel, états vides et fenêtres.
+    path.join(SRC, 'screens', 'auth', 'LoginScreen.tsx'),
+    path.join(SRC, 'screens', 'auth', 'RegisterScreen.tsx'),
+    path.join(SRC, 'screens', 'auth', 'ForgotPasswordScreen.tsx'),
+    path.join(SRC, 'screens', 'onboarding', 'WaitingScreen.tsx'),
+    path.join(SRC, 'screens', 'onboarding', 'JoinBoxScreen.tsx'),
+    path.join(SRC, 'screens', 'onboarding', 'OnboardingTutorialScreen.tsx'),
+    path.join(SRC, 'components', 'EmptyState.tsx'),
+    path.join(SRC, 'components', 'ConfirmDialog.tsx'),
     // R8a : écrans des tournois.
     ...R8A_SCREENS.map((f) => path.join(SRC, 'screens', 'competition', f)),
     // R10 : réservation au nouveau design (Mes réservations est déjà adoptant R3c).

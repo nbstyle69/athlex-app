@@ -23,6 +23,7 @@ import { formatScoreValue } from '../../utils/scoreFormat';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { buildHistoryEntries, countScores, HistoryEntry, BoxScoreRow, CompletionRow } from '../../lib/wodHistoryEntries';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import EmptyState from '../../components/EmptyState';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -386,11 +387,7 @@ export default function WodHistoryScreen() {
           onEndReachedThreshold={0.3}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
           ListEmptyComponent={
-            <View style={S.empty}>
-              <ClipboardList color={c.textMuted} size={40} />
-              <Text style={S.emptyTitle}>{t('wodHistory.emptyTitle')}</Text>
-              <Text style={S.emptySub}>{t('wodHistory.emptySub')}</Text>
-            </View>
+            <EmptyState testID="wod-history-empty" style={S.empty} icon={ClipboardList} title={t('wodHistory.emptyTitle')} text={t('wodHistory.emptySub')} />
           }
         />
       )}
@@ -409,9 +406,7 @@ function createStyles(c: AxColors) { return StyleSheet.create({
   filterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm, paddingHorizontal: axSpacing.xl, paddingVertical: axSpacing.md },
   list: { paddingHorizontal: axSpacing.xl, gap: axSpacing.md },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty: { alignItems: 'center', paddingTop: 60, gap: axSpacing.sm },
-  emptyTitle: { ...axTypography.label, color: c.text },
-  emptySub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center', paddingHorizontal: 40 },
+  empty: { paddingTop: 60 },
   wodCard: { gap: 6 },
   wodTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.sm },
   wodBadges: { flexDirection: 'row', gap: axSpacing.xs, flexWrap: 'wrap', flex: 1, minWidth: 0 },
