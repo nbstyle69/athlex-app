@@ -63,15 +63,17 @@ export function AxScreenHeader({ title, onBack, right, children, safeArea = true
             </Pressable>
           </View>
         </View>
-        <Text
-          testID={`${testID}-title`}
-          accessibilityRole="header"
-          numberOfLines={1}
-          ellipsizeMode="tail"
-          style={[axTypography.titleM, styles.title, { lineHeight: axAccentSafeLineHeight.titleM, color: c.text }]}
-        >
-          {title}
-        </Text>
+        <View testID={`${testID}-title-box`} style={styles.titleBox}>
+          <Text
+            testID={`${testID}-title`}
+            accessibilityRole="header"
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={[axTypography.titleM, styles.title, { lineHeight: axAccentSafeLineHeight.titleM, color: c.text }]}
+          >
+            {title}
+          </Text>
+        </View>
         <View testID={`${testID}-right`} style={[styles.side, styles.right, { minWidth: side }]}>
           {right ? (
             <View testID={`${testID}-right-content`} style={styles.rightContent} onLayout={measure}>
@@ -89,7 +91,9 @@ const styles = StyleSheet.create({
   wrap: { paddingHorizontal: AX_SCREEN_HEADER.sideMargin },
   withChildren: { paddingBottom: axSpacing.md, gap: axSpacing.xs },
   row: { height: AX_SCREEN_HEADER.height, flexDirection: 'row', alignItems: 'center' },
-  side: { flexGrow: 1, flexShrink: 0, flexBasis: 0, flexDirection: 'row', alignItems: 'center' },
+  // Les côtés gardent la largeur de leur contenu : le titre ne peut ni les
+  // recouvrir ni leur prendre de place, il occupe tout l'espace restant.
+  side: { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', flexDirection: 'row', alignItems: 'center' },
   left: { justifyContent: 'flex-start' },
   right: { justifyContent: 'flex-end', gap: axSpacing.xs },
   rightContent: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
@@ -100,5 +104,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: axSpacing.xs,
   },
-  title: { flexShrink: 1, textAlign: 'center', marginHorizontal: axSpacing.sm },
+  titleBox: { flex: 1, minWidth: 0, marginHorizontal: axSpacing.sm, overflow: 'hidden' },
+  // Largeur fixée par la boîte, pas par la mesure du texte : un titre court
+  // n'est jamais coupé tant qu'il tient entre les deux côtés.
+  title: { textAlign: 'center' },
 });

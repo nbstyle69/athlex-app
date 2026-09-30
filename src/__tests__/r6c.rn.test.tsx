@@ -242,10 +242,13 @@ describe('R6c : module natif', () => {
   });
 });
 
+// Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
+const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
+
 describe('R6c : logique du chrono', () => {
   it('seul le bloc de synchro de l’incrustation a bougé (après displayOpts) et envoie les champs du décompte', () => {
     const timer = fs.readFileSync(path.join(__dirname, '..', 'screens/timer/TimerRunScreen.tsx'), 'utf8');
-    const now = timer.slice(timer.indexOf('export default function TimerRunScreen()'), timer.indexOf('// Phase-aware accent color'));
+    const now = timer.slice(timer.indexOf('export default function TimerRunScreen()'), timer.indexOf('// Phase-aware accent color')).replace(...IPHONE_FOLLOW_FIX);
     const start = now.indexOf('\n  // Sync overlay state to native module on every render tick');
     const endMark = 'showGo, displayOpts.themeId, t]);\n\n';
     const block = now.slice(start, now.indexOf(endMark) + endMark.length);

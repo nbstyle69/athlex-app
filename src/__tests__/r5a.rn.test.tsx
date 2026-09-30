@@ -245,6 +245,8 @@ describe('R5a : capture', () => {
  * Bips sans doublon : mélange décidé par mixBeepInVideo dans playBeep, calage de latence retiré (r6cBips.rn.test.tsx).
  */
 const LOGIC_SHA = '639d1b0da7c06cdb7656032b351acbb788b0c4bec11fd9e6c2d7f0a8360691f1';
+// Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
+const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
 const MODAL_SHA = '48d210edde52dc6c61eefc919547338ded563c6ac4e8405c748e9c748a47c566';
 const LAUNCH_SHA = 'e4567887b4ed3745b56790f362ad063d475f82f5d770b1ab62783ff38c5f7dc2';
@@ -438,7 +440,7 @@ const sha = (s: string) => crypto.createHash('sha256').update(s).digest('hex');
 describe('R5a : aucun calcul, bip ni thème touché', () => {
   it('logique de TimerRunScreen (phases, tics, bips, enregistrement) figée (R5b : suivi du thème de l’app, vibration et GO du décompte ; R6b : GO en mode caméra)', () => {
     const logic = srcRegion('screens/timer/TimerRunScreen.tsx', 'export default function TimerRunScreen()', '// Phase-aware accent color');
-    expect(sha(logic)).toBe(LOGIC_SHA);
+    expect(sha(logic.replace(...IPHONE_FOLLOW_FIX))).toBe(LOGIC_SHA);
   });
   it('TIMER_THEMES figé (état R5b)', () => {
     expect(sha(JSON.stringify(TIMER_THEMES))).toBe(THEMES_SHA);

@@ -1,4 +1,5 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
@@ -256,7 +257,8 @@ export default function InterTeamScreen() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={S.container}>
       <GlassBackground />
-        <AxScreenHeader title={team ? team.name : t('interTeam.myTeam')}>
+        <AxScreenHeader title={t('interTeam.myTeam')}>
+            {team ? <AxContentTitle title={team.name} testID="team-name-title" /> : null}
             <Text style={S.headerSub}>
               {team ? t('interTeam.membersCount', { count: acceptedCount, max: teamSize }) : t('interTeam.teamOf', { n: teamSize })}
             </Text>

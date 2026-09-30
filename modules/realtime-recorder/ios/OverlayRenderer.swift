@@ -293,18 +293,21 @@ final class OverlayRenderer {
 
   /// Label above a circle of diameter `d`: « PRÉPARE-TOI » + white digit in a
   /// 35 % ring above 3, « PRÊT ? » + accent digit on a 12 % accent halo at 3-2-1.
+  /// The label + ring group is centered in the frame, each text by its ink.
   private func drawCountdown(context: CGContext, size: CGSize, refDim: CGFloat, isLandscape: Bool, state: OverlayState) {
     let accent = UIColor(hex: state.accentColor) ?? .white
     let tense = state.countdownTense
-    let d = refDim * (isLandscape ? 0.5 : 0.55)
-    let circle = CGRect(x: (size.width - d) / 2, y: (size.height - d) / 2, width: d, height: d)
+    let layout = CountdownLayout.countdown(size: size, isLandscape: isLandscape, hasLabel: !state.countdownLabel.isEmpty)
+    let d = layout.ringDiameter
+    let circle = CGRect(x: layout.centerX - d / 2, y: layout.ringCenterY - d / 2, width: d, height: d)
 
-    let labelSize = d * 0.07
-    let labelH = lineHeight(labelSize)
-    drawText(context: context, text: state.countdownLabel,
-             rect: CGRect(x: 0, y: circle.minY - d * 0.04 - labelH, width: size.width, height: labelH),
-             fontSize: labelSize, bold: false, color: tense ? accent : UIColor.white.withAlphaComponent(0.8),
-             alignment: .center, weight: .medium, shadow: true, tracking: labelSize * 0.33)
+    if !state.countdownLabel.isEmpty {
+      let labelSize = CountdownLayout.labelSize(d)
+      drawInkCentered(context: context, text: state.countdownLabel,
+                      center: CGPoint(x: layout.centerX, y: layout.labelCenterY),
+                      fontSize: labelSize, color: tense ? accent : UIColor.white.withAlphaComponent(0.8),
+                      weight: .medium, shadow: true, tracking: labelSize * 0.33)
+    }
 
     context.saveGState()
     if tense {
@@ -318,20 +321,18 @@ final class OverlayRenderer {
     }
     context.restoreGState()
 
-    let digitSize = d * (tense ? 0.7 : 0.55)
-    let digitH = lineHeight(digitSize, oswaldMedium: true)
-    drawText(context: context, text: "\(state.countdownValue)",
-             rect: CGRect(x: circle.minX - d * 0.25, y: circle.midY - digitH / 2, width: d * 1.5, height: digitH),
-             fontSize: digitSize, bold: false, color: tense ? accent : .white, alignment: .center,
-             shadow: !tense, oswaldMedium: true,
-             glow: tense ? accent.withAlphaComponent(0.5) : nil, glowRadius: d * 0.11)
+    drawInkCentered(context: context, text: "\(state.countdownValue)",
+                    center: CGPoint(x: circle.midX, y: circle.midY),
+                    fontSize: CountdownLayout.digitSize(d, tense: tense), color: tense ? accent : .white,
+                    shadow: !tense, oswaldMedium: true,
+                    glow: tense ? accent.withAlphaComponent(0.5) : nil, glowRadius: d * 0.11)
   }
 
-  /// Accent band tilted by -4° across the frame, « GO ! » centered in `goInk`.
+  /// Accent band tilted by -4° through the center of the frame, « GO ! » ink-centered in `goInk`.
   private func drawGoBand(context: CGContext, size: CGSize, refDim: CGFloat, state: OverlayState) {
     let accent = UIColor(hex: state.accentColor) ?? .white
     let ink = UIColor(hex: state.goInk) ?? .black
-    let goSize = refDim * 0.16
+    let goSize = CountdownLayout.goSize(refDim)
     let textH = lineHeight(goSize, oswaldMedium: true)
     let bandH = textH + goSize * 0.75
     context.saveGState()
@@ -339,10 +340,30 @@ final class OverlayRenderer {
     context.rotate(by: -4 * .pi / 180)
     context.setFillColor(accent.cgColor)
     context.fill(CGRect(x: -size.width * 0.6, y: -bandH / 2, width: size.width * 1.2, height: bandH))
-    drawText(context: context, text: state.goLabel,
-             rect: CGRect(x: -size.width / 2, y: -textH / 2, width: size.width, height: textH),
-             fontSize: goSize, bold: false, color: ink, alignment: .center, oswaldMedium: true)
+    drawInkCentered(context: context, text: state.goLabel, center: .zero,
+                    fontSize: goSize, color: ink, oswaldMedium: true)
     context.restoreGState()
+  }
+
+  // MARK: - Ink-centered text (countdown, « GO ! »)
+
+  /// Draws `text` so that its ink (the glyphs actually drawn, from
+  /// `usesDeviceMetrics`) is centered on `center`: neither the line box
+  /// (ascent/descent) nor the trailing letter spacing shift it.
+  private func drawInkCentered(
+    context: CGContext, text: String, center: CGPoint, fontSize: CGFloat, color: UIColor,
+    weight: UIFont.Weight? = nil, shadow: Bool = false, tracking: CGFloat = 0,
+    oswaldMedium: Bool = false, glow: UIColor? = nil, glowRadius: CGFloat = 0
+  ) {
+    let attr = attributedText(text, fontSize: fontSize, bold: false, color: color, alignment: .left,
+                              weight: weight, shadow: shadow, tracking: tracking,
+                              oswaldMedium: oswaldMedium, glow: glow, glowRadius: glowRadius)
+    let area = CGSize(width: 100_000, height: 100_000)
+    let ink = attr.boundingRect(with: area, options: [.usesLineFragmentOrigin, .usesDeviceMetrics], context: nil)
+    let origin = CGPoint(x: center.x - ink.midX, y: center.y - ink.midY)
+    UIGraphicsPushContext(context)
+    attr.draw(with: CGRect(origin: origin, size: area), options: [.usesLineFragmentOrigin], context: nil)
+    UIGraphicsPopContext()
   }
 
   private func lineHeight(_ fontSize: CGFloat, oswaldMedium: Bool = false) -> CGFloat {
@@ -370,6 +391,31 @@ final class OverlayRenderer {
     glow: UIColor? = nil,
     glowRadius: CGFloat = 0
   ) {
+    let attrString = attributedText(text, fontSize: fontSize, bold: bold, color: color, alignment: alignment,
+                                    weight: weight, shadow: shadow, monospace: monospace, dsDigital: dsDigital,
+                                    oswald: oswald, tracking: tracking, oswaldMedium: oswaldMedium,
+                                    glow: glow, glowRadius: glowRadius)
+    UIGraphicsPushContext(context)
+    attrString.draw(in: rect)
+    UIGraphicsPopContext()
+  }
+
+  private func attributedText(
+    _ text: String,
+    fontSize: CGFloat,
+    bold: Bool,
+    color: UIColor,
+    alignment: NSTextAlignment,
+    weight: UIFont.Weight? = nil,
+    shadow: Bool = false,
+    monospace: Bool = false,
+    dsDigital: Bool = false,
+    oswald: Bool = false,
+    tracking: CGFloat = 0,
+    oswaldMedium: Bool = false,
+    glow: UIColor? = nil,
+    glowRadius: CGFloat = 0
+  ) -> NSAttributedString {
     let font: UIFont
     if oswaldMedium, let omFont = oswaldMediumFont?.withSize(fontSize) {
       font = omFont
@@ -415,11 +461,30 @@ final class OverlayRenderer {
       attributes[.shadow] = s
     }
 
-    let attrString = NSAttributedString(string: text, attributes: attributes)
+    return NSAttributedString(string: text, attributes: attributes)
+  }
+}
 
-    UIGraphicsPushContext(context)
-    attrString.draw(in: rect)
-    UIGraphicsPopContext()
+/// Geometry of the countdown burned into the video, centered in the frame
+/// (portrait or landscape, front or back camera: the overlay is drawn on the
+/// already-oriented buffer and never mirrored). Same rules and numbers as
+/// `CountdownLayout.kt`, which is JVM-tested.
+enum CountdownLayout {
+  static func ringDiameter(_ refDim: CGFloat, isLandscape: Bool) -> CGFloat { refDim * (isLandscape ? 0.5 : 0.55) }
+  static func labelSize(_ ringDiameter: CGFloat) -> CGFloat { ringDiameter * 0.07 }
+  static func digitSize(_ ringDiameter: CGFloat, tense: Bool) -> CGFloat { ringDiameter * (tense ? 0.7 : 0.55) }
+  static func gap(_ ringDiameter: CGFloat) -> CGFloat { ringDiameter * 0.04 }
+  static func goSize(_ refDim: CGFloat) -> CGFloat { refDim * 0.16 }
+
+  /// Label above the ring, the pair centered in `size`. The label block is one
+  /// font size tall whatever the label: « PRÉPARE-TOI » → « PRÊT ? » never moves the ring.
+  static func countdown(size: CGSize, isLandscape: Bool, hasLabel: Bool)
+    -> (centerX: CGFloat, labelCenterY: CGFloat, ringCenterY: CGFloat, ringDiameter: CGFloat) {
+    let d = ringDiameter(min(size.width, size.height), isLandscape: isLandscape)
+    let labelH = hasLabel ? labelSize(d) : 0
+    let labelBlock = hasLabel ? labelH + gap(d) : 0
+    let top = (size.height - (labelBlock + d)) / 2
+    return (size.width / 2, top + labelH / 2, top + labelBlock + d / 2, d)
   }
 }
 
