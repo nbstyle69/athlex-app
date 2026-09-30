@@ -270,7 +270,7 @@ function createStyles(t: AppTheme) {
   rowLabelOff: { color: c.textMuted },
   rowSub: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 1 },
   hourSection: { gap: 8 },
-  hourScroll: { marginTop: 4 },
+  hourScroll: { flexGrow: 0, flexShrink: 0, marginTop: 4 },
   hourRow: { gap: 6, paddingVertical: 2 },
   pending: { width: 44, alignItems: 'flex-end' },
 }); }

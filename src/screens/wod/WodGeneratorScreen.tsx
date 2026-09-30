@@ -540,7 +540,7 @@ function createStyles(theme: AppTheme) { const c = theme.ax; return StyleSheet.c
   section: { marginBottom: 18 },
   sectionTitle: { ...axTypography.overline, color: c.textMuted, marginBottom: 10 },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm, marginTop: axSpacing.sm },
-  chipScrollOuter: { marginHorizontal: -axSpacing.xl, marginBottom: axSpacing.sm },
+  chipScrollOuter: { flexGrow: 0, flexShrink: 0, marginHorizontal: -axSpacing.xl, marginBottom: axSpacing.sm },
   chipScroll: { flexDirection: 'row', gap: axSpacing.sm, paddingHorizontal: axSpacing.xl },
   chip: {
     flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs,

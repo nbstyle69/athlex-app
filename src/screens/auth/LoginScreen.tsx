@@ -14,7 +14,7 @@ import { AxButton } from '../../components/ax/AxButton';
 import { AxCard } from '../../components/ax/AxCard';
 import { AxTextField } from '../../components/ax/AxTextField';
 import { withAlpha } from '../../components/ax/color';
-import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
+import { axAccentSafeLineHeight, axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { versionDisplay } from '../../lib/buildIdentity';
 import { translateAuthError } from '../../lib/authErrorMessage';
 import { isEmailNotConfirmed, resendConfirmationMail } from '../../lib/loginConfirmation';
@@ -191,7 +191,7 @@ function createStyles(c: AxColors) {
     container: { flexGrow: 1, justifyContent: 'center', padding: axSpacing.xl },
     logoContainer: { alignItems: 'center', marginBottom: axSpacing['2xl'] },
     logo: { width: 88, height: 88, resizeMode: 'contain', marginBottom: axSpacing.md },
-    appName: { ...axTypography.titleXL, color: c.text },
+    appName: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text },
     tagline: { ...axTypography.overline, color: c.textMuted, marginTop: axSpacing.xs, textAlign: 'center' },
     form: { gap: axSpacing.md },
     title: { ...axTypography.titleM, color: c.text },

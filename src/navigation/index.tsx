@@ -1,5 +1,6 @@
 import React from 'react';
 import { NavigationContainer, NavigatorScreenParams, DefaultTheme } from '@react-navigation/native';
+import { StatusBar } from 'expo-status-bar';
 
 // Dark navigation theme to avoid a white background flash between screens before
 // each screen's content has mounted.
@@ -867,6 +868,7 @@ export default function AppNavigator() {
 
   return (
     <View style={styles.rootContainer}>
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <NavigationContainer ref={navigationRef} linking={linking} theme={navThemeFor(mode, theme.background)}>
         <RootStack.Navigator screenOptions={shell}>
           {!isAuthenticated ? (

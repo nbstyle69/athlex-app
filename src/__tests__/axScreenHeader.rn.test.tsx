@@ -7,7 +7,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { ChevronLeft, Share2 } from 'lucide-react-native';
 import { lightTheme, darkTheme, type AppTheme } from '../theme/palette';
-import { axTypography } from '../theme/axTokens';
+import { axAccentSafeLineHeight, axTypography } from '../theme/axTokens';
 import { contrast } from '../theme/contrast';
 import { AxScreenHeader, AX_SCREEN_HEADER } from '../components/ax/AxScreenHeader';
 import { AxIconButton } from '../components/ax/AxIconButton';
@@ -68,7 +68,7 @@ describe('AxScreenHeader', () => {
       expect(flat(label)).toMatchObject({ ...axTypography.label, color: theme.ax.textMuted });
       const title = host(root, 'ax-screen-header-title');
       expect(title.props.children).toBe('Classement');
-      expect(flat(title)).toMatchObject({ ...axTypography.titleM, color: theme.ax.text });
+      expect(flat(title)).toMatchObject({ ...axTypography.titleM, lineHeight: axAccentSafeLineHeight.titleM, color: theme.ax.text });
     });
 
     it(`${theme.mode} : contraste AA du Retour et du titre sur le fond`, () => {
@@ -139,8 +139,7 @@ describe('AxScreenHeader', () => {
 
   it('sans action à droite : emplacement vide de même largeur que Retour', async () => {
     const root = await mount(<AxScreenHeader title="X" />);
-    await layout(root, 'ax-screen-header-left', 78);
-    await layout(root, 'ax-screen-header-right', 0);
+    await layout(root, 'ax-screen-header-left-content', 78);
     const [l, r] = sides(root);
     expect(r).toEqual({ ...l, justifyContent: 'flex-end', gap: 4 });
     expect(l.minWidth).toBe(78);
@@ -156,9 +155,8 @@ describe('AxScreenHeader', () => {
         right={<><AxIconButton icon={Share2} onPress={onShare} accessibilityLabel="Partager" testID="share" /><AxIconButton icon={Share2} onPress={() => {}} accessibilityLabel="b" /></>}
       />,
     );
-    await layout(root, 'ax-screen-header-left', 78);
-    await layout(root, 'ax-screen-header-right', 92);
-    await layout(root, 'ax-screen-header-left', 92);
+    await layout(root, 'ax-screen-header-left-content', 78);
+    await layout(root, 'ax-screen-header-right-content', 92);
     const [l, r] = sides(root);
     expect(l.minWidth).toBe(92);
     expect(r.minWidth).toBe(92);
@@ -171,6 +169,35 @@ describe('AxScreenHeader', () => {
     const widest = 44 + 4 + 44;
     const titleBox = 390 - 2 * AX_SCREEN_HEADER.sideMargin - 2 * widest - 2 * 8;
     expect(titleBox).toBeGreaterThan(100);
+  });
+
+  it('les colonnes ne mesurent que leur contenu : la largeur étirée d’une colonne ne réserve pas la place du titre', async () => {
+    const root = await mount(<AxScreenHeader title="Minuteur" right={<AxIconButton icon={Share2} onPress={() => {}} accessibilityLabel="a" />} />);
+    const col = (id: string) => root.findAll((n) => n.props.testID === id && n.type === View)[0];
+    expect(col('ax-screen-header-left').props.onLayout).toBeUndefined();
+    expect(col('ax-screen-header-right').props.onLayout).toBeUndefined();
+    expect(typeof col('ax-screen-header-left-content').props.onLayout).toBe('function');
+    expect(typeof col('ax-screen-header-right-content').props.onLayout).toBe('function');
+  });
+
+  it('390 px : « MINUTEUR » (Oswald 500, 20 px) tient en entier entre Retour et une action', async () => {
+    // Chasses Oswald 500 (unités de 1000 em, lues dans Oswald_500Medium.ttf).
+    const ADV: Record<string, number> = { M: 683, I: 275, N: 545, U: 566, T: 430, E: 428, R: 561 };
+    const fontSize = axTypography.titleM.fontSize as number;
+    const letterSpacing = axTypography.titleM.letterSpacing as number;
+    const text = 'Minuteur'.toUpperCase();
+    const titleWidth = [...text].reduce((w, ch) => w + (ADV[ch] * fontSize) / 1000 + letterSpacing, 0);
+    const root = await mount(<AxScreenHeader title="Minuteur" right={<AxIconButton icon={Share2} onPress={() => {}} accessibilityLabel="a" />} />);
+    // Contenus réels : « ‹ Retour » ≈ 78, un bouton icône 44 ; puis re-mesure après un premier rendu étiré.
+    await layout(root, 'ax-screen-header-left-content', 78);
+    await layout(root, 'ax-screen-header-right-content', 44);
+    const [l, r] = sides(root);
+    expect(l.minWidth).toBe(78);
+    expect(r.minWidth).toBe(78);
+    const title = host(root, 'ax-screen-header-title');
+    const room = 390 - 2 * AX_SCREEN_HEADER.sideMargin - l.minWidth - r.minWidth - 2 * (flat(title).marginHorizontal as number);
+    expect(title.props.children).toBe('Minuteur');
+    expect(titleWidth).toBeLessThan(room);
   });
 
   it('contenu existant de l’en-tête posé sous la rangée', async () => {

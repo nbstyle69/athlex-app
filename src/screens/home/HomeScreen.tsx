@@ -19,7 +19,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
-import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { axAccentSafeLineHeight, axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { HomeStackParamList, CompetitionSummary } from '../../navigation';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
@@ -830,7 +830,7 @@ function createStyles(t: AppTheme) {
     // Header row
     headerRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     headerText: { flex: 1, minWidth: 0, gap: axSpacing.xs },
-    username: { ...axTypography.titleXL, color: c.text },
+    username: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text },
     boxLogo: { width: 44, height: 44, borderRadius: HEADER_RADIUS },
     boxSwitchBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', maxWidth: '100%' },
     boxSwitchText: { ...axTypography.bodySmall, color: c.textMuted, flexShrink: 1 },

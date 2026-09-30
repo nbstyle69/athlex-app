@@ -496,7 +496,7 @@ function createStyles(theme: AppTheme) {
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
   header: { paddingBottom: axSpacing.md },
-  tabsBar: { flexGrow: 0 },
+  tabsBar: { flexGrow: 0, flexShrink: 0 },
   tabs: { flexDirection: 'row', gap: axSpacing.sm, paddingHorizontal: axSpacing.xl, paddingBottom: axSpacing.md },
   content: { padding: axSpacing.lg },
   flex: { flex: 1, minWidth: 0 },

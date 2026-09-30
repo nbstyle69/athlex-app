@@ -450,7 +450,7 @@ export default function TournamentScreen() {
       {/* ── Tabs ── */}
       <View style={S.tabsBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
-          contentContainerStyle={S.tabsContent}>
+          style={S.chipBar} contentContainerStyle={S.tabsContent}>
           {((): any[] => {
               const fmt = tournament?.format ?? 'simple';
               const base: any[] = ['infos'];
@@ -1009,7 +1009,8 @@ function createStyles(theme: AppTheme) {
   adminMsgBox:   { flexDirection: 'row', alignItems: 'flex-start', gap: axSpacing.sm, marginTop: axSpacing.sm },
   adminMsgText:  { ...axTypography.caption, color: c.textMuted, flex: 1 },
   divSubInfo:   { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
-  subTabs:        { marginBottom: axSpacing.md },
+  chipBar:        { flexGrow: 0, flexShrink: 0 },
+  subTabs:        { flexGrow: 0, flexShrink: 0, marginBottom: axSpacing.md },
   subTabsContent: { gap: axSpacing.sm, paddingHorizontal: 2 },
   wodRankHeader:        { backgroundColor: c.surface, borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border, paddingHorizontal: axSpacing.lg, paddingVertical: axSpacing.md, marginBottom: axSpacing.sm },
   wodRankHeaderText:    { ...axTypography.label, color: c.text },

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, createContext, useCont
 import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
 import { CheckCircle, AlertTriangle, XCircle, Info } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { axColors } from '../theme/axTokens';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -62,10 +63,10 @@ const ICON_MAP: Record<ToastType, typeof CheckCircle> = {
 };
 
 const COLOR_MAP: Record<ToastType, string> = {
-  success: '#10b981',
-  error: '#ef4444',
-  warning: '#f59e0b',
-  info: '#3b82f6',
+  success: axColors.dark.success,
+  error: axColors.dark.danger,
+  warning: axColors.dark.warning,
+  info: axColors.dark.info,
 };
 
 function ToastItem({ toast }: { toast: ToastMessage }) {
@@ -112,7 +113,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: axColors.dark.surface,
     borderRadius: 12,
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
     }),
   },
   toastText: {
-    color: '#F5F5F7',
+    color: axColors.dark.text,
     fontSize: 14,
     fontWeight: '600',
     flex: 1,

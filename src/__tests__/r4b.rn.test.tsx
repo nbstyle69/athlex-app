@@ -314,7 +314,7 @@ describe('R4b : calculs du calculateur inchangés', () => {
   it('tableau des zones de gymnastique inchangé (pourcentages, zones, couleurs)', () => {
     expect(GYM_ZONES.map((z) => [z.pct, z.zone, z.color])).toEqual([
       [10, 'Volume facile', '#60A5FA'], [20, 'Volume facile', '#60A5FA'], [30, 'Volume facile', '#60A5FA'],
-      [40, 'Volume facile', '#34D399'], [50, 'Volume de travail', '#34D399'], [60, 'Volume de travail', '#34D399'],
+      [40, 'Volume facile', '#4ADE80'], [50, 'Volume de travail', '#4ADE80'], [60, 'Volume de travail', '#4ADE80'],
       [70, 'Volume de travail', '#FBBF24'], [80, 'Série limite', '#F97316'], [90, 'Série limite', '#F97316'],
       [100, 'Record', '#EF4444'], [110, 'Au-delà du record', '#A855F7'], [120, 'Au-delà du record', '#A855F7'],
       [130, 'Au-delà du record', '#EC4899'], [140, 'Au-delà du record', '#EC4899'], [150, 'Au-delà du record', '#EC4899'],

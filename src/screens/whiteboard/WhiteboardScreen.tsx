@@ -36,7 +36,7 @@ import { StrengthWodCardStatus, strengthCardLinkKey } from '../../components/wod
 import { fetchStrengthSummaries } from '../../services/strengthSets';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { AxButton, AxCard, AxCounterBadge, AxIconButton, AxTag } from '../../components/ax';
-import { axSpacing, axTypography } from '../../theme/axTokens';
+import { axAccentSafeLineHeight, axSpacing, axTypography } from '../../theme/axTokens';
 import WhiteboardMembersModal, { WhiteboardMember } from './WhiteboardMembersModal';
 
 function toISO(d: Date): string {
@@ -984,7 +984,7 @@ function createStyles(theme: AppTheme) {
   header: { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 4 },
   headerBtns: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, marginTop: axSpacing.sm },
   headerBtn: { flex: 1, minWidth: 0 },
-  headerTitle: { ...axTypography.titleXL, color: c.text },
+  headerTitle: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text },
   headerSub: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2, marginBottom: axSpacing.xs },
   badge: { position: 'absolute', top: -6, right: -4, zIndex: 2, elevation: 2 },
   section: { paddingHorizontal: 16, marginTop: 20 },

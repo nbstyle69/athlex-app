@@ -47,8 +47,9 @@ describe.each(THEMES)('contraste — thème %s', (mode, t) => {
     expect(contrast(t.accentText, `${t.accent}12`, t.background)).toBeGreaterThanOrEqual(GLYPH_MIN);
   });
 
-  it('l\'encre du bouton d\'appel à l\'action est lisible sur sa surface', () => {
-    expect(contrast(t.text, t.ctaBg, t.background)).toBeGreaterThanOrEqual(TEXT_MIN);
+  it('R14a : le CTA est un aplat d\'accent ax, son encre onAccent y est lisible', () => {
+    expect(t.ctaBg).toBe(t.ax.accent);
+    expect(contrast(t.ax.onAccent, t.ctaBg, t.background)).toBeGreaterThanOrEqual(TEXT_MIN);
   });
 
   it('l\'encre du bouton plein (EmeraldCTAButton) est lisible sur sa surface', () => {
@@ -71,9 +72,22 @@ describe('contraste — bouton « Série suivante » (MuscuSessionCard)', () => 
   });
 });
 
+/** Valeurs de master avant R14a, gardées pour mesurer les défauts historiques. */
+const OLD = {
+  lightAccent: '#94a3b8',
+  lightCard: 'rgba(255,255,255,0.55)',
+  lightBackground: '#ffffff',
+  darkAccent: '#10b981',
+  darkCtaBg: 'rgba(16,185,129,0.25)',
+  darkOnAccent: '#0a0a0a',
+  darkBackground: '#0a0a0a',
+};
+
 describe('contraste — le contrôle sait échouer', () => {
   it('mesure le défaut historique : #fff sur l\'accent des deux thèmes', () => {
-    expect(contrast('#ffffff', lightTheme.accent)).toBeLessThan(TEXT_MIN);
+    expect(contrast('#ffffff', OLD.lightAccent)).toBeLessThan(TEXT_MIN);
+    expect(contrast('#ffffff', OLD.darkAccent)).toBeLessThan(TEXT_MIN);
+    // R14a : l'aplat d'accent sombre (menthe) refuse toujours le blanc.
     expect(contrast('#ffffff', darkTheme.accent)).toBeLessThan(TEXT_MIN);
   });
 
@@ -85,12 +99,12 @@ describe('contraste — le contrôle sait échouer', () => {
     expect(contrast('#ffffff', lightTheme.ctaBg, lightTheme.background)).toBeLessThan(2);
   });
 
-  it('le CTA n\'est pas un aplat d\'accent : onAccent y disparaît en sombre', () => {
-    expect(contrast(darkTheme.onAccent, darkTheme.ctaBg, darkTheme.background)).toBeLessThan(GLYPH_MIN);
+  it('mesure le défaut historique : le CTA translucide de master effaçait onAccent en sombre', () => {
+    expect(contrast(OLD.darkOnAccent, OLD.darkCtaBg, OLD.darkBackground)).toBeLessThan(GLYPH_MIN);
   });
 
   it('mesure le défaut historique : theme.card pris pour encre sur l\'accent', () => {
-    expect(contrast(lightTheme.card, lightTheme.accent, lightTheme.background)).toBeLessThan(TEXT_MIN);
+    expect(contrast(OLD.lightCard, OLD.lightAccent, OLD.lightBackground)).toBeLessThan(TEXT_MIN);
   });
 
   it.each([['clair', lightTheme] as const, ['sombre', darkTheme] as const])(

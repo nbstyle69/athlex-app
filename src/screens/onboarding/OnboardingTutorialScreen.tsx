@@ -10,7 +10,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { AxButton } from '../../components/ax/AxButton';
 import { AxTextField } from '../../components/ax/AxTextField';
 import { withAlpha } from '../../components/ax/color';
-import { axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
+import { axAccentSafeLineHeight, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { useAuth } from '../../context/AuthContext';
 import { awardLevelBadge } from '../../services/gamification';
 import { trackOnboardingStep, trackOnboardingComplete, trackOnboardingBoxJoin, trackOnboardingSkipBox } from '../../lib/analytics';
@@ -30,16 +30,16 @@ interface Slide {
 }
 
 const SLIDES: Slide[] = [
-  { id: '1', key: 'welcome',  icon: 'logo',  color: '#059669' },
+  { id: '1', key: 'welcome',  icon: 'logo',  color: '#9AE6D2' },
   { id: '2', key: 'wodTimer', icon: 'wod',   color: '#3B82F6' },
   { id: '3', key: 'compElo',  icon: 'comp',  color: '#F59E0B' },
   { id: '4', key: 'box',      icon: 'box',   color: '#8B5CF6' },
-  { id: '5', key: 'badge',    icon: 'badge', color: '#10b981' },
+  { id: '5', key: 'badge',    icon: 'badge', color: '#9AE6D2' },
 ];
 
 // ── Confetti Particle ──────────────────────────────────────
 
-const CONFETTI_COLORS = ['#10b981', '#34d399', '#6ee7b7', '#F59E0B', '#3B82F6', '#8B5CF6', '#EC4899', '#fff'];
+const CONFETTI_COLORS = ['#9AE6D2', '#4ADE80', '#C8F2E6', '#F59E0B', '#3B82F6', '#8B5CF6', '#EC4899', '#fff'];
 const PARTICLE_COUNT = 40;
 
 function ConfettiOverlay({ active }: { active: boolean }) {
@@ -468,7 +468,7 @@ function createStyles(c: AxColors) { return StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  title: { ...axTypography.titleXL, color: c.text, textAlign: 'center', marginBottom: 14 },
+  title: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text, textAlign: 'center', marginBottom: 14 },
   description: { ...axTypography.body, color: c.textMuted, textAlign: 'center', maxWidth: 320 },
   bottomContainer: {
     paddingBottom: 60,

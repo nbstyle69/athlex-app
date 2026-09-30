@@ -51,7 +51,7 @@ export async function setupAndroidChannel() {
       name: 'AthleX',
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#10B981',
+      lightColor: '#9AE6D2',
       sound: 'default',
     });
   }

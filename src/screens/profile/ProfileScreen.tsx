@@ -40,7 +40,7 @@ import { programWeekAt, toLocalIso } from '../../utils/programSchedule';
 import { getMyMemberships, membershipState, membershipStateText, MembershipState } from '../../services/membership';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { AxButton, AxCard, AxChip, AxSwitch } from '../../components/ax';
-import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { axAccentSafeLineHeight, axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { levelInk } from '../home/homeLevelColor';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Profile'>;
@@ -1671,7 +1671,7 @@ function createStyles(t: AppTheme) {
   },
   headerTop: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: axSpacing.xl },
   userInfo: { flex: 1, minWidth: 0, gap: 2 },
-  username: { ...axTypography.titleXL, color: c.text },
+  username: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text },
   email: { ...axTypography.bodySmall, color: c.textMuted, marginBottom: 6 },
   levelBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,

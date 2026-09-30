@@ -144,7 +144,7 @@ export const LevelColors: Record<string, string> = {
   inter:       '#3B82F6',
   rx:          '#16A34A',
   'rx+':       '#D97706',
-  elite:       '#7C3AED',
+  elite:       '#8B5CF6',
   pro:         '#DC2626',
 };
 

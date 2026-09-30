@@ -17,6 +17,8 @@ interface Props {
 
 /** Hauteur visuelle 9 + 20 + 9 + bordure 2 = 40 : 2 de marge tactile en haut et en bas. */
 const HIT_SLOP = { top: 2, bottom: 2, left: 0, right: 0 };
+/** Hauteur de la pastille : une rangée qui la comprime rogne le bas du libellé. */
+export const AX_CHIP_HEIGHT = 9 + (axTypography.label.lineHeight ?? 20) + 9 + 2;
 
 /** Pastille de filtre ou de choix. */
 export function AxChip({ label, selected = false, onPress, disabled = false, accessibilityRole = 'button', testID }: Props) {
@@ -46,6 +48,8 @@ export function AxChip({ label, selected = false, onPress, disabled = false, acc
 const styles = StyleSheet.create({
   base: {
     alignSelf: 'flex-start',
+    flexShrink: 0,
+    minHeight: AX_CHIP_HEIGHT,
     paddingVertical: 9,
     paddingHorizontal: 14,
     borderRadius: axRadius.control,
