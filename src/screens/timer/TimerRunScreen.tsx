@@ -1785,7 +1785,9 @@ export default function TimerRunScreen() {
         )}
       </View>
       {hideUI
-        ? <View style={{ width: 44 }} />
+        ? <View style={{ width: 44, alignItems: 'center' }}>
+            <RecBlinkDot />
+          </View>
         : withCamera
           ? // Camera flip is allowed ONLY before "Démarrer" is pressed (camState === 0).
             // Once recording starts, both camera facing and orientation are locked

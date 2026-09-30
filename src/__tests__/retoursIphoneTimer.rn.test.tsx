@@ -180,6 +180,14 @@ describe('Retours iPhone (3) : caméra, REC sous l’îlot, point clignotant, da
     expect(isAncestor(kids[kids.length - 1], dot)).toBe(true);
     expect(flat(dot)).toMatchObject({ backgroundColor: REC_DOT.color, borderRadius: REC_DOT.size / 2 });
   });
+  it('chrono lancé : le point reste à droite pendant tout l’enregistrement', async () => {
+    const r = await run(params({ countdown: 0, withCamera: true }), darkTheme);
+    await camPress(r); await camPress(r); await tick(1);
+    expect(camPrimary(r).props.label).toMatch(/Arrêter/);
+    const row = one(r, 'timer-cam-topbar');
+    const kids = row.children.filter((c): c is ReactTestInstance => typeof c !== 'string');
+    expect(isAncestor(kids[kids.length - 1], one(r, 'timer-rec-blink'))).toBe(true);
+  });
   it('date et heure sous « Arrêter le chrono », avec un espace', async () => {
     const r = await run(params({ countdown: 0, withCamera: true }), darkTheme);
     await camPress(r); await camPress(r); await tick(1);

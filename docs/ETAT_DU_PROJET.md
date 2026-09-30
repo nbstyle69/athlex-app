@@ -319,9 +319,9 @@ Supabase/Resend.
   équipe, Box, Partenaire, Article), nom long en tête du contenu (`AxContentTitle`, retour à la ligne).
 - Ton WOD : « Au Whiteboard » / « Ajouté » et « Mon score » / « Modifier » sur une ligne, même hauteur, libellés
   complets en accessibilité ; Profil : onglets centrés ; Entraînement : tuiles Outils centrées.
-- Tests : `retoursIphoneTimer.rn.test.tsx` (18) + cas ajoutés à R6c, R4a, R9a, R12, Entraînement ; instantanés R4b / R8a /
+- Tests : `retoursIphoneTimer.rn.test.tsx` (19) + cas ajoutés à R6c, R4a, R9a, R12, Entraînement ; instantanés R4b / R8a /
   R8b / R9a / R9b / R13 et contrats R3c / R5a / R6b / R6c mis à jour pour les titres courts ; `npx jest` 1987,
-  `npm run test:rn` 1329, `tsc` vert ; 15 mutations tuées.
+  `npm run test:rn` 1330, `tsc` vert ; 16 mutations tuées.
 
 **Refonte R14c : finitions des écrans athlète — logo, boutons, types traduits, membres, champs (app seule, aucune migration).**
 - Connexion, Créer un compte et écran de démarrage : `assets/athex-logo.png` (120 px, centré) à la place de
