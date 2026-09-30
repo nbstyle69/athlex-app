@@ -6,7 +6,8 @@ import {
 } from 'react-native';
 import { AxCard, AxGlass, AxTextField } from '../../components/ax';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
-import { Heart, MessageCircle, Send, Trash2 } from 'lucide-react-native';
+import { ChevronRight, Heart, MessageCircle, Send, Trash2 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
@@ -37,6 +38,7 @@ interface Comment {
 }
 
 export default function ArticlesScreen() {
+  const { t } = useTranslation();
   const tabSpace = useTabBarScrollSpace();
   const tabFootprint = useTabBarFootprint();
   const navigation = useNavigation();
@@ -313,6 +315,17 @@ export default function ArticlesScreen() {
                   <Text testID={`article-comments-${a.id}`} style={S.metaText}>{a.comments_count}</Text>
                 </View>
               </View>
+              <Pressable
+                testID={`article-read-${a.id}`}
+                style={S.readLink}
+                onPress={() => openArticle(a)}
+                accessibilityRole="link"
+                accessibilityLabel={`${t('whiteboard.readArticle')} : ${a.title}`}
+                hitSlop={8}
+              >
+                <Text testID={`article-read-label-${a.id}`} style={S.readText}>{t('whiteboard.readArticle')}</Text>
+                <ChevronRight color={c.accentText} size={14} strokeWidth={2} />
+              </Pressable>
             </View>
           </AxCard>
         ))}
@@ -337,6 +350,8 @@ function styles(theme: AppTheme) {
   articleMeta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: axSpacing.md, marginTop: axSpacing.sm },
   dateText: { ...axTypography.overline, color: c.textMuted },
   counter: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+  readLink: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 2, marginTop: axSpacing.sm },
+  readText: { ...axTypography.labelSmall, color: c.accentText },
   metaText: { ...axTypography.caption, color: c.textMuted },
   // Detail
   detailImage: { width: '100%', height: 220 },
