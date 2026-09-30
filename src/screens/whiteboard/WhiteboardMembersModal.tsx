@@ -15,7 +15,6 @@ export interface WhiteboardMember {
   level: string;
   elo: number;
   avatar_url?: string | null;
-  full_name?: string | null;
   /** `box_members.role` de la ligne. */
   role?: string | null;
 }
@@ -35,11 +34,11 @@ export function memberRoleTag(member: Pick<WhiteboardMember, 'id' | 'role'>, own
 
 const fold = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 
-/** Filtre local sur le pseudo et le nom, sans casse ni accents ; requête vide = tout le monde. */
-export function filterMembers<T extends Pick<WhiteboardMember, 'username' | 'full_name'>>(members: T[], query: string): T[] {
+/** Filtre local sur le pseudo, sans casse ni accents ; requête vide = tout le monde. Le nom civil n'est pas lisible entre athlètes (Lot 0-bis). */
+export function filterMembers<T extends Pick<WhiteboardMember, 'username'>>(members: T[], query: string): T[] {
   const q = fold(query);
   if (!q) return members;
-  return members.filter((m) => fold(m.username ?? '').includes(q) || fold(m.full_name ?? '').includes(q));
+  return members.filter((m) => fold(m.username ?? '').includes(q));
 }
 
 interface Props {
