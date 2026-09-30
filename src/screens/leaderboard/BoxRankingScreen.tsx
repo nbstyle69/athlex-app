@@ -1,9 +1,11 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React from 'react';
 import {
-  View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator,
+  View, Text, FlatList, StyleSheet, ActivityIndicator,
 } from 'react-native';
-import { Trophy } from 'lucide-react-native';
+import { Medal, Trophy } from 'lucide-react-native';
+import { AxCard } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { WhiteboardStackParamList } from '../../navigation';
@@ -32,12 +34,18 @@ interface Row {
   isMe: boolean;
 }
 
+const MEDALS = ['#C9A227', '#9AA4AC', '#B87333'];
+
 function RankBadge({ rank }: { rank: number }) {
   const { theme } = useTheme();
   const S = createStyles(theme);
-  if (rank === 1) return <Text style={S.rankEmoji}>🥇</Text>;
-  if (rank === 2) return <Text style={S.rankEmoji}>🥈</Text>;
-  if (rank === 3) return <Text style={S.rankEmoji}>🥉</Text>;
+  if (rank <= 3) {
+    return (
+      <View testID={`rank-medal-${rank}`} accessible accessibilityLabel={`Rang ${rank}`}>
+        <Medal size={22} color={MEDALS[rank - 1]} strokeWidth={2} />
+      </View>
+    );
+  }
   return <Text style={S.rankNum}>#{rank}</Text>;
 }
 
@@ -100,15 +108,16 @@ export default function BoxRankingScreen() {
 
   const rows = data ?? [];
 
+  const c = theme.ax;
   return (
     <View style={S.container}>
       <GlassBackground />
       <AxScreenHeader title="Classement de la box">
-        <Text style={S.headerSub}>ELO propre à {currentBox?.name ?? 'la box'} — WODs de la box uniquement</Text>
+        <Text testID="ranking-sub" style={S.headerSub}>ELO propre à {currentBox?.name ?? 'la box'} — WODs de la box uniquement</Text>
       </AxScreenHeader>
 
       {isLoading ? (
-        <ActivityIndicator style={{ marginTop: 40 }} color={theme.accent} />
+        <ActivityIndicator style={{ marginTop: 40 }} color={c.accentText} />
       ) : (
         <FlatList
           style={{ flex: 1 }}
@@ -118,38 +127,40 @@ export default function BoxRankingScreen() {
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={{ alignItems: 'center', paddingTop: 40 }}>
-              <Trophy size={40} color={theme.textMuted} />
-              <Text style={{ color: theme.textMuted, fontWeight: '600', marginTop: 12 }}>Aucun membre pour l'instant</Text>
+              <Trophy size={40} color={c.textMuted} />
+              <Text style={S.emptyText}>Aucun membre pour l'instant</Text>
             </View>
           }
           renderItem={({ item }) => (
-            <TouchableOpacity
-              style={[S.row, item.isMe && S.rowMe]}
-              activeOpacity={0.7}
+            <AxCard
+              testID={`ranking-row-${item.id}`}
+              variant={item.isMe ? 'featured' : 'standard'}
+              style={S.row}
               onPress={() => !item.isMe && navigation.navigate('PublicProfile', { userId: item.id })}
+              accessibilityLabel={item.username}
             >
               <View style={S.rankCell}><RankBadge rank={item.rank} /></View>
               <UserAvatar
                 uri={item.avatar_url}
                 name={item.username}
                 size={40}
-                borderRadius={20}
+                borderRadius={axRadius.card}
                 borderWidth={2}
-                borderColor={LevelColors[item.level as AthleteLevel] ?? theme.border}
-                backgroundColor={theme.surface}
-                textColor={theme.text}
+                borderColor={LevelColors[item.level as AthleteLevel] ?? c.border}
+                backgroundColor={c.background}
+                textColor={c.text}
               />
               <View style={S.info}>
-                <Text style={[S.name, item.isMe && { color: theme.accent }]}>
-                  {item.username}{item.isMe ? ' 👈' : ''}
+                <Text testID={`ranking-name-${item.id}`} style={[S.name, item.isMe && { color: c.accentText }]} numberOfLines={1}>
+                  {item.username}
                 </Text>
-                <Text style={S.winsText}>{item.wins}V · {item.matches} WOD{item.matches > 1 ? 's' : ''}</Text>
+                <Text testID={`ranking-wins-${item.id}`} style={S.winsText} numberOfLines={1}>{item.wins}V · {item.matches} WOD{item.matches > 1 ? 's' : ''}</Text>
               </View>
               <View style={S.eloCell}>
-                <Text style={S.eloValue}>{item.elo}</Text>
+                <Text testID={`ranking-elo-${item.id}`} style={S.eloValue}>{item.elo}</Text>
                 <Text style={S.eloLabel}>ELO box</Text>
               </View>
-            </TouchableOpacity>
+            </AxCard>
           )}
         />
       )}
@@ -157,29 +168,21 @@ export default function BoxRankingScreen() {
   );
 }
 
-function createStyles(theme: AppTheme) { return StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    paddingTop: 56, paddingHorizontal: 20, paddingBottom: 20,
-    backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
-  },
-  backBtn: { marginBottom: 12 },
-  headerTitle: { fontSize: 26, fontWeight: '900', color: theme.text },
-  headerSub: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-  list: { padding: 16, gap: 8, paddingBottom: 140 },
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: theme.card, borderRadius: 12, padding: 12,
-    borderWidth: 1, borderColor: theme.border,
-  },
-  rowMe: { borderColor: theme.accent, backgroundColor: `${theme.accent}0D` },
-  rankCell: { width: 36, alignItems: 'center' },
-  rankEmoji: { fontSize: 20 },
-  rankNum: { fontSize: 13, fontWeight: '800', color: theme.textMuted },
-  info: { flex: 1 },
-  name: { fontSize: 15, fontWeight: '800', color: theme.text },
-  winsText: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-  eloCell: { alignItems: 'flex-end' },
-  eloValue: { fontSize: 17, fontWeight: '900', color: theme.accent },
-  eloLabel: { fontSize: 9, fontWeight: '700', color: theme.textMuted },
-}); }
+function createStyles(theme: AppTheme) {
+  const c = theme.ax;
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: 'transparent' },
+    headerSub: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+    list: { padding: axSpacing.lg, gap: axSpacing.sm },
+    row: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, padding: axSpacing.md },
+    rankCell: { width: 36, alignItems: 'center' },
+    rankNum: { ...axTypography.labelSmall, color: c.textMuted },
+    info: { flex: 1, minWidth: 0 },
+    name: { ...axTypography.label, color: c.text },
+    winsText: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+    eloCell: { alignItems: 'flex-end' },
+    eloValue: { ...axTypography.numberM, color: c.accentText },
+    eloLabel: { ...axTypography.overlineSmall, color: c.textMuted },
+    emptyText: { ...axTypography.label, color: c.textMuted, marginTop: axSpacing.md },
+  });
+}
