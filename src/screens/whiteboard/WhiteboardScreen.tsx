@@ -151,12 +151,12 @@ export default function WhiteboardScreen() {
     setMembersLoading(true);
     const { data } = await supabase
       .from('box_members')
-      .select('member_id, profiles:member_id(id, username, level, elo, avatar_url)')
+      .select('member_id, role, profiles:member_id(id, username, full_name, level, elo, avatar_url)')
       .eq('box_id', currentBox.id)
       .eq('status', 'active');
     const profiles = (data ?? [])
-      .map((row: any) => row.profiles)
-      .filter(Boolean)
+      .filter((row: any) => row.profiles)
+      .map((row: any) => ({ ...row.profiles, role: row.role }))
       .sort((a: any, b: any) => (b.elo ?? 0) - (a.elo ?? 0));
     setMembers(profiles as BoxMember[]);
     setMembersLoading(false);
@@ -961,6 +961,7 @@ export default function WhiteboardScreen() {
       <WhiteboardMembersModal
         visible={membersModal}
         boxName={currentBox.name}
+        ownerId={currentBox.owner_id}
         loading={membersLoading}
         members={members}
         onClose={() => setMembersModal(false)}
