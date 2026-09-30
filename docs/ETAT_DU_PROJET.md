@@ -315,6 +315,14 @@ Supabase/Resend.
 - Tests : `r14a.rn.test.tsx`, `r14aPalette.test.ts`, `shellBackground` réécrit, contrats historiques mis à jour ;
   mutations listées dans la PR.
 
+**Seed de démo : `ON CONFLICT` du lot 4 aligné sur la contrainte de `movement_rep_counts` (script seul, aucune migration).**
+- `scripts/demo-seed/sql/40_lot4_social.sql` : `on conflict (athlete_id, movement_key, unit)`, clé unique posée par
+  `20261204_movement_stats_unit.sql` (l'ancienne clé faisait échouer le lot 4 en `42P10`). Autres `ON CONFLICT` du script
+  vérifiés contre le catalogue (badges, amitiés, streaks, journal, correspondances) : conformes.
+- Rejeu complet sur pile jetable reconstruite (30/09/2026) : lots 0 à 4 OK, contrôles A, B, D et E tous OK. Écarts restants,
+  hors migrations, listés dans la PR : C8 / C9 / C12 selon le jour et l'heure d'exécution, et `rollback` refusé par la
+  garde `MATCH_TERMINE` (`20270124`).
+
 **Refonte R13 : annuaire, programmes et partenaires au nouveau design (app seule, aucune migration, apparence seule).**
 - `BoxDirectoryScreen` (recherche en `AxTextField`, sports en `AxChip`, boxs en `AxCard`, nom en `titleM`, ville et infos
   en `bodySmall` `textMuted`, sports en `AxTag`), `BoxDirectoryMapScreen` (en-tête flottant et fiche basse `AxCard`

@@ -22,7 +22,7 @@ begin
          r.total_reps::int,
          (v_anchor - 3)::timestamptz + interval '20 hours'
     from demo_stg.movement_reps r join demo_stg.member_map mm on mm.member_ref = r.member_ref
-  on conflict (athlete_id, movement_key) do update set total_reps = movement_rep_counts.total_reps + excluded.total_reps;
+  on conflict (athlete_id, movement_key, unit) do update set total_reps = movement_rep_counts.total_reps + excluded.total_reps;
   perform public._demo_log('movement_rep_counts', c.id::text)
      from public.movement_rep_counts c join demo_stg.member_map mm on mm.user_id = c.athlete_id;
 
