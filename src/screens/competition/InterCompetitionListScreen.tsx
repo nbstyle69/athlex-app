@@ -1,10 +1,12 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState, useCallback } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
+  View, Text, ScrollView, StyleSheet,
   ActivityIndicator, RefreshControl,
 } from 'react-native';
-import { Globe2, Users, Calendar, ChevronRight, Zap, Trophy } from 'lucide-react-native';
+import { Globe2, Users, Calendar, ChevronRight } from 'lucide-react-native';
+import { AxCard, AxStatusDot, AxTag } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -19,9 +21,10 @@ import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav = NativeStackNavigationProp<CompetitionStackParamList, 'InterCompetitionList'>;
 
-const STATUS_COLOR: Record<string, string> = {
-  open: '#22C55E', active: '#C9A227', closed: '#6B7280',
-};
+/** Libellé traduit sans son pictogramme de tête. */
+function stripGlyph(label: string): string {
+  return label.replace(/^[^\p{L}\p{N}]+/u, '');
+}
 
 interface InterComp {
   id: string;
@@ -53,6 +56,7 @@ export default function InterCompetitionListScreen() {
     open: t('interComp.statusOpen'), active: t('interComp.statusActive'), closed: t('interComp.statusClosed'),
   };
   const S = createStyles(theme);
+  const ax = theme.ax;
 
   const [comps, setComps] = useState<InterComp[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,50 +98,41 @@ export default function InterCompetitionListScreen() {
       </AxScreenHeader>
 
       {loading ? (
-        <ActivityIndicator color={theme.accent} style={{ marginTop: 60 }} />
+        <ActivityIndicator color={ax.accent} style={{ marginTop: 60 }} />
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={ax.accent} />}
         >
           {comps.length === 0 ? (
             <View style={S.empty}>
-              <Globe2 size={48} color={theme.textMuted} />
+              <Globe2 size={48} color={ax.textMuted} />
               <Text style={S.emptyTitle}>{t('interComp.noCompetition')}</Text>
               <Text style={S.emptyText}>{t('interComp.noCompetitionHint')}</Text>
             </View>
           ) : (
             comps.map(c => {
-              const statusColor = STATUS_COLOR[c.status] ?? theme.textMuted;
+              const statusTone = c.status === 'open' ? 'active' : c.status === 'active' ? 'warning' : 'muted';
               return (
-                <TouchableOpacity
+                <AxCard
                   key={c.id}
-                  style={S.card}
-                  activeOpacity={0.8}
+                  testID={`inter-card-${c.id}`}
+                  variant={c.status === 'active' ? 'featured' : 'standard'}
+                  accessibilityLabel={c.title}
                   onPress={() => navigation.navigate('InterCompetitionDetail', { competitionId: c.id })}
+                  style={S.card}
                 >
-                  {/* Top accent line for active */}
-                  {c.status === 'active' && <View style={S.activeBar} />}
-
                   <View style={S.cardHeader}>
                     <View style={S.cardIcon}>
-                      <Globe2 size={20} color={theme.accent} />
+                      <Globe2 size={20} color={ax.accentText} />
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={S.cardTitle}>{c.title}</Text>
+                    <View style={S.cardHead}>
+                      <Text style={S.cardTitle} numberOfLines={2}>{c.title}</Text>
                       <View style={S.badgeRow}>
-                        <View style={[S.badge, { backgroundColor: `${statusColor}18` }]}>
-                          <Text style={[S.badgeText, { color: statusColor }]}>{STATUS_LABEL[c.status] ?? c.status}</Text>
-                        </View>
-                        <View style={[S.badge, { backgroundColor: `${theme.accent}15` }]}>
-                          <Text style={[S.badgeText, { color: theme.accent }]}>{FORMAT_LABEL[c.format] ?? c.format}</Text>
-                        </View>
-                        <View style={[S.badge, { backgroundColor: theme.surface }]}>
-                          <Text style={[S.badgeText, { color: theme.textMuted }]}>
-                            {c.type === 'individual' ? t('interComp.individual') : t('interComp.team', { n: c.team_size })}
-                          </Text>
-                        </View>
+                        <AxStatusDot label={STATUS_LABEL[c.status] ?? c.status} tone={statusTone} testID={`inter-status-${c.id}`} />
+                        <AxTag label={FORMAT_LABEL[c.format] ?? c.format} testID={`inter-format-${c.id}`} />
+                        <AxTag label={c.type === 'individual' ? t('interComp.individual') : t('interComp.team', { n: c.team_size })} tone="muted" />
                       </View>
                     </View>
                   </View>
@@ -148,25 +143,21 @@ export default function InterCompetitionListScreen() {
 
                   <View style={S.cardFooter}>
                     <View style={S.footerItem}>
-                      <Users size={12} color={theme.textMuted} />
-                      <Text style={S.footerText}>
+                      <Users size={12} color={ax.textMuted} />
+                      <Text style={S.footerText} testID={`inter-count-${c.id}`}>
                         {t('interComp.registered', { count: `${c.reg_count}${c.max_participants ? `/${c.max_participants}` : ''}` })}
                       </Text>
                     </View>
                     {c.starts_at && (
                       <View style={S.footerItem}>
-                        <Calendar size={12} color={theme.textMuted} />
+                        <Calendar size={12} color={ax.textMuted} />
                         <Text style={S.footerText}>{new Date(c.starts_at).toLocaleDateString(dateLocale)}</Text>
                       </View>
                     )}
-                    {c.my_registration && (
-                      <View style={[S.badge, { backgroundColor: `${theme.accent}20` }]}>
-                        <Text style={[S.badgeText, { color: theme.accent }]}>{t('interComp.registeredBadge')}</Text>
-                      </View>
-                    )}
-                    <ChevronRight size={16} color={theme.textMuted} style={{ marginLeft: 'auto' as any }} />
+                    {c.my_registration && <AxTag label={stripGlyph(t('interComp.registeredBadge'))} dot />}
+                    <ChevronRight size={16} color={ax.textMuted} style={S.chevron} />
                   </View>
-                </TouchableOpacity>
+                </AxCard>
               );
             })
           )}
@@ -178,41 +169,28 @@ export default function InterCompetitionListScreen() {
 }
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16,
-      backgroundColor: theme.card,
-      borderBottomWidth: 1, borderBottomColor: theme.border,
-    },
-    backBtn: { padding: 4 },
-    headerTitle: { fontSize: 20, fontWeight: '900', color: theme.text },
-    headerSub:   { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-    content:     { padding: 16, paddingBottom: 140 },
-    card: {
-      backgroundColor: theme.card, borderRadius: 18,
-      borderWidth: 1, borderColor: theme.border,
-      marginBottom: 12, overflow: 'hidden',
-      padding: 16,
-    },
-    activeBar: { position: 'absolute', top: 0, left: 0, right: 0, height: 2, backgroundColor: '#C9A227' },
-    cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 8 },
+    headerSub: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+    content: { padding: axSpacing.lg, gap: axSpacing.md },
+    card: { gap: axSpacing.sm },
+    cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: axSpacing.md },
     cardIcon: {
-      width: 40, height: 40, borderRadius: 12,
-      backgroundColor: '#C9A22720',
+      width: 40, height: 40, borderRadius: axRadius.control,
+      borderWidth: 1, borderColor: c.border,
       justifyContent: 'center', alignItems: 'center',
     },
-    cardTitle: { fontSize: 15, fontWeight: '800', color: theme.text, marginBottom: 6 },
-    badgeRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-    badge: { borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
-    badgeText: { fontSize: 10, fontWeight: '700' },
-    cardDesc: { fontSize: 13, color: theme.textMuted, lineHeight: 18, marginBottom: 12 },
-    cardFooter: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    footerItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    footerText: { fontSize: 12, color: theme.textMuted },
-    empty: { alignItems: 'center', paddingTop: 80, gap: 12 },
-    emptyTitle: { fontSize: 16, fontWeight: '700', color: theme.text },
-    emptyText:  { fontSize: 13, color: theme.textMuted, textAlign: 'center' },
+    cardHead: { flex: 1, minWidth: 0, gap: axSpacing.sm },
+    cardTitle: { ...axTypography.titleM, color: c.text },
+    badgeRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: axSpacing.sm },
+    cardDesc: { ...axTypography.bodySmall, color: c.textMuted },
+    cardFooter: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, flexWrap: 'wrap' },
+    footerItem: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+    footerText: { ...axTypography.caption, color: c.textMuted },
+    chevron: { marginLeft: 'auto' },
+    empty: { alignItems: 'center', paddingTop: 80, gap: axSpacing.md, paddingHorizontal: axSpacing['2xl'] },
+    emptyTitle: { ...axTypography.label, color: c.text, textAlign: 'center' },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
   });
 }
