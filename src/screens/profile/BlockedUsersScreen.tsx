@@ -1,15 +1,16 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxButton, AxCard } from '../../components/ax';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, Alert,
+  View, Text, StyleSheet, FlatList, ActivityIndicator, Alert,
 } from 'react-native';
 import { UserX } from 'lucide-react-native';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { getMyBlockedUsers, unblockUser } from '../../services/moderation';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { axSpacing, axTypography } from '../../theme/axTokens';
 
 export default function BlockedUsersScreen({ navigation }: any) {
   const tabSpace = useTabBarScrollSpace();
@@ -50,10 +51,10 @@ export default function BlockedUsersScreen({ navigation }: any) {
       <AxScreenHeader title="Utilisateurs bloqués" />
 
       {loading ? (
-        <View style={S.center}><ActivityIndicator color={theme.accent} /></View>
+        <View style={S.center}><ActivityIndicator color={theme.ax.accentText} /></View>
       ) : users.length === 0 ? (
         <View style={S.center}>
-          <UserX size={48} color={theme.textMuted} />
+          <UserX size={48} color={theme.ax.textMuted} />
           <Text style={S.emptyTitle}>Aucun utilisateur bloqué</Text>
           <Text style={S.emptyText}>
             Les utilisateurs que tu bloques apparaîtront ici. Tu peux les débloquer à tout moment.
@@ -65,14 +66,16 @@ export default function BlockedUsersScreen({ navigation }: any) {
           keyExtractor={(u) => u.id}
           contentContainerStyle={{ padding: 16, paddingBottom: tabSpace }}
           renderItem={({ item }) => (
-            <View style={S.row}>
-              <UserAvatar size={42} name={item.username} uri={item.avatar_url ?? undefined} />
-              <Text style={S.username}>{item.username}</Text>
-              <TouchableOpacity onPress={() => handleUnblock(item.id, item.username)} activeOpacity={0.85}
-                style={S.unblockBtn}>
-                <Text style={S.unblockText}>Débloquer</Text>
-              </TouchableOpacity>
-            </View>
+            <AxCard style={S.row} testID={`blocked-${item.id}`}>
+              <UserAvatar size={42} name={item.username} uri={item.avatar_url ?? undefined} backgroundColor={theme.ax.field} textColor={theme.ax.text} />
+              <Text style={S.username} numberOfLines={1}>{item.username}</Text>
+              <AxButton
+                variant="outline"
+                label="Débloquer"
+                onPress={() => handleUnblock(item.id, item.username)}
+                testID={`unblock-${item.id}`}
+              />
+            </AxCard>
           )}
         />
       )}
@@ -80,28 +83,13 @@ export default function BlockedUsersScreen({ navigation }: any) {
   );
 }
 
-function createStyles(t: AppTheme) { return StyleSheet.create({
+function createStyles(t: AppTheme) {
+  const c = t.ax;
+  return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16,
-    backgroundColor: t.card, borderBottomWidth: 1, borderBottomColor: t.border,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-  },
-  headerTitle: { fontSize: 18, fontWeight: '900', color: t.text },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40, gap: 12 },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: t.text, marginTop: 8 },
-  emptyText: { fontSize: 13, color: t.textMuted, textAlign: 'center', lineHeight: 20 },
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: t.card, borderRadius: 16, padding: 14, marginBottom: 10,
-    borderWidth: 1, borderColor: t.border,
-  },
-  username: { flex: 1, fontSize: 15, fontWeight: '700', color: t.text },
-  unblockBtn: {
-    paddingHorizontal: 16, paddingVertical: 10,
-    borderRadius: 12, alignItems: 'center', justifyContent: 'center',
-    backgroundColor: t.ctaBg,
-    borderWidth: 1.5, borderColor: t.ctaBorder,
-  },
-  unblockText: { color: '#fff', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+  emptyTitle: { ...axTypography.titleM, color: c.text, marginTop: 8, textAlign: 'center' },
+  emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
+  username: { flex: 1, minWidth: 0, ...axTypography.label, color: c.text },
 }); }
