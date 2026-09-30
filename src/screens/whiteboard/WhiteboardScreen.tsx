@@ -151,7 +151,7 @@ export default function WhiteboardScreen() {
     setMembersLoading(true);
     const { data } = await supabase
       .from('box_members')
-      .select('member_id, role, profiles:member_id(id, username, full_name, level, elo, avatar_url)')
+      .select('member_id, role, profiles:member_id(id, username, level, elo, avatar_url)')
       .eq('box_id', currentBox.id)
       .eq('status', 'active');
     const profiles = (data ?? [])
