@@ -391,7 +391,8 @@ describe('R6b : chrono et natif intacts', () => {
     // R6c : + synchro de l'incrustation déplacée et champs du décompte (écart prouvé dans r6c.rn.test.tsx).
     // R6c (A) : + options vidéo, couvertes par r6cOptionsVideo.rn.test.tsx.
     // R6c (B) : + jeu de bips et bips dans la vidéo, couverts par r6cBips.rn.test.tsx.
-    expect(sha(back)).toBe('2c76f8d0fe63db68e11edbbbbcbad51442897b97ec22eeed467212da13af0b81');
+    // Bips sans doublon : mixBeepInVideo dans playBeep, plus de calage de latence (r6cBips.rn.test.tsx).
+    expect(sha(back)).toBe('89a341ab1b73a7d959b2e8453e9d6b18986f7b40224b88fee5ec7d1f762aa1d3');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');
@@ -399,7 +400,7 @@ describe('R6b : chrono et natif intacts', () => {
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
     // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
     // R6c (A) : qualité, fps et micro dans le module, couverts par r6cOptionsVideo.rn.test.tsx et VideoQualityTest.kt.
-    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('7aebd9b87d0bc8daa85d2b57f75e7a01984bbf0a6244865c189e359157582bc6'); // R6c (B) : mélange des bips (BeepMixerTest.kt)
+    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('5be615e438a43164f54942139fba2614ef741cddb21c1283fc80e1af81145bec'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; bips sans doublon : calage de latence retiré
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
       .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');

@@ -242,8 +242,9 @@ describe('R5a : capture', () => {
  * R6c (C) : synchro de l'incrustation déplacée après displayOpts, champs du décompte envoyés (écart prouvé dans r6c.rn.test.tsx).
  * R6c (A) : options vidéo (qualité vérifiée, fps, micro, saccades), couvertes par r6cOptionsVideo.rn.test.tsx.
  * R6c (B) : jeu de bips chargé selon le réglage, markBeep dans playBeep, bips passés au module (r6cBips.rn.test.tsx).
+ * Bips sans doublon : mélange décidé par mixBeepInVideo dans playBeep, calage de latence retiré (r6cBips.rn.test.tsx).
  */
-const LOGIC_SHA = 'a4129be621739534063e20489172fd6886806486faf55e54867d3222d4385445';
+const LOGIC_SHA = '639d1b0da7c06cdb7656032b351acbb788b0c4bec11fd9e6c2d7f0a8360691f1';
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
 const MODAL_SHA = '48d210edde52dc6c61eefc919547338ded563c6ac4e8405c748e9c748a47c566';
 const LAUNCH_SHA = 'e4567887b4ed3745b56790f362ad063d475f82f5d770b1ab62783ff38c5f7dc2';

@@ -53,11 +53,8 @@ class VideoRecorderEngine private constructor() {
 
   // Beeps in the video (R6c): PCM per type (44.1 kHz, -6 dBFS peak), scheduled by markBeep.
   @Volatile var beepsEnabled = false
-  /** Mic on: delay of the mixed beep so it lands on the speaker beep captured by the mic. */
-  @Volatile var beepLatencyMs = 80
   @Volatile private var beepPcm: Map<String, FloatArray> = emptyMap()
   @Volatile private var beepSchedule: BeepSchedule? = null
-  @Volatile private var micActive = false
 
   private val videoWidth: Int get() = VideoQuality.size(quality).let { if (isLandscape) it.first else it.second }
   private val videoHeight: Int get() = VideoQuality.size(quality).let { if (isLandscape) it.second else it.first }
@@ -440,9 +437,8 @@ class VideoRecorderEngine private constructor() {
       //    Never touches the mic when it is off.
       val withBeeps = beepsEnabled && beepPcm.isNotEmpty()
       beepSchedule = if (withBeeps) BeepSchedule() else null
-      micActive = false
       audioEncoder = if (micEnabled) try {
-        AudioEncoder().apply { configure(useMic = true) }.also { micActive = true }
+        AudioEncoder().apply { configure(useMic = true) }
       } catch (e: Exception) {
         Log.w(TAG, "Mic audio encoder setup failed", e)
         null
@@ -732,13 +728,15 @@ class VideoRecorderEngine private constructor() {
     }.toMap()
   }
 
-  /** Places a beep at "now" on the audio timeline (+ mic latency when the mic records). */
+  /**
+   * Places a beep at "now" on the audio timeline. No mic-latency offset: JS only
+   * mixes a beep when the mic cannot hear the speaker (mic off or phone silent).
+   */
   fun markBeep(type: String) {
     val schedule = beepSchedule ?: return
     if (!isRecording.get()) return
     val pcm = beepPcm[type] ?: return
-    val latencyNanos = if (micActive) beepLatencyMs * 1_000_000L else 0L
-    schedule.add(BeepPcm.sampleAt(System.nanoTime() - recordingStartNanos + latencyNanos, AudioEncoder.SAMPLE_RATE), pcm)
+    schedule.add(BeepPcm.sampleAt(System.nanoTime() - recordingStartNanos, AudioEncoder.SAMPLE_RATE), pcm)
   }
 
   // ================================================================

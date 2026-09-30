@@ -1948,7 +1948,7 @@
       "fpsValue": "{{fps}} fps",
       "mic": "Microphone",
       "beeps": "Beeps in the video",
-      "beepsHint": "The timer beeps are heard in the recording",
+      "beepsHint": "The timer beeps are heard in the recording: added to the track when the mic is off or the phone is silent, otherwise picked up by the mic",
       "micHint": "Records sound during the video",
       "checking": "Checking {{quality}}…",
       "notice": {

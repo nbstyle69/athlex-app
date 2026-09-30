@@ -12,7 +12,7 @@ import { useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { RealtimeRecorderView, updateOverlayState, startRecording as nativeStartRec, stopRecording as nativeStopRec } from 'realtime-recorder';
 import { getLastRecordingStats, markBeep, prepareQuality, type QualityCheck, type VideoQuality } from 'realtime-recorder';
 import {
-  ANDROID_BEEP_MIC_LATENCY_MS, BEEP_SETS, BEEP_TYPES, DEFAULT_BEEP_SET, beepFileName, buildMultiWAV, isBeepSet,
+  BEEP_SETS, BEEP_TYPES, DEFAULT_BEEP_SET, beepFileName, buildMultiWAV, isBeepSet, mixBeepInVideo,
   type BeepSetId, type BeepType,
 } from '../../lib/timerBeeps';
 import { DISPLAY_OPTS_KEY, VIDEO_QUALITY_LABELS, isAbove1080, isJerky, loadVideoOpts, qualityNotice, type VideoOpts } from '../../lib/timerVideoOpts';
@@ -910,8 +910,12 @@ export default function TimerRunScreen() {
   }, [phase]);
 
   function playBeep(type: BeepType) {
-    // Bips dans la vidéo : réglage indépendant des sons du téléphone (ignoré par le module hors enregistrement).
-    if (videoOptsRef.current?.videoBeeps) {
+    const phoneAudible = !!displayOptsRef.current.bipsEnabled && soundReadyRef.current
+      && (displayOptsRef.current.beepVolume ?? 1) > 0;
+    // Bips dans la vidéo : mélangés seulement si le micro ne capte pas déjà le haut-parleur
+    // (ignoré par le module hors enregistrement).
+    const v = videoOptsRef.current;
+    if (v && mixBeepInVideo({ videoBeeps: v.videoBeeps, mic: v.videoMic, phoneAudible })) {
       try { markBeep(type); } catch (e) { captureError(e, { screen: 'TimerRun', action: 'markBeep' }); }
     }
     if (!displayOptsRef.current.bipsEnabled || !soundReadyRef.current) return;
@@ -980,7 +984,6 @@ export default function TimerRunScreen() {
     nativeStartRec({
       outputPath, facing, isLandscape, quality, fps: videoOpts.videoFps, mic,
       beeps, beepFiles: beeps ? beepFilesRef.current! : undefined,
-      beepLatencyMs: Platform.OS === 'android' ? ANDROID_BEEP_MIC_LATENCY_MS : undefined,
     }).catch((err: any) => {
       captureError(err, { screen: 'TimerRun', action: 'nativeStartRec' });
       recordingActiveRef.current = false;
