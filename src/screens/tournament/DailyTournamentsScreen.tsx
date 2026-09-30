@@ -3,11 +3,14 @@ import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import { AxIconButton } from '../../components/ax/AxIconButton';
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl,
-  ActivityIndicator, Modal, TextInput, Alert, KeyboardAvoidingView, Platform,
+  View, Text, StyleSheet, FlatList, RefreshControl,
+  ActivityIndicator, Modal, Alert, KeyboardAvoidingView, Platform,
   ScrollView,
 } from 'react-native';
-import { Plus, Users, Clock, Zap, Trophy, ChevronRight, Flame } from 'lucide-react-native';
+import { Plus, Users, Zap, Trophy, ChevronRight } from 'lucide-react-native';
+import { AxButton, AxCard, AxChip, AxStatusDot, AxTag, AxTextField } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { levelInk } from '../home/homeLevelColor';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -59,6 +62,7 @@ export default function DailyTournamentsScreen() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const S = createStyles(theme);
+  const c = theme.ax;
 
   const [tournaments, setTournaments] = useState<DailyTournament[]>([]);
   const [loading, setLoading] = useState(true);
@@ -187,79 +191,52 @@ export default function DailyTournamentsScreen() {
   }
 
   function renderTournament({ item }: { item: DailyTournament }) {
-    const levelColor = LevelColors[item.level] ?? theme.textMuted;
     const isFull = item.participant_count >= item.max_players;
     const remaining = timeLeft(item.ends_at);
 
     return (
-      <TouchableOpacity
-        style={S.card}
+      <AxCard
+        testID={`mini-card-${item.id}`}
         onPress={() => navigation.navigate('DailyTournamentDetail', { tournamentId: item.id })}
-        activeOpacity={0.8}
+        accessibilityLabel={item.wod_name}
       >
-        {/* Badges */}
         <View style={S.cardTop}>
           <View style={S.badges}>
-            <View style={[S.badge, { backgroundColor: `${theme.accent}12` }]}>
-              <Text style={[S.badgeTxt, { color: theme.accent }]}>{item.wod_type}</Text>
-            </View>
-            <View style={[S.badge, { backgroundColor: `${levelColor}20` }]}>
-              <Text style={[S.badgeTxt, { color: levelColor }]}>{item.level.toUpperCase()}</Text>
-            </View>
-            {item.duration > 0 && (
-              <View style={[S.badge, { backgroundColor: theme.surface }]}>
-                <Clock color={theme.textMuted} size={9} />
-                <Text style={[S.badgeTxt, { color: theme.textMuted }]}>{item.duration}m</Text>
-              </View>
-            )}
+            <AxTag label={item.wod_type} testID={`mini-type-${item.id}`} />
+            <AxTag label={item.level.toUpperCase()} color={levelInk(item.level, c)} testID={`mini-level-${item.id}`} />
+            {item.duration > 0 && <AxTag label={`${item.duration}m`} tone="muted" />}
           </View>
-          <View style={[S.badge, { backgroundColor: remaining === 'Terminé' ? '#EF444420' : `${theme.accent}15` }]}>
-            <Flame color={remaining === 'Terminé' ? '#EF4444' : theme.accent} size={9} />
-            <Text style={[S.badgeTxt, { color: remaining === 'Terminé' ? '#EF4444' : theme.accent }]}>{remaining}</Text>
-          </View>
+          <AxStatusDot label={remaining} tone={remaining === 'Terminé' ? 'danger' : 'active'} testID={`mini-status-${item.id}`} />
         </View>
 
-        {/* Title */}
-        <Text style={S.cardName}>{item.wod_name}</Text>
-        <Text style={S.cardCreator}>par {item.creator_name}</Text>
+        <View style={S.cardHead}>
+          <Text style={S.cardName} numberOfLines={2}>{item.wod_name}</Text>
+          <Text style={S.caption} numberOfLines={1}>par {item.creator_name}</Text>
+        </View>
 
-        {/* Movements preview */}
         <Text style={S.cardMovements} numberOfLines={2}>{item.movements}</Text>
 
-        {/* Footer */}
         <View style={S.cardFooter}>
-          <View style={S.playersRow}>
-            <Users color={theme.textMuted} size={14} />
-            <Text style={[S.playersTxt, isFull && { color: '#EF4444' }]}>
+          <View style={S.metaRow}>
+            <Users color={c.textMuted} size={14} />
+            <Text testID={`mini-players-${item.id}`} style={[S.caption, isFull && { color: c.danger }]}>
               {item.participant_count}/{item.max_players}
             </Text>
           </View>
-          <View style={S.rewardRow}>
-            <Trophy color={theme.gold} size={13} />
-            <Text style={S.rewardTxt}>+{item.elo_reward} ELO</Text>
+          <View style={S.metaRow}>
+            <Trophy color={c.textMuted} size={14} />
+            <Text style={S.caption}>+{item.elo_reward} ELO</Text>
           </View>
-          {!item.has_joined && !isFull && (
-            <TouchableOpacity
-              style={S.joinBtn}
-              onPress={(e) => { e.stopPropagation(); handleJoin(item.id); }}
-              activeOpacity={0.8}
-            >
-              <Text style={S.joinBtnTxt}>Rejoindre</Text>
-            </TouchableOpacity>
-          )}
-          {item.has_joined && !item.has_scored && (
-            <View style={S.joinedBadge}>
-              <Text style={S.joinedTxt}>Inscrit ✓</Text>
-            </View>
-          )}
-          {item.has_scored && (
-            <View style={[S.joinedBadge, { backgroundColor: `${theme.gold}15` }]}>
-              <Text style={[S.joinedTxt, { color: theme.gold }]}>Score ✓</Text>
-            </View>
-          )}
-          <ChevronRight color={theme.textMuted} size={16} />
+          <View style={S.footerEnd}>
+            {!item.has_joined && !isFull && (
+              <AxButton label="Rejoindre" variant="outline" onPress={() => handleJoin(item.id)} testID={`mini-join-${item.id}`} />
+            )}
+            {item.has_joined && !item.has_scored && <AxTag label="Inscrit" dot />}
+            {item.has_scored && <AxTag label="Score" tone="muted" dot />}
+            <ChevronRight color={c.textMuted} size={16} />
+          </View>
         </View>
-      </TouchableOpacity>
+      </AxCard>
     );
   }
 
@@ -275,7 +252,7 @@ export default function DailyTournamentsScreen() {
       {/* Stats */}
       <View style={S.statsRow}>
         <View style={S.statBox}>
-          <Text style={S.statNum}>{tournaments.length}</Text>
+          <Text style={S.statNum} testID="mini-stat-active">{tournaments.length}</Text>
           <Text style={S.statLabel}>Actifs</Text>
         </View>
         <View style={S.statBox}>
@@ -290,7 +267,7 @@ export default function DailyTournamentsScreen() {
 
       {loading ? (
         <View style={S.center}>
-          <ActivityIndicator size="large" color={theme.accent} />
+          <ActivityIndicator size="large" color={c.accent} />
         </View>
       ) : (
         <FlatList
@@ -301,13 +278,10 @@ export default function DailyTournamentsScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
           ListEmptyComponent={
             <View style={S.empty}>
-              <Text style={S.emptyEmoji}>⚡</Text>
+              <Zap color={c.textMuted} size={40} />
               <Text style={S.emptyTitle}>Aucun mini-tournoi en cours</Text>
               <Text style={S.emptySub}>Crée le premier et défie la communauté !</Text>
-              <TouchableOpacity style={S.emptyBtn} onPress={() => setCreateModal(true)} activeOpacity={0.8}>
-                <Plus color="#fff" size={16} />
-                <Text style={S.emptyBtnTxt}>Créer un mini-tournoi</Text>
-              </TouchableOpacity>
+              <AxButton label="Créer un mini-tournoi" icon={Plus} onPress={() => setCreateModal(true)} testID="mini-empty-create" />
             </View>
           }
         />
@@ -316,85 +290,66 @@ export default function DailyTournamentsScreen() {
       {/* Create modal */}
       <Modal visible={createModal} transparent animationType="slide" onRequestClose={() => setCreateModal(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={S.modalOverlay}>
-          <View style={S.modalSheet}>
+          <View style={S.modalSheet} testID="mini-create-sheet">
             <View style={S.modalHandle} />
             <Text style={S.modalTitle}>Nouveau mini-tournoi</Text>
 
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }}>
+            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }} contentContainerStyle={S.form}>
               <Text style={S.label}>Nom du WOD</Text>
-              <TextInput style={S.input} value={formName} onChangeText={setFormName} placeholder="Ex: Flash Burner" placeholderTextColor={theme.textMuted} />
+              <AxTextField value={formName} onChangeText={setFormName} placeholder="Ex: Flash Burner" accessibilityLabel="Nom du WOD" testID="mini-form-name" />
 
               <Text style={S.label}>Type</Text>
               <View style={S.chipRow}>
                 {WOD_TYPES.map(t => (
-                  <TouchableOpacity key={t} onPress={() => setFormType(t)} activeOpacity={0.7}
-                    style={[S.chip, formType === t && S.chipSel]}>
-                    <Text style={[S.chipTxt, formType === t && S.chipTxtSel]}>{t}</Text>
-                  </TouchableOpacity>
+                  <AxChip key={t} label={t} selected={formType === t} onPress={() => setFormType(t)} testID={`mini-form-type-${t}`} />
                 ))}
               </View>
 
               <Text style={S.label}>Durée (min)</Text>
-              <TextInput style={S.input} value={formDuration} onChangeText={setFormDuration} keyboardType="numeric" placeholder="12" placeholderTextColor={theme.textMuted} />
+              <AxTextField value={formDuration} onChangeText={setFormDuration} keyboardType="numeric" placeholder="12" accessibilityLabel="Durée (min)" testID="mini-form-duration" />
 
               <Text style={S.label}>Niveau</Text>
               <View style={S.chipRow}>
                 {Object.keys(LevelColors).map(l => (
-                  <TouchableOpacity key={l} onPress={() => setFormLevel(l)} activeOpacity={0.7}
-                    style={[S.chip, formLevel === l && { backgroundColor: `${LevelColors[l]}15`, borderColor: LevelColors[l] }]}>
-                    <Text style={[S.chipTxt, formLevel === l && { color: LevelColors[l], fontWeight: '900' }]}>{l.toUpperCase()}</Text>
-                  </TouchableOpacity>
+                  <AxChip key={l} label={l.toUpperCase()} selected={formLevel === l} onPress={() => setFormLevel(l)} testID={`mini-form-level-${l}`} />
                 ))}
               </View>
 
               <Text style={S.label}>Mode de score</Text>
               <View style={S.chipRow}>
                 {SCORE_MODES.map(m => (
-                  <TouchableOpacity key={m.key} onPress={() => setFormScoreMode(m.key)} activeOpacity={0.7}
-                    style={[S.chip, formScoreMode === m.key && S.chipSel]}>
-                    <Text style={[S.chipTxt, formScoreMode === m.key && S.chipTxtSel]}>{m.label}</Text>
-                  </TouchableOpacity>
+                  <AxChip key={m.key} label={m.label} selected={formScoreMode === m.key} onPress={() => setFormScoreMode(m.key)} testID={`mini-form-mode-${m.key}`} />
                 ))}
               </View>
 
               <Text style={S.label}>Genre cible</Text>
               <View style={S.chipRow}>
                 {([['mix', 'Mix'], ['male', 'Homme'], ['female', 'Femme']] as [GenderTarget, string][]).map(([val, lbl]) => (
-                  <TouchableOpacity key={val} onPress={() => setFormGender(val)} activeOpacity={0.7}
-                    style={[S.chip, formGender === val && S.chipSel]}>
-                    <Text style={[S.chipTxt, formGender === val && S.chipTxtSel]}>{lbl}</Text>
-                  </TouchableOpacity>
+                  <AxChip key={val} label={lbl} selected={formGender === val} onPress={() => setFormGender(val)} testID={`mini-form-gender-${val}`} />
                 ))}
               </View>
 
               <Text style={S.label}>Mouvements</Text>
-              <TextInput
-                style={[S.input, { minHeight: 80, textAlignVertical: 'top' }]}
+              <AxTextField
                 value={formMovements}
                 onChangeText={setFormMovements}
                 multiline
                 placeholder="21-15-9&#10;Thrusters (43/30 kg)&#10;Pull-ups"
-                placeholderTextColor={theme.textMuted}
+                accessibilityLabel="Mouvements"
+                testID="mini-form-movements"
               />
             </ScrollView>
 
-            <TouchableOpacity
-              style={[S.createBtn, (!formName.trim() || !formMovements.trim() || creating) && { opacity: 0.5 }]}
+            <AxButton
+              label="Lancer le mini-tournoi"
+              icon={Zap}
               onPress={handleCreate}
-              disabled={!formName.trim() || !formMovements.trim() || creating}
-              activeOpacity={0.85}
-            >
-              {creating ? <ActivityIndicator color="#fff" size="small" /> : (
-                <>
-                  <Zap color="#fff" size={16} />
-                  <Text style={S.createBtnTxt}>Lancer le mini-tournoi</Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setCreateModal(false)} style={S.cancelBtn}>
-              <Text style={S.cancelTxt}>Annuler</Text>
-            </TouchableOpacity>
+              disabled={!formName.trim() || !formMovements.trim()}
+              loading={creating}
+              fullWidth
+              testID="mini-form-create"
+            />
+            <AxButton label="Annuler" variant="outline" onPress={() => setCreateModal(false)} fullWidth testID="mini-form-cancel" />
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -402,84 +357,42 @@ export default function DailyTournamentsScreen() {
   );
 }
 
-function createStyles(t: AppTheme) { return StyleSheet.create({
-  screen: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 60, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: t.border,
-  },
-  headerTitle: { fontSize: 18, fontWeight: '900', color: t.text },
-  statsRow: {
-    flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: t.border,
-  },
-  statBox: { alignItems: 'center' },
-  statNum: { fontSize: 20, fontWeight: '900', color: t.text },
-  statLabel: { fontSize: 10, fontWeight: '600', color: t.textMuted, marginTop: 2 },
-  list: { padding: 16, gap: 12, paddingBottom: 140 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  empty: { alignItems: 'center', paddingTop: 60, gap: 10 },
-  emptyEmoji: { fontSize: 48 },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: t.text },
-  emptySub: { fontSize: 13, color: t.textMuted, textAlign: 'center', paddingHorizontal: 40 },
-  emptyBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: t.accent, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 20, marginTop: 8,
-  },
-  emptyBtnTxt: { color: '#fff', fontSize: 14, fontWeight: '800' },
-  card: {
-    backgroundColor: t.card, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: t.border, gap: 6,
-  },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  badges: { flexDirection: 'row', gap: 5, flexWrap: 'wrap', flex: 1 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 5 },
-  badgeTxt: { fontSize: 9, fontWeight: '800' },
-  cardName: { fontSize: 17, fontWeight: '900', color: t.text },
-  cardCreator: { fontSize: 11, fontWeight: '600', color: t.textMuted },
-  cardMovements: { fontSize: 12, color: t.textSecondary, lineHeight: 17 },
-  cardFooter: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  playersRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  playersTxt: { fontSize: 12, fontWeight: '700', color: t.textMuted },
-  rewardRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  rewardTxt: { fontSize: 11, fontWeight: '800', color: t.gold },
-  joinBtn: {
-    marginLeft: 'auto', backgroundColor: t.accent, borderRadius: 8,
-    paddingHorizontal: 14, paddingVertical: 6,
-  },
-  joinBtnTxt: { color: '#fff', fontSize: 11, fontWeight: '800' },
-  joinedBadge: {
-    marginLeft: 'auto', backgroundColor: `${t.accent}15`, borderRadius: 8,
-    paddingHorizontal: 10, paddingVertical: 4,
-  },
-  joinedTxt: { fontSize: 11, fontWeight: '800', color: t.accent },
-  // Modal
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: t.modalBackdrop },
-  modalSheet: {
-    backgroundColor: t.modalCard, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: 20, paddingBottom: 40, gap: 10,
-  },
-  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: t.border, alignSelf: 'center', marginBottom: 4 },
-  modalTitle: { fontSize: 18, fontWeight: '900', color: t.text, marginBottom: 4 },
-  label: { fontSize: 11, fontWeight: '800', color: t.textMuted, letterSpacing: 0.5, marginTop: 8 },
-  input: {
-    backgroundColor: t.surface, borderRadius: 10, borderWidth: 1, borderColor: t.border,
-    padding: 12, fontSize: 14, color: t.text, marginTop: 4,
-  },
-  chipRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginTop: 4 },
-  chip: {
-    paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8,
-    borderWidth: 1.5, borderColor: t.border, backgroundColor: t.surface,
-  },
-  chipSel: { backgroundColor: `${t.accent}15`, borderColor: t.accent },
-  chipTxt: { fontSize: 11, fontWeight: '700', color: t.textMuted },
-  chipTxtSel: { color: t.accent, fontWeight: '900' },
-  createBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: t.accent, borderRadius: 12, padding: 14, marginTop: 8,
-  },
-  createBtnTxt: { color: '#fff', fontSize: 14, fontWeight: '900' },
-  cancelBtn: { alignItems: 'center', paddingVertical: 8 },
-  cancelTxt: { fontSize: 13, color: t.textMuted, fontWeight: '600' },
-}); }
+function createStyles(t: AppTheme) {
+  const c = t.ax;
+  return StyleSheet.create({
+    screen: { flex: 1, backgroundColor: 'transparent' },
+    statsRow: {
+      flexDirection: 'row', justifyContent: 'space-around', paddingVertical: axSpacing.md,
+      borderBottomWidth: 1, borderBottomColor: c.border,
+    },
+    statBox: { alignItems: 'center', flex: 1 },
+    statNum: { ...axTypography.numberM, color: c.text },
+    statLabel: { ...axTypography.overlineSmall, color: c.textMuted, marginTop: 2 },
+    list: { padding: axSpacing.lg, gap: axSpacing.md },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    empty: { alignItems: 'center', paddingTop: 60, paddingHorizontal: axSpacing['2xl'], gap: axSpacing.md },
+    emptyTitle: { ...axTypography.label, color: c.text, textAlign: 'center' },
+    emptySub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.sm },
+    badges: { flexDirection: 'row', gap: axSpacing.xs, flexWrap: 'wrap', flex: 1, minWidth: 0 },
+    cardHead: { gap: 2 },
+    cardName: { ...axTypography.titleM, color: c.text },
+    caption: { ...axTypography.caption, color: c.textMuted, flexShrink: 1 },
+    cardMovements: { ...axTypography.bodySmall, color: c.textMuted },
+    cardFooter: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, flexWrap: 'wrap' },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+    footerEnd: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+    // Modal
+    modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: t.modalBackdrop },
+    modalSheet: {
+      backgroundColor: c.background, borderTopLeftRadius: axRadius.card, borderTopRightRadius: axRadius.card,
+      borderWidth: 1, borderColor: c.border,
+      padding: axSpacing.xl, paddingBottom: 40, gap: axSpacing.md,
+    },
+    modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: c.border, alignSelf: 'center' },
+    modalTitle: { ...axTypography.titleM, color: c.text },
+    form: { gap: axSpacing.sm, paddingBottom: axSpacing.sm },
+    label: { ...axTypography.overline, color: c.textMuted, marginTop: axSpacing.sm },
+    chipRow: { flexDirection: 'row', gap: axSpacing.sm, flexWrap: 'wrap' },
+  });
+}

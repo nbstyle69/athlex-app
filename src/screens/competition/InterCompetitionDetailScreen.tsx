@@ -4,7 +4,9 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity,
   ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
-import { Globe2, Users, Calendar, Trophy, Dumbbell, Lock, Clock, CheckCircle2, XCircle, UserPlus, GitBranch, Swords, Shield } from 'lucide-react-native';
+import { Globe2, Users, Calendar, Trophy, Dumbbell, Lock, CheckCircle2, XCircle, UserPlus, GitBranch, Swords, Check, Medal } from 'lucide-react-native';
+import { AxButton, AxCard, AxStatusDot, AxTag } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { useNavigation, useRoute, useFocusEffect, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -21,6 +23,11 @@ import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'InterCompetitionDetail'>;
 type Route = RouteProp<CompetitionStackParamList, 'InterCompetitionDetail'>;
 
+/** Libellé traduit sans son pictogramme de tête. */
+function stripGlyph(label: string): string {
+  return label.replace(/^[^\p{L}\p{N}]+/u, '');
+}
+
 type Tab = 'Infos' | 'WODs' | 'Inscription' | 'Classement' | 'Bracket' | 'Ligue' | 'Poules' | 'Suisse';
 
 export default function InterCompetitionDetailScreen() {
@@ -32,6 +39,11 @@ export default function InterCompetitionDetailScreen() {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const S = createStyles(theme);
+  const ax = theme.ax;
+  const MEDAL = [theme.gold, theme.silver, theme.bronze];
+  const rankMark = (rank: number) => (rank >= 1 && rank <= 3
+    ? <View style={S.rankMedal}><Medal size={18} color={MEDAL[rank - 1]} /></View>
+    : <Text style={[S.rankNum, { color: ax.textMuted }]}>#{rank}</Text>);
   const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
 
   const FORMAT_LABEL: Record<string, string> = {
@@ -253,13 +265,13 @@ export default function InterCompetitionDetailScreen() {
   if (loading) return (
     <View style={[S.container, { justifyContent: 'center', alignItems: 'center' }]}>
       <GlassBackground />
-      <ActivityIndicator color={theme.accent} size="large" />
+      <ActivityIndicator color={ax.accent} size="large" />
     </View>
   );
   if (!comp) return (
     <View style={[S.container, { justifyContent: 'center', alignItems: 'center' }]}>
       <GlassBackground />
-      <Text style={{ color: theme.textMuted }}>{t('interDetail.notFound')}</Text>
+      <Text style={{ color: ax.textMuted }}>{t('interDetail.notFound')}</Text>
     </View>
   );
 
@@ -295,53 +307,54 @@ export default function InterCompetitionDetailScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={theme.accent} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} tintColor={ax.accent} />}
       >
 
         {/* ── INFOS ── */}
         {tab === 'Infos' && (
-          <View style={{ gap: 16 }}>
+          <View style={{ gap: axSpacing.lg }}>
             {comp.description ? (
-              <View style={S.infoCard}>
+              <AxCard style={S.infoCard}>
                 <Text style={S.infoLabel}>{t('interDetail.about')}</Text>
                 <Text style={S.infoText}>{comp.description}</Text>
-              </View>
+              </AxCard>
             ) : null}
 
-            <View style={S.infoCard}>
+            <AxCard style={S.infoCard}>
               <Text style={S.infoLabel}>{t('interDetail.details')}</Text>
-              <View style={{ gap: 10, marginTop: 4 }}>
+              <View style={{ gap: axSpacing.sm }}>
                 {[
                   { icon: Trophy,   label: t('interDetail.format'),    val: FORMAT_LABEL[comp.format] ?? comp.format },
                   { icon: Users,    label: t('interDetail.type'),      val: comp.type === 'individual' ? t('interComp.individual') : t('interDetail.teamOf', { n: comp.team_size }) },
-                  { icon: Users,    label: t('interDetail.registered'),  val: comp.max_participants ? `${myReg ? '✓ ' : ''}/ ${comp.max_participants} max` : t('interDetail.unlimited') },
+                  { icon: Users,    label: t('interDetail.registered'),  val: comp.max_participants ? `/ ${comp.max_participants} max` : t('interDetail.unlimited'), check: !!myReg && !!comp.max_participants },
                   { icon: Calendar, label: t('interDetail.start'),     val: comp.starts_at ? new Date(comp.starts_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
                   { icon: Calendar, label: t('interDetail.end'),       val: comp.ends_at   ? new Date(comp.ends_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
-                ].map(({ icon: Icon, label, val }) => (
+                ].map(({ icon: Icon, label, val, check }) => (
                   <View key={label} style={S.detailRow}>
-                    <Icon size={14} color={theme.textMuted} />
+                    <Icon size={14} color={ax.textMuted} />
                     <Text style={S.detailLabel}>{label}</Text>
+                    {check ? <Check size={14} color={ax.success} /> : null}
                     <Text style={S.detailVal}>{val}</Text>
                   </View>
                 ))}
               </View>
-            </View>
+            </AxCard>
 
             {comp.rules ? (
-              <View style={S.infoCard}>
+              <AxCard style={S.infoCard}>
                 <Text style={S.infoLabel}>{t('interDetail.rules')}</Text>
                 <Text style={S.infoText}>{comp.rules}</Text>
-              </View>
+              </AxCard>
             ) : null}
           </View>
         )}
 
         {/* ── WODs ── */}
         {tab === 'WODs' && (
-          <View style={{ gap: 12 }}>
+          <View style={{ gap: axSpacing.md }}>
             {wods.length === 0 ? (
               <View style={S.empty}>
-                <Dumbbell size={40} color={theme.textMuted} />
+                <Dumbbell size={40} color={ax.textMuted} />
                 <Text style={S.emptyText}>{t('interDetail.wodsSoon')}</Text>
               </View>
             ) : (
@@ -349,13 +362,13 @@ export default function InterCompetitionDetailScreen() {
                 const revealed = isRevealed(w);
                 const myScore  = myScoreForWod(w.id);
                 return (
-                  <View key={w.id} style={[S.wodCard, !revealed && S.wodLocked]}>
+                  <AxCard key={w.id} style={[S.wodCard, !revealed && S.wodLocked]}>
                     <View style={S.wodHeader}>
                       <View style={S.wodNum}>
                         <Text style={S.wodNumText}>W{w.order_index}</Text>
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={[S.wodTitle, !revealed && { color: theme.textMuted }]}>
+                        <Text style={[S.wodTitle, !revealed && { color: ax.textMuted }]}>
                           {revealed ? w.title : t('interDetail.wodNotRevealed', { n: w.order_index })}
                         </Text>
                         {!revealed && w.revealed_at ? (
@@ -364,7 +377,7 @@ export default function InterCompetitionDetailScreen() {
                           </Text>
                         ) : null}
                       </View>
-                      {!revealed && <Lock size={16} color={theme.textMuted} />}
+                      {!revealed && <Lock size={16} color={ax.textMuted} />}
                     </View>
 
                     {revealed && w.description ? (
@@ -373,33 +386,30 @@ export default function InterCompetitionDetailScreen() {
 
                     {revealed && (
                       <View style={S.wodMeta}>
-                        {w.time_cap ? (
-                          <View style={S.metaChip}>
-                            <Clock size={11} color={theme.textMuted} />
-                            <Text style={S.metaChipText}>{t('interDetail.minCap', { n: w.time_cap })}</Text>
-                          </View>
-                        ) : null}
-                        <View style={S.metaChip}>
-                          <Text style={S.metaChipText}>{w.scoring_type}</Text>
-                        </View>
+                        {w.time_cap ? <AxTag label={t('interDetail.minCap', { n: w.time_cap })} tone="muted" /> : null}
+                        <AxTag label={w.scoring_type} testID={`inter-wod-scoring-${w.id}`} />
                       </View>
                     )}
 
                     {/* My score or submit button */}
                     {revealed && myReg && (
                       myScore ? (
-                        <View style={[S.scoreChip, { backgroundColor: myScore.status === 'validated' ? `${theme.success}15` : myScore.status === 'rejected' ? `${theme.error}15` : `${theme.accent}15` }]}>
-                          <Text style={[S.scoreChipVal, { color: myScore.status === 'validated' ? theme.success : myScore.status === 'rejected' ? theme.error : theme.accent }]}>
+                        <View style={S.scoreChip} testID={`inter-myscore-${w.id}`}>
+                          <Text style={S.scoreChipVal}>
                             {myScore.score_display ?? myScore.score_value}
                           </Text>
-                          <Text style={[S.scoreChipStatus, { color: myScore.status === 'validated' ? theme.success : myScore.status === 'rejected' ? theme.error : theme.textMuted }]}>
-                            {myScore.status === 'validated' ? t('interDetail.validated') : myScore.status === 'rejected' ? t('interDetail.rejected') : t('interDetail.pending')}
-                          </Text>
+                          <AxStatusDot
+                            label={stripGlyph(myScore.status === 'validated' ? t('interDetail.validated') : myScore.status === 'rejected' ? t('interDetail.rejected') : t('interDetail.pending'))}
+                            tone={myScore.status === 'validated' ? 'active' : myScore.status === 'rejected' ? 'danger' : 'warning'}
+                          />
                         </View>
                       ) : comp.status !== 'closed' ? (
-                        <TouchableOpacity
-                          style={S.submitBtn}
-                          activeOpacity={0.8}
+                        <AxButton
+                          label={t('interDetail.submitScore')}
+                          icon={Trophy}
+                          variant="outline"
+                          fullWidth
+                          testID={`inter-wod-submit-${w.id}`}
                           onPress={() => navigation.navigate('InterScoreSubmit', {
                             competitionId,
                             wodId: w.id,
@@ -409,13 +419,10 @@ export default function InterCompetitionDetailScreen() {
                             scoringType: w.scoring_type,
                             existingScore: null,
                           })}
-                        >
-                          <Trophy size={15} color="#fff" />
-                          <Text style={S.submitBtnText}>{t('interDetail.submitScore')}</Text>
-                        </TouchableOpacity>
+                        />
                       ) : null
                     )}
-                  </View>
+                  </AxCard>
                 );
               })
             )}
@@ -424,89 +431,86 @@ export default function InterCompetitionDetailScreen() {
 
         {/* ── INSCRIPTION ── */}
         {tab === 'Inscription' && (
-          <View style={{ gap: 16 }}>
+          <View style={{ gap: axSpacing.lg }}>
             {/* TEAM competition */}
             {comp.type === 'team' ? (
               <>
                 {myTeam ? (
-                  <View style={S.registeredCard}>
-                    <CheckCircle2 size={28} color={theme.success} />
+                  <AxCard style={S.registeredCard}>
+                    <CheckCircle2 size={28} color={ax.success} />
                     <View style={{ flex: 1 }}>
                       <Text style={S.registeredTitle}>{t('interDetail.teamNamed', { name: myTeam.name })}</Text>
                       <Text style={S.registeredSub}>{t('interDetail.youAreCaptain')}</Text>
                     </View>
-                  </View>
+                  </AxCard>
                 ) : myReg ? (
-                  <View style={S.registeredCard}>
-                    <CheckCircle2 size={28} color={theme.success} />
+                  <AxCard style={S.registeredCard}>
+                    <CheckCircle2 size={28} color={ax.success} />
                     <View style={{ flex: 1 }}>
                       <Text style={S.registeredTitle}>{t('interDetail.inATeam')}</Text>
                       <Text style={S.registeredSub}>{t('interDetail.checkWodsTab')}</Text>
                     </View>
-                  </View>
+                  </AxCard>
                 ) : null}
                 {canRegister && (
-                  <TouchableOpacity
-                    style={S.registerBtn}
-                    activeOpacity={0.85}
+                  <AxButton
+                    label={myTeam ? t('interDetail.manageTeam') : t('interDetail.createJoinTeam')}
+                    icon={UserPlus}
+                    fullWidth
+                    testID="inter-team-btn"
                     onPress={() => navigation.navigate('InterTeam', { competitionId, teamSize: comp.team_size })}
-                  >
-                    <UserPlus size={18} color="#fff" />
-                    <Text style={S.registerBtnText}>{myTeam ? t('interDetail.manageTeam') : t('interDetail.createJoinTeam')}</Text>
-                  </TouchableOpacity>
+                  />
                 )}
               </>
             ) : (
               /* INDIVIDUAL competition */
               myReg ? (
-                <View style={S.registeredCard}>
-                  <CheckCircle2 size={28} color={theme.success} />
+                <AxCard style={S.registeredCard}>
+                  <CheckCircle2 size={28} color={ax.success} />
                   <View style={{ flex: 1 }}>
                     <Text style={S.registeredTitle}>{t('interDetail.youAreRegistered')}</Text>
                     <Text style={S.registeredSub}>{t('interDetail.checkWodsTab')}</Text>
                   </View>
-                </View>
+                </AxCard>
               ) : canRegister ? (
-                <TouchableOpacity style={S.registerBtn} activeOpacity={0.85} onPress={handleRegister} disabled={registering}>
-                  {registering
-                    ? <ActivityIndicator color="#fff" />
-                    : <>
-                      <Globe2 size={18} color="#fff" />
-                      <Text style={S.registerBtnText}>{t('interDetail.registerToComp')}</Text>
-                    </>
-                  }
-                </TouchableOpacity>
+                <AxButton
+                  label={t('interDetail.registerToComp')}
+                  icon={Globe2}
+                  fullWidth
+                  onPress={handleRegister}
+                  disabled={registering}
+                  loading={registering}
+                  testID="inter-register"
+                />
               ) : (
-                <View style={S.closedBox}>
-                  <XCircle size={28} color={theme.textMuted} />
+                <AxCard style={S.closedBox}>
+                  <XCircle size={28} color={ax.textMuted} />
                   <Text style={S.closedText}>{t('interDetail.registrationsClosed')}</Text>
-                </View>
+                </AxCard>
               )
             )}
 
-            <View style={S.infoCard}>
+            <AxCard style={S.infoCard}>
               <Text style={S.infoLabel}>{t('interDetail.howItWorks')}</Text>
-              <View style={{ gap: 8, marginTop: 4 }}>
+              <View style={{ gap: axSpacing.sm }}>
                 {(t('interDetail.howSteps', { returnObjects: true }) as string[]).map(step => (
                   <Text key={step} style={S.infoText}>{step}</Text>
                 ))}
               </View>
-            </View>
+            </AxCard>
 
             {myReg && comp.status !== 'closed' && (
-              <TouchableOpacity style={S.unregisterBtn} activeOpacity={0.8} onPress={handleUnregister}>
-                <Text style={S.unregisterBtnText}>{t('interDetail.unregister')}</Text>
-              </TouchableOpacity>
+              <AxButton label={t('interDetail.unregister')} variant="stop" fullWidth onPress={handleUnregister} testID="inter-unregister" />
             )}
           </View>
         )}
 
         {/* ── BRACKET ── */}
         {tab === 'Bracket' && comp?.format === 'bracket' && (
-          <View style={{ gap: 12 }}>
+          <View style={{ gap: axSpacing.md }}>
             {bracketMatches.length === 0 ? (
               <View style={S.empty}>
-                <GitBranch size={40} color={theme.textMuted} />
+                <GitBranch size={40} color={ax.textMuted} />
                 <Text style={S.emptyText}>{t('interDetail.bracketNotGenerated')}</Text>
               </View>
             ) : (
@@ -516,51 +520,56 @@ export default function InterCompetitionDetailScreen() {
                   return acc;
                 }, {})
               ).sort(([a], [b]) => Number(a) - Number(b)).map(([round, matches]) => (
-                <View key={round} style={S.infoCard}>
+                <AxCard key={round} style={S.infoCard}>
                   <Text style={S.infoLabel}>{t('interDetail.round', { n: round })}</Text>
                   {(matches as any[]).map((match: any) => {
                     const isMyMatch = user && (match.participant1_id === user.id || match.participant2_id === user.id);
                     const iWon = match.winner_id === user?.id;
                     const iLost = match.winner_id && match.winner_id !== user?.id && isMyMatch;
                     return (
-                      <View key={match.id} style={[S.bracketMatchCard, isMyMatch && { borderColor: theme.accent, borderWidth: 1.5 }]}>
+                      <View key={match.id} style={[S.bracketMatchCard, isMyMatch && { borderColor: ax.accent }]}>
                         <View style={S.bracketMatchRow}>
                           <View style={{ flex: 1, alignItems: 'center' }}>
                             <Text style={[
                               S.bracketPlayer,
-                              match.winner_id === match.participant1_id && { color: theme.success },
-                              match.participant1_id === user?.id && { color: theme.accent },
+                              match.winner_id === match.participant1_id && { color: ax.success },
+                              match.participant1_id === user?.id && { color: ax.accentText },
                             ]}>
                               {match.p1_username ?? 'BYE'}
                             </Text>
                           </View>
                           <View style={S.bracketVsBadge}>
-                            <Text style={S.bracketVsText}>{match.status === 'completed' ? '✓' : match.status === 'bye' ? 'BYE' : 'VS'}</Text>
+                            {match.status === 'completed'
+                              ? <Check size={16} color={ax.success} />
+                              : <Text style={S.bracketVsText}>{match.status === 'bye' ? 'BYE' : 'VS'}</Text>}
                           </View>
                           <View style={{ flex: 1, alignItems: 'center' }}>
                             <Text style={[
                               S.bracketPlayer,
-                              match.winner_id === match.participant2_id && { color: theme.success },
-                              match.participant2_id === user?.id && { color: theme.accent },
+                              match.winner_id === match.participant2_id && { color: ax.success },
+                              match.participant2_id === user?.id && { color: ax.accentText },
                             ]}>
                               {match.p2_username ?? 'BYE'}
                             </Text>
                           </View>
                         </View>
                         {match.status === 'completed' && (
-                          <Text style={{ fontSize: 11, color: theme.success, textAlign: 'center', marginTop: 6, fontWeight: '700' }}>
+                          <Text style={S.bracketWinner}>
                             {t('interDetail.winner', { name: match.winner_id === match.participant1_id ? match.p1_username : match.p2_username })}
                           </Text>
                         )}
                         {match.status === 'bye' && (
-                          <Text style={{ fontSize: 11, color: theme.textMuted, textAlign: 'center', marginTop: 4, fontStyle: 'italic' }}>
+                          <Text style={S.bracketBye}>
                             {t('interDetail.byeAdvance')}
                           </Text>
                         )}
                         {isMyMatch && match.status === 'pending' && comp.status !== 'closed' && (
-                          <TouchableOpacity
-                            style={[S.submitBtn, { marginTop: 8 }]}
-                            activeOpacity={0.8}
+                          <AxButton
+                            label={t('interDetail.submitScore')}
+                            icon={Trophy}
+                            variant="outline"
+                            fullWidth
+                            testID={`inter-bracket-submit-${match.id}`}
                             onPress={() => {
                               const matchWod = wods.find(w => w.id === match.wod_id) ?? wods[0];
                               if (!matchWod) { Alert.alert(t('interDetail.noWodTitle'), t('interDetail.noWodMsg')); return; }
@@ -574,15 +583,12 @@ export default function InterCompetitionDetailScreen() {
                                 existingScore: null,
                               });
                             }}
-                          >
-                            <Trophy size={15} color="#fff" />
-                            <Text style={S.submitBtnText}>{t('interDetail.submitScore')}</Text>
-                          </TouchableOpacity>
+                          />
                         )}
                       </View>
                     );
                   })}
-                </View>
+                </AxCard>
               ))
             )}
           </View>
@@ -590,22 +596,18 @@ export default function InterCompetitionDetailScreen() {
 
         {/* ── LIGUE ── */}
         {tab === 'Ligue' && comp?.format === 'league' && (
-          <View style={{ gap: 16 }}>
+          <View style={{ gap: axSpacing.lg }}>
             {/* League standings */}
-            <View style={S.infoCard}>
+            <AxCard style={S.infoCard}>
               <Text style={S.infoLabel}>{t('interDetail.leagueStandings')}</Text>
               {leagueStandings.length === 0 ? (
                 <Text style={S.infoText}>{t('interDetail.noLeagueStandings')}</Text>
               ) : (
                 leagueStandings.map((s: any, i: number) => (
-                  <View key={s.id} style={[S.rankRow, s.athlete_id === user?.id && { backgroundColor: `${theme.accent}10` }]}>
-                    <Text style={[S.rankNum, {
-                      color: i === 0 ? '#C9A227' : i === 1 ? '#9CA3AF' : i === 2 ? '#B45309' : theme.textMuted,
-                    }]}>
-                      {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
-                    </Text>
+                  <View key={s.id} style={[S.rankRow, s.athlete_id === user?.id && { backgroundColor: `${ax.accent}10` }]}>
+                    {rankMark(i + 1)}
                     <View style={{ flex: 1 }}>
-                      <Text style={[S.rankName, s.athlete_id === user?.id && { color: theme.accent }]}>
+                      <Text style={[S.rankName, s.athlete_id === user?.id && { color: ax.accentText }]}>
                         {s.username ?? '—'}{s.athlete_id === user?.id ? t('interDetail.meSuffix') : ''}
                       </Text>
                       <Text style={S.rankBox}>{t('interDetail.leagueRecord', { wins: s.wins, podiums: s.podiums, rounds: s.rounds_played })}</Text>
@@ -614,10 +616,10 @@ export default function InterCompetitionDetailScreen() {
                   </View>
                 ))
               )}
-            </View>
+            </AxCard>
 
             {/* League rounds */}
-            <View style={S.infoCard}>
+            <AxCard style={S.infoCard}>
               <Text style={S.infoLabel}>{t('interDetail.rounds', { count: leagueRounds.length })}</Text>
               {leagueRounds.length === 0 ? (
                 <Text style={S.infoText}>{t('interDetail.noRounds')}</Text>
@@ -627,21 +629,16 @@ export default function InterCompetitionDetailScreen() {
                   return (
                     <View key={r.id} style={[S.leagueRoundCard]}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: theme.text }}>
+                        <Text style={S.leagueRoundTitle}>
                           {r.title ?? t('interDetail.roundDay', { n: r.round_number })}
                         </Text>
-                        <View style={[S.leagueStatusBadge, {
-                          backgroundColor: r.status === 'completed' ? `${theme.success}20` : `${theme.accent}20`,
-                        }]}>
-                          <Text style={[S.leagueStatusText, {
-                            color: r.status === 'completed' ? theme.success : theme.accent,
-                          }]}>
-                            {r.status === 'completed' ? t('interDetail.statusCompleted') : r.status === 'active' ? t('interDetail.statusActive') : t('interDetail.statusUpcoming')}
-                          </Text>
-                        </View>
+                        <AxStatusDot
+                          label={r.status === 'completed' ? t('interDetail.statusCompleted') : r.status === 'active' ? t('interDetail.statusActive') : t('interDetail.statusUpcoming')}
+                          tone={r.status === 'completed' ? 'muted' : 'active'}
+                        />
                       </View>
                       {roundWod && (
-                        <Text style={{ fontSize: 12, color: theme.textMuted, marginTop: 4 }}>
+                        <Text style={S.caption}>
                           {t('interDetail.wodLabel', { title: roundWod.title })}
                         </Text>
                       )}
@@ -649,16 +646,16 @@ export default function InterCompetitionDetailScreen() {
                   );
                 })
               )}
-            </View>
+            </AxCard>
           </View>
         )}
 
         {/* ── POULES ── */}
         {tab === 'Poules' && comp?.format === 'pool' && (
-          <View style={{ gap: 16 }}>
+          <View style={{ gap: axSpacing.lg }}>
             {poolGroups.length === 0 ? (
               <View style={S.empty}>
-                <Users size={40} color={theme.textMuted} />
+                <Users size={40} color={ax.textMuted} />
                 <Text style={S.emptyText}>{t('interDetail.poolsNotGenerated')}</Text>
               </View>
             ) : (
@@ -667,20 +664,20 @@ export default function InterCompetitionDetailScreen() {
                 const matches = poolMatches.filter((m: any) => m.group_id === group.id);
                 const myGroup = members.some((m: any) => m.athlete_id === user?.id);
                 return (
-                  <View key={group.id} style={[S.infoCard, myGroup && { borderColor: theme.accent, borderWidth: 1.5 }]}>
+                  <AxCard key={group.id} style={[S.infoCard, myGroup && { borderColor: ax.accent }]}>
                     <Text style={S.infoLabel}>
                       {group.group_name}{myGroup ? t('interDetail.myPoolSuffix') : ''}
                     </Text>
                     {/* Group standings */}
                     {members.map((m: any, i: number) => (
-                      <View key={m.id} style={[S.rankRow, m.athlete_id === user?.id && { backgroundColor: `${theme.accent}10` }]}>
+                      <View key={m.id} style={[S.rankRow, m.athlete_id === user?.id && { backgroundColor: `${ax.accent}10` }]}>
                         <Text style={[S.rankNum, {
-                          color: i === 0 ? '#C9A227' : i === 1 ? '#9CA3AF' : theme.textMuted,
+                          color: i < 2 ? ax.text : ax.textMuted,
                         }]}>
                           {i + 1}.
                         </Text>
                         <View style={{ flex: 1 }}>
-                          <Text style={[S.rankName, m.athlete_id === user?.id && { color: theme.accent }]}>
+                          <Text style={[S.rankName, m.athlete_id === user?.id && { color: ax.accentText }]}>
                             {m.username ?? '—'}{m.athlete_id === user?.id ? t('interDetail.meSuffix') : ''}
                           </Text>
                           <Text style={S.rankBox}>{t('interDetail.poolRecord', { wins: m.wins, draws: m.draws, losses: m.losses, diff: `${m.score_for - m.score_against > 0 ? '+' : ''}${m.score_for - m.score_against}` })}</Text>
@@ -690,18 +687,18 @@ export default function InterCompetitionDetailScreen() {
                     ))}
 
                     {/* Group matches */}
-                    <View style={{ marginTop: 10, borderTopWidth: 1, borderTopColor: theme.border, paddingTop: 10 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '800', color: theme.textMuted, marginBottom: 6 }}>
+                    <View style={{ marginTop: 10, borderTopWidth: 1, borderTopColor: ax.border, paddingTop: 10 }}>
+                      <Text style={S.subLabel}>
                         {t('interDetail.matches', { done: matches.filter((m: any) => m.status === 'completed').length, total: matches.length })}
                       </Text>
                       {matches.map((match: any) => {
                         const isMyMatch = user && (match.athlete1_id === user.id || match.athlete2_id === user.id);
                         return (
-                          <View key={match.id} style={[S.poolMatchRow, isMyMatch && { backgroundColor: `${theme.accent}08` }]}>
+                          <View key={match.id} style={[S.poolMatchRow, isMyMatch && { backgroundColor: `${ax.accent}08` }]}>
                             <Text style={[
                               S.poolMatchPlayer,
-                              match.winner_id === match.athlete1_id && { color: theme.success, fontWeight: '800' as any },
-                              match.athlete1_id === user?.id && { color: theme.accent },
+                              match.winner_id === match.athlete1_id && { color: ax.success, fontWeight: '800' as any },
+                              match.athlete1_id === user?.id && { color: ax.accentText },
                             ]}>
                               {match.a1_username}
                             </Text>
@@ -710,8 +707,8 @@ export default function InterCompetitionDetailScreen() {
                             </Text>
                             <Text style={[
                               S.poolMatchPlayer,
-                              match.winner_id === match.athlete2_id && { color: theme.success, fontWeight: '800' as any },
-                              match.athlete2_id === user?.id && { color: theme.accent },
+                              match.winner_id === match.athlete2_id && { color: ax.success, fontWeight: '800' as any },
+                              match.athlete2_id === user?.id && { color: ax.accentText },
                             ]}>
                               {match.a2_username}
                             </Text>
@@ -719,7 +716,7 @@ export default function InterCompetitionDetailScreen() {
                         );
                       })}
                     </View>
-                  </View>
+                  </AxCard>
                 );
               })
             )}
@@ -728,27 +725,27 @@ export default function InterCompetitionDetailScreen() {
 
         {/* ── SUISSE ── */}
         {tab === 'Suisse' && comp?.format === 'swiss' && (
-          <View style={{ gap: 16 }}>
+          <View style={{ gap: axSpacing.lg }}>
             {swissStandings.length === 0 && swissRounds.length === 0 ? (
               <View style={S.empty}>
-                <Swords size={40} color={theme.textMuted} />
+                <Swords size={40} color={ax.textMuted} />
                 <Text style={S.emptyText}>{t('interDetail.swissNotStarted')}</Text>
               </View>
             ) : (
               <>
                 {/* Standings */}
                 {swissStandings.length > 0 && (
-                  <View style={S.infoCard}>
+                  <AxCard style={S.infoCard}>
                     <Text style={S.infoLabel}>{t('interDetail.standings')}</Text>
                     {swissStandings.map((st: any, i: number) => (
-                      <View key={st.id} style={[S.rankRow, st.athlete_id === user?.id && { backgroundColor: `${theme.accent}10` }]}>
+                      <View key={st.id} style={[S.rankRow, st.athlete_id === user?.id && { backgroundColor: `${ax.accent}10` }]}>
                         <Text style={[S.rankNum, {
-                          color: i === 0 ? '#C9A227' : i === 1 ? '#9CA3AF' : i === 2 ? '#B45309' : theme.textMuted,
+                          color: i < 3 ? ax.text : ax.textMuted,
                         }]}>
                           {i + 1}.
                         </Text>
                         <View style={{ flex: 1 }}>
-                          <Text style={[S.rankName, st.athlete_id === user?.id && { color: theme.accent }]}>
+                          <Text style={[S.rankName, st.athlete_id === user?.id && { color: ax.accentText }]}>
                             {st.username}{st.athlete_id === user?.id ? t('interDetail.meSuffix') : ''}
                           </Text>
                           <Text style={S.rankBox}>{t('interDetail.swissRecord', { wins: st.wins, draws: st.draws, losses: st.losses, buchholz: st.buchholz })}</Text>
@@ -756,7 +753,7 @@ export default function InterCompetitionDetailScreen() {
                         <Text style={S.rankScore}>{t('interDetail.points', { n: st.points })}</Text>
                       </View>
                     ))}
-                  </View>
+                  </AxCard>
                 )}
 
                 {/* Rounds */}
@@ -766,21 +763,21 @@ export default function InterCompetitionDetailScreen() {
                     p.athlete1_id === user?.id || p.athlete2_id === user?.id
                   );
                   return (
-                    <View key={round.id} style={[S.infoCard, myPairing && { borderColor: theme.accent, borderWidth: 1.5 }]}>
+                    <AxCard key={round.id} style={[S.infoCard, myPairing && { borderColor: ax.accent }]}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Text style={S.infoLabel}>{t('interDetail.round', { n: round.round_number })}</Text>
-                        <Text style={{ fontSize: 11, color: round.status === 'completed' ? theme.success : theme.textMuted }}>
+                        <Text style={[S.caption, { color: round.status === 'completed' ? ax.success : ax.textMuted }]}>
                           {round.status === 'completed' ? t('interDetail.statusCompleted') : t('interDetail.statusActive')}
                         </Text>
                       </View>
                       {roundPairings.map((pairing: any) => {
                         const isMyPairing = user && (pairing.athlete1_id === user.id || pairing.athlete2_id === user.id);
                         return (
-                          <View key={pairing.id} style={[S.poolMatchRow, isMyPairing && { backgroundColor: `${theme.accent}08` }]}>
+                          <View key={pairing.id} style={[S.poolMatchRow, isMyPairing && { backgroundColor: `${ax.accent}08` }]}>
                             <Text style={[
                               S.poolMatchPlayer,
-                              pairing.winner_id === pairing.athlete1_id && { color: theme.success, fontWeight: '800' as any },
-                              pairing.athlete1_id === user?.id && { color: theme.accent },
+                              pairing.winner_id === pairing.athlete1_id && { color: ax.success, fontWeight: '800' as any },
+                              pairing.athlete1_id === user?.id && { color: ax.accentText },
                             ]}>
                               {pairing.a1_username}
                             </Text>
@@ -790,15 +787,15 @@ export default function InterCompetitionDetailScreen() {
                             </Text>
                             <Text style={[
                               S.poolMatchPlayer,
-                              pairing.winner_id === pairing.athlete2_id && { color: theme.success, fontWeight: '800' as any },
-                              pairing.athlete2_id === user?.id && { color: theme.accent },
+                              pairing.winner_id === pairing.athlete2_id && { color: ax.success, fontWeight: '800' as any },
+                              pairing.athlete2_id === user?.id && { color: ax.accentText },
                             ]}>
                               {pairing.a2_username}
                             </Text>
                           </View>
                         );
                       })}
-                    </View>
+                    </AxCard>
                   );
                 })}
               </>
@@ -808,16 +805,16 @@ export default function InterCompetitionDetailScreen() {
 
         {/* ── CLASSEMENT ── */}
         {tab === 'Classement' && (
-          <View style={{ gap: 16 }}>
+          <View style={{ gap: axSpacing.lg }}>
             {wods.length === 0 ? (
               <View style={S.empty}>
-                <Trophy size={40} color={theme.textMuted} />
+                <Trophy size={40} color={ax.textMuted} />
                 <Text style={S.emptyText}>{t('interDetail.noWodAvailable')}</Text>
               </View>
             ) : wods.filter(w => isRevealed(w)).map(w => {
               const ws = standings.filter(s => s.wod_id === w.id);
               return (
-                <View key={w.id} style={S.rankCard}>
+                <AxCard key={w.id} style={S.rankCard}>
                   <View style={S.rankHeader}>
                     <View style={S.wodNum}>
                       <Text style={S.wodNumText}>W{w.order_index}</Text>
@@ -829,14 +826,10 @@ export default function InterCompetitionDetailScreen() {
                   ) : (
                     ws.map(s => (
                       <View key={s.athlete_id ?? s.team_id}
-                        style={[S.rankRow, s.rank <= 3 && { backgroundColor: `${theme.accent}08` }]}>
-                        <Text style={[S.rankNum, {
-                          color: s.rank === 1 ? '#C9A227' : s.rank === 2 ? '#9CA3AF' : s.rank === 3 ? '#B45309' : theme.textMuted,
-                        }]}>
-                          {s.rank === 1 ? '🥇' : s.rank === 2 ? '🥈' : s.rank === 3 ? '🥉' : `#${s.rank}`}
-                        </Text>
+                        style={[S.rankRow, s.rank <= 3 && { backgroundColor: `${ax.accent}08` }]}>
+                        {rankMark(s.rank)}
                         <View style={{ flex: 1 }}>
-                          <Text style={[S.rankName, s.athlete_id === user?.id && { color: theme.accent }]}>
+                          <Text style={[S.rankName, s.athlete_id === user?.id && { color: ax.accentText }]}>
                             {s.username ?? '—'}{s.athlete_id === user?.id ? t('interDetail.meSuffix') : ''}
                           </Text>
                           <Text style={S.rankBox}>{s.box_name ?? t('interDetail.unknownBox')}</Text>
@@ -845,12 +838,12 @@ export default function InterCompetitionDetailScreen() {
                       </View>
                     ))
                   )}
-                </View>
+                </AxCard>
               );
             })}
             {wods.filter(w => isRevealed(w)).length === 0 && (
               <View style={S.empty}>
-                <Trophy size={40} color={theme.textMuted} />
+                <Trophy size={40} color={ax.textMuted} />
                 <Text style={S.emptyText}>{t('interDetail.standingsAfterReveal')}</Text>
               </View>
             )}
@@ -864,112 +857,75 @@ export default function InterCompetitionDetailScreen() {
 }
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingTop: 56, paddingHorizontal: 16, paddingBottom: 14,
-      backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
-    },
-    backBtn:    { padding: 4 },
-    headerIcon: { width: 36, height: 36, borderRadius: 10, backgroundColor: '#C9A22720', justifyContent: 'center', alignItems: 'center' },
-    headerTitle:{ fontSize: 17, fontWeight: '800', color: theme.text },
-    headerSub:  { fontSize: 11, color: theme.textMuted, marginTop: 1 },
-    tabBar: {
-      flexDirection: 'row', backgroundColor: theme.card,
-      borderBottomWidth: 1, borderBottomColor: theme.border,
-    },
-    tabItem:      { flex: 1, paddingVertical: 11, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-    tabActive:    { borderBottomColor: theme.accent },
-    tabText:      { fontSize: 12, fontWeight: '600', color: theme.textMuted },
-    tabTextActive:{ color: theme.accent, fontWeight: '700' },
-    content: { padding: 16, paddingBottom: 140 },
-    infoCard: {
-      backgroundColor: theme.card, borderRadius: 16,
-      borderWidth: 1, borderColor: theme.border, padding: 16,
-    },
-    infoLabel: { fontSize: 11, fontWeight: '800', color: theme.accent, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
-    infoText:  { fontSize: 13, color: theme.textMuted, lineHeight: 20 },
-    detailRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    detailLabel:{ fontSize: 12, color: theme.textMuted, width: 60 },
-    detailVal:  { fontSize: 12, fontWeight: '700', color: theme.text, flex: 1 },
-    wodCard: {
-      backgroundColor: theme.card, borderRadius: 16,
-      borderWidth: 1, borderColor: theme.border, padding: 16,
-    },
+    headerSub: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+    tabBar: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: c.border },
+    tabItem: { paddingVertical: axSpacing.md, paddingHorizontal: axSpacing.lg, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+    tabActive: { borderBottomColor: c.accent },
+    tabText: { ...axTypography.tab, color: c.textMuted },
+    tabTextActive: { color: c.text },
+    content: { padding: axSpacing.lg },
+    infoCard: { gap: axSpacing.sm },
+    infoLabel: { ...axTypography.overline, color: c.textMuted },
+    infoText: { ...axTypography.bodySmall, color: c.textMuted },
+    detailRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+    detailLabel: { ...axTypography.caption, color: c.textMuted, width: 72 },
+    detailVal: { ...axTypography.label, color: c.text, flex: 1 },
+    wodCard: { gap: axSpacing.sm },
     wodLocked: { opacity: 0.6 },
-    wodHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
-    wodNum:    { width: 34, height: 34, borderRadius: 10, backgroundColor: '#C9A22715', justifyContent: 'center', alignItems: 'center' },
-    wodNumText:{ fontSize: 12, fontWeight: '900', color: '#C9A227' },
-    wodTitle:  { fontSize: 15, fontWeight: '700', color: theme.text },
-    wodRevealDate: { fontSize: 11, color: theme.accent, marginTop: 2 },
-    wodDesc:   { fontSize: 13, color: theme.textMuted, lineHeight: 19, marginBottom: 10 },
-    wodMeta:   { flexDirection: 'row', gap: 8, marginBottom: 10 },
-    metaChip:  { flexDirection: 'row', gap: 4, backgroundColor: theme.surface, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignItems: 'center' },
-    metaChipText: { fontSize: 10, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase' },
-    scoreChip: { borderRadius: 12, padding: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 },
-    scoreChipVal:    { fontSize: 16, fontWeight: '900' },
-    scoreChipStatus: { fontSize: 11, fontWeight: '700' },
-    submitBtn: {
-      flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center',
-      backgroundColor: '#C9A227', borderRadius: 12, padding: 12, marginTop: 4,
+    wodHeader: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+    wodNum: { width: 34, height: 34, borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border, justifyContent: 'center', alignItems: 'center' },
+    wodNumText: { ...axTypography.labelSmall, color: c.accentText },
+    wodTitle: { ...axTypography.label, color: c.text },
+    wodRevealDate: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+    wodDesc: { ...axTypography.bodySmall, color: c.textMuted },
+    wodMeta: { flexDirection: 'row', gap: axSpacing.sm, flexWrap: 'wrap' },
+    scoreChip: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.sm,
+      borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border, padding: axSpacing.md,
     },
-    submitBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
-    registeredCard: {
-      flexDirection: 'row', gap: 12, alignItems: 'center',
-      backgroundColor: `${theme.success}12`, borderRadius: 16,
-      borderWidth: 1, borderColor: `${theme.success}30`, padding: 16,
-    },
-    registeredTitle:{ fontSize: 16, fontWeight: '800', color: theme.text },
-    registeredSub:  { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-    registerBtn: {
-      flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center',
-      backgroundColor: '#C9A227', borderRadius: 16, padding: 18,
-    },
-    registerBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
-    closedBox: {
-      flexDirection: 'row', gap: 12, alignItems: 'center',
-      backgroundColor: theme.surface, borderRadius: 16, padding: 16,
-    },
-    closedText: { fontSize: 14, fontWeight: '600', color: theme.textMuted },
-    unregisterBtn: {
-      alignItems: 'center', padding: 14, borderRadius: 14,
-      borderWidth: 1, borderColor: theme.border,
-    },
-    unregisterBtnText: { fontSize: 13, fontWeight: '600', color: theme.error ?? '#EF4444' },
-    rankCard: {
-      backgroundColor: theme.card, borderRadius: 16,
-      borderWidth: 1, borderColor: theme.border, overflow: 'hidden',
-    },
+    scoreChipVal: { ...axTypography.numberM, color: c.text },
+    registeredCard: { flexDirection: 'row', gap: axSpacing.md, alignItems: 'center' },
+    registeredTitle: { ...axTypography.label, color: c.text },
+    registeredSub: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+    closedBox: { flexDirection: 'row', gap: axSpacing.md, alignItems: 'center' },
+    closedText: { ...axTypography.body, color: c.textMuted, flex: 1 },
+    rankCard: { padding: 0, gap: 0 },
     rankHeader: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      padding: 14, borderBottomWidth: 1, borderBottomColor: theme.border,
+      flexDirection: 'row', alignItems: 'center', gap: axSpacing.md,
+      padding: axSpacing.md, borderBottomWidth: 1, borderBottomColor: c.border,
     },
-    rankTitle:  { fontSize: 14, fontWeight: '700', color: theme.text, flex: 1 },
-    rankRow:    { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 10 },
-    rankNum:    { width: 32, textAlign: 'center', fontSize: 14, fontWeight: '900' },
-    rankName:   { fontSize: 13, fontWeight: '700', color: theme.text },
-    rankBox:    { fontSize: 11, color: theme.textMuted },
-    rankScore:  { fontSize: 14, fontWeight: '900', color: '#C9A227' },
-    noScores:   { fontSize: 13, color: theme.textMuted, padding: 14 },
-    empty:      { alignItems: 'center', paddingTop: 60, gap: 12 },
-    emptyText:  { fontSize: 14, color: theme.textMuted, textAlign: 'center' },
-    // Bracket styles
+    rankTitle: { ...axTypography.label, color: c.text, flex: 1 },
+    rankRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, paddingHorizontal: axSpacing.md, paddingVertical: axSpacing.sm, borderRadius: axRadius.control },
+    rankMedal: { width: 32, alignItems: 'center' },
+    rankNum: { ...axTypography.label, width: 32, textAlign: 'center' },
+    rankName: { ...axTypography.label, color: c.text },
+    rankBox: { ...axTypography.caption, color: c.textMuted },
+    rankScore: { ...axTypography.numberM, color: c.text },
+    noScores: { ...axTypography.bodySmall, color: c.textMuted, padding: axSpacing.md },
+    empty: { alignItems: 'center', paddingTop: 60, gap: axSpacing.md, paddingHorizontal: axSpacing['2xl'] },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+    // Bracket
     bracketMatchCard: {
-      backgroundColor: theme.surface, borderRadius: 12,
-      padding: 12, marginBottom: 8, borderWidth: 1, borderColor: theme.border,
+      borderRadius: axRadius.control, padding: axSpacing.md, gap: axSpacing.sm,
+      borderWidth: 1, borderColor: c.border,
     },
-    bracketMatchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    bracketPlayer:   { fontSize: 13, fontWeight: '700', color: theme.text },
-    bracketVsBadge:  { width: 36, height: 36, borderRadius: 18, backgroundColor: `${theme.accent}15`, justifyContent: 'center', alignItems: 'center' },
-    bracketVsText:   { fontSize: 11, fontWeight: '900', color: theme.accent },
-    // League styles
-    leagueRoundCard: { backgroundColor: theme.surface, borderRadius: 10, padding: 12, marginTop: 8 },
-    leagueStatusBadge: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 },
-    leagueStatusText:  { fontSize: 10, fontWeight: '800' },
-    // Pool styles
-    poolMatchRow:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: 4, borderRadius: 6, marginBottom: 2 },
-    poolMatchPlayer: { fontSize: 12, fontWeight: '600', color: theme.text, flex: 1, textAlign: 'center' },
-    poolMatchScore:  { fontSize: 12, fontWeight: '700', color: theme.textMuted, marginHorizontal: 8 },
+    bracketMatchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.sm },
+    bracketPlayer: { ...axTypography.label, color: c.text, textAlign: 'center' },
+    bracketVsBadge: { width: 36, height: 36, borderRadius: 18, borderWidth: 1, borderColor: c.border, justifyContent: 'center', alignItems: 'center' },
+    bracketVsText: { ...axTypography.labelSmall, color: c.textMuted },
+    // Ligue
+    leagueRoundCard: { borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border, padding: axSpacing.md, marginTop: axSpacing.sm, gap: axSpacing.xs },
+    // Poules
+    poolMatchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, paddingHorizontal: axSpacing.xs, borderRadius: axRadius.control, marginBottom: 2 },
+    poolMatchPlayer: { ...axTypography.bodySmall, color: c.text, flex: 1, textAlign: 'center' },
+    bracketWinner: { ...axTypography.caption, color: c.success, textAlign: 'center' },
+    bracketBye: { ...axTypography.caption, color: c.textMuted, textAlign: 'center', fontStyle: 'italic' },
+    leagueRoundTitle: { ...axTypography.label, color: c.text, flex: 1 },
+    caption: { ...axTypography.caption, color: c.textMuted },
+    subLabel: { ...axTypography.overlineSmall, color: c.textMuted, marginBottom: 6 },
+    poolMatchScore: { ...axTypography.label, color: c.textMuted, marginHorizontal: axSpacing.sm },
   });
 }
