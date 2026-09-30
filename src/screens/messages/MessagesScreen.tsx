@@ -7,7 +7,9 @@ import {
 } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Send, Megaphone, ImagePlus, X, Search, ChevronLeft } from 'lucide-react-native';
+import { Send, Megaphone, ImagePlus, X, Search, ChevronLeft, MessageCircle } from 'lucide-react-native';
+import { AxTextField } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 
 // Marqueur repérable dans le bundle publié (ota.yml, verify:ipa/aab) : le
 // préfixe suit la clé inlinée au moment du bundle, comme l'URL Supabase.
@@ -571,13 +573,14 @@ export default function MessagesScreen() {
             {groups.map(g => (
               <TouchableOpacity
                 key={g.id}
+                testID={`messages-tab-${g.id}`}
                 style={[
                   S.tab,
-                  activeTab === g.id && { backgroundColor: g.color ?? theme.accent, borderColor: g.color ?? theme.accent },
+                  activeTab === g.id && S.tabActive,
                 ]}
                 onPress={() => setActiveTab(g.id)}
               >
-                <View style={[S.tabDot, { backgroundColor: g.color ?? theme.accent }]} />
+                <View style={[S.tabDot, { backgroundColor: g.color ?? theme.ax.accentText }, activeTab === g.id && S.tabDotActive]} />
                 <Text style={[S.tabText, activeTab === g.id && S.tabTextActive]} numberOfLines={1}>{g.name}</Text>
               </TouchableOpacity>
             ))}
@@ -617,7 +620,7 @@ export default function MessagesScreen() {
             <View style={[S.msgRow, isMe && S.msgRowMe, !showSender && S.msgRowGrouped]}>
               {!isMe && (
                 showSender
-                  ? <UserAvatar uri={msg.sender?.avatar_url} name={msg.sender?.username ?? '?'} size={28} borderRadius={10} backgroundColor={theme.accentShadow} />
+                  ? <UserAvatar uri={msg.sender?.avatar_url} name={msg.sender?.username ?? '?'} size={28} borderRadius={10} backgroundColor={theme.ax.surface} textColor={theme.ax.text} />
                   : <View style={S.avatarSpacer} />
               )}
               <Pressable
@@ -626,13 +629,13 @@ export default function MessagesScreen() {
                 delayLongPress={400}
                 style={{ maxWidth: '78%' }}
               >
-                <View style={[S.bubble, isMe ? S.bubbleMe : S.bubbleThem]}>
+                <View testID={`bubble-${msg.id}`} style={[S.bubble, isMe ? S.bubbleMe : S.bubbleThem]}>
                   {!isMe && showSender && (
-                    <Text style={S.senderName}>{msg.sender?.username ?? 'Inconnu'}</Text>
+                    <Text testID={`bubble-sender-${msg.id}`} style={S.senderName} numberOfLines={1}>{msg.sender?.username ?? 'Inconnu'}</Text>
                   )}
                   {msg.is_announcement && (
                     <View style={S.announcementTag}>
-                      <Megaphone color={theme.warning} size={10} />
+                      <Megaphone color={theme.ax.warning} size={10} />
                       <Text style={S.announcementText}>Annonce</Text>
                     </View>
                   )}
@@ -654,9 +657,9 @@ export default function MessagesScreen() {
                     );
                   })()}
                   {msg.content && msg.content !== '📷 Image' && (
-                    <Text style={[S.bubbleText, isMe && S.bubbleTextMe]}>{msg.content}</Text>
+                    <Text testID={`bubble-text-${msg.id}`} style={[S.bubbleText, isMe && S.bubbleTextMe]}>{msg.content}</Text>
                   )}
-                  <Text style={[S.timeText, isMe && S.timeTextMe]}>{formatTime(msg.created_at)}</Text>
+                  <Text testID={`bubble-time-${msg.id}`} style={[S.timeText, isMe && S.timeTextMe]}>{formatTime(msg.created_at)}</Text>
                 </View>
                 {!isMe && msg.sender_id !== 'admin' && msg.sender_id !== null && !msg.id.startsWith('temp-') && (
                   <View style={{ position: 'absolute', top: 6, right: -18, opacity: 0.4 }}>
@@ -679,7 +682,7 @@ export default function MessagesScreen() {
                         style={[S.reactionPill, r.mine && S.reactionPillMine]}
                       >
                         <Text style={S.reactionEmoji}>{r.emoji}</Text>
-                        <Text style={[S.reactionCount, r.mine && { color: theme.accent }]}>{r.count}</Text>
+                        <Text style={[S.reactionCount, r.mine && { color: theme.ax.accentText }]}>{r.count}</Text>
                       </Pressable>
                     ))}
                   </View>
@@ -690,7 +693,7 @@ export default function MessagesScreen() {
         }}
         ListEmptyComponent={
           <View style={S.empty}>
-            <Text style={S.emptyEmoji}>💬</Text>
+            <MessageCircle color={theme.ax.textMuted} size={40} />
             <Text style={S.emptyText}>Aucun message pour l'instant.{'\n'}Soyez le premier à écrire !</Text>
           </View>
         }
@@ -709,7 +712,7 @@ export default function MessagesScreen() {
       {/* Character counter */}
       {input.length >= 400 && (
         <View style={S.charCounterBar}>
-          <Text style={[S.charCounterText, input.length >= 500 && { color: '#ef4444' }]}>
+          <Text style={[S.charCounterText, input.length >= 500 && { color: theme.ax.danger }]}>
             {input.length}/500
           </Text>
         </View>
@@ -723,16 +726,18 @@ export default function MessagesScreen() {
         <TouchableOpacity onPress={openGifPicker} style={S.imgBtn} activeOpacity={0.7}>
           <Text style={S.gifBtnLabel}>GIF</Text>
         </TouchableOpacity>
-        <TextInput
-          style={S.input}
-          placeholder="Écrire un message…"
-          placeholderTextColor={theme.textMuted}
-          value={input}
-          onChangeText={setInput}
-          multiline
-          maxLength={500}
-          returnKeyType="default"
-        />
+        <View style={S.inputWrap}>
+          <AxTextField
+            testID="messages-input"
+            placeholder="Écrire un message…"
+            value={input}
+            onChangeText={setInput}
+            multiline
+            compact
+            maxLength={500}
+            maxInputHeight={100}
+          />
+        </View>
         <TouchableOpacity
           style={[S.sendBtn, (!input.trim() && !pendingImage || sending) && S.sendBtnDisabled]}
           onPress={sendMessage}
@@ -740,8 +745,8 @@ export default function MessagesScreen() {
           activeOpacity={0.8}
         >
           {sending
-            ? <ActivityIndicator color="#fff" size="small" />
-            : <Send color="#fff" size={18} />}
+            ? <ActivityIndicator color={theme.ax.onAccent} size="small" />
+            : <Send color={theme.ax.onAccent} size={18} />}
         </TouchableOpacity>
       </View>
 
@@ -831,6 +836,7 @@ export default function MessagesScreen() {
 
 function createStyles(theme: AppTheme) {
   const isDark = theme.mode === 'dark';
+  const c = theme.ax;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
   header: {
@@ -839,12 +845,12 @@ function createStyles(theme: AppTheme) {
     borderBottomWidth: isDark ? 1 : 0, borderBottomColor: theme.border,
     ...(isDark ? {} : { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 }),
   },
-  headerTitle: { fontSize: 22, fontWeight: '900', color: theme.text, letterSpacing: -0.3 },
-  headerSub:   { fontSize: 12, color: theme.textMuted, marginTop: 2 },
+  headerTitle: { ...axTypography.titleM, color: c.text },
+  headerSub:   { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
   list: { paddingHorizontal: 12, paddingTop: 8, paddingBottom: 6 },
   dateDivider: { flexDirection: 'row', alignItems: 'center', marginVertical: 14, gap: 10 },
   dateLine:    { flex: 1, height: StyleSheet.hairlineWidth, backgroundColor: theme.border },
-  dateLabel:   { fontSize: 11, color: theme.textMuted, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  dateLabel:   { ...axTypography.overlineSmall, color: c.textMuted },
   msgRow:        { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginBottom: 2, marginTop: 8 },
   msgRowMe:      { flexDirection: 'row-reverse' },
   msgRowGrouped: { marginTop: 2 },
@@ -852,61 +858,56 @@ function createStyles(theme: AppTheme) {
   avatarSpacer:  { width: 28 },
   avatarText:    { fontSize: 11, fontWeight: '900', color: '#fff' },
   bubble: {
-    borderRadius: 18, paddingHorizontal: 14, paddingVertical: 9,
+    borderRadius: axRadius.card * 2, paddingHorizontal: 14, paddingVertical: 9,
   },
   bubbleThem: {
-    backgroundColor: isDark ? theme.card : theme.card,
-    borderWidth: 1, borderColor: theme.border,
-    borderBottomLeftRadius: 4,
+    backgroundColor: c.surface,
+    borderWidth: 1, borderColor: c.border,
+    borderBottomLeftRadius: axRadius.badge,
   },
   bubbleMe: {
-    backgroundColor: theme.accent,
-    borderBottomRightRadius: 4,
+    backgroundColor: c.accent,
+    borderBottomRightRadius: axRadius.badge,
   },
-  senderName:       { fontSize: 11, fontWeight: '700', color: theme.accent, marginBottom: 2 },
-  announcementTag:  { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 3 },
-  announcementText: { fontSize: 9, fontWeight: '700', color: theme.warning },
-  bubbleText:       { fontSize: 15, color: theme.text, lineHeight: 21 },
-  bubbleTextMe:     { color: '#fff' },
-  timeText:         { fontSize: 10, color: theme.textMuted, alignSelf: 'flex-end', marginTop: 2 },
-  timeTextMe:       { color: 'rgba(255,255,255,0.55)' },
+  senderName:       { ...axTypography.labelSmall, color: c.accentText, marginBottom: 2 },
+  announcementTag:  { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, marginBottom: 3 },
+  announcementText: { ...axTypography.overlineSmall, color: c.warning },
+  bubbleText:       { ...axTypography.body, lineHeight: 21, color: c.text },
+  bubbleTextMe:     { color: c.onAccent },
+  timeText:         { ...axTypography.caption, fontSize: 10, lineHeight: 14, color: c.textMuted, alignSelf: 'flex-end', marginTop: 2 },
+  timeTextMe:       { color: c.onAccent },
   inputBar: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 8, paddingVertical: 6,
-    backgroundColor: theme.card, borderTopWidth: 1, borderTopColor: theme.border,
+    flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs,
+    paddingHorizontal: axSpacing.sm, paddingVertical: 6,
+    backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border,
   },
-  input: {
-    flex: 1, backgroundColor: theme.surface, borderRadius: 22,
-    borderWidth: 1, borderColor: theme.border,
-    paddingHorizontal: 16, paddingVertical: 10,
-    fontSize: 15, color: theme.text, maxHeight: 100,
-  },
-  sendBtn:         { width: 42, height: 42, borderRadius: 14, backgroundColor: theme.accent, justifyContent: 'center', alignItems: 'center' },
+  inputWrap: { flex: 1, minWidth: 0 },
+  sendBtn:         { width: 44, height: 44, borderRadius: axRadius.control, backgroundColor: c.accent, justifyContent: 'center', alignItems: 'center' },
   sendBtnDisabled: { opacity: 0.4 },
   empty:     { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, paddingTop: 60, gap: 12 },
-  emptyEmoji: { fontSize: 40 },
-  emptyText: { fontSize: 14, color: theme.textMuted, textAlign: 'center', lineHeight: 22 },
-  tabsContainer: { backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border },
-  tabsContent:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, gap: 8 },
+  emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+  tabsContainer: { backgroundColor: c.surface, borderBottomWidth: 1, borderBottomColor: c.border },
+  tabsContent:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: axSpacing.md, paddingVertical: 10, gap: axSpacing.sm },
   tab: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    paddingVertical: 10, paddingHorizontal: 16,
-    borderRadius: 20, borderWidth: 1, borderColor: theme.border,
-    backgroundColor: theme.surface,
+    paddingVertical: 10, paddingHorizontal: axSpacing.lg, maxWidth: 240,
+    borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border,
+    backgroundColor: c.field,
   },
-  tabActive:     { backgroundColor: theme.accent, borderColor: theme.accent },
+  tabActive:     { backgroundColor: c.accent, borderColor: c.accent },
   tabDot:        { width: 7, height: 7, borderRadius: 4 },
-  tabText:       { fontSize: 13, fontWeight: '700', color: theme.textSecondary ?? theme.textMuted },
-  tabTextActive: { color: '#fff', fontWeight: '700' },
+  tabDotActive:  { borderWidth: 1, borderColor: c.onAccent },
+  tabText:       { ...axTypography.labelSmall, color: c.text, flexShrink: 1 },
+  tabTextActive: { color: c.onAccent },
 
   attachmentWrap:  { marginBottom: 6, borderRadius: 12, overflow: 'hidden' },
   attachmentImg:   { width: SCREEN_W * 0.55, height: SCREEN_W * 0.4, borderRadius: 12 },
 
   reactionsRow:    { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4, paddingHorizontal: 4 },
   reactionPill:    { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)', borderRadius: 12, paddingHorizontal: 7, paddingVertical: 3 },
-  reactionPillMine:{ borderWidth: 1, borderColor: `${theme.accent}50`, backgroundColor: `${theme.accent}12` },
+  reactionPillMine:{ borderWidth: 1, borderColor: c.accentText },
   reactionEmoji:   { fontSize: 14 },
-  reactionCount:   { fontSize: 11, fontWeight: '700', color: theme.textMuted },
+  reactionCount:   { ...axTypography.labelSmall, fontSize: 11, color: c.textMuted },
 
   pendingImageBar:   { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: theme.card, borderTopWidth: 1, borderTopColor: theme.border },
   pendingImageThumb: { width: 60, height: 60, borderRadius: 10 },
@@ -923,7 +924,7 @@ function createStyles(theme: AppTheme) {
   reactionPickerBtn:  { padding: 8 },
   reactionPickerEmoji:{ fontSize: 28 },
 
-  gifBtnLabel:     { fontSize: 13, fontWeight: '900', color: theme.textMuted, letterSpacing: 0.5 },
+  gifBtnLabel:     { ...axTypography.labelSmall, fontSize: 13, color: c.textMuted, letterSpacing: 0.5 },
   gifModal:        { flex: 1, backgroundColor: theme.background, paddingTop: Platform.OS === 'ios' ? 56 : 32 },
   gifHeader:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 12 },
   gifHeaderTitle:  { fontSize: 18, fontWeight: '800', color: theme.text },
@@ -936,6 +937,6 @@ function createStyles(theme: AppTheme) {
   gifUnavailableHint:  { fontSize: 14, color: theme.textMuted, textAlign: 'center' },
   gifAttribution:  { fontSize: 11, fontWeight: '700', color: theme.textMuted, textAlign: 'center', paddingVertical: 10, letterSpacing: 0.5 },
 
-  charCounterBar:  { alignItems: 'flex-end', paddingHorizontal: 16, paddingVertical: 2, backgroundColor: theme.card, borderTopWidth: 1, borderTopColor: theme.border },
-  charCounterText: { fontSize: 11, fontWeight: '600', color: theme.textMuted },
+  charCounterBar:  { alignItems: 'flex-end', paddingHorizontal: 16, paddingVertical: 2, backgroundColor: c.surface, borderTopWidth: 1, borderTopColor: c.border },
+  charCounterText: { ...axTypography.caption, color: c.textMuted },
 }); }
