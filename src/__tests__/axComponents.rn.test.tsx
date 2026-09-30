@@ -369,6 +369,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'components', 'wod', 'TimerLaunchModal.tsx'),
     // R6a : écrans du mode caméra (lecture de la vidéo).
     path.join(SRC, 'screens', 'timer', 'VideoPlaybackScreen.tsx'),
+    // R7 : historique ELO par paliers.
+    path.join(SRC, 'screens', 'profile', 'EloHistoryScreen.tsx'),
   ];
 
   it('R4a : dans src/screens/wod et src/components/wod, seuls les fichiers du générateur et des résultats consomment ax', () => {
@@ -431,6 +433,18 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       path.join('tournament', 'DailyTournamentDetailScreen.tsx'),
       path.join('tournament', 'DailyTournamentsScreen.tsx'),
     ].sort());
+  });
+
+  it('R7 : dans src/screens/profile, seul l’historique ELO passe aux cartes ax ; les paliers restent sans ax', () => {
+    const profile = walk(path.join(SRC, 'screens', 'profile'))
+      .filter((f) => IMPORTS_AX.test(fs.readFileSync(f, 'utf8')))
+      .map((f) => path.basename(f))
+      .sort();
+    // BlockedUsers et PublicProfile : adoptants R3c (AxScreenHeader seul).
+    expect(profile).toEqual(['BlockedUsersScreen.tsx', 'EloHistoryScreen.tsx', 'PublicProfileScreen.tsx']);
+    const withCards = profile.filter((f) => /\bAxCard\b/.test(fs.readFileSync(path.join(SRC, 'screens', 'profile', f), 'utf8')));
+    expect(withCards).toEqual(['EloHistoryScreen.tsx']);
+    expect(IMPORTS_AX.test(fs.readFileSync(path.join(SRC, 'utils', 'eloTiers.ts'), 'utf8'))).toBe(false);
   });
 
   it('aucun écran de src/screens (hors catalogue et adoptants) ni ancien composant de src/components n’importe ax', () => {
