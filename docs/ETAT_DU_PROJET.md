@@ -453,6 +453,10 @@ Supabase/Resend.
   libellés, icônes, ordre et comportement inchangés ; barres gérant et coach inchangées.
 - Espace bas commun `useTabBarScrollSpace()` (64 + 12 + inset + 16) sur tous les écrans des piles de
   l'athlète ; éléments fixés en bas (carte de la carte des box, commentaire d'article) posés au-dessus.
+- Correctif (apparence seule) : les 5 onglets ont la même largeur (`flex: 1`, padding horizontal de la barre 6),
+  « Accueil » centré au pixel sur l'écran ; libellés Inter SemiBold 9,5 sans espacement, une ligne, réduits
+  jusqu'à 0,85 (`adjustsFontSizeToFit`) au lieu d'être coupés. Tests : largeurs égales, centre à 390 / 430 px,
+  libellés FR / EN mesurés avec les avances réelles d'Inter (390, 430, 320 px), 5 mutations tuées.
 
 **Refonte R2a : onglet Entraînement à la place d'Explorer (app seule, aucune migration).**
 - 2e onglet « Entraînement » (icône Dumbbell) : écran ax `TrainingScreen` (génération en un tap par

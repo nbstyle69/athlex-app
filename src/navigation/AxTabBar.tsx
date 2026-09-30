@@ -71,7 +71,14 @@ export function AxTabBar({ state, descriptors, navigation, insets }: BottomTabBa
                 </View>
               )}
             </View>
-            <Text style={[axTypography.tab, { color }]} numberOfLines={1}>{label}</Text>
+            <Text
+              style={[axTypography.tab, styles.label, { color }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={TAB_BAR.labelMinScale}
+            >
+              {label}
+            </Text>
             <View
               testID={`tab-${route.name}-dot`}
               style={[styles.dot, { backgroundColor: ax.accentText, opacity: focused ? 1 : 0 }]}
@@ -90,18 +97,19 @@ const styles = StyleSheet.create({
     borderRadius: TAB_BAR.radius,
     borderWidth: 1,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
     paddingVertical: TAB_BAR.paddingVertical,
     paddingHorizontal: TAB_BAR.paddingHorizontal,
     overflow: 'hidden',
   },
   item: {
+    flex: 1,
     minWidth: TAB_BAR.minTouch,
     minHeight: TAB_BAR.minTouch,
     alignItems: 'center',
     gap: TAB_BAR.itemGap,
   },
+  label: { alignSelf: 'stretch', textAlign: 'center', fontSize: TAB_BAR.labelSize, letterSpacing: 0 },
   badge: { position: 'absolute', top: -6, left: TAB_BAR.iconSize - 6 },
   dot: { width: TAB_BAR.dotSize, height: TAB_BAR.dotSize, borderRadius: TAB_BAR.dotSize / 2 },
 });
