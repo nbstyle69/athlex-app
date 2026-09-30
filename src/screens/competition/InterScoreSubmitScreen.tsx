@@ -1,10 +1,12 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity,
-  TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform,
+  View, Text, ScrollView, StyleSheet,
+  Alert, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { Timer, Video, Send, Dumbbell, Clock } from 'lucide-react-native';
+import { Timer, Video, Send, Dumbbell } from 'lucide-react-native';
+import { AxButton, AxCard, AxTag, AxTextField } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
@@ -30,6 +32,7 @@ export default function InterScoreSubmitScreen() {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const S = createStyles(theme);
+  const ax = theme.ax;
 
   // inter_scores.score_value is a NUMERIC column and the standings view ranks on
   // it (time ↑, everything else ↓). We store a canonical number and keep a
@@ -127,37 +130,30 @@ export default function InterScoreSubmitScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} keyboardShouldPersistTaps="handled">
 
           {/* WOD info */}
-          <View style={S.wodCard}>
+          <AxCard style={S.wodCard} testID="inter-score-wod">
             <View style={S.wodHeader}>
               <View style={S.wodIcon}>
-                <Dumbbell size={16} color={theme.accent} />
+                <Dumbbell size={16} color={ax.accentText} />
               </View>
               <Text style={S.wodTitle}>{wodTitle}</Text>
             </View>
             {wodDescription ? <Text style={S.wodDesc}>{wodDescription}</Text> : null}
             <View style={S.wodMeta}>
-              {timeCap && (
-                <View style={S.chip}>
-                  <Clock size={10} color={theme.textMuted} />
-                  <Text style={S.chipText}>{t('interScore.minCap', { n: timeCap })}</Text>
-                </View>
-              )}
-              <View style={S.chip}>
-                <Text style={S.chipText}>{scoringType}</Text>
-              </View>
+              {timeCap && <AxTag label={t('interScore.minCap', { n: timeCap })} tone="muted" />}
+              <AxTag label={scoringType} testID="inter-score-scoring" />
             </View>
-          </View>
+          </AxCard>
 
           {/* Launch timer */}
           <View style={S.section}>
             <Text style={S.sectionLabel}>{t('interScore.step1')}</Text>
-            <TouchableOpacity style={S.timerBtn} activeOpacity={0.85} onPress={handleLaunchTimer}>
-              <Timer size={20} color="#fff" />
-              <View>
+            <AxCard onPress={handleLaunchTimer} accessibilityLabel={t('interScore.launchTimerCamera')} style={S.timerBtn} testID="inter-score-timer">
+              <Timer size={20} color={ax.accentText} />
+              <View style={S.timerTexts}>
                 <Text style={S.timerBtnTitle}>{t('interScore.launchTimerCamera')}</Text>
                 <Text style={S.timerBtnSub}>{t('interScore.launchTimerCameraSub')}</Text>
               </View>
-            </TouchableOpacity>
+            </AxCard>
             <Text style={S.orText}>{t('interScore.orEnterBelow')}</Text>
           </View>
 
@@ -176,60 +172,50 @@ export default function InterScoreSubmitScreen() {
           <View style={S.section}>
             <Text style={S.sectionLabel}>{t('interScore.step3')}</Text>
             <Text style={S.sectionHint}>{t('interScore.step3Hint')}</Text>
-            <View style={S.inputWrapper}>
-              <Video size={16} color={theme.textMuted} />
-              <TextInput
-                style={S.input}
-                value={videoUrl}
-                onChangeText={setVideoUrl}
-                placeholder="https://youtube.com/..."
-                placeholderTextColor={theme.textMuted}
-                autoCapitalize="none"
-                keyboardType="url"
-              />
-            </View>
+            <AxTextField
+              icon={Video}
+              value={videoUrl}
+              onChangeText={setVideoUrl}
+              placeholder="https://youtube.com/..."
+              autoCapitalize="none"
+              keyboardType="url"
+              accessibilityLabel={t('interScore.step3')}
+              testID="inter-score-video"
+            />
           </View>
 
           {/* Notes */}
           <View style={S.section}>
             <Text style={S.sectionLabel}>{t('interScore.notes')}</Text>
-            <TextInput
-              style={[S.inputWrapper, { height: 80, alignItems: 'flex-start', paddingTop: 12 }]}
+            <AxTextField
               value={notes}
               onChangeText={setNotes}
               placeholder={t('interScore.notesPlaceholder')}
-              placeholderTextColor={theme.textMuted}
               multiline
-              textAlignVertical="top"
+              accessibilityLabel={t('interScore.notes')}
+              testID="inter-score-notes"
             />
           </View>
 
           {/* Info */}
-          <View style={S.infoBox}>
+          <AxCard style={S.infoBox}>
             <Text style={S.infoText}>
               {t('interScore.infoPrefix')}{' '}
-              <Text style={{ fontWeight: '700', color: theme.accent }}>{t('interScore.pending')}</Text>.
+              <Text style={S.infoStrong}>{t('interScore.pending')}</Text>.
               {'\n'}{t('interScore.infoSuffix')}
             </Text>
-          </View>
+          </AxCard>
 
           {/* Submit */}
-          <TouchableOpacity
-            style={[S.submitBtn, submitting && { opacity: 0.6 }]}
-            activeOpacity={0.85}
+          <AxButton
+            label={existingScore ? t('interScore.update') : t('interScore.title')}
+            icon={Send}
+            fullWidth
             onPress={handleSubmit}
             disabled={submitting}
-          >
-            {submitting
-              ? <ActivityIndicator color="#fff" />
-              : <>
-                <Send size={18} color="#fff" />
-                <Text style={S.submitBtnText}>
-                  {existingScore ? t('interScore.update') : t('interScore.title')}
-                </Text>
-              </>
-            }
-          </TouchableOpacity>
+            loading={submitting}
+            testID="inter-score-submit"
+          />
 
           <View style={{ height: 40 }} />
         </ScrollView>
@@ -239,56 +225,27 @@ export default function InterScoreSubmitScreen() {
 }
 
 function createStyles(theme: AppTheme) {
+  const c = theme.ax;
   return StyleSheet.create({
-    container:  { flex: 1, backgroundColor: 'transparent' },
-    header: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      paddingTop: 56, paddingHorizontal: 16, paddingBottom: 14,
-      backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
-    },
-    backBtn:      { padding: 4 },
-    headerTitle:  { fontSize: 18, fontWeight: '800', color: theme.text },
-    headerSub:    { fontSize: 12, color: theme.textMuted, marginTop: 1 },
-    content:      { padding: 16, paddingBottom: 140 },
-    wodCard: {
-      backgroundColor: theme.card, borderRadius: 16,
-      borderWidth: 1, borderColor: theme.border,
-      padding: 16, marginBottom: 20,
-    },
-    wodHeader:  { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
-    wodIcon:    { width: 32, height: 32, borderRadius: 8, backgroundColor: '#C9A22718', justifyContent: 'center', alignItems: 'center' },
-    wodTitle:   { fontSize: 15, fontWeight: '700', color: theme.text, flex: 1 },
-    wodDesc:    { fontSize: 13, color: theme.textMuted, lineHeight: 18, marginBottom: 10 },
-    wodMeta:    { flexDirection: 'row', gap: 8 },
-    chip:       { flexDirection: 'row', gap: 4, backgroundColor: theme.surface, borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignItems: 'center' },
-    chipText:   { fontSize: 10, fontWeight: '700', color: theme.textMuted, textTransform: 'uppercase' },
-    section:    { marginBottom: 20 },
-    sectionLabel:{ fontSize: 13, fontWeight: '800', color: theme.text, marginBottom: 8 },
-    sectionHint: { fontSize: 11, color: theme.textMuted, marginBottom: 8, marginTop: -4 },
-    timerBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      backgroundColor: '#C9A227', borderRadius: 14, padding: 16,
-    },
-    timerBtnTitle:{ fontSize: 15, fontWeight: '700', color: '#fff' },
-    timerBtnSub:  { fontSize: 11, color: 'rgba(255,255,255,0.75)', marginTop: 1 },
-    orText: { textAlign: 'center', fontSize: 12, color: theme.textMuted, marginTop: 12 },
-    inputWrapper: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      backgroundColor: theme.card, borderRadius: 12,
-      borderWidth: 1, borderColor: theme.border,
-      paddingHorizontal: 14, paddingVertical: 12,
-    },
-    input: { flex: 1, fontSize: 14, color: theme.text },
-    infoBox: {
-      backgroundColor: `${theme.accent}12`, borderRadius: 12,
-      borderWidth: 1, borderColor: `${theme.accent}25`,
-      padding: 14, marginBottom: 20,
-    },
-    infoText: { fontSize: 13, color: theme.textMuted, lineHeight: 19 },
-    submitBtn: {
-      flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'center',
-      backgroundColor: '#C9A227', borderRadius: 16, padding: 18,
-    },
-    submitBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+    container: { flex: 1, backgroundColor: 'transparent' },
+    headerSub: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+    content: { padding: axSpacing.lg },
+    wodCard: { marginBottom: axSpacing.xl, gap: axSpacing.sm },
+    wodHeader: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+    wodIcon: { width: 32, height: 32, borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border, justifyContent: 'center', alignItems: 'center' },
+    wodTitle: { ...axTypography.titleM, color: c.text, flex: 1 },
+    wodDesc: { ...axTypography.bodySmall, color: c.textMuted },
+    wodMeta: { flexDirection: 'row', gap: axSpacing.sm, flexWrap: 'wrap' },
+    section: { marginBottom: axSpacing.xl, gap: axSpacing.sm },
+    sectionLabel: { ...axTypography.overline, color: c.textMuted },
+    sectionHint: { ...axTypography.caption, color: c.textMuted },
+    timerBtn: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+    timerTexts: { flex: 1, minWidth: 0 },
+    timerBtnTitle: { ...axTypography.label, color: c.text },
+    timerBtnSub: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+    orText: { ...axTypography.caption, textAlign: 'center', color: c.textMuted, marginTop: axSpacing.xs },
+    infoBox: { marginBottom: axSpacing.xl },
+    infoText: { ...axTypography.bodySmall, color: c.textMuted },
+    infoStrong: { fontWeight: '700', color: c.accentText },
   });
 }

@@ -32,7 +32,9 @@ describe('src/theme — chaque module a au moins un importeur', () => {
     const importers = allSources.filter((src) => {
       if (path.join(THEME_DIR, file) === src) return false;
       const text = fs.readFileSync(src, 'utf8');
-      return new RegExp(`(from|require\\()\\s*['"][^'"]*theme/${moduleName}['"]`).test(text);
+      if (new RegExp(`(from|require\\()\\s*['"][^'"]*theme/${moduleName}['"]`).test(text)) return true;
+      return path.dirname(src) === THEME_DIR
+        && new RegExp(`(from|require\\()\\s*['"]\\./${moduleName}['"]`).test(text);
     });
     expect(importers.length).toBeGreaterThan(0);
   });
