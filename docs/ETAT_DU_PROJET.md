@@ -205,6 +205,21 @@ Supabase/Resend.
 
 ## En cours
 
+**Refonte R9a : Ma Box et détail du WOD au nouveau design, page Ma Box entièrement défilante (app seule, aucune migration).**
+- `WhiteboardScreen` : tout l'écran (en-tête, Membres / Messages / Actualités / Classement de la box, onglets de piste,
+  jours, « Entrer mon score » / « Classement », séances) dans un seul `ScrollView` avec « tirer pour actualiser » (même
+  action) ; sans box, l'écran perso défile aussi et garde son actualisation. `AxButton`, `AxCounterBadge`, `AxChip`
+  (onglets, `WhiteboardTrackTabs`), `AxDayItem` (`WeekDayPicker` variante `ax`), `AxCard` / `AxTag` / `AxIconButton`
+  pour les séances ; états musculation et « Reprendre ma saisie » inchangés ; 📋 remplacé par l'icône Lucide.
+- `WODDetailScreen` : carte du WOD `AxCard` featured, « Notes coach » en overline accentText, « Mon score » en `AxCard`
+  (score `numberM`, « Partager » / « Modifier » outline, « Ma note »), « Entrer mon score » `AxButton` accent, classement
+  en liste d'`AxCard` (médailles Lucide `Medal`), commentaires en `AxCard` + `AxTextField` ; fenêtre de saisie : `AxChip`
+  (type, niveau), `AxTextField`, `AxButton` accent « Valider le score ». Saisie, brouillon et validation musculation inchangés.
+- Options rétrocompatibles : `AxChip.accessibilityRole`, `AxTextField.autoFocus` / `inputRef`, `AxCounterBadge.readableInk`
+  (encre lisible sur le rouge en thème sombre).
+- Tests : `r9a.rn.test.tsx` (54, instantané avant / après sur 9 variantes `r9aStructureBefore.json`), isolement R1
+  élargi aux fichiers du lot, `npx jest` 1976, `npm run test:rn` 622, `tsc` vert ; 25 mutations tuées.
+
 **Refonte R9b : écrans secondaires de Ma Box au nouveau design (app seule, aucune migration, apparence seule).**
 - Actualités, Membres (fenêtre extraite telle quelle de `WhiteboardScreen` vers `WhiteboardMembersModal`), Séance perso
   (formulaire), Classement de la box, Messages et Infos de la box : `AxCard` par ligne ou section, `AxTextField`, `AxChip`,

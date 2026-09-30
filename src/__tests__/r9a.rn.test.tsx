@@ -448,6 +448,7 @@ describe('R9a : navigation et callbacks de Ma Box inchangés', () => {
   });
   it('le bouton chrono ouvre le minuteur de la séance', async () => {
     const root = await mount(<WhiteboardScreen />);
+    expect(mockTimerOpen).toEqual([]);
     await press(root, 'wod-timer-wA');
     expect(mockTimerOpen).toContain(LONG);
   });
@@ -507,6 +508,7 @@ describe('R9a : détail du WOD', () => {
     typo(byID(root, 'my-score-value'), 'numberM');
     expect(isAncestor(byID(root, 'my-score'), textNode(root, 'Wall balls à 6 kg'))).toBe(true);
     expect(root.findAll((x) => x.props.testID === 'enter-score')).toHaveLength(0);
+    expect(accentButtons(root)).toHaveLength(0);
     expect(root.findAll((x) => String(x.type) === 'TextInput' && !insideModal(x))).toHaveLength(0);
     await press(root, 'my-score-edit');
     expect(visibleModals(root)).toHaveLength(1);
