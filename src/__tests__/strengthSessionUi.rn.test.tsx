@@ -9,7 +9,7 @@ import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { lightTheme, darkTheme, type AppTheme } from '../theme/palette';
 import i18n from '../i18n';
 import StrengthSetGrid, {
-  StrengthMaxLoadRow, StrengthSessionStatus,
+  StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSessionStatus,
 } from '../components/wod/StrengthSetGrid';
 import { AxStatusDot } from '../components/ax';
 import type { StrengthSetDraft } from '../services/strengthSets';
@@ -78,5 +78,35 @@ describe('charge max calculée', () => {
     expect(root.findByProps({ testID: 'strength-max-load' }).props.accessibilityLabel)
       .toBe('Charge max (score) · calculée : 102.5 kg');
     expect(root.findAllByType(TextInput)).toHaveLength(0);
+  });
+});
+
+describe('même mouvement dans deux blocs', () => {
+  // Numéros de stockage 1, 2 puis 3, 4 (continus par mouvement) : l'athlète lit
+  // « Série 1, 2 » dans chaque bloc.
+  const fs = (entryIndex: number, setIndex: number, reps: string, loadKg: string): StrengthSetDraft => ({
+    entryIndex, setIndex, name: 'Front Squat', reps, loadKg, prescribedReps: Number(reps), prescribedLoadKg: null,
+  });
+  const drafts = [fs(0, 1, '3', '60'), fs(0, 2, '3', '62.5'), fs(1, 3, '2', '72.5'), fs(1, 4, '2', '75')];
+
+  it('la grille affiche le rang dans le bloc, pas le numéro de stockage', async () => {
+    const root = await mount(<StrengthSetGrid drafts={drafts} onChange={jest.fn()} />);
+    expect(texts(root).filter(t => t.startsWith('Série'))).toEqual(['Série 1', 'Série 2', 'Série 1', 'Série 2']);
+    expect(texts(root).filter(t => t === 'Front Squat')).toHaveLength(2);
+  });
+
+  it('« Mes charges » aussi, même quand une série du bloc est vide', async () => {
+    const root = await mount(<StrengthMyLoadsCard drafts={[drafts[0], fs(0, 2, '', ''), drafts[2], drafts[3]]} maxLoadKg={75} />);
+    expect(texts(root).filter(t => /^Série/.test(t))).toEqual([
+      i18n.t('strengthSession.setLine', { index: 1, reps: '3', kg: '60' }),
+      i18n.t('strengthSession.setLine', { index: 1, reps: '2', kg: '72.5' }),
+      i18n.t('strengthSession.setLine', { index: 2, reps: '2', kg: '75' }),
+    ]);
+  });
+
+  it('un refus du serveur s’affiche comme tel, pas comme une coupure', async () => {
+    const root = await mount(<StrengthSessionStatus done={2} total={4} savedAt={null} saveState="refused" now={0} />);
+    expect(root.findByProps({ testID: 'strength-saved' }).props.children).toBe(i18n.t('strengthSession.refused'));
+    expect(i18n.t('strengthSession.refused')).toMatch(/^Enregistrement refusé par le serveur/);
   });
 });

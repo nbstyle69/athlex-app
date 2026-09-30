@@ -16,12 +16,24 @@ interface Db {
   touched: string[];
   rpcCalls: Row[];
   offline: boolean;
+  /** Refus du serveur sur l'écriture d'une table (policy, contrainte…). */
+  refuse: { table: string; code: string; message: string } | null;
 }
-const mockDb: Db = { strength_sessions: [], strength_set_logs: [], wod_scores: [], touched: [], rpcCalls: [], offline: false };
+const mockDb: Db = { strength_sessions: [], strength_set_logs: [], wod_scores: [], touched: [], rpcCalls: [], offline: false, refuse: null };
 let mockSeq = 0;
 
 jest.mock('../lib/supabase', () => {
-  const OFFLINE = { error: { message: 'TypeError: Network request failed' }, data: null };
+  // Contrat de postgrest-js : une coupure réseau rend status 0 et code '' ; un
+  // refus de la base porte toujours son code Postgres ou PostgREST.
+  const OFFLINE = { error: { message: 'TypeError: Network request failed', code: '' }, data: null, status: 0 };
+  const pgError = (code: string, message: string) => ({ data: null, error: { code, message } });
+  // Règles de Postgres que le client doit respecter (migration 20270138).
+  const SERIES_CHECK = (rows: Row[]) => {
+    if (rows.some(r => !(Number(r.set_index) >= 1 && Number(r.set_index) <= 50))) {
+      return pgError('23514', 'new row for relation "strength_set_logs" violates check constraint "strength_set_logs_set_index_check"');
+    }
+    return null;
+  };
   class Q {
     filters: [string, unknown][] = [];
     notIds: string[] | null = null;
@@ -53,6 +65,12 @@ jest.mock('../lib/supabase', () => {
       }
       const key = this.table === 'strength_sessions'
         ? ['user_id', 'source_type', 'source_id'] : ['user_id', 'source_type', 'source_id', 'movement', 'set_index'];
+      if (mockDb.refuse?.table === this.table) return pgError(mockDb.refuse.code, mockDb.refuse.message);
+      // Un INSERT … ON CONFLICT DO UPDATE ne peut pas toucher deux fois la même clé.
+      if (new Set(this.payload.map(p => key.map(k => String(p[k])).join('|'))).size !== this.payload.length) {
+        return pgError('21000', 'ON CONFLICT DO UPDATE command cannot affect row a second time');
+      }
+      if (this.table === 'strength_set_logs') { const bad = SERIES_CHECK(this.payload); if (bad) return bad; }
       const out = this.payload.map(p => {
         const ex = this.rows().find(r => key.every(k => r[k] === p[k]));
         if (ex) { Object.assign(ex, p); return ex; }
@@ -60,7 +78,7 @@ jest.mock('../lib/supabase', () => {
         this.rows().push(row);
         return row;
       });
-      return { data: out.map(r => ({ id: r.id })), error: null };
+      return { data: out.map(r => ({ ...r })), error: null };
     }
   }
   return {
@@ -70,7 +88,12 @@ jest.mock('../lib/supabase', () => {
         if (mockDb.offline) return OFFLINE;
         mockDb.rpcCalls.push(a);
         const sets = a.p_sets as Row[];
-        if (sets.length === 0) return { data: null, error: { message: 'SEANCE_VIDE: aucune série valide' } };
+        if (sets.length === 0) return pgError('22023', 'SEANCE_VIDE: aucune série valide');
+        if (new Set(sets.map(x => `${x.movement}#${x.set_index}`)).size !== sets.length) {
+          return pgError('22023', 'SERIES_EN_DOUBLE: un mouvement a deux fois la même série');
+        }
+        const bad = SERIES_CHECK(sets);
+        if (bad) return bad;
         const k = { user_id: 'u1', source_type: a.p_source_type, source_id: a.p_source_id };
         let s = mockDb.strength_sessions.find(r => r.source_id === k.source_id && r.source_type === k.source_type);
         if (!s) { s = { id: `id-${++mockSeq}`, ...k, status: 'draft', first_validated_at: null }; mockDb.strength_sessions.push(s); }
@@ -95,10 +118,12 @@ import { supabase } from '../lib/supabase';
 import { incrementCounter, logMovementReps } from '../services/gamification';
 import { sendScoreNotification } from '../services/notifications';
 import { estimateOneRepMax } from '../services/strengthPR';
+import { parseStrengthLine, StrengthEntry } from '../utils/strengthBlock';
 import {
   StrengthSetDraft, buildStrengthGrid, computedMaxLoad, loadStrengthGrid, normalizeDecimalInput,
   parseDecimal, saveStrengthDraft, savedAgo, strengthProgress, strengthRecordsFor,
   submitStrengthValidation, validationErrorCode, SaveStrengthDraftParams, StrengthSourceKey,
+  gridFromServer, isNetworkError, logStrengthSets, setRanks,
 } from '../services/strengthSets';
 
 const KEY: StrengthSourceKey = { userId: 'u1', sourceType: 'whiteboard', sourceId: 'wod-1' };
@@ -117,7 +142,7 @@ const validate = (drafts: StrengthSetDraft[], onFirst = jest.fn()) => submitStre
 );
 
 beforeEach(async () => {
-  Object.assign(mockDb, { strength_sessions: [], strength_set_logs: [], wod_scores: [], touched: [], rpcCalls: [], offline: false });
+  Object.assign(mockDb, { strength_sessions: [], strength_set_logs: [], wod_scores: [], touched: [], rpcCalls: [], offline: false, refuse: null });
   jest.clearAllMocks();
   await AsyncStorage.clear();
 });
@@ -273,5 +298,179 @@ describe('écran Whiteboard (lecture du source)', () => {
   it('brouillon enregistré ~0,8 s après la dernière frappe', () => {
     expect(src).toContain('export const DRAFT_SAVE_DELAY_MS = 800;');
     expect(src).toMatch(/setTimeout\(\(\) => \{ saveDraftNow\(\); \}, DRAFT_SAVE_DELAY_MS\)/);
+  });
+});
+
+// ═══ Même mouvement dans deux blocs (build 1.0.58) ════════════════════════════
+// Les deux séances réelles de Nab du 30/09. Chaque bloc numérotait ses séries à
+// partir de 1 : brouillon refusé (21000) mais affiché « hors connexion », puis
+// saisie remplacée par une grille vide, validation refusée (SERIES_EN_DOUBLE).
+const cells = (d: StrengthSetDraft[]) => d.map(x => `${x.reps}x${x.loadKg}`);
+const PENDING_KEY = '@athlex:strengthDraft:u1:whiteboard:wod-1';
+
+describe('même mouvement dans deux blocs', () => {
+  const entries = (lines: string[]): StrengthEntry[] =>
+    lines.map(parseStrengthLine).filter((e): e is StrengthEntry => e !== null);
+  const FRONT_SQUAT = entries([
+    'Front Squat — 2 × 3 @ 65 %1RM — tempo 1" pause en bas',
+    'Front Squat — 2 × 2 @ 75 %1RM — tempo 2" pause en bas',
+  ]);
+  const COMPLEXE = entries(['Complexe — 5 × 1 @ 60 %1RM', 'Complexe — 5 × 1 @ 60 %1RM']);
+  const oneRm = (name: string) => (name === 'Front Squat' ? 100 : null);
+  const fsGrid = () => buildStrengthGrid(FRONT_SQUAT, oneRm);
+  /** Ce que Nab tape : chaque série a sa charge (bloc 1 : 60, 62,5 ; bloc 2 : 72,5, 75). */
+  const fsTyped = () => fsGrid().map((d, i) => ({ ...d, loadKg: ['60', '62.5', '72.5', '75'][i] }));
+  /** La même grille numérotée par bloc, comme la 1.0.58. */
+  const perBlock = () => fsTyped().map(d => ({ ...d, setIndex: d.entryIndex === 0 ? d.setIndex : d.setIndex - 2 }));
+  const stored = () => mockDb.strength_set_logs
+    .map(r => `${r.movement}#${r.set_index}:${r.reps}x${r.load_kg}`).sort();
+  const FS_STORED = ['Front Squat#1:3x60', 'Front Squat#2:3x62.5', 'Front Squat#3:2x72.5', 'Front Squat#4:2x75'];
+
+  it('numéro de stockage continu par mouvement, rang affiché dans le bloc', () => {
+    expect(FRONT_SQUAT).toHaveLength(2);
+    const g = fsGrid();
+    expect(g.map(d => [d.entryIndex, d.setIndex, d.reps, d.loadKg])).toEqual([
+      [0, 1, '3', '65'], [0, 2, '3', '65'], [1, 3, '2', '75'], [1, 4, '2', '75'],
+    ]);
+    expect(setRanks(g)).toEqual([1, 2, 1, 2]);
+    const c = buildStrengthGrid(COMPLEXE, oneRm);
+    expect(c.map(d => d.setIndex)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(setRanks(c)).toEqual([1, 2, 3, 4, 5, 1, 2, 3, 4, 5]);
+  });
+
+  it('plafond de 50 séries par mouvement (CHECK set_index ≤ 50)', () => {
+    const g = buildStrengthGrid(entries(['Back Squat — 30 × 1 @ 50kg', 'Back Squat — 30 × 1 @ 60kg']), () => null);
+    expect(g).toHaveLength(50);
+    expect(Math.max(...g.map(d => d.setIndex))).toBe(50);
+  });
+
+  it('brouillon : chaque série est enregistrée, aucune n’est prise pour une autre', async () => {
+    const res = await saveStrengthDraft(draftParams(fsTyped()));
+    expect(res.status).toBe('saved');
+    expect(stored()).toEqual(FS_STORED);
+    expect(await AsyncStorage.getItem(PENDING_KEY)).toBeNull();
+  });
+
+  it('Complexe 5 × 1 deux fois : les 10 séries partent et se relisent', async () => {
+    const typed = buildStrengthGrid(COMPLEXE, oneRm).map((d, i) => ({ ...d, loadKg: String(40 + i * 2.5) }));
+    expect((await saveStrengthDraft(draftParams(typed))).status).toBe('saved');
+    expect(mockDb.strength_set_logs).toHaveLength(10);
+    await AsyncStorage.clear();
+    const loaded = await loadStrengthGrid(KEY, buildStrengthGrid(COMPLEXE, oneRm));
+    expect(cells(loaded.drafts)).toEqual(cells(typed));
+  });
+
+  it('rechargement sur un autre appareil : chaque bloc retrouve SES valeurs', async () => {
+    await saveStrengthDraft(draftParams(fsTyped()));
+    await AsyncStorage.clear();
+    const loaded = await loadStrengthGrid(KEY, fsGrid());
+    expect(loaded.origin).toBe('server');
+    expect(cells(loaded.drafts)).toEqual(['3x60', '3x62.5', '2x72.5', '2x75']);
+    expect(loaded.drafts.map(d => d.entryIndex)).toEqual([0, 0, 1, 1]);
+  });
+
+  it('validation : 4 séries, charge max du bloc 2, record prouvé par sa propre série', async () => {
+    const r = await validate(fsTyped());
+    expect(r).toMatchObject({ premiereValidation: true, maxLoadKg: 75, seriesValides: 4 });
+    expect((mockDb.rpcCalls[0].p_sets as Row[]).map(x => [x.set_index, x.reps, x.load_kg]))
+      .toEqual([[1, 3, 60], [2, 3, 62.5], [3, 2, 72.5], [4, 2, 75]]);
+    const [rec] = strengthRecordsFor(fsTyped());
+    expect(rec).toMatchObject({ movement: 'Front Squat', set_index: 4, kg: estimateOneRepMax(75, 2) });
+  });
+
+  it('modification après validation : seule la série corrigée change', async () => {
+    await validate(fsTyped());
+    const r = await validate(edit(fsTyped(), 3, { loadKg: '77,5' }));
+    expect(r).toMatchObject({ premiereValidation: false, maxLoadKg: 77.5, seriesValides: 4 });
+    expect(stored()).toEqual([...FS_STORED.slice(0, 3), 'Front Squat#4:2x77.5']);
+    const reloaded = gridFromServer(fsGrid(), mockDb.strength_set_logs as never);
+    expect(cells(reloaded)).toEqual(['3x60', '3x62.5', '2x72.5', '2x77.5']);
+  });
+
+  it('copie locale laissée par la 1.0.58 (1, 2, 1, 2) : relue, renumérotée, enregistrée sans perte', async () => {
+    expect(perBlock().map(d => d.setIndex)).toEqual([1, 2, 1, 2]);
+    await AsyncStorage.setItem(PENDING_KEY, JSON.stringify({ drafts: perBlock(), editedAt: new Date().toISOString(), baseUpdatedAt: null }));
+    const loaded = await loadStrengthGrid(KEY, fsGrid());
+    expect(loaded.origin).toBe('local');
+    expect(loaded.drafts.map(d => d.setIndex)).toEqual([1, 2, 3, 4]);
+    expect(cells(loaded.drafts)).toEqual(['3x60', '3x62.5', '2x72.5', '2x75']);
+    expect((await saveStrengthDraft(draftParams(loaded.drafts))).status).toBe('saved');
+    expect(stored()).toEqual(FS_STORED);
+  });
+
+  it('une grille encore numérotée par bloc est renumérotée avant toute écriture (brouillon, validation, ancien journal)', async () => {
+    expect((await saveStrengthDraft(draftParams(perBlock()))).status).toBe('saved');
+    expect(stored()).toEqual(FS_STORED);
+    await validate(perBlock());
+    expect(stored()).toEqual(FS_STORED);
+    Object.assign(mockDb, { strength_sessions: [], strength_set_logs: [] });
+    const performed = await logStrengthSets({ userId: 'u1', sourceType: 'whiteboard', sourceId: 'wod-1', sourceTitle: 'FS', drafts: perBlock() });
+    expect(performed).toHaveLength(4);
+    expect(stored()).toEqual(FS_STORED);
+  });
+});
+
+describe('refus du serveur ≠ hors connexion', () => {
+  const REFUS = { table: 'strength_set_logs', code: '42501', message: 'new row violates row-level security policy for table "strength_set_logs"' };
+
+  it('une erreur de la base n’est jamais classée hors connexion ; une coupure réseau, si', () => {
+    expect(isNetworkError({ code: '', message: 'TypeError: Network request failed' })).toBe(true);
+    expect(isNetworkError(new TypeError('Network request failed'))).toBe(true);
+    for (const code of ['21000', '42501', '23514', '22023', 'PGRST116']) expect(isNetworkError({ code, message: 'x' })).toBe(false);
+  });
+
+  it('refus : statut refused avec son code, saisie gardée sur le téléphone', async () => {
+    mockDb.refuse = REFUS;
+    const res = await saveStrengthDraft(draftParams(edit(prescription(), 0, { loadKg: '110' })));
+    expect(res).toMatchObject({ status: 'refused', code: '42501' });
+    expect(JSON.parse((await AsyncStorage.getItem(PENDING_KEY))!).drafts[0].loadKg).toBe('110');
+  });
+
+  it('coupure réseau : toujours offline', async () => {
+    mockDb.offline = true;
+    expect((await saveStrengthDraft(draftParams(prescription()))).status).toBe('offline');
+  });
+
+  it('lecture refusée à la réouverture : refused, jamais offline', async () => {
+    mockDb.refuse = null;
+    const spy = jest.spyOn(supabase, 'from').mockImplementationOnce(() => ({
+      select: () => ({ eq: () => ({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null, error: { code: 'PGRST301', message: 'JWT expired' } }) }) }) }) }),
+    }) as never);
+    const loaded = await loadStrengthGrid(KEY, prescription());
+    spy.mockRestore();
+    expect(loaded).toMatchObject({ offline: false, refused: true, origin: 'prescription' });
+  });
+
+  it('la séance écrite avant l’échec des séries ne se fait pas passer pour un autre appareil : rien n’est écrasé', async () => {
+    const editedAt = new Date(Date.now() - 5000).toISOString();
+    const typed = edit(edit(prescription(), 0, { loadKg: '110' }), 1, { loadKg: '112,5' });
+    mockDb.refuse = REFUS;
+    const first = await saveStrengthDraft(draftParams(typed, { editedAt }));
+    expect(first.status).toBe('refused');
+    const written = mockDb.strength_sessions[0].updated_at as string;
+    expect(first.status === 'refused' ? first.baseUpdatedAt : null).toBe(written);
+
+    // Réouverture : la copie locale l'emporte (elle repose sur la séance qu'elle a écrite).
+    const reopened = await loadStrengthGrid(KEY, prescription());
+    expect(reopened.origin).toBe('local');
+    expect(cells(reopened.drafts)).toEqual(['5x110', '5x112,5', '5x100']);
+
+    // Nouvel essai à partir de la version rendue : enregistré, pas « serveur plus récent ».
+    mockDb.refuse = null;
+    const base = first.status === 'refused' ? first.baseUpdatedAt : null;
+    const again = await saveStrengthDraft(draftParams(typed, { editedAt, baseUpdatedAt: base }));
+    expect(again.status).toBe('saved');
+    expect(mockDb.strength_set_logs.map(r => r.load_kg)).toEqual([110, 112.5, 100]);
+  });
+
+  it('écrans : un refus ne lance pas la boucle de nouvel essai, et la validation l’affiche comme un refus', () => {
+    for (const file of [['whiteboard', 'WODDetailScreen.tsx'], ['wod', 'WodResultScreen.tsx']]) {
+      const src = fs.readFileSync(path.join(__dirname, '..', 'screens', ...file), 'utf8');
+      expect(src).toMatch(/if \(draftSaveState !== 'offline'\) return undefined;/);
+      expect(src).toContain('baseUpdatedAtRef.current = res.baseUpdatedAt;');
+      expect(src).toContain('else if (res.refused) setDraftSaveState(\'refused\');');
+      expect(src).toMatch(/isNetworkError\(e\)/);
+      expect(src).toContain("i18n.t('strengthSession.refused')");
+    }
   });
 });

@@ -44,8 +44,8 @@ import {
   totalTonnage,
 } from '../../services/wodGenerator';
 import {
-  ServerStrengthSession, StrengthSourceKey, fetchStrengthSession, gridFromServer, loadStrengthGrid, saveStrengthDraft,
-  validationErrorCode,
+  ServerStrengthSession, StrengthSourceKey, fetchStrengthSession, gridFromServer, isNetworkError, loadStrengthGrid,
+  saveStrengthDraft, validationErrorCode,
 } from '../../services/strengthSets';
 import { draftsToPerformed, performedToDrafts, validateMuscuSession } from '../../services/muscuSession';
 import type { StrengthSaveState } from '../../components/wod/StrengthSetGrid';
@@ -232,8 +232,9 @@ export default function WodResultScreen() {
           id = await saveGeneratedWod(user.id, muscu, category);
         } catch (e) {
           captureError(e, { screen: 'WodResult', action: 'saveForDraft' });
-          setDraftSaveState('offline');
-          return 'offline';
+          const status = isNetworkError(e) ? 'offline' : 'refused';
+          setDraftSaveState(status);
+          return status;
         }
         savedIdRef.current = id;
         setSavedId(id);
@@ -258,7 +259,11 @@ export default function WodResultScreen() {
         applyServerSession(muscu, res.server);
         setDraftSaveState('serverNewer');
       } else {
-        setDraftSaveState('offline');
+        // Coupure réseau (nouvel essai automatique) ou refus du serveur (aucune
+        // boucle) : la saisie reste, la version serveur de référence est celle
+        // que cet envoi a pu écrire.
+        baseUpdatedAtRef.current = res.baseUpdatedAt;
+        setDraftSaveState(res.status);
       }
       return res.status;
     };
@@ -291,6 +296,7 @@ export default function WodResultScreen() {
         editedAtRef.current = res.pending.editedAt;
         baseUpdatedAtRef.current = res.pending.baseUpdatedAt;
         if (res.offline) setDraftSaveState('offline');
+        else if (res.refused) setDraftSaveState('refused');
         else saveDraftNow();
       }
     }).catch((e) => captureError(e, { screen: 'WodResult', action: 'loadStrengthGrid' }));
@@ -328,6 +334,7 @@ export default function WodResultScreen() {
     if (!editedAtRef.current) editedAtRef.current = new Date().toISOString();
     const status = await saveDraftNow();
     if (status === 'offline') Alert.alert(i18n.t('strengthSession.offlineSavedTitle'), i18n.t('strengthSession.offline'));
+    else if (status === 'refused') Alert.alert(i18n.t('strengthSession.refusedTitle'), i18n.t('strengthSession.refused'));
   }
 
   // B6 : brouillon local tant que la séance n'est pas enregistrée — écrit à
@@ -540,7 +547,7 @@ export default function WodResultScreen() {
           if (!editedAtRef.current) editedAtRef.current = new Date().toISOString();
           saveDraftNow();
         }
-        Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t('strengthSession.errorOffline'));
+        Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t(isNetworkError(e) ? 'strengthSession.errorOffline' : 'strengthSession.refused'));
       } else if (code === 'SEANCE_VIDE') {
         Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t('strengthSession.errorEmpty'));
       } else if (code === 'SERIES_EN_DOUBLE') {
@@ -549,7 +556,7 @@ export default function WodResultScreen() {
         Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t('strengthSession.errorRecord'));
       } else {
         captureError(e, { screen: 'WodResult', action: 'submitScore' });
-        Alert.alert('Erreur', "Impossible d'enregistrer le score.");
+        Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t('strengthSession.refused'));
       }
     } finally {
       setSubmitting(false);

@@ -30,7 +30,7 @@ import { annotateCardioLines } from '../../utils/cardioBlock';
 import {
   buildStrengthGrid, logStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
   loadStrengthGrid, saveStrengthDraft, gridFromServer, fetchStrengthSession, submitStrengthValidation,
-  strengthProgress, computedMaxLoad, validationErrorCode,
+  strengthProgress, computedMaxLoad, validationErrorCode, isNetworkError,
 } from '../../services/strengthSets';
 import i18n from '../../i18n';
 import { wodTypeLabel } from '../../utils/wodTypeLabel';
@@ -296,7 +296,11 @@ export default function WODDetailScreen() {
         setStrengthDrafts(gridFromServer(strengthPrescription, res.server.sets));
         setDraftSaveState('serverNewer');
       } else {
-        setDraftSaveState('offline');
+        // Coupure réseau (nouvel essai automatique) ou refus du serveur (aucune
+        // boucle) : la saisie reste à l'écran et sur le téléphone. La version
+        // serveur de référence est celle que cet envoi a pu écrire.
+        baseUpdatedAtRef.current = res.baseUpdatedAt;
+        setDraftSaveState(res.status);
       }
       return res.status;
     };
@@ -318,6 +322,7 @@ export default function WODDetailScreen() {
         editedAtRef.current = res.pending.editedAt;
         baseUpdatedAtRef.current = res.pending.baseUpdatedAt;
         if (res.offline) setDraftSaveState('offline');
+        else if (res.refused) setDraftSaveState('refused');
         else saveDraftNow();
       }
     }).catch(e => captureError(e, { screen: 'WODDetail', action: 'loadStrengthGrid' }));
@@ -379,6 +384,8 @@ export default function WODDetailScreen() {
     setClock(Date.now());
     if (status === 'offline') {
       Alert.alert(i18n.t('strengthSession.offlineSavedTitle'), i18n.t('strengthSession.offline'));
+    } else if (status === 'refused') {
+      Alert.alert(i18n.t('strengthSession.refusedTitle'), i18n.t('strengthSession.refused'));
     }
     setModalOpen(false);
   }
@@ -630,6 +637,7 @@ export default function WODDetailScreen() {
         : code === 'SCORE_AUTRE_TYPE' ? i18n.t('strengthSession.errorOtherScoreType')
         : code === 'SERIES_EN_DOUBLE' ? i18n.t('strengthSession.errorDuplicate')
         : code && code.startsWith('RECORD_') ? i18n.t('strengthSession.errorRecord')
+        : code || !isNetworkError(e) ? i18n.t('strengthSession.refused')
         : i18n.t('strengthSession.errorOffline');
       if (!code) captureError(e, { screen: 'WODDetail', action: 'validateStrength' });
       if (!code && !strengthValidated) {
@@ -874,7 +882,7 @@ export default function WODDetailScreen() {
             </View>
           ) : (
             <>
-              {isStrengthSession && (strengthServer?.session?.status === 'draft' || draftSaveState === 'offline') && (
+              {isStrengthSession && (strengthServer?.session?.status === 'draft' || draftSaveState === 'offline' || draftSaveState === 'refused') && (
                 <View style={{ marginBottom: 12 }}>
                   <StrengthSessionStatus
                     {...strengthProgress(strengthDrafts)}
