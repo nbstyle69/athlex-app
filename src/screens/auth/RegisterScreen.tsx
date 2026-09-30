@@ -79,10 +79,11 @@ export default function RegisterScreen({ navigation }: Props) {
 
           <View style={S.logoContainer}>
             <Image
-              source={require('../../../assets/logo.png')}
+              source={require('../../../assets/athex-logo.png')}
               style={S.logo}
+              testID="entry-logo"
+              accessibilityLabel="AthleX"
             />
-            <Text style={S.appName}>AthleX</Text>
           </View>
 
           <AxCard style={S.form}>
@@ -228,8 +229,7 @@ function createStyles(c: AxColors) {
     back: { flexDirection: 'row', alignItems: 'center', marginBottom: axSpacing.lg },
     backText: { ...axTypography.labelSmall, color: c.textMuted },
     logoContainer: { alignItems: 'center', marginBottom: axSpacing.xl },
-    logo: { width: 72, height: 72, resizeMode: 'contain', marginBottom: axSpacing.sm },
-    appName: { ...axTypography.titleL, color: c.text },
+    logo: { width: 120, height: 120, resizeMode: 'contain' },
     form: { gap: axSpacing.md },
     title: { ...axTypography.titleM, color: c.text },
     inputContainer: { gap: axSpacing.xs },

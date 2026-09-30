@@ -304,6 +304,20 @@ Supabase/Resend.
 - Tests : `r12.rn.test.tsx` (51, dont ordre des blocs sur 22 états figés sur master), isolement R1 élargi au seul
   `ProfileScreen` ; `npx jest` 1976, `npm run test:rn` 536, `tsc` vert ; 28 mutations tuées.
 
+**Refonte R14c : finitions des écrans athlète — logo, boutons, types traduits, membres, champs (app seule, aucune migration).**
+- Connexion, Créer un compte et écran de démarrage : `assets/athex-logo.png` (120 px, centré) à la place de
+  `assets/logo.png` ; titre texte « AthleX » retiré (le logo le contient), slogan conservé.
+- Libellés de boutons athlète en écriture normale en FR et en EN (clés i18n et libellés en dur, plus de `toUpperCase`) ;
+  titres et surtitres inchangés.
+- `wodTypeLabel` (`src/utils/wodTypeLabel.ts`) + clés `wodTypes` : Musculation / Personnalisé / For Time / AMRAP / EMOM /
+  Tabata (EN : Strength / Custom / For Time…), utilisé par Ma Box, détail WOD, historique et programme.
+- Membres : rôle sous le nom, à côté du palier ; le nom occupe toute la largeur. Profil › Compte : « Rejoindre une box »
+  en `AxButton` outline ; code de box en `AxTextField`.
+- `AxTextField` : option rétrocompatible `inputStyle` ; plus de contour navigateur en web, focus porté par la seule
+  bordure `accentText` du champ.
+- Tests : `r14c.rn.test.tsx` (39) ; instantanés R4b / R9a / R11 et contrats R5a / R9b / minuteur mis à jour pour les
+  nouveaux libellés ; `npx jest` 1987, `npm run test:rn` 1292, `tsc` vert ; 16 mutations tuées.
+
 **Refonte R14a : fond uni et palette du nouveau design sur tous les écrans (app seule, aucune migration, apparence seule).**
 - `GlassBackground` (même API) rend un fond uni `theme.ax.background` (#101214 / #F3F5F4) : plus de dégradé, de taches
   SVG ni d'animation ; `GlassCard` / `GlassButton` / `GlassIconBox` / fond de barre d'onglets en surfaces opaques `ax` ;

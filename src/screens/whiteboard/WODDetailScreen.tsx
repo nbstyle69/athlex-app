@@ -33,6 +33,7 @@ import {
   strengthProgress, computedMaxLoad, validationErrorCode,
 } from '../../services/strengthSets';
 import i18n from '../../i18n';
+import { wodTypeLabel } from '../../utils/wodTypeLabel';
 import StrengthSetGrid, {
   StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSaveState, StrengthSessionStatus,
 } from '../../components/wod/StrengthSetGrid';
@@ -763,7 +764,7 @@ export default function WODDetailScreen() {
         {/* WOD info card */}
         <AxCard variant="featured" style={S.wodCard} testID="wod-card">
           <View style={S.wodMeta}>
-            <AxTag label={(wod.wod_type ?? 'custom').toUpperCase()} tone="accent" testID="wod-type-tag" />
+            <AxTag label={wodTypeLabel(wod.wod_type ?? 'custom')} tone="accent" testID="wod-type-tag" />
             {wod.time_cap_seconds && (
               <View style={S.timeCap}>
                 <Clock color={c.textMuted} size={12} />

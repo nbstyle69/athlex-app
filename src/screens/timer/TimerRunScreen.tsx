@@ -417,8 +417,8 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
 
           {/* ── RÉINITIALISER + FERMER */}
           <View style={{ gap: 10 }}>
-            <AxButton label="RÉINITIALISER" variant="outline" fullWidth onPress={() => onUpdate({ ...DEFAULT_DISPLAY })} testID="timer-design-reset" />
-            <AxButton label="FERMER" variant="accent" fullWidth onPress={onClose} testID="timer-design-close" />
+            <AxButton label="Réinitialiser" variant="outline" fullWidth onPress={() => onUpdate({ ...DEFAULT_DISPLAY })} testID="timer-design-reset" />
+            <AxButton label="Fermer" variant="accent" fullWidth onPress={onClose} testID="timer-design-close" />
           </View>
         </ScrollView>
       </View>

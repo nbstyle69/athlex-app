@@ -113,11 +113,11 @@ export default function WhiteboardMembersModal({ visible, boxName, ownerId, load
                 <Text testID={`member-rank-${item.id}`} style={S.memberRank}>{rankOf.get(item.id)}</Text>
                 <UserAvatar uri={item.avatar_url} name={item.username} size={40} borderRadius={axRadius.card} backgroundColor={c.background} textColor={c.text} />
                 <View style={S.memberInfo}>
-                  <View style={S.nameRow}>
-                    <Text testID={`member-name-${item.id}`} style={S.memberName} numberOfLines={1}>{item.username}</Text>
+                  <Text testID={`member-name-${item.id}`} style={S.memberName} numberOfLines={1}>{item.username}</Text>
+                  <View testID={`member-meta-${item.id}`} style={S.metaRow}>
+                    <Text testID={`member-level-${item.id}`} style={[S.memberLevel, { color: levelInk(item.level, c) }]} numberOfLines={1}>{item.level?.toUpperCase()}</Text>
                     {tag && <AxTag testID={`member-role-${item.id}`} label={t(tag.key)} tone={tag.tone} />}
                   </View>
-                  <Text testID={`member-level-${item.id}`} style={[S.memberLevel, { color: levelInk(item.level, c) }]} numberOfLines={1}>{item.level?.toUpperCase()}</Text>
                 </View>
                 <Text testID={`member-elo-${item.id}`} style={S.memberElo}>
                   {item.elo}<Text style={S.memberEloUnit}> ELO</Text>
@@ -153,8 +153,8 @@ function createStyles(theme: AppTheme) {
     memberRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, padding: axSpacing.md },
     memberRank: { ...axTypography.labelSmall, width: 22, color: c.textMuted, textAlign: 'center' },
     memberInfo: { flex: 1, minWidth: 0 },
-    nameRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
-    memberName: { ...axTypography.label, color: c.text, flexShrink: 1 },
+    memberName: { ...axTypography.label, color: c.text },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, marginTop: 2 },
     memberLevel: { ...axTypography.overlineSmall },
     memberElo: { ...axTypography.numberM, color: c.text },
     memberEloUnit: { ...axTypography.caption, color: c.textMuted },

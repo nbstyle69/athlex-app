@@ -657,7 +657,7 @@ describe('Ma Box (29/09) : étiquettes de rôle', () => {
     expect(memberRoleTag({ id: 'u5', role: null }, null)).toBeNull();
   });
 
-  it.each(THEMES)('thème %s : libellés, tons et lisibilité à côté du nom', async (_n, theme) => {
+  it.each(THEMES)('thème %s : libellés, tons et lisibilité sous le nom, à côté du palier', async (_n, theme) => {
     const root = await mount(membersModal([...MEMBERS, ELODIE]), theme);
     const c = theme.ax;
     const label = (u: string) => hostByID(root, `member-role-${u}`).findAll(isHostText)[0];
@@ -670,9 +670,10 @@ describe('Ma Box (29/09) : étiquettes de rôle', () => {
     expect(flat(label('u4')).color).toBe(c.textMuted);
     for (const u of ['u2', 'u3', 'u4']) {
       expectReadable(root, label(u), theme);
-      const nameRow = hostParent(hostByID(root, `member-name-${u}`));
-      expect(flat(nameRow).flexDirection).toBe('row');
-      expect(nameRow.findAll((x) => x.props.testID === `member-role-${u}`).length).toBeGreaterThan(0);
+      const metaRow = hostByID(root, `member-meta-${u}`);
+      expect(flat(metaRow).flexDirection).toBe('row');
+      expect(metaRow.findAll((x) => x.props.testID === `member-role-${u}`).length).toBeGreaterThan(0);
+      expect(metaRow.findAll((x) => x.props.testID === `member-level-${u}`).length).toBeGreaterThan(0);
     }
     expectNoOverflow(hostByID(root, 'member-name-u2'));
   });

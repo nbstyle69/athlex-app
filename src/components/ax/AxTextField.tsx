@@ -1,5 +1,5 @@
 import React, { useState, type ReactNode } from 'react';
-import { KeyboardTypeOptions, StyleSheet, TextInputProps, Text, TextInput, View } from 'react-native';
+import { KeyboardTypeOptions, Platform, StyleProp, StyleSheet, TextInputProps, TextStyle, Text, TextInput, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
@@ -34,13 +34,15 @@ interface Props {
   maxInputHeight?: number;
   /** Accès au champ natif (passer le focus au champ suivant). */
   inputRef?: React.Ref<TextInput>;
+  /** Style ajouté au texte saisi (police, alignement) ; la bordure reste celle du champ. */
+  inputStyle?: StyleProp<TextStyle>;
   testID?: string;
 }
 
 export function AxTextField({
   value, onChangeText, placeholder, icon: Icon, error, keyboardType, secureTextEntry, multiline,
   accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight, autoComplete,
-  textContentType, returnKeyType, onSubmitEditing, autoCorrect, autoFocus, trailing, inputRef, testID = 'ax-text-field',
+  textContentType, returnKeyType, onSubmitEditing, autoCorrect, autoFocus, trailing, inputRef, inputStyle, testID = 'ax-text-field',
 }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
@@ -73,7 +75,8 @@ export function AxTextField({
           accessibilityLabel={accessibilityLabel ?? placeholder}
           accessibilityHint={error}
           style={[axTypography.body, styles.input, { color: c.text }, multiline ? styles.multiline : null, compact ? styles.compactInput : null,
-            minInputHeight != null || maxInputHeight != null ? { minHeight: minInputHeight, maxHeight: maxInputHeight } : null]}
+            minInputHeight != null || maxInputHeight != null ? { minHeight: minInputHeight, maxHeight: maxInputHeight } : null,
+            inputStyle, Platform.OS === 'web' ? styles.webNoOutline : null]}
         />
         {Icon && <Icon size={18} color={c.textMuted} strokeWidth={2} />}
         {trailing}
@@ -101,4 +104,6 @@ const styles = StyleSheet.create({
   multiline: { textAlignVertical: 'top' },
   compact: { paddingVertical: axSpacing.sm, paddingHorizontal: axSpacing.sm },
   compactInput: { textAlign: 'center' },
+  // Le focus est porté par la bordure accentText du champ, pas par le contour du navigateur.
+  webNoOutline: { outlineWidth: 0 },
 });

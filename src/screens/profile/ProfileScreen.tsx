@@ -39,7 +39,7 @@ import { fetchMyStrengthSets, groupStrengthSessions } from '../../services/stren
 import { programWeekAt, toLocalIso } from '../../utils/programSchedule';
 import { getMyMemberships, membershipState, membershipStateText, MembershipState } from '../../services/membership';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
-import { AxButton, AxCard, AxChip, AxSwitch } from '../../components/ax';
+import { AxButton, AxCard, AxChip, AxSwitch, AxTextField } from '../../components/ax';
 import { axAccentSafeLineHeight, axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { levelInk } from '../home/homeLevelColor';
 
@@ -1087,10 +1087,7 @@ export default function ProfileScreen() {
               ) : (
                 <Text style={S.noBoxText}>{t('profile.account.noBox')}</Text>
               )}
-              <TouchableOpacity style={S.joinBtn} onPress={() => setJoinModal(true)} activeOpacity={0.8}>
-                <Hash color={theme.ax.text} size={16} />
-                <Text style={S.joinBtnText}>{t('profile.account.joinBox')}</Text>
-              </TouchableOpacity>
+              <AxButton testID="profile-join-box" variant="outline" icon={Hash} label={t('profile.account.joinBox')} onPress={() => setJoinModal(true)} fullWidth />
               {membershipStates.map(m => (
                 <View key={m.boxId} style={S.subStateRow}>
                   {m.name ? <Text style={S.subStateBox}>{m.name}</Text> : null}
@@ -1529,12 +1526,12 @@ export default function ProfileScreen() {
             <View style={S.modalHandle} />
             <Text style={S.modalTitle}>{t('profile.account.joinBox')}</Text>
             <Text style={S.modalSub}>{t('profile.account.joinBoxSub')}</Text>
-            <TextInput
-              style={S.codeInput}
+            <AxTextField
+              testID="profile-join-code"
+              inputStyle={S.codeInput}
               value={joinCode}
               onChangeText={v => setJoinCode(v.toUpperCase())}
               placeholder="Ex : ABC123"
-              placeholderTextColor={theme.textMuted}
               maxLength={6}
               autoCapitalize="characters"
               autoFocus
@@ -1844,11 +1841,7 @@ function createStyles(t: AppTheme) {
   modalHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: c.border, alignSelf: 'center', marginBottom: 4 },
   modalTitle: { ...axTypography.titleM, color: c.text, textAlign: 'center' },
   modalSub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
-  codeInput: {
-    backgroundColor: c.field, borderRadius: axRadius.control, borderWidth: 1,
-    borderColor: c.fieldBorder, paddingHorizontal: 16, paddingVertical: 14,
-    ...axTypography.numberM, color: c.text, textAlign: 'center', letterSpacing: 6,
-  },
+  codeInput: { ...axTypography.numberM, textAlign: 'center', letterSpacing: 6 },
   modalCancel: { alignItems: 'center', paddingVertical: 8 },
   modalCancelText: { ...axTypography.label, color: c.textMuted },
 

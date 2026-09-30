@@ -1,19 +1,17 @@
 {
   "screens": {
     "connexion": [
-      "AthleX",
       "COMPÉTITION • PARTOUT • MAINTENANT",
       "Connexion",
       "Email",
       "Mot de passe",
       "Mot de passe oublié ?",
-      "SE CONNECTER",
+      "Se connecter",
       "Pas encore de compte ? Créer un compte",
       "v1.0.0"
     ],
     "creer-un-compte": [
       "Retour",
-      "AthleX",
       "Créer un compte",
       "Pseudo",
       "Email",
@@ -24,12 +22,11 @@
       "♀",
       "Femme",
       "J'accepte les CGU et la Politique de Confidentialité",
-      "REJOINDRE LA BATAILLE",
+      "Rejoindre la bataille",
       "Vous gérez une box ? Créez votre compte sur athlexapp.eu"
     ],
     "creer-un-compte-mail-a-confirmer": [
       "Retour",
-      "AthleX",
       "Créer un compte",
       "Pseudo",
       "Email",
@@ -40,7 +37,7 @@
       "♀",
       "Femme",
       "J'accepte les CGU et la Politique de Confidentialité",
-      "REJOINDRE LA BATAILLE",
+      "Rejoindre la bataille",
       "Vous gérez une box ? Créez votre compte sur athlexapp.eu",
       "── fenêtre ──",
       "📧 Confirme ton email",

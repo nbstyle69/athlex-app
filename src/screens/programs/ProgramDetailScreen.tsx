@@ -10,6 +10,7 @@ import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { AxButton, AxCard, AxTag } from '../../components/ax';
+import { wodTypeLabel } from '../../utils/wodTypeLabel';
 import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { WODScore } from '../../types';
 import { formatCap, formatScoreValue } from '../../utils/scoreFormat';
@@ -267,7 +268,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
                     <AxCard key={w.id} style={S.wodRow} onPress={() => setSelected(w)} testID={`program-wod-${w.id}`}>
                       <View style={S.wodLine}>
                         <View style={S.wodContent}>
-                          <Text style={S.wodType}>{(w.wod_type ?? 'WOD').toUpperCase()}</Text>
+                          <Text style={S.wodType}>{wodTypeLabel(w.wod_type).toUpperCase()}</Text>
                           <Text style={S.wodTitle} numberOfLines={2}>{w.title}</Text>
                           <Text style={S.wodDesc} numberOfLines={2}>{w.description}</Text>
                         </View>
@@ -337,7 +338,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
           </View>
           <ScrollView contentContainerStyle={S.modalBody}>
             <View style={S.detailBadges}>
-              <AxTag label={(selected?.wod_type ?? 'WOD').toUpperCase()} tone="accent" />
+              <AxTag testID="program-detail-type" label={wodTypeLabel(selected?.wod_type)} tone="accent" />
               {!!selected?.time_cap_seconds && (
                 <View style={S.metaBadge}>
                   <Clock color={c.textMuted} size={13} />

@@ -368,7 +368,7 @@ describe('R5a : réglages du minuteur', () => {
       expect.arrayContaining(['timer-camera-switch']),
     );
     const accents = root.findAllByType(AxButton).filter((b) => b.props.variant === 'accent');
-    expect(accents.map((b) => b.props.label)).toEqual(['DÉMARRER']);
+    expect(accents.map((b) => b.props.label)).toEqual(['Démarrer']);
   });
 
   it.each(THEMES)('liste : 7 AxCard avec libellé et description d’origine, type actif en accentText (%s)', async (_, th) => {

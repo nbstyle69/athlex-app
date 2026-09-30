@@ -43,7 +43,7 @@ describe('minuteur — encre des commandes', () => {
     expect(contrast(lightTheme.text, cta, GRAD_LIGHT)).toBeGreaterThanOrEqual(TEXT_MIN);
     expect(contrast(darkTheme.text, `${darkTheme.accent}28`, GRAD_DARK)).toBeGreaterThanOrEqual(TEXT_MIN);
     // R5a : DÉMARRER est un AxButton accent plein (encre onAccent, prouvée AA dans axComponents).
-    expect(TIMER).toMatch(/<AxButton label="DÉMARRER" variant="accent"/);
+    expect(TIMER).toMatch(/<AxButton label="Démarrer" variant="accent"/);
   });
 
   it('l’accent ne sert plus d’encre : accentText sur carte et sur dégradé', () => {
