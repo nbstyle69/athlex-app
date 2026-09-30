@@ -16,11 +16,13 @@ interface Props {
   veil?: boolean;
   /** Libellé long : retour à la ligne dans la largeur du parent. */
   wrap?: boolean;
+  /** Libellé long (nom de séance…) : coupé à ce nombre de lignes, dans la largeur disponible. */
+  numberOfLines?: number;
   testID?: string;
 }
 
 /** Étiquette non interactive, en capitales. */
-export function AxTag({ label, tone = 'accent', color: ink, dot = false, veil = false, wrap = false, testID }: Props) {
+export function AxTag({ label, tone = 'accent', color: ink, dot = false, veil = false, wrap = false, numberOfLines, testID }: Props) {
   const { theme } = useTheme();
   const toneColor = tone === 'danger'
     ? (veil ? axVeil.rec : theme.ax.danger)
@@ -30,9 +32,14 @@ export function AxTag({ label, tone = 'accent', color: ink, dot = false, veil = 
   const color = ink ?? (veil ? axVeil.ink : toneColor);
   const edge = ink ?? (veil && tone !== 'danger' ? axVeil.border : toneColor);
   return (
-    <View testID={testID} style={[styles.base, { borderColor: edge }, veil ? { backgroundColor: axVeil.background } : null, wrap ? styles.wrap : null]}>
+    <View testID={testID} style={[styles.base, { borderColor: edge }, veil ? { backgroundColor: axVeil.background } : null, wrap || numberOfLines ? styles.bounded : null]}>
       {dot && <View testID={testID ? `${testID}-dot` : undefined} style={[styles.dot, { backgroundColor: toneColor }]} />}
-      <Text style={[axTypography.labelSmall, styles.text, { color }, wrap ? styles.wrapText : null]}>{label}</Text>
+      <Text
+        numberOfLines={numberOfLines}
+        style={[axTypography.labelSmall, styles.text, { color }, wrap || numberOfLines ? styles.shrink : null]}
+      >
+        {label}
+      </Text>
     </View>
   );
 }
@@ -50,6 +57,6 @@ const styles = StyleSheet.create({
   },
   dot: { width: 7, height: 7, borderRadius: 4 },
   text: { textTransform: 'uppercase' },
-  wrap: { maxWidth: '100%' },
-  wrapText: { flexShrink: 1 },
+  shrink: { flexShrink: 1 },
+  bounded: { maxWidth: '100%' },
 });

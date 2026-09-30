@@ -8,23 +8,28 @@ interface Props {
   dayLabel: string;
   dayNumber: number | string;
   selected?: boolean;
+  /** Jour courant : libellé et chiffre en accentText tant qu'il n'est pas sélectionné. */
+  today?: boolean;
+  /** Jour hors de la plage proposée : non appuyable, atténué. */
+  disabled?: boolean;
   onPress: () => void;
   testID?: string;
 }
 
 /** Jour d'un sélecteur de semaine (44 × 58). */
-export function AxDayItem({ dayLabel, dayNumber, selected = false, onPress, testID }: Props) {
+export function AxDayItem({ dayLabel, dayNumber, selected = false, today = false, disabled = false, onPress, testID }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
-  const ink = selected ? c.onAccent : undefined;
+  const ink = selected ? c.onAccent : today ? c.accentText : undefined;
   return (
     <Pressable
       testID={testID}
-      onPress={onPress}
+      onPress={disabled ? undefined : onPress}
+      disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={`${dayLabel} ${dayNumber}`}
-      accessibilityState={{ selected }}
-      style={[styles.base, selected ? { backgroundColor: c.accent } : null]}
+      accessibilityState={disabled ? { selected, disabled } : { selected }}
+      style={[styles.base, selected ? { backgroundColor: c.accent } : null, disabled ? styles.disabled : null]}
     >
       {!selected && <AxGlass color={c.text} opacity={0.08} radius={axRadius.control} />}
       <Text style={[axTypography.overlineSmall, { color: ink ?? c.textMuted }]}>{dayLabel}</Text>
@@ -44,4 +49,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  disabled: { opacity: 0.35 },
 });
