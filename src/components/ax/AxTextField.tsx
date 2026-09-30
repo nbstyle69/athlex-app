@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type ReactNode } from 'react';
 import { KeyboardTypeOptions, StyleSheet, TextInputProps, Text, TextInput, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
@@ -20,6 +20,8 @@ interface Props {
   /** Champ compact centré (grilles de séries). */
   compact?: boolean;
   maxLength?: number;
+  /** Élément posé à droite du champ, après l'icône (bouton d'effacement…). */
+  trailing?: ReactNode;
   /** Hauteur minimale de la zone de saisie (champ multiligne). */
   minInputHeight?: number;
   /** Hauteur maximale de la zone de saisie : au-delà, le texte défile dans le champ. */
@@ -32,7 +34,8 @@ interface Props {
 
 export function AxTextField({
   value, onChangeText, placeholder, icon: Icon, error, keyboardType, secureTextEntry, multiline,
-  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight, autoFocus, inputRef, testID = 'ax-text-field',
+  accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight, trailing,
+  autoFocus, inputRef, testID = 'ax-text-field',
 }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
@@ -63,6 +66,7 @@ export function AxTextField({
             minInputHeight != null || maxInputHeight != null ? { minHeight: minInputHeight, maxHeight: maxInputHeight } : null]}
         />
         {Icon && <Icon size={18} color={c.textMuted} strokeWidth={2} />}
+        {trailing}
       </View>
       {!!error && (
         <Text testID={`${testID}-error`} style={[axTypography.caption, { color: c.danger }]}>

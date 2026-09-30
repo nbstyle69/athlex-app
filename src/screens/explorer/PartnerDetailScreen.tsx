@@ -1,7 +1,8 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxButton, AxCard, AxTag } from '../../components/ax';
 import React, { useEffect, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView,
   Image, ActivityIndicator, Linking, Alert,
 } from 'react-native';
 import { Globe, Instagram, Tag, Copy, ExternalLink, Handshake } from 'lucide-react-native';
@@ -9,7 +10,8 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { HomeStackParamList } from '../../navigation';
 import { Partner } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
@@ -29,7 +31,8 @@ export default function PartnerDetailScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
-  const s = createStyles(theme);
+  const c = theme.ax;
+  const s = createStyles(c);
 
   const partnerId = route.params?.partnerId;
   const [partner, setPartner] = useState<Partner | null>(null);
@@ -64,7 +67,7 @@ export default function PartnerDetailScreen() {
     return (
       <View style={[s.container, s.center]}>
         <GlassBackground />
-        <ActivityIndicator size="large" color={theme.accent} />
+        <ActivityIndicator size="large" color={c.accentText} />
       </View>
     );
   }
@@ -91,13 +94,11 @@ export default function PartnerDetailScreen() {
             <Image source={{ uri: partner.logo_url }} style={s.logo} />
           ) : (
             <View style={[s.logo, s.logoPlaceholder]}>
-              <Handshake size={36} color={theme.accent} />
+              <Handshake size={36} color={c.accentText} />
             </View>
           )}
           <Text style={s.name}>{partner.name}</Text>
-          <View style={s.categoryBadge}>
-            <Text style={s.categoryText}>{CATEGORY_LABELS[partner.category] ?? partner.category}</Text>
-          </View>
+          <AxTag label={CATEGORY_LABELS[partner.category] ?? partner.category} />
         </View>
 
         <View style={s.body}>
@@ -111,25 +112,24 @@ export default function PartnerDetailScreen() {
 
           {/* Offer */}
           {(partner.offer_title || partner.offer_description) && (
-            <View style={s.offerCard}>
+            <AxCard variant="featured" style={s.offerCard} testID="partner-offer">
               <View style={s.offerHeader}>
-                <Tag size={16} color={theme.accent} />
+                <Tag size={16} color={c.accentText} />
                 <Text style={s.offerTitle}>{partner.offer_title ?? 'Offre spéciale'}</Text>
               </View>
               {partner.offer_description ? (
                 <Text style={s.offerDesc}>{partner.offer_description}</Text>
               ) : null}
               {partner.offer_code ? (
-                <TouchableOpacity
-                  style={s.codeBtn}
+                <AxButton
+                  label={partner.offer_code}
+                  icon={Copy}
                   onPress={() => copyCode(partner.offer_code!)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={s.codeText}>{partner.offer_code}</Text>
-                  <Copy size={14} color={theme.accent} />
-                </TouchableOpacity>
+                  fullWidth
+                  testID="partner-offer-code"
+                />
               ) : null}
-            </View>
+            </AxCard>
           )}
 
           {/* Links */}
@@ -137,24 +137,28 @@ export default function PartnerDetailScreen() {
             <Text style={s.sectionTitle}>Liens</Text>
             <View style={s.linkList}>
               {partner.website_url && (
-                <TouchableOpacity
+                <AxCard
                   style={s.linkBtn}
                   onPress={() => Linking.openURL(partner.website_url!)}
+                  accessibilityLabel="Site web"
+                  testID="partner-link-website"
                 >
-                  <Globe size={16} color={theme.accent} />
+                  <Globe size={16} color={c.accentText} />
                   <Text style={s.linkText}>Site web</Text>
-                  <ExternalLink size={13} color={theme.textMuted} />
-                </TouchableOpacity>
+                  <ExternalLink size={14} color={c.textMuted} />
+                </AxCard>
               )}
               {partner.instagram_url && (
-                <TouchableOpacity
+                <AxCard
                   style={s.linkBtn}
                   onPress={() => Linking.openURL(partner.instagram_url!)}
+                  accessibilityLabel="Instagram"
+                  testID="partner-link-instagram"
                 >
-                  <Instagram size={16} color={theme.accent} />
+                  <Instagram size={16} color={c.accentText} />
                   <Text style={s.linkText}>Instagram</Text>
-                  <ExternalLink size={13} color={theme.textMuted} />
-                </TouchableOpacity>
+                  <ExternalLink size={14} color={c.textMuted} />
+                </AxCard>
               )}
             </View>
           </View>
@@ -164,56 +168,28 @@ export default function PartnerDetailScreen() {
   );
 }
 
-function createStyles(t: AppTheme) {
+function createStyles(c: AxColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: 'transparent' },
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-    emptyText: { fontSize: 14, color: t.textMuted },
-    header: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12,
-      backgroundColor: t.card, borderBottomWidth: 1, borderBottomColor: t.border,
-    },
-    backBtn: {
-      width: 36, height: 36, borderRadius: 10,
-      backgroundColor: t.surface, alignItems: 'center', justifyContent: 'center',
-    },
-    headerTitle: { flex: 1, fontSize: 18, fontWeight: '900', color: t.text },
-    heroSection: { alignItems: 'center', paddingVertical: 32 },
-    logo: { width: 80, height: 80, borderRadius: 20 },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: axSpacing['2xl'] },
+    emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+    heroSection: { alignItems: 'center', gap: axSpacing.sm, paddingVertical: axSpacing['2xl'], paddingHorizontal: axSpacing.xl },
+    logo: { width: 80, height: 80, borderRadius: axRadius.card },
     logoPlaceholder: {
-      backgroundColor: `${t.accent}15`, alignItems: 'center', justifyContent: 'center',
+      backgroundColor: c.field, borderWidth: 1, borderColor: c.border,
+      alignItems: 'center', justifyContent: 'center',
     },
-    name: { fontSize: 22, fontWeight: '900', color: t.text, marginTop: 16 },
-    categoryBadge: {
-      marginTop: 8, paddingHorizontal: 12, paddingVertical: 4,
-      borderRadius: 8, backgroundColor: `${t.accent}15`,
-    },
-    categoryText: { fontSize: 11, fontWeight: '700', color: t.accent },
-    body: { paddingHorizontal: 20 },
-    section: { marginTop: 24 },
-    sectionTitle: { fontSize: 14, fontWeight: '800', color: t.text, marginBottom: 10 },
-    descText: { fontSize: 14, color: t.textSecondary, lineHeight: 22 },
-    offerCard: {
-      marginTop: 24, padding: 18, borderRadius: 16,
-      backgroundColor: `${t.accent}08`,
-      borderWidth: 1, borderColor: `${t.accent}25`,
-    },
-    offerHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-    offerTitle: { fontSize: 16, fontWeight: '800', color: t.text },
-    offerDesc: { fontSize: 13, color: t.textSecondary, lineHeight: 20, marginBottom: 12 },
-    codeBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      backgroundColor: t.card, borderRadius: 10, paddingVertical: 12,
-      borderWidth: 1, borderColor: t.border, borderStyle: 'dashed',
-    },
-    codeText: { fontSize: 16, fontWeight: '900', color: t.accent, letterSpacing: 2 },
-    linkList: { gap: 10 },
-    linkBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 10,
-      backgroundColor: t.card, borderRadius: 12, padding: 14,
-      borderWidth: 1, borderColor: t.border,
-    },
-    linkText: { flex: 1, fontSize: 14, fontWeight: '600', color: t.text },
+    name: { ...axTypography.titleL, color: c.text, textAlign: 'center', marginTop: axSpacing.sm },
+    body: { paddingHorizontal: axSpacing.xl },
+    section: { marginTop: axSpacing['2xl'] },
+    sectionTitle: { ...axTypography.overline, color: c.textMuted, marginBottom: axSpacing.md },
+    descText: { ...axTypography.body, color: c.text },
+    offerCard: { marginTop: axSpacing['2xl'] },
+    offerHeader: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+    offerTitle: { ...axTypography.titleM, color: c.text, flex: 1, minWidth: 0 },
+    offerDesc: { ...axTypography.bodySmall, color: c.textMuted },
+    linkList: { gap: axSpacing.sm },
+    linkBtn: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+    linkText: { ...axTypography.label, color: c.text, flex: 1, minWidth: 0 },
   });
 }
