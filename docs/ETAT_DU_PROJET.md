@@ -218,7 +218,7 @@ Supabase/Resend.
 - Options rétrocompatibles : `AxChip.accessibilityRole`, `AxTextField.autoFocus` / `inputRef`, `AxCounterBadge.readableInk`
   (encre lisible sur le rouge en thème sombre).
 - Tests : `r9a.rn.test.tsx` (54, instantané avant / après sur 9 variantes `r9aStructureBefore.json`), isolement R1
-  élargi aux fichiers du lot, `npx jest` 1976, `npm run test:rn` 622, `tsc` vert ; 25 mutations tuées.
+  élargi aux fichiers du lot, `npx jest` 1976, `npm run test:rn` 664, `tsc` vert ; 25 mutations tuées.
 
 **Refonte R13 : annuaire, programmes et partenaires au nouveau design (app seule, aucune migration, apparence seule).**
 - `BoxDirectoryScreen` (recherche en `AxTextField`, sports en `AxChip`, boxs en `AxCard`, nom en `titleM`, ville et infos
