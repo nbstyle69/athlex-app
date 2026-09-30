@@ -890,6 +890,19 @@ dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
   (tournoi, saison — la saison en cours par défaut) additionne les points de WOD de cette seule saison ;
   sert à l'onglet « Général » d'une ligue et aux « Saisons précédentes ».
 
+**Liste « Membres » de Ma Box sans colonne privée** (diffusion au prochain build de test).
+Le build 1.0.58 (iOS 58 / Android 73, `build/1.0.58`) a été arrêté par `verify:ipa` (28/29) et
+`verify:aab` (30/31) : depuis #436, `WhiteboardScreen` lisait `profiles.full_name` dans la
+jointure `profiles:member_id(…)`, colonne révoquée pour `authenticated` depuis `20261105` — la
+requête entière tombait en 42501 et la liste des membres restait vide. Aucun des deux binaires
+n'a été soumis. Correctif : la liste lit le pseudo, comme les autres écrans ; la recherche porte
+sur le pseudo seul (le nom civil ne se lit qu'en RPC, par soi-même ou le staff).
+`profileColumnGrants.test.ts` ne connaissait que `profiles(` et trois colonnes : il passe en
+liste **blanche** des colonnes accordées à `authenticated`, relevée en prod le 30/09/2026 en
+lecture seule (non accordées : `email`, `full_name`, `gender`, `onboarding_completed_at`,
+`personal_records`), et reconnaît `profiles(…)`, `profiles:fk(…)`, `profiles!fk(…)` et
+`from('profiles')` ; la réintroduction de `full_name` est rattrapée.
+
 **Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
 Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
 choisie montrait de contenu (« Tout » presque illisible), et onglet choisi plus large que les

@@ -98,11 +98,11 @@ const COMMENTS = [
   { id: 'c2', user_id: 'u2', content: 'Top', created_at: '2026-09-27T09:30:00Z', profile: { username: 'Julie' } },
 ];
 const MEMBERS: WhiteboardMember[] = [
-  { id: 'u2', username: LONG_NAME, level: 'rx', elo: 1420, avatar_url: null, full_name: 'Maximilien Dupont', role: 'owner' },
-  { id: 'u3', username: 'Julie', level: 'scaled', elo: 1100, avatar_url: null, full_name: 'Julie Béranger', role: 'owner' },
-  { id: 'u4', username: 'Karim', level: 'elite', elo: 980, avatar_url: null, full_name: null, role: 'coach' },
+  { id: 'u2', username: LONG_NAME, level: 'rx', elo: 1420, avatar_url: null, role: 'owner' },
+  { id: 'u3', username: 'Julie', level: 'scaled', elo: 1100, avatar_url: null, role: 'owner' },
+  { id: 'u4', username: 'Karim', level: 'elite', elo: 980, avatar_url: null, role: 'coach' },
 ];
-const ELODIE: WhiteboardMember = { id: 'u5', username: 'Élodie', level: 'rx', elo: 900, avatar_url: null, full_name: 'Élodie Marchand', role: 'member' };
+const ELODIE: WhiteboardMember = { id: 'u5', username: 'Élodie', level: 'rx', elo: 900, avatar_url: null, role: 'member' };
 /** Gérant principal de la box fictive (`boxes.owner_id`). */
 const OWNER_ID = 'u2';
 const RANK_MEMBERS = [
@@ -590,11 +590,9 @@ describe('Ma Box (29/09) : recherche des membres', () => {
     await act(async () => { input(root).props.onChangeText(q); });
   }
 
-  it('filtre local : pseudo, nom, casse, accents, vide, aucun résultat', () => {
+  it('filtre local : pseudo, casse, accents, vide, aucun résultat', () => {
     expect(filterMembers(ALL, 'kar').map((m) => m.id)).toEqual(['u4']);
-    expect(filterMembers(ALL, 'dupont').map((m) => m.id)).toEqual(['u2']);
     expect(filterMembers(ALL, 'JULIE').map((m) => m.id)).toEqual(['u3']);
-    expect(filterMembers(ALL, 'beranger').map((m) => m.id)).toEqual(['u3']);
     expect(filterMembers(ALL, 'élo').map((m) => m.id)).toEqual(['u5']);
     expect(filterMembers(ALL, 'ELODIE').map((m) => m.id)).toEqual(['u5']);
     expect(filterMembers(ALL, '   ')).toBe(ALL);
@@ -643,7 +641,7 @@ describe('Ma Box (29/09) : recherche des membres', () => {
     const src = fs.readFileSync(path.join(__dirname, '../screens/whiteboard/WhiteboardScreen.tsx'), 'utf8');
     const body = src.slice(src.indexOf('const loadMembers'), src.indexOf('}, [currentBox]);', src.indexOf('const loadMembers')));
     expect(body.match(/\.from\(/g)).toHaveLength(1);
-    expect(body).toContain(".select('member_id, role, profiles:member_id(id, username, full_name, level, elo, avatar_url)')");
+    expect(body).toContain(".select('member_id, role, profiles:member_id(id, username, level, elo, avatar_url)')");
     expect(body).toContain('role: row.role');
     expect(src).toMatch(/ownerId=\{currentBox\.owner_id\}/);
   });
