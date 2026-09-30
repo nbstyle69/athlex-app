@@ -32,13 +32,15 @@ interface Props {
   minInputHeight?: number;
   /** Hauteur maximale de la zone de saisie : au-delà, le texte défile dans le champ. */
   maxInputHeight?: number;
+  /** Accès au champ natif (passer le focus au champ suivant). */
+  inputRef?: React.Ref<TextInput>;
   testID?: string;
 }
 
 export function AxTextField({
   value, onChangeText, placeholder, icon: Icon, error, keyboardType, secureTextEntry, multiline,
   accessibilityLabel, autoCapitalize, onBlur, compact = false, maxLength, minInputHeight, maxInputHeight, autoComplete,
-  textContentType, returnKeyType, onSubmitEditing, autoCorrect, autoFocus, trailing, testID = 'ax-text-field',
+  textContentType, returnKeyType, onSubmitEditing, autoCorrect, autoFocus, trailing, inputRef, testID = 'ax-text-field',
 }: Props) {
   const { theme } = useTheme();
   const c = theme.ax;
@@ -49,7 +51,9 @@ export function AxTextField({
     <View style={styles.wrapper}>
       <View testID={`${testID}-box`} style={[styles.box, compact ? styles.compact : null, { backgroundColor: c.field, borderColor }]}>
         <TextInput
+          ref={inputRef}
           testID={testID}
+          autoFocus={autoFocus}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -66,7 +70,6 @@ export function AxTextField({
           returnKeyType={returnKeyType}
           onSubmitEditing={onSubmitEditing}
           autoCorrect={autoCorrect}
-          autoFocus={autoFocus}
           accessibilityLabel={accessibilityLabel ?? placeholder}
           accessibilityHint={error}
           style={[axTypography.body, styles.input, { color: c.text }, multiline ? styles.multiline : null, compact ? styles.compactInput : null,
