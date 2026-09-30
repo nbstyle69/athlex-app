@@ -10,10 +10,12 @@ export const TAB_BAR = {
   sideMargin: 20,
   bottomGap: 12,
   paddingVertical: 10,
-  paddingHorizontal: 14,
+  paddingHorizontal: 6,
   iconSize: 20,
   dotSize: 4,
   itemGap: 4,
+  labelSize: 9.5,
+  labelMinScale: 0.85,
   minTouch: 44,
   glassOpacity: 0.8,
 } as const;

@@ -4,6 +4,7 @@
  * couleurs dans les deux thèmes), accessibilité, masquage au clavier et espace
  * réservé en bas des écrans selon l'inset.
  */
+import fs from 'node:fs';
 import React from 'react';
 import { Dimensions, Keyboard, Platform, StyleSheet, Text, View } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
@@ -113,7 +114,7 @@ describe('barre flottante : forme et verre', () => {
     expect(s).toMatchObject({
       position: 'absolute', width: 350, height: 64, left: 20, bottom: inset + 12, borderRadius: 24,
       borderWidth: 1, borderColor: lightTheme.ax.border,
-      paddingVertical: 10, paddingHorizontal: 14, flexDirection: 'row', justifyContent: 'space-between',
+      paddingVertical: 10, paddingHorizontal: 6, flexDirection: 'row',
     });
   });
 
@@ -139,16 +140,16 @@ describe('barre flottante : forme et verre', () => {
 });
 
 describe('onglets', () => {
-  it('5 onglets dans l\'ordre, libellé axTypography.tab, icône 20, zone tactile 44 × 44, rôle tab et libellé lu', async () => {
+  it('5 onglets dans l\'ordre, libellé Inter SemiBold 9,5 sans espacement, icône 20, zone tactile 44 × 44, rôle tab et libellé lu', async () => {
     const { root } = await mount({ index: 2 });
     const items = tabs(root);
     expect(items.map((t) => t.props.accessibilityLabel)).toEqual(ROUTES.map((r) => r.label));
     items.forEach((t, i) => {
-      expect(flat(t)).toMatchObject({ minWidth: 44, minHeight: 44, alignItems: 'center', gap: 4 });
+      expect(flat(t)).toMatchObject({ flex: 1, minWidth: 44, minHeight: 44, alignItems: 'center', gap: 4 });
       expect(t.props.accessibilityState).toEqual({ selected: i === 2 });
       const label = t.findByType(Text);
       expect(label.props.children).toBe(ROUTES[i].label);
-      expect(flat(label)).toMatchObject(axTypography.tab);
+      expect(flat(label)).toMatchObject({ fontFamily: axTypography.tab.fontFamily, fontSize: 9.5, lineHeight: 12, letterSpacing: 0 });
       expect(t.findByType(ROUTES[i].Icon).props.size).toBe(20);
     });
   });
@@ -234,5 +235,133 @@ describe('espace réservé en bas des écrans', () => {
     const out: { space?: number; foot?: number } = {};
     await act(async () => { renderer = TestRenderer.create(<Probe out={out} />); });
     expect(out).toEqual({ space: 50, foot: 0 });
+  });
+});
+
+/**
+ * Largeurs d'avance réelles d'Inter SemiBold, lues dans le fichier de police
+ * (tables head, hhea, hmtx et cmap format 4) : aucune estimation par caractère.
+ */
+function loadAdvance(file: string): (text: string, size: number) => number {
+  const buf = fs.readFileSync(file);
+  const u16 = (o: number) => buf.readUInt16BE(o);
+  const tables: Record<string, number> = {};
+  for (let i = 0; i < u16(4); i++) tables[buf.toString('latin1', 12 + i * 16, 16 + i * 16)] = buf.readUInt32BE(20 + i * 16);
+  const unitsPerEm = u16(tables.head + 18);
+  const hMetrics = u16(tables.hhea + 34);
+  let sub = -1;
+  for (let i = 0; i < u16(tables.cmap + 2); i++) {
+    const r = tables.cmap + 4 + i * 8;
+    if (u16(r) === 3 && u16(r + 2) === 1) sub = tables.cmap + buf.readUInt32BE(r + 4);
+  }
+  const seg = u16(sub + 6) / 2;
+  const ends = sub + 14, starts = ends + seg * 2 + 2, deltas = starts + seg * 2, ranges = deltas + seg * 2;
+  const glyph = (code: number) => {
+    for (let i = 0; i < seg; i++) {
+      if (code > u16(ends + i * 2)) continue;
+      if (code < u16(starts + i * 2)) return 0;
+      const ro = u16(ranges + i * 2);
+      if (ro === 0) return (code + u16(deltas + i * 2)) & 0xffff;
+      const g = u16(ranges + i * 2 + ro + (code - u16(starts + i * 2)) * 2);
+      return g === 0 ? 0 : (g + u16(deltas + i * 2)) & 0xffff;
+    }
+    return 0;
+  };
+  const advance = (g: number) => u16(tables.hmtx + Math.min(g, hMetrics - 1) * 4);
+  return (text, size) => {
+    let units = 0;
+    for (const ch of text) {
+      const g = glyph(ch.codePointAt(0)!);
+      expect(g).toBeGreaterThan(0);
+      units += advance(g);
+    }
+    return (units / unitsPerEm) * size;
+  };
+}
+
+const textWidth = loadAdvance(require.resolve('@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf'));
+const LABELS = {
+  fr: ['Compétition', 'Entraînement', 'Accueil', 'Ma Box', 'Réservation'],
+  en: ['Competition', 'Training', 'Home', 'My Box', 'Booking'],
+};
+
+/**
+ * Rangée flex horizontale à partir des styles rendus : un enfant flex: 1 se
+ * partage l'espace restant (base 0), sinon il prend sa largeur propre (icône ou
+ * libellé, au moins minWidth), placée selon justifyContent.
+ */
+function layoutTabs(root: ReactTestInstance) {
+  const b = flat(bar(root));
+  const left = (b.borderLeftWidth ?? b.borderWidth ?? 0) + (b.paddingLeft ?? b.paddingHorizontal ?? b.padding ?? 0);
+  const right = (b.borderRightWidth ?? b.borderWidth ?? 0) + (b.paddingRight ?? b.paddingHorizontal ?? b.padding ?? 0);
+  const inner = b.width - left - right;
+  const items = tabs(root).map((t) => {
+    const s = flat(t);
+    const label = flat(t.findByType(Text));
+    const own = Math.max(s.minWidth ?? 0, 20, textWidth(t.findByType(Text).props.children, label.fontSize) + (label.letterSpacing ?? 0) * t.findByType(Text).props.children.length);
+    return { grow: s.flex ?? s.flexGrow ?? 0, basis: (s.flex ?? 0) > 0 ? 0 : own, min: s.minWidth ?? 0 };
+  });
+  const totalGrow = items.reduce((a, i) => a + i.grow, 0);
+  const free = inner - items.reduce((a, i) => a + i.basis, 0);
+  const widths = items.map((i) => Math.max(i.min, i.basis + (totalGrow > 0 ? (free * i.grow) / totalGrow : 0)));
+  const rest = inner - widths.reduce((a, w) => a + w, 0);
+  const jc = b.justifyContent ?? 'flex-start';
+  const gap = jc === 'space-between' && widths.length > 1 ? rest / (widths.length - 1) : 0;
+  let x = b.left + left + (jc === 'center' ? rest / 2 : jc === 'flex-end' ? rest : 0);
+  return widths.map((w) => {
+    const r = { left: x, width: w, center: x + w / 2 };
+    x += w + gap;
+    return r;
+  });
+}
+
+const setWidth = (width: number) =>
+  Dimensions.set({ window: { width, height: 844, scale: 3, fontScale: 1 }, screen: { width, height: 844, scale: 3, fontScale: 1 } });
+
+describe('Accueil centré, onglets de largeur égale', () => {
+  it.each([390, 430])('écran de %d : les 5 onglets ont exactement la même largeur', async (w) => {
+    setWidth(w);
+    const { root } = await mount();
+    const widths = layoutTabs(root).map((r) => r.width);
+    expect(widths).toHaveLength(5);
+    widths.forEach((x) => expect(x).toBeCloseTo((w - 40 - 2 - 12) / 5, 6));
+  });
+
+  it.each([390, 430])('écran de %d : le centre d\'« Accueil » est le centre de l\'écran', async (w) => {
+    setWidth(w);
+    const { root } = await mount();
+    const home = layoutTabs(root)[ROUTES.findIndex((r) => r.name === 'Home')];
+    expect(home.center).toBeCloseTo(w / 2, 6);
+  });
+});
+
+describe('aucun libellé tronqué', () => {
+  it('une seule ligne ; sinon réduction jusqu\'à 0,85, jamais coupé', async () => {
+    const { root } = await mount();
+    tabs(root).forEach((t) => {
+      const label = t.findByType(Text);
+      expect(label.props).toMatchObject({ numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.85 });
+      expect(label.props.ellipsizeMode).toBeUndefined();
+      expect(flat(label)).toMatchObject({ alignSelf: 'stretch', textAlign: 'center' });
+    });
+  });
+
+  it.each([
+    [390, 'fr'], [390, 'en'], [430, 'fr'], [430, 'en'],
+  ] as const)('écran de %d (%s) : chaque libellé tient à 9,5 sans réduction', async (w, lang) => {
+    setWidth(w);
+    const { root } = await mount();
+    const boxes = layoutTabs(root);
+    const size = flat(tabs(root)[0].findByType(Text)).fontSize;
+    LABELS[lang].forEach((l, i) => expect(textWidth(l, size)).toBeLessThanOrEqual(boxes[i].width));
+  });
+
+  it.each(['fr', 'en'] as const)('petit écran de 320 (%s) : chaque libellé tient une fois réduit au minimum', async (lang) => {
+    setWidth(320);
+    const { root } = await mount();
+    const boxes = layoutTabs(root);
+    const label = tabs(root)[0].findByType(Text);
+    const min = flat(label).fontSize * label.props.minimumFontScale;
+    LABELS[lang].forEach((l, i) => expect(textWidth(l, min)).toBeLessThanOrEqual(boxes[i].width));
   });
 });
