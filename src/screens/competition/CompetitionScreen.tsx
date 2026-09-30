@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, TouchableOpacity, FlatList,
-  ActivityIndicator, RefreshControl, Alert, LayoutAnimation,
+  View, Text, ScrollView, StyleSheet, TouchableOpacity,
+  ActivityIndicator, Alert, LayoutAnimation,
 } from 'react-native';
-import { Trophy, Users, Clock, Zap, ChevronRight, ChevronLeft, Plus, MapPin, Flame, Globe2, Info, CheckCircle } from 'lucide-react-native';
+import { Trophy, Users, Zap, ChevronRight, Plus, Flame, Globe2, Info, CheckCircle } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
-import { LevelColors } from '../../theme/designTokens';
+import { AxButton, AxCard, AxChip, AxPageHeader, AxStatusDot, AxTag } from '../../components/ax';
+import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { CompetitionStackParamList } from '../../navigation';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
@@ -69,6 +71,8 @@ export default function CompetitionScreen() {
   const { t } = useTranslation();
   const TABS = [t('competition.tabTournaments'), t('competition.tabMini'), t('competition.tabPhysical'), t('competition.tabInter')];
   const S = createStyles(theme);
+  const c = theme.ax;
+  const insets = useSafeAreaInsets();
   const [activeTab,    setActiveTab]    = useState(route.params?.initialTab ?? 0);
   const [tournaments,  setTournaments]  = useState<Tournament[]>([]);
   const [tLoading,     setTLoading]     = useState(false);
@@ -227,24 +231,21 @@ export default function CompetitionScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <View>
-          <Text style={S.headerTitle}>{t('competition.title')}</Text>
-          <Text style={S.headerSub}>{t('competition.subtitle')}</Text>
-        </View>
+      <View style={[S.header, { paddingTop: insets.top + axSpacing.lg }]}>
+        <AxPageHeader title={t('competition.title')} subtitle={t('competition.subtitle')} testID="competition-header" />
       </View>
 
-      <View style={S.tabs}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={S.tabsBar} contentContainerStyle={S.tabs}>
         {TABS.map((tab, i) => (
-          <TouchableOpacity
+          <AxChip
             key={tab}
+            testID={`competition-tab-${i}`}
+            label={tab}
+            selected={activeTab === i}
             onPress={() => { LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut); setActiveTab(i); }}
-            style={[S.tab, activeTab === i && S.tabActive]}
-          >
-            <Text style={[S.tabText, activeTab === i && S.tabTextActive]}>{tab}</Text>
-          </TouchableOpacity>
+          />
         ))}
-      </View>
+      </ScrollView>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {activeTab === 0 && (
@@ -260,57 +261,46 @@ export default function CompetitionScreen() {
 
             <Text style={S.sectionTitle}>{t('competition.availableTournaments')}</Text>
             {tLoading ? (
-              <ActivityIndicator color={theme.accent} style={{ marginTop: 32 }} />
+              <ActivityIndicator color={c.accentText} style={S.loader} />
             ) : tournaments.length === 0 ? (
               <EmptyState testID="competition-no-tournament" style={S.emptyBox} icon={Trophy} title={t('competition.noTournament')} />
             ) : (
               tournaments.map(tour => {
                 const participants = participantCounts[tour.id] ?? 0;
                 const pct = tour.max_participants > 0 ? (participants / tour.max_participants) * 100 : 0;
-                const levelColor = LevelColors[tour.level as keyof typeof LevelColors] ?? theme.accent;
                 return (
-                  <TouchableOpacity
+                  <AxCard
                     key={tour.id}
-                    style={S.tournamentCard}
+                    testID={`competition-tournament-${tour.id}`}
+                    style={S.card}
                     onPress={() => navigation.navigate('Tournament', { tournamentId: tour.id })}
-                    activeOpacity={0.8}
                   >
                     <View style={S.tHeader}>
                       <Text style={S.tName}>{tour.name}</Text>
-                      <View style={[
-                        S.tStatus,
-                        { backgroundColor: tour.status === 'active' ? `${theme.success}20` : `${theme.accent}20` },
-                      ]}>
-                        <Text style={[
-                          S.tStatusText,
-                          { color: tour.status === 'active' ? theme.success : theme.accent },
-                        ]}>
-                          {tour.status === 'active' ? t('competition.live') : t('competition.open')}
-                        </Text>
-                      </View>
+                      <AxStatusDot
+                        testID={`competition-tournament-status-${tour.id}`}
+                        tone={tour.status === 'active' ? 'warning' : 'active'}
+                        label={tour.status === 'active' ? t('competition.live') : t('competition.open')}
+                      />
                     </View>
                     {myRegistered[tour.id] && (
                       <View style={S.regBadge}>
-                        <CheckCircle color={theme.success} size={13} />
+                        <CheckCircle color={c.success} size={13} />
                         <Text style={S.regBadgeText}>{t('competition.registered')}</Text>
                       </View>
                     )}
                     <View style={S.tInfo}>
                       <View style={S.tInfoItem}>
-                        <Users color={theme.textMuted} size={14} />
+                        <Users color={c.textMuted} size={14} />
                         <Text style={S.tInfoText}>{participants}/{tour.max_participants}</Text>
                       </View>
-                      <View style={[S.levelPill, { backgroundColor: `${levelColor}20` }]}>
-                        <Text style={[S.levelPillText, { color: levelColor }]}>
-                          {(tour.level ?? 'RX').toUpperCase()}
-                        </Text>
-                      </View>
+                      <AxTag label={(tour.level ?? 'RX').toUpperCase()} tone="accent" />
                       {tour.prize ? <Text style={S.tPrize}>{tour.prize}</Text> : null}
                     </View>
                     <View style={S.progressBar}>
                       <View style={[S.progressFill, { width: `${pct}%` as any }]} />
                     </View>
-                  </TouchableOpacity>
+                  </AxCard>
                 );
               })
             )}
@@ -320,14 +310,15 @@ export default function CompetitionScreen() {
         {activeTab === 1 && (
           <>
             {officialWod && (
-              <TouchableOpacity
-                activeOpacity={0.85}
-                style={S.officialCard}
+              <AxCard
+                variant="featured"
+                testID="competition-official-wod"
+                style={S.card}
                 onPress={() => navigation.navigate('DailyTournamentDetail', { tournamentId: officialWod.id })}
               >
                 <View style={S.officialBadgeRow}>
                   <View style={S.officialBadge}>
-                    <Flame color={theme.onAccent} size={13} />
+                    <Flame color={c.accentText} size={13} />
                     <Text style={S.officialBadgeTxt}>{t('competition.wodOfDay')}</Text>
                   </View>
                   <Text style={S.officialTime}>{timeLeft(officialWod.ends_at)}</Text>
@@ -336,61 +327,58 @@ export default function CompetitionScreen() {
                 <Text style={S.officialSub}>{officialWod.wod_type} · {officialWod.level.toUpperCase()}</Text>
                 <View style={S.officialFooter}>
                   <View style={S.officialParticipants}>
-                    <Users color={theme.textMuted} size={13} />
+                    <Users color={c.textMuted} size={13} />
                     <Text style={S.officialParticipantsTxt}>
                       {t('competition.wodOfDayPlayers', { count: officialWod.participant_count })}
                     </Text>
                   </View>
-                  <View style={[S.officialCta, officialWod.has_scored && { backgroundColor: `${theme.accent}15` }]}>
-                    <Text style={[S.officialCtaTxt, officialWod.has_scored && { color: theme.accentText }]}>
-                      {officialWod.has_scored ? t('competition.wodOfDayScored') : t('competition.wodOfDayPlay')}
-                    </Text>
-                  </View>
+                  <AxTag
+                    testID="competition-official-cta"
+                    tone={officialWod.has_scored ? 'success' : 'accent'}
+                    label={officialWod.has_scored ? t('competition.wodOfDayScored') : t('competition.wodOfDayPlay')}
+                  />
                 </View>
-              </TouchableOpacity>
+              </AxCard>
             )}
 
             <View style={S.miniInfo}>
-              <Zap color={theme.gold} size={16} />
+              <Zap color={c.accentText} size={16} />
               <Text style={S.miniInfoText}>{t('competition.miniInfo')}</Text>
             </View>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[S.createButton, S.createGradient]}
-              onPress={() => navigation.navigate('DailyTournaments')}
-            >
-                <Plus color={theme.text} size={20} />
-                <Text style={S.createText}>{t('competition.createDaily')}</Text>
-            </TouchableOpacity>
+            <View style={S.block}>
+              <AxButton
+                testID="competition-create-mini"
+                variant="dashed"
+                icon={Plus}
+                fullWidth
+                onPress={() => navigation.navigate('DailyTournaments')}
+                label={t('competition.createDaily')}
+              />
+            </View>
 
             <Text style={S.sectionTitle}>{t('competition.openNow')}</Text>
             {miniLoading ? (
-              <ActivityIndicator color={theme.accent} style={{ marginTop: 32 }} />
+              <ActivityIndicator color={c.accentText} style={S.loader} />
             ) : miniTournaments.length === 0 ? (
               <EmptyState testID="competition-no-mini" style={S.emptyBox} icon={Zap} title={t('competition.noMini')} />
             ) : (
               miniTournaments.map(m => {
-                const levelColor = LevelColors[m.level] ?? theme.textMuted;
                 const isFull = m.participant_count >= m.max_players;
                 const remaining = timeLeft(m.ends_at);
                 const isFinished = new Date(m.ends_at).getTime() - Date.now() <= 0;
                 return (
-                  <TouchableOpacity
+                  <AxCard
                     key={m.id}
-                    style={S.miniCard}
-                    activeOpacity={0.8}
+                    testID={`competition-mini-${m.id}`}
+                    style={S.card}
                     onPress={() => navigation.navigate('DailyTournamentDetail', { tournamentId: m.id })}
                   >
                     <View style={S.miniHeader}>
                       <Text style={S.miniName}>{m.wod_name}</Text>
-                      <View style={[S.levelPill, { backgroundColor: `${levelColor}20` }]}>
-                        <Text style={[S.levelPillText, { color: levelColor }]}>
-                          {m.level.toUpperCase()}
-                        </Text>
-                      </View>
+                      <AxTag label={m.level.toUpperCase()} tone="muted" />
                     </View>
-                    <Text style={{ fontSize: 11, color: theme.textMuted, marginBottom: 6 }}>{t('competition.byCreator', { name: m.creator_name, type: m.wod_type })}</Text>
+                    <Text style={S.miniCreator}>{t('competition.byCreator', { name: m.creator_name, type: m.wod_type })}</Text>
                     <View style={S.miniFooter}>
                       <View style={S.miniParticipants}>
                         {Array.from({ length: m.max_players }).map((_, i) => (
@@ -398,236 +386,168 @@ export default function CompetitionScreen() {
                             key={i}
                             style={[
                               S.participantDot,
-                              { backgroundColor: i < m.participant_count ? theme.accent : theme.surface },
+                              { backgroundColor: i < m.participant_count ? c.accentText : c.border },
                             ]}
                           />
                         ))}
                         <Text style={S.miniParticipantsText}>{m.participant_count}/{m.max_players}</Text>
                       </View>
                       <View style={S.miniTime}>
-                        <Flame color={isFinished ? theme.error : theme.accent} size={13} />
-                        <Text style={[S.miniTimeText, isFinished && { color: theme.error }]}>{remaining}</Text>
+                        <Flame color={isFinished ? c.danger : c.accentText} size={13} />
+                        <Text style={[S.miniTimeText, isFinished && { color: c.danger }]}>{remaining}</Text>
                       </View>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-                        <Trophy color={theme.gold} size={12} />
-                        <Text style={{ fontSize: 10, fontWeight: '800', color: theme.gold }}>+{m.elo_reward}</Text>
+                      <View style={S.miniTime}>
+                        <Trophy color={c.textMuted} size={12} />
+                        <Text style={S.miniReward}>+{m.elo_reward}</Text>
                       </View>
                     </View>
                     {!m.has_joined && !isFull ? (
-                      <TouchableOpacity
-                        activeOpacity={0.8}
-                        style={S.joinButton}
-                        onPress={(e) => { e.stopPropagation(); handleJoinMini(m.id); }}
-                      >
-                        <Text style={S.joinButtonText}>{t('competition.join')}</Text>
-                      </TouchableOpacity>
+                      <AxButton
+                        testID={`competition-join-${m.id}`}
+                        variant="outline"
+                        fullWidth
+                        onPress={() => handleJoinMini(m.id)}
+                        label={t('competition.join')}
+                      />
                     ) : m.has_joined ? (
-                      <View style={[S.joinButton, { backgroundColor: `${theme.accent}15` }]}>
-                        <Text style={[S.joinButtonText, { color: theme.accentText }]}>{t('competition.joined')}</Text>
+                      <View style={S.joinedRow}>
+                        <CheckCircle color={c.success} size={14} />
+                        <Text style={S.joinedText}>{t('competition.joined')}</Text>
                       </View>
                     ) : null}
-                  </TouchableOpacity>
+                  </AxCard>
                 );
               })
             )}
 
             {miniTournaments.length > 0 && (
               <TouchableOpacity
-                style={{ alignItems: 'center', paddingVertical: 12 }}
+                style={S.seeAll}
                 onPress={() => navigation.navigate('DailyTournaments')}
+                accessibilityRole="button"
                 activeOpacity={0.7}
               >
-                <Text style={{ fontSize: 13, fontWeight: '700', color: theme.accent }}>{t('competition.seeAllMini')}</Text>
+                <Text style={S.seeAllText}>{t('competition.seeAllMini')}</Text>
+                <ChevronRight color={c.accentText} size={14} />
               </TouchableOpacity>
             )}
           </>
         )}
         {activeTab === 2 && (
-          <View style={{ gap: 12 }}>
-            <TouchableOpacity
-              activeOpacity={0.8}
+          <View style={S.physList}>
+            <AxCard
+              testID="competition-physical-qualification"
               style={S.physModeCard}
               onPress={() => navigation.navigate('PhysicalCompetition', { mode: 'qualification' })}
             >
-              <View style={[S.physModeIcon, { backgroundColor: '#8B5CF620' }]}>
-                <Zap color="#8B5CF6" size={22} />
+              <View style={S.physModeIcon}>
+                <Zap color={c.accentText} size={22} />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={S.flex}>
                 <Text style={S.physModeTitle}>{t('competition.onlineQualif')}</Text>
                 <Text style={S.physModeDesc}>{t('competition.onlineQualifDesc')}</Text>
               </View>
-              <ChevronRight color={theme.textMuted} size={18} />
-            </TouchableOpacity>
+              <ChevronRight color={c.textMuted} size={18} />
+            </AxCard>
 
-            <TouchableOpacity
-              activeOpacity={0.8}
+            <AxCard
+              testID="competition-physical-info"
               style={S.physModeCard}
               onPress={() => navigation.navigate('PhysicalCompetition', { mode: 'info' })}
             >
-              <View style={[S.physModeIcon, { backgroundColor: '#3B82F620' }]}>
-                <Info color="#3B82F6" size={22} />
+              <View style={S.physModeIcon}>
+                <Info color={c.accentText} size={22} />
               </View>
-              <View style={{ flex: 1 }}>
+              <View style={S.flex}>
                 <Text style={S.physModeTitle}>{t('competition.noQualif')}</Text>
                 <Text style={S.physModeDesc}>{t('competition.noQualifDesc')}</Text>
               </View>
-              <ChevronRight color={theme.textMuted} size={18} />
-            </TouchableOpacity>
+              <ChevronRight color={c.textMuted} size={18} />
+            </AxCard>
           </View>
         )}
 
         {activeTab === 3 && (
           <>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={[S.createButton, S.createGradient, { backgroundColor: 'rgba(201,162,39,0.25)', borderColor: 'rgba(201,162,39,0.8)' }]}
-              onPress={() => navigation.navigate('InterCompetitionList')}
-            >
-              <Globe2 color={theme.text} size={20} />
-              <Text style={S.createText}>{t('competition.seeInterBox')}</Text>
-            </TouchableOpacity>
-            <View style={[S.physInfoBox, { borderColor: '#C9A22725', backgroundColor: '#C9A22710' }]}>
-              <Text style={[S.physInfoTitle, { color: '#C9A227' }]}>{t('competition.interBoxTitle')}</Text>
-              <Text style={S.physInfoText}>{t('competition.interBoxInfo')}</Text>
+            <View style={S.block}>
+              <AxButton
+                testID="competition-inter-box"
+                icon={Globe2}
+                fullWidth
+                onPress={() => navigation.navigate('InterCompetitionList')}
+                label={t('competition.seeInterBox')}
+              />
             </View>
+            <AxCard style={S.card}>
+              <Text style={S.physInfoTitle}>{t('competition.interBoxTitle')}</Text>
+              <Text style={S.physInfoText}>{t('competition.interBoxInfo')}</Text>
+            </AxCard>
           </>
         )}
 
-        <View style={{ height: 32 }} />
+        <View style={S.bottomGap} />
       </ScrollView>
     </View>
   );
 }
 
 function createStyles(theme: AppTheme) {
-  const isDark = theme.mode === 'dark';
-  const cardShadow = isDark ? {} : {
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
-  };
+  const c = theme.ax;
   return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16,
-    backgroundColor: theme.card,
-    borderBottomWidth: isDark ? 1 : 0, borderBottomColor: theme.border,
-    ...(isDark ? {} : { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2 }),
-  },
-  headerTitle: { fontSize: 24, fontWeight: '900', color: theme.text, letterSpacing: -0.3 },
-  headerSub: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-  tabs: {
-    flexDirection: 'row', backgroundColor: theme.card,
-    borderBottomWidth: 1, borderBottomColor: theme.border,
-  },
-  tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabActive: { borderBottomColor: theme.accent },
-  tabText: { fontSize: 12, fontWeight: '600', color: theme.textMuted, textAlign: 'center' },
-  tabTextActive: { color: theme.accent, fontWeight: '700' },
-  content: { padding: 16, paddingBottom: 140 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: theme.text, marginBottom: 12, marginTop: 8 },
-  createButton: { marginBottom: 16 },
-  createGradient: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    borderRadius: 14, padding: 16, gap: 8,
-    backgroundColor: theme.ctaBg,
-    borderWidth: 2, borderColor: theme.ctaBorder,
-  },
-  createText: { color: theme.text, fontWeight: '700', fontSize: 15 },
-  vsAvatar: {
-    width: 46, height: 46, borderRadius: 16,
-    backgroundColor: theme.surface, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 2, borderColor: theme.accent,
-  },
-  vsAvatarText: { fontSize: 18, fontWeight: '900', color: theme.text },
-  levelPill: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
-  levelPillText: { fontSize: 10, fontWeight: '700' },
-  statusBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
-  statusText: { fontSize: 11, fontWeight: '700' },
-  tournamentCard: {
-    backgroundColor: isDark ? theme.card : theme.card, borderRadius: 16, padding: 16,
-    marginBottom: 10, borderWidth: 1, borderColor: theme.border,
-    ...cardShadow,
-  },
-  tHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  tName: { fontSize: 15, fontWeight: '700', color: theme.text, flex: 1 },
-  tStatus: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  tStatusText: { fontSize: 11, fontWeight: '700' },
-  regBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
-    backgroundColor: `${theme.success}15`, borderRadius: 8,
-    paddingHorizontal: 8, paddingVertical: 4, marginBottom: 10,
-    borderWidth: 1, borderColor: `${theme.success}30`,
-  },
-  regBadgeText: { fontSize: 11, fontWeight: '800', color: theme.success },
-  tInfo: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
-  tInfoItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  tInfoText: { fontSize: 12, color: theme.textMuted },
-  tPrize: { fontSize: 12, color: theme.gold, fontWeight: '700' },
-  progressBar: {
-    height: 4, backgroundColor: theme.surface,
-    borderRadius: 2, overflow: 'hidden',
-  },
-  progressFill: { height: '100%', backgroundColor: theme.accent, borderRadius: 2 },
-  miniInfo: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: `${theme.gold}12`, borderRadius: 12,
-    padding: 12, marginBottom: 16, borderWidth: 1, borderColor: `${theme.gold}25`,
-  },
-  miniInfoText: { fontSize: 12, color: theme.gold, flex: 1 },
-  officialCard: {
-    backgroundColor: theme.card, borderRadius: 16, padding: 16,
-    marginBottom: 16, borderWidth: 1.5, borderColor: theme.accent,
-    ...cardShadow,
-  },
-  officialBadgeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  officialBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: theme.accent, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5,
-  },
-  officialBadgeTxt: { fontSize: 11, fontWeight: '900', color: theme.onAccent, letterSpacing: 0.3 },
-  officialTime: { fontSize: 12, fontWeight: '800', color: theme.accent },
-  officialName: { fontSize: 18, fontWeight: '900', color: theme.text },
-  officialSub: { fontSize: 12, fontWeight: '600', color: theme.textMuted, marginTop: 2 },
-  officialFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 },
-  officialParticipants: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  officialParticipantsTxt: { fontSize: 12, fontWeight: '600', color: theme.textSecondary },
-  officialCta: { backgroundColor: theme.accent, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 },
-  officialCtaTxt: { fontSize: 12, fontWeight: '800', color: theme.onAccent },
-  miniCard: {
-    backgroundColor: isDark ? theme.card : theme.card, borderRadius: 16, padding: 16,
-    marginBottom: 10, borderWidth: 1, borderColor: theme.border,
-    ...cardShadow,
-  },
-  miniHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  miniName: { fontSize: 15, fontWeight: '700', color: theme.text },
-  miniFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  miniParticipants: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  participantDot: { width: 10, height: 10, borderRadius: 5 },
-  miniParticipantsText: { fontSize: 12, color: theme.textSecondary, marginLeft: 4 },
-  miniTime: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  miniTimeText: { fontSize: 12, color: theme.textMuted },
-  joinButton: {
-    borderRadius: 14, padding: 12, alignItems: 'center',
-    backgroundColor: theme.accent, marginTop: 4,
-  },
-  joinButtonText: { color: theme.onAccent, fontWeight: '700', fontSize: 13, letterSpacing: 0.5 },
-  emptyBox:   { paddingTop: 48 },
-  physInfoBox: {
-    backgroundColor: `#8B5CF610`, borderRadius: 14, padding: 16,
-    borderWidth: 1, borderColor: `#8B5CF625`, marginTop: 8,
-  },
-  physInfoTitle: { fontSize: 15, fontWeight: '700', color: '#8B5CF6', marginBottom: 6 },
-  physInfoText:  { fontSize: 13, color: theme.textSecondary, lineHeight: 19 },
-  physModeCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: theme.card, borderRadius: 14, padding: 14,
-    borderWidth: 1, borderColor: theme.border,
-    ...cardShadow,
-  },
-  physModeIcon: {
-    width: 42, height: 42, borderRadius: 12,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  physModeTitle: { fontSize: 15, fontWeight: '800', color: theme.text },
-  physModeDesc:  { fontSize: 12, color: theme.textMuted, marginTop: 2 },
-}); }
+  header: { paddingBottom: axSpacing.md },
+  tabsBar: { flexGrow: 0 },
+  tabs: { flexDirection: 'row', gap: axSpacing.sm, paddingHorizontal: axSpacing.xl, paddingBottom: axSpacing.md },
+  content: { padding: axSpacing.lg },
+  flex: { flex: 1, minWidth: 0 },
+  block: { marginBottom: axSpacing.lg },
+  card: { marginBottom: axSpacing.md },
+  loader: { marginTop: 32 },
+  sectionTitle: { ...axTypography.titleM, color: c.text, marginBottom: axSpacing.md, marginTop: axSpacing.sm },
+  emptyBox: { alignItems: 'center', paddingVertical: 40, gap: axSpacing.md },
+  emptyText: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+  tHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: axSpacing.md },
+  tName: { ...axTypography.titleM, color: c.text, flex: 1, minWidth: 0 },
+  regBadge: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+  regBadgeText: { ...axTypography.labelSmall, color: c.success },
+  tInfo: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md, flexWrap: 'wrap' },
+  tInfoItem: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+  tInfoText: { ...axTypography.bodySmall, color: c.textMuted },
+  tPrize: { ...axTypography.label, color: c.text, flexShrink: 1 },
+  progressBar: { height: 4, backgroundColor: c.border, borderRadius: 2, overflow: 'hidden' },
+  progressFill: { height: 4, backgroundColor: c.accent, borderRadius: 2 },
+  officialBadgeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.md },
+  officialBadge: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, flexShrink: 1 },
+  officialBadgeTxt: { ...axTypography.overline, color: c.accentText },
+  officialTime: { ...axTypography.label, color: c.textMuted },
+  officialName: { ...axTypography.titleL, color: c.text },
+  officialSub: { ...axTypography.bodySmall, color: c.textMuted },
+  officialFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.md, flexWrap: 'wrap' },
+  officialParticipants: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs, flexShrink: 1 },
+  officialParticipantsTxt: { ...axTypography.caption, color: c.textMuted },
+  miniInfo: { flexDirection: 'row', alignItems: 'flex-start', gap: axSpacing.sm, marginBottom: axSpacing.lg },
+  miniInfoText: { ...axTypography.bodySmall, color: c.textMuted, flex: 1 },
+  miniHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: axSpacing.md },
+  miniName: { ...axTypography.titleM, color: c.text, flex: 1, minWidth: 0 },
+  miniCreator: { ...axTypography.caption, color: c.textMuted },
+  miniFooter: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.lg, flexWrap: 'wrap' },
+  miniParticipants: { flexDirection: 'row', alignItems: 'center', gap: 3, flexWrap: 'wrap' },
+  participantDot: { width: 8, height: 8, borderRadius: 4 },
+  miniParticipantsText: { ...axTypography.caption, color: c.textMuted, marginLeft: axSpacing.xs },
+  miniTime: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+  miniTimeText: { ...axTypography.labelSmall, color: c.text },
+  miniReward: { ...axTypography.labelSmall, color: c.text },
+  joinedRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: axSpacing.xs, minHeight: 44 },
+  joinedText: { ...axTypography.label, color: c.success },
+  seeAll: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: axSpacing.xs, minHeight: 44 },
+  seeAllText: { ...axTypography.label, color: c.accentText },
+  physList: { gap: axSpacing.md },
+  physModeCard: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.md },
+  physModeIcon: { width: 44, height: 44, borderRadius: axRadius.control, borderWidth: 1, borderColor: c.border, alignItems: 'center', justifyContent: 'center' },
+  physModeTitle: { ...axTypography.label, color: c.text },
+  physModeDesc: { ...axTypography.caption, color: c.textMuted, marginTop: 2 },
+  physInfoTitle: { ...axTypography.label, color: c.text },
+  physInfoText: { ...axTypography.bodySmall, color: c.textMuted },
+  bottomGap: { height: 32 },
+  });
+}

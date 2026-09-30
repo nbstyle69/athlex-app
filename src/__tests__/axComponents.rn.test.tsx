@@ -372,6 +372,11 @@ describe('contraste AA des couples texte / fond', () => {
   }
 });
 
+const R8A_SCREENS = [
+  'CompetitionScreen.tsx', 'TournamentScreen.tsx', 'TournamentBracketView.tsx',
+  'TournamentDivisionsView.tsx', 'TournamentWODScreen.tsx',
+];
+
 describe('isolement : rien d’existant ne consomme src/components/ax', () => {
   const SRC = path.join(__dirname, '..');
   const AX_DIR = path.join(SRC, 'components', 'ax');
@@ -416,6 +421,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'screens', 'onboarding', 'OnboardingTutorialScreen.tsx'),
     path.join(SRC, 'components', 'EmptyState.tsx'),
     path.join(SRC, 'components', 'ConfirmDialog.tsx'),
+    // R8a : écrans des tournois.
+    ...R8A_SCREENS.map((f) => path.join(SRC, 'screens', 'competition', f)),
     // R10 : réservation au nouveau design (Mes réservations est déjà adoptant R3c).
     path.join(SRC, 'screens', 'reservation', 'ReservationScreen.tsx'),
     path.join(SRC, 'screens', 'reservation', 'ReservationWeekPicker.tsx'),
@@ -507,6 +514,7 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       path.join('competition', 'PhysicalCompetitionScreen.tsx'),
       path.join('tournament', 'DailyTournamentDetailScreen.tsx'),
       path.join('tournament', 'DailyTournamentsScreen.tsx'),
+      ...R8A_SCREENS.map((f) => path.join('competition', f)),
     ].sort());
   });
 
