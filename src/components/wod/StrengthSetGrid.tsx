@@ -18,7 +18,7 @@ import { View, Text, StyleSheet } from 'react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import {
-  StrengthCardSummary, StrengthSetDraft, normalizeDecimalInput, normalizeRepsInput, savedAgo,
+  StrengthCardSummary, StrengthSetDraft, normalizeDecimalInput, normalizeRepsInput, savedAgo, setRanks,
   strengthSetDeviation, strengthTonnage, validStrengthSets,
 } from '../../services/strengthSets';
 import { AxCard, AxStatusDot, AxTextField } from '../ax';
@@ -34,6 +34,8 @@ export default function StrengthSetGrid({ drafts, onChange }: Props) {
   const { theme } = useTheme();
   const S = createStyles(theme);
   if (drafts.length === 0) return null;
+  // « Série n » = rang dans le bloc ; le numéro de stockage continue d'un bloc à l'autre.
+  const ranks = setRanks(drafts);
 
   return (
     <View>
@@ -51,7 +53,7 @@ export default function StrengthSetGrid({ drafts, onChange }: Props) {
           <View key={`${d.entryIndex}-${d.setIndex}`}>
             {first && <Text style={S.movement}>{d.name}</Text>}
             <View style={S.row}>
-              <Text style={S.setLabel}>Série {d.setIndex}</Text>
+              <Text style={S.setLabel}>Série {ranks[i]}</Text>
               <View style={S.input}>
                 <AxTextField
                   compact
@@ -95,7 +97,7 @@ const SAVED_AGO_KEYS = {
   days: 'strengthSession.savedDays',
 } as const;
 
-export type StrengthSaveState = 'idle' | 'saving' | 'offline' | 'serverNewer';
+export type StrengthSaveState = 'idle' | 'saving' | 'offline' | 'refused' | 'serverNewer';
 
 interface StatusProps {
   done: number;
@@ -111,6 +113,7 @@ export function StrengthSessionStatus({ done, total, savedAt, saveState, now }: 
   let saved: string;
   if (saveState === 'saving') saved = i18n.t('strengthSession.saving');
   else if (saveState === 'offline') saved = i18n.t('strengthSession.offline');
+  else if (saveState === 'refused') saved = i18n.t('strengthSession.refused');
   else if (saveState === 'serverNewer') saved = i18n.t('strengthSession.serverNewer');
   else if (!savedAt) saved = i18n.t('strengthSession.notSavedYet');
   else {
@@ -162,6 +165,7 @@ export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
 }) {
   const { theme } = useTheme();
   const c = theme.ax;
+  const ranks = setRanks(drafts);
   const sets = validStrengthSets(drafts);
   if (sets.length === 0) return null;
   return (
@@ -179,7 +183,7 @@ export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
             {first && <Text style={[axTypography.label, { color: c.text }]}>{d.name}</Text>}
             <View style={axStyles.setLine}>
               <Text style={[axTypography.bodySmall, { color: c.text }]}>
-                {i18n.t('strengthSession.setLine', { index: d.setIndex, reps: d.reps, kg: d.loadKg })}
+                {i18n.t('strengthSession.setLine', { index: ranks[drafts.indexOf(d)], reps: d.reps, kg: d.loadKg })}
               </Text>
               {gaps ? (
                 <Text style={[axTypography.labelSmall, { color: c.accentText }]} testID={`strength-my-loads-gap-${i}`}>{gaps}</Text>

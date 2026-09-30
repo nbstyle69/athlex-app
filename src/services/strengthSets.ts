@@ -31,7 +31,10 @@ export type StrengthSourceType = 'whiteboard' | 'program' | 'generated';
 export interface StrengthSetDraft {
   /** Index du bloc dans la description (une même séance peut avoir plusieurs mouvements). */
   entryIndex: number;
-  /** 1-based, dans l'ordre des séries du bloc. */
+  /**
+   * Numéro de stockage, 1-based, continu par mouvement sur toute la séance
+   * (`numberSetsByMovement`) ; l'affichage montre le rang dans le bloc (`setRanks`).
+   */
   setIndex: number;
   name: string;
   /** Saisies libres : la grille reste éditable, la validation se fait à l'écriture. */
@@ -78,6 +81,47 @@ export function parseDecimal(text: string): number | null {
   return toNumber(text);
 }
 
+/** Plafond du CHECK `strength_set_logs.set_index` (1..50) : séries d'un mouvement dans une séance. */
+export const MAX_SETS_PER_MOVEMENT = 50;
+
+/**
+ * Numéro de STOCKAGE des séries : continu par mouvement sur toute la séance.
+ * Deux blocs « Front Squat » (2 × 3 puis 2 × 2) donnent 1, 2 puis 3, 4 : la clé
+ * (athlète, source, mouvement, série) reste unique. Numéroter par bloc (1, 2,
+ * 1, 2) la dédoublait — brouillon refusé en 21000, validation en
+ * SERIES_EN_DOUBLE (1.0.58). L'athlète voit, lui, le rang dans le bloc
+ * (`setRanks`).
+ */
+export function numberSetsByMovement<T extends { name: string; setIndex: number }>(drafts: T[]): T[] {
+  const next = new Map<string, number>();
+  return drafts.map(d => {
+    const n = (next.get(d.name) ?? 0) + 1;
+    next.set(d.name, n);
+    return { ...d, setIndex: n };
+  });
+}
+
+/**
+ * Grille prête à écrire : renumérotée seulement si une clé (mouvement, série)
+ * y est en double — une grille de la 1.0.58 (1, 2, 1, 2), copie locale
+ * comprise. Une grille déjà unique est gardée telle quelle (une série hors
+ * prescription, venue du serveur, garde son numéro).
+ */
+export function withUniqueSetKeys<T extends { name: string; setIndex: number }>(drafts: T[]): T[] {
+  const unique = new Set(drafts.map(d => `${d.name}#${d.setIndex}`)).size === drafts.length;
+  return unique ? drafts : numberSetsByMovement(drafts);
+}
+
+/** Rang de chaque série dans son bloc (« Série 1, 2, 3 » affiché), quel que soit son numéro de stockage. */
+export function setRanks(drafts: { entryIndex: number }[]): number[] {
+  const seen = new Map<number, number>();
+  return drafts.map(d => {
+    const n = (seen.get(d.entryIndex) ?? 0) + 1;
+    seen.set(d.entryIndex, n);
+    return n;
+  });
+}
+
 /**
  * Grille pré-remplie par la prescription : une ligne par série.
  *
@@ -89,13 +133,20 @@ export function buildStrengthGrid(
   oneRepMaxFor: (name: string) => number | null,
 ): StrengthSetDraft[] {
   const out: StrengthSetDraft[] = [];
+  const perMovement = new Map<string, number>();
   entries.forEach((e, entryIndex) => {
     const kg = resolveStrengthLoadKg(e, oneRepMaxFor(e.name));
-    const sets = Math.max(1, Math.min(50, Math.round(e.sets)));
+    const sets = Math.max(1, Math.min(MAX_SETS_PER_MOVEMENT, Math.round(e.sets)));
     for (let s = 1; s <= sets; s++) {
+      const setIndex = (perMovement.get(e.name) ?? 0) + 1;
+      // ponytail: au-delà de 50 séries d'un même mouvement dans la séance, les
+      // suivantes ne sont pas proposées (CHECK set_index ≤ 50) ; une migration
+      // relèvera le plafond si une vraie séance le dépasse un jour.
+      if (setIndex > MAX_SETS_PER_MOVEMENT) break;
+      perMovement.set(e.name, setIndex);
       out.push({
         entryIndex,
-        setIndex: s,
+        setIndex,
         name: e.name,
         reps: String(e.reps),
         loadKg: kg == null ? '' : String(kg),
@@ -135,7 +186,7 @@ export interface LogStrengthSetsParams {
  * il ne l'empile pas — et trois séries déclarées après cinq, c'est trois séries.
  */
 export async function logStrengthSets(p: LogStrengthSetsParams): Promise<PerformedSet[]> {
-  const usable = usableDrafts(p.drafts);
+  const usable = usableDrafts(withUniqueSetKeys(p.drafts));
   // Une grille entièrement vide n'est PAS une déclaration de « zéro série » :
   // le pré-remplissage repart de la prescription à chaque ouverture, donc un
   // %1RM non résolu rend les charges vides sans que l'athlète ait rien dit.
@@ -458,9 +509,9 @@ export async function loadPendingStrengthDraft(k: StrengthSourceKey): Promise<Pe
     const raw = await AsyncStorage.getItem(pendingKey(k));
     if (!raw) return null;
     const p = JSON.parse(raw) as Partial<PendingStrengthDraft>;
-    return Array.isArray(p.drafts) && typeof p.editedAt === 'string'
-      ? { drafts: p.drafts, editedAt: p.editedAt, baseUpdatedAt: p.baseUpdatedAt ?? null }
-      : null;
+    if (!Array.isArray(p.drafts) || typeof p.editedAt !== 'string') return null;
+    // Copie laissée par la 1.0.58, numérotée par bloc : renumérotée à la relecture.
+    return { drafts: withUniqueSetKeys(p.drafts), editedAt: p.editedAt, baseUpdatedAt: p.baseUpdatedAt ?? null };
   } catch { return null; }
 }
 
@@ -493,7 +544,10 @@ const fmtKg = (n: number) => String(Number(n));
  * valeurs prévues ; une ligne sans série enregistrée reste vide (l'athlète l'a
  * vidée), une série hors prescription est ajoutée à la fin.
  */
-export function gridFromServer(prescription: StrengthSetDraft[], sets: ServerSet[]): StrengthSetDraft[] {
+export function gridFromServer(rawPrescription: StrengthSetDraft[], sets: ServerSet[]): StrengthSetDraft[] {
+  // La série n du bloc b est retrouvée par son numéro de stockage, continu par
+  // mouvement : deux blocs du même mouvement ne relisent jamais la même série.
+  const prescription = withUniqueSetKeys(rawPrescription);
   const byKey = new Map(sets.map(s => [`${s.movement}#${s.set_index}`, s]));
   const used = new Set<string>();
   const out = prescription.map(d => {
@@ -590,7 +644,20 @@ export interface LoadedStrengthGrid {
   server: ServerStrengthSession | null;
   /** La copie locale est en attente d'envoi (hors connexion, ou à renvoyer maintenant). */
   pending: PendingStrengthDraft | null;
+  /** Lecture impossible faute de réseau. */
   offline: boolean;
+  /** Lecture refusée par le serveur (jamais présentée comme une coupure réseau). */
+  refused: boolean;
+}
+
+/**
+ * Coupure réseau : postgrest-js rend alors `status 0` et `code ''` (fetch
+ * échoué). Un refus de la base porte toujours un code (21000, 42501, PGRST…) :
+ * il n'est jamais « hors connexion ».
+ */
+export function isNetworkError(e: unknown): boolean {
+  const code = e && typeof e === 'object' && 'code' in e ? (e as { code: unknown }).code : undefined;
+  return code == null || code === '';
 }
 
 /** Chargement de la grille : serveur d'abord, copie locale si elle est plus récente. */
@@ -604,11 +671,15 @@ export async function loadStrengthGrid(
     server = await fetchStrengthSession(k);
   } catch (e) {
     captureError(e, { service: 'strengthSets', action: 'fetchSession' });
-    return { drafts: pending?.drafts ?? prescription, origin: pending ? 'local' : 'prescription', server: null, pending, offline: true };
+    const offline = isNetworkError(e);
+    return {
+      drafts: pending?.drafts ?? prescription, origin: pending ? 'local' : 'prescription', server: null, pending,
+      offline, refused: !offline,
+    };
   }
   const resolved = resolveStrengthGrid(prescription, server, pending);
   if (pending && resolved.origin !== 'local') await clearPendingStrengthDraft(k);
-  return { ...resolved, server, pending: resolved.origin === 'local' ? pending : null, offline: false };
+  return { ...resolved, server, pending: resolved.origin === 'local' ? pending : null, offline: false, refused: false };
 }
 
 export interface SaveStrengthDraftParams extends StrengthSourceKey {
@@ -621,17 +692,30 @@ export interface SaveStrengthDraftParams extends StrengthSourceKey {
 export type SaveStrengthDraftResult =
   | { status: 'saved'; updatedAt: string }
   | { status: 'server_newer'; server: ServerStrengthSession }
-  | { status: 'offline' };
+  /**
+   * Coupure réseau (`offline`) ou refus du serveur (`refused`, avec son code) :
+   * la copie locale est gardée. `baseUpdatedAt` est la version serveur sur
+   * laquelle elle repose désormais — celle que cet envoi a lui-même écrite si
+   * la séance est passée avant l'échec des séries.
+   */
+  | { status: 'offline'; baseUpdatedAt: string | null }
+  | { status: 'refused'; code: string; baseUpdatedAt: string | null };
 
 /**
  * Enregistre le brouillon : séance (statut draft) puis séries, rien d'autre.
- * La copie locale est écrite avant l'envoi et effacée après : une coupure réseau
- * ou une app tuée ne perd pas la saisie. Une version serveur plus récente n'est
- * jamais écrasée : elle est rendue à l'écran à la place.
+ * La copie locale est écrite avant l'envoi et effacée après : une coupure réseau,
+ * un refus du serveur ou une app tuée ne perd pas la saisie. Une version serveur
+ * plus récente n'est jamais écrasée : elle est rendue à l'écran à la place.
+ *
+ * Les deux écritures ne sont pas atomiques : si la séance passe et que les
+ * séries échouent, la copie locale reprend l'`updated_at` que cet envoi vient
+ * d'écrire. Sans cela, l'essai suivant prenait sa propre écriture pour celle
+ * d'un autre appareil et remplaçait la saisie par des séries vides (1.0.58).
  */
 export async function saveStrengthDraft(p: SaveStrengthDraftParams): Promise<SaveStrengthDraftResult> {
   const k: StrengthSourceKey = { userId: p.userId, sourceType: p.sourceType, sourceId: p.sourceId };
-  const pending: PendingStrengthDraft = { drafts: p.drafts, editedAt: p.editedAt, baseUpdatedAt: p.baseUpdatedAt };
+  const drafts = withUniqueSetKeys(p.drafts);
+  const pending: PendingStrengthDraft = { drafts, editedAt: p.editedAt, baseUpdatedAt: p.baseUpdatedAt };
   await savePendingStrengthDraft(k, pending);
   try {
     const current = await fetchStrengthSession(k);
@@ -648,12 +732,14 @@ export async function saveStrengthDraft(p: SaveStrengthDraftParams): Promise<Sav
         source_type: p.sourceType,
         source_id: p.sourceId,
         source_title: p.sourceTitle,
-        planned_sets: Math.min(500, Math.max(1, p.drafts.length)),
+        planned_sets: Math.min(500, Math.max(1, drafts.length)),
         updated_at: updatedAt,
       }, { onConflict: 'user_id,source_type,source_id' });
     if (sErr) throw sErr;
+    pending.baseUpdatedAt = updatedAt;
+    await savePendingStrengthDraft(k, pending);
 
-    const rows = p.drafts
+    const rows = drafts
       .map(d => ({ d, reps: validReps(d.reps), load: validLoad(d.loadKg) }))
       .filter(r => r.reps != null || r.load != null)
       .map(({ d, reps, load }) => ({
@@ -693,7 +779,8 @@ export async function saveStrengthDraft(p: SaveStrengthDraftParams): Promise<Sav
     return { status: 'saved', updatedAt };
   } catch (e) {
     captureError(e, { service: 'strengthSets', action: 'saveDraft' });
-    return { status: 'offline' };
+    if (isNetworkError(e)) return { status: 'offline', baseUpdatedAt: pending.baseUpdatedAt };
+    return { status: 'refused', code: String((e as { code: unknown }).code), baseUpdatedAt: pending.baseUpdatedAt };
   }
 }
 
@@ -763,7 +850,8 @@ const numOrNull = (v: number | string | null | undefined) => (v == null ? null :
 
 /** Valide la séance : une seule transaction côté serveur (séries, séance, score, 1RM). */
 export async function validateStrengthSession(p: ValidateStrengthParams): Promise<StrengthValidationResult> {
-  const valid = validStrengthSets(p.drafts);
+  const drafts = withUniqueSetKeys(p.drafts);
+  const valid = validStrengthSets(drafts);
   const sets = valid.map(d => ({
     movement: d.name,
     movement_label: weightliftingPrLabel(d.name),
@@ -773,12 +861,12 @@ export async function validateStrengthSession(p: ValidateStrengthParams): Promis
     prescribed_reps: d.prescribedReps >= 1 ? d.prescribedReps : null,
     prescribed_load_kg: d.prescribedLoadKg != null && d.prescribedLoadKg > 0 ? d.prescribedLoadKg : null,
   }));
-  const records = strengthRecordsFor(p.drafts, p.previousSets ?? []);
+  const records = strengthRecordsFor(drafts, p.previousSets ?? []);
   const { data, error } = await db.rpc('validate_strength_session', {
     p_source_type: p.sourceType,
     p_source_id: p.sourceId,
     p_source_title: p.sourceTitle,
-    p_planned_sets: Math.min(500, Math.max(1, p.drafts.length)),
+    p_planned_sets: Math.min(500, Math.max(1, drafts.length)),
     p_rx: p.rx,
     p_sets: sets as unknown as Json,
     p_records: records as unknown as Json,

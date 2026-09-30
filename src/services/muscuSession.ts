@@ -12,7 +12,7 @@ import { supabase } from '../lib/supabase';
 import type { User } from '../types';
 import type { MuscuWod } from '../../packages/wod-engine/src';
 import {
-  ServerSet, StrengthSetDraft, StrengthValidationResult, latestStrengthDraft, parseDecimal,
+  ServerSet, StrengthSetDraft, StrengthValidationResult, latestStrengthDraft, numberSetsByMovement, parseDecimal,
   submitStrengthValidation,
 } from './strengthSets';
 import {
@@ -27,10 +27,14 @@ export function initialPerformed(wod: MuscuWod): PerformedExercise[] {
 
 const numText = (n: number) => (n > 0 ? String(Number(n)) : '');
 
-/** Séries de la carte Séance → lignes de la grille du service (une par série). */
+/**
+ * Séries de la carte Séance → lignes de la grille du service (une par série),
+ * numérotées pour le stockage en continu par mouvement (un exercice présent
+ * deux fois ne dédouble pas la clé).
+ */
 export function performedToDrafts(wod: MuscuWod, performed: readonly PerformedExercise[]): StrengthSetDraft[] {
   const exercises = wod.blocks[0].exercises;
-  return performed.flatMap((ex, i) => {
+  return numberSetsByMovement(performed.flatMap((ex, i) => {
     const planned = exercises[i] ? plannedSets(exercises[i]) : [];
     return ex.sets.map((s, j) => ({
       entryIndex: i,
@@ -41,15 +45,19 @@ export function performedToDrafts(wod: MuscuWod, performed: readonly PerformedEx
       prescribedReps: planned[j]?.reps ?? 0,
       prescribedLoadKg: planned[j] && planned[j].load_kg > 0 ? planned[j].load_kg : null,
     }));
-  });
+  }));
 }
 
-/** Lignes de la grille → séries de la carte Séance, dans l'ordre de la prescription. */
+/**
+ * Lignes de la grille → séries de la carte Séance, dans l'ordre de la
+ * prescription : la série j de l'exercice i est la j-ième ligne de son bloc
+ * (son rang), pas son numéro de stockage.
+ */
 export function draftsToPerformed(base: readonly PerformedExercise[], drafts: readonly StrengthSetDraft[]): PerformedExercise[] {
   return base.map((ex, i) => ({
     ...ex,
     sets: ex.sets.map((s, j) => {
-      const d = drafts.find((x) => x.entryIndex === i && x.setIndex === j + 1);
+      const d = drafts.filter((x) => x.entryIndex === i)[j];
       if (!d) return s;
       return {
         reps: Math.max(0, Math.floor(parseDecimal(d.reps) ?? 0)),
