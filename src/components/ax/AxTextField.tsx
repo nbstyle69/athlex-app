@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type ReactNode } from 'react';
 import { KeyboardTypeOptions, StyleSheet, TextInputProps, Text, TextInput, View } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
@@ -26,8 +26,8 @@ interface Props {
   onSubmitEditing?: () => void;
   autoCorrect?: boolean;
   autoFocus?: boolean;
-  /** Élément posé à droite du champ (bouton afficher / masquer le mot de passe). */
-  trailing?: React.ReactNode;
+  /** Élément posé à droite du champ, après l'icône (bouton d'effacement…). */
+  trailing?: ReactNode;
   /** Hauteur minimale de la zone de saisie (champ multiligne). */
   minInputHeight?: number;
   /** Hauteur maximale de la zone de saisie : au-delà, le texte défile dans le champ. */
