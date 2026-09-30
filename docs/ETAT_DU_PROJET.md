@@ -216,6 +216,25 @@ Supabase/Resend.
 - Tests : `r6cBips.rn.test.tsx` (19), `BeepMixerTest.kt` (9, JVM), `VideoQualityTest.kt` complété (7) ; mutations JS et
   Kotlin tuées ; Kotlin compilé en local, Swift par un build simulateur EAS.
 
+**Refonte R12 : profil et écrans sociaux au nouveau design (app seule, aucune migration, apparence seule).**
+- `ProfileScreen` : en-tête (photo ou initiale, pseudo `titleXL`, box `bodySmall`, ELO `numberM`, palier `levelInk` AA),
+  onglets Compte / PR / Stats / Badges en `AxChip`, sections en `AxCard`, thème en `AxSwitch`, « Supprimer mon compte »
+  en `AxButton` stop, PR et stats en `numberM`, badges en grille de cartes, icônes Lucide à la place des emoji.
+- Amis, Profil public, Utilisateurs bloqués, Notifications, Nouveautés : lignes et blocs en `AxCard`, onglets / périodes /
+  heures en `AxChip`, interrupteurs en `AxSwitch`, couleurs de niveau et de type rendues lisibles (`readableInk`).
+- Thème, langue, code de box, abonnement, déconnexion, suppression (deux confirmations), requêtes et navigation inchangés.
+- Tests : `r12.rn.test.tsx` (51, dont ordre des blocs sur 22 états figés sur master), isolement R1 élargi au seul
+  `ProfileScreen` ; `npx jest` 1976, `npm run test:rn` 536, `tsc` vert ; 28 mutations tuées.
+
+**Refonte R13 : annuaire, programmes et partenaires au nouveau design (app seule, aucune migration, apparence seule).**
+- `BoxDirectoryScreen` (recherche en `AxTextField`, sports en `AxChip`, boxs en `AxCard`, nom en `titleM`, ville et infos
+  en `bodySmall` `textMuted`, sports en `AxTag`), `BoxDirectoryMapScreen` (en-tête flottant et fiche basse `AxCard`
+  featured ; fond de carte et marqueurs inchangés ; toujours sans `AxScreenHeader`, écran plein écran), fiche box (identité
+  en `AxCard` featured, sports / services en `AxTag`, horaires en `AxCard`), Programmes, programmes des boxs, partenaires
+  et fiche partenaire (offre en `AxCard` featured, code en `AxButton` accent unique) ; `AxTextField` gagne l'option
+  rétrocompatible `trailing` (bouton d'effacement). Requêtes, navigation et liens inchangés ; ordre des textes comparé à un
+  relevé de master (`r13.rn.test.tsx`, `r13StructureBefore.json`).
+
 **Refonte R9b : écrans secondaires de Ma Box au nouveau design (app seule, aucune migration, apparence seule).**
 - Actualités, Membres (fenêtre extraite telle quelle de `WhiteboardScreen` vers `WhiteboardMembersModal`), Séance perso
   (formulaire), Classement de la box, Messages et Infos de la box : `AxCard` par ligne ou section, `AxTextField`, `AxChip`,

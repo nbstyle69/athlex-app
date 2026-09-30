@@ -1,13 +1,15 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxCard, AxTag } from '../../components/ax';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, SectionList,
+  View, Text, StyleSheet, Pressable, SectionList,
   Image, ActivityIndicator, Linking,
 } from 'react-native';
 import { Building2, ExternalLink, Calendar } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
+import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { HomeStackParamList } from '../../navigation';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
@@ -37,7 +39,8 @@ export default function BoxProgramsScreen() {
   const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
   const navigation = useNavigation<Nav>();
-  const s = createStyles(theme);
+  const c = theme.ax;
+  const s = createStyles(c);
   const [programs, setPrograms] = useState<ProgramItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -103,98 +106,95 @@ export default function BoxProgramsScreen() {
 
       {loading ? (
         <View style={s.center}>
-          <ActivityIndicator size="large" color={theme.accent} />
+          <ActivityIndicator size="large" color={c.accentText} />
         </View>
       ) : (
         <SectionList
           sections={sections}
           keyExtractor={item => item.id}
-          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabSpace, paddingTop: 8 }}
+          contentContainerStyle={[s.list, { paddingBottom: tabSpace }]}
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
           ListEmptyComponent={
             <View style={s.center}>
-              <Building2 color={theme.textMuted} size={40} />
+              <Building2 color={c.textMuted} size={40} />
               <Text style={s.emptyTxt}>Aucune box ne propose de programme pour le moment</Text>
             </View>
           }
           renderSectionHeader={({ section }) => (
-            <TouchableOpacity style={s.sectionRow} activeOpacity={0.8} onPress={() => openBoxPage(section.box_slug)}>
+            <Pressable
+              style={s.sectionRow}
+              onPress={() => openBoxPage(section.box_slug)}
+              accessibilityRole="button"
+              accessibilityLabel={section.title}
+              testID={`box-programs-section-${section.data[0].box_id}`}
+            >
               {section.box_logo ? (
                 <Image source={{ uri: section.box_logo }} style={s.sectionLogo} />
               ) : (
-                <View style={s.sectionLogoFallback}>
+                <View style={[s.sectionLogo, s.sectionLogoFallback]}>
                   <Text style={s.sectionInitial}>{section.title.charAt(0)}</Text>
                 </View>
               )}
-              <View style={{ flex: 1 }}>
-                <Text style={s.sectionName}>{section.title}</Text>
-                {section.box_city && <Text style={s.sectionCity}>{section.box_city}</Text>}
+              <View style={s.sectionText}>
+                <Text style={s.sectionName} numberOfLines={1}>{section.title}</Text>
+                {section.box_city && <Text style={s.sectionCity} numberOfLines={1}>{section.box_city}</Text>}
               </View>
-              {section.box_slug && <ExternalLink color={theme.textMuted} size={16} />}
-            </TouchableOpacity>
+              {section.box_slug && <ExternalLink color={c.textMuted} size={16} />}
+            </Pressable>
           )}
           renderItem={({ item }) => (
-            <TouchableOpacity style={s.card} activeOpacity={0.85} onPress={() => openBoxPage(item.box_slug)}>
-              <View style={{ flex: 1 }}>
-                <View style={s.titleRow}>
-                  <Text style={s.cardName} numberOfLines={1}>{item.title}</Text>
-                  <View style={[s.typeBadge, { backgroundColor: item.type === 'fixed' ? '#3B82F615' : '#8B5CF615' }]}>
-                    <Text style={[s.typeTxt, { color: item.type === 'fixed' ? '#3B82F6' : '#8B5CF6' }]}>
-                      {item.type === 'fixed' ? `${item.duration_weeks} sem.` : 'Ongoing'}
-                    </Text>
-                  </View>
-                </View>
-                {item.description && <Text style={s.cardDesc} numberOfLines={2}>{item.description}</Text>}
-                <View style={s.metaRow}>
-                  <Calendar color={theme.textMuted} size={12} />
-                  <Text style={s.metaTxt}>{item.days_per_week} jours/semaine</Text>
-                </View>
+            <AxCard
+              onPress={() => openBoxPage(item.box_slug)}
+              accessibilityLabel={item.title}
+              testID={`program-card-${item.id}`}
+            >
+              <View style={s.titleRow}>
+                <Text style={s.cardName} numberOfLines={1}>{item.title}</Text>
+                <AxTag
+                  tone={item.type === 'fixed' ? 'accent' : 'muted'}
+                  label={item.type === 'fixed' ? `${item.duration_weeks} sem.` : 'Ongoing'}
+                />
               </View>
-            </TouchableOpacity>
+              {item.description && <Text style={s.cardDesc} numberOfLines={2}>{item.description}</Text>}
+              <View style={s.metaRow}>
+                <Calendar color={c.textMuted} size={12} />
+                <Text style={s.metaTxt}>{item.days_per_week} jours/semaine</Text>
+              </View>
+            </AxCard>
           )}
-          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-          SectionSeparatorComponent={() => <View style={{ height: 16 }} />}
+          ItemSeparatorComponent={() => <View style={s.separator} />}
+          SectionSeparatorComponent={() => <View style={s.sectionSeparator} />}
         />
       )}
     </View>
   );
 }
 
-function createStyles(t: AppTheme) { return StyleSheet.create({
+function createStyles(c: AxColors) { return StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16,
-    backgroundColor: t.card, borderBottomWidth: 1, borderBottomColor: t.border,
-  },
-  back: { padding: 4 },
-  headerTitle: { fontSize: 20, fontWeight: '900', color: t.text },
-  headerSub: { fontSize: 11, color: t.textMuted, marginTop: 2 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingTop: 60 },
-  emptyTxt: { fontSize: 13, color: t.textMuted, textAlign: 'center', paddingHorizontal: 30 },
+  headerSub: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
+  list: { paddingHorizontal: axSpacing.xl, paddingTop: axSpacing.sm },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: axSpacing.md, paddingTop: 60 },
+  emptyTxt: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center', paddingHorizontal: 30 },
+  separator: { height: axSpacing.sm },
+  sectionSeparator: { height: axSpacing.lg },
   sectionRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    paddingVertical: 12, paddingHorizontal: 4,
+    flexDirection: 'row', alignItems: 'center', gap: axSpacing.md,
+    minHeight: 44, paddingVertical: axSpacing.sm,
   },
-  sectionLogo: { width: 36, height: 36, borderRadius: 10 },
+  sectionLogo: { width: 36, height: 36, borderRadius: axRadius.card },
   sectionLogoFallback: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: `${t.accent}15`,
+    backgroundColor: c.field, borderWidth: 1, borderColor: c.border,
     alignItems: 'center', justifyContent: 'center',
   },
-  sectionInitial: { fontSize: 16, fontWeight: '900', color: t.accent },
-  sectionName: { fontSize: 14, fontWeight: '900', color: t.text },
-  sectionCity: { fontSize: 11, color: t.textMuted, marginTop: 1 },
-  card: {
-    backgroundColor: t.card, borderRadius: 16, padding: 16,
-    borderWidth: 1, borderColor: t.border,
-  },
-  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardName: { fontSize: 15, fontWeight: '800', color: t.text, flex: 1 },
-  typeBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  typeTxt: { fontSize: 10, fontWeight: '800' },
-  cardDesc: { fontSize: 12, color: t.textMuted, marginTop: 4, lineHeight: 17 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
-  metaTxt: { fontSize: 11, color: t.textMuted },
+  sectionInitial: { ...axTypography.label, color: c.accentText },
+  sectionText: { flex: 1, minWidth: 0 },
+  sectionName: { ...axTypography.label, color: c.text },
+  sectionCity: { ...axTypography.bodySmall, color: c.textMuted },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm },
+  cardName: { ...axTypography.titleM, color: c.text, flex: 1, minWidth: 0 },
+  cardDesc: { ...axTypography.bodySmall, color: c.textMuted },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.xs },
+  metaTxt: { ...axTypography.bodySmall, color: c.textMuted },
 }); }

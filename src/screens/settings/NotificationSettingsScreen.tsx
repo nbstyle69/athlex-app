@@ -1,7 +1,8 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxButton, AxCard, AxChip, AxSwitch } from '../../components/ax';
 import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, TouchableOpacity, Switch, ScrollView, Alert,
+  View, Text, StyleSheet, ScrollView, Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Bell, BellOff, Clock, Users, Trophy, Zap, MessageCircle, Heart, Dumbbell, CalendarClock, TrendingUp, Megaphone, Award } from 'lucide-react-native';
@@ -19,6 +20,8 @@ import {
 } from '../../services/notifications';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { axSpacing, axTypography } from '../../theme/axTokens';
+import { readableInk } from '../home/homeLevelColor';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
@@ -130,11 +133,11 @@ export default function NotificationSettingsScreen() {
 
   function renderToggle(t: Toggle) {
     const value = prefs[t.key] && master;
-    const tint = hue(theme.mode, t.hue);
+    const tint = readableInk(hue(theme.mode, t.hue), theme.ax);
     return (
       <View style={S.row} key={t.key}>
         <View style={S.rowLeft}>
-          <t.Icon color={master ? tint : theme.textMuted} size={18} />
+          <t.Icon color={master ? tint : theme.ax.textMuted} size={18} />
           <View style={{ flex: 1 }}>
             <Text style={[S.rowLabel, !master && S.rowLabelOff]}>{t.label}</Text>
             <Text style={S.rowSub}>{t.sub}</Text>
@@ -143,12 +146,12 @@ export default function NotificationSettingsScreen() {
         {saving === t.key ? (
           <ActivityIndicator size="small" color={tint} style={S.pending} />
         ) : (
-          <Switch
+          <AxSwitch
             value={value}
             disabled={!master || saving !== null}
             onValueChange={v => update(t.key, v)}
-            trackColor={{ false: theme.border, true: `${tint}60` }}
-            thumbColor={value ? tint : theme.textMuted}
+            accessibilityLabel={t.label}
+            testID={`notif-switch-${t.key}`}
           />
         )}
       </View>
@@ -162,10 +165,10 @@ export default function NotificationSettingsScreen() {
 
       <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {/* Interrupteur maître */}
-        <View style={S.section}>
+        <AxCard style={S.section} testID="notif-section-master">
           <View style={S.row}>
             <View style={S.rowLeft}>
-              {master ? <Bell color={theme.accent} size={18} /> : <BellOff color={theme.textMuted} size={18} />}
+              {master ? <Bell color={theme.ax.accentText} size={18} /> : <BellOff color={theme.ax.textMuted} size={18} />}
               <View style={{ flex: 1 }}>
                 <Text style={S.rowLabel}>Toutes les notifications</Text>
                 <Text style={S.rowSub}>
@@ -176,39 +179,39 @@ export default function NotificationSettingsScreen() {
               </View>
             </View>
             {saving === 'notifications_enabled' ? (
-              <ActivityIndicator size="small" color={theme.accent} style={S.pending} />
+              <ActivityIndicator size="small" color={theme.ax.accentText} style={S.pending} />
             ) : (
-              <Switch
+              <AxSwitch
                 value={master}
                 disabled={saving !== null}
                 onValueChange={v => update('notifications_enabled', v)}
-                trackColor={{ false: theme.border, true: `${theme.accent}60` }}
-                thumbColor={master ? theme.accent : theme.textMuted}
+                accessibilityLabel="Toutes les notifications"
+                testID="notif-switch-notifications_enabled"
               />
             )}
           </View>
-        </View>
+        </AxCard>
 
         {/* Rappel quotidien + son heure */}
-        <View style={S.section}>
+        <AxCard style={S.section} testID="notif-section-reminder">
           <Text style={S.sectionTitle}>Rappel quotidien</Text>
           <View style={S.row}>
             <View style={S.rowLeft}>
-              <Bell color={master ? theme.accent : theme.textMuted} size={18} />
+              <Bell color={master ? theme.ax.accentText : theme.ax.textMuted} size={18} />
               <View style={{ flex: 1 }}>
                 <Text style={[S.rowLabel, !master && S.rowLabelOff]}>Rappel d'entraînement</Text>
                 <Text style={S.rowSub}>Notification chaque jour pour t'entraîner</Text>
               </View>
             </View>
             {saving === 'daily_reminder' ? (
-              <ActivityIndicator size="small" color={theme.accent} style={S.pending} />
+              <ActivityIndicator size="small" color={theme.ax.accentText} style={S.pending} />
             ) : (
-              <Switch
+              <AxSwitch
                 value={prefs.daily_reminder && master}
                 disabled={!master || saving !== null}
                 onValueChange={v => update('daily_reminder', v)}
-                trackColor={{ false: theme.border, true: `${theme.accent}60` }}
-                thumbColor={prefs.daily_reminder && master ? theme.accent : theme.textMuted}
+                accessibilityLabel="Rappel d'entraînement"
+                testID="notif-switch-daily_reminder"
               />
             )}
           </View>
@@ -216,88 +219,58 @@ export default function NotificationSettingsScreen() {
           {prefs.daily_reminder && master && (
             <View style={S.hourSection}>
               <View style={S.rowLeft}>
-                <Clock color={theme.textMuted} size={16} />
+                <Clock color={theme.ax.textMuted} size={16} />
                 <Text style={S.rowLabel}>Heure du rappel</Text>
                 {saving === 'reminder_hour' && (
-                  <ActivityIndicator size="small" color={theme.accent} />
+                  <ActivityIndicator size="small" color={theme.ax.accentText} />
                 )}
               </View>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={S.hourScroll}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={S.hourScroll} contentContainerStyle={S.hourRow}>
                 {HOURS.map(h => (
-                  <TouchableOpacity
+                  <AxChip
                     key={h}
-                    style={[
-                      S.hourChip,
-                      prefs.reminder_hour === h && S.hourChipSel,
-                      saving !== null && S.hourChipOff,
-                    ]}
+                    label={`${String(h).padStart(2, '0')}:00`}
+                    selected={prefs.reminder_hour === h}
                     onPress={() => update('reminder_hour', h)}
                     disabled={saving !== null}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={[S.hourTxt, prefs.reminder_hour === h && S.hourTxtSel]}>
-                      {String(h).padStart(2, '0')}:00
-                    </Text>
-                  </TouchableOpacity>
+                    testID={`notif-hour-${h}`}
+                  />
                 ))}
               </ScrollView>
             </View>
           )}
-        </View>
+        </AxCard>
 
         {GROUPS.map(g => (
-          <View style={S.section} key={g.title}>
+          <AxCard style={S.section} key={g.title} testID={`notif-group-${g.title}`}>
             <Text style={S.sectionTitle}>{g.title}</Text>
             {g.toggles.map(renderToggle)}
-          </View>
+          </AxCard>
         ))}
 
         {/* Test button */}
-        <TouchableOpacity style={S.testBtn} onPress={testPush} activeOpacity={0.8}>
-          <Bell color={theme.onAccent} size={16} />
-          <Text style={S.testBtnTxt}>Tester les notifications</Text>
-        </TouchableOpacity>
+        <AxButton label="Tester les notifications" icon={Bell} onPress={testPush} fullWidth testID="notif-test-push" />
       </ScrollView>
     </View>
   );
 }
 
-function createStyles(t: AppTheme) { return StyleSheet.create({
+function createStyles(t: AppTheme) {
+  const c = t.ax;
+  return StyleSheet.create({
   screen: { flex: 1, backgroundColor: 'transparent' },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 60, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: t.border,
-  },
-  headerTitle: { fontSize: 18, fontWeight: '900', color: t.text },
-  content: { padding: 16, gap: 20, paddingBottom: 140 },
-  section: {
-    backgroundColor: t.card, borderRadius: 14, padding: 16,
-    borderWidth: 1, borderColor: t.border, gap: 14,
-  },
-  sectionTitle: { fontSize: 14, fontWeight: '900', color: t.text },
+  content: { padding: axSpacing.lg, gap: axSpacing.xl, paddingBottom: 140 },
+  section: { gap: 14 },
+  sectionTitle: { ...axTypography.overline, color: c.textMuted },
   row: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.md,
   },
-  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
-  rowLabel: { fontSize: 13, fontWeight: '700', color: t.text },
-  rowLabelOff: { color: t.textMuted },
-  rowSub: { fontSize: 11, color: t.textMuted, marginTop: 1 },
+  rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 },
+  rowLabel: { ...axTypography.label, color: c.text, flexShrink: 1 },
+  rowLabelOff: { color: c.textMuted },
+  rowSub: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 1 },
   hourSection: { gap: 8 },
   hourScroll: { marginTop: 4 },
-  hourChip: {
-    paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8,
-    borderWidth: 1.5, borderColor: t.border, backgroundColor: t.surface,
-    marginRight: 6,
-  },
-  hourChipSel: { backgroundColor: `${t.accent}15`, borderColor: t.accent },
-  hourChipOff: { backgroundColor: t.surfaceAlt, borderStyle: 'dashed' },
-  pending: { width: 51, alignItems: 'flex-end' },
-  hourTxt: { fontSize: 12, fontWeight: '700', color: t.textMuted },
-  hourTxtSel: { color: t.accentText, fontWeight: '900' },
-  testBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: t.accent, borderRadius: 12, padding: 14,
-  },
-  testBtnTxt: { color: t.onAccent, fontSize: 14, fontWeight: '900' },
+  hourRow: { gap: 6, paddingVertical: 2 },
+  pending: { width: 44, alignItems: 'flex-end' },
 }); }
