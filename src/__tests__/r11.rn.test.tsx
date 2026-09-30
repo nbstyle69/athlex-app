@@ -16,6 +16,7 @@ import MyReservationsScreen from '../screens/reservation/MyReservationsScreen';
 import ReservationScreen from '../screens/reservation/ReservationScreen';
 import WodHistoryScreen from '../screens/wod/WodHistoryScreen';
 import FriendsScreen from '../screens/home/FriendsScreen';
+import { Users } from 'lucide-react-native';
 import MessagesScreen from '../screens/messages/MessagesScreen';
 import { AxButton } from '../components/ax/AxButton';
 import { AxCard } from '../components/ax/AxCard';
@@ -497,7 +498,7 @@ if (!process.env.R11_CAPTURE) {
     it('état vide : icône Lucide, titre titleM text, texte bodySmall textMuted, action AxButton', async () => {
       const root = await mount(<FriendsScreen />, theme);
       const box = root.findByProps({ testID: 'friends-empty' });
-      expect(root.findByProps({ testID: 'friends-empty-icon' }).props.color).toBe(c.textMuted);
+      expect(box.findByType(Users).props.color).toBe(c.textMuted);
       const [title, text] = box.findAll((n) => isHostText(n) && !n.parent?.props.accessibilityRole);
       expect(flat(title)).toMatchObject({ fontFamily: axTypography.titleM.fontFamily, fontSize: axTypography.titleM.fontSize, color: c.text });
       expect(flat(text)).toMatchObject({ fontFamily: axTypography.bodySmall.fontFamily, fontSize: axTypography.bodySmall.fontSize, color: c.textMuted });
