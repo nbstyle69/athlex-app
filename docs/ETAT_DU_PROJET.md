@@ -833,6 +833,15 @@ build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).
   - Jour de prélèvement `box_members.billing_day`, du 1er au 10, écrit par le serveur seulement
     (19e colonne de la garde de facturation) ; recopié depuis un paiement antérieur au compte
     (`pending_entitlements.billing_day`).
+- État de la formule d'un membre pour l'app (lot 4 de « Rejoindre une box en payant », partie base ;
+  migration `20270141`, **non appliquée en prod**). `my_box_plan_status(box)` rend, pour l'appelant
+  membre actif de la box (aucune ligne sinon) : `is_staff` et `has_plan` — les règles mêmes du refus
+  `NO_ACTIVE_PLAN` (`internal.est_staff_box`, `internal.membre_a_formule`), sans recopie —,
+  `suspended`, `credits_left` (carnets utilisables) et `pays_online` (la box vend au moins une formule
+  par Stripe ; sinon l'app masquera « Activer mon abonnement »). Rien pour PUBLIC ni anon. Parité avec
+  le refus vérifiée par des réservations réelles annulées. En prod le 01/10/2026 : 27 membres actifs
+  non staff sans formule (3 box) ; deux box sur trois ne vendent aucune formule en ligne. App (bandeaux,
+  « Bienvenue chez ta box », bouton de la fenêtre de refus) : PR suivante.
 
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
 dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
