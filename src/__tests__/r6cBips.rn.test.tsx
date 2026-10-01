@@ -141,38 +141,86 @@ describe('R6c (B) : jeux de bips', () => {
     expect(beepFileName('athlex', 'tick')).toBe('bwod_athlex_tick.wav');
     expect(beepFileName('classic', 'done')).toBe('bwod_classic_done.wav');
   });
-  it('tic AthleX : environ 100 ms, fondamentale vers 1046 Hz, fondu court, crête sous la saturation', () => {
+  const peakOf = (s: Int16Array, from = 0, to = s.length) => {
+    let p = 0;
+    for (let i = from; i < to; i++) p = Math.max(p, Math.abs(s[i]));
+    return p;
+  };
+  const rms = (s: Int16Array, from: number, to: number) => {
+    let e = 0;
+    for (let i = from; i < to; i++) e += s[i] * s[i];
+    return Math.sqrt(e / (to - from));
+  };
+  const at = (msec: number) => Math.round(msec * 44.1);
+  /** Instant (ms) où le son passe durablement sous 10 % de sa crête. */
+  const fallMs = (s: Int16Array) => {
+    const p = peakOf(s);
+    let last = 0;
+    for (let i = 0; i < s.length; i++) if (Math.abs(s[i]) > p * 0.1) last = i;
+    return ms(last);
+  };
+  const CEILING = Math.round(0.85 * 32767);
+
+  it('tic AthleX « sonar » : ping d’environ 350 ms vers 1 100 Hz, attaque très courte, longue décroissance exponentielle', () => {
     const s = samples(buildMultiWAV(BEEP_SETS.athlex.tick));
-    expect(ms(s.length)).toBe(100);
-    expect(freq(s)).toBeGreaterThan(1020);
-    expect(freq(s)).toBeLessThan(1070);
+    expect(ms(s.length)).toBe(350);
+    const f = freq(s, 0, at(150));
+    expect(f).toBeGreaterThan(1070);
+    expect(f).toBeLessThan(1130);
     expect(s[0]).toBe(0);
-    expect(Math.abs(s[s.length - 1])).toBeLessThan(2000);
-    const peak = Math.max(...Array.from(s, Math.abs));
-    expect(peak).toBeGreaterThan(20000);
-    expect(peak).toBeLessThanOrEqual(Math.round(0.85 * 32767));
-    // Harmonique douce : le son n'est plus une sinusoïde pure (différent du même tic sans harmonique).
-    const pure = samples(buildMultiWAV([{ ...BEEP_SETS.athlex.tick[0], harmonic: 0 }]));
-    expect(Array.from(s).some((v, i) => Math.abs(v - pure[i]) > 1000)).toBe(true);
+    // Attaque : la crête est atteinte dans les 10 premières ms.
+    expect(peakOf(s, 0, at(10))).toBeGreaterThan(0.8 * peakOf(s));
+    expect(peakOf(s)).toBeGreaterThan(20000);
+    // Décroissance exponentielle (constante ~80 ms) : l'énergie de 0-150 ms vaut plusieurs fois celle de 150-300 ms…
+    const ratio = rms(s, 0, at(150)) / rms(s, at(150), at(300));
+    expect(ratio).toBeGreaterThan(3);
+    expect(ratio).toBeLessThan(12);
+    // … et le ping s'éteint doucement : encore audible à 150 ms, presque nul à la fin, sans clic.
+    expect(peakOf(s, at(140), at(160))).toBeGreaterThan(0.05 * peakOf(s));
+    expect(peakOf(s, at(330), s.length)).toBeLessThan(0.02 * peakOf(s));
+    expect(Math.abs(s[s.length - 1])).toBeLessThan(50);
   });
-  it('GO AthleX : environ 400 ms et montant (de 880 vers 1318 Hz)', () => {
+  it('légère résonance : un partiel désaccordé fait battre le ping (différent du même ping sans résonance)', () => {
+    const s = samples(buildMultiWAV(BEEP_SETS.athlex.tick));
+    const dry = samples(buildMultiWAV([{ ...BEEP_SETS.athlex.tick[0], resonance: 0 }]));
+    // Même forme ramenée à la crête : seule la résonance (pas un simple gain) la change.
+    const ps = peakOf(s), pd = peakOf(dry);
+    expect(Array.from(s).some((v, i) => Math.abs(v / ps - dry[i] / pd) > 0.05)).toBe(true);
+    expect(BEEP_SETS.athlex.tick[0].resonance).toBeGreaterThan(0);
+    expect(BEEP_SETS.athlex.tick[0].resonance).toBeLessThanOrEqual(0.5);
+  });
+  it('GO AthleX : ping plus aigu (vers 1 500 Hz) et plus long (environ 800 ms)', () => {
     const s = samples(buildMultiWAV(BEEP_SETS.athlex.go));
-    expect(ms(s.length)).toBe(400);
-    const w = 2205; // 50 ms
-    const start = freq(s, 0, w), end = freq(s, s.length - w, s.length);
-    expect(start).toBeGreaterThan(860); expect(start).toBeLessThan(960);
-    expect(end).toBeGreaterThan(1240); expect(end).toBeLessThan(1340);
+    const tick = samples(buildMultiWAV(BEEP_SETS.athlex.tick));
+    expect(ms(s.length)).toBe(800);
+    const f = freq(s, 0, at(300));
+    expect(f).toBeGreaterThan(1460);
+    expect(f).toBeLessThan(1540);
+    expect(peakOf(s, 0, at(10))).toBeGreaterThan(0.8 * peakOf(s));
+    // Il résonne plus longtemps que le tic.
+    expect(fallMs(s)).toBeGreaterThan(fallMs(tick) + 150);
+    expect(peakOf(s, at(780), s.length)).toBeLessThan(0.02 * peakOf(s));
   });
-  it('fin AthleX : trois notes descendantes séparées de silences', () => {
+  it('fin AthleX : trois pings descendants', () => {
     const s = samples(buildMultiWAV(BEEP_SETS.athlex.done));
-    const n = notes(s);
-    expect(n).toHaveLength(3);
-    const f = n.map(([a, b]) => freq(s, a, b));
-    expect(f[0]).toBeGreaterThan(f[1]);
-    expect(f[1]).toBeGreaterThan(f[2]);
+    expect(ms(s.length)).toBe(1000);
+    const bounds = [[0, 300], [300, 600], [600, 1000]].map(([a, b]) => [at(a), at(b)]);
+    const f = bounds.map(([a, b]) => freq(s, a, a + at(150)));
+    expect(f[0]).toBeGreaterThan(f[1] + 150);
+    expect(f[1]).toBeGreaterThan(f[2] + 150);
     expect(f[2]).toBeGreaterThan(1020);
-    expect(f[2]).toBeLessThan(1070);
-    expect(ms(s.length)).toBe(590);
+    expect(f[2]).toBeLessThan(1080);
+    // Chaque ping repart d'une attaque : fort au début, presque éteint à la fin.
+    for (const [a, b] of bounds) {
+      expect(peakOf(s, a, a + at(10))).toBeGreaterThan(20000);
+      expect(peakOf(s, b - at(15), b)).toBeLessThan(0.05 * 32767);
+    }
+  });
+  it('aucune saturation : toute la série AthleX reste sous 0,85 de la pleine échelle', () => {
+    for (const t of BEEP_TYPES) expect(peakOf(samples(buildMultiWAV(BEEP_SETS.athlex[t])))).toBeLessThanOrEqual(CEILING);
+    // Résonance forte et harmonique ensemble : la normalisation tient toujours la crête.
+    const loud = samples(buildMultiWAV([{ hz: 1100, ms: 200, fadeInMs: 2, decayMs: 80, resonance: 1, harmonic: 1 }]));
+    expect(peakOf(loud)).toBeLessThanOrEqual(CEILING);
   });
   it('mélange dans la vidéo : seulement si le micro ne capte pas déjà le haut-parleur', () => {
     const cases: [boolean, boolean, boolean, boolean][] = [

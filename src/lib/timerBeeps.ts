@@ -9,6 +9,13 @@ export type WavSeg = {
   harmonic?: number;
   /** Fréquence d'arrivée : glissement linéaire depuis `hz`. */
   hzEnd?: number;
+  /**
+   * « Ping » : après l'attaque (`fadeInMs`), décroissance exponentielle de constante
+   * de temps `decayMs` au lieu d'un palier ; `fadeOutMs` ne sert plus qu'à finir à zéro.
+   */
+  decayMs?: number;
+  /** Amplitude relative d'un partiel désaccordé de +0,6 % : battement lent, la résonance du sonar. */
+  resonance?: number;
 };
 
 export type BeepType = 'tick' | 'go' | 'done';
@@ -27,16 +34,18 @@ export const BEEP_SETS: Record<BeepSetId, Record<BeepType, WavSeg[]>> = {
       { hz: 1000, ms: 550, fadeInMs: 15, fadeOutMs: 50 },
     ],
   },
-  /** Tic court et brillant (do 6), GO long et montant, fin en trois notes descendantes (sol, mi, do). */
+  /**
+   * « Sonar » : pings sinusoïdaux, attaque de 2 ms puis longue décroissance exponentielle,
+   * légère résonance. Tic vers 1 100 Hz (350 ms), GO plus aigu et plus long (1 500 Hz,
+   * 800 ms), fin en trois pings descendants.
+   */
   athlex: {
-    tick: [{ hz: 1046.5, ms: 100, fadeInMs: 4, fadeOutMs: 30, harmonic: 0.25 }],
-    go: [{ hz: 880, hzEnd: 1318.5, ms: 400, fadeInMs: 6, fadeOutMs: 60, harmonic: 0.25 }],
+    tick: [{ hz: 1100, ms: 350, fadeInMs: 2, decayMs: 80, fadeOutMs: 20, resonance: 0.3 }],
+    go: [{ hz: 1500, ms: 800, fadeInMs: 2, decayMs: 180, fadeOutMs: 30, resonance: 0.3 }],
     done: [
-      { hz: 1568, ms: 170, fadeInMs: 4, fadeOutMs: 40, harmonic: 0.25 },
-      { silent: true, ms: 40 },
-      { hz: 1318.5, ms: 170, fadeInMs: 4, fadeOutMs: 40, harmonic: 0.25 },
-      { silent: true, ms: 40 },
-      { hz: 1046.5, ms: 170, fadeInMs: 4, fadeOutMs: 40, harmonic: 0.25 },
+      { hz: 1500, ms: 300, fadeInMs: 2, decayMs: 70, fadeOutMs: 20, resonance: 0.3 },
+      { hz: 1250, ms: 300, fadeInMs: 2, decayMs: 70, fadeOutMs: 20, resonance: 0.3 },
+      { hz: 1050, ms: 400, fadeInMs: 2, decayMs: 100, fadeOutMs: 20, resonance: 0.3 },
     ],
   },
 };
@@ -45,7 +54,7 @@ export function isBeepSet(v: unknown): v is BeepSetId {
   return v === 'athlex' || v === 'classic';
 }
 
-/** WAV en base64. Sans `harmonic` ni `hzEnd`, octets identiques à ceux d'avant R6c (vérifié par empreinte). */
+/** WAV en base64. Sans `harmonic`, `hzEnd`, `decayMs` ni `resonance`, octets identiques à ceux d'avant R6c (vérifié par empreinte). */
 export function buildMultiWAV(segs: WavSeg[]): string {
   const sr = 44100;
   const blockAlign = 2; // 16-bit mono
@@ -67,15 +76,20 @@ export function buildMultiWAV(segs: WavSeg[]): string {
     const fadeIn  = Math.max(1, Math.floor(sr * (seg.fadeInMs  ?? 5)  / 1000));
     const fadeOut = Math.max(1, Math.floor(sr * (seg.fadeOutMs ?? 8)  / 1000));
     const h = seg.harmonic ?? 0;
+    const r = seg.resonance ?? 0;
+    const tau = seg.decayMs ? sr * seg.decayMs / 1000 : 0;
     for (let i = 0; i < n; i++) {
       let sample = 0;
       if (!seg.silent && seg.hz) {
         let amp = seg.amp ?? 0.85;
         if (i < fadeIn)          amp *= i / fadeIn;
-        else if (i > n - fadeOut) amp *= (n - i) / fadeOut;
-        // Phase intégrée du glissement linéaire hz → hzEnd ; harmonique normalisée (crête ≤ amp).
+        else if (tau)            amp *= Math.exp(-(i - fadeIn) / tau);
+        if (i >= fadeIn && i > n - fadeOut) amp *= (n - i) / fadeOut;
+        // Phase intégrée du glissement linéaire hz → hzEnd ; harmonique et résonance
+        // normalisées : crête ≤ amp, jamais de saturation.
         const phase = 2 * Math.PI * (seg.hz * i + ((seg.hzEnd ?? seg.hz) - seg.hz) * i * i / (2 * n)) / sr;
-        sample = Math.round(32767 * amp * (Math.sin(phase) + h * Math.sin(2 * phase)) / (1 + h));
+        const wave = Math.sin(phase) + h * Math.sin(2 * phase) + (r ? r * Math.sin(1.006 * phase) : 0);
+        sample = Math.round(32767 * amp * wave / (1 + h + r));
       }
       dv.setInt16(off, sample, true); off += 2;
     }

@@ -206,6 +206,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Bips « sonar » pour le jeu AthleX (app seule, aucune migration, aucun changement natif).** Demande de Nab (1er octobre).
+- `src/lib/timerBeeps.ts` : pings sinusoïdaux (`decayMs` : attaque de 2 ms puis décroissance exponentielle ; `resonance` :
+  partiel désaccordé de +0,6 %, battement lent), crête normalisée ≤ 0,85 (aucune saturation). Tic vers 1 100 Hz (350 ms),
+  GO vers 1 500 Hz (800 ms), fin en trois pings descendants (1 500, 1 250, 1 050 Hz). Mêmes instants de déclenchement ;
+  même WAV au haut-parleur et dans la vidéo. « Classique » inchangé à l'octet près (empreintes).
+- Tests : `r6cBips.rn.test.tsx` (fréquences, durées, attaque, décroissance, résonance, descente, crête), 8 mutations tuées.
+  Protocole manuel : [`audits/protocole-bips-sonar.md`](./audits/protocole-bips-sonar.md).
+
 **Bips dans la vidéo sans doublon (app et module natif, aucune migration).** Retour de Nab sur le build 1.0.58 : double
 bip à la relecture avec le micro activé. Règle décidée par Claude (conception) et Nab :
 - `mixBeepInVideo` (`src/lib/timerBeeps.ts`), décidé à chaque bip dans `playBeep` : un bip n'est mélangé dans la piste que
