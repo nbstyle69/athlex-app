@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, Pressable,
   ActivityIndicator, RefreshControl, Alert, Modal, FlatList, Linking,
 } from 'react-native';
-import { CalendarClock, Users, Timer, X, CalendarCheck, AlertTriangle, ExternalLink, User } from 'lucide-react-native';
+import { CalendarClock, Users, Timer, X, CalendarCheck, AlertTriangle, ExternalLink, User, CreditCard } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
@@ -13,7 +13,9 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { scheduleClassReminder, cancelClassReminder } from '../../services/notifications';
-import { getMyMemberships } from '../../services/membership';
+import { getMyMemberships, needsPlan, planActivationUrl } from '../../services/membership';
+import { usePlanStatuses } from '../../hooks/usePlanStatuses';
+import PlanToActivateNotice from '../../components/PlanToActivateNotice';
 import { WEB_URL } from '../../lib/urls';
 import { reservationRefusal } from '../../utils/refusals';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
@@ -104,6 +106,8 @@ export default function ReservationScreen() {
   const [detailLoading, setDetailLoading] = useState(false);
   // Adhésion suspendue (impayé au-delà du délai de la box) : les réservations sont refusées.
   const [suspension, setSuspension] = useState<{ stripe: boolean } | null>(null);
+  // Formule à activer (ni staff ni formule) : bandeau en tête et bouton du refus NO_ACTIVE_PLAN.
+  const planStatus = usePlanStatuses(currentBox ? [currentBox.id] : [])[currentBox?.id ?? ''];
 
   const weekDates = getWeekDates(weekOffset);
 
@@ -299,7 +303,8 @@ export default function ReservationScreen() {
         }).select('status').single();
         if (error) {
           const refusal = reservationRefusal(error);
-          if (refusal) dialog.show(refusal.title, refusal.body);
+          if (refusal?.code === 'NO_ACTIVE_PLAN') dialog.show(refusal.title, refusal.body, noPlanButtons(planActivationUrl(planStatus, currentBox.slug)), { icon: CreditCard });
+          else if (refusal) dialog.show(refusal.title, refusal.body);
           else Alert.alert(t('common.error'), error.message);
         }
         else if (data?.status === 'waiting') {
@@ -325,6 +330,12 @@ export default function ReservationScreen() {
       }
       await insertReservation();
     }
+  }
+
+  /** Fenêtre « Pas de formule active » (maquette 68:1539) : le site si la box vend en ligne, sinon fermer seulement. */
+  function noPlanButtons(url: string | null) {
+    const close = { text: t('common.close'), style: 'cancel' as const };
+    return url ? [{ text: t('plan.activateCta'), onPress: () => { Linking.openURL(url); } }, close] : [close];
   }
 
   const todayISO = toISO(new Date());
@@ -369,6 +380,12 @@ export default function ReservationScreen() {
               label={t('reservation.suspendedCta')}
             />
           )}
+        </View>
+      )}
+
+      {needsPlan(planStatus) && (
+        <View style={S.planNoticeWrap}>
+          <PlanToActivateNotice status={planStatus} box={currentBox} testID="r10-plan" />
         </View>
       )}
 
@@ -651,6 +668,7 @@ function createStyles(t: AppTheme) {
     suspendedBody:    { ...axTypography.bodySmall, color: c.text },
 
     myResWrap:        { marginHorizontal: axSpacing.lg, marginBottom: axSpacing.sm },
+    planNoticeWrap:   { marginHorizontal: axSpacing.lg, marginBottom: axSpacing.sm },
 
 
     dayBlock:           { marginHorizontal: axSpacing.lg, marginTop: axSpacing.md, gap: axSpacing.sm },

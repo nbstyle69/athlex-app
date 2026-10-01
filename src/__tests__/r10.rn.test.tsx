@@ -15,8 +15,9 @@ let mockTheme = lightTheme;
 const mockTables: Record<string, Record<string, unknown>[]> = {};
 const mockCalls: Array<{ table: string; method: string; args: unknown[] }> = [];
 let mockInsertStatus: string = 'confirmed';
+let mockInsertError: { code: string; message: string } | null = null;
 let mockMemberships: unknown[] = [];
-const mockAuth: { user: { id: string } | null; currentBox: { id: string; name: string } | null } = {
+const mockAuth: { user: { id: string } | null; currentBox: { id: string; name: string; slug?: string } | null } = {
   user: { id: 'me' }, currentBox: { id: 'box-1', name: 'CrossFit Lumière' },
 };
 const mockSchedule = jest.fn(async (..._a: unknown[]) => {});
@@ -45,7 +46,12 @@ jest.mock('../services/notifications', () => ({
   scheduleClassReminder: (...a: unknown[]) => mockSchedule(...a),
   cancelClassReminder: (id: string) => mockCancel(id),
 }));
-jest.mock('../services/membership', () => ({ getMyMemberships: async () => mockMemberships }));
+let mockPlanStatus: unknown = null;
+jest.mock('../services/membership', () => ({
+  ...jest.requireActual('../services/membership'),
+  getMyMemberships: async () => mockMemberships,
+  getMyPlanStatus: async () => mockPlanStatus,
+}));
 jest.mock('../lib/supabase', () => {
   const builder = (table: string) => {
     const filters: Array<[string, unknown]> = [];
@@ -61,7 +67,7 @@ jest.mock('../lib/supabase', () => {
       };
     }
     b.then = (res: (v: unknown) => unknown) => {
-      if (op === 'insert') return Promise.resolve({ data: { status: mockInsertStatus }, error: null }).then(res);
+      if (op === 'insert') return Promise.resolve(mockInsertError ? { data: null, error: mockInsertError } : { data: { status: mockInsertStatus }, error: null }).then(res);
       if (op === 'delete') return Promise.resolve({ data: null, error: null }).then(res);
       const rows = (mockTables[table] ?? []).filter((r) => filters.every(([k, v]) => !(k in r) || r[k] === v));
       return Promise.resolve({ data: rows, error: null }).then(res);
@@ -130,7 +136,9 @@ beforeEach(() => {
   mockTables.class_reservations = RESERVATIONS;
   mockMemberships = [];
   mockInsertStatus = 'confirmed';
-  mockAuth.currentBox = { id: 'box-1', name: 'CrossFit Lumière' };
+  mockInsertError = null;
+  mockPlanStatus = null;
+  mockAuth.currentBox = { id: 'box-1', name: 'CrossFit Lumière', slug: 'crossfit-lumiere' };
 });
 afterEach(async () => {
   if (renderer) { const r = renderer; await act(async () => r.unmount()); renderer = null; }
@@ -447,6 +455,95 @@ describe('R10 : Réservation au nouveau design', () => {
   });
 });
 
+// Lot 4 « Rejoindre une box en payant » : bandeau « Formule à activer » et bouton du refus NO_ACTIVE_PLAN.
+const SANS_FORMULE = { is_staff: false, has_plan: false, suspended: false, credits_left: 0, pays_online: true };
+const NO_PLAN_ERROR = { code: '23514', message: 'NO_ACTIVE_PLAN: aucune formule active dans cette box — rapproche-toi de ta box pour activer ton abonnement.' };
+
+describe('Lot 4 : Réservation sans formule', () => {
+  for (const th of THEMES) {
+    const c = th.ax;
+    it(`${th.mode} : bandeau en tête, au-dessus de Mes réservations, ton warning, bouton vers la page de la box`, async () => {
+      mockPlanStatus = SANS_FORMULE;
+      const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+      const root = await mount(<ReservationScreen />, th);
+      const s = structure(root);
+      expect(s.indexOf('FORMULE À ACTIVER')).toBeGreaterThan(s.indexOf('CrossFit Lumière'));
+      expect(s.indexOf('FORMULE À ACTIVER')).toBeLessThan(s.indexOf('Mes réservations'));
+      expect(s).toContain('Tu as rejoint CrossFit Lumière. Pour réserver tes cours, active une formule de ta box.');
+      expect(s).toContain('Tu paies au comptoir ? Rapproche-toi de ta box.');
+      const card = root.findAll((n) => n.props.testID === 'r10-plan' && String(n.type) === 'View')[0];
+      expect(flat(card)).toMatchObject({ borderColor: c.warning, backgroundColor: c.surface });
+      expect(flat(textNode(root, 'Formule à activer'))).toMatchObject({ color: c.warning });
+      expect(contrast(c.warning, c.surface)).toBeGreaterThanOrEqual(4.5);
+      expect(contrast(c.textMuted, c.surface)).toBeGreaterThanOrEqual(4.5);
+      const cta = comp(root, 'AxButton').find((b) => b.props.testID === 'r10-plan-cta')!;
+      expect([cta.props.label, cta.props.variant ?? 'accent']).toEqual(['Activer mon abonnement', 'accent']);
+      await act(async () => { cta.props.onPress(); });
+      expect(open).toHaveBeenCalledWith('https://athlexapp.eu/box/crossfit-lumiere');
+    });
+  }
+
+  it('box sans formule en ligne : bandeau sans bouton, seul « Tu paies au comptoir ? » reste', async () => {
+    mockPlanStatus = { ...SANS_FORMULE, pays_online: false };
+    const root = await mount(<ReservationScreen />);
+    expect(byId(root, 'r10-plan')).toBeDefined();
+    expect(comp(root, 'AxButton').map((b) => b.props.testID)).not.toContain('r10-plan-cta');
+    expect(structure(root)).toContain('Tu paies au comptoir ? Rapproche-toi de ta box.');
+  });
+
+  it('suspendu : seul le bandeau « Abonnement suspendu », jamais les deux', async () => {
+    mockMemberships = [{ box_id: 'box-1', suspended: true, has_stripe_subscription: true }];
+    mockPlanStatus = { ...SANS_FORMULE, suspended: true };
+    const root = await mount(<ReservationScreen />);
+    expect(byId(root, 'r10-suspended')).toBeDefined();
+    expect(byId(root, 'r10-plan')).toBeUndefined();
+  });
+
+  it('formule active, staff ou état inconnu : aucun bandeau', async () => {
+    for (const st of [{ ...SANS_FORMULE, has_plan: true }, { ...SANS_FORMULE, is_staff: true }, null]) {
+      mockPlanStatus = st;
+      const root = await mount(<ReservationScreen />);
+      expect([st, byId(root, 'r10-plan')]).toEqual([st, undefined]);
+      const r = renderer!; await act(async () => r.unmount()); renderer = null;
+    }
+  });
+
+  it('refus NO_ACTIVE_PLAN : textes conservés, icône carte, « Activer mon abonnement » ouvre la page de la box, « Fermer » en contour', async () => {
+    mockPlanStatus = SANS_FORMULE;
+    mockInsertError = NO_PLAN_ERROR;
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const root = await mount(<ReservationScreen />);
+    await pressText(root, 'Réserver');
+    const dialog = root.findByProps({ testID: 'confirm-dialog' });
+    const texts: string[] = []; textsOf(dialog, texts);
+    expect(texts).toEqual([
+      'PAS DE FORMULE ACTIVE',
+      "Tu n'as pas de formule active dans cette box. Rapproche-toi de ta box pour activer ton abonnement.",
+      'Activer mon abonnement', 'Fermer',
+    ]);
+    expect(dialog.findAll((n) => n.props.testID === 'confirm-dialog-icon').length).toBeGreaterThan(0);
+    expect(alertButtons(root).map((b) => [b.text, b.style])).toEqual([['Activer mon abonnement', 'default'], ['Fermer', 'cancel']]);
+    await pressText(root, 'Activer mon abonnement', true);
+    expect(open).toHaveBeenCalledWith('https://athlexapp.eu/box/crossfit-lumiere');
+  });
+
+  it('refus NO_ACTIVE_PLAN, box sans formule en ligne : « Fermer » seul', async () => {
+    mockPlanStatus = { ...SANS_FORMULE, pays_online: false };
+    mockInsertError = NO_PLAN_ERROR;
+    const root = await mount(<ReservationScreen />);
+    await pressText(root, 'Réserver');
+    expect(alertButtons(root).map((b) => [b.text, b.style])).toEqual([['Fermer', 'cancel']]);
+  });
+
+  it('autre refus (impayé) : fenêtre inchangée, sans bouton vers le site', async () => {
+    mockPlanStatus = SANS_FORMULE;
+    mockInsertError = { code: '23514', message: 'MEMBERSHIP_PAST_DUE: abonnement impayé' };
+    const root = await mount(<ReservationScreen />);
+    await pressText(root, 'Réserver');
+    expect(alertButtons(root).map((b) => [b.text, b.style])).toEqual([['OK', 'default']]);
+  });
+});
+
 describe('R10 : Mes réservations au nouveau design', () => {
   for (const th of THEMES) {
     const c = th.ax;
@@ -527,7 +624,9 @@ describe('R10 : garde-fous', () => {
       fp(r, 'const REGISTER_CUTOFF_MIN', 'export default'),
       fp(m, '  const [reservations', 'function formatDate'),
       fp(m, 'const minsLeft = minutesUntilSlot(s.scheduled_date', 'await cancelClassReminder(item.schedule_id);'),
-    ]).toEqual(['30a40a25bfdcbecc', '5479c602315099b6', '3d0c0e51770f9357', 'b3e544429aca2467']);
+    // Première empreinte relevée de nouveau au lot 4 « Rejoindre une box en payant » : état de la
+    // formule (usePlanStatuses) et boutons du refus NO_ACTIVE_PLAN ; le reste de la logique est inchangé.
+    ]).toEqual(['6c560a4251bc58f3', '5479c602315099b6', '3d0c0e51770f9357', 'b3e544429aca2467']);
   });
 
   it('filtre de visibilité et fenêtre d’inscription inchangés dans le rendu', () => {

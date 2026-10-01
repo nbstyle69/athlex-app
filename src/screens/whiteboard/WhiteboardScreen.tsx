@@ -36,6 +36,9 @@ import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import { StrengthWodCardStatus, strengthCardLinkKey } from '../../components/wod/StrengthSetGrid';
 import { fetchStrengthSummaries } from '../../services/strengthSets';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { needsPlan } from '../../services/membership';
+import { usePlanStatuses } from '../../hooks/usePlanStatuses';
+import PlanToActivateNotice from '../../components/PlanToActivateNotice';
 import { AxButton, AxCard, AxCounterBadge, AxIconButton, AxTag } from '../../components/ax';
 import { axAccentSafeLineHeight, axSpacing, axTypography } from '../../theme/axTokens';
 import WhiteboardMembersModal, { WhiteboardMember } from './WhiteboardMembersModal';
@@ -56,6 +59,8 @@ interface WeekWodRow { id: string; track: string | null; wod_type: string | null
 export default function WhiteboardScreen() {
   const tabSpace = useTabBarScrollSpace();
   const { user, currentBox, boxRole, joinBox } = useAuth();
+  // Formule à activer : bandeau sous les raccourcis (maquette 68:671).
+  const planStatus = usePlanStatuses(currentBox ? [currentBox.id] : [])[currentBox?.id ?? ''];
   const { theme } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
@@ -763,6 +768,12 @@ export default function WhiteboardScreen() {
           </View>
         </View>
 
+        {needsPlan(planStatus) && (
+          <View style={S.planNotice}>
+            <PlanToActivateNotice status={planStatus} box={currentBox} testID="whiteboard-plan" />
+          </View>
+        )}
+
         <WhiteboardTrackTabs tabs={trackTabs} value={track} onChange={choisirPiste} />
 
         <WeekDayPicker
@@ -984,6 +995,7 @@ function createStyles(theme: AppTheme) {
   container: { flex: 1, backgroundColor: 'transparent' },
   header: { paddingTop: 56, paddingHorizontal: 20, paddingBottom: 4 },
   headerBtns: { flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, marginTop: axSpacing.sm },
+  planNotice: { paddingHorizontal: 20, marginTop: axSpacing.sm, marginBottom: axSpacing.md },
   headerBtn: { flex: 1, minWidth: 0 },
   headerTitle: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text },
   headerSub: { ...axTypography.bodySmall, color: c.textMuted, marginTop: 2, marginBottom: axSpacing.xs },

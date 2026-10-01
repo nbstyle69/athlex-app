@@ -3,7 +3,7 @@
  * design, montés avec le vrai react-native. Données fictives, aucun réseau.
  */
 import React from 'react';
-import { Modal, RefreshControl, ScrollView, StyleSheet } from 'react-native';
+import { Linking, Modal, RefreshControl, ScrollView, StyleSheet } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { lightTheme, darkTheme } from '../theme/palette';
@@ -37,7 +37,7 @@ jest.mock('react-native-safe-area-context', () => {
   const { View } = jest.requireActual('react-native');
   return { useSafeAreaInsets: () => ({ top: 0, bottom: 0, left: 0, right: 0 }), SafeAreaView: View };
 });
-const BOX = { id: 'box-1', name: 'CrossFit Fictif', owner_id: 'u9', logo_url: null };
+const BOX = { id: 'box-1', name: 'CrossFit Fictif', owner_id: 'u9', logo_url: null, slug: 'crossfit-fictif' };
 const mockAuth: { user: Record<string, unknown>; currentBox: typeof BOX | null; boxRole: string; joinBox: jest.Mock } = {
   user: { id: 'me', username: 'Moi', avatar_url: null },
   currentBox: BOX,
@@ -74,6 +74,11 @@ jest.mock('../lib/supabase', () => {
   };
   return { supabase: { from: (t: string) => builder(t), channel, removeChannel: jest.fn(), rpc: jest.fn(async () => ({ data: null, error: null })) } };
 });
+let mockPlanStatus: unknown = null;
+jest.mock('../services/membership', () => ({
+  ...jest.requireActual('../services/membership'),
+  getMyPlanStatus: async () => mockPlanStatus,
+}));
 jest.mock('../lib/unreadMessages', () => ({ countUnreadMessages: jest.fn(async () => 3) }));
 jest.mock('../lib/analytics', () => ({ trackScoreSubmit: jest.fn() }));
 jest.mock('../services/notifications', () => ({
@@ -600,5 +605,42 @@ describe('Retours iPhone (7) : en-tête court, nom long en tête du contenu', ()
     const content = root.findAll((n) => n.props.testID === 'wod-detail-title' && typeof n.type === 'string')[0];
     expect(hostText(content)).toBe(LONG);
     expect(content.props.numberOfLines).toBeUndefined();
+  });
+});
+
+// Lot 4 « Rejoindre une box en payant » : bandeau « Formule à activer » sous les raccourcis (maquette 68:671).
+describe('Lot 4 : Ma Box sans formule', () => {
+  const SANS_FORMULE = { is_staff: false, has_plan: false, suspended: false, credits_left: 0, pays_online: true };
+  afterEach(() => { mockPlanStatus = null; });
+
+  it.each(THEMES)('thème %s : sous « Classement de la box », au-dessus des pistes et des jours ; bouton vers la page de la box', async (_n, theme) => {
+    mockPlanStatus = SANS_FORMULE;
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const root = await mount(<WhiteboardScreen />, theme);
+    const s = structure(root);
+    const i = s.indexOf('FORMULE À ACTIVER');
+    expect(i).toBeGreaterThan(s.indexOf('Classement de la box'));
+    expect(i).toBeLessThan(s.indexOf('Functional'));
+    expect(i).toBeLessThan(s.indexOf('LUN'));
+    expect(s).toContain('Tu as rejoint CrossFit Fictif. Pour réserver tes cours, active une formule de ta box.');
+    const card = root.findAll((n) => n.props.testID === 'whiteboard-plan' && String(n.type) === 'View')[0];
+    expect(StyleSheet.flatten(card.props.style)).toMatchObject({ borderColor: theme.ax.warning });
+    const cta = root.findAll((n) => n.props.testID === 'whiteboard-plan-cta' && typeof n.props.onPress === 'function')[0];
+    await act(async () => { cta.props.onPress(); });
+    expect(open).toHaveBeenCalledWith('https://athlexapp.eu/box/crossfit-fictif');
+    open.mockRestore();
+  });
+
+  it('sans formule en ligne : pas de bouton ; suspendu, formule ou staff : aucun bandeau', async () => {
+    mockPlanStatus = { ...SANS_FORMULE, pays_online: false };
+    let root = await mount(<WhiteboardScreen />);
+    expect(root.findAll((n) => n.props.testID === 'whiteboard-plan').length).toBeGreaterThan(0);
+    expect(root.findAll((n) => n.props.testID === 'whiteboard-plan-cta')).toHaveLength(0);
+    for (const st of [{ ...SANS_FORMULE, suspended: true }, { ...SANS_FORMULE, has_plan: true }, { ...SANS_FORMULE, is_staff: true }, null]) {
+      await act(async () => renderer.unmount());
+      mockPlanStatus = st;
+      root = await mount(<WhiteboardScreen />);
+      expect([st, root.findAll((n) => n.props.testID === 'whiteboard-plan').length]).toEqual([st, 0]);
+    }
   });
 });
