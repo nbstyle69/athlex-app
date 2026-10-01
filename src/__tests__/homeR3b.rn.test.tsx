@@ -13,6 +13,7 @@ import { contrast } from '../theme/contrast';
 import { levelInk } from '../screens/home/homeLevelColor';
 import i18n from '../i18n';
 import HomeScreen from '../screens/home/HomeScreen';
+import { FIXED_NOW, freezeDate } from './fixedClock';
 
 const mockNavigate = jest.fn();
 const mockParentNavigate = jest.fn();
@@ -50,7 +51,7 @@ jest.mock('../lib/supabase', () => {
 });
 
 const LONG = 'Un nom vraiment très très long qui ne tiendrait jamais sur un écran de 390 points de large';
-const NOW = new Date();
+const NOW = FIXED_NOW;
 
 function homeData(overrides: Record<string, unknown> = {}) {
   return {
@@ -88,11 +89,12 @@ async function mount(theme: AppTheme = lightTheme, data = homeData()) {
 
 beforeAll(async () => { await i18n.changeLanguage('fr'); });
 beforeEach(() => {
+  freezeDate();
   mockNavigate.mockClear(); mockParentNavigate.mockClear();
   mockUser = { id: 'u1', username: 'ATHLEX_USER', elo: 1423, level: 'rx+', wins: 4, total_matches: 8 };
   mockBox = { id: 'b1', name: 'AthleX Fitness', logo_url: 'https://x/logo.png' };
 });
-afterEach(async () => { if (r) await act(async () => r.unmount()); });
+afterEach(async () => { if (r) await act(async () => r.unmount()); jest.useRealTimers(); });
 
 describe('ordre des blocs', () => {
   it('en-tête, ELO, Amis / Profil, Actu, Cette semaine, Explorer, Compétitions, Tournois, Résultats récents', async () => {

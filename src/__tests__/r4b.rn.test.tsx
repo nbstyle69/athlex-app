@@ -70,7 +70,7 @@ jest.mock('../services/programContent', () => ({
 jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('../components/glass/GlassBackground', () => () => null);
 
-const NOW = new Date('2026-09-28T10:00:00');
+const NOW = new Date('2026-09-28T10:00:00Z');
 const LONG = 'Une séance au titre particulièrement long pour vérifier qu’aucun texte ne déborde';
 
 const GENERATED = {

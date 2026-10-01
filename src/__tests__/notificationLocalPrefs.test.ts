@@ -68,6 +68,7 @@ import {
   clearCachedPrefs,
   isLocalCategoryEnabled,
 } from '../services/notificationPrefsCache';
+import { freezeDate } from './fixedClock';
 
 const CACHE_KEY = '@athlex:notification_prefs';
 
@@ -86,12 +87,14 @@ function futureDate(daysAhead: number): string {
 }
 
 beforeEach(async () => {
+  freezeDate();
   scheduled.length = 0;
   requests.length = 0;
   cancelled.length = 0;
   await clearCachedPrefs();
   await AsyncStorage.removeItem(CACHE_KEY);
 });
+afterEach(() => { jest.useRealTimers(); });
 
 describe('isLocalCategoryEnabled', () => {
   it('autorise quand aucune préférence n\'est connue (défaut du serveur : envoyer)', async () => {

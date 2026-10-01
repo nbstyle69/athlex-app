@@ -22,5 +22,6 @@ module.exports = {
     '^mixpanel-react-native$': '<rootDir>/src/__mocks__/rn/mixpanel.js',
     '\\.(png|jpg)$': '<rootDir>/src/__mocks__/rn/img.js',
   },
+  globalSetup: '<rootDir>/jest.rn.globalSetup.js',
   setupFiles: ['<rootDir>/jest.setup.js'],
 };

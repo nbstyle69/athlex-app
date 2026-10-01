@@ -12,6 +12,7 @@ import type { WodDraft } from '../services/wodDraft';
 import i18n from '../i18n';
 import TrainingScreen from '../screens/training/TrainingScreen';
 import HomeExplorerBlock from '../screens/home/HomeExplorerBlock';
+import { freezeDate } from './fixedClock';
 
 const mockNavigate = jest.fn();
 const mockGenerate = jest.fn();
@@ -70,10 +71,11 @@ async function mount() {
 
 beforeAll(async () => { await i18n.changeLanguage('fr'); });
 beforeEach(() => {
+  freezeDate();
   mockNavigate.mockClear(); mockGenerate.mockReset(); mockSaveDraft.mockClear();
   mockDraft = null; mockRows = [];
 });
-afterEach(async () => { if (renderer) await act(async () => renderer.unmount()); });
+afterEach(async () => { if (renderer) await act(async () => renderer.unmount()); jest.useRealTimers(); });
 
 describe('TrainingScreen', () => {
   it('en-tête, carte vedette et libellés du brief', async () => {

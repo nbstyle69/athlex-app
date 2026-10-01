@@ -206,6 +206,13 @@ Supabase/Resend.
 
 ## En cours
 
+**Tests : instantanés indépendants de l'heure et du fuseau horaire (tests seuls, aucun écran modifié).** Demande de Nab (1er octobre).
+- Suite RN (`npm run test:rn`) en UTC quel que soit le poste (`jest.rn.globalSetup.js`) ; `NOW` des tests R4b, R7, R9a, R9b, R10, R12
+  écrit en UTC (`…T10:00:00Z`) ; horloge figée (`src/__tests__/fixedClock.ts`) dans `homeR3b`, `trainingScreen`, `classReminders`,
+  `notificationLocalPrefs`. Prouvé : `test:rn` vert en Europe/Paris et en UTC à deux heures simulées chacun (dont 23:59 → minuit).
+- Défaut d'affichage relevé, non corrigé : les commentaires d'un score (`WODDetailScreen`) affichent un temps négatif (« -60min »)
+  quand `created_at` est plus récent que l'horloge du téléphone (téléphone en retard sur le serveur).
+
 **Bips « sonar » pour le jeu AthleX (app seule, aucune migration, aucun changement natif).** Demande de Nab (1er octobre).
 - `src/lib/timerBeeps.ts` : pings sinusoïdaux (`decayMs` : attaque de 2 ms puis décroissance exponentielle ; `resonance` :
   partiel désaccordé de +0,6 %, battement lent), crête normalisée ≤ 0,85 (aucune saturation). Tic vers 1 100 Hz (350 ms),

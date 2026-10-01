@@ -120,7 +120,7 @@ jest.mock('expo-sharing', () => ({ shareAsync: jest.fn(), isAvailableAsync: jest
 jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('../components/glass/GlassBackground', () => () => null);
 
-const NOW = new Date('2026-09-28T10:00:00');
+const NOW = new Date('2026-09-28T10:00:00Z');
 const TODAY = '2026-09-28';
 const LONG = 'Une séance au titre particulièrement long pour vérifier qu’aucun texte ne déborde à 390 points';
 

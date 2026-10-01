@@ -133,7 +133,7 @@ jest.mock('../lib/supabase', () => {
 });
 
 export const LONG = 'Un pseudo vraiment très très long qui ne tiendrait jamais sur un écran de 390 points';
-const NOW = new Date('2026-09-28T10:00:00');
+const NOW = new Date('2026-09-28T10:00:00Z');
 const BOX = { id: 'b1', name: 'CrossFit Lens' };
 const BOX2 = { id: 'b2', name: 'Box au nom particulièrement long pour vérifier le retour à la ligne', slug: 'box-longue' };
 const BADGES = [
