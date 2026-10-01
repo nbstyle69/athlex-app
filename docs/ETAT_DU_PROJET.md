@@ -841,8 +841,22 @@ build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).
   `suspended`, `credits_left` (carnets utilisables) et `pays_online` (la box vend au moins une formule
   par Stripe ; sinon l'app masquera « Activer mon abonnement »). Rien pour PUBLIC ni anon. Parité avec
   le refus vérifiée par des réservations réelles annulées. En prod le 01/10/2026 : 27 membres actifs
-  non staff sans formule (3 box) ; deux box sur trois ne vendent aucune formule en ligne. App (bandeaux,
-  « Bienvenue chez ta box », bouton de la fenêtre de refus) : PR suivante.
+  non staff sans formule (3 box) ; deux box sur trois ne vendent aucune formule en ligne.
+- Formule à activer dans l'app (lot 4 de « Rejoindre une box en payant », partie app, sans migration ;
+  **à diffuser au prochain build**). L'app lit `my_box_plan_status` (`getMyPlanStatus`), relu quand
+  l'écran reprend le focus et quand l'app revient au premier plan (retour du site) ; appel échoué ou
+  aucune ligne : rien ne s'affiche.
+  - Bandeau « Formule à activer » (nouveau composant `AxNotice`) dans Ma Box (sous les raccourcis) et
+    Réservation (en tête), ligne « Formule à activer » dans Profil › Compte › Mes boxs ; affichés quand
+    la base refuserait la réservation (ni staff ni formule). Suspendu : seul le bandeau « abonnement
+    suspendu » existant.
+  - « Activer mon abonnement » ouvre `athlexapp.eu/box/<slug>` dans le navigateur (aucun achat dans
+    l'app) ; masqué partout quand la box ne vend aucune formule en ligne (`pays_online` faux), seul
+    « Tu paies au comptoir ? Rapproche-toi de ta box. » reste.
+  - Écran « Bienvenue chez ta box » après avoir rejoint une box par son code, quand la formule est à
+    activer ; « Je paie au comptoir » mène à Ma Box.
+  - Fenêtre de refus `NO_ACTIVE_PLAN` : textes inchangés, icône carte, « Activer mon abonnement » et
+    « Fermer ». L'écran P1 « Délai de régularisation » est reporté au lot P1.
 
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
 dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).

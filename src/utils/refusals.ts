@@ -69,11 +69,11 @@ const RESERVATION_REFUSALS: Record<string, string> = {
  * Le refus RLS (42501) n'a pas de code dans son message : à l'insertion d'une réservation, c'est que le
  * compte n'est plus membre actif de la box (migration 20270134).
  */
-export function reservationRefusal(error: { code?: string; message?: string } | null | undefined): { title: string; body: string } | null {
+export function reservationRefusal(error: { code?: string; message?: string } | null | undefined): { code: string; title: string; body: string } | null {
   const code = refusalCode(error?.message);
   const key = code ? RESERVATION_REFUSALS[code] : error?.code === '42501' ? 'reservation.notMember' : undefined;
   if (!key) return null;
-  return { title: i18n.t(`${key}Title`), body: i18n.t(`${key}Body`) };
+  return { code: code ?? 'NOT_MEMBER', title: i18n.t(`${key}Title`), body: i18n.t(`${key}Body`) };
 }
 
 /** Refus d'une box archivée ou en archivage programmé, traduit ; null pour tout autre message. */

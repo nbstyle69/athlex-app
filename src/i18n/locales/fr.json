@@ -1051,7 +1051,9 @@
         "stoppedOn": "Ta box a arrêté ton abonnement le {{date}}.",
         "endedOn": "Ton abonnement a pris fin le {{date}}.",
         "pastDue": "Ton dernier paiement a échoué. Mets ton moyen de paiement à jour avant le {{date}} pour continuer à réserver.",
-        "suspended": "Abonnement suspendu : paiement en retard."
+        "suspended": "Abonnement suspendu : paiement en retard.",
+        "toActivate": "Formule à activer",
+        "toActivateHint": "Choisis ta formule et ton jour de prélèvement. Tu paies au comptoir ? Rapproche-toi de ta box."
       }
     },
     "password": {
@@ -1983,5 +1985,18 @@
     "competition": "Compétition",
     "tournament": "Tournoi",
     "tournamentWod": "WOD du tournoi"
+  },
+  "welcome": {
+    "title": "Bienvenue chez {{box}}",
+    "body": "Dernière étape : active ta formule pour réserver tes cours. En attendant, tu as accès au whiteboard, aux messages et aux classements de ta box.",
+    "inviteTitle": "Tu as reçu une invitation par e-mail ?",
+    "inviteBody": "Utilise plutôt son lien : ta formule et ta date de prélèvement y sont déjà prêtes."
+  },
+  "plan": {
+    "activateCta": "Activer mon abonnement",
+    "counterCta": "Je paie au comptoir",
+    "bannerTitle": "Formule à activer",
+    "bannerBody": "Tu as rejoint {{box}}. Pour réserver tes cours, active une formule de ta box.",
+    "counterHint": "Tu paies au comptoir ? Rapproche-toi de ta box."
   }
 }

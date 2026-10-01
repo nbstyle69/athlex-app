@@ -37,7 +37,8 @@ import { formatTimeValue, isTimeUnit, parseTimeInput } from './timeValue';
 import StrengthHistory from '../../components/profile/StrengthHistory';
 import { fetchMyStrengthSets, groupStrengthSessions } from '../../services/strengthSets';
 import { programWeekAt, toLocalIso } from '../../utils/programSchedule';
-import { getMyMemberships, membershipState, membershipStateText, MembershipState } from '../../services/membership';
+import { getMyMemberships, membershipState, membershipStateText, MembershipState, needsPlan, planActivationUrl } from '../../services/membership';
+import { usePlanStatuses } from '../../hooks/usePlanStatuses';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { AxButton, AxCard, AxChip, AxSwitch, AxTextField } from '../../components/ax';
 import { axAccentSafeLineHeight, axRadius, axSpacing, axTypography } from '../../theme/axTokens';
@@ -235,6 +236,9 @@ export default function ProfileScreen() {
     })().catch(e => captureError(e, { screen: 'Profile', action: 'membershipStates' }));
     return () => { cancelled = true; };
   }, [user, myBoxes]);
+
+  // Formule à activer, box par box (maquette 68:1971)
+  const planStatuses = usePlanStatuses(myBoxes.map(e => e.box.id));
 
   // Load my programs
   useEffect(() => {
@@ -1096,6 +1100,27 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
               ))}
+              {myBoxes.filter(e => needsPlan(planStatuses[e.box.id])).map(e => {
+                const url = planActivationUrl(planStatuses[e.box.id], e.box.slug);
+                return (
+                  <View key={`plan-${e.box.id}`} style={S.planRow} testID={`profile-plan-${e.box.id}`}>
+                    <View style={S.planHead}>
+                      <Text style={S.planBox}>{e.box.name}</Text>
+                      <Text style={S.planState}>{t('profile.account.subscription.toActivate')}</Text>
+                    </View>
+                    {url && (
+                      <AxButton
+                        testID={`profile-plan-${e.box.id}-cta`}
+                        icon={ExternalLink}
+                        label={t('plan.activateCta')}
+                        onPress={() => Linking.openURL(url)}
+                        fullWidth
+                      />
+                    )}
+                    <Text style={S.planHint}>{url ? t('profile.account.subscription.toActivateHint') : t('plan.counterHint')}</Text>
+                  </View>
+                );
+              })}
               {myBoxes.some(e => e.role === 'member') && (
                 <>
                   <TouchableOpacity
@@ -1784,6 +1809,11 @@ function createStyles(t: AppTheme) {
   manageSubBtnText: { ...axTypography.label, color: c.accentText },
   manageSubHint: { ...axTypography.caption, color: c.textMuted, marginTop: 6, textAlign: 'center' },
   subStateRow: { marginTop: 10, gap: 2 },
+  planRow: { marginTop: 10, gap: 10 },
+  planHead: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', columnGap: axSpacing.sm },
+  planBox: { ...axTypography.bodySmall, color: c.textMuted },
+  planState: { ...axTypography.labelSmall, color: c.warning },
+  planHint: { ...axTypography.bodySmall, color: c.textMuted },
   subStateBox: { ...axTypography.labelSmall, color: c.text },
   subStateText: { ...axTypography.bodySmall, color: c.textMuted },
 

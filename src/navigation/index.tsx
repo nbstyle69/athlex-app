@@ -59,6 +59,7 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import WaitingScreen from '../screens/onboarding/WaitingScreen';
 import JoinBoxScreen from '../screens/onboarding/JoinBoxScreen';
+import BoxWelcomeGate from '../screens/onboarding/BoxWelcomeScreen';
 import HomeScreen from '../screens/home/HomeScreen';
 import TimerScreen from '../screens/timer/TimerScreen';
 import TimerRunScreen from '../screens/timer/TimerRunScreen';
@@ -892,6 +893,7 @@ export default function AppNavigator() {
           )}
         </RootStack.Navigator>
       </NavigationContainer>
+      {isAuthenticated && <BoxWelcomeGate />}
     </View>
   );
 }

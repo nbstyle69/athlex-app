@@ -8,6 +8,7 @@ export { AxTag } from './AxTag';
 export type { AxTagTone } from './AxTag';
 export { AxCounterBadge, formatCount } from './AxCounterBadge';
 export { AxCard } from './AxCard';
+export { AxNotice } from './AxNotice';
 export type { AxCardVariant } from './AxCard';
 export { AxTextField } from './AxTextField';
 export { AxSwitch } from './AxSwitch';

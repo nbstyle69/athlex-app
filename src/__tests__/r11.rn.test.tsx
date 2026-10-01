@@ -75,7 +75,11 @@ jest.mock('../services/notifications', () => ({
   sendFriendRequestNotification: jest.fn(), sendFriendAcceptedNotification: jest.fn(), sendNewMessageNotification: jest.fn(),
 }));
 jest.mock('../services/gamification', () => ({ incrementCounter: jest.fn(), awardLevelBadge: jest.fn(async () => true) }));
-jest.mock('../services/membership', () => ({ getMyMemberships: async () => [] }));
+jest.mock('../services/membership', () => ({
+  ...jest.requireActual('../services/membership'),
+  getMyMemberships: async () => [],
+  getMyPlanStatus: async () => null,
+}));
 jest.mock('../services/moderation', () => ({ getBlockedUserIds: async () => [] }));
 jest.mock('../lib/analytics', () => ({
   trackOnboardingStep: jest.fn(), trackOnboardingComplete: jest.fn(), trackOnboardingBoxJoin: jest.fn(), trackOnboardingSkipBox: jest.fn(),

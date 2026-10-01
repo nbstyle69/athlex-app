@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { captureError } from '../lib/sentry';
 import i18n from '../i18n';
+import { WEB_URL } from '../lib/urls';
 
 /** Une adhésion de l'utilisateur connecté, telle que la rend `get_my_membership_billing`. */
 export interface MyMembership {
@@ -61,4 +62,40 @@ export async function getMyMemberships(): Promise<MyMembership[]> {
     return [];
   }
   return (data ?? []) as MyMembership[];
+}
+
+/** L'état de la formule de l'appelant dans une box, tel que le rend `my_box_plan_status`. */
+export interface MyPlanStatus {
+  is_staff: boolean;
+  has_plan: boolean;
+  suspended: boolean;
+  credits_left: number;
+  pays_online: boolean;
+}
+
+/**
+ * Null si l'appel échoue ou si l'appelant n'est pas membre actif de la box :
+ * l'app n'affiche alors ni bandeau ni bienvenue.
+ */
+export async function getMyPlanStatus(boxId: string): Promise<MyPlanStatus | null> {
+  const { data, error } = await supabase.rpc('my_box_plan_status', { p_box_id: boxId });
+  if (error) {
+    captureError(error, { service: 'membership', action: 'getMyPlanStatus' });
+    return null;
+  }
+  return (data?.[0] as MyPlanStatus | undefined) ?? null;
+}
+
+/**
+ * « Formule à activer » : la base refuserait une réservation (ni staff ni
+ * formule, migration 20270141). Suspendu, seul le bandeau « abonnement
+ * suspendu » s'affiche.
+ */
+export function needsPlan(s: MyPlanStatus | null | undefined): boolean {
+  return !!s && !s.is_staff && !s.has_plan && !s.suspended;
+}
+
+/** Page de la box sur le site, où l'on paie la formule ; null si la box ne vend rien en ligne. */
+export function planActivationUrl(s: MyPlanStatus | null | undefined, slug: string | null | undefined): string | null {
+  return s?.pays_online && slug ? `${WEB_URL}/box/${encodeURIComponent(slug)}` : null;
 }

@@ -1051,7 +1051,9 @@
         "stoppedOn": "Your box stopped your membership on {{date}}.",
         "endedOn": "Your membership ended on {{date}}.",
         "pastDue": "Your last payment failed. Update your payment method before {{date}} to keep booking.",
-        "suspended": "Membership suspended: payment overdue."
+        "suspended": "Membership suspended: payment overdue.",
+        "toActivate": "Plan to activate",
+        "toActivateHint": "Choose your plan and billing day. Paying at the front desk? Talk to your box."
       }
     },
     "password": {
@@ -1983,5 +1985,18 @@
     "competition": "Competition",
     "tournament": "Tournament",
     "tournamentWod": "Tournament WOD"
+  },
+  "welcome": {
+    "title": "Welcome to {{box}}",
+    "body": "Last step: activate your plan to book classes. Meanwhile, you can use your box's whiteboard, messages and leaderboards.",
+    "inviteTitle": "Got an email invitation?",
+    "inviteBody": "Use its link instead: your plan and billing date are already set up."
+  },
+  "plan": {
+    "activateCta": "Activate my membership",
+    "counterCta": "I pay at the front desk",
+    "bannerTitle": "Plan to activate",
+    "bannerBody": "You've joined {{box}}. To book classes, activate one of your box's plans.",
+    "counterHint": "Paying at the front desk? Talk to your box."
   }
 }

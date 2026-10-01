@@ -51,6 +51,9 @@ interface AuthContextType {
   skipBox: () => Promise<void>;
   leaveBox: () => Promise<{ error: string | null }>;
   joinBox: (inviteCode: string) => Promise<{ error: string | null }>;
+  /** Box rejointe à l'instant par son code : l'écran « Bienvenue chez ta box » s'en sert, puis l'efface. */
+  joinedBox: Box | null;
+  clearJoinedBox: () => void;
   refreshBox: () => Promise<void>;
   refreshSubscription: () => Promise<void>;
 }
@@ -64,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [boxRole, setBoxRole]       = useState<BoxMemberRole | 'owner' | null>(null);
   const [myBoxes, setMyBoxes]       = useState<MyBoxEntry[]>([]);
   const [boxSkipped, setBoxSkipped] = useState(false);
+  const [joinedBox, setJoinedBox]   = useState<Box | null>(null);
   const [boxSubscription, setBoxSubscription] = useState<BoxSubscription | null>(null);
   const [loading, setLoading]       = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
@@ -411,6 +415,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setMyBoxes(prev => [...prev, newEntry]);
     setCurrentBox(box as Box);
     setBoxRole('member');
+    setJoinedBox(box as Box);
     await AsyncStorage.setItem(ACTIVE_BOX_KEY, box.id);
     trackBoxJoin();
     setBoxSkipped(false);
@@ -481,6 +486,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setBoxRole(null);
     setMyBoxes([]);
     setBoxSkipped(false);
+    setJoinedBox(null);
     // Purge des clés locales au signOut (3.8) — appareils partagés : box active,
     // onboarding, messages vus (lastSeenMessages_*), file de badges, etc.
     // `@athlex:tourDone` en est exclu : le tutoriel guidé décrit l'interface de
@@ -531,7 +537,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       profileError, switchBox, loading,
       signIn, signUp, signOut, deleteAccount, resetPassword, updateUser,
       boxSkipped, skipBox, leaveBox,
-      joinBox, refreshBox, refreshSubscription,
+      joinBox, joinedBox, clearJoinedBox: () => setJoinedBox(null), refreshBox, refreshSubscription,
     }}>
       {children}
     </AuthContext.Provider>

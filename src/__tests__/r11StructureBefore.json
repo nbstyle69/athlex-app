@@ -242,6 +242,7 @@
       "t('reservation.tooLateTitle'), t('reservation.registerTooLate', { min: REGISTER_CUTOFF_MIN })",
       "t('reservation.limitReachedTitle'), t('reservation.limitReachedBody', { max: wl.max, used: wl.used })",
       "t('reservation.dailyLimitTitle'), t('reservation.dailyLimitBody')",
+      "refusal.title, refusal.body, noPlanButtons(planActivationUrl(planStatus, currentBox.slug)), { icon: CreditCard }",
       "refusal.title, refusal.body",
       "t('reservation.slotFullTitle'), t('reservation.slotFullBody', { pos: item.waiting_count + 1 }), [ { text: t('common.cancel'), style: 'cancel', onPress: () => setBooking(null) }, { text: t('reservation.joinWaitlist'), onPress: insertReservation }]"
     ],

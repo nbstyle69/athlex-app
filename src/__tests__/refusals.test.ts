@@ -140,16 +140,16 @@ const MISMATCH = erreur("RESERVATION_BOX_MISMATCH: la box de la réservation n'e
 
 describe.each([
   ['fr', {
-    noPlan: { title: 'Pas de formule active', body: "Tu n'as pas de formule active dans cette box. Rapproche-toi de ta box pour activer ton abonnement." },
-    pastDue: { title: 'Abonnement impayé', body: 'Ton dernier prélèvement a échoué : les réservations sont suspendues. Mets ton moyen de paiement à jour ou contacte ta box pour rétablir ton accès.' },
-    notMember: { title: 'Réservation impossible', body: 'Tu ne fais plus partie de cette box. Rejoins-la à nouveau ou contacte-la.' },
-    mismatch: { title: 'Réservation impossible', body: "Ce cours n'appartient pas à ta box. Actualise l'écran et réessaie." },
+    noPlan: { code: 'NO_ACTIVE_PLAN', title: 'Pas de formule active', body: "Tu n'as pas de formule active dans cette box. Rapproche-toi de ta box pour activer ton abonnement." },
+    pastDue: { code: 'MEMBERSHIP_PAST_DUE', title: 'Abonnement impayé', body: 'Ton dernier prélèvement a échoué : les réservations sont suspendues. Mets ton moyen de paiement à jour ou contacte ta box pour rétablir ton accès.' },
+    notMember: { code: 'NOT_MEMBER', title: 'Réservation impossible', body: 'Tu ne fais plus partie de cette box. Rejoins-la à nouveau ou contacte-la.' },
+    mismatch: { code: 'RESERVATION_BOX_MISMATCH', title: 'Réservation impossible', body: "Ce cours n'appartient pas à ta box. Actualise l'écran et réessaie." },
   }],
   ['en', {
-    noPlan: { title: 'No active plan', body: "You don't have an active plan at this box. Contact your box to activate your membership." },
-    pastDue: { title: 'Unpaid membership', body: 'Your last payment failed, so bookings are suspended. Update your payment method or contact your gym to restore access.' },
-    notMember: { title: "Can't book", body: "You're no longer a member of this box. Join it again or contact it." },
-    mismatch: { title: "Can't book", body: "This class doesn't belong to your box. Refresh and try again." },
+    noPlan: { code: 'NO_ACTIVE_PLAN', title: 'No active plan', body: "You don't have an active plan at this box. Contact your box to activate your membership." },
+    pastDue: { code: 'MEMBERSHIP_PAST_DUE', title: 'Unpaid membership', body: 'Your last payment failed, so bookings are suspended. Update your payment method or contact your gym to restore access.' },
+    notMember: { code: 'NOT_MEMBER', title: "Can't book", body: "You're no longer a member of this box. Join it again or contact it." },
+    mismatch: { code: 'RESERVATION_BOX_MISMATCH', title: "Can't book", body: "This class doesn't belong to your box. Refresh and try again." },
   }],
 ] as const)('refus d’une réservation (%s)', (lang, attendu) => {
   beforeAll(async () => { await i18n.changeLanguage(lang); });
@@ -181,7 +181,7 @@ describe('ReservationScreen : le refus d’une réservation passe par reservatio
   const src = fs.readFileSync(path.join(__dirname, '../screens/reservation/ReservationScreen.tsx'), 'utf8');
   const insert = src.slice(src.indexOf('const insertReservation'), src.indexOf('if (wantsWaiting) {', src.indexOf('const insertReservation')));
   it('réservation et liste d’attente partagent ce chemin, qui affiche le refus traduit', () => {
-    expect(insert).toMatch(/const refusal = reservationRefusal\(error\);\s*if \(refusal\) dialog\.show\(refusal\.title, refusal\.body\);/);
+    expect(insert).toMatch(/const refusal = reservationRefusal\(error\);\s*if \(refusal\?\.code === 'NO_ACTIVE_PLAN'\) dialog\.show\(refusal\.title, refusal\.body, noPlanButtons\(planActivationUrl\(planStatus, currentBox\.slug\)\), \{ icon: CreditCard \}\);\s*else if \(refusal\) dialog\.show\(refusal\.title, refusal\.body\);/);
     expect(src.match(/from\('class_reservations'\)\.insert\(/g)).toHaveLength(1);
     expect(src).toMatch(/\{ text: t\('reservation\.joinWaitlist'\), onPress: insertReservation \}/);
   });

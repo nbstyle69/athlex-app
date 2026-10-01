@@ -8,7 +8,7 @@
 import React, { useEffect as mockUseEffect } from 'react';
 import fs from 'fs';
 import path from 'path';
-import { Alert, Modal, StyleSheet } from 'react-native';
+import { Alert, Linking, Modal, StyleSheet } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { lightTheme, darkTheme, type AppTheme } from '../theme/palette';
 import i18n from '../i18n';
@@ -97,6 +97,7 @@ jest.mock('../services/strengthSets', () => ({ fetchMyStrengthSets: async () => 
 jest.mock('../services/membership', () => ({
   ...jest.requireActual('../services/membership'),
   getMyMemberships: async () => mockState.memberships ?? [],
+  getMyPlanStatus: async (id: string) => mockState.plans?.[id] ?? null,
 }));
 jest.mock('../services/notifications', () => ({
   DEFAULT_NOTIFICATION_PREFS: jest.requireActual('../services/notificationPrefsCache').DEFAULT_NOTIFICATION_PREFS,
@@ -134,7 +135,7 @@ jest.mock('../lib/supabase', () => {
 export const LONG = 'Un pseudo vraiment très très long qui ne tiendrait jamais sur un écran de 390 points';
 const NOW = new Date('2026-09-28T10:00:00');
 const BOX = { id: 'b1', name: 'CrossFit Lens' };
-const BOX2 = { id: 'b2', name: 'Box au nom particulièrement long pour vérifier le retour à la ligne' };
+const BOX2 = { id: 'b2', name: 'Box au nom particulièrement long pour vérifier le retour à la ligne', slug: 'box-longue' };
 const BADGES = [
   { badge_key: 'first_wod', title: 'Premier WOD', description: 'Termine ton premier WOD', icon: '🏋️', category: 'wod', sort_order: 1 },
   { badge_key: 'elo_1200', title: 'Palier RX', description: 'Atteins 1200 ELO', icon: '📈', category: 'elo', sort_order: 2 },
@@ -641,5 +642,41 @@ describe('Retours iPhone (9) : onglets du Profil centrés', () => {
     expect(StyleSheet.flatten(tabs.props.style).justifyContent).toBe('center');
     const labels = tabs.findAllByType(AxChip).map((c) => c.props.label);
     expect(labels).toEqual(['Compte', 'PR', 'Stats', 'Badges']);
+  });
+});
+
+// Lot 4 « Rejoindre une box en payant » : « Formule à activer » dans MES BOXS (maquette 68:1971).
+describe('Lot 4 : Profil, formule à activer', () => {
+  const SANS_FORMULE = { is_staff: false, has_plan: false, suspended: false, credits_left: 0, pays_online: true };
+  afterEach(() => { mockState.plans = undefined; });
+
+  it.each(THEMES)('thème %s : nom de la box, « Formule à activer » en warning, bouton vers la page de la box, texte', async (_n, theme) => {
+    mockState.plans = { b1: { ...SANS_FORMULE, is_staff: true }, b2: SANS_FORMULE };
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const root = await mount(<ProfileScreen />, theme);
+    expect(root.findAll((x) => x.props.testID === 'profile-plan-b1')).toHaveLength(0);
+    const row = root.findAll((x) => x.props.testID === 'profile-plan-b2' && String(x.type) === 'View')[0];
+    const texts = row.findAll(isHostText).map(hostText);
+    expect(texts).toEqual([BOX2.name, 'Formule à activer', 'Activer mon abonnement',
+      'Choisis ta formule et ton jour de prélèvement. Tu paies au comptoir ? Rapproche-toi de ta box.']);
+    const state = row.findAll((x) => isHostText(x) && hostText(x) === 'Formule à activer')[0];
+    expect(flat(state)).toMatchObject({ color: theme.ax.warning });
+    expect(ratio(theme.ax.warning, theme.ax.surface)).toBeGreaterThanOrEqual(4.5);
+    await pressId(root, 'profile-plan-b2-cta');
+    expect(open).toHaveBeenCalledWith('https://athlexapp.eu/box/box-longue');
+    open.mockRestore();
+  });
+
+  it('box sans formule en ligne : pas de bouton, seul « Tu paies au comptoir ? » ; formule active ou suspendu : rien', async () => {
+    mockState.plans = { b2: { ...SANS_FORMULE, pays_online: false } };
+    let root = await mount(<ProfileScreen />);
+    const row = root.findAll((x) => x.props.testID === 'profile-plan-b2' && String(x.type) === 'View')[0];
+    expect(row.findAll(isHostText).map(hostText)).toEqual([BOX2.name, 'Formule à activer', 'Tu paies au comptoir ? Rapproche-toi de ta box.']);
+    for (const st of [{ ...SANS_FORMULE, has_plan: true }, { ...SANS_FORMULE, suspended: true }]) {
+      await act(async () => renderer!.unmount());
+      mockState.plans = { b2: st };
+      root = await mount(<ProfileScreen />);
+      expect([st, root.findAll((x) => x.props.testID === 'profile-plan-b2').length]).toEqual([st, 0]);
+    }
   });
 });
