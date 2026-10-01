@@ -1,7 +1,21 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- État de la formule d'un membre, pour l'app athlète
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 01/10/2026 à 00:57 UTC, avec PGCLIENTENCODING=UTF8,
+-- en une transaction, sur GO de Nab. Dump des schémas public et internal avec
+-- droits db-dumps/2026-10-01/athlex-prod-public-internal-20261001T005645Z.dump,
+-- sha256 f0d8d5849fe3104fdccf4c4fd3d93452bd8831a2d6c01ec8c9586644aaa64abd vérifié
+-- après aller-retour, 135 TABLE DATA, 449 ACL, 346 POLICY ; précontrôles (trois
+-- passages identiques, search_path de la prod) : membre_a_formule 471b0e75…,
+-- membership_suspendu 4a057f03…, est_staff_box f2829621…,
+-- bloquer_reservation_impaye 3910a8d0…, consume_credit_on_reservation f6bc083f…,
+-- get_my_membership_billing 6b3770f8…, déclencheurs de class_reservations
+-- 5c64d781… (9), my_box_plan_status absente ; vérifications : nouvelle
+-- fonction au md5 du rejeu 5b3ced6c…, EXECUTE pour authenticated et
+-- service_role seulement, tout le reste identique avant/après ; test réel sur
+-- AthleX Fitness en transaction annulée (membre fictif sans formule, avec
+-- formule, staff : état et réservation concordants), aucune trace ensuite ;
+-- audit grants-prod 37/37.
 --
 -- Chantier « Rejoindre une box en payant », lot 4 (base). L'app doit savoir,
 -- avant toute réservation, qu'un membre n'a pas de formule (bandeau « Formule

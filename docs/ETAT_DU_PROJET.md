@@ -834,7 +834,8 @@ build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).
     (19e colonne de la garde de facturation) ; recopié depuis un paiement antérieur au compte
     (`pending_entitlements.billing_day`).
 - État de la formule d'un membre pour l'app (lot 4 de « Rejoindre une box en payant », partie base ;
-  migration `20270141`, **non appliquée en prod**). `my_box_plan_status(box)` rend, pour l'appelant
+  migration `20270141`, **appliquée en prod le 01/10/2026 à 00:57 UTC** ; dump
+  `db-dumps/2026-10-01/athlex-prod-public-internal-20261001T005645Z.dump` ; audit 37/37). `my_box_plan_status(box)` rend, pour l'appelant
   membre actif de la box (aucune ligne sinon) : `is_staff` et `has_plan` — les règles mêmes du refus
   `NO_ACTIVE_PLAN` (`internal.est_staff_box`, `internal.membre_a_formule`), sans recopie —,
   `suspended`, `credits_left` (carnets utilisables) et `pays_online` (la box vend au moins une formule
