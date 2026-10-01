@@ -1121,7 +1121,8 @@ export default function ProfileScreen() {
                   </View>
                 );
               })}
-              {myBoxes.some(e => e.role === 'member') && (
+              {/* Formule à activer dans la box active : rien à gérer sur le site. */}
+              {myBoxes.some(e => e.role === 'member') && !needsPlan(planStatuses[currentBox?.id ?? '']) && (
                 <>
                   <TouchableOpacity
                     style={[S.manageSubBtn, { marginTop: 10 }]}

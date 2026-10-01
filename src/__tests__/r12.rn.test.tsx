@@ -667,6 +667,23 @@ describe('Lot 4 : Profil, formule à activer', () => {
     open.mockRestore();
   });
 
+  it('box active en « Formule à activer » : « Gérer mon abonnement » et sa phrase masqués ; présents avec une formule ou suspendu', async () => {
+    const hasManage = (root: ReactTestInstance) => [
+      root.findAll((x) => isHostText(x) && hostText(x) === 'Gérer mon abonnement').length > 0,
+      root.findAll((x) => isHostText(x) && hostText(x).startsWith('Ouvre le site web pour gérer ta formule')).length > 0,
+    ];
+    mockState.auth = { ...mockState.auth, currentBox: BOX2, boxRole: 'member' };
+    mockState.plans = { b2: SANS_FORMULE };
+    let root = await mount(<ProfileScreen />);
+    expect(hasManage(root)).toEqual([false, false]);
+    for (const st of [{ ...SANS_FORMULE, has_plan: true }, { ...SANS_FORMULE, suspended: true }, null]) {
+      await act(async () => renderer!.unmount());
+      mockState.plans = { b2: st };
+      root = await mount(<ProfileScreen />);
+      expect([st, hasManage(root)]).toEqual([st, [true, true]]);
+    }
+  });
+
   it('box sans formule en ligne : pas de bouton, seul « Tu paies au comptoir ? » ; formule active ou suspendu : rien', async () => {
     mockState.plans = { b2: { ...SANS_FORMULE, pays_online: false } };
     let root = await mount(<ProfileScreen />);
