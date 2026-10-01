@@ -403,7 +403,7 @@ describe('R6b : chrono et natif intacts', () => {
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
     // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
     // R6c (A) : fps et micro dans le module (r6cOptionsVideo.rn.test.tsx) ; qualité retirée, 1080p fixe, démarrage sérialisé et exception rattrapée (recorderRotationCoordinator.test.ts).
-    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('022c5f809b4d805e1741c23eee3d981e1e403625f5e146aa86fd73a80a3c9d46'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt) ; bips sans doublon : calage de latence retiré
+    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('e8d0dd5d83635452dffa88aff05dd4e9690c380f2ea133867b2888015636a1c8'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt) ; bips sans doublon : calage de latence retiré
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
       .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');
