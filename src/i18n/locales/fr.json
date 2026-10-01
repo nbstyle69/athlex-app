@@ -1948,7 +1948,7 @@
       "fpsValue": "{{fps}} fps",
       "mic": "Micro",
       "beeps": "Bips dans la vidéo",
-      "beepsHint": "Les bips du chrono s'entendent dans l'enregistrement",
+      "beepsHint": "Les bips du chrono s'entendent dans l'enregistrement : ajoutés à la piste si le micro est coupé ou le téléphone muet, sinon captés par le micro",
       "micHint": "Enregistre le son pendant la vidéo",
       "checking": "Vérification {{quality}}…",
       "notice": {
@@ -1971,5 +1971,17 @@
     "tabata": "Tabata",
     "strength": "Musculation",
     "custom": "Personnalisé"
+  },
+  "screenTitles": {
+    "wodOfDay": "WOD du jour",
+    "wod": "WOD",
+    "article": "Article",
+    "program": "Programme",
+    "miniTournament": "Mini-tournoi",
+    "partner": "Partenaire",
+    "box": "Box",
+    "competition": "Compétition",
+    "tournament": "Tournoi",
+    "tournamentWod": "WOD du tournoi"
   }
 }

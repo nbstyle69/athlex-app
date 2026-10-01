@@ -591,3 +591,14 @@ describe('R9a : aucun emoji dans Ma Box et le détail du WOD', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('Retours iPhone (7) : en-tête court, nom long en tête du contenu', () => {
+  it('détail d’un WOD au nom très long : « WOD du jour » en en-tête, nom entier dans le contenu', async () => {
+    const root = await mount(detail(WOD_AMRAP));
+    const title = root.findAll((n) => n.props.testID === 'ax-screen-header-title' && typeof n.type === 'string')[0];
+    expect(hostText(title)).toBe('WOD du jour');
+    const content = root.findAll((n) => n.props.testID === 'wod-detail-title' && typeof n.type === 'string')[0];
+    expect(hostText(content)).toBe(LONG);
+    expect(content.props.numberOfLines).toBeUndefined();
+  });
+});

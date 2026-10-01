@@ -92,6 +92,7 @@
  ],
  "tournoi-pas-inscrit": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "Inscriptions",
@@ -126,6 +127,7 @@
  ],
  "tournoi-inscrit": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "Inscriptions",
@@ -160,6 +162,7 @@
  ],
  "tournoi-inscriptions-pendant": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "En cours",
@@ -194,6 +197,7 @@
  ],
  "tournoi-complet": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "Inscriptions",
@@ -228,6 +232,7 @@
  ],
  "tournoi-terminé": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "Terminé",
@@ -260,6 +265,7 @@
  ],
  "tournoi-archivé": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "Terminé",
@@ -293,6 +299,7 @@
  ],
  "wods-pas-inscrit": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "Inscriptions",
@@ -324,6 +331,7 @@
  ],
  "wods-à-faire": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "En cours",
@@ -355,6 +363,7 @@
  ],
  "wods-score-en-attente": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "En cours",
@@ -387,6 +396,7 @@
  ],
  "wods-score-rejeté": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "En cours",
@@ -421,6 +431,7 @@
  ],
  "participants-staff": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "Inscriptions",
@@ -459,6 +470,7 @@
  ],
  "valider-staff": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "En cours",
@@ -487,6 +499,7 @@
  ],
  "classement": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "En cours",
@@ -524,6 +537,7 @@
  ],
  "classement-wod": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "En cours",
@@ -550,6 +564,7 @@
  ],
  "ligue-pas-inscrit": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "Inscriptions",
@@ -587,6 +602,7 @@
  ],
  "ligue-divisions": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "En cours",
@@ -624,6 +640,7 @@
  ],
  "bracket-pas-encore-généré": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "En cours",
@@ -640,6 +657,7 @@
  ],
  "bracket": [
   "Retour",
+  "TOURNOI",
   "UN TOURNOI AU NOM PARTICULIÈREMENT LONG POUR VÉRIFIER QU’AUCUN TEXTE NE DÉBORDE À 390",
   "RX",
   "En cours",
@@ -696,6 +714,7 @@
  ],
  "wod-détail": [
   "Retour",
+  "WOD DU TOURNOI",
   "UN WOD AU TITRE PARTICULIÈREMENT LONG POUR VÉRIFIER LE RETOUR À LA LIGNE",
   "Un tournoi au nom particulièrement long pour vérifier qu’aucun texte ne déborde à 390",
   "For Time",
@@ -721,6 +740,7 @@
  ],
  "wod-soumission": [
   "Retour",
+  "WOD DU TOURNOI",
   "UN WOD AU TITRE PARTICULIÈREMENT LONG POUR VÉRIFIER LE RETOUR À LA LIGNE",
   "Un tournoi au nom particulièrement long pour vérifier qu’aucun texte ne déborde à 390",
   "24:00:00",

@@ -104,8 +104,12 @@ export function beepFileName(set: BeepSetId, type: BeepType): string {
 }
 
 /**
- * Android, micro activé : retard donné au bip mélangé pour qu'il tombe sur le bip du haut-parleur
- * capté par le micro (sinon on l'entend doublé). Réglage de départ, à caler sur téléphone ;
- * envoyé par le JS, donc réglable par mise à jour OTA. iOS mesure lui-même ses latences.
+ * Un bip est-il mélangé dans la piste son de la vidéo ? Seulement si « Bips dans la vidéo »
+ * est activé ET que le micro ne l'enregistre pas déjà : micro coupé, ou téléphone muet (sons
+ * coupés, volume à zéro, sons pas encore chargés). Micro et sons du téléphone activés : le
+ * micro capte le bip du haut-parleur, le mélanger aussi le ferait entendre deux fois.
+ * Décidé à chaque bip : couper ou rétablir les sons pendant l'enregistrement est suivi.
  */
-export const ANDROID_BEEP_MIC_LATENCY_MS = 80;
+export function mixBeepInVideo(o: { videoBeeps: boolean; mic: boolean; phoneAudible: boolean }): boolean {
+  return o.videoBeeps && (!o.mic || !o.phoneAudible);
+}

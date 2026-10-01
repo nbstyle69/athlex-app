@@ -574,11 +574,9 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
   /// beep the mic captures instead of doubling it.
   func markBeep(_ type: String) {
     guard isRecording, beepsEnabled, beepPcm[type] != nil else { return }
-    var t = CMTimeGetSeconds(CMClockGetTime(captureClock))
-    if micActive {
-      let session = AVAudioSession.sharedInstance()
-      t += session.outputLatency + session.inputLatency
-    }
+    // No speaker-latency offset: JS only mixes a beep when the mic cannot hear the
+    // speaker (mic off or phone silent), so the beep belongs at "now".
+    let t = CMTimeGetSeconds(CMClockGetTime(captureClock))
     beepLock.lock()
     scheduledBeeps.append((time: t, type: type))
     beepLock.unlock()
@@ -842,7 +840,6 @@ public class RealtimeRecorderModule: Module {
   }
 
   /// beeps / beepFiles from JS; missing = no beep in the video (former behaviour).
-  /// `beepLatencyMs` is Android only: iOS reads its own latencies.
   private func applyBeepOptions(_ options: [String: Any]) {
     let files = options["beepFiles"] as? [String: String] ?? [:]
     engine.beepsEnabled = (options["beeps"] as? Bool ?? false) && !files.isEmpty

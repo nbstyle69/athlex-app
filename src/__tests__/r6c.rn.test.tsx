@@ -242,10 +242,13 @@ describe('R6c : module natif', () => {
   });
 });
 
+// Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
+const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
+
 describe('R6c : logique du chrono', () => {
   it('seul le bloc de synchro de l’incrustation a bougé (après displayOpts) et envoie les champs du décompte', () => {
     const timer = fs.readFileSync(path.join(__dirname, '..', 'screens/timer/TimerRunScreen.tsx'), 'utf8');
-    const now = timer.slice(timer.indexOf('export default function TimerRunScreen()'), timer.indexOf('// Phase-aware accent color'));
+    const now = timer.slice(timer.indexOf('export default function TimerRunScreen()'), timer.indexOf('// Phase-aware accent color')).replace(...IPHONE_FOLLOW_FIX);
     const start = now.indexOf('\n  // Sync overlay state to native module on every render tick');
     const endMark = 'showGo, displayOpts.themeId, t]);\n\n';
     const block = now.slice(start, now.indexOf(endMark) + endMark.length);
@@ -257,7 +260,7 @@ describe('R6c : logique du chrono', () => {
     const back = now.replace(block, '').replace(anchor, `${anchor}\n${oldBlock.slice(0, -1)}`);
     const sha = crypto.createHash('sha256').update(back).digest('hex');
     // État R6c (A) de la logique (LOGIC_SHA de r5a.rn.test.tsx avant R6c C), plus R6c (B) : jeu de bips,
-    // markBeep et bips passés au module (r6cBips.rn.test.tsx).
-    expect(sha).toBe('db217fa97ed8e85ab2e7414f83e5e6d3bca50e23c57413de13469a83663f0448');
+    // markBeep et bips passés au module (r6cBips.rn.test.tsx) ; bips sans doublon (mixBeepInVideo, plus de calage).
+    expect(sha).toBe('ac8d071035f8808767fa9e85e220b99e7ad892a84a5e034600d4c7ee34fb794f');
   });
 });

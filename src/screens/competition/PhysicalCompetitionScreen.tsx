@@ -1,4 +1,5 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import React, { useState, useCallback, useRef } from 'react';
 import {
   View, Text, StyleSheet, FlatList,
@@ -158,7 +159,7 @@ export default function PhysicalCompetitionScreen() {
       <View style={S.container}>
       <GlassBackground />
         <AxScreenHeader
-          title={selected.name}
+          title={t('screenTitles.competition')}
           onBack={() => setSelected(null)}
           right={(
             <>
@@ -169,6 +170,7 @@ export default function PhysicalCompetitionScreen() {
             </>
           )}
         >
+            <AxContentTitle title={selected.name} testID="phys-detail-title" />
             <View style={S.metaRow}>
               {selected.location ? <><MapPin color={ax.textMuted} size={12} /><Text style={S.metaTxt}>{selected.location}</Text></> : null}
               {selected.mode === 'qualification' && selected.start_date ? (

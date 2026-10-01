@@ -160,9 +160,9 @@ export default function TrainingScreen() {
           <View style={styles.grid}>
             {tools.map(({ key, label, Icon, onPress }) => (
               <View key={key} style={styles.tile}>
-                <AxCard onPress={onPress} accessibilityLabel={label} testID={`training-tool-${key}`}>
+                <AxCard onPress={onPress} accessibilityLabel={label} testID={`training-tool-${key}`} style={styles.tileCard}>
                   <Icon size={22} color={c.accentText} />
-                  <Text style={[axTypography.label, { color: c.text }]}>{label}</Text>
+                  <Text style={[axTypography.label, styles.tileLabel, { color: c.text }]}>{label}</Text>
                 </AxCard>
               </View>
             ))}
@@ -204,4 +204,6 @@ const styles = StyleSheet.create({
   section: { gap: axSpacing.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.md },
   tile: { flexBasis: '46%', flexGrow: 1 },
+  tileCard: { alignItems: 'center', justifyContent: 'center' },
+  tileLabel: { textAlign: 'center' },
 });

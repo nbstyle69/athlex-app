@@ -130,8 +130,28 @@ describe('AxScreenHeader', () => {
     const title = host(root, 'ax-screen-header-title');
     expect(title.props.numberOfLines).toBe(1);
     expect(title.props.ellipsizeMode).toBe('tail');
-    expect(flat(title).flexShrink).toBe(1);
     expect(flat(title).textAlign).toBe('center');
+    // La boîte du titre prend tout l'espace restant et ne déborde jamais sur les côtés.
+    expect(flat(host(root, 'ax-screen-header-title-box'))).toMatchObject({ flex: 1, minWidth: 0, overflow: 'hidden' });
+  });
+
+  it('les côtés gardent la largeur de leur contenu : un titre long ne passe jamais par-dessus « Retour »', async () => {
+    const root = await mount(<AxScreenHeader title={'Metcon — Overhead Squat & Burpees Over The Bar'} right={<AxIconButton icon={Share2} onPress={() => {}} accessibilityLabel="a" />} />);
+    for (const s of sides(root)) expect(s).toMatchObject({ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' });
+  });
+
+  it('390 px : « TON WOD » tient en entier : la boîte du titre ne dépend pas de la mesure du texte', async () => {
+    const ADV: Record<string, number> = { T: 430, O: 600, N: 545, ' ': 180, W: 800, D: 590 };
+    const fontSize = axTypography.titleM.fontSize as number;
+    const letterSpacing = axTypography.titleM.letterSpacing as number;
+    const titleWidth = [...'TON WOD'].reduce((w, ch) => w + (ADV[ch] * fontSize) / 1000 + letterSpacing, 0);
+    const root = await mount(<AxScreenHeader title="Ton WOD" />);
+    await layout(root, 'ax-screen-header-left-content', 78);
+    const [l, r] = sides(root);
+    const box = flat(host(root, 'ax-screen-header-title-box'));
+    expect(box.flex).toBe(1);
+    const room = 390 - 2 * AX_SCREEN_HEADER.sideMargin - (l.minWidth as number) - (r.minWidth as number) - 2 * (box.marginHorizontal as number);
+    expect(titleWidth).toBeLessThan(room);
   });
 
   const sides = (root: ReactTestInstance) =>
@@ -160,7 +180,7 @@ describe('AxScreenHeader', () => {
     const [l, r] = sides(root);
     expect(l.minWidth).toBe(92);
     expect(r.minWidth).toBe(92);
-    for (const s of [l, r]) expect(s).toMatchObject({ flexGrow: 1, flexShrink: 0, flexBasis: 0 });
+    for (const s of [l, r]) expect(s).toMatchObject({ flexGrow: 0, flexShrink: 0, flexBasis: 'auto' });
     await act(async () => byId(root, 'share').props.onPress());
     expect(onShare).toHaveBeenCalledTimes(1);
   });
@@ -195,7 +215,7 @@ describe('AxScreenHeader', () => {
     expect(l.minWidth).toBe(78);
     expect(r.minWidth).toBe(78);
     const title = host(root, 'ax-screen-header-title');
-    const room = 390 - 2 * AX_SCREEN_HEADER.sideMargin - l.minWidth - r.minWidth - 2 * (flat(title).marginHorizontal as number);
+    const room = 390 - 2 * AX_SCREEN_HEADER.sideMargin - l.minWidth - r.minWidth - 2 * (flat(host(root, 'ax-screen-header-title-box')).marginHorizontal as number);
     expect(title.props.children).toBe('Minuteur');
     expect(titleWidth).toBeLessThan(room);
   });

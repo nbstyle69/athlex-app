@@ -40,6 +40,7 @@ import StrengthSetGrid, {
 import { AxButton, AxCard, AxChip, AxTag, AxTextField } from '../../components/ax';
 import { axSpacing, axTypography } from '../../theme/axTokens';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import { AxIconButton } from '../../components/ax/AxIconButton';
 import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
 import { recordStrengthPRs } from '../../services/strengthPR';
@@ -760,7 +761,7 @@ export default function WODDetailScreen() {
     <View style={S.container}>
       <GlassBackground />
       <AxScreenHeader
-        title={wod.title}
+        title={wod.scheduled_date ? i18n.t('screenTitles.wodOfDay') : i18n.t('screenTitles.wod')}
         right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: `${wod.title} — Rejoins le WOD sur AthleX ! athlex://wod/${wodId}` })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
       />
 
@@ -771,6 +772,7 @@ export default function WODDetailScreen() {
       >
         {/* WOD info card */}
         <AxCard variant="featured" style={S.wodCard} testID="wod-card">
+          <AxContentTitle title={wod.title} testID="wod-detail-title" />
           <View style={S.wodMeta}>
             <AxTag label={wodTypeLabel(wod.wod_type ?? 'custom')} tone="accent" testID="wod-type-tag" />
             {wod.time_cap_seconds && (

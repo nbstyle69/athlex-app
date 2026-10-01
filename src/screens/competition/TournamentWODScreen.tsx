@@ -8,6 +8,7 @@ import {
   AlertTriangle, Play, FileText, Info, Check,
 } from 'lucide-react-native';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
+import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import { AxButton, AxCard, AxTag } from '../../components/ax';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -215,8 +216,9 @@ export default function TournamentWODScreen() {
   if (phase === 'detail') return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title={wod.title} />
+      <AxScreenHeader title={t('screenTitles.tournamentWod')} />
       <View style={S.header} testID="tourwod-header">
+        <AxContentTitle title={wod.title} testID="tourwod-title" />
         <Text style={S.headerSub}>{tournamentName}</Text>
         <View style={S.headerBadges}>
           <AxTag label={wod.type} tone="accent" testID="tourwod-type" />
@@ -298,8 +300,9 @@ export default function TournamentWODScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title={wod.title} onBack={() => setPhase('detail')} />
+      <AxScreenHeader title={t('screenTitles.tournamentWod')} onBack={() => setPhase('detail')} />
       <View style={S.header} testID="tourwod-header">
+        <AxContentTitle title={wod.title} testID="tourwod-title" />
         <Text style={S.headerSub}>{tournamentName}</Text>
         <View style={[S.countdownRow, { borderColor: countdown.color }]} testID="tourwod-countdown">
           <Clock color={countdown.color} size={14} />
