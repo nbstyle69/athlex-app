@@ -8365,6 +8365,16 @@ export type Database = {
         Args: { p_target_monday?: string }
         Returns: number
       }
+      my_box_plan_status: {
+        Args: { p_box_id: string }
+        Returns: {
+          credits_left: number
+          has_plan: boolean
+          is_staff: boolean
+          pays_online: boolean
+          suspended: boolean
+        }[]
+      }
       owner_box_count: { Args: { p_owner_id: string }; Returns: number }
       peek_box_invitation: { Args: { p_token: string }; Returns: Json }
       peer_review_daily_score: {
