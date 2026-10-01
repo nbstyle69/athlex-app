@@ -57,7 +57,6 @@ jest.mock('realtime-recorder', () => ({
   startRecording: jest.fn(async () => {}),
   stopRecording: jest.fn(async () => '/docs/video.mp4'),
   updateOverlayState: jest.fn(),
-  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
   getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
   markBeep: jest.fn(),
 }));
@@ -298,8 +297,8 @@ describe('Retours iPhone (6) : « Suivre le thème de l’app » après un régl
   const bgs = (root: ReactTestInstance) => new Set(root.findAll((n) => String(n.type) === 'View')
     .map((n) => flat(n)).filter((st) => st.flex === 1).map((st) => st.backgroundColor));
   it.each([['clair', lightTheme, '#9AE6D2'], ['sombre', darkTheme, '#101214']] as const)(
-    'app en %s, qualité vidéo déjà choisie : le chrono suit le thème de l’app', async (_, th, bg) => {
-      await saveVideoOpts({ videoQuality: '4k' });
+    'app en %s, cadence vidéo déjà choisie : le chrono suit le thème de l’app', async (_, th, bg) => {
+      await saveVideoOpts({ videoFps: 25 });
       const r = await run(params(), th);
       await press(r, 'timer-start-stop'); await tick(1);
       expect(bgs(r).has(bg)).toBe(true);

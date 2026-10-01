@@ -61,7 +61,6 @@ jest.mock('realtime-recorder', () => ({
   startRecording: jest.fn(async () => {}),
   stopRecording: jest.fn(async () => '/docs/video.mp4'),
   updateOverlayState: (s: unknown) => mockOverlay(s),
-  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
   getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
 }));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
@@ -260,7 +259,8 @@ describe('R6c : logique du chrono', () => {
     const back = now.replace(block, '').replace(anchor, `${anchor}\n${oldBlock.slice(0, -1)}`);
     const sha = crypto.createHash('sha256').update(back).digest('hex');
     // État R6c (A) de la logique (LOGIC_SHA de r5a.rn.test.tsx avant R6c C), plus R6c (B) : jeu de bips,
-    // markBeep et bips passés au module (r6cBips.rn.test.tsx) ; bips sans doublon (mixBeepInVideo, plus de calage).
-    expect(sha).toBe('ac8d071035f8808767fa9e85e220b99e7ad892a84a5e034600d4c7ee34fb794f');
+    // markBeep et bips passés au module (r6cBips.rn.test.tsx) ; bips sans doublon (mixBeepInVideo, plus de calage) ;
+    // 1080p fixe : plus de prepareQuality, « Démarrage… » jusqu'à la réponse du module (r6cOptionsVideo.rn.test.tsx).
+    expect(sha).toBe('eaa8f7f6f7e6a42db8bcafd451befe303b159d778e7ed9afe11f37de3f2c31b8');
   });
 });

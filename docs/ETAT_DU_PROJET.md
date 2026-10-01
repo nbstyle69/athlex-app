@@ -207,6 +207,36 @@ Supabase/Resend.
 
 ## En cours
 
+**Caméra : démarrage sérialisé, exception rattrapée, 1080p fixe (module natif iOS + app, aucune migration, module Android
+intact).** Enquête sur les deux plantages du build 1.0.59 (iPhone 16 Pro, iOS 26.6.1, réglage 2K) et sur le paysage
+(aperçu couché, vidéo étirée, cercle du décompte en ovale), décidée par Claude (conception) et Nab le 1er octobre.
+- Cause du plantage, lue dans les deux rapports `.ips` : `setupSession` postait la création de l'aperçu sur le fil principal
+  (`AVCaptureVideoPreviewLayer(session:)` enveloppe un `beginConfiguration` / `commitConfiguration`) puis appelait
+  `startRunning` sur la file de capture sans attendre ; quand le fil principal gagnait, `startRunning` levait
+  `startRunning may not be called between calls to beginConfiguration and commitConfiguration`, exception ObjC que Swift
+  ne rattrape pas → `abort`. Course présente depuis 1.0.57, multipliée en 1.0.58/1.0.59 par les relances de session de
+  `prepareQuality` (essai à blanc 2K/4K, redescente) lancées depuis un fil principal oisif.
+- Cause du paysage : le writer était créé par un minuteur à l'aveugle de 0,5 s après la relance ; au-delà (preset 4K),
+  les angles du `RotationCoordinator` n'étaient pas encore appliqués et `isLandscape` venait de la session précédente →
+  tampon paysage dans un writer portrait (rapport hauteur/largeur 3,1 mesuré sur la capture de Nab).
+- Correctif iOS (`RealtimeRecorderModule.swift`) : une seule file (`com.athlex.recorder.capture`) sérialise toute
+  configuration ; l'aperçu et le coordinateur sont créés en `main.sync`, l'angle de capture et la géométrie appliqués
+  **avant** `startRunning` ; `startRecording` attend la complétion « session prête » émise sur cette file (plus de 0,5 s
+  ni 0,8 s) et relit `isLandscape` à ce moment ; `stopRunning`, la configuration, l'aperçu et `startRunning` passent par
+  `RTRCatchException` (ObjC, `RTRExceptionCatcher.m`) : une exception devient une promesse rejetée `ERR_CAPTURE_SESSION`
+  avec le motif, l'app n'est plus jamais tuée. Capture et fichier en 1080p fixe (6 Mb/s) comme en 1.0.57.
+- App : choix de qualité, essai à blanc, contrôle de chauffe et redescente retirés (section « Qualité » de l'écran
+  Minuteur, bandeaux, textes FR/EN) ; une ancienne `videoQuality` enregistrée est ignorée puis retirée à la première
+  écriture ; 25/30 i/s, micro, bips dans la vidéo et décompte incrusté conservés. Bouton « Démarrage… » (grisé) entre
+  Démarrer et la réponse du module ; promesse rejetée → alerte « Démarrage de l'enregistrement échoué » avec le motif,
+  on reste sur l'écran, nouvel essai possible.
+- Android : module inchangé (il attendait déjà le rappel « prêt » avant d'écrire) ; `prepareQuality` et
+  `getSupportedQualities` y restent, plus appelés. Pas de build Android pour cette PR.
+- Tests : `r6cOptionsVideo.rn.test.tsx` réécrit (défauts sans qualité, ancienne qualité ignorée, aucune puce ni texte de
+  qualité, options transmises sans `quality`, « Démarrage… » jusqu'à la réponse du module, promesse rejetée → alerte,
+  retour à Démarrer, nouvel essai), contrat R5a mis à jour ; `tsc` vert. Swift par le build EAS 1.0.60. Protocole manuel
+  obligatoire avant merge : [`audits/protocole-camera-1080p-demarrage.md`](./audits/protocole-camera-1080p-demarrage.md).
+
 **Tests : instantanés indépendants de l'heure et du fuseau horaire (tests seuls, aucun écran modifié).** Demande de Nab (1er octobre).
 - Suite RN (`npm run test:rn`) en UTC quel que soit le poste (`jest.rn.globalSetup.js`) ; `NOW` des tests R4b, R7, R9a, R9b, R10, R12
   écrit en UTC (`…T10:00:00Z`) ; horloge figée (`src/__tests__/fixedClock.ts`) dans `homeR3b`, `trainingScreen`, `classReminders`,

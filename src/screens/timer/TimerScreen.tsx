@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Modal, Pressable } from 'react-native';
 import {
   Timer, Video, Plus, Minus, Trash2, Type, Clock, Camera, Pause, ChevronDown, Check,
@@ -15,7 +15,7 @@ import { AxButton, AxCard, AxChip, AxIconButton, AxSwitch, AxTag, AxTextField, w
 import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { useTranslation } from 'react-i18next';
 import {
-  DEFAULT_VIDEO_OPTS, VIDEO_FPS, VIDEO_QUALITY_LABELS, loadVideoOpts, offeredQualities, saveVideoOpts, shownQuality, type VideoOpts,
+  DEFAULT_VIDEO_OPTS, VIDEO_FPS, loadVideoOpts, saveVideoOpts, type VideoOpts,
 } from '../../lib/timerVideoOpts';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Timer'>;
@@ -104,13 +104,11 @@ export default function TimerScreen() {
   const { t } = useTranslation();
   // Options vidéo (R6c) : même stockage que les options d'affichage du minuteur.
   const [videoOpts, setVideoOpts] = useState<VideoOpts>(DEFAULT_VIDEO_OPTS);
-  const offered = useMemo(offeredQualities, []);
   useEffect(() => { loadVideoOpts().then(setVideoOpts); }, []);
   function updateVideo(update: Partial<VideoOpts>) {
     setVideoOpts(v => ({ ...v, ...update }));
     saveVideoOpts(update).catch(() => {});
   }
-  const quality = shownQuality(videoOpts.videoQuality, offered);
 
   // Splits mode state — manual tap-to-restart timer
   const [splitsMin, setSplitsMin] = useState(1);
@@ -441,16 +439,6 @@ export default function TimerScreen() {
               <View style={S.recOptRow}>
                 <Video color={c.textMuted} size={16} />
                 <View style={[S.flex1, S.recOptGroup]}>
-                  <View>
-                    <Text style={S.recOptLabel}>{t('timer.video.quality')}</Text>
-                    <Text style={S.recOptHint}>{t('timer.video.qualityHint')}</Text>
-                  </View>
-                  <View style={S.chipRow}>
-                    {offered.map(q => (
-                      <AxChip key={q} label={VIDEO_QUALITY_LABELS[q]} selected={quality === q}
-                        onPress={() => updateVideo({ videoQuality: q })} testID={`timer-quality-${q}`} />
-                    ))}
-                  </View>
                   <Text style={S.recOptLabel}>{t('timer.video.fps')}</Text>
                   <View style={S.chipRow}>
                     {VIDEO_FPS.map(f => (

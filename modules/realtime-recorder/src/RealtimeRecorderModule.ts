@@ -21,11 +21,8 @@ export interface OverlayState {
   competitionLogoUrl: string;
 }
 
-export type VideoQuality = '720p' | '1080p' | '2k' | '4k';
-
-/** Options vidéo (R6c) ; absentes = 1080p, 30 i/s, micro activé. */
+/** Options vidéo (R6c) ; absentes = 30 i/s, micro activé. La vidéo est toujours en 1080p. */
 export interface VideoOptions {
-  quality?: VideoQuality;
   fps?: 25 | 30;
   mic?: boolean;
 }
@@ -42,20 +39,18 @@ export interface RecordingOptions extends VideoOptions {
   beepFiles?: Record<BeepType, string>;
 }
 
-/** Qualité réellement retenue et pourquoi elle est plus basse que demandée. */
-export interface QualityCheck {
-  requested: VideoQuality;
-  applied: VideoQuality;
-  reason: 'camera' | 'performance' | 'thermal' | null;
-}
+/**
+ * Code de la promesse rejetée par `startRecording` quand la session de capture ne
+ * démarre pas (exception AVFoundation rattrapée, caméra absente…) : l'app reste
+ * ouverte et affiche l'erreur.
+ */
+export const CAPTURE_SESSION_ERROR = 'ERR_CAPTURE_SESSION';
 
 interface RealtimeRecorderNative {
   updateOverlayState(state: Partial<OverlayState>): void;
   startRecording(options: RecordingOptions): Promise<void>;
   stopRecording(): Promise<string>;
   switchCamera(): void;
-  getSupportedQualities(): { front: VideoQuality[]; back: VideoQuality[] };
-  prepareQuality(options: VideoOptions & { facing?: string }): Promise<QualityCheck>;
   getLastRecordingStats(): { expectedFrames: number; writtenFrames: number };
   markBeep(type: BeepType): void;
 }
@@ -72,6 +67,12 @@ export function updateOverlayState(state: Partial<OverlayState>): void {
   getModule().updateOverlayState(state);
 }
 
+/**
+ * Démarre l'enregistrement : la promesse n'est tenue qu'une fois la session de
+ * capture relancée, orientée et le writer créé (iOS : complétion sur la file de
+ * capture, plus de minuteur à l'aveugle). Rejetée (`CAPTURE_SESSION_ERROR`) si
+ * la session ne démarre pas.
+ */
 export async function startRecording(options: RecordingOptions): Promise<void> {
   return getModule().startRecording(options);
 }
@@ -82,16 +83,6 @@ export async function stopRecording(): Promise<string> {
 
 export function switchCamera(): void {
   getModule().switchCamera();
-}
-
-/** Qualités acceptées par la caméra avant et par la caméra arrière. */
-export function getSupportedQualities(): { front: VideoQuality[]; back: VideoQuality[] } {
-  return getModule().getSupportedQualities();
-}
-
-/** Fixe la qualité avant l'enregistrement (caméra, chauffe, essai à blanc au-delà de 1080p). */
-export async function prepareQuality(options: VideoOptions & { facing?: string }): Promise<QualityCheck> {
-  return getModule().prepareQuality(options);
 }
 
 /** Images attendues / écrites pendant le dernier enregistrement. */

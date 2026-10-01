@@ -1,15 +1,12 @@
 import React from 'react';
-import { Dimensions, StyleSheet, Text, Vibration } from 'react-native';
+import { Alert, Dimensions, StyleSheet, Text, Vibration } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from '../i18n';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { darkTheme } from '../theme/palette';
 import { AxChip, AxSwitch } from '../components/ax';
 import type { HomeStackParamList } from '../navigation';
-import {
-  DEFAULT_VIDEO_OPTS, DISPLAY_OPTS_KEY, isJerky, loadVideoOpts, offeredQualities, qualityNotice, readVideoOpts,
-  saveVideoOpts, shownQuality,
-} from '../lib/timerVideoOpts';
+import { DEFAULT_VIDEO_OPTS, DISPLAY_OPTS_KEY, isJerky, loadVideoOpts, readVideoOpts, saveVideoOpts } from '../lib/timerVideoOpts';
 import TimerScreen from '../screens/timer/TimerScreen';
 import TimerRunScreen from '../screens/timer/TimerRunScreen';
 
@@ -60,18 +57,13 @@ jest.mock('expo-screen-orientation', () => ({
   getOrientationAsync: jest.fn(async () => 1),
   lockAsync: jest.fn(async () => {}), unlockAsync: jest.fn(async () => {}),
 }));
-type Q = '720p' | '1080p' | '2k' | '4k';
-let mockSupported: { front: Q[]; back: Q[] } | null = { front: ['720p', '1080p'], back: ['720p', '1080p'] };
 let mockStats = { expectedFrames: 0, writtenFrames: 0 };
 const mockStartRec = jest.fn(async (_o: unknown) => {});
-const mockPrepare = jest.fn(async (o: { quality: Q }) => ({ requested: o.quality, applied: o.quality, reason: null as string | null }));
 jest.mock('realtime-recorder', () => ({
   RealtimeRecorderView: 'Recorder',
   startRecording: (o: unknown) => mockStartRec(o),
   stopRecording: async () => '/docs/video.mp4',
   updateOverlayState: () => {},
-  getSupportedQualities: () => { if (!mockSupported) throw new Error('no native module'); return mockSupported; },
-  prepareQuality: (o: { quality: Q }) => mockPrepare(o),
   getLastRecordingStats: () => mockStats,
 }));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
@@ -89,15 +81,16 @@ beforeEach(async () => {
   act(() => { Dimensions.set({ window: PORTRAIT, screen: PORTRAIT }); });
   await AsyncStorage.clear();
   jest.spyOn(Vibration, 'vibrate').mockImplementation(() => {});
-  mockSupported = { front: ['720p', '1080p'], back: ['720p', '1080p'] };
+  jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   mockStats = { expectedFrames: 0, writtenFrames: 0 };
   mockMicGranted = true;
+  mockStartRec.mockImplementation(async () => {});
 });
 afterEach(async () => {
   if (renderer) { const r = renderer; await act(async () => r.unmount()); renderer = null; }
   jest.useRealTimers();
   jest.restoreAllMocks();
-  mockStartRec.mockClear(); mockPrepare.mockClear(); mockRequestMic.mockClear(); mockSetAudioMode.mockClear();
+  mockStartRec.mockClear(); mockRequestMic.mockClear(); mockSetAudioMode.mockClear();
 });
 
 async function mount(el: React.ReactElement) {
@@ -108,50 +101,30 @@ async function mount(el: React.ReactElement) {
 const byId = (root: ReactTestInstance, id: string) => root.findAll((n) => n.props.testID === id && typeof n.type !== 'string');
 const stored = async () => JSON.parse((await AsyncStorage.getItem(DISPLAY_OPTS_KEY)) ?? '{}');
 const fr = (k: string, o?: Record<string, string>) => i18n.t(k, { lng: 'fr', ...o });
-const en = (k: string, o?: Record<string, string>) => i18n.t(k, { lng: 'en', ...o });
 
 describe('R6c (A) : réglages vidéo enregistrés avec les options d’affichage', () => {
-  it('défauts = comportement d’avant : 1080p, 30 i/s, micro activé', () => {
-    expect(DEFAULT_VIDEO_OPTS).toEqual({ videoQuality: '1080p', videoFps: 30, videoMic: true, videoBeeps: true }); // bips : R6c (B)
+  it('défauts = comportement d’avant : 30 i/s, micro activé ; plus aucune qualité', () => {
+    expect(DEFAULT_VIDEO_OPTS).toEqual({ videoFps: 30, videoMic: true, videoBeeps: true }); // bips : R6c (B)
     expect(readVideoOpts(null)).toEqual(DEFAULT_VIDEO_OPTS);
-    expect(readVideoOpts({ videoQuality: '8k', videoFps: 60, videoMic: 'non' })).toEqual(DEFAULT_VIDEO_OPTS);
-    expect(readVideoOpts({ videoQuality: '720p', videoFps: 25, videoMic: false })).toEqual({ videoQuality: '720p', videoFps: 25, videoMic: false, videoBeeps: true });
-    expect(readVideoOpts({ videoQuality: '4k' }).videoQuality).toBe('4k');
-    expect(readVideoOpts({ videoQuality: '2k' }).videoQuality).toBe('2k');
+    expect(readVideoOpts({ videoFps: 60, videoMic: 'non' })).toEqual(DEFAULT_VIDEO_OPTS);
+    expect(readVideoOpts({ videoFps: 25, videoMic: false })).toEqual({ videoFps: 25, videoMic: false, videoBeeps: true });
+  });
+  it('une ancienne qualité enregistrée (2K, 4K…) est ignorée, puis retirée à la première écriture', async () => {
+    await AsyncStorage.setItem(DISPLAY_OPTS_KEY, JSON.stringify({ themeId: 'noir', videoQuality: '2k', videoFps: 25 }));
+    expect(await loadVideoOpts()).toEqual({ videoFps: 25, videoMic: true, videoBeeps: true });
+    expect(readVideoOpts({ videoQuality: '4k' })).not.toHaveProperty('videoQuality');
+    await saveVideoOpts({ videoMic: false });
+    expect(await stored()).toEqual({ themeId: 'noir', videoFps: 25, videoMic: false });
   });
   it('même clé que le design du minuteur ; enregistrer ne touche pas aux autres options', async () => {
     expect(DISPLAY_OPTS_KEY).toBe('bwod_timer_display_opts_v2');
     await AsyncStorage.setItem(DISPLAY_OPTS_KEY, JSON.stringify({ themeId: 'noir', bipsEnabled: false }));
-    await saveVideoOpts({ videoQuality: '4k' });
+    await saveVideoOpts({ videoFps: 25 });
     await saveVideoOpts({ videoMic: false });
-    expect(await stored()).toEqual({ themeId: 'noir', bipsEnabled: false, videoQuality: '4k', videoMic: false });
-    expect(await loadVideoOpts()).toEqual({ videoQuality: '4k', videoFps: 30, videoMic: false, videoBeeps: true });
+    expect(await stored()).toEqual({ themeId: 'noir', bipsEnabled: false, videoFps: 25, videoMic: false });
+    expect(await loadVideoOpts()).toEqual({ videoFps: 25, videoMic: false, videoBeeps: true });
     await AsyncStorage.setItem(DISPLAY_OPTS_KEY, '{cassé');
     expect(await loadVideoOpts()).toEqual(DEFAULT_VIDEO_OPTS);
-  });
-  it('qualités proposées = union des deux caméras ; 720p et 1080p toujours', () => {
-    mockSupported = { front: ['720p', '1080p'], back: ['720p', '1080p', '2k', '4k'] };
-    expect(offeredQualities()).toEqual(['720p', '1080p', '2k', '4k']);
-    mockSupported = { front: ['720p', '1080p', '2k'], back: ['720p', '1080p'] };
-    expect(offeredQualities()).toEqual(['720p', '1080p', '2k']);
-    mockSupported = { front: [], back: [] };
-    expect(offeredQualities()).toEqual(['720p', '1080p']);
-    mockSupported = null;
-    expect(offeredQualities()).toEqual(['720p', '1080p']);
-  });
-  it('choix affiché : la qualité enregistrée ou la meilleure proposée en dessous', () => {
-    expect(shownQuality('4k', ['720p', '1080p', '2k'])).toBe('2k');
-    expect(shownQuality('4k', ['720p', '1080p'])).toBe('1080p');
-    expect(shownQuality('720p', ['720p', '1080p'])).toBe('720p');
-    expect(shownQuality('2k', ['720p', '1080p', '2k', '4k'])).toBe('2k');
-  });
-  it('bandeau de redescente : caméra, cadence, chauffe ; rien si la qualité est tenue', () => {
-    expect(qualityNotice(null, fr)).toBeNull();
-    expect(qualityNotice({ requested: '4k', applied: '4k', reason: null }, fr)).toBeNull();
-    expect(qualityNotice({ requested: '4k', applied: '1080p', reason: 'camera' }, fr)).toBe('4K indisponible sur cette caméra : vidéo en 1080p');
-    expect(qualityNotice({ requested: '4k', applied: '2k', reason: 'performance' }, fr)).toBe('Ton téléphone ne tient pas la 4K avec l\'incrustation : vidéo en 2K');
-    expect(qualityNotice({ requested: '2k', applied: '1080p', reason: 'thermal' }, fr)).toBe('Téléphone trop chaud pour la 2K : vidéo en 1080p');
-    expect(qualityNotice({ requested: '4k', applied: '1080p', reason: 'camera' }, en)).toBe('4K not available on this camera: recording in 1080p');
   });
   it('saccades : moins de 90 % des images attendues', () => {
     expect(isJerky({ expectedFrames: 300, writtenFrames: 269 })).toBe(true);
@@ -168,42 +141,30 @@ describe('R6c (A) : écran de réglage du minuteur', () => {
   const cameraOn = async (root: ReactTestInstance) => {
     await act(async () => { byId(root, 'timer-camera-switch')[0].props.onValueChange(true); });
   };
-  it('options visibles seulement avec « Enregistrer avec caméra » ; 1080p, 30 fps et micro par défaut', async () => {
-    mockSupported = { front: ['720p', '1080p'], back: ['720p', '1080p', '2k', '4k'] };
+  it('options visibles seulement avec « Enregistrer avec caméra » ; 30 fps et micro par défaut, aucune puce de qualité', async () => {
     const root = await mount(<TimerScreen />);
     expect(chips(root)).toEqual([]);
     expect(byId(root, 'timer-mic-switch')).toHaveLength(0);
     await cameraOn(root);
-    expect(chips(root)).toEqual([
-      ['timer-quality-720p', '720p', false], ['timer-quality-1080p', '1080p', true],
-      ['timer-quality-2k', '2K', false], ['timer-quality-4k', '4K', false],
-      ['timer-fps-25', '25 fps', false], ['timer-fps-30', '30 fps', true],
-    ]);
+    expect(chips(root)).toEqual([['timer-fps-25', '25 fps', false], ['timer-fps-30', '30 fps', true]]);
     const mic = root.findAllByType(AxSwitch).find((s) => s.props.testID === 'timer-mic-switch')!;
     expect(mic.props.value).toBe(true);
+    const all = root.findAll((n) => String(n.type) === 'Text').map((n) => n.props.children).flat().join('|');
+    expect(all).not.toMatch(/Qualité|2K|4K|720p/);
   });
   it('un choix est enregistré tout de suite et retrouvé au retour', async () => {
-    mockSupported = { front: ['720p', '1080p'], back: ['720p', '1080p', '2k', '4k'] };
     await AsyncStorage.setItem(DISPLAY_OPTS_KEY, JSON.stringify({ themeId: 'noir' }));
     let root = await mount(<TimerScreen />);
     await cameraOn(root);
-    await act(async () => { byId(root, 'timer-quality-4k')[0].props.onPress(); });
     await act(async () => { byId(root, 'timer-fps-25')[0].props.onPress(); });
     await act(async () => { byId(root, 'timer-mic-switch')[0].props.onValueChange(false); });
     await act(async () => {});
-    expect(await stored()).toEqual({ themeId: 'noir', videoQuality: '4k', videoFps: 25, videoMic: false });
+    expect(await stored()).toEqual({ themeId: 'noir', videoFps: 25, videoMic: false });
     await act(async () => renderer!.unmount()); renderer = null;
     root = await mount(<TimerScreen />);
     await cameraOn(root);
-    expect(chips(root).filter((c) => c[2]).map((c) => c[0])).toEqual(['timer-quality-4k', 'timer-fps-25']);
+    expect(chips(root).filter((c) => c[2]).map((c) => c[0])).toEqual(['timer-fps-25']);
     expect(byId(root, 'timer-mic-switch')[0].props.value).toBe(false);
-  });
-  it('téléphone sans 4K : pas de puce 4K, choix enregistré 4K affiché en 1080p', async () => {
-    await AsyncStorage.setItem(DISPLAY_OPTS_KEY, JSON.stringify({ videoQuality: '4k' }));
-    const root = await mount(<TimerScreen />);
-    await cameraOn(root);
-    expect(chips(root).map((c) => c[1])).toEqual(['720p', '1080p', '25 fps', '30 fps']);
-    expect(chips(root).filter((c) => c[2]).map((c) => c[1])).toEqual(['1080p', '30 fps']);
   });
   it('textes en anglais', async () => {
     await act(async () => { await i18n.changeLanguage('en'); });
@@ -211,7 +172,8 @@ describe('R6c (A) : écran de réglage du minuteur', () => {
       const root = await mount(<TimerScreen />);
       await cameraOn(root);
       const all = root.findAll((n) => String(n.type) === 'Text').map((n) => n.props.children).flat().join('|');
-      for (const s of ['Quality', 'Frames per second', 'Microphone', 'Records sound during the video']) expect(all).toContain(s);
+      for (const s of ['Frames per second', 'Microphone', 'Records sound during the video']) expect(all).toContain(s);
+      expect(all).not.toContain('Quality');
     } finally {
       await act(async () => { await i18n.changeLanguage('fr'); });
     }
@@ -231,16 +193,48 @@ async function run() {
 const primary = (root: ReactTestInstance) => root.findByProps({ testID: 'timer-cam-primary' });
 async function press(root: ReactTestInstance) { await act(async () => { primary(root).props.onPress(); }); }
 
+describe('Démarrage de la caméra : attente du module, échec sans quitter l’écran', () => {
+  it('« Démarrage… » désactivé tant que le module n’a pas répondu, puis « Lancer le chrono »', async () => {
+    let settle: () => void = () => {};
+    mockStartRec.mockImplementationOnce(() => new Promise<void>((r) => { settle = r; }));
+    const root = await run();
+    await press(root);
+    expect(primary(root).props.label).toBe('Démarrage…');
+    expect(primary(root).props.disabled).toBe(true);
+    await act(async () => { settle(); });
+    expect(primary(root).props.label).toBe('Lancer le chrono');
+    expect(primary(root).props.disabled).toBe(false);
+  });
+  it('promesse rejetée (ERR_CAPTURE_SESSION) : alerte avec le motif, retour à « Démarrer », nouvel essai possible', async () => {
+    const err = Object.assign(new Error('startRunning: NSGenericException — startRunning may not be called between calls to beginConfiguration and commitConfiguration'), { code: 'ERR_CAPTURE_SESSION' });
+    mockStartRec.mockImplementationOnce(async () => { throw err; });
+    const root = await run();
+    await press(root);
+    await act(async () => {});
+    expect(Alert.alert).toHaveBeenCalledWith(
+      "Démarrage de l'enregistrement échoué",
+      expect.stringContaining('startRunning may not be called between calls to beginConfiguration and commitConfiguration'),
+      expect.anything(),
+    );
+    expect(primary(root).props.label).toBe('Démarrer');
+    expect(primary(root).props.disabled).toBe(false);
+    await press(root);
+    expect(mockStartRec).toHaveBeenCalledTimes(2);
+    expect(primary(root).props.label).toBe('Lancer le chrono');
+  });
+});
+
+// La vidéo saccadée (minuteurs simulés) reste le dernier test qui monte TimerRunScreen.
 describe('R6c (A) : options transmises au module', () => {
-  it('par défaut : 1080p, 30 fps, micro — mêmes permissions et même session audio qu’avant', async () => {
+  it('par défaut : 30 fps, micro, aucune qualité — mêmes permissions et même session audio qu’avant', async () => {
     mockMicGranted = false;
     const root = await run();
     expect(mockRequestMic).toHaveBeenCalled();
-    expect(mockPrepare).toHaveBeenCalledWith({ quality: '1080p', fps: 30, mic: true, facing: 'back' });
     expect(primary(root).props.label).toBe('Démarrer');
     mockMicGranted = true;
     await press(root);
-    expect(mockStartRec).toHaveBeenCalledWith(expect.objectContaining({ quality: '1080p', fps: 30, mic: true, facing: 'back' }));
+    expect(mockStartRec).toHaveBeenCalledWith(expect.objectContaining({ fps: 30, mic: true, facing: 'back' }));
+    expect(mockStartRec.mock.calls[0][0]).not.toHaveProperty('quality');
     expect(mockSetAudioMode).toHaveBeenLastCalledWith(expect.objectContaining({ allowsRecordingIOS: true }));
   });
   it('micro coupé : aucune demande de permission micro, module et session audio sans enregistrement du son', async () => {
@@ -249,41 +243,9 @@ describe('R6c (A) : options transmises au module', () => {
     const root = await run();
     await press(root);
     expect(mockRequestMic).not.toHaveBeenCalled();
-    expect(mockStartRec).toHaveBeenCalledWith(expect.objectContaining({ quality: '720p', fps: 25, mic: false }));
+    expect(mockStartRec).toHaveBeenCalledWith(expect.objectContaining({ fps: 25, mic: false }));
+    expect(mockStartRec.mock.calls[0][0]).not.toHaveProperty('quality');
     expect(mockSetAudioMode).toHaveBeenLastCalledWith(expect.objectContaining({ allowsRecordingIOS: false }));
-  });
-  it('4K : « Vérification 4K… » bloque le départ, puis bandeau et enregistrement à la qualité retenue', async () => {
-    await AsyncStorage.setItem(DISPLAY_OPTS_KEY, JSON.stringify({ videoQuality: '4k' }));
-    let settle: (v: { requested: Q; applied: Q; reason: string | null }) => void = () => {};
-    mockPrepare.mockImplementationOnce(() => new Promise((r) => { settle = r; }));
-    const root = await run();
-    expect(primary(root).props.label).toBe('Vérification 4K…');
-    expect(primary(root).props.disabled).toBe(true);
-    await press(root);
-    expect(mockStartRec).not.toHaveBeenCalled();
-    await act(async () => { settle({ requested: '4k', applied: '2k', reason: 'performance' }); });
-    expect(primary(root).props.label).toBe('Démarrer');
-    expect(primary(root).props.disabled).toBe(false);
-    const notice = root.findAll((n) => n.props.testID === 'timer-quality-notice' && String(n.type) === 'Text');
-    expect(notice.map((n) => n.props.children)).toEqual(['Ton téléphone ne tient pas la 4K avec l\'incrustation : vidéo en 2K']);
-    await press(root);
-    expect(mockStartRec).toHaveBeenCalledWith(expect.objectContaining({ quality: '2k' }));
-    expect(root.findAll((n) => n.props.testID === 'timer-quality-notice')).toHaveLength(0);
-  });
-  it('vérification en échec au-delà de 1080p : enregistrement en 1080p', async () => {
-    await AsyncStorage.setItem(DISPLAY_OPTS_KEY, JSON.stringify({ videoQuality: '4k' }));
-    mockPrepare.mockImplementationOnce(async () => { throw new Error('boom'); });
-    const root = await run();
-    await press(root);
-    expect(mockStartRec).toHaveBeenCalledWith(expect.objectContaining({ quality: '1080p' }));
-  });
-  it('changer de caméra refait la vérification pour la caméra choisie', async () => {
-    const root = await run();
-    expect(mockPrepare).toHaveBeenCalledTimes(1);
-    await act(async () => { byId(root, 'timer-cam-flip')[0].props.onPress(); });
-    await act(async () => {});
-    expect(mockPrepare).toHaveBeenLastCalledWith(expect.objectContaining({ facing: 'front' }));
-    expect(mockPrepare).toHaveBeenCalledTimes(2);
   });
   it('vidéo saccadée (moins de 90 % des images) : avertissement au temps final', async () => {
     for (const [stats, shown] of [[{ expectedFrames: 300, writtenFrames: 250 }, 1], [{ expectedFrames: 300, writtenFrames: 290 }, 0]] as const) {

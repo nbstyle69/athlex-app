@@ -74,7 +74,6 @@ jest.mock('realtime-recorder', () => ({
   startRecording: (o: unknown) => mockStartRec(o),
   stopRecording: () => mockStopRec(),
   updateOverlayState: (s: unknown) => mockOverlay(s),
-  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
   getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
 }));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
@@ -396,15 +395,15 @@ describe('R6b : chrono et natif intacts', () => {
     // R6c (A) : + options vidéo, couvertes par r6cOptionsVideo.rn.test.tsx.
     // R6c (B) : + jeu de bips et bips dans la vidéo, couverts par r6cBips.rn.test.tsx.
     // Bips sans doublon : mixBeepInVideo dans playBeep, plus de calage de latence (r6cBips.rn.test.tsx).
-    expect(sha(back)).toBe('89a341ab1b73a7d959b2e8453e9d6b18986f7b40224b88fee5ec7d1f762aa1d3');
+    expect(sha(back)).toBe('56e9dfd34b8433830aca0ded2a1c2ae03419eea8073f88566a2be5a8f5c07d70');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');
     const files = execSync('git ls-files modules/realtime-recorder', { cwd: root }).toString().trim().split('\n');
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
     // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
-    // R6c (A) : qualité, fps et micro dans le module, couverts par r6cOptionsVideo.rn.test.tsx et VideoQualityTest.kt.
-    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('f674d8084b7bd48307fab26d413bda7505dbbf65d7fe4d0ee2066fb578a369d4'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt) ; bips sans doublon : calage de latence retiré
+    // R6c (A) : fps et micro dans le module (r6cOptionsVideo.rn.test.tsx) ; qualité retirée, 1080p fixe, démarrage sérialisé et exception rattrapée (recorderRotationCoordinator.test.ts).
+    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('022c5f809b4d805e1741c23eee3d981e1e403625f5e146aa86fd73a80a3c9d46'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt) ; bips sans doublon : calage de latence retiré
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
       .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');

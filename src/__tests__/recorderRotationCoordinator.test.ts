@@ -27,9 +27,29 @@ describe('RealtimeRecorderModule.swift — orientation demandée à iOS, pas dev
   });
 
   it('recrée le coordinator à chaque setupSession (changement de caméra)', () => {
-    const setup = src.slice(src.indexOf('func setupSession()'), src.indexOf('// MARK: Recording'));
+    const start = src.indexOf('func setupSession(');
+    expect(start).toBeGreaterThan(0);
+    const setup = src.slice(start, src.indexOf('// MARK: Recording'));
     expect(setup).toMatch(/rotationCoordinator = nil/);
     expect(setup).toMatch(/installRotationCoordinator\(device:\s*camera,\s*preview:\s*preview\)/);
+  });
+
+  it('démarrage sérialisé : aperçu et angles appliqués avant startRunning, exception rattrapée, aucun minuteur', () => {
+    const setup = src.slice(src.indexOf('func setupSession('), src.indexOf('// MARK: Recording'));
+    const preview = setup.indexOf('AVCaptureVideoPreviewLayer(session: session)');
+    const capture = setup.indexOf('applyCaptureAngle(');
+    const start = setup.indexOf('session.startRunning()');
+    expect(preview).toBeGreaterThan(0);
+    expect(capture).toBeGreaterThan(preview);
+    expect(start).toBeGreaterThan(capture);
+    // L'aperçu (begin/commitConfiguration sur la session) se crée en main.sync, jamais en async.
+    expect(setup.slice(0, preview)).toMatch(/DispatchQueue\.main\.sync\s*\{[^}]*$/s);
+    expect(setup).not.toMatch(/DispatchQueue\.main\.async\s*\{[\s\S]{0,200}AVCaptureVideoPreviewLayer/);
+    expect(setup).toMatch(/RTRCatchException\(\{\s*session\.startRunning\(\)\s*\}\)/);
+    expect(src).not.toMatch(/asyncAfter/);
+    // La promesse JS attend la complétion de setupSession, sur la file de capture.
+    expect(src).toMatch(/self\.engine\.setupSession \{ error in/);
+    expect(src).toMatch(/promise\.reject\(RecorderEngine\.sessionErrorCode/);
   });
 
   it('déduit isLandscape de l’angle appliqué, pas de UIDeviceOrientation seul', () => {
