@@ -52,6 +52,7 @@ import {
   cancelTodayScoreReminder,
   classStartDate,
 } from '../services/notifications';
+import { freezeDate } from './fixedClock';
 
 function futureDate(daysAhead: number): string {
   const d = new Date();
@@ -60,10 +61,12 @@ function futureDate(daysAhead: number): string {
 }
 
 beforeEach(() => {
+  freezeDate();
   scheduled.length = 0;
   requests.length = 0;
   cancelled.length = 0;
 });
+afterEach(() => { jest.useRealTimers(); });
 
 describe('classStartDate', () => {
   it('construit une date LOCALE (pas de décalage UTC)', () => {

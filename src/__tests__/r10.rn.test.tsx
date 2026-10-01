@@ -84,7 +84,7 @@ jest.mock('../lib/supabase', () => {
 jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('../components/glass/GlassBackground', () => () => null);
 
-const NOW = new Date('2026-09-28T10:00:00');
+const NOW = new Date('2026-09-28T10:00:00Z');
 const LONG = 'Haltérophilie technique et conditionnement métabolique longue durée';
 const LONG_COACH = 'Maximilien-Alexandre de la Tour-Dupont';
 const TODAY = '2026-09-28';
