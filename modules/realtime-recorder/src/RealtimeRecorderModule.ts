@@ -40,8 +40,6 @@ export interface RecordingOptions extends VideoOptions {
   beeps?: boolean;
   /** WAV PCM 16 bits des bips (mêmes fichiers que le haut-parleur). */
   beepFiles?: Record<BeepType, string>;
-  /** Android, micro activé : retard du bip mélangé (défaut natif 80 ms). */
-  beepLatencyMs?: number;
 }
 
 /** Qualité réellement retenue et pourquoi elle est plus basse que demandée. */

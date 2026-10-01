@@ -215,13 +215,12 @@ class RealtimeRecorderModule : Module() {
     engine.micEnabled = options["mic"] as? Boolean ?: true
   }
 
-  /** beeps / beepFiles / beepLatencyMs from JS; missing = no beep in the video (former behaviour). */
+  /** beeps / beepFiles from JS; missing = no beep in the video (former behaviour). */
   private fun applyBeepOptions(options: Map<String, Any?>) {
     val files = (options["beepFiles"] as? Map<*, *>)
       ?.mapNotNull { (k, v) -> if (k is String && v is String) k to v else null }?.toMap()
       ?: emptyMap()
     engine.beepsEnabled = options["beeps"] as? Boolean == true && files.isNotEmpty()
-    engine.beepLatencyMs = (options["beepLatencyMs"] as? Number)?.toInt()?.coerceIn(0, 500) ?: 80
     engine.loadBeeps(if (engine.beepsEnabled) files else emptyMap())
   }
 }

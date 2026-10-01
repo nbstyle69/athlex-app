@@ -8,7 +8,7 @@ import { Settings } from 'lucide-react-native';
 import { AxChip } from '../components/ax';
 import type { HomeStackParamList } from '../navigation';
 import {
-  ANDROID_BEEP_MIC_LATENCY_MS, BEEP_SETS, BEEP_TYPES, DEFAULT_BEEP_SET, beepFileName, buildMultiWAV, isBeepSet,
+  BEEP_SETS, BEEP_TYPES, DEFAULT_BEEP_SET, beepFileName, buildMultiWAV, isBeepSet, mixBeepInVideo,
 } from '../lib/timerBeeps';
 import { DEFAULT_VIDEO_OPTS, DISPLAY_OPTS_KEY, readVideoOpts } from '../lib/timerVideoOpts';
 import { captureError } from '../lib/sentry';
@@ -174,8 +174,21 @@ describe('R6c (B) : jeux de bips', () => {
     expect(f[2]).toBeLessThan(1070);
     expect(ms(s.length)).toBe(590);
   });
-  it('Android, micro activé : calage de départ du bip mélangé à 80 ms', () => {
-    expect(ANDROID_BEEP_MIC_LATENCY_MS).toBe(80);
+  it('mélange dans la vidéo : seulement si le micro ne capte pas déjà le haut-parleur', () => {
+    const cases: [boolean, boolean, boolean, boolean][] = [
+      // videoBeeps, mic, phoneAudible → mélangé
+      [true, true, true, false], // micro + sons du téléphone : le micro capte le bip, pas de doublon
+      [true, false, true, true], // micro coupé
+      [true, true, false, true], // téléphone muet
+      [true, false, false, true],
+      [false, false, false, false], // « Bips dans la vidéo » coupé : jamais
+      [false, true, true, false],
+      [false, false, true, false],
+      [false, true, false, false],
+    ];
+    for (const [videoBeeps, mic, phoneAudible, mixed] of cases) {
+      expect(mixBeepInVideo({ videoBeeps, mic, phoneAudible })).toBe(mixed);
+    }
   });
 });
 
@@ -196,7 +209,7 @@ describe('R6c (B) : réglage « Bips dans la vidéo »', () => {
     expect(sw.props.value).toBe(true);
     const all = root.findAll((n) => String(n.type) === 'Text').map((n) => n.props.children).flat().join('|');
     expect(all).toContain('Bips dans la vidéo');
-    expect(all).toContain('Les bips du chrono s\'entendent dans l\'enregistrement');
+    expect(all).toContain('Les bips du chrono s\'entendent dans l\'enregistrement : ajoutés à la piste si le micro est coupé ou le téléphone muet, sinon captés par le micro');
     await act(async () => { sw.props.onValueChange(false); });
     await act(async () => {});
     expect(JSON.parse((await AsyncStorage.getItem(DISPLAY_OPTS_KEY))!).videoBeeps).toBe(false);
@@ -257,17 +270,17 @@ describe('R6c (B) : le chrono charge le jeu choisi et le passe au module', () =>
     await press(root);
     expect(mockStartRec).toHaveBeenCalledWith(expect.objectContaining({ beeps: false, beepFiles: undefined }));
   });
-  it('calage : 80 ms envoyés sur Android, rien sur iOS (le natif mesure)', async () => {
+  it('plus aucun calage de latence envoyé (iOS comme Android) : un bip mélangé tombe à l’instant de l’événement', async () => {
     let root = await run();
     await press(root);
-    expect((mockStartRec.mock.calls[0][0] as { beepLatencyMs?: number }).beepLatencyMs).toBeUndefined();
+    expect(mockStartRec.mock.calls[0][0]).not.toHaveProperty('beepLatencyMs');
     await act(async () => renderer!.unmount()); renderer = null;
     const os = Platform.OS;
     Object.defineProperty(Platform, 'OS', { value: 'android', configurable: true });
     try {
       root = await run();
       await press(root);
-      expect((mockStartRec.mock.calls[1][0] as { beepLatencyMs?: number }).beepLatencyMs).toBe(80);
+      expect(mockStartRec.mock.calls[1][0]).not.toHaveProperty('beepLatencyMs');
     } finally {
       Object.defineProperty(Platform, 'OS', { value: os, configurable: true });
     }
@@ -284,11 +297,23 @@ describe('R6c (B) : markBeep aux mêmes instants que le haut-parleur', () => {
     for (let i = 0; i < 4; i++) await act(async () => { jest.advanceTimersByTime(1000); });
     return root;
   }
-  it('pendant l’enregistrement : 3-2-1 puis GO, dans la vidéo comme au haut-parleur', async () => {
+  it('micro et sons du téléphone activés (défaut) : bips au haut-parleur seulement, captés par le micro — aucun doublon', async () => {
     await countdown({});
+    expect(mockMarkBeep).not.toHaveBeenCalled();
+    expect(mockReplay.mock.calls.map((c) => c[0].replace('file:///cache/bwod_athlex_', '')))
+      .toEqual(['tick.wav', 'tick.wav', 'tick.wav', 'go.wav']);
+    // Le module reçoit quand même les fichiers : couper les sons en cours de route reste suivi.
+    expect(mockStartRec).toHaveBeenCalledWith(expect.objectContaining({ beeps: true, mic: true }));
+  });
+  it('micro coupé : 3-2-1 puis GO dans la vidéo, aux mêmes instants que le haut-parleur', async () => {
+    await countdown({ videoMic: false });
     expect(mockMarkBeep.mock.calls.map((c) => c[0])).toEqual(['tick', 'tick', 'tick', 'go']);
     expect(mockReplay.mock.calls.map((c) => c[0].replace('file:///cache/bwod_athlex_', '')))
       .toEqual(['tick.wav', 'tick.wav', 'tick.wav', 'go.wav']);
+  });
+  it('volume des bips à zéro (téléphone muet) : les bips vont dans la vidéo', async () => {
+    await countdown({ beepVolume: 0 });
+    expect(mockMarkBeep.mock.calls.map((c) => c[0])).toEqual(['tick', 'tick', 'tick', 'go']);
   });
   it('sons du téléphone coupés : les bips vont quand même dans la vidéo', async () => {
     await countdown({ bipsEnabled: false });

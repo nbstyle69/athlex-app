@@ -318,7 +318,7 @@ describe('R6a : module natif et incrustation dans la vidéo inchangés', () => {
     // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
     // R6c (A) : qualité, fps et micro dans le module, couverts par r6cOptionsVideo.rn.test.tsx et VideoQualityTest.kt.
     expect(crypto.createHash('sha256').update(all).digest('hex'))
-      .toBe('2d59b5bb42bf3f2e4e1938b5fda78899186f23d8cf54e9d31cb44c723ef7f5ed'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt, decompteVideoCentre.test.ts)
+      .toBe('f674d8084b7bd48307fab26d413bda7505dbbf65d7fe4d0ee2066fb578a369d4'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt, decompteVideoCentre.test.ts) ; bips sans doublon : calage de latence retiré (r6cBips.rn.test.tsx)
   });
 
   it('l’état d’incrustation suit toujours l’enregistrement', async () => {

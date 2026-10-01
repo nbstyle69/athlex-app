@@ -242,8 +242,9 @@ describe('R5a : capture', () => {
  * R6c (C) : synchro de l'incrustation déplacée après displayOpts, champs du décompte envoyés (écart prouvé dans r6c.rn.test.tsx).
  * R6c (A) : options vidéo (qualité vérifiée, fps, micro, saccades), couvertes par r6cOptionsVideo.rn.test.tsx.
  * R6c (B) : jeu de bips chargé selon le réglage, markBeep dans playBeep, bips passés au module (r6cBips.rn.test.tsx).
+ * Bips sans doublon : mélange décidé par mixBeepInVideo dans playBeep, calage de latence retiré (r6cBips.rn.test.tsx).
  */
-const LOGIC_SHA = 'a4129be621739534063e20489172fd6886806486faf55e54867d3222d4385445';
+const LOGIC_SHA = '639d1b0da7c06cdb7656032b351acbb788b0c4bec11fd9e6c2d7f0a8360691f1';
 // Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
 const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';

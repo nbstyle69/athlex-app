@@ -206,6 +206,19 @@ Supabase/Resend.
 
 ## En cours
 
+**Bips dans la vidéo sans doublon (app et module natif, aucune migration).** Retour de Nab sur le build 1.0.58 : double
+bip à la relecture avec le micro activé. Règle décidée par Claude (conception) et Nab :
+- `mixBeepInVideo` (`src/lib/timerBeeps.ts`), décidé à chaque bip dans `playBeep` : un bip n'est mélangé dans la piste que
+  si « Bips dans la vidéo » est activé ET que le micro ne le capte pas déjà — micro coupé, ou téléphone muet (sons coupés,
+  volume des bips à zéro, sons pas encore chargés). Micro et sons activés : seul le bip du haut-parleur, capté par le micro.
+  Couper les sons pendant l'enregistrement est suivi (le module reçoit toujours les fichiers).
+- Calage de latence retiré (iOS `outputLatency + inputLatency`, Android 80 ms `beepLatencyMs`) : il servait à superposer
+  le bip mélangé au bip capté ; un bip mélangé tombe désormais à l'instant de l'événement.
+- Texte d'aide de « Bips dans la vidéo » (FR / EN) : la règle en une phrase.
+- Tests : `r6cBips.rn.test.tsx` (table de vérité, défaut sans doublon, micro coupé, sons coupés, volume à zéro, plus de
+  calage), 7 mutations tuées ; Kotlin compilé et tests JVM du module verts ; Swift par un build simulateur EAS.
+  Protocole manuel : [`audits/protocole-bips-video-sans-doublon.md`](./audits/protocole-bips-video-sans-doublon.md).
+
 **Décompte incrusté centré dans la vidéo (module natif, aucune migration).** Retour de Nab sur le build 1.0.58.
 - Cause, identique iOS et Android : l'anneau seul était centré (le libellé au-dessus remontait tout le groupe), et le chiffre,
   le libellé et « GO ! » étaient centrés sur leur boîte de ligne (ascendante / descendante de la police) et non sur leurs
