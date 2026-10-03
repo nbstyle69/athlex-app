@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { BOX_COLUMNS, BOX_MEMBERSHIP_COLUMNS } from '../lib/boxColumns';
 import { readRows } from '../lib/db';
 import { User, Box, BoxMemberRole, BoxSubscription } from '../types';
-import { Session } from '@supabase/supabase-js';
+import { Session, isAuthRetryableFetchError } from '@supabase/supabase-js';
 import { registerForPushNotifications, savePushToken, refreshPushTokenLanguage, removePushToken, scheduleDailyReminder, scheduleScoreReminder, getNotificationPrefs, clearCachedPrefs, cancelAllLocalReminders } from '../services/notifications';
 import { awardLevelBadge } from '../services/gamification';
 import { setUserContext, clearUserContext, captureError } from '../lib/sentry';
@@ -46,6 +46,13 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<{ error: string | null }>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
+  /**
+   * Mot de passe oublié par code : vérifie le code reçu par e-mail puis pose
+   * le nouveau mot de passe. `step` dit quelle étape a échoué, `network` si
+   * c'est le réseau et pas la donnée.
+   */
+  resetPasswordWithCode: (email: string, code: string, password: string) =>
+    Promise<{ error: string | null; step?: 'code' | 'password'; network?: boolean }>;
   updateUser: (updates: Partial<User>) => void;
   boxSkipped: boolean;
   skipBox: () => Promise<void>;
@@ -72,6 +79,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading]       = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
   const pendingLoginTrack = useRef(false);
+  // Récupération par code en cours : verifyOtp ouvre une session avant que le
+  // mot de passe soit changé. Tant que ce drapeau est levé, la session n'ouvre
+  // pas le profil, donc l'app reste sur la pile d'authentification.
+  const recovering = useRef(false);
 
   const isBoxActive = (() => {
     if (!boxSubscription) return true;
@@ -102,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      if (recovering.current) return;
       if (session?.user) fetchProfile(session.user.id);
       else { setUser(null); setCurrentBox(null); setBoxRole(null); setProfileError(null); setLoading(false); }
     });
@@ -277,6 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signIn(email: string, password: string) {
+    recovering.current = false;
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error) pendingLoginTrack.current = true;
     return { error: error?.message ?? null };
@@ -471,6 +484,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error: error?.message ?? null };
   }
 
+  async function resetPasswordWithCode(email: string, code: string, password: string) {
+    recovering.current = true;
+    const { data, error: codeError } = await supabase.auth.verifyOtp({ email, token: code, type: 'recovery' });
+    if (codeError || !data.user) {
+      recovering.current = false;
+      return { error: codeError?.message ?? 'no user', step: 'code' as const, network: isAuthRetryableFetchError(codeError) };
+    }
+    const { error: updateError } = await supabase.auth.updateUser({ password });
+    if (updateError) {
+      // Aucune session à moitié ouverte : le mot de passe n'a pas changé. Si
+      // la déconnexion échoue elle aussi (réseau), le drapeau reste levé pour
+      // que cette session n'ouvre pas l'app ; un nouveau code la remplacera.
+      const { error: outError } = await supabase.auth.signOut();
+      if (!outError) recovering.current = false;
+      setSession(null);
+      return { error: updateError.message, step: 'password' as const, network: isAuthRetryableFetchError(updateError) };
+    }
+    recovering.current = false;
+    await fetchProfile(data.user.id);
+    return { error: null };
+  }
+
   async function signOut() {
     const userId = user?.id ?? null;
     await runSignOutSequence({
@@ -535,7 +570,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       session, user, currentBox, boxRole, myBoxes, boxSubscription, isBoxActive, daysLeftTrial,
       profileError, switchBox, loading,
-      signIn, signUp, signOut, deleteAccount, resetPassword, updateUser,
+      signIn, signUp, signOut, deleteAccount, resetPassword, resetPasswordWithCode, updateUser,
       boxSkipped, skipBox, leaveBox,
       joinBox, joinedBox, clearJoinedBox: () => setJoinedBox(null), refreshBox, refreshSubscription,
     }}>

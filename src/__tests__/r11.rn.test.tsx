@@ -8,6 +8,7 @@ import i18n from '../i18n';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ResetPasswordCodeScreen from '../screens/auth/ResetPasswordCodeScreen';
 import JoinBoxScreen from '../screens/onboarding/JoinBoxScreen';
 import WaitingScreen from '../screens/onboarding/WaitingScreen';
 import OnboardingTutorialScreen from '../screens/onboarding/OnboardingTutorialScreen';
@@ -109,6 +110,7 @@ function reset() {
     signIn: jest.fn(async () => ({ error: null })),
     signUp: jest.fn(async () => ({ error: 'CONFIRM_EMAIL', finalUsername: 'Nab' })),
     resetPassword: jest.fn(async () => ({ error: null })),
+    resetPasswordWithCode: jest.fn(async () => ({ error: null })),
     joinBox: jest.fn(async () => ({ error: null })),
     skipBox: jest.fn(async () => undefined),
     signOut: jest.fn(async () => undefined),
@@ -201,14 +203,11 @@ export const VARIANTS: Variant[] = [
     },
   },
   { name: 'mot-de-passe-oublie', run: () => mount(<ForgotPasswordScreen navigation={{ navigate: mockNavigate, goBack: mockGoBack } as never} />) },
+  // D6 : l'écran « Email envoyé » cède la place à la saisie du code.
   {
-    name: 'email-envoye', run: async () => {
-      const root = await mount(<ForgotPasswordScreen navigation={{ navigate: mockNavigate, goBack: mockGoBack } as never} />);
-      const field = root.findAll((n) => String(n.type) === 'TextInput')[0];
-      await act(async () => { field.props.onChangeText('nab@example.test'); });
-      await pressText(root, 'Envoyer le lien');
-      return root;
-    },
+    name: 'nouveau-mot-de-passe', run: () => mount(
+      <ResetPasswordCodeScreen navigation={{ navigate: mockNavigate, goBack: mockGoBack } as never} route={{ params: { email: 'nab@example.test' } } as never} />,
+    ),
   },
   { name: 'rejoindre-une-box', run: () => mount(<WaitingScreen navigation={{ navigate: mockNavigate }} />) },
   { name: 'rejoins-ta-box', run: () => mount(<JoinBoxScreen navigation={{ navigate: mockNavigate, goBack: mockGoBack }} />) },
@@ -289,7 +288,7 @@ if (process.env.R11_CAPTURE) {
 
 const THEMES = [['clair', lightTheme], ['sombre', darkTheme]] as const;
 const R11_FILES = [
-  'screens/auth/LoginScreen.tsx', 'screens/auth/RegisterScreen.tsx', 'screens/auth/ForgotPasswordScreen.tsx',
+  'screens/auth/LoginScreen.tsx', 'screens/auth/RegisterScreen.tsx', 'screens/auth/ForgotPasswordScreen.tsx', 'screens/auth/ResetPasswordCodeScreen.tsx',
   'screens/onboarding/WaitingScreen.tsx', 'screens/onboarding/JoinBoxScreen.tsx', 'screens/onboarding/OnboardingTutorialScreen.tsx',
   'screens/documents/LegalScreen.tsx', 'components/EmptyState.tsx', 'components/ConfirmDialog.tsx',
 ];
@@ -352,11 +351,12 @@ if (!process.env.R11_CAPTURE) {
       expect(root.findAllByProps({ testID: 'confirm-dialog' })).toHaveLength(0);
     });
 
-    it('mot de passe oublié : envoi puis retour à Connexion', async () => {
-      const root = await variant('email-envoye').run();
+    it('mot de passe oublié : envoi puis écran du code (D6)', async () => {
+      const root = await variant('mot-de-passe-oublie').run();
+      await act(async () => { root.findByProps({ testID: 'forgot-email' }).props.onChangeText('nab@example.test'); });
+      await pressButton(root.findByProps({ testID: 'forgot-submit' }));
       expect(mockAuth.resetPassword).toHaveBeenCalledWith('nab@example.test');
-      await pressButton(root.findByProps({ testID: 'forgot-back-to-login' }));
-      expect(mockNavigate).toHaveBeenLastCalledWith('Login');
+      expect(mockNavigate).toHaveBeenLastCalledWith('ResetPasswordCode', { email: 'nab@example.test' });
       await pressText(root, 'Retour');
       expect(mockGoBack).toHaveBeenCalled();
     });

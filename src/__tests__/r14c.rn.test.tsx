@@ -83,7 +83,7 @@ describe('R14c 2 : boutons athlète en écriture normale', () => {
   });
   it.each([
     ['auth.login', 'Se connecter', 'Sign in'], ['auth.joinBattle', 'Rejoindre la bataille', 'Join the battle'],
-    ['forgot.sendLink', 'Envoyer le lien', 'Send link'], ['whiteboard.enterScore', 'Entrer mon score', 'Enter my score'],
+    ['forgot.getCode', 'Recevoir un code', 'Get a code'], ['whiteboard.enterScore', 'Entrer mon score', 'Enter my score'],
     ['competition.join', 'Rejoindre', 'Join'], ['tourWod.submitScoreCta', 'Soumettre mon score', 'Submit my score'],
   ])('%s : « %s » / « %s »', (k, f, e) => {
     expect(get(fr, k)).toBe(f);
