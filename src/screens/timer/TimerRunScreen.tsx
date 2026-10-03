@@ -794,35 +794,7 @@ export default function TimerRunScreen() {
       if (seqBlocksRef.current.length > 0) initSeqBlockByIdx(0);
     }
     async function setup() {
-      try {
-        if (withCamera) {
-          // Avec caméra : on enregistre le micro TOUT en laissant la musique de
-          // l'utilisateur (Spotify, etc.) continuer. iOS mixe (la catégorie native
-          // .playAndRecord ajoute .mixWithOthers) ; Android ducke brièvement sur nos bips.
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: true,
-            playsInSilentModeIOS: true,
-            staysActiveInBackground: false,
-            interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-            interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-            shouldDuckAndroid: true,
-            playThroughEarpieceAndroid: false,
-          });
-        } else {
-          // Sans caméra : MIXER avec la musique de l'utilisateur (Spotify, etc.) au
-          // lieu de la couper. allowsRecordingIOS:false sinon iOS force la catégorie
-          // d'enregistrement qui interrompt la musique. Android ducke brièvement.
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            playsInSilentModeIOS: true,
-            staysActiveInBackground: true,
-            interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-            interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-            shouldDuckAndroid: true,
-            playThroughEarpieceAndroid: false,
-          });
-        }
-      } catch (e) { captureError(e, { screen: 'TimerRun', action: 'setAudioMode' }); }
+      await appliquerModeAudio();
       if (withCamera) {
         if (!camPermission?.granted) requestCamPermission();
         if (!mediaPermission?.granted) requestMediaPermission();
@@ -830,6 +802,43 @@ export default function TimerRunScreen() {
     }
     setup();
   }, []);
+
+  // Session audio du minuteur (bips). Posée à l'ouverture de l'écran, puis de
+  // nouveau à chaque lancement sans caméra (handleStart) : iOS peut l'avoir
+  // changée entre-temps (passage par la caméra, interruption, autre app), et
+  // sans caméra rien d'autre ne la repose avant le premier bip (retour D1 du
+  // build 1.0.60). Avec caméra, handleStartRecording la repose déjà.
+  async function appliquerModeAudio() {
+    try {
+      if (withCamera) {
+        // Avec caméra : on enregistre le micro TOUT en laissant la musique de
+        // l'utilisateur (Spotify, etc.) continuer. iOS mixe (la catégorie native
+        // .playAndRecord ajoute .mixWithOthers) ; Android ducke brièvement sur nos bips.
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      } else {
+        // Sans caméra : MIXER avec la musique de l'utilisateur (Spotify, etc.) au
+        // lieu de la couper. allowsRecordingIOS:false sinon iOS force la catégorie
+        // d'enregistrement qui interrompt la musique. Android ducke brièvement.
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      }
+    } catch (e) { captureError(e, { screen: 'TimerRun', action: 'setAudioMode' }); }
+  }
 
   // Jeu de bips (R6c) : WAV écrits en cache puis chargés, rechargés quand le jeu change.
   // Les mêmes fichiers partent au module natif pour le mélange dans la vidéo.
@@ -1435,7 +1444,9 @@ export default function TimerRunScreen() {
   // ─── LIBRE FOR-TIME: manually end unlimited block ─────────────────────────
   function libreEndForTimeBlock() { seqBlockDone(); }
 
-  function handleStart() {
+  async function handleStart() {
+    // Avant le premier bip, à chaque lancement (voir appliquerModeAudio).
+    if (!withCamera) await appliquerModeAudio();
     if (countdown > 0) {
       recordingCdRef.current = countdown;
       setCountdownVal(countdown);
