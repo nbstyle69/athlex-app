@@ -401,6 +401,17 @@ build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).
 - Tests : `r12.rn.test.tsx` (51, dont ordre des blocs sur 22 états figés sur master), isolement R1 élargi au seul
   `ProfileScreen` ; `npx jest` 1976, `npm run test:rn` 536, `tsc` vert ; 28 mutations tuées.
 
+**Temps final du minuteur dans la zone sûre, sans défilement (retour D2 du build 1.0.60, app seule, apparence ;
+vérification visuelle par Nab).** Fermer sortait de l'écran (avec caméra sur iPhone, et dans tous les paysages) ou passait
+sous la barre d'accueil. Décision de Nab : l'écran ne défile pas. Recommencer et Fermer deviennent deux actions rondes en
+verre de 56 px (`rotate-ccw` neutre, `x` couleur arrêt / danger), côte à côte en bas avec leur libellé court en
+portrait, empilées à droite en icône seule en paysage, libellés d'accessibilité complets. Marges de la zone sûre en
+haut (caméra), en bas et sur les côtés ; le grand chiffre prend la hauteur restante et descend jusqu'à 44 px au plus
+(`FINAL_DIGITS_MIN`) ; logo, QR et espacements réduits sous 760 pt de haut et en paysage ; badge du format centré.
+Seule la liste des temps intermédiaires (Splits), qui défilait déjà, garde sa ScrollView. Tests
+`retours1060TempsFinal.rn.test.tsx`, 17 mutations tuées ; captures et mesures avant / après sur iPhone SE, iPhone 15
+et 390 px dans `athlex-captures/correctifs-1.0.60/pr2-temps-final`.
+
 **Retours iPhone (build 1.0.58) : minuteur, caméra, en-têtes, boutons, profil et outils (app seule, aucune migration, écrans seuls).**
 - Minuteur : compte à rebours en six pastilles `AxChip equal` sur une ligne à 390 px ; décompte PRÉPARE-TOI / PRÊT ? /
   GO ! centré plein écran (avec et sans caméra, portrait et paysage), chiffre centré dans son cercle, halo circulaire
