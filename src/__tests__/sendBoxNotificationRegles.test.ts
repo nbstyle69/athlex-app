@@ -33,12 +33,17 @@ type Monde = {
   tickets?: Record<string, 'ok' | 'error'>;
   expoEnPanne?: boolean;
   ecritureEnPanne?: boolean;
+  /** Un envoi simultané a déjà réservé la ligne : la mise à jour conditionnelle ne rend rien. */
+  dejaReservee?: boolean;
 };
 
 function acces(m: Monde) {
   const lots: MessageExpo[][] = [];
   const ecrits: Array<[string, number]> = [];
   const journal: string[] = [];
+  const reservations: string[] = [];
+  /** Ordre des appels qui comptent : réservation, lots Expo, écritures. */
+  const ordre: string[] = [];
   const a: Acces = {
     notification: async (id) => (m.notif && m.notif.id === id ? m.notif : null),
     roleAppelant: async (_box, userId): Promise<FaitsAppelant> => ({
@@ -52,19 +57,26 @@ function acces(m: Monde) {
     jetons: async (ids) => ids.flatMap((id) => m.jetons[id] ?? []),
     envoyerExpo: async (messages) => {
       lots.push(messages);
+      ordre.push('expo');
       if (m.expoEnPanne) return null;
       return { data: messages.map((msg) => ({ status: m.tickets?.[msg.to] ?? 'ok', id: `ticket-${msg.to}` })) };
+    },
+    reserverEnvoi: async (id) => {
+      reservations.push(id);
+      ordre.push('reserver');
+      return !m.dejaReservee;
     },
     poserResultat: async (id, n) => {
       if (m.ecritureEnPanne) throw new Error('écriture refusée');
       ecrits.push([id, n]);
+      ordre.push(`ecrire ${n}`);
     },
     journaliser: (message) => { journal.push(message); },
   };
-  return { a, lots, ecrits, journal };
+  return { a, lots, ecrits, journal, reservations, ordre };
 }
 
-const NOTIF_TOUS: Notification = { id: 'n-tous', box_id: BOX, title: 'Fermeture', body: 'Box fermée lundi', target: 'all' };
+const NOTIF_TOUS: Notification = { id: 'n-tous', box_id: BOX, title: 'Fermeture', body: 'Box fermée lundi', target: 'all', delivered_count: null };
 const NOTIF_M1: Notification = { ...NOTIF_TOUS, id: 'n-m1', target: M1 };
 const monde = (o: Partial<Monde> = {}): Monde => ({
   notif: NOTIF_TOUS,
@@ -129,6 +141,55 @@ describe('send-box-notification : envoi et résultat', () => {
     expect(ecrits).toEqual([['n-tous', 2]]);
   });
 
+  it('réservation avant Expo, nombre définitif après', async () => {
+    const beaucoup = Array.from({ length: 150 }, (_, i) => `ExponentPushToken[${i}]`);
+    const { a, ordre, reservations } = acces(monde({ jetons: { [M1]: beaucoup } }));
+    await traiterEnvoi(a, G, 'n-tous');
+    expect(reservations).toEqual(['n-tous']);
+    expect(ordre).toEqual(['reserver', 'expo', 'expo', 'ecrire 150']);
+  });
+
+  it('déjà envoyée (delivered_count posé, 0 compris) : 409, ni Expo, ni réservation, ni écriture', async () => {
+    for (const deja of [0, 4]) {
+      const { a, lots, ecrits, reservations } = acces(monde({ notif: { ...NOTIF_TOUS, delivered_count: deja } }));
+      const r = await traiterEnvoi(a, G, 'n-tous');
+      expect(r).toEqual({ status: 409, body: { error: 'Already sent' } });
+      expect(lots).toHaveLength(0);
+      expect(reservations).toHaveLength(0);
+      expect(ecrits).toHaveLength(0);
+    }
+  });
+
+  it('envoi simultané : la réservation conditionnelle ne rend rien, 409 sans Expo ni écriture', async () => {
+    const { a, lots, ecrits, reservations } = acces(monde({ dejaReservee: true }));
+    const r = await traiterEnvoi(a, C, 'n-tous');
+    expect(r).toEqual({ status: 409, body: { error: 'Already sent' } });
+    expect(reservations).toEqual(['n-tous']);
+    expect(lots).toHaveLength(0);
+    expect(ecrits).toHaveLength(0);
+  });
+
+  it('chemins à 0 (sans membre, sans jeton, préférences coupées) : réservés aussi, puis 0 écrit', async () => {
+    const cas: Array<Partial<Monde>> = [
+      { actifs: [] },
+      { notif: NOTIF_M1, jetons: {} },
+      { notif: NOTIF_M1, prefs: [{ user_id: M1, notifications_enabled: false, box_announcements: true }] },
+    ];
+    for (const o of cas) {
+      const { a, ordre } = acces(monde(o));
+      expect((await traiterEnvoi(a, G, (o.notif ?? NOTIF_TOUS).id)).body.sent).toBe(0);
+      expect(ordre).toEqual(['reserver', 'ecrire 0']);
+    }
+  });
+
+  it("erreur levée après la réservation : la ligne garde 0 (rien de définitif écrit), l'erreur remonte", async () => {
+    const { a, reservations, ecrits } = acces(monde());
+    a.jetons = async () => { throw new Error('base injoignable'); };
+    await expect(traiterEnvoi(a, G, 'n-tous')).rejects.toThrow('base injoignable');
+    expect(reservations).toEqual(['n-tous']);
+    expect(ecrits).toHaveLength(0);
+  });
+
   it('gérant principal servi, sans ligne box_members', async () => {
     const { a, ecrits } = acces(monde());
     const r = await traiterEnvoi(a, G, 'n-tous');
@@ -137,14 +198,20 @@ describe('send-box-notification : envoi et résultat', () => {
     expect(ecrits).toEqual([['n-tous', 3]]);
   });
 
-  it('coach et membre : 403, rien envoyé, rien écrit', async () => {
+  it('coach et membre : 403, rien envoyé, rien réservé, rien écrit', async () => {
     for (const qui of [K, M1]) {
-      const { a, lots, ecrits } = acces(monde());
+      const { a, lots, ecrits, reservations } = acces(monde());
       const r = await traiterEnvoi(a, qui, 'n-tous');
       expect(r).toEqual({ status: 403, body: { error: 'Not owner or co-owner of this box' } });
       expect(lots).toHaveLength(0);
+      expect(reservations).toHaveLength(0);
       expect(ecrits).toHaveLength(0);
     }
+  });
+
+  it('coach sur une notification déjà envoyée : 403, pas 409 (le contrôle des droits passe avant)', async () => {
+    const { a } = acces(monde({ notif: { ...NOTIF_TOUS, delivered_count: 3 } }));
+    expect((await traiterEnvoi(a, K, 'n-tous')).status).toBe(403);
   });
 
   it('membre seul sans aucun jeton : sent 0, et 0 écrit (pas NULL)', async () => {
@@ -202,9 +269,10 @@ describe('send-box-notification : envoi et résultat', () => {
       [{ prefsErreur: new Error('panne') }, 'n-tous', 503],
     ];
     for (const [o, id, statut] of cas) {
-      const { a, lots, ecrits } = acces(monde(o));
+      const { a, lots, ecrits, reservations } = acces(monde(o));
       expect((await traiterEnvoi(a, G, id)).status).toBe(statut);
       expect(lots).toHaveLength(0);
+      expect(reservations).toHaveLength(0); // la ligne garde NULL
       expect(ecrits).toHaveLength(0);
     }
   });
@@ -228,5 +296,8 @@ describe('send-box-notification : branchement', () => {
     expect(src).toContain('const admin = createClient(SUPABASE_URL, SERVICE_KEY);');
     expect(src).toMatch(/admin\s*\.from\('box_notifications'\)\.update\(\{ delivered_count: delivered \}\)\.eq\('id', notificationId\)/);
     expect(src).toContain('await traiterEnvoi(acces, userData.user.id, notificationId)');
+    expect(src).toContain(".select('id, box_id, title, body, target, delivered_count')");
+    expect(src).toMatch(/\.update\(\{ delivered_count: 0 \}\)\s*\.eq\('id', notificationId\)\.is\('delivered_count', null\)\s*\.select\('id'\);/);
+    expect(src).toContain('return (data ?? []).length === 1;');
   });
 });

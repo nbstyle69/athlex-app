@@ -10,6 +10,8 @@
 // Returns: { sent: number, recipients: number, pref_disabled: number }
 //   `sent` = devices Expo accepted (tickets "ok"), also written to
 //   box_notifications.delivered_count (0 included) with the service role.
+//   409 { error: 'Already sent' }: the row already has a result, or a
+//   concurrent call reserved it first (delivered_count NULL → 0, conditional).
 // The rules live in regles.ts (tested by Jest without Deno).
 // ------------------------------------------------------------------
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
@@ -50,7 +52,7 @@ serve(async (req: Request) => {
     const acces: Acces = {
       async notification(id) {
         const { data, error } = await admin
-          .from('box_notifications').select('id, box_id, title, body, target').eq('id', id).maybeSingle();
+          .from('box_notifications').select('id, box_id, title, body, target, delivered_count').eq('id', id).maybeSingle();
         return error ? null : data;
       },
       async roleAppelant(boxId, userId) {
@@ -98,6 +100,15 @@ serve(async (req: Request) => {
           console.error('send-box-notification: Expo injoignable', e);
           return null;
         }
+      },
+      async reserverEnvoi(notificationId) {
+        // Conditionnelle : deux envois simultanés ne réservent pas tous les deux.
+        const { data, error } = await admin
+          .from('box_notifications').update({ delivered_count: 0 })
+          .eq('id', notificationId).is('delivered_count', null)
+          .select('id');
+        if (error) throw error;
+        return (data ?? []).length === 1;
       },
       async poserResultat(notificationId, delivered) {
         const { error } = await admin

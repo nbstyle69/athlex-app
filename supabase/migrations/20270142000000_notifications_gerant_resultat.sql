@@ -8,7 +8,10 @@
 --   a) colonne `delivered_count integer NULL` : nombre d'appareils qu'Expo a
 --      acceptés pour cette notification (tickets « ok »), 0 compris. NULL veut
 --      dire « notification antérieure à cette migration, ou pas encore envoyée ».
---      Écrite par la fonction edge `send-box-notification`, avec la clé serveur.
+--      Écrite par la fonction edge `send-box-notification`, avec la clé serveur :
+--      d'abord 0 par une mise à jour conditionnelle (`WHERE delivered_count IS
+--      NULL`) qui réserve l'envoi, puis le nombre définitif. Une notification
+--      qui a déjà un résultat n'est jamais renvoyée (409 `Already sent`).
 --
 --   b) garde `internal.garder_resultat_notification()` (BEFORE INSERT OR UPDATE,
 --      ligne par ligne, toutes colonnes) : pour un rôle client (`authenticated`,

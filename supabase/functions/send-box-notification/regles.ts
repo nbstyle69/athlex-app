@@ -2,7 +2,11 @@
 // (src/__tests__/sendBoxNotificationRegles.test.ts), importées par index.ts qui
 // leur fournit les accès à la base (clé serveur) et à Expo.
 
-export type Notification = { id: string; box_id: string; title: string; body: string | null; target: string };
+export type Notification = {
+  id: string; box_id: string; title: string; body: string | null; target: string;
+  /** NULL tant que l'envoi n'a pas été tenté ; posé à 0 par `reserverEnvoi`, puis au nombre définitif. */
+  delivered_count: number | null;
+};
 export type Preference = { user_id: string; notifications_enabled: boolean | null; box_announcements: boolean | null };
 export type MessageExpo = { to: string; sound: 'default'; title: string; body: string; data: { type: 'box_notification'; box_id: string } };
 
@@ -17,6 +21,13 @@ export interface Acces {
   jetons(userIds: string[]): Promise<string[]>;
   /** Un lot de 100 messages au plus ; le JSON de la réponse d'Expo, ou null si la requête a échoué. */
   envoyerExpo(messages: MessageExpo[]): Promise<unknown>;
+  /**
+   * Réserve l'envoi : `UPDATE … SET delivered_count = 0 WHERE id = … AND
+   * delivered_count IS NULL`, avec retour de ligne. Vrai si la ligne est
+   * revenue (cet appel est le seul à envoyer), faux si un autre envoi l'a déjà
+   * réservée. Une erreur de la base lève (500, rien n'est envoyé).
+   */
+  reserverEnvoi(notificationId: string): Promise<boolean>;
   /** Écrit `box_notifications.delivered_count` (clé serveur seulement, garde 20270142). */
   poserResultat(notificationId: string, delivered: number): Promise<void>;
   journaliser(message: string, erreur: unknown): void;
@@ -65,9 +76,14 @@ export type Reponse = { status: number; body: Record<string, unknown> };
 /**
  * Envoie la notification `notificationId` pour l'appelant `callerId` (JWT déjà
  * vérifié par index.ts). Réponse `{ sent, recipients, pref_disabled }`, où
- * `sent` est le nombre d'appareils qu'Expo a acceptés ; ce même nombre (0
- * compris) est écrit dans `delivered_count` dès que l'envoi a été tenté. Les
- * refus (400, 403, 404, 503) n'écrivent rien : la ligne garde NULL.
+ * `sent` est le nombre d'appareils qu'Expo a acceptés.
+ *
+ * Une notification ne part qu'une fois : 409 `Already sent` si elle a déjà un
+ * résultat, ou si un envoi simultané l'a réservée avant celui-ci. La
+ * réservation (`delivered_count` NULL → 0, conditionnelle) se fait après tous
+ * les refus (400, 403, 404, 503), qui laissent donc NULL, et avant Expo ; le
+ * nombre définitif (0 compris) est écrit après l'envoi. Une erreur levée après
+ * la réservation laisse 0 : la notification n'est jamais renvoyée en double.
  */
 export async function traiterEnvoi(acces: Acces, callerId: string, notificationId: string): Promise<Reponse> {
   const notif = await acces.notification(notificationId);
@@ -76,16 +92,8 @@ export async function traiterEnvoi(acces: Acces, callerId: string, notificationI
   if (!gerantOuCogerant(await acces.roleAppelant(notif.box_id, callerId), callerId)) {
     return { status: 403, body: { error: 'Not owner or co-owner of this box' } };
   }
-
-  // Résultat final : écrit sur la ligne, puis rendu.
-  const resultat = async (sent: number, recipients: number, prefDisabled: number): Promise<Reponse> => {
-    try {
-      await acces.poserResultat(notif.id, sent);
-    } catch (e) {
-      acces.journaliser('send-box-notification : delivered_count non écrit', e);
-    }
-    return { status: 200, body: { sent, recipients, pref_disabled: prefDisabled } };
-  };
+  const DEJA_ENVOYEE: Reponse = { status: 409, body: { error: 'Already sent' } };
+  if (notif.delivered_count !== null) return DEJA_ENVOYEE;
 
   let recipientIds: string[];
   if (notif.target === 'all') {
@@ -103,24 +111,40 @@ export async function traiterEnvoi(acces: Acces, callerId: string, notificationI
     }
     recipientIds = [notif.target];
   }
-  if (recipientIds.length === 0) return resultat(0, 0, 0);
 
   // ── PRÉFÉRENCES (2026-08-16) ───────────────────────────────────────────────
   // Une annonce du gérant ne passe pas par send-push (elle parle à Expo
   // directement) : le filtre des réglages est appliqué ici, sur la même clé.
   // Ligne de préférence absente = annonce autorisée (défaut true).
-  const { data: prefs, error: prefsErr } = await acces.preferences(recipientIds);
-  if (prefsErr) return { status: 503, body: { error: 'Preferences unavailable', sent: 0 } };
-  const disabled = new Set(
-    (prefs ?? [])
-      .filter((p) => p.notifications_enabled === false || p.box_announcements === false)
-      .map((p) => p.user_id),
-  );
-  recipientIds = recipientIds.filter((id) => !disabled.has(id));
-  if (recipientIds.length === 0) return resultat(0, 0, disabled.size);
+  let disabled = new Set<string>();
+  if (recipientIds.length > 0) {
+    const { data: prefs, error: prefsErr } = await acces.preferences(recipientIds);
+    if (prefsErr) return { status: 503, body: { error: 'Preferences unavailable', sent: 0 } };
+    disabled = new Set(
+      (prefs ?? [])
+        .filter((p) => p.notifications_enabled === false || p.box_announcements === false)
+        .map((p) => p.user_id),
+    );
+    recipientIds = recipientIds.filter((id) => !disabled.has(id));
+  }
+
+  // Plus aucun refus possible : réservation, puis envoi.
+  if (!(await acces.reserverEnvoi(notif.id))) return DEJA_ENVOYEE;
+
+  // Résultat définitif : écrit sur la ligne, puis rendu.
+  const resultat = async (sent: number, recipients: number): Promise<Reponse> => {
+    try {
+      await acces.poserResultat(notif.id, sent);
+    } catch (e) {
+      acces.journaliser('send-box-notification : delivered_count non écrit', e);
+    }
+    return { status: 200, body: { sent, recipients, pref_disabled: disabled.size } };
+  };
+
+  if (recipientIds.length === 0) return resultat(0, 0);
 
   const list = (await acces.jetons(recipientIds)).filter(Boolean);
-  if (list.length === 0) return resultat(0, recipientIds.length, disabled.size);
+  if (list.length === 0) return resultat(0, recipientIds.length);
 
   const messages: MessageExpo[] = list.map((token) => ({
     to: token,
@@ -134,5 +158,5 @@ export async function traiterEnvoi(acces: Acces, callerId: string, notificationI
   for (let i = 0; i < messages.length; i += LOT) {
     sent += compterAcceptes(await acces.envoyerExpo(messages.slice(i, i + LOT)));
   }
-  return resultat(sent, recipientIds.length, disabled.size);
+  return resultat(sent, recipientIds.length);
 }

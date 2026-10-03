@@ -220,7 +220,10 @@ gérant », node 475:753 ; PR 2a apparence et PR 2b comportement à suivre).
   des membres inchangée.
 - `send-box-notification` : gérant ou co-gérant de la box (même règle que `is_box_owner_admin`), 403 sinon ; `sent` =
   tickets « ok » d'Expo (avant : messages des lots envoyés) ; résultat écrit dans `delivered_count` avec la clé
-  serveur, 0 compris (sans membre, sans jeton, préférences coupées). Règles dans `regles.ts`, testées par Jest.
+  serveur, 0 compris (sans membre, sans jeton, préférences coupées). Une notification ne part qu'une fois : 409
+  `Already sent` si elle a déjà un résultat ; sinon réservation conditionnelle (`delivered_count` NULL → 0, `WHERE
+  delivered_count IS NULL`) après tous les refus et avant Expo, 409 si un envoi simultané l'a prise ; nombre définitif
+  écrit après l'envoi (une erreur après la réservation laisse 0). Règles dans `regles.ts`, testées par Jest.
 - Précontrôle du 03/10/2026 (lecture seule) : fonction déployée identique à `d9b3382` (copie de retour arrière dans
   `C:\Users\NBS\athlex-retour-arriere-send-box-notification\avant-d4b-pr1`) ; 3 lignes dans la table ; en prod,
   3 gérants sur 4 n'ont pas de ligne `box_members`, d'où le passage par `boxes.owner_id`.
