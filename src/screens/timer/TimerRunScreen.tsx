@@ -10,12 +10,12 @@ import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
 import { useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import { RealtimeRecorderView, updateOverlayState, startRecording as nativeStartRec, stopRecording as nativeStopRec } from 'realtime-recorder';
-import { getLastRecordingStats, markBeep, prepareQuality, type QualityCheck, type VideoQuality } from 'realtime-recorder';
+import { getLastRecordingStats, markBeep } from 'realtime-recorder';
 import {
   BEEP_SETS, BEEP_TYPES, DEFAULT_BEEP_SET, beepFileName, buildMultiWAV, isBeepSet, mixBeepInVideo,
   type BeepSetId, type BeepType,
 } from '../../lib/timerBeeps';
-import { DISPLAY_OPTS_KEY, VIDEO_QUALITY_LABELS, isAbove1080, isJerky, loadVideoOpts, qualityNotice, type VideoOpts } from '../../lib/timerVideoOpts';
+import { DISPLAY_OPTS_KEY, isJerky, loadVideoOpts, type VideoOpts } from '../../lib/timerVideoOpts';
 import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system/legacy';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -525,11 +525,11 @@ export default function TimerRunScreen() {
   }, [withTimestamp]);
   const [facing, setFacing] = useState<'front' | 'back'>('back');
 
-  // Options vidéo (R6c) : chargées avant tout enregistrement ; la qualité est
-  // fixée par le module (caméra, chauffe, essai à blanc au-delà de 1080p).
+  // Options vidéo (R6c) : chargées avant tout enregistrement (1080p fixe).
   const [videoOpts, setVideoOpts] = useState<VideoOpts | null>(null);
-  const [qualityCheck, setQualityCheck] = useState<QualityCheck | null>(null);
-  const [checkingQuality, setCheckingQuality] = useState<VideoQuality | null>(null);
+  // Vrai entre « Démarrer » et la réponse du module : la session de capture se
+  // relance et s'oriente, le writer n'existe pas encore.
+  const [startingRec, setStartingRec] = useState(false);
   const [jerky, setJerky] = useState(false);
   const videoOptsRef = useRef<VideoOpts | null>(null);
   videoOptsRef.current = videoOpts;
@@ -541,19 +541,6 @@ export default function TimerRunScreen() {
     if (withCamera && videoOpts?.videoMic && !micPermission?.granted) requestMicPermission();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [withCamera, videoOpts?.videoMic]);
-  useEffect(() => {
-    if (!withCamera || !isCameraReady || !videoOpts || recordingActiveRef.current) return;
-    let alive = true;
-    const requested = videoOpts.videoQuality;
-    setQualityCheck(null);
-    setCheckingQuality(isAbove1080(requested) ? requested : null);
-    prepareQuality({ quality: requested, fps: videoOpts.videoFps, mic: videoOpts.videoMic, facing })
-      .then(r => { if (alive) setQualityCheck(r); })
-      .catch(e => captureError(e, { screen: 'TimerRun', action: 'prepareQuality' }))
-      .finally(() => { if (alive) setCheckingQuality(null); });
-    return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [withCamera, isCameraReady, videoOpts, facing]);
 
   async function saveCard() {
     if (savingCard || cardSaved) return;
@@ -970,7 +957,7 @@ export default function TimerRunScreen() {
   }
 
   async function handleStartRecording() {
-    if (!isCameraReady || !videoOpts || checkingQuality) return;
+    if (!isCameraReady || !videoOpts || recordingActiveRef.current) return;
     const mic = videoOpts.videoMic;
 
     // Ensure microphone permission is granted before recording (fixes silent videos)
@@ -996,16 +983,18 @@ export default function TimerRunScreen() {
     timerStopOffsetRef.current = null;
     recordingActiveRef.current = true;
     setIsRecordingActive(true);
+    setStartingRec(true);
 
-    // Start native realtime recording (overlays burned on each frame)
+    // Start native realtime recording (overlays burned on each frame). The promise
+    // settles once the capture session runs, oriented, and the writer exists.
     const outputPath = (FileSystem.documentDirectory ?? '') + `bwod_video_${videoStartTimeRef.current}.mp4`;
-    // Sans vérification aboutie, jamais au-delà de 1080p.
-    const quality = qualityCheck?.applied ?? (isAbove1080(videoOpts.videoQuality) ? '1080p' : videoOpts.videoQuality);
     const beeps = videoOpts.videoBeeps && !!beepFilesRef.current;
     nativeStartRec({
-      outputPath, facing, isLandscape, quality, fps: videoOpts.videoFps, mic,
+      outputPath, facing, isLandscape, fps: videoOpts.videoFps, mic,
       beeps, beepFiles: beeps ? beepFilesRef.current! : undefined,
     }).catch((err: any) => {
+      // Session de capture en échec (exception AVFoundation rattrapée, caméra
+      // absente…) : on reste sur l'écran, prêt à réessayer.
       captureError(err, { screen: 'TimerRun', action: 'nativeStartRec' });
       recordingActiveRef.current = false;
       setIsRecordingActive(false);
@@ -1014,7 +1003,7 @@ export default function TimerRunScreen() {
         `La caméra n'a pas pu démarrer l'enregistrement.\n\nErreur : ${err?.message ?? String(err)}\n\nVérifie que l'app a accès à la Caméra et au Micro dans les Réglages iOS.`,
         [{ text: 'OK' }]
       );
-    });
+    }).finally(() => setStartingRec(false));
   }
 
   async function stopVideoAndFinish() {
@@ -1714,21 +1703,13 @@ export default function TimerRunScreen() {
     camState === 2 ? handleStop :
     stopVideoAndFinish;
 
-  const qualityMsg = camState === 0 ? qualityNotice(qualityCheck, t) : null;
   const renderCamPrimary = () => (
-    <>
-      {qualityMsg && (
-        <View style={styles.savedBanner}>
-          <Text testID="timer-quality-notice" style={[axTypography.caption, { color: axVeil.ink, flexShrink: 1 }]}>{qualityMsg}</Text>
-        </View>
-      )}
-      <AxButton testID="timer-cam-primary" veil fullWidth
-        variant={camState === 2 || camState === 3 ? 'stop' : 'accent'}
-        label={camState === 0 && checkingQuality ? t('timer.video.checking', { quality: VIDEO_QUALITY_LABELS[checkingQuality] })
-          : camState === 0 && (!isCameraReady || !videoOpts) ? 'Initialisation…' : camPrimaryLabel}
-        disabled={camState === 0 && (!isCameraReady || !videoOpts || !!checkingQuality)}
-        onPress={camPrimaryAction} />
-    </>
+    <AxButton testID="timer-cam-primary" veil fullWidth
+      variant={camState === 2 || camState === 3 ? 'stop' : 'accent'}
+      label={camState === 0 && (!isCameraReady || !videoOpts) ? 'Initialisation…'
+        : camState === 1 && startingRec ? 'Démarrage…' : camPrimaryLabel}
+      disabled={(camState === 0 && (!isCameraReady || !videoOpts)) || (camState === 1 && startingRec)}
+      onPress={camPrimaryAction} />
   );
 
   const renderRoundBubbles = (forLandscape = false) => {

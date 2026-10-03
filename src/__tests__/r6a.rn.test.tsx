@@ -71,7 +71,6 @@ jest.mock('realtime-recorder', () => ({
   startRecording: (o: unknown) => mockStartRec(o),
   stopRecording: () => mockStopRec(),
   updateOverlayState: (s: unknown) => mockOverlay(s),
-  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
   getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
 }));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
@@ -316,9 +315,9 @@ describe('R6a : module natif et incrustation dans la vidéo inchangés', () => {
     const files = execSync('git ls-files modules/realtime-recorder', { cwd: root }).toString().trim().split('\n');
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
     // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
-    // R6c (A) : qualité, fps et micro dans le module, couverts par r6cOptionsVideo.rn.test.tsx et VideoQualityTest.kt.
+    // R6c (A) : fps et micro dans le module (r6cOptionsVideo.rn.test.tsx) ; qualité retirée, 1080p fixe, démarrage sérialisé et exception rattrapée (recorderRotationCoordinator.test.ts).
     expect(crypto.createHash('sha256').update(all).digest('hex'))
-      .toBe('f674d8084b7bd48307fab26d413bda7505dbbf65d7fe4d0ee2066fb578a369d4'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt, decompteVideoCentre.test.ts) ; bips sans doublon : calage de latence retiré (r6cBips.rn.test.tsx)
+      .toBe('e8d0dd5d83635452dffa88aff05dd4e9690c380f2ea133867b2888015636a1c8'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt, decompteVideoCentre.test.ts) ; bips sans doublon : calage de latence retiré (r6cBips.rn.test.tsx)
   });
 
   it('l’état d’incrustation suit toujours l’enregistrement', async () => {

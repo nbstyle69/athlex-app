@@ -1944,20 +1944,12 @@
       "classic": "Classic"
     },
     "video": {
-      "quality": "Quality",
-      "qualityHint": "1080p recommended · 2K and 4K depending on your phone, larger files",
       "fps": "Frames per second",
       "fpsValue": "{{fps}} fps",
       "mic": "Microphone",
       "beeps": "Beeps in the video",
       "beepsHint": "The timer beeps are heard in the recording: added to the track when the mic is off or the phone is silent, otherwise picked up by the mic",
       "micHint": "Records sound during the video",
-      "checking": "Checking {{quality}}…",
-      "notice": {
-        "camera": "{{requested}} not available on this camera: recording in {{applied}}",
-        "performance": "Your phone can't keep up with {{requested}} and the overlay: recording in {{applied}}",
-        "thermal": "Phone too hot for {{requested}}: recording in {{applied}}"
-      },
       "jerky": "The video may stutter: the phone couldn't keep the frame rate."
     },
     "youtube": {

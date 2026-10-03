@@ -72,8 +72,6 @@ jest.mock('realtime-recorder', () => ({
   startRecording: (o: unknown) => mockStartRec(o),
   stopRecording: async () => '/docs/video.mp4',
   updateOverlayState: () => {},
-  getSupportedQualities: () => ({ front: ['720p', '1080p'], back: ['720p', '1080p'] }),
-  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
   getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
   markBeep: (t: string) => mockMarkBeep(t),
 }));

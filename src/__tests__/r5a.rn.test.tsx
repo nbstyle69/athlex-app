@@ -65,7 +65,6 @@ jest.mock('expo-screen-orientation', () => ({
 }));
 jest.mock('realtime-recorder', () => ({
   RealtimeRecorderView: 'Recorder',
-  prepareQuality: async (o: { quality: string }) => ({ requested: o.quality, applied: o.quality, reason: null }),
   getLastRecordingStats: () => ({ expectedFrames: 0, writtenFrames: 0 }),
 }));
 jest.mock('react-native-qrcode-svg', () => 'QRCode');
@@ -244,7 +243,7 @@ describe('R5a : capture', () => {
  * R6c (B) : jeu de bips chargé selon le réglage, markBeep dans playBeep, bips passés au module (r6cBips.rn.test.tsx).
  * Bips sans doublon : mélange décidé par mixBeepInVideo dans playBeep, calage de latence retiré (r6cBips.rn.test.tsx).
  */
-const LOGIC_SHA = '639d1b0da7c06cdb7656032b351acbb788b0c4bec11fd9e6c2d7f0a8360691f1';
+const LOGIC_SHA = 'd83f5d1551b2686303c49d352403aa75bcd57251cac7a3cb2e5b78b006ee2d2d';
 // Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
 const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
@@ -284,10 +283,10 @@ function normalizeBefore(name: string, list: string[]): string[] {
     out = [...out.slice(0, i + 2), type.desc.toUpperCase(), ...out.slice(i + 2)];
   }
   if (name.endsWith('-caméra')) {
-    // R6c : qualité (720p et 1080p sans module natif), images par seconde et micro après le timestamp.
+    // R6c : images par seconde et micro après le timestamp (le choix de qualité a été retiré : 1080p fixe).
     const k = out.indexOf('DATE & HEURE EN OVERLAY');
     const up = (key: string, o?: Record<string, string>) => i18n.t(key, o).toUpperCase();
-    out = [...out.slice(0, k + 1), up('timer.video.quality'), up('timer.video.qualityHint'), '720P', '1080P',
+    out = [...out.slice(0, k + 1),
       up('timer.video.fps'), up('timer.video.fpsValue', { fps: '25' }), up('timer.video.fpsValue', { fps: '30' }),
       up('timer.video.mic'), up('timer.video.micHint'), ...out.slice(k + 1)];
     // R6c (B) : « Bips dans la vidéo » après le micro.

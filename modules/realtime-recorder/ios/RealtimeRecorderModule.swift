@@ -41,10 +41,14 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
   /// `true` to compare two phones.
   static let orientationDebugLog = false
 
-  // Video options (R6c). Defaults = former fixed behaviour: 1080p, 30 fps, mic on.
-  var quality = VideoQuality.defaultQuality
+  // Video options (R6c). Defaults = former fixed behaviour: 30 fps, mic on.
+  // Capture and file are fixed at 1080p (the 2K / 4K choice and its dry run were
+  // removed after the 1.0.59 crashes).
   var fps: Int32 = 30
   var micEnabled = true
+
+  /// Error code sent to JS when the capture pipeline cannot be built or raises.
+  static let sessionErrorCode = "ERR_CAPTURE_SESSION"
 
   // Beeps in the video (R6c): PCM per type (44.1 kHz, -6 dBFS peak), placed on the
   // capture clock by markBeep, mixed into the mic buffers or into a synthetic track.
@@ -107,20 +111,22 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
   /// Builds a fresh coordinator for the active device + preview layer, wires the
   /// KVO that keeps the preview level while the user rotates the phone before
-  /// recording, and applies the initial angles. Main thread.
+  /// recording, and returns the initial angles (applied synchronously by
+  /// `buildAndStartSession`, before the session runs). Main thread.
   @available(iOS 17.0, *)
-  private func installRotationCoordinator(device: AVCaptureDevice, preview: AVCaptureVideoPreviewLayer) {
+  private func installRotationCoordinator(device: AVCaptureDevice, preview: AVCaptureVideoPreviewLayer) -> (preview: CGFloat, capture: CGFloat) {
     rotationObservation?.invalidate()
     let coordinator = AVCaptureDevice.RotationCoordinator(device: device, previewLayer: preview)
     rotationCoordinator = coordinator
     rotationObservation = coordinator.observe(\.videoRotationAngleForHorizonLevelPreview, options: [.new]) { [weak self] _, _ in
       self?.applyCoordinatorAngles(logReason: "rotation")
     }
-    applyCoordinatorAngles(logReason: "session start")
+    return (coordinator.videoRotationAngleForHorizonLevelPreview, coordinator.videoRotationAngleForHorizonLevelCapture)
   }
 
-  /// Preview → `videoRotationAngleForHorizonLevelPreview`, video output (writer)
-  /// → `videoRotationAngleForHorizonLevelCapture`. Frozen while recording.
+  /// Live rotation before recording (KVO): preview →
+  /// `videoRotationAngleForHorizonLevelPreview` on main, video output (writer) →
+  /// `videoRotationAngleForHorizonLevelCapture` on captureQueue. Frozen while recording.
   @available(iOS 17.0, *)
   private func applyCoordinatorAngles(logReason: String) {
     guard let coordinator = rotationCoordinator as? AVCaptureDevice.RotationCoordinator else { return }
@@ -135,21 +141,26 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
     captureQueue.async { [weak self] in
       guard let self = self, !self.isRecording else { return }
-      // The angle really applied is the one re-read from the connection after
-      // assignment (unsupported angles are silently not applied), and it is the
-      // one the writer geometry must follow.
-      var appliedAngle = captureAngle
-      if let conn = self.videoOutput?.connection(with: .video) {
-        if conn.isVideoRotationAngleSupported(captureAngle) {
-          conn.videoRotationAngle = captureAngle
-        }
-        appliedAngle = conn.videoRotationAngle
+      self.applyCaptureAngle(captureAngle, previewAngle: previewAngle, logReason: logReason)
+    }
+  }
+
+  /// Sets the video output angle and derives the writer geometry from the angle
+  /// really applied (unsupported angles are silently not applied, so it is
+  /// re-read from the connection after assignment). captureQueue.
+  @available(iOS 17.0, *)
+  private func applyCaptureAngle(_ captureAngle: CGFloat, previewAngle: CGFloat, logReason: String) {
+    var appliedAngle = captureAngle
+    if let conn = videoOutput?.connection(with: .video) {
+      if conn.isVideoRotationAngleSupported(captureAngle) {
+        conn.videoRotationAngle = captureAngle
       }
-      self.refreshOutputGeometry(appliedAngle: appliedAngle)
-      if RecorderEngine.orientationDebugLog {
-        let name = self.currentDevice?.localizedName ?? "?"
-        print("[RealtimeRecorder][orientation] \(logReason) device=\(name) facing=\(self.currentFacing == .front ? "front" : "back") previewAngle=\(previewAngle) captureAngle=\(captureAngle) appliedAngle=\(appliedAngle) isLandscape=\(self.isLandscape)")
-      }
+      appliedAngle = conn.videoRotationAngle
+    }
+    refreshOutputGeometry(appliedAngle: appliedAngle)
+    if RecorderEngine.orientationDebugLog {
+      let name = currentDevice?.localizedName ?? "?"
+      print("[RealtimeRecorder][orientation] \(logReason) device=\(name) facing=\(currentFacing == .front ? "front" : "back") previewAngle=\(previewAngle) captureAngle=\(captureAngle) appliedAngle=\(appliedAngle) isLandscape=\(isLandscape)")
     }
   }
 
@@ -185,66 +196,95 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
   // MARK: Setup
 
-  func setupSession() {
+  /// Rebuilds the capture session on `captureQueue`, which serializes every
+  /// setup, camera switch and recording start: nothing else touches a session
+  /// while it is being configured. `completion` runs on `captureQueue` once the
+  /// session is running with the preview attached, the rotation angles applied
+  /// and `isLandscape` computed for *this* session — or with the error.
+  ///
+  /// Never kills the app: AVFoundation raises Objective-C exceptions (1.0.59
+  /// crashed in `startRunning`, called while the preview layer was between
+  /// `beginConfiguration` and `commitConfiguration` on the main thread), and
+  /// Swift cannot catch them, so every session call goes through
+  /// `RTRCatchException` and a raised exception becomes an error for JS.
+  func setupSession(completion: ((Error?) -> Void)? = nil) {
     captureQueue.async { [weak self] in
       guard let self = self else { return }
+      let error = self.buildAndStartSession()
+      if let error = error { print("[RealtimeRecorder] Session setup failed: \(error.localizedDescription)") }
+      completion?(error)
+    }
+  }
 
-      DispatchQueue.main.sync {
-        let orientation = UIDevice.current.orientation
-        if orientation.isValidInterfaceOrientation {
-          self.currentDeviceOrientation = orientation
-        }
-        self.rotationObservation?.invalidate()
-        self.rotationObservation = nil
-        self.rotationCoordinator = nil
+  private func sessionError(_ message: String) -> NSError {
+    NSError(domain: "RealtimeRecorder", code: 3, userInfo: [NSLocalizedDescriptionKey: message])
+  }
+
+  private func sessionError(_ step: String, raised exception: NSException) -> NSError {
+    sessionError("\(step): \(exception.name.rawValue) — \(exception.reason ?? "no reason")")
+  }
+
+  /// captureQueue. Returns nil when the session runs.
+  private func buildAndStartSession() -> Error? {
+    DispatchQueue.main.sync {
+      let orientation = UIDevice.current.orientation
+      if orientation.isValidInterfaceOrientation {
+        self.currentDeviceOrientation = orientation
       }
+      self.rotationObservation?.invalidate()
+      self.rotationObservation = nil
+      self.rotationCoordinator = nil
+    }
 
-      if let existing = self.captureSession, existing.isRunning {
-        existing.stopRunning()
+    if let existing = captureSession {
+      captureSession = nil
+      videoOutput = nil
+      audioOutput = nil
+      if existing.isRunning, let raised = RTRCatchException({ existing.stopRunning() }) {
+        print("[RealtimeRecorder] stopRunning raised \(raised.name.rawValue): \(raised.reason ?? "")")
       }
+    }
 
-      // Configure audio session BEFORE capture session to ensure iOS locks the correct audio route
-      let audioSession = AVAudioSession.sharedInstance()
-      do {
-        if self.micEnabled {
-          try audioSession.setCategory(.playAndRecord, mode: .videoRecording, options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
-          try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-          try audioSession.overrideOutputAudioPort(.speaker)
-          print("[RealtimeRecorder] Audio session configured (videoRecording mode)")
-        } else {
-          // Mic off: playback only, no input route (no orange mic indicator).
-          try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-          try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-          print("[RealtimeRecorder] Audio session configured (playback only, mic off)")
-        }
-      } catch {
-        print("[RealtimeRecorder] Audio session config error: \(error)")
+    // Configure audio session BEFORE capture session to ensure iOS locks the correct audio route
+    let audioSession = AVAudioSession.sharedInstance()
+    do {
+      if micEnabled {
+        try audioSession.setCategory(.playAndRecord, mode: .videoRecording, options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
+        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        try audioSession.overrideOutputAudioPort(.speaker)
+        print("[RealtimeRecorder] Audio session configured (videoRecording mode)")
+      } else {
+        // Mic off: playback only, no input route (no orange mic indicator).
+        try audioSession.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+        try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
+        print("[RealtimeRecorder] Audio session configured (playback only, mic off)")
       }
+    } catch {
+      print("[RealtimeRecorder] Audio session config error: \(error)")
+    }
 
-      let session = AVCaptureSession()
-      // Keep our own audio session (with .mixWithOthers) — otherwise AVCaptureSession
-      // reconfigures it when the mic input is added and interrupts the user's music.
-      session.automaticallyConfiguresApplicationAudioSession = false
+    guard let camera = findCamera(position: currentFacing) else {
+      return sessionError("No camera for facing \(currentFacing == .front ? "front" : "back")")
+    }
+
+    let session = AVCaptureSession()
+    // Keep our own audio session (with .mixWithOthers) — otherwise AVCaptureSession
+    // reconfigures it when the mic input is added and interrupts the user's music.
+    session.automaticallyConfiguresApplicationAudioSession = false
+
+    let vOutput = AVCaptureVideoDataOutput()
+    var aOutput: AVCaptureAudioDataOutput?
+    var configError: Error?
+    if let raised = RTRCatchException({
       session.beginConfiguration()
       session.sessionPreset = .hd1920x1080
 
-      guard let camera = self.findCamera(position: self.currentFacing),
-            let videoInput = try? AVCaptureDeviceInput(device: camera),
-            session.canAddInput(videoInput) else {
-        print("[RealtimeRecorder] Cannot add video input")
+      guard let videoInput = try? AVCaptureDeviceInput(device: camera), session.canAddInput(videoInput) else {
         session.commitConfiguration()
+        configError = self.sessionError("Cannot add video input")
         return
       }
       session.addInput(videoInput)
-      self.currentDevice = camera
-
-      if self.quality != VideoQuality.defaultQuality {
-        // Step down until this camera accepts the preset (2K captures 4K).
-        var q: String? = self.quality
-        while let cur = q, !session.canSetSessionPreset(VideoQuality.preset(cur)) { q = VideoQuality.lower(cur) }
-        self.quality = q ?? VideoQuality.defaultQuality
-        session.sessionPreset = VideoQuality.preset(self.quality)
-      }
 
       if self.micEnabled,
          let mic = AVCaptureDevice.default(for: .audio),
@@ -253,7 +293,6 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         session.addInput(audioInput)
       }
 
-      let vOutput = AVCaptureVideoDataOutput()
       vOutput.videoSettings = [
         kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
       ]
@@ -267,7 +306,6 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         connection.isVideoMirrored = true
       }
 
-      var aOutput: AVCaptureAudioDataOutput?
       if self.micEnabled {
         let out = AVCaptureAudioDataOutput()
         out.setSampleBufferDelegate(self, queue: self.captureQueue)
@@ -284,31 +322,58 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
         camera.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: self.fps)
         camera.unlockForConfiguration()
       }
+    }) {
+      return sessionError("configure", raised: raised)
+    }
+    if let configError = configError { return configError }
 
-      self.captureSession = session
-      self.videoOutput = vOutput
-      self.audioOutput = aOutput
+    currentDevice = camera
+    captureSession = session
+    videoOutput = vOutput
+    audioOutput = aOutput
 
-      // Attach preview on main thread, then let iOS decide the angles.
-      DispatchQueue.main.async {
+    // Preview + rotation coordinator, synchronously on main: the preview layer's own
+    // beginConfiguration / commitConfiguration finishes before startRunning below.
+    var angles: (preview: CGFloat, capture: CGFloat)?
+    var previewError: Error?
+    DispatchQueue.main.sync {
+      if let raised = RTRCatchException({
         let preview = AVCaptureVideoPreviewLayer(session: session)
         preview.videoGravity = .resizeAspectFill
         self.hostView?.attachPreview(preview)
-
         if #available(iOS 17.0, *) {
-          self.installRotationCoordinator(device: camera, preview: preview)
-        } else {
-          self.captureQueue.async { self.applyLegacyOrientation() }
+          let a = self.installRotationCoordinator(device: camera, preview: preview)
+          if let conn = preview.connection, conn.isVideoRotationAngleSupported(a.preview) {
+            conn.videoRotationAngle = a.preview
+          }
+          angles = a
         }
-      }
-
-      session.startRunning()
-      print("[RealtimeRecorder] Session started, facing: \(self.currentFacing == .back ? "back" : "front")")
-
-      DispatchQueue.main.async {
-        self.hostView?.markReady()
+      }) {
+        previewError = self.sessionError("preview", raised: raised)
       }
     }
+    if let previewError = previewError {
+      captureSession = nil; videoOutput = nil; audioOutput = nil
+      return previewError
+    }
+
+    // Capture angle and writer geometry for this session, before it runs.
+    if #available(iOS 17.0, *), let a = angles {
+      applyCaptureAngle(a.capture, previewAngle: a.preview, logReason: "session start")
+    } else {
+      applyLegacyOrientation()
+    }
+
+    if let raised = RTRCatchException({ session.startRunning() }) {
+      captureSession = nil; videoOutput = nil; audioOutput = nil
+      return sessionError("startRunning", raised: raised)
+    }
+    print("[RealtimeRecorder] Session started, facing: \(currentFacing == .back ? "back" : "front"), landscape: \(isLandscape)")
+
+    DispatchQueue.main.async { [weak self] in
+      self?.hostView?.markReady()
+    }
+    return nil
   }
 
   // MARK: Recording
@@ -324,32 +389,28 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
 
     let writer = try AVAssetWriter(url: url, fileType: .mp4)
 
-    let size = VideoQuality.size(quality)
-    let vidW = isLandscape ? size.width : size.height
-    let vidH = isLandscape ? size.height : size.width
+    // `isLandscape` was computed for the session that is running now
+    // (`buildAndStartSession`), never carried over from a previous one.
+    let vidW = isLandscape ? 1920 : 1080
+    let vidH = isLandscape ? 1080 : 1920
 
-    var videoSettings: [String: Any] = [
+    let videoSettings: [String: Any] = [
       AVVideoCodecKey: AVVideoCodecType.h264,
       AVVideoWidthKey: vidW,
       AVVideoHeightKey: vidH,
       AVVideoCompressionPropertiesKey: [
-        AVVideoAverageBitRateKey: VideoQuality.bitrate(quality),
+        AVVideoAverageBitRateKey: 6_000_000,
         AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
       ]
     ]
-    // 2K: 4K camera buffers, scaled down to 2560 x 1440 by the writer.
-    let scaled = quality == "2k"
-    if scaled { videoSettings[AVVideoScalingModeKey] = AVVideoScalingModeResizeAspect }
     let vInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoSettings)
     vInput.expectsMediaDataInRealTime = true
 
-    var adaptorAttrs: [String: Any] = [
+    let adaptorAttrs: [String: Any] = [
       kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA,
+      kCVPixelBufferWidthKey as String: vidW,
+      kCVPixelBufferHeightKey as String: vidH,
     ]
-    if !scaled {
-      adaptorAttrs[kCVPixelBufferWidthKey as String] = vidW
-      adaptorAttrs[kCVPixelBufferHeightKey as String] = vidH
-    }
     let adaptor = AVAssetWriterInputPixelBufferAdaptor(
       assetWriterInput: vInput,
       sourcePixelBufferAttributes: adaptorAttrs
@@ -474,78 +535,13 @@ final class RecorderEngine: NSObject, AVCaptureVideoDataOutputSampleBufferDelega
     }
   }
 
-  // MARK: Quality (R6c)
+  // MARK: Recording stats (R6c)
 
   /// (frames expected from the first to the last appended frame, frames appended).
   func lastRecordingStats() -> (expected: Int, written: Int) {
     guard firstFrameTime.isValid, lastFrameTime.isValid else { return (0, writtenFrames) }
     let span = CMTimeGetSeconds(CMTimeSubtract(lastFrameTime, firstFrameTime))
     return (Int((span * Double(fps)).rounded(.down)) + 1, writtenFrames)
-  }
-
-  /// Qualities the camera at `position` records natively (2K = 4K scaled down).
-  func supportedQualities(position: AVCaptureDevice.Position) -> [String] {
-    guard let device = findCamera(position: position) else { return ["720p", "1080p"] }
-    let dims = device.formats
-      .filter { $0.videoSupportedFrameRateRanges.contains(where: { $0.maxFrameRate >= 30 }) }
-      .map { CMVideoFormatDescriptionGetDimensions($0.formatDescription) }
-    let has4k = dims.contains { $0.width == 3840 && $0.height == 2160 }
-    return VideoQuality.order.filter { VideoQuality.isAbove1080($0) ? has4k : true }
-  }
-
-  /// Settles the quality before recording: highest one the current camera
-  /// supports, 1080p when the phone is hot, and above 1080p a 1.5 s dry run
-  /// through the real pipeline (overlay included, mic off) that steps down
-  /// while fewer than 90 % of the frames reach the file.
-  func prepareQuality(completion: @escaping (_ applied: String, _ reason: String?) -> Void) {
-    let requested = quality
-    var q = VideoQuality.clamp(requested, supportedQualities(position: currentFacing))
-    var reason: String? = q != requested ? "camera" : nil
-    let thermal = ProcessInfo.processInfo.thermalState
-    if VideoQuality.isAbove1080(q), thermal == .serious || thermal == .critical {
-      q = VideoQuality.defaultQuality
-      reason = "thermal"
-    }
-    let mic = micEnabled
-    let beeps = beepsEnabled
-
-    func finish(_ applied: String) {
-      quality = applied
-      micEnabled = mic
-      beepsEnabled = beeps
-      if applied != requested || VideoQuality.isAbove1080(requested) { setupSession() }
-      print("[RealtimeRecorder] prepareQuality requested=\(requested) applied=\(applied) reason=\(reason ?? "-")")
-      completion(applied, reason)
-    }
-
-    func dryRun(_ candidate: String) {
-      guard VideoQuality.isAbove1080(candidate) else { finish(candidate); return }
-      quality = candidate
-      micEnabled = false
-      beepsEnabled = false
-      setupSession()
-      let url = FileManager.default.temporaryDirectory.appendingPathComponent("realtime_recorder_dry_run.mp4")
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-        do { try self.startRecording(url: url) } catch { finish(VideoQuality.defaultQuality); return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-          self.stopRecording { _ in
-            try? FileManager.default.removeItem(at: url)
-            let stats = self.lastRecordingStats()
-            print("[RealtimeRecorder] dry run \(candidate): \(stats.written)/\(stats.expected) frames")
-            // An unsupported preset was stepped down by setupSession: keep what it settled on.
-            let ran = self.quality
-            if VideoQuality.keepsUp(written: stats.written, expected: stats.expected) {
-              DispatchQueue.main.async { finish(ran) }
-            } else {
-              reason = "performance"
-              DispatchQueue.main.async { dryRun(VideoQuality.lower(ran) ?? VideoQuality.defaultQuality) }
-            }
-          }
-        }
-      }
-    }
-
-    dryRun(q)
   }
 
   // MARK: Beeps in the video (R6c)
@@ -757,30 +753,19 @@ public class RealtimeRecorderModule: Module {
         url = URL(fileURLWithPath: outputPath)
       }
 
-      // Always re-setup session so the rotation coordinator matches the device
-      self.engine.setupSession()
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      // The session is rebuilt for this recording (camera, mic, fps, rotation
+      // coordinator) and the writer is created in its completion, on the same
+      // queue, once the session runs with its geometry known: no timer.
+      self.engine.setupSession { error in
+        if let error = error {
+          promise.reject(RecorderEngine.sessionErrorCode, error.localizedDescription)
+          return
+        }
         do {
           try self.engine.startRecording(url: url)
           promise.resolve(nil)
         } catch {
           promise.reject("ERR", error.localizedDescription)
-        }
-      }
-    }
-
-    Function("getSupportedQualities") { () -> [String: [String]] in
-      ["front": self.engine.supportedQualities(position: .front),
-       "back": self.engine.supportedQualities(position: .back)]
-    }
-
-    AsyncFunction("prepareQuality") { (options: [String: Any], promise: Promise) in
-      if let facing = options["facing"] as? String { self.engine.currentFacing = facing == "front" ? .front : .back }
-      self.applyVideoOptions(options)
-      let requested = self.engine.quality
-      DispatchQueue.main.async {
-        self.engine.prepareQuality { applied, reason in
-          promise.resolve(["requested": requested, "applied": applied, "reason": reason.map { $0 as Any } ?? NSNull()])
         }
       }
     }
@@ -831,10 +816,8 @@ public class RealtimeRecorderModule: Module {
     }
   }
 
-  /// quality / fps / mic from JS; missing keys keep the defaults (1080p, 30 fps, mic on).
+  /// fps / mic from JS; missing keys keep the defaults (30 fps, mic on).
   private func applyVideoOptions(_ options: [String: Any]) {
-    let q = options["quality"] as? String ?? VideoQuality.defaultQuality
-    engine.quality = VideoQuality.order.contains(q) ? q : VideoQuality.defaultQuality
     engine.fps = (options["fps"] as? Int) == 25 ? 25 : 30
     engine.micEnabled = options["mic"] as? Bool ?? true
   }
@@ -844,59 +827,6 @@ public class RealtimeRecorderModule: Module {
     let files = options["beepFiles"] as? [String: String] ?? [:]
     engine.beepsEnabled = (options["beeps"] as? Bool ?? false) && !files.isEmpty
     engine.loadBeeps(files: engine.beepsEnabled ? files : [:])
-  }
-}
-
-// MARK: - Video quality rules (R6c)
-
-enum VideoQuality {
-  static let order = ["720p", "1080p", "2k", "4k"]
-  static let defaultQuality = "1080p"
-
-  /// Landscape output size.
-  static func size(_ q: String) -> (width: Int, height: Int) {
-    switch q {
-    case "720p": return (1280, 720)
-    case "2k": return (2560, 1440)
-    case "4k": return (3840, 2160)
-    default: return (1920, 1080)
-    }
-  }
-
-  /// 1080p keeps the former 6 Mb/s.
-  static func bitrate(_ q: String) -> Int {
-    switch q {
-    case "720p": return 4_000_000
-    case "2k": return 10_000_000
-    case "4k": return 20_000_000
-    default: return 6_000_000
-    }
-  }
-
-  /// 2K has no native preset on iPhone: it captures 4K.
-  static func preset(_ q: String) -> AVCaptureSession.Preset {
-    switch q {
-    case "720p": return .hd1280x720
-    case "2k", "4k": return .hd4K3840x2160
-    default: return .hd1920x1080
-    }
-  }
-
-  static func isAbove1080(_ q: String) -> Bool { q == "2k" || q == "4k" }
-
-  static func lower(_ q: String) -> String? {
-    guard let i = order.firstIndex(of: q), i > 0 else { return nil }
-    return order[i - 1]
-  }
-
-  static func clamp(_ requested: String, _ supported: [String]) -> String {
-    var q: String? = order.contains(requested) ? requested : defaultQuality
-    while let cur = q, !supported.contains(cur) { q = lower(cur) }
-    return q ?? defaultQuality
-  }
-
-  static func keepsUp(written: Int, expected: Int) -> Bool {
-    expected > 0 && written * 10 >= expected * 9
   }
 }
 
