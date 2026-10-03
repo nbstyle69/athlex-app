@@ -208,8 +208,9 @@ Supabase/Resend.
 
 ## En cours
 
-**Notifications du gérant (D4b), PR 1 : base et fonction** (migration `20270142`, **appliquée en prod : non** ;
-fonction `send-box-notification` **non déployée** ; maquettes validées par Nab, page « 🧪 Spec · Notifications du
+**Notifications du gérant (D4b), PR 1 : base et fonction** (migration `20270142`, **appliquée en prod le 03/10/2026 à
+16:17 UTC** ; dump `db-dumps/2026-10-03/athlex-prod-public-internal-20261003T160601Z.dump` ; audit 38/38 ; fonction
+`send-box-notification` **déployée le 03/10/2026 à 16:19 UTC** ; maquettes validées par Nab, page « 🧪 Spec · Notifications du
 gérant », node 475:753 ; PR 2a apparence et PR 2b comportement à suivre).
 - `box_notifications.delivered_count integer NULL` : appareils acceptés par Expo pour cette notification (0 compris),
   NULL pour les lignes antérieures ou pas encore envoyées. Garde `internal.garder_resultat_notification()` : un client
@@ -227,8 +228,8 @@ gérant », node 475:753 ; PR 2a apparence et PR 2b comportement à suivre).
 - Précontrôle du 03/10/2026 (lecture seule) : fonction déployée identique à `d9b3382` (copie de retour arrière dans
   `C:\Users\NBS\athlex-retour-arriere-send-box-notification\avant-d4b-pr1`) ; 3 lignes dans la table ; en prod,
   3 gérants sur 4 n'ont pas de ligne `box_members`, d'où le passage par `boxes.owner_id`.
-- Ordre d'application : migration, puis fonction. **Ne pas merger avant l'application en prod** : l'audit nocturne
-  rejouerait T13 sur une base qui n'a pas encore la garde.
+- Appliquée dans l'ordre migration, puis fonction ; test réel en transaction annulée sur AthleX Fitness (co-gérant
+  fictif accepté, résultat refusé au client, coach refusé, réservation conditionnelle par la clé serveur), sans trace.
 
 **Caméra : démarrage sérialisé, exception rattrapée, 1080p fixe (module natif iOS + app, aucune migration, module Android
 intact).** Enquête sur les deux plantages du build 1.0.59 (iPhone 16 Pro, iOS 26.6.1, réglage 2K) et sur le paysage

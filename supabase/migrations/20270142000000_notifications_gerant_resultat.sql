@@ -1,7 +1,26 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Notifications du gérant (D4b, PR 1) : résultat de l'envoi et co-gérants
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 03/10/2026 à 16:17 UTC, avec PGCLIENTENCODING=UTF8,
+-- sur GO de Nab. Dump des schémas public et internal avec droits
+-- db-dumps/2026-10-03/athlex-prod-public-internal-20261003T160601Z.dump,
+-- sha256 0021d536f25a28d87dd05475adfac268c04dafb11ab6cbe1b6ff9b4ae9bf7531 vérifié
+-- après aller-retour, 135 TABLE DATA, 450 ACL, 346 POLICY ; précontrôles : md5
+-- des trois règles (f1c07d7a…, 18a7a39e…, 4df9fd82…), is_box_owner aa018646…,
+-- is_box_owner_admin e61752a6…, ni colonne, ni déclencheur, ni garde ; 3 lignes,
+-- empreinte du contenu 59bcdd522dc6ba021d861808d1bdcd5b ; fonction déployée
+-- identique à la copie avant-d4b-pr1 ; vérifications : colonne integer NULL,
+-- déclencheur O / tgtype 23 / sans colonnes, seul sur la table, garde
+-- SECURITY INVOKER au md5 51b20f187c6ae258914332a2fd349939 (sans CR), EXECUTE
+-- fermé à anon et authenticated, box_notifs_owner = is_box_owner_admin(box_id)
+-- (md5 88f31044…), deux règles de lecture inchangées, 3 lignes à la même
+-- empreinte, delivered_count NULL partout ; test réel en transaction annulée sur
+-- AthleX Fitness (co-gérant fictif accepté, delivered_count = 1 refusé 42501,
+-- coach fictif refusé par la RLS, clé serveur : réservation conditionnelle puis
+-- seconde réservation refusée puis résultat posé, co-gérant qui réécrit refusé),
+-- sans trace ; audit des droits en prod 38/38 (T13 compris). Fonction
+-- send-box-notification déployée le même jour à 16:19 UTC (source identique à
+-- la branche, sondes 401 sans JWT, journaux sans erreur).
 --
 -- Trois changements sur `public.box_notifications` :
 --
