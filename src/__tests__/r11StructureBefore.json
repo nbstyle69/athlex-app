@@ -47,16 +47,21 @@
     "mot-de-passe-oublie": [
       "Retour",
       "Mot de passe oublié",
-      "Saisis ton email et on t'envoie un lien pour réinitialiser ton mot de passe.",
+      "Saisis ton email : on t'envoie un code à 6 chiffres pour choisir un nouveau mot de passe.",
       "Email",
-      "ENVOYER LE LIEN"
+      "RECEVOIR UN CODE"
     ],
-    "email-envoye": [
+    "nouveau-mot-de-passe": [
       "Retour",
-      "Email envoyé !",
-      "Un lien de réinitialisation a été envoyé à\nnab@example.test",
-      "Vérifie ta boîte mail (et tes spams). Clique sur le lien pour choisir un nouveau mot de passe.",
-      "RETOUR À LA CONNEXION"
+      "NOUVEAU MOT DE PASSE",
+      "Si un compte existe pour cette adresse, un code à 6 chiffres vient d'y être envoyé :",
+      "nab@example.test",
+      "Code reçu par email",
+      "Nouveau mot de passe",
+      "Confirmer le mot de passe",
+      "6 caractères minimum.",
+      "CHANGER LE MOT DE PASSE",
+      "Renvoyer le code dans 60 s"
     ],
     "rejoindre-une-box": [
       "🏋️",
