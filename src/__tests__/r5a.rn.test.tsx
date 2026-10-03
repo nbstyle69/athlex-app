@@ -242,8 +242,10 @@ describe('R5a : capture', () => {
  * R6c (A) : options vidéo (qualité vérifiée, fps, micro, saccades), couvertes par r6cOptionsVideo.rn.test.tsx.
  * R6c (B) : jeu de bips chargé selon le réglage, markBeep dans playBeep, bips passés au module (r6cBips.rn.test.tsx).
  * Bips sans doublon : mélange décidé par mixBeepInVideo dans playBeep, calage de latence retiré (r6cBips.rn.test.tsx).
+ * Retours 1.0.60 (D1) : mode audio reposé à chaque lancement sans caméra, attendu avant le premier bip
+ * (appliquerModeAudio, retours1060Audio.rn.test.tsx).
  */
-const LOGIC_SHA = 'd83f5d1551b2686303c49d352403aa75bcd57251cac7a3cb2e5b78b006ee2d2d';
+const LOGIC_SHA = '2649bc052b9a806f0b209683a0dad3dd7cb0891ed0066695b415ccf91486b7d8';
 // Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
 const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
@@ -269,6 +271,11 @@ const TYPES = [
 ];
 function normalizeBefore(name: string, list: string[]): string[] {
   let out = list.filter((t) => !GLYPHS.has(t)).map((t) => t.replace(EMOJI_PREFIX, '').toUpperCase());
+  if (name === 'temps-final') {
+    // Retours 1.0.60 (D2) : Recommencer devient une action ronde avec son libellé court sous l'icône, à côté de Fermer.
+    const f = out.indexOf('FERMER');
+    out = [...out.slice(0, f), 'RECOMMENCER', ...out.slice(f)];
+  }
   if (name === 'design-du-minuteur') {
     // R5b : thèmes AthleX en tête, noms traduits, réglage « Suivre le thème de l'app ».
     const a = out.indexOf('DESIGN DU MINUTEUR');
@@ -521,10 +528,10 @@ describe('R5a : temps final sans vidéo', () => {
     expect(r.findAll((n) => n.props.testID === 'timer-final-time')).toHaveLength(0);
     expect(r.findAll((n) => n.props.testID === 'timer-start-stop').length).toBeGreaterThan(0);
   });
-  it('Fermer : AxButton contour, retour inchangé', async () => {
+  it('Fermer : action ronde couleur arrêt (retours 1.0.60, D2), retour inchangé', async () => {
     const r = await final();
-    const close = r.findAllByType(AxButton).find((b) => b.props.testID === 'timer-close')!;
-    expect(close.props.variant).toBe('outline');
+    const close = r.findAll((n) => n.props.testID === 'timer-close')[0];
+    expect(close.props.tone).toBe('stop');
     await pressID(r, 'timer-close');
     expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
   });

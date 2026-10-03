@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, ScrollView, Modal,
-  Linking, Alert, useWindowDimensions, Image, Platform, Vibration, AppState, Animated,
+  Linking, Alert, useWindowDimensions, Image, Platform, Vibration, AppState, Animated, Pressable,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,7 +31,7 @@ import { blockDurationSec } from '../../utils/wodToTimer';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { appTimerThemeId, ensureContrast, inkOn, inkOnSecondary, TIMER_THEMES } from '../../theme/timerInk';
-import { AxButton, AxCard, AxChip, AxIconButton, AxSwitch, AxTag, withAlpha } from '../../components/ax';
+import { AxButton, AxCard, AxChip, AxGlass, AxIconButton, AxSwitch, AxTag, withAlpha } from '../../components/ax';
 import { axColors, axFonts, axRadius, axSpacing, axTypography, axVeil } from '../../theme/axTokens';
 import { CD_TENSE_FROM, countdownOverlay } from '../../lib/timerCountdownOverlay';
 import { incrementCounter } from '../../services/gamification';
@@ -189,6 +189,42 @@ const CAM_SHADOW = 'rgba(0,0,0,0.6)';
 export const CAM_REC_GAP = 40;
 /** Logo du temps final sans vidéo : même taille que sur Connexion. */
 const FINAL_LOGO_SIZE = 120;
+/** Temps final : taille plancher du grand chiffre (px) quand la hauteur manque (iPhone SE en paysage). */
+export const FINAL_DIGITS_MIN = 44;
+/** Diamètre des deux actions rondes du temps final (Recommencer, Fermer). */
+export const FINAL_ACTION_SIZE = 56;
+
+/**
+ * Action ronde du temps final : cercle en verre de 56 px, icône seule, libellé
+ * court dessous en portrait. Sur le fond du chrono (couleur choisie), le verre et
+ * le filet suivent l'encre du fond comme les boutons contour ; « stop » prend la
+ * couleur arrêt / danger, contrastée sur ce fond. Sur l'image de la caméra : voile.
+ */
+function ActionRonde({ icon: Icon, label, showLabel, tone, ink, danger, veil, onPress, testID }: {
+  icon: typeof X; label: string; showLabel: boolean; tone: 'neutral' | 'stop';
+  ink: string; danger: string; veil: boolean; onPress: () => void; testID: string;
+}) {
+  const stop = tone === 'stop';
+  const fg = veil ? axVeil.ink : stop ? danger : ink;
+  return (
+    <Pressable testID={testID} onPress={onPress} accessibilityRole="button" accessibilityLabel={label}
+      style={{ alignItems: 'center', gap: 4, minWidth: 44, minHeight: 44 }}>
+      <View testID={`${testID}-cercle`} style={{
+        width: FINAL_ACTION_SIZE, height: FINAL_ACTION_SIZE, borderRadius: FINAL_ACTION_SIZE / 2, overflow: 'hidden',
+        alignItems: 'center', justifyContent: 'center', borderWidth: 1,
+        borderColor: veil ? (stop ? axVeil.stop : axVeil.border) : fg,
+        backgroundColor: veil ? (stop ? axVeil.stop : axVeil.background) : undefined,
+      }}>
+        {!veil && <AxGlass color={fg} opacity={stop ? 0.12 : 0.08} radius={FINAL_ACTION_SIZE / 2} />}
+        <Icon color={fg} size={24} strokeWidth={2} />
+      </View>
+      {showLabel && (
+        <Text testID={`${testID}-libelle`} numberOfLines={1}
+          style={[axTypography.caption, { color: veil ? axVeil.ink : ink }]}>{label}</Text>
+      )}
+    </Pressable>
+  );
+}
 /** Caméra en portrait : écart entre les éléments du bas, et entre « Arrêter le chrono » et la date. */
 const CAM_STACK_GAP = 10;
 export const CAM_INFO_GAP = 16;
@@ -758,35 +794,7 @@ export default function TimerRunScreen() {
       if (seqBlocksRef.current.length > 0) initSeqBlockByIdx(0);
     }
     async function setup() {
-      try {
-        if (withCamera) {
-          // Avec caméra : on enregistre le micro TOUT en laissant la musique de
-          // l'utilisateur (Spotify, etc.) continuer. iOS mixe (la catégorie native
-          // .playAndRecord ajoute .mixWithOthers) ; Android ducke brièvement sur nos bips.
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: true,
-            playsInSilentModeIOS: true,
-            staysActiveInBackground: false,
-            interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-            interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-            shouldDuckAndroid: true,
-            playThroughEarpieceAndroid: false,
-          });
-        } else {
-          // Sans caméra : MIXER avec la musique de l'utilisateur (Spotify, etc.) au
-          // lieu de la couper. allowsRecordingIOS:false sinon iOS force la catégorie
-          // d'enregistrement qui interrompt la musique. Android ducke brièvement.
-          await Audio.setAudioModeAsync({
-            allowsRecordingIOS: false,
-            playsInSilentModeIOS: true,
-            staysActiveInBackground: true,
-            interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
-            interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
-            shouldDuckAndroid: true,
-            playThroughEarpieceAndroid: false,
-          });
-        }
-      } catch (e) { captureError(e, { screen: 'TimerRun', action: 'setAudioMode' }); }
+      await appliquerModeAudio();
       if (withCamera) {
         if (!camPermission?.granted) requestCamPermission();
         if (!mediaPermission?.granted) requestMediaPermission();
@@ -794,6 +802,43 @@ export default function TimerRunScreen() {
     }
     setup();
   }, []);
+
+  // Session audio du minuteur (bips). Posée à l'ouverture de l'écran, puis de
+  // nouveau à chaque lancement sans caméra (handleStart) : iOS peut l'avoir
+  // changée entre-temps (passage par la caméra, interruption, autre app), et
+  // sans caméra rien d'autre ne la repose avant le premier bip (retour D1 du
+  // build 1.0.60). Avec caméra, handleStartRecording la repose déjà.
+  async function appliquerModeAudio() {
+    try {
+      if (withCamera) {
+        // Avec caméra : on enregistre le micro TOUT en laissant la musique de
+        // l'utilisateur (Spotify, etc.) continuer. iOS mixe (la catégorie native
+        // .playAndRecord ajoute .mixWithOthers) ; Android ducke brièvement sur nos bips.
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
+          interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      } else {
+        // Sans caméra : MIXER avec la musique de l'utilisateur (Spotify, etc.) au
+        // lieu de la couper. allowsRecordingIOS:false sinon iOS force la catégorie
+        // d'enregistrement qui interrompt la musique. Android ducke brièvement.
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: false,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          interruptionModeIOS: InterruptionModeIOS.MixWithOthers,
+          interruptionModeAndroid: InterruptionModeAndroid.DuckOthers,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      }
+    } catch (e) { captureError(e, { screen: 'TimerRun', action: 'setAudioMode' }); }
+  }
 
   // Jeu de bips (R6c) : WAV écrits en cache puis chargés, rechargés quand le jeu change.
   // Les mêmes fichiers partent au module natif pour le mélange dans la vidéo.
@@ -1399,7 +1444,9 @@ export default function TimerRunScreen() {
   // ─── LIBRE FOR-TIME: manually end unlimited block ─────────────────────────
   function libreEndForTimeBlock() { seqBlockDone(); }
 
-  function handleStart() {
+  async function handleStart() {
+    // Avant le premier bip, à chaque lancement (voir appliquerModeAudio).
+    if (!withCamera) await appliquerModeAudio();
     if (countdown > 0) {
       recordingCdRef.current = countdown;
       setCountdownVal(countdown);
@@ -1802,121 +1849,172 @@ export default function TimerRunScreen() {
     </View>
   );
 
+  // ── TEMPS FINAL ─────────────────────────────────────────────────────────────
+  // Décision de Nab (retour D2 du build 1.0.60) : l'écran NE DÉFILE PAS. Tout tient
+  // dans la zone sûre (haut, bas, côtés), en portrait et en paysage, avec ou sans
+  // caméra, jusqu'à l'iPhone SE (375 × 667). Le grand chiffre prend la place
+  // restante et se réduit jusqu'à FINAL_DIGITS_MIN ; Recommencer et Fermer sont deux
+  // actions rondes en bas (portrait) ou empilées à droite (paysage).
+  const [boiteChiffres, setBoiteChiffres] = useState<{ w: number; h: number } | null>(null);
+  const renderFinal = () => {
+    const compact = isLandscape || winH < 760;
+    const bas = insets.bottom + (isLandscape ? 8 : 12);
+    const cotes = { paddingLeft: insets.left + (isLandscape ? 16 : 24), paddingRight: insets.right + (isLandscape ? 16 : 24) };
+    const logoNu = isLandscape ? 56 : compact ? 72 : FINAL_LOGO_SIZE;
+    const logoCam = isLandscape ? 52 : compact ? 64 : 88;
+    const qr = compact ? 56 : 70;
+    // Grand chiffre : la hauteur et la largeur de sa boîte, jamais sous le plancher.
+    const base = isLandscape ? winH * 0.4 : SW * 0.25;
+    const tailleChiffres = boiteChiffres
+      ? Math.max(FINAL_DIGITS_MIN, Math.min(base, boiteChiffres.h / 1.2, boiteChiffres.w / 2.6))
+      : base;
+    const danger = withCamera ? axVeil.stop : ensureContrast(theme.ax.danger, currentBg);
+    const ink = withCamera ? axVeil.ink : onBg1;
+
+    const tete = (
+      <View style={{ alignItems: 'center', gap: compact ? 6 : 10 }}>
+        {withCamera ? (
+          <View testID="timer-final-logo-cam" style={{ width: logoCam, height: logoCam, borderRadius: logoCam / 2, backgroundColor: '#FFFFFF',
+            justifyContent: 'center', alignItems: 'center',
+            shadowColor: '#ffffff', shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 0 } }}>
+            <Image source={require('../../../assets/athex-logo.png')}
+              style={{ width: logoCam * 0.7, height: logoCam * 0.7, resizeMode: 'contain' }} />
+          </View>
+        ) : (
+          <Image testID="timer-final-logo" accessibilityLabel="AthleX"
+            source={require('../../../assets/athex-logo.png')}
+            style={{ width: logoNu, height: logoNu, resizeMode: 'contain' }} />
+        )}
+        {/* Badge du format centré. AxTag porte alignSelf: 'flex-start', qui l'emporte sur
+            l'alignItems d'un parent : l'enveloppe épouse donc sa taille et se centre elle-même. */}
+        <View testID="timer-final-tag-wrap" style={{ alignSelf: 'center' }}>
+          {withCamera
+            ? <AxTag testID="timer-final-tag" label={displayLabel} veil />
+            : <AxTag testID="timer-final-tag" label={displayLabel} color={onBg1} />}
+        </View>
+      </View>
+    );
+
+    const temps = (
+      <View style={{ alignItems: 'center', gap: 2, flexShrink: 1, flexGrow: 1, minHeight: 0, alignSelf: 'stretch', justifyContent: 'center' }}>
+        <Text testID="timer-final-label" style={[axTypography.overline, { color: withCamera ? axVeil.ink : onBg2 }]}>TEMPS FINAL</Text>
+        <View testID="timer-final-digits-box"
+          style={{ flexGrow: 1, flexShrink: 1, minHeight: FINAL_DIGITS_MIN * 1.2, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' }}
+          onLayout={(e) => {
+            const { width: w, height: h } = e.nativeEvent.layout;
+            setBoiteChiffres(prev => (prev && Math.abs(prev.w - w) < 1 && Math.abs(prev.h - h) < 1 ? prev : { w, h }));
+          }}>
+          <Text testID="timer-final-time" adjustsFontSizeToFit numberOfLines={1} minimumFontScale={0.5}
+            style={[styles.sessionTime, styles.finalDigits, { color: withCamera ? axVeil.ink : onBg1,
+              fontSize: tailleChiffres, lineHeight: Math.round(tailleChiffres * 1.15), marginVertical: 0, includeFontPadding: false }]}>{mainTime}</Text>
+        </View>
+        {videoTitle ? <Text style={[styles.sessionTitle, axTypography.label, { color: withCamera ? axVeil.ink : onBg1 }]} numberOfLines={isLandscape ? 1 : 2}>{videoTitle}</Text> : null}
+        {splitLog.length > 0 && (
+          // Liste des temps intermédiaires (Splits) : la seule partie qui défilait déjà, conservée.
+          <ScrollView style={{ maxHeight: compact ? 90 : 150, marginTop: 6, alignSelf: 'stretch', flexShrink: 1 }} contentContainerStyle={{ alignItems: 'center' }}>
+            {splitLog.map((sp, i) => (
+              <Text key={i} testID={`timer-split-${i}`} style={{ color: onBg2, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'], textAlign: 'center' }}>
+                {sp.label} — exercice {formatTime(sp.duration)} · total {formatTime(sp.at)}
+              </Text>
+            ))}
+          </ScrollView>
+        )}
+        {withCamera && <Text testID="timer-final-date" style={[axTypography.caption, styles.sessionDate]}>{clockStr}</Text>}
+      </View>
+    );
+
+    const qrCode = withCamera ? (
+      <View style={[styles.sessionQRWrap, { marginTop: 4, padding: compact ? 6 : 10, gap: 4, alignSelf: 'center' }]}>
+        <QRCode value={qrData} size={qr} color="#111111" backgroundColor="#FFFFFF" />
+        <Text style={[axTypography.caption, styles.sessionQRHint]}>Scanner pour les détails</Text>
+      </View>
+    ) : null;
+
+    const actionsVideo = withCamera ? (
+      <View style={{ alignSelf: 'stretch', gap: compact ? 6 : 8, alignItems: 'center' }}>
+        {(saving || savedUri) && (
+          <View style={styles.savedBanner}>
+            {saving
+              ? <><ActivityIndicator color={axVeil.ink} size="small" /><Text style={[axTypography.label, { color: axVeil.ink }]}>Sauvegarde vidéo…</Text></>
+              : <><Check testID="timer-video-saved-icon" color={theme.ax.accent} size={18} strokeWidth={3} /><Text testID="timer-video-saved" style={[axTypography.label, { color: axVeil.ink }]}>{t('timer.camera.videoSaved')}</Text></>}
+          </View>
+        )}
+        {jerky && !saving && (
+          <View style={styles.savedBanner}>
+            <Text testID="timer-video-jerky" style={[axTypography.caption, { color: axVeil.ink, flexShrink: 1 }]}>{t('timer.video.jerky')}</Text>
+          </View>
+        )}
+        {sessionMeta && (
+          <AxButton testID="timer-play-video" veil variant="outline" fullWidth icon={Play} label="Lire la vidéo"
+            onPress={() => navigation.navigate('VideoPlayback', {
+              videoURL: sessionMeta.videoURL,
+              title: sessionMeta.title || undefined,
+              recordedAt: sessionMeta.recordedAt,
+              timerStartOffset: sessionMeta.timerStartOffset,
+              timerStopOffset: sessionMeta.timerStopOffset,
+              countdownDuration: sessionMeta.countdownDuration,
+              overlaysBurned: sessionMeta.overlaysBurned ?? false,
+            })} />
+        )}
+        <AxButton testID="timer-save-card" veil variant="outline" fullWidth loading={savingCard}
+          icon={cardSaved ? Check : Download}
+          label={cardSaved ? t('timer.camera.cardSaved') : t('timer.camera.saveCard')}
+          onPress={saveCard} />
+        <AxButton testID="timer-yt-share" veil variant="accent" fullWidth icon={Youtube}
+          label={t('timer.youtube.share')} onPress={() => setShowYT(true)} />
+      </View>
+    ) : null;
+
+    const actions = (
+      <View testID="timer-final-actions"
+        style={{ flexDirection: isLandscape ? 'column' : 'row', justifyContent: 'center', alignItems: 'center', gap: isLandscape ? 16 : 40 }}>
+        <ActionRonde testID="timer-reset" icon={RotateCcw} label="Recommencer" showLabel={!isLandscape} tone="neutral"
+          ink={ink} danger={danger} veil={withCamera} onPress={handleReset} />
+        <ActionRonde testID="timer-close" icon={X} label="Fermer" showLabel={!isLandscape} tone="stop"
+          ink={ink} danger={danger} veil={withCamera} onPress={handleClose} />
+      </View>
+    );
+
+    return (
+      <View testID="timer-final" style={{ flex: 1 }}>
+        <ViewShot ref={cardRef} options={{ format: 'png', quality: 1 }} style={{ flex: 1 }}>
+          {!withCamera && renderCtrlRow('timer-final-controls')}
+          {isLandscape ? (
+            <View testID="timer-final-row" style={[{ flex: 1, flexDirection: 'row', alignItems: 'stretch', gap: 16, paddingBottom: bas }, cotes]}>
+              <View testID="timer-final-info" style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 4, minWidth: 0 }}>
+                {tete}
+                {temps}
+              </View>
+              {withCamera && (
+                <View testID="timer-final-media" style={{ width: Math.min(240, winW * 0.34), justifyContent: 'center', gap: 6 }}>
+                  {qrCode}
+                  {actionsVideo}
+                </View>
+              )}
+              <View style={{ justifyContent: 'center' }}>{actions}</View>
+            </View>
+          ) : (
+            <View testID="timer-final-column"
+              style={[{ flex: 1, alignItems: 'center', justifyContent: 'space-between', gap: compact ? 6 : 10, paddingBottom: bas }, cotes]}>
+              {tete}
+              {temps}
+              {qrCode}
+              {actionsVideo}
+              {actions}
+            </View>
+          )}
+        </ViewShot>
+      </View>
+    );
+  };
+
   const renderContent = () => (
-    <View testID="timer-overlay" style={[styles.overlay, withCamera && isLandscape && { paddingVertical: 20 }, withCamera && !isLandscape && { paddingTop: camTopPad }, withCamera && !isLandscape && phase === 'done' && { paddingBottom: 8 }, !withCamera && { paddingVertical: 0 }]}>
+    <View testID="timer-overlay" style={[styles.overlay, withCamera && isLandscape && { paddingVertical: 20 }, withCamera && !isLandscape && { paddingTop: camTopPad }, !withCamera && { paddingVertical: 0 },
+      // Temps final : aucune marge fixe, renderFinal pose celles de la zone sûre.
+      phase === 'done' && { paddingTop: withCamera ? insets.top + 8 : 0, paddingBottom: 0 }]}>
       {withCamera && renderTopBar(0)}
 
-      {phase === 'done' ? (
-        /* ── RÉSULTAT PLEIN ÉCRAN ──────────────────────────────── */
-        <View style={{ flex: 1 }}>
-          <ViewShot ref={cardRef} options={{ format: 'png', quality: 1 }} style={{ flex: 1 }}>
-            {!withCamera && renderCtrlRow('timer-final-controls')}
-            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 28, paddingBottom: 16, paddingTop: 0 }}>
-
-              {/* ── TOP : logo + badge ── */}
-              <View style={{ alignItems: 'center', gap: 10, paddingTop: 2 }}>
-                {withCamera ? (
-                  <View style={{ width: 88, height: 88, borderRadius: 44, backgroundColor: '#FFFFFF',
-                    justifyContent: 'center', alignItems: 'center',
-                    shadowColor: '#ffffff', shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 0 } }}>
-                    <Image
-                      source={require('../../../assets/athex-logo.png')}
-                      style={{ width: 62, height: 62, resizeMode: 'contain' }}
-                    />
-                  </View>
-                ) : (
-                  <Image testID="timer-final-logo" accessibilityLabel="AthleX"
-                    source={require('../../../assets/athex-logo.png')}
-                    style={{ width: FINAL_LOGO_SIZE, height: FINAL_LOGO_SIZE, resizeMode: 'contain' }}
-                  />
-                )}
-                {withCamera ? (
-                  <AxTag testID="timer-final-tag" label={displayLabel} veil />
-                ) : (
-                  <AxTag testID="timer-final-tag" label={displayLabel} color={onBg1} />
-                )}
-              </View>
-
-              {/* ── CENTRE : temps final ── */}
-              <View style={{ alignItems: 'center', gap: 4 }}>
-                <Text style={[axTypography.overline, { color: withCamera ? axVeil.ink : onBg2 }]}>TEMPS FINAL</Text>
-                <Text testID="timer-final-time" adjustsFontSizeToFit numberOfLines={1}
-                  style={[styles.sessionTime, styles.finalDigits, { color: withCamera ? axVeil.ink : onBg1 }]}>{mainTime}</Text>
-                {videoTitle ? <Text style={[styles.sessionTitle, axTypography.label, { color: withCamera ? axVeil.ink : onBg1 }]} numberOfLines={2}>{videoTitle}</Text> : null}
-                {splitLog.length > 0 && (
-                  <ScrollView style={{ maxHeight: 150, marginTop: 6, alignSelf: 'stretch' }} contentContainerStyle={{ alignItems: 'center' }}>
-                    {splitLog.map((sp, i) => (
-                      <Text key={i} testID={`timer-split-${i}`} style={{ color: onBg2, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'], textAlign: 'center' }}>
-                        {sp.label} — exercice {formatTime(sp.duration)} · total {formatTime(sp.at)}
-                      </Text>
-                    ))}
-                  </ScrollView>
-                )}
-                {withCamera && <Text testID="timer-final-date" style={[axTypography.caption, styles.sessionDate]}>{clockStr}</Text>}
-                {withCamera && (
-                  <View style={[styles.sessionQRWrap, { marginTop: 6, padding: 10 }]}>
-                    <QRCode value={qrData} size={70} color="#111111" backgroundColor="#FFFFFF" />
-                    <Text style={[axTypography.caption, styles.sessionQRHint]}>Scanner pour les détails</Text>
-                  </View>
-                )}
-                {/* Bouton recommencer centré sous le timer */}
-                <TouchableOpacity testID="timer-reset" onPress={handleReset} style={[styles.resetBtn, { marginTop: 8,
-                  backgroundColor: withCamera ? axVeil.background : isLightBg ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.12)',
-                  borderColor: withCamera ? axVeil.border : onBg1 }]} activeOpacity={0.8}
-                  accessibilityRole="button" accessibilityLabel="Recommencer">
-                  <RotateCcw color={withCamera ? axVeil.ink : onBg1} size={26} />
-                </TouchableOpacity>
-              </View>
-
-              {/* ── BAS : actions ── */}
-              <View style={{ width: '100%', gap: 8, alignItems: 'center' }}>
-                {withCamera && (
-                  <View style={styles.savedBanner}>
-                    {saving
-                      ? <><ActivityIndicator color={axVeil.ink} size="small" /><Text style={[axTypography.label, { color: axVeil.ink }]}>Sauvegarde vidéo…</Text></>
-                      : savedUri
-                        ? <><Check testID="timer-video-saved-icon" color={theme.ax.accent} size={18} strokeWidth={3} /><Text testID="timer-video-saved" style={[axTypography.label, { color: axVeil.ink }]}>{t('timer.camera.videoSaved')}</Text></>
-                        : null}
-                  </View>
-                )}
-                {withCamera && jerky && !saving && (
-                  <View style={styles.savedBanner}>
-                    <Text testID="timer-video-jerky" style={[axTypography.caption, { color: axVeil.ink, flexShrink: 1 }]}>{t('timer.video.jerky')}</Text>
-                  </View>
-                )}
-                {sessionMeta && (
-                  <AxButton testID="timer-play-video" veil variant="outline" fullWidth icon={Play} label="Lire la vidéo"
-                    onPress={() => navigation.navigate('VideoPlayback', {
-                      videoURL: sessionMeta.videoURL,
-                      title: sessionMeta.title || undefined,
-                      recordedAt: sessionMeta.recordedAt,
-                      timerStartOffset: sessionMeta.timerStartOffset,
-                      timerStopOffset: sessionMeta.timerStopOffset,
-                      countdownDuration: sessionMeta.countdownDuration,
-                      overlaysBurned: sessionMeta.overlaysBurned ?? false,
-                    })} />
-                )}
-                {withCamera && (
-                  <AxButton testID="timer-save-card" veil variant="outline" fullWidth loading={savingCard}
-                    icon={cardSaved ? Check : Download}
-                    label={cardSaved ? t('timer.camera.cardSaved') : t('timer.camera.saveCard')}
-                    onPress={saveCard} />
-                )}
-                {withCamera && (
-                  <AxButton testID="timer-yt-share" veil variant="accent" fullWidth icon={Youtube}
-                    label={t('timer.youtube.share')} onPress={() => setShowYT(true)} />
-                )}
-                {withCamera ? (
-                  <AxButton testID="timer-close" veil variant="outline" fullWidth label="Fermer" onPress={handleClose} />
-                ) : (
-                  <AxButton testID="timer-close" label="Fermer" variant="outline" ink={onBg1} fullWidth onPress={handleClose} />
-                )}
-              </View>
-
-            </View>
-          </ViewShot>
-        </View>
-      ) : (
+      {phase === 'done' ? renderFinal() : (
         /* ── RUNNING / COUNTDOWN ─────────────────────────── */
         <>
           {/* ── LANDSCAPE LAYOUT ─────────────────────────────────── */}

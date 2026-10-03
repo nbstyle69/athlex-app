@@ -260,7 +260,8 @@ describe('R6c : logique du chrono', () => {
     const sha = crypto.createHash('sha256').update(back).digest('hex');
     // État R6c (A) de la logique (LOGIC_SHA de r5a.rn.test.tsx avant R6c C), plus R6c (B) : jeu de bips,
     // markBeep et bips passés au module (r6cBips.rn.test.tsx) ; bips sans doublon (mixBeepInVideo, plus de calage) ;
-    // 1080p fixe : plus de prepareQuality, « Démarrage… » jusqu'à la réponse du module (r6cOptionsVideo.rn.test.tsx).
-    expect(sha).toBe('eaa8f7f6f7e6a42db8bcafd451befe303b159d778e7ed9afe11f37de3f2c31b8');
+    // 1080p fixe : plus de prepareQuality, « Démarrage… » jusqu'à la réponse du module (r6cOptionsVideo.rn.test.tsx) ;
+    // retours 1.0.60 (D1) : mode audio reposé à chaque lancement sans caméra (retours1060Audio.rn.test.tsx).
+    expect(sha).toBe('3ea16d50dece3f46a8d4d03787922530d0dff5459028d392317d0c9a58092093');
   });
 });

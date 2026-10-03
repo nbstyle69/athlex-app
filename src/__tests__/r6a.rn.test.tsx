@@ -232,13 +232,16 @@ describe('R6a : enchaînement caméra inchangé, boutons Ax', () => {
     expect(mockGoBack).toHaveBeenCalledTimes(1);
   });
 
-  it('temps final avec vidéo : Lire, Sauvegarder et Fermer en outline sur voile (partage et feuille YouTube : r6b)', async () => {
+  it('temps final avec vidéo : Lire et Sauvegarder en outline sur voile, Fermer en action ronde sur voile (partage et feuille YouTube : r6b)', async () => {
     const { root } = await walkFlow();
-    for (const id of ['timer-play-video', 'timer-save-card', 'timer-close']) {
+    for (const id of ['timer-play-video', 'timer-save-card']) {
       const b = root.findByProps({ testID: id });
       expect(b.type).toBe(AxButton);
       expect([b.props.variant, b.props.veil]).toEqual(['outline', true]);
     }
+    // Retours 1.0.60 (D2) : Fermer et Recommencer sont des actions rondes (retours1060TempsFinal.rn.test.tsx).
+    const close = root.findAll((n) => n.props.testID === 'timer-close')[0];
+    expect([close.props.tone, close.props.veil]).toEqual(['stop', true]);
     expect(root.findByProps({ testID: 'timer-final-tag' }).type).toBe(AxTag);
   });
 });
@@ -288,7 +291,10 @@ describe('R6a : portrait et paysage sans débordement', () => {
     it(`${name} : action principale dans l’écran à chaque état`, async () => {
       const { states, root } = await walkFlow(w);
       expect(states.map((s) => s.label)).toEqual(['Démarrer', 'Lancer le chrono', 'Arrêter le chrono', 'Arrêter la vidéo']);
-      expect(texts(root)).toEqual(expect.arrayContaining(['Lire la vidéo', 'Sauvegarder la carte', 'Partager sur YouTube', 'Fermer']));
+      // Retours 1.0.60 (D2) : en paysage, Fermer est une icône seule (libellé d'accessibilité, sans texte visible).
+      expect(texts(root)).toEqual(expect.arrayContaining(['Lire la vidéo', 'Sauvegarder la carte', 'Partager sur YouTube',
+        ...(w === PORTRAIT ? ['Fermer'] : [])]));
+      expect(root.findAll((n) => n.props.testID === 'timer-close' && n.props.accessibilityLabel === 'Fermer').length).toBeGreaterThan(0);
       if (renderer) { const r = renderer; await act(async () => r.unmount()); renderer = null; }
       const again = await camera(w);
       const wrap = again.findByProps({ testID: 'timer-cam-primary' }).parent!;

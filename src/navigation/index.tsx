@@ -57,6 +57,7 @@ function useAndroidNavBar(_bgColor: string, mode: 'light' | 'dark') {
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ResetPasswordCodeScreen from '../screens/auth/ResetPasswordCodeScreen';
 import WaitingScreen from '../screens/onboarding/WaitingScreen';
 import JoinBoxScreen from '../screens/onboarding/JoinBoxScreen';
 import BoxWelcomeGate from '../screens/onboarding/BoxWelcomeScreen';
@@ -203,6 +204,7 @@ export type AuthStackParamList = {
   Login: undefined;
   Register: undefined;
   ForgotPassword: undefined;
+  ResetPasswordCode: { email: string };
   Legal: undefined;
 };
 
@@ -473,6 +475,7 @@ function AuthNavigator() {
       <AuthStack.Screen name="Login" component={LoginScreen} />
       <AuthStack.Screen name="Register" component={RegisterScreen} />
       <AuthStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <AuthStack.Screen name="ResetPasswordCode" component={ResetPasswordCodeScreen} />
       <AuthStack.Screen name="Legal" component={LegalScreen} />
     </AuthStack.Navigator>
   );
