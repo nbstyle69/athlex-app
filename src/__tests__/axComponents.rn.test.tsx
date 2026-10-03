@@ -424,6 +424,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'screens', 'auth', 'LoginScreen.tsx'),
     path.join(SRC, 'screens', 'auth', 'RegisterScreen.tsx'),
     path.join(SRC, 'screens', 'auth', 'ForgotPasswordScreen.tsx'),
+    // D6 : mot de passe oublié par code.
+    path.join(SRC, 'screens', 'auth', 'ResetPasswordCodeScreen.tsx'),
     path.join(SRC, 'screens', 'onboarding', 'WaitingScreen.tsx'),
     path.join(SRC, 'screens', 'onboarding', 'JoinBoxScreen.tsx'),
     path.join(SRC, 'screens', 'onboarding', 'OnboardingTutorialScreen.tsx'),
