@@ -60,6 +60,8 @@ export default function ResetPasswordCodeScreen({ navigation, route }: Props) {
     setLoading(false);
     if (result.network) setError(translateAuthError(t, result.error));
     else if (result.step === 'code') { setCodeError(t('forgot.codeInvalid')); setLeft(0); }
+    // Reconnu par son code d'erreur Auth, pas par le texte du message.
+    else if (result.code === 'same_password') setPasswordError(t('forgot.samePassword'));
     else setPasswordError(translateAuthError(t, result.error));
   }
 

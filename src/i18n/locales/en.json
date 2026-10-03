@@ -827,7 +827,8 @@
     "codeIncomplete": "Enter the 6-digit code.",
     "codeInvalid": "Invalid or expired code. Request a new one.",
     "passwordMismatch": "Passwords don't match.",
-    "passwordTooShort": "Your password must be at least 6 characters."
+    "passwordTooShort": "Your password must be at least 6 characters.",
+    "samePassword": "Choose a password different from your previous one."
   },
   "tabs": {
     "home": "Home",

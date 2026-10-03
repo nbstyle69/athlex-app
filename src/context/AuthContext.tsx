@@ -49,10 +49,10 @@ interface AuthContextType {
   /**
    * Mot de passe oublié par code : vérifie le code reçu par e-mail puis pose
    * le nouveau mot de passe. `step` dit quelle étape a échoué, `network` si
-   * c'est le réseau et pas la donnée.
+   * c'est le réseau et pas la donnée, `code` le code d'erreur Auth (ex. `same_password`).
    */
   resetPasswordWithCode: (email: string, code: string, password: string) =>
-    Promise<{ error: string | null; step?: 'code' | 'password'; network?: boolean }>;
+    Promise<{ error: string | null; step?: 'code' | 'password'; network?: boolean; code?: string }>;
   updateUser: (updates: Partial<User>) => void;
   boxSkipped: boolean;
   skipBox: () => Promise<void>;
@@ -499,7 +499,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error: outError } = await supabase.auth.signOut();
       if (!outError) recovering.current = false;
       setSession(null);
-      return { error: updateError.message, step: 'password' as const, network: isAuthRetryableFetchError(updateError) };
+      return { error: updateError.message, step: 'password' as const, network: isAuthRetryableFetchError(updateError), code: updateError.code };
     }
     recovering.current = false;
     await fetchProfile(data.user.id);

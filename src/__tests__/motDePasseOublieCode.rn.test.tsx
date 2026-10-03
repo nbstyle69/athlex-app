@@ -198,6 +198,12 @@ describe('écran 3 : code et nouveau mot de passe', () => {
     expect(errorOf(root, 'reset-code')).toBeUndefined();
   });
 
+  it('mot de passe identique à l’ancien (code same_password) : message dédié sous le nouveau mot de passe', async () => {
+    // Message volontairement sans rapport : seul le code d'erreur doit compter.
+    const root = await submitValid({ error: 'quelque chose', step: 'password', network: false, code: 'same_password' });
+    expect(errorOf(root, 'reset-password')).toBe("Choisis un mot de passe différent de l'ancien.");
+  });
+
   it('refus du nouveau mot de passe : message sous le nouveau mot de passe', async () => {
     const root = await submitValid({ error: 'Password should be at least 6 characters.', step: 'password', network: false });
     expect(errorOf(root, 'reset-password')).toBe('Mot de passe trop court (6 caractères min)');
@@ -252,8 +258,8 @@ describe('AuthContext : verifyOtp puis updateUser, sans ouvrir l’app avant la 
 
   it('updateUser refusé : signOut, aucune session ni profil, erreur rendue à l’écran', async () => {
     const { pending } = await start();
-    await act(async () => { releaseUpdate({ data: { user: null }, error: { message: 'New password should be different from the old password.' } }); await pending; });
-    expect(await pending).toEqual(expect.objectContaining({ step: 'password', network: false }));
+    await act(async () => { releaseUpdate({ data: { user: null }, error: { message: 'New password should be different from the old password.', code: 'same_password' } }); await pending; });
+    expect(await pending).toEqual(expect.objectContaining({ step: 'password', network: false, code: 'same_password' }));
     expect(calls).toEqual(['verifyOtp', 'updateUser', 'signOut']);
     expect(ctx.session).toBeNull();
     expect(ctx.user).toBeNull();
