@@ -4,13 +4,18 @@
 // service role because push_tokens is RLS-locked to each owner, so a
 // box owner cannot read their members' tokens from the client.
 //
-// Auth: caller must own the box the notification belongs to.
+// Auth: caller must be the owner or a co-owner of the box the notification
+// belongs to (same rule as `public.is_box_owner_admin`, see regles.ts).
 // Body: { notification_id: string }
 // Returns: { sent: number, recipients: number, pref_disabled: number }
+//   `sent` = devices Expo accepted (tickets "ok"), also written to
+//   box_notifications.delivered_count (0 included) with the service role.
+// The rules live in regles.ts (tested by Jest without Deno).
 // ------------------------------------------------------------------
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { cleSecrete } from '../_shared/cle-secrete.ts';
+import { type Acces, traiterEnvoi } from './regles.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -41,99 +46,71 @@ serve(async (req: Request) => {
     const admin = createClient(SUPABASE_URL, SERVICE_KEY);
     const { data: userData, error: userErr } = await admin.auth.getUser(jwt);
     if (userErr || !userData?.user) return json({ error: 'Invalid token' }, 401);
-    const callerId = userData.user.id;
 
-    // Fetch the notification + verify the caller owns its box.
-    const { data: notif, error: notifErr } = await admin
-      .from('box_notifications')
-      .select('id, box_id, title, body, target')
-      .eq('id', notificationId)
-      .maybeSingle();
-    if (notifErr || !notif) return json({ error: 'Notification not found' }, 404);
+    const acces: Acces = {
+      async notification(id) {
+        const { data, error } = await admin
+          .from('box_notifications').select('id, box_id, title, body, target').eq('id', id).maybeSingle();
+        return error ? null : data;
+      },
+      async roleAppelant(boxId, userId) {
+        const [{ data: box }, { data: ligne }, { data: profil }] = await Promise.all([
+          admin.from('boxes').select('owner_id').eq('id', boxId).maybeSingle(),
+          admin.from('box_members').select('role, status').eq('box_id', boxId).eq('member_id', userId).maybeSingle(),
+          admin.from('profiles').select('role').eq('id', userId).maybeSingle(),
+        ]);
+        return { ownerId: box?.owner_id ?? null, ligne: ligne ?? null, roleProfil: profil?.role ?? null };
+      },
+      async membresActifs(boxId) {
+        const { data } = await admin
+          .from('box_members').select('member_id').eq('box_id', boxId).eq('status', 'active');
+        return (data ?? []).map((m: { member_id: string }) => m.member_id);
+      },
+      async estMembreActif(boxId, userId) {
+        const { data } = await admin
+          .from('box_members').select('member_id')
+          .eq('box_id', boxId).eq('member_id', userId).eq('status', 'active').maybeSingle();
+        return !!data;
+      },
+      async preferences(userIds) {
+        return await admin
+          .from('notification_preferences')
+          .select('user_id, notifications_enabled, box_announcements')
+          .in('user_id', userIds);
+      },
+      async jetons(userIds) {
+        const { data } = await admin.from('push_tokens').select('token').in('user_id', userIds);
+        return (data ?? []).map((t: { token: string }) => t.token);
+      },
+      async envoyerExpo(messages) {
+        try {
+          const res = await fetch('https://exp.host/--/api/v2/push/send', {
+            method: 'POST',
+            headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify(messages),
+          });
+          if (!res.ok) {
+            console.error('send-box-notification: Expo a répondu', res.status);
+            return null;
+          }
+          return await res.json();
+        } catch (e) {
+          console.error('send-box-notification: Expo injoignable', e);
+          return null;
+        }
+      },
+      async poserResultat(notificationId, delivered) {
+        const { error } = await admin
+          .from('box_notifications').update({ delivered_count: delivered }).eq('id', notificationId);
+        if (error) throw error;
+      },
+      journaliser(message, erreur) {
+        console.error(message, erreur);
+      },
+    };
 
-    const { data: box } = await admin
-      .from('boxes').select('id').eq('id', notif.box_id).eq('owner_id', callerId).maybeSingle();
-    if (!box) return json({ error: 'Not owner of this box' }, 403);
-
-    // Resolve recipients.
-    let recipientIds: string[];
-    if (notif.target === 'all') {
-      const { data: members } = await admin
-        .from('box_members')
-        .select('member_id')
-        .eq('box_id', notif.box_id)
-        .eq('status', 'active');
-      recipientIds = (members ?? []).map((m: any) => m.member_id);
-    } else {
-      // SÉCURITÉ (Lot 6B) : une cible nominative doit être un MEMBRE ACTIF de la
-      // box. `box_notifications.target` est un text libre sans FK : sans ce
-      // contrôle, un owner poussait un message signé AthleX à n'importe quel
-      // utilisateur de la plateforme (trou jumeau de celui fermé sur send-push).
-      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (typeof notif.target !== 'string' || !UUID_RE.test(notif.target)) {
-        return json({ error: 'Invalid target' }, 400);
-      }
-      const { data: member } = await admin
-        .from('box_members')
-        .select('member_id')
-        .eq('box_id', notif.box_id)
-        .eq('member_id', notif.target)
-        .eq('status', 'active')
-        .maybeSingle();
-      if (!member) return json({ error: 'Target is not an active member of this box' }, 403);
-      recipientIds = [notif.target];
-    }
-    if (recipientIds.length === 0) return json({ sent: 0, recipients: 0, pref_disabled: 0 });
-
-    // ── PRÉFÉRENCES (2026-08-16) ─────────────────────────────────────────────
-    // Cette fonction ne consultait AUCUNE préférence : une annonce du back-office
-    // partait à tous les membres actifs, réglages coupés compris. Elle ne passe
-    // pas par send-push (elle parle à Expo directement, parce qu'un owner n'a de
-    // lien send-push qu'avec ses co-membres), donc corriger send-push ne la
-    // corrigeait pas — le filtre est appliqué ici, sur la même clé.
-    // Ligne de préférence absente = annonce autorisée (défaut true).
-    const { data: prefs, error: prefsErr } = await admin
-      .from('notification_preferences')
-      .select('user_id, notifications_enabled, box_announcements')
-      .in('user_id', recipientIds);
-    if (prefsErr) return json({ error: 'Preferences unavailable', sent: 0 }, 503);
-    const disabled = new Set(
-      (prefs ?? [])
-        .filter((p: any) => p.notifications_enabled === false || p.box_announcements === false)
-        .map((p: any) => p.user_id),
-    );
-    recipientIds = recipientIds.filter((id: string) => !disabled.has(id));
-    if (recipientIds.length === 0) {
-      return json({ sent: 0, recipients: 0, pref_disabled: disabled.size });
-    }
-
-    const { data: tokens } = await admin
-      .from('push_tokens')
-      .select('token')
-      .in('user_id', recipientIds);
-
-    const list = (tokens ?? []).map((t: any) => t.token).filter(Boolean);
-    if (list.length === 0) return json({ sent: 0, recipients: recipientIds.length, pref_disabled: disabled.size });
-
-    const messages = list.map((token: string) => ({
-      to: token,
-      sound: 'default',
-      title: notif.title,
-      body: notif.body ?? '',
-      data: { type: 'box_notification', box_id: notif.box_id },
-    }));
-
-    let sent = 0;
-    for (let i = 0; i < messages.length; i += 100) {
-      const res = await fetch('https://exp.host/--/api/v2/push/send', {
-        method: 'POST',
-        headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
-        body: JSON.stringify(messages.slice(i, i + 100)),
-      });
-      if (res.ok) sent += messages.slice(i, i + 100).length;
-    }
-
-    return json({ sent, recipients: recipientIds.length, pref_disabled: disabled.size });
+    const r = await traiterEnvoi(acces, userData.user.id, notificationId);
+    return json(r.body, r.status);
   } catch (e: any) {
     console.error('send-box-notification error', e);
     return json({ error: e?.message ?? 'Internal error' }, 500);

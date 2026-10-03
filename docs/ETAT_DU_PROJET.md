@@ -208,6 +208,25 @@ Supabase/Resend.
 
 ## En cours
 
+**Notifications du gérant (D4b), PR 1 : base et fonction** (migration `20270142`, **appliquée en prod : non** ;
+fonction `send-box-notification` **non déployée** ; maquettes validées par Nab, page « 🧪 Spec · Notifications du
+gérant », node 475:753 ; PR 2a apparence et PR 2b comportement à suivre).
+- `box_notifications.delivered_count integer NULL` : appareils acceptés par Expo pour cette notification (0 compris),
+  NULL pour les lignes antérieures ou pas encore envoyées. Garde `internal.garder_resultat_notification()` : un client
+  (`authenticated`, `anon`) ne pose ni ne change ce nombre (42501 `NOTIF_RESULTAT_RESERVE`) ; contrôle T13 de l'audit
+  des droits.
+- `box_notifs_owner` passe de `is_box_owner(box_id)` (md5 de prod f1c07d7a…) à `is_box_owner_admin(box_id)` : le
+  co-gérant crée et lit les notifications de sa box comme le gérant ; coach et membre restent sans écriture ; lecture
+  des membres inchangée.
+- `send-box-notification` : gérant ou co-gérant de la box (même règle que `is_box_owner_admin`), 403 sinon ; `sent` =
+  tickets « ok » d'Expo (avant : messages des lots envoyés) ; résultat écrit dans `delivered_count` avec la clé
+  serveur, 0 compris (sans membre, sans jeton, préférences coupées). Règles dans `regles.ts`, testées par Jest.
+- Précontrôle du 03/10/2026 (lecture seule) : fonction déployée identique à `d9b3382` (copie de retour arrière dans
+  `C:\Users\NBS\athlex-retour-arriere-send-box-notification\avant-d4b-pr1`) ; 3 lignes dans la table ; en prod,
+  3 gérants sur 4 n'ont pas de ligne `box_members`, d'où le passage par `boxes.owner_id`.
+- Ordre d'application : migration, puis fonction. **Ne pas merger avant l'application en prod** : l'audit nocturne
+  rejouerait T13 sur une base qui n'a pas encore la garde.
+
 **Caméra : démarrage sérialisé, exception rattrapée, 1080p fixe (module natif iOS + app, aucune migration, module Android
 intact).** Enquête sur les deux plantages du build 1.0.59 (iPhone 16 Pro, iOS 26.6.1, réglage 2K) et sur le paysage
 (aperçu couché, vidéo étirée, cercle du décompte en ovale), décidée par Claude (conception) et Nab le 1er octobre.
