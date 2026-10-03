@@ -57,7 +57,32 @@
             {
               "scheme": "https",
               "host": "athlexapp.eu",
-              "pathPrefix": "/"
+              "pathPrefix": "/wod/"
+            },
+            {
+              "scheme": "https",
+              "host": "athlexapp.eu",
+              "pathPrefix": "/profile/"
+            },
+            {
+              "scheme": "https",
+              "host": "athlexapp.eu",
+              "pathPrefix": "/user/"
+            },
+            {
+              "scheme": "https",
+              "host": "athlexapp.eu",
+              "pathPrefix": "/tournament/"
+            },
+            {
+              "scheme": "https",
+              "host": "athlexapp.eu",
+              "pathPrefix": "/inter/"
+            },
+            {
+              "scheme": "https",
+              "host": "athlexapp.eu",
+              "pathPrefix": "/daily/"
             }
           ],
           "category": [
