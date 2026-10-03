@@ -271,6 +271,11 @@ const TYPES = [
 ];
 function normalizeBefore(name: string, list: string[]): string[] {
   let out = list.filter((t) => !GLYPHS.has(t)).map((t) => t.replace(EMOJI_PREFIX, '').toUpperCase());
+  if (name === 'temps-final') {
+    // Retours 1.0.60 (D2) : Recommencer devient une action ronde avec son libellé court sous l'icône, à côté de Fermer.
+    const f = out.indexOf('FERMER');
+    out = [...out.slice(0, f), 'RECOMMENCER', ...out.slice(f)];
+  }
   if (name === 'design-du-minuteur') {
     // R5b : thèmes AthleX en tête, noms traduits, réglage « Suivre le thème de l'app ».
     const a = out.indexOf('DESIGN DU MINUTEUR');
@@ -523,10 +528,10 @@ describe('R5a : temps final sans vidéo', () => {
     expect(r.findAll((n) => n.props.testID === 'timer-final-time')).toHaveLength(0);
     expect(r.findAll((n) => n.props.testID === 'timer-start-stop').length).toBeGreaterThan(0);
   });
-  it('Fermer : AxButton contour, retour inchangé', async () => {
+  it('Fermer : action ronde couleur arrêt (retours 1.0.60, D2), retour inchangé', async () => {
     const r = await final();
-    const close = r.findAllByType(AxButton).find((b) => b.props.testID === 'timer-close')!;
-    expect(close.props.variant).toBe('outline');
+    const close = r.findAll((n) => n.props.testID === 'timer-close')[0];
+    expect(close.props.tone).toBe('stop');
     await pressID(r, 'timer-close');
     expect(mockNavigation.goBack).toHaveBeenCalledTimes(1);
   });

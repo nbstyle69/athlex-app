@@ -254,7 +254,9 @@ describe('R6b : temps final avec vidéo', () => {
     const label = accents[0].findAll((n) => isHostText(n))[0];
     expect(flat(label).color).toBe(darkTheme.ax.onAccent);
     expect(contrast(darkTheme.ax.onAccent, darkTheme.ax.accent)).toBeGreaterThanOrEqual(4.5);
-    for (const id of ['timer-play-video', 'timer-save-card', 'timer-close']) {
+    // Retours 1.0.60 (D2) : Fermer devient une action ronde couleur arrêt (retours1060TempsFinal.rn.test.tsx).
+    expect(root.findAll((n) => n.props.testID === 'timer-close')[0].props.tone).toBe('stop');
+    for (const id of ['timer-play-video', 'timer-save-card']) {
       expect(root.findByProps({ testID: id }).props.variant).toBe('outline');
     }
   });
