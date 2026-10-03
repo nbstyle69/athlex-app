@@ -1874,7 +1874,7 @@ export default function TimerRunScreen() {
     const tete = (
       <View style={{ alignItems: 'center', gap: compact ? 6 : 10 }}>
         {withCamera ? (
-          <View style={{ width: logoCam, height: logoCam, borderRadius: logoCam / 2, backgroundColor: '#FFFFFF',
+          <View testID="timer-final-logo-cam" style={{ width: logoCam, height: logoCam, borderRadius: logoCam / 2, backgroundColor: '#FFFFFF',
             justifyContent: 'center', alignItems: 'center',
             shadowColor: '#ffffff', shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 0 } }}>
             <Image source={require('../../../assets/athex-logo.png')}
@@ -1885,8 +1885,9 @@ export default function TimerRunScreen() {
             source={require('../../../assets/athex-logo.png')}
             style={{ width: logoNu, height: logoNu, resizeMode: 'contain' }} />
         )}
-        {/* Badge du format centré : AxTag se cale à gauche par défaut. */}
-        <View testID="timer-final-tag-wrap" style={{ alignSelf: 'stretch', alignItems: 'center' }}>
+        {/* Badge du format centré. AxTag porte alignSelf: 'flex-start', qui l'emporte sur
+            l'alignItems d'un parent : l'enveloppe épouse donc sa taille et se centre elle-même. */}
+        <View testID="timer-final-tag-wrap" style={{ alignSelf: 'center' }}>
           {withCamera
             ? <AxTag testID="timer-final-tag" label={displayLabel} veil />
             : <AxTag testID="timer-final-tag" label={displayLabel} color={onBg1} />}
@@ -1896,7 +1897,7 @@ export default function TimerRunScreen() {
 
     const temps = (
       <View style={{ alignItems: 'center', gap: 2, flexShrink: 1, flexGrow: 1, minHeight: 0, alignSelf: 'stretch', justifyContent: 'center' }}>
-        <Text style={[axTypography.overline, { color: withCamera ? axVeil.ink : onBg2 }]}>TEMPS FINAL</Text>
+        <Text testID="timer-final-label" style={[axTypography.overline, { color: withCamera ? axVeil.ink : onBg2 }]}>TEMPS FINAL</Text>
         <View testID="timer-final-digits-box"
           style={{ flexGrow: 1, flexShrink: 1, minHeight: FINAL_DIGITS_MIN * 1.2, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' }}
           onLayout={(e) => {

@@ -14,6 +14,7 @@ import type { HomeStackParamList } from '../navigation';
 import TimerRunScreen, { FINAL_DIGITS_MIN } from '../screens/timer/TimerRunScreen';
 import { ensureContrast } from '../theme/ink';
 import { contrast } from '../theme/contrast';
+import { AxTag } from '../components/ax';
 
 let mockTheme = lightTheme;
 let mockParams: unknown;
@@ -240,11 +241,19 @@ describe('D2 : aucun défilement, zone sûre, badge centré, chiffre ajusté', (
     expect(flat(one(r, 'timer-overlay')).paddingTop).toBe(ISLAND.top + 8);
   });
 
-  it('badge du format centré dans sa ligne', async () => {
-    const r = await tempsFinal(PORTRAIT);
-    expect(flat(one(r, 'timer-final-tag-wrap'))).toMatchObject({ alignSelf: 'stretch', alignItems: 'center' });
-    expect(isAncestor(one(r, 'timer-final-tag-wrap'), r.findAll((n) => n.props.testID === 'timer-final-tag')[0])).toBe(true);
-  });
+  it.each([['portrait', PORTRAIT, false], ['paysage', LANDSCAPE, false], ['portrait caméra', PORTRAIT, true], ['paysage caméra', LANDSCAPE, true]] as const)(
+    'badge du format (%s) : son parent direct est une vue qui épouse sa taille et se centre elle-même', async (_, w, camera) => {
+      const r = await tempsFinal(w, darkTheme, camera);
+      // AxTag pose alignSelf: 'flex-start' : un parent étiré, même en alignItems: 'center', le laisse à gauche.
+      const tag = r.findAllByType(AxTag).find((n) => n.props.testID === 'timer-final-tag')!;
+      expect(flat(r.findAll((n) => n.props.testID === 'timer-final-tag' && typeof n.type === 'string')[0]).alignSelf).toBe('flex-start');
+      let parent = tag.parent;
+      while (parent && typeof parent.type !== 'string') parent = parent.parent;
+      expect(parent!.props.testID).toBe('timer-final-tag-wrap');
+      const st = flat(parent!);
+      expect(st.alignSelf).toBe('center');
+      for (const k of ['width', 'minWidth', 'flex', 'flexGrow'] as const) expect(st[k]).toBeUndefined();
+    });
 
   it('grand chiffre : taille tirée de la place disponible, jamais sous le plancher de 44', async () => {
     const r = await tempsFinal(SE_PAYSAGE);
