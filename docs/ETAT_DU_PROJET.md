@@ -210,6 +210,29 @@ Supabase/Resend.
 
 ## En cours
 
+**Notifications du gérant (D4b), PR 1 : base et fonction** (migration `20270142`, **appliquée en prod le 03/10/2026 à
+16:17 UTC** ; dump `db-dumps/2026-10-03/athlex-prod-public-internal-20261003T160601Z.dump` ; audit 38/38 ; fonction
+`send-box-notification` **déployée le 03/10/2026 à 16:19 UTC** ; maquettes validées par Nab, page « 🧪 Spec · Notifications du
+gérant », node 475:753 ; PR 2a apparence et PR 2b comportement à suivre).
+- `box_notifications.delivered_count integer NULL` : appareils acceptés par Expo pour cette notification (0 compris),
+  NULL pour les lignes antérieures ou pas encore envoyées. Garde `internal.garder_resultat_notification()` : un client
+  (`authenticated`, `anon`) ne pose ni ne change ce nombre (42501 `NOTIF_RESULTAT_RESERVE`) ; contrôle T13 de l'audit
+  des droits.
+- `box_notifs_owner` passe de `is_box_owner(box_id)` (md5 de prod f1c07d7a…) à `is_box_owner_admin(box_id)` : le
+  co-gérant crée et lit les notifications de sa box comme le gérant ; coach et membre restent sans écriture ; lecture
+  des membres inchangée.
+- `send-box-notification` : gérant ou co-gérant de la box (même règle que `is_box_owner_admin`), 403 sinon ; `sent` =
+  tickets « ok » d'Expo (avant : messages des lots envoyés) ; résultat écrit dans `delivered_count` avec la clé
+  serveur, 0 compris (sans membre, sans jeton, préférences coupées). Une notification ne part qu'une fois : 409
+  `Already sent` si elle a déjà un résultat ; sinon réservation conditionnelle (`delivered_count` NULL → 0, `WHERE
+  delivered_count IS NULL`) après tous les refus et avant Expo, 409 si un envoi simultané l'a prise ; nombre définitif
+  écrit après l'envoi (une erreur après la réservation laisse 0). Règles dans `regles.ts`, testées par Jest.
+- Précontrôle du 03/10/2026 (lecture seule) : fonction déployée identique à `d9b3382` (copie de retour arrière dans
+  `C:\Users\NBS\athlex-retour-arriere-send-box-notification\avant-d4b-pr1`) ; 3 lignes dans la table ; en prod,
+  3 gérants sur 4 n'ont pas de ligne `box_members`, d'où le passage par `boxes.owner_id`.
+- Appliquée dans l'ordre migration, puis fonction ; test réel en transaction annulée sur AthleX Fitness (co-gérant
+  fictif accepté, résultat refusé au client, coach refusé, réservation conditionnelle par la clé serveur), sans trace.
+
 **Caméra : démarrage sérialisé, exception rattrapée, 1080p fixe (module natif iOS + app, aucune migration, module Android
 intact).** Enquête sur les deux plantages du build 1.0.59 (iPhone 16 Pro, iOS 26.6.1, réglage 2K) et sur le paysage
 (aperçu couché, vidéo étirée, cercle du décompte en ovale), décidée par Claude (conception) et Nab le 1er octobre.

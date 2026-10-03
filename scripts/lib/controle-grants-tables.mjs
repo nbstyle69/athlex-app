@@ -84,6 +84,18 @@ const GARDES_DECLENCHEUR = [
     risque: 'un co-gérant nomme un autre co-gérant, qui aura accès à l\'argent, ou '
       + 'retire ce rôle à un autre. Rejoue 20270139.',
   },
+  {
+    id: 'T13',
+    table: 'box_notifications',
+    declencheur: 'trg_box_notifications_garde_resultat',
+    evenements: ['INSERT', 'UPDATE'],
+    colonnes: [],
+    corps: ['NOTIF_RESULTAT_RESERVE', 'NEW.delivered_count IS NOT NULL',
+      'NEW.delivered_count IS DISTINCT FROM OLD.delivered_count'],
+    libelle: 'le résultat d\'un envoi de notification n\'est écrit que par le serveur',
+    risque: 'un gérant ou un co-gérant invente ou réécrit le nombre d\'appareils '
+      + 'atteints par sa notification. Rejoue 20270142.',
+  },
 ];
 
 /**
