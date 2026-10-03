@@ -697,3 +697,28 @@ describe('Lot 4 : Profil, formule à activer', () => {
     }
   });
 });
+
+describe('Retours 1.0.60 (D3) : bouton d’ami centré dans le profil public', () => {
+  const ancetre = (a: ReactTestInstance, b: ReactTestInstance) => { let n: ReactTestInstance | null = b.parent; while (n) { if (n === a) return true; n = n.parent; } return false; };
+  for (const [nom, id, ami] of [
+    ['« Demander en ami »', 'public-add-friend', null],
+    ['« Accepter »', 'public-accept', { status: 'pending', requester_id: 'u9' }],
+  ] as const) {
+    it(`${nom} : centré dans le héros par une enveloppe locale, le bouton garde sa largeur`, async () => {
+      mockState.publicFriend = ami;
+      const root = await mount(<PublicProfileScreen navigation={publicNav} route={publicRoute} />);
+      const hero = byId(root, 'public-hero');
+      const enveloppe = root.findAll((x) => x.props.testID === 'public-friend-action' && typeof x.type === 'string')[0];
+      expect(flat(enveloppe).alignSelf).toBe('center');
+      expect(ancetre(hero, enveloppe)).toBe(true);
+      const btn = root.findAllByType(AxButton).find((b) => b.props.testID === id)!;
+      expect(ancetre(enveloppe, btn)).toBe(true);
+      expect(btn.props.fullWidth).toBeFalsy();
+    });
+  }
+  it('AxButton garde son alignement par défaut (à gauche) : le centrage reste local', async () => {
+    const root = await mount(<AxButton label="Test" onPress={() => {}} testID="ax-defaut" />);
+    const host = root.findAll((x) => x.props.testID === 'ax-defaut' && typeof x.type === 'string')[0];
+    expect(flat(host).alignSelf).toBe('flex-start');
+  });
+});

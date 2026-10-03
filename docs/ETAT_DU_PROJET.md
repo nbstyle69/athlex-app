@@ -899,6 +899,11 @@ build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).
   - Fenêtre de refus `NO_ACTIVE_PLAN` : textes inchangés, icône carte, « Activer mon abonnement » et
     « Fermer ». L'écran P1 « Délai de régularisation » est reporté au lot P1.
 
+**Profil public : « Demander en ami » centré (retour D3 du build 1.0.60, app seule, apparence seule).** Le bouton
+(et « Accepter ») se calait à gauche de la carte du profil : `AxButton` pose `alignSelf: 'flex-start'` quand il n'est
+pas en pleine largeur, ce qui l'emporte sur le centrage de la carte. Une enveloppe locale `alignSelf: 'center'` le
+centre ; l'alignement par défaut du bouton partagé n'est pas changé. Tests dans `r12.rn.test.tsx`, 5 mutations tuées.
+
 **Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
 dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
 - PR 1, la base (migration `20270127`, **appliquée en prod le 25/09/2026 à 20:05 UTC**, dump

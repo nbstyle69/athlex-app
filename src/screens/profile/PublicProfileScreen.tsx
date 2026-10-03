@@ -217,11 +217,17 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
         <Text style={S.pendingBadgeText}>Demande envoyée</Text>
       </View>
     );
+    // Centrés dans la carte comme le reste du héros : AxButton se cale à gauche
+    // quand il n'occupe pas toute la largeur (retour D3 du build 1.0.60).
     if (friendStatus === 'pending_received') return (
-      <AxButton label="Accepter" icon={Check} onPress={handleAcceptFriend} loading={actionLoading} testID="public-accept" />
+      <View style={S.friendAction} testID="public-friend-action">
+        <AxButton label="Accepter" icon={Check} onPress={handleAcceptFriend} loading={actionLoading} testID="public-accept" />
+      </View>
     );
     return (
-      <AxButton label="Demander en ami" icon={UserPlus} onPress={handleAddFriend} loading={actionLoading} testID="public-add-friend" />
+      <View style={S.friendAction} testID="public-friend-action">
+        <AxButton label="Demander en ami" icon={UserPlus} onPress={handleAddFriend} loading={actionLoading} testID="public-add-friend" />
+      </View>
     );
   }
 
@@ -335,6 +341,7 @@ function createStyles(theme: AppTheme) {
   backBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
   content: { padding: axSpacing.lg, gap: 14, paddingBottom: 120 },
   heroCard: { padding: 24, alignItems: 'center', gap: 8 },
+  friendAction: { alignSelf: 'center' },
   username: { ...axTypography.titleXL, lineHeight: axAccentSafeLineHeight.titleXL, color: c.text, textAlign: 'center', alignSelf: 'stretch' },
   levelPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: axRadius.badge, borderWidth: 1,
