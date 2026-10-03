@@ -210,6 +210,15 @@ Supabase/Resend.
 
 ## En cours
 
+**Minuteur sans caméra : session audio reposée à chaque lancement (retour D1 du build 1.0.60, app seule, aucune
+migration ; à vérifier sur iPhone au prochain build).** Sur iPhone, pas de bip sans caméra. Le mode audio n'était posé
+qu'à l'ouverture de l'écran ; avec caméra, `handleStartRecording` le repose avant l'enregistrement, sans caméra rien ne le
+reposait avant les bips si iOS avait changé la session entre-temps. `appliquerModeAudio()` (même configuration
+qu'avant, lecture en mode silencieux comprise) est maintenant appelée à l'ouverture et attendue au début de chaque
+lancement sans caméra, avant le premier bip ; un échec est signalé à Sentry et n'empêche pas le départ. Parcours caméra
+inchangé. Tests `retours1060Audio.rn.test.tsx` (premier et deuxième lancement, sans décompte, échec), 6 mutations
+tuées.
+
 **Caméra : démarrage sérialisé, exception rattrapée, 1080p fixe (module natif iOS + app, aucune migration, module Android
 intact).** Enquête sur les deux plantages du build 1.0.59 (iPhone 16 Pro, iOS 26.6.1, réglage 2K) et sur le paysage
 (aperçu couché, vidéo étirée, cercle du décompte en ovale), décidée par Claude (conception) et Nab le 1er octobre.
