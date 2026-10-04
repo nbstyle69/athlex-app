@@ -38,15 +38,15 @@ enabled = false
 [edge_runtime]
 enabled = false
 
-# ── Fonctions edge : `verify_jwt = false` pour les huit ─────────────────────
+# ── Fonctions edge : `verify_jwt = false` pour les neuf ─────────────────────
 # La vérification de la plateforme ne connaît que les JWT signés par l'ancien
 # secret : elle refuserait une clé `sb_secret_…` ou `sb_publishable_…`, et
 # cassera à la révocation de l'ancien secret JWT. Chaque fonction authentifie
 # elle-même son appelant, avant tout accès aux données, et refuse un appel
 # sans authentification (401) :
 #   * `x-cron-secret` comparé à CRON_SECRET, refus si l'un manque —
-#     generate-box-week, session-followup-cron, tournament-notifications-cron,
-#     weekly-owner-digest ;
+#     deliver-manager-notifications, generate-box-week, session-followup-cron,
+#     tournament-notifications-cron, weekly-owner-digest ;
 #   * `auth.getUser(jeton)` sur l'en-tête Authorization, refus si absent ou
 #     invalide — analyze-tournament-score, parse-wod-pdf, send-box-notification ;
 #   * l'un ou l'autre — send-push.
@@ -54,6 +54,9 @@ enabled = false
 # CLI le lit au déploiement : sans ces sections, le réglage ne dépendait que de
 # l'état de la prod (trois fonctions à false, cinq à true au 23/09/2026).
 [functions.analyze-tournament-score]
+verify_jwt = false
+
+[functions.deliver-manager-notifications]
 verify_jwt = false
 
 [functions.generate-box-week]

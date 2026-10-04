@@ -210,6 +210,23 @@ Supabase/Resend.
 
 ## En cours
 
+**Notifications push au gérant (D4a), PR B : fonction `deliver-manager-notifications`** (**déployée le 04/10/2026 à
+10:19 UTC** par `scripts/deploy-edge.mjs`, après la migration `20270143` ; source déployée identique à la branche,
+copie gardée hors dépôt (`athlex-retour-arriere-deliver-manager-notifications/deploye-d4a`) ; sondes sans secret, faux
+secret, secret vide, GET et OPTIONS : 401 ; démarrage sans erreur ; appelée chaque minute par pg_cron depuis 10:20 UTC,
+réponses 200 ; conception dans `docs/NOTIFS_GERANT.md`, PR A).
+- Appelée seulement par pg_cron avec `x-cron-secret` (401 sinon, `verify_jwt = false` versionné), clé par
+  `_shared/cle-secrete.ts`. Lit au plus 50 lignes non envoyées, non réservées, moins de 5 tentatives, des dernières
+  24 h ; réserve chaque ligne avant d'envoyer (mise à jour conditionnelle, une seule exécution l'envoie).
+- Destinataires par leur compte : `boxes.owner_id` et co-gérants actifs (`box_members.role = 'owner'`) ; ni coach,
+  ni membre, ni administrateur de la plateforme ; l'auteur du geste exclu ; interrupteur général coupé respecté.
+  Texte dans la langue de chaque jeton, pseudo du membre (jamais l'e-mail), heure du cours à Paris.
+- Appareils acceptés = tickets « ok » d'Expo (comme `send-box-notification`) écrits avec `sent_at` ; échec → ligne
+  libérée avec un code sans donnée personnelle, nouvelle tentative la minute suivante ; résultat non écrit après
+  l'envoi → la ligne n'est jamais reprise (pas de double envoi). Données `{ type, box_id }` : au toucher, l'app
+  s'ouvre simplement (`notificationRouter` ignore ces types).
+- Règles dans `regles.ts`, 33 tests Jest, 28 mutations tuées.
+
 **Notifications push au gérant (D4a), PR A : file d'attente et déclencheurs** (migration `20270143`, **appliquée en
 prod le 04/10/2026 à 10:16 UTC** ; dump `db-dumps/2026-10-04/athlex-prod-public-internal-20261004T101510Z.dump` ; test
 réel en transaction annulée sur AthleX Fitness, sans trace ; audit des droits 39/39 ; conception dans
