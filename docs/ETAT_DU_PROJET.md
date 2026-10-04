@@ -228,6 +228,9 @@ sur le détail du WOD (`useMyRecords().reload` au focus) ; un record arrivé rec
 à la prescription après l'enregistrement du brouillon (défaut existant, rendu visible par le rechargement) ;
 `logStrengthSets` envoie `prescribed_reps` NULL au lieu de 0, comme le brouillon et la validation. Tests
 `gymRecordFocus.rn.test.tsx`, `strengthSession.test.ts` (CHECK `prescribed_reps` simulé), 5 mutations tuées.
+Contrat de format partagé avec le Manager : `src/__tests__/fixtures/strength-line-contract.json` (5 cas, identique
+octet pour octet à AthleX-Manager `lib/__fixtures__/strength-line-contract.json`, sha256 `52b03e77…7025`), vérifié
+par `strengthLineContract.test.ts` (lecture et écriture).
 
 **Profil → Notifications : bouton de test sans fenêtre ni jeton, écran traduit (retour du build 1.0.60, app seule, aucune
 migration ; PR non mergée, à vérifier par Nab au prochain build).** Le bouton « Tester les notifications » ouvrait une
