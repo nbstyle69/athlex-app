@@ -211,8 +211,10 @@ Supabase/Resend.
 ## En cours
 
 **Notifications push au gérant (D4a), PR A : file d'attente et déclencheurs** (migration `20270143`, **appliquée en
-prod : non** ; conception dans [`NOTIFS_GERANT.md`](./NOTIFS_GERANT.md) ; PR B fonction d'envoi et PR C tâche pg_cron à
-suivre).
+prod le 04/10/2026 à 10:16 UTC** ; dump `db-dumps/2026-10-04/athlex-prod-public-internal-20261004T101510Z.dump` ; test
+réel en transaction annulée sur AthleX Fitness, sans trace ; audit des droits 39/39 ; conception dans
+[`NOTIFS_GERANT.md`](./NOTIFS_GERANT.md) ; fonction d'envoi (PR B) déployée et tâches pg_cron (PR C) appliquées le même
+jour).
 - Table `box_manager_notifications` : une ligne par événement, clé unique `(type, event_ref)` ; RLS active sans
   règle, aucun droit pour `anon` et `authenticated`, la clé serveur lit et n'écrit que les colonnes d'envoi ;
   contrôle T14 de l'audit des droits.

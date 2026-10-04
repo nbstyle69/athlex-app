@@ -1,7 +1,25 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Notifications push au gérant (D4a, PR A) : file d'attente et déclencheurs
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 04/10/2026 à 10:16 UTC, avec PGCLIENTENCODING=UTF8,
+-- sur GO de Nab. Dump des schémas public et internal avec droits
+-- db-dumps/2026-10-04/athlex-prod-public-internal-20261004T101510Z.dump,
+-- sha256 92a481a37f438d4536164f3285dfb7d6742de9f810989ed48a6170c94e7cedad vérifié
+-- après aller-retour, 135 TABLE DATA, 451 ACL, 346 POLICY (un ACL de plus que le
+-- dump du 03/10, pris avant 20270142 : garder_resultat_notification) ;
+-- précontrôles : md5 des sept fonctions existantes et de is_box_owner_admin
+-- identiques au relevé ci-dessous, ni table, ni fonction, ni déclencheur,
+-- cron_secret présent dans le Vault ; vérifications : RLS active sans règle,
+-- service_role SELECT et UPDATE des cinq colonnes d'envoi, aucun droit client,
+-- fonction SECURITY DEFINER au md5 du rejeu 6b0bb58f80f3eeeaa883d838ae5049ce
+-- (sans CR), EXECUTE fermé, cinq déclencheurs actifs avec leurs conditions,
+-- fonctions existantes inchangées, box_members (183 lignes, 4ad6b560…),
+-- box_member_alerts (0) et box_invitations (3 lignes, 7fb19f32…) à la même
+-- empreinte, file vide ; test réel en transaction annulée sur AthleX Fitness
+-- (membres et co-gérant fictifs : une ligne par événement, aucune au
+-- renouvellement ni à la relance, heure du cours et auteur justes, file en
+-- erreur sans blocage de l'écriture d'origine), sans trace ; audit des droits
+-- en prod 39/39 (T13 et T14 compris).
 --
 -- Aucune notification n'est envoyée aujourd'hui au gérant d'une box. Quatre
 -- événements, validés par Nab, sont mis en file ici ; la fonction edge

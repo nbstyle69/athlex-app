@@ -6,9 +6,9 @@ co-gérants. Trois PR :
 
 | PR | Contenu | Prod |
 | --- | --- | --- |
-| A | migration `20270143` : file `box_manager_notifications` + déclencheurs | non appliquée |
-| B | fonction edge `deliver-manager-notifications` (envoi) | non déployée |
-| C | migration `20270144` : tâches pg_cron (envoi chaque minute, purge) | non appliquée |
+| A | migration `20270143` : file `box_manager_notifications` + déclencheurs | appliquée le 04/10/2026, 10:16 UTC |
+| B | fonction edge `deliver-manager-notifications` (envoi) | déployée le 04/10/2026, 10:19 UTC |
+| C | migration `20270144` : tâches pg_cron (envoi chaque minute, purge) | appliquée le 04/10/2026, 10:19 UTC |
 
 Ordre d'application : A, puis B (déploiement), puis C. A seule remplit la file
 sans rien envoyer ; B sans C ne tourne jamais.
@@ -153,7 +153,7 @@ Règles dans `regles.ts`, testées par Jest.
 Données de la notification : `{ type, box_id }`. **Au toucher, l'app s'ouvre
 simplement** : `src/services/notificationRouter.ts` ignore les types inconnus.
 L'onglet Membres du gérant existe (`BoxOwnerTabs` → `BOMembers`) mais n'est
-monté que pour un compte en mode gérant ; l'y conduire demande une PR d'app.
+monté que pour un compte en mode gérant ; l'y conduire demande une PR d'app, reportée par Nab après la sortie App Store (04/10/2026).
 
 ## Purge (PR C)
 
