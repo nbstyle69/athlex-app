@@ -211,6 +211,15 @@ Supabase/Resend.
 
 ## En cours
 
+**Crédit R2b : « N% Mouvement » ne crédite plus N reps (app seule, aucune migration ; PR non mergée, à vérifier par
+Nab).** Une ligne de WOD qui commence par un nombre suivi de « % » (`40% Ring Muscle-ups`, `40 % RMU`, `35%du max
+Toes-to-Bar`) n'est plus une quantité de reps : `parseMovementLine` rend `null`, la ligne garde sa place dans le tour
+(cycles d'EMOM) sans rien créditer ; AMRAP en reps et Max Reps avec une telle ligne ne créditent rien (répartition du
+score inconnue). Serveur non concerné (le crédit tournois lit `movement_lines`, structuré). Prod, lecture seule : 34
+`box_wods` en %, 4 `movement_logs` faux sur 2 WOD pour 1 athlète (30 `ring_muscle_up`, 76 `bar_muscle_up`), non
+retirés, décision à Nab. Tests dans `movementParser.test.ts`, prouvés par 8 mutations ; rapport dans
+`athlex-captures/retours-1.0.61/R2b`.
+
 **Gymnastique G4 : fenêtre « Nouveau record ? » (app seule ; PR non mergée, à vérifier par Nab).** Spec Figma
 501:812 / 501:899. Après une validation réussie (WOD du Whiteboard et séance générée), les séries sont relues du
 serveur ; pour chacun des 11 mouvements de gymnastique dont une série sans charge dépasse un record existant, une ligne
