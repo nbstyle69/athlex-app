@@ -26,7 +26,7 @@ const mockInserts: Record<string, unknown>[] = [];
 const mockInvokes: unknown[] = [];
 const mockGoBack = jest.fn();
 
-jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ goBack: mockGoBack, navigate: jest.fn() }) }));
+jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ goBack: mockGoBack, navigate: jest.fn() }), useRoute: () => ({ params: undefined }) }));
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 47, bottom: 34, left: 0, right: 0 }) }));
 jest.mock('../context/AuthContext', () => {
   const box = { id: 'box-1' };
@@ -84,16 +84,20 @@ beforeEach(() => {
 });
 afterEach(() => jest.restoreAllMocks());
 
-/** Contenu de l'écran d'avant la PR, texte pour texte (dates au format local inchangé). */
+/**
+ * Contenu de l'écran, texte pour texte (dates au format local inchangé). PR 2b : deux pastilles
+ * (« Tous les membres (N) », « Un membre ») au lieu d'une pastille par membre, et le pseudo du
+ * membre au lieu de « Individuel » dans l'historique (boNotificationsDestinataire.rn.test.tsx).
+ */
 const date = (iso: string) => new Date(iso).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 const CONTENU = [
-  'Notifications', 'Nouvelle notification', 'Destinataire', 'Tous (2)', 'Léa M.', 'Karim B.',
+  'Notifications', 'Nouvelle notification', 'Destinataire', 'Tous les membres (2)', 'Un membre',
   'Titre', 'Message (optionnel)', 'Envoyer', 'Historique',
   'Ouverture samedi 8 h', 'Le WOD sera révélé à 9 h.', date('2026-09-25T16:02:00Z'), '→ Tous',
-  'Rappel de paiement', date('2026-09-20T08:15:00Z'), '→ Individuel',
+  'Rappel de paiement', date('2026-09-20T08:15:00Z'), '→ Léa M.',
 ];
 
-describe('D4b 2a : même contenu (contrôle joué aussi sur l’écran d’avant)', () => {
+describe('D4b 2a : même contenu (contrôle joué aussi sur l’écran d’avant ; PR 2b : destinataire et pseudo)', () => {
   it('mêmes textes, dans le même ordre', async () => {
     const root = await monter();
     expect(textes(root)).toEqual(CONTENU);
@@ -116,7 +120,7 @@ describe('D4b 2a : apparence de la maquette', () => {
       expect(compose).toBeTruthy();
       // Destinataires en pastilles, « Tous » choisie par défaut.
       const chips = root.findAllByType(AxChip);
-      expect(chips.map((x) => [x.props.label, x.props.selected])).toEqual([['Tous (2)', true], ['Léa M.', false], ['Karim B.', false]]);
+      expect(chips.map((x) => [x.props.label, x.props.selected])).toEqual([['Tous les membres (2)', true], ['Un membre', false]]);
       // Libellés : « Destinataire » en libellé petit, Titre et Message en surtitre petit.
       const lib = (s: string) => flat(root.findAllByType(Text).find((n) => texteDe(n) === s)!);
       expect(lib('Destinataire')).toMatchObject({ ...axTypography.labelSmall, color: c.textMuted });
@@ -139,27 +143,27 @@ describe('D4b 2a : apparence de la maquette', () => {
     });
   }
 
-  it('défilement vertical unique et rangée de pastilles qui défile horizontalement (inchangés)', async () => {
+  it('défilement vertical unique ; plus de rangée horizontale (PR 2b : deux pastilles)', async () => {
     const root = await monter();
     const scrolls = root.findAllByType(ScrollView);
-    expect(scrolls.filter((s) => s.props.horizontal)).toHaveLength(1);
+    expect(scrolls.filter((s) => s.props.horizontal)).toHaveLength(0);
     expect(scrolls.filter((s) => !s.props.horizontal)).toHaveLength(1);
   });
 });
 
 describe('D4b 2a : comportement inchangé', () => {
-  it('bouton désactivé sans titre ; envoi : même insertion, même fonction, même message', async () => {
+  it('bouton désactivé sans titre ; envoi : même insertion, même fonction (PR 2b : résultat dans la carte)', async () => {
     const root = await monter();
     const send = () => root.findAllByType(AxButton).find((b) => b.props.testID === 'bo-notif-send')!;
     expect(send().props.disabled).toBe(true);
     const champTitre = root.findAllByType(AxTextField)[0];
     await act(async () => { champTitre.props.onChangeText('  Fermeture lundi  '); });
     expect(send().props.disabled).toBe(false);
-    await act(async () => { root.findAllByType(AxChip)[1].props.onPress(); });
     await act(async () => { await send().props.onPress(); });
-    expect(mockInserts).toEqual([{ box_id: 'box-1', title: 'Fermeture lundi', body: '', target: 'u-lea', created_by: 'gerant' }]);
+    expect(mockInserts).toEqual([{ box_id: 'box-1', title: 'Fermeture lundi', body: '', target: 'all', created_by: 'gerant' }]);
     expect(mockInvokes).toEqual([['send-box-notification', { body: { notification_id: 'n-new' } }]]);
-    expect(Alert.alert).toHaveBeenCalledWith('Envoyé', 'Notification poussée à 2 appareil(s).');
+    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(textes(root)).toContain('Envoyée à 2 appareils.');
   });
 
   it('retour : navigation.goBack', async () => {

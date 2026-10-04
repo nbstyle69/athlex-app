@@ -189,7 +189,8 @@ export type BODashboardStackParamList = {
   BOInterCompetition: undefined;
   BOStats: undefined;
   BOReport: undefined;
-  BONotifications: undefined;
+  /** memberId : membre présélectionné depuis sa fiche (BOMembersScreen). */
+  BONotifications: { memberId?: string } | undefined;
   BOGamification: undefined;
   BOArticles: undefined;
   BOSettings: undefined;

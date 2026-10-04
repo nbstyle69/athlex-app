@@ -29,6 +29,7 @@ jest.mock('../context/AuthContext', () => {
 jest.mock('../context/ThemeContext', () => ({ useTheme: () => ({ theme: mockTheme }) }));
 jest.mock('../lib/sentry', () => ({ captureError: jest.fn() }));
 jest.mock('../components/glass/GlassBackground', () => () => null);
+jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('../lib/supabase', () => {
   function from(table: string) {
     const q: Record<string, unknown> = {};
