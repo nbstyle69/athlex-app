@@ -561,6 +561,8 @@ function scoreNotes(wod: AnyWod, s: Pick<ScoreSubmission, 'category' | 'notes'>)
 export interface PerformedSet {
   reps: number;
   load_kg: number;
+  /** Série ajoutée au-delà de la prescription (exercice au poids du corps, en reps). */
+  added?: boolean;
 }
 
 /** Séries réalisées par exercice, dans l'ordre de la séance (`exercise_id` = ligne du bloc). */
@@ -635,6 +637,18 @@ export async function submitMuscuScore(
   logMovementReps(user.id, performedMovementEntries(s.performed), 'wod', s.wodId)
     .catch((e) => captureError(e, { action: 'logMovementReps' }));
   return tonnage;
+}
+
+/**
+ * Première validation d'une séance au poids du corps seule (aucune série chargée) :
+ * même crédit qu'une séance chargée (score envoyé au compteur, série de jours,
+ * rappel du jour), sans ligne de score (le tonnage n'existe pas) ni rep de badge
+ * (aucun movement_logs).
+ */
+export function creditMuscuSessionWithoutLoad(user: Pick<User, 'id'>, boxId: string | null | undefined): void {
+  incrementCounter(user.id, 'total_scores_submitted', 1, boxId ?? undefined)
+    .catch((e) => captureError(e, { action: 'incrementScores' }));
+  cancelTodayScoreReminder().catch((e) => captureError(e, { action: 'cancelScoreReminder' }));
 }
 
 /**

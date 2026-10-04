@@ -40,8 +40,8 @@ const U = 'user-1';
 const session = (source_id: string, status: string, planned_sets: number): Row => ({
   user_id: U, source_type: 'whiteboard', source_id, status, planned_sets,
 });
-const set = (source_id: string, reps: number | null, load_kg: number | null): Row => ({
-  user_id: U, source_type: 'whiteboard', source_id, reps, load_kg,
+const set = (source_id: string, reps: number | null, load_kg: number | null, prescribed_load_kg: number | null = 100): Row => ({
+  user_id: U, source_type: 'whiteboard', source_id, reps, load_kg, prescribed_load_kg,
 });
 const draft = (setIndex: number, reps: string, loadKg: string, prescribedReps = 7, prescribedLoadKg: number | null = 100): StrengthSetDraft => ({
   entryIndex: 0, setIndex, name: 'Back Squat', reps, loadKg, prescribedReps, prescribedLoadKg,
@@ -59,6 +59,8 @@ describe('cartes de Ma Box : états des séances de la semaine', () => {
       { ...session('w-other', 'draft', 2), user_id: 'autre' }];
     mockDb.strength_set_logs = [
       set('w-draft', 5, 100), set('w-draft', 5, 102.5), set('w-draft', 5, null), set('w-draft', null, 80),
+      // G3 : série sans charge d'une ligne sans charge prévue (gymnastique) : elle compte.
+      set('w-draft', 8, null, null),
       set('w-done', 3, 120), set('w-done', 3, 120), set('w-done', 3, 125),
     ];
   });
@@ -66,7 +68,7 @@ describe('cartes de Ma Box : états des séances de la semaine', () => {
   it('brouillon « n / N » (séries valides sur séries prévues), validée, sans séance : rien', async () => {
     const r = await fetchStrengthSummaries(U, 'whiteboard', ['w-draft', 'w-done', 'w-none', 'w-other']);
     expect(r).toEqual({
-      'w-draft': { status: 'draft', done: 2, total: 5 },
+      'w-draft': { status: 'draft', done: 3, total: 5 },
       'w-done': { status: 'validated', done: 3, total: 3 },
     });
   });
@@ -118,9 +120,10 @@ describe('« Modifier mes charges »', () => {
   const src = fs.readFileSync(path.join(__dirname, '../screens/whiteboard/WODDetailScreen.tsx'), 'utf8');
 
   it('le bloc s’affiche sur une séance validée et ouvre la saisie pré-remplie de ses charges', () => {
-    expect(src).toMatch(/\{isStrengthSession && strengthValidated && \(\s*<View[^>]*>\s*<StrengthMyLoadsCard\s+drafts=\{strengthDrafts\}/);
-    const block = src.slice(src.indexOf('<StrengthMyLoadsCard'), src.indexOf('<StrengthMyLoadsCard') + 700);
-    expect(block).toMatch(/variant="outline"\s*label=\{i18n\.t\('strengthSession\.editLoads'\)\}\s*onPress=\{openEditModal\}/);
+    expect(src).toMatch(/\{isStrengthSession && strengthValidated && \(\s*<View[^>]*>[\s\S]{0,600}?<StrengthMyLoadsCard\s+drafts=\{strengthDrafts\}/);
+    const block = src.slice(src.indexOf('<StrengthMyLoadsCard'), src.indexOf('<StrengthMyLoadsCard') + 900);
+    // G3 : « Modifier mes séries » quand la séance a des lignes en reps seules.
+    expect(block).toMatch(/variant="outline"\s*label=\{i18n\.t\(strengthDrafts\.some\(isRepsOnly\) \? 'strengthSession\.editSets' : 'strengthSession\.editLoads'\)\}\s*onPress=\{openEditModal\}/);
     // La saisie d'une séance serveur garde la grille relue du serveur : pas de
     // retour à la prescription à l'ouverture.
     expect(src).toMatch(/const prefillStrengthLoads = useCallback\(\(\) => \{\s*if \(isStrengthSession\) return;/);

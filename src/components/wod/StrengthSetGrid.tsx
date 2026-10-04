@@ -15,11 +15,12 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Plus, Trash2 } from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import {
-  StrengthCardSummary, StrengthSetDraft, normalizeDecimalInput, normalizeRepsInput, savedAgo, setRanks,
-  strengthSetDeviation, strengthTonnage, validStrengthSets,
+  StrengthCardSummary, StrengthSetDraft, blockRepsTotal, computedTotalReps, isRepsOnly, normalizeDecimalInput,
+  normalizeRepsInput, savedAgo, setRanks, strengthSetDeviation, strengthTonnage, validStrengthSets,
 } from '../../services/strengthSets';
 import { AxCard, AxStatusDot, AxTextField } from '../ax';
 import { axSpacing, axTypography } from '../../theme/axTokens';
@@ -32,9 +33,16 @@ interface Props {
   gymRecordFor?: (name: string) => number | null;
   /** Lien « Renseigner mon record » quand le mouvement n'en a pas. */
   onSetGymRecord?: () => void;
+  /** « Ajouter une série » sous un mouvement en reps seules (bloc `entryIndex`). */
+  onAddSet?: (entryIndex: number) => void;
+  /** Corbeille d'une série ajoutée (index dans `drafts`). */
+  onRemoveSet?: (index: number) => void;
 }
 
-export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetGymRecord }: Props) {
+/** « 9 reps », « 1 rep ». */
+export const repsText = (n: number) => i18n.t('strengthSession.repsCount', { count: n });
+
+export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetGymRecord, onAddSet, onRemoveSet }: Props) {
   const { theme } = useTheme();
   const S = createStyles(theme);
   if (drafts.length === 0) return null;
@@ -56,6 +64,9 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
           (d.prescribedLoadKg != null && d.loadKg.trim() !== String(d.prescribedLoadKg));
         const pct = d.prescribedPctOfMax ?? null;
         const record = pct != null ? gymRecordFor?.(d.name) ?? null : null;
+        const repsOnly = isRepsOnly(d);
+        const lastOfBlock = i === drafts.length - 1 || drafts[i + 1].entryIndex !== d.entryIndex;
+        const dev = strengthSetDeviation(d);
         return (
           <View key={`${d.entryIndex}-${d.setIndex}`}>
             {first && <Text style={[S.movement, pct != null && S.movementWithPct]}>{d.name}</Text>}
@@ -79,8 +90,8 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
               </View>
             )}
             <View style={S.row}>
-              <Text style={S.setLabel}>Série {ranks[i]}</Text>
-              <View style={S.input}>
+              <Text style={S.setLabel}>{i18n.t('strengthSession.repsSetLine', { index: ranks[i] })}</Text>
+              <View style={repsOnly ? S.repsInput : S.input}>
                 <AxTextField
                   compact
                   placeholder="reps"
@@ -90,28 +101,93 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
                   keyboardType="number-pad"
                 />
               </View>
-              <Text style={S.times}>×</Text>
-              <View style={S.input}>
-                <AxTextField
-                  compact
-                  placeholder="kg"
-                  value={d.loadKg}
-                  onChangeText={txt => onChange(i, { loadKg: normalizeDecimalInput(txt) })}
-                  testID={`strength-kg-${i}`}
-                  keyboardType="decimal-pad"
-                />
-              </View>
-              <Text style={[S.prescribed, deviates && S.prescribedDeviates]}>
-                {d.prescribedLoadKg != null
-                  ? `prévu ${d.prescribedReps} × ${d.prescribedLoadKg}`
-                  : pct != null && d.prescribedReps < 1
-                    ? i18n.t('strengthSession.plannedPctOfMax', { pct })
-                    : `prévu ${d.prescribedReps} reps`}
-              </Text>
+              {repsOnly ? (
+                <>
+                  {/* Figma 501:514 : pas de champ kg, « reps » à côté du champ. */}
+                  <Text style={S.repsUnit}>{i18n.t('strengthSession.repsUnit')}</Text>
+                  <View style={S.spacer} />
+                  {d.isAdded ? (
+                    <>
+                      <Text style={S.added} testID={`strength-added-${i}`}>{i18n.t('strengthSession.addedSet')}</Text>
+                      {onRemoveSet && (
+                        <TouchableOpacity
+                          onPress={() => onRemoveSet(i)}
+                          accessibilityRole="button"
+                          accessibilityLabel={i18n.t('strengthSession.removeSetA11y', { index: ranks[i] })}
+                          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                          testID={`strength-remove-${i}`}
+                        >
+                          <Trash2 size={16} color={theme.ax.textMuted} />
+                        </TouchableOpacity>
+                      )}
+                    </>
+                  ) : (
+                    <Text style={[S.repsPrescribed, dev.reps && S.prescribedDeviates]} numberOfLines={1}>
+                      {dev.reps
+                        ? i18n.t('strengthSession.deviationReps', dev.reps)
+                        : d.prescribedReps >= 1
+                          ? i18n.t('strengthSession.plannedReps', { count: d.prescribedReps })
+                          : pct != null ? i18n.t('strengthSession.plannedPctOfMax', { pct }) : ''}
+                    </Text>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Text style={S.times}>×</Text>
+                  <View style={S.input}>
+                    <AxTextField
+                      compact
+                      placeholder="kg"
+                      value={d.loadKg}
+                      onChangeText={txt => onChange(i, { loadKg: normalizeDecimalInput(txt) })}
+                      testID={`strength-kg-${i}`}
+                      keyboardType="decimal-pad"
+                    />
+                  </View>
+                  <Text style={[S.prescribed, deviates && S.prescribedDeviates]}>
+                    {d.prescribedLoadKg != null
+                      ? `prévu ${d.prescribedReps} × ${d.prescribedLoadKg}`
+                      : pct != null && d.prescribedReps < 1
+                        ? i18n.t('strengthSession.plannedPctOfMax', { pct })
+                        : `prévu ${d.prescribedReps} reps`}
+                  </Text>
+                </>
+              )}
             </View>
+            {lastOfBlock && repsOnly && (
+              <>
+                {onAddSet && (
+                  <TouchableOpacity
+                    style={S.addSet}
+                    onPress={() => onAddSet(d.entryIndex)}
+                    accessibilityRole="button"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    testID={`strength-add-set-${d.entryIndex}`}
+                  >
+                    <Plus size={14} color={theme.ax.accentText} />
+                    <Text style={S.addSetText}>{i18n.t('strengthSession.addSet')}</Text>
+                  </TouchableOpacity>
+                )}
+                <View style={S.totalRow} testID={`strength-block-total-${d.entryIndex}`}>
+                  <Text style={S.totalLabel}>{i18n.t('strengthSession.blockTotal', { movement: d.name })}</Text>
+                  <Text style={S.totalValue}>{repsText(blockRepsTotal(drafts, d.entryIndex))}</Text>
+                </View>
+              </>
+            )}
           </View>
         );
       })}
+      {drafts.some(isRepsOnly) && (
+        <>
+          <View style={S.separator} />
+          <View style={S.scoreRow} testID="strength-total-reps">
+            <Text style={S.scoreLabel}>{i18n.t('strengthSession.totalRepsScore')}</Text>
+            <Text style={S.scoreValue} testID="strength-total-reps-value">
+              {i18n.t('strengthSession.totalRepsComputed', { reps: repsText(computedTotalReps(drafts) ?? 0) })}
+            </Text>
+          </View>
+        </>
+      )}
     </View>
   );
 }
@@ -184,8 +260,11 @@ export function StrengthMaxLoadRow({ maxLoadKg }: { maxLoadKg: number | null }) 
 }
 
 /**
- * « Mes charges » d'une séance validée : les séries enregistrées (pas la
- * prescription), l'écart à la prescription, tonnage et charge max.
+ * « Mes charges » / « Mes séries » d'une séance validée : les séries
+ * enregistrées (pas la prescription), l'écart à la prescription, tonnage et
+ * charge max des séries chargées ; pour les lignes en reps seules (Figma
+ * 501:604 / 501:738), les reps, « ajoutée », un total par mouvement, puis
+ * « Reps totales » après un séparateur.
  */
 export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
   drafts: StrengthSetDraft[];
@@ -196,12 +275,52 @@ export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
   const ranks = setRanks(drafts);
   const sets = validStrengthSets(drafts);
   if (sets.length === 0) return null;
+  const loaded = sets.filter(d => !isRepsOnly(d));
+  const totalReps = computedTotalReps(sets);
   return (
     <AxCard testID="strength-my-loads">
-      <Text style={[axTypography.overline, { color: c.textMuted }]}>{i18n.t('strengthSession.myLoadsTitle')}</Text>
+      <Text style={[axTypography.overline, { color: c.textMuted }]}>
+        {i18n.t(totalReps != null ? 'strengthSession.mySetsTitle' : 'strengthSession.myLoadsTitle')}
+      </Text>
       {sets.map((d, i) => {
         const first = i === 0 || sets[i - 1].entryIndex !== d.entryIndex;
+        const last = i === sets.length - 1 || sets[i + 1].entryIndex !== d.entryIndex;
         const dev = strengthSetDeviation(d);
+        const rank = ranks[drafts.indexOf(d)];
+        if (isRepsOnly(d)) {
+          const pct = d.prescribedPctOfMax ?? null;
+          return (
+            <View key={`${d.entryIndex}-${d.setIndex}`} style={axStyles.repsBlock} testID={`strength-my-loads-set-${i}`}>
+              {first && <Text style={[axTypography.label, { color: c.text }]}>{d.name}</Text>}
+              <View style={axStyles.repsLine}>
+                <Text style={[axStyles.repsLabel, { color: c.textMuted }]}>{i18n.t('strengthSession.repsSetLine', { index: rank })}</Text>
+                <Text style={[axStyles.repsValue, { color: c.text }]}>{repsText(Number(d.reps))}</Text>
+                <View style={axStyles.spacer} />
+                <Text
+                  style={[axTypography.caption, { color: dev.reps ? c.accentText : c.textMuted }]}
+                  numberOfLines={1}
+                  testID={`strength-my-loads-note-${i}`}
+                >
+                  {d.isAdded
+                    ? i18n.t('strengthSession.addedSet')
+                    : dev.reps
+                      ? i18n.t('strengthSession.deviationReps', dev.reps)
+                      : d.prescribedReps >= 1
+                        ? i18n.t('strengthSession.plannedShort', { count: d.prescribedReps })
+                        : pct != null ? i18n.t('strengthSession.plannedPctOfMax', { pct }) : ''}
+                </Text>
+              </View>
+              {last && (
+                <View style={axStyles.totalLine} testID={`strength-my-loads-total-${d.entryIndex}`}>
+                  <Text style={[axTypography.bodySmall, { color: c.textMuted, flexShrink: 1 }]}>
+                    {i18n.t('strengthSession.blockTotal', { movement: d.name })}
+                  </Text>
+                  <Text style={[axTypography.label, { color: c.text }]}>{repsText(blockRepsTotal(sets, d.entryIndex))}</Text>
+                </View>
+              )}
+            </View>
+          );
+        }
         const gaps = [
           dev.reps && i18n.t('strengthSession.deviationReps', { done: dev.reps.done, planned: dev.reps.planned }),
           dev.loadKg && i18n.t('strengthSession.deviationLoad', { done: fmtKg(dev.loadKg.done), planned: fmtKg(dev.loadKg.planned) }),
@@ -211,7 +330,7 @@ export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
             {first && <Text style={[axTypography.label, { color: c.text }]}>{d.name}</Text>}
             <View style={axStyles.setLine}>
               <Text style={[axTypography.bodySmall, { color: c.text }]}>
-                {i18n.t('strengthSession.setLine', { index: ranks[drafts.indexOf(d)], reps: d.reps, kg: d.loadKg })}
+                {i18n.t('strengthSession.setLine', { index: rank, reps: d.reps, kg: d.loadKg })}
               </Text>
               {gaps ? (
                 <Text style={[axTypography.labelSmall, { color: c.accentText }]} testID={`strength-my-loads-gap-${i}`}>{gaps}</Text>
@@ -220,19 +339,52 @@ export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
           </View>
         );
       })}
-      <View style={axStyles.totals}>
-        <View>
-          <Text style={[axTypography.overlineSmall, { color: c.textMuted }]}>{i18n.t('strengthSession.tonnageLabel')}</Text>
-          <Text style={[axTypography.numberM, { color: c.text }]} testID="strength-my-loads-tonnage">{`${fmtKg(strengthTonnage(sets))} kg`}</Text>
+      {loaded.length > 0 && (
+        <View style={axStyles.totals}>
+          <View>
+            <Text style={[axTypography.overlineSmall, { color: c.textMuted }]}>{i18n.t('strengthSession.tonnageLabel')}</Text>
+            <Text style={[axTypography.numberM, { color: c.text }]} testID="strength-my-loads-tonnage">{`${fmtKg(strengthTonnage(sets))} kg`}</Text>
+          </View>
+          <View>
+            <Text style={[axTypography.overlineSmall, { color: c.textMuted }]}>{i18n.t('strengthSession.maxLoadShort')}</Text>
+            <Text style={[axTypography.numberM, { color: c.text }]} testID="strength-my-loads-max">
+              {maxLoadKg == null ? '—' : `${fmtKg(maxLoadKg)} kg`}
+            </Text>
+          </View>
         </View>
-        <View>
-          <Text style={[axTypography.overlineSmall, { color: c.textMuted }]}>{i18n.t('strengthSession.maxLoadShort')}</Text>
-          <Text style={[axTypography.numberM, { color: c.text }]} testID="strength-my-loads-max">
-            {maxLoadKg == null ? '—' : `${fmtKg(maxLoadKg)} kg`}
-          </Text>
-        </View>
-      </View>
+      )}
+      {totalReps != null && (
+        <>
+          <View style={[axStyles.separator, { backgroundColor: c.border }]} />
+          <View style={axStyles.totalLine} testID="strength-my-loads-total-reps">
+            <Text style={[axTypography.bodySmall, { color: c.text }]}>{i18n.t('strengthSession.totalRepsLabel')}</Text>
+            <Text style={[axTypography.label, { color: c.text }]} testID="strength-my-loads-total-reps-value">{repsText(totalReps)}</Text>
+          </View>
+        </>
+      )}
     </AxCard>
+  );
+}
+
+/**
+ * Séance validée sans charge (Figma 501:609) : pastille « Validée le … » et
+ * « Score N reps » (reps totales, informatif ; aucun score de classement).
+ */
+export function StrengthRepsScoreStatus({ validatedAt, totalReps }: { validatedAt: string | null; totalReps: number }) {
+  const { theme } = useTheme();
+  const date = validatedAt
+    ? new Date(validatedAt).toLocaleDateString(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'short' })
+    : null;
+  return (
+    <View style={axStyles.scoreStatus} testID="strength-reps-score">
+      <AxStatusDot
+        tone="active"
+        label={date ? i18n.t('strengthSession.validatedOn', { date }) : i18n.t('strengthSession.cardValidated')}
+      />
+      <Text style={[axTypography.caption, { color: theme.ax.textMuted }]} testID="strength-reps-score-value">
+        {i18n.t('strengthSession.scoreReps', { reps: repsText(totalReps) })}
+      </Text>
+    </View>
   );
 }
 
@@ -260,6 +412,15 @@ const axStyles = StyleSheet.create({
   maxLoad: { gap: axSpacing.xs, marginTop: axSpacing.lg },
   setLine: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: axSpacing.sm },
   totals: { flexDirection: 'row', gap: axSpacing['2xl'] },
+  // Figma 501:613 : 10 px entre chaque ligne (nom, séries, total).
+  repsBlock: { gap: 10 },
+  repsLine: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  repsLabel: { fontFamily: axTypography.caption.fontFamily, fontSize: 13, width: 58 },
+  repsValue: { fontFamily: axTypography.label.fontFamily, fontSize: 15 },
+  spacer: { flex: 1, minWidth: 4 },
+  totalLine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.sm },
+  separator: { height: 1, alignSelf: 'stretch' },
+  scoreStatus: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: axSpacing.sm },
 });
 
 function createStyles(theme: AppTheme) {
@@ -273,6 +434,21 @@ function createStyles(theme: AppTheme) {
     pctBlock: { gap: 4, marginTop: 4, marginBottom: axSpacing.sm },
     pctLine: { ...axTypography.caption, color: c.textMuted },
     pctLink: { ...axTypography.caption, color: c.accentText },
+    // Figma 501:514 / 501:648 : reps seules, ajout, totaux.
+    repsInput: { width: 74 },
+    repsUnit: { fontFamily: axTypography.caption.fontFamily, fontSize: 14, color: c.textMuted },
+    spacer: { flex: 1, minWidth: 4 },
+    repsPrescribed: { ...axTypography.caption, color: c.textMuted, flexShrink: 1, textAlign: 'right' },
+    added: { ...axTypography.caption, color: c.textMuted },
+    addSet: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 2, alignSelf: 'flex-start', marginBottom: axSpacing.sm },
+    addSetText: { ...axTypography.caption, color: c.accentText },
+    totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.sm, marginBottom: axSpacing.xs },
+    totalLabel: { ...axTypography.bodySmall, color: c.textMuted, flexShrink: 1 },
+    totalValue: { ...axTypography.label, color: c.text },
+    separator: { height: 1, backgroundColor: c.border, marginVertical: axSpacing.md },
+    scoreRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.sm },
+    scoreLabel: { ...axTypography.bodySmall, color: c.text, flexShrink: 1 },
+    scoreValue: { ...axTypography.label, color: c.text },
     row: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
     setLabel: { ...axTypography.caption, color: c.textMuted, width: 62 },
     input: { flex: 1, minWidth: 52 },

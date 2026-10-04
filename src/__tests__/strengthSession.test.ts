@@ -32,6 +32,9 @@ jest.mock('../lib/supabase', () => {
     if (rows.some(r => !(Number(r.set_index) >= 1 && Number(r.set_index) <= 50))) {
       return pgError('23514', 'new row for relation "strength_set_logs" violates check constraint "strength_set_logs_set_index_check"');
     }
+    if (rows.some(r => r.is_added === true && r.prescribed_reps != null)) {
+      return pgError('23514', 'new row for relation "strength_set_logs" violates check constraint "strength_set_logs_ajoutee_sans_prevu"');
+    }
     if (rows.some(r => r.prescribed_reps != null && !(Number(r.prescribed_reps) >= 1))) {
       return pgError('23514', 'new row for relation "strength_set_logs" violates check constraint "strength_set_logs_prescribed_reps_check"');
     }
@@ -101,14 +104,18 @@ jest.mock('../lib/supabase', () => {
         let s = mockDb.strength_sessions.find(r => r.source_id === k.source_id && r.source_type === k.source_type);
         if (!s) { s = { id: `id-${++mockSeq}`, ...k, status: 'draft', first_validated_at: null }; mockDb.strength_sessions.push(s); }
         const first = s.first_validated_at == null;
-        const max = Math.max(...sets.map(x => Number(x.load_kg)));
+        // Règles de 20270145 : charge max des séries chargées, reps totales des séries sans charge.
+        const loads = sets.filter(x => x.load_kg != null).map(x => Number(x.load_kg));
+        const max = loads.length ? Math.max(...loads) : null;
+        const unloaded = sets.filter(x => x.load_kg == null).map(x => Number(x.reps));
+        const total = unloaded.length ? unloaded.reduce((p, q) => p + q, 0) : null;
         mockDb.strength_set_logs = mockDb.strength_set_logs.filter(r => r.source_id !== k.source_id)
           .concat(sets.map(x => ({ id: `id-${++mockSeq}`, ...k, ...x })));
-        Object.assign(s, { status: 'validated', max_load_kg: max, first_validated_at: s.first_validated_at ?? 'T1', validated_at: 'T', updated_at: new Date().toISOString() });
-        if (a.p_source_type === 'whiteboard') {
+        Object.assign(s, { status: 'validated', max_load_kg: max, total_reps: total, first_validated_at: s.first_validated_at ?? 'T1', validated_at: 'T', updated_at: new Date().toISOString() });
+        if (a.p_source_type === 'whiteboard' && max != null) {
           mockDb.wod_scores = [{ wod_id: k.source_id, score_type: 'weight', score_value: max }];
         }
-        return { data: { premiere_validation: first, max_load_kg: max, series_valides: sets.length, records: [] }, error: null };
+        return { data: { premiere_validation: first, max_load_kg: max, total_reps: total, series_valides: sets.length, records: [] }, error: null };
       }),
     },
   };
@@ -127,6 +134,7 @@ import {
   parseDecimal, saveStrengthDraft, savedAgo, strengthProgress, strengthRecordsFor,
   submitStrengthValidation, validationErrorCode, SaveStrengthDraftParams, StrengthSourceKey,
   gridFromServer, isNetworkError, logStrengthSets, setRanks,
+  addStrengthSet, removeStrengthSet, computedTotalReps, blockRepsTotal, validStrengthSets, isRepsOnly,
 } from '../services/strengthSets';
 
 const KEY: StrengthSourceKey = { userId: 'u1', sourceType: 'whiteboard', sourceId: 'wod-1' };
@@ -285,7 +293,8 @@ describe('écran Whiteboard (lecture du source)', () => {
 
   it('compteurs et crédit ne partent que depuis le rappel de première validation', () => {
     const v = fn('validateStrength');
-    expect(v).toMatch(/submitStrengthValidation\([\s\S]*?async r => \{\s*first = true;\s*await creditScoreSubmission\(r\.maxLoadKg, 'weight'\);/);
+    // G3 bis : même crédit pour une séance de gymnastique, sans reps de badge (badgeReps faux sans charge).
+    expect(v).toMatch(/submitStrengthValidation\([\s\S]*?async r => \{\s*first = true;[\s\S]{0,300}?await creditScoreSubmission\(r\.maxLoadKg \?\? 0, 'weight', \{ badgeReps: r\.maxLoadKg != null \}\);/);
     expect(v.match(/creditScoreSubmission\(/g)).toHaveLength(1);
     expect(v).not.toMatch(/incrementCounter|logMovementReps|recordStrengthPRs/);
     expect(v).toContain('refreshScoresAfterSubmit(first)');
@@ -294,10 +303,11 @@ describe('écran Whiteboard (lecture du source)', () => {
   });
 
   it('pas de champ POIDS pour une séance de musculation : charge max calculée', () => {
-    expect(src).toMatch(/\{isStrengthSession \? \(\s*<StrengthMaxLoadRow maxLoadKg=\{computedMaxLoad\(strengthDrafts\)\} \/>/);
+    // G3 : la charge max ne s'affiche que si une ligne chargée existe.
+    expect(src).toMatch(/\{isStrengthSession \? \(\s*strengthDrafts\.some\(d => !isRepsOnly\(d\)\) \? <StrengthMaxLoadRow maxLoadKg=\{computedMaxLoad\(strengthDrafts\)\} \/> : null/);
     expect(src).toMatch(/variant="accent"[\s\S]{0,120}strengthSession\.validate/);
     expect(src).toMatch(/variant="outline"\s*label=\{i18n\.t\('strengthSession\.saveLater'\)\}/);
-    expect(src).toMatch(/variant="outline"\s*label=\{i18n\.t\('strengthSession\.editLoads'\)\}/);
+    expect(src).toMatch(/variant="outline"\s*label=\{i18n\.t\(strengthDrafts\.some\(isRepsOnly\) \? 'strengthSession\.editSets' : 'strengthSession\.editLoads'\)\}/);
   });
 
   it('brouillon enregistré ~0,8 s après la dernière frappe', () => {
@@ -518,5 +528,149 @@ describe('G2 : load_required, une série sans charge sur une ligne chargée ne v
     const d = edit(ligne('Back Squat — 2 × 3 @ 80 %1RM'), 0, { loadKg: '100' });
     await validate(edit(d, 1, { loadKg: '100' }));
     expect((mockDb.rpcCalls[0].p_sets as Row[]).map(s => s.load_required)).toEqual([true, true]);
+  });
+});
+
+describe('G3 : lignes en reps seules, séries ajoutées, totaux', () => {
+  // Ring Muscle-up (record 20 → 3 reps) et Toes to Bar (sans record), puis un Back Squat chargé.
+  const gym = () => buildStrengthGrid(
+    ['Ring Muscle-up — 3 × 15 % du max', 'Toes to Bar — 2 × 60 % du max', 'Back Squat — 2 × 5 @ 100 kg'].map(l => parseStrengthLine(l)!),
+    () => null,
+    n => (n === 'Ring Muscle-up' ? 20 : null),
+  );
+  const saisie = () => {
+    let d = gym();
+    d = edit(d, 2, { reps: '2' });          // 3, 3, 2 : écart sur la 3e
+    d = edit(d, 3, { reps: '12' });         // Toes to Bar : 12, la 2e vide
+    return d;
+  };
+
+  it('reps seules sur « % du max » et sans charge ; la ligne chargée garde sa charge', () => {
+    expect(gym().map(d => isRepsOnly(d))).toEqual([true, true, true, true, true, false, false]);
+  });
+
+  it('une ligne en secondes ou en mètres garde son champ kg (ses « reps » ne sont pas des reps)', () => {
+    const g = buildStrengthGrid(['Gainage — 2 × 30 s', 'Farmer Carry — 2 × 40 m', 'Pull-ups — 2 × 30 s'].map(l => parseStrengthLine(l)!), () => null);
+    expect(g.map(d => isRepsOnly(d))).toEqual([false, false, false, false, false, false]);
+  });
+
+  it('une série en reps seules vaut sans charge ; vide, elle ne compte pas', () => {
+    const v = validStrengthSets(saisie());
+    expect(v.map(d => `${d.name}#${d.setIndex}`)).toEqual([
+      'Ring Muscle-up#1', 'Ring Muscle-up#2', 'Ring Muscle-up#3', 'Toes to Bar#1', 'Back Squat#1', 'Back Squat#2',
+    ]);
+  });
+
+  it('totaux par mouvement et reps totales (séries chargées exclues)', () => {
+    const d = saisie();
+    expect(blockRepsTotal(d, 0)).toBe(8);
+    expect(blockRepsTotal(d, 1)).toBe(12);
+    expect(computedTotalReps(d)).toBe(20);
+    expect(computedMaxLoad(d)).toBe(100);
+  });
+
+  it('ajouter une série : vide, en fin de bloc, sans reps prévues, numérotée après le mouvement', () => {
+    const d = addStrengthSet(saisie(), 0);
+    expect(d).toHaveLength(8);
+    expect(d[3]).toMatchObject({ entryIndex: 0, setIndex: 4, name: 'Ring Muscle-up', reps: '', isAdded: true, prescribedReps: 0, loadRequired: false });
+    expect(strengthProgress(d)).toEqual({ done: 6, total: 8 });
+    const plein = edit(d, 3, { reps: '1' });
+    expect(blockRepsTotal(plein, 0)).toBe(9);
+    expect(computedTotalReps(plein)).toBe(21);
+  });
+
+  it('pas d’ajout sous une ligne chargée', () => {
+    const d = saisie();
+    expect(addStrengthSet(d, 2)).toBe(d);
+  });
+
+  it('retirer : seulement une série ajoutée ; une série prescrite ne se retire pas', () => {
+    const d = addStrengthSet(saisie(), 0);
+    expect(removeStrengthSet(d, 0)).toBe(d);
+    expect(removeStrengthSet(d, 3).map(x => x.isAdded ?? false)).toEqual(Array(7).fill(false));
+  });
+
+  it('is_added et load_required envoyés ; série ajoutée sans reps prévues ; reps seules sans charge', async () => {
+    const d = edit(addStrengthSet(saisie(), 0), 3, { reps: '1' });
+    const pleines = edit(edit(d, 6, { loadKg: '100' }), 7, { loadKg: '100' });
+    await validate(pleines);
+    const p = mockDb.rpcCalls[0].p_sets as Row[];
+    expect(p.map(x => [x.movement, x.set_index, x.load_kg, x.prescribed_reps, x.is_added, x.load_required])).toEqual([
+      ['Ring Muscle-up', 1, null, 3, false, false],
+      ['Ring Muscle-up', 2, null, 3, false, false],
+      ['Ring Muscle-up', 3, null, 3, false, false],
+      ['Ring Muscle-up', 4, null, null, true, false],
+      ['Toes to Bar', 1, null, null, false, false],
+      ['Back Squat', 1, 100, 5, false, true],
+      ['Back Squat', 2, 100, 5, false, true],
+    ]);
+  });
+
+  it('séance de gymnastique seule : validée, reps totales, aucun score (le crédit de compteurs part de l’écran)', async () => {
+    const seule = buildStrengthGrid([parseStrengthLine('Toes to Bar — 2 × 60 % du max')!], () => null, () => 15);
+    const onFirst = jest.fn();
+    const r = await validate(seule, onFirst);
+    expect(r).toMatchObject({ premiereValidation: true, maxLoadKg: null, totalReps: 18 });
+    expect(mockDb.wod_scores).toEqual([]);
+    expect(onFirst).toHaveBeenCalledWith(expect.objectContaining({ maxLoadKg: null }));
+    expect(incrementCounter).not.toHaveBeenCalled();
+    expect(logMovementReps).not.toHaveBeenCalled();
+  });
+
+  it('séance mixte : score en charge inchangé, reps totales en plus', async () => {
+    const d = edit(edit(saisie(), 5, { loadKg: '100' }), 6, { loadKg: '102.5' });
+    const r = await validate(d);
+    expect(r).toMatchObject({ maxLoadKg: 102.5, totalReps: 20 });
+    expect(mockDb.wod_scores).toEqual([{ wod_id: 'wod-1', score_type: 'weight', score_value: 102.5 }]);
+  });
+
+  it('brouillon : séries ajoutées et sans charge gardées, relues dans leur bloc (autre téléphone)', async () => {
+    const d = edit(addStrengthSet(saisie(), 0), 3, { reps: '1' });
+    expect((await saveStrengthDraft(draftParams(d))).status).toBe('saved');
+    const stored = mockDb.strength_set_logs.find(r => r.movement === 'Ring Muscle-up' && r.set_index === 4)!;
+    expect(stored).toMatchObject({ reps: 1, load_kg: null, prescribed_reps: null, is_added: true });
+    await AsyncStorage.clear();
+    const relue = gridFromServer(gym(), mockDb.strength_set_logs.map(r => ({ ...r, is_added: r.is_added === true })) as never);
+    expect(relue.map(x => [x.name, x.setIndex, x.reps, x.isAdded ?? false])).toEqual([
+      ['Ring Muscle-up', 1, '3', false], ['Ring Muscle-up', 2, '3', false], ['Ring Muscle-up', 3, '2', false],
+      ['Ring Muscle-up', 4, '1', true],
+      ['Toes to Bar', 1, '12', false], ['Toes to Bar', 2, '', false],
+      ['Back Squat', 1, '5', false], ['Back Squat', 2, '5', false],
+    ]);
+    expect(isRepsOnly(relue[3])).toBe(true);
+  });
+});
+
+describe('G3 : grille d’avant G2 (sans loadRequired)', () => {
+  it('garde son champ kg : une série sans charge n’y vaut rien', () => {
+    const ancienne: StrengthSetDraft = {
+      entryIndex: 0, setIndex: 1, name: 'Back Squat', reps: '5', loadKg: '', prescribedReps: 5, prescribedLoadKg: null,
+    };
+    expect(isRepsOnly(ancienne)).toBe(false);
+    expect(validStrengthSets([ancienne])).toEqual([]);
+  });
+});
+
+describe('G3 bis : reps seules réservées à la gymnastique', () => {
+  const ligne = (l: string) => buildStrengthGrid([parseStrengthLine(l)!], () => null, () => null);
+
+  it('« Push Press — 2 × 5 » sans charge : reps × kg, charge exigée (l’athlète choisit sa charge)', () => {
+    const d = ligne('Push Press — 2 × 5');
+    expect(d.map(x => [isRepsOnly(x), x.loadRequired, x.prescribedReps, x.prescribedLoadKg])).toEqual([[false, true, 5, null], [false, true, 5, null]]);
+    const vide = edit(d, 0, { loadKg: '' });
+    expect(validStrengthSets(vide)).toEqual([]);
+    expect(addStrengthSet(d, 0)).toBe(d);
+  });
+
+  it('« Ring Muscle-up — 3 × 5 » sans charge : reps seules', () => {
+    expect(ligne('Ring Muscle-up — 3 × 5').map(x => [isRepsOnly(x), x.loadRequired])).toEqual(Array(3).fill([true, false]));
+  });
+
+  it('« Pull-ups — 4 × 8 @ 10 kg » (gymnastique lestée) : reps × kg', () => {
+    expect(ligne('Pull-ups — 4 × 8 @ 10 kg').map(x => [isRepsOnly(x), x.loadRequired, x.prescribedLoadKg])).toEqual(Array(4).fill([false, true, 10]));
+  });
+
+  it('un mouvement hors des 11 (« Strict Pull-Ups — 3 × 8 ») garde reps × kg', () => {
+    expect(ligne('Strict Pull-Ups — 3 × 8').map(x => isRepsOnly(x))).toEqual([false, false, false]);
   });
 });

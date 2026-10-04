@@ -10,13 +10,13 @@
  */
 import { supabase } from '../lib/supabase';
 import type { User } from '../types';
-import type { MuscuWod } from '../../packages/wod-engine/src';
+import type { MuscuExercise, MuscuWod } from '../../packages/wod-engine/src';
 import {
   ServerSet, StrengthSetDraft, StrengthValidationResult, latestStrengthDraft, numberSetsByMovement, parseDecimal,
   submitStrengthValidation,
 } from './strengthSets';
 import {
-  MuscuResult, MuscuScoreSubmission, PerformedExercise, isMuscuWod, plannedSets, submitMuscuScore,
+  MuscuResult, MuscuScoreSubmission, PerformedExercise, PerformedSet, creditMuscuSessionWithoutLoad, isMuscuWod, plannedSets, submitMuscuScore,
   totalTonnage, updateMuscuScore,
 } from './wodGenerator';
 import type { MuscuScreenParams } from './wodGenerator';
@@ -28,6 +28,15 @@ export function initialPerformed(wod: MuscuWod): PerformedExercise[] {
 const numText = (n: number) => (n > 0 ? String(Number(n)) : '');
 
 /**
+ * Exercice en reps seules : au poids du corps et compté en reps. Pas de champ
+ * kg, « Ajouter une série », total en reps. Tout autre mode (1RM, %, RPE,
+ * lesté) garde sa charge exigée, même quand elle n'est pas connue.
+ */
+export function muscuRepsOnly(e: MuscuExercise | undefined): boolean {
+  return !!e && e.load.mode === 'bodyweight' && e.reps_unit === 'reps';
+}
+
+/**
  * Séries de la carte Séance → lignes de la grille du service (une par série),
  * numérotées pour le stockage en continu par mouvement (un exercice présent
  * deux fois ne dédouble pas la clé).
@@ -36,14 +45,17 @@ export function performedToDrafts(wod: MuscuWod, performed: readonly PerformedEx
   const exercises = wod.blocks[0].exercises;
   return numberSetsByMovement(performed.flatMap((ex, i) => {
     const planned = exercises[i] ? plannedSets(exercises[i]) : [];
+    const repsOnly = muscuRepsOnly(exercises[i]);
     return ex.sets.map((s, j) => ({
       entryIndex: i,
       setIndex: j + 1,
       name: ex.name,
       reps: numText(s.reps),
-      loadKg: numText(s.load_kg),
-      prescribedReps: planned[j]?.reps ?? 0,
-      prescribedLoadKg: planned[j] && planned[j].load_kg > 0 ? planned[j].load_kg : null,
+      loadKg: repsOnly ? '' : numText(s.load_kg),
+      prescribedReps: s.added ? 0 : planned[j]?.reps ?? 0,
+      prescribedLoadKg: !s.added && planned[j] && planned[j].load_kg > 0 ? planned[j].load_kg : null,
+      loadRequired: !repsOnly,
+      ...(s.added && repsOnly ? { isAdded: true } : {}),
     }));
   }));
 }
@@ -54,17 +66,21 @@ export function performedToDrafts(wod: MuscuWod, performed: readonly PerformedEx
  * (son rang), pas son numéro de stockage.
  */
 export function draftsToPerformed(base: readonly PerformedExercise[], drafts: readonly StrengthSetDraft[]): PerformedExercise[] {
-  return base.map((ex, i) => ({
-    ...ex,
-    sets: ex.sets.map((s, j) => {
-      const d = drafts.filter((x) => x.entryIndex === i)[j];
-      if (!d) return s;
-      return {
-        reps: Math.max(0, Math.floor(parseDecimal(d.reps) ?? 0)),
-        load_kg: Math.max(0, parseDecimal(d.loadKg) ?? 0),
-      };
-    }),
-  }));
+  const toSet = (d: StrengthSetDraft): PerformedSet => ({
+    reps: Math.max(0, Math.floor(parseDecimal(d.reps) ?? 0)),
+    load_kg: Math.max(0, parseDecimal(d.loadKg) ?? 0),
+  });
+  return base.map((ex, i) => {
+    const block = drafts.filter((x) => x.entryIndex === i);
+    return {
+      ...ex,
+      // Prescrites dans l'ordre, puis les séries ajoutées relues du serveur.
+      sets: [
+        ...ex.sets.map((s, j) => (block[j] ? toSet(block[j]) : s)),
+        ...block.slice(ex.sets.length).filter((d) => d.isAdded).map((d) => ({ ...toSet(d), added: true })),
+      ],
+    };
+  });
 }
 
 export interface MuscuValidation {
@@ -95,9 +111,15 @@ export async function validateMuscuSession(
       rx: wod.level !== 'debutant',
       previousSets,
     },
-    async () => { await submitMuscuScore(user, boxId, wod, s); },
+    // Séance sans aucune série chargée (poids du corps) : même crédit de compteurs
+    // qu'une séance chargée, sans ligne de score ni movement_logs ; le serveur
+    // garde les reps totales.
+    async (r) => {
+      if (r.maxLoadKg != null) await submitMuscuScore(user, boxId, wod, s);
+      else creditMuscuSessionWithoutLoad(user, boxId);
+    },
   );
-  if (!result.premiereValidation) await updateMuscuScore(user, wod, s);
+  if (!result.premiereValidation && result.maxLoadKg != null) await updateMuscuScore(user, wod, s);
   return { tonnage, result };
 }
 

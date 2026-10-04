@@ -10,6 +10,7 @@ import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import ShareScoreCard from '../../components/ShareScoreCard';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
@@ -28,13 +29,15 @@ import { computeCompletedMovements } from '../../utils/movementParser';
 import { annotateGymRepsInText, annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
 import {
-  applyGymRecordsToGrid, buildStrengthGrid, logStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
+  addStrengthSet, applyGymRecordsToGrid, buildStrengthGrid, isRepsOnly, logStrengthSets, removeStrengthSet,
+  validStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
   loadStrengthGrid, saveStrengthDraft, gridFromServer, fetchStrengthSession, submitStrengthValidation,
   strengthProgress, computedMaxLoad, validationErrorCode, isNetworkError,
 } from '../../services/strengthSets';
 import i18n from '../../i18n';
 import { wodTypeLabel } from '../../utils/wodTypeLabel';
 import StrengthSetGrid, {
+  StrengthRepsScoreStatus,
   StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSaveState, StrengthSessionStatus,
 } from '../../components/wod/StrengthSetGrid';
 import { AxButton, AxCard, AxChip, AxTag, AxTextField } from '../../components/ax';
@@ -94,6 +97,7 @@ export default function WODDetailScreen() {
   const c = theme.ax;
   const medalInk = [c.warning, c.textMuted, c.orange];
   const { oneRepMaxFor, gymRecordFor, reload: reloadRecords } = useMyRecords();
+  const insets = useSafeAreaInsets();
   const scrollRef = useRef<ScrollView>(null);
   const leaderboardY = useRef(0);
 
@@ -372,6 +376,16 @@ export default function WODDetailScreen() {
   saveDraftNowRef.current = saveDraftNow;
   useEffect(() => () => { if (editedAtRef.current) saveDraftNowRef.current(); }, []);
 
+  /** « Ajouter une série » / corbeille : la grille change comme sur une frappe (brouillon gardé). */
+  function onStrengthGridEdit(next: (prev: StrengthSetDraft[]) => StrengthSetDraft[]) {
+    setStrengthDrafts(next);
+    if (isStrengthSession) {
+      editedAtRef.current = new Date().toISOString();
+      strengthOriginRef.current = 'local';
+      setDraftDirtyTick(t => t + 1);
+    }
+  }
+
   function onStrengthDraftChange(index: number, patch: Partial<StrengthSetDraft>) {
     setStrengthDrafts(prev => prev.map((d, i) => (i === index ? { ...d, ...patch } : d)));
     if (isStrengthSession && !strengthValidated) {
@@ -528,7 +542,7 @@ export default function WODDetailScreen() {
    * Compteurs, streak et crédit de mouvements d'un score posé. Pour une séance de
    * musculation, n'est appelé qu'à la première validation.
    */
-  async function creditScoreSubmission(value: number, submittedType: ScoreType) {
+  async function creditScoreSubmission(value: number, submittedType: ScoreType, opts: { badgeReps?: boolean } = {}) {
     if (!wod || !user) return;
     trackScoreSubmit(wod.id, submittedType);
 
@@ -550,7 +564,7 @@ export default function WODDetailScreen() {
     cancelTodayScoreReminder().catch(e => captureError(e, { action: 'cancelScoreReminder' }));
 
     // Log movement reps for badges (parse description as movement lines)
-    if (wod.description) {
+    if (wod.description && opts.badgeReps !== false) {
       const lines = wod.description.split('\n').filter(Boolean);
       const wodFormat = wod.wod_type === 'for-time' ? 'For Time' : wod.wod_type === 'amrap' ? 'AMRAP' : wod.wod_type === 'emom' ? 'EMOM' : wod.wod_type ?? 'For Time';
       const completed = computeCompletedMovements(lines, wodFormat, value, submittedType, { gender: user.gender });
@@ -626,7 +640,10 @@ export default function WODDetailScreen() {
         previousSets: strengthServer?.sets ?? [],
       }, async r => {
         first = true;
-        await creditScoreSubmission(r.maxLoadKg, 'weight');
+        // Même crédit qu'une séance chargée (score envoyé, série de jours, compteurs),
+        // une seule fois. Séance sans aucune série chargée (gymnastique) : aucune rep
+        // de badge (aucun crédit de mouvements) ; le serveur n'écrit aucun score.
+        await creditScoreSubmission(r.maxLoadKg ?? 0, 'weight', { badgeReps: r.maxLoadKg != null });
       });
       editedAtRef.current = null;
       setDraftSaveState('idle');
@@ -880,6 +897,14 @@ export default function WODDetailScreen() {
           ) : null}
           {isStrengthSession && strengthValidated && (
             <View style={{ marginTop: 12 }}>
+              {strengthServer?.session?.maxLoadKg == null && strengthServer?.session?.totalReps != null && (
+                <View style={{ marginBottom: 12 }}>
+                  <StrengthRepsScoreStatus
+                    validatedAt={strengthServer.session.firstValidatedAt}
+                    totalReps={strengthServer.session.totalReps}
+                  />
+                </View>
+              )}
               <StrengthMyLoadsCard
                 drafts={strengthDrafts}
                 maxLoadKg={strengthServer?.session?.maxLoadKg ?? computedMaxLoad(strengthDrafts)}
@@ -888,16 +913,19 @@ export default function WODDetailScreen() {
                 <View style={{ marginTop: 12 }}>
                   <AxButton
                     variant="outline"
-                    label={i18n.t('strengthSession.editLoads')}
+                    label={i18n.t(strengthDrafts.some(isRepsOnly) ? 'strengthSession.editSets' : 'strengthSession.editLoads')}
                     onPress={openEditModal}
                     fullWidth
                     testID="strength-edit-loads"
                   />
+                  {strengthDrafts.some(isRepsOnly) && (
+                    <Text style={[S.editSetsHint]} testID="strength-edit-sets-hint">{i18n.t('strengthSession.editSetsHint')}</Text>
+                  )}
                 </View>
               )}
             </View>
           )}
-          {myScore ? null : isExpired ? (
+          {myScore || (isStrengthSession && strengthValidated) ? null : isExpired ? (
             <View style={S.expiredBanner}>
               <Clock color={c.textMuted} size={14} />
               <Text style={S.expiredText}>Soumission de score terminée (minuit passé)</Text>
@@ -1010,7 +1038,8 @@ export default function WODDetailScreen() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView contentContainerStyle={S.modalBody} keyboardShouldPersistTaps="handled">
+            {/* Zone sûre en bas : la grille s'allonge (séries ajoutées), les boutons restent au-dessus de la barre d'accueil. */}
+            <ScrollView contentContainerStyle={[S.modalBody, { paddingBottom: 20 + insets.bottom }]} keyboardShouldPersistTaps="handled" testID="score-modal-scroll">
               <Text style={S.modalWodName}>{wod.title}</Text>
 
               {/* Score type */}
@@ -1061,7 +1090,7 @@ export default function WODDetailScreen() {
               )}
 
               {isStrengthSession ? (
-                <StrengthMaxLoadRow maxLoadKg={computedMaxLoad(strengthDrafts)} />
+                strengthDrafts.some(d => !isRepsOnly(d)) ? <StrengthMaxLoadRow maxLoadKg={computedMaxLoad(strengthDrafts)} /> : null
               ) : scoreType === 'time' && dnf ? (
                 <>
                   <Text style={S.modalLabel}>NOMBRE DE RÉPÉTITIONS COMPLÉTÉES</Text>
@@ -1138,6 +1167,8 @@ export default function WODDetailScreen() {
                 onChange={onStrengthDraftChange}
                 gymRecordFor={gymRecordFor}
                 onSetGymRecord={openGymRecords}
+                onAddSet={entryIndex => onStrengthGridEdit(prev => addStrengthSet(prev, entryIndex))}
+                onRemoveSet={index => onStrengthGridEdit(prev => removeStrengthSet(prev, index))}
               />
 
               <Text style={S.modalLabel}>NIVEAU</Text>
@@ -1163,7 +1194,7 @@ export default function WODDetailScreen() {
                     label={i18n.t(strengthValidated ? 'strengthSession.saveChanges' : 'strengthSession.validate')}
                     onPress={validateStrength}
                     loading={submitting}
-                    disabled={computedMaxLoad(strengthDrafts) == null}
+                    disabled={validStrengthSets(strengthDrafts).length === 0}
                     fullWidth
                     testID="strength-validate"
                   />
@@ -1498,6 +1529,8 @@ function createStyles(theme: AppTheme) {
   myRankText: { ...axTypography.label, color: c.text },
   expiredBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.surface, borderRadius: 8, padding: 12, borderWidth: 1, borderColor: c.border },
   expiredText: { ...axTypography.bodySmall, color: c.textMuted, flex: 1 },
+  // Figma 501:647 : texte sous « Modifier mes séries ».
+  editSetsHint: { ...axTypography.caption, color: c.textMuted, marginTop: axSpacing.md },
   section: { paddingHorizontal: 16, marginTop: 20 },
   sectionTitle: { ...axTypography.overline, color: c.textMuted, marginBottom: 12 },
   leaderboard: { gap: axSpacing.sm },
