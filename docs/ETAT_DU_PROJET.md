@@ -222,7 +222,12 @@ Profil ajouté à la pile Ma Box). « Mvt — S × R @ P % » : R gagne, rien de
 Ma Box, détail, programme) : « (≈ N reps) » après le % quand la ligne porte exactement un mouvement reconnu, un seul %,
 aucune charge, aucun mouvement à 1RM, et pas de reps écrites ; sinon rien. Aucun effet sur score, crédits ni badges ;
 le champ kg reste affiché (G3). Tests `gymPercentReps.test.ts` (18 tests, 11 mutations tuées) ; captures banc web
-local 390 px sombre/clair FR/EN dans `athlex-captures/gymnastique-G1`.
+local 390 px sombre/clair FR/EN dans `athlex-captures/gymnastique-G1`. Relecture (bis) : records relus à chaque retour
+sur le détail du WOD (`useMyRecords().reload` au focus) ; un record arrivé recalcule les reps prévues des lignes
+« % du max » et ne remplit que les reps encore vides (`applyGymRecordsToGrid`) ; une grille saisie n'est plus remise
+à la prescription après l'enregistrement du brouillon (défaut existant, rendu visible par le rechargement) ;
+`logStrengthSets` envoie `prescribed_reps` NULL au lieu de 0, comme le brouillon et la validation. Tests
+`gymRecordFocus.rn.test.tsx`, `strengthSession.test.ts` (CHECK `prescribed_reps` simulé), 5 mutations tuées.
 
 **Profil → Notifications : bouton de test sans fenêtre ni jeton, écran traduit (retour du build 1.0.60, app seule, aucune
 migration ; PR non mergée, à vérifier par Nab au prochain build).** Le bouton « Tester les notifications » ouvrait une

@@ -94,7 +94,7 @@ jest.mock('../services/strengthPR', () => ({ recordStrengthPRs: jest.fn(async ()
 jest.mock('../utils/eloLevels', () => ({ syncLevelAndBadges: jest.fn(async () => []) }));
 jest.mock('../hooks/useMyOneRepMax', () => {
   const none = () => null;
-  return { useMyOneRepMax: () => none, useMyRecords: () => ({ oneRepMaxFor: none, gymRecordFor: none }) };
+  return { useMyOneRepMax: () => none, useMyRecords: () => ({ oneRepMaxFor: none, gymRecordFor: none, reload: () => {} }) };
 });
 jest.mock('../services/strengthSets', () => {
   const actual = jest.requireActual('../services/strengthSets');

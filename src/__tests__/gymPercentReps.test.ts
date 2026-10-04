@@ -7,7 +7,7 @@ import { annotateGymReps, gymPrLabel, gymRepsForPct, GymPrMovement } from '../sc
 import {
   annotateGymRepsInText, annotateStrengthLoads, formatStrengthPrescription, parseStrengthLine, serializeStrength,
 } from '../utils/strengthBlock';
-import { buildStrengthGrid } from '../services/strengthSets';
+import { applyGymRecordsToGrid, buildStrengthGrid } from '../services/strengthSets';
 import { gymRecordForMovement } from '../hooks/useMyOneRepMax';
 import { oneRepMaxForMovement, parsePersonalRecords } from '../utils/wod/movementLoadability';
 
@@ -164,5 +164,26 @@ describe('« (≈ N reps) » dans le texte des WOD', () => {
   it('n’annote que les lignes concernées', () => {
     expect(annotateGymReps('5 rounds\n70% Pull-ups\n10 Burpees', recordFor))
       .toBe('5 rounds\n70% (≈ 21 reps) Pull-ups\n10 Burpees');
+  });
+});
+
+describe('record arrivé après l’ouverture de la grille', () => {
+  const entries = [parseStrengthLine('Toes to Bar — 3 × 60 % du max')!];
+  const sans = buildStrengthGrid(entries, () => null, () => null);
+  const avec = buildStrengthGrid(entries, () => null, () => 15);
+
+  it('recalcule les reps prévues et ne remplit que les champs vides', () => {
+    const saisie = sans.map((d, i) => (i === 0 ? { ...d, reps: '12' } : d));
+    const out = applyGymRecordsToGrid(saisie, avec);
+    expect(out.map(d => [d.reps, d.prescribedReps])).toEqual([['12', 9], ['9', 9], ['9', 9]]);
+  });
+
+  it('ne touche pas une ligne dont les reps prévues n’ont pas changé (champ vidé exprès)', () => {
+    const vide = avec.map((d, i) => (i === 1 ? { ...d, reps: '' } : d));
+    expect(applyGymRecordsToGrid(vide, avec)).toBe(vide);
+  });
+
+  it('sans record, rien n’est inventé', () => {
+    expect(applyGymRecordsToGrid(sans, sans)).toBe(sans);
   });
 });

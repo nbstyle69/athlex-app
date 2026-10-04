@@ -168,6 +168,26 @@ export function buildStrengthGrid(
   return out;
 }
 
+/**
+ * Record de gymnastique arrivé (ou changé) après l'ouverture de la grille : les
+ * reps prévues des lignes « % du max » suivent la prescription recalculée, et
+ * seuls les champs de reps encore vides sont pré-remplis. Une valeur saisie
+ * n'est jamais touchée ; une ligne dont les reps prévues n'ont pas bougé non
+ * plus (un champ vidé exprès reste vide).
+ */
+export function applyGymRecordsToGrid(drafts: StrengthSetDraft[], prescription: StrengthSetDraft[]): StrengthSetDraft[] {
+  const byKey = new Map(withUniqueSetKeys(prescription).map(p => [`${p.name}#${p.setIndex}`, p]));
+  let changed = false;
+  const out = drafts.map(d => {
+    if (d.prescribedPctOfMax == null) return d;
+    const p = byKey.get(`${d.name}#${d.setIndex}`);
+    if (!p || p.prescribedReps < 1 || p.prescribedReps === d.prescribedReps) return d;
+    changed = true;
+    return { ...d, prescribedReps: p.prescribedReps, reps: d.reps.trim() === '' ? String(p.prescribedReps) : d.reps };
+  });
+  return changed ? out : drafts;
+}
+
 /** Les lignes exploitables : une série sans reps ni charge valides n'est pas une série. */
 export function usableDrafts(drafts: StrengthSetDraft[]): StrengthSetDraft[] {
   return drafts.filter(d => {
@@ -214,7 +234,7 @@ export async function logStrengthSets(p: LogStrengthSetsParams): Promise<Perform
     set_index: d.setIndex,
     reps: Math.round(toNumber(d.reps) as number),
     load_kg: toNumber(d.loadKg),
-    prescribed_reps: d.prescribedReps,
+    prescribed_reps: d.prescribedReps >= 1 ? d.prescribedReps : null,
     prescribed_load_kg: d.prescribedLoadKg,
   }));
 

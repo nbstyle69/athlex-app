@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchMyPersonalRecords } from '../services/myProfile';
 import { parsePersonalRecords, oneRepMaxForMovement } from '../utils/wod/movementLoadability';
 import { readPr } from '../screens/profile/prStorage';
@@ -26,22 +26,30 @@ export function gymRecordForMovement(name: string, records: Record<string, unkno
 export function useMyRecords(): {
   oneRepMaxFor: (movementName: string) => number | null;
   gymRecordFor: (movementName: string) => number | null;
+  /** Relit les records (retour sur l'écran après « Renseigner mon record »). Les anciens restent jusqu'à la réponse. */
+  reload: () => void;
 } {
   const [records, setRecords] = useState<Record<string, unknown>>({});
+  const alive = useRef(true);
+
+  const reload = useCallback(() => {
+    fetchMyPersonalRecords().then(r => {
+      if (alive.current) setRecords(r);
+    });
+  }, []);
 
   useEffect(() => {
-    let alive = true;
-    fetchMyPersonalRecords().then(r => {
-      if (alive) setRecords(r);
-    });
-    return () => { alive = false; };
-  }, []);
+    alive.current = true;
+    reload();
+    return () => { alive.current = false; };
+  }, [reload]);
 
   const prs = useMemo(() => parsePersonalRecords(records), [records]);
 
   return {
     oneRepMaxFor: useCallback((name: string) => oneRepMaxForMovement(name, prs), [prs]),
     gymRecordFor: useCallback((name: string) => gymRecordForMovement(name, records), [records]),
+    reload,
   };
 }
 

@@ -9,7 +9,7 @@ import WebView from 'react-native-webview';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import ShareScoreCard from '../../components/ShareScoreCard';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
@@ -28,7 +28,7 @@ import { computeCompletedMovements } from '../../utils/movementParser';
 import { annotateGymRepsInText, annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
 import {
-  buildStrengthGrid, logStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
+  applyGymRecordsToGrid, buildStrengthGrid, logStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
   loadStrengthGrid, saveStrengthDraft, gridFromServer, fetchStrengthSession, submitStrengthValidation,
   strengthProgress, computedMaxLoad, validationErrorCode, isNetworkError,
 } from '../../services/strengthSets';
@@ -93,7 +93,7 @@ export default function WODDetailScreen() {
   const S = createStyles(theme);
   const c = theme.ax;
   const medalInk = [c.warning, c.textMuted, c.orange];
-  const { oneRepMaxFor, gymRecordFor } = useMyRecords();
+  const { oneRepMaxFor, gymRecordFor, reload: reloadRecords } = useMyRecords();
   const scrollRef = useRef<ScrollView>(null);
   const leaderboardY = useRef(0);
 
@@ -330,10 +330,20 @@ export default function WODDetailScreen() {
   }, [strengthKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Les 1RM du profil arrivent après : une grille encore issue de la
-  // prescription, pas touchée, reprend les charges résolues.
+  // prescription, pas touchée, reprend les charges résolues. Sinon, un record
+  // de gymnastique arrivé entre-temps ne remplit que les reps encore vides.
   useEffect(() => {
     if (strengthOriginRef.current === 'prescription' && !editedAtRef.current) setStrengthDrafts(strengthPrescription);
-  }, [strengthPrescription]);
+    else if (!strengthValidated) setStrengthDrafts(prev => applyGymRecordsToGrid(prev, strengthPrescription));
+  }, [strengthPrescription]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Retour sur l'écran (après « Renseigner mon record ») : records relus. Le
+  // premier focus est le montage, déjà couvert par la lecture du hook.
+  const focusedOnce = useRef(false);
+  useFocusEffect(useCallback(() => {
+    if (focusedOnce.current) reloadRecords();
+    focusedOnce.current = true;
+  }, [reloadRecords]));
 
   // Brouillon enregistré ~0,8 s après la dernière frappe.
   useEffect(() => {
@@ -366,6 +376,9 @@ export default function WODDetailScreen() {
     setStrengthDrafts(prev => prev.map((d, i) => (i === index ? { ...d, ...patch } : d)));
     if (isStrengthSession && !strengthValidated) {
       editedAtRef.current = new Date().toISOString();
+      // Une grille saisie n'est plus la prescription, même une fois le brouillon
+      // enregistré (editedAt remis à zéro) : un record relu ne la remplace plus.
+      strengthOriginRef.current = 'local';
       setDraftDirtyTick(t => t + 1);
     }
   }
