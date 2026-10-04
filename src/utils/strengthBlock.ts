@@ -16,6 +16,7 @@
 
 import { annotateGymReps, gymPrLabel } from '../screens/home/gymZones';
 import { weightliftingPrLabel } from '../screens/profile/prStorage';
+import i18n from '../i18n';
 
 export type StrengthLoadUnit = 'kg' | '%1RM';
 /** Unité des « reps » : répétitions (défaut), secondes (gainage) ou mètres (carry). */
@@ -195,7 +196,9 @@ export function formatStrengthPrescription(
   e: StrengthEntry,
   oneRepMaxKg?: number | null,
 ): string {
-  if (e.pctOfMax != null) return `${e.sets} × ${e.pctOfMax} % du max`;
+  // Affichage traduit (« 3 × 15 % du max », « 3 × 15% of max ») ; le texte du WOD,
+  // lui, reste écrit en français par serializeStrength (c'est ce que lit le parseur).
+  if (e.pctOfMax != null) return i18n.t('strengthSession.pctOfMaxScheme', { sets: e.sets, pct: e.pctOfMax });
   let out = `${e.sets} × ${e.reps}`;
   if (e.repsUnit && e.repsUnit !== 'reps') out += ` ${e.repsUnit}`;
   if (e.perSide) out += ` / ${e.perSide}`;

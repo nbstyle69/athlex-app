@@ -8,15 +8,17 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { ChevronDown, ChevronUp, Check, Timer as TimerIcon } from 'lucide-react-native';
+import { ChevronDown, ChevronUp, Check, Plus, Timer as TimerIcon, Trash2 } from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { loadText, sideLabel } from '../../../packages/wod-engine/src';
 import type { MuscuExercise, MuscuWod } from '../../../packages/wod-engine/src';
 import { PerformedExercise, PerformedSet, setTonnage, totalTonnage } from '../../services/wodGenerator';
-import { initialPerformed, performedToDrafts } from '../../services/muscuSession';
-import { normalizeDecimalInput, normalizeRepsInput, parseDecimal, strengthProgress } from '../../services/strengthSets';
-import { StrengthSaveState, StrengthSessionStatus } from '../../components/wod/StrengthSetGrid';
+import { initialPerformed, muscuRepsOnly, performedToDrafts } from '../../services/muscuSession';
+import {
+  MAX_SETS_PER_MOVEMENT, normalizeDecimalInput, normalizeRepsInput, parseDecimal, strengthProgress,
+} from '../../services/strengthSets';
+import { StrengthSaveState, StrengthSessionStatus, repsText } from '../../components/wod/StrengthSetGrid';
 import { AxButton, AxCard, AxTextField } from '../../components/ax';
 import { axSpacing, axTypography } from '../../theme/axTokens';
 import i18n from '../../i18n';
@@ -115,6 +117,21 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
     })));
   };
 
+  /** « Ajouter une série » (exercice en reps seules) : série vide, retirable. */
+  const addSet = (ei: number) => {
+    const ex = performed[ei];
+    if (!ex || ex.sets.length >= MAX_SETS_PER_MOVEMENT) return;
+    onPerformedChange(performed.map((x, i) => (i !== ei ? x : { ...x, sets: [...x.sets, { reps: 0, load_kg: 0, added: true }] })));
+    setOpen((prev) => new Set(prev).add(ei));
+  };
+  /** Corbeille d'une série ajoutée (seules les séries ajoutées en portent une). */
+  const removeSet = (ei: number, si: number) => {
+    onPerformedChange(performed.map((x, i) => (i !== ei ? x : { ...x, sets: x.sets.filter((_, j) => j !== si) })));
+  };
+  const repsOf = (ei: number) => (performed[ei]?.sets ?? []).reduce((sum, st) => sum + (st.reps > 0 ? st.reps : 0), 0);
+  const repsOnlyIdx = exercises.map((e, i) => (muscuRepsOnly(e) ? i : -1)).filter((i) => i >= 0);
+  const totalReps = repsOnlyIdx.reduce((sum, i) => sum + repsOf(i), 0);
+
   const nextSet = () => {
     if (!cursor) return;
     const e = exercises[cursor.exercise];
@@ -170,7 +187,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
               <View style={S.detail}>
                 {e.notes ? <Text style={S.notes}>{e.notes}</Text> : null}
                 {p?.sets.map((s, si) => (
-                  <View key={si} style={S.setRow}>
+                  <View key={si} style={S.setRow} testID={`muscu-set-${i}-${si}`}>
                     <Text style={[S.setLabel, cursor?.exercise === i && cursor.set === si && { color: accent }]}>
                       Série {si + 1}
                     </Text>
@@ -184,6 +201,27 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
                         testID={`muscu-reps-${i}-${si}`}
                       />
                     </View>
+                    {muscuRepsOnly(e) ? (
+                      <>
+                        <Text style={S.unit}>{i18n.t('strengthSession.repsUnit')}</Text>
+                        <View style={{ flex: 1 }} />
+                        {s.added ? (
+                          <>
+                            <Text style={S.tonnage}>{i18n.t('strengthSession.addedSet')}</Text>
+                            <TouchableOpacity
+                              onPress={() => removeSet(i, si)}
+                              accessibilityRole="button"
+                              accessibilityLabel={i18n.t('strengthSession.removeSetA11y', { index: si + 1 })}
+                              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                              testID={`muscu-remove-${i}-${si}`}
+                            >
+                              <Trash2 size={16} color={c.textMuted} />
+                            </TouchableOpacity>
+                          </>
+                        ) : null}
+                      </>
+                    ) : (
+                    <>
                     <Text style={S.unit}>×</Text>
                     <View style={S.input}>
                     <AxTextField
@@ -205,8 +243,28 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
                     />
                     </View>
                     <Text style={S.tonnage}>{setTonnage(s) ? `${fmtKg(setTonnage(s))} kg` : '—'}</Text>
+                    </>
+                    )}
                   </View>
                 ))}
+                {muscuRepsOnly(e) && (
+                  <>
+                    <TouchableOpacity
+                      style={S.addSet}
+                      onPress={() => addSet(i)}
+                      accessibilityRole="button"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      testID={`muscu-add-set-${i}`}
+                    >
+                      <Plus size={14} color={c.accentText} />
+                      <Text style={S.addSetText}>{i18n.t('strengthSession.addSet')}</Text>
+                    </TouchableOpacity>
+                    <View style={S.totalRow} testID={`muscu-block-total-${i}`}>
+                      <Text style={S.totalLabel}>{i18n.t('strengthSession.blockTotal', { movement: e.name })}</Text>
+                      <Text style={S.totalValue}>{repsText(repsOf(i))}</Text>
+                    </View>
+                  </>
+                )}
               </View>
             )}
           </View>
@@ -218,6 +276,12 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
           <Text style={S.footerLabel}>Tonnage</Text>
           <Text style={S.footerValue} testID="muscu-tonnage">{fmtKg(tonnage)} kg</Text>
         </View>
+        {repsOnlyIdx.length > 0 && (
+          <View style={{ flex: 1 }} testID="muscu-total-reps">
+            <Text style={S.footerLabel}>{i18n.t('strengthSession.totalRepsLabel')}</Text>
+            <Text style={S.footerValue} testID="muscu-total-reps-value">{repsText(totalReps)}</Text>
+          </View>
+        )}
         {restLeft != null && (
           <View style={S.rest} testID="muscu-rest">
             <TimerIcon size={16} color={restLeft > 0 ? accent : c.success} />
@@ -284,6 +348,11 @@ const styles = (t: AppTheme) => {
   input: { width: 64 },
   unit: { ...axTypography.caption, color: c.textMuted },
   tonnage: { ...axTypography.caption, color: c.textMuted, marginLeft: 'auto', flexShrink: 1, textAlign: 'right' },
+  addSet: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 2, alignSelf: 'flex-start' },
+  addSetText: { ...axTypography.caption, color: c.accentText },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: axSpacing.sm },
+  totalLabel: { ...axTypography.bodySmall, color: c.textMuted, flexShrink: 1 },
+  totalValue: { ...axTypography.label, color: c.text },
   footer: {
     flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: axSpacing.md, marginTop: ROW_PAD, paddingTop: ROW_PAD,
     borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border,

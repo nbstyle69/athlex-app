@@ -115,11 +115,15 @@ jest.mock('../lib/supabase', () => {
         let s = mockDb.strength_sessions.find(r => r.source_id === k.source_id && r.source_type === k.source_type);
         if (!s) { s = { id: `id-${++mockSeq}`, ...k, status: 'draft', first_validated_at: null }; mockDb.strength_sessions.push(s); }
         const first = s.first_validated_at == null;
-        const max = Math.max(...sets.map(x => Number(x.load_kg)));
+        // Règles de 20270145 : charge max des séries chargées, reps totales des séries sans charge.
+        const loads = sets.filter(x => x.load_kg != null).map(x => Number(x.load_kg));
+        const max = loads.length ? Math.max(...loads) : null;
+        const unloaded = sets.filter(x => x.load_kg == null).map(x => Number(x.reps));
+        const total = unloaded.length ? unloaded.reduce((p, q) => p + q, 0) : null;
         mockDb.strength_set_logs = mockDb.strength_set_logs.filter(r => r.source_id !== k.source_id)
           .concat(sets.map(x => ({ id: `id-${++mockSeq}`, ...k, ...x })));
-        Object.assign(s, { status: 'validated', max_load_kg: max, first_validated_at: s.first_validated_at ?? 'T1', updated_at: new Date().toISOString() });
-        return { data: { premiere_validation: first, max_load_kg: max, series_valides: sets.length, records: [] }, error: null };
+        Object.assign(s, { status: 'validated', max_load_kg: max, total_reps: total, first_validated_at: s.first_validated_at ?? 'T1', updated_at: new Date().toISOString() });
+        return { data: { premiere_validation: first, max_load_kg: max, total_reps: total, series_valides: sets.length, records: [] }, error: null };
       }),
     },
   };
@@ -141,6 +145,7 @@ import {
   draftsToPerformed, findResumableMuscuSession, initialPerformed, performedToDrafts, validateMuscuSession,
 } from '../services/muscuSession';
 import { PerformedExercise, totalTonnage } from '../services/wodGenerator';
+import { isRepsOnly } from '../services/strengthSets';
 
 const exercise = (id: string, name: string, sets: number, reps: number, kg: number) => ({
   id, name, sets, reps, reps_unit: 'reps', load: { mode: 'weighted', kg },
@@ -309,5 +314,60 @@ describe('même exercice deux fois dans la séance', () => {
     expect(v.result.seriesValides).toBe(5);
     expect((mockDb.rpcCalls[0].p_sets as Row[]).filter(x => x.movement === 'Hip Thrust').map(x => [x.set_index, x.load_kg]))
       .toEqual([[1, 60], [2, 65], [3, 72.5], [4, 70]]);
+  });
+});
+
+describe('G3 : exercices au poids du corps en reps seules', () => {
+  const bw = (id: string, name: string, sets: number, reps: number) => ({
+    id, name, sets, reps, reps_unit: 'reps', load: { mode: 'bodyweight' },
+  });
+  const BW = { ...WOD, blocks: [{ exercises: [bw('pull_up', 'Strict Pull-Ups', 3, 8), bw('dips', 'Dips', 2, 10)] }] } as unknown as MuscuWod;
+  const MIXTE = { ...WOD, blocks: [{ exercises: [bw('pull_up', 'Strict Pull-Ups', 2, 8), exercise('hip_thrust', 'Hip Thrust', 2, 10, 60)] }] } as unknown as MuscuWod;
+  const withAdded = (p: PerformedExercise[], ei: number, reps: number) =>
+    p.map((ex, i) => (i !== ei ? ex : { ...ex, sets: [...ex.sets, { reps, load_kg: 0, added: true }] }));
+  const run = (wod: MuscuWod, performed: PerformedExercise[]) =>
+    validateMuscuSession(user, 'box-1', wod, { wodId: 'gw-1', performed, notes: '' });
+
+  it('poids du corps : reps seules (sans charge) ; toute autre charge reste exigée', () => {
+    const d = performedToDrafts(MIXTE, initialPerformed(MIXTE));
+    expect(d.map(x => [x.name, isRepsOnly(x), x.loadKg, x.loadRequired])).toEqual([
+      ['Strict Pull-Ups', true, '', false], ['Strict Pull-Ups', true, '', false],
+      ['Hip Thrust', false, '60', true], ['Hip Thrust', false, '60', true],
+    ]);
+  });
+
+  it('série ajoutée : sans reps prévues, envoyée is_added, relue après le brouillon', async () => {
+    const p = withAdded(initialPerformed(BW), 0, 5);
+    const d = performedToDrafts(BW, p);
+    expect(d[3]).toMatchObject({ name: 'Strict Pull-Ups', setIndex: 4, reps: '5', isAdded: true, prescribedReps: 0, loadRequired: false });
+    expect((await saveStrengthDraft({ ...KEY, sourceTitle: BW.title, drafts: d, editedAt: new Date().toISOString(), baseUpdatedAt: null })).status).toBe('saved');
+    const loaded = await loadStrengthGrid(KEY, performedToDrafts(BW, initialPerformed(BW)));
+    const back = draftsToPerformed(initialPerformed(BW), loaded.drafts);
+    expect(back[0].sets).toEqual([
+      { reps: 8, load_kg: 0 }, { reps: 8, load_kg: 0 }, { reps: 8, load_kg: 0 }, { reps: 5, load_kg: 0, added: true },
+    ]);
+  });
+
+  it('séance au poids du corps seule : validée, aucun score, aucun compteur, aucun movement_logs', async () => {
+    const { result } = await run(BW, withAdded(initialPerformed(BW), 0, 5));
+    expect(result).toMatchObject({ premiereValidation: true, maxLoadKg: null, totalReps: 3 * 8 + 5 + 2 * 10 });
+    const p = mockDb.rpcCalls[0].p_sets as Row[];
+    expect(p.map(x => [x.set_index, x.load_kg, x.is_added, x.load_required])).toEqual([
+      [1, null, false, false], [2, null, false, false], [3, null, false, false], [4, null, true, false],
+      [1, null, false, false], [2, null, false, false],
+    ]);
+    expect(mockDb.generated_wod_scores).toEqual([]);
+    expect(incrementCounter).not.toHaveBeenCalled();
+    expect(logMovementReps).not.toHaveBeenCalled();
+    await run(BW, initialPerformed(BW));
+    expect(mockDb.generated_wod_scores).toEqual([]);
+  });
+
+  it('séance mixte : score tonnage comme avant, reps totales en plus', async () => {
+    const { tonnage, result } = await run(MIXTE, initialPerformed(MIXTE));
+    expect(result).toMatchObject({ maxLoadKg: 60, totalReps: 16 });
+    expect(mockDb.generated_wod_scores).toHaveLength(1);
+    expect(mockDb.generated_wod_scores[0].score_value).toBe(tonnage);
+    expect(tonnage).toBe(2 * 10 * 60);
   });
 });

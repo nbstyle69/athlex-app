@@ -210,6 +210,21 @@ Supabase/Resend.
 
 ## En cours
 
+**Gymnastique G3 : grille en reps seules, « Ajouter une série », totaux, séance validée (app seule ; PR non mergée, à
+vérifier par Nab).** Spec Figma 501:514 / 501:648 (A) et 501:604 / 501:738 (C), base G2 en prod (20270145). Une ligne
+sans charge prescrite (« % du max », ligne sans charge, exercice au poids du corps en reps d'une séance générée) passe
+en reps seules : pas de champ kg, « Ajouter une série » (série vide, `is_added`, sans reps prévues, retirable par la
+corbeille ; une série prescrite ne se retire pas), « Total <mouvement> », séparateur, « Reps totales (score) ·
+calculées » ; la pastille « En cours · n / N » compte les séries ajoutées. Ligne chargée (kg, %1RM résolu ou non, charge
+notée), ligne en secondes ou en mètres et grille d'avant G2 : champ kg comme avant. Envoi : séries sans charge au
+brouillon et à la validation (`load_required` faux), `is_added` ; `logStrengthSets` inchangé. Séance sans aucune série
+chargée : ni score, ni compteur, ni `movement_logs` par l'app (Whiteboard et séance générée). Écran C : séries en reps,
+« ajoutée », totaux, « Reps totales », pastille « Validée le … · Score N reps » (séance sans charge), « Modifier mes
+séries » et son texte ; séance mixte : tonnage et charge max gardés, reps totales en plus. Fenêtre de saisie : zone sûre
+en bas. i18n FR/EN, dont « S × P % du max » (EN « S × P% of max »). Tests `gymRepsGrid.rn.test.tsx` et blocs G3 de
+`strengthSession.test.ts`, `muscuSession.test.ts` ; captures banc web local 390 px sombre/clair FR/EN dans
+`athlex-captures/gymnastique-G3`.
+
 **Gymnastique G2 : validation sans charge, reps totales, séries ajoutées, record confirmé (migration 20270145 ;
 **appliquée en prod : oui**, le 04/10/2026 à 17:48 UTC, dump `db-dumps/2026-10-04/athlex-prod-public-internal-20261004T170427Z.dump` (sha256 `23c056b6…56a9`, aller-retour vérifié) ; données inchangées avant/après (séances, séries, records, scores, movement_logs), définitions aux empreintes du rejeu, test réel G1 à G9 sur données fictives annulé sans trace, audit grants-prod 39/39 ; PR non mergée).** `validate_strength_session` garde et valide
 les séries sans charge quand aucune charge n'était prescrite (une séance de gymnastique seule se valide ; une série à

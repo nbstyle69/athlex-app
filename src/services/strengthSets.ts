@@ -55,6 +55,22 @@ export interface StrengthSetDraft {
    * sans charge ou une série ajoutée. Envoyé en `load_required` (20270145).
    */
   loadRequired?: boolean;
+  /**
+   * Série ajoutée par l'athlète au-delà de la prescription (« Ajouter une
+   * série », lignes en reps seules) : retirable, sans reps prévues, envoyée en
+   * `is_added`. Une série prescrite ne se retire pas.
+   */
+  isAdded?: boolean;
+}
+
+/**
+ * Ligne en reps seules : aucune charge prescrite (« % du max », ligne sans
+ * charge, poids du corps d'une séance générée). Pas de champ kg ; une série y
+ * vaut ses reps. Seul un `false` explicite compte : une grille d'avant G2 (sans
+ * le champ) garde son champ kg.
+ */
+export function isRepsOnly(d: Pick<StrengthSetDraft, 'loadRequired'>): boolean {
+  return d.loadRequired === false;
 }
 
 export interface StrengthSetRow {
@@ -152,7 +168,10 @@ export function buildStrengthGrid(
     const kg = resolveStrengthLoadKg(e, oneRepMaxFor(e.name));
     // % du record : reps calculées, ou vides sans record (jamais inventées).
     const reps = e.pctOfMax != null ? gymRepsForPct(gymRecordFor(e.name), e.pctOfMax) ?? 0 : e.reps;
-    const loadRequired = e.pctOfMax == null && ((e.load != null && e.load > 0) || !!(e.loadNote ?? '').trim());
+    // Reps seules : ni charge (kg, %1RM, charge notée), ni secondes ou mètres
+    // (gainage, carry : leurs « reps » ne s'additionnent pas à des reps).
+    const loadRequired = e.pctOfMax == null && ((e.load != null && e.load > 0) || !!(e.loadNote ?? '').trim()
+      || (e.repsUnit != null && e.repsUnit !== 'reps'));
     const sets = Math.max(1, Math.min(MAX_SETS_PER_MOVEMENT, Math.round(e.sets)));
     for (let s = 1; s <= sets; s++) {
       const setIndex = (perMovement.get(e.name) ?? 0) + 1;
@@ -357,6 +376,7 @@ interface StrengthDb {
           status: string;
           planned_sets: number | null;
           max_load_kg: number | null;
+          total_reps: number | null;
           first_validated_at: string | null;
           validated_at: string | null;
           created_at: string;
@@ -378,9 +398,9 @@ interface StrengthDb {
         Relationships: [];
       };
       strength_set_logs: {
-        Row: Omit<SetLogs['Row'], 'reps'> & { reps: number | null };
-        Insert: Omit<SetLogs['Insert'], 'reps'> & { reps?: number | null };
-        Update: Omit<SetLogs['Update'], 'reps'> & { reps?: number | null };
+        Row: Omit<SetLogs['Row'], 'reps'> & { reps: number | null; is_added: boolean };
+        Insert: Omit<SetLogs['Insert'], 'reps'> & { reps?: number | null; is_added?: boolean };
+        Update: Omit<SetLogs['Update'], 'reps'> & { reps?: number | null; is_added?: boolean };
         Relationships: [];
       };
     };
@@ -411,6 +431,8 @@ export interface StrengthSessionInfo {
   status: StrengthSessionStatus;
   plannedSets: number | null;
   maxLoadKg: number | null;
+  /** Reps des séries sans charge (20270145) ; `null` sans elles. */
+  totalReps?: number | null;
   firstValidatedAt: string | null;
   updatedAt: string;
 }
@@ -425,6 +447,8 @@ export interface ServerSet {
   load_kg: number | null;
   prescribed_reps: number | null;
   prescribed_load_kg: number | null;
+  /** Série ajoutée par l'athlète (20270145) ; absent d'un serveur plus ancien. */
+  is_added?: boolean;
 }
 
 export interface ServerStrengthSession {
@@ -460,9 +484,49 @@ const validLoad = (text: string): number | null => {
   return n != null && n > 0 && n <= LIMITS.loadKg ? Math.round(n * 100) / 100 : null;
 };
 
-/** Séries valides au sens de la validation serveur : reps 1..500, charge ]0 ; 500]. */
+/**
+ * Séries valides au sens de la validation serveur : reps 1..500 et charge
+ * ]0 ; 500] ; sur une ligne en reps seules, les reps suffisent (sans charge).
+ */
 export function validStrengthSets(drafts: StrengthSetDraft[]): StrengthSetDraft[] {
-  return drafts.filter(d => validReps(d.reps) != null && validLoad(d.loadKg) != null);
+  return drafts.filter(d => validReps(d.reps) != null
+    && (validLoad(d.loadKg) != null || (isRepsOnly(d) && (d.loadKg ?? '').trim() === '')));
+}
+
+/** Reps des séries valides en reps seules (sans charge) ; `null` s'il n'y en a aucune. */
+export function computedTotalReps(drafts: StrengthSetDraft[]): number | null {
+  const reps = validStrengthSets(drafts).filter(d => validLoad(d.loadKg) == null).map(d => validReps(d.reps) as number);
+  return reps.length ? reps.reduce((a, b) => a + b, 0) : null;
+}
+
+/** « Total <mouvement> » d'un bloc en reps seules : reps saisies, séries ajoutées comprises. */
+export function blockRepsTotal(drafts: StrengthSetDraft[], entryIndex: number): number {
+  return computedTotalReps(drafts.filter(d => d.entryIndex === entryIndex)) ?? 0;
+}
+
+/**
+ * Ajoute une série vide en fin de bloc (ligne en reps seules seulement) : sans
+ * reps prévues, numérotée après la dernière série du mouvement dans la séance
+ * (plafond 50, CHECK set_index). Grille inchangée sinon.
+ */
+export function addStrengthSet(drafts: StrengthSetDraft[], entryIndex: number): StrengthSetDraft[] {
+  const block = drafts.filter(d => d.entryIndex === entryIndex);
+  const last = block[block.length - 1];
+  if (!last || !isRepsOnly(last)) return drafts;
+  const setIndex = Math.max(...drafts.filter(d => d.name === last.name).map(d => d.setIndex)) + 1;
+  if (setIndex > MAX_SETS_PER_MOVEMENT) return drafts;
+  const at = drafts.lastIndexOf(last) + 1;
+  const added: StrengthSetDraft = {
+    entryIndex, setIndex, name: last.name, reps: '', loadKg: '', prescribedReps: 0, prescribedLoadKg: null,
+    loadRequired: false, isAdded: true,
+    ...(last.prescribedPctOfMax != null ? { prescribedPctOfMax: last.prescribedPctOfMax } : {}),
+  };
+  return [...drafts.slice(0, at), added, ...drafts.slice(at)];
+}
+
+/** Retire une série ajoutée ; une série prescrite ne se retire jamais. */
+export function removeStrengthSet(drafts: StrengthSetDraft[], index: number): StrengthSetDraft[] {
+  return drafts[index]?.isAdded ? drafts.filter((_, i) => i !== index) : drafts;
 }
 
 /** « n / N séries » : séries valides sur séries de la grille. */
@@ -472,14 +536,14 @@ export function strengthProgress(drafts: StrengthSetDraft[]): { done: number; to
 
 /** Charge max (score « weight » du Whiteboard) : la plus lourde des séries valides. */
 export function computedMaxLoad(drafts: StrengthSetDraft[]): number | null {
-  const loads = validStrengthSets(drafts).map(d => validLoad(d.loadKg) as number);
+  const loads = validStrengthSets(drafts).map(d => validLoad(d.loadKg)).filter((x): x is number => x != null);
   return loads.length ? Math.max(...loads) : null;
 }
 
 /** Tonnage des séries valides : somme reps × charge. */
 export function strengthTonnage(drafts: StrengthSetDraft[]): number {
   const t = validStrengthSets(drafts)
-    .reduce((sum, d) => sum + (validReps(d.reps) as number) * (validLoad(d.loadKg) as number), 0);
+    .reduce((sum, d) => sum + (validReps(d.reps) as number) * (validLoad(d.loadKg) ?? 0), 0);
   return Math.round(t * 100) / 100;
 }
 
@@ -523,7 +587,7 @@ export async function fetchStrengthSummaries(
       .select('source_id, status, planned_sets')
       .eq('user_id', userId).eq('source_type', sourceType).in('source_id', ids),
     db.from('strength_set_logs')
-      .select('source_id, reps, load_kg')
+      .select('source_id, reps, load_kg, prescribed_load_kg')
       .eq('user_id', userId).eq('source_type', sourceType).in('source_id', ids),
   ]);
   if (e1 || e2) throw e1 ?? e2;
@@ -531,7 +595,8 @@ export async function fetchStrengthSummaries(
   for (const s of sessions ?? []) {
     const rows = (sets ?? []).filter(r => r.source_id === s.source_id);
     const done = rows.filter(r => validReps(r.reps == null ? '' : String(r.reps)) != null
-      && validLoad(r.load_kg == null ? '' : String(r.load_kg)) != null).length;
+      && (validLoad(r.load_kg == null ? '' : String(r.load_kg)) != null
+          || (r.load_kg == null && r.prescribed_load_kg == null))).length;
     out[s.source_id] = {
       status: s.status === 'validated' ? 'validated' : 'draft',
       done,
@@ -600,8 +665,10 @@ export function gridFromServer(rawPrescription: StrengthSetDraft[], sets: Server
     .filter(s => !used.has(`${s.movement}#${s.set_index}`))
     .sort((a, b) => a.movement.localeCompare(b.movement) || a.set_index - b.set_index);
   for (const s of extra) {
-    const same = out.find(d => d.name === s.movement);
-    out.push({
+    // Une série hors prescription retrouve la fin du (dernier) bloc de son
+    // mouvement : une série ajoutée s'affiche sous ses séries, pas en fin de grille.
+    const same = [...out].reverse().find(d => d.name === s.movement);
+    const row: StrengthSetDraft = {
       entryIndex: same ? same.entryIndex : 1000 + extra.indexOf(s),
       setIndex: s.set_index,
       name: s.movement,
@@ -609,7 +676,11 @@ export function gridFromServer(rawPrescription: StrengthSetDraft[], sets: Server
       loadKg: s.load_kg == null ? '' : fmtKg(s.load_kg),
       prescribedReps: s.prescribed_reps ?? 0,
       prescribedLoadKg: s.prescribed_load_kg == null ? null : Number(s.prescribed_load_kg),
-    });
+      ...(s.is_added ? { isAdded: true, loadRequired: false } : {}),
+      ...(same?.loadRequired != null && !s.is_added ? { loadRequired: same.loadRequired } : {}),
+      ...(same?.prescribedPctOfMax != null ? { prescribedPctOfMax: same.prescribedPctOfMax } : {}),
+    };
+    out.splice(same ? out.lastIndexOf(same) + 1 : out.length, 0, row);
   }
   return out;
 }
@@ -634,11 +705,11 @@ export function resolveStrengthGrid(
 export async function fetchStrengthSession(k: StrengthSourceKey): Promise<ServerStrengthSession> {
   const [{ data: session, error: e1 }, { data: sets, error: e2 }] = await Promise.all([
     db.from('strength_sessions')
-      .select('status, planned_sets, max_load_kg, first_validated_at, updated_at')
+      .select('status, planned_sets, max_load_kg, total_reps, first_validated_at, updated_at')
       .eq('user_id', k.userId).eq('source_type', k.sourceType).eq('source_id', k.sourceId)
       .maybeSingle(),
     db.from('strength_set_logs')
-      .select('id, movement, movement_label, set_index, reps, load_kg, prescribed_reps, prescribed_load_kg')
+      .select('id, movement, movement_label, set_index, reps, load_kg, prescribed_reps, prescribed_load_kg, is_added')
       .eq('user_id', k.userId).eq('source_type', k.sourceType).eq('source_id', k.sourceId)
       .order('set_index', { ascending: true }),
   ]);
@@ -649,6 +720,7 @@ export async function fetchStrengthSession(k: StrengthSourceKey): Promise<Server
           status: session.status === 'validated' ? 'validated' : 'draft',
           plannedSets: session.planned_sets,
           maxLoadKg: session.max_load_kg == null ? null : Number(session.max_load_kg),
+          totalReps: session.total_reps == null ? null : Number(session.total_reps),
           firstValidatedAt: session.first_validated_at,
           updatedAt: session.updated_at,
         }
@@ -793,6 +865,7 @@ export async function saveStrengthDraft(p: SaveStrengthDraftParams): Promise<Sav
         load_kg: load,
         prescribed_reps: d.prescribedReps >= 1 ? d.prescribedReps : null,
         prescribed_load_kg: d.prescribedLoadKg != null && d.prescribedLoadKg > 0 ? d.prescribedLoadKg : null,
+        is_added: d.isAdded === true,
       }));
 
     let keptIds: string[] = [];
@@ -873,14 +946,18 @@ export interface ValidateStrengthParams {
 
 export interface StrengthValidationResult {
   premiereValidation: boolean;
-  maxLoadKg: number;
+  /** `null` pour une séance sans aucune série chargée (aucun score écrit). */
+  maxLoadKg: number | null;
+  /** Reps des séries sans charge, calculées par le serveur ; `null` sans elles. */
+  totalReps?: number | null;
   seriesValides: number;
   records: { label: string; kg: number | null; precedent: number | null }[];
 }
 
 interface RpcResult {
   premiere_validation?: boolean;
-  max_load_kg?: number | string;
+  max_load_kg?: number | string | null;
+  total_reps?: number | string | null;
   series_valides?: number;
   records?: { label: string; kg: number | string | null; precedent: number | string | null }[];
 }
@@ -899,9 +976,8 @@ export async function validateStrengthSession(p: ValidateStrengthParams): Promis
     load_kg: validLoad(d.loadKg),
     prescribed_reps: d.prescribedReps >= 1 ? d.prescribedReps : null,
     prescribed_load_kg: d.prescribedLoadKg != null && d.prescribedLoadKg > 0 ? d.prescribedLoadKg : null,
-    // Série ajoutée au-delà de la prescription (« Ajouter une série », G3) ;
-    // aucune pour l'instant. Lu par validate_strength_session (20270145).
-    is_added: false,
+    // Série ajoutée au-delà de la prescription (« Ajouter une série »), sans reps prévues.
+    is_added: d.isAdded === true,
     // Ligne à charge prescrite (même inconnue) : sans charge, la série ne vaut rien.
     load_required: d.loadRequired === true,
   }));
@@ -920,7 +996,8 @@ export async function validateStrengthSession(p: ValidateStrengthParams): Promis
   await clearPendingStrengthDraft({ userId: p.userId, sourceType: p.sourceType, sourceId: p.sourceId });
   return {
     premiereValidation: r.premiere_validation === true,
-    maxLoadKg: Number(r.max_load_kg ?? 0),
+    maxLoadKg: numOrNull(r.max_load_kg),
+    totalReps: numOrNull(r.total_reps),
     seriesValides: Number(r.series_valides ?? 0),
     records: (r.records ?? []).map(x => ({ label: x.label, kg: numOrNull(x.kg), precedent: numOrNull(x.precedent) })),
   };

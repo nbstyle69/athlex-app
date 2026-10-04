@@ -187,3 +187,18 @@ describe('record arrivé après l’ouverture de la grille', () => {
     expect(applyGymRecordsToGrid(sans, sans)).toBe(sans);
   });
 });
+
+describe('G3 : prescription « % du max » traduite', () => {
+  it('FR « 3 × 15 % du max », EN « 3 × 15% of max » ; le texte du WOD reste en français', async () => {
+    const i18n = (await import('../i18n')).default;
+    const e = parseStrengthLine('Ring Muscle-up — 3 × 15 % du max')!;
+    expect(formatStrengthPrescription(e)).toBe('3 × 15 % du max');
+    await i18n.changeLanguage('en');
+    try {
+      expect(formatStrengthPrescription(e)).toBe('3 × 15% of max');
+      expect(serializeStrength(e)).toBe('Ring Muscle-up — 3 × 15 % du max');
+    } finally {
+      await i18n.changeLanguage('fr');
+    }
+  });
+});

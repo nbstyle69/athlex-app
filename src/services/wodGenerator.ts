@@ -561,6 +561,8 @@ function scoreNotes(wod: AnyWod, s: Pick<ScoreSubmission, 'category' | 'notes'>)
 export interface PerformedSet {
   reps: number;
   load_kg: number;
+  /** Série ajoutée au-delà de la prescription (exercice au poids du corps, en reps). */
+  added?: boolean;
 }
 
 /** Séries réalisées par exercice, dans l'ordre de la séance (`exercise_id` = ligne du bloc). */
