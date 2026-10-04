@@ -210,6 +210,16 @@ Supabase/Resend.
 
 ## En cours
 
+**Profil → Notifications : bouton de test sans fenêtre ni jeton, écran traduit (retour du build 1.0.60, app seule, aucune
+migration ; PR non mergée, à vérifier par Nab au prochain build).** Le bouton « Tester les notifications » ouvrait une
+fenêtre de développement « Token enregistré » avec le début du jeton push. Il enregistre toujours le jeton
+(`registerForPushNotifications` + `savePushToken`), puis programme une notification locale dans 3 s (aucune requête
+serveur) et affiche le résultat sous le bouton : message succès, ou message alerte et lien « Ouvrir les réglages »
+(`Linking.openSettings`) si la permission est refusée. Plus aucune `Alert`, aucun jeton, aucun emoji. Tout l'écran
+passe par i18n (`notifSettings`, FR/EN), textes français inchangés. Tests `notificationSettingsTest.rn.test.tsx`
+(7 tests, 16 mutations tuées) ; captures avant/après sur banc web local (390 px, sombre/clair, FR/EN), message à 16 px
+au-dessus de la barre d'onglets.
+
 **Minuteur : la musique de l'utilisateur remonte après chaque bip (retour D7 du build 1.0.60, Android, app seule, aucune
 migration ; PR non mergée, à vérifier à l'oreille par Nab sur Android et iPhone au prochain build).** Sur Android, la
 musique (Spotify…) baissait au premier bip du décompte et ne remontait plus. expo-av demande le focus audio
