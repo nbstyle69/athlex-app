@@ -398,7 +398,8 @@ describe('R6b : chrono et natif intacts', () => {
     // R6c (B) : + jeu de bips et bips dans la vidéo, couverts par r6cBips.rn.test.tsx.
     // Bips sans doublon : mixBeepInVideo dans playBeep, plus de calage de latence (r6cBips.rn.test.tsx).
     // Retours 1.0.60 (D1) : mode audio reposé à chaque lancement sans caméra (retours1060Audio.rn.test.tsx).
-    expect(sha(back)).toBe('5a6d9dc0da8eeb8594b8b99421e17c6242dcaefdb0b3bd1766c3490fc51704b5');
+    // Retours 1.0.60 (D7) : bips arrêtés dès leur fin sur Android, focus audio rendu (retours1060Musique.rn.test.tsx).
+    expect(sha(back)).toBe('562884b2958c41cb4662e07b95343cad010c4931506f52a4775370b551f8af22');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');

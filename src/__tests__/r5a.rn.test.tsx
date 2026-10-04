@@ -244,8 +244,10 @@ describe('R5a : capture', () => {
  * Bips sans doublon : mélange décidé par mixBeepInVideo dans playBeep, calage de latence retiré (r6cBips.rn.test.tsx).
  * Retours 1.0.60 (D1) : mode audio reposé à chaque lancement sans caméra, attendu avant le premier bip
  * (appliquerModeAudio, retours1060Audio.rn.test.tsx).
+ * Retours 1.0.60 (D7) : sur Android, chaque bip est arrêté dès sa fin (stopAsync) pour rendre le focus audio
+ * et laisser remonter la musique (retours1060Musique.rn.test.tsx).
  */
-const LOGIC_SHA = '2649bc052b9a806f0b209683a0dad3dd7cb0891ed0066695b415ccf91486b7d8';
+const LOGIC_SHA = '7f664aae457844e99a28391700596212b8c4c37a7d1704a499bf9470443d4caa';
 // Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
 const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';

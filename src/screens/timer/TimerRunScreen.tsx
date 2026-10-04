@@ -858,6 +858,14 @@ export default function TimerRunScreen() {
         // Une seule instance tick (les tics sont espacés d'≥1 s).
         for (const type of BEEP_TYPES) loaded.push((await Audio.Sound.createAsync({ uri: files[type] })).sound);
         if (!alive) return;
+        // Android : un bip fini garde shouldPlay à true dans expo-av, qui ne rend donc
+        // jamais le focus audio (GAIN_TRANSIENT_MAY_DUCK) : la musique de l'utilisateur
+        // restait baissée jusqu'à la sortie de l'écran (retour D7 du build 1.0.60).
+        // stopAsync remet shouldPlay à false et expo-av rend le focus : la musique
+        // remonte juste après chaque bip. iOS mélange sans baisser, rien à rendre.
+        if (Platform.OS === 'android') loaded.forEach(snd => snd.setOnPlaybackStatusUpdate(st => {
+          if (st.isLoaded && st.didJustFinish) snd.stopAsync().catch(e => captureError(e, { action: 'stopBeep' }));
+        }));
         const [tickSnd, goSnd, doneSnd] = loaded;
         sndTickRef.current = [tickSnd];
         sndGoRef.current = goSnd;

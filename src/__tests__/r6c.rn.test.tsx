@@ -262,6 +262,7 @@ describe('R6c : logique du chrono', () => {
     // markBeep et bips passés au module (r6cBips.rn.test.tsx) ; bips sans doublon (mixBeepInVideo, plus de calage) ;
     // 1080p fixe : plus de prepareQuality, « Démarrage… » jusqu'à la réponse du module (r6cOptionsVideo.rn.test.tsx) ;
     // retours 1.0.60 (D1) : mode audio reposé à chaque lancement sans caméra (retours1060Audio.rn.test.tsx).
-    expect(sha).toBe('3ea16d50dece3f46a8d4d03787922530d0dff5459028d392317d0c9a58092093');
+    // retours 1.0.60 (D7) : bips arrêtés dès leur fin sur Android, focus audio rendu (retours1060Musique.rn.test.tsx).
+    expect(sha).toBe('0ad9d5f3c70470b2e047c7700827f817cdecb5340ed2c7a2574570009f065c47');
   });
 });
