@@ -20,9 +20,9 @@ const FONCTIONS = fs.readdirSync(DOSSIER, { withFileTypes: true })
   .sort();
 
 describe('clé secrète des fonctions edge', () => {
-  it('les huit fonctions sont bien lues (contre-exemple)', () => {
+  it('les neuf fonctions sont bien lues (contre-exemple)', () => {
     expect(FONCTIONS).toEqual([
-      'analyze-tournament-score', 'generate-box-week', 'parse-wod-pdf', 'send-box-notification',
+      'analyze-tournament-score', 'deliver-manager-notifications', 'generate-box-week', 'parse-wod-pdf', 'send-box-notification',
       'send-push', 'session-followup-cron', 'tournament-notifications-cron', 'weekly-owner-digest',
     ]);
   });
@@ -66,7 +66,8 @@ describe('verify_jwt versionné', () => {
 
   it('chaque fonction refuse elle-même un appel sans authentification', () => {
     // x-cron-secret comparé à CRON_SECRET, refus si l'un manque…
-    for (const fn of ['generate-box-week', 'session-followup-cron', 'tournament-notifications-cron', 'weekly-owner-digest']) {
+    for (const fn of ['deliver-manager-notifications', 'generate-box-week', 'session-followup-cron',
+      'tournament-notifications-cron', 'weekly-owner-digest']) {
       expect(lire(`supabase/functions/${fn}/index.ts`))
         .toMatch(/if \(!cronSecret \|\| provided !== cronSecret\) return json\(\{ error: 'unauthorized' \}, 401\);/);
     }
