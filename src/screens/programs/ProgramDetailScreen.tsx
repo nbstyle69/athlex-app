@@ -16,9 +16,9 @@ import { wodTypeLabel } from '../../utils/wodTypeLabel';
 import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { WODScore } from '../../types';
 import { formatCap, formatScoreValue } from '../../utils/scoreFormat';
-import { annotateStrengthLoads } from '../../utils/strengthBlock';
+import { annotateGymRepsInText, annotateStrengthLoads } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
-import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
+import { useMyRecords } from '../../hooks/useMyOneRepMax';
 import {
   listProgramWods, listProgramRestDays, setProgramStartDate, ProgramWod,
 } from '../../services/programContent';
@@ -57,7 +57,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
   const { theme } = useTheme();
   const c = theme.ax;
   const S = createStyles(c);
-  const oneRepMaxFor = useMyOneRepMax();
+  const { oneRepMaxFor, gymRecordFor } = useMyRecords();
 
   const dpw = daysPerWeek ?? 5;
 
@@ -352,7 +352,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
 
             <Text style={S.sectionLabel}>SÉANCE</Text>
             <Text style={S.detailDesc}>
-              {annotateCardioLines(annotateStrengthLoads(selected?.description ?? '', oneRepMaxFor))}
+              {annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(selected?.description ?? '', oneRepMaxFor), gymRecordFor))}
             </Text>
 
             {!!selected?.notes && (

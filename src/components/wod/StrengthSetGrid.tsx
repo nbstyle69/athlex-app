@@ -14,7 +14,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import {
@@ -28,9 +28,13 @@ import i18n from '../../i18n';
 interface Props {
   drafts: StrengthSetDraft[];
   onChange: (index: number, patch: Partial<Pick<StrengthSetDraft, 'reps' | 'loadKg'>>) => void;
+  /** Record de gymnastique (reps) d'un mouvement, pour la ligne « P % de ton max ». */
+  gymRecordFor?: (name: string) => number | null;
+  /** Lien « Renseigner mon record » quand le mouvement n'en a pas. */
+  onSetGymRecord?: () => void;
 }
 
-export default function StrengthSetGrid({ drafts, onChange }: Props) {
+export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetGymRecord }: Props) {
   const { theme } = useTheme();
   const S = createStyles(theme);
   if (drafts.length === 0) return null;
@@ -46,12 +50,34 @@ export default function StrengthSetGrid({ drafts, onChange }: Props) {
       </Text>
       {drafts.map((d, i) => {
         const first = i === 0 || drafts[i - 1].entryIndex !== d.entryIndex;
+        // Reps prévues inconnues (% du max sans record) : pas d'écart à signaler.
         const deviates =
-          d.reps.trim() !== String(d.prescribedReps) ||
+          (d.prescribedReps >= 1 && d.reps.trim() !== String(d.prescribedReps)) ||
           (d.prescribedLoadKg != null && d.loadKg.trim() !== String(d.prescribedLoadKg));
+        const pct = d.prescribedPctOfMax ?? null;
+        const record = pct != null ? gymRecordFor?.(d.name) ?? null : null;
         return (
           <View key={`${d.entryIndex}-${d.setIndex}`}>
-            {first && <Text style={S.movement}>{d.name}</Text>}
+            {first && <Text style={[S.movement, pct != null && S.movementWithPct]}>{d.name}</Text>}
+            {first && pct != null && (
+              <View style={S.pctBlock}>
+                <Text style={S.pctLine} testID={`strength-gym-pct-${d.entryIndex}`}>
+                  {record != null && d.prescribedReps >= 1
+                    ? i18n.t('strengthSession.gymPctLine', { pct, record, reps: d.prescribedReps })
+                    : i18n.t('strengthSession.gymPctNoRecord', { pct })}
+                </Text>
+                {(record == null || d.prescribedReps < 1) && onSetGymRecord && (
+                  <TouchableOpacity
+                    onPress={onSetGymRecord}
+                    accessibilityRole="link"
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    testID={`strength-gym-set-record-${d.entryIndex}`}
+                  >
+                    <Text style={S.pctLink}>{i18n.t('strengthSession.gymSetRecord')}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            )}
             <View style={S.row}>
               <Text style={S.setLabel}>Série {ranks[i]}</Text>
               <View style={S.input}>
@@ -78,7 +104,9 @@ export default function StrengthSetGrid({ drafts, onChange }: Props) {
               <Text style={[S.prescribed, deviates && S.prescribedDeviates]}>
                 {d.prescribedLoadKg != null
                   ? `prévu ${d.prescribedReps} × ${d.prescribedLoadKg}`
-                  : `prévu ${d.prescribedReps} reps`}
+                  : pct != null && d.prescribedReps < 1
+                    ? i18n.t('strengthSession.plannedPctOfMax', { pct })
+                    : `prévu ${d.prescribedReps} reps`}
               </Text>
             </View>
           </View>
@@ -240,6 +268,11 @@ function createStyles(theme: AppTheme) {
     label: { ...axTypography.overline, color: c.textMuted, marginTop: axSpacing.lg, marginBottom: axSpacing.xs },
     hint: { ...axTypography.caption, color: c.textMuted, marginBottom: axSpacing.sm },
     movement: { ...axTypography.label, color: c.text, marginTop: 10, marginBottom: axSpacing.xs },
+    movementWithPct: { marginBottom: 0 },
+    // Figma 501:808 / 501:809 : 4 px sous le nom, style des « prévu … », lien couleur des écarts.
+    pctBlock: { gap: 4, marginTop: 4, marginBottom: axSpacing.sm },
+    pctLine: { ...axTypography.caption, color: c.textMuted },
+    pctLink: { ...axTypography.caption, color: c.accentText },
     row: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
     setLabel: { ...axTypography.caption, color: c.textMuted, width: 62 },
     input: { flex: 1, minWidth: 52 },

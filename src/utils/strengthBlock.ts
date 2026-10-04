@@ -14,6 +14,9 @@
  * chiffre de tête) ; le test de non-crédit la verrouille.
  */
 
+import { annotateGymReps, gymPrLabel } from '../screens/home/gymZones';
+import { weightliftingPrLabel } from '../screens/profile/prStorage';
+
 export type StrengthLoadUnit = 'kg' | '%1RM';
 /** Unité des « reps » : répétitions (défaut), secondes (gainage) ou mètres (carry). */
 export type StrengthRepsUnit = 'reps' | 's' | 'm';
@@ -38,6 +41,12 @@ export interface StrengthEntry {
    * force : elle commence par le nom, donc jamais créditée comme metcon.
    */
   loadNote?: string | null;
+  /**
+   * Mouvement de gymnastique prescrit en % du record (max unbroken) :
+   * « Ring Muscle-up — 3 × 15 % du max ». Les reps viennent du record de
+   * l'athlète (`gymRepsForPct`) ; `reps` vaut alors 0 (inconnues ici).
+   */
+  pctOfMax?: number;
 }
 
 const SEP = ' — ';
@@ -69,10 +78,12 @@ export function serializeStrength(e: StrengthEntry): string {
   if (!name) return '';
   const sets = Math.max(1, Math.round(e.sets));
   const reps = Math.max(1, Math.round(e.reps));
-  let out = `${name}${SEP}${sets} × ${reps}`;
-  if (e.repsUnit && e.repsUnit !== 'reps') out += ` ${e.repsUnit}`;
-  if (e.perSide) out += ` / ${e.perSide}`;
-  if (e.load != null && e.load > 0) out += ` @ ${e.load} ${e.unit}`;
+  let out = e.pctOfMax != null
+    ? `${name}${SEP}${sets} × ${e.pctOfMax} % du max`
+    : `${name}${SEP}${sets} × ${reps}`;
+  if (e.pctOfMax == null && e.repsUnit && e.repsUnit !== 'reps') out += ` ${e.repsUnit}`;
+  if (e.pctOfMax == null && e.perSide) out += ` / ${e.perSide}`;
+  if (e.pctOfMax == null && e.load != null && e.load > 0) out += ` @ ${e.load} ${e.unit}`;
   const loadNote = (e.loadNote ?? '').trim().replace(/\s+[—–-]\s+/g, ' ');
   if (loadNote) out += `${SEP}charge ${loadNote}`;
   if (e.restSec != null && e.restSec > 0) out += `${SEP}repos ${formatRest(e.restSec)}`;
@@ -90,12 +101,15 @@ export function parseStrengthLine(line: string): StrengthEntry | null {
   if (!name) return null;
 
   const m = parts[1].match(/^(\d+)\s*[x×]\s*(\d+)(?:\s*(s|m)\b)?(?:\s*\/\s*(jambe|bras|c[oô]t[eé]))?(?:\s*@\s*(\d+(?:[.,]\d+)?)\s*(kg|%\s*1rm|%))?$/i);
-  if (!m) return null;
+  // « 3 × 15 % du max » / « 3 × 15 % » : seulement pour un mouvement de
+  // gymnastique (un % de son record). Un mouvement chargé reste non reconnu.
+  const pm = m ? null : parts[1].match(/^(\d+)\s*[x×]\s*(\d+(?:[.,]\d+)?)\s*%(?:\s*du\s+max)?$/i);
+  if (!m && !(pm && gymPrLabel(name))) return null;
 
-  const repsUnit = (m[3]?.toLowerCase() ?? null) as StrengthRepsUnit | null;
-  const perSide: StrengthSide | null = m[4] ? (/^jambe/i.test(m[4]) ? 'jambe' : /^bras/i.test(m[4]) ? 'bras' : 'côté') : null;
-  const load = m[5] != null ? parseFloat(m[5].replace(',', '.')) : null;
-  const unit: StrengthLoadUnit = m[6] != null && m[6].toLowerCase().startsWith('kg') ? 'kg' : '%1RM';
+  const repsUnit = (m?.[3]?.toLowerCase() ?? null) as StrengthRepsUnit | null;
+  const perSide: StrengthSide | null = m?.[4] ? (/^jambe/i.test(m[4]) ? 'jambe' : /^bras/i.test(m[4]) ? 'bras' : 'côté') : null;
+  const load = m?.[5] != null ? parseFloat(m[5].replace(',', '.')) : null;
+  const unit: StrengthLoadUnit = m?.[6] != null && m[6].toLowerCase().startsWith('kg') ? 'kg' : '%1RM';
 
   let restSec: number | null = null;
   let tempo: string | null = null;
@@ -111,8 +125,8 @@ export function parseStrengthLine(line: string): StrengthEntry | null {
 
   return {
     name,
-    sets: parseInt(m[1], 10),
-    reps: parseInt(m[2], 10),
+    sets: parseInt((m ?? pm)![1], 10),
+    reps: m ? parseInt(m[2], 10) : 0,
     load,
     unit: load == null ? 'kg' : unit,
     restSec,
@@ -120,6 +134,7 @@ export function parseStrengthLine(line: string): StrengthEntry | null {
     ...(loadNote ? { loadNote } : {}),
     ...(repsUnit ? { repsUnit } : {}),
     ...(perSide ? { perSide } : {}),
+    ...(pm ? { pctOfMax: parseFloat(pm[2].replace(',', '.')) } : {}),
   };
 }
 
@@ -180,6 +195,7 @@ export function formatStrengthPrescription(
   e: StrengthEntry,
   oneRepMaxKg?: number | null,
 ): string {
+  if (e.pctOfMax != null) return `${e.sets} × ${e.pctOfMax} % du max`;
   let out = `${e.sets} × ${e.reps}`;
   if (e.repsUnit && e.repsUnit !== 'reps') out += ` ${e.repsUnit}`;
   if (e.perSide) out += ` / ${e.perSide}`;
@@ -192,4 +208,16 @@ export function formatStrengthPrescription(
   }
   if (note) out += ` · charge ${note}`;
   return out;
+}
+
+/**
+ * Reps (≈ N reps) des % du max de gymnastique dans un texte de WOD, tous types
+ * confondus. Une ligne qui nomme aussi un mouvement à 1RM est laissée telle
+ * quelle : le % pourrait être le sien.
+ */
+export function annotateGymRepsInText(
+  description: string,
+  gymRecordFor: (movementName: string) => number | null,
+): string {
+  return annotateGymReps(description, gymRecordFor, name => weightliftingPrLabel(name) != null);
 }

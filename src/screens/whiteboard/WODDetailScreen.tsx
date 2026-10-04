@@ -25,7 +25,7 @@ import { sendScoreNotification, sendScoreOvertakenNotification, cancelTodayScore
 import { incrementCounter, logMovementReps } from '../../services/gamification';
 import { formatScoreValue, normalizeScore, mapForTimeScore, formatCap } from '../../utils/scoreFormat';
 import { computeCompletedMovements } from '../../utils/movementParser';
-import { annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
+import { annotateGymRepsInText, annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
 import {
   buildStrengthGrid, logStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
@@ -42,7 +42,7 @@ import { axSpacing, axTypography } from '../../theme/axTokens';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import { AxIconButton } from '../../components/ax/AxIconButton';
-import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
+import { useMyRecords } from '../../hooks/useMyOneRepMax';
 import { recordStrengthPRs } from '../../services/strengthPR';
 import { computeMaxScore } from '../../utils/computeMaxScore';
 import { syncLevelAndBadges } from '../../utils/eloLevels';
@@ -93,7 +93,7 @@ export default function WODDetailScreen() {
   const S = createStyles(theme);
   const c = theme.ax;
   const medalInk = [c.warning, c.textMuted, c.orange];
-  const oneRepMaxFor = useMyOneRepMax();
+  const { oneRepMaxFor, gymRecordFor } = useMyRecords();
   const scrollRef = useRef<ScrollView>(null);
   const leaderboardY = useRef(0);
 
@@ -246,8 +246,8 @@ export default function WODDetailScreen() {
   const isStrengthSession = wod?.wod_type === 'strength' && strengthEntries.length > 0;
   const strengthValidated = strengthServer?.session?.status === 'validated';
   const strengthPrescription = useMemo(
-    () => buildStrengthGrid(strengthEntries, oneRepMaxFor),
-    [strengthEntries, oneRepMaxFor],
+    () => buildStrengthGrid(strengthEntries, oneRepMaxFor, gymRecordFor),
+    [strengthEntries, oneRepMaxFor, gymRecordFor],
   );
   const strengthKey: StrengthSourceKey | null = useMemo(
     () => (isStrengthSession && wod && user ? { userId: user.id, sourceType: 'whiteboard', sourceId: wod.id } : null),
@@ -374,6 +374,13 @@ export default function WODDetailScreen() {
   function closeScoreModal() {
     if (strengthValidated && strengthServer) setStrengthDrafts(gridFromServer(strengthPrescription, strengthServer.sets));
     setModalOpen(false);
+  }
+
+  /** « Renseigner mon record » : la saisie est gardée, la fenêtre se ferme, Records s'ouvre sur Gymnastique. */
+  function openGymRecords() {
+    if (editedAtRef.current) saveDraftNow();
+    closeScoreModal();
+    navigation.navigate('Profile', { prCategory: 'gymnastics' });
   }
 
   async function saveStrengthLater() {
@@ -790,7 +797,7 @@ export default function WODDetailScreen() {
           </Text>
 
           {wod.description && (
-            <Text style={S.wodDesc}>{annotateCardioLines(annotateStrengthLoads(wod.description, oneRepMaxFor))}</Text>
+            <Text style={S.wodDesc}>{annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(wod.description, oneRepMaxFor), gymRecordFor))}</Text>
           )}
           {wod.notes && (
             <AxCard style={S.notesBox} testID="wod-coach-notes">
@@ -1113,7 +1120,12 @@ export default function WODDetailScreen() {
                 />
               )}
 
-              <StrengthSetGrid drafts={strengthDrafts} onChange={onStrengthDraftChange} />
+              <StrengthSetGrid
+                drafts={strengthDrafts}
+                onChange={onStrengthDraftChange}
+                gymRecordFor={gymRecordFor}
+                onSetGymRecord={openGymRecords}
+              />
 
               <Text style={S.modalLabel}>NIVEAU</Text>
               <View style={S.rxRow}>

@@ -202,10 +202,16 @@ export default function ProfileScreen() {
   const [saving, setSaving]         = useState(false);
 
   // Ouverture directe du formulaire (lien « modifier » de la page résultat du générateur)
-  const route = useRoute<RouteProp<{ Profile: { editLevel?: boolean } | undefined }, 'Profile'>>();
+  const route = useRoute<RouteProp<{ Profile: { editLevel?: boolean; prCategory?: PrCategorySlug } | undefined }, 'Profile'>>();
   useEffect(() => {
     if (route.params?.editLevel) setEditing(true);
   }, [route.params?.editLevel]);
+  // Lien « Renseigner mon record » de la saisie des séries : Records, catégorie ouverte.
+  useEffect(() => {
+    if (!route.params?.prCategory) return;
+    setActiveTab(TAB_KEYS.indexOf('pr'));
+    setExpandedPR(route.params.prCategory);
+  }, [route.params?.prCategory]);
 
   // ── Changement de mot de passe (3E)
   const [pwdModal, setPwdModal]     = useState(false);

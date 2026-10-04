@@ -21,6 +21,7 @@ import { supabase } from '../lib/supabase';
 import { captureError } from '../lib/sentry';
 import { StrengthEntry, resolveStrengthLoadKg } from '../utils/strengthBlock';
 import { weightliftingPrLabel } from '../screens/profile/prStorage';
+import { gymRepsForPct } from '../screens/home/gymZones';
 import { bestOneRepMaxBySet, PerformedSet } from './strengthPR';
 import type { Database, Json } from '../types/supabase';
 
@@ -42,6 +43,11 @@ export interface StrengthSetDraft {
   loadKg: string;
   prescribedReps: number;
   prescribedLoadKg: number | null;
+  /**
+   * Gymnastique prescrite en % du record (« 3 × 15 % du max ») : les reps
+   * prévues en découlent ; sans record, `prescribedReps` vaut 0 (inconnues).
+   */
+  prescribedPctOfMax?: number | null;
 }
 
 export interface StrengthSetRow {
@@ -131,11 +137,14 @@ export function setRanks(drafts: { entryIndex: number }[]): number[] {
 export function buildStrengthGrid(
   entries: StrengthEntry[],
   oneRepMaxFor: (name: string) => number | null,
+  gymRecordFor: (name: string) => number | null = () => null,
 ): StrengthSetDraft[] {
   const out: StrengthSetDraft[] = [];
   const perMovement = new Map<string, number>();
   entries.forEach((e, entryIndex) => {
     const kg = resolveStrengthLoadKg(e, oneRepMaxFor(e.name));
+    // % du record : reps calculées, ou vides sans record (jamais inventées).
+    const reps = e.pctOfMax != null ? gymRepsForPct(gymRecordFor(e.name), e.pctOfMax) ?? 0 : e.reps;
     const sets = Math.max(1, Math.min(MAX_SETS_PER_MOVEMENT, Math.round(e.sets)));
     for (let s = 1; s <= sets; s++) {
       const setIndex = (perMovement.get(e.name) ?? 0) + 1;
@@ -148,10 +157,11 @@ export function buildStrengthGrid(
         entryIndex,
         setIndex,
         name: e.name,
-        reps: String(e.reps),
+        reps: e.pctOfMax != null && reps < 1 ? '' : String(reps),
         loadKg: kg == null ? '' : String(kg),
-        prescribedReps: e.reps,
+        prescribedReps: reps,
         prescribedLoadKg: kg,
+        ...(e.pctOfMax != null ? { prescribedPctOfMax: e.pctOfMax } : {}),
       });
     }
   });
