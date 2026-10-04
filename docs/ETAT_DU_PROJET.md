@@ -213,7 +213,8 @@ Supabase/Resend.
 **Gymnastique G2 : validation sans charge, reps totales, séries ajoutées, record confirmé (migration 20270145 ;
 appliquée en prod : non, en attente du feu vert de Nab ; PR non mergée).** `validate_strength_session` garde et valide
 les séries sans charge quand aucune charge n'était prescrite (une séance de gymnastique seule se valide ; une série à
-charge prescrite reste exigée avec sa charge) ; `strength_sessions.total_reps` (reps des séries sans charge, calculées
+charge prescrite, ou marquée `load_required` par l'app pour une ligne en kg ou en %1RM même non résolu, reste exigée
+avec sa charge) ; `strength_sessions.total_reps` (reps des séries sans charge, calculées
 par le serveur seul, refusées en écriture directe) ; `statut_coherent` : validée = charge max ou reps totales ; aucune
 ligne `wod_scores` sans série chargée, séance chargée ou mixte inchangée (score en charge) ; jamais de `movement_logs`.
 `strength_set_logs.is_added` (série ajoutée, sans reps prévues), renvoyé en dernière colonne par
@@ -221,8 +222,9 @@ ligne `wod_scores` sans série chargée, séance chargée ou mixte inchangée (s
 une série sans charge d'une séance validée de l'appelant, valeur = reps de la série, jamais abaissé, clé
 `gymnastics_<Libellé>` + `_date` + `_src` ; erreurs `RECORD_NON_PROUVE`, `RECORD_NON_AMELIORE`,
 `MOUVEMENT_NON_GYMNIQUE` ; authenticated seul. Rapprochement des noms en SQL (`internal.gym_pr_label`, miroir de
-`gymPrLabel`). App : `is_added: false` envoyé dans `p_sets`, aucun changement d'écran. Test
-`gymnastique_validation_sans_charge.sql` (G1 à G10 et retour arrière exact aux empreintes de prod, 29 mutations tuées) ;
+`gymPrLabel`). App : `is_added: false` et `load_required` (`StrengthSetDraft.loadRequired`, posé par `buildStrengthGrid`) envoyés dans
+`p_sets`, aucun changement d'écran. Test
+`gymnastique_validation_sans_charge.sql` (G1 à G10 et retour arrière exact aux empreintes de prod, 32 mutations tuées, plus 5 côté app) ;
 retour arrière `supabase/retours/20270145000000_gymnastique_validation_sans_charge.sql`.
 
 **Gymnastique G1 : % du max → reps (app seule, aucune migration ; mergée, PR #472 ; à vérifier sur téléphone au prochain build).** Spec Figma
