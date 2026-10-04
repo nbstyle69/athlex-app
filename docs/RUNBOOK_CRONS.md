@@ -19,6 +19,8 @@ pas ces jobs**. La liste ci-dessous est la référence pour les remonter.
 | `tournament-notifications-sweep` | min. 5, 20, 35, 50 | edge `tournament-notifications-cron` |
 | `weekly-owner-digest-monday` | lundi 07:00 UTC | edge `weekly-owner-digest` |
 | `generate-box-week-cet` / `-cest` | sam. 07:00 / 06:00 UTC | edge `generate-box-week` |
+| `deliver-manager-notifications-minute` | chaque minute | edge `deliver-manager-notifications` (migration `20270144`, créée inactive sans `cron_secret` dans le Vault) |
+| `box-manager-notifications-purge` | 03:23 UTC | `DELETE` des lignes de `box_manager_notifications` de plus de 30 jours (migration `20270144`) |
 
 ## `generate-box-week` (programmation automatique, J1)
 

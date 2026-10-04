@@ -210,6 +210,15 @@ Supabase/Resend.
 
 ## En cours
 
+**Notifications push au gérant (D4a), PR C : tâches pg_cron** (migration `20270144`, **appliquée en prod le 04/10/2026 à
+10:19 UTC**, en dernier, après la migration `20270143` et le déploiement de `deliver-manager-notifications` ; tâches 15
+et 16 actives, les 13 autres inchangées ; exécutions de 10:20 à 10:23 réussies, réponses 200, file vide).
+- `deliver-manager-notifications-minute` (chaque minute) : `net.http_post` vers la fonction, sans clé d'API ni
+  `Authorization`, `x-cron-secret` lu dans le Vault (`cron_secret`) ; sans ce secret (base de rejeu), créée inactive.
+- `box-manager-notifications-purge` (03:23 UTC) : supprime les lignes de la file de plus de 30 jours.
+- Tests `notifications_gerant_cron.sql` (C0 à C3 : forme des tâches, Vault avec et sans secret, rejouable sans
+  doublon, autres tâches intactes, purge à 30 jours, retour arrière), 12 mutations tuées.
+
 **Notifications push au gérant (D4a), PR B : fonction `deliver-manager-notifications`** (**déployée le 04/10/2026 à
 10:19 UTC** par `scripts/deploy-edge.mjs`, après la migration `20270143` ; source déployée identique à la branche,
 copie gardée hors dépôt (`athlex-retour-arriere-deliver-manager-notifications/deploye-d4a`) ; sondes sans secret, faux
