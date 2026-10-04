@@ -454,6 +454,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     // D4b (PR 2b) : feuille « Choisir un membre » et raccourci de la fiche membre.
     path.join(SRC, 'components', 'ChoisirMembreFeuille.tsx'),
     path.join(SRC, 'screens', 'backoffice', 'BOMembersScreen.tsx'),
+    // Annonces de la box : écran neuf, au design ax.
+    path.join(SRC, 'screens', 'whiteboard', 'AnnoncesScreen.tsx'),
   ];
 
   it('R9b : les écrans secondaires de Ma Box consomment ax, rien d’autre dans src/screens/whiteboard', () => {
@@ -462,6 +464,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       .map((f) => path.basename(f))
       .sort();
     expect(whiteboard).toEqual([
+      // Annonces de la box.
+      'AnnoncesScreen.tsx',
       'ArticlesScreen.tsx', 'PersonalWODFormScreen.tsx', 'WODDetailScreen.tsx', 'WhiteboardMembersModal.tsx',
       // R9a : Ma Box.
       'WhiteboardScreen.tsx',

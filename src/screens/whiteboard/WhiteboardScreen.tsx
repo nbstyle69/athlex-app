@@ -7,7 +7,7 @@ import {
   Modal, TextInput, KeyboardAvoidingView, Platform,
   ActivityIndicator, Alert, RefreshControl,
 } from 'react-native';
-import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, MessageCircle, FileText, Trophy, Sparkles, Newspaper, Play, BookOpen, Check, Timer as TimerIcon, Pencil, ClipboardList } from 'lucide-react-native';
+import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, MessageCircle, FileText, Trophy, Sparkles, Newspaper, Megaphone, Play, BookOpen, Check, Timer as TimerIcon, Pencil, ClipboardList } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
@@ -41,6 +41,7 @@ import { usePlanStatuses } from '../../hooks/usePlanStatuses';
 import PlanToActivateNotice from '../../components/PlanToActivateNotice';
 import { AxButton, AxCard, AxCounterBadge, AxIconButton, AxTag } from '../../components/ax';
 import { axAccentSafeLineHeight, axSpacing, axTypography } from '../../theme/axTokens';
+import { lastSeenAnnoncesKey } from './AnnoncesScreen';
 import WhiteboardMembersModal, { WhiteboardMember } from './WhiteboardMembersModal';
 
 function toISO(d: Date): string {
@@ -102,6 +103,7 @@ export default function WhiteboardScreen() {
   // Unread badges
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [unreadArticles, setUnreadArticles] = useState(0);
+  const [unreadAnnonces, setUnreadAnnonces] = useState(0);
 
   // Timer-launch modal (preconfigured from a WOD card, mode editable)
   const [timerModalWod, setTimerModalWod] = useState<BoxWOD | null>(null);
@@ -134,9 +136,10 @@ export default function WhiteboardScreen() {
     if (!user || !currentBox) return;
     (async () => {
       try {
-        const [unread, lastArt] = await Promise.all([
+        const [unread, lastArt, lastAnn] = await Promise.all([
           countUnreadMessages(user.id, currentBox.id),
           AsyncStorage.getItem(`lastSeenArticles_${user.id}_${currentBox.id}`),
+          AsyncStorage.getItem(lastSeenAnnoncesKey(user.id, currentBox.id)),
         ]);
         setUnreadMessages(unread);
 
@@ -148,6 +151,15 @@ export default function WhiteboardScreen() {
         if (lastArt) artQuery = artQuery.gt('created_at', lastArt);
         const { count: artCount } = await artQuery;
         setUnreadArticles(artCount ?? 0);
+
+        // Annonces lisibles (RLS) plus récentes que la dernière ouverture de l'écran
+        let annQuery = supabase
+          .from('box_notifications')
+          .select('id', { count: 'exact', head: true })
+          .eq('box_id', currentBox.id);
+        if (lastAnn) annQuery = annQuery.gt('created_at', lastAnn);
+        const { count: annCount } = await annQuery;
+        setUnreadAnnonces(annCount ?? 0);
       } catch (_) {}
     })();
   }, [user, currentBox]));
@@ -751,6 +763,21 @@ export default function WhiteboardScreen() {
                 onPress={() => navigation.navigate('Articles')}
                 fullWidth
                 testID="whiteboard-news"
+              />
+            </View>
+            <View style={S.headerBtn}>
+              {unreadAnnonces > 0 && (
+                <View style={S.badge} pointerEvents="none">
+                  <AxCounterBadge count={unreadAnnonces} readableInk testID="whiteboard-annonces-badge" />
+                </View>
+              )}
+              <AxButton
+                variant="outline"
+                icon={Megaphone}
+                label={t('whiteboard.announcements')}
+                onPress={() => navigation.navigate('Annonces')}
+                fullWidth
+                testID="whiteboard-annonces"
               />
             </View>
           </View>

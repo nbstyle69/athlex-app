@@ -307,6 +307,18 @@ notification » dans la fiche d'un membre actif (482:3303), qui ouvre l'écran a
 filtre dans `src/lib/membresAZ.ts`. Tests `membresAZ.test.ts`, `boNotificationsDestinataire.rn.test.tsx`,
 `boMembersNotifier.rn.test.tsx`, 25 mutations tuées.
 
+**Annonces de la box dans l'app (app seule, aucune migration ni Edge Function ; vérification visuelle par Nab au
+prochain build).** Écran « ANNONCES » (`AnnoncesScreen`, pile de Ma Box ; Figma 505:2955) : `box_notifications` de la
+box active, colonnes `id, title, body, target, created_at`, 50 au plus, de la plus récente à la plus ancienne ; la RLS
+existante (`notif_member_read`, `box_notifs_member_read`) ne rend que les annonces à toute la box ou au membre lui-même.
+Plus récente en carte vedette ; étiquette « Pour toi » si `target` est le membre, « Toute la box » sinon ; date et
+heure, titre, message en entier. État vide (mégaphone, « AUCUNE ANNONCE »), message d'erreur générique, tirer pour
+actualiser. Ma Box : bouton « Annonces » à côté d'« Actualités », pastille des annonces plus récentes que la dernière
+ouverture de l'écran (`lastSeenAnnonces_<userId>_<boxId>` sur le téléphone, même mécanique que les Actualités).
+Toucher une notification `box_notification` ouvre l'écran si sa `box_id` est la box active, sinon l'app s'ouvre
+simplement (`notificationRouter`, box active tenue à jour par `AuthContext`). Tests `annonces.rn.test.tsx`,
+`notificationRouter.test.ts`, 14 mutations tuées.
+
 **Minuteur sans caméra : session audio reposée à chaque lancement (retour D1 du build 1.0.60, app seule, aucune
 migration ; à vérifier sur iPhone au prochain build).** Sur iPhone, pas de bip sans caméra. Le mode audio n'était posé
 qu'à l'ouverture de l'écran ; avec caméra, `handleStartRecording` le repose avant l'enregistrement, sans caméra rien ne le

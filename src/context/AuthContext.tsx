@@ -16,6 +16,7 @@ import { ONBOARDING_KEY } from '../lib/onboardingStatus';
 import { EMAIL_CONFIRMED_URL, UPDATE_PASSWORD_URL } from '../lib/urls';
 import { boxClosedRefusal } from '../utils/refusals';
 import i18n from '../i18n';
+import { setNotificationActiveBox } from '../services/notificationRouter';
 
 const BOX_SKIPPED_KEY = '@athlex:boxSkipped';
 const ACTIVE_BOX_KEY = '@athlex:activeBoxId';
@@ -78,6 +79,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [boxSubscription, setBoxSubscription] = useState<BoxSubscription | null>(null);
   const [loading, setLoading]       = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
+
+  useEffect(() => { setNotificationActiveBox(currentBox?.id ?? null); }, [currentBox?.id]);
   const pendingLoginTrack = useRef(false);
   // Récupération par code en cours : verifyOtp ouvre une session avant que le
   // mot de passe soit changé. Tant que ce drapeau est levé, la session n'ouvre

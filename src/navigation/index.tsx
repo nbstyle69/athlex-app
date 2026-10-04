@@ -96,6 +96,7 @@ import BOProgrammingScreen from '../screens/backoffice/BOProgrammingScreen';
 import BOProgramEditorScreen from '../screens/backoffice/BOProgramEditorScreen';
 import ProgramDetailScreen from '../screens/programs/ProgramDetailScreen';
 import ArticlesScreen from '../screens/whiteboard/ArticlesScreen';
+import AnnoncesScreen from '../screens/whiteboard/AnnoncesScreen';
 import MessagesScreen from '../screens/messages/MessagesScreen';
 import CommunityScreen from '../screens/community/CommunityScreen';
 import CompetitionDetailScreen from '../screens/competition/CompetitionDetailScreen';
@@ -410,6 +411,7 @@ export type WhiteboardStackParamList = {
   PublicProfile: { userId: string };
   Messages: undefined;
   Articles: undefined;
+  Annonces: undefined;
   PersonalWODForm: { wodId?: string; date?: string } | undefined;
   TimerRun: {
     timerType: TimerType;
@@ -543,6 +545,7 @@ function WhiteboardNavigator() {
       <WhiteboardStack.Screen name="PublicProfile"  component={PublicProfileScreen} />
       <WhiteboardStack.Screen name="Messages"       component={MessagesScreen} />
       <WhiteboardStack.Screen name="Articles"        component={ArticlesScreen} />
+      <WhiteboardStack.Screen name="Annonces"        component={AnnoncesScreen} />
       <WhiteboardStack.Screen name="PersonalWODForm" component={PersonalWODFormScreen} />
       <WhiteboardStack.Screen name="TimerRun"        component={TimerRunScreen} />
       <WhiteboardStack.Screen name="VideoPlayback"  component={VideoPlaybackScreen} />
