@@ -449,6 +449,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     // Lot 4 « Rejoindre une box en payant » : bandeau « Formule à activer » et bienvenue.
     path.join(SRC, 'components', 'PlanToActivateNotice.tsx'),
     path.join(SRC, 'screens', 'onboarding', 'BoxWelcomeScreen.tsx'),
+    // D4b (PR 2a) : notifications du gérant au nouveau design.
+    path.join(SRC, 'screens', 'backoffice', 'BONotificationsScreen.tsx'),
   ];
 
   it('R9b : les écrans secondaires de Ma Box consomment ax, rien d’autre dans src/screens/whiteboard', () => {
