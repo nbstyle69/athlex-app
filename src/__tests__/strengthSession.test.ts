@@ -229,6 +229,8 @@ describe('validation', () => {
     expect(computedMaxLoad(d)).toBe(102.5);
     expect(mockDb.wod_scores[0].score_value).toBe(102.5);
     expect((mockDb.rpcCalls[0].p_sets as Row[]).map(s => s.load_kg)).toEqual([100, 102.5]);
+    // G2 : chaque série porte is_added (aucune série ajoutée avant la grille de G3).
+    expect((mockDb.rpcCalls[0].p_sets as Row[]).map(s => s.is_added)).toEqual([false, false]);
     expect(onFirst).toHaveBeenCalledTimes(1);
 
     const r2 = await validate(edit(d, 0, { loadKg: '105' }), onFirst);

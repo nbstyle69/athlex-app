@@ -890,6 +890,9 @@ export async function validateStrengthSession(p: ValidateStrengthParams): Promis
     load_kg: validLoad(d.loadKg),
     prescribed_reps: d.prescribedReps >= 1 ? d.prescribedReps : null,
     prescribed_load_kg: d.prescribedLoadKg != null && d.prescribedLoadKg > 0 ? d.prescribedLoadKg : null,
+    // Série ajoutée au-delà de la prescription (« Ajouter une série », G3) ;
+    // aucune pour l'instant. Lu par validate_strength_session (20270145).
+    is_added: false,
   }));
   const records = strengthRecordsFor(drafts, p.previousSets ?? []);
   const { data, error } = await db.rpc('validate_strength_session', {

@@ -210,7 +210,22 @@ Supabase/Resend.
 
 ## En cours
 
-**Gymnastique G1 : % du max → reps (app seule, aucune migration ; PR non mergée, à vérifier par Nab).** Spec Figma
+**Gymnastique G2 : validation sans charge, reps totales, séries ajoutées, record confirmé (migration 20270145 ;
+appliquée en prod : non, en attente du feu vert de Nab ; PR non mergée).** `validate_strength_session` garde et valide
+les séries sans charge quand aucune charge n'était prescrite (une séance de gymnastique seule se valide ; une série à
+charge prescrite reste exigée avec sa charge) ; `strength_sessions.total_reps` (reps des séries sans charge, calculées
+par le serveur seul, refusées en écriture directe) ; `statut_coherent` : validée = charge max ou reps totales ; aucune
+ligne `wod_scores` sans série chargée, séance chargée ou mixte inchangée (score en charge) ; jamais de `movement_logs`.
+`strength_set_logs.is_added` (série ajoutée, sans reps prévues), renvoyé en dernière colonne par
+`list_athlete_strength_sets` (pour GM2). `confirm_gym_record(p_set_log_id, p_label)` : record de gymnastique prouvé par
+une série sans charge d'une séance validée de l'appelant, valeur = reps de la série, jamais abaissé, clé
+`gymnastics_<Libellé>` + `_date` + `_src` ; erreurs `RECORD_NON_PROUVE`, `RECORD_NON_AMELIORE`,
+`MOUVEMENT_NON_GYMNIQUE` ; authenticated seul. Rapprochement des noms en SQL (`internal.gym_pr_label`, miroir de
+`gymPrLabel`). App : `is_added: false` envoyé dans `p_sets`, aucun changement d'écran. Test
+`gymnastique_validation_sans_charge.sql` (G1 à G10 et retour arrière exact aux empreintes de prod, 29 mutations tuées) ;
+retour arrière `supabase/retours/20270145000000_gymnastique_validation_sans_charge.sql`.
+
+**Gymnastique G1 : % du max → reps (app seule, aucune migration ; mergée, PR #472 ; à vérifier sur téléphone au prochain build).** Spec Figma
 501:513, arbitrage G0 du 04/10. Sur un mouvement de gymnastique (les 11 libellés de `GYM_PR_MOVEMENTS`, rapprochés
 sans casse, tirets, espaces ni pluriel, plus les abréviations sans ambiguïté T2B/TTB, C2B/CTB, RMU, BMU, Strict HSPU,
 Wall Facing HSPU ; ni « HSPU » ni « MU » seuls, ni « Strict Pull-Ups »), un % est un % du record (max unbroken) :
