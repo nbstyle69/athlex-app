@@ -211,6 +211,13 @@ Supabase/Resend.
 
 ## En cours
 
+**R1 (retour 1.0.61) : 1RM exact du libellé pour les blocs de musculation (app seule ; PR non mergée, à vérifier
+par Nab).** Un bloc `%1RM` (texte des WOD, grille pré-remplie) prend d'abord le record de son libellé de la page Records
+(`weightlifting_<Libellé>` et anciennes clés, rapprochement casse/tirets/espaces/pluriel comme la gymnastique) : Bench
+Press et Hip Thrust ont enfin leur kg, Strict Press n'utilise plus le max de Push Press. Sans record exact, repli sur la
+famille du générateur (Squat Clean → clean). Générateur inchangé (`parsePersonalRecords`, `resolveLoad`). Charges
+toujours arrondies à 2,5 kg (91 % de 100 → ≈ 90 kg). Tests `oneRepMaxExactLabel.test.ts`, `oneRepMaxHook.rn.test.tsx`.
+
 **Crédit R2b : « N% Mouvement » ne crédite plus N reps (app seule, aucune migration ; PR non mergée, à vérifier par
 Nab).** Une ligne de WOD qui commence par un nombre suivi de « % » (`40% Ring Muscle-ups`, `40 % RMU`, `35%du max
 Toes-to-Bar`) n'est plus une quantité de reps : `parseMovementLine` rend `null`, la ligne garde sa place dans le tour
