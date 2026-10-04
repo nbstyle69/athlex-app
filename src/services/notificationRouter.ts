@@ -1,6 +1,13 @@
 import { CommonActions } from '@react-navigation/native';
 import { navigationRef } from '../navigation/navigationRef';
 
+// Box active, tenue à jour par AuthContext : le toucher est traité hors de
+// l'arbre React, sans accès au contexte.
+let activeBoxId: string | null = null;
+export function setNotificationActiveBox(boxId: string | null) {
+  activeBoxId = boxId;
+}
+
 /**
  * Maps a push notification data payload to a navigation action.
  * Called when the user taps a notification (foreground or background).
@@ -44,6 +51,14 @@ export function routeNotification(data: Record<string, any> | undefined) {
     // ── Abonnement arrêté par le gérant → profil, onglet Compte (son état y est affiché) ──
     case 'membership_stopped':
       navigateToTab('Home', 'Profile');
+      break;
+
+    // ── Annonce de la box → écran Annonces, seulement si c'est la box active
+    //    (sinon l'app s'ouvre simplement) ──
+    case 'box_notification':
+      if (data.box_id && data.box_id === activeBoxId) {
+        navigateToTab('Whiteboard', 'Annonces');
+      }
       break;
 
     default:

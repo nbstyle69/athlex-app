@@ -1,4 +1,4 @@
-import { routeNotification } from '../services/notificationRouter';
+import { routeNotification, setNotificationActiveBox } from '../services/notificationRouter';
 import { navigationRef } from '../navigation/navigationRef';
 import { CommonActions } from '@react-navigation/native';
 
@@ -23,6 +23,7 @@ const mockNavigate = CommonActions.navigate as jest.Mock;
 beforeEach(() => {
   jest.clearAllMocks();
   mockIsReady.mockReturnValue(true);
+  setNotificationActiveBox(null);
   mockNavigate.mockImplementation((args: any) => ({ type: 'NAVIGATE', payload: args }));
 });
 
@@ -118,6 +119,40 @@ describe('routeNotification', () => {
         params: { screen: 'Profile', params: undefined },
       });
       expect(mockDispatch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('annonce de la box → écran Annonces', () => {
+    it('routes "box_notification" de la box active to Whiteboard > Annonces', () => {
+      setNotificationActiveBox('b1');
+      routeNotification({ type: 'box_notification', box_id: 'b1' });
+      expect(mockNavigate).toHaveBeenCalledWith({
+        name: 'Whiteboard',
+        params: { screen: 'Annonces', params: undefined },
+      });
+      expect(mockDispatch).toHaveBeenCalledTimes(1);
+    });
+
+    it("box de la notification autre que la box active : l'app s'ouvre simplement", () => {
+      setNotificationActiveBox('b1');
+      routeNotification({ type: 'box_notification', box_id: 'b2' });
+      expect(mockDispatch).not.toHaveBeenCalled();
+    });
+
+    it('aucune box active (ou box_id absent) : aucune navigation', () => {
+      routeNotification({ type: 'box_notification', box_id: 'b1' });
+      setNotificationActiveBox('b1');
+      routeNotification({ type: 'box_notification' });
+      expect(mockDispatch).not.toHaveBeenCalled();
+    });
+
+    it('la box active ne change pas la route des autres types', () => {
+      setNotificationActiveBox('b1');
+      routeNotification({ type: 'new_message', box_id: 'b2' });
+      expect(mockNavigate).toHaveBeenCalledWith({
+        name: 'Whiteboard',
+        params: { screen: 'Messages', params: undefined },
+      });
     });
   });
 
