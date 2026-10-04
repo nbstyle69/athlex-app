@@ -3,7 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, Alert, Modal, ScrollView,
 } from 'react-native';
-import { UserX, UserCheck, ChevronLeft, ChevronRight, X, Calendar, Clock, Check, Timer, ShieldCheck, CreditCard } from 'lucide-react-native';
+import { UserX, UserCheck, ChevronLeft, ChevronRight, X, Calendar, Clock, Check, Timer, ShieldCheck, CreditCard, Bell } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { readRows } from '../../lib/db';
@@ -13,6 +13,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { LevelColors } from '../../theme/designTokens';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { AxButton } from '../../components/ax';
 import { memberWriteRefusal } from '../../utils/refusals';
 import { assignableRoles, memberRowPermissions, MemberViewer } from '../../utils/memberPermissions';
 
@@ -388,6 +389,18 @@ export default function BOMembersScreen({ navigation }: any) {
               );
             })()}
 
+            {/* Raccourci vers les notifications du gérant, ce membre présélectionné (D4b, Figma 482:3303). */}
+            {selectedMember && selectedMember.status === 'active' && (
+              <View style={S.notifAction}>
+                <AxButton testID="members-send-notification" variant="outline" fullWidth icon={Bell}
+                  label={t('bo.members.sendNotification')}
+                  onPress={() => {
+                    const memberId = selectedMember.member_id;
+                    setSelectedMember(null);
+                    navigation.navigate('BODashboard', { screen: 'BONotifications', params: { memberId } });
+                  }} />
+              </View>
+            )}
             {/* Coach promote/demote + Ban/Unban actions */}
             {selectedMember && memberRowPermissions(viewer, selectedMember).reservedToPrincipal && (
               <Text style={S.reservedNote} testID="members-coowner-reserved">{t('bo.members.refusal.coOwnerReserved')}</Text>
@@ -536,6 +549,8 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
     marginHorizontal: 20, marginTop: 14, paddingVertical: 10, borderRadius: 10,
     backgroundColor: 'rgba(239,68,68,0.1)', borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
   },
+  // Même emprise que les actions voisines de la fiche (marges de 20, 14 au-dessus).
+  notifAction: { marginHorizontal: 20, marginTop: 14 },
   unbanBtn: {
     backgroundColor: `${theme.success}15`, borderColor: `${theme.success}30`,
   },

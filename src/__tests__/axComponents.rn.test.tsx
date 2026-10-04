@@ -451,6 +451,9 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'screens', 'onboarding', 'BoxWelcomeScreen.tsx'),
     // D4b (PR 2a) : notifications du gérant au nouveau design.
     path.join(SRC, 'screens', 'backoffice', 'BONotificationsScreen.tsx'),
+    // D4b (PR 2b) : feuille « Choisir un membre » et raccourci de la fiche membre.
+    path.join(SRC, 'components', 'ChoisirMembreFeuille.tsx'),
+    path.join(SRC, 'screens', 'backoffice', 'BOMembersScreen.tsx'),
   ];
 
   it('R9b : les écrans secondaires de Ma Box consomment ax, rien d’autre dans src/screens/whiteboard', () => {
