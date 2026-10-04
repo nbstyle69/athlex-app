@@ -41,7 +41,7 @@ export type GymPrMovement = (typeof GYM_PR_MOVEMENTS)[number];
  * « Toes To Bar »). Les mots ne sont jamais retirés : « Strict Pull-Ups » reste
  * distinct de « Pull-ups ».
  */
-function gymKey(name: string): string {
+export function movementMatchKey(name: string): string {
   return name.toLowerCase().split(/[\s_-]+/).filter(Boolean).map(w => w.replace(/s$/, '')).join('');
 }
 
@@ -62,13 +62,13 @@ const GYM_ABBREVIATIONS: Record<string, GymPrMovement> = {
 };
 
 const GYM_BY_KEY: ReadonlyMap<string, GymPrMovement> = new Map<string, GymPrMovement>([
-  ...GYM_PR_MOVEMENTS.map(m => [gymKey(m), m] as [string, GymPrMovement]),
+  ...GYM_PR_MOVEMENTS.map(m => [movementMatchKey(m), m] as [string, GymPrMovement]),
   ...Object.entries(GYM_ABBREVIATIONS),
 ]);
 
 /** Libellé de la page Records (section Gymnastique) d'un nom de mouvement, sinon `null`. */
 export function gymPrLabel(name: string): GymPrMovement | null {
-  return GYM_BY_KEY.get(gymKey(name ?? '')) ?? null;
+  return GYM_BY_KEY.get(movementMatchKey(name ?? '')) ?? null;
 }
 
 /** Reps d'un % du record : arrondies, jamais moins d'une ; `null` sans record. */

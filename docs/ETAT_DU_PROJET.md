@@ -211,6 +211,13 @@ Supabase/Resend.
 
 ## En cours
 
+**R1 (retour 1.0.61) : 1RM exact du libellé pour les blocs de musculation (app seule ; PR non mergée, à vérifier
+par Nab).** Un bloc `%1RM` (texte des WOD, grille pré-remplie) prend d'abord le record de son libellé de la page Records
+(`weightlifting_<Libellé>` et anciennes clés, rapprochement casse/tirets/espaces/pluriel comme la gymnastique) : Bench
+Press et Hip Thrust ont enfin leur kg, Strict Press n'utilise plus le max de Push Press. Sans record exact, repli sur la
+famille du générateur (Squat Clean → clean). Générateur inchangé (`parsePersonalRecords`, `resolveLoad`). Charges
+toujours arrondies à 2,5 kg (91 % de 100 → ≈ 90 kg). Tests `oneRepMaxExactLabel.test.ts`, `oneRepMaxHook.rn.test.tsx`.
+
 **Gymnastique G4 : fenêtre « Nouveau record ? » (app seule ; PR non mergée, à vérifier par Nab).** Spec Figma
 501:812 / 501:899. Après une validation réussie (WOD du Whiteboard et séance générée), les séries sont relues du
 serveur ; pour chacun des 11 mouvements de gymnastique dont une série sans charge dépasse un record existant, une ligne
