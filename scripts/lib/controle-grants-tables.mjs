@@ -45,6 +45,25 @@ const TABLES_ECRITURE_SERVEUR = new Map([
     + 'résolues par resoudre_alerte_membre()'],
 ]);
 
+/**
+ * T14, T15… : tables entièrement fermées aux clients — ni lecture ni écriture
+ * pour `anon` et `authenticated`, RLS active sans aucune règle, et les
+ * fonctions de déclencheur qui les remplissent (`declencheurs`, par préfixe de
+ * nom) existent et ne sont exécutables par aucun client. Lu par oid, sans
+ * résoudre de nom dans `internal`.
+ */
+const TABLES_FERMEES = [
+  {
+    id: 'T14',
+    table: 'box_manager_notifications',
+    declencheurs: 'trg_notif_gerant_',
+    nbDeclencheurs: 5,
+    libelle: 'la file des notifications du gérant est fermée aux clients',
+    risque: 'un membre lit qui paie, qui est en impayé et qui rejoint la box, ou '
+      + 'met en file une notification signée AthleX au gérant. Rejoue 20270143.',
+  },
+];
+
 /** Bits de `pg_trigger.tgtype`. */
 const TG = { ROW: 1, BEFORE: 2, INSERT: 4, DELETE: 8, UPDATE: 16 };
 
@@ -105,7 +124,8 @@ const GARDES_DECLENCHEUR = [
  * en ait qu'un : deux propriétaires feraient dépasser l'attendu, et le
  * décompte le dirait au lieu de le taire.
  */
-export const ASSERTIONS_GRANTS_TABLES = 9 + TABLES_ECRITURE_SERVEUR.size + GARDES_DECLENCHEUR.length; // T1..T9, T10 par table, T11+ par garde
+export const ASSERTIONS_GRANTS_TABLES = 9 + TABLES_ECRITURE_SERVEUR.size + GARDES_DECLENCHEUR.length
+  + TABLES_FERMEES.length; // T1..T9, T10 par table, T11..T13 par garde, T14+ par table fermée
 
 const PRIV_LISTE = privs => privs.map(p => `'${p}'`).join(', ');
 
@@ -352,6 +372,7 @@ export function controlerGrantsTables(query, assert) {
 
   controlerTablesEcritureServeur(query, assert);
   for (const garde of GARDES_DECLENCHEUR) controlerGardeDeclencheur(query, assert, garde);
+  for (const t of TABLES_FERMEES) controlerTableFermee(query, assert, t);
 }
 
 /**
@@ -424,6 +445,46 @@ function controlerGardeDeclencheur(query, assert, g) {
     ecarts.length === 0,
     ecarts.join(' ; ') + '\n'
       + `       → sans cette garde, ${g.risque}`,
+  );
+}
+
+function controlerTableFermee(query, assert, t) {
+  const [[present, rls, regles, droits, declencheurs, execClient]] = query(`
+    select count(c.oid)::text,
+           coalesce(bool_or(c.relrowsecurity), false)::text,
+           (select count(*) from pg_policies where schemaname = 'public' and tablename = '${t.table}')::text,
+           coalesce((select string_agg(distinct r || ':' || p, ',')
+                     from unnest(array['anon', 'authenticated']) r,
+                          unnest(array['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']) p
+                     where to_regclass('public.${t.table}') is not null
+                       and (has_table_privilege(r, 'public.${t.table}', p)
+                            or (p in ('SELECT', 'INSERT', 'UPDATE', 'REFERENCES')
+                                and has_any_column_privilege(r, 'public.${t.table}', p)))), ''),
+           (select count(*) from pg_trigger tg where tg.tgname like '${t.declencheurs}%' and not tg.tgisinternal)::text,
+           coalesce((select string_agg(distinct pr.proname, ',')
+                     from pg_trigger tg join pg_proc pr on pr.oid = tg.tgfoid
+                     where tg.tgname like '${t.declencheurs}%'
+                       and (has_function_privilege('anon', pr.oid, 'EXECUTE')
+                            or has_function_privilege('authenticated', pr.oid, 'EXECUTE'))), '')
+    from pg_class c
+    where c.oid = to_regclass('public.${t.table}')
+  `);
+
+  const ecarts = present !== '1' ? ['table absente : la migration qui la crée n\'est pas appliquée']
+    : [
+      ...(rls === 'true' ? [] : ['RLS désactivée']),
+      ...(regles === '0' ? [] : [`${regles} règle(s) RLS (aucune attendue)`]),
+      ...(droits === '' ? [] : [`droits client : ${droits} → REVOKE ALL ON public.${t.table} FROM anon, authenticated`]),
+      ...(declencheurs === String(t.nbDeclencheurs) ? []
+        : [`${declencheurs} déclencheur(s) ${t.declencheurs}* au lieu de ${t.nbDeclencheurs}`]),
+      ...(execClient === '' ? [] : [`${execClient} exécutable par un rôle client`]),
+    ];
+
+  assert(
+    `${t.id} — ${t.libelle} (public.${t.table})`,
+    ecarts.length === 0,
+    ecarts.join(' ; ') + '\n'
+      + `       → sans cette fermeture, ${t.risque}`,
   );
 }
 
