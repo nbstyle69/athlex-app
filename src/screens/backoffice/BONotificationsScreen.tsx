@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity,
+  View, Text, StyleSheet, ScrollView, Pressable,
   Alert, ActivityIndicator, RefreshControl, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { Bell, Send, Users, User, Clock, CheckCircle, ChevronLeft } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Bell, Send, Clock, CircleCheck, ChevronLeft } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme, AppTheme } from '../../context/ThemeContext';
+import { useTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { AxButton, AxCard, AxChip, AxTextField } from '../../components/ax';
+import { axAccentSafeLineHeight, axSpacing, axTypography } from '../../theme/axTokens';
 
 interface Member { user_id: string; username: string }
 interface SentNotif { id: string; title: string; body: string; target: string; created_at: string }
@@ -19,9 +22,10 @@ export default function BONotificationsScreen() {
   const navigation = useNavigation();
   const { currentBox } = useAuth();
   const { theme } = useTheme();
+  const c = theme.ax;
+  const insets = useSafeAreaInsets();
   const { t, i18n } = useTranslation();
   const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
-  const S = styles(theme);
 
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -102,7 +106,7 @@ export default function BONotificationsScreen() {
     return (
       <View style={[S.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <GlassBackground />
-        <ActivityIndicator size="large" color={theme.accent} />
+        <ActivityIndicator size="large" color={c.accent} />
       </View>
     );
   }
@@ -110,181 +114,101 @@ export default function BONotificationsScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <View style={S.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={S.back} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityRole="button" accessibilityLabel={t('common.back')}>
-          <ChevronLeft color={theme.text} size={22} />
-        </TouchableOpacity>
-        <Bell color={theme.accent} size={22} />
-        <Text style={S.headerTitle}>{t('bo.notifications.title')}</Text>
+      {/* En-tête de la maquette « Notifications (envoi) » : ‹, cloche, titre Oswald en capitales. */}
+      <View testID="bo-notif-header" style={[S.header, { paddingTop: insets.top + axSpacing.md }]}>
+        <Pressable onPress={() => navigation.goBack()} hitSlop={{ top: 11, bottom: 11, left: 11, right: 11 }} accessibilityRole="button" accessibilityLabel={t('common.back')}>
+          <ChevronLeft color={c.text} size={22} strokeWidth={2} />
+        </Pressable>
+        <Bell color={c.accentText} size={20} strokeWidth={2} />
+        <Text accessibilityRole="header" style={[axTypography.titleM, { lineHeight: axAccentSafeLineHeight.titleM, color: c.text }]}>{t('bo.notifications.title')}</Text>
       </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 140 }}
+          contentContainerStyle={S.content}
+          keyboardShouldPersistTaps="handled"
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
         >
           {/* Compose */}
-          <View style={S.composeCard}>
-            <Text style={S.composeTitle}>{t('bo.notifications.compose')}</Text>
+          <AxCard testID="bo-notif-compose">
+            <Text style={[axTypography.titleM, { lineHeight: axAccentSafeLineHeight.titleM, color: c.text }]}>{t('bo.notifications.compose')}</Text>
 
             {/* Target selector */}
-            <Text style={S.label}>{t('bo.notifications.recipient')}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TouchableOpacity
-                  style={[S.targetPill, target === 'all' && S.targetPillActive]}
-                  onPress={() => setTarget('all')}
-                  activeOpacity={0.8}
-                >
-                  <Users color={target === 'all' ? theme.onAccent : theme.textMuted} size={14} />
-                  <Text style={[S.targetPillText, target === 'all' && S.targetPillTextActive]}>
-                    {t('bo.notifications.allCount', { count: members.length })}
-                  </Text>
-                </TouchableOpacity>
-                {members.map(m => (
-                  <TouchableOpacity
-                    key={m.user_id}
-                    style={[S.targetPill, target === m.user_id && S.targetPillActive]}
-                    onPress={() => setTarget(m.user_id)}
-                    activeOpacity={0.8}
-                  >
-                    <User color={target === m.user_id ? theme.onAccent : theme.textMuted} size={14} />
-                    <Text style={[S.targetPillText, target === m.user_id && S.targetPillTextActive]}>
-                      {m.username}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+            <Text style={[axTypography.labelSmall, { color: c.textMuted }]}>{t('bo.notifications.recipient')}</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={S.pills}>
+              <AxChip testID="bo-notif-target-all" label={t('bo.notifications.allCount', { count: members.length })}
+                selected={target === 'all'} onPress={() => setTarget('all')} />
+              {members.map(m => (
+                <AxChip key={m.user_id} testID={`bo-notif-target-${m.user_id}`} label={m.username}
+                  selected={target === m.user_id} onPress={() => setTarget(m.user_id)} />
+              ))}
             </ScrollView>
 
             {/* Title */}
-            <Text style={S.label}>{t('bo.notifications.labelTitle')}</Text>
-            <TextInput
-              style={S.input}
-              value={title}
-              onChangeText={setTitle}
-              placeholder={t('bo.notifications.titlePlaceholder')}
-              placeholderTextColor={theme.textMuted}
-              maxLength={80}
-            />
+            <Text style={[axTypography.overlineSmall, { color: c.textMuted }]}>{t('bo.notifications.labelTitle')}</Text>
+            <AxTextField testID="bo-notif-title" value={title} onChangeText={setTitle}
+              placeholder={t('bo.notifications.titlePlaceholder')} accessibilityLabel={t('bo.notifications.labelTitle')} maxLength={80} />
 
             {/* Body */}
-            <Text style={S.label}>{t('bo.notifications.labelBody')}</Text>
-            <TextInput
-              style={[S.input, { height: 80, textAlignVertical: 'top' }]}
-              value={body}
-              onChangeText={setBody}
-              placeholder={t('bo.notifications.bodyPlaceholder')}
-              placeholderTextColor={theme.textMuted}
-              multiline
-              maxLength={300}
-            />
+            <Text style={[axTypography.overlineSmall, { color: c.textMuted }]}>{t('bo.notifications.labelBody')}</Text>
+            <AxTextField testID="bo-notif-body" value={body} onChangeText={setBody} multiline minInputHeight={56}
+              placeholder={t('bo.notifications.bodyPlaceholder')} accessibilityLabel={t('bo.notifications.labelBody')} maxLength={300} />
 
-            <TouchableOpacity
-              style={[S.sendBtn, (!title.trim() || sending) && { opacity: 0.5 }]}
-              onPress={handleSend}
-              disabled={!title.trim() || sending}
-              activeOpacity={0.8}
-            >
-              <Send color={theme.onAccent} size={16} />
-              <Text style={S.sendBtnText}>{sending ? t('bo.notifications.sending') : t('bo.notifications.send')}</Text>
-            </TouchableOpacity>
-          </View>
+            <AxButton testID="bo-notif-send" fullWidth icon={Send}
+              label={sending ? t('bo.notifications.sending') : t('bo.notifications.send')}
+              disabled={!title.trim() || sending} onPress={handleSend} />
+          </AxCard>
 
           {/* History */}
-          <View style={S.section}>
-            <Text style={S.sectionTitle}>{t('bo.notifications.history')}</Text>
-            {history.length === 0 ? (
-              <View style={S.emptyCard}>
-                <Bell color={theme.textMuted} size={28} />
-                <Text style={S.emptyText}>{t('bo.notifications.empty')}</Text>
-              </View>
-            ) : (
-              <View style={S.listCard}>
-                {history.map((n, i) => (
-                  <View key={n.id} style={[S.historyRow, i < history.length - 1 && S.historyRowBorder]}>
-                    <View style={S.historyIcon}>
-                      <CheckCircle color={theme.success} size={14} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={S.historyTitle}>{n.title}</Text>
-                      {!!n.body && <Text style={S.historyBody} numberOfLines={2}>{n.body}</Text>}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                        <Clock color={theme.textMuted} size={10} />
-                        <Text style={S.historyDate}>
-                          {new Date(n.created_at).toLocaleDateString(dateLocale, {
-                            day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
-                          })}
-                        </Text>
-                        <Text style={S.historyTarget}>
-                          → {n.target === 'all' ? t('bo.notifications.targetAll') : t('bo.notifications.targetIndividual')}
-                        </Text>
-                      </View>
+          <Text style={[axTypography.titleM, { lineHeight: axAccentSafeLineHeight.titleM, color: c.text }]}>{t('bo.notifications.history')}</Text>
+          {history.length === 0 ? (
+            <AxCard testID="bo-notif-empty" style={S.empty}>
+              <Bell color={c.textMuted} size={28} strokeWidth={2} />
+              <Text style={[axTypography.bodySmall, { color: c.textMuted }]}>{t('bo.notifications.empty')}</Text>
+            </AxCard>
+          ) : (
+            <AxCard testID="bo-notif-history" style={S.historyCard}>
+              {history.map((n, i) => (
+                <View key={n.id} testID={`bo-notif-row-${n.id}`} style={[S.historyRow, i > 0 && { borderTopWidth: 1, borderTopColor: c.border }]}>
+                  <CircleCheck color={c.success} size={14} strokeWidth={2} style={S.historyIcon} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Text style={[axTypography.label, { color: c.text }]}>{n.title}</Text>
+                    {!!n.body && <Text style={[axTypography.caption, { color: c.textMuted }]} numberOfLines={2}>{n.body}</Text>}
+                    <View style={S.historyMeta}>
+                      <Clock color={c.textMuted} size={10} strokeWidth={2} />
+                      <Text style={[axTypography.caption, { color: c.textMuted }]}>
+                        {new Date(n.created_at).toLocaleDateString(dateLocale, {
+                          day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+                        })}
+                      </Text>
+                      <Text style={[axTypography.caption, { color: c.accentText }]}>
+                        → {n.target === 'all' ? t('bo.notifications.targetAll') : t('bo.notifications.targetIndividual')}
+                      </Text>
                     </View>
                   </View>
-                ))}
-              </View>
-            )}
-          </View>
+                </View>
+              ))}
+            </AxCard>
+          )}
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
   );
 }
 
-function styles(theme: AppTheme) { return StyleSheet.create({
+const S = StyleSheet.create({
   container: { flex: 1, backgroundColor: 'transparent' },
   header: {
-    paddingTop: 56, paddingHorizontal: 20, paddingBottom: 16,
-    backgroundColor: theme.card, borderBottomWidth: 1, borderBottomColor: theme.border,
+    paddingHorizontal: axSpacing.xl, paddingBottom: axSpacing.md,
     flexDirection: 'row', alignItems: 'center', gap: 10,
   },
-  back: { marginRight: 2 },
-  headerTitle: { fontSize: 20, fontWeight: '900', color: theme.text },
-  composeCard: {
-    margin: 16, backgroundColor: theme.card, borderRadius: 16,
-    padding: 18, borderWidth: 1, borderColor: theme.border,
-  },
-  composeTitle: { fontSize: 15, fontWeight: '900', color: theme.text, marginBottom: 14 },
-  label: { fontSize: 11, fontWeight: '700', color: theme.textMuted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 1 },
-  targetPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10,
-    backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border,
-  },
-  targetPillActive: { backgroundColor: theme.accent, borderColor: theme.accent },
-  targetPillText: { fontSize: 12, fontWeight: '700', color: theme.textSecondary },
-  targetPillTextActive: { color: theme.onAccent },
-  input: {
-    backgroundColor: theme.surface, borderRadius: 12, padding: 14,
-    fontSize: 14, color: theme.text, marginBottom: 12,
-    borderWidth: 1, borderColor: theme.border,
-  },
-  sendBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-    backgroundColor: theme.accent, borderRadius: 12, padding: 14,
-  },
-  sendBtnText: { fontSize: 14, fontWeight: '800', color: theme.onAccent },
-  section: { paddingHorizontal: 16, marginTop: 20 },
-  sectionTitle: { fontSize: 15, fontWeight: '900', color: theme.text, marginBottom: 10 },
-  listCard: {
-    backgroundColor: theme.card, borderRadius: 14,
-    borderWidth: 1, borderColor: theme.border, overflow: 'hidden',
-  },
-  emptyCard: {
-    backgroundColor: theme.card, borderRadius: 14, padding: 30,
-    borderWidth: 1, borderColor: theme.border, alignItems: 'center', gap: 10,
-  },
-  emptyText: { fontSize: 13, color: theme.textMuted },
-  historyRow: { flexDirection: 'row', padding: 12, gap: 10 },
-  historyRowBorder: { borderBottomWidth: 1, borderBottomColor: theme.border },
-  historyIcon: {
-    width: 28, height: 28, borderRadius: 8, backgroundColor: `${theme.success}15`,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  historyTitle: { fontSize: 13, fontWeight: '800', color: theme.text },
-  historyBody: { fontSize: 12, color: theme.textSecondary, marginTop: 2 },
-  historyDate: { fontSize: 10, color: theme.textMuted },
-  historyTarget: { fontSize: 10, fontWeight: '700', color: theme.accentText },
-}); }
+  // Colonne de la maquette : marges de 20, 16 entre les blocs ; place sous la barre d'onglets flottante.
+  content: { paddingHorizontal: axSpacing.xl, paddingTop: axSpacing.xs, paddingBottom: 140, gap: axSpacing.lg },
+  pills: { flexDirection: 'row', gap: 6 },
+  empty: { padding: 30, alignItems: 'center', gap: 10 },
+  historyCard: { paddingHorizontal: axSpacing.lg, paddingVertical: 2, gap: 0 },
+  historyRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingVertical: 10 },
+  historyIcon: { marginTop: 3 },
+  historyMeta: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+});

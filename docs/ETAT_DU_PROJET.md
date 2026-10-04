@@ -274,6 +274,14 @@ gérant », node 475:753 ; PR 2a apparence et PR 2b comportement à suivre).
 - Appliquée dans l'ordre migration, puis fonction ; test réel en transaction annulée sur AthleX Fitness (co-gérant
   fictif accepté, résultat refusé au client, coach refusé, réservation conditionnelle par la clé serveur), sans trace.
 
+**Notifications du gérant (D4b), PR 2a : apparence de l'écran (app seule, apparence seule ; vérification visuelle
+par Nab).** `BONotificationsScreen` à l'apparence de sa maquette « Notifications (envoi) » (Figma 56:1868 sombre,
+56:2536 clair) avec les composants `ax` : en-tête ‹ / cloche menthe / titre Oswald, carte « NOUVELLE NOTIFICATION »,
+destinataires en `AxChip`, champs `AxTextField`, bouton menthe `AxButton`, historique en carte (coche verte, date,
+cible en menthe). Mêmes libellés, mêmes destinataires, même envoi (logique identique, contenu vérifié sur l'écran
+d'avant). Tests `boNotificationsApparence.rn.test.tsx`, 11 mutations tuées. Destinataire, résultat de l'envoi et
+historique enrichi : PR 2b.
+
 **Minuteur sans caméra : session audio reposée à chaque lancement (retour D1 du build 1.0.60, app seule, aucune
 migration ; à vérifier sur iPhone au prochain build).** Sur iPhone, pas de bip sans caméra. Le mode audio n'était posé
 qu'à l'ouverture de l'écran ; avec caméra, `handleStartRecording` le repose avant l'enregistrement, sans caméra rien ne le
