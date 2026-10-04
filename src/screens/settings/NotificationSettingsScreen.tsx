@@ -3,8 +3,10 @@ import { AxButton, AxCard, AxChip, AxSwitch } from '../../components/ax';
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Alert,
-  ActivityIndicator,
+  ActivityIndicator, Linking,
 } from 'react-native';
+import * as Notifications from 'expo-notifications';
+import { useTranslation } from 'react-i18next';
 import { Bell, BellOff, Clock, Users, Trophy, Zap, MessageCircle, Heart, Dumbbell, CalendarClock, TrendingUp, Megaphone, Award } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -22,15 +24,15 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { axSpacing, axTypography } from '../../theme/axTokens';
 import { readableInk } from '../home/homeLevelColor';
+import { captureError } from '../../lib/sentry';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 
 type BoolKey = Exclude<keyof NotificationPrefs, 'reminder_hour' | 'notifications_enabled'>;
 
 interface Toggle {
+  /** Libellé et sous-titre : `notifSettings.toggles.<key>`. */
   key: BoolKey;
-  label: string;
-  sub: string;
   Icon: typeof Bell;
   /** Couleur de catégorie — teinte de domaine, résolue selon le thème. */
   hue: HueName;
@@ -38,43 +40,43 @@ interface Toggle {
 
 // Chaque clé de la table `notification_preferences` est exposée ici : une clé
 // gouvernée côté serveur mais absente de cet écran serait un réglage que
-// l'utilisateur subit sans pouvoir le changer.
-const GROUPS: { title: string; toggles: Toggle[] }[] = [
+// l'utilisateur subit sans pouvoir le changer. Titre : `notifSettings.groups.<id>`.
+const GROUPS: { id: string; toggles: Toggle[] }[] = [
   {
-    title: 'Rappels',
+    id: 'reminders',
     toggles: [
-      { key: 'score_reminder', label: 'Rappel de score (18 h)', sub: 'Si tu n\'as pas encore entré ton score du jour', Icon: Clock, hue: 'amber' },
-      { key: 'class_reminders', label: 'Rappel de cours', sub: '1 h avant un cours que tu as réservé', Icon: CalendarClock, hue: 'cyan' },
+      { key: 'score_reminder', Icon: Clock, hue: 'amber' },
+      { key: 'class_reminders', Icon: CalendarClock, hue: 'cyan' },
     ],
   },
   {
-    title: 'Social',
+    id: 'social',
     toggles: [
-      { key: 'friend_requests', label: 'Demandes d\'amis', sub: 'Demandes reçues et acceptées', Icon: Users, hue: 'violet' },
-      { key: 'group_messages', label: 'Messages de groupe', sub: 'Nouveaux messages dans tes groupes', Icon: MessageCircle, hue: 'blue' },
-      { key: 'score_comments', label: 'Commentaires', sub: 'Quand quelqu\'un commente ton score', Icon: MessageCircle, hue: 'blue' },
-      { key: 'score_reactions', label: 'Likes & réactions', sub: 'Quand quelqu\'un réagit à ton score', Icon: Heart, hue: 'pink' },
+      { key: 'friend_requests', Icon: Users, hue: 'violet' },
+      { key: 'group_messages', Icon: MessageCircle, hue: 'blue' },
+      { key: 'score_comments', Icon: MessageCircle, hue: 'blue' },
+      { key: 'score_reactions', Icon: Heart, hue: 'pink' },
     ],
   },
   {
-    title: 'Entraînement',
+    id: 'training',
     toggles: [
-      { key: 'new_wod', label: 'Nouveau WOD', sub: 'Quand ta box publie un WOD', Icon: Dumbbell, hue: 'emerald' },
-      { key: 'badge_unlocks', label: 'Badges débloqués', sub: 'Quand tu débloques un badge', Icon: Award, hue: 'orange' },
+      { key: 'new_wod', Icon: Dumbbell, hue: 'emerald' },
+      { key: 'badge_unlocks', Icon: Award, hue: 'orange' },
     ],
   },
   {
-    title: 'Compétition',
+    id: 'competition',
     toggles: [
-      { key: 'tournament_updates', label: 'Tournois', sub: 'Démarrage, ouverture des WOD, rappels, résultats', Icon: Trophy, hue: 'yellow' },
-      { key: 'score_updates', label: 'Scores', sub: 'Quand un score est validé ou que tu es dépassé', Icon: Zap, hue: 'red' },
-      { key: 'elo_updates', label: 'ELO & inter-box', sub: 'Gains et pertes d\'ELO, résultats inter-box', Icon: TrendingUp, hue: 'indigo' },
+      { key: 'tournament_updates', Icon: Trophy, hue: 'yellow' },
+      { key: 'score_updates', Icon: Zap, hue: 'red' },
+      { key: 'elo_updates', Icon: TrendingUp, hue: 'indigo' },
     ],
   },
   {
-    title: 'Annonces de la box',
+    id: 'box',
     toggles: [
-      { key: 'box_announcements', label: 'Annonces', sub: 'Messages envoyés par ta box', Icon: Megaphone, hue: 'teal' },
+      { key: 'box_announcements', Icon: Megaphone, hue: 'teal' },
     ],
   },
 ];
@@ -82,6 +84,7 @@ const GROUPS: { title: string; toggles: Toggle[] }[] = [
 export default function NotificationSettingsScreen() {
   const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { theme } = useTheme();
   const S = createStyles(theme);
@@ -89,6 +92,8 @@ export default function NotificationSettingsScreen() {
   const [prefs, setPrefs] = useState<NotificationPrefs>(DEFAULT_NOTIFICATION_PREFS);
   const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState<keyof NotificationPrefs | null>(null);
+  // Résultat du bouton de test, affiché sous le bouton.
+  const [test, setTest] = useState<'idle' | 'busy' | 'ready' | 'denied'>('idle');
 
   useEffect(() => {
     if (!user) return;
@@ -111,19 +116,29 @@ export default function NotificationSettingsScreen() {
       await saveNotificationPrefs(user.id, { [key]: value });
       setPrefs(p => ({ ...p, [key]: value }));
     } catch {
-      Alert.alert('Réglage non enregistré', 'Vérifie ta connexion et réessaie.');
+      Alert.alert(t('notifSettings.saveFailedTitle'), t('notifSettings.saveFailedMsg'));
     } finally {
       setSaving(null);
     }
   }
 
+  // Enregistre le jeton, puis programme une notification locale : l'utilisateur
+  // voit arriver une vraie notification, sans aucune requête d'envoi.
   async function testPush() {
-    const token = await registerForPushNotifications();
-    if (token && user) {
-      await savePushToken(user.id, token);
-      Alert.alert('✅ Token enregistré', `Token: ${token.slice(0, 30)}…`);
-    } else {
-      Alert.alert('⚠️ Permission refusée', 'Active les notifications dans les réglages de ton téléphone.');
+    if (test === 'busy') return;
+    setTest('busy');
+    try {
+      const token = await registerForPushNotifications();
+      if (!token) { setTest('denied'); return; }
+      if (user) await savePushToken(user.id, token);
+      await Notifications.scheduleNotificationAsync({
+        content: { title: t('notifSettings.testTitle'), body: t('notifSettings.testBody'), sound: 'default' },
+        trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 3 },
+      });
+      setTest('ready');
+    } catch (e) {
+      captureError(e, { screen: 'NotificationSettings', action: 'testPush' });
+      setTest('idle');
     }
   }
 
@@ -131,27 +146,28 @@ export default function NotificationSettingsScreen() {
 
   const master = prefs.notifications_enabled;
 
-  function renderToggle(t: Toggle) {
-    const value = prefs[t.key] && master;
-    const tint = readableInk(hue(theme.mode, t.hue), theme.ax);
+  function renderToggle(tg: Toggle) {
+    const value = prefs[tg.key] && master;
+    const tint = readableInk(hue(theme.mode, tg.hue), theme.ax);
+    const label = t(`notifSettings.toggles.${tg.key}.label`);
     return (
-      <View style={S.row} key={t.key}>
+      <View style={S.row} key={tg.key}>
         <View style={S.rowLeft}>
-          <t.Icon color={master ? tint : theme.ax.textMuted} size={18} />
+          <tg.Icon color={master ? tint : theme.ax.textMuted} size={18} />
           <View style={{ flex: 1 }}>
-            <Text style={[S.rowLabel, !master && S.rowLabelOff]}>{t.label}</Text>
-            <Text style={S.rowSub}>{t.sub}</Text>
+            <Text style={[S.rowLabel, !master && S.rowLabelOff]}>{label}</Text>
+            <Text style={S.rowSub}>{t(`notifSettings.toggles.${tg.key}.sub`)}</Text>
           </View>
         </View>
-        {saving === t.key ? (
+        {saving === tg.key ? (
           <ActivityIndicator size="small" color={tint} style={S.pending} />
         ) : (
           <AxSwitch
             value={value}
             disabled={!master || saving !== null}
-            onValueChange={v => update(t.key, v)}
-            accessibilityLabel={t.label}
-            testID={`notif-switch-${t.key}`}
+            onValueChange={v => update(tg.key, v)}
+            accessibilityLabel={label}
+            testID={`notif-switch-${tg.key}`}
           />
         )}
       </View>
@@ -170,11 +186,9 @@ export default function NotificationSettingsScreen() {
             <View style={S.rowLeft}>
               {master ? <Bell color={theme.ax.accentText} size={18} /> : <BellOff color={theme.ax.textMuted} size={18} />}
               <View style={{ flex: 1 }}>
-                <Text style={S.rowLabel}>Toutes les notifications</Text>
+                <Text style={S.rowLabel}>{t('notifSettings.allLabel')}</Text>
                 <Text style={S.rowSub}>
-                  {master
-                    ? 'Coupe tout d\'un coup, y compris les rappels déjà programmés'
-                    : 'Aucune notification ne t\'est envoyée'}
+                  {master ? t('notifSettings.allOnSub') : t('notifSettings.allOffSub')}
                 </Text>
               </View>
             </View>
@@ -185,7 +199,7 @@ export default function NotificationSettingsScreen() {
                 value={master}
                 disabled={saving !== null}
                 onValueChange={v => update('notifications_enabled', v)}
-                accessibilityLabel="Toutes les notifications"
+                accessibilityLabel={t('notifSettings.allLabel')}
                 testID="notif-switch-notifications_enabled"
               />
             )}
@@ -194,13 +208,13 @@ export default function NotificationSettingsScreen() {
 
         {/* Rappel quotidien + son heure */}
         <AxCard style={S.section} testID="notif-section-reminder">
-          <Text style={S.sectionTitle}>Rappel quotidien</Text>
+          <Text style={S.sectionTitle}>{t('notifSettings.dailyTitle')}</Text>
           <View style={S.row}>
             <View style={S.rowLeft}>
               <Bell color={master ? theme.ax.accentText : theme.ax.textMuted} size={18} />
               <View style={{ flex: 1 }}>
-                <Text style={[S.rowLabel, !master && S.rowLabelOff]}>Rappel d'entraînement</Text>
-                <Text style={S.rowSub}>Notification chaque jour pour t'entraîner</Text>
+                <Text style={[S.rowLabel, !master && S.rowLabelOff]}>{t('notifSettings.dailyLabel')}</Text>
+                <Text style={S.rowSub}>{t('notifSettings.dailySub')}</Text>
               </View>
             </View>
             {saving === 'daily_reminder' ? (
@@ -210,7 +224,7 @@ export default function NotificationSettingsScreen() {
                 value={prefs.daily_reminder && master}
                 disabled={!master || saving !== null}
                 onValueChange={v => update('daily_reminder', v)}
-                accessibilityLabel="Rappel d'entraînement"
+                accessibilityLabel={t('notifSettings.dailyLabel')}
                 testID="notif-switch-daily_reminder"
               />
             )}
@@ -220,7 +234,7 @@ export default function NotificationSettingsScreen() {
             <View style={S.hourSection}>
               <View style={S.rowLeft}>
                 <Clock color={theme.ax.textMuted} size={16} />
-                <Text style={S.rowLabel}>Heure du rappel</Text>
+                <Text style={S.rowLabel}>{t('notifSettings.hourLabel')}</Text>
                 {saving === 'reminder_hour' && (
                   <ActivityIndicator size="small" color={theme.ax.accentText} />
                 )}
@@ -242,14 +256,34 @@ export default function NotificationSettingsScreen() {
         </AxCard>
 
         {GROUPS.map(g => (
-          <AxCard style={S.section} key={g.title} testID={`notif-group-${g.title}`}>
-            <Text style={S.sectionTitle}>{g.title}</Text>
+          <AxCard style={S.section} key={g.id} testID={`notif-group-${g.id}`}>
+            <Text style={S.sectionTitle}>{t(`notifSettings.groups.${g.id}`)}</Text>
             {g.toggles.map(renderToggle)}
           </AxCard>
         ))}
 
-        {/* Test button */}
-        <AxButton label="Tester les notifications" icon={Bell} onPress={testPush} fullWidth testID="notif-test-push" />
+        {/* Bouton de test et son résultat */}
+        <View style={S.testBlock}>
+          <AxButton label={t('notifSettings.testButton')} icon={Bell} onPress={testPush} disabled={test === 'busy'} fullWidth testID="notif-test-push" />
+          {test === 'ready' && (
+            <Text style={[S.testMsg, { color: theme.ax.success }]} testID="notif-test-ready">
+              {t('notifSettings.testReady')}
+            </Text>
+          )}
+          {test === 'denied' && (
+            <View testID="notif-test-denied">
+              <Text style={[S.testMsg, { color: theme.ax.warning }]}>{t('notifSettings.testDenied')}</Text>
+              <Text
+                style={S.testLink}
+                onPress={() => Linking.openSettings()}
+                accessibilityRole="link"
+                testID="notif-test-open-settings"
+              >
+                {t('notifSettings.openSettings')}
+              </Text>
+            </View>
+          )}
+        </View>
       </ScrollView>
     </View>
   );
@@ -273,4 +307,7 @@ function createStyles(t: AppTheme) {
   hourScroll: { flexGrow: 0, flexShrink: 0, marginTop: 4 },
   hourRow: { gap: 6, paddingVertical: 2 },
   pending: { width: 44, alignItems: 'flex-end' },
+  testBlock: { gap: axSpacing.sm },
+  testMsg: { ...axTypography.bodySmall, textAlign: 'center' },
+  testLink: { ...axTypography.label, color: c.accentText, textAlign: 'center', paddingVertical: axSpacing.sm },
 }); }

@@ -2018,5 +2018,79 @@
     "bannerTitle": "Formule à activer",
     "bannerBody": "Tu as rejoint {{box}}. Pour réserver tes cours, active une formule de ta box.",
     "counterHint": "Tu paies au comptoir ? Rapproche-toi de ta box."
+  },
+  "notifSettings": {
+    "groups": {
+      "reminders": "Rappels",
+      "social": "Social",
+      "training": "Entraînement",
+      "competition": "Compétition",
+      "box": "Annonces de la box"
+    },
+    "toggles": {
+      "score_reminder": {
+        "label": "Rappel de score (18 h)",
+        "sub": "Si tu n'as pas encore entré ton score du jour"
+      },
+      "class_reminders": {
+        "label": "Rappel de cours",
+        "sub": "1 h avant un cours que tu as réservé"
+      },
+      "friend_requests": {
+        "label": "Demandes d'amis",
+        "sub": "Demandes reçues et acceptées"
+      },
+      "group_messages": {
+        "label": "Messages de groupe",
+        "sub": "Nouveaux messages dans tes groupes"
+      },
+      "score_comments": {
+        "label": "Commentaires",
+        "sub": "Quand quelqu'un commente ton score"
+      },
+      "score_reactions": {
+        "label": "Likes & réactions",
+        "sub": "Quand quelqu'un réagit à ton score"
+      },
+      "new_wod": {
+        "label": "Nouveau WOD",
+        "sub": "Quand ta box publie un WOD"
+      },
+      "badge_unlocks": {
+        "label": "Badges débloqués",
+        "sub": "Quand tu débloques un badge"
+      },
+      "tournament_updates": {
+        "label": "Tournois",
+        "sub": "Démarrage, ouverture des WOD, rappels, résultats"
+      },
+      "score_updates": {
+        "label": "Scores",
+        "sub": "Quand un score est validé ou que tu es dépassé"
+      },
+      "elo_updates": {
+        "label": "ELO & inter-box",
+        "sub": "Gains et pertes d'ELO, résultats inter-box"
+      },
+      "box_announcements": {
+        "label": "Annonces",
+        "sub": "Messages envoyés par ta box"
+      }
+    },
+    "allLabel": "Toutes les notifications",
+    "allOnSub": "Coupe tout d'un coup, y compris les rappels déjà programmés",
+    "allOffSub": "Aucune notification ne t'est envoyée",
+    "dailyTitle": "Rappel quotidien",
+    "dailyLabel": "Rappel d'entraînement",
+    "dailySub": "Notification chaque jour pour t'entraîner",
+    "hourLabel": "Heure du rappel",
+    "saveFailedTitle": "Réglage non enregistré",
+    "saveFailedMsg": "Vérifie ta connexion et réessaie.",
+    "testButton": "Tester les notifications",
+    "testTitle": "Notification de test",
+    "testBody": "Tout fonctionne : tu recevras les notifications d'AthleX.",
+    "testReady": "Ton téléphone est prêt. Une notification de test va arriver.",
+    "testDenied": "Notifications désactivées pour AthleX. Active-les dans les réglages de ton téléphone.",
+    "openSettings": "Ouvrir les réglages"
   }
 }

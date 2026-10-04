@@ -2018,5 +2018,79 @@
     "bannerTitle": "Plan to activate",
     "bannerBody": "You've joined {{box}}. To book classes, activate one of your box's plans.",
     "counterHint": "Paying at the front desk? Talk to your box."
+  },
+  "notifSettings": {
+    "groups": {
+      "reminders": "Reminders",
+      "social": "Social",
+      "training": "Training",
+      "competition": "Competition",
+      "box": "Box announcements"
+    },
+    "toggles": {
+      "score_reminder": {
+        "label": "Score reminder (6 pm)",
+        "sub": "If you haven't entered today's score yet"
+      },
+      "class_reminders": {
+        "label": "Class reminder",
+        "sub": "1 hour before a class you booked"
+      },
+      "friend_requests": {
+        "label": "Friend requests",
+        "sub": "Requests received and accepted"
+      },
+      "group_messages": {
+        "label": "Group messages",
+        "sub": "New messages in your groups"
+      },
+      "score_comments": {
+        "label": "Comments",
+        "sub": "When someone comments on your score"
+      },
+      "score_reactions": {
+        "label": "Likes & reactions",
+        "sub": "When someone reacts to your score"
+      },
+      "new_wod": {
+        "label": "New WOD",
+        "sub": "When your box publishes a WOD"
+      },
+      "badge_unlocks": {
+        "label": "Badges unlocked",
+        "sub": "When you unlock a badge"
+      },
+      "tournament_updates": {
+        "label": "Tournaments",
+        "sub": "Start, WOD releases, reminders, results"
+      },
+      "score_updates": {
+        "label": "Scores",
+        "sub": "When a score is validated or you get overtaken"
+      },
+      "elo_updates": {
+        "label": "ELO & inter-box",
+        "sub": "ELO gains and losses, inter-box results"
+      },
+      "box_announcements": {
+        "label": "Announcements",
+        "sub": "Messages sent by your box"
+      }
+    },
+    "allLabel": "All notifications",
+    "allOnSub": "Turns everything off at once, including reminders already scheduled",
+    "allOffSub": "No notifications are sent to you",
+    "dailyTitle": "Daily reminder",
+    "dailyLabel": "Training reminder",
+    "dailySub": "A notification every day to get you training",
+    "hourLabel": "Reminder time",
+    "saveFailedTitle": "Setting not saved",
+    "saveFailedMsg": "Check your connection and try again.",
+    "testButton": "Test notifications",
+    "testTitle": "Test notification",
+    "testBody": "Everything works: you'll receive AthleX notifications.",
+    "testReady": "Your phone is ready. A test notification is on its way.",
+    "testDenied": "Notifications are turned off for AthleX. Turn them on in your phone settings.",
+    "openSettings": "Open settings"
   }
 }
