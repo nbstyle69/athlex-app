@@ -282,6 +282,19 @@ cible en menthe). Mêmes libellés, mêmes destinataires, même envoi (logique i
 d'avant). Tests `boNotificationsApparence.rn.test.tsx`, 11 mutations tuées. Destinataire, résultat de l'envoi et
 historique enrichi : PR 2b.
 
+**Notifications du gérant (D4b), PR 2b : destinataire, résultat de l'envoi, historique (app seule, aucune migration ;
+vérification visuelle par Nab).** Destinataire en deux pastilles, « Tous les membres (N) » par défaut et « Un membre »
+qui ouvre la feuille « CHOISIR UN MEMBRE » (Figma 479:1161, 479:1366 ; `ChoisirMembreFeuille`) : membres actifs de A à Z
+sans tenir compte des accents ni de la casse, groupés sous leur lettre, index A–Z qui fait défiler à la lettre, recherche
+qui filtre dès la première lettre avec compteur et croix ; la feuille se réduit au-dessus du clavier. Membre choisi en
+carte avec « Changer ». Résultat de l'envoi dans la carte au lieu des fenêtres « Envoyé » : encadré vert « Envoyée à N
+appareil(s) » si `sent` > 0, sinon encadré d'alerte « non reçue » (texte membre ou tous) ; erreur d'envoi (409 compris)
+inchangée. Historique : coche verte et « N appareils », cloche barrée « non reçue » à 0, rien si `delivered_count` est
+NULL ; pseudo du membre au lieu de « Individuel », « Membre retiré » s'il n'est plus là. Raccourci « Envoyer une
+notification » dans la fiche d'un membre actif (482:3303), qui ouvre l'écran avec ce membre présélectionné. Tri et
+filtre dans `src/lib/membresAZ.ts`. Tests `membresAZ.test.ts`, `boNotificationsDestinataire.rn.test.tsx`,
+`boMembersNotifier.rn.test.tsx`, 25 mutations tuées.
+
 **Minuteur sans caméra : session audio reposée à chaque lancement (retour D1 du build 1.0.60, app seule, aucune
 migration ; à vérifier sur iPhone au prochain build).** Sur iPhone, pas de bip sans caméra. Le mode audio n'était posé
 qu'à l'ouverture de l'écran ; avec caméra, `handleStartRecording` le repose avant l'enregistrement, sans caméra rien ne le
