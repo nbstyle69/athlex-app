@@ -210,6 +210,20 @@ Supabase/Resend.
 
 ## En cours
 
+**Notifications push au gérant (D4a), PR B : fonction `deliver-manager-notifications`** (**déployée : non** ; à
+déployer après la migration `20270143` de la PR A ; conception dans `docs/NOTIFS_GERANT.md`, PR A).
+- Appelée seulement par pg_cron avec `x-cron-secret` (401 sinon, `verify_jwt = false` versionné), clé par
+  `_shared/cle-secrete.ts`. Lit au plus 50 lignes non envoyées, non réservées, moins de 5 tentatives, des dernières
+  24 h ; réserve chaque ligne avant d'envoyer (mise à jour conditionnelle, une seule exécution l'envoie).
+- Destinataires par leur compte : `boxes.owner_id` et co-gérants actifs (`box_members.role = 'owner'`) ; ni coach,
+  ni membre, ni administrateur de la plateforme ; l'auteur du geste exclu ; interrupteur général coupé respecté.
+  Texte dans la langue de chaque jeton, pseudo du membre (jamais l'e-mail), heure du cours à Paris.
+- Appareils acceptés = tickets « ok » d'Expo (comme `send-box-notification`) écrits avec `sent_at` ; échec → ligne
+  libérée avec un code sans donnée personnelle, nouvelle tentative la minute suivante ; résultat non écrit après
+  l'envoi → la ligne n'est jamais reprise (pas de double envoi). Données `{ type, box_id }` : au toucher, l'app
+  s'ouvre simplement (`notificationRouter` ignore ces types).
+- Règles dans `regles.ts`, 33 tests Jest, 28 mutations tuées.
+
 **Notifications du gérant (D4b), PR 1 : base et fonction** (migration `20270142`, **appliquée en prod le 03/10/2026 à
 16:17 UTC** ; dump `db-dumps/2026-10-03/athlex-prod-public-internal-20261003T160601Z.dump` ; audit 38/38 ; fonction
 `send-box-notification` **déployée le 03/10/2026 à 16:19 UTC** ; maquettes validées par Nab, page « 🧪 Spec · Notifications du
