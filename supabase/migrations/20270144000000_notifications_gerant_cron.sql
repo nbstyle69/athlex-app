@@ -1,7 +1,18 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Notifications push au gérant (D4a, PR C) : tâches pg_cron
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 04/10/2026 à 10:19 UTC, avec PGCLIENTENCODING=UTF8,
+-- sur GO de Nab, après 20270143 (10:16 UTC) et le déploiement de
+-- deliver-manager-notifications (10:19 UTC) ; dump du jour
+-- db-dumps/2026-10-04/athlex-prod-public-internal-20261004T101510Z.dump (sha256
+-- 92a481a3…). Précontrôle : cron_secret présent dans le Vault, aucune des deux
+-- tâches. Vérifications : tâche 15 deliver-manager-notifications-minute
+-- (`* * * * *`, active, md5 de commande 539f5a3d…) et tâche 16
+-- box-manager-notifications-purge (`23 3 * * *`, active, fbe6903a…), les 13
+-- autres tâches au même planning, état et md5 de commande qu'avant ; exécutions
+-- de 10:20, 10:21, 10:22 et 10:23 `succeeded` dans cron.job_run_details,
+-- réponses HTTP 200 `{"lues":0,"envoyees":0,"echecs":0,"prises_ailleurs":0}`,
+-- journaux de la fonction sans erreur, file vide.
 --
 -- À APPLIQUER EN DERNIER : après la migration 20270143 (PR A, la file
 -- `box_manager_notifications`) et après le déploiement de la fonction
