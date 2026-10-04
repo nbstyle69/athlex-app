@@ -2,7 +2,19 @@
 -- Gymnastique (G2, base) : validation sans charge, reps totales, séries ajoutées,
 -- record de gymnastique confirmé
 --
--- Appliquée en prod : NON (en attente du feu vert de Nab après le précontrôle).
+-- Appliquée en prod : OUI, le 04/10/2026 à 17:48 UTC (17:48:09 → 17:48:10), fichier seul en une
+-- transaction, PGCLIENTENCODING=UTF8, sur feu vert de Nab (commit 1388e1a, sha256 du fichier
+-- 4748ea4d…daee5). Dump des schémas public et internal avec droits
+-- db-dumps/2026-10-04/athlex-prod-public-internal-20261004T170427Z.dump, sha256
+-- 23c056b690252af467d157e52c44f79f366d56e84c240f68ecb15c710db256a9 vérifié après aller-retour,
+-- 136 TABLE DATA, 458 ACL, 346 POLICY. Précontrôle et recontrôle avant application : définitions
+-- identiques à G0. Après : données inchangées (strength_sessions 9ae7b734…, strength_set_logs
+-- 6385738c…, records e95c099b…, wod_scores f261dc80…, movement_logs 8dc4bef7…, mêmes md5 avant et
+-- après, sur les colonnes de prod) ; définitions aux empreintes du rejeu (validate_strength_session
+-- 14ac92fb…, list_athlete_strength_sets 0d267536… avec is_added, confirm_gym_record 6ebca7f3…
+-- exécutable par authenticated seul, internal.gym_pr_label 87b12c05… fermée aux rôles clients) ;
+-- test réel G1 à G9 sur données fictives, transaction annulée, aucune trace ; audit des droits
+-- grants-prod.yml 39/39.)
 --
 -- Chantier « Saisie des séries en gymnastique », lot G2. Spec Figma 501:513, brief
 -- G0 à G4 et arbitrages de Nab des 04/10/2026.

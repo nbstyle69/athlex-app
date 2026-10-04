@@ -211,7 +211,7 @@ Supabase/Resend.
 ## En cours
 
 **Gymnastique G2 : validation sans charge, reps totales, séries ajoutées, record confirmé (migration 20270145 ;
-appliquée en prod : non, en attente du feu vert de Nab ; PR non mergée).** `validate_strength_session` garde et valide
+**appliquée en prod : oui**, le 04/10/2026 à 17:48 UTC, dump `db-dumps/2026-10-04/athlex-prod-public-internal-20261004T170427Z.dump` (sha256 `23c056b6…56a9`, aller-retour vérifié) ; données inchangées avant/après (séances, séries, records, scores, movement_logs), définitions aux empreintes du rejeu, test réel G1 à G9 sur données fictives annulé sans trace, audit grants-prod 39/39 ; PR non mergée).** `validate_strength_session` garde et valide
 les séries sans charge quand aucune charge n'était prescrite (une séance de gymnastique seule se valide ; une série à
 charge prescrite, ou marquée `load_required` par l'app pour une ligne en kg ou en %1RM même non résolu, reste exigée
 avec sa charge) ; `strength_sessions.total_reps` (reps des séries sans charge, calculées
