@@ -542,7 +542,7 @@ export default function WODDetailScreen() {
    * Compteurs, streak et crédit de mouvements d'un score posé. Pour une séance de
    * musculation, n'est appelé qu'à la première validation.
    */
-  async function creditScoreSubmission(value: number, submittedType: ScoreType) {
+  async function creditScoreSubmission(value: number, submittedType: ScoreType, opts: { badgeReps?: boolean } = {}) {
     if (!wod || !user) return;
     trackScoreSubmit(wod.id, submittedType);
 
@@ -564,7 +564,7 @@ export default function WODDetailScreen() {
     cancelTodayScoreReminder().catch(e => captureError(e, { action: 'cancelScoreReminder' }));
 
     // Log movement reps for badges (parse description as movement lines)
-    if (wod.description) {
+    if (wod.description && opts.badgeReps !== false) {
       const lines = wod.description.split('\n').filter(Boolean);
       const wodFormat = wod.wod_type === 'for-time' ? 'For Time' : wod.wod_type === 'amrap' ? 'AMRAP' : wod.wod_type === 'emom' ? 'EMOM' : wod.wod_type ?? 'For Time';
       const completed = computeCompletedMovements(lines, wodFormat, value, submittedType, { gender: user.gender });
@@ -640,9 +640,10 @@ export default function WODDetailScreen() {
         previousSets: strengthServer?.sets ?? [],
       }, async r => {
         first = true;
-        // Séance sans aucune série chargée : le serveur n'écrit aucun score ; l'app
-        // n'écrit ni score, ni compteur, ni movement_logs (aucun crédit de badge).
-        if (r.maxLoadKg != null) await creditScoreSubmission(r.maxLoadKg, 'weight');
+        // Même crédit qu'une séance chargée (score envoyé, série de jours, compteurs),
+        // une seule fois. Séance sans aucune série chargée (gymnastique) : aucune rep
+        // de badge (aucun crédit de mouvements) ; le serveur n'écrit aucun score.
+        await creditScoreSubmission(r.maxLoadKg ?? 0, 'weight', { badgeReps: r.maxLoadKg != null });
       });
       editedAtRef.current = null;
       setDraftSaveState('idle');

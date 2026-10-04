@@ -293,8 +293,8 @@ describe('écran Whiteboard (lecture du source)', () => {
 
   it('compteurs et crédit ne partent que depuis le rappel de première validation', () => {
     const v = fn('validateStrength');
-    // G3 : une séance sans aucune série chargée ne crédite rien (ni score, ni compteur, ni movement_logs).
-    expect(v).toMatch(/submitStrengthValidation\([\s\S]*?async r => \{\s*first = true;[\s\S]{0,250}?if \(r\.maxLoadKg != null\) await creditScoreSubmission\(r\.maxLoadKg, 'weight'\);/);
+    // G3 bis : même crédit pour une séance de gymnastique, sans reps de badge (badgeReps faux sans charge).
+    expect(v).toMatch(/submitStrengthValidation\([\s\S]*?async r => \{\s*first = true;[\s\S]{0,300}?await creditScoreSubmission\(r\.maxLoadKg \?\? 0, 'weight', \{ badgeReps: r\.maxLoadKg != null \}\);/);
     expect(v.match(/creditScoreSubmission\(/g)).toHaveLength(1);
     expect(v).not.toMatch(/incrementCounter|logMovementReps|recordStrengthPRs/);
     expect(v).toContain('refreshScoresAfterSubmit(first)');
@@ -550,8 +550,8 @@ describe('G3 : lignes en reps seules, séries ajoutées, totaux', () => {
   });
 
   it('une ligne en secondes ou en mètres garde son champ kg (ses « reps » ne sont pas des reps)', () => {
-    const g = buildStrengthGrid(['Gainage — 2 × 30 s', 'Farmer Carry — 2 × 40 m'].map(l => parseStrengthLine(l)!), () => null);
-    expect(g.map(d => isRepsOnly(d))).toEqual([false, false, false, false]);
+    const g = buildStrengthGrid(['Gainage — 2 × 30 s', 'Farmer Carry — 2 × 40 m', 'Pull-ups — 2 × 30 s'].map(l => parseStrengthLine(l)!), () => null);
+    expect(g.map(d => isRepsOnly(d))).toEqual([false, false, false, false, false, false]);
   });
 
   it('une série en reps seules vaut sans charge ; vide, elle ne compte pas', () => {
@@ -606,7 +606,7 @@ describe('G3 : lignes en reps seules, séries ajoutées, totaux', () => {
     ]);
   });
 
-  it('séance de gymnastique seule : validée, reps totales, aucun score ni crédit', async () => {
+  it('séance de gymnastique seule : validée, reps totales, aucun score (le crédit de compteurs part de l’écran)', async () => {
     const seule = buildStrengthGrid([parseStrengthLine('Toes to Bar — 2 × 60 % du max')!], () => null, () => 15);
     const onFirst = jest.fn();
     const r = await validate(seule, onFirst);
@@ -648,5 +648,29 @@ describe('G3 : grille d’avant G2 (sans loadRequired)', () => {
     };
     expect(isRepsOnly(ancienne)).toBe(false);
     expect(validStrengthSets([ancienne])).toEqual([]);
+  });
+});
+
+describe('G3 bis : reps seules réservées à la gymnastique', () => {
+  const ligne = (l: string) => buildStrengthGrid([parseStrengthLine(l)!], () => null, () => null);
+
+  it('« Push Press — 2 × 5 » sans charge : reps × kg, charge exigée (l’athlète choisit sa charge)', () => {
+    const d = ligne('Push Press — 2 × 5');
+    expect(d.map(x => [isRepsOnly(x), x.loadRequired, x.prescribedReps, x.prescribedLoadKg])).toEqual([[false, true, 5, null], [false, true, 5, null]]);
+    const vide = edit(d, 0, { loadKg: '' });
+    expect(validStrengthSets(vide)).toEqual([]);
+    expect(addStrengthSet(d, 0)).toBe(d);
+  });
+
+  it('« Ring Muscle-up — 3 × 5 » sans charge : reps seules', () => {
+    expect(ligne('Ring Muscle-up — 3 × 5').map(x => [isRepsOnly(x), x.loadRequired])).toEqual(Array(3).fill([true, false]));
+  });
+
+  it('« Pull-ups — 4 × 8 @ 10 kg » (gymnastique lestée) : reps × kg', () => {
+    expect(ligne('Pull-ups — 4 × 8 @ 10 kg').map(x => [isRepsOnly(x), x.loadRequired, x.prescribedLoadKg])).toEqual(Array(4).fill([false, true, 10]));
+  });
+
+  it('un mouvement hors des 11 (« Strict Pull-Ups — 3 × 8 ») garde reps × kg', () => {
+    expect(ligne('Strict Pull-Ups — 3 × 8').map(x => isRepsOnly(x))).toEqual([false, false, false]);
   });
 });

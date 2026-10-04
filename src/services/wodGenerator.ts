@@ -640,6 +640,18 @@ export async function submitMuscuScore(
 }
 
 /**
+ * Première validation d'une séance au poids du corps seule (aucune série chargée) :
+ * même crédit qu'une séance chargée (score envoyé au compteur, série de jours,
+ * rappel du jour), sans ligne de score (le tonnage n'existe pas) ni rep de badge
+ * (aucun movement_logs).
+ */
+export function creditMuscuSessionWithoutLoad(user: Pick<User, 'id'>, boxId: string | null | undefined): void {
+  incrementCounter(user.id, 'total_scores_submitted', 1, boxId ?? undefined)
+    .catch((e) => captureError(e, { action: 'incrementScores' }));
+  cancelTodayScoreReminder().catch((e) => captureError(e, { action: 'cancelScoreReminder' }));
+}
+
+/**
  * Modification d'une séance déjà validée : le tonnage remplace celui du score
  * existant, sans compteur, rappel ni crédit de badges (déjà faits une fois).
  */

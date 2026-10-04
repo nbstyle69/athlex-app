@@ -348,7 +348,7 @@ describe('G3 : exercices au poids du corps en reps seules', () => {
     ]);
   });
 
-  it('séance au poids du corps seule : validée, aucun score, aucun compteur, aucun movement_logs', async () => {
+  it('séance au poids du corps seule : validée, même crédit de compteurs qu’une séance chargée, sans score ni movement_logs', async () => {
     const { result } = await run(BW, withAdded(initialPerformed(BW), 0, 5));
     expect(result).toMatchObject({ premiereValidation: true, maxLoadKg: null, totalReps: 3 * 8 + 5 + 2 * 10 });
     const p = mockDb.rpcCalls[0].p_sets as Row[];
@@ -357,10 +357,14 @@ describe('G3 : exercices au poids du corps en reps seules', () => {
       [1, null, false, false], [2, null, false, false],
     ]);
     expect(mockDb.generated_wod_scores).toEqual([]);
-    expect(incrementCounter).not.toHaveBeenCalled();
+    expect(incrementCounter).toHaveBeenCalledTimes(1);
+    expect(incrementCounter).toHaveBeenCalledWith('u1', 'total_scores_submitted', 1, 'box-1');
+    expect(cancelTodayScoreReminder).toHaveBeenCalledTimes(1);
     expect(logMovementReps).not.toHaveBeenCalled();
+    // Une modification ne recompte rien.
     await run(BW, initialPerformed(BW));
     expect(mockDb.generated_wod_scores).toEqual([]);
+    expect(incrementCounter).toHaveBeenCalledTimes(1);
   });
 
   it('séance mixte : score tonnage comme avant, reps totales en plus', async () => {

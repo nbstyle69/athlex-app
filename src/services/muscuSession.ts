@@ -16,7 +16,7 @@ import {
   submitStrengthValidation,
 } from './strengthSets';
 import {
-  MuscuResult, MuscuScoreSubmission, PerformedExercise, PerformedSet, isMuscuWod, plannedSets, submitMuscuScore,
+  MuscuResult, MuscuScoreSubmission, PerformedExercise, PerformedSet, creditMuscuSessionWithoutLoad, isMuscuWod, plannedSets, submitMuscuScore,
   totalTonnage, updateMuscuScore,
 } from './wodGenerator';
 import type { MuscuScreenParams } from './wodGenerator';
@@ -111,9 +111,13 @@ export async function validateMuscuSession(
       rx: wod.level !== 'debutant',
       previousSets,
     },
-    // Séance sans aucune série chargée (poids du corps) : aucun score, aucun
-    // compteur, aucun movement_logs ; le serveur garde les reps totales.
-    async (r) => { if (r.maxLoadKg != null) await submitMuscuScore(user, boxId, wod, s); },
+    // Séance sans aucune série chargée (poids du corps) : même crédit de compteurs
+    // qu'une séance chargée, sans ligne de score ni movement_logs ; le serveur
+    // garde les reps totales.
+    async (r) => {
+      if (r.maxLoadKg != null) await submitMuscuScore(user, boxId, wod, s);
+      else creditMuscuSessionWithoutLoad(user, boxId);
+    },
   );
   if (!result.premiereValidation && result.maxLoadKg != null) await updateMuscuScore(user, wod, s);
   return { tonnage, result };

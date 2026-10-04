@@ -245,10 +245,10 @@ describe('G3 : détail du WOD (saisie et séance validée)', () => {
     description: LINES.slice(0, 2).join('\n'), time_cap_seconds: null, video_url: null, notes: null, track: 'functional',
     is_published: true, sort_order: 0, leaderboard_enabled: true,
   };
-  async function mountDetail() {
-    mockTables['box_wods|*'] = [WOD];
+  async function mountDetail(wod: Record<string, unknown> = WOD) {
+    mockTables['box_wods|*'] = [wod];
     mockTables.wod_scores = [];
-    mockRouteParams = { wodId: WOD.id };
+    mockRouteParams = { wodId: wod.id };
     await act(async () => {
       renderer = TestRenderer.create(
         <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}>
@@ -347,5 +347,68 @@ describe('G3 : séance générée au poids du corps', () => {
     expect(byID(root, 'muscu-set-0-2')).toBeUndefined();
     expect(hostText(byID(root, 'muscu-total-reps-value'))).toBe('16 reps');
     expect(root.findAll(n => String(n.type) === 'TextInput' && n.props.testID === 'muscu-kg-0-0')).toHaveLength(0);
+  });
+});
+
+describe('G3 bis : crédit à la première validation', () => {
+  const base = {
+    box_id: 'box-1', block_name: 'strength', wod_type: 'strength', scheduled_date: TODAY, time_cap_seconds: null, video_url: null,
+    notes: null, track: 'functional', is_published: true, sort_order: 0, leaderboard_enabled: true,
+  };
+  const GYM = { ...base, id: 'wGym', title: 'Skill gym', description: 'Ring Muscle-up — 3 × 5' };
+  const CHARGE = { ...base, id: 'wLoad', title: 'Force', description: 'Back Squat — 2 × 5 @ 100 kg' };
+  async function valider(wod: Record<string, unknown>, maxLoadKg: number | null) {
+    const { submitStrengthValidation } = jest.requireMock('../services/strengthSets');
+    submitStrengthValidation.mockImplementation(async (_p: unknown, onFirst: (r: unknown) => Promise<void>) => {
+      const res = { premiereValidation: true, maxLoadKg, totalReps: maxLoadKg == null ? 15 : null, seriesValides: 3, records: [] };
+      await onFirst(res);
+      return res;
+    });
+    mockTables['box_wods|*'] = [wod];
+    mockTables.wod_scores = [];
+    mockRouteParams = { wodId: wod.id };
+    await act(async () => {
+      renderer = TestRenderer.create(
+        <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } })}>
+          <WODDetailScreen />
+        </QueryClientProvider>,
+      );
+    });
+    await settle();
+    const root = renderer.root;
+    await press(root, 'enter-score');
+    await press(root, 'strength-validate');
+    const { incrementCounter, logMovementReps } = jest.requireMock('../services/gamification');
+    const calls = { counters: incrementCounter.mock.calls.map((c: unknown[]) => c.slice(0, 3)), badgeReps: logMovementReps.mock.calls.length };
+    await act(async () => renderer.unmount());
+    jest.clearAllMocks();
+    return calls;
+  }
+
+  it('une séance de gymnastique seule déclenche le même crédit de compteurs qu’une séance chargée', async () => {
+    const gym = await valider(GYM, null);
+    const charge = await valider(CHARGE, 100);
+    expect(gym.counters).toEqual([['me', 'total_scores_submitted', 1]]);
+    expect(gym.counters).toEqual(charge.counters);
+  });
+
+  it('et ne crée aucune rep de badge (ni logMovementReps, ni movement_logs)', async () => {
+    const gym = await valider(GYM, null);
+    expect(gym.badgeReps).toBe(0);
+  });
+});
+
+describe('G3 bis : grille, reps seules réservées à la gymnastique', () => {
+  it('« Push Press — 2 × 5 » sans charge garde son champ kg ; « Ring Muscle-up — 3 × 5 » passe en reps seules', async () => {
+    const d = buildStrengthGrid(['Push Press — 2 × 5', 'Ring Muscle-up — 3 × 5', 'Pull-ups — 1 × 8 @ 10 kg'].map(l => parseStrengthLine(l)!), () => null, () => null);
+    await act(async () => { renderer = TestRenderer.create(<Banc initial={d} />); });
+    await settle();
+    const root = renderer.root;
+    expect([0, 1].map(i => !!byID(root, `strength-kg-${i}-box`))).toEqual([true, true]);
+    expect([2, 3, 4].map(i => !!byID(root, `strength-kg-${i}-box`))).toEqual([false, false, false]);
+    expect(!!byID(root, 'strength-kg-5-box')).toBe(true);
+    expect(byID(root, 'strength-add-set-0')).toBeUndefined();
+    expect(byID(root, 'strength-add-set-1')).toBeTruthy();
+    expect(byID(root, 'strength-add-set-2')).toBeUndefined();
   });
 });

@@ -21,7 +21,7 @@ import { supabase } from '../lib/supabase';
 import { captureError } from '../lib/sentry';
 import { StrengthEntry, resolveStrengthLoadKg } from '../utils/strengthBlock';
 import { weightliftingPrLabel } from '../screens/profile/prStorage';
-import { gymRepsForPct } from '../screens/home/gymZones';
+import { gymPrLabel, gymRepsForPct } from '../screens/home/gymZones';
 import { bestOneRepMaxBySet, PerformedSet } from './strengthPR';
 import type { Database, Json } from '../types/supabase';
 
@@ -168,10 +168,15 @@ export function buildStrengthGrid(
     const kg = resolveStrengthLoadKg(e, oneRepMaxFor(e.name));
     // % du record : reps calculées, ou vides sans record (jamais inventées).
     const reps = e.pctOfMax != null ? gymRepsForPct(gymRecordFor(e.name), e.pctOfMax) ?? 0 : e.reps;
-    // Reps seules : ni charge (kg, %1RM, charge notée), ni secondes ou mètres
-    // (gainage, carry : leurs « reps » ne s'additionnent pas à des reps).
-    const loadRequired = e.pctOfMax == null && ((e.load != null && e.load > 0) || !!(e.loadNote ?? '').trim()
-      || (e.repsUnit != null && e.repsUnit !== 'reps'));
+    // Reps seules : une ligne « % du max », ou un des 11 mouvements de gymnastique
+    // sans charge en kg (ni charge notée, ni secondes ou mètres). Toute autre
+    // ligne garde reps × kg, charge exigée même sans charge prescrite
+    // (« Push Press — 2 × 5 » : l'athlète choisit sa charge). Gymnastique lestée
+    // (« Pull-ups — 4 × 8 @ 10 kg ») : reps × kg.
+    const repsOnly = e.pctOfMax != null || (gymPrLabel(e.name) != null
+      && !(e.load != null && e.load > 0 && e.unit === 'kg') && !(e.loadNote ?? '').trim()
+      && (e.repsUnit == null || e.repsUnit === 'reps'));
+    const loadRequired = !repsOnly;
     const sets = Math.max(1, Math.min(MAX_SETS_PER_MOVEMENT, Math.round(e.sets)));
     for (let s = 1; s <= sets; s++) {
       const setIndex = (perMovement.get(e.name) ?? 0) + 1;
