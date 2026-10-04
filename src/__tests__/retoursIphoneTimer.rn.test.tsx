@@ -5,7 +5,7 @@ import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { X } from 'lucide-react-native';
 import { lightTheme, darkTheme } from '../theme/palette';
 import type { HomeStackParamList } from '../navigation';
-import TimerRunScreen, { CAM_INFO_GAP, CAM_REC_GAP, LANDSCAPE_SIDE_ROOM } from '../screens/timer/TimerRunScreen';
+import TimerRunScreen, { CAM_INFO_GAP, CAM_REC_GAP } from '../screens/timer/TimerRunScreen';
 import { RecBlinkDot, REC_DOT } from '../components/timer/RecBlinkDot';
 import { AxSwitch } from '../components/ax';
 import { saveVideoOpts } from '../lib/timerVideoOpts';
@@ -272,23 +272,23 @@ describe('Retours iPhone (4) : temps final sans vidéo', () => {
       await press(r, 'timer-ctrl-settings');
       expect(r.findAllByType(Modal).some((m) => m.props.visible)).toBe(true);
     });
-  it('paysage : même rangée que pendant le chrono', async () => {
-    const { r, running } = await final(lightTheme, LANDSCAPE);
+  // R3 : en paysage, le bandeau du chrono suit la maquette Paysage A (marges portées par la page) ;
+  // le temps final, hors périmètre, garde sa rangée d'avant (D2), valeurs figées ici.
+  it('paysage : rangée du temps final inchangée', async () => {
+    const { r } = await final(lightTheme, LANDSCAPE);
     const ctrls = flat(one(r, 'timer-final-controls'));
-    expect(ctrls.paddingTop).toBe(running.paddingTop);
-    expect(ctrls.paddingHorizontal).toBe(running.paddingHorizontal);
+    expect(ctrls.paddingTop).toBe(Math.max(10, ISLAND.top));
+    expect(ctrls.paddingHorizontal).toBe(12);
   });
 });
 
 describe('Retours iPhone (5) : paysage sans vidéo, For Time au repos', () => {
-  it('chiffres centrés sur l’écran, place du bouton de droite réservée des deux côtés', async () => {
+  // R3 : le bouton Lecture est passé dans la rangée du bas (maquette Paysage A) ; plus de place réservée à droite.
+  it('chiffres centrés sur l’écran : marges latérales égales', async () => {
     const r = await run(params(), lightTheme, LANDSCAPE);
-    const main = flat(one(r, 'timer-main-landscape'));
-    expect(main.paddingHorizontal).toBe(LANDSCAPE_SIDE_ROOM);
-    expect(main.paddingLeft ?? main.paddingHorizontal).toBe(main.paddingRight ?? main.paddingHorizontal);
-    const btn = flat(one(r, 'timer-start-stop'));
-    expect(LANDSCAPE_SIDE_ROOM).toBeGreaterThan((btn.right as number) + (btn.width as number));
-    expect(flat(one(r, 'timer-main-time'))).toMatchObject({ textAlign: 'center', alignSelf: 'stretch' });
+    const page = flat(one(r, 'timer-landscape'));
+    expect(page.paddingLeft).toBe(page.paddingRight);
+    expect(flat(one(r, 'timer-main-time'))).toMatchObject({ textAlign: 'center' });
   });
 });
 

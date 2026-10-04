@@ -211,6 +211,21 @@ Supabase/Resend.
 
 ## En cours
 
+**Minuteur en paysage conforme à la maquette (retour R3 du build 1.0.61, app seule, apparence, aucune migration ; PR non
+mergée, à vérifier sur téléphone).** En paysage, le chrono était environ trois fois trop petit (226 px fixes réduits par
+`adjustsFontSizeToFit` sur l'appareil, 137 px avec caméra) et « Appuie pour démarrer » tenait sur trois lignes. Maquette
+suivie : « Minuteur · Paysage A » (spec Minuteur 98:500, option A 102:1694, « Plein écran » par défaut ; reprise sur le
+prototype en 173:4838 / 173:4858). La taille du chrono part de la boîte mesurée (`onLayout`) entre le bandeau et la rangée
+du bas : l'encre des chiffres occupe 90 % de la hauteur sans dépasser la largeur (`chronoFontSize`, métriques d'Oswald
+Bold relevées dans Chrome), dans les deux thèmes, avec et sans caméra (styles Barre, Digits et Cercle). Oswald Bold
+chargé pour ce chrono. Bandeau : type, « BLOC 1/1 · CAP 18:00 » (s'il y a un cap ou plusieurs blocs), petit total masqué
+quand il répète le grand chrono ; rangée du bas : barre de progression, consigne sur une ligne, bouton Lecture / Arrêt de
+56 px ; marges de la zone sûre (îlot, bords, barre d'accueil). Portrait et temps final inchangés (captures portrait
+identiques à l'octet, logique de `TimerRunScreen` figée par r5a). Non repris : l'option B (colonne, Pause et « Maintenir
+pour terminer » changent le comportement) et le réglage « Disposition en paysage ». Tests
+`retoursPaysageChrono.rn.test.tsx` (19, 17 mutations tuées) ; captures avant / après dans
+`athlex-captures/retours-1.0.61/R3`.
+
 **Gymnastique G4 : fenêtre « Nouveau record ? » (app seule ; PR non mergée, à vérifier par Nab).** Spec Figma
 501:812 / 501:899. Après une validation réussie (WOD du Whiteboard et séance générée), les séries sont relues du
 serveur ; pour chacun des 11 mouvements de gymnastique dont une série sans charge dépasse un record existant, une ligne
