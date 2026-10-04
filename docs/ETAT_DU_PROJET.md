@@ -210,6 +210,19 @@ Supabase/Resend.
 
 ## En cours
 
+**Notifications push au gérant (D4a), PR A : file d'attente et déclencheurs** (migration `20270143`, **appliquée en
+prod : non** ; conception dans [`NOTIFS_GERANT.md`](./NOTIFS_GERANT.md) ; PR B fonction d'envoi et PR C tâche pg_cron à
+suivre).
+- Table `box_manager_notifications` : une ligne par événement, clé unique `(type, event_ref)` ; RLS active sans
+  règle, aucun droit pour `anon` et `authenticated`, la clé serveur lit et n'écrit que les colonnes d'envoi ;
+  contrôle T14 de l'audit des droits.
+- Cinq déclencheurs AFTER sur la transition seulement, une fonction `internal.filer_notification_gerant()` : nouvel
+  abonnement Stripe actif (nouvel `stripe_subscription_id` — ni renouvellement, ni retour d'impayé, ni comptoir),
+  `past_due_since` NULL → date, alerte « réservation sans formule », invitation passée à `accepted`. Box archivée :
+  rien. Une erreur de mise en file ne bloque jamais l'écriture d'origine.
+- Précontrôle du 04/10/2026 (lecture seule) : déclencheurs existants non redéfinis (md5 dans la note), table absente,
+  `is_box_owner_admin` identique au dépôt. Tests `notifications_gerant_file.sql` (F0 à F9, mutations, retour arrière).
+
 **Notifications du gérant (D4b), PR 1 : base et fonction** (migration `20270142`, **appliquée en prod le 03/10/2026 à
 16:17 UTC** ; dump `db-dumps/2026-10-03/athlex-prod-public-internal-20261003T160601Z.dump` ; audit 38/38 ; fonction
 `send-box-notification` **déployée le 03/10/2026 à 16:19 UTC** ; maquettes validées par Nab, page « 🧪 Spec · Notifications du
