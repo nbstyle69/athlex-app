@@ -164,7 +164,9 @@ BEGIN
   -- ── M3 : validation ─────────────────────────────────────────────────────
   v := pg_temp.valider('anon', '1', '[{"movement":"back squat","set_index":1,"reps":5,"load_kg":100}]');
   IF v NOT LIKE '42501:%' THEN RAISE EXCEPTION 'M3 : anon valide : %', v; END IF;
-  v := pg_temp.valider('01', '1', '[{"movement":"back squat","set_index":1,"reps":null,"load_kg":100},{"movement":"back squat","set_index":2,"reps":5,"load_kg":""}]');
+  -- Depuis 20270145, une série sans charge compte si aucune charge n'était
+  -- prescrite (gymnastique) : ici la charge est prescrite, la série reste vide.
+  v := pg_temp.valider('01', '1', '[{"movement":"back squat","set_index":1,"reps":null,"load_kg":100},{"movement":"back squat","set_index":2,"reps":5,"load_kg":"","prescribed_load_kg":100}]');
   IF v NOT LIKE '22023: SEANCE_VIDE%' THEN RAISE EXCEPTION 'M3 : séance vide : %', v; END IF;
   v := pg_temp.valider('01', '00000000-0000-4000-c9fc-00000000000f', '[{"movement":"back squat","set_index":1,"reps":5,"load_kg":100}]');
   IF v NOT LIKE 'P0002: WOD_INTROUVABLE%' THEN RAISE EXCEPTION 'M3 : WOD inconnu : %', v; END IF;
@@ -351,6 +353,9 @@ BEGIN
   BEGIN
     DROP FUNCTION public.validate_strength_session(text, uuid, text, integer, boolean, jsonb, jsonb);
     DROP FUNCTION internal.estimation_1rm(numeric, integer);
+    -- 20270145 a changé son type de retour (is_added) : la définition d'origine
+    -- ne peut plus la remplacer en place.
+    DROP FUNCTION public.list_athlete_strength_sets(uuid, integer);
     CREATE OR REPLACE FUNCTION public.list_athlete_strength_sets(
       p_user_id uuid,
       p_limit   integer DEFAULT 200
