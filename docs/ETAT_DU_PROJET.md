@@ -210,6 +210,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Notifications push au gérant (D4a), PR C : tâches pg_cron** (migration `20270144`, **appliquée en prod : non** ; à
+appliquer en dernier, après la migration `20270143` et le déploiement de `deliver-manager-notifications`).
+- `deliver-manager-notifications-minute` (chaque minute) : `net.http_post` vers la fonction, sans clé d'API ni
+  `Authorization`, `x-cron-secret` lu dans le Vault (`cron_secret`) ; sans ce secret (base de rejeu), créée inactive.
+- `box-manager-notifications-purge` (03:23 UTC) : supprime les lignes de la file de plus de 30 jours.
+- Tests `notifications_gerant_cron.sql` (C0 à C3 : forme des tâches, Vault avec et sans secret, rejouable sans
+  doublon, autres tâches intactes, purge à 30 jours, retour arrière), 12 mutations tuées.
+
 **Notifications du gérant (D4b), PR 1 : base et fonction** (migration `20270142`, **appliquée en prod le 03/10/2026 à
 16:17 UTC** ; dump `db-dumps/2026-10-03/athlex-prod-public-internal-20261003T160601Z.dump` ; audit 38/38 ; fonction
 `send-box-notification` **déployée le 03/10/2026 à 16:19 UTC** ; maquettes validées par Nab, page « 🧪 Spec · Notifications du
