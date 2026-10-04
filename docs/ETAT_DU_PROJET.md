@@ -210,6 +210,18 @@ Supabase/Resend.
 
 ## En cours
 
+**Minuteur : la musique de l'utilisateur remonte après chaque bip (retour D7 du build 1.0.60, Android, app seule, aucune
+migration ; PR non mergée, à vérifier à l'oreille par Nab sur Android et iPhone au prochain build).** Sur Android, la
+musique (Spotify…) baissait au premier bip du décompte et ne remontait plus. expo-av demande le focus audio
+(`GAIN_TRANSIENT_MAY_DUCK`, mode `DuckOthers`) à chaque lecture et ne le rend que quand plus aucun son n'a `shouldPlay` à
+vrai ; un bip fini le garde à vrai, donc le focus restait pris jusqu'à la sortie de l'écran (déchargement des sons).
+Chaque bip est maintenant arrêté (`stopAsync`) dès sa fin (`didJustFinish`) sur Android : le focus est rendu et la
+musique remonte juste après le bip, avec et sans caméra (le module natif Android n'utilise que `AudioRecord`, qui ne
+prend pas le focus). iOS inchangé : `MixWithOthers` sans `DuckOthers`, côté expo-av comme côté module natif
+(`.mixWithOthers`), aucune baisse à rétablir. Vérifié sur l'émulateur par `dumpsys audio` avec une musique de test
+(focus pris puis rendu à chaque bip, plus de « ducked players » hors bips). Tests `retours1060Musique.rn.test.tsx`
+(5 tests, 5 mutations tuées) ; empreintes r5a/r6b/r6c mises à jour, mock Android de r5b complété.
+
 **Notifications push au gérant (D4a), PR C : tâches pg_cron** (migration `20270144`, **appliquée en prod le 04/10/2026 à
 10:19 UTC**, en dernier, après la migration `20270143` et le déploiement de `deliver-manager-notifications` ; tâches 15
 et 16 actives, les 13 autres inchangées ; exécutions de 10:20 à 10:23 réussies, réponses 200, file vide).

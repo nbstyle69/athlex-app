@@ -366,6 +366,7 @@ describe('R5b : décompte', () => {
     const av = jest.requireMock('expo-av') as { Audio: { Sound: { createAsync: jest.Mock } } };
     av.Audio.Sound.createAsync.mockImplementation(async (src: { uri: string }) => ({ sound: {
       setVolumeAsync: jest.fn(async () => {}), unloadAsync: jest.fn(async () => {}),
+      setOnPlaybackStatusUpdate: jest.fn(), stopAsync: jest.fn(async () => {}), // D7 : fin de bip écoutée sur Android
       replayAsync: jest.fn(async () => { played.push(src.uri.replace(/^.*bwod_(athlex_|classic_)?|\.wav$/g, '')); }),
     } }));
     const os = Platform.OS;
