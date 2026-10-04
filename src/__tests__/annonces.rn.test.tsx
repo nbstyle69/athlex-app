@@ -232,7 +232,7 @@ describe('AnnoncesScreen', () => {
     const root = await mount(<AnnoncesScreen />);
     expect(hostText(byId(root, 'annonce-tag-n-new')[0])).toBe('For you');
     expect(hostText(byId(root, 'annonce-tag-n-old')[0])).toBe('Whole box');
-    expect(hostText(byId(root, 'ax-screen-header')[0])).toContain('NOTICES');
+    expect(hostText(byId(root, 'ax-screen-header')[0])).toContain('ANNOUNCEMENTS');
   });
 });
 
@@ -254,7 +254,7 @@ describe('Ma Box : bouton Annonces et non-lus', () => {
     expect(mockNavigate).toHaveBeenCalledWith('Annonces');
     await i18n.changeLanguage('en');
     const en = await mount(<WhiteboardScreen />);
-    expect(hostText(byId(en, 'whiteboard-annonces')[0])).toBe('Notices');
+    expect(hostText(byId(en, 'whiteboard-annonces')[0])).toBe('Announcements');
   });
 
   it('pastille = annonces lisibles plus récentes que la dernière ouverture ; remise à zéro par l\'écran', async () => {

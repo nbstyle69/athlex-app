@@ -314,9 +314,9 @@ existante (`notif_member_read`, `box_notifs_member_read`) ne rend que les annonc
 Plus récente en carte vedette ; étiquette « Pour toi » si `target` est le membre, « Toute la box » sinon ; date et
 heure, titre, message en entier. État vide (mégaphone, « AUCUNE ANNONCE »), message d'erreur générique, tirer pour
 actualiser. Date « 04 oct. 2026 · 18:02 », en anglais même structure « 04 Oct 2026 · 18:02 » (heure sur 24 h comme
-Actualités et le minuteur). Ma Box : bouton « Annonces » (EN « Notices », titre « NOTICES ») à côté d'« Actualités »,
-pastille des annonces plus récentes que la dernière ouverture de l'écran (`lastSeenAnnonces_<userId>_<boxId>` sur le
-téléphone, même mécanique que les Actualités).
+Actualités et le minuteur). Ma Box : bouton « Annonces » (EN « Announcements », titre « ANNOUNCEMENTS », comme les
+réglages de notifications) à côté d'« Actualités », pastille des annonces plus récentes que la dernière ouverture de
+l'écran (`lastSeenAnnonces_<userId>_<boxId>` sur le téléphone, même mécanique que les Actualités).
 Toucher une notification `box_notification` ouvre l'écran si sa `box_id` est la box active, sinon l'app s'ouvre
 simplement (`notificationRouter`, box active tenue à jour par `AuthContext`, changement de box compris). Tests
 `annonces.rn.test.tsx`, `annoncesBoxActive.rn.test.tsx` (vrai `AuthProvider`), `notificationRouter.test.ts`, 21 mutations
