@@ -403,6 +403,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
   const ADOPTERS = [
     path.join(SRC, 'screens', 'whiteboard', 'WODDetailScreen.tsx'),
     path.join(SRC, 'components', 'wod', 'StrengthSetGrid.tsx'),
+    // G4 : fenêtre « Nouveau record ? ».
+    path.join(SRC, 'components', 'wod', 'GymRecordSheet.tsx'),
     path.join(SRC, 'screens', 'wod', 'MuscuSessionCard.tsx'),
     path.join(SRC, 'screens', 'training', 'TrainingScreen.tsx'),
     path.join(SRC, 'screens', 'home', 'HomeExplorerBlock.tsx'),
@@ -480,6 +482,8 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       .map((f) => path.relative(SRC, f))
       .sort();
     expect(wod).toEqual([
+      // G4 : fenêtre « Nouveau record ? ».
+      path.join('components', 'wod', 'GymRecordSheet.tsx'),
       path.join('components', 'wod', 'SessionContextCard.tsx'),
       path.join('components', 'wod', 'StrengthSetGrid.tsx'),
       // R5a : fenêtre « Lancer le chrono ».

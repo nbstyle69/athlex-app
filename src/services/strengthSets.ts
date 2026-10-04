@@ -411,6 +411,10 @@ interface StrengthDb {
     };
     Views: Record<string, never>;
     Functions: {
+      confirm_gym_record: {
+        Args: { p_set_log_id: string; p_label: string };
+        Returns: Json;
+      };
       validate_strength_session: {
         Args: {
           p_source_type: string;
@@ -1036,4 +1040,67 @@ export function savedAgo(savedAt: string, now: number): { key: 'justNow' | 'minu
   if (s < 3600) return { key: 'minutes', count: Math.floor(s / 60) };
   if (s < 86400) return { key: 'hours', count: Math.floor(s / 3600) };
   return { key: 'days', count: Math.floor(s / 86400) };
+}
+
+/** Mouvement de gymnastique dont une série validée dépasse le record (fenêtre « Nouveau record ? »). */
+export interface GymRecordCandidate {
+  /** Libellé de la page Records (un des 11), passé tel quel à confirm_gym_record. */
+  label: string;
+  /** Nom du mouvement tel qu'écrit dans la séance. */
+  movement: string;
+  /** Reps de la meilleure série validée du mouvement. */
+  reps: number;
+  /** Record enregistré avant la séance. */
+  record: number;
+  /** `strength_set_logs.id` de cette série, relu du serveur après validation. */
+  setLogId: string;
+}
+
+/**
+ * Records de gymnastique battus par une séance validée, d'après les séries
+ * relues du serveur (jamais la grille locale) : séries sans charge d'un des 11
+ * mouvements (lignes en reps seules), meilleure série par mouvement, au-dessus
+ * d'un record existant. Sans record : rien (le lien « Renseigner mon record »
+ * suffit). Mouvement chargé, gymnastique lestée, gainage : jamais (leurs séries
+ * validées portent une charge).
+ */
+export function gymRecordCandidates(
+  sets: ServerSet[],
+  recordFor: (label: string) => number | null,
+): GymRecordCandidate[] {
+  const best = new Map<string, ServerSet>();
+  for (const st of sets) {
+    if (st.load_kg != null || st.reps == null || st.reps < 1) continue;
+    const label = gymPrLabel(st.movement);
+    if (!label) continue;
+    const cur = best.get(label);
+    if (!cur || (st.reps as number) > (cur.reps as number)) best.set(label, st);
+  }
+  const out: GymRecordCandidate[] = [];
+  for (const [label, st] of best) {
+    const record = recordFor(label);
+    if (record == null || (st.reps as number) <= record) continue;
+    out.push({ label, movement: st.movement, reps: st.reps as number, record, setLogId: st.id });
+  }
+  return out;
+}
+
+export type ConfirmGymRecordResult = { ok: true } | { ok: false; code: string };
+
+/**
+ * « Enregistrer N reps comme record » : confirm_gym_record (20270145) prouve le
+ * record par la série du serveur et écrit sa valeur ; l'app n'envoie jamais de
+ * nombre. Erreur métier (RECORD_NON_PROUVE, RECORD_NON_AMELIORE,
+ * MOUVEMENT_NON_GYMNIQUE) ou réseau (RESEAU) rendue telle quelle.
+ */
+export async function confirmGymRecord(setLogId: string, label: string): Promise<ConfirmGymRecordResult> {
+  try {
+    const { error } = await db.rpc('confirm_gym_record', { p_set_log_id: setLogId, p_label: label });
+    if (error) throw error;
+    return { ok: true };
+  } catch (e) {
+    const code = validationErrorCode(e);
+    if (!code) captureError(e, { service: 'strengthSets', action: 'confirmGymRecord' });
+    return { ok: false, code: code ?? (isNetworkError(e) ? 'RESEAU' : 'REFUS') };
+  }
 }

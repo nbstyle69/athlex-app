@@ -44,14 +44,16 @@ import {
   totalTonnage,
 } from '../../services/wodGenerator';
 import {
-  ServerStrengthSession, StrengthSourceKey, fetchStrengthSession, gridFromServer, isNetworkError, loadStrengthGrid,
-  saveStrengthDraft, validationErrorCode,
+  GymRecordCandidate, ServerStrengthSession, StrengthSourceKey, fetchStrengthSession, gridFromServer, gymRecordCandidates,
+  isNetworkError, loadStrengthGrid, saveStrengthDraft, validStrengthSets, validationErrorCode,
 } from '../../services/strengthSets';
+import GymRecordSheet from '../../components/wod/GymRecordSheet';
+import { useMyRecords } from '../../hooks/useMyOneRepMax';
 import { draftsToPerformed, performedToDrafts, validateMuscuSession } from '../../services/muscuSession';
 import type { StrengthSaveState } from '../../components/wod/StrengthSetGrid';
 import { muscuDisplayedFor } from './muscuOptions';
 import MuscuSessionCard, { initialPerformed } from './MuscuSessionCard';
-import { useConfirmDialog } from '../../components/ConfirmDialog';
+import { MODAL_DISMISS_MS, useConfirmDialog } from '../../components/ConfirmDialog';
 
 export type WodResultParams = {
   screen: ScreenParams;
@@ -126,6 +128,9 @@ export default function WodResultScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<Route>();
   const insets = useSafeAreaInsets();
+  const { gymRecordFor, reload: reloadRecords } = useMyRecords();
+  /** Fenêtre « Nouveau record ? » (G4) après la validation d'une séance générée. */
+  const [gymRecords, setGymRecords] = useState<GymRecordCandidate[] | null>(null);
   const tabBarHeight = useTabBarHeight();
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
@@ -500,6 +505,23 @@ export default function WodResultScreen() {
     }
   }
 
+  function showScoreSaved() {
+    dialog.show(
+      i18n.t('wodGenerator.scoreSavedTitle'),
+      i18n.t('wodGenerator.scoreSavedBody'),
+      [
+        { text: i18n.t('common.ok'), style: 'cancel' },
+        { text: i18n.t('wodGenerator.seeMyHistory'), onPress: () => navigation.navigate('WodHistory') },
+      ],
+    );
+  }
+
+  function closeGymRecords() {
+    setGymRecords(null);
+    dialog.afterModalClose();
+    showScoreSaved();
+  }
+
   /**
    * Musculation : séance validée par validate_strength_session, score = tonnage
    * des séries saisies ; compteur et crédit movement_logs à la première validation seulement.
@@ -507,7 +529,12 @@ export default function WodResultScreen() {
   async function onSubmitMuscuScore(m: MuscuWod) {
     if (!user) return;
     const tonnage = totalTonnage(performed);
-    if (tonnage <= 0) { Alert.alert('Aucune série chargée', 'Renseigne les reps et la charge de tes séries dans la carte Séance.'); return; }
+    // Une séance au poids du corps n'a pas de tonnage mais se valide (G3) :
+    // seule une séance sans aucune série valide est arrêtée ici.
+    if (validStrengthSets(performedToDrafts(m, performed)).length === 0) {
+      Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t('strengthSession.errorEmpty'));
+      return;
+    }
     const id = await onSave();
     if (!id) return;
     const key = strengthKeyFor(id);
@@ -524,21 +551,25 @@ export default function WodResultScreen() {
         },
         sets: prev?.sets ?? [],
       }));
-      if (key) fetchStrengthSession(key).then(setStrengthServer).catch((e) => captureError(e, { screen: 'WodResult', action: 'refreshStrength' }));
+      // Séries relues du serveur : la fenêtre « Nouveau record ? » s'appuie sur leurs ids.
+      const server = key
+        ? await fetchStrengthSession(key).catch((e) => { captureError(e, { screen: 'WodResult', action: 'refreshStrength' }); return null; })
+        : null;
+      if (server) setStrengthServer(server);
+      const records = server ? gymRecordCandidates(server.sets, gymRecordFor) : [];
       setSubmittedScore({ wodId: id, scoreType: 'weight', value: tonnage, category: 'rx', notes: scoreNotes });
       hapticSuccess();
       setScoreModal(false);
       dialog.afterModalClose();
       setScoreInput('');
       setScoreNotes('');
-      dialog.show(
-        i18n.t('wodGenerator.scoreSavedTitle'),
-        i18n.t('wodGenerator.scoreSavedBody'),
-        [
-          { text: i18n.t('common.ok'), style: 'cancel' },
-          { text: i18n.t('wodGenerator.seeMyHistory'), onPress: () => navigation.navigate('WodHistory') },
-        ],
-      );
+      // Record de gymnastique battu : la fenêtre « Nouveau record ? » d'abord ;
+      // le message « score enregistré » suit sa fermeture.
+      if (records.length > 0) {
+        setTimeout(() => setGymRecords(records), Platform.OS === 'ios' ? MODAL_DISMISS_MS : 0);
+        return;
+      }
+      showScoreSaved();
     } catch (e) {
       const code = validationErrorCode(e);
       if (!code) {
@@ -907,6 +938,7 @@ export default function WodResultScreen() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+      <GymRecordSheet candidates={gymRecords} onClose={closeGymRecords} onSaved={reloadRecords} />
       {dialog.element}
     </View>
   );

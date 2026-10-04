@@ -29,13 +29,15 @@ import { computeCompletedMovements } from '../../utils/movementParser';
 import { annotateGymRepsInText, annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
 import {
-  addStrengthSet, applyGymRecordsToGrid, buildStrengthGrid, isRepsOnly, logStrengthSets, removeStrengthSet,
+  GymRecordCandidate, addStrengthSet, applyGymRecordsToGrid, buildStrengthGrid, gymRecordCandidates, isRepsOnly, logStrengthSets, removeStrengthSet,
   validStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
   loadStrengthGrid, saveStrengthDraft, gridFromServer, fetchStrengthSession, submitStrengthValidation,
   strengthProgress, computedMaxLoad, validationErrorCode, isNetworkError,
 } from '../../services/strengthSets';
 import i18n from '../../i18n';
 import { wodTypeLabel } from '../../utils/wodTypeLabel';
+import GymRecordSheet from '../../components/wod/GymRecordSheet';
+import { MODAL_DISMISS_MS } from '../../components/ConfirmDialog';
 import StrengthSetGrid, {
   StrengthRepsScoreStatus,
   StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSaveState, StrengthSessionStatus,
@@ -98,6 +100,8 @@ export default function WODDetailScreen() {
   const medalInk = [c.warning, c.textMuted, c.orange];
   const { oneRepMaxFor, gymRecordFor, reload: reloadRecords } = useMyRecords();
   const insets = useSafeAreaInsets();
+  /** Fenêtre « Nouveau record ? » (G4) : records de gymnastique battus par la séance validée. */
+  const [gymRecords, setGymRecords] = useState<GymRecordCandidate[] | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const leaderboardY = useRef(0);
 
@@ -607,7 +611,7 @@ export default function WODDetailScreen() {
     // ELO is now computed lazily after WOD closes (past midnight)
   }
 
-  function finishSubmit() {
+  function finishSubmit(records: GymRecordCandidate[] = []) {
     hapticSuccess();
     setSubmitting(false);
     setModalOpen(false);
@@ -617,7 +621,15 @@ export default function WODDetailScreen() {
     setNoteInput('');
     setDnf(false);
     setCapReps('');
-    setShareModal(true);
+    // Record de gymnastique battu : la fenêtre « Nouveau record ? » d'abord, le
+    // partage ensuite (une fenêtre iOS ne s'ouvre qu'une fois l'autre fermée).
+    if (records.length > 0) setTimeout(() => setGymRecords(records), Platform.OS === 'ios' ? MODAL_DISMISS_MS : 0);
+    else setShareModal(true);
+  }
+
+  function closeGymRecords() {
+    setGymRecords(null);
+    setTimeout(() => setShareModal(true), Platform.OS === 'ios' ? MODAL_DISMISS_MS : 0);
   }
 
   /**
@@ -655,9 +667,12 @@ export default function WODDetailScreen() {
         if (nErr) captureError(nErr, { screen: 'WODDetail', action: 'strengthNotes' });
       }
 
-      fetchStrengthSession(strengthKey)
-        .then(server => { applyServerSession(server); setStrengthDrafts(gridFromServer(strengthPrescription, server.sets)); })
-        .catch(e => captureError(e, { screen: 'WODDetail', action: 'reloadStrengthSession' }));
+      // Séries relues du serveur : la fenêtre « Nouveau record ? » s'appuie sur
+      // leurs ids, jamais sur la grille locale.
+      const server = await fetchStrengthSession(strengthKey)
+        .catch(e => { captureError(e, { screen: 'WODDetail', action: 'reloadStrengthSession' }); return null; });
+      if (server) { applyServerSession(server); setStrengthDrafts(gridFromServer(strengthPrescription, server.sets)); }
+      const records = server ? gymRecordCandidates(server.sets, gymRecordFor) : [];
 
       const beaten = result.records.filter(r => r.kg != null && (r.precedent == null || r.kg > r.precedent));
       if (beaten.length > 0) {
@@ -667,7 +682,7 @@ export default function WODDetailScreen() {
       }
 
       await refreshScoresAfterSubmit(first);
-      finishSubmit();
+      finishSubmit(records);
     } catch (e) {
       setSubmitting(false);
       const code = validationErrorCode(e);
@@ -1228,6 +1243,8 @@ export default function WODDetailScreen() {
       </Modal>
 
       {/* Share Modal */}
+      <GymRecordSheet candidates={gymRecords} onClose={closeGymRecords} onSaved={reloadRecords} />
+
       <Modal visible={shareModal} animationType="fade" transparent onRequestClose={() => setShareModal(false)}>
         <View style={S.shareOverlay}>
           <View style={S.shareContainer}>

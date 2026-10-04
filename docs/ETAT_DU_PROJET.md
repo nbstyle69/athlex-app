@@ -210,6 +210,20 @@ Supabase/Resend.
 
 ## En cours
 
+**Gymnastique G4 : fenêtre « Nouveau record ? » (app seule ; PR non mergée, à vérifier par Nab).** Spec Figma
+501:812 / 501:899. Après une validation réussie (WOD du Whiteboard et séance générée), les séries sont relues du
+serveur ; pour chacun des 11 mouvements de gymnastique dont une série sans charge dépasse un record existant, une ligne
+« <mouvement> · N reps · avant R » (meilleure série du mouvement). Sans record, série égale ou en dessous, mouvement
+chargé ou gymnastique lestée : rien. « Enregistrer N reps comme record » (« Enregistrer ces records » à plusieurs
+lignes) appelle `confirm_gym_record(id de la série du serveur, libellé de la page Records)` ligne par ligne ; une erreur
+(`RECORD_NON_PROUVE`, `RECORD_NON_AMELIORE`, `MOUVEMENT_NON_GYMNIQUE`, réseau) reste sur sa ligne, un nouvel appui ne
+renvoie que les lignes non enregistrées ; après un succès, records relus, et la fenêtre se ferme quand tout est
+enregistré. « Pas maintenant » ferme sans rien écrire. Le partage (Whiteboard) et « Score enregistré » (séance générée)
+suivent la fermeture. Séance générée au poids du corps seule : n'est plus arrêtée par « Aucune série chargée » (reste
+de G3), seule une séance sans série valide l'est. `GymRecordSheet` (feuille en bas, voile, zone sûre, liste
+défilable), i18n FR/EN. Tests `gymRecordSheet.rn.test.tsx`, `gymRecordResult.rn.test.tsx` ; captures banc web local
+390 px sombre/clair FR/EN dans `athlex-captures/gymnastique-G4`.
+
 **Gymnastique G3 : grille en reps seules, « Ajouter une série », totaux, séance validée (app seule ; PR non mergée, à
 vérifier par Nab).** Spec Figma 501:514 / 501:648 (A) et 501:604 / 501:738 (C), base G2 en prod (20270145). Passent
 en reps seules : une ligne « % du max », une ligne d'un des 11 mouvements de gymnastique sans charge en kg, un
