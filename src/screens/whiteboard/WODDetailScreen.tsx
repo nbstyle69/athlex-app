@@ -9,7 +9,7 @@ import WebView from 'react-native-webview';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import ShareScoreCard from '../../components/ShareScoreCard';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
@@ -25,10 +25,10 @@ import { sendScoreNotification, sendScoreOvertakenNotification, cancelTodayScore
 import { incrementCounter, logMovementReps } from '../../services/gamification';
 import { formatScoreValue, normalizeScore, mapForTimeScore, formatCap } from '../../utils/scoreFormat';
 import { computeCompletedMovements } from '../../utils/movementParser';
-import { annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
+import { annotateGymRepsInText, annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
 import {
-  buildStrengthGrid, logStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
+  applyGymRecordsToGrid, buildStrengthGrid, logStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
   loadStrengthGrid, saveStrengthDraft, gridFromServer, fetchStrengthSession, submitStrengthValidation,
   strengthProgress, computedMaxLoad, validationErrorCode, isNetworkError,
 } from '../../services/strengthSets';
@@ -42,7 +42,7 @@ import { axSpacing, axTypography } from '../../theme/axTokens';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import { AxContentTitle } from '../../components/ax/AxContentTitle';
 import { AxIconButton } from '../../components/ax/AxIconButton';
-import { useMyOneRepMax } from '../../hooks/useMyOneRepMax';
+import { useMyRecords } from '../../hooks/useMyOneRepMax';
 import { recordStrengthPRs } from '../../services/strengthPR';
 import { computeMaxScore } from '../../utils/computeMaxScore';
 import { syncLevelAndBadges } from '../../utils/eloLevels';
@@ -93,7 +93,7 @@ export default function WODDetailScreen() {
   const S = createStyles(theme);
   const c = theme.ax;
   const medalInk = [c.warning, c.textMuted, c.orange];
-  const oneRepMaxFor = useMyOneRepMax();
+  const { oneRepMaxFor, gymRecordFor, reload: reloadRecords } = useMyRecords();
   const scrollRef = useRef<ScrollView>(null);
   const leaderboardY = useRef(0);
 
@@ -246,8 +246,8 @@ export default function WODDetailScreen() {
   const isStrengthSession = wod?.wod_type === 'strength' && strengthEntries.length > 0;
   const strengthValidated = strengthServer?.session?.status === 'validated';
   const strengthPrescription = useMemo(
-    () => buildStrengthGrid(strengthEntries, oneRepMaxFor),
-    [strengthEntries, oneRepMaxFor],
+    () => buildStrengthGrid(strengthEntries, oneRepMaxFor, gymRecordFor),
+    [strengthEntries, oneRepMaxFor, gymRecordFor],
   );
   const strengthKey: StrengthSourceKey | null = useMemo(
     () => (isStrengthSession && wod && user ? { userId: user.id, sourceType: 'whiteboard', sourceId: wod.id } : null),
@@ -330,10 +330,20 @@ export default function WODDetailScreen() {
   }, [strengthKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Les 1RM du profil arrivent après : une grille encore issue de la
-  // prescription, pas touchée, reprend les charges résolues.
+  // prescription, pas touchée, reprend les charges résolues. Sinon, un record
+  // de gymnastique arrivé entre-temps ne remplit que les reps encore vides.
   useEffect(() => {
     if (strengthOriginRef.current === 'prescription' && !editedAtRef.current) setStrengthDrafts(strengthPrescription);
-  }, [strengthPrescription]);
+    else if (!strengthValidated) setStrengthDrafts(prev => applyGymRecordsToGrid(prev, strengthPrescription));
+  }, [strengthPrescription]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Retour sur l'écran (après « Renseigner mon record ») : records relus. Le
+  // premier focus est le montage, déjà couvert par la lecture du hook.
+  const focusedOnce = useRef(false);
+  useFocusEffect(useCallback(() => {
+    if (focusedOnce.current) reloadRecords();
+    focusedOnce.current = true;
+  }, [reloadRecords]));
 
   // Brouillon enregistré ~0,8 s après la dernière frappe.
   useEffect(() => {
@@ -366,6 +376,9 @@ export default function WODDetailScreen() {
     setStrengthDrafts(prev => prev.map((d, i) => (i === index ? { ...d, ...patch } : d)));
     if (isStrengthSession && !strengthValidated) {
       editedAtRef.current = new Date().toISOString();
+      // Une grille saisie n'est plus la prescription, même une fois le brouillon
+      // enregistré (editedAt remis à zéro) : un record relu ne la remplace plus.
+      strengthOriginRef.current = 'local';
       setDraftDirtyTick(t => t + 1);
     }
   }
@@ -374,6 +387,13 @@ export default function WODDetailScreen() {
   function closeScoreModal() {
     if (strengthValidated && strengthServer) setStrengthDrafts(gridFromServer(strengthPrescription, strengthServer.sets));
     setModalOpen(false);
+  }
+
+  /** « Renseigner mon record » : la saisie est gardée, la fenêtre se ferme, Records s'ouvre sur Gymnastique. */
+  function openGymRecords() {
+    if (editedAtRef.current) saveDraftNow();
+    closeScoreModal();
+    navigation.navigate('Profile', { prCategory: 'gymnastics' });
   }
 
   async function saveStrengthLater() {
@@ -790,7 +810,7 @@ export default function WODDetailScreen() {
           </Text>
 
           {wod.description && (
-            <Text style={S.wodDesc}>{annotateCardioLines(annotateStrengthLoads(wod.description, oneRepMaxFor))}</Text>
+            <Text style={S.wodDesc}>{annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(wod.description, oneRepMaxFor), gymRecordFor))}</Text>
           )}
           {wod.notes && (
             <AxCard style={S.notesBox} testID="wod-coach-notes">
@@ -1113,7 +1133,12 @@ export default function WODDetailScreen() {
                 />
               )}
 
-              <StrengthSetGrid drafts={strengthDrafts} onChange={onStrengthDraftChange} />
+              <StrengthSetGrid
+                drafts={strengthDrafts}
+                onChange={onStrengthDraftChange}
+                gymRecordFor={gymRecordFor}
+                onSetGymRecord={openGymRecords}
+              />
 
               <Text style={S.modalLabel}>NIVEAU</Text>
               <View style={S.rxRow}>

@@ -79,6 +79,7 @@ import WhiteboardScreen from '../screens/whiteboard/WhiteboardScreen';
 import WODDetailScreen from '../screens/whiteboard/WODDetailScreen';
 import PersonalWODFormScreen from '../screens/whiteboard/PersonalWODFormScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import type { PrCategorySlug } from '../screens/profile/prStorage';
 import AdminScreen from '../screens/admin/AdminScreen';
 import BODashboardScreen from '../screens/backoffice/BODashboardScreen';
 import BOMembersScreen from '../screens/backoffice/BOMembersScreen';
@@ -280,7 +281,7 @@ export type HomeStackParamList = {
   OneRMCalculator: undefined;
   Timer: undefined;
   Leaderboard: undefined;
-  Profile: { editLevel?: boolean } | undefined;
+  Profile: { editLevel?: boolean; prCategory?: PrCategorySlug } | undefined;
   EloHistory: undefined;
   WODDetail: { wodId: string; scrollToLeaderboard?: boolean };
   Legal: undefined;
@@ -409,6 +410,7 @@ export type WhiteboardStackParamList = {
   ProgramDetail: ProgramDetailParams;
   BoxRanking: undefined;
   PublicProfile: { userId: string };
+  Profile: HomeStackParamList['Profile'];
   Messages: undefined;
   Articles: undefined;
   Annonces: undefined;
@@ -536,6 +538,7 @@ function HomeNavigator() {
 
 function WhiteboardNavigator() {
   const shell = useShellScreenOptions();
+  const { user } = useAuth();
   return (
     <WhiteboardStack.Navigator screenOptions={shell}>
       <WhiteboardStack.Screen name="WhiteboardMain" component={WhiteboardScreen} />
@@ -543,6 +546,7 @@ function WhiteboardNavigator() {
       <WhiteboardStack.Screen name="ProgramDetail"  component={ProgramDetailScreen} />
       <WhiteboardStack.Screen name="BoxRanking"     component={BoxRankingScreen} />
       <WhiteboardStack.Screen name="PublicProfile"  component={PublicProfileScreen} />
+      <WhiteboardStack.Screen name="Profile" component={user?.role === 'admin' || user?.role === 'super_admin' ? AdminScreen : ProfileScreen} />
       <WhiteboardStack.Screen name="Messages"       component={MessagesScreen} />
       <WhiteboardStack.Screen name="Articles"        component={ArticlesScreen} />
       <WhiteboardStack.Screen name="Annonces"        component={AnnoncesScreen} />

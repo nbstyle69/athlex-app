@@ -210,6 +210,28 @@ Supabase/Resend.
 
 ## En cours
 
+**Gymnastique G1 : % du max → reps (app seule, aucune migration ; PR non mergée, à vérifier par Nab).** Spec Figma
+501:513, arbitrage G0 du 04/10. Sur un mouvement de gymnastique (les 11 libellés de `GYM_PR_MOVEMENTS`, rapprochés
+sans casse, tirets, espaces ni pluriel, plus les abréviations sans ambiguïté T2B/TTB, C2B/CTB, RMU, BMU, Strict HSPU,
+Wall Facing HSPU ; ni « HSPU » ni « MU » seuls, ni « Strict Pull-Ups »), un % est un % du record (max unbroken) :
+reps = max(1, arrondi(record × P / 100)), rien sans record. Grille (WOD strength seulement) : nouvelles formes
+« Mvt — S × P % du max » et « Mvt — S × P % » (reps pré-remplies depuis le record, vides sans record), ligne
+« P % de ton max (R reps) → N reps » sous le mouvement, ou « P % de ton max · aucun record enregistré » et le lien
+« Renseigner mon record › » (ferme la saisie en gardant le brouillon, ouvre Profil → PR, Gymnastique dépliée ; écran
+Profil ajouté à la pile Ma Box). « Mvt — S × R @ P % » : R gagne, rien de calculé. Texte des WOD (tous types : cartes
+Ma Box, détail, programme) : « (≈ N reps) » après le % quand la ligne porte exactement un mouvement reconnu, un seul %,
+aucune charge, aucun mouvement à 1RM, et pas de reps écrites ; sinon rien. Aucun effet sur score, crédits ni badges ;
+le champ kg reste affiché (G3). Tests `gymPercentReps.test.ts` (18 tests, 11 mutations tuées) ; captures banc web
+local 390 px sombre/clair FR/EN dans `athlex-captures/gymnastique-G1`. Relecture (bis) : records relus à chaque retour
+sur le détail du WOD (`useMyRecords().reload` au focus) ; un record arrivé recalcule les reps prévues des lignes
+« % du max » et ne remplit que les reps encore vides (`applyGymRecordsToGrid`) ; une grille saisie n'est plus remise
+à la prescription après l'enregistrement du brouillon (défaut existant, rendu visible par le rechargement) ;
+`logStrengthSets` envoie `prescribed_reps` NULL au lieu de 0, comme le brouillon et la validation. Tests
+`gymRecordFocus.rn.test.tsx`, `strengthSession.test.ts` (CHECK `prescribed_reps` simulé), 5 mutations tuées.
+Contrat de format partagé avec le Manager : `src/__tests__/fixtures/strength-line-contract.json` (5 cas, identique
+octet pour octet à AthleX-Manager `lib/__fixtures__/strength-line-contract.json`, sha256 `52b03e77…7025`), vérifié
+par `strengthLineContract.test.ts` (lecture et écriture).
+
 **Profil → Notifications : bouton de test sans fenêtre ni jeton, écran traduit (retour du build 1.0.60, app seule, aucune
 migration ; PR non mergée, à vérifier par Nab au prochain build).** Le bouton « Tester les notifications » ouvrait une
 fenêtre de développement « Token enregistré » avec le début du jeton push. Il enregistre toujours le jeton

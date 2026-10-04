@@ -32,6 +32,9 @@ jest.mock('../lib/supabase', () => {
     if (rows.some(r => !(Number(r.set_index) >= 1 && Number(r.set_index) <= 50))) {
       return pgError('23514', 'new row for relation "strength_set_logs" violates check constraint "strength_set_logs_set_index_check"');
     }
+    if (rows.some(r => r.prescribed_reps != null && !(Number(r.prescribed_reps) >= 1))) {
+      return pgError('23514', 'new row for relation "strength_set_logs" violates check constraint "strength_set_logs_prescribed_reps_check"');
+    }
     return null;
   };
   class Q {
@@ -472,5 +475,28 @@ describe('refus du serveur ≠ hors connexion', () => {
       expect(src).toMatch(/isNetworkError\(e\)/);
       expect(src).toContain("i18n.t('strengthSession.refused')");
     }
+  });
+});
+
+describe('gymnastique « % du max » sans record : prescribed_reps jamais à 0', () => {
+  // Reps prévues inconnues (0 dans la grille) : la base n'accepte que NULL ou ≥ 1.
+  const gymDrafts = () => {
+    const grid = buildStrengthGrid([parseStrengthLine('Toes to Bar — 2 × 60 % du max')!], () => null, () => null);
+    expect(grid.map(d => d.prescribedReps)).toEqual([0, 0]);
+    return edit(edit(grid, 0, { reps: '10', loadKg: '5' }), 1, { reps: '8', loadKg: '5' });
+  };
+  const prescribed = () => mockDb.strength_set_logs.map(r => r.prescribed_reps);
+
+  it('journal (logStrengthSets) : série chargée envoyée avec prescribed_reps null', async () => {
+    const performed = await logStrengthSets({ userId: 'u1', sourceType: 'whiteboard', sourceId: 'wod-1', sourceTitle: 'Gym', drafts: gymDrafts() });
+    expect(performed).toHaveLength(2);
+    expect(prescribed()).toEqual([null, null]);
+  });
+
+  it('brouillon et validation : même règle', async () => {
+    expect((await saveStrengthDraft(draftParams(gymDrafts()))).status).toBe('saved');
+    expect(prescribed()).toEqual([null, null]);
+    await validate(gymDrafts());
+    expect(prescribed()).toEqual([null, null]);
   });
 });

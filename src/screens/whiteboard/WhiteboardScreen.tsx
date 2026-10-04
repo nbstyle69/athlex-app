@@ -38,6 +38,8 @@ import { fetchStrengthSummaries } from '../../services/strengthSets';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { needsPlan } from '../../services/membership';
 import { usePlanStatuses } from '../../hooks/usePlanStatuses';
+import { useMyRecords } from '../../hooks/useMyOneRepMax';
+import { annotateGymRepsInText } from '../../utils/strengthBlock';
 import PlanToActivateNotice from '../../components/PlanToActivateNotice';
 import { AxButton, AxCard, AxCounterBadge, AxIconButton, AxTag } from '../../components/ax';
 import { axAccentSafeLineHeight, axSpacing, axTypography } from '../../theme/axTokens';
@@ -65,6 +67,8 @@ export default function WhiteboardScreen() {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
+  const { gymRecordFor } = useMyRecords();
+  const descOf = (text: string) => annotateGymRepsInText(text, gymRecordFor);
   const S = createStyles(theme);
   const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
 
@@ -574,7 +578,7 @@ export default function WhiteboardScreen() {
         {capOf(wod.time_cap_seconds)}
       </View>
       <Text style={S.wodTitle}>{wod.title}</Text>
-      {wod.description ? <Text style={S.wodDesc} numberOfLines={lines}>{wod.description}</Text> : null}
+      {wod.description ? <Text style={S.wodDesc} numberOfLines={lines}>{descOf(wod.description)}</Text> : null}
       <View style={S.wodCardFooter}>
         <View style={S.wodCardAction}>
           <Text style={S.wodCardActionText}>{t('whiteboard.seeDetails')}</Text>
@@ -898,7 +902,7 @@ export default function WhiteboardScreen() {
                         </View>
                         <Text style={S.wodTitle}>{wod.title}</Text>
                         {wod.description && (
-                          <Text style={S.wodDesc} numberOfLines={2}>{wod.description}</Text>
+                          <Text style={S.wodDesc} numberOfLines={2}>{descOf(wod.description)}</Text>
                         )}
                       </TouchableOpacity>
                       <View style={S.wodCardFooter}>
@@ -986,7 +990,7 @@ export default function WhiteboardScreen() {
                       {capOf(entry.wod.time_cap_seconds)}
                     </View>
                     <Text style={S.wodTitle}>{entry.wod.title}</Text>
-                    {entry.wod.description ? <Text style={S.wodDesc} numberOfLines={3}>{entry.wod.description}</Text> : null}
+                    {entry.wod.description ? <Text style={S.wodDesc} numberOfLines={3}>{descOf(entry.wod.description)}</Text> : null}
                   </AxCard>
                 ))}
               </View>
