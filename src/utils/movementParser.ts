@@ -27,6 +27,15 @@ function normalizeUnit(raw: string): MovementUnit {
 }
 
 /**
+ * `40% Ring Muscle-ups`, `40 % RMU`, `35%du max Toes-to-Bar` : un pourcentage
+ * du max, jamais une quantité de reps. La ligne ne crédite rien (on ne sait
+ * pas combien de reps l'athlète a faites).
+ */
+export function isPercentLine(line: string): boolean {
+  return /^\d+(?:[.,]\d+)?(?:\s*\/\s*\d+(?:[.,]\d+)?)?\s*%/.test(line.trim());
+}
+
+/**
  * Parse a formatted movement line from generated WODs.
  * Examples:
  *   "12 Thrusters (43 kg)"  → { name: "Thrusters", reps: 12, weight_kg: 43 }
@@ -56,6 +65,7 @@ export function parseMovementLine(line: string, options?: ParseOptions): Movemen
   if (trimmed.endsWith(':')) return null;
   if (trimmed.startsWith('⚡') || trimmed.startsWith('──')) return null;
   if (/⟨.*⟩/.test(trimmed)) return null; // team format labels
+  if (isPercentLine(trimmed)) return null;
 
   // Durées : "30 s Plank Hold", "45/30 s Hollow Hold" — une tenue ne crédite
   // aucun compteur (pas de badge en secondes) et ne doit surtout pas être lue
@@ -140,7 +150,24 @@ function computeMetconMovements(
   scoreType: string,
   options?: ParseOptions,
 ): MovementEntry[] {
-  const parsed = movements.map(l => parseMovementLine(l, options)).filter(Boolean) as MovementEntry[];
+  // Une ligne en % reste une place dans le tour (cycles d'EMOM), mais sa
+  // quantité est inconnue : rien quand le score se répartit entre les lignes.
+  const PCT: MovementEntry = { name: '', reps: 0 };
+  const all = movements
+    .map(l => (isPercentLine(l) ? PCT : parseMovementLine(l, options)))
+    .filter(Boolean) as MovementEntry[];
+  const hasPct = all.includes(PCT);
+  if (hasPct && (wodType === 'AMRAP' && scoreType === 'reps' || wodType === 'Max Reps')) return [];
+  return computeFromEntries(all, movements, wodType, scoreValue, scoreType).filter(m => m.name !== PCT.name);
+}
+
+function computeFromEntries(
+  parsed: MovementEntry[],
+  movements: string[],
+  wodType: string,
+  scoreValue: number,
+  scoreType: string,
+): MovementEntry[] {
   if (parsed.length === 0) return [];
 
   // Extract rounds from header if present (e.g. "5 Rounds For Time :")
