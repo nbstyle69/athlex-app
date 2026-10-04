@@ -239,8 +239,6 @@ COMMENT ON FUNCTION public.validate_strength_session(text, uuid, text, integer, 
   'Valide une séance de musculation de l''appelant : séries, séance, score (Whiteboard : charge max) et 1RM en une transaction. N''écrit ni compteurs ni movement_logs : l''app les fait partir une seule fois, quand premiere_validation est vrai.';
 
 
-COMMENT ON FUNCTION public.validate_strength_session(text, uuid, text, integer, boolean, jsonb, jsonb) IS
-  'Valide une séance de musculation de l''appelant : séries, séance, score (Whiteboard : charge max) et 1RM en une transaction. N''écrit ni compteurs ni movement_logs : l''app les fait partir une seule fois, quand premiere_validation est vrai.';
 
 -- list_athlete_strength_sets : définition de prod (md5 17c26f33…), 20270138.
 DROP FUNCTION public.list_athlete_strength_sets(uuid, integer);

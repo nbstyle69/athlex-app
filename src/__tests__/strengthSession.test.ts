@@ -502,3 +502,21 @@ describe('gymnastique « % du max » sans record : prescribed_reps jamais à 0',
     expect(prescribed()).toEqual([null, null]);
   });
 });
+
+describe('G2 : load_required, une série sans charge sur une ligne chargée ne vaut rien', () => {
+  const ligne = (l: string) => buildStrengthGrid([parseStrengthLine(l)!], () => null, () => null);
+
+  it('posé sur toute ligne prescrite avec une charge, même inconnue ; pas sur « % du max » ni sans charge', () => {
+    expect(ligne('Back Squat — 5 × 3 @ 80 %1RM').map(d => [d.prescribedLoadKg, d.loadRequired])).toEqual(Array(5).fill([null, true]));
+    expect(ligne('Back Squat — 2 × 3 @ 100 kg').map(d => d.loadRequired)).toEqual([true, true]);
+    expect(ligne('Back Squat — 2 × 3 — charge RPE 8').map(d => d.loadRequired)).toEqual([true, true]);
+    expect(ligne('Ring Muscle-up — 2 × 15 % du max').map(d => d.loadRequired)).toEqual([false, false]);
+    expect(ligne('Pull-ups — 2 × 8').map(d => d.loadRequired)).toEqual([false, false]);
+  });
+
+  it('envoyé dans p_sets avec chaque série', async () => {
+    const d = edit(ligne('Back Squat — 2 × 3 @ 80 %1RM'), 0, { loadKg: '100' });
+    await validate(edit(d, 1, { loadKg: '100' }));
+    expect((mockDb.rpcCalls[0].p_sets as Row[]).map(s => s.load_required)).toEqual([true, true]);
+  });
+});

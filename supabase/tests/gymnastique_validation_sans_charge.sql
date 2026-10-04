@@ -11,7 +11,9 @@
 --   G1  séance sans charge validée (plus de SEANCE_VIDE), séries gardées ;
 --   G2  total_reps calculé par le serveur seul (valeur reçue ignorée, écriture
 --       directe refusée par les policies) ;
---   G3  charge exigée : série à charge prescrite sans charge écartée, charge max
+--   G3  charge exigée : série à charge prescrite sans charge écartée, série sans
+--       charge marquée load_required écartée (seule : SEANCE_VIDE ; dans une
+--       séance mixte : ignorée), la même sans la clé acceptée ; charge max
 --       présente dès qu'une série chargée existe, contrainte statut_coherent ;
 --   G4  séance mixte : score en charge inchangé, reps totales en plus ;
 --   G5  aucune ligne wod_scores pour une séance sans charge (même revalidée) ;
@@ -53,7 +55,7 @@ SELECT '00000000-0000-4000-b9e1-00000000000a', ('00000000-0000-4000-a9e1-0000000
 INSERT INTO public.box_wods (id, box_id, title, wod_type, scheduled_date)
 SELECT ('00000000-0000-4000-c9e1-00000000000' || n)::uuid, '00000000-0000-4000-b9e1-00000000000a',
        'WOD ' || n, 'strength', CURRENT_DATE
-  FROM unnest(ARRAY['1', '2', '3', '4']) n;
+  FROM unnest(ARRAY['1', '2', '3', '4', '5']) n;
 
 CREATE FUNCTION pg_temp.faire(p_qui text, p_sql text) RETURNS text LANGUAGE plpgsql AS $$
 DECLARE v text := 'OK'; r text;
@@ -170,6 +172,14 @@ BEGIN
   -- ── G3 : charge exigée dès qu'elle est prescrite ou qu'une série la porte ──
   v := pg_temp.valider('01', '2', '[{"movement":"Back Squat","set_index":1,"reps":5,"load_kg":"","prescribed_load_kg":100}]');
   IF v NOT LIKE '22023: SEANCE_VIDE%' THEN RAISE EXCEPTION 'G3 : charge prescrite non exigée : %', v; END IF;
+  -- Ligne en %1RM sans 1RM connu : pas de charge prévue, mais l'app dit load_required.
+  v := pg_temp.valider('01', '2', '[{"movement":"Back Squat","set_index":1,"reps":5,"load_required":true}]');
+  IF v NOT LIKE '22023: SEANCE_VIDE%' THEN RAISE EXCEPTION 'G3 : série load_required sans charge acceptée : %', v; END IF;
+  -- La même série sans la clé (ancien client, ou ligne sans charge) : acceptée.
+  v := pg_temp.valider('01', '5', '[{"movement":"Back Squat","set_index":1,"reps":5}]');
+  IF v NOT LIKE 'OK %' OR pg_temp.seance('01', '5') IS DISTINCT FROM 'validated|-|5' THEN
+    RAISE EXCEPTION 'G3 : série sans clé refusée : % / %', v, pg_temp.seance('01', '5');
+  END IF;
   BEGIN
     UPDATE public.strength_sessions SET total_reps = NULL
      WHERE user_id = a::uuid AND source_id = '00000000-0000-4000-c9e1-000000000001';
@@ -182,7 +192,8 @@ BEGIN
     {"movement":"Back Squat","set_index":1,"reps":5,"load_kg":100,"prescribed_reps":5,"prescribed_load_kg":100},
     {"movement":"Back Squat","set_index":2,"reps":5,"load_kg":90,"prescribed_reps":5,"prescribed_load_kg":100},
     {"movement":"Back Squat","set_index":3,"reps":5,"load_kg":"","prescribed_reps":5,"prescribed_load_kg":100},
-    {"movement":"Pull-ups","set_index":1,"reps":10,"load_kg":null}
+    {"movement":"Pull-ups","set_index":1,"reps":10,"load_kg":null},
+    {"movement":"Back Squat","set_index":4,"reps":5,"load_kg":"","load_required":true}
   ]$j$);
   IF v NOT LIKE 'OK %' THEN RAISE EXCEPTION 'G4 : séance mixte refusée : %', v; END IF;
   j := substr(v, 4)::jsonb;

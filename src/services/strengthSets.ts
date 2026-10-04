@@ -48,6 +48,13 @@ export interface StrengthSetDraft {
    * prévues en découlent ; sans record, `prescribedReps` vaut 0 (inconnues).
    */
   prescribedPctOfMax?: number | null;
+  /**
+   * La ligne prescrit une charge (kg, %1RM résolu ou non, ou charge notée) : une
+   * série sans charge n'y est pas une série valide, même quand la charge prévue
+   * est inconnue (%1RM sans 1RM). Faux pour une ligne « % du max », une ligne
+   * sans charge ou une série ajoutée. Envoyé en `load_required` (20270145).
+   */
+  loadRequired?: boolean;
 }
 
 export interface StrengthSetRow {
@@ -145,6 +152,7 @@ export function buildStrengthGrid(
     const kg = resolveStrengthLoadKg(e, oneRepMaxFor(e.name));
     // % du record : reps calculées, ou vides sans record (jamais inventées).
     const reps = e.pctOfMax != null ? gymRepsForPct(gymRecordFor(e.name), e.pctOfMax) ?? 0 : e.reps;
+    const loadRequired = e.pctOfMax == null && ((e.load != null && e.load > 0) || !!(e.loadNote ?? '').trim());
     const sets = Math.max(1, Math.min(MAX_SETS_PER_MOVEMENT, Math.round(e.sets)));
     for (let s = 1; s <= sets; s++) {
       const setIndex = (perMovement.get(e.name) ?? 0) + 1;
@@ -161,6 +169,7 @@ export function buildStrengthGrid(
         loadKg: kg == null ? '' : String(kg),
         prescribedReps: reps,
         prescribedLoadKg: kg,
+        loadRequired,
         ...(e.pctOfMax != null ? { prescribedPctOfMax: e.pctOfMax } : {}),
       });
     }
@@ -893,6 +902,8 @@ export async function validateStrengthSession(p: ValidateStrengthParams): Promis
     // Série ajoutée au-delà de la prescription (« Ajouter une série », G3) ;
     // aucune pour l'instant. Lu par validate_strength_session (20270145).
     is_added: false,
+    // Ligne à charge prescrite (même inconnue) : sans charge, la série ne vaut rien.
+    load_required: d.loadRequired === true,
   }));
   const records = strengthRecordsFor(drafts, p.previousSets ?? []);
   const { data, error } = await db.rpc('validate_strength_session', {

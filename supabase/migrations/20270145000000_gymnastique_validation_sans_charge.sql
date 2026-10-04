@@ -30,11 +30,15 @@
 --   2. strength_set_logs.is_added (défaut false) : série ajoutée depuis la grille
 --      (G3), sans reps prévues (CHECK).
 --   3. validate_strength_session (même signature) : une série sans charge est
---      gardée et validée quand aucune charge n'était prescrite pour elle ; une
---      série dont la charge est prescrite reste exigée avec sa charge, comme
---      avant. Charge max = séries chargées (NULL sans aucune), reps totales =
---      séries sans charge. Whiteboard : aucune écriture dans wod_scores pour une
---      séance sans aucune série chargée ; une séance chargée ou mixte garde son
+--      gardée et validée quand aucune charge n'était prescrite pour elle : ni
+--      prescribed_load_kg, ni load_required (clé facultative de p_sets, posée par
+--      l'app pour toute ligne prescrite en kg ou en %1RM, résolue ou non ; absente
+--      = false, un ancien client n'envoyant que des séries chargées). Sinon elle
+--      reste exigée avec sa charge, comme avant : un Back Squat en %1RM sans 1RM
+--      connu n'est jamais compté comme de la gymnastique. Charge max = séries
+--      chargées (NULL sans aucune), reps totales = séries sans charge.
+--      Whiteboard : aucune écriture dans wod_scores pour une séance sans aucune
+--      série chargée ; une séance chargée ou mixte garde son
 --      score en charge, inchangé. is_added lu dans p_sets (prescribed_reps NULL
 --      pour une série ajoutée) ; prescribed_reps / prescribed_load_kg à 0
 --      deviennent NULL (la table les refusait). Records 1RM inchangés. Jamais de
@@ -156,8 +160,10 @@ BEGIN
 
   -- Séries valides reçues (les séries vides ou incomplètes ne comptent pas).
   -- Une série sans charge (gymnastique) est valide si aucune charge n'était
-  -- prescrite ; une série dont la charge est prescrite reste exigée avec sa
-  -- charge, comme avant. Une série ajoutée (is_added) n'a pas de reps prévues.
+  -- prescrite : ni charge prévue reçue, ni load_required (ligne prescrite en kg
+  -- ou en %1RM, résolue ou non, selon l'app). Sinon elle reste exigée avec sa
+  -- charge, comme avant. Un ancien client n'envoie que des séries chargées : la
+  -- clé absente vaut false. Une série ajoutée (is_added) n'a pas de reps prévues.
   SELECT coalesce(jsonb_agg(jsonb_build_object(
            'movement', btrim(c.e->>'movement'),
            'movement_label', nullif(c.e->>'movement_label', ''),
@@ -174,13 +180,14 @@ BEGIN
                  coalesce(e->>'load_kg', '') = '' AS sans_charge,
                  CASE WHEN e->>'prescribed_load_kg' ~ '^[0-9]+(\.[0-9]+)?$'
                       THEN nullif((e->>'prescribed_load_kg')::numeric, 0) END AS charge_prevue,
-                 coalesce(e->>'is_added', '') = 'true' AS ajoutee
+                 coalesce(e->>'is_added', '') = 'true' AS ajoutee,
+                 coalesce(e->>'load_required', '') = 'true' AS charge_exigee
             FROM jsonb_array_elements(p_sets) e) c
    WHERE c.e->>'reps' ~ '^[0-9]+$'
      AND c.e->>'set_index' ~ '^[0-9]+$'
      AND (c.e->>'reps')::integer BETWEEN 1 AND 500
      AND ((c.charge > 0 AND c.charge <= 500)
-          OR (c.sans_charge AND c.charge_prevue IS NULL));
+          OR (c.sans_charge AND c.charge_prevue IS NULL AND NOT c.charge_exigee));
 
   -- Charge max : séries chargées seulement (NULL sans charge) ; reps totales :
   -- séries sans charge seulement, calculées ici, jamais reçues du client.
@@ -336,12 +343,10 @@ BEGIN
 END;
 $function$;
 
-COMMENT ON FUNCTION public.validate_strength_session(text, uuid, text, integer, boolean, jsonb, jsonb) IS
-  'Valide une séance de musculation de l''appelant : séries, séance, score (Whiteboard : charge max) et 1RM en une transaction. N''écrit ni compteurs ni movement_logs : l''app les fait partir une seule fois, quand premiere_validation est vrai.';
 
 
 COMMENT ON FUNCTION public.validate_strength_session(text, uuid, text, integer, boolean, jsonb, jsonb) IS
-  'Valide une séance de musculation de l''appelant : séries (sans charge comprises, si aucune charge n''était prescrite), séance (charge max et reps totales), score (Whiteboard : charge max, rien sans série chargée) et 1RM en une transaction. N''écrit ni compteurs ni movement_logs : l''app les fait partir une seule fois, quand premiere_validation est vrai.';
+  'Valide une séance de musculation de l''appelant : séries (sans charge comprises, si aucune charge n''était prescrite : ni prescribed_load_kg ni load_required), séance (charge max et reps totales), score (Whiteboard : charge max, rien sans série chargée) et 1RM en une transaction. N''écrit ni compteurs ni movement_logs : l''app les fait partir une seule fois, quand premiere_validation est vrai.';
 
 -- ═══ 4. Lecture staff : is_added en plus ══════════════════════════════════════
 -- Définition en prod : 20270138 (md5 17c26f33…), droits authenticated et
