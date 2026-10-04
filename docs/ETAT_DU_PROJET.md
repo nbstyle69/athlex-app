@@ -211,6 +211,13 @@ Supabase/Resend.
 
 ## En cours
 
+**R1 (retour 1.0.61) : 1RM exact du libellé pour les blocs de musculation (app seule ; PR non mergée, à vérifier
+par Nab).** Un bloc `%1RM` (texte des WOD, grille pré-remplie) prend d'abord le record de son libellé de la page Records
+(`weightlifting_<Libellé>` et anciennes clés, rapprochement casse/tirets/espaces/pluriel comme la gymnastique) : Bench
+Press et Hip Thrust ont enfin leur kg, Strict Press n'utilise plus le max de Push Press. Sans record exact, repli sur la
+famille du générateur (Squat Clean → clean). Générateur inchangé (`parsePersonalRecords`, `resolveLoad`). Charges
+toujours arrondies à 2,5 kg (91 % de 100 → ≈ 90 kg). Tests `oneRepMaxExactLabel.test.ts`, `oneRepMaxHook.rn.test.tsx`.
+
 **Minuteur en paysage conforme à la maquette (retour R3 du build 1.0.61, app seule, apparence, aucune migration ; PR non
 mergée, à vérifier sur téléphone).** En paysage, le chrono était environ trois fois trop petit (226 px fixes réduits par
 `adjustsFontSizeToFit` sur l'appareil, 137 px avec caméra) et « Appuie pour démarrer » tenait sur trois lignes. Maquette
