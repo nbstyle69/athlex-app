@@ -108,7 +108,7 @@ export default function AnnoncesScreen() {
                   label={forMe ? t('whiteboard.announcementForYou') : t('whiteboard.announcementWholeBox')}
                   tone={forMe ? 'accent' : 'muted'}
                 />
-                <Text style={S.date}>{formatDate(a.created_at, i18n.language)}</Text>
+                <Text testID={`annonce-date-${a.id}`} style={S.date}>{formatDate(a.created_at, i18n.language)}</Text>
               </View>
               <Text style={S.title}>{a.title}</Text>
               <Text style={S.body}>{a.body}</Text>

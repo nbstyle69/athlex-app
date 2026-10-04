@@ -180,7 +180,6 @@ describe('AnnoncesScreen', () => {
     // Message en entier : aucune coupe de lignes.
     const body = first.findAll((n) => String(n.type) === 'Text' && hostText(n).startsWith('Pense à régulariser'))[0];
     expect(body.props.numberOfLines).toBeUndefined();
-    expect(hostText(first)).toContain('04 oct. 2026');
   });
 
   it('étiquette « Pour toi » (accent) si l\'annonce vise le membre, « Toute la box » (discret) sinon', async () => {
@@ -208,11 +207,32 @@ describe('AnnoncesScreen', () => {
     expect(byId(root, 'annonces-empty')).toHaveLength(0);
   });
 
+  // Heure locale du téléphone, 24 h comme Actualités et le minuteur ; 16:02 UTC reste en octobre dans tout fuseau.
+  const local = (iso: string) => {
+    const d = new Date(iso);
+    const p = (n: number) => String(n).padStart(2, '0');
+    return { jour: p(d.getDate()), heure: `${p(d.getHours())}:${p(d.getMinutes())}` };
+  };
+
+  it('date et heure en français : « 04 oct. 2026 · 18:02 »', async () => {
+    const root = await mount(<AnnoncesScreen />);
+    const { jour, heure } = local('2026-10-04T16:02:00Z');
+    expect(hostText(byId(root, 'annonce-date-n-new')[0])).toBe(`${jour} oct. 2026 · ${heure}`);
+  });
+
+  it('date et heure en anglais, même structure : « 04 Oct 2026 · 18:02 »', async () => {
+    await i18n.changeLanguage('en');
+    const root = await mount(<AnnoncesScreen />);
+    const { jour, heure } = local('2026-10-04T16:02:00Z');
+    expect(hostText(byId(root, 'annonce-date-n-new')[0])).toBe(`${jour} Oct 2026 · ${heure}`);
+  });
+
   it('en anglais : libellés traduits', async () => {
     await i18n.changeLanguage('en');
     const root = await mount(<AnnoncesScreen />);
     expect(hostText(byId(root, 'annonce-tag-n-new')[0])).toBe('For you');
     expect(hostText(byId(root, 'annonce-tag-n-old')[0])).toBe('Whole box');
+    expect(hostText(byId(root, 'ax-screen-header')[0])).toContain('NOTICES');
   });
 });
 
@@ -232,6 +252,9 @@ describe('Ma Box : bouton Annonces et non-lus', () => {
     const press = root.findAll((n) => n.props.testID === 'whiteboard-annonces' && typeof n.props.onPress === 'function')[0];
     await act(async () => press.props.onPress());
     expect(mockNavigate).toHaveBeenCalledWith('Annonces');
+    await i18n.changeLanguage('en');
+    const en = await mount(<WhiteboardScreen />);
+    expect(hostText(byId(en, 'whiteboard-annonces')[0])).toBe('Notices');
   });
 
   it('pastille = annonces lisibles plus récentes que la dernière ouverture ; remise à zéro par l\'écran', async () => {

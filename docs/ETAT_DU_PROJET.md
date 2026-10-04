@@ -313,11 +313,14 @@ box active, colonnes `id, title, body, target, created_at`, 50 au plus, de la pl
 existante (`notif_member_read`, `box_notifs_member_read`) ne rend que les annonces à toute la box ou au membre lui-même.
 Plus récente en carte vedette ; étiquette « Pour toi » si `target` est le membre, « Toute la box » sinon ; date et
 heure, titre, message en entier. État vide (mégaphone, « AUCUNE ANNONCE »), message d'erreur générique, tirer pour
-actualiser. Ma Box : bouton « Annonces » à côté d'« Actualités », pastille des annonces plus récentes que la dernière
-ouverture de l'écran (`lastSeenAnnonces_<userId>_<boxId>` sur le téléphone, même mécanique que les Actualités).
+actualiser. Date « 04 oct. 2026 · 18:02 », en anglais même structure « 04 Oct 2026 · 18:02 » (heure sur 24 h comme
+Actualités et le minuteur). Ma Box : bouton « Annonces » (EN « Notices », titre « NOTICES ») à côté d'« Actualités »,
+pastille des annonces plus récentes que la dernière ouverture de l'écran (`lastSeenAnnonces_<userId>_<boxId>` sur le
+téléphone, même mécanique que les Actualités).
 Toucher une notification `box_notification` ouvre l'écran si sa `box_id` est la box active, sinon l'app s'ouvre
-simplement (`notificationRouter`, box active tenue à jour par `AuthContext`). Tests `annonces.rn.test.tsx`,
-`notificationRouter.test.ts`, 14 mutations tuées.
+simplement (`notificationRouter`, box active tenue à jour par `AuthContext`, changement de box compris). Tests
+`annonces.rn.test.tsx`, `annoncesBoxActive.rn.test.tsx` (vrai `AuthProvider`), `notificationRouter.test.ts`, 21 mutations
+tuées.
 
 **Minuteur sans caméra : session audio reposée à chaque lancement (retour D1 du build 1.0.60, app seule, aucune
 migration ; à vérifier sur iPhone au prochain build).** Sur iPhone, pas de bip sans caméra. Le mode audio n'était posé
