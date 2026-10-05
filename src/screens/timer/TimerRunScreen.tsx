@@ -229,34 +229,58 @@ function ActionRonde({ icon: Icon, label, showLabel, tone, ink, danger, veil, on
 const CAM_STACK_GAP = 10;
 export const CAM_INFO_GAP = 16;
 const CAM_BOTTOM_PAD = 28;
-// ─── Chrono géant en paysage (R3, maquette « Minuteur · Paysage A ») ──────────
-// Oswald Bold, métriques relevées dans Chrome à 1000 px (canvas measureText) :
-// les chiffres montent à 0,828 em et descendent à 0,016 em ; « 0 » est le plus
-// large (0,55 em de chasse), le deux-points 0,278 em ; la ligne fait 1,482 em
-// (ascendante 1,193, descendante 0,289), ce qui place l'encre 0,046 em sous le
-// milieu de la ligne.
-export const CHRONO_INK_EM = 0.844;
-const CHRONO_DIGIT_EM = 0.55;
-const CHRONO_COLON_EM = 0.278;
-const CHRONO_INK_SHIFT_EM = 0.046;
-/** Part de la hauteur de la boîte que l'encre des chiffres peut occuper. */
+// ─── Chrono géant en paysage (R3, maquette « Minuteur · Paysage A » ; R3b) ────
+// Mesures natives d'Oswald Bold, lues dans le fichier embarqué
+// (@expo-google-fonts/oswald/700Bold/Oswald_700Bold.ttf, tables head / hhea / OS/2 / glyf) :
+// iOS (CoreText) et Android (includeFontPadding: false) placent la ligne d'après hhea
+// (ascendante 1193, descendante -289, interligne 0 ; OS/2 typo identiques, USE_TYPO_METRICS),
+// les chiffres vont de -15 à 822, « 0 » a la plus grande chasse (550), « : » 278.
+// Les métriques « win » (1325 / 377) ne servent qu'avec includeFontPadding, coupé ici.
+export const OSWALD_BOLD = {
+  unitsPerEm: 1000, ascender: 1193, descender: -289, lineGap: 0,
+  digitTop: 822, digitBottom: -15, digitAdvance: 550, colonAdvance: 278,
+} as const;
+const emBold = (u: number) => u / OSWALD_BOLD.unitsPerEm;
+/** Hauteur de ligne native, en em (1,482) : le texte du chrono a exactement cette hauteur, jamais moins. */
+export const CHRONO_LINE_EM = emBold(OSWALD_BOLD.ascender - OSWALD_BOLD.descender + OSWALD_BOLD.lineGap);
+/** Hauteur de l'encre des chiffres, en em (0,837). */
+export const CHRONO_INK_EM = emBold(OSWALD_BOLD.digitTop - OSWALD_BOLD.digitBottom);
+/** Haut de l'encre sous le haut de la ligne, en em (0,371). */
+const CHRONO_INK_TOP_EM = emBold(OSWALD_BOLD.ascender - OSWALD_BOLD.digitTop);
+/** Décalage du milieu de l'encre par rapport au milieu de la ligne (l'encre est plus bas), en em. */
+const CHRONO_INK_SHIFT_EM = CHRONO_INK_TOP_EM + CHRONO_INK_EM / 2 - CHRONO_LINE_EM / 2;
+/** Part de la hauteur mesurée que l'encre des chiffres peut occuper. */
 export const CHRONO_FILL = 0.9;
+/** Marge : la ligne native ne dépasse pas cette part de la hauteur sûre de l'écran. */
+export const CHRONO_LINE_FILL = 0.96;
 /**
- * Taille de police du chrono pour une boîte mesurée w × h : l'encre occupe au plus
- * CHRONO_FILL de la hauteur, et la chasse (comptée sur le chiffre le plus large,
- * donc stable quand les secondes défilent) tient dans la largeur.
+ * Taille de police du chrono pour une boîte mesurée w × h : l'encre des chiffres occupe au
+ * plus CHRONO_FILL de la hauteur, la chasse (comptée sur « 0 », le plus large : la taille ne
+ * bouge pas quand les secondes défilent) tient dans la largeur, et la ligne native entière
+ * tient dans CHRONO_LINE_FILL de la hauteur sûre de l'écran (`ligne`).
  */
-export function chronoFontSize(time: string, w: number, h: number): number {
+export function chronoFontSize(time: string, w: number, h: number, ligne = Infinity): number {
   const colons = time.split(':').length - 1;
-  const em = (time.length - colons) * CHRONO_DIGIT_EM + colons * CHRONO_COLON_EM;
-  return Math.max(0, Math.floor(Math.min((h * CHRONO_FILL) / CHRONO_INK_EM, w / em)));
+  const chasse = emBold((time.length - colons) * OSWALD_BOLD.digitAdvance + colons * OSWALD_BOLD.colonAdvance);
+  return Math.max(0, Math.floor(Math.min((h * CHRONO_FILL) / CHRONO_INK_EM, w / chasse, (ligne * CHRONO_LINE_FILL) / CHRONO_LINE_EM)));
 }
-/** Style du chrono à la taille fs : sans interligne imposé (la ligne déborde la boîte, vide, sans être écrasée), encre recentrée sur la boîte. */
-const chronoStyle = (fs: number) => ({
-  fontFamily: axFonts.oswaldBold, fontSize: fs, letterSpacing: 0, includeFontPadding: false, flexShrink: 0,
-  textAlign: 'center' as const, transform: [{ translateY: -Math.round(fs * CHRONO_INK_SHIFT_EM) }],
-});
-type Boite = { w: number; h: number };
+/**
+ * Style du chrono à la taille fs : une ligne native entière (lineHeight = height = 1,482 em),
+ * jamais écrasée par la boîte qui l'entoure (flexShrink 0) ; centré par son parent, il est
+ * remonté de l'écart entre milieu de ligne et milieu des chiffres pour centrer l'encre.
+ * Largeur fixe (toute la boîte) : quand une seconde élargit le texte, Android ne le remet
+ * plus en page un instant dans l'ancienne largeur (« 00:… » le temps d'une image).
+ */
+const chronoStyle = (fs: number) => {
+  const ligne = Math.ceil(fs * CHRONO_LINE_EM);
+  return {
+    fontFamily: axFonts.oswaldBold, fontSize: fs, lineHeight: ligne, height: ligne, flexShrink: 0, alignSelf: 'stretch' as const, letterSpacing: 0,
+    includeFontPadding: false, textAlignVertical: 'center' as const, textAlign: 'center' as const,
+    transform: [{ translateY: -Math.round(fs * CHRONO_INK_SHIFT_EM) }],
+  };
+};
+/** Boîte mesurée du chrono ; `ligne` : hauteur sûre de l'écran (fenêtre moins zones sûres). */
+type Boite = { w: number; h: number; ligne?: number };
 /** Paysage sans caméra : diamètre du bouton Lecture / Arrêt, qui fixe la hauteur de la rangée du bas. */
 export const LANDSCAPE_PLAY = 56;
 /** Paysage avec caméra : marge verticale de la couche au-dessus de l’aperçu. */
@@ -297,27 +321,29 @@ function BarTimer({ time, progress, color, fontSize, strokeColor, fit, flat }: {
   const { width: bw } = useWindowDimensions();
   const pct = Math.round(Math.max(0, Math.min(1, progress)) * 100);
   const sc = strokeColor || color;
-  const fs = fit ? chronoFontSize(time, fit.w, fit.h - CAM_BAR_ROOM) : fontSize;
+  const fs = fit ? chronoFontSize(time, fit.w, fit.h - CAM_BAR_ROOM, fit.ligne) : fontSize;
+  // En paysage, la ligne native entière est gardée ; elle remonte sous la barre de la hauteur
+  // vide au-dessus des chiffres, si bien que l'encre reste à 20 px de la barre.
   const digits = (
     <Text testID="timer-cam-time" numberOfLines={fit ? 1 : undefined} style={[{ fontSize: fs, fontFamily: axFonts.oswaldMedium, color, letterSpacing: -2,
-      textShadowColor: flat ? CAM_SHADOW : color, textShadowOffset: { width: 0, height: flat ? 1 : 0 }, textShadowRadius: flat ? 6 : 18, fontVariant: ['tabular-nums'] }, fit && chronoStyle(fs)]}>
+      textShadowColor: flat ? CAM_SHADOW : color, textShadowOffset: { width: 0, height: flat ? 1 : 0 }, textShadowRadius: flat ? 6 : 18, fontVariant: ['tabular-nums'] },
+      fit && { ...chronoStyle(fs), transform: undefined, marginTop: -Math.round(fs * CHRONO_INK_TOP_EM) }]}>
       {time}
     </Text>
   );
   return (
-    <View style={{ alignItems: 'center', gap: 20 }}>
+    <View style={[{ alignItems: 'center', gap: 20 }, fit && { alignSelf: 'stretch', transform: [{ translateY: Math.round(fs * (CHRONO_LINE_EM - CHRONO_INK_TOP_EM - CHRONO_INK_EM) / 2) }] }]}>
       <View style={{ width: fit ? fit.w * 0.6 : bw * 0.75, height: fit ? 18 : 14, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 9, overflow: 'hidden', position: 'relative' }}>
         <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${pct}%` as `${number}%`, backgroundColor: sc, borderRadius: 9 }} />
       </View>
-      {/* En paysage, la boîte n'a que la hauteur de l'encre : la barre reste collée aux chiffres. */}
-      {fit ? <View style={{ height: Math.ceil(fs * CHRONO_INK_EM), justifyContent: 'center', alignItems: 'center' }}>{digits}</View> : digits}
+      {digits}
     </View>
   );
 }
 
 // ─── DIGITS clock ───────────────────────────────────────────────────────────
 function DigitsTimer({ time, color, fontSize, fit, flat }: { time: string; color: string; fontSize: number; fit?: Boite; flat?: boolean }) {
-  const fs = fit ? chronoFontSize(time, fit.w, fit.h) : fontSize;
+  const fs = fit ? chronoFontSize(time, fit.w, fit.h, fit.ligne) : fontSize;
   return (
     <Text testID="timer-cam-time" numberOfLines={fit ? 1 : undefined} style={[{ fontSize: fs, fontFamily: axFonts.oswaldMedium, color, letterSpacing: -2,
       textShadowColor: flat ? CAM_SHADOW : color, textShadowOffset: { width: 0, height: flat ? 1 : 0 }, textShadowRadius: flat ? 6 : 22, fontVariant: ['tabular-nums'] }, fit && chronoStyle(fs)]}>
@@ -1913,8 +1939,9 @@ export default function TimerRunScreen() {
     setBoiteChrono(prev => (prev && Math.abs(prev.w - w) < 1 && Math.abs(prev.h - h) < 1 ? prev : { w, h }));
   };
   // Avant la première mesure : estimation prudente (moitié de la hauteur de l'écran).
-  const chronoBoite: Boite = boiteChrono ?? { w: winW - insets.left - insets.right - 32, h: winH * 0.5 };
-  const chronoTaille = chronoFontSize(mainTime, chronoBoite.w, chronoBoite.h);
+  // La ligne native du chrono tient dans la hauteur sûre de l'écran (fenêtre moins zones sûres).
+  const chronoBoite: Boite = { ...(boiteChrono ?? { w: winW - insets.left - insets.right - 32, h: winH * 0.5 }), ligne: winH - insets.top - insets.bottom };
+  const chronoTaille = chronoFontSize(mainTime, chronoBoite.w, chronoBoite.h, chronoBoite.ligne);
   // Bandeau du haut en paysage : bloc et time cap (« BLOC 1/1 · CAP 18:00 »), seulement s'il
   // y a un cap ou plusieurs blocs (un EMOM seul n'affiche pas « BLOC 1/1 »).
   const capPaysage = timerType === 'for-time' ? maxTime : curBlk?.type === 'for-time' ? blockDurationSec(curBlk) : 0;

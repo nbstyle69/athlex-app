@@ -12,7 +12,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { lightTheme, darkTheme } from '../theme/palette';
 import type { HomeStackParamList } from '../navigation';
-import TimerRunScreen, { CAM_BAR_ROOM, CHRONO_FILL, CHRONO_INK_EM, LANDSCAPE_PLAY } from '../screens/timer/TimerRunScreen';
+import TimerRunScreen, { CAM_BAR_ROOM, CHRONO_FILL, CHRONO_INK_EM, CHRONO_LINE_EM, CHRONO_LINE_FILL, LANDSCAPE_PLAY, OSWALD_BOLD } from '../screens/timer/TimerRunScreen';
+import { FICHIER_OSWALD_BOLD, lirePolice } from './policeTtf';
 import { DISPLAY_OPTS_KEY } from '../lib/timerVideoOpts';
 import { axFonts } from '../theme/axTokens';
 
@@ -82,14 +83,24 @@ const ILOT_PAYSAGE = { top: 0, bottom: 21, left: 59, right: 59 };
 function setWindow(w: typeof PORTRAIT) { act(() => { Dimensions.set({ window: w, screen: w }); }); }
 
 /**
- * Vérité indépendante du code : chasse et hauteur d'encre d'Oswald Bold, relevées dans Chrome
- * (canvas measureText à 1000 px, fichier @expo-google-fonts/oswald/700Bold).
+ * Vérité indépendante du code : chasses, encre des chiffres et ligne d'Oswald Bold, lues dans le
+ * fichier embarqué (R3b ; en R3, relevées dans Chrome).
  */
-const CHASSE_BOLD: Record<string, number> = {
-  0: 0.55, 1: 0.385, 2: 0.514, 3: 0.514, 4: 0.524, 5: 0.509, 6: 0.538, 7: 0.439, 8: 0.521, 9: 0.538, ':': 0.278,
-};
-const ENCRE_BOLD = 0.828 + 0.016;
-const largeurEncre = (t: string, fs: number) => [...t].reduce((s, c) => s + CHASSE_BOLD[c] * fs, 0);
+const POLICE = lirePolice(FICHIER_OSWALD_BOLD);
+const em = (u: number) => u / POLICE.unitsPerEm;
+const CHIFFRES = [...'0123456789'];
+const ENCRE_BOLD = em(Math.max(...CHIFFRES.map((c) => POLICE.glyphe(c).yMax)) - Math.min(...CHIFFRES.map((c) => POLICE.glyphe(c).yMin)));
+const LIGNE_BOLD = em(POLICE.hhea.ascender - POLICE.hhea.descender + POLICE.hhea.lineGap);
+const largeurEncre = (t: string, fs: number) => [...t].reduce((s, c) => s + em(POLICE.glyphe(c).chasse) * fs, 0);
+/** Hauteur sûre du paysage du banc : fenêtre de 390 moins les zones sûres. */
+const SURE = 390 - 0 - 21;
+/** Taille la plus grande permise : l'encre remplit la boîte, ou la ligne native la hauteur sûre (R3b). */
+function tailleMaximale(fs: number, h: number) {
+  const parEncre = (fs * ENCRE_BOLD) / (h * CHRONO_FILL);
+  const parLigne = (fs * LIGNE_BOLD) / (SURE * CHRONO_LINE_FILL);
+  expect(Math.max(parEncre, parLigne)).toBeLessThanOrEqual(1);
+  expect(Math.max(parEncre, parLigne)).toBeGreaterThan(0.97);
+}
 
 let renderer: TestRenderer.ReactTestRenderer | null = null;
 let vib: jest.SpyInstance;
@@ -153,10 +164,10 @@ describe('R3 : chrono en paysage sans caméra, taille mesurée', () => {
       await mesurer(r, 726, 243);
       const repos = flat(chrono(r));
       expect(repos.fontFamily).toBe(axFonts.oswaldBold);
-      const encre = (fs: number) => fs * ENCRE_BOLD;
-      // Avant R3 : 226 px fixes, réduits par adjustsFontSizeToFit sur l'appareil. Ici : 259 px, encre de 219 px sur 243.
-      expect(encre(repos.fontSize as number)).toBeGreaterThanOrEqual(0.85 * 243);
-      expect(encre(repos.fontSize as number)).toBeLessThanOrEqual(243);
+      // Avant R3 : 226 px fixes, réduits par adjustsFontSizeToFit. R3b : 239 px, borné par la ligne
+      // native (1,482 em) dans 96 % des 369 px sûrs ; encre de 200 px dans la boîte de 243.
+      tailleMaximale(repos.fontSize as number, 243);
+      expect((repos.fontSize as number) * ENCRE_BOLD).toBeLessThanOrEqual(243);
       await press(r, 'timer-start-stop'); await tick(3);
       expect(hostText(chrono(r))).toBe('00:03');
       expect(flat(chrono(r)).fontSize).toBe(repos.fontSize); // la taille ne saute pas quand les secondes défilent
@@ -251,7 +262,7 @@ describe('R3 : chrono en paysage avec caméra, taille mesurée', () => {
     await mesurer(r, 726, 280);
     const fs = flat(chrono(r, 'timer-cam-time')).fontSize as number;
     expect(fs * ENCRE_BOLD + CAM_BAR_ROOM).toBeLessThanOrEqual(280);
-    expect(fs * ENCRE_BOLD).toBeGreaterThanOrEqual(0.85 * (280 - CAM_BAR_ROOM));
+    tailleMaximale(fs, 280 - CAM_BAR_ROOM);
     expect(largeurEncre('00:00', fs)).toBeLessThanOrEqual(726);
   });
 
@@ -260,7 +271,7 @@ describe('R3 : chrono en paysage avec caméra, taille mesurée', () => {
     await mesurer(r, 726, 280);
     const fs = flat(chrono(r, 'timer-cam-time')).fontSize as number;
     expect(fs * ENCRE_BOLD).toBeLessThanOrEqual(280);
-    expect(fs * ENCRE_BOLD).toBeGreaterThanOrEqual(0.85 * 280);
+    tailleMaximale(fs, 280);
   });
 
   it('style Cercle : le cadran tient dans la boîte (il en prend le plus petit côté)', async () => {
@@ -333,4 +344,88 @@ describe('R3 (relecture) : temps final en paysage, Fermer et Réglages dans la z
       }
     });
   }
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// R3b (retour du build 1.0.62, iPhone) : en paysage, le bas des chiffres était coupé. Sur
+// l'appareil, le texte était mesuré dans la boîte (243 px) alors que sa ligne native fait
+// 1,482 em (≈ 384 px à 259 px) : le cadre du texte, plus court que la ligne, tranchait les
+// pieds des chiffres (et la boîte « hauteur d'encre » du style Barre aussi). Le banc web ne
+// mesure pas le texte ainsi et ne l'a pas vu.
+// ═════════════════════════════════════════════════════════════════════════════
+/** Ce qui peut couper les chiffres : texte plus bas que sa ligne native, ancêtre overflow hidden ou à hauteur fixe trop basse. */
+function coupeurs(t: ReactTestInstance): string[] {
+  const st = flat(t);
+  const fs = st.fontSize as number;
+  const ligne = Math.ceil(fs * LIGNE_BOLD);
+  const out: string[] = [];
+  if (st.fontFamily === axFonts.oswaldBold) {
+    if (typeof st.height !== 'number' || st.height < ligne) out.push(`texte : hauteur ${String(st.height)} < ligne native ${ligne}`);
+    if (st.includeFontPadding !== false) out.push('texte : includeFontPadding non coupé (Android ajouterait les métriques win)');
+    // Largeur stable : sinon Android remet un instant le texte élargi dans l'ancienne largeur (« 00:… »).
+    if (st.alignSelf !== 'stretch') out.push('texte : largeur qui suit le contenu (ellipse passagère à chaque seconde)');
+  }
+  for (let n = t.parent; n; n = n.parent) {
+    if (typeof n.type !== 'string') continue;
+    const a = flat(n);
+    const nom = String(n.props.testID ?? n.type);
+    if (a.overflow === 'hidden') out.push(`${nom} : overflow hidden`);
+    for (const k of ['height', 'maxHeight'] as const) {
+      if (typeof a[k] === 'number' && (a[k] as number) < ligne) out.push(`${nom} : ${k} ${a[k]} < ligne native ${ligne}`);
+    }
+  }
+  return out;
+}
+
+describe('R3b : aucun conteneur ne coupe les chiffres en paysage', () => {
+  for (const [nomTheme, th] of [['sombre', darkTheme], ['clair', lightTheme]] as const) {
+    it(`sans caméra, thème ${nomTheme} : au repos puis en cours`, async () => {
+      const r = await run(params(), th);
+      await mesurer(r, 726, 243);
+      expect(coupeurs(chrono(r))).toEqual([]);
+      await press(r, 'timer-start-stop'); await tick(14);
+      expect(hostText(chrono(r))).toBe('00:14');
+      expect(coupeurs(chrono(r))).toEqual([]);
+    });
+  }
+  for (const style of ['bar', 'digits', 'arc'] as const) {
+    it(`avec caméra, style ${style} : au repos puis en cours`, async () => {
+      const r = await run(params({ withCamera: true }), darkTheme, LANDSCAPE, style);
+      await mesurer(r, 726, 280);
+      expect(coupeurs(chrono(r, 'timer-cam-time'))).toEqual([]);
+      const cam = async () => { await act(async () => { r.findByProps({ testID: 'timer-cam-primary' }).props.onPress(); }); };
+      await cam(); await cam(); await tick(14);
+      expect(hostText(chrono(r, 'timer-cam-time'))).toBe('00:14');
+      expect(coupeurs(chrono(r, 'timer-cam-time'))).toEqual([]);
+    });
+  }
+});
+
+describe('R3b : hauteur de ligne du chrono = mesures natives de la police', () => {
+  it('les constantes du code sont celles du fichier Oswald Bold embarqué', () => {
+    expect(OSWALD_BOLD.unitsPerEm).toBe(POLICE.unitsPerEm);
+    expect([OSWALD_BOLD.ascender, OSWALD_BOLD.descender, OSWALD_BOLD.lineGap]).toEqual([POLICE.hhea.ascender, POLICE.hhea.descender, POLICE.hhea.lineGap]);
+    // Android suit OS/2 typo (USE_TYPO_METRICS) : identiques à hhea, donc même ligne sur iOS et Android.
+    expect(POLICE.typo).toEqual({ ascender: POLICE.hhea.ascender, descender: POLICE.hhea.descender, lineGap: POLICE.hhea.lineGap, utilisees: true });
+    expect(OSWALD_BOLD.digitTop).toBe(Math.max(...CHIFFRES.map((c) => POLICE.glyphe(c).yMax)));
+    expect(OSWALD_BOLD.digitBottom).toBe(Math.min(...CHIFFRES.map((c) => POLICE.glyphe(c).yMin)));
+    expect(OSWALD_BOLD.digitAdvance).toBe(Math.max(...CHIFFRES.map((c) => POLICE.glyphe(c).chasse)));
+    expect(OSWALD_BOLD.colonAdvance).toBe(POLICE.glyphe(':').chasse);
+    expect(CHRONO_LINE_EM).toBeCloseTo(LIGNE_BOLD, 6);
+  });
+
+  it.each([
+    ['sans caméra', false, undefined, 'timer-main-time'],
+    ['caméra, Barre', true, 'bar', 'timer-cam-time'],
+    ['caméra, Digits', true, 'digits', 'timer-cam-time'],
+  ] as const)('%s : lineHeight et hauteur du texte = taille × (ascendante − descendante + interligne) du fichier', async (_, camera, style, id) => {
+    const r = await run(params({ withCamera: camera }), darkTheme, LANDSCAPE, style);
+    await mesurer(r, 726, 260);
+    const st = flat(chrono(r, id));
+    const attendu = Math.ceil((st.fontSize as number) * LIGNE_BOLD);
+    expect(st.lineHeight).toBe(attendu);
+    expect(st.height).toBe(attendu);
+    // La ligne native entière tient dans la hauteur sûre de l'écran, avec la marge.
+    expect(attendu).toBeLessThanOrEqual(Math.ceil(SURE * CHRONO_LINE_FILL));
+  });
 });
