@@ -16,7 +16,7 @@ import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { hapticSuccess } from '../../lib/haptics';
 import { computeAndSaveElo, sortScoresRxFirst } from '../../services/eloCompute';
-import { leaderboardAvailable } from '../../utils/programSchedule';
+import { leaderboardAvailable, scoreListMode } from '../../utils/programSchedule';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { spacing, borderRadius, typography, shadows } from '../../theme/designTokens';
@@ -808,6 +808,9 @@ export default function WODDetailScreen() {
   }
 
   const myRank = myScore ? scores.findIndex(s => s.id === myScore.id) + 1 : null;
+  // Liste des scores : tout bloc daté qui en a. Rang et ELO : bloc classé seulement.
+  const listMode = scoreListMode(wod, scores.length);
+  const ranked = listMode === 'ranked';
 
   return (
     <View style={S.container}>
@@ -968,13 +971,15 @@ export default function WODDetailScreen() {
           )}
         </View>
 
-        {/* Leaderboard */}
-        {scores.length > 0 && leaderboardAvailable(wod) && (
+        {/* Leaderboard — ou, sur un bloc non classé, la même liste sans rang ni ELO */}
+        {listMode && (
           <View
             style={S.section}
             onLayout={e => { leaderboardY.current = e.nativeEvent.layout.y; }}
           >
-            <Text style={S.sectionTitle}>Classement · {scores.length} score{scores.length > 1 ? 's' : ''}</Text>
+            <Text style={S.sectionTitle} testID="score-list-title">
+              {ranked ? `Classement · ${scores.length} score${scores.length > 1 ? 's' : ''}` : i18n.t('whiteboard.scoresTitle')}
+            </Text>
             <View style={S.leaderboard}>
               {(() => {
                 const rankMap: Record<string, number> = {};
@@ -990,11 +995,13 @@ export default function WODDetailScreen() {
                     onPress={() => openScoreDetail(sc)}
                     testID={`leader-row-${sc.id}`}
                   >
-                    <View style={S.leaderRank}>
-                      {globalRank <= 3
-                        ? <Medal color={medalInk[globalRank - 1]} size={18} testID={`rank-medal-${globalRank}`} />
-                        : <Text style={S.leaderRankText}>{globalRank}</Text>}
-                    </View>
+                    {ranked && (
+                      <View style={S.leaderRank}>
+                        {globalRank <= 3
+                          ? <Medal color={medalInk[globalRank - 1]} size={18} testID={`rank-medal-${globalRank}`} />
+                          : <Text style={S.leaderRankText}>{globalRank}</Text>}
+                      </View>
+                    )}
                     <UserAvatar
                       uri={(sc.profile as any)?.avatar_url}
                       name={(sc.profile as any)?.username ?? '?'}
@@ -1009,8 +1016,8 @@ export default function WODDetailScreen() {
                         {(sc.profile as any)?.username ?? 'Athlète'}{isMe ? ' (moi)' : ''}
                       </Text>
                       <View style={S.leaderSubRow}>
-                        <Text style={S.leaderElo}>{elo} ELO</Text>
-                        {isExpired && eloDeltas[sc.member_id] != null && (
+                        {ranked && <Text style={S.leaderElo}>{elo} ELO</Text>}
+                        {ranked && isExpired && eloDeltas[sc.member_id] != null && (
                           <Text style={[S.leaderDelta, { color: eloDeltas[sc.member_id] > 0 ? c.success : eloDeltas[sc.member_id] < 0 ? c.danger : c.textMuted }]}>
                             {eloDeltas[sc.member_id] > 0 ? '+' : ''}{eloDeltas[sc.member_id]}
                           </Text>

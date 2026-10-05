@@ -13,6 +13,7 @@ import {
   isMonday,
   upcomingMondays,
   leaderboardAvailable,
+  scoreListMode,
   isRestDay,
 } from '../utils/programSchedule';
 import { semaineSuivante } from '../services/programContent';
@@ -163,6 +164,25 @@ describe('leaderboard / ELO fermés sur une séance relative', () => {
     expect(leaderboardAvailable({ scheduled_date: '2026-04-13', leaderboard_enabled: true })).toBe(true);
     expect(leaderboardAvailable({ scheduled_date: '2026-04-13', leaderboard_enabled: null })).toBe(true);
     expect(leaderboardAvailable({ scheduled_date: '2026-04-13', leaderboard_enabled: false })).toBe(false);
+  });
+});
+
+describe('liste des scores : affichée sur tout bloc daté, rang et ELO sur bloc classé seulement', () => {
+  const jour = '2026-10-05';
+  it('bloc classé (ou flag absent) avec scores → classement', () => {
+    expect(scoreListMode({ scheduled_date: jour, leaderboard_enabled: true }, 3)).toBe('ranked');
+    expect(scoreListMode({ scheduled_date: jour, leaderboard_enabled: null }, 1)).toBe('ranked');
+  });
+  it('bloc non classé avec scores → liste « Scores » sans rang', () => {
+    expect(scoreListMode({ scheduled_date: jour, leaderboard_enabled: false }, 2)).toBe('scores');
+  });
+  it('aucun score → rien, classé ou non', () => {
+    expect(scoreListMode({ scheduled_date: jour, leaderboard_enabled: true }, 0)).toBeNull();
+    expect(scoreListMode({ scheduled_date: jour, leaderboard_enabled: false }, 0)).toBeNull();
+  });
+  it('séance relative (non datée) → rien, comme avant', () => {
+    expect(scoreListMode({ scheduled_date: null, leaderboard_enabled: true }, 4)).toBeNull();
+    expect(scoreListMode({ scheduled_date: null, leaderboard_enabled: false }, 4)).toBeNull();
   });
 });
 
