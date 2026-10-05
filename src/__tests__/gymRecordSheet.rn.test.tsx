@@ -94,6 +94,13 @@ const fetchRecords = () => jest.requireMock('../services/myProfile').fetchMyPers
 
 let renderer: TestRenderer.ReactTestRenderer | null = null;
 beforeEach(() => {
+  // Horloge figée à TODAY (seule la date : les minuteries restent réelles, settle() en dépend) ;
+  // sans elle, le WOD du jour devient « passé » dès le lendemain et « Entrer mon score » disparaît.
+  jest.useFakeTimers({
+    now: new Date(`${TODAY}T10:00:00Z`),
+    doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
+      'queueMicrotask', 'requestAnimationFrame', 'cancelAnimationFrame', 'requestIdleCallback', 'cancelIdleCallback', 'performance', 'hrtime'],
+  });
   for (const k of Object.keys(mockTables)) delete mockTables[k];
   mockServer = null;
   mockRecords = {};
@@ -103,6 +110,7 @@ beforeEach(() => {
 afterEach(async () => {
   if (renderer) await act(async () => renderer!.unmount());
   renderer = null;
+  jest.useRealTimers();
   jest.clearAllMocks();
 });
 
