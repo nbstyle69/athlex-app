@@ -107,6 +107,8 @@ export const axGlass = {
 /** Familles telles que chargées par expo-font (App.tsx). */
 export const axFonts = {
   oswaldMedium: 'Oswald_500Medium',
+  /** Chrono géant du minuteur en paysage (maquette Minuteur · Paysage A). */
+  oswaldBold: 'Oswald_700Bold',
   interRegular: 'Inter_400Regular',
   interMedium: 'Inter_500Medium',
   interSemiBold: 'Inter_600SemiBold',

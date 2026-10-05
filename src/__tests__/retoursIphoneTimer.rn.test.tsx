@@ -5,7 +5,7 @@ import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { X } from 'lucide-react-native';
 import { lightTheme, darkTheme } from '../theme/palette';
 import type { HomeStackParamList } from '../navigation';
-import TimerRunScreen, { CAM_INFO_GAP, CAM_REC_GAP, LANDSCAPE_SIDE_ROOM } from '../screens/timer/TimerRunScreen';
+import TimerRunScreen, { CAM_INFO_GAP, CAM_REC_GAP } from '../screens/timer/TimerRunScreen';
 import { RecBlinkDot, REC_DOT } from '../components/timer/RecBlinkDot';
 import { AxSwitch } from '../components/ax';
 import { saveVideoOpts } from '../lib/timerVideoOpts';
@@ -272,23 +272,26 @@ describe('Retours iPhone (4) : temps final sans vidéo', () => {
       await press(r, 'timer-ctrl-settings');
       expect(r.findAllByType(Modal).some((m) => m.props.visible)).toBe(true);
     });
-  it('paysage : même rangée que pendant le chrono', async () => {
-    const { r, running } = await final(lightTheme, LANDSCAPE);
-    const ctrls = flat(one(r, 'timer-final-controls'));
-    expect(ctrls.paddingTop).toBe(running.paddingTop);
-    expect(ctrls.paddingHorizontal).toBe(running.paddingHorizontal);
+  // R3 : en paysage, les marges du bandeau du chrono sont portées par la page (maquette Paysage A) ;
+  // relecture de #479 : la rangée du temps final reprend exactement ces marges (zone sûre comprise).
+  it('paysage : même place que pendant le chrono', async () => {
+    const r0 = await run(params(), lightTheme, LANDSCAPE);
+    const page = { ...flat(one(r0, 'timer-landscape')) };
+    await press(r0, 'timer-start-stop'); await tick(3); await press(r0, 'timer-start-stop');
+    const ctrls = flat(one(r0, 'timer-final-controls'));
+    expect(ctrls.paddingTop).toBe(page.paddingTop);
+    expect(ctrls.paddingLeft).toBe(page.paddingLeft);
+    expect(ctrls.paddingRight).toBe(page.paddingRight);
   });
 });
 
 describe('Retours iPhone (5) : paysage sans vidéo, For Time au repos', () => {
-  it('chiffres centrés sur l’écran, place du bouton de droite réservée des deux côtés', async () => {
+  // R3 : le bouton Lecture est passé dans la rangée du bas (maquette Paysage A) ; plus de place réservée à droite.
+  it('chiffres centrés sur l’écran : marges latérales égales', async () => {
     const r = await run(params(), lightTheme, LANDSCAPE);
-    const main = flat(one(r, 'timer-main-landscape'));
-    expect(main.paddingHorizontal).toBe(LANDSCAPE_SIDE_ROOM);
-    expect(main.paddingLeft ?? main.paddingHorizontal).toBe(main.paddingRight ?? main.paddingHorizontal);
-    const btn = flat(one(r, 'timer-start-stop'));
-    expect(LANDSCAPE_SIDE_ROOM).toBeGreaterThan((btn.right as number) + (btn.width as number));
-    expect(flat(one(r, 'timer-main-time'))).toMatchObject({ textAlign: 'center', alignSelf: 'stretch' });
+    const page = flat(one(r, 'timer-landscape'));
+    expect(page.paddingLeft).toBe(page.paddingRight);
+    expect(flat(one(r, 'timer-main-time'))).toMatchObject({ textAlign: 'center' });
   });
 });
 

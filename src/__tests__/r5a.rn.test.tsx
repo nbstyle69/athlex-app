@@ -302,6 +302,12 @@ function normalizeBefore(name: string, list: string[]): string[] {
     const m = out.indexOf(up('timer.video.micHint'));
     out = [...out.slice(0, m + 1), up('timer.video.beeps'), up('timer.video.beepsHint'), ...out.slice(m + 1)];
   }
+  if (name.startsWith('paysage-')) {
+    // R3 (retours 1.0.61), maquette « Minuteur · Paysage A » : consigne sur une ligne, pourcentage
+    // retiré, bloc et time cap dans le bandeau, petit total masqué quand il répète le grand chrono.
+    out = out.filter((t) => !/^\d+%$/.test(t)).map((t) => (t === 'APPUIE\nPOUR\nDÉMARRER' ? 'APPUIE POUR DÉMARRER' : t));
+    if (name === 'paysage-a-for-time') out = [out[0], 'BLOC 1/1 · CAP 10:00', ...out.slice(2)];
+  }
   if (name === 'design-du-minuteur') {
     // R6c (B) : jeu de bips (AthleX, Classique) après sons et rotation.
     const p = out.indexOf('PORTRAIT');
@@ -498,7 +504,8 @@ describe('R5a : écran en cours et paysage', () => {
     const root = await v.run();
     const main = root.findAll((n) => n.props.testID === 'timer-main-time' && isHostText(n))[0];
     expect(main.props.numberOfLines).toBe(1);
-    expect(main.props.adjustsFontSizeToFit).toBe(true);
+    // R3 : taille calculée sur la boîte mesurée (retoursPaysageChrono.rn.test.tsx), plus d'ajustement natif.
+    expect(main.props.adjustsFontSizeToFit).toBeFalsy();
     expect(StyleSheet.flatten(main.props.style).fontSize).toBeLessThanOrEqual(390);
     for (const n of root.findAll((x) => String(x.type) === 'View')) {
       const st = StyleSheet.flatten(n.props.style) ?? {};
