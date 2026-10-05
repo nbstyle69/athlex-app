@@ -213,6 +213,13 @@ Supabase/Resend.
 
 ## En cours
 
+**Scores des membres visibles sur les blocs non classés (app seule, aucune migration ; PR #484 non mergée).** Sur
+WOD du jour, un bloc daté non classé (`leaderboard_enabled = false`, cas des blocs hors `wod` importés par PDF ou
+programmés) n'affichait que le score de l'athlète. Il affiche maintenant la liste « Scores » des membres : mêmes lignes
+que le classement (avatar, nom, likes, score, RX/Scaled), même tri, sans rang ni ELO. Les blocs classés sont inchangés et
+`leaderboardAvailable` garde son sens ; `scoreListMode` (programSchedule) sépare la liste du rang. Tests : 4 cas unitaires
+et 4 rendus de l'écran, 10 mutations tuées ; captures web sombre et clair comparées à la maquette Figma 566:1593 / 566:1678.
+
 **Minuteur en paysage : chiffres du chrono entiers (retour R3b du build 1.0.62, iPhone ; app seule, apparence, aucune
 migration ; PR non mergée, vérifiée sur l'émulateur Android, à vérifier sur iPhone).** En paysage, le bas des chiffres
 était coupé : le texte était mesuré dans sa boîte (ex. 262 dp) alors que sa ligne native fait 1,482 em (412 dp à 278 dp
