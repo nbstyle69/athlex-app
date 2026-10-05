@@ -272,13 +272,16 @@ describe('Retours iPhone (4) : temps final sans vidéo', () => {
       await press(r, 'timer-ctrl-settings');
       expect(r.findAllByType(Modal).some((m) => m.props.visible)).toBe(true);
     });
-  // R3 : en paysage, le bandeau du chrono suit la maquette Paysage A (marges portées par la page) ;
-  // le temps final, hors périmètre, garde sa rangée d'avant (D2), valeurs figées ici.
-  it('paysage : rangée du temps final inchangée', async () => {
-    const { r } = await final(lightTheme, LANDSCAPE);
-    const ctrls = flat(one(r, 'timer-final-controls'));
-    expect(ctrls.paddingTop).toBe(Math.max(10, ISLAND.top));
-    expect(ctrls.paddingHorizontal).toBe(12);
+  // R3 : en paysage, les marges du bandeau du chrono sont portées par la page (maquette Paysage A) ;
+  // relecture de #479 : la rangée du temps final reprend exactement ces marges (zone sûre comprise).
+  it('paysage : même place que pendant le chrono', async () => {
+    const r0 = await run(params(), lightTheme, LANDSCAPE);
+    const page = { ...flat(one(r0, 'timer-landscape')) };
+    await press(r0, 'timer-start-stop'); await tick(3); await press(r0, 'timer-start-stop');
+    const ctrls = flat(one(r0, 'timer-final-controls'));
+    expect(ctrls.paddingTop).toBe(page.paddingTop);
+    expect(ctrls.paddingLeft).toBe(page.paddingLeft);
+    expect(ctrls.paddingRight).toBe(page.paddingRight);
   });
 });
 

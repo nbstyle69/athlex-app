@@ -289,3 +289,48 @@ describe('R3 : le portrait ne change pas', () => {
     expect(flat(t).transform).toBeUndefined();
   });
 });
+
+// ═════════════════════════════════════════════════════════════════════════════
+// Relecture de #479 : sur le temps final (D2) en paysage, Fermer passait sous l'îlot
+// (12 px du bord sans caméra, 24 px avec). Fermer et Réglages prennent la zone sûre et
+// la position du chrono en paysage : ils ne sautent plus d'un écran à l'autre.
+// ═════════════════════════════════════════════════════════════════════════════
+/** Coin haut gauche de la croix, déduit des marges réellement posées (pas de moteur de mise en page ici). */
+function croixChrono(r: ReactTestInstance, camera: boolean) {
+  if (camera) return { x: flat(one(r, 'timer-cam-topbar')).paddingLeft as number, y: flat(one(r, 'timer-overlay')).paddingTop as number };
+  const page = flat(one(r, 'timer-landscape'));
+  return { x: page.paddingLeft as number, y: page.paddingTop as number };
+}
+function croixFinal(r: ReactTestInstance, camera: boolean) {
+  if (camera) return { x: flat(one(r, 'timer-cam-topbar')).paddingLeft as number, y: flat(one(r, 'timer-overlay')).paddingTop as number };
+  const rangee = flat(one(r, 'timer-final-controls'));
+  return { x: rangee.paddingLeft as number, y: rangee.paddingTop as number };
+}
+async function versFinal(r: ReactTestInstance, camera: boolean) {
+  const cam = async () => { await act(async () => { r.findByProps({ testID: 'timer-cam-primary' }).props.onPress(); }); };
+  if (camera) { await cam(); await cam(); await tick(3); await cam(); await cam(); }
+  else { await press(r, 'timer-start-stop'); await tick(3); await press(r, 'timer-start-stop'); }
+  for (let i = 0; i < 5; i++) await act(async () => { await Promise.resolve(); });
+  expect(host(r, 'timer-final')).toHaveLength(1);
+}
+
+describe('R3 (relecture) : temps final en paysage, Fermer et Réglages dans la zone sûre', () => {
+  for (const camera of [false, true]) for (const [nomTheme, th] of [['sombre', darkTheme], ['clair', lightTheme]] as const) {
+    it(`${camera ? 'avec' : 'sans'} caméra, thème ${nomTheme} : Fermer hors de l’îlot, à la place qu’il avait sur le chrono`, async () => {
+      const r = await run(params({ withCamera: camera }), th);
+      const avant = croixChrono(r, camera);
+      await versFinal(r, camera);
+      const croix = host(r, camera ? 'timer-cam-close' : 'timer-ctrl-close');
+      expect(croix.length).toBeGreaterThan(0);
+      const apres = croixFinal(r, camera);
+      // Entièrement hors de la bande non sûre de gauche (0 → inset) et sous le haut de la zone sûre.
+      expect(apres.x).toBeGreaterThanOrEqual(ILOT_PAYSAGE.left);
+      expect(apres.y).toBeGreaterThanOrEqual(ILOT_PAYSAGE.top);
+      expect(apres).toEqual(avant);
+      if (!camera) {
+        // Réglages : même marge à droite que sur le chrono.
+        expect(flat(one(r, 'timer-final-controls')).paddingRight).toBeGreaterThanOrEqual(ILOT_PAYSAGE.right);
+      }
+    });
+  }
+});

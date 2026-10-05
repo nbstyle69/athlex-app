@@ -1612,9 +1612,14 @@ export default function TimerRunScreen() {
   })();
   // Phase-aware accent color
   const insets = useSafeAreaInsets();
+  // Paysage : marges de la zone sûre (îlot, bords arrondis) communes au chrono et au temps final.
+  const paysageCotes = { paddingLeft: Math.max(16, insets.left), paddingRight: Math.max(16, insets.right) };
+  const paysageHaut = Math.max(18, insets.top);
+  // Avec caméra : marge haute de la couche, la même pendant le chrono et sur le temps final.
+  const camPaysageHaut = Math.max(CAM_LANDSCAPE_PAD, insets.top);
   // Croix et Réglages : même rangée pendant le chrono et sur le temps final, sous la zone sûre.
   const ctrlRowStyle = isLandscape
-    ? { paddingHorizontal: 12, paddingTop: Math.max(10, insets.top), paddingBottom: 4 }
+    ? { ...paysageCotes, paddingTop: paysageHaut, paddingBottom: 4 }
     : { paddingHorizontal: 16, paddingTop: Math.max(52, insets.top + axSpacing.sm), paddingBottom: 8 };
   // Caméra en portrait : la rangée REC démarre 40 px sous la zone sûre (îlot dynamique).
   const camTopPad = insets.top + CAM_REC_GAP;
@@ -1843,8 +1848,8 @@ export default function TimerRunScreen() {
 
   const renderTopBar = (extraPadTop = 0) => (
     <View testID="timer-cam-topbar" style={[styles.topBar, extraPadTop > 0 && { paddingTop: extraPadTop },
-      // Paysage pendant le chrono : hors de l’îlot et des bords arrondis (le temps final garde sa barre).
-      isLandscape && phase !== 'done' && { paddingLeft: Math.max(spacing.xl, insets.left), paddingRight: Math.max(spacing.xl, insets.right) }]}>
+      // Paysage, chrono et temps final : hors de l’îlot et des bords arrondis.
+      isLandscape && { paddingLeft: Math.max(spacing.xl, insets.left), paddingRight: Math.max(spacing.xl, insets.right) }]}>
       {hideUI
         ? <View style={{ width: 44 }} />
         : withCamera
@@ -2074,9 +2079,9 @@ export default function TimerRunScreen() {
   };
 
   const renderContent = () => (
-    <View testID="timer-overlay" style={[styles.overlay, withCamera && isLandscape && { paddingVertical: CAM_LANDSCAPE_PAD }, withCamera && !isLandscape && { paddingTop: camTopPad }, !withCamera && { paddingVertical: 0 },
+    <View testID="timer-overlay" style={[styles.overlay, withCamera && isLandscape && { paddingVertical: CAM_LANDSCAPE_PAD, paddingTop: camPaysageHaut }, withCamera && !isLandscape && { paddingTop: camTopPad }, !withCamera && { paddingVertical: 0 },
       // Temps final : aucune marge fixe, renderFinal pose celles de la zone sûre.
-      phase === 'done' && { paddingTop: withCamera ? insets.top + 8 : 0, paddingBottom: 0 }]}>
+      phase === 'done' && { paddingTop: withCamera ? (isLandscape ? camPaysageHaut : insets.top + 8) : 0, paddingBottom: 0 }]}>
       {withCamera && renderTopBar(0)}
 
       {phase === 'done' ? renderFinal() : (
@@ -2088,8 +2093,7 @@ export default function TimerRunScreen() {
               {!withCamera ? (
                 /* ── PAYSAGE SANS CAMÉRA : maquette « Minuteur · Paysage A » (R3) ── */
                 <View testID="timer-landscape" style={{ flex: 1, backgroundColor: currentBg,
-                  paddingLeft: Math.max(16, insets.left), paddingRight: Math.max(16, insets.right),
-                  paddingTop: Math.max(18, insets.top), paddingBottom: insets.bottom + 8 }}>
+                  ...paysageCotes, paddingTop: paysageHaut, paddingBottom: insets.bottom + 8 }}>
 
                   {/* BANDEAU : Fermer · type · bloc et time cap · (total) · Réglages */}
                   <View testID="timer-controls" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
