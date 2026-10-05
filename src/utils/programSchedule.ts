@@ -68,6 +68,20 @@ export function leaderboardAvailable(w: Pick<RelativeAnchored, 'scheduled_date'>
   return w.scheduled_date != null && w.leaderboard_enabled !== false;
 }
 
+/**
+ * Liste des scores des membres sous un bloc du Whiteboard. Elle s'affiche dès
+ * qu'un bloc daté a des scores ; seul le rang (et l'ELO) dépend de
+ * `leaderboardAvailable` : `'ranked'` = classement, `'scores'` = bloc non
+ * classé, mêmes lignes sans rang ni ELO. Séance relative : rien.
+ */
+export function scoreListMode(
+  w: Pick<RelativeAnchored, 'scheduled_date'> & { leaderboard_enabled?: boolean | null },
+  scoreCount: number,
+): 'ranked' | 'scores' | null {
+  if (w.scheduled_date == null || scoreCount === 0) return null;
+  return leaderboardAvailable(w) ? 'ranked' : 'scores';
+}
+
 export function isMonday(dateIso: string): boolean {
   return isoDayOf(dateIso) === 1;
 }
