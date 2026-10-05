@@ -212,6 +212,19 @@ Supabase/Resend.
 
 ## En cours
 
+**Minuteur en paysage : chiffres du chrono entiers (retour R3b du build 1.0.62, iPhone ; app seule, apparence, aucune
+migration ; PR non mergée, vérifiée sur l'émulateur Android, à vérifier sur iPhone).** En paysage, le bas des chiffres
+était coupé : le texte était mesuré dans sa boîte (ex. 262 dp) alors que sa ligne native fait 1,482 em (412 dp à 278 dp
+de police), et le style Barre avec caméra l'enfermait dans une boîte « hauteur d'encre » ; sur Android, la ligne trop
+courte donnait aussi « 00:… ». Les mesures du chrono viennent maintenant du fichier Oswald Bold embarqué (hhea 1193 /
+−289, OS/2 typo identiques, chiffres −15 à 822, chasses), plus de Chrome : le texte a exactement une ligne native de
+haut (lineHeight = height), largeur fixe, `includeFontPadding: false` ; taille bornée par l'encre dans la boîte mesurée
+et par la ligne native dans 96 % de la hauteur sûre. Avec et sans caméra, deux thèmes, Barre / Digits / Cercle ;
+portrait et temps final inchangés. Vérifié sur l'émulateur (Medium Phone API 36.1, build de développement local, banc
+sans compte ni réseau) : 20 captures avant / après, encre mesurée 549 px pour 550 attendus. Tests
+`retoursPaysageChrono.rn.test.tsx` (32, dont 9 R3b, mesures lues dans le .ttf par `policeTtf.ts`), 9 mutations
+tuées ; captures dans `athlex-captures/retours-1.0.62/R3b`.
+
 **R1 (retour 1.0.61) : 1RM exact du libellé pour les blocs de musculation (app seule ; PR non mergée, à vérifier
 par Nab).** Un bloc `%1RM` (texte des WOD, grille pré-remplie) prend d'abord le record de son libellé de la page Records
 (`weightlifting_<Libellé>` et anciennes clés, rapprochement casse/tirets/espaces/pluriel comme la gymnastique) : Bench
