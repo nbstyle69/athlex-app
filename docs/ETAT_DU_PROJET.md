@@ -218,6 +218,15 @@ Press et Hip Thrust ont enfin leur kg, Strict Press n'utilise plus le max de Pus
 famille du générateur (Squat Clean → clean). Générateur inchangé (`parsePersonalRecords`, `resolveLoad`). Charges
 toujours arrondies à 2,5 kg (91 % de 100 → ≈ 90 kg). Tests `oneRepMaxExactLabel.test.ts`, `oneRepMaxHook.rn.test.tsx`.
 
+**Crédit R2b : « N% Mouvement » ne crédite plus N reps (app seule, aucune migration ; PR non mergée, à vérifier par
+Nab).** Une ligne de WOD qui commence par un nombre suivi de « % » (`40% Ring Muscle-ups`, `40 % RMU`, `35%du max
+Toes-to-Bar`) n'est plus une quantité de reps : `parseMovementLine` rend `null`, la ligne garde sa place dans le tour
+(cycles d'EMOM) sans rien créditer ; AMRAP en reps et Max Reps avec une telle ligne ne créditent rien (répartition du
+score inconnue). Serveur non concerné (le crédit tournois lit `movement_lines`, structuré). Prod, lecture seule : 34
+`box_wods` en %, 4 `movement_logs` faux sur 2 WOD pour 1 athlète (30 `ring_muscle_up`, 76 `bar_muscle_up`), non
+retirés, décision à Nab. Tests dans `movementParser.test.ts`, prouvés par 8 mutations ; rapport dans
+`athlex-captures/retours-1.0.61/R2b`.
+
 **Minuteur en paysage conforme à la maquette (retour R3 du build 1.0.61, app seule, apparence, aucune migration ; PR non
 mergée, à vérifier sur téléphone).** En paysage, le chrono était environ trois fois trop petit (226 px fixes réduits par
 `adjustsFontSizeToFit` sur l'appareil, 137 px avec caméra) et « Appuie pour démarrer » tenait sur trois lignes. Maquette
@@ -227,10 +236,11 @@ du bas : l'encre des chiffres occupe 90 % de la hauteur sans dépasser la largeu
 Bold relevées dans Chrome), dans les deux thèmes, avec et sans caméra (styles Barre, Digits et Cercle). Oswald Bold
 chargé pour ce chrono. Bandeau : type, « BLOC 1/1 · CAP 18:00 » (s'il y a un cap ou plusieurs blocs), petit total masqué
 quand il répète le grand chrono ; rangée du bas : barre de progression, consigne sur une ligne, bouton Lecture / Arrêt de
-56 px ; marges de la zone sûre (îlot, bords, barre d'accueil). Portrait et temps final inchangés (captures portrait
-identiques à l'octet, logique de `TimerRunScreen` figée par r5a). Non repris : l'option B (colonne, Pause et « Maintenir
+56 px ; marges de la zone sûre (îlot, bords, barre d'accueil). Temps final (D2) : seuls Fermer et Réglages bougent,
+hors de l'îlot et à la place qu'ils ont sur le chrono (relecture de #479). Portrait inchangé (captures identiques à
+l'octet, logique de `TimerRunScreen` figée par r5a). Non repris : l'option B (colonne, Pause et « Maintenir
 pour terminer » changent le comportement) et le réglage « Disposition en paysage ». Tests
-`retoursPaysageChrono.rn.test.tsx` (19, 17 mutations tuées) ; captures avant / après dans
+`retoursPaysageChrono.rn.test.tsx` (23, 20 mutations tuées) ; captures avant / après dans
 `athlex-captures/retours-1.0.61/R3`.
 
 **Gymnastique G4 : fenêtre « Nouveau record ? » (app seule ; PR non mergée, à vérifier par Nab).** Spec Figma

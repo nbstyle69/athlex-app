@@ -241,3 +241,43 @@ describe('lignes cardio (m / cal) et split ♂/♀', () => {
     ]);
   });
 });
+
+// R2b : un nombre suivi de « % » est un % du max, jamais une quantité de reps.
+describe('lignes en % du max : aucun crédit', () => {
+  it.each(['40% Ring Muscle-ups', '40 % RMU', '35%du max Toes-to-Bar', '22% Handstand Push-ups (CAP 8)'])(
+    '« %s » ne crédite rien',
+    line => {
+      expect(parseMovementLine(line)).toBeNull();
+      expect(computeCompletedMovements([line], 'For Time', 300, 'time')).toEqual([]);
+      expect(computeCompletedMovements(['5 Rounds For Time :', line], 'For Time', 300, 'time')).toEqual([]);
+    },
+  );
+
+  it('« 40 Ring Muscle-ups » crédite toujours 40', () => {
+    expect(computeCompletedMovements(['40 Ring Muscle-ups'], 'For Time', 300, 'time')).toEqual([
+      { name: 'Ring Muscle-ups', reps: 40, weight_kg: undefined },
+    ]);
+  });
+
+  it('une ligne de force « Mvt — S × P % du max » ne crédite rien', () => {
+    expect(computeCompletedMovements(['Ring Muscle-ups — 5 × 40 % du max'], 'For Time', 300, 'time')).toEqual([]);
+  });
+
+  it('EMOM en rounds : la ligne en % compte dans le cycle, seule l’autre est créditée', () => {
+    // 10 minutes alternées : 5 cycles, donc 5 × 10 burpees (pas 10 × 10).
+    expect(computeCompletedMovements(['40% Ring Muscle-ups', '10 Burpees'], 'EMOM', 10, 'rounds')).toEqual([
+      { name: 'Burpees', reps: 50, weight_kg: undefined },
+    ]);
+  });
+
+  it('AMRAP en reps ou Max Reps avec une ligne en % : rien (répartition inconnue)', () => {
+    expect(computeCompletedMovements(['40% Ring Muscle-ups', '10 Burpees'], 'AMRAP', 36, 'reps')).toEqual([]);
+    expect(computeCompletedMovements(['40% Ring Muscle-ups', 'Burpees'], 'Max Reps', 36, 'reps')).toEqual([]);
+  });
+
+  it('AMRAP en rounds : les autres lignes restent créditées', () => {
+    expect(computeCompletedMovements(['40% Ring Muscle-ups', '10 Burpees'], 'AMRAP', 3, 'rounds')).toEqual([
+      { name: 'Burpees', reps: 30, weight_kg: undefined },
+    ]);
+  });
+});
