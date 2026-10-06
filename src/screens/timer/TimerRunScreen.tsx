@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import QRCode from 'react-native-qrcode-svg';
 import ViewShot from 'react-native-view-shot';
 import { useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
@@ -20,7 +20,7 @@ import * as MediaLibrary from 'expo-media-library';
 import * as FileSystem from 'expo-file-system/legacy';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Audio, InterruptionModeAndroid, InterruptionModeIOS } from 'expo-av';
-import { Square, Play, X, RotateCcw, RefreshCw, Download, Settings, Youtube, ExternalLink, RotateCw, Palette, Volume2, VolumeX, Minus, Plus, Check } from 'lucide-react-native';
+import { Square, Play, X, RotateCcw, RefreshCw, Download, Settings, Youtube, ExternalLink, RotateCw, Palette, Volume2, VolumeX, Minus, Plus, Check, Timer } from 'lucide-react-native';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { useKeepAwake } from 'expo-keep-awake';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -367,6 +367,103 @@ function ProgressRing({ progress, color, size }: { progress: number; color: stri
       </Svg>
       <Text style={{ color, fontSize: size * 0.22, fontWeight: '900', letterSpacing: -0.5 }}>{pct}%</Text>
     </View>
+  );
+}
+
+// ─── Splits : écran « Tap pour lancer » entre deux rounds ─────────────────────
+// Anneaux de la cible (Ø, opacité, filet) relevés sur la maquette, pour une cible de 300.
+const SPLITS_RINGS = [{ d: 300, o: 0.12, w: 1 }, { d: 236, o: 0.25, w: 1 }, { d: 176, o: 0.5, w: 2 }];
+
+function SplitsTapOverlay({ nextRound, total, doneTime, onPress }: {
+  nextRound: number; total: number; doneTime: string; onPress: () => void;
+}) {
+  const { theme } = useTheme();
+  const { t } = useTranslation();
+  const c = theme.ax;
+  const insets = useSafeAreaInsets();
+  const { width: w, height: h } = useWindowDimensions();
+  const landscape = w > h;
+  // La cible rétrécit quand la hauteur manque (petit écran, paysage) : rien n'est coupé.
+  const s = Math.max(0.5, Math.min(1, (w - 48) / 300,
+    (h - insets.top - insets.bottom - (landscape ? 32 : 420)) / 300));
+  const halo = 700 * s;
+  const target = (
+    <View style={{ width: 300 * s, height: 300 * s, alignItems: 'center', justifyContent: 'center' }}>
+      <Svg width={halo} height={halo} style={{ position: 'absolute' }}>
+        <Defs>
+          <RadialGradient id="splitsHalo" cx="50%" cy="50%" r="50%">
+            <Stop offset="0" stopColor={c.accent} stopOpacity={0.13} />
+            <Stop offset="1" stopColor={c.accent} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <Circle cx={halo / 2} cy={halo / 2} r={halo / 2} fill="url(#splitsHalo)" />
+      </Svg>
+      {SPLITS_RINGS.map(r => (
+        <View key={r.d} style={{ position: 'absolute', width: r.d * s, height: r.d * s, borderRadius: r.d * s / 2,
+          borderWidth: r.w, borderColor: withAlpha(c.accent, r.o) }} />
+      ))}
+      <View testID="timer-splits-play" style={{ width: 124 * s, height: 124 * s, borderRadius: 62 * s, backgroundColor: c.accent,
+        alignItems: 'center', justifyContent: 'center', boxShadow: `0 0 40px ${withAlpha(c.accent, 0.35)}` }}>
+        <Play color={c.onAccent} size={48 * s} strokeWidth={2} />
+      </View>
+    </View>
+  );
+  const header = (
+    <View style={{ alignItems: 'center', gap: 14 }}>
+      <Text testID="timer-splits-round" style={[axTypography.overline, { color: c.textMuted }]}>
+        {t('timer.splits.round', { n: nextRound, total })}
+      </Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 10, maxWidth: w - 48 }}>
+        {Array.from({ length: total }, (_, i) => i + 1).map(n => {
+          const state = n < nextRound ? 'done' : n === nextRound ? 'next' : 'todo';
+          return (
+            <View key={n} testID={`timer-splits-dot-${n}-${state}`} style={{ height: 10, borderRadius: 5,
+              width: state === 'next' ? 28 : 10,
+              backgroundColor: state === 'todo' ? c.border : withAlpha(c.accent, state === 'done' ? 0.45 : 1) }} />
+          );
+        })}
+      </View>
+    </View>
+  );
+  const label = (
+    <View style={{ alignItems: 'center', gap: 12 }}>
+      <Text numberOfLines={1} adjustsFontSizeToFit
+        style={[axTypography.numberL, { color: c.text, textTransform: 'uppercase', maxWidth: w - 48 }]}>
+        {t('timer.splits.tapToStart')}
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8,
+        borderRadius: 16, borderWidth: 1, borderColor: c.border, backgroundColor: c.surface }}>
+        <Timer color={c.accentText} size={14} strokeWidth={2} />
+        <Text style={[axTypography.bodySmall, { color: c.textMuted }]}>{t('timer.splits.hint')}</Text>
+      </View>
+    </View>
+  );
+  // Round qui vient de se terminer : en Splits il s'arrête seul à 0, sa durée est donc workTime.
+  const done = (
+    <View testID="timer-splits-done" style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <Text style={[axTypography.overline, { color: c.textMuted }]}>{t('timer.splits.doneRound', { n: nextRound - 1 })}</Text>
+      <Text testID="timer-splits-done-time" style={[axTypography.titleM, { color: c.accentText }]}>{doneTime}</Text>
+    </View>
+  );
+  return (
+    <TouchableOpacity testID="timer-splits-overlay" activeOpacity={0.85} onPress={onPress}
+      accessibilityRole="button" accessibilityLabel={t('timer.splits.tapToStart')}
+      style={[StyleSheet.absoluteFill, { zIndex: 50, backgroundColor: c.background, overflow: 'hidden',
+        paddingTop: insets.top + (landscape ? 16 : 64), paddingBottom: insets.bottom + (landscape ? 16 : 48),
+        paddingLeft: insets.left + 24, paddingRight: insets.right + 24 }]}>
+      {landscape ? (
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-evenly' }}>
+          {target}
+          <View style={{ alignItems: 'center', gap: 28 }}>{header}{label}{done}</View>
+        </View>
+      ) : (
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'space-between' }}>
+          {header}
+          <View style={{ alignItems: 'center', gap: 44 }}>{target}{label}</View>
+          {done}
+        </View>
+      )}
+    </TouchableOpacity>
   );
 }
 
@@ -2500,19 +2597,8 @@ export default function TimerRunScreen() {
 
       {/* SPLITS — tap-anywhere overlay between rounds */}
       {timerType === 'splits' && phase === 'splits-waiting' && (
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={splitsNextRound}
-          style={styles.splitsTapOverlay}
-        >
-          <View style={styles.splitsTapBadge}>
-            <Text style={styles.splitsTapRound}>
-              ROUND {Math.min(currentRound + 1, rounds)} / {rounds}
-            </Text>
-            <Text style={styles.splitsTapLabel}>TAP POUR LANCER</Text>
-            <Text style={styles.splitsTapHint}>Récup libre · Touche n'importe où</Text>
-          </View>
-        </TouchableOpacity>
+        <SplitsTapOverlay nextRound={Math.min(currentRound + 1, rounds)} total={rounds}
+          doneTime={formatTime(workTime)} onPress={splitsNextRound} />
       )}
     </View>
   );
@@ -2777,31 +2863,6 @@ const styles = StyleSheet.create({
   roundBadgeDivider: {
     width: 1, height: 40, borderRadius: 1,
   },
-  splitsTapOverlay: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    justifyContent: 'center', alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    zIndex: 50,
-  },
-  splitsTapBadge: {
-    paddingHorizontal: 36, paddingVertical: 28,
-    backgroundColor: 'rgba(20,20,20,0.92)',
-    borderRadius: 24,
-    borderWidth: 2, borderColor: 'rgba(74,222,128,0.55)',
-    alignItems: 'center', gap: 10,
-    shadowColor: '#4ADE80', shadowOpacity: 0.4, shadowRadius: 24, shadowOffset: { width: 0, height: 0 },
-  },
-  splitsTapRound: {
-    fontSize: 14, fontWeight: '900', color: 'rgba(255,255,255,0.6)', letterSpacing: 4,
-  },
-  splitsTapLabel: {
-    fontSize: 28, fontWeight: '900', color: '#4ADE80', letterSpacing: 2,
-    textShadowColor: '#4ADE80', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 12,
-  },
-  splitsTapHint: {
-    fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.45)', letterSpacing: 1,
-  },
-
   // NEW DESIGN - Phase-based color layout (AthleX style)
   newHeader: {
     flexDirection: 'row',

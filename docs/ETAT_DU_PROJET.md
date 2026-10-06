@@ -213,6 +213,15 @@ Supabase/Resend.
 
 ## En cours
 
+**Minuteur Split « Tap pour lancer » refait d'après la maquette (refonte Split & Partage, PR 1 ; app seule, apparence,
+aucune migration ; PR non mergée, vérifiée sur l'émulateur Android, à vérifier sur build).** L'écran entre deux rounds
+Splits devient un plein écran aux jetons du thème (Figma 580:772 sombre / 580:892 clair) : surtitre « ROUND n / total » et
+pastilles des rounds (fait / suivant / à venir), cible à trois anneaux et disque Play accent, « TAP POUR LANCER » en
+Oswald 44, indice en pastille, et en bas le round qui vient de se terminer avec sa durée (`formatTime(workTime)`, le
+round Splits s'arrêtant seul à 0 ; validé par Nab le 05/10). Tout l'écran reste touchable (`splitsNextRound`, inchangé),
+textes par `t()` (fr / en). En paysage, cible à gauche et textes à droite. Tests `splitsTapOverlay.rn.test.tsx` (3),
+6 mutations tuées ; captures avant / après et mesures uiautomator dans `athlex-captures/split-partage`.
+
 **Scores des membres visibles sur les blocs non classés (app seule, aucune migration ; PR #484 non mergée).** Sur
 WOD du jour, un bloc daté non classé (`leaderboard_enabled = false`, cas des blocs hors `wod` importés par PDF ou
 programmés) n'affichait que le score de l'athlète. Il affiche maintenant la liste « Scores » des membres : mêmes lignes
