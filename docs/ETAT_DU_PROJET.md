@@ -213,6 +213,12 @@ Supabase/Resend.
 
 ## En cours
 
+**Chantier anglais, PR 1b : Résultat du WOD, programmes, calculateur 1RM (app seule, aucune migration ; PR non
+mergée).** « Ton WOD », le Détail d'un programme, le calculateur 1RM (zones barres et gymnastique), le matériel du
+générateur et les affichages des blocs de force et cardio passent par `t()` en français et en anglais (texte français
+inchangé) ; les clés de records `gymnastics_<Libellé>` et le texte enregistré des WOD ne bougent pas, l'analyse des
+blocs donne le même résultat dans les deux langues ; textes du moteur (PR 8) et contenus de box restent tels quels.
+
 **« Partager ma perf » en plein écran et image partagée refaite d'après la maquette (refonte Split & Partage, PR 2 ;
 app seule, apparence, aucune migration ; PR non mergée, vérifiée sur l'émulateur Android, à vérifier sur build).** La
 petite fenêtre devient un écran plein (Figma 580:801 / 580:915) dont la carte est le fond : logo et ATHLEX, étiquette de

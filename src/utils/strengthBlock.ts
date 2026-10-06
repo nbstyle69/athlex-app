@@ -80,7 +80,7 @@ export function serializeStrength(e: StrengthEntry): string {
   const sets = Math.max(1, Math.round(e.sets));
   const reps = Math.max(1, Math.round(e.reps));
   let out = e.pctOfMax != null
-    ? `${name}${SEP}${sets} × ${e.pctOfMax} % du max`
+    ? `${name}${SEP}${sets} × ${e.pctOfMax} % du max` // i18n-ignore : texte du WOD enregistré, relu par parseStrengthLine
     : `${name}${SEP}${sets} × ${reps}`;
   if (e.pctOfMax == null && e.repsUnit && e.repsUnit !== 'reps') out += ` ${e.repsUnit}`;
   if (e.pctOfMax == null && e.perSide) out += ` / ${e.perSide}`;
@@ -108,6 +108,7 @@ export function parseStrengthLine(line: string): StrengthEntry | null {
   if (!m && !(pm && gymPrLabel(name))) return null;
 
   const repsUnit = (m?.[3]?.toLowerCase() ?? null) as StrengthRepsUnit | null;
+  // i18n-ignore : valeur interne relue dans le texte français du WOD (affichée par sideLabel)
   const perSide: StrengthSide | null = m?.[4] ? (/^jambe/i.test(m[4]) ? 'jambe' : /^bras/i.test(m[4]) ? 'bras' : 'côté') : null;
   const load = m?.[5] != null ? parseFloat(m[5].replace(',', '.')) : null;
   const unit: StrengthLoadUnit = m?.[6] != null && m[6].toLowerCase().startsWith('kg') ? 'kg' : '%1RM';
@@ -191,6 +192,11 @@ export function annotateStrengthLoads(
     .join('\n');
 }
 
+/** Côté d'un exercice unilatéral, traduit (« jambe » / « leg ») ; la valeur interne reste française. */
+function sideLabel(side: StrengthSide): string {
+  return i18n.t(`strengthSession.side.${side === 'côté' ? 'cote' : side}`);
+}
+
 /** « 5 × 3 @ 80 %1RM (≈ 152.5 kg) » — le kg n'apparaît que s'il est connu. */
 export function formatStrengthPrescription(
   e: StrengthEntry,
@@ -201,16 +207,16 @@ export function formatStrengthPrescription(
   if (e.pctOfMax != null) return i18n.t('strengthSession.pctOfMaxScheme', { sets: e.sets, pct: e.pctOfMax });
   let out = `${e.sets} × ${e.reps}`;
   if (e.repsUnit && e.repsUnit !== 'reps') out += ` ${e.repsUnit}`;
-  if (e.perSide) out += ` / ${e.perSide}`;
+  if (e.perSide) out += ` / ${sideLabel(e.perSide)}`;
   const note = (e.loadNote ?? '').trim();
-  if (e.load == null || e.load <= 0) return note ? `${out} · charge ${note}` : out;
+  const noteText = note ? ` · ${i18n.t('strengthSession.loadNote', { note })}` : '';
+  if (e.load == null || e.load <= 0) return `${out}${noteText}`;
   out += ` @ ${e.load} ${e.unit}`;
   if (e.unit === '%1RM') {
     const kg = resolveStrengthLoadKg(e, oneRepMaxKg);
     if (kg != null) out += ` (≈ ${kg} kg)`;
   }
-  if (note) out += ` · charge ${note}`;
-  return out;
+  return `${out}${noteText}`;
 }
 
 /**

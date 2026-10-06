@@ -88,8 +88,14 @@ export async function listProgramRestDaysByProgram(
  * et refuse dès qu'une séance du programme a été scorée : ce garde-fou vit en
  * base (`set_program_start_date`), l'écran ne fait que le refléter.
  */
+/**
+ * Refus « pas un lundi » : texte exact du RAISE de `set_program_start_date`, repris
+ * par le contrôle local ; l'écran le reconnaît pour afficher sa version traduite.
+ */
+export const START_NOT_MONDAY = 'La date de début doit être un lundi'; // i18n-ignore : message de la base
+
 export async function setProgramStartDate(programId: string, mondayIso: string): Promise<string> {
-  if (!isMonday(mondayIso)) throw new Error('La date de début doit être un lundi');
+  if (!isMonday(mondayIso)) throw new Error(START_NOT_MONDAY);
   const { data, error } = await supabase.rpc('set_program_start_date', {
     p_program_id: programId,
     p_start_date: mondayIso,

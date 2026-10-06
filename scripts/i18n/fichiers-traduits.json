@@ -11,10 +11,21 @@
   "src/screens/backoffice/BOWODsScreen.tsx",
   "src/screens/competition/InterCompetitionListScreen.tsx",
   "src/screens/competition/TournamentScreen.tsx",
+  "src/screens/home/OneRMCalculatorScreen.tsx",
+  "src/screens/home/gymZones.ts",
+  "src/screens/programs/ProgramDetailScreen.tsx",
   "src/screens/reservation/MyReservationsScreen.tsx",
   "src/screens/whiteboard/AnnoncesScreen.tsx",
   "src/screens/whiteboard/WhiteboardScreen.tsx",
   "src/screens/wod/WodHistoryScreen.tsx",
+  "src/screens/wod/WodResultScreen.tsx",
+  "src/services/gamification.ts",
   "src/services/membership.ts",
-  "src/utils/refusals.ts"
+  "src/services/programContent.ts",
+  "src/utils/cardioBlock.ts",
+  "src/utils/refusals.ts",
+  "src/utils/strengthBlock.ts",
+  "src/utils/tournamentUtils.ts",
+  "src/utils/wod/equipmentLabels.ts",
+  "src/utils/wod/movementLoadability.ts"
 ]

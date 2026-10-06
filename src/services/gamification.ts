@@ -5,6 +5,7 @@ import { captureError } from '../lib/sentry';
 import { hapticHeavy } from '../lib/haptics';
 import { isLocalCategoryEnabled } from './notificationPrefsCache';
 import { normalizeMovement, isKnownMovementKey } from '../utils/tournamentUtils';
+import i18n from '../i18n';
 
 // ── Quota de la formule de l'adhérent ────────────────────────────
 // `box_members.plan_id` est nominatif : il ne se lit plus sur la table (lot 6).
@@ -250,7 +251,7 @@ async function awardBadge(userId: string, badgeKey: string): Promise<boolean> {
     const { title, icon } = await getBadgeTitle(badgeKey);
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: `${icon} Badge débloqué !`,
+        title: `${icon} ${i18n.t('onboarding.slides.badge.title')}`,
         body: title,
         data: { type: 'badge_unlock', badgeKey },
       },

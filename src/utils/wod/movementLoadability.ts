@@ -153,7 +153,7 @@ const PR_LABEL_TO_KEY: Record<string, string> = {
 // Préfixes de catégorie retirés avant lookup du label (slug moderne + labels legacy).
 const PR_CATEGORY_PREFIXES = [
   'weightlifting_', 'gymnastics_', 'benchmarks_', 'cardio_',
-  'Haltérophilie_', 'Gymnastics_', 'Benchmarks CrossFit_', 'Cardio & Endurance_',
+  'Haltérophilie_', 'Gymnastics_', 'Benchmarks CrossFit_', 'Cardio & Endurance_', // i18n-ignore : clés enregistrées
 ];
 
 const stripPrefix = (key: string): string => {

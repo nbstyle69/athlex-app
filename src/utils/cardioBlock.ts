@@ -1,4 +1,5 @@
 import type { MovementEntry } from '../services/gamification';
+import i18n from '../i18n';
 
 /**
  * Bloc cardio : séries × quantité (m ou cal) × cible, sérialisé dans `description`.
@@ -144,7 +145,7 @@ export function formatCardioPrescription(e: CardioEntry): string {
   let out = `${e.sets} × ${e.quantity} ${e.unit}`;
   if (e.watts != null) out += ` @ ${e.watts} W`;
   else if (e.pace) out += ` @ ${e.pace.mmss}/${e.pace.per}`;
-  if (e.restSec != null && e.restSec > 0) out += ` · repos ${formatRest(e.restSec)}`;
+  if (e.restSec != null && e.restSec > 0) out += ` · ${i18n.t('cardio.rest', { rest: formatRest(e.restSec) })}`;
   if (e.rpe) out += ` · RPE ${e.rpe}`;
   return out;
 }

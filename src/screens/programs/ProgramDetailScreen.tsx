@@ -1,6 +1,6 @@
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import { AxContentTitle } from '../../components/ax/AxContentTitle';
-import i18n from '../../i18n';
+import { useTranslation } from 'react-i18next';
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
@@ -20,7 +20,7 @@ import { annotateGymRepsInText, annotateStrengthLoads } from '../../utils/streng
 import { annotateCardioLines } from '../../utils/cardioBlock';
 import { useMyRecords } from '../../hooks/useMyOneRepMax';
 import {
-  listProgramWods, listProgramRestDays, setProgramStartDate, ProgramWod,
+  listProgramWods, listProgramRestDays, setProgramStartDate, ProgramWod, START_NOT_MONDAY,
 } from '../../services/programContent';
 import {
   groupProgramWeeks, programWeekAt, weekGroupSessionsOn, toLocalIso, mondayOf,
@@ -29,8 +29,10 @@ import {
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { formatDate } from '../../i18n/locale';
+import { errorMessage } from '../../utils/refusals';
 
-const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+// Libellés courts des jours : `bo.programEditor.dayLabels.<i>`, traduits au rendu.
+const DAY_INDEXES = [0, 1, 2, 3, 4, 5, 6];
 
 function libelleDate(iso: string): string {
   return formatDate(iso + 'T00:00:00', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -48,6 +50,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
   const tabSpace = useTabBarScrollSpace();
   const { programId, programTitle, progType, durationWeeks, daysPerWeek } = route.params;
   const { user } = useAuth();
+  const { t } = useTranslation();
   // La date de début est celle de l'athlète, choisie après l'achat : elle
   // arrive par la navigation puis vit ici, puisqu'on peut la (re)choisir.
   const [startDate, setStartDate] = useState<string | null>(route.params.startDate ?? null);
@@ -98,9 +101,8 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
         setScores({});
       }
     } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
       captureError(e, { screen: 'ProgramDetail', action: 'load' });
-      setErreur(message);
+      setErreur(await errorMessage(e));
     }
     setLoading(false);
     setRefreshing(false);
@@ -132,7 +134,8 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
       setChoixDate(false);
     } catch (e) {
       captureError(e, { screen: 'ProgramDetail', action: 'setStartDate' });
-      setErreurDate(e instanceof Error ? e.message : String(e));
+      // « pas un lundi » : contrôle local et RAISE de la base, même texte
+      setErreurDate(e instanceof Error && e.message === START_NOT_MONDAY ? t('programDetail.startMustBeMonday') : await errorMessage(e));
     }
   };
   const estSemaineEnCours = (s: (typeof semaines)[number]) =>
@@ -158,7 +161,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
     <View style={S.container}>
       <GlassBackground />
       <AxScreenHeader
-        title={i18n.t('screenTitles.program')}
+        title={t('screenTitles.program')}
         right={(
           <>
         {startDate && !loading && (
@@ -167,7 +170,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
             disabled={dateVerrouillee}
             onPress={() => { setDateEnCours(startDate); setChoixDate(true); }}
             accessibilityRole="button"
-            accessibilityLabel={dateVerrouillee ? 'Date de début verrouillée' : 'Modifier ma date de début'}
+            accessibilityLabel={dateVerrouillee ? t('programDetail.dateLocked') : t('programDetail.editStartDate')}
             testID="program-date-edit"
           >
             {dateVerrouillee
@@ -180,9 +183,11 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
       >
           <AxContentTitle title={programTitle} testID="program-detail-title" />
           <Text style={S.headerSub} numberOfLines={2}>
-            {progType === 'fixed' ? `${durationWeeks ?? semaines.length} semaines · ${dpw}j/sem` : `Ongoing · ${dpw}j/sem`}
-            {startDate ? ` · depuis le ${libelleDate(startDate)}` : ''}
-            {doneCount > 0 ? ` · ${doneCount} WOD${doneCount > 1 ? 's' : ''} fait${doneCount > 1 ? 's' : ''}` : ''}
+            {progType === 'fixed'
+              ? t('programDetail.fixedSchedule', { count: durationWeeks ?? semaines.length, days: dpw })
+              : t('programDetail.ongoingSchedule', { days: dpw })}
+            {startDate ? t('programDetail.since', { date: libelleDate(startDate) }) : ''}
+            {doneCount > 0 ? t('programDetail.wodsDone', { count: doneCount }) : ''}
           </Text>
       </AxScreenHeader>
 
@@ -193,7 +198,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
             style={S.weekArrow}
             disabled={weekIdx === 0}
             accessibilityRole="button"
-            accessibilityLabel="Semaine précédente"
+            accessibilityLabel={t('programDetail.prevWeek')}
             testID="program-week-prev"
           >
             <ChevronLeft color={weekIdx === 0 ? c.textMuted : c.text} size={20} />
@@ -201,17 +206,19 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
           <View style={S.weekCenter}>
             <Text style={S.weekLabel} numberOfLines={1}>
               {semaine.week != null
-                ? `Semaine ${semaine.week}${durationWeeks ? ` / ${durationWeeks}` : ''}`
-                : `Semaine ${weekIdx + 1} / ${semaines.length} · ${libelleSemaine(semaine.monday ?? lundiAujourdhui)}`}
+                ? (durationWeeks
+                  ? t('programDetail.weekNOfTotal', { week: semaine.week, total: durationWeeks })
+                  : t('programDetail.weekN', { week: semaine.week }))
+                : t('programDetail.weekDated', { week: weekIdx + 1, total: semaines.length, range: libelleSemaine(semaine.monday ?? lundiAujourdhui) })}
             </Text>
-            {estSemaineEnCours(semaine) && <Text style={S.weekNow}>Semaine en cours</Text>}
+            {estSemaineEnCours(semaine) && <Text style={S.weekNow}>{t('programDetail.currentWeek')}</Text>}
           </View>
           <TouchableOpacity
             onPress={() => setWeekIdx(w => Math.min(semaines.length - 1, w + 1))}
             style={S.weekArrow}
             disabled={weekIdx >= semaines.length - 1}
             accessibilityRole="button"
-            accessibilityLabel="Semaine suivante"
+            accessibilityLabel={t('programDetail.nextWeek')}
             testID="program-week-next"
           >
             <ChevronRight color={weekIdx >= semaines.length - 1 ? c.textMuted : c.text} size={20} />
@@ -223,20 +230,17 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
         <ActivityIndicator style={S.loader} size="large" color={c.accentText} />
       ) : erreur ? (
         <View style={S.emptyBlock}>
-          <Text style={S.emptyTitle}>Programmation indisponible</Text>
+          <Text style={S.emptyTitle}>{t('programDetail.unavailable')}</Text>
           <Text style={S.emptyText}>{erreur}</Text>
-          <AxButton variant="outline" label="Réessayer" onPress={() => { setLoading(true); load(); }} testID="program-retry" />
+          <AxButton variant="outline" label={t('common.retry')} onPress={() => { setLoading(true); load(); }} testID="program-retry" />
         </View>
       ) : !startDate ? (
         <View style={S.emptyBlock}>
           <CalendarDays color={c.accentText} size={32} />
-          <Text style={S.emptyTitle}>Choisir ma date de début</Text>
-          <Text style={S.emptyText}>
-            Ton programme démarre un lundi : la semaine 1 fait sept jours pleins. Choisis le lundi
-            qui te convient, tu pourras le changer tant que tu n'as pas enregistré de résultat.
-          </Text>
+          <Text style={S.emptyTitle}>{t('programDetail.chooseStart')}</Text>
+          <Text style={S.emptyText}>{t('programDetail.chooseStartBody')}</Text>
           <AxButton
-            label="Choisir ma date de début"
+            label={t('programDetail.chooseStart')}
             onPress={() => { setDateEnCours(lundisProposes[0] ?? null); setChoixDate(true); }}
             fullWidth
             testID="program-date-choose"
@@ -244,27 +248,25 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
         </View>
       ) : semaines.length === 0 ? (
         <View style={S.emptyBlock}>
-          <Text style={S.emptyTitle}>Aucune séance publiée</Text>
-          <Text style={S.emptyText}>
-            Ton coach n'a pas encore publié de séance sur ce programme. Elles apparaîtront ici dès
-            qu'il les mettra en ligne.
-          </Text>
+          <Text style={S.emptyTitle}>{t('programDetail.noSessions')}</Text>
+          <Text style={S.emptyText}>{t('programDetail.noSessionsBody')}</Text>
         </View>
       ) : (
         <ScrollView
           contentContainerStyle={[S.list, { paddingBottom: tabSpace }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
         >
-          {DAY_LABELS.map((label, i) => {
+          {DAY_INDEXES.map((i) => {
+            const label = t(`bo.programEditor.dayLabels.${i}`);
             const dayWods = wodsDuJour(i);
             // Le repos est une décision du coach (`program_rest_days`), pas la
             // simple absence de séance : un jour vide reste un jour vide.
             const isRest = semaine.week != null && isRestDay(restDays, semaine.week, i + 1);
             return (
-              <View key={label} style={[S.dayBlock, i > 0 && S.daySep]} testID={`program-day-${i + 1}`}>
+              <View key={i} style={[S.dayBlock, i > 0 && S.daySep]} testID={`program-day-${i + 1}`}>
                 <View style={S.dayHeader}>
                   <Text style={S.dayLabel}>{label}</Text>
-                  {isRest && <Text style={S.restBadge}>Repos</Text>}
+                  {isRest && <Text style={S.restBadge}>{t('whiteboard.rest')}</Text>}
                 </View>
                 {dayWods.map(w => {
                   const score = scores[w.id];
@@ -299,13 +301,13 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
       <Modal visible={choixDate} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setChoixDate(false)}>
         <View style={S.modalContainer}>
           <View style={S.modalHeader}>
-            <Text style={S.modalTitle}>Ma date de début</Text>
+            <Text style={S.modalTitle}>{t('programDetail.myStartDate')}</Text>
             <TouchableOpacity onPress={() => setChoixDate(false)} hitSlop={12} accessibilityRole="button">
-              <Text style={S.modalCancel}>Fermer</Text>
+              <Text style={S.modalCancel}>{t('common.close')}</Text>
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={S.modalBody}>
-            <Text style={S.emptyText}>Un lundi, pour que la semaine 1 fasse sept jours pleins.</Text>
+            <Text style={S.emptyText}>{t('programDetail.mondayHint')}</Text>
             <View style={S.lundiList}>
               {lundisProposes.map(lundi => {
                 const actif = lundi === dateEnCours;
@@ -319,7 +321,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
                     testID={`program-monday-${lundi}`}
                   >
                     <Text style={[S.lundiTxt, actif && { color: c.accentText }]}>
-                      Lundi {libelleDate(lundi)}{lundi === lundiAujourdhui ? ' · cette semaine' : ''}
+                      {t('programDetail.mondayOn', { date: libelleDate(lundi) })}{lundi === lundiAujourdhui ? t('programDetail.thisWeek') : ''}
                     </Text>
                     {actif && <Check color={c.accentText} size={16} />}
                   </TouchableOpacity>
@@ -327,7 +329,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
               })}
             </View>
             {erreurDate && <Text style={S.erreurTxt}>{erreurDate}</Text>}
-            <AxButton label="Valider" onPress={validerDate} disabled={!dateEnCours} fullWidth testID="program-date-validate" />
+            <AxButton label={t('tournament.validate')} onPress={validerDate} disabled={!dateEnCours} fullWidth testID="program-date-validate" />
           </ScrollView>
         </View>
       </Modal>
@@ -337,7 +339,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
           <View style={S.modalHeader}>
             <Text style={S.modalTitle} numberOfLines={1}>{selected?.title}</Text>
             <TouchableOpacity onPress={() => setSelected(null)} hitSlop={12} accessibilityRole="button">
-              <Text style={S.modalCancel}>Fermer</Text>
+              <Text style={S.modalCancel}>{t('common.close')}</Text>
             </TouchableOpacity>
           </View>
           <ScrollView contentContainerStyle={S.modalBody}>
@@ -351,7 +353,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
               )}
             </View>
 
-            <Text style={S.sectionLabel}>SÉANCE</Text>
+            <Text style={S.sectionLabel}>{t('programDetail.session')}</Text>
             <Text style={S.detailDesc}>
               {annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(selected?.description ?? '', oneRepMaxFor), gymRecordFor))}
             </Text>
@@ -360,7 +362,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
               <AxCard style={S.notesCard} testID="program-notes">
                 <View style={S.noteHeader}>
                   <StickyNote color={c.accentText} size={14} />
-                  <Text style={S.notesLabel}>NOTES COACH</Text>
+                  <Text style={S.notesLabel}>{t('programDetail.coachNotes')}</Text>
                 </View>
                 <Text style={S.detailNotes}>{selected.notes}</Text>
               </AxCard>
@@ -368,7 +370,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
 
             {selected && scores[selected.id] && (
               <AxCard style={S.myScoreCard} testID="program-my-score">
-                <Text style={S.myScoreLabel}>TON RÉSULTAT</Text>
+                <Text style={S.myScoreLabel}>{t('programDetail.yourResult')}</Text>
                 <Text style={S.myScoreValue}>
                   {formatScoreValue(
                     scores[selected.id].score_value,
@@ -383,7 +385,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
                 vivent dans l'écran de WOD : un seul chemin de score, celui du
                 contenu canonique. Dupliquer ici ferait diverger les deux. */}
             <AxButton
-              label={selected && scores[selected.id] ? 'Voir / modifier mon résultat' : 'Ouvrir la séance'}
+              label={selected && scores[selected.id] ? t('programDetail.seeEditResult') : t('programDetail.openSession')}
               fullWidth
               testID="program-open-session"
               onPress={() => {
