@@ -29,6 +29,7 @@ import { chargerClassement, classementGeneral, LigneClassement, RangWod } from '
 import { computeCompletedMovements, AthleteGender } from '../../utils/movementParser';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useConfirmDialog } from '../../components/ConfirmDialog';
+import { dateLocale } from '../../i18n/locale';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function StatusPill({ status, theme: th }: { status: string; theme: AppTheme }) {
@@ -52,8 +53,7 @@ export default function BOTournamentScreen() {
   const navigation = useNavigation();
   const { currentBox } = useAuth();
   const { theme } = useTheme();
-  const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
+  const { t } = useTranslation();
   const s = createStyles(theme);
   const dialog = useConfirmDialog();
 
@@ -573,7 +573,7 @@ export default function BOTournamentScreen() {
               const levelColor = LevelColors[p.profile?.level ?? ''] ?? theme.accent;
               const boxName = p.profile?.box_members?.[0]?.box?.name ?? null;
               const regDate = p.created_at
-                ? new Date(p.created_at).toLocaleDateString(dateLocale, { day: '2-digit', month: '2-digit', year: 'numeric' })
+                ? new Date(p.created_at).toLocaleDateString(dateLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })
                 : '—';
               return (
                 <View key={p.athlete_id} style={s.partRow}>
@@ -660,7 +660,7 @@ export default function BOTournamentScreen() {
                       </View>
                       <Text style={s.scoreWodNm} numberOfLines={1}>{score.tw?.title ?? ''} · {score.tw?.type ?? ''}</Text>
                       <View style={s.scoreCardRow}>
-                        <Text style={s.scoreDate}>{formatDateTime(score.submitted_at)}</Text>
+                        <Text style={s.scoreDate}>{formatDateTime(score.submitted_at, dateLocale())}</Text>
                         <Text style={s.scoreValue}>{formatScoreDisplay(score.score_value, score.tw?.type, (score.tw as any)?.reps_per_round, score.capped)}</Text>
                       </View>
                     </View>
@@ -686,7 +686,7 @@ export default function BOTournamentScreen() {
                       )}
                       {score.deadline_at && (
                         <Text style={s.deadlineTxt}>
-                          <Clock color={theme.textMuted} size={12} /> {t('bo.tournament.deadline', { date: formatDateTime(score.deadline_at) })}
+                          <Clock color={theme.textMuted} size={12} /> {t('bo.tournament.deadline', { date: formatDateTime(score.deadline_at, dateLocale()) })}
                         </Text>
                       )}
 

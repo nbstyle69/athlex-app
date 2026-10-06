@@ -33,11 +33,23 @@ describe('i18n', () => {
     expect(deviceLanguage()).toBe('fr');
   });
 
-  it('falls back to French for unsupported device languages', () => {
+  it('uses English for unsupported device languages', () => {
     mockLanguageCode = 'de';
-    expect(deviceLanguage()).toBe('fr');
+    expect(deviceLanguage()).toBe('en');
+    mockLanguageCode = 'es';
+    expect(deviceLanguage()).toBe('en');
     mockLanguageCode = undefined;
-    expect(deviceLanguage()).toBe('fr');
+    expect(deviceLanguage()).toBe('en');
+  });
+
+  it('starts in the device language before initLanguage runs', () => {
+    for (const [code, attendu] of [['en', 'en'], ['de', 'en'], ['fr', 'fr']] as const) {
+      mockLanguageCode = code;
+      jest.isolateModules(() => {
+        const fresh = require('../i18n').default;
+        expect(fresh.language).toBe(attendu);
+      });
+    }
   });
 
   it('prioritises the persisted preference over the device language', async () => {

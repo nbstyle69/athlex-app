@@ -17,6 +17,7 @@ import { cancelClassReminder } from '../../services/notifications';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { useConfirmDialog } from '../../components/ConfirmDialog';
 import EmptyState from '../../components/EmptyState';
+import { dateLocale } from '../../i18n/locale';
 
 interface ReservationRow {
   id: string;
@@ -43,7 +44,7 @@ export default function MyReservationsScreen() {
   const tabSpace = useTabBarScrollSpace();
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const S = createStyles(theme);
   const dialog = useConfirmDialog();
@@ -91,8 +92,7 @@ export default function MyReservationsScreen() {
 
   function formatDate(dateStr: string) {
     const d = new Date(dateStr + 'T00:00:00');
-    const locale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
-    return d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
+    return d.toLocaleDateString(dateLocale(), { weekday: 'short', day: 'numeric', month: 'short' });
   }
 
   return (

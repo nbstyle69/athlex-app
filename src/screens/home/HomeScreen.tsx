@@ -36,6 +36,7 @@ import { fetchEloRank } from '../../services/eloRank';
 import HomeExplorerBlock from './HomeExplorerBlock';
 import { levelInk } from './homeLevelColor';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { dateLocale } from '../../i18n/locale';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'HomeList'>;
 
@@ -144,8 +145,8 @@ export default function HomeScreen() {
       const mapped: CompetitionSummary[] = (tourns ?? []).map((t: any) => ({
         id: t.id, name: t.name, description: t.description ?? '', level: t.level ?? 'rx',
         status: t.status,
-        startDate: t.start_date ? new Date(t.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—',
-        endDate:   t.end_date   ? new Date(t.end_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) : '—',
+        startDate: t.start_date ? new Date(t.start_date).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' }) : '—',
+        endDate:   t.end_date   ? new Date(t.end_date).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' }) : '—',
         participants: t.tournament_participants?.[0]?.count ?? 0,
         maxParticipants: t.max_participants ?? 0,
         prize: t.prize ?? '', wods: [],
@@ -792,7 +793,7 @@ export default function HomeScreen() {
                 <View style={S.flexShrink}>
                   <Text style={S.resultTitle} numberOfLines={1}>{r.wod_title}</Text>
                   <Text style={S.resultDate}>
-                    {new Date(r.submitted_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                    {new Date(r.submitted_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' })}
                   </Text>
                 </View>
                 <View style={S.resultRight}>

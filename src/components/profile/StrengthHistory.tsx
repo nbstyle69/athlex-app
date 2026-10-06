@@ -14,6 +14,7 @@ import { View, Text, StyleSheet } from 'react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { StrengthSession } from '../../services/strengthSets';
+import { dateLocale } from '../../i18n/locale';
 
 interface Props {
   sessions: StrengthSession[];
@@ -24,7 +25,7 @@ interface Props {
 function formatDay(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(dateLocale(), { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 export default function StrengthHistory({ sessions, prSourceIds }: Props) {

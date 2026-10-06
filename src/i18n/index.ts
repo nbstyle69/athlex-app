@@ -5,6 +5,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import fr from './locales/fr.json';
 import en from './locales/en.json';
+import { installPluralRules } from './pluralRules';
+
+installPluralRules();
 
 export const LANGUAGE_KEY = '@app_language';
 export const SUPPORTED_LANGUAGES = ['fr', 'en'] as const;
@@ -16,22 +19,31 @@ export const resources = {
   en: { translation: en },
 } as const;
 
-// Resolve the phone's language, falling back to French (the app default).
+// Langue du téléphone : français s'il est en français, anglais pour toute
+// autre langue (décision produit). Le choix du Profil l'emporte (initLanguage).
 export function deviceLanguage(): AppLanguage {
-  const code = getLocales()[0]?.languageCode?.toLowerCase();
-  return SUPPORTED_LANGUAGES.includes(code as AppLanguage) ? (code as AppLanguage) : DEFAULT_LANGUAGE;
+  return getLocales()[0]?.languageCode?.toLowerCase() === 'fr' ? 'fr' : 'en';
 }
 
-// Langue des notifications, enregistrée avec le jeton : la langue principale
-// du téléphone, `fr` ou `en` ; toute autre langue donne `en` (le choix de
-// langue de l'app n'y entre pas).
+// Langue des notifications, enregistrée avec le jeton : celle de l'app (choix
+// du Profil, sinon langue détectée par initLanguage), pas celle du téléphone.
 export function pushLanguage(): AppLanguage {
-  return getLocales()[0]?.languageCode?.toLowerCase() === 'fr' ? 'fr' : 'en';
+  return i18n.language === 'en' ? 'en' : 'fr';
+}
+
+// Appelés par setLanguage une fois la langue enregistrée (ex. réenregistrer le
+// jeton de notification) ; inscrits par les services, pour éviter un import circulaire.
+type LanguageListener = (lang: AppLanguage) => unknown;
+const languageListeners: LanguageListener[] = [];
+
+export function onLanguageSaved(listener: LanguageListener): void {
+  languageListeners.push(listener);
 }
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: DEFAULT_LANGUAGE,
+  // Langue du téléphone dès le premier rendu, avant que initLanguage lise le choix enregistré.
+  lng: deviceLanguage(),
   fallbackLng: DEFAULT_LANGUAGE,
   supportedLngs: [...SUPPORTED_LANGUAGES],
   defaultNS: 'translation',
@@ -59,6 +71,7 @@ export async function setLanguage(lang: AppLanguage): Promise<void> {
   } catch {
     /* ignore storage errors */
   }
+  await Promise.all(languageListeners.map(l => Promise.resolve().then(() => l(lang)).catch(() => undefined)));
 }
 
 export default i18n;

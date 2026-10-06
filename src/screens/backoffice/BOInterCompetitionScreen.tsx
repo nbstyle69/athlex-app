@@ -32,6 +32,7 @@ import {
   SwissRound, SwissPairing, SwissStanding,
 } from './inter-competition';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { dateLocale } from '../../i18n/locale';
 
 export default function BOInterCompetitionScreen() {
   const navigation = useNavigation();
@@ -701,8 +702,8 @@ export default function BOInterCompetitionScreen() {
                       // Programmé dans le futur : masqué des participants jusqu'à l'heure dite (RLS)
                       <TouchableOpacity style={S.scheduledChip} onPress={() => handleCancelSchedule(w.id)}>
                         <Text style={S.scheduledChipText}>
-                          🕐 {new Date(w.revealed_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}{' '}
-                          {new Date(w.revealed_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} · annuler
+                          🕐 {new Date(w.revealed_at).toLocaleDateString(dateLocale(), { day: '2-digit', month: '2-digit' })}{' '}
+                          {new Date(w.revealed_at).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' })} · annuler
                         </Text>
                       </TouchableOpacity>
                     ) : (

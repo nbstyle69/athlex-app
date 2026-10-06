@@ -10,6 +10,7 @@ import * as Sharing from 'expo-sharing';
 import { useTheme } from '../../context/ThemeContext';
 import { AxIconButton } from '../../components/ax';
 import { axFonts, axSpacing, axTypography, axVeil } from '../../theme/axTokens';
+import { dateLocale } from '../../i18n/locale';
 
 type Route = RouteProp<HomeStackParamList, 'VideoPlayback'>;
 type Nav   = NativeStackNavigationProp<HomeStackParamList, 'VideoPlayback'>;
@@ -30,8 +31,8 @@ function formatChronoTime(totalMs: number): string {
 function formatRecordedAt(iso: string): string {
   try {
     const d = new Date(iso);
-    return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })
-      + ' · ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleDateString(dateLocale(), { day: '2-digit', month: 'long', year: 'numeric' })
+      + ' · ' + d.toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' });
   } catch { return iso; }
 }
 

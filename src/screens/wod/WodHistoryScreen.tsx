@@ -9,7 +9,6 @@ import {
 } from 'lucide-react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import i18n from '../../i18n';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
@@ -25,6 +24,7 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import { buildHistoryEntries, countScores, HistoryEntry, BoxScoreRow, CompletionRow } from '../../lib/wodHistoryEntries';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import EmptyState from '../../components/EmptyState';
+import { dateLocale } from '../../i18n/locale';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -66,18 +66,14 @@ function formatScore(score: WODScore): string {
   return formatScoreValue(score.score_value, score.score_type);
 }
 
-function localeTag(): string {
-  return i18n.language === 'en' ? 'en-US' : 'fr-FR';
-}
-
 function formatDate(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString(localeTag(), { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 function formatDateShort(iso: string): string {
   const d = new Date(iso);
-  return d.toLocaleDateString(localeTag(), { day: 'numeric', month: 'short' });
+  return d.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' });
 }
 
 export default function WodHistoryScreen() {

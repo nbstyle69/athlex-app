@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { captureError } from '../lib/sentry';
 import i18n from '../i18n';
 import { WEB_URL } from '../lib/urls';
+import { dateLocale } from '../i18n/locale';
 
 /** Une adhésion de l'utilisateur connecté, telle que la rend `get_my_membership_billing`. */
 export interface MyMembership {
@@ -49,7 +50,7 @@ export function membershipState(m: MyMembership): MembershipState | null {
 /** La phrase à montrer à l'athlète, dans la langue de l'app. */
 export function membershipStateText(state: MembershipState): string {
   if (state.key === 'suspended') return i18n.t('profile.account.subscription.suspended');
-  const date = new Date(state.date).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'fr-FR', {
+  const date = new Date(state.date).toLocaleDateString(dateLocale(), {
     day: 'numeric', month: 'long', year: 'numeric',
   });
   return i18n.t(`profile.account.subscription.${state.key}`, { date });

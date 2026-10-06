@@ -14,6 +14,7 @@ import { AxCard } from '../../components/ax';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { dateLocale } from '../../i18n/locale';
 
 interface BoxInfo {
   name: string;
@@ -118,9 +119,9 @@ export default function BoxInfoScreen({ navigation }: any) {
     );
   }
 
-  const foundedDate = info.founded_at ? new Date(info.founded_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
-  const createdDate = new Date(info.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-  const joinedDate = info.joinedAt ? new Date(info.joinedAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : null;
+  const foundedDate = info.founded_at ? new Date(info.founded_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) : null;
+  const createdDate = new Date(info.created_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' });
+  const joinedDate = info.joinedAt ? new Date(info.joinedAt).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) : null;
 
   return (
     <View style={S.container}>

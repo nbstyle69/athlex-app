@@ -293,17 +293,19 @@ export interface TournamentScore {
   t?: { name: string };
 }
 
-export function formatDate(iso: string) {
+// `locale` : dateLocale() de src/i18n/locale (ce fichier reste sans dépendance à l'app,
+// il est aussi empaqueté par scripts/generate-movement-stats-keys.mjs).
+export function formatDate(iso: string, locale: string) {
   try {
-    return new Date(iso).toLocaleDateString('fr-FR', {
+    return new Date(iso).toLocaleDateString(locale, {
       day: 'numeric', month: 'short', year: 'numeric',
     });
   } catch { return iso; }
 }
 
-export function formatDateTime(iso: string) {
+export function formatDateTime(iso: string, locale: string) {
   try {
-    return new Date(iso).toLocaleDateString('fr-FR', {
+    return new Date(iso).toLocaleDateString(locale, {
       day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
     });
   } catch { return iso; }

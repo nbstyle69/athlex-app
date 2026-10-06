@@ -941,7 +941,7 @@
     "disciplines": {
       "functional": "Functional",
       "hybrid": "Hybrid",
-      "musculation": "Musculation"
+      "musculation": "Strength"
     },
     "tools": {
       "title": "Tools",
@@ -1303,7 +1303,7 @@
     "track": {
       "functional": "Functional",
       "hybrid": "Hybrid",
-      "musculation": "Musculation",
+      "musculation": "Strength",
       "box": "Box",
       "all": "All"
     }
@@ -2152,5 +2152,15 @@
     "testReady": "Your phone is ready. A test notification is on its way.",
     "testDenied": "Notifications are turned off for AthleX. Turn them on in your phone settings.",
     "openSettings": "Open settings"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again shortly.",
+    "notAuthenticated": "Your session has expired. Please sign in again.",
+    "forbidden": "You don't have permission to do this.",
+    "staffOnly": "Only the box team (owner, co-owner or coach) can do this.",
+    "notFound": "Not found: it may have been deleted.",
+    "wodNotFound": "This WOD no longer exists.",
+    "banned": "Your access to this box has been revoked.",
+    "registrationClosed": "Registration is closed."
   }
 }

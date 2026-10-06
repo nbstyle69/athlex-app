@@ -40,6 +40,7 @@ import { tournamentRefusal } from '../../utils/refusals';
 import { libelleEtape } from '../../utils/bracketWods';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { useConfirmDialog } from '../../components/ConfirmDialog';
+import { dateLocale } from '../../i18n/locale';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'Tournament'>;
 type Route = RouteProp<CompetitionStackParamList, 'Tournament'>;
@@ -433,7 +434,7 @@ export default function TournamentScreen() {
             {tournament.start_date && (
               <View style={S.metaItem}>
                 <Calendar color={c.textMuted} size={14} />
-                <Text style={S.metaText}>{formatDate(tournament.start_date)}</Text>
+                <Text style={S.metaText}>{formatDate(tournament.start_date, dateLocale())}</Text>
               </View>
             )}
             {tournament.prize ? <Text style={S.prize} numberOfLines={2}>{tournament.prize}</Text> : null}
@@ -708,7 +709,7 @@ export default function TournamentScreen() {
               const isMe = user?.id === p.athlete_id;
               const boxName = p.profile?.box_members?.[0]?.box?.name ?? null;
               const regDate = p.created_at
-                ? new Date(p.created_at).toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                ? new Date(p.created_at).toLocaleDateString(dateLocale(), { day: '2-digit', month: '2-digit', year: 'numeric' })
                 : '—';
               return (
                 <View key={p.athlete_id} testID={`tournament-participant-${p.athlete_id}`} style={[S.row, isMe && S.rowMe]}>

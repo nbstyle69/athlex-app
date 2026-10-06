@@ -11,6 +11,7 @@ import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { dateLocale } from '../../i18n/locale';
 
 interface MonthlyReport {
   month: string;
@@ -28,8 +29,7 @@ export default function BOReportScreen() {
   const navigation = useNavigation();
   const { currentBox } = useAuth();
   const { theme } = useTheme();
-  const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
+  const { t } = useTranslation();
   const S = styles(theme);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,7 +40,7 @@ export default function BOReportScreen() {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth() - offset, 1);
     const end = new Date(now.getFullYear(), now.getMonth() - offset + 1, 1);
-    const label = start.toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' });
+    const label = start.toLocaleDateString(dateLocale(), { month: 'long', year: 'numeric' });
     return { start, end, label };
   };
 
