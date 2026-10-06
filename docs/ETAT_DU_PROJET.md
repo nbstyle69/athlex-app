@@ -213,6 +213,19 @@ Supabase/Resend.
 
 ## En cours
 
+**Sécurité, stockage `partner-logos` : écriture réservée aux admins** (migration `20270148`, **appliquée en prod le
+06/10/2026 à 22:01 UTC** ; dump `db-dumps/2026-10-06/athlex-prod-public-storage-20261006T220052Z.dump` (sha256
+`f87e3d92…84d0`, aller-retour vérifié) ; objets et partenaires inchangés ; audit des droits 41/41 avec S6 ; PR non
+mergée, test de Nab avant merge ; point 2 d'« Avant l'App Store »). Constat du 06/10/2026 en lecture seule : les policies
+`admin_upload/update/delete_partner_logo` ne demandaient que `auth.uid() IS NOT NULL` — tout compte connecté
+déposait, remplaçait ou supprimait un logo de partenaire (stockage public, 0 objet, table `partners` vide). Dépôt,
+modification et suppression passent au rôle `authenticated` avec `profiles.role` `super_admin` ou `admin` (même
+prédicat que `admin_manage_partners` et le stockage `assets`) ; la modification juge aussi la nouvelle ligne.
+Lecture publique, stockage public, `admin_manage_partners` et `prevent_role_escalation` inchangés. Test
+`supabase/tests/partner_logos_admin.sql` (P0 à P6, dont la lecture du rôle sous RLS), contrôle S6 de l'audit des
+droits, retour arrière `supabase/retours/20270148000000_partner_logos_admin.sql`. Appliquée **avant** le merge, pour
+que le `grants-prod.yml` du merge (S6) soit vert d'emblée, contrairement à 20270136 et 20270137.
+
 **Chantier anglais, PR 1a : minuteur, générateur, Musculation, partage (app seule, aucune migration ; PR non mergée).**
 Le minuteur (réglages, lancement, en cours en portrait et paysage, Split, design, vidéo), le générateur (Functional,
 Hybrid, Musculation et leurs options), la carte Séance de Musculation et « Partager ma perf » (écran et image) passent
