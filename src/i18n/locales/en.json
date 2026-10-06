@@ -1981,6 +1981,18 @@
     "cardValidated": "Validated",
     "resumeEntry": "Resume my entry"
   },
+  "sharePerf": {
+    "share": "Share my performance",
+    "ranking": "Ranking",
+    "types": {
+      "for-time": "FOR TIME",
+      "amrap": "AMRAP",
+      "emom": "EMOM",
+      "tabata": "TABATA",
+      "strength": "STRENGTH",
+      "custom": "CUSTOM"
+    }
+  },
   "timer": {
     "splits": {
       "round": "ROUND {{n}} / {{total}}",

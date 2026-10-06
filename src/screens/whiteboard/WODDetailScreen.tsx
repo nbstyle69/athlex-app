@@ -8,7 +8,7 @@ import { Clock, Plus, RotateCcw, MessageSquare, Trophy, Heart, Send, X, Smile, S
 import WebView from 'react-native-webview';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
-import ShareScoreCard from '../../components/ShareScoreCard';
+import SharePerfScreen from '../../components/SharePerfScreen';
 import { useFocusEffect, useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -1252,54 +1252,27 @@ export default function WODDetailScreen() {
       {/* Share Modal */}
       <GymRecordSheet candidates={gymRecords} onClose={closeGymRecords} onSaved={reloadRecords} />
 
-      <Modal visible={shareModal} animationType="fade" transparent onRequestClose={() => setShareModal(false)}>
-        <View style={S.shareOverlay}>
-          <View style={S.shareContainer}>
-            <View style={S.shareHeader}>
-              <Text style={S.shareTitle}>Partager ma perf 📸</Text>
-              <TouchableOpacity onPress={() => setShareModal(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <X color={theme.textMuted} size={22} />
-              </TouchableOpacity>
-            </View>
-
-            {myScore && wod && (
-              <>
-                <View style={S.sharePreview}>
-                  <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1, result: 'tmpfile' }}>
-                    <ShareScoreCard
-                      wodTitle={wod.title}
-                      wodType={wod.wod_type ?? null}
-                      score={myScore.score_value}
-                      scoreType={myScore.score_type}
-                      capped={myScore.capped}
-                      rx={myScore.rx}
-                      rank={myRank}
-                      totalParticipants={scores.length}
-                      username={user?.username ?? 'Athlète'}
-                      avatarUrl={user?.avatar_url}
-                      boxName={currentBox?.name ?? 'Ma Box'}
-                      date={wod.scheduled_date ?? new Date().toISOString().slice(0, 10)}
-                    />
-                  </ViewShot>
-                </View>
-
-                <EmeraldCTAButton
-                  loading={sharing}
-                  icon={<Share2 color={theme.ctaText} size={18} />}
-                  onPress={handleShare}
-                  style={{ marginHorizontal: 20 }}
-                >
-                  Partager ma performance
-                </EmeraldCTAButton>
-              </>
-            )}
-
-            <TouchableOpacity onPress={() => setShareModal(false)} style={S.shareSkip} activeOpacity={0.7}>
-              <Text style={S.shareSkipText}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <SharePerfScreen
+        visible={shareModal}
+        card={myScore && wod ? {
+          wodTitle: wod.title,
+          wodType: wod.wod_type ?? null,
+          score: myScore.score_value,
+          scoreType: myScore.score_type,
+          capped: myScore.capped,
+          rx: myScore.rx,
+          rank: myRank,
+          totalParticipants: scores.length,
+          username: user?.username ?? 'Athlète',
+          avatarUrl: user?.avatar_url,
+          boxName: currentBox?.name ?? 'Ma Box',
+          date: wod.scheduled_date ?? new Date().toISOString().slice(0, 10),
+        } : null}
+        viewShotRef={viewShotRef}
+        sharing={sharing}
+        onShare={handleShare}
+        onClose={() => setShareModal(false)}
+      />
 
       {/* Score Detail Modal */}
       <Modal visible={!!selectedScore} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSelectedScore(null)}>
@@ -1694,36 +1667,4 @@ function createStyles(theme: AppTheme) {
   },
   sdInput: { flex: 1 },
   sdSendBtn: { width: 46, height: 46, borderRadius: 5, backgroundColor: c.accent, justifyContent: 'center', alignItems: 'center' },
-
-  // ── Share Modal ──
-  shareOverlay: {
-    flex: 1, backgroundColor: theme.modalBackdrop,
-    justifyContent: 'center', alignItems: 'center', padding: 20,
-  },
-  shareContainer: {
-    width: '100%', maxWidth: 400, backgroundColor: theme.modalCard,
-    borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-  },
-  shareHeader: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 20, paddingVertical: 16,
-    borderBottomWidth: 1, borderBottomColor: theme.border,
-  },
-  shareTitle: { fontSize: 18, fontWeight: '800', color: theme.text },
-  sharePreview: {
-    alignSelf: 'center',
-    alignItems: 'center', justifyContent: 'center',
-    width: 1080, height: 1920,
-    transform: [{ scale: 0.28 }],
-    marginVertical: -(1920 * (1 - 0.28)) / 2,
-    marginHorizontal: -(1080 * (1 - 0.28)) / 2,
-  },
-  shareCTA: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: theme.accent, marginHorizontal: 20,
-    borderRadius: 14, padding: 16,
-  },
-  shareCTAText: { color: '#fff', fontSize: 15, fontWeight: '700' },
-  shareSkip: { alignItems: 'center', paddingVertical: 16 },
-  shareSkipText: { fontSize: 13, color: theme.textMuted, fontWeight: '600' },
 }); }

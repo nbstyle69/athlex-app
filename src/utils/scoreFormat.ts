@@ -59,6 +59,18 @@ export function formatScoreValue(value: number, type: string, capped?: boolean |
 }
 
 /**
+ * Le score de la carte « Partager ma perf » : la valeur en géant, l'unité en capitales à côté
+ * de l'étiquette RX / SCALED. Découpe ce qu'écrit `formatScoreValue`, sans en changer le contenu :
+ * `04:27` → 04:27 sans unité ; `CAP + 12 reps` → CAP, « + 12 REPS » ; `170 kg` → 170, « KG ».
+ */
+export function splitScoreForDisplay(value: number, type: string, capped?: boolean | null): { value: string; unit: string } {
+  const text = formatScoreValue(value, type, capped);
+  const cut = text.indexOf(' ');
+  if (cut < 0) return { value: text, unit: '' };
+  return { value: text.slice(0, cut), unit: text.slice(cut + 1).toUpperCase() };
+}
+
+/**
  * Le time cap d'un WOD se saisit et s'affiche en `mm:ss` — comme la saisie de
  * score — alors que la colonne `time_cap_seconds` est en secondes. `formatCap`
  * puis `parseCap` doivent redonner la valeur d'origine à la seconde : sinon un

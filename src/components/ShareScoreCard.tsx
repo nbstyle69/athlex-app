@@ -1,11 +1,29 @@
-import React, { forwardRef } from 'react';
-import { View, Text, Image, StyleSheet, Dimensions } from 'react-native';
-import { formatScoreValue } from '../utils/scoreFormat';
+import React, { forwardRef, useState } from 'react';
+import { View, Text, Image, type LayoutChangeEvent } from 'react-native';
+import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import { Medal } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
+import { splitScoreForDisplay } from '../utils/scoreFormat';
+import { useTheme } from '../context/ThemeContext';
+import { axFonts } from '../theme/axTokens';
+import { AxTag } from './ax';
 import UserAvatar from './UserAvatar';
 
-const CARD_W = 1080;
-const CARD_H = 1920;
-const SCALE = Dimensions.get('window').width / CARD_W;
+/** Largeur de la maquette : toute la composition est donnée pour 390 et suit la largeur réelle. */
+const MAQUETTE_W = 390;
+/** Score géant : 170 pour 390, puis réduit pour tenir en largeur (une ligne) et en hauteur. */
+const SCORE_SIZE = 170;
+const SCORE_MIN = 48;
+/** Espace sous l'en-tête (maquette), réductible jusqu'au minimum sur les écrans courts. */
+const HEADER_GAP = 68;
+const HEADER_GAP_MIN = 24;
+/**
+ * Le score garde une ligne pleine (un interligne plus court coupe le bas des chiffres sur Android) ;
+ * des marges négatives le rapprochent de la date et de l'unité comme dans la maquette (leading 0,9).
+ */
+const SCORE_PULL_TOP = 0.1;
+const SCORE_PULL_BOTTOM = 0.03;
+const SCORE_BOX = 1 - SCORE_PULL_TOP - SCORE_PULL_BOTTOM;
 
 interface ShareScoreCardProps {
   wodTitle: string;
@@ -20,116 +38,122 @@ interface ShareScoreCardProps {
   avatarUrl?: string | null;
   boxName: string;
   date: string;
+  /** Taille de la composition : 1080 × 1920 pour l'image partagée, l'écran pour la fenêtre. */
+  width?: number;
+  height?: number;
+  /** Haut du contenu (zone sûre sur l'écran). */
+  topInset?: number;
+  /** Hauteur réservée en bas (barre d'actions + 20 sur l'écran) : le contenu finit au-dessus. */
+  bottomReserve?: number;
 }
 
-const TYPE_COLORS: Record<string, string> = {
-  'for-time': '#EF4444', amrap: '#3B82F6', emom: '#8B5CF6',
-  tabata: '#F59E0B', strength: '#16A34A', custom: '#6B7280',
-};
-
-const TYPE_LABELS: Record<string, string> = {
-  'for-time': 'FOR TIME', amrap: 'AMRAP', emom: 'EMOM',
-  tabata: 'TABATA', strength: 'FORCE', custom: 'CUSTOM',
-};
-
-function medalEmoji(rank: number | null): string {
-  if (!rank) return '';
-  if (rank === 1) return '🥇';
-  if (rank === 2) return '🥈';
-  if (rank === 3) return '🥉';
-  return '';
-}
-
+/** Carte « Partager ma perf » : l'image 1080 × 1920 et le fond de l'écran plein ont la même composition. */
 const ShareScoreCard = forwardRef<View, ShareScoreCardProps>(
-  ({ wodTitle, wodType, score, scoreType, capped, rx, rank, totalParticipants, username, avatarUrl, boxName, date }, ref) => {
-    const typeColor = TYPE_COLORS[wodType ?? 'custom'] ?? '#6B7280';
-    const typeLabel = TYPE_LABELS[wodType ?? 'custom'] ?? 'WOD';
-    const medal = medalEmoji(rank);
-    const formattedScore = formatScoreValue(score, scoreType, capped);
+  ({ wodTitle, wodType, score, scoreType, capped, rx, rank, totalParticipants, username, avatarUrl, boxName, date,
+    width = 1080, height = 1920, topInset, bottomReserve }, ref) => {
+    const { theme } = useTheme();
+    const { t } = useTranslation();
+    const c = theme.ax;
+    const u = width / MAQUETTE_W;
+    const top = topInset ?? 40 * u;
+    const limit = height - (bottomReserve ?? 52 * u);
+    // Hauteur retirée pour finir au-dessus de la réserve basse : d'abord l'espace sous l'en-tête, puis le score.
+    const [cut, setCut] = useState(0);
+    const headerCut = Math.min(cut, (HEADER_GAP - HEADER_GAP_MIN) * u);
+    const scoreSize = Math.max(SCORE_MIN * u, SCORE_SIZE * u - (cut - headerCut) / SCORE_BOX);
+    const { value, unit } = splitScoreForDisplay(score, scoreType, capped);
+    const typeLabel = t(`sharePerf.types.${wodType ?? 'custom'}`, { defaultValue: 'WOD' });
     const formattedDate = new Date(date).toLocaleDateString('fr-FR', {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     });
+    const oswald = (size: number, line: number, spacing = -0.3) =>
+      ({ fontFamily: axFonts.oswaldMedium, fontSize: size * u, lineHeight: line * u, letterSpacing: spacing * u });
+    const inter = (family: string, size: number, line: number) => ({ fontFamily: family, fontSize: size * u, lineHeight: line * u });
 
+    // 1 px de plus que le dépassement : l'arrondi aux pixels de l'écran ne doit pas faire passer sous la limite.
+    function fit(e: LayoutChangeEvent) {
+      const { y, height: h } = e.nativeEvent.layout;
+      const over = y + h - limit;
+      if (over > 0) setCut((c) => c + over + 1);
+    }
+
+    const halo = 690 * u;
     return (
-      <View
-        ref={ref}
-        style={styles.card}
-        collapsable={false}
-      >
-        {/* Background gradient layers */}
-        <View style={styles.bgBase} />
-        <View style={styles.bgGlow} />
+      <View ref={ref} collapsable={false}
+        style={{ width, height, overflow: 'hidden', backgroundColor: c.background }}>
+        <Svg width={halo} height={halo} style={{ position: 'absolute', left: 195 * u - halo / 2, top: 483 * u - halo / 2 }}>
+          <Defs>
+            <RadialGradient id="shareHalo" cx="50%" cy="50%" r="50%">
+              <Stop offset="0" stopColor={c.accent} stopOpacity={0.13} />
+              <Stop offset="1" stopColor={c.accent} stopOpacity={0} />
+            </RadialGradient>
+          </Defs>
+          <Circle cx={halo / 2} cy={halo / 2} r={halo / 2} fill="url(#shareHalo)" />
+        </Svg>
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 4 * u, backgroundColor: c.accent }} />
 
-        {/* Top: Logo */}
-        <View style={styles.topSection}>
-          <Image
-            source={require('../../assets/logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.brandText}>ATHLEX</Text>
-        </View>
-
-        {/* Center content */}
-        <View style={styles.centerSection}>
-          {/* WOD Type badge */}
-          <View style={[styles.typeBadge, { backgroundColor: `${typeColor}30` }]}>  
-            <View style={[styles.typeDot, { backgroundColor: typeColor }]} />
-            <Text style={[styles.typeText, { color: typeColor }]}>{typeLabel}</Text>
+        <View onLayout={fit} testID="share-card-content"
+          style={{ position: 'absolute', top, left: 24 * u, right: 24 * u }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 * u, height: 44 * u }}>
+            <View style={{ width: 28 * u, height: 28 * u, borderRadius: 7 * u, borderWidth: u, borderColor: c.border,
+              backgroundColor: c.surface, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              <Image source={require('../../assets/logo.png')} resizeMode="contain" style={{ width: 22 * u, height: 22 * u }} />
+            </View>
+            <Text style={[oswald(18, 24, 3.96), { color: c.text }]}>ATHLEX</Text>
           </View>
 
-          {/* WOD Title */}
-          <Text style={styles.wodTitle} numberOfLines={2}>{wodTitle}</Text>
-          <Text style={styles.dateText}>{formattedDate}</Text>
+          <View style={{ marginTop: HEADER_GAP * u - headerCut, gap: 10 * u, alignItems: 'flex-start' }}>
+            <AxTag label={typeLabel} scale={u} testID="share-type" />
+            <Text testID="share-title" numberOfLines={2} ellipsizeMode="tail"
+              style={[oswald(34, 38, -1), { color: c.text, textTransform: 'uppercase', alignSelf: 'stretch' }]}>
+              {wodTitle}
+            </Text>
+            <Text style={[inter(axFonts.interRegular, 13, 18), { color: c.textMuted, textTransform: 'capitalize' }]}>
+              {formattedDate}
+            </Text>
+          </View>
 
-          {/* Score */}
-          <View style={styles.scoreContainer}>
-            <Text style={styles.scoreValue}>{formattedScore}</Text>
-            <View style={[styles.rxBadge, { backgroundColor: rx ? '#22c55e20' : '#f59e0b20' }]}>
-              <Text style={[styles.rxText, { color: rx ? '#22c55e' : '#f59e0b' }]}>
-                {rx ? 'RX' : 'SCALED'}
-              </Text>
+          <View style={{ marginTop: 16 * u, marginLeft: -4 * u }}>
+            <Text testID="share-score" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.2}
+              style={{ fontFamily: axFonts.oswaldMedium, fontSize: scoreSize, lineHeight: scoreSize,
+                marginTop: -SCORE_PULL_TOP * scoreSize, marginBottom: -SCORE_PULL_BOTTOM * scoreSize,
+                letterSpacing: -u, color: c.accentText, includeFontPadding: false }}>
+              {value}
+            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 * u, marginLeft: 4 * u }}>
+              {unit ? (
+                <Text testID="share-unit" style={[oswald(40, 44, -1), { color: c.text, textTransform: 'uppercase' }]}>{unit}</Text>
+              ) : null}
+              <AxTag label={rx ? 'RX' : 'SCALED'} scale={u} testID="share-level" />
             </View>
           </View>
 
-          {/* Rank */}
           {rank != null && (
-            <View style={styles.rankContainer}>
-              <Text style={styles.rankLabel}>CLASSEMENT</Text>
-              <Text style={styles.rankValue}>
-                {medal ? `${medal} ` : ''}#{rank}
-                <Text style={styles.rankTotal}> / {totalParticipants}</Text>
-              </Text>
+            <View testID="share-rank" style={{ marginTop: 32 * u, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center',
+              gap: 12 * u, paddingHorizontal: 16 * u, paddingVertical: 12 * u, borderRadius: 8 * u,
+              borderWidth: u, borderColor: c.border, backgroundColor: c.surface }}>
+              {rank <= 3 && <Medal testID="share-medal" size={26 * u} color={c.warning} strokeWidth={2} />}
+              <View style={{ gap: 2 * u }}>
+                <Text style={[inter(axFonts.interMedium, 11, 16), { color: c.textMuted, letterSpacing: 1.98 * u, textTransform: 'uppercase' }]}>
+                  {t('sharePerf.ranking')}
+                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 * u }}>
+                  <Text testID="share-rank-value" style={[oswald(30, 38, -1), { color: c.text }]}>#{rank}</Text>
+                  <Text style={[oswald(18, 24), { color: c.textMuted }]}>/ {totalParticipants}</Text>
+                </View>
+              </View>
             </View>
           )}
-        </View>
 
-        {/* Bottom: athlete info */}
-        <View style={styles.bottomSection}>
-          <View style={styles.divider} />
-          <View style={styles.athleteRow}>
-            <UserAvatar
-              uri={avatarUrl}
-              name={username}
-              size={96}
-              borderRadius={48}
-              backgroundColor={'#C9A22730'}
-              textColor={'#C9A227'}
-              fontSize={42}
-            />
-            <View style={styles.athleteInfo}>
-              <Text style={styles.athleteName}>{username}</Text>
-              <Text style={styles.boxName}>{boxName}</Text>
+          <View style={{ marginTop: 20 * u, flexDirection: 'row', alignItems: 'center', gap: 12 * u }}>
+            <UserAvatar uri={avatarUrl} name={username} size={44 * u} borderWidth={1.5 * u} borderColor={c.accent}
+              backgroundColor={c.surface} textColor={c.accentText} fontSize={18 * u} />
+            <View style={{ flex: 1, gap: 2 * u }}>
+              <Text numberOfLines={1} style={[oswald(18, 24), { color: c.text, textTransform: 'uppercase' }]}>{username}</Text>
+              <Text numberOfLines={1} style={[inter(axFonts.interRegular, 12, 16), { color: c.textMuted }]}>
+                {boxName} · athlexapp.eu
+              </Text>
             </View>
-          </View>
-
-          <View style={styles.footerRow}>
-            <Image
-              source={require('../../assets/logo.png')}
-              style={styles.footerLogo}
-              resizeMode="contain"
-            />
-            <Text style={styles.footerText}>athlexapp.eu</Text>
           </View>
         </View>
       </View>
@@ -138,193 +162,5 @@ const ShareScoreCard = forwardRef<View, ShareScoreCardProps>(
 );
 
 ShareScoreCard.displayName = 'ShareScoreCard';
-
-const styles = StyleSheet.create({
-  card: {
-    width: CARD_W,
-    height: CARD_H,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  bgBase: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0a0a0a',
-  },
-  bgGlow: {
-    position: 'absolute',
-    top: '28%',
-    left: '12%',
-    width: '76%',
-    height: '40%',
-    borderRadius: 999,
-    backgroundColor: '#C9A22710',
-  },
-
-  // Top
-  topSection: {
-    alignItems: 'center',
-    paddingTop: 120,
-    gap: 16,
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    borderRadius: 30,
-  },
-  brandText: {
-    fontSize: 42,
-    fontWeight: '900',
-    color: '#C9A227',
-    letterSpacing: 12,
-  },
-
-  // Center
-  centerSection: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 80,
-    gap: 24,
-  },
-  typeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 28,
-    paddingVertical: 12,
-    borderRadius: 50,
-    gap: 12,
-  },
-  typeDot: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  typeText: {
-    fontSize: 28,
-    fontWeight: '900',
-    letterSpacing: 4,
-  },
-  wodTitle: {
-    fontSize: 72,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    lineHeight: 84,
-  },
-  dateText: {
-    fontSize: 28,
-    color: '#666666',
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  scoreContainer: {
-    alignItems: 'center',
-    marginTop: 32,
-    gap: 20,
-  },
-  scoreValue: {
-    fontSize: 120,
-    fontWeight: '900',
-    color: '#C9A227',
-    letterSpacing: 2,
-  },
-  rxBadge: {
-    paddingHorizontal: 32,
-    paddingVertical: 10,
-    borderRadius: 50,
-  },
-  rxText: {
-    fontSize: 32,
-    fontWeight: '900',
-    letterSpacing: 4,
-  },
-  rankContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    gap: 8,
-  },
-  rankLabel: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#555555',
-    letterSpacing: 6,
-  },
-  rankValue: {
-    fontSize: 52,
-    fontWeight: '900',
-    color: '#FFFFFF',
-  },
-  rankTotal: {
-    fontSize: 36,
-    fontWeight: '600',
-    color: '#555555',
-  },
-
-  // Bottom
-  bottomSection: {
-    paddingHorizontal: 80,
-    paddingBottom: 100,
-    gap: 32,
-  },
-  divider: {
-    height: 2,
-    backgroundColor: '#ffffff10',
-    borderRadius: 1,
-  },
-  athleteRow: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  avatarCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#C9A22730',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 34,
-    fontWeight: '900',
-    color: '#C9A227',
-  },
-  athleteInfo: {
-    gap: 4,
-    alignItems: 'center',
-  },
-  athleteName: {
-    fontSize: 36,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    textAlign: 'center',
-  },
-  boxName: {
-    fontSize: 26,
-    fontWeight: '600',
-    color: '#666666',
-    textAlign: 'center',
-  },
-  footerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-    marginTop: 8,
-  },
-  footerLogo: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    opacity: 0.5,
-  },
-  footerText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#444444',
-    letterSpacing: 2,
-  },
-});
 
 export default ShareScoreCard;

@@ -213,6 +213,19 @@ Supabase/Resend.
 
 ## En cours
 
+**« Partager ma perf » en plein écran et image partagée refaite d'après la maquette (refonte Split & Partage, PR 2 ;
+app seule, apparence, aucune migration ; PR non mergée, vérifiée sur l'émulateur Android, à vérifier sur build).** La
+petite fenêtre devient un écran plein (Figma 580:801 / 580:915) dont la carte est le fond : logo et ATHLEX, étiquette de
+type (AxTag, FORCE = STRENGTH en anglais), titre sur 2 lignes au plus, date (format inchangé), score géant sur une ligne
+(170 pour 390 de large, réduit pour tenir en largeur puis en hauteur), unité à côté de RX / SCALED
+(`splitScoreForDisplay`, qui découpe `formatScoreValue` sans en changer le contenu), encart Classement masqué sans rang
+et médaille pour les rangs 1 à 3 seulement, athlète, liseré accent et halo ; croix en haut à droite, barre d'actions
+collée en bas avec la zone sûre (« Partager ma performance », même `handleShare`, et « Fermer »), sans défilement, le
+contenu finissant au moins 20 au-dessus de la barre. L'image 1080 × 1920 (580:856 / 580:948) a la même composition sans
+boutons ; capture ViewShot et partage inchangés. Plus de couleurs de type ni d'emoji. Tests `splitScoreForDisplay.test.ts`
+(4) et `sharePerf.rn.test.tsx` (13), 25 mutations tuées ; captures avant / après, images et mesures uiautomator dans
+`athlex-captures/split-partage`.
+
 **« Mon abonnement », PR A : changement de formule, la base** (migration `20270147`, **appliquée en prod le
 06/10/2026 à 15:00 UTC** ; dump `db-dumps/2026-10-06/athlex-prod-public-internal-20261006T145926Z.dump` ; données de
 box_members, boxes et de la file des notifications identiques avant/après ; audit des droits 40/40 ; PR non mergée). Une seule règle pour l'app et le site /compte : un membre payant en ligne verra son changement
