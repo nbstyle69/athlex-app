@@ -3,7 +3,7 @@
 // contiennent un accent ou un mot français courant, sauf ceux passés à t() /
 // i18n.t(), les imports, les comparaisons, les clés d'objet, les arguments
 // Supabase et de navigation, console.* et les props techniques (testID…).
-// Une ligne peut être exemptée par un commentaire `i18n-ignore` (message
+// Une ligne peut être exemptée par un commentaire `i18n-ignore : <raison>` (message
 // technique jamais montré, texte attendu de la base…).
 //
 // Usage : node scripts/i18n/scanner.js [fichier ou dossier…]  (défaut : src)
@@ -100,12 +100,104 @@ function scanSource(fileName, source) {
   const strong = new Set(found.filter(f => !f.weak).map(f => f.ctx));
   return found
     .filter(f => !f.weak || strong.has(f.ctx))
-    .filter(f => !/i18n-ignore/.test(lines[f.line - 1] || '') && !/i18n-ignore/.test(lines[f.line - 2] || ''))
+    .filter(f => !ignored(lines, f.line))
     .map(({ weak, ...f }) => f);
 }
 
 function scanFile(file) {
   return scanSource(file, fs.readFileSync(file, 'utf8'));
+}
+
+// ── Exemptions : « // i18n-ignore : <raison> », sur la ligne ou la ligne au-dessus ──
+const IGNORE_OK = /i18n-ignore\s*:\s*\S/;
+function ignored(lines, line) {
+  return IGNORE_OK.test(lines[line - 1] || '') || IGNORE_OK.test(lines[line - 2] || '');
+}
+
+/** Lignes qui portent un i18n-ignore sans raison (refusées par la garde). */
+function ignoresWithoutReason(source) {
+  return source.split('\n')
+    .map((l, i) => ({ line: i + 1, text: l.trim() }))
+    .filter(l => /i18n-ignore/.test(l.text) && !IGNORE_OK.test(l.text));
+}
+
+// ── Garde stricte : tout texte affiché hors t(), quelle que soit sa langue ──
+const TERMES = require('./termes-techniques.json').termes;
+// termes de plusieurs mots d'abord, pour « For Time » avant « For »
+const TERMES_RE = new RegExp(
+  TERMES.slice().sort((a, b) => b.length - a.length)
+    .map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .map(t => `(?<![\\p{L}\\p{N}])${t}(?![\\p{L}\\p{N}+])`).join('|'),
+  'giu',
+);
+
+/** Un texte affiché est admis s'il n'a pas de lettre, une fois retirés les termes techniques déclarés. */
+function strictAllowed(text) {
+  return !/\p{L}/u.test(text.replace(TERMES_RE, ' '));
+}
+
+const DISPLAY_ATTR = new Set(['label', 'title', 'subtitle', 'placeholder', 'accessibilityLabel', 'accessibilityHint', 'message']);
+
+/**
+ * Textes en position d'affichage qui ne passent pas par t() : enfants texte JSX,
+ * props d'affichage, arguments d'Alert.alert (titre, message, `text` des boutons),
+ * avec les gabarits, ternaires et `??` / `||` qui y aboutissent.
+ */
+function scanStrict(fileName, source) {
+  const sf = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, fileName.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS);
+  const lines = source.split('\n');
+  const line = n => sf.getLineAndCharacterOfPosition(n.getStart(sf)).line + 1;
+  const found = [];
+  const push = (n, text, where) => {
+    const t = text.replace(/\s+/g, ' ').trim();
+    if (t && !strictAllowed(t) && !ignored(lines, line(n))) found.push({ line: line(n), text: t.slice(0, 120), where });
+  };
+
+  // Valeurs qu'une expression peut rendre telles quelles (pas les arguments d'un appel).
+  function results(e, where) {
+    if (!e) return;
+    if (ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e)) return push(e, e.text, where);
+    if (ts.isTemplateExpression(e)) {
+      push(e, [e.head.text, ...e.templateSpans.map(s => s.literal.text)].join(' '), where);
+      return e.templateSpans.forEach(s => results(s.expression, where));
+    }
+    if (ts.isParenthesizedExpression(e) || ts.isAsExpression(e) || ts.isNonNullExpression(e)) return results(e.expression, where);
+    if (ts.isConditionalExpression(e)) { results(e.whenTrue, where); return results(e.whenFalse, where); }
+    if (ts.isBinaryExpression(e)) {
+      const op = e.operatorToken.kind;
+      if (op === ts.SyntaxKind.AmpersandAmpersandToken) return results(e.right, where);
+      if (op === ts.SyntaxKind.BarBarToken || op === ts.SyntaxKind.QuestionQuestionToken || op === ts.SyntaxKind.PlusToken) {
+        results(e.left, where); return results(e.right, where);
+      }
+    }
+  }
+
+  function visit(n) {
+    if (ts.isJsxText(n)) push(n, n.text, '<Text>');
+    else if (ts.isJsxExpression(n) && n.expression && (ts.isJsxElement(n.parent) || ts.isJsxFragment(n.parent))) results(n.expression, 'JSX {…}');
+    else if (ts.isJsxAttribute(n) && DISPLAY_ATTR.has(n.name.getText(sf)) && n.initializer) {
+      const where = `prop ${n.name.getText(sf)}=`;
+      if (ts.isStringLiteral(n.initializer)) push(n.initializer, n.initializer.text, where);
+      else if (ts.isJsxExpression(n.initializer)) results(n.initializer.expression, where);
+    } else if (ts.isCallExpression(n) && n.expression.getText(sf) === 'Alert.alert') {
+      n.arguments.slice(0, 2).forEach(a => results(a, 'Alert.alert'));
+      const buttons = n.arguments[2];
+      if (buttons && ts.isArrayLiteralExpression(buttons)) {
+        for (const b of buttons.elements) {
+          if (!ts.isObjectLiteralExpression(b)) continue;
+          for (const p of b.properties) if (ts.isPropertyAssignment(p) && p.name.getText(sf) === 'text') results(p.initializer, 'Alert.alert bouton');
+        }
+      }
+    }
+    ts.forEachChild(n, visit);
+  }
+  visit(sf);
+  return found;
+}
+
+function scanFileStrict(file) {
+  const source = fs.readFileSync(file, 'utf8');
+  return { strict: scanStrict(file, source), ignoresWithoutReason: ignoresWithoutReason(source) };
 }
 
 function listFiles(target) {
@@ -118,16 +210,21 @@ function listFiles(target) {
   });
 }
 
-module.exports = { scanSource, scanFile, isFrench };
+module.exports = { scanSource, scanFile, isFrench, scanStrict, scanFileStrict, strictAllowed, ignoresWithoutReason };
 
 if (require.main === module) {
-  const targets = process.argv.slice(2);
+  // --strict : garde stricte (tout texte affiché hors t(), i18n-ignore sans raison)
+  const strict = process.argv.includes('--strict');
+  const targets = process.argv.slice(2).filter(a => a !== '--strict');
   let total = 0;
   for (const f of (targets.length ? targets : ['src']).flatMap(listFiles)) {
-    for (const r of scanFile(f)) {
+    const rows = strict
+      ? (({ strict: s, ignoresWithoutReason: bad }) => [...s.map(r => ({ ...r, type: r.where })), ...bad.map(r => ({ ...r, type: 'i18n-ignore sans raison' }))])(scanFileStrict(f))
+      : scanFile(f);
+    for (const r of rows) {
       total++;
       console.log(`${f.replace(/\\/g, '/')}:${r.line}\t${r.type}\t${r.text}`);
     }
   }
-  console.log(`${total} chaîne(s) française(s) hors t()`);
+  console.log(strict ? `${total} texte(s) affiché(s) hors t()` : `${total} chaîne(s) française(s) hors t()`);
 }

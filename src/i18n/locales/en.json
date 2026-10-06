@@ -653,7 +653,8 @@
       "now": "Now",
       "schedule": "Schedule",
       "hour": "TIME",
-      "createWodBtn": "Create WOD"
+      "createWodBtn": "Create WOD",
+      "emomEvery": "E{{n}}MOM"
     },
     "tournament": {
       "backOffice": "BACK OFFICE",
@@ -713,7 +714,8 @@
       "noVideo": "No video link submitted",
       "rejectScore": "Reject score",
       "rejectReasonPlaceholder": "Rejection reason (optional)",
-      "confirmReject": "Confirm rejection"
+      "confirmReject": "Confirm rejection",
+      "ptsCompact": "{{n}}pts"
     },
     "programming": {
       "title": "Marketplace",
@@ -1235,7 +1237,9 @@
     "deleteConfirmTitle": "Delete this WOD?",
     "boxTag": "BOX",
     "boxWodFallback": "Box WOD",
-    "completedNoScore": "Completed, no score"
+    "completedNoScore": "Completed, no score",
+    "benchmarkShort": "BM",
+    "scaledShort": "SC"
   },
   "whiteboard": {
     "title": "My Box",
@@ -1857,7 +1861,9 @@
       "divisionUnavailable": "The league has no division open for registration.",
       "divisionFull": "The league's entry division is full.",
       "generic": "Registration failed. Please try again later."
-    }
+    },
+    "divisionShort": "D{{level}} · {{name}}",
+    "tiebreakShort": "TB: {{value}}"
   },
   "tour": {
     "next": "Next",
@@ -2328,7 +2334,8 @@
     "seeWhiteboard": "See the Whiteboard",
     "addFailed": "Couldn't add this WOD to the Whiteboard.",
     "invalidScore": "Invalid score",
-    "saveScoreFailed": "Couldn't save the score."
+    "saveScoreFailed": "Couldn't save the score.",
+    "roundShort": "R{{round}} · "
   },
   "cardio": {
     "rest": "rest {{rest}}"

@@ -710,7 +710,7 @@ export default function WodResultScreen() {
                   <View style={S.bullet} />
                   <View style={{ flex: 1 }}>
                     <Text style={S.moveText}>
-                      {m.round != null ? <Text style={S.moveRound}>R{m.round} · </Text> : null}
+                      {m.round != null ? <Text style={S.moveRound}>{t('wodResult.roundShort', { round: m.round })}</Text> : null}
                       <Text style={[S.moveQty, { color: accent }]}>{qtyText(m, metcon.blocks[0])}</Text> {m.name}
                     </Text>
                     <Text style={S.moveSub}>{line ?? t('wodResult.allCategories')}</Text>

@@ -530,7 +530,7 @@ export default function BOTournamentScreen() {
                           return (
                             <View key={w.id} style={[s.tableCell, s.colWod, { backgroundColor: bg }]}>
                               {res
-                                ? <Text style={s.wodCell}>{`${res.rank === 1 ? '🥇' : res.rank === 2 ? '🥈' : res.rank === 3 ? '🥉' : `#${res.rank}`} ${res.pts}pts`}</Text>
+                                ? <Text style={s.wodCell}>{`${res.rank === 1 ? '🥇' : res.rank === 2 ? '🥈' : res.rank === 3 ? '🥉' : `#${res.rank}`} ${t('bo.tournament.ptsCompact', { n: res.pts })}`}</Text>
                                 : <Text style={s.wodCellEmpty}>—</Text>}
                             </View>
                           );
