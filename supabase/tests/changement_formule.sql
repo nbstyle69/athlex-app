@@ -239,9 +239,10 @@ BEGIN
      OR NOT (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.box_stripe_portal'::regclass) THEN
     RAISE EXCEPTION 'C0 : RLS';
   END IF;
-  SELECT string_agg(policyname || ' ' || cmd || ' ' || array_to_string(roles, ',') || ' ' || qual, ' | ' ORDER BY policyname) INTO v
+  -- `auth.uid()` se lit `uid()` quand `auth` est dans le search_path (image Supabase de la CI).
+  SELECT string_agg(policyname || ' ' || cmd || ' ' || array_to_string(roles, ',') || ' ' || replace(qual, 'auth.uid()', 'uid()'), ' | ' ORDER BY policyname) INTO v
     FROM pg_policies WHERE schemaname = 'public' AND tablename IN ('box_plan_change_requests', 'box_stripe_portal');
-  IF v IS DISTINCT FROM 'box_plan_change_requests_lecture_gerant SELECT authenticated is_box_owner_admin(box_id) | box_plan_change_requests_lecture_membre SELECT authenticated (member_id = auth.uid())' THEN
+  IF v IS DISTINCT FROM 'box_plan_change_requests_lecture_gerant SELECT authenticated is_box_owner_admin(box_id) | box_plan_change_requests_lecture_membre SELECT authenticated (member_id = uid())' THEN
     RAISE EXCEPTION 'C0 : règles RLS (%)', v;
   END IF;
   SELECT string_agg(c.relname || ':' || a.grantee::regrole::text || ':' || a.privilege_type, ',' ORDER BY c.relname, a.grantee::regrole::text, a.privilege_type) INTO v
