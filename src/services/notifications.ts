@@ -4,7 +4,7 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { captureError } from '../lib/sentry';
-import { pushLanguage } from '../i18n';
+import { onLanguageSaved, pushLanguage } from '../i18n';
 import {
   NotificationPrefs,
   DEFAULT_NOTIFICATION_PREFS,
@@ -88,7 +88,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
 }
 
 // ── Sauvegarder le token dans Supabase ───────────────────────────────
-// Le jeton porte la langue du téléphone : send-push envoie à chaque jeton sa
+// Le jeton porte la langue de l'app : send-push envoie à chaque jeton sa
 // version (français pour un jeton sans langue).
 let lastSaved: { userId: string; token: string; language: string } | null = null;
 
@@ -105,12 +105,14 @@ export async function savePushToken(userId: string, token: string) {
   else lastSaved = { userId, token, language };
 }
 
-// Au retour de l'app au premier plan : la langue du téléphone a pu changer.
+// Au changement de langue dans le Profil, et au retour au premier plan :
+// réenregistre le jeton si la langue a changé.
 export async function refreshPushTokenLanguage() {
   if (lastSaved && lastSaved.language !== pushLanguage()) {
     await savePushToken(lastSaved.userId, lastSaved.token);
   }
 }
+onLanguageSaved(refreshPushTokenLanguage);
 
 // ── Supprimer le token (logout) ──────────────────────────────────────
 export async function removePushToken(userId: string) {

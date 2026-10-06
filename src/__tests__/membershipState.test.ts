@@ -71,13 +71,13 @@ describe('membershipStateText', () => {
       .toBe('Ton dernier paiement a échoué. Mets ton moyen de paiement à jour avant le 31 octobre 2026 pour continuer à réserver.');
     expect(membershipStateText({ key: 'suspended' })).toBe('Abonnement suspendu : paiement en retard.');
   });
-  it('anglais', async () => {
+  it('anglais (téléphone en français : dates en-GB)', async () => {
     await i18n.changeLanguage('en');
-    expect(membershipStateText({ key: 'endsOn', date: d })).toBe('Your membership ends on October 31, 2026.');
-    expect(membershipStateText({ key: 'stoppedOn', date: d })).toBe('Your box stopped your membership on October 31, 2026.');
-    expect(membershipStateText({ key: 'endedOn', date: d })).toBe('Your membership ended on October 31, 2026.');
+    expect(membershipStateText({ key: 'endsOn', date: d })).toBe('Your membership ends on 31 October 2026.');
+    expect(membershipStateText({ key: 'stoppedOn', date: d })).toBe('Your box stopped your membership on 31 October 2026.');
+    expect(membershipStateText({ key: 'endedOn', date: d })).toBe('Your membership ended on 31 October 2026.');
     expect(membershipStateText({ key: 'pastDue', date: d }))
-      .toBe('Your last payment failed. Update your payment method before October 31, 2026 to keep booking.');
+      .toBe('Your last payment failed. Update your payment method before 31 October 2026 to keep booking.');
     expect(membershipStateText({ key: 'suspended' })).toBe('Membership suspended: payment overdue.');
   });
 });

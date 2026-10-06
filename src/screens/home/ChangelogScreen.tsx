@@ -17,6 +17,7 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { readableInk } from './homeLevelColor';
+import { dateLocale } from '../../i18n/locale';
 
 interface ChangelogEntry {
   id: string;
@@ -91,7 +92,7 @@ export default function ChangelogScreen() {
 
   function formatDate(iso: string) {
     const d = new Date(iso);
-    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    return d.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   function renderEntry({ item }: { item: ChangelogEntry }) {

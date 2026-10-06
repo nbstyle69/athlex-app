@@ -10,6 +10,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Send, Megaphone, ImagePlus, X, Search, ChevronLeft, MessageCircle, Dumbbell } from 'lucide-react-native';
 import { AxTextField } from '../../components/ax';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
+import { dateLocale } from '../../i18n/locale';
 
 // Marqueur repérable dans le bundle publié (ota.yml, verify:ipa/aab) : le
 // préfixe suit la clé inlinée au moment du bundle, comme l'URL Supabase.
@@ -482,7 +483,7 @@ export default function MessagesScreen() {
 
   function formatTime(iso: string): string {
     const d = new Date(iso);
-    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' });
   }
 
   function formatDate(iso: string): string {
@@ -492,7 +493,7 @@ export default function MessagesScreen() {
     if (diff) return "Aujourd'hui";
     const yest = new Date(today); yest.setDate(today.getDate() - 1);
     if (yest.toDateString() === d.toDateString()) return 'Hier';
-    return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    return d.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long' });
   }
 
   if (!currentBox) {

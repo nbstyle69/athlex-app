@@ -122,7 +122,7 @@ describe('vocabulaire des nouveaux écrans', () => {
       const d = JSON.parse(read('i18n', 'locales', `${lang}.json`));
       const blob = JSON.stringify([d.training, d.home.explorer, d.tabs.training]);
       expect(blob).not.toMatch(/crossfit|hyrox/i);
-      expect(d.training.disciplines).toEqual({ functional: 'Functional', hybrid: 'Hybrid', musculation: 'Musculation' });
+      expect(d.training.disciplines).toEqual({ functional: 'Functional', hybrid: 'Hybrid', musculation: lang === 'en' ? 'Strength' : 'Musculation' });
     }
   });
 

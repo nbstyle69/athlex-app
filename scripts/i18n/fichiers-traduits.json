@@ -1,0 +1,20 @@
+[
+  "src/i18n/index.ts",
+  "src/i18n/locale.ts",
+  "src/i18n/pluralRules.ts",
+  "src/screens/backoffice/BOArticlesScreen.tsx",
+  "src/screens/backoffice/BOGamificationScreen.tsx",
+  "src/screens/backoffice/BONotificationsScreen.tsx",
+  "src/screens/backoffice/BOReportScreen.tsx",
+  "src/screens/backoffice/BOSubscriptionScreen.tsx",
+  "src/screens/backoffice/BOTournamentScreen.tsx",
+  "src/screens/backoffice/BOWODsScreen.tsx",
+  "src/screens/competition/InterCompetitionListScreen.tsx",
+  "src/screens/competition/TournamentScreen.tsx",
+  "src/screens/reservation/MyReservationsScreen.tsx",
+  "src/screens/whiteboard/AnnoncesScreen.tsx",
+  "src/screens/whiteboard/WhiteboardScreen.tsx",
+  "src/screens/wod/WodHistoryScreen.tsx",
+  "src/services/membership.ts",
+  "src/utils/refusals.ts"
+]

@@ -13,6 +13,7 @@ import { captureError } from '../../lib/sentry';
 import { formatScoreValue } from '../../utils/scoreFormat';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { dateLocale } from '../../i18n/locale';
 
 const TABS = ['Scores', 'Daily WOD', 'Changelog'];
 
@@ -529,7 +530,7 @@ export default function AdminScreen() {
                     <View style={S.scoreHeader}>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, color: theme.textMuted }}>
-                          {meta.icon} {meta.label} · {new Date(item.created_at).toLocaleDateString('fr-FR')}
+                          {meta.icon} {meta.label} · {new Date(item.created_at).toLocaleDateString(dateLocale())}
                         </Text>
                         <Text style={[S.athleteName, { marginTop: 4 }]}>{item.title}</Text>
                       </View>

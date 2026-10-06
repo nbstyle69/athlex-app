@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { dateLocale } from '../../i18n/locale';
 
 interface Annonce {
   id: string;
@@ -24,14 +25,13 @@ interface Annonce {
 
 export const lastSeenAnnoncesKey = (userId: string, boxId: string) => `lastSeenAnnonces_${userId}_${boxId}`;
 
-function formatDate(iso: string, lang: string) {
-  const locale = lang.startsWith('en') ? 'en-GB' : 'fr-FR';
+function formatDate(iso: string) {
   const d = new Date(iso);
-  return `${d.toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' })} · ${d.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}`;
+  return `${d.toLocaleDateString(dateLocale(), { day: '2-digit', month: 'short', year: 'numeric' })} · ${d.toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' })}`;
 }
 
 export default function AnnoncesScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const tabSpace = useTabBarScrollSpace();
   const { currentBox, user } = useAuth();
   const { theme } = useTheme();
@@ -108,7 +108,7 @@ export default function AnnoncesScreen() {
                   label={forMe ? t('whiteboard.announcementForYou') : t('whiteboard.announcementWholeBox')}
                   tone={forMe ? 'accent' : 'muted'}
                 />
-                <Text testID={`annonce-date-${a.id}`} style={S.date}>{formatDate(a.created_at, i18n.language)}</Text>
+                <Text testID={`annonce-date-${a.id}`} style={S.date}>{formatDate(a.created_at)}</Text>
               </View>
               <Text style={S.title}>{a.title}</Text>
               <Text style={S.body}>{a.body}</Text>

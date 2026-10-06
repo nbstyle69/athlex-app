@@ -18,8 +18,8 @@ import { CompetitionStackParamList } from '../../navigation';
 import { trackInterCompRegister, trackInterCompScoreSubmit } from '../../lib/analytics';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
-import i18n from '../../i18n';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { dateLocale } from '../../i18n/locale';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'InterCompetitionDetail'>;
 type Route = RouteProp<CompetitionStackParamList, 'InterCompetitionDetail'>;
@@ -45,7 +45,6 @@ export default function InterCompetitionDetailScreen() {
   const rankMark = (rank: number) => (rank >= 1 && rank <= 3
     ? <View style={S.rankMedal}><Medal size={18} color={MEDAL[rank - 1]} /></View>
     : <Text style={[S.rankNum, { color: ax.textMuted }]}>#{rank}</Text>);
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
 
   const FORMAT_LABEL: Record<string, string> = {
     league: t('interComp.formatLeague'),
@@ -329,8 +328,8 @@ export default function InterCompetitionDetailScreen() {
                   { icon: Trophy,   label: t('interDetail.format'),    val: FORMAT_LABEL[comp.format] ?? comp.format },
                   { icon: Users,    label: t('interDetail.type'),      val: comp.type === 'individual' ? t('interComp.individual') : t('interDetail.teamOf', { n: comp.team_size }) },
                   { icon: Users,    label: t('interDetail.registered'),  val: comp.max_participants ? `/ ${comp.max_participants} max` : t('interDetail.unlimited'), check: !!myReg && !!comp.max_participants },
-                  { icon: Calendar, label: t('interDetail.start'),     val: comp.starts_at ? new Date(comp.starts_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
-                  { icon: Calendar, label: t('interDetail.end'),       val: comp.ends_at   ? new Date(comp.ends_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
+                  { icon: Calendar, label: t('interDetail.start'),     val: comp.starts_at ? new Date(comp.starts_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
+                  { icon: Calendar, label: t('interDetail.end'),       val: comp.ends_at   ? new Date(comp.ends_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) : '—' },
                 ].map(({ icon: Icon, label, val, check }) => (
                   <View key={label} style={S.detailRow}>
                     <Icon size={14} color={ax.textMuted} />
@@ -375,7 +374,7 @@ export default function InterCompetitionDetailScreen() {
                         </Text>
                         {!revealed && w.revealed_at ? (
                           <Text style={S.wodRevealDate}>
-                            {t('interDetail.revealedOn', { date: new Date(w.revealed_at).toLocaleString(dateLocale) })}
+                            {t('interDetail.revealedOn', { date: new Date(w.revealed_at).toLocaleString(dateLocale()) })}
                           </Text>
                         ) : null}
                       </View>

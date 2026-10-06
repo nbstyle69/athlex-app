@@ -28,18 +28,19 @@ import {
 } from '../../utils/programSchedule';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { formatDate } from '../../i18n/locale';
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
 function libelleDate(iso: string): string {
-  return iso.split('-').reverse().join('/');
+  return formatDate(iso + 'T00:00:00', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 function libelleSemaine(lundi: string): string {
   const d = new Date(lundi + 'T00:00:00');
   const fin = new Date(d);
   fin.setDate(fin.getDate() + 6);
-  const fmt = (x: Date) => `${x.getDate()}/${x.getMonth() + 1}`;
+  const fmt = (x: Date) => formatDate(x, { day: 'numeric', month: 'numeric' });
   return `${fmt(d)} – ${fmt(fin)}`;
 }
 

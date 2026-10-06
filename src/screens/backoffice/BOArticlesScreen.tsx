@@ -12,6 +12,7 @@ import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { dateLocale } from '../../i18n/locale';
 
 interface Article {
   id: string;
@@ -27,8 +28,7 @@ export default function BOArticlesScreen() {
   const navigation = useNavigation();
   const { currentBox, user } = useAuth();
   const { theme } = useTheme();
-  const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
+  const { t } = useTranslation();
   const S = styles(theme);
 
   const [loading, setLoading] = useState(true);
@@ -217,7 +217,7 @@ export default function BOArticlesScreen() {
               {a.body ? <Text style={S.articleBody} numberOfLines={3}>{a.body}</Text> : null}
               <View style={S.articleMeta}>
                 <Text style={S.metaText}>
-                  {new Date(a.created_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' })}
+                  {new Date(a.created_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' })}
                 </Text>
                 <Text style={S.metaText}>❤️ {a.likes_count}</Text>
                 <Text style={S.metaText}>💬 {a.comments_count}</Text>

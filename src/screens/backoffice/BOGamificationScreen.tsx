@@ -10,6 +10,7 @@ import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { formatNumber } from '../../i18n/locale';
 
 interface MemberBadge {
   user_id: string;
@@ -330,7 +331,7 @@ export default function BOGamificationScreen() {
                     <Text style={S.listName} numberOfLines={1}>{m.username}</Text>
                     <Text style={S.listSub}>{t('bo.gamification.differentMovements', { count: m.movement_count })}</Text>
                   </View>
-                  <Text style={S.listValue}>{t('bo.gamification.repsCount', { count: m.total_reps.toLocaleString() })}</Text>
+                  <Text style={S.listValue}>{t('bo.gamification.repsCount', { count: formatNumber(m.total_reps) })}</Text>
                 </View>
               ))}
             </View>

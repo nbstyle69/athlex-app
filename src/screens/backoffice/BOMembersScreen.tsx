@@ -16,6 +16,7 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import { AxButton } from '../../components/ax';
 import { memberWriteRefusal } from '../../utils/refusals';
 import { assignableRoles, memberRowPermissions, MemberViewer } from '../../utils/memberPermissions';
+import { dateLocale } from '../../i18n/locale';
 
 interface MemberRow {
   id: string;
@@ -65,8 +66,7 @@ export default function BOMembersScreen({ navigation }: any) {
   const { user, currentBox } = useAuth();
   const viewer: MemberViewer = { userId: user?.id, principalId: currentBox?.owner_id };
   const { theme } = useTheme();
-  const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
+  const { t } = useTranslation();
   const S = createStyles(theme);
   const [members,    setMembers]    = useState<MemberRow[]>([]);
   const [loading,    setLoading]    = useState(true);
@@ -226,13 +226,13 @@ export default function BOMembersScreen({ navigation }: any) {
 
   function formatDate(dateStr: string) {
     const d = new Date(dateStr + 'T00:00:00');
-    return d.toLocaleDateString(dateLocale, { weekday: 'short', day: 'numeric', month: 'short' });
+    return d.toLocaleDateString(dateLocale(), { weekday: 'short', day: 'numeric', month: 'short' });
   }
 
   const todayISO = new Date().toISOString().slice(0, 10);
 
   function formatDay(iso: string) {
-    return new Date(iso).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   // Statut lisible d'un abonnement : Stripe quand il y en a un, sinon la
@@ -324,7 +324,7 @@ export default function BOMembersScreen({ navigation }: any) {
                 </View>
               </View>
               <Text style={S.email}>{m.profile.email}</Text>
-              <Text style={S.elo}>{t('bo.members.eloSince', { elo: m.profile.elo, date: new Date(m.joined_at).toLocaleDateString(dateLocale) })}</Text>
+              <Text style={S.elo}>{t('bo.members.eloSince', { elo: m.profile.elo, date: new Date(m.joined_at).toLocaleDateString(dateLocale()) })}</Text>
             </View>
             <ChevronRight color={theme.textMuted} size={16} />
           </TouchableOpacity>

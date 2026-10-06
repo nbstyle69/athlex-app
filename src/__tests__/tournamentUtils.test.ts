@@ -80,14 +80,14 @@ describe('normalizeMovement', () => {
 // ── formatDate ────────────────────────────────────────────────────────────────
 describe('formatDate', () => {
   it('returns a non-empty string for a valid ISO date', () => {
-    const result = formatDate('2026-01-15T10:00:00Z');
+    const result = formatDate('2026-01-15T10:00:00Z', 'fr-FR');
     expect(typeof result).toBe('string');
     expect(result.length).toBeGreaterThan(0);
   });
 
   it('does not throw for invalid input', () => {
-    expect(() => formatDate('not-a-date')).not.toThrow();
-    expect(typeof formatDate('not-a-date')).toBe('string');
+    expect(() => formatDate('not-a-date', 'fr-FR')).not.toThrow();
+    expect(typeof formatDate('not-a-date', 'fr-FR')).toBe('string');
   });
 });
 

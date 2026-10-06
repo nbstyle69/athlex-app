@@ -21,6 +21,7 @@ import { MOVEMENT_CATALOG, isWeightedMovement, serializeMovement, parseMovementR
 import { splitStrengthLines, parseStrengthLine, formatStrengthPrescription } from '../../utils/strengthBlock';
 import { formatCap, parseCap } from '../../utils/scoreFormat';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { dateLocale } from '../../i18n/locale';
 
 const WOD_TYPES: { value: BoxWODType; labelKey: string }[] = [
   { value: 'for-time', labelKey: 'bo.wods.typeForTime' },
@@ -59,8 +60,7 @@ function toISO(d: Date): string {
 export default function BOWODsScreen({ navigation }: any) {
   const { user, currentBox, boxRole } = useAuth();
   const { theme } = useTheme();
-  const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
+  const { t } = useTranslation();
   const S = createStyles(theme);
 
   const [wods,      setWods]      = useState<BoxWOD[]>([]);
@@ -374,9 +374,9 @@ export default function BOWODsScreen({ navigation }: any) {
           <ChevronLeft color={theme.text} size={20} />
         </TouchableOpacity>
         <Text style={S.weekLabel}>
-          {weekDates[0].toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' })}
+          {weekDates[0].toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' })}
           {' — '}
-          {weekDates[6].toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })}
+          {weekDates[6].toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' })}
         </Text>
         <TouchableOpacity onPress={() => setWeekOffset(w => w + 1)} style={S.weekArrow}>
           <ChevronRight color={theme.text} size={20} />
@@ -434,7 +434,7 @@ export default function BOWODsScreen({ navigation }: any) {
                             {!wod.is_published && <Text style={S.draftTag}>{t('bo.wods.draft')}</Text>}
                             {wod.is_published && wod.publish_at && new Date(wod.publish_at) > new Date() && (
                               <Text style={[S.draftTag, { color: theme.accent }]}>
-                                {t('bo.wods.scheduledAt', { time: new Date(wod.publish_at).toLocaleTimeString(dateLocale, { hour: '2-digit', minute: '2-digit' }) })}
+                                {t('bo.wods.scheduledAt', { time: new Date(wod.publish_at).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' }) })}
                               </Text>
                             )}
                           </View>

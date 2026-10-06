@@ -58,6 +58,7 @@ import EmeraldCTAButton from '../../components/glass/EmeraldCTAButton';
 import ReportMenu from '../../components/ReportMenu';
 import { readRows } from '../../lib/db';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { dateLocale } from '../../i18n/locale';
 
 const DAY_LABELS_LONG = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
@@ -840,7 +841,7 @@ export default function WODDetailScreen() {
 
           <Text style={S.wodDate}>
             {wod.scheduled_date
-              ? new Date(wod.scheduled_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+              ? new Date(wod.scheduled_date).toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
               : `Programme · semaine ${wod.program_week ?? '?'} · ${DAY_LABELS_LONG[(wod.program_day ?? 1) - 1] ?? ''}`}
           </Text>
 

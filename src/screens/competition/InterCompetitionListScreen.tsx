@@ -16,8 +16,8 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { CompetitionStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
-import i18n from '../../i18n';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { dateLocale } from '../../i18n/locale';
 
 type Nav = NativeStackNavigationProp<CompetitionStackParamList, 'InterCompetitionList'>;
 
@@ -47,7 +47,6 @@ export default function InterCompetitionListScreen() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const { t } = useTranslation();
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
   const FORMAT_LABEL: Record<string, string> = {
     league: t('interComp.formatLeague'), bracket: t('interComp.formatBracket'),
     pool: t('interComp.formatPool'), swiss: t('interComp.formatSwiss'),
@@ -151,7 +150,7 @@ export default function InterCompetitionListScreen() {
                     {c.starts_at && (
                       <View style={S.footerItem}>
                         <Calendar size={12} color={ax.textMuted} />
-                        <Text style={S.footerText}>{new Date(c.starts_at).toLocaleDateString(dateLocale)}</Text>
+                        <Text style={S.footerText}>{new Date(c.starts_at).toLocaleDateString(dateLocale())}</Text>
                       </View>
                     )}
                     {c.my_registration && <AxTag label={stripGlyph(t('interComp.registeredBadge'))} dot />}

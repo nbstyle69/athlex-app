@@ -17,6 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarFootprint, useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { dateLocale } from '../../i18n/locale';
 
 interface Article {
   id: string;
@@ -208,7 +209,7 @@ export default function ArticlesScreen() {
           <View style={S.detailBodyWrap}>
             <Text testID="article-detail-title" style={S.detailTitle}>{selectedArticle.title}</Text>
             <Text testID="article-detail-meta" style={S.detailMeta}>
-              Par {selectedArticle.author_username} · {new Date(selectedArticle.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+              Par {selectedArticle.author_username} · {new Date(selectedArticle.created_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })}
             </Text>
             {selectedArticle.body ? <Text style={S.detailBody}>{selectedArticle.body}</Text> : null}
 
@@ -241,7 +242,7 @@ export default function ArticlesScreen() {
                   <Text style={S.commentUser} numberOfLines={1}>{cm.username}</Text>
                   <Text style={S.commentContent}>{cm.content}</Text>
                   <Text style={S.commentDate}>
-                    {new Date(cm.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    {new Date(cm.created_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </Text>
                 </View>
                 {cm.user_id === user?.id && (
@@ -295,7 +296,7 @@ export default function ArticlesScreen() {
               {a.body ? <Text testID={`article-body-${a.id}`} style={S.articleBody} numberOfLines={2}>{a.body}</Text> : null}
               <View style={S.articleMeta}>
                 <Text testID={`article-date-${a.id}`} style={S.dateText}>
-                  {new Date(a.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                  {new Date(a.created_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' })}
                 </Text>
                 <TouchableOpacity
                   testID={`article-like-${a.id}`}

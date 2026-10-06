@@ -7,6 +7,7 @@ import type {
   Catalog, Entry, MuscuEquipment, MuscuLevel, MuscuObjective, MuscuTarget, RmReference,
 } from '../../../packages/wod-engine/src';
 import { readPr } from '../profile/prStorage';
+import { dateLocale } from '../../i18n/locale';
 
 export const MUSCU_BLUE = '#3B82F6';
 /**
@@ -69,7 +70,7 @@ export function muscuEquipmentOptions(catalog: Catalog, equipment: MuscuEquipmen
     if (w <= 0) continue;
     for (const e of m.equipment) if (e && e !== 'none' && e !== 'bodyweight') set.add(e);
   }
-  return [...set].sort((a, b) => a.localeCompare(b, 'fr'));
+  return [...set].sort((a, b) => a.localeCompare(b, dateLocale()));
 }
 
 export function coerceMuscuDuration(durations: number[], current: number): number {

@@ -14,6 +14,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import DateField from '../../components/DateField';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { dateLocale } from '../../i18n/locale';
 
 interface ClassSchedule {
   id: string;
@@ -72,8 +73,7 @@ function toISO(d: Date): string {
 export default function BOScheduleScreen({ navigation }: any) {
   const { user, currentBox, boxRole } = useAuth();
   const { theme } = useTheme();
-  const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
+  const { t } = useTranslation();
   const S = createStyles(theme);
 
   const [schedules,   setSchedules]   = useState<ClassSchedule[]>([]);
@@ -405,9 +405,9 @@ export default function BOScheduleScreen({ navigation }: any) {
           <ChevronLeft color={theme.text} size={20} />
         </TouchableOpacity>
         <Text style={S.weekLabel}>
-          {weekDates[0].toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' })}
+          {weekDates[0].toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' })}
           {' — '}
-          {weekDates[6].toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' })}
+          {weekDates[6].toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short', year: 'numeric' })}
         </Text>
         <TouchableOpacity onPress={() => setWeekOffset(w => w + 1)} style={S.weekArrow}>
           <ChevronRight color={theme.text} size={20} />

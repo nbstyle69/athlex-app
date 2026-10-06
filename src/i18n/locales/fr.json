@@ -2140,5 +2140,15 @@
     "testReady": "Ton téléphone est prêt. Une notification de test va arriver.",
     "testDenied": "Notifications désactivées pour AthleX. Active-les dans les réglages de ton téléphone.",
     "openSettings": "Ouvrir les réglages"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Réessaie dans un instant.",
+    "notAuthenticated": "Ta session a expiré : reconnecte-toi.",
+    "forbidden": "Tu n'as pas les droits pour cette action.",
+    "staffOnly": "Action réservée à l'équipe de la box (gérant, co-gérant ou coach).",
+    "notFound": "Introuvable : cet élément a peut-être été supprimé.",
+    "wodNotFound": "Ce WOD n'existe plus.",
+    "banned": "Ton accès à cette box a été révoqué.",
+    "registrationClosed": "Les inscriptions sont closes."
   }
 }

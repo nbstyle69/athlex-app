@@ -11,7 +11,6 @@ import { Clock, ChevronRight, ChevronUp, ChevronDown, Hash, Users, MessageCircle
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
-import i18n from '../../i18n';
 import { wodTypeLabel } from '../../utils/wodTypeLabel';
 import { supabase } from '../../lib/supabase';
 import { countUnreadMessages } from '../../lib/unreadMessages';
@@ -45,6 +44,7 @@ import { AxButton, AxCard, AxCounterBadge, AxIconButton, AxTag } from '../../com
 import { axAccentSafeLineHeight, axSpacing, axTypography } from '../../theme/axTokens';
 import { lastSeenAnnoncesKey } from './AnnoncesScreen';
 import WhiteboardMembersModal, { WhiteboardMember } from './WhiteboardMembersModal';
+import { dateLocale } from '../../i18n/locale';
 
 function toISO(d: Date): string {
   const y = d.getFullYear();
@@ -70,7 +70,6 @@ export default function WhiteboardScreen() {
   const { gymRecordFor } = useMyRecords();
   const descOf = (text: string) => annotateGymRepsInText(text, gymRecordFor);
   const S = createStyles(theme);
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
 
   const [dayWODs,       setDayWODs]       = useState<BoxWOD[]>([]);
   const [completedIds,  setCompletedIds]  = useState<Set<string>>(new Set());
@@ -561,7 +560,7 @@ export default function WhiteboardScreen() {
   const refreshPersonal = () => { setRefreshing(true); loadPersonalWODs().finally(() => setRefreshing(false)); };
   const dayTitle = (todayISO: string) => (selectedDate === todayISO
     ? t('whiteboard.sessionOfDay')
-    : new Date(selectedDate + 'T00:00:00').toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' }));
+    : new Date(selectedDate + 'T00:00:00').toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long' }));
   const capOf = (secs: number | null | undefined) => secs != null && (
     <View style={S.timeCap}>
       <Clock color={c.textMuted} size={12} />

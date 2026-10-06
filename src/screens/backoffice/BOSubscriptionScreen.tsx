@@ -10,12 +10,12 @@ import { openExternalUrl, pollUntilTrue } from '../../lib/openCheckout';
 import { supabase } from '../../lib/supabase';
 import { PRICING_URL } from '../../lib/urls';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { dateLocale } from '../../i18n/locale';
 
 export default function BOSubscriptionScreen({ navigation }: any) {
   const { currentBox, boxSubscription, isBoxActive, daysLeftTrial, refreshSubscription } = useAuth();
   const { theme } = useTheme();
-  const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
+  const { t } = useTranslation();
   const S = createStyles(theme);
   const FEATURES = t('bo.subscription.features', { returnObjects: true }) as string[];
   const [loadingCheckout, setLoadingCheckout] = useState(false);
@@ -104,13 +104,13 @@ export default function BOSubscriptionScreen({ navigation }: any) {
           {isTrialing && daysLeftTrial > 0 && (
             <Text style={S.statusDesc}>
               {t('bo.subscription.trialExpires', { date: boxSubscription?.trial_ends_at
-                ? new Date(boxSubscription.trial_ends_at).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' })
+                ? new Date(boxSubscription.trial_ends_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })
                 : '—' })}
             </Text>
           )}
           {isActive && boxSubscription?.current_period_end && (
             <Text style={S.statusDesc}>
-              {t('bo.subscription.nextRenewal', { date: new Date(boxSubscription.current_period_end).toLocaleDateString(dateLocale, { day: 'numeric', month: 'long', year: 'numeric' }) })}
+              {t('bo.subscription.nextRenewal', { date: new Date(boxSubscription.current_period_end).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) })}
             </Text>
           )}
         </View>

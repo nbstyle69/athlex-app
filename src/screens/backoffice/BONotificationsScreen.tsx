@@ -15,6 +15,7 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import { AxButton, AxCard, AxChip, AxTextField } from '../../components/ax';
 import { axAccentSafeLineHeight, axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import { ChoisirMembreFeuille } from '../../components/ChoisirMembreFeuille';
+import { dateLocale } from '../../i18n/locale';
 
 interface Member { user_id: string; username: string }
 interface SentNotif {
@@ -33,8 +34,7 @@ export default function BONotificationsScreen() {
   const { theme } = useTheme();
   const c = theme.ax;
   const insets = useSafeAreaInsets();
-  const { t, i18n } = useTranslation();
-  const dateLocale = i18n.language === 'en' ? 'en-US' : 'fr-FR';
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -222,7 +222,7 @@ export default function BONotificationsScreen() {
                     <View style={S.historyMeta}>
                       <Clock color={c.textMuted} size={10} strokeWidth={2} />
                       <Text style={[axTypography.caption, { color: c.textMuted }]}>
-                        {new Date(n.created_at).toLocaleDateString(dateLocale, {
+                        {new Date(n.created_at).toLocaleDateString(dateLocale(), {
                           day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
                         })}
                       </Text>

@@ -25,6 +25,7 @@ import {
 import { AxCard, AxStatusDot, AxTextField } from '../ax';
 import { axSpacing, axTypography } from '../../theme/axTokens';
 import i18n from '../../i18n';
+import { dateLocale } from '../../i18n/locale';
 
 interface Props {
   drafts: StrengthSetDraft[];
@@ -373,7 +374,7 @@ export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
 export function StrengthRepsScoreStatus({ validatedAt, totalReps }: { validatedAt: string | null; totalReps: number }) {
   const { theme } = useTheme();
   const date = validatedAt
-    ? new Date(validatedAt).toLocaleDateString(i18n.language === 'en' ? 'en-GB' : 'fr-FR', { day: 'numeric', month: 'short' })
+    ? new Date(validatedAt).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'short' })
     : null;
   return (
     <View style={axStyles.scoreStatus} testID="strength-reps-score">
