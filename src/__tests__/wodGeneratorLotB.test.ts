@@ -6,7 +6,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { CATALOG_SNAPSHOT } from '../../packages/wod-engine/src/catalog/snapshot';
-import { EQUIPMENT_LABELS_FR, equipmentLabel } from '../utils/wod/equipmentLabels';
+import { EQUIPMENT_LABEL_KEYS, equipmentLabel } from '../utils/wod/equipmentLabels';
 
 const generateur = fs.readFileSync(path.join(__dirname, '..', 'screens/wod/WodGeneratorScreen.tsx'), 'utf8');
 const contextCard = fs.readFileSync(path.join(__dirname, '..', 'components/wod/SessionContextCard.tsx'), 'utf8');
@@ -31,7 +31,7 @@ describe('B2 — encart Classe du jour', () => {
 describe('B3 — matériel en français, recherche visible au-dessus du clavier', () => {
   it('chaque identifiant de matériel du catalogue a un libellé français', () => {
     const ids = new Set(CATALOG_SNAPSHOT.movements.flatMap((m) => m.equipment));
-    const manquants = [...ids].filter((id) => !EQUIPMENT_LABELS_FR[id]);
+    const manquants = [...ids].filter((id) => !EQUIPMENT_LABEL_KEYS[id]);
     expect(manquants).toEqual([]);
     expect(equipmentLabel('band')).toBe('Élastique');
     expect(equipmentLabel('jump_rope')).toBe('Corde à sauter');

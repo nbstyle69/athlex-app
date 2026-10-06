@@ -51,7 +51,9 @@ describe('C2 — durée dérivée, formats faisables visibles', () => {
 
   it('le résultat annonce le relâchement avec le message convenu', () => {
     expect(resultat).toContain("rel.includes('format')");
-    expect(resultat).toContain('Aucun ${fmt} disponible en ${intention} — voici un');
+    expect(resultat).toContain("t('wodResult.formatRelaxed', { requested: fmt, intention, obtained: formatObtenu(metcon.format) })");
+    expect(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', 'locales', 'fr.json'), 'utf8')).wodResult.formatRelaxed)
+      .toBe('Aucun {{requested}} disponible en {{intention}} — voici un {{obtained}}.');
     expect(resultat).toContain('testID="wodresult-format-relache"');
   });
 });
@@ -59,7 +61,7 @@ describe('C2 — durée dérivée, formats faisables visibles', () => {
 describe('G3 — « Durée » sur les formats bornés, « Cap » sur les autres', () => {
   it('l\'écran choisit le libellé d\'après TIME_BOUNDED du moteur', () => {
     expect(resultat).toContain('TIME_BOUNDED.has(metcon.format)');
-    expect(resultat).toMatch(/\{borneParDuree \? 'Durée' : 'Cap'\}/);
+    expect(resultat).toContain("{borneParDuree ? t('wodResult.duration') : t('wodResult.cap')}");
   });
 
   it('un EMOM est borné par sa durée, un For time ne l\'est pas', () => {

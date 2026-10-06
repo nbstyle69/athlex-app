@@ -380,3 +380,26 @@ describe('Retours iPhone (8) : boutons Whiteboard et score de « Ton WOD »', ()
     expect(boxH[0]).toBe(boxH[1]);
   });
 });
+
+describe('i18n 1b : « Ton WOD » en anglais', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const i18n = require('../i18n').default;
+  afterAll(() => i18n.changeLanguage('fr'));
+
+  it.each(SPORTS)('%s : libellés de l’écran en anglais, plus aucun libellé français de l’interface', async (sport) => {
+    await i18n.changeLanguage('en');
+    const root = await mountResult(sport);
+    const texts = structure(root);
+    const all = texts.join('\n');
+    for (const label of ['Redraw', 'Favorite', 'Timer', 'More', 'Estimated time']) expect(all).toMatch(new RegExp(label, 'i'));
+    expect(all).toMatch(/GENERATED/i);
+    for (const fr of ['Re-tirer', 'Favori', 'Minuteur', 'Plus', 'Généré', 'Durée estimée', 'Toutes catégories', 'Voir toutes les catégories', 'repos compris']) {
+      expect(texts.filter((t) => t.toLowerCase() === fr.toLowerCase() || (fr.includes(' ') && t.includes(fr)))).toEqual([]);
+    }
+    if (sport === 'musculation') expect(all).toMatch(/exercises · rest included/);
+    else {
+      expect(all).toContain('Shown for: RX · based on your profile');
+      expect(all).toContain('Show all categories');
+    }
+  });
+});

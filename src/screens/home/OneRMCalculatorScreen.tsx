@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronDown, ChevronUp, Dumbbell } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
@@ -30,30 +31,33 @@ const PR_MOVEMENTS = [
   'Clean & Jerk', 'Overhead Squat', 'Thruster',
 ];
 
+// `zone` et `usage` : clés i18n (`oneRm.zone.*`, `oneRm.usage.*`), traduites au rendu ;
+// `reps` : fourchette de reps, identique dans les deux langues.
 const ZONES: Array<{
   pct: number;
   zone: string;
-  reps: string;
+  reps?: string;
+  usage?: string;
   color: string;
   bg: string;
 }> = [
-  { pct: 50,  zone: 'Récupération',  reps: '20+ reps', color: '#60A5FA', bg: '#1E3A5F' },
-  { pct: 55,  zone: 'Endurance',     reps: '16–20 reps', color: '#60A5FA', bg: '#1E3A5F' },
-  { pct: 60,  zone: 'Endurance',     reps: '12–16 reps', color: '#4ADE80', bg: '#1C2023' },
-  { pct: 65,  zone: 'Hypertrophie',  reps: '10–12 reps', color: '#4ADE80', bg: '#1C2023' },
-  { pct: 70,  zone: 'Hypertrophie',  reps: '8–10 reps',  color: '#4ADE80', bg: '#1C2023' },
-  { pct: 75,  zone: 'Hypertrophie',  reps: '6–8 reps',   color: '#FBBF24', bg: '#3D2E0F' },
-  { pct: 80,  zone: 'Force',         reps: '4–6 reps',   color: '#FBBF24', bg: '#3D2E0F' },
-  { pct: 85,  zone: 'Force',         reps: '3–5 reps',   color: '#F97316', bg: '#3D1A0A' },
-  { pct: 90,  zone: 'Force Max',     reps: '2–3 reps',   color: '#F97316', bg: '#3D1A0A' },
-  { pct: 95,  zone: 'Force Max',     reps: '1–2 reps',   color: '#EF4444', bg: '#3D0F0F' },
-  { pct: 100, zone: '1RM',           reps: '1 rep',      color: '#EF4444', bg: '#3D0F0F' },
-  { pct: 105, zone: 'Supra-max',     reps: 'Partiel/excentrique', color: '#A855F7', bg: '#2E1048' },
-  { pct: 110, zone: 'Supra-max',     reps: 'Excentrique seul',    color: '#A855F7', bg: '#2E1048' },
-  { pct: 115, zone: 'Potentiation',  reps: 'Assistance',          color: '#EC4899', bg: '#3D0A24' },
-  { pct: 120, zone: 'Potentiation',  reps: 'Assistance',          color: '#EC4899', bg: '#3D0A24' },
-  { pct: 125, zone: 'Overloading',   reps: 'Technique guidée',    color: '#EC4899', bg: '#3D0A24' },
-  { pct: 130, zone: 'Overloading',   reps: 'Technique guidée',    color: '#EC4899', bg: '#3D0A24' },
+  { pct: 50,  zone: 'recovery',     reps: '20+ reps',          color: '#60A5FA', bg: '#1E3A5F' },
+  { pct: 55,  zone: 'endurance',    reps: '16–20 reps',        color: '#60A5FA', bg: '#1E3A5F' },
+  { pct: 60,  zone: 'endurance',    reps: '12–16 reps',        color: '#4ADE80', bg: '#1C2023' },
+  { pct: 65,  zone: 'hypertrophy',  reps: '10–12 reps',        color: '#4ADE80', bg: '#1C2023' },
+  { pct: 70,  zone: 'hypertrophy',  reps: '8–10 reps',         color: '#4ADE80', bg: '#1C2023' },
+  { pct: 75,  zone: 'hypertrophy',  reps: '6–8 reps',          color: '#FBBF24', bg: '#3D2E0F' },
+  { pct: 80,  zone: 'strength',     reps: '4–6 reps',          color: '#FBBF24', bg: '#3D2E0F' },
+  { pct: 85,  zone: 'strength',     reps: '3–5 reps',          color: '#F97316', bg: '#3D1A0A' },
+  { pct: 90,  zone: 'maxStrength',  reps: '2–3 reps',          color: '#F97316', bg: '#3D1A0A' },
+  { pct: 95,  zone: 'maxStrength',  reps: '1–2 reps',          color: '#EF4444', bg: '#3D0F0F' },
+  { pct: 100, zone: 'oneRm',        reps: '1 rep',             color: '#EF4444', bg: '#3D0F0F' },
+  { pct: 105, zone: 'supramax',     usage: 'partialEccentric', color: '#A855F7', bg: '#2E1048' },
+  { pct: 110, zone: 'supramax',     usage: 'eccentricOnly',    color: '#A855F7', bg: '#2E1048' },
+  { pct: 115, zone: 'potentiation', usage: 'assistance',       color: '#EC4899', bg: '#3D0A24' },
+  { pct: 120, zone: 'potentiation', usage: 'assistance',       color: '#EC4899', bg: '#3D0A24' },
+  { pct: 125, zone: 'overloading',  usage: 'guided',           color: '#EC4899', bg: '#3D0A24' },
+  { pct: 130, zone: 'overloading',  usage: 'guided',           color: '#EC4899', bg: '#3D0A24' },
 ];
 
 function round(val: number, step: number): number {
@@ -65,6 +69,7 @@ export default function OneRMCalculatorScreen() {
   const navigation = useNavigation();
   const { theme } = useTheme();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const c = theme.ax;
   const S = createStyles(c);
   const [input, setInput] = useState('');
@@ -147,13 +152,13 @@ export default function OneRMCalculatorScreen() {
   return (
     <SafeAreaView style={S.screen}>
       <GlassBackground />
-      <AxScreenHeader title="Calculateur 1RM" safeArea={false} />
+      <AxScreenHeader title={t('oneRm.title')} safeArea={false} />
 
       <ScrollView style={S.scroll} contentContainerStyle={[S.scrollContent, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
 
         {/* B8 : Barres ou Gymnastique */}
         <View style={S.sectionRow}>
-          {([['barbell', 'Barres'], ['gym', 'Gymnastique']] as const).map(([key, label]) => (
+          {([['barbell', t('oneRm.sectionBarbell')], ['gym', t('profile.pr.categories.gymnastics')]] as const).map(([key, label]) => (
             <AxChip
               key={key}
               label={label}
@@ -171,7 +176,7 @@ export default function OneRMCalculatorScreen() {
                 <AxCard style={S.prToggleCard} onPress={() => setShowPRList(!showPRList)} testID="onerm-pr-toggle">
                   <View style={S.prToggle}>
                     <Dumbbell color={c.accentText} size={16} />
-                    <Text style={S.prToggleText} numberOfLines={1}>{gymMovement ?? 'Choisir un mouvement (mes PR)'}</Text>
+                    <Text style={S.prToggleText} numberOfLines={1}>{gymMovement ?? t('oneRm.pickMovement')}</Text>
                     {showPRList ? <ChevronUp color={c.textMuted} size={16} /> : <ChevronDown color={c.textMuted} size={16} />}
                   </View>
                 </AxCard>
@@ -197,14 +202,14 @@ export default function OneRMCalculatorScreen() {
             )}
 
             <AxCard style={S.inputCard} testID="onerm-input-card">
-              <Text style={S.inputLabel} numberOfLines={1}>{gymMovement ? `RECORD — ${gymMovement.toUpperCase()}` : 'TON RECORD (REPS)'}</Text>
+              <Text style={S.inputLabel} numberOfLines={1}>{gymMovement ? t('oneRm.gymRecordFor', { movement: gymMovement.toUpperCase() }) : t('oneRm.yourGymRecord')}</Text>
               <View style={S.inputRow}>
                 <View style={S.inputField}>
                   <AxTextField
                     value={gymInput}
                     onChangeText={(v) => { setGymInput(v); setGymMovement(null); }}
                     keyboardType="number-pad"
-                    placeholder="ex: 20"
+                    placeholder={t('oneRm.placeholderGym')}
                     maxLength={4}
                     testID="onerm-gym-input"
                   />
@@ -214,16 +219,14 @@ export default function OneRMCalculatorScreen() {
             </AxCard>
 
             <ZoneTable
-              headers={['%', 'Reps', 'Zone', 'Usage']}
+              headers={['%', 'Reps', t('oneRm.colZone'), t('oneRm.colUsage')]}
               rows={GYM_ZONES.map((z) => {
                 const reps = gymValid ? gymRepsAt(gymRecord, z.pct) : null;
-                return { pct: z.pct, value: reps != null ? `${reps} reps` : null, zone: z.zone, detail: z.usage, color: z.color };
+                return { pct: z.pct, value: reps != null ? `${reps} reps` : null, zone: t(`gymZones.zone.${z.zone}`), detail: t(`gymZones.usage.${z.usage}`), color: z.color };
               })}
             />
             <View style={S.footer}>
-              <Text style={S.footerTxt}>
-                Reps arrondies à l'entier. 60 % du record : le plafond que le générateur s'impose sur un WOD.
-              </Text>
+              <Text style={S.footerTxt}>{t('oneRm.gymFooter')}</Text>
             </View>
           </>
         )}
@@ -236,7 +239,7 @@ export default function OneRMCalculatorScreen() {
               <View style={S.prToggle}>
                 <Dumbbell color={c.accentText} size={16} />
                 <Text style={S.prToggleText} numberOfLines={1}>
-                  {selectedMovement ?? 'Choisir un mouvement (mes PR)'}
+                  {selectedMovement ?? t('oneRm.pickMovement')}
                 </Text>
                 {showPRList
                   ? <ChevronUp color={c.textMuted} size={16} />
@@ -270,7 +273,7 @@ export default function OneRMCalculatorScreen() {
         {/* Input */}
         <AxCard style={S.inputCard} testID="onerm-input-card">
           <Text style={S.inputLabel} numberOfLines={1}>
-            {selectedMovement ? `1RM — ${selectedMovement}` : 'TON 1RM'}
+            {selectedMovement ? `1RM — ${selectedMovement}` : t('oneRm.yourOneRm')}
           </Text>
           <View style={S.inputRow}>
             <View style={S.inputField}>
@@ -278,7 +281,7 @@ export default function OneRMCalculatorScreen() {
                 value={input}
                 onChangeText={(v) => { setInput(v); setSelectedMovement(null); }}
                 keyboardType="decimal-pad"
-                placeholder="ex: 100"
+                placeholder={t('oneRm.placeholderBarbell')}
                 maxLength={6}
                 testID="onerm-barbell-input"
               />
@@ -288,23 +291,23 @@ export default function OneRMCalculatorScreen() {
 
           <View style={S.toggleRow}>
             <Text style={[S.toggleLabel, { color: isLbs ? c.textMuted : c.accentText }]}>KG</Text>
-            <AxSwitch value={isLbs} onValueChange={setIsLbs} accessibilityLabel="Afficher en livres" testID="onerm-unit-switch" />
+            <AxSwitch value={isLbs} onValueChange={setIsLbs} accessibilityLabel={t('oneRm.showInPounds')} testID="onerm-unit-switch" />
             <Text style={[S.toggleLabel, { color: isLbs ? c.accentText : c.textMuted }]}>LBS</Text>
           </View>
         </AxCard>
 
         <ZoneTable
-          headers={['%', 'Charge', 'Zone', 'Reps']}
+          headers={['%', t('oneRm.colLoad'), t('oneRm.colZone'), 'Reps']}
           rows={ZONES.map((z) => {
             const load = valid ? round(raw * z.pct / 100, step) : null;
-            return { pct: z.pct, value: load != null ? `${load} ${unit}` : null, zone: z.zone, detail: z.reps, color: z.color };
+            return { pct: z.pct, value: load != null ? `${load} ${unit}` : null, zone: t(`oneRm.zone.${z.zone}`), detail: z.usage ? t(`oneRm.usage.${z.usage}`) : z.reps ?? '', color: z.color };
           })}
         />
 
         <View style={S.footer}>
           <Text style={S.footerTxt}>
-            Charges arrondiées au {step} {unit} le plus proche.{'\n'}
-            Au-delà de 100% : excentrique, partiel ou assisté uniquement.
+            {t('oneRm.roundingNote', { step, unit })}{'\n'}
+            {t('oneRm.beyond100')}
           </Text>
         </View>
         </>)}

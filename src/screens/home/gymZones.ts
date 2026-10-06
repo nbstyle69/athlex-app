@@ -10,23 +10,32 @@ export const GYM_PR_MOVEMENTS = [
   'Ring Muscle-up', 'Bar Muscle-up', 'Dips', 'Strict Dips', 'Pull Over',
 ] as const;
 
-export const GYM_ZONES: Array<{ pct: number; zone: string; usage: string; color: string; bg: string }> = [
-  { pct: 10,  zone: 'Volume facile',     usage: 'Échauffement',             color: '#60A5FA', bg: '#1E3A5F' },
-  { pct: 20,  zone: 'Volume facile',     usage: 'EMOM long',                color: '#60A5FA', bg: '#1E3A5F' },
-  { pct: 30,  zone: 'Volume facile',     usage: 'Séries en AMRAP',          color: '#60A5FA', bg: '#1E3A5F' },
-  { pct: 40,  zone: 'Volume facile',     usage: 'Séries tenues au chrono',  color: '#4ADE80', bg: '#1C2023' },
-  { pct: 50,  zone: 'Volume de travail', usage: 'Série type de WOD',        color: '#4ADE80', bg: '#1C2023' },
-  { pct: 60,  zone: 'Volume de travail', usage: 'Plafond par WOD',          color: '#4ADE80', bg: '#1C2023' },
-  { pct: 70,  zone: 'Volume de travail', usage: 'Grosse série, 1 à 2 fois', color: '#FBBF24', bg: '#3D2E0F' },
-  { pct: 80,  zone: 'Série limite',      usage: 'Proche du max',            color: '#F97316', bg: '#3D1A0A' },
-  { pct: 90,  zone: 'Série limite',      usage: 'Test en forme',            color: '#F97316', bg: '#3D1A0A' },
-  { pct: 100, zone: 'Record',            usage: 'Max unbroken',             color: '#EF4444', bg: '#3D0F0F' },
-  { pct: 110, zone: 'Au-delà du record', usage: 'Objectif',                 color: '#A855F7', bg: '#2E1048' },
-  { pct: 120, zone: 'Au-delà du record', usage: 'Objectif',                 color: '#A855F7', bg: '#2E1048' },
-  { pct: 130, zone: 'Au-delà du record', usage: 'Cumulé en 2 séries',       color: '#EC4899', bg: '#3D0A24' },
-  { pct: 140, zone: 'Au-delà du record', usage: 'Cumulé en 2 séries',       color: '#EC4899', bg: '#3D0A24' },
-  { pct: 150, zone: 'Au-delà du record', usage: 'Cumulé en 3 séries',       color: '#EC4899', bg: '#3D0A24' },
+/**
+ * Paliers du tableau Gymnastique. `zone` et `usage` sont des clés i18n
+ * (`gymZones.zone.*`, `gymZones.usage.*`), traduites au rendu.
+ */
+export const GYM_ZONES: Array<{ pct: number; zone: GymZoneKey; usage: GymUsageKey; color: string; bg: string }> = [
+  { pct: 10,  zone: 'easy',   usage: 'warmup',      color: '#60A5FA', bg: '#1E3A5F' },
+  { pct: 20,  zone: 'easy',   usage: 'emomLong',    color: '#60A5FA', bg: '#1E3A5F' },
+  { pct: 30,  zone: 'easy',   usage: 'amrapSets',   color: '#60A5FA', bg: '#1E3A5F' },
+  { pct: 40,  zone: 'easy',   usage: 'timedSets',   color: '#4ADE80', bg: '#1C2023' },
+  { pct: 50,  zone: 'work',   usage: 'wodSet',      color: '#4ADE80', bg: '#1C2023' },
+  { pct: 60,  zone: 'work',   usage: 'wodCap',      color: '#4ADE80', bg: '#1C2023' },
+  { pct: 70,  zone: 'work',   usage: 'bigSet',      color: '#FBBF24', bg: '#3D2E0F' },
+  { pct: 80,  zone: 'limit',  usage: 'nearMax',     color: '#F97316', bg: '#3D1A0A' },
+  { pct: 90,  zone: 'limit',  usage: 'fitTest',     color: '#F97316', bg: '#3D1A0A' },
+  { pct: 100, zone: 'record', usage: 'maxUnbroken', color: '#EF4444', bg: '#3D0F0F' },
+  { pct: 110, zone: 'beyond', usage: 'goal',        color: '#A855F7', bg: '#2E1048' },
+  { pct: 120, zone: 'beyond', usage: 'goal',        color: '#A855F7', bg: '#2E1048' },
+  { pct: 130, zone: 'beyond', usage: 'cumul2',      color: '#EC4899', bg: '#3D0A24' },
+  { pct: 140, zone: 'beyond', usage: 'cumul2',      color: '#EC4899', bg: '#3D0A24' },
+  { pct: 150, zone: 'beyond', usage: 'cumul3',      color: '#EC4899', bg: '#3D0A24' },
 ];
+
+export type GymZoneKey = 'easy' | 'work' | 'limit' | 'record' | 'beyond';
+export type GymUsageKey =
+  | 'warmup' | 'emomLong' | 'amrapSets' | 'timedSets' | 'wodSet' | 'wodCap' | 'bigSet'
+  | 'nearMax' | 'fitTest' | 'maxUnbroken' | 'goal' | 'cumul2' | 'cumul3';
 
 /** Reps au palier, arrondies à l'entier (record 50 → 50 % = 25, 150 % = 75). */
 export function gymRepsAt(record: number, pct: number): number {

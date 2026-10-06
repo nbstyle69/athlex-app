@@ -10,6 +10,7 @@ import { axTypography } from '../theme/axTokens';
 import { contrast } from '../theme/contrast';
 import { readableInk } from '../screens/home/homeLevelColor';
 import { GYM_ZONES, gymRepsAt } from '../screens/home/gymZones';
+import i18n from '../i18n';
 import BEFORE from './r4bStructureBefore.json';
 import WodHistoryScreen from '../screens/wod/WodHistoryScreen';
 import OneRMCalculatorScreen from '../screens/home/OneRMCalculatorScreen';
@@ -312,7 +313,7 @@ describe('R4b : calculs du calculateur inchangés', () => {
   });
 
   it('tableau des zones de gymnastique inchangé (pourcentages, zones, couleurs)', () => {
-    expect(GYM_ZONES.map((z) => [z.pct, z.zone, z.color])).toEqual([
+    expect(GYM_ZONES.map((z) => [z.pct, i18n.t(`gymZones.zone.${z.zone}`), z.color])).toEqual([
       [10, 'Volume facile', '#60A5FA'], [20, 'Volume facile', '#60A5FA'], [30, 'Volume facile', '#60A5FA'],
       [40, 'Volume facile', '#4ADE80'], [50, 'Volume de travail', '#4ADE80'], [60, 'Volume de travail', '#4ADE80'],
       [70, 'Volume de travail', '#FBBF24'], [80, 'Série limite', '#F97316'], [90, 'Série limite', '#F97316'],

@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView, Platform, Pressable, AppState,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronRight, ChevronDown, ChevronUp, RefreshCw, Bookmark, Heart, Check, Copy, Trophy, X, Timer as TimerIcon, Clock, MoreHorizontal, Share2, ClipboardList } from 'lucide-react-native';
@@ -85,7 +86,7 @@ export function minutesText(min: number): string {
 export function qtyText(m: GeneratedMovement, block: GeneratedBlock): string {
   if (block.format === 'tabata') {
     const work = block.rest?.work_s ?? 20;
-    return m.unit === 's' ? `Tenue ${work} s ·` : `Max ${m.unit} en ${work} s ·`;
+    return m.unit === 's' ? i18n.t('wodResult.tabataHold', { work }) : i18n.t('wodResult.tabataMax', { unit: m.unit, work });
   }
   const q = m.scheme ? m.scheme.join('-') : String(m.qty);
   const per = m.per_minute ? ' (+1 / min)' : '';
@@ -111,13 +112,14 @@ export function categoryLine(m: GeneratedMovement, c: Category, withLabel: boole
 /** « Affiché pour : Inter · d'après ton profil » / « RX · niveau non renseigné ». */
 export function displayedForText(category: Category, hasLevel: boolean): { text: string; link: string } {
   return hasLevel
-    ? { text: `Affiché pour : ${CATEGORY_LABEL[category]} · d'après ton profil`, link: 'modifier' }
-    : { text: `Affiché pour : ${CATEGORY_LABEL[category]} · niveau non renseigné`, link: 'choisir' };
+    ? { text: i18n.t('wodResult.displayedFor', { category: CATEGORY_LABEL[category] }), link: i18n.t('wodResult.linkEdit') }
+    : { text: i18n.t('wodResult.displayedForNoLevel', { category: CATEGORY_LABEL[category] }), link: i18n.t('wodResult.linkChoose') };
 }
 
-/** Minuteur libre pour une séance de séries (pas de Split en M2) : durée estimée en compte à rebours. */
-const SCORE_TYPES: { key: ScoreInputType; label: string }[] = [
-  { key: 'time', label: 'Temps' }, { key: 'rounds', label: 'Rounds' }, { key: 'reps', label: 'Reps' }, { key: 'weight', label: 'Charge' },
+/** Types de score : `labelKey` traduit au rendu. */
+const SCORE_TYPES: { key: ScoreInputType; labelKey: string }[] = [
+  { key: 'time', labelKey: 'wod.scoreType.time' }, { key: 'rounds', labelKey: 'wodResult.scoreTypeRounds' },
+  { key: 'reps', labelKey: 'wod.scoreType.reps' }, { key: 'weight', labelKey: 'wod.scoreType.weight' },
 ];
 
 function useTabBarHeight(): number {
@@ -127,6 +129,7 @@ function useTabBarHeight(): number {
 export default function WodResultScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<Route>();
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { gymRecordFor, reload: reloadRecords } = useMyRecords();
   /** Fenêtre « Nouveau record ? » (G4) après la validation d'une séance générée. */
@@ -147,10 +150,7 @@ export default function WodResultScreen() {
   // scorés au temps (For time, chipper…), où c'est un plafond à ne pas franchir.
   const borneParDuree = metcon ? TIME_BOUNDED.has(metcon.format) && !(metcon.format === 'ladder' && !metcon.blocks[0].ladder) : true;
 
-  const FORMAT_OBTENU: Record<SkeletonFormat, string> = {
-    amrap: 'AMRAP', for_time: 'For time', rounds_for_time: 'Rounds for time', chipper: 'Chipper', ladder: 'Ladder',
-    emom: 'EMOM', death_by: 'Death by', tabata: 'Tabata', interval: 'Intervalles', stations: 'Stations', continuous: 'Continu',
-  };
+  const formatObtenu = (f: SkeletonFormat) => t(`wodResult.format.${f}`);
   const formatRelache = (() => {
     if (!metcon || screen.discipline === 'musculation') return null;
     const rel = metcon.generator.relaxations;
@@ -159,7 +159,7 @@ export default function WodResultScreen() {
     if (demande && demande !== 'surprise' && rel.includes('format')) {
       const fmt = FORMATS.find((f) => f.key === demande)?.label ?? demande;
       const intention = INTENTIONS[metcon.discipline].find((i) => i.key === metcon.intention)?.label ?? metcon.intention;
-      parts.push(`Aucun ${fmt} disponible en ${intention} — voici un ${FORMAT_OBTENU[metcon.format]}.`);
+      parts.push(t('wodResult.formatRelaxed', { requested: fmt, intention, obtained: formatObtenu(metcon.format) }));
     }
     return parts.length ? parts.join(' ') : null;
   })();
@@ -382,7 +382,7 @@ export default function WodResultScreen() {
     try {
       resetFor(await redraw(user, currentBox?.id, screen));
     } catch (e) {
-      Alert.alert('Aucun WOD valide', 'Réessaie ou change les paramètres.');
+      Alert.alert(t('training.generate.noValidWodTitle'), t('wodResult.retryOrChange'));
     } finally {
       setRedrawing(false);
     }
@@ -399,7 +399,7 @@ export default function WodResultScreen() {
       return id;
     } catch (e) {
       captureError(e, { screen: 'WodResult', action: 'save' });
-      Alert.alert('Erreur', "Impossible d'enregistrer ce WOD.");
+      Alert.alert(t('common.error'), t('wodResult.saveWodFailed'));
       return null;
     } finally {
       setSaving(false);
@@ -456,16 +456,16 @@ export default function WodResultScreen() {
       setBoxWodId(created);
       hapticSuccess();
       Alert.alert(
-        'Ajouté au Whiteboard',
-        submittedScore ? 'Le WOD et ton score sont dans « Mes WODs perso ».' : 'Le WOD est dans « Mes WODs perso » pour aujourd\'hui.',
+        t('wodResult.addedTitle'),
+        submittedScore ? t('wodResult.addedWithScore') : t('wodResult.addedToday'),
         [
           { text: i18n.t('common.ok'), style: 'cancel' },
-          { text: 'Voir le Whiteboard', onPress: () => navigation.navigate('Whiteboard', { screen: 'WhiteboardMain' }) },
+          { text: t('wodResult.seeWhiteboard'), onPress: () => navigation.navigate('Whiteboard', { screen: 'WhiteboardMain' }) },
         ],
       );
     } catch (e) {
       captureError(e, { screen: 'WodResult', action: 'addToWhiteboard' });
-      Alert.alert('Erreur', "Impossible d'ajouter ce WOD au Whiteboard.");
+      Alert.alert(t('common.error'), t('wodResult.addFailed'));
     } finally {
       setAdding(false);
     }
@@ -476,7 +476,7 @@ export default function WodResultScreen() {
     if (muscu) { await onSubmitMuscuScore(muscu); return; }
     if (!metcon) return;
     const value = scoreType === 'time' ? timeStringToSeconds(scoreInput) : parseFloat(scoreInput);
-    if (isNaN(value) || value <= 0) { Alert.alert('Score invalide'); return; }
+    if (isNaN(value) || value <= 0) { Alert.alert(t('wodResult.invalidScore')); return; }
     const id = await onSave();
     if (!id) return;
     setSubmitting(true);
@@ -499,7 +499,7 @@ export default function WodResultScreen() {
       );
     } catch (e) {
       captureError(e, { screen: 'WodResult', action: 'submitScore' });
-      Alert.alert('Erreur', "Impossible d'enregistrer le score.");
+      Alert.alert(t('common.error'), t('wodResult.saveScoreFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -599,7 +599,7 @@ export default function WodResultScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title="Ton WOD" />
+      <AxScreenHeader title={t('wodResult.title')} />
 
       <ScrollView contentContainerStyle={[S.content, { paddingBottom: bottomBarPadding + 150 }]} showsVerticalScrollIndicator={false}>
         {formatRelache && (
@@ -611,16 +611,16 @@ export default function WodResultScreen() {
         <AxCard variant="featured" style={S.wodCard} testID="wodresult-card">
           <View style={S.wodCardInner}>
           <View style={S.wodCardTop}>
-            <AxTag label="Généré" tone="accent" testID="wodresult-generated-tag" />
+            <AxTag label={t('wodResult.generated')} tone="accent" testID="wodresult-generated-tag" />
             {wod.time_cap_seconds != null && (
               <View style={S.timeCap}>
                 <Clock color={c.textMuted} size={12} />
-                <Text style={S.timeCapText}>{borneParDuree ? 'Durée' : 'Cap'} {mmss(wod.time_cap_seconds)}</Text>
+                <Text style={S.timeCapText}>{borneParDuree ? t('wodResult.duration') : t('wodResult.cap')} {mmss(wod.time_cap_seconds)}</Text>
               </View>
             )}
             {metcon?.vest && metcon.vest.mode !== 'none' && (
               <Text style={S.timeCapText}>
-                Gilet {metcon.vest.mode === 'optional' ? 'optionnel ' : ''}{metcon.vest.load_kg_by_category[category] ?? ''} kg
+                {t(metcon.vest.mode === 'optional' ? 'wodResult.vestOptional' : 'wodResult.vest', { kg: metcon.vest.load_kg_by_category[category] ?? '' })}
               </Text>
             )}
           </View>
@@ -681,13 +681,13 @@ export default function WodResultScreen() {
               <View style={S.estRow}>
                 <Text style={S.estBig} testID="wodresult-estimate">{minutesText(muscu.estimate.minutes)}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={S.estLabel}>Durée estimée</Text>
-                  <Text style={S.estTarget}>{muscu.blocks[0].exercises.length} exercices · repos compris</Text>
+                  <Text style={S.estLabel}>{t('wodResult.estimated')}</Text>
+                  <Text style={S.estTarget}>{t('wodResult.exercisesRestIncluded', { count: muscu.blocks[0].exercises.length })}</Text>
                 </View>
               </View>
-              <Text style={S.stimulus}>Stimulus · RPE {fmtNum(muscu.stimulus.rpe)} — {muscu.stimulus.note}</Text>
+              <Text style={S.stimulus}>{t('wodResult.stimulus', { rpe: fmtNum(muscu.stimulus.rpe), note: muscu.stimulus.note })}</Text>
               {muscu.after_class && muscu.after_class.excluded_muscles.length > 0 && (
-                <Text style={S.afterClass}>Après ma classe : muscles évités {muscu.after_class.excluded_muscles.join(', ')}.</Text>
+                <Text style={S.afterClass}>{t('wodResult.afterClassMuscles', { list: muscu.after_class.excluded_muscles.join(', ') })}</Text>
               )}
               </View>
             </AxCard>
@@ -713,7 +713,7 @@ export default function WodResultScreen() {
                       {m.round != null ? <Text style={S.moveRound}>R{m.round} · </Text> : null}
                       <Text style={[S.moveQty, { color: accent }]}>{qtyText(m, metcon.blocks[0])}</Text> {m.name}
                     </Text>
-                    <Text style={S.moveSub}>{line ?? 'Toutes catégories'}</Text>
+                    <Text style={S.moveSub}>{line ?? t('wodResult.allCategories')}</Text>
                   </View>
                   {open
                     ? <ChevronUp color={c.textMuted} size={18} />
@@ -743,12 +743,12 @@ export default function WodResultScreen() {
               {estimate ? minutesText(estimate.minutes) : minutesText(metcon.estimate.reference_minutes)}
             </Text>
             <View style={{ flex: 1 }}>
-              <Text style={S.estLabel}>Durée estimée · {CATEGORY_LABEL[category]}</Text>
-              <Text style={S.estTarget}>cible {estimate?.target ?? '—'}</Text>
+              <Text style={S.estLabel}>{t('wodResult.estimatedFor', { category: CATEGORY_LABEL[category] })}</Text>
+              <Text style={S.estTarget}>{t('wodResult.target', { target: estimate?.target ?? '—' })}</Text>
             </View>
           </View>
           <TouchableOpacity style={S.estLink} onPress={() => setAllCategories((v) => !v)} activeOpacity={0.7} testID="wodresult-all-categories">
-            <Text style={[S.estLinkText, { color: accent }]}>{allCategories ? 'Masquer les catégories' : 'Voir toutes les catégories'}</Text>
+            <Text style={[S.estLinkText, { color: accent }]}>{allCategories ? t('wodResult.hideCategories') : t('wodResult.showCategories')}</Text>
             {allCategories ? <ChevronUp color={accent} size={14} /> : <ChevronDown color={accent} size={14} />}
           </TouchableOpacity>
           {allCategories && (
@@ -764,9 +764,9 @@ export default function WodResultScreen() {
               })}
             </View>
           )}
-          <Text style={S.stimulus}>Stimulus · RPE {fmtNum(wod.stimulus.rpe)} — {wod.stimulus.note}</Text>
+          <Text style={S.stimulus}>{t('wodResult.stimulus', { rpe: fmtNum(wod.stimulus.rpe), note: wod.stimulus.note })}</Text>
           {metcon.after_class && (metcon.after_class.excluded_patterns.length > 0 || metcon.after_class.excluded_families.length > 0) && (
-            <Text style={S.afterClass}>Complément : évite {[...metcon.after_class.excluded_patterns, ...metcon.after_class.excluded_families].join(', ')}.</Text>
+            <Text style={S.afterClass}>{t('wodResult.complementAvoids', { list: [...metcon.after_class.excluded_patterns, ...metcon.after_class.excluded_families].join(', ') })}</Text>
           )}
           </View>
         </AxCard>
@@ -780,23 +780,23 @@ export default function WodResultScreen() {
         <View style={S.iconRow}>
           <TouchableOpacity style={S.iconBtn} onPress={onRedraw} disabled={redrawing} activeOpacity={0.8} testID="wodresult-redraw">
             {redrawing ? <ActivityIndicator color={accent} size="small" /> : <RefreshCw size={18} color={accent} />}
-            <Text style={S.iconText}>Re-tirer</Text>
+            <Text style={S.iconText}>{t('wodResult.redraw')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={S.iconBtn} onPress={onSave} disabled={saving || !!savedId} activeOpacity={0.8} testID="wodresult-save">
             {saving ? <ActivityIndicator color={c.text} size="small" /> : savedId ? <Check size={18} color={accent} /> : <Bookmark size={18} color={c.text} />}
-            <Text style={S.iconText}>{savedId ? 'Enregistré' : 'Enregistrer'}</Text>
+            <Text style={S.iconText}>{savedId ? t('wodResult.saved') : t('common.save')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={S.iconBtn} onPress={onFavorite} activeOpacity={0.8} testID="wodresult-favorite">
             <Heart size={18} color={c.danger} fill={favorite ? c.danger : 'transparent'} />
-            <Text style={S.iconText}>Favori</Text>
+            <Text style={S.iconText}>{t('wodResult.favorite')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={S.iconBtn} onPress={() => setTimerOpen(true)} activeOpacity={0.8} testID="wodresult-timer-bar">
             <TimerIcon size={18} color={c.text} />
-            <Text style={S.iconText}>Minuteur</Text>
+            <Text style={S.iconText}>{t('training.tools.timer')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={S.iconBtn} onPress={() => setMenu(true)} activeOpacity={0.8} testID="wodresult-more">
             <MoreHorizontal size={18} color={c.text} />
-            <Text style={S.iconText}>Plus</Text>
+            <Text style={S.iconText}>{t('wodResult.more')}</Text>
           </TouchableOpacity>
         </View>
         <View style={S.ctaRow}>
@@ -804,8 +804,8 @@ export default function WodResultScreen() {
             <AxButton
               variant="outline"
               icon={boxWodId ? Check : ClipboardList}
-              label={boxWodId ? 'Ajouté' : 'Au Whiteboard'}
-              accessibilityLabel={boxWodId ? 'Sur le Whiteboard' : 'Ajouter au Whiteboard'}
+              label={boxWodId ? t('wodResult.added') : t('wodResult.toWhiteboard')}
+              accessibilityLabel={boxWodId ? t('wodResult.onWhiteboardA11y') : t('wodResult.addToWhiteboard')}
               numberOfLines={1}
               onPress={onAddToWhiteboard}
               loading={adding}
@@ -817,8 +817,8 @@ export default function WodResultScreen() {
             <AxButton
               variant="accent"
               icon={Trophy}
-              label={submittedScore ? 'Modifier' : 'Mon score'}
-              accessibilityLabel={submittedScore ? 'Modifier mon score' : 'Saisir mon score'}
+              label={submittedScore ? t('common.edit') : t('wodResult.myScore')}
+              accessibilityLabel={submittedScore ? t('wodResult.editMyScore') : t('wodResult.enterMyScore')}
               numberOfLines={1}
               onPress={() => setScoreModal(true)}
               fullWidth
@@ -833,23 +833,23 @@ export default function WodResultScreen() {
       <Modal visible={wbModal} transparent animationType="fade" onRequestClose={() => setWbModal(false)}>
         <TouchableOpacity style={S.modalBg} activeOpacity={1} onPress={() => setWbModal(false)}>
           <TouchableOpacity activeOpacity={1} style={S.modalSheet} onPress={() => {}}>
-            <Text style={S.modalTitle}>Ajouter au Whiteboard</Text>
+            <Text style={S.modalTitle}>{t('wodResult.addToWhiteboard')}</Text>
             <Text style={S.modalText}>
-              {muscu ? 'Un bloc par exercice, à valider et scorer un par un.' : 'Le WOD rejoint « Mes WODs perso » à la date choisie.'}
+              {muscu ? t('wodResult.wbMuscuHint') : t('wodResult.wbHint')}
             </Text>
             <DateField style={S.input} value={wbDate} onChangeText={setWbDate} theme={theme} />
             <View style={S.dayRow}>
-              {([[-1, 'Hier'], [0, "Aujourd'hui"], [1, 'Demain']] as const).map(([d, label]) => (
+              {([[-1, 'training.last.yesterday'], [0, 'training.last.today'], [1, 'wodResult.tomorrow']] as const).map(([d, labelKey]) => (
                 <AxChip
-                  key={label}
-                  label={label}
+                  key={labelKey}
+                  label={t(labelKey)}
                   onPress={() => { const x = new Date(); x.setDate(x.getDate() + d); setWbDate(x.toISOString().slice(0, 10)); }}
                   testID={`wodresult-wb-day-${d}`}
                 />
               ))}
             </View>
             <View style={S.modalCta}>
-              <AxButton label="Ajouter" onPress={onConfirmWhiteboard} disabled={!DATE_ISO.test(wbDate)} fullWidth testID="wodresult-wb-confirm" />
+              <AxButton label={t('bo.interComp.add')} onPress={onConfirmWhiteboard} disabled={!DATE_ISO.test(wbDate)} fullWidth testID="wodresult-wb-confirm" />
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
@@ -869,11 +869,11 @@ export default function WodResultScreen() {
           <Pressable style={[S.menuSheet, { paddingBottom: insets.bottom + 16 }]} onPress={() => {}}>
             <TouchableOpacity style={S.menuItem} onPress={onCopy} activeOpacity={0.7} testID="wodresult-copy">
               <Copy size={18} color={c.text} />
-              <Text style={S.menuItemText}>Copier le WOD</Text>
+              <Text style={S.menuItemText}>{t('wodResult.copyWod')}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={S.menuItem} onPress={onShare} activeOpacity={0.7} testID="wodresult-share">
               <Share2 size={18} color={c.text} />
-              <Text style={S.menuItemText}>Partager</Text>
+              <Text style={S.menuItemText}>{t('common.share')}</Text>
             </TouchableOpacity>
           </Pressable>
         </Pressable>
@@ -884,31 +884,31 @@ export default function WodResultScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={S.modalBg}>
           <View style={S.modalSheet}>
             <View style={S.modalHead}>
-              <Text style={S.modalTitle}>Mon score</Text>
+              <Text style={S.modalTitle}>{t('wodResult.myScore')}</Text>
               <TouchableOpacity onPress={() => setScoreModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}><X size={20} color={c.textMuted} /></TouchableOpacity>
             </View>
             {muscu ? (
               <>
-                <Text style={S.modalLabel}>Tonnage des séries saisies</Text>
+                <Text style={S.modalLabel}>{t('wodResult.tonnageTitle')}</Text>
                 <Text style={S.estBig} testID="wodresult-muscu-tonnage">{fmtNum(totalTonnage(performed))} kg</Text>
-                <Text style={S.estTarget}>charge × reps, d'après la carte Séance — les badges comptent les reps réellement faites.</Text>
+                <Text style={S.estTarget}>{t('wodResult.tonnageHint')}</Text>
               </>
             ) : (<>
-            <Text style={S.modalLabel}>Catégorie réalisée</Text>
+            <Text style={S.modalLabel}>{t('wodResult.categoryDone')}</Text>
             <View style={S.chipRow}>
               {categories.map((cat) => (
                 <AxChip key={cat} label={CATEGORY_LABEL[cat]} selected={scoreCategory === cat} onPress={() => setScoreCategory(cat)} testID={`wodresult-score-cat-${cat}`} />
               ))}
             </View>
-            <Text style={S.modalLabel}>Type de score</Text>
+            <Text style={S.modalLabel}>{t('wodResult.scoreType')}</Text>
             <View style={S.chipRow}>
               {SCORE_TYPES.map((s) => (
-                <AxChip key={s.key} label={s.label} selected={scoreType === s.key} onPress={() => { setScoreType(s.key); setScoreInput(''); }} testID={`wodresult-score-type-${s.key}`} />
+                <AxChip key={s.key} label={t(s.labelKey)} selected={scoreType === s.key} onPress={() => { setScoreType(s.key); setScoreInput(''); }} testID={`wodresult-score-type-${s.key}`} />
               ))}
             </View>
             <View style={S.field}>
               <AxTextField
-                placeholder={scoreType === 'time' ? 'mm:ss' : scoreType === 'rounds' ? 'Rounds (ex. 7)' : scoreType === 'weight' ? 'kg' : 'Reps totales'}
+                placeholder={scoreType === 'time' ? 'mm:ss' : scoreType === 'rounds' ? t('wodResult.phRounds') : scoreType === 'weight' ? 'kg' : t('wodResult.phReps')}
                 keyboardType="numeric"
                 value={scoreInput}
                 onChangeText={(v) => setScoreInput(scoreType === 'time' ? maskTimeInput(v) : v)}
@@ -918,7 +918,7 @@ export default function WodResultScreen() {
             </>)}
             <View style={S.field}>
               <AxTextField
-                placeholder="Notes (optionnel)"
+                placeholder={t('wodResult.phNotes')}
                 value={scoreNotes}
                 onChangeText={setScoreNotes}
                 testID="wodresult-score-notes"
@@ -926,7 +926,7 @@ export default function WodResultScreen() {
             </View>
             <View style={S.modalCta}>
               <AxButton
-                label="Enregistrer mon score"
+                label={t('wodResult.submitScore')}
                 onPress={onSubmitScore}
                 loading={submitting}
                 disabled={submitting}

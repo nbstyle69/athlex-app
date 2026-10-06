@@ -81,15 +81,25 @@ describe('options du formulaire', () => {
 describe('page résultat', () => {
   it('Re-tirer (nouvelle graine, mêmes paramètres), Enregistrer, Favori, Minuteur, Whiteboard, Saisir mon score ; Copier dans le menu ⋯', () => {
     expect(result).toContain('redraw(user, currentBox?.id, screen)');
-    for (const label of ['Re-tirer', 'Favori', 'Minuteur', 'Plus', 'Copier le WOD']) expect(result).toContain(`>${label}</Text>`);
-    expect(result).toContain("savedId ? 'Enregistré' : 'Enregistrer'");
-    expect(result).toContain("boxWodId ? 'Sur le Whiteboard' : 'Ajouter au Whiteboard'");
-    expect(result).toContain("submittedScore ? 'Modifier mon score' : 'Saisir mon score'");
+    // Libellés par t() (i18n 1b) : la clé est dans l'écran, le texte français inchangé dans fr.json.
+    const fr = (k: string) => k.split('.').reduce((o: any, p) => o?.[p], JSON.parse(read('src', 'i18n', 'locales', 'fr.json')));
+    for (const [label, key] of [['Re-tirer', 'wodResult.redraw'], ['Favori', 'wodResult.favorite'], ['Minuteur', 'training.tools.timer'], ['Plus', 'wodResult.more'], ['Copier le WOD', 'wodResult.copyWod']]) {
+      expect(result).toContain(`>{t('${key}')}</Text>`);
+      expect(fr(key)).toBe(label);
+    }
+    expect(result).toContain("savedId ? t('wodResult.saved') : t('common.save')");
+    expect([fr('wodResult.saved'), fr('common.save')]).toEqual(['Enregistré', 'Enregistrer']);
+    expect(result).toContain("boxWodId ? t('wodResult.onWhiteboardA11y') : t('wodResult.addToWhiteboard')");
+    expect([fr('wodResult.onWhiteboardA11y'), fr('wodResult.addToWhiteboard')]).toEqual(['Sur le Whiteboard', 'Ajouter au Whiteboard']);
+    expect(result).toContain("submittedScore ? t('wodResult.editMyScore') : t('wodResult.enterMyScore')");
+    expect([fr('wodResult.editMyScore'), fr('wodResult.enterMyScore')]).toEqual(['Modifier mon score', 'Saisir mon score']);
     expect(result).toContain('<TimerLaunchModal');
-    expect(result).toContain('<AxTag label="Généré" tone="accent"');
+    expect(result).toContain("<AxTag label={t('wodResult.generated')} tone=\"accent\"");
+    expect(fr('wodResult.generated')).toBe('Généré');
     expect(result).toContain("navigation.navigate('Profile', { editLevel: true })");
     expect(result).not.toContain('theme.textMuted, marginTop');
-    expect(result).toContain('Catégorie réalisée');
+    expect(result).toContain("t('wodResult.categoryDone')");
+    expect(fr('wodResult.categoryDone')).toBe('Catégorie réalisée');
     expect(result).toMatch(/Share\.share\(\{ message: `\$\{wod\.title\}\\n\$\{wod\.description\}` \}\)/);
     expect(result).not.toContain('wod.description}</Text>');
   });

@@ -182,15 +182,25 @@ export function roundsRepsToTotal(
   return Math.max(0, Math.round(rounds)) * Math.max(0, repsPerRound) + Math.max(0, Math.round(reps));
 }
 
+/**
+ * Libellé des tours d'un score AMRAP, fourni par l'écran (`n => t('score.amrapRounds', { count: n })`) :
+ * ce fichier n'importe pas l'i18n (il est aussi empaqueté par un script Node).
+ */
+export type RoundsLabel = (rounds: number) => string;
+
+// Repli des écrans pas encore traduits (PR Compétition).
+const roundsLabelFr: RoundsLabel = (n) => `${n} tour${n > 1 ? 's' : ''}`; // i18n-ignore : repli français
+
 // "123 reps (3 tours + 12)" — or just "123 reps" when reps_per_round is unknown.
 export function formatAmrapScore(
   total: number,
   repsPerRound: number | null | undefined,
+  roundsLabel: RoundsLabel = roundsLabelFr,
 ): string {
   const repsLabel = `${total} reps`;
   if (!repsPerRound || repsPerRound <= 0) return repsLabel;
   const { rounds, reps } = amrapTotalToRoundsReps(total, repsPerRound);
-  return `${repsLabel} (${rounds} tour${rounds > 1 ? 's' : ''}${reps > 0 ? ` + ${reps}` : ''})`;
+  return `${repsLabel} (${roundsLabel(rounds)}${reps > 0 ? ` + ${reps}` : ''})`;
 }
 
 // ── Time (For Time) helpers ───────────────────────────────────────────────────
@@ -260,6 +270,7 @@ export function formatScoreDisplay(
   wodType: string | null | undefined,
   repsPerRound?: number | null,
   capped?: boolean | null,
+  roundsLabel?: RoundsLabel,
 ): string {
   const raw = (value ?? '').toString();
   if (isTimeScoredType(wodType)) {
@@ -268,7 +279,7 @@ export function formatScoreDisplay(
   }
   if (isRepsScoredType(wodType)) {
     const n = parseFloat(raw);
-    if (!isNaN(n)) return formatAmrapScore(n, repsPerRound);
+    if (!isNaN(n)) return formatAmrapScore(n, repsPerRound, roundsLabel);
   }
   return raw;
 }

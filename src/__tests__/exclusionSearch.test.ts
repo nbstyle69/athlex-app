@@ -1,14 +1,14 @@
 import { CATALOG_SNAPSHOT } from '../../packages/wod-engine/src/catalog/snapshot';
 import { equipmentOptions } from '../screens/wod/wodGeneratorOptions';
-import { EQUIPMENT_LABELS_FR } from '../utils/wod/equipmentLabels';
+import { EQUIPMENT_LABEL_KEYS, equipmentLabel } from '../utils/wod/equipmentLabels';
 import { searchExclusions } from '../utils/wod/exclusionSearch';
 
-const equipment = Object.keys(EQUIPMENT_LABELS_FR);
+const equipment = Object.keys(EQUIPMENT_LABEL_KEYS);
 const search = (query: string, excluded: string[] = [], musculation = false) =>
   searchExclusions(CATALOG_SNAPSHOT, equipment, query, excluded, musculation);
 
 describe('C1 — recherche sur les libellés affichés', () => {
-  it.each(Object.entries(EQUIPMENT_LABELS_FR))('%s est retrouvé par un mot de « %s »', (id, label) => {
+  it.each(equipment.map((id) => [id, equipmentLabel(id)]))('%s est retrouvé par un mot de « %s »', (id, label) => {
     const word = label.split(/[\s-]+/).sort((a, b) => b.length - a.length)[0]
       .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
     expect(search(word)).toContainEqual({ id, name: label, kind: 'equipment' });
