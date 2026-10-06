@@ -213,6 +213,17 @@ Supabase/Resend.
 
 ## En cours
 
+**Sécurité, stockage `partner-logos` : écriture réservée aux admins** (migration `20270148`, **non appliquée en prod**,
+PR non mergée ; point 2 d'« Avant l'App Store »). Constat du 06/10/2026 en lecture seule : les policies
+`admin_upload/update/delete_partner_logo` ne demandaient que `auth.uid() IS NOT NULL` — tout compte connecté
+déposait, remplaçait ou supprimait un logo de partenaire (stockage public, 0 objet, table `partners` vide). Dépôt,
+modification et suppression passent au rôle `authenticated` avec `profiles.role` `super_admin` ou `admin` (même
+prédicat que `admin_manage_partners` et le stockage `assets`) ; la modification juge aussi la nouvelle ligne.
+Lecture publique, stockage public, `admin_manage_partners` et `prevent_role_escalation` inchangés. Test
+`supabase/tests/partner_logos_admin.sql` (P0 à P6, dont la lecture du rôle sous RLS), contrôle S6 de l'audit des
+droits, retour arrière `supabase/retours/20270148000000_partner_logos_admin.sql`. À appliquer en prod **avant** le
+merge (sinon `grants-prod.yml` passe rouge sur S6, comme pour 20270136 et 20270137).
+
 **Chantier anglais, PR 0b : garde stricte (outillage et tests, aucune migration ; PR non mergée).** Dans un fichier déclaré
 traduit (`scripts/i18n/fichiers-traduits.json`), la garde refuse désormais tout texte affiché hors `t()`, quelle que
 soit sa langue, sauf les textes sans lettre, les termes techniques de `scripts/i18n/termes-techniques.json` et les lignes
