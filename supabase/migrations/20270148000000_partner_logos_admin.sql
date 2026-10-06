@@ -2,7 +2,17 @@
 -- Stockage « partner-logos » : dépôt, modification et suppression réservés aux
 -- admins de la plateforme
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 06/10/2026 à 22:01 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et storage avec droits
+-- db-dumps/2026-10-06/athlex-prod-public-storage-20261006T220052Z.dump,
+-- sha256 f87e3d925dacdf8283aa3a171b77ead7099935a6bb04049b82fc1d82f1cd84d0 vérifié
+-- après aller-retour, 145 TABLE DATA, 446 ACL, 380 POLICY ; précontrôle en
+-- lecture seule identique au constat ci-dessous ; vérifications : anciennes
+-- policies absentes, partner_logos_admin_insert, _update et _delete à
+-- authenticated, md5 2f0edf55546927699dcd713983c1736d comme au rejeu ; lecture,
+-- stockage, admin_manage_partners, prevent_role_escalation, objets et partenaires
+-- inchangés ; audit des droits grants-prod.yml sur fix/partner-logos-admin
+-- 41/41, S6 compris — 40/40 + S6.)
 --
 -- Constat en prod, lecture seule (session en default_transaction_read_only et
 -- transaction READ ONLY), le 06/10/2026 — md5 calculés par la base, avec le
