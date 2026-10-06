@@ -20,22 +20,23 @@ import {
 
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'Timer'>;
 
-const TABS: { key: TimerType; label: string; icon: LucideIcon; desc: string }[] = [
-  { key: 'for-time',  label: 'FOR TIME',     icon: Timer,        desc: 'Chrono montant avec cap optionnel' },
-  { key: 'amrap',     label: 'AMRAP',        icon: RefreshCw,    desc: 'As Many Rounds As Possible' },
-  { key: 'emom',      label: 'EMOM',         icon: Radio,        desc: 'Every Minute On the Minute' },
-  { key: 'tabata',    label: 'TABATA',       icon: Zap,          desc: 'Intervalles travail / repos' },
-  { key: 'ywyr',      label: 'YWYR',         icon: BicepsFlexed, desc: 'Your Work Your Rest' },
-  { key: 'splits',    label: 'SPLITS',       icon: Scissors,     desc: 'Rounds chronométrés séparément' },
-  { key: 'libre',     label: 'PERSONNALISÉ', icon: Wrench,       desc: 'Séquence de blocs sur mesure' },
+// Libellés et descriptions : clés i18n (`timer.run.type.*`, `timer.config.desc.*`), traduites au rendu.
+const TABS: { key: TimerType; labelKey: string; icon: LucideIcon; descKey: string }[] = [
+  { key: 'for-time',  labelKey: 'timer.run.type.forTime', icon: Timer,        descKey: 'timer.config.desc.forTime' },
+  { key: 'amrap',     labelKey: 'timer.run.type.amrap',   icon: RefreshCw,    descKey: 'timer.config.desc.amrap' },
+  { key: 'emom',      labelKey: 'timer.run.type.emom',    icon: Radio,        descKey: 'timer.config.desc.emom' },
+  { key: 'tabata',    labelKey: 'timer.run.type.tabata',  icon: Zap,          descKey: 'timer.config.desc.tabata' },
+  { key: 'ywyr',      labelKey: 'timer.run.type.ywyr',    icon: BicepsFlexed, descKey: 'timer.config.desc.ywyr' },
+  { key: 'splits',    labelKey: 'timer.run.type.splits',  icon: Scissors,     descKey: 'timer.config.desc.splits' },
+  { key: 'libre',     labelKey: 'timer.run.type.custom',  icon: Wrench,       descKey: 'timer.config.desc.custom' },
 ];
 
-const BLOCK_TYPES: { key: BlockType; label: string }[] = [
-  { key: 'for-time', label: 'FOR TIME' },
-  { key: 'amrap',    label: 'AMRAP' },
-  { key: 'emom',     label: 'EMOM' },
-  { key: 'tabata',   label: 'TABATA' },
-  { key: 'ywyr',     label: 'YWYR' },
+const BLOCK_TYPES: { key: BlockType; labelKey: string }[] = [
+  { key: 'for-time', labelKey: 'timer.run.type.forTime' },
+  { key: 'amrap',    labelKey: 'timer.run.type.amrap' },
+  { key: 'emom',     labelKey: 'timer.run.type.emom' },
+  { key: 'tabata',   labelKey: 'timer.run.type.tabata' },
+  { key: 'ywyr',     labelKey: 'timer.run.type.ywyr' },
 ];
 
 function makeBlock(): SeqBlock {
@@ -59,26 +60,28 @@ const EMOM_INTERVALS = [1, 2, 3, 4, 5];
 function Stepper({
   value, onDec, onInc, unit, minVal = 0,
 }: { value: number; onDec: () => void; onInc: () => void; unit: string; minVal?: number }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const S = createStyles(theme.ax);
   return (
     <View style={S.stepperRow}>
-      <AxIconButton icon={Minus} onPress={onDec} disabled={value <= minVal} accessibilityLabel={`Moins (${unit})`} />
+      <AxIconButton icon={Minus} onPress={onDec} disabled={value <= minVal} accessibilityLabel={t('timer.config.less', { unit })} />
       <View style={S.stepperValueBox}>
         <Text style={S.stepperValue}>{value}</Text>
         <Text style={S.stepperUnit}>{unit}</Text>
       </View>
-      <AxIconButton icon={Plus} onPress={onInc} accessibilityLabel={`Plus (${unit})`} />
+      <AxIconButton icon={Plus} onPress={onInc} accessibilityLabel={t('timer.config.more', { unit })} />
     </View>
   );
 }
 
 function CountdownPicker({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const { t } = useTranslation();
   const { theme } = useTheme();
   const S = createStyles(theme.ax);
   return (
     <AxCard>
-      <Text style={S.overline}>COMPTE À REBOURS</Text>
+      <Text style={S.overline}>{t('timer.config.countdown')}</Text>
       <View testID="timer-countdown-opts" style={S.countdownRow}>
         {COUNTDOWN_OPTS.map((v) => (
           <AxChip key={v} equal testID={`timer-countdown-opt-${v}`} label={v === 0 ? '—' : `${v}s`} selected={value === v} onPress={() => onChange(v)} />
@@ -177,11 +180,11 @@ export default function TimerScreen() {
         <View style={S.seqBlockNum}>
           <Text style={S.seqBlockNumText}>1</Text>
         </View>
-        <AxTag label="SPLITS" />
+        <AxTag label={t('timer.run.type.splits')} />
       </View>
 
       <View style={S.seqConfigRow}>
-        <Text style={S.overline}>DURÉE PAR ROUND</Text>
+        <Text style={S.overline}>{t('timer.config.durationPerRound')}</Text>
         <View style={S.stepperPair}>
           <View style={S.flex1}>
             <Stepper value={splitsMin} unit="min" minVal={0}
@@ -190,18 +193,18 @@ export default function TimerScreen() {
             />
           </View>
           <View style={S.flex1}>
-            <Stepper value={splitsSec} unit="sec" minVal={0}
+            <Stepper value={splitsSec} unit={t('timer.config.unitSec')} minVal={0}
               onDec={() => setSplitsSec(v => v % 5 === 0 ? Math.max(0, v - 5) : Math.floor(v / 5) * 5)}
               onInc={() => setSplitsSec(v => Math.min(55, v % 5 === 0 ? v + 5 : Math.ceil(v / 5) * 5))}
             />
           </View>
         </View>
-        <Text style={S.overline}>ROUNDS</Text>
-        <Stepper value={splitsRounds} unit="rounds" minVal={1}
+        <Text style={S.overline}>{t('timer.config.rounds')}</Text>
+        <Stepper value={splitsRounds} unit={t('timer.config.unitRounds')} minVal={1}
           onDec={() => setSplitsRounds(v => Math.max(1, v - 1))}
           onInc={() => setSplitsRounds(v => v + 1)}
         />
-        <Text style={S.cardHint}>Tap entre rounds · Récup libre</Text>
+        <Text style={S.cardHint}>{t('timer.config.splitsHint')}</Text>
       </View>
     </AxCard>
   );
@@ -210,13 +213,13 @@ export default function TimerScreen() {
     <>
       {(blk.type === 'amrap' || blk.type === 'for-time') && (
         <View style={S.seqConfigRow}>
-          <Text style={S.overline}>{blk.type === 'amrap' ? 'DURÉE' : 'CAP MAX (0 = ∞)'}</Text>
+          <Text style={S.overline}>{blk.type === 'amrap' ? t('timer.config.duration') : t('timer.config.capMax')}</Text>
           <Stepper value={blk.durationMin} unit="min" minVal={0}
             onDec={() => updateBlock(blk.id, { durationMin: Math.max(0, blk.durationMin - 1) })}
             onInc={() => updateBlock(blk.id, { durationMin: blk.durationMin + 1 })}
           />
-          {blk.type === 'amrap' && <Text style={S.cardHint}>Compte à rebours · Bip final</Text>}
-          {blk.type === 'for-time' && <Text style={S.cardHint}>Chrono montant · Stoppe avec ■</Text>}
+          {blk.type === 'amrap' && <Text style={S.cardHint}>{t('timer.config.amrapHint')}</Text>}
+          {blk.type === 'for-time' && <Text style={S.cardHint}>{t('timer.config.forTimeHint')}</Text>}
         </View>
       )}
       {blk.type === 'emom' && (() => {
@@ -230,10 +233,10 @@ export default function TimerScreen() {
         const totalSs = totalSec % 60;
         return (
         <View style={S.seqConfigRow}>
-          <Text style={S.overline}>TYPE</Text>
+          <Text style={S.overline}>{t('timer.config.type')}</Text>
           <View style={S.chipRow}>
             {[1,2,3,4,5].map(iv => (
-              <AxChip key={iv} label={iv === 1 ? 'EMOM' : `E${iv}MOM`} selected={blk.emomInterval === iv}
+              <AxChip key={iv} label={iv === 1 ? t('timer.run.type.emom') : t('bo.wods.emomEvery', { n: iv })} selected={blk.emomInterval === iv}
                 onPress={() => {
                   // Conserve la durée totale lors du changement d'interval, ajuste les rounds
                   const prevIvSec = isPerso ? customSec : blk.emomInterval * 60;
@@ -243,12 +246,12 @@ export default function TimerScreen() {
                 }}
               />
             ))}
-            <AxChip label="PERSO" selected={isPerso} onPress={() => updateBlock(blk.id, { emomInterval: 0 })} />
+            <AxChip label={t('timer.config.emomCustom')} selected={isPerso} onPress={() => updateBlock(blk.id, { emomInterval: 0 })} />
           </View>
 
           {isPerso && (
             <>
-              <Text style={S.overline}>INTERVALLE PERSO</Text>
+              <Text style={S.overline}>{t('timer.config.customInterval')}</Text>
               <View style={S.stepperPair}>
                 <View style={S.flex1}>
                   <Stepper value={customMin} unit="min" minVal={0}
@@ -257,7 +260,7 @@ export default function TimerScreen() {
                   />
                 </View>
                 <View style={S.flex1}>
-                  <Stepper value={customSs} unit="sec" minVal={0}
+                  <Stepper value={customSs} unit={t('timer.config.unitSec')} minVal={0}
                     onDec={() => updateBlock(blk.id, { emomCustomSec: Math.max(1, customSec % 5 === 0 ? customSec - 5 : Math.floor(customSec / 5) * 5) })}
                     onInc={() => updateBlock(blk.id, { emomCustomSec: customSec % 5 === 0 ? customSec + 5 : Math.ceil(customSec / 5) * 5 })}
                   />
@@ -266,39 +269,39 @@ export default function TimerScreen() {
             </>
           )}
 
-          <Text style={S.overline}>ROUNDS</Text>
-          <Stepper value={blk.emomRounds} unit="rounds" minVal={1}
+          <Text style={S.overline}>{t('timer.config.rounds')}</Text>
+          <Stepper value={blk.emomRounds} unit={t('timer.config.unitRounds')} minVal={1}
             onDec={() => updateBlock(blk.id, { emomRounds: Math.max(1, blk.emomRounds - 1) })}
             onInc={() => updateBlock(blk.id, { emomRounds: blk.emomRounds + 1 })}
           />
           <Text style={S.cardHint}>
-            Bip au début de chaque interval · Total : {totalMm} min{totalSs ? ` ${totalSs}s` : ''}
+            {t('timer.config.emomHint', { total: `${totalMm} min${totalSs ? ` ${totalSs}s` : ''}` })}
           </Text>
         </View>
         );
       })()}
       {blk.type === 'tabata' && (
         <View style={S.seqConfigRow}>
-          <Text style={S.overline}>TRAVAIL</Text>
-          <Stepper value={blk.workSec} unit="sec" minVal={5}
+          <Text style={S.overline}>{t('timer.run.work')}</Text>
+          <Stepper value={blk.workSec} unit={t('timer.config.unitSec')} minVal={5}
             onDec={() => updateBlock(blk.id, { workSec: Math.max(5, blk.workSec - 5) })}
             onInc={() => updateBlock(blk.id, { workSec: blk.workSec + 5 })}
           />
-          <Text style={S.overline}>REPOS</Text>
-          <Stepper value={blk.restSec} unit="sec" minVal={5}
+          <Text style={S.overline}>{t('timer.run.rest')}</Text>
+          <Stepper value={blk.restSec} unit={t('timer.config.unitSec')} minVal={5}
             onDec={() => updateBlock(blk.id, { restSec: Math.max(5, blk.restSec - 5) })}
             onInc={() => updateBlock(blk.id, { restSec: blk.restSec + 5 })}
           />
-          <Text style={S.overline}>ROUNDS</Text>
-          <Stepper value={blk.tabRounds} unit="rounds" minVal={1}
+          <Text style={S.overline}>{t('timer.config.rounds')}</Text>
+          <Stepper value={blk.tabRounds} unit={t('timer.config.unitRounds')} minVal={1}
             onDec={() => updateBlock(blk.id, { tabRounds: Math.max(1, blk.tabRounds - 1) })}
             onInc={() => updateBlock(blk.id, { tabRounds: blk.tabRounds + 1 })}
           />
-          <Text style={S.cardHint}>Total : {Math.floor((blk.workSec + blk.restSec) * blk.tabRounds / 60)} min {((blk.workSec + blk.restSec) * blk.tabRounds) % 60} s</Text>
+          <Text style={S.cardHint}>{t('timer.config.total', { total: `${Math.floor((blk.workSec + blk.restSec) * blk.tabRounds / 60)} min ${((blk.workSec + blk.restSec) * blk.tabRounds) % 60} s` })}</Text>
         </View>
       )}
       {blk.type === 'ywyr' && (
-        <Text style={S.cardHint}>Chrono libre · appuie sur FIN pour passer au repos</Text>
+        <Text style={S.cardHint}>{t('timer.config.ywyrHint')}</Text>
       )}
     </>
   );
@@ -314,7 +317,7 @@ export default function TimerScreen() {
             {activeTab === 'libre' ? (
               <View style={[S.chipRow, S.flex1]}>
                 {BLOCK_TYPES.map(bt => (
-                  <AxChip key={bt.key} label={bt.label} selected={blk.type === bt.key}
+                  <AxChip key={bt.key} label={t(bt.labelKey)} selected={blk.type === bt.key}
                     onPress={() => updateBlock(blk.id, { type: bt.key })} />
                 ))}
               </View>
@@ -325,7 +328,7 @@ export default function TimerScreen() {
             )}
             {seqBlocks.length > 1 && (
               <AxIconButton icon={Trash2} onPress={() => removeBlock(blk.id)}
-                accessibilityLabel={`Supprimer le bloc ${idx + 1}`} />
+                accessibilityLabel={t('timer.config.removeBlock', { n: idx + 1 })} />
             )}
           </View>
 
@@ -335,11 +338,11 @@ export default function TimerScreen() {
             <View style={S.seqPauseRow}>
               <View style={S.seqPauseTitle}>
                 <Pause color={c.textMuted} size={14} />
-                <Text style={S.seqPauseLabel}>Pause après</Text>
+                <Text style={S.seqPauseLabel}>{t('timer.config.pauseAfter')}</Text>
               </View>
               <View style={S.chipRow}>
                 {[0, 30, 60, 90, 120].map(sec => (
-                  <AxChip key={sec} label={sec === 0 ? 'Aucune' : `${sec}s`} selected={blk.pauseSec === sec}
+                  <AxChip key={sec} label={sec === 0 ? t('timer.config.pauseNone') : `${sec}s`} selected={blk.pauseSec === sec}
                     onPress={() => updateBlock(blk.id, { pauseSec: sec })} />
                 ))}
               </View>
@@ -347,7 +350,7 @@ export default function TimerScreen() {
           )}
         </AxCard>
       ))}
-      <AxButton label="Ajouter un bloc" icon={Plus} variant="dashed" fullWidth onPress={addBlock} />
+      <AxButton label={t('timer.config.addBlock')} icon={Plus} variant="dashed" fullWidth onPress={addBlock} />
     </>
   );
 
@@ -357,7 +360,7 @@ export default function TimerScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title="Minuteur" />
+      <AxScreenHeader title={t('training.tools.timer')} />
 
       {/* Liste de sélection */}
       <Modal visible={showTypePicker} transparent animationType="slide" onRequestClose={() => setShowTypePicker(false)}>
@@ -365,9 +368,10 @@ export default function TimerScreen() {
           <Pressable style={S.pickerBackdrop} onPress={() => setShowTypePicker(false)} testID="timer-type-backdrop" />
           <View style={S.pickerSheet} testID="timer-type-sheet">
             <View style={S.pickerHandle} />
-            <Text style={S.pickerTitle}>Choisir un format</Text>
-            {TABS.map(({ key, label, icon: Icon, desc }) => {
+            <Text style={S.pickerTitle}>{t('timer.config.chooseFormat')}</Text>
+            {TABS.map(({ key, labelKey, icon: Icon, descKey }) => {
               const active = activeTab === key;
+              const label = t(labelKey);
               return (
                 <AxCard key={key} testID={`timer-type-option-${key}`} accessibilityLabel={label} style={S.typeSelectorCard}
                   onPress={() => {
@@ -377,7 +381,7 @@ export default function TimerScreen() {
                   <Icon color={active ? c.accentText : c.textMuted} size={20} />
                   <View style={S.flex1}>
                     <Text style={[S.typeLabel, active && S.typeLabelActive]}>{label}</Text>
-                    <Text style={S.typeDesc}>{desc}</Text>
+                    <Text style={S.typeDesc}>{t(descKey)}</Text>
                   </View>
                   {active && <Check color={c.accentText} size={18} />}
                 </AxCard>
@@ -390,13 +394,13 @@ export default function TimerScreen() {
       <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
         {/* Sélecteur de type de minuteur */}
         <View style={S.typeSelector}>
-          <Text style={S.overline}>TYPE DE MINUTEUR</Text>
-          <AxCard onPress={() => setShowTypePicker(true)} accessibilityLabel={`Type de minuteur : ${activeType.label}`}
+          <Text style={S.overline}>{t('timer.config.timerType')}</Text>
+          <AxCard onPress={() => setShowTypePicker(true)} accessibilityLabel={t('timer.config.timerTypeA11y', { type: t(activeType.labelKey) })}
             testID="timer-type-selector" style={S.typeSelectorCard}>
             <ActiveIcon color={c.accentText} size={20} />
             <View style={S.flex1}>
-              <Text style={S.typeLabel}>{activeType.label}</Text>
-              <Text style={S.typeDesc}>{activeType.desc}</Text>
+              <Text style={S.typeLabel}>{t(activeType.labelKey)}</Text>
+              <Text style={S.typeDesc}>{t(activeType.descKey)}</Text>
             </View>
             <ChevronDown color={c.textMuted} size={20} />
           </AxCard>
@@ -411,30 +415,30 @@ export default function TimerScreen() {
           <View style={S.recOptRow}>
             <Camera color={c.textMuted} size={16} />
             <View style={S.flex1}>
-              <Text style={S.recOptLabel}>Enregistrer avec caméra</Text>
-              <Text style={S.recOptHint}>Active la vidéo pendant le chrono</Text>
+              <Text style={S.recOptLabel}>{t('timer.config.recordWithCamera')}</Text>
+              <Text style={S.recOptHint}>{t('timer.config.recordHint')}</Text>
             </View>
             <AxSwitch value={withCamera} onValueChange={setWithCamera}
-              accessibilityLabel="Enregistrer avec caméra" testID="timer-camera-switch" />
+              accessibilityLabel={t('timer.config.recordWithCamera')} testID="timer-camera-switch" />
           </View>
           {withCamera && (
             <>
               <View style={S.recOptRow}>
                 <Type color={c.textMuted} size={16} />
                 <View style={S.flex1}>
-                  <Text style={S.recOptLabel}>Titre</Text>
+                  <Text style={S.recOptLabel}>{t('timer.config.videoTitle')}</Text>
                   <AxTextField value={videoTitle} onChangeText={setVideoTitle} compact
-                    placeholder="Ex: Fran Sprint · Rx · 3 min 12s" maxLength={60} testID="timer-video-title" />
+                    placeholder={t('timer.config.videoTitlePlaceholder')} maxLength={60} testID="timer-video-title" />
                 </View>
               </View>
               <View style={S.recOptRow}>
                 <Clock color={c.textMuted} size={16} />
                 <View style={S.flex1}>
-                  <Text style={S.recOptLabel}>Timestamp</Text>
-                  <Text style={S.recOptHint}>Date &amp; heure en overlay</Text>
+                  <Text style={S.recOptLabel}>{t('timer.config.timestamp')}</Text>
+                  <Text style={S.recOptHint}>{t('timer.config.timestampHint')}</Text>
                 </View>
                 <AxSwitch value={withTimestamp} onValueChange={setWithTimestamp}
-                  accessibilityLabel="Timestamp" testID="timer-timestamp-switch" />
+                  accessibilityLabel={t('timer.config.timestamp')} testID="timer-timestamp-switch" />
               </View>
               <View style={S.recOptRow}>
                 <Video color={c.textMuted} size={16} />
@@ -473,7 +477,7 @@ export default function TimerScreen() {
         {activeTab === 'splits' ? renderSplitsConfig() : renderBlocks()}
 
         <View style={S.spacer} />
-        <AxButton label="Démarrer" variant="accent" icon={withCamera ? Video : Timer} fullWidth onPress={launch}
+        <AxButton label={t('wodGenerator.start')} variant="accent" icon={withCamera ? Video : Timer} fullWidth onPress={launch}
           testID="timer-start" />
       </ScrollView>
     </View>

@@ -226,6 +226,12 @@ Lecture publique, stockage public, `admin_manage_partners` et `prevent_role_esca
 droits, retour arrière `supabase/retours/20270148000000_partner_logos_admin.sql`. Appliquée **avant** le merge, pour
 que le `grants-prod.yml` du merge (S6) soit vert d'emblée, contrairement à 20270136 et 20270137.
 
+**Chantier anglais, PR 1a : minuteur, générateur, Musculation, partage (app seule, aucune migration ; PR non mergée).**
+Le minuteur (réglages, lancement, en cours en portrait et paysage, Split, design, vidéo), le générateur (Functional,
+Hybrid, Musculation et leurs options), la carte Séance de Musculation et « Partager ma perf » (écran et image) passent
+par `t()` en français et en anglais, texte français inchangé ; dates par `formatDate`, « Strength » en anglais ; les
+valeurs envoyées au moteur, à la base et aux préférences ne changent pas (mêmes paramètres dans les deux langues).
+
 **Chantier anglais, PR 0b : garde stricte (outillage et tests, aucune migration ; PR non mergée).** Dans un fichier déclaré
 traduit (`scripts/i18n/fichiers-traduits.json`), la garde refuse désormais tout texte affiché hors `t()`, quelle que
 soit sa langue, sauf les textes sans lettre, les termes techniques de `scripts/i18n/termes-techniques.json` et les lignes

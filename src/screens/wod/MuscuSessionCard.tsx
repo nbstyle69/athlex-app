@@ -35,10 +35,10 @@ export function schemeText(e: MuscuExercise): string {
 
 export function restText(rest_s: number): string {
   if (rest_s <= 0) return '';
-  if (rest_s < 60) return `repos ${rest_s} s`;
+  if (rest_s < 60) return i18n.t('muscu.restSec', { s: rest_s });
   const m = Math.floor(rest_s / 60);
   const s = rest_s % 60;
-  return s ? `repos ${m} min ${s.toString().padStart(2, '0')}` : `repos ${m} min`;
+  return s ? i18n.t('muscu.restMinSec', { m, s: s.toString().padStart(2, '0') }) : i18n.t('muscu.restMin', { m });
 }
 
 const fmtKg = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, ''));
@@ -161,7 +161,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
   return (
     <AxCard style={S.card} testID="muscu-session-card">
       <View style={S.cardInner}>
-      <Text style={S.section}>Séance</Text>
+      <Text style={S.section}>{i18n.t('muscu.session')}</Text>
       {exercises.map((e, i) => {
         const isOpen = open.has(i);
         const isCurrent = cursor?.exercise === i;
@@ -174,11 +174,11 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
               <View style={{ flex: 1 }}>
                 <Text style={[S.name, isCurrent && { color: accent }]}>
                   {e.name}
-                  {e.optional ? <Text style={S.optional}> · optionnel</Text> : null}
+                  {e.optional ? <Text style={S.optional}>{i18n.t('muscu.optional')}</Text> : null}
                 </Text>
                 <Text style={S.scheme}>{schemeText(e)} · {loadText(e)}</Text>
                 <Text style={S.meta}>
-                  {[restText(e.rest_s), `${Math.min(done, e.sets)}/${e.sets} séries`].filter(Boolean).join(' · ')}
+                  {[restText(e.rest_s), i18n.t('muscu.setsProgress', { done: Math.min(done, e.sets), total: e.sets })].filter(Boolean).join(' · ')}
                 </Text>
               </View>
               {isOpen ? <ChevronUp size={18} color={c.textMuted} /> : <ChevronDown size={18} color={c.textMuted} />}
@@ -189,7 +189,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
                 {p?.sets.map((s, si) => (
                   <View key={si} style={S.setRow} testID={`muscu-set-${i}-${si}`}>
                     <Text style={[S.setLabel, cursor?.exercise === i && cursor.set === si && { color: accent }]}>
-                      Série {si + 1}
+                      {i18n.t('strengthSession.repsSetLine', { index: si + 1 })}
                     </Text>
                     <View style={S.input}>
                       <AxTextField
@@ -273,7 +273,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
 
       <View style={S.footer}>
         <View style={{ flex: 1 }}>
-          <Text style={S.footerLabel}>Tonnage</Text>
+          <Text style={S.footerLabel}>{i18n.t('strengthSession.tonnageLabel')}</Text>
           <Text style={S.footerValue} testID="muscu-tonnage">{fmtKg(tonnage)} kg</Text>
         </View>
         {repsOnlyIdx.length > 0 && (
@@ -286,14 +286,14 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
           <View style={S.rest} testID="muscu-rest">
             <TimerIcon size={16} color={restLeft > 0 ? accent : c.success} />
             <Text style={[S.restText, { color: restLeft > 0 ? accent : c.success }]}>
-              {restLeft > 0 ? `Repos ${Math.floor(restLeft / 60)}:${(restLeft % 60).toString().padStart(2, '0')}` : 'Go !'}
+              {restLeft > 0 ? i18n.t('muscu.restCountdown', { time: `${Math.floor(restLeft / 60)}:${(restLeft % 60).toString().padStart(2, '0')}` }) : i18n.t('muscu.go')}
             </Text>
           </View>
         )}
         {current ? (
-          <AxButton variant="outline" icon={Check} label="Série suivante" onPress={nextSet} testID="muscu-next-set" />
+          <AxButton variant="outline" icon={Check} label={i18n.t('muscu.nextSet')} onPress={nextSet} testID="muscu-next-set" />
         ) : (
-          <Text style={[S.restText, { color: c.success }]}>Séance terminée</Text>
+          <Text style={[S.restText, { color: c.success }]}>{i18n.t('muscu.sessionDone')}</Text>
         )}
       </View>
       {draft && !draft.validated && (

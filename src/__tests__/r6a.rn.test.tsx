@@ -311,7 +311,7 @@ describe('R6a : module natif et incrustation dans la vidéo inchangés', () => {
   it('import, vue d’aperçu et états caméra identiques à master (empreintes)', () => {
     expect(TIMER).toContain("import { RealtimeRecorderView, updateOverlayState, startRecording as nativeStartRec, stopRecording as nativeStopRec } from 'realtime-recorder';");
     expect(sha(region(TIMER, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
-      .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');
+      .toBe('f19d3562e9cb2dcab395d0bf0f8f99c86ec2e54b0339e1110915ac789d175fab'); // i18n 1a : libellés du bouton caméra par t()
     expect(sha(region(TIMER, '? <RealtimeRecorderView', '/>')))
       .toBe('b9be0398d6a1eb22ef0050500d9058f715455a4e25fce20386abd1367b712cd6');
   });
@@ -338,7 +338,7 @@ describe('R6a : lecture de la vidéo', () => {
 
   it('lecteur et logique identiques à master (empreinte)', () => {
     const src = read('screens/timer/VideoPlaybackScreen.tsx');
-    expect(sha(region(src, 'export default function VideoPlaybackScreen()', '\n  return (\n'))).toBe('6f35ed9ddf62f6db65ae7517cd86670f2ce7951bbda98de6bbe3833cfe3ec97c');
+    expect(sha(region(src, 'export default function VideoPlaybackScreen()', '\n  return (\n'))).toBe('251c359f1d169517d254a0263a482be58f4265ee4ebff0063c014357e4d3266f'); // i18n 1a : useTranslation() ajouté, lecteur inchangé
     expect(src).toContain('<VideoView\n          player={player}');
   });
 

@@ -115,8 +115,22 @@ async function mount(el: React.ReactElement, theme = lightTheme) {
   await act(async () => { renderer = TestRenderer.create(el); });
   return renderer!.root;
 }
+/** Texte français → texte de la langue courante (i18n 1a : variantes rejouées en anglais). */
+function enLangue(text: string): string {
+  const fr = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', 'locales', 'fr.json'), 'utf8'));
+  const chercher = (o: Record<string, unknown>, p: string): string | null => {
+    for (const [k, v] of Object.entries(o)) {
+      if (v === text) return `${p}${k}`;
+      if (v && typeof v === 'object') { const r = chercher(v as Record<string, unknown>, `${p}${k}.`); if (r) return r; }
+    }
+    return null;
+  };
+  const key = chercher(fr, '');
+  return key ? i18n.t(key) : text;
+}
 async function pressText(root: ReactTestInstance, text: string) {
-  const t = root.findAll((n) => isHostText(n) && hostText(n) === text)[0];
+  const wanted = [text, enLangue(text)];
+  const t = root.findAll((n) => isHostText(n) && wanted.includes(hostText(n)))[0];
   let n: ReactTestInstance | null = t;
   while (n && typeof n.props.onPress !== 'function') n = n.parent;
   if (!n) throw new Error(`rien d'appuyable autour de « ${text} »`);
@@ -247,7 +261,8 @@ describe('R5a : capture', () => {
  * Retours 1.0.60 (D7) : sur Android, chaque bip est arrêté dès sa fin (stopAsync) pour rendre le focus audio
  * et laisser remonter la musique (retours1060Musique.rn.test.tsx).
  */
-const LOGIC_SHA = '7f664aae457844e99a28391700596212b8c4c37a7d1704a499bf9470443d4caa';
+// i18n 1a : textes affichés passés par t() (libellés de type, phases, boutons caméra, alertes, date incrustée par formatDate) ; logique inchangée.
+const LOGIC_SHA = 'b462274c55f1321b17a785e022f2a506bf931a951d0f5547f45f1abd6ae78656';
 // Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
 const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
@@ -576,5 +591,26 @@ describe('R5a : encres posées sur le fond du chrono', () => {
     </>);
     const texts = root.findAll((n) => isHostText(n));
     expect(texts.map((n) => colorOf(n))).toEqual(['#003300', '#003300', lightTheme.ax.text]);
+  });
+});
+
+describe('i18n 1a : minuteur en anglais', () => {
+  // Fragments français des libellés du minuteur (valeurs fr ≠ en, morceaux fixes autour des {{…}}).
+  const lire = (lang: string) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', 'locales', `${lang}.json`), 'utf8'));
+  const feuilles = (o: Record<string, unknown>, p = ''): [string, string][] => Object.entries(o).flatMap(([k, v]) =>
+    v && typeof v === 'object' ? feuilles(v as Record<string, unknown>, `${p}${k}.`) : [[`${p}${k}`, String(v)] as [string, string]]);
+  const fr = Object.fromEntries(feuilles(lire('fr').timer, 'timer.'));
+  const en = Object.fromEntries(feuilles(lire('en').timer, 'timer.'));
+  const fragments = Object.keys(fr).filter((k) => fr[k] !== en[k])
+    .flatMap((k) => fr[k].split(/\{\{[^}]+\}\}/).map((x) => x.trim()).filter((x) => /\p{L}{3,}/u.test(x)))
+    // un fragment qui figure aussi dans un texte anglais de l'app n'est pas un reste de français
+    .filter((x) => !feuilles(lire('en')).some(([, v]) => v.toUpperCase().includes(x.toUpperCase())));
+
+  afterAll(() => i18n.changeLanguage('fr'));
+  it.each(VARIANTS.map((v) => [v.name, v] as const))('%s : aucun libellé français', async (_n, v) => {
+    await i18n.changeLanguage('en');
+    const texts = structure(await v.run()).map((t) => t.toUpperCase());
+    const restes = fragments.filter((f) => texts.some((t) => (f.includes(' ') ? t.includes(f.toUpperCase()) : t === f.toUpperCase())));
+    expect(restes).toEqual([]);
   });
 });

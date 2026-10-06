@@ -399,7 +399,8 @@ describe('R6b : chrono et natif intacts', () => {
     // Bips sans doublon : mixBeepInVideo dans playBeep, plus de calage de latence (r6cBips.rn.test.tsx).
     // Retours 1.0.60 (D1) : mode audio reposé à chaque lancement sans caméra (retours1060Audio.rn.test.tsx).
     // Retours 1.0.60 (D7) : bips arrêtés dès leur fin sur Android, focus audio rendu (retours1060Musique.rn.test.tsx).
-    expect(sha(back)).toBe('562884b2958c41cb4662e07b95343cad010c4931506f52a4775370b551f8af22');
+    // i18n 1a : textes affichés passés par t() (libellés de type, phases, boutons caméra, alertes, date incrustée par formatDate) ; logique inchangée.
+    expect(sha(back)).toBe('2992b7642a33854fa373bfdeb5607148acfcfe40bf458c012352e4028fd0fdbc');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');
@@ -410,7 +411,7 @@ describe('R6b : chrono et natif intacts', () => {
     expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('e8d0dd5d83635452dffa88aff05dd4e9690c380f2ea133867b2888015636a1c8'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt) ; bips sans doublon : calage de latence retiré
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
-      .toBe('6b247370baa667947c4af06dd786454b35dd6deb53b463f2bd767b76f6e41c9d');
+      .toBe('f19d3562e9cb2dcab395d0bf0f8f99c86ec2e54b0339e1110915ac789d175fab'); // i18n 1a : libellés du bouton caméra par t()
     expect(sha(region(timer, '? <RealtimeRecorderView', '/>')))
       .toBe('b9be0398d6a1eb22ef0050500d9058f715455a4e25fce20386abd1367b712cd6');
   });

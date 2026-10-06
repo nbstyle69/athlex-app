@@ -2,12 +2,13 @@
  * Options de la carte « Musculation » du générateur (PR M2) : constantes et
  * helpers purs, séparés de l'écran pour être testables sans React Native.
  */
-import { MUSCU_DURATIONS, OBJECTIVE_LABEL, TARGET_LABEL, muscuLevelFor } from '../../../packages/wod-engine/src';
+import { MUSCU_DURATIONS, muscuLevelFor } from '../../../packages/wod-engine/src';
 import type {
   Catalog, Entry, MuscuEquipment, MuscuLevel, MuscuObjective, MuscuTarget, RmReference,
 } from '../../../packages/wod-engine/src';
 import { readPr } from '../profile/prStorage';
 import { dateLocale } from '../../i18n/locale';
+import i18n from '../../i18n';
 
 export const MUSCU_BLUE = '#3B82F6';
 /**
@@ -16,12 +17,13 @@ export const MUSCU_BLUE = '#3B82F6';
  */
 export const MUSCU_BLUE_DARK = '#2563EB';
 
-export const MUSCU_OBJECTIVES: { key: MuscuObjective; label: string }[] = (
+// Libellés : clés i18n (`muscu.*`), traduites au rendu ; `key` est la valeur envoyée au moteur.
+export const MUSCU_OBJECTIVES: { key: MuscuObjective; labelKey: string }[] = (
   ['hypertrophie', 'force', 'endurance'] as MuscuObjective[]
-).map((key) => ({ key, label: OBJECTIVE_LABEL[key] }));
+).map((key) => ({ key, labelKey: `muscu.objective.${key}` }));
 
-export const MUSCU_EQUIPMENTS: { key: MuscuEquipment; label: string }[] = [
-  { key: 'none', label: 'Sans matériel' }, { key: 'box', label: 'Box' }, { key: 'gym', label: 'Salle' },
+export const MUSCU_EQUIPMENTS: { key: MuscuEquipment; labelKey: string }[] = [
+  { key: 'none', labelKey: 'muscu.equipment.none' }, { key: 'box', labelKey: 'muscu.equipment.box' }, { key: 'gym', labelKey: 'muscu.equipment.gym' },
 ];
 
 /** Ordre des cibles selon le genre du profil ; sans genre, Full body en tête. */
@@ -36,14 +38,14 @@ export function targetOrderFor(gender: string | null | undefined): MuscuTarget[]
 }
 
 export function targetLabel(t: MuscuTarget): string {
-  return t === 'fessiers_ischios' ? 'Fessiers + ischios' : TARGET_LABEL[t];
+  return i18n.t(`muscu.target.${t}`);
 }
 
 /** Sous-titre de la ligne Cible : ordre d'après le profil, ou invitation à le renseigner. */
 export function targetOrderHint(gender: string | null | undefined): { text: string; link: string } {
   return gender === 'female' || gender === 'male'
-    ? { text: 'Ordre d\'après ton profil', link: 'modifier' }
-    : { text: 'Renseigne ton profil pour un ordre adapté', link: 'modifier' };
+    ? { text: i18n.t('muscu.orderFromProfile'), link: i18n.t('wodResult.linkEdit') }
+    : { text: i18n.t('muscu.orderSetProfile'), link: i18n.t('wodResult.linkEdit') };
 }
 
 /** Durées candidates avant filtrage par `availableDurations` (Tronc : 15 · 20 · 30). */
@@ -79,14 +81,15 @@ export function coerceMuscuDuration(durations: number[], current: number): numbe
   return durations.reduce((best, d) => (Math.abs(d - current) < Math.abs(best - current) ? d : best), durations[0]);
 }
 
-export const MUSCU_LEVEL_TEXT: Record<MuscuLevel, string> = { debutant: 'Débutant', inter: 'Intermédiaire', avance: 'Avancé' };
+/** Niveau affiché (`muscu.level.<clé>`), traduit à l'appel. */
+export const muscuLevelText = (lv: MuscuLevel): string => i18n.t(`muscu.level.${lv}`);
 
 /** « Affiché pour : Intermédiaire · d'après ton profil » / « Débutant · niveau non renseigné ». */
 export function muscuDisplayedFor(level: string | null | undefined): { level: MuscuLevel; text: string; link: string } {
   const lv = muscuLevelFor(level);
   return level
-    ? { level: lv, text: `Affiché pour : ${MUSCU_LEVEL_TEXT[lv]} · d'après ton profil`, link: 'modifier' }
-    : { level: lv, text: `Affiché pour : ${MUSCU_LEVEL_TEXT[lv]} · niveau non renseigné`, link: 'choisir' };
+    ? { level: lv, text: i18n.t('wodResult.displayedFor', { category: muscuLevelText(lv) }), link: i18n.t('wodResult.linkEdit') }
+    : { level: lv, text: i18n.t('wodResult.displayedForNoLevel', { category: muscuLevelText(lv) }), link: i18n.t('wodResult.linkChoose') };
 }
 
 /** Libellé de la page Records pour chaque référence 1RM du moteur. */
@@ -115,6 +118,6 @@ export function muscuOneRepMax(records: Record<string, unknown> | null | undefin
 export function oneRepMaxLine(rm: Partial<Record<RmReference, number>>): { text: string; link: string; known: boolean } {
   const parts = RM_ORDER.filter((r) => rm[r] != null).map((r) => `${RM_SHORT[r]} ${rm[r]}`);
   return parts.length
-    ? { text: `Charges d'après tes 1RM : ${parts.join(' · ')}`, link: 'modifier', known: true }
-    : { text: 'Renseigne tes 1RM pour avoir des charges en kg', link: 'calculateur', known: false };
+    ? { text: i18n.t('muscu.loadsFromRm', { list: parts.join(' · ') }), link: i18n.t('wodResult.linkEdit'), known: true }
+    : { text: i18n.t('muscu.setYourRm'), link: i18n.t('muscu.calculatorLink'), known: false };
 }

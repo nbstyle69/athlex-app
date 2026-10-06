@@ -4,6 +4,7 @@
  */
 import { afterClassFilter } from '../../../packages/wod-engine/src';
 import type { Catalog, Discipline, Entry, Family, FormatChoice, Intention, Pattern, Vest } from '../../../packages/wod-engine/src';
+import i18n from '../../i18n';
 
 export const HYBRID_ORANGE = '#F97316';
 
@@ -12,43 +13,41 @@ export const DURATIONS: Record<Entry, Record<Discipline, number[]>> = {
   after_class: { functional: [10, 15, 20], hybrid: [10, 15, 20] },
 };
 
-export const FORMATS: { key: FormatChoice; label: string }[] = [
-  { key: 'surprise', label: 'Surprends-moi' }, { key: 'amrap', label: 'AMRAP' }, { key: 'for_time', label: 'For time' },
-  { key: 'emom', label: 'EMOM' }, { key: 'chipper', label: 'Chipper' }, { key: 'stations', label: 'Stations' },
-  { key: 'interval', label: 'Intervalles' },
+// Libellés : clés i18n, traduites au rendu (`t(labelKey)`) ; `key` est la valeur envoyée au moteur.
+export const FORMATS: { key: FormatChoice; labelKey: string }[] = [
+  { key: 'surprise', labelKey: 'wodGen.format.surprise' }, { key: 'amrap', labelKey: 'wodGen.format.amrap' }, { key: 'for_time', labelKey: 'wodGen.format.for_time' },
+  { key: 'emom', labelKey: 'wodGen.format.emom' }, { key: 'chipper', labelKey: 'wodGen.format.chipper' }, { key: 'stations', labelKey: 'wodGen.format.stations' },
+  { key: 'interval', labelKey: 'wodGen.format.interval' },
 ];
 
-export const INTENTIONS: Record<Discipline, { key: Intention; label: string }[]> = {
+export const INTENTIONS: Record<Discipline, { key: Intention; labelKey: string }[]> = {
   functional: [
-    { key: 'mixed', label: 'Mixed' }, { key: 'cardio', label: 'Cardio' }, { key: 'force', label: 'Force' }, { key: 'gym', label: 'Gym' },
+    { key: 'mixed', labelKey: 'wodGenerator.intentOpt.mixed' }, { key: 'cardio', labelKey: 'wodGenerator.intentOpt.cardio' },
+    { key: 'force', labelKey: 'wodGenerator.intentOpt.strength' }, { key: 'gym', labelKey: 'wodGenerator.intentOpt.gymnastics' },
   ],
   hybrid: [
-    { key: 'interval', label: 'Interval' }, { key: 'engine', label: 'Engine' }, { key: 'aerobic', label: 'Aerobic' },
-    { key: 'run', label: 'Run' }, { key: 'core', label: 'Core' },
+    { key: 'interval', labelKey: 'wodGen.intention.interval' }, { key: 'engine', labelKey: 'wodGen.intention.engine' }, { key: 'aerobic', labelKey: 'wodGen.intention.aerobic' },
+    { key: 'run', labelKey: 'wodGen.intention.run' }, { key: 'core', labelKey: 'wodGen.intention.core' },
   ],
 };
 
-export const VESTS: { key: Vest; label: string }[] = [
-  { key: 'none', label: 'Sans' }, { key: 'required', label: 'Avec' }, { key: 'optional', label: 'Optionnel' },
+export const VESTS: { key: Vest; labelKey: string }[] = [
+  { key: 'none', labelKey: 'wodGen.vest.none' }, { key: 'required', labelKey: 'wodGen.vest.required' }, { key: 'optional', labelKey: 'wodGenerator.vestOpt.optional' },
 ];
 
-export const PATTERN_LABEL: Record<Pattern, string> = {
-  squat: 'squat', hinge: 'hinge', push_v: 'poussée verticale', push_h: 'poussée horizontale',
-  pull_v: 'traction verticale', pull_h: 'traction horizontale', carry: 'porté', lunge: 'fente', core: 'core', mono: 'mono',
-};
+/** Libellé d'un pattern de mouvement (`wodGen.pattern.<clé>`), traduit à l'appel. */
+export const patternLabel = (p: Pattern): string => i18n.t(`wodGen.pattern.${p}`);
 
-export const FAMILY_LABEL: Record<Family, string> = {
-  barbell: 'barre', dumbbell: 'haltères', kettlebell: 'kettlebell', gym: 'gym', bodyweight: 'poids du corps', erg: 'erg',
-  run: 'course', sled: 'sled', carry: 'porté', sandbag: 'sandbag', wallball: 'wall ball', jump_rope: 'corde', box: 'box', machine: 'machine', cable: 'poulie', other: 'autre',
-};
+/** Libellé d'une famille de matériel (`wodGen.family.<clé>`), traduit à l'appel. */
+export const familyLabel = (f: Family): string => i18n.t(`wodGen.family.${f}`);
 
 /** « Patterns évités : squat, fente · barre » — ce que le complément écartera. */
 export function avoidedText(catalog: Catalog, dayMovements: string[]): string {
   const f = afterClassFilter(catalog, dayMovements);
-  const patterns = [...f.patterns].map((p) => PATTERN_LABEL[p]);
-  const families = [...f.families].map((p) => FAMILY_LABEL[p]);
-  if (!patterns.length && !families.length) return 'Aucun pattern reconnu : complément sans filtre.';
-  return `Patterns évités : ${[patterns.join(', '), families.join(', ')].filter(Boolean).join(' · ')}`;
+  const patterns = [...f.patterns].map(patternLabel);
+  const families = [...f.families].map(familyLabel);
+  if (!patterns.length && !families.length) return i18n.t('wodGen.noPattern');
+  return i18n.t('wodGen.avoided', { list: [patterns.join(', '), families.join(', ')].filter(Boolean).join(' · ') });
 }
 
 /** Matériel proposé dans « Exclure » : union du champ `equipment` des mouvements actifs. */

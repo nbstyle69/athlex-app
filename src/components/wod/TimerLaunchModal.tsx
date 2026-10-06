@@ -69,7 +69,7 @@ export default function TimerLaunchModal({ visible, title, initialBlock, onClose
             {TIMER_BLOCK_TYPES.map(mt => (
               <AxChip
                 key={mt.key}
-                label={mt.label}
+                label={t(mt.labelKey)}
                 selected={blk.type === mt.key}
                 onPress={() => updateBlock({ type: mt.key })}
                 testID={`timer-type-${mt.key}`}
@@ -118,7 +118,7 @@ export default function TimerLaunchModal({ visible, title, initialBlock, onClose
                   {[1, 2, 3, 4, 5].map(iv => (
                     <AxChip
                 key={iv}
-                label={iv === 1 ? 'EMOM' : `E${iv}MOM`}
+                label={iv === 1 ? t('timer.run.type.emom') : t('bo.wods.emomEvery', { n: iv })}
                 selected={blk.emomInterval === iv}
                 onPress={() => {
                         const prevIvSec = isPerso ? customSec : blk.emomInterval * 60;
@@ -178,10 +178,10 @@ export default function TimerLaunchModal({ visible, title, initialBlock, onClose
           <View style={S.splitList}>
             {(blk.splitExercises ?? []).map((e, i) => (
               <Text key={`${e.name}-${i}`} style={S.splitItem} numberOfLines={1}>
-                {e.name} · {e.sets} {e.sets > 1 ? 'séries' : 'série'}{e.restSec > 0 ? ` · repos ${e.restSec} s` : ''}
+                {e.name} · {t('timer.launch.sets', { count: e.sets })}{e.restSec > 0 ? t('timer.launch.rest', { s: e.restSec }) : ''}
               </Text>
             ))}
-            <Text style={S.emomTotalHint}>Chrono global. « Série terminée » enregistre un split et lance le repos ; les splits sont listés en fin de séance.</Text>
+            <Text style={S.emomTotalHint}>{t('timer.launch.splitHint')}</Text>
           </View>
         )}
       </View>

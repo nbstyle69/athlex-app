@@ -2,6 +2,7 @@
  * Écran « Générateur de WOD » (brief §8) : options exactes, libellés, menu,
  * remplacement de l'ancien générateur (supprimé, pas masqué).
  */
+import i18n from '../i18n';
 import fs from 'fs';
 import path from 'path';
 import {
@@ -44,10 +45,10 @@ describe('options du formulaire', () => {
   });
 
   it('formats express, intentions par discipline, gilet Hybrid', () => {
-    expect(FORMATS.map((f) => f.label)).toEqual(['Surprends-moi', 'AMRAP', 'For time', 'EMOM', 'Chipper', 'Stations', 'Intervalles']);
-    expect(INTENTIONS.functional.map((i) => i.label)).toEqual(['Mixed', 'Cardio', 'Force', 'Gym']);
-    expect(INTENTIONS.hybrid.map((i) => i.label)).toEqual(['Interval', 'Engine', 'Aerobic', 'Run', 'Core']);
-    expect(VESTS.map((v) => v.label)).toEqual(['Sans', 'Avec', 'Optionnel']);
+    expect(FORMATS.map((f) => i18n.t(f.labelKey))).toEqual(['Surprends-moi', 'AMRAP', 'For time', 'EMOM', 'Chipper', 'Stations', 'Intervalles']);
+    expect(INTENTIONS.functional.map((i) => i18n.t(i.labelKey))).toEqual(['Mixed', 'Cardio', 'Force', 'Gym']);
+    expect(INTENTIONS.hybrid.map((i) => i18n.t(i.labelKey))).toEqual(['Interval', 'Engine', 'Aerobic', 'Run', 'Core']);
+    expect(VESTS.map((v) => i18n.t(v.labelKey))).toEqual(['Sans', 'Avec', 'Optionnel']);
     expect(VESTS.map((v) => v.key)).toEqual(['none', 'required', 'optional']);
   });
 
@@ -55,7 +56,8 @@ describe('options du formulaire', () => {
     const eq = equipmentOptions(CATALOG_SNAPSHOT);
     expect(eq).toEqual(expect.arrayContaining(['barbell', 'rower']));
     expect(eq).toEqual([...eq].sort((a, b) => a.localeCompare(b)));
-    expect(screen).toContain('placeholder="Exclure du matériel ou un mouvement…"');
+    expect(screen).toContain("placeholder={t('wodGen.excludePlaceholder')}");
+    expect(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', 'locales', 'fr.json'), 'utf8')).wodGen.excludePlaceholder).toBe('Exclure du matériel ou un mouvement…');
     expect(screen).toContain('saveExcludes(user.id, next)');
     expect(screen).not.toMatch(/title="Catégorie"/);
     expect(screen).not.toContain('CATEGORY_LABEL');
@@ -63,18 +65,22 @@ describe('options du formulaire', () => {
 
   it('Après ma classe : carte « Classe du jour · box » seulement si box + WOD publié, patterns évités', () => {
     expect(screen).toContain("entry === 'after_class' && dayClass && currentBox");
-    expect(screen).toContain('label={`Classe du jour · ${currentBox.name}`}');
+    expect(screen).toContain("label={t('wodGen.dayClass', { box: currentBox.name })}");
+    expect(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', 'locales', 'fr.json'), 'utf8')).wodGen.dayClass).toBe('Classe du jour · {{box}}');
     expect(avoidedText(CATALOG_SNAPSHOT, ['21 Thruster (43/30 kg)', '21 Pull-ups'])).toMatch(/^Patterns évités : .*traction verticale/);
     expect(avoidedText(CATALOG_SNAPSHOT, ['21 Thruster (43/30 kg)'])).toContain('barre');
     expect(avoidedText(CATALOG_SNAPSHOT, [])).toContain('sans filtre');
   });
 
   it('titre, menu Historique · Favoris · Programmes, bouton selon l’entrée', () => {
-    expect(screen).toContain('Générateur de WOD');
+    expect(screen).toContain("t('wodGen.title')");
+    expect(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', 'locales', 'fr.json'), 'utf8')).wodGen.title).toBe('Générateur de WOD');
     expect(screen).toContain("navigation.navigate('WodHistory')");
     expect(screen).toContain("navigation.navigate('WodHistory', { filter: 'favorites' })");
     expect(screen).toContain("navigation.navigate('Home', { screen: 'Programmation' })");
-    expect(screen).toContain("entry === 'express' ? (isMuscu ? 'Générer ma séance' : 'Générer mon WOD') : 'Générer mon complément'");
+    expect(screen).toContain("entry === 'express' ? (isMuscu ? t('training.generate.title') : t('training.generate.button')) : t('wodGen.generateComplement')");
+    const fr = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', 'locales', 'fr.json'), 'utf8'));
+    expect([fr.training.generate.title, fr.training.generate.button, fr.wodGen.generateComplement]).toEqual(['Générer ma séance', 'Générer mon WOD', 'Générer mon complément']);
   });
 });
 

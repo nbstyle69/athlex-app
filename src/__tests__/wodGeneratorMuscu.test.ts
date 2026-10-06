@@ -40,6 +40,7 @@ jest.mock('../services/notifications', () => ({ cancelTodayScoreReminder: () => 
 const records: Record<string, unknown> = {};
 jest.mock('../services/myProfile', () => ({ fetchMyPersonalRecords: () => Promise.resolve(records) }));
 
+import i18n from '../i18n';
 import type { MuscuExercise } from '../../packages/wod-engine/src';
 import {
   generateForUser, isMuscuResult, isMuscuWod, loadMuscuEquipment, performedMovementEntries, plannedSets,
@@ -66,8 +67,8 @@ beforeEach(() => {
 
 describe('options de la carte Musculation', () => {
   it('libellés validés, ordre des cibles par genre, Full body en tête sans genre', () => {
-    expect(MUSCU_OBJECTIVES.map((o) => o.label)).toEqual(['Prise de muscle', 'Force', 'Tonification']);
-    expect(MUSCU_EQUIPMENTS.map((e) => e.label)).toEqual(['Sans matériel', 'Box', 'Salle']);
+    expect(MUSCU_OBJECTIVES.map((o) => i18n.t(o.labelKey))).toEqual(['Prise de muscle', 'Force', 'Tonification']);
+    expect(MUSCU_EQUIPMENTS.map((e) => i18n.t(e.labelKey))).toEqual(['Sans matériel', 'Box', 'Salle']);
     expect(targetOrderFor('female')[0]).toBe('fessiers');
     expect(targetOrderFor('male')[0]).toBe('push');
     expect(targetOrderFor(null)[0]).toBe('full_body');

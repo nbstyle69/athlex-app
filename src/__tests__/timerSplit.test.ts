@@ -36,7 +36,8 @@ describe('bloc Split', () => {
   it('le mode est proposé dans le lanceur, avec ses exercices et son explication', () => {
     expect(TIMER_BLOCK_TYPES.map((t) => t.key)).toContain('split');
     expect(modal).toContain("blk.type === 'split' && (");
-    expect(modal).toContain('« Série terminée » enregistre un split et lance le repos');
+    expect(modal).toContain("t('timer.launch.splitHint')");
+    expect(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', 'locales', 'fr.json'), 'utf8')).timer.launch.splitHint).toContain('« Série terminée » enregistre un split et lance le repos');
     expect(modal).toContain("patch.type === 'split' && !b.splitExercises?.length ? { splitExercises: roundSplitExercises(b.emomRounds) } : {}");
   });
 
@@ -52,7 +53,8 @@ describe('minuteur', () => {
 
   it('« Série terminée » : split enregistré au temps global, repos de l\'exercice courant, exercice suivant, fin du bloc après la dernière série', () => {
     expect(timer).toContain('function splitSetDone()');
-    expect(timer).toContain("setSplitLog((l) => [...l, { label: list.length > 1 ? `${cur.name} · série ${set}/${cur.sets}` : `${cur.name} ${set}/${cur.sets}`, duration, at }]);");
+    expect(timer).toContain("setSplitLog((l) => [...l, { label: list.length > 1 ? t('timer.run.splitSetLabel', { name: cur.name, set, sets: cur.sets }) : `${cur.name} ${set}/${cur.sets}`, duration, at }]);");
+    expect(JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', 'locales', 'fr.json'), 'utf8')).timer.run.splitSetLabel).toBe('{{name}} · série {{set}}/{{sets}}');
     expect(timer).toContain('const next = set < cur.sets ? { ex, set: set + 1 } : { ex: ex + 1, set: 1 };');
     expect(timer).toContain('if (!list[next.ex]) { Vibration.vibrate([0, 350, 120, 350]); seqBlockDone(); return; }');
     expect(timer).toContain("if (cur.restSec > 0) { innerPhaseRef.current = 'rest'; setInnerPhase('rest'); roundTimeLeftRef.current = cur.restSec; setRoundTimeLeft(cur.restSec); }");
@@ -60,7 +62,9 @@ describe('minuteur', () => {
 
   it('le bouton existe dans les trois dispositions et la liste des splits est affichée en fin de séance', () => {
     expect((timer.match(/\{showSplitBtn && \(/g) ?? []).length).toBe(3);
-    expect(timer).toContain("const splitBtnLabel = innerPhase === 'rest' ? 'PASSER LE REPOS' : (curBlk?.splitExercises?.length ?? 0) > 1 ? 'SÉRIE TERMINÉE' : 'ROUND TERMINÉ';");
+    expect(timer).toContain("const splitBtnLabel = innerPhase === 'rest' ? t('timer.run.skipRest') : (curBlk?.splitExercises?.length ?? 0) > 1 ? t('timer.run.setDone') : t('timer.run.roundDone');");
+    const run = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'i18n', 'locales', 'fr.json'), 'utf8')).timer.run;
+    expect([run.skipRest, run.setDone, run.roundDone]).toEqual(['PASSER LE REPOS', 'SÉRIE TERMINÉE', 'ROUND TERMINÉ']);
     expect(timer).toContain('{splitLog.length > 0 && (');
     expect(timer).toContain("case 'split': break; // dynamique");
   });

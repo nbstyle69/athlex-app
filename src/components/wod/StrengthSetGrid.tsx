@@ -52,10 +52,9 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
 
   return (
     <View>
-      <Text style={S.label}>SÉRIES RÉALISÉES (MUSCULATION)</Text>
+      <Text style={S.label}>{i18n.t('strengthSession.gridTitle')}</Text>
       <Text style={S.hint}>
-        Pré-rempli avec ce qui était prescrit. Corrige seulement les séries où tu as fait autre
-        chose — ce sont ces valeurs qui mettent à jour ton 1RM.
+        {i18n.t('strengthSession.gridHint')}
       </Text>
       {drafts.map((d, i) => {
         const first = i === 0 || drafts[i - 1].entryIndex !== d.entryIndex;
@@ -147,10 +146,10 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
                   </View>
                   <Text style={[S.prescribed, deviates && S.prescribedDeviates]}>
                     {d.prescribedLoadKg != null
-                      ? `prévu ${d.prescribedReps} × ${d.prescribedLoadKg}`
+                      ? i18n.t('strengthSession.plannedRepsLoad', { reps: d.prescribedReps, kg: d.prescribedLoadKg })
                       : pct != null && d.prescribedReps < 1
                         ? i18n.t('strengthSession.plannedPctOfMax', { pct })
-                        : `prévu ${d.prescribedReps} reps`}
+                        : i18n.t('strengthSession.plannedReps', { count: d.prescribedReps })}
                   </Text>
                 </>
               )}
