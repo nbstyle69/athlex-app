@@ -80,6 +80,12 @@ ligne dont la clause `WHEN` porte la transition :
 | payment_failed | `trg_notif_gerant_impaye` (UPDATE OF past_due_since) | `past_due_since` passe de NULL à une date | id du membre + date |
 | booked_without_plan | `trg_notif_gerant_sans_formule` (INSERT box_member_alerts) | `kind = 'reservation_sans_formule'` | id de l'alerte |
 | invitation_accepted | `trg_notif_gerant_invitation` (UPDATE OF status box_invitations) | passe à `accepted` | id de l'invitation |
+| plan_change_request | `trg_notif_gerant_changement_formule` (INSERT box_plan_change_requests, migration 20270147) | aucune : une demande naît en attente | id de la demande |
+
+`plan_change_request` (« {pseudo} demande à passer à {formule} », `plan_id` = formule
+demandée) n'est pas encore rédigé par `deliver-manager-notifications` : `rediger()`
+(`regles.ts`) ne connaît que les quatre types ci-dessus. À ajouter avant qu'une
+demande puisse être créée (PR B du changement de formule).
 
 « Nouvel abonnement » = **un nouvel identifiant d'abonnement Stripe arrive
 actif**, pas « statut vers actif » : le retour d'impayé, la reprise après pause
@@ -165,5 +171,5 @@ Tâche pg_cron quotidienne : suppression des lignes créées il y a plus de
 - SQL : `supabase/tests/notifications_gerant_file.sql` (F0 à F9), rejoué par
   `scripts/db-replay.sh` (CI db-replay, sur chaque PR) ; mutations intégrées
   et retour arrière.
-- Audit des droits : T14 (`scripts/lib/controle-grants-tables.mjs`).
+- Audit des droits : T14 (`scripts/lib/controle-grants-tables.mjs`), six déclencheurs depuis 20270147.
 - Jest : `src/__tests__/deliverManagerNotificationsRegles.test.ts` (PR B).

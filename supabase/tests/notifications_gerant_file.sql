@@ -7,7 +7,8 @@
 -- Les écritures « serveur » (webhook, fonctions) sont jouées par le
 -- superutilisateur du rejeu, comme la clé serveur passe la garde de facturation.
 --   F0  structure : table, RLS, clé unique, droits ; fonction SECURITY DEFINER
---       fermée aux clients ; cinq déclencheurs AFTER ligne par ligne ; les
+--       fermée aux clients ; six déclencheurs AFTER ligne par ligne (le sixième,
+--       demande de changement de formule, vient de 20270147) ; les
 --       fonctions existantes des trois tables aux md5 de prod (04/10/2026) ;
 --   F1  subscription_paid : création active (INSERT), activation d'une ligne
 --       en attente (UPDATE), réabonnement (nouvel identifiant) : une ligne
@@ -149,14 +150,14 @@ BEGIN
   END IF;
   IF (SELECT count(*) FROM pg_trigger t
        WHERE t.tgfoid = 'internal.filer_notification_gerant()'::regprocedure
-         AND t.tgenabled = 'O' AND (t.tgtype & 3) = 1) <> 5 THEN
-    RAISE EXCEPTION 'F0 : il faut cinq déclencheurs AFTER, ligne par ligne, actifs, sur filer_notification_gerant';
+         AND t.tgenabled = 'O' AND (t.tgtype & 3) = 1) <> 6 THEN
+    RAISE EXCEPTION 'F0 : il faut six déclencheurs AFTER, ligne par ligne, actifs, sur filer_notification_gerant';
   END IF;
   -- Fonctions existantes des tables touchées, aux md5 de prod (04/10/2026) ;
   -- update_box_member_count : md5 du rejeu (la prod porte des CR, 82f49d09…).
   SELECT string_agg(a.fn || ' ' || coalesce(md5(pg_get_functiondef(a.fn::regprocedure)), 'absente'), ', ') INTO v
   FROM (VALUES
-    ('internal.garder_facturation_membre()', '2c8c6335dd9ec48f9e2899af6f24dffc'),
+    ('internal.garder_facturation_membre()', 'b50e8f8843dbe51848862942b3f3602f'), -- 20270147
     ('internal.garder_role_cogerant()', 'a3f6d592e30b88f0099e3e3e0f27e08f'),
     ('internal.refuser_entree_directe_box()', '73b868ed7881131d0e746a9b95645c0d'),
     ('public.update_box_member_count()', '163d943ff7816e332f965e1b4d477420'),
@@ -377,8 +378,10 @@ BEGIN
   REVOKE EXECUTE ON FUNCTION internal.filer_notification_gerant() FROM authenticated;
 END $t$;
 
--- F9 : retour arrière de l'en-tête de la migration, tel quel (sans BEGIN/COMMIT :
+-- F9 : d'abord le retour arrière de 20270147, qui s'appuie sur cette file (ordre
+-- inverse des migrations), puis celui de l'en-tête de la migration, tel quel (sans BEGIN/COMMIT :
 -- on est déjà dans la transaction du test).
+\i supabase/retours/20270147000000_changement_formule.sql
 DROP TRIGGER trg_notif_gerant_abonnement_creation ON public.box_members;
 DROP TRIGGER trg_notif_gerant_abonnement_nouveau ON public.box_members;
 DROP TRIGGER trg_notif_gerant_impaye ON public.box_members;
