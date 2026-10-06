@@ -266,11 +266,11 @@ export default function TournamentScreen() {
             <Text style={[S.rankName, isMe && { color: c.accentText }]} numberOfLines={1}>
               {p.profile?.username ?? '?'}{isMe ? t('tournament.youSuffix') : ''}
             </Text>
-            {myDiv && <AxTag label={`D${myDiv.level} · ${myDiv.name}`} tone="muted" />}
+            {myDiv && <AxTag label={t('tournament.divisionShort', { level: myDiv.level, name: myDiv.name })} tone="muted" />}
           </View>
           <Text style={S.rankElo}>ELO {p.profile?.elo ?? 1000}</Text>
         </View>
-        <Text style={S.rankScore} numberOfLines={1}>{p.points} pts</Text>
+        <Text style={S.rankScore} numberOfLines={1}>{t('divisions.points', { n: p.points })}</Text>
       </View>
     );
   }
@@ -629,7 +629,7 @@ export default function TournamentScreen() {
                     })()}
                     {tournament.format === 'league_div' && (() => {
                       const d = (wod as any).division_id ? divisions.find((x: any) => x.id === (wod as any).division_id) : null;
-                      return <AxTag label={d ? `D${d.level} · ${d.name}` : t('tournament.generalTab')} tone="muted" />;
+                      return <AxTag label={d ? t('tournament.divisionShort', { level: d.level, name: d.name }) : t('tournament.generalTab')} tone="muted" />;
                     })()}
                     <View style={S.wodDurationRow}>
                       <Clock color={c.textMuted} size={12} />
@@ -850,7 +850,7 @@ export default function TournamentScreen() {
                           </View>
                           <Text style={S.rankElo}>ELO {m.profile?.elo ?? 1000}</Text>
                         </View>
-                        <Text style={S.rankScore} numberOfLines={1}>{m.score ?? 0} pts</Text>
+                        <Text style={S.rankScore} numberOfLines={1}>{t('divisions.points', { n: m.score ?? 0 })}</Text>
                       </View>
                     );
                   })}
@@ -924,7 +924,7 @@ export default function TournamentScreen() {
                   <View style={S.scoreValueRow}>
                     <Text style={S.scoreValue} numberOfLines={1}>{formatScoreDisplay(score.score_value, (score as any).tw?.type, (score as any).tw?.reps_per_round, score.capped)}</Text>
                     {score.tiebreak_value != null && (
-                      <Text style={S.scoreTiebreak}>TB: {score.tiebreak_value}</Text>
+                      <Text style={S.scoreTiebreak}>{t('tournament.tiebreakShort', { value: score.tiebreak_value })}</Text>
                     )}
                   </View>
 

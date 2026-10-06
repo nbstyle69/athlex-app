@@ -348,7 +348,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
               {!!selected?.time_cap_seconds && (
                 <View style={S.metaBadge}>
                   <Clock color={c.textMuted} size={13} />
-                  <Text style={S.metaBadgeText}>Cap {formatCap(selected.time_cap_seconds)}</Text>
+                  <Text style={S.metaBadgeText}>{t('whiteboard.cap', { cap: formatCap(selected.time_cap_seconds) })}</Text>
                 </View>
               )}
             </View>

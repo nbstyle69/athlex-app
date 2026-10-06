@@ -653,7 +653,8 @@
       "now": "Maintenant",
       "schedule": "Programmer",
       "hour": "HEURE",
-      "createWodBtn": "Créer le WOD"
+      "createWodBtn": "Créer le WOD",
+      "emomEvery": "E{{n}}MOM"
     },
     "tournament": {
       "backOffice": "BACK OFFICE",
@@ -713,7 +714,8 @@
       "noVideo": "Aucun lien vidéo soumis",
       "rejectScore": "Rejeter le score",
       "rejectReasonPlaceholder": "Motif du rejet (optionnel)",
-      "confirmReject": "Confirmer le rejet"
+      "confirmReject": "Confirmer le rejet",
+      "ptsCompact": "{{n}}pts"
     },
     "programming": {
       "title": "Marketplace",
@@ -1235,7 +1237,9 @@
     "deleteConfirmTitle": "Supprimer ce WOD ?",
     "boxTag": "BOX",
     "boxWodFallback": "WOD de box",
-    "completedNoScore": "Réalisé, sans score"
+    "completedNoScore": "Réalisé, sans score",
+    "benchmarkShort": "BM",
+    "scaledShort": "SC"
   },
   "whiteboard": {
     "title": "Ma Box",
@@ -1857,7 +1861,9 @@
       "divisionUnavailable": "La ligue n'a pas de division ouverte aux inscriptions.",
       "divisionFull": "La division d'entrée de la ligue est complète.",
       "generic": "L'inscription n'a pas abouti. Réessaie plus tard."
-    }
+    },
+    "divisionShort": "D{{level}} · {{name}}",
+    "tiebreakShort": "TB: {{value}}"
   },
   "tour": {
     "next": "Suivant",
@@ -2328,7 +2334,8 @@
     "seeWhiteboard": "Voir le Whiteboard",
     "addFailed": "Impossible d'ajouter ce WOD au Whiteboard.",
     "invalidScore": "Score invalide",
-    "saveScoreFailed": "Impossible d'enregistrer le score."
+    "saveScoreFailed": "Impossible d'enregistrer le score.",
+    "roundShort": "R{{round}} · "
   },
   "cardio": {
     "rest": "repos {{rest}}"

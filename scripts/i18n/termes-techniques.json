@@ -1,0 +1,9 @@
+{
+  "_": "Termes techniques identiques en français et en anglais, admis en dur dans un texte affiché (garde stricte, scripts/i18n/scanner.js). Liste fermée : unités, abréviations et noms propres seulement, jamais un mot courant. Comparaison sans tenir compte de la casse.",
+  "termes": [
+    "reps", "rep", "kg", "lb", "lbs", "km", "m", "cal", "W", "s", "min",
+    "RPE", "%1RM", "1RM", "RM", "PR", "ELO", "RX", "RX+",
+    "AMRAP", "EMOM", "WOD", "WODs", "For Time", "Tabata",
+    "mm:ss", "AthleX"
+  ]
+}

@@ -213,6 +213,12 @@ Supabase/Resend.
 
 ## En cours
 
+**Chantier anglais, PR 0b : garde stricte (outillage et tests, aucune migration ; PR non mergée).** Dans un fichier déclaré
+traduit (`scripts/i18n/fichiers-traduits.json`), la garde refuse désormais tout texte affiché hors `t()`, quelle que
+soit sa langue, sauf les textes sans lettre, les termes techniques de `scripts/i18n/termes-techniques.json` et les lignes
+« `// i18n-ignore : <raison>` » (raison obligatoire) ; les onze textes qu’elle a trouvés dans les 29 fichiers
+déjà déclarés (« pts », « D1 · », « TB: », « BM », « SC », « Cap », « R1 · », « E2MOM ») passent par `t()`, texte inchangé.
+
 **Chantier anglais, PR 1b : Résultat du WOD, programmes, calculateur 1RM (app seule, aucune migration ; PR non
 mergée).** « Ton WOD », le Détail d'un programme, le calculateur 1RM (zones barres et gymnastique), le matériel du
 générateur et les affichages des blocs de force et cardio passent par `t()` en français et en anglais (texte français

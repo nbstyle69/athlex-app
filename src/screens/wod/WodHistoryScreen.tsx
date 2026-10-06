@@ -244,7 +244,7 @@ export default function WodHistoryScreen() {
             <View style={[S.badge, { borderColor: levelColor }]} testID={`history-level-${item.id}`}>
               <Text style={[S.badgeTxt, { color: levelColor }]}>{item.level.toUpperCase()}</Text>
             </View>
-            {item.is_benchmark && <AxTag label="BM" tone="accent" />}
+            {item.is_benchmark && <AxTag label={t('wodHistory.benchmarkShort')} tone="accent" />}
             {item.duration > 0 && (
               <View style={[S.badge, { borderColor: c.border }]}>
                 <Clock color={c.textMuted} size={10} />
@@ -307,7 +307,7 @@ export default function WodHistoryScreen() {
                   <View key={sc.id} style={S.scoreRow}>
                     <Text style={S.scoreDate}>{formatDateShort(sc.completed_at)}</Text>
                     <Text style={S.scoreValue}>{formatScore(sc)}</Text>
-                    <Text style={S.scoreRx}>{sc.rx ? 'RX' : 'SC'}</Text>
+                    <Text style={S.scoreRx}>{sc.rx ? 'RX' : t('wodHistory.scaledShort')}</Text>
                     {sc.notes ? <Text style={S.scoreNotes} numberOfLines={1}>{sc.notes}</Text> : null}
                   </View>
                 ))}

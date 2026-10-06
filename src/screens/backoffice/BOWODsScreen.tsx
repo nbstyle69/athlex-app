@@ -421,7 +421,7 @@ export default function BOWODsScreen({ navigation }: any) {
                               {wod.block_name ? `${wod.block_name.toUpperCase()} · ` : ''}
                               {(wod.wod_type ?? 'WOD').toUpperCase()}
                               {wod.wod_type === 'emom' && wod.emom_interval_minutes
-                                ? ` ${wod.emom_interval_minutes > 1 ? `E${wod.emom_interval_minutes}MOM` : ''}`
+                                ? ` ${wod.emom_interval_minutes > 1 ? t('bo.wods.emomEvery', { n: wod.emom_interval_minutes }) : ''}`
                                 : ''}
                               {wod.wod_type === 'tabata' && wod.tabata_work_seconds
                                 ? ` ${wod.tabata_work_seconds}/${wod.tabata_rest_seconds ?? 0}s`
