@@ -444,4 +444,28 @@ describe('i18n 1a : le générateur envoie les mêmes valeurs en français et en
     expect(texts).toContain('Strength');
     expect(texts.filter((t) => /musculation/i.test(t))).toEqual([]);
   });
+
+  // Décision produit : l'objectif « Force » se dit « Max Strength », la discipline « Strength ».
+  const objectiveLabel = (root: ReactTestInstance) => hostText(root.findAll((n) => n.props.testID === 'wodgen-objective-force')[0]
+    .findAll((n) => isHostText(n))[0]);
+  const insideDiscipline = (n: ReactTestInstance) => {
+    for (let p: ReactTestInstance | null = n; p; p = p.parent) if (/^wodgen-discipline/.test(p.props.testID ?? '')) return true;
+    return false;
+  };
+
+  it('en anglais : objectif « Max Strength », « Strength » réservé à la discipline', async () => {
+    await i18n.changeLanguage('en');
+    const root = await mountGenerator('musculation');
+    expect(objectiveLabel(root)).toBe('Max Strength');
+    const strength = root.findAll((n) => isHostText(n) && hostText(n) === 'Strength');
+    expect(strength.length).toBeGreaterThan(0);
+    expect(strength.filter((n) => !insideDiscipline(n)).map(hostText)).toEqual([]);
+  });
+
+  it('en français : objectif « Force », discipline « Musculation », inchangés', async () => {
+    await i18n.changeLanguage('fr');
+    const root = await mountGenerator('musculation');
+    expect(objectiveLabel(root)).toBe('Force');
+    expect(structure(root)).toContain('Musculation');
+  });
 });

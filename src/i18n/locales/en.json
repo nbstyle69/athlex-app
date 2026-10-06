@@ -2627,7 +2627,7 @@
   "muscu": {
     "objective": {
       "hypertrophie": "Muscle gain",
-      "force": "Strength",
+      "force": "Max Strength",
       "endurance": "Toning"
     },
     "equipment": {
