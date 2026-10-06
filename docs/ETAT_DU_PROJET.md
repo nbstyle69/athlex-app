@@ -226,7 +226,8 @@ un engagement, sans le changer.
 - `box_plan_change_requests` (une seule demande en attente par membre et par box ; le membre lit les siennes, le
   gérant et les co-gérants celles de leur box ; aucune écriture client) et trois fonctions réservées à la clé
   serveur : `request_plan_change`, `cancel_plan_change_request`, `decide_plan_change_request` (gérant ou co-gérant,
-  jamais le coach ; une demande décidée ne bouge plus). Codes `PLAN_CHANGE_…`.
+  jamais le coach ; une demande décidée ne bouge plus ; à l'acceptation, un montant noté suit le prix de la
+  nouvelle formule, un montant vide le reste). Codes `PLAN_CHANGE_…`.
 - Le gérant est notifié de chaque demande (`plan_change_request` dans la file des notifications) ; le texte reste à
   ajouter à `deliver-manager-notifications` avant la PR B.
 - Tests `changement_formule.sql` (C0 à C9, mutations intégrées, retour arrière), contrôle T15 de l'audit des droits ;
