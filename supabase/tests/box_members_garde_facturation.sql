@@ -11,10 +11,11 @@
 --       colonne ajoutée à la table sans être gardée (ou testée) fait échouer ;
 --       et celle de la liste UPDATE OF du déclencheur ;
 --   F1  règles réelles : G et C refusés (42501, MEMBRE_FACTURATION_RESERVEE)
---       sur chacune des 19 colonnes (billing_day comprise, migration
---       20270135) ; K et le membre MN ne changent rien ; rien n'a bougé ;
+--       sur chacune des 22 colonnes (billing_day comprise, migration
+--       20270135 ; scheduled_plan_id, scheduled_change_at et
+--       stripe_schedule_id, migration 20270147) ; K et le membre MN ne changent rien ; rien n'a bougé ;
 --   F2  règle d'écriture ouverte à tous (dans la transaction) : G, C, K et MN
---       refusés sur chacune des 19 colonnes ; rien n'a bougé ;
+--       refusés sur chacune des 22 colonnes ; rien n'a bougé ;
 --   F3  réécriture à l'identique acceptée ; `role` et `status` restent libres ;
 --   F4  la clé serveur écrit la facturation ; `reactivate_box_member` (SECURITY
 --       DEFINER) remet MR à zéro ;
@@ -80,7 +81,7 @@ BEGIN
 END $$;
 
 CREATE FUNCTION pg_temp.facturation(p_id text) RETURNS text LANGUAGE sql AS $$
-  SELECT row(plan_id, subscription_status, stripe_subscription_id, stripe_checkout_session_id, subscription_current_period_end, subscription_cancel_at_period_end, amount_cents, platform_fee_cents, commitment_end_date, subscription_paused, pause_started_at, pause_resumes_at, payment_method_type, past_due_since, dunning_attempts, last_payment_error, dunning_reminders_sent, dunning_last_reminder_at, billing_day)::text FROM public.box_members WHERE id = ('00000000-0000-4000-f9c1-0000000000' || p_id)::uuid;
+  SELECT row(plan_id, subscription_status, stripe_subscription_id, stripe_checkout_session_id, subscription_current_period_end, subscription_cancel_at_period_end, amount_cents, platform_fee_cents, commitment_end_date, subscription_paused, pause_started_at, pause_resumes_at, payment_method_type, past_due_since, dunning_attempts, last_payment_error, dunning_reminders_sent, dunning_last_reminder_at, billing_day, scheduled_plan_id, scheduled_change_at, stripe_schedule_id)::text FROM public.box_members WHERE id = ('00000000-0000-4000-f9c1-0000000000' || p_id)::uuid;
 $$;
 
 DO $t$
@@ -104,7 +105,10 @@ DECLARE
     'last_payment_error', '''x''',
     'dunning_reminders_sent', '5',
     'dunning_last_reminder_at', 'now()',
-    'billing_day', '5'];
+    'billing_day', '5',
+    'scheduled_plan_id', '''00000000-0000-4000-c9c1-000000000002''',
+    'scheduled_change_at', 'now()',
+    'stripe_schedule_id', '''sub_sched_pirate'''];
   v text;
   v_qui text;
   v_i int;

@@ -213,6 +213,27 @@ Supabase/Resend.
 
 ## En cours
 
+**« Mon abonnement », PR A : changement de formule, la base** (migration `20270147`, **appliquée en prod le
+06/10/2026 à 15:00 UTC** ; dump `db-dumps/2026-10-06/athlex-prod-public-internal-20261006T145926Z.dump` ; données de
+box_members, boxes et de la file des notifications identiques avant/après ; audit des droits 40/40 ; PR non mergée). Une seule règle pour l'app et le site /compte : un membre payant en ligne verra son changement
+programmé à la prochaine échéance (échéancier Stripe, sans prorata, écrit par le webhook à la bascule — PR B) ; un
+membre payant au comptoir envoie une demande que le gérant accepte (formule appliquée tout de suite) ou refuse dans
+Abonnés du Manager. Refusé en impayé, en pause, résiliation programmée, box archivée ou en archivage ; possible pendant
+un engagement, sans le changer.
+- `box_members` : `scheduled_plan_id`, `scheduled_change_at`, `stripe_schedule_id`, gardées comme `plan_id` (aucun
+  client ne les écrit ni ne les lit) ; `get_my_membership_billing()` rend les deux premières à leur membre.
+- `box_stripe_portal` : configuration du portail Stripe d'une box, clé serveur seule (une colonne de `boxes` aurait
+  été lisible par tout compte connecté).
+- `box_plan_change_requests` (une seule demande en attente par membre et par box ; le membre lit les siennes, le
+  gérant et les co-gérants celles de leur box ; aucune écriture client) et trois fonctions réservées à la clé
+  serveur : `request_plan_change`, `cancel_plan_change_request`, `decide_plan_change_request` (gérant ou co-gérant,
+  jamais le coach ; une demande décidée ne bouge plus ; à l'acceptation, un montant noté suit le prix de la
+  nouvelle formule, un montant vide le reste). Codes `PLAN_CHANGE_…`.
+- Le gérant est notifié de chaque demande (`plan_change_request` dans la file des notifications) ; le texte reste à
+  ajouter à `deliver-manager-notifications` avant la PR B.
+- Tests `changement_formule.sql` (C0 à C9, mutations intégrées, retour arrière), contrôle T15 de l'audit des droits ;
+  retour arrière `supabase/retours/20270147000000_changement_formule.sql`.
+
 **Chantier anglais, PR 0 : socle i18n (app seule, aucune migration ; PR #487 non mergée).** Dates et nombres selon la
 langue de l'app et la région du téléphone (`src/i18n/locale.ts`, plus de `'fr-FR'` en dur hors minuteur et carte de
 partage, laissés à la PR 1a), `errorMessage()` qui traduit les refus de la base et des fonctions Edge, app et push en

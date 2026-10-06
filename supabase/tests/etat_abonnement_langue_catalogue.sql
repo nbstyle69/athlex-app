@@ -168,8 +168,9 @@ BEGIN
      'Lot 6 : son propre abonnement, par auth.uid(). Remplace la lecture directe des colonnes nominatives de box_members.' THEN
     RAISE EXCEPTION 'A5 : commentaire de get_my_membership_billing perdu ou modifié';
   END IF;
-  IF md5(pg_get_functiondef('public.get_my_membership_billing()'::regprocedure)) <> '6b3770f8bcf03c86b7e68f2e680c734e' THEN
-    RAISE EXCEPTION 'A5 : la définition de get_my_membership_billing n''est plus celle de 20270128 (md5 %)',
+  IF md5(pg_get_functiondef('public.get_my_membership_billing()'::regprocedure)) <> 'b4ca55006146fc83bc3da8eff1260234' THEN
+    -- Redéfinie depuis par 20270147 (deux colonnes ajoutées en fin de retour).
+    RAISE EXCEPTION 'A5 : la définition de get_my_membership_billing n''est plus celle de 20270147 (md5 %)',
       md5(pg_get_functiondef('public.get_my_membership_billing()'::regprocedure));
   END IF;
 
