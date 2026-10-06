@@ -248,7 +248,7 @@ BEGIN
   SELECT string_agg(c.relname || ':' || a.grantee::regrole::text || ':' || a.privilege_type, ',' ORDER BY c.relname, a.grantee::regrole::text, a.privilege_type) INTO v
     FROM pg_class c, aclexplode(c.relacl) a
    WHERE c.oid IN ('public.box_plan_change_requests'::regclass, 'public.box_stripe_portal'::regclass)
-     AND a.grantee <> c.relowner;
+     AND (a.grantee = 0 OR a.grantee::regrole::text IN ('anon', 'authenticated', 'service_role'));  -- propriétaire et rôles de plateforme varient selon l'image
   IF v IS DISTINCT FROM 'box_plan_change_requests:authenticated:SELECT,box_plan_change_requests:service_role:SELECT,box_stripe_portal:service_role:DELETE,box_stripe_portal:service_role:INSERT,box_stripe_portal:service_role:SELECT,box_stripe_portal:service_role:UPDATE' THEN
     RAISE EXCEPTION 'C0 : droits des tables (%)', v;
   END IF;
@@ -259,7 +259,7 @@ BEGIN
     ('internal.refus_changement_formule(uuid,uuid,uuid)')
   ) t(sig) LOOP
     SELECT string_agg(coalesce(nullif(a.grantee::regrole::text, '-'), 'PUBLIC') || ':' || a.privilege_type, ',' ORDER BY a.grantee::regrole::text) INTO v
-      FROM pg_proc p, aclexplode(p.proacl) a WHERE p.oid = v_cas.sig::regprocedure AND a.grantee <> p.proowner;
+      FROM pg_proc p, aclexplode(p.proacl) a WHERE p.oid = v_cas.sig::regprocedure AND (a.grantee = 0 OR a.grantee::regrole::text IN ('anon', 'authenticated', 'service_role'));
     IF v IS DISTINCT FROM (CASE WHEN v_cas.sig LIKE 'internal.%' THEN NULL ELSE 'service_role:EXECUTE' END) THEN
       RAISE EXCEPTION 'C0 : droits de % (%)', v_cas.sig, v;
     END IF;
