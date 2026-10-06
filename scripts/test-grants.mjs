@@ -35,6 +35,7 @@ import { controlerGrantsTables, controlerRpcMutantes } from './lib/controle-gran
 import { controlerSchemaInternal } from './lib/controle-schema-internal.mjs';
 import { controlerStockageDocuments } from './lib/controle-stockage-documents.mjs';
 import { controlerStockagePiecesJointes } from './lib/controle-stockage-pieces-jointes.mjs';
+import { controlerStockagePartnerLogos } from './lib/controle-stockage-partner-logos.mjs';
 
 const { url: SUPABASE_URL, anonKey: ANON_KEY } = requireTestTarget();
 
@@ -232,6 +233,10 @@ controlerStockageDocuments(query, assert);
 // ── Stockage `message-attachments` (S4, S5) ────────────────────────────────────
 console.log('\n=== Contrôle du stockage `message-attachments` ===\n');
 controlerStockagePiecesJointes(query, assert);
+
+// ── Stockage `partner-logos` (S6) ──────────────────────────────────────────────
+console.log('\n=== Contrôle du stockage `partner-logos` ===\n');
+controlerStockagePartnerLogos(query, assert);
 
 // ── Le geste réel, et son effet mesuré ───────────────────────────────────────
 // Ici — pile jetable — la sonde peut être complète, et elle doit l'être : le

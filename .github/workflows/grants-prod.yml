@@ -28,6 +28,7 @@ on:
       - 'scripts/lib/controle-grants-tables.mjs'
       - 'scripts/lib/controle-stockage-documents.mjs'
       - 'scripts/lib/controle-stockage-pieces-jointes.mjs'
+      - 'scripts/lib/controle-stockage-partner-logos.mjs'
       - '.github/workflows/grants-prod.yml'
 
   workflow_dispatch:
