@@ -157,8 +157,10 @@ export default function WodResultScreen() {
     const parts: string[] = [];
     const demande = screen.format;
     if (demande && demande !== 'surprise' && rel.includes('format')) {
-      const fmt = FORMATS.find((f) => f.key === demande)?.label ?? demande;
-      const intention = INTENTIONS[metcon.discipline].find((i) => i.key === metcon.intention)?.label ?? metcon.intention;
+      const fmtKey = FORMATS.find((f) => f.key === demande)?.labelKey;
+      const fmt = fmtKey ? t(fmtKey) : demande;
+      const intentionKey = INTENTIONS[metcon.discipline].find((i) => i.key === metcon.intention)?.labelKey;
+      const intention = intentionKey ? t(intentionKey) : metcon.intention;
       parts.push(t('wodResult.formatRelaxed', { requested: fmt, intention, obtained: formatObtenu(metcon.format) }));
     }
     return parts.length ? parts.join(' ') : null;

@@ -263,6 +263,7 @@ describe('R6c : logique du chrono', () => {
     // 1080p fixe : plus de prepareQuality, « Démarrage… » jusqu'à la réponse du module (r6cOptionsVideo.rn.test.tsx) ;
     // retours 1.0.60 (D1) : mode audio reposé à chaque lancement sans caméra (retours1060Audio.rn.test.tsx).
     // retours 1.0.60 (D7) : bips arrêtés dès leur fin sur Android, focus audio rendu (retours1060Musique.rn.test.tsx).
-    expect(sha).toBe('0ad9d5f3c70470b2e047c7700827f817cdecb5340ed2c7a2574570009f065c47');
+    // i18n 1a : textes affichés passés par t() dans la logique du chrono (libellés, alertes, date incrustée) ; logique inchangée.
+    expect(sha).toBe('b6af749d41a3ecd5200f9ee75488592a4da3768adcbad07711b068c5a4bcbba1');
   });
 });

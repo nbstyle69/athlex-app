@@ -11,6 +11,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { AxIconButton } from '../../components/ax';
 import { axFonts, axSpacing, axTypography, axVeil } from '../../theme/axTokens';
 import { dateLocale } from '../../i18n/locale';
+import { useTranslation } from 'react-i18next';
 
 type Route = RouteProp<HomeStackParamList, 'VideoPlayback'>;
 type Nav   = NativeStackNavigationProp<HomeStackParamList, 'VideoPlayback'>;
@@ -37,6 +38,7 @@ function formatRecordedAt(iso: string): string {
 }
 
 export default function VideoPlaybackScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const { videoURL, title, recordedAt, timerStartOffset = 0, timerStopOffset = 0, countdownDuration = 0, overlaysBurned = false } = route.params;
@@ -142,9 +144,9 @@ export default function VideoPlaybackScreen() {
             {!overlaysBurned && recordedAt ? <Text style={[axTypography.caption, styles.timestampText]}>{formatRecordedAt(recordedAt)}</Text> : null}
           </View>
           <View style={{ flexDirection: 'row', gap: axSpacing.md }}>
-            <AxIconButton testID="playback-share" icon={Share2} veil accessibilityLabel="Partager"
+            <AxIconButton testID="playback-share" icon={Share2} veil accessibilityLabel={t('common.share')}
               onPress={async () => { if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(videoURL); }} />
-            <AxIconButton testID="playback-close" icon={X} veil accessibilityLabel="Fermer" onPress={() => navigation.goBack()} />
+            <AxIconButton testID="playback-close" icon={X} veil accessibilityLabel={t('common.close')} onPress={() => navigation.goBack()} />
           </View>
         </View>
 
@@ -160,7 +162,7 @@ export default function VideoPlaybackScreen() {
           {controlsVisible && (
             <View style={styles.playPauseWrap} pointerEvents="box-none">
               <AxIconButton testID="playback-toggle" icon={isPlaying ? Pause : Play} veil
-                accessibilityLabel={isPlaying ? 'Pause' : 'Lecture'} onPress={togglePlayPause} />
+                accessibilityLabel={isPlaying ? t('timer.playback.pause') : t('timer.playback.play')} onPress={togglePlayPause} />
             </View>
           )}
         </View>

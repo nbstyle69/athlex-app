@@ -26,6 +26,7 @@ import { AxButton, AxChip, AxSwitch, AxTextField } from '../../components/ax';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import SessionContextCard from '../../components/wod/SessionContextCard';
 import i18n from '../../i18n';
+import { useTranslation } from 'react-i18next';
 import type {
   Catalog, Discipline, Entry, FormatChoice, Intention, MuscuEquipment, MuscuObjective, MuscuTarget, Vest,
 } from '../../../packages/wod-engine/src';
@@ -53,6 +54,7 @@ import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 type Sport = Discipline | 'musculation';
 
 export default function WodGeneratorScreen() {
+  const { t } = useTranslation();
   const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
@@ -203,8 +205,8 @@ export default function WodGeneratorScreen() {
       navigation.navigate('WodResult', { screen, result });
     } catch (e) {
       Alert.alert(
-        isMuscu ? 'Aucune séance valide' : 'Aucun WOD valide',
-        isMuscu ? 'Essaie une autre durée, une autre cible ou moins d\'exclusions.' : 'Essaie une autre durée, un autre format ou moins d\'exclusions.',
+        isMuscu ? t('training.generate.noValidSessionTitle') : t('training.generate.noValidWodTitle'),
+        isMuscu ? t('training.generate.noValidSessionBody') : t('training.generate.noValidWodBody'),
       );
     } finally {
       setGenerating(false);
@@ -224,7 +226,7 @@ export default function WodGeneratorScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title="Générateur de WOD">
+      <AxScreenHeader title={t('wodGen.title')}>
           <View style={S.menu}>
             <TouchableOpacity style={S.menuBtn} onPress={() => navigation.navigate('WodHistory')} activeOpacity={0.8} testID="wodgen-menu-history">
               <History color={c.text} size={15} />
@@ -240,7 +242,7 @@ export default function WodGeneratorScreen() {
             </TouchableOpacity>
           </View>
         <Text style={[S.headerDiscipline, { color: accent }]} testID="wodgen-discipline">
-          {isMuscu ? 'Musculation' : sport === 'hybrid' ? 'Hybrid' : 'Functional'}
+          {t(`training.disciplines.${isMuscu ? 'musculation' : sport === 'hybrid' ? 'hybrid' : 'functional'}`)}
         </Text>
       </AxScreenHeader>
 
@@ -250,8 +252,8 @@ export default function WodGeneratorScreen() {
         {/* Entrée */}
         <View style={S.cardRow}>
           {([
-            { key: 'express', label: isMuscu ? 'Séance' : 'WOD express', sub: 'Une séance complète', Icon: Zap },
-            { key: 'after_class', label: 'Après ma classe', sub: 'Un complément', Icon: GraduationCap },
+            { key: 'express', label: isMuscu ? t('wodGen.entrySession') : t('training.generate.express'), sub: t('wodGen.entryExpressSub'), Icon: Zap },
+            { key: 'after_class', label: t('training.generate.afterClass'), sub: t('wodGen.entryAfterClassSub'), Icon: GraduationCap },
           ] as { key: Entry; label: string; sub: string; Icon: typeof Zap }[]).map(({ key, label, sub, Icon }) => (
             <TouchableOpacity
               key={key}
@@ -286,7 +288,7 @@ export default function WodGeneratorScreen() {
               >
                 <View style={S.sportIcon}><SportIcon size={22} color={selected ? accent : c.textMuted} /></View>
                 <Text style={[S.sportLabel, selected && { color: accent }]} numberOfLines={1}>
-                  {d === 'functional' ? 'Functional' : d === 'hybrid' ? 'Hybrid' : 'Musculation'}
+                  {t(`training.disciplines.${d}`)}
                 </Text>
               </TouchableOpacity>
             );
@@ -297,10 +299,10 @@ export default function WodGeneratorScreen() {
         {draft && (
           <SessionContextCard
             testID="wodgen-draft"
-            label="Dernière séance générée"
+            label={t('wodGen.lastGenerated')}
             title={draft.result.wod.title}
             action={{
-              label: 'Reprendre la séance',
+              label: t('wodGen.resumeSession'),
               testID: 'wodgen-draft-resume',
               onPress: () => navigation.navigate('WodResult', { screen: draft.screen, result: draft.result, draft: { performed: draft.performed, submittedScore: draft.submittedScore } }),
             }}
@@ -309,10 +311,10 @@ export default function WodGeneratorScreen() {
         {!draft && serverMuscu && (
           <SessionContextCard
             testID="wodgen-server-draft"
-            label="Dernière séance générée"
+            label={t('wodGen.lastGenerated')}
             title={serverMuscu.result.wod.title}
             action={{
-              label: 'Reprendre la séance',
+              label: t('wodGen.resumeSession'),
               testID: 'wodgen-server-draft-resume',
               onPress: () => navigation.navigate('WodResult', {
                 screen: serverMuscu.screen, result: serverMuscu.result, savedId: serverMuscu.savedId,
@@ -325,7 +327,7 @@ export default function WodGeneratorScreen() {
         {entry === 'after_class' && dayClass && currentBox && (
           <SessionContextCard
             testID="wodgen-class"
-            label={`Classe du jour · ${currentBox.name}`}
+            label={t('wodGen.dayClass', { box: currentBox.name })}
             title={dayClass.title}
             subtitle={catalog ? avoidedText(catalog, dayClass.movements) : ''}
           />
@@ -333,12 +335,12 @@ export default function WodGeneratorScreen() {
 
         {isMuscu && (
           <>
-            <Section title="Objectif" S={S}>
+            <Section title={t('wodGen.objective')} S={S}>
               <ChipScroll>
                 {MUSCU_OBJECTIVES.map((o) => (
                   <Chip
                     key={o.key}
-                    label={o.label}
+                    label={t(o.labelKey)}
                     selected={effectiveObjective === o.key}
                     disabled={objectiveDisabled(o.key, entry, target, muscuEquipment)}
                     onPress={() => setObjective(o.key)}
@@ -348,10 +350,10 @@ export default function WodGeneratorScreen() {
               </ChipScroll>
             </Section>
 
-            <Section title="Cible" S={S}>
+            <Section title={t('wodGen.target')} S={S}>
               <ChipScroll>
-                {targets.map((t) => (
-                  <Chip key={t} label={targetLabel(t)} selected={target === t} onPress={() => setTarget(t)} testID={`wodgen-target-${t}`} />
+                {targets.map((tg) => (
+                  <Chip key={tg} label={targetLabel(tg)} selected={target === tg} onPress={() => setTarget(tg)} testID={`wodgen-target-${tg}`} />
                 ))}
               </ChipScroll>
               <Text style={S.hint} testID="wodgen-target-hint">
@@ -362,10 +364,10 @@ export default function WodGeneratorScreen() {
               </Text>
             </Section>
 
-            <Section title="Matériel" S={S}>
+            <Section title={t('wodGen.equipment')} S={S}>
               <ChipScroll>
                 {MUSCU_EQUIPMENTS.map((e) => (
-                  <Chip key={e.key} label={e.label} selected={muscuEquipment === e.key} onPress={() => chooseMuscuEquipment(e.key)} testID={`wodgen-equipment-${e.key}`} />
+                  <Chip key={e.key} label={t(e.labelKey)} selected={muscuEquipment === e.key} onPress={() => chooseMuscuEquipment(e.key)} testID={`wodgen-equipment-${e.key}`} />
                 ))}
               </ChipScroll>
               <Text style={S.hint} testID="wodgen-rm-line">
@@ -382,30 +384,30 @@ export default function WodGeneratorScreen() {
         )}
 
         {!isMuscu && entry === 'express' && (
-          <Section title="Format" S={S}>
+          <Section title={t('wodGenerator.format')} S={S}>
             <ChipScroll>
               {FORMATS.filter((f) => formatsFaisables.has(f.key)).map((f) => (
-                <Chip key={f.key} label={f.label} selected={format === f.key} onPress={() => setFormat(f.key)} testID={`wodgen-format-${f.key}`} />
+                <Chip key={f.key} label={t(f.labelKey)} selected={format === f.key} onPress={() => setFormat(f.key)} testID={`wodgen-format-${f.key}`} />
               ))}
             </ChipScroll>
           </Section>
         )}
 
         {!isMuscu && (
-        <Section title="Intention" S={S}>
+        <Section title={t('wodGenerator.intention')} S={S}>
           <ChipScroll>
             {INTENTIONS[discipline].map((i) => (
-              <Chip key={i.key} label={i.label} selected={intention === i.key} onPress={() => setIntention(i.key)} />
+              <Chip key={i.key} label={t(i.labelKey)} selected={intention === i.key} onPress={() => setIntention(i.key)} />
             ))}
           </ChipScroll>
         </Section>
         )}
 
         {sport === 'hybrid' && (
-          <Section title="Gilet lesté" S={S}>
+          <Section title={t('wodGenerator.vest')} S={S}>
             <ChipScroll>
               {VESTS.map((v) => (
-                <Chip key={v.key} label={v.label} selected={vest === v.key} onPress={() => setVest(v.key)} />
+                <Chip key={v.key} label={t(v.labelKey)} selected={vest === v.key} onPress={() => setVest(v.key)} />
               ))}
             </ChipScroll>
           </Section>
@@ -413,7 +415,7 @@ export default function WodGeneratorScreen() {
 
         {/* Options avancées */}
         <TouchableOpacity style={S.advToggle} onPress={() => setAdvanced((v) => !v)} activeOpacity={0.8} testID="wodgen-advanced">
-          <Text style={S.advToggleText}>Options avancées{exclude.length ? ` · ${exclude.length} exclu${exclude.length > 1 ? 's' : ''}` : ''}</Text>
+          <Text style={S.advToggleText}>{t('wodGen.advanced')}{exclude.length ? t('wodGen.excludedCount', { count: exclude.length }) : ''}</Text>
           {advanced ? <ChevronUp size={18} color={c.textMuted} /> : <ChevronDown size={18} color={c.textMuted} />}
         </TouchableOpacity>
         {advanced && (
@@ -421,21 +423,21 @@ export default function WodGeneratorScreen() {
             {!isMuscu && (
               <View style={S.prOption}>
                 <View style={{ flex: 1 }}>
-                  <Text style={S.advLabel}>Adapter à mes PR</Text>
+                  <Text style={S.advLabel}>{t('wodGen.adaptToPr')}</Text>
                   <Text style={S.hint}>
-                    {adaptToPr ? 'Gym : substitutions et 50 % du record par série.' : 'Mode challenge : catégorie seule, sans adaptation aux PR gym.'}
+                    {adaptToPr ? t('wodGen.adaptOn') : t('wodGen.adaptOff')}
                   </Text>
                 </View>
                 <AxSwitch
                   value={adaptToPr}
                   onValueChange={chooseAdaptToPr}
                   disabled={!prPreferenceReady}
-                  accessibilityLabel="Adapter à mes PR"
+                  accessibilityLabel={t('wodGen.adaptToPr')}
                   testID="wodgen-adapt-pr"
                 />
               </View>
             )}
-            <Text style={S.advLabel}>Exclure</Text>
+            <Text style={S.advLabel}>{t('wodGen.exclude')}</Text>
             {!catalog ? <ActivityIndicator color={accent} /> : (
               <ChipScroll>
                 {excludedMovements.map((m) => (
@@ -459,7 +461,7 @@ export default function WodGeneratorScreen() {
             )}
             <View style={S.input}>
               <AxTextField
-                placeholder="Exclure du matériel ou un mouvement…"
+                placeholder={t('wodGen.excludePlaceholder')}
                 value={search}
                 onChangeText={setSearch}
                 autoCapitalize="none"
@@ -482,7 +484,7 @@ export default function WodGeneratorScreen() {
           <AxButton
             variant="accent"
             icon={Sparkles}
-            label={entry === 'express' ? (isMuscu ? 'Générer ma séance' : 'Générer mon WOD') : 'Générer mon complément'}
+            label={entry === 'express' ? (isMuscu ? t('training.generate.title') : t('training.generate.button')) : t('wodGen.generateComplement')}
             onPress={generate}
             loading={generating}
             disabled={!user || (!isMuscu && !prPreferenceReady)}

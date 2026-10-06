@@ -1,10 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 export const REC_DOT = { size: 12, color: '#EF4444', minOpacity: 0.25, halfPeriodMs: 900 } as const;
 
 /** Point rouge d'enregistrement : clignotement doux, immobile quand « réduire les animations » est activé. */
 export function RecBlinkDot({ testID = 'timer-rec-blink' }: { testID?: string }) {
+  const { t } = useTranslation();
   const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
   const opacity = useRef(new Animated.Value(1)).current;
 
@@ -32,7 +34,7 @@ export function RecBlinkDot({ testID = 'timer-rec-blink' }: { testID?: string })
   return (
     <Animated.View
       testID={testID}
-      accessibilityLabel="Enregistrement en cours"
+      accessibilityLabel={t('timer.run.recording')}
       style={[styles.dot, { opacity }]}
     />
   );

@@ -40,6 +40,8 @@ import { spacing, borderRadius, typography } from '../../theme/designTokens';
 import { captureError } from '../../lib/sentry';
 import { RecBlinkDot } from '../../components/timer/RecBlinkDot';
 import { hapticLight, hapticMedium, hapticHeavy } from '../../lib/haptics';
+import { formatDate, formatTime as formatClockTime } from '../../i18n/locale';
+import { errorMessage } from '../../utils/refusals';
 
 type Route = RouteProp<HomeStackParamList, 'TimerRun'>;
 type Nav = NativeStackNavigationProp<HomeStackParamList, 'TimerRun'>;
@@ -499,13 +501,13 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: axSpacing.md, marginBottom: axSpacing['2xl'] }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: axSpacing.sm, flexShrink: 1 }}>
               <Palette color={c.accentText} size={20} />
-              <Text style={[axTypography.titleM, { color: c.text, flexShrink: 1 }]} numberOfLines={1}>Design du minuteur</Text>
+              <Text style={[axTypography.titleM, { color: c.text, flexShrink: 1 }]} numberOfLines={1}>{t('timer.design.title')}</Text>
             </View>
             <AxTag testID="timer-active-theme" label={t(activeTheme.labelKey).toUpperCase()} />
           </View>
 
           {/* ── THÈME */}
-          <SLabel label="Thème" />
+          <SLabel label={t('timer.design.theme')} />
           <AxCard style={{ marginBottom: axSpacing.md }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: axSpacing.md }}>
               <View style={{ flex: 1 }}>
@@ -544,7 +546,7 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
           </View>
 
           {/* ── COULEUR DES CHIFFRES */}
-          <SLabel label="Couleur des chiffres" />
+          <SLabel label={t('timer.design.digitColor')} />
           <View style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }, section]}>
             {DIGIT_COLORS.map(dc => {
               const isActive = opts.digitColor === dc;
@@ -562,28 +564,28 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
           </View>
 
           {/* ── STYLE D'HORLOGE */}
-          <SLabel label="Style d'affichage" />
+          <SLabel label={t('timer.design.displayStyle')} />
           <View style={[{ flexDirection: 'row', flexWrap: 'wrap', gap: axSpacing.sm }, section]}>
             {([
-              { id: 'arc',    label: 'Cercle' },
-              { id: 'bar',    label: 'Barre' },
-              { id: 'digits', label: 'Digits' },
-            ] as { id: ClockStyle; label: string }[]).map(st => (
-              <AxChip key={st.id} label={st.label.toUpperCase()} selected={opts.clockStyle === st.id}
+              { id: 'arc',    labelKey: 'timer.design.styleArc' },
+              { id: 'bar',    labelKey: 'timer.design.styleBar' },
+              { id: 'digits', labelKey: 'timer.design.styleDigits' },
+            ] as { id: ClockStyle; labelKey: string }[]).map(st => (
+              <AxChip key={st.id} label={t(st.labelKey).toUpperCase()} selected={opts.clockStyle === st.id}
                 onPress={() => onUpdate({ clockStyle: st.id })} testID={`timer-style-${st.id}`} />
             ))}
           </View>
 
           {/* ── TAILLE */}
-          <SLabel label={`Taille des chiffres · ${opts.fontSize}px`} />
+          <SLabel label={t('timer.design.digitSize', { px: opts.fontSize })} />
           <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 14 }, section]}>
-            <AxIconButton icon={Minus} accessibilityLabel="Réduire la taille des chiffres" testID="timer-size-minus"
+            <AxIconButton icon={Minus} accessibilityLabel={t('timer.design.smaller')} testID="timer-size-minus"
               onPress={() => onUpdate({ fontSize: Math.max(20, opts.fontSize - 8) })} />
             <View style={trackStyle}>
               <View style={{ width: `${Math.round(((opts.fontSize - 20) / 120) * 100)}%` as `${number}%`,
                 height: '100%', backgroundColor: c.accent, borderRadius: 3 }} />
             </View>
-            <AxIconButton icon={Plus} accessibilityLabel="Agrandir les chiffres" testID="timer-size-plus"
+            <AxIconButton icon={Plus} accessibilityLabel={t('timer.design.bigger')} testID="timer-size-plus"
               onPress={() => onUpdate({ fontSize: Math.min(140, opts.fontSize + 8) })} />
           </View>
 
@@ -591,15 +593,15 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
           <AxCard style={[{ gap: axSpacing.md }, section]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: axSpacing.md }}>
               {opts.bipsEnabled ? <Volume2 color={c.text} size={18} /> : <VolumeX color={c.textMuted} size={18} />}
-              <Text style={[axTypography.label, { flex: 1, color: c.text }]}>Sons {opts.bipsEnabled ? 'ON' : 'OFF'}</Text>
+              <Text style={[axTypography.label, { flex: 1, color: c.text }]}>{t(opts.bipsEnabled ? 'timer.design.soundsOn' : 'timer.design.soundsOff')}</Text>
               <AxSwitch value={opts.bipsEnabled} onValueChange={() => onUpdate({ bipsEnabled: !opts.bipsEnabled })}
-                accessibilityLabel="Sons" testID="timer-sounds-switch" />
+                accessibilityLabel={t('timer.design.sounds')} testID="timer-sounds-switch" />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: axSpacing.md }}>
               <RotateCw size={18} color={opts.allowRotation ? c.text : c.textMuted} />
-              <Text style={[axTypography.label, { flex: 1, color: c.text }]}>{opts.allowRotation ? 'Rotation' : 'Portrait'}</Text>
+              <Text style={[axTypography.label, { flex: 1, color: c.text }]}>{t(opts.allowRotation ? 'timer.design.rotation' : 'timer.design.portrait')}</Text>
               <AxSwitch value={opts.allowRotation} onValueChange={() => onUpdate({ allowRotation: !opts.allowRotation })}
-                accessibilityLabel="Rotation" testID="timer-rotation-switch" />
+                accessibilityLabel={t('timer.design.rotation')} testID="timer-rotation-switch" />
             </View>
           </AxCard>
 
@@ -615,15 +617,15 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
           {/* ── VOLUME DES BIPS */}
           {opts.bipsEnabled && (
             <>
-              <SLabel label={`Volume des bips · ${Math.round(opts.beepVolume * 100)}%`} />
+              <SLabel label={t('timer.design.beepVolume', { pct: Math.round(opts.beepVolume * 100) })} />
               <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 14 }, section]}>
-                <AxIconButton icon={Minus} accessibilityLabel="Baisser le volume des bips" testID="timer-volume-minus"
+                <AxIconButton icon={Minus} accessibilityLabel={t('timer.design.volumeDown')} testID="timer-volume-minus"
                   onPress={() => onUpdate({ beepVolume: Math.max(0, Math.round((opts.beepVolume - 0.1) * 10) / 10) })} />
                 <View style={trackStyle}>
                   <View style={{ width: `${Math.round(opts.beepVolume * 100)}%` as `${number}%`,
                     height: '100%', backgroundColor: c.accent, borderRadius: 3 }} />
                 </View>
-                <AxIconButton icon={Plus} accessibilityLabel="Monter le volume des bips" testID="timer-volume-plus"
+                <AxIconButton icon={Plus} accessibilityLabel={t('timer.design.volumeUp')} testID="timer-volume-plus"
                   onPress={() => onUpdate({ beepVolume: Math.min(1, Math.round((opts.beepVolume + 0.1) * 10) / 10) })} />
               </View>
             </>
@@ -631,8 +633,8 @@ function TimerSettingsModal({ opts, onUpdate, onClose }: {
 
           {/* ── RÉINITIALISER + FERMER */}
           <View style={{ gap: 10 }}>
-            <AxButton label="Réinitialiser" variant="outline" fullWidth onPress={() => onUpdate({ ...DEFAULT_DISPLAY })} testID="timer-design-reset" />
-            <AxButton label="Fermer" variant="accent" fullWidth onPress={onClose} testID="timer-design-close" />
+            <AxButton label={t('timer.design.reset')} variant="outline" fullWidth onPress={() => onUpdate({ ...DEFAULT_DISPLAY })} testID="timer-design-reset" />
+            <AxButton label={t('common.close')} variant="accent" fullWidth onPress={onClose} testID="timer-design-close" />
           </View>
         </ScrollView>
       </View>
@@ -667,8 +669,8 @@ export default function TimerRunScreen() {
 
   const [clockStr, setClockStr] = useState(() => {
     const n = new Date();
-    return n.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
-      '  ' + n.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return formatDate(n, { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+      '  ' + formatClockTime(n, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   });
 
   const [seqIdx, setSeqIdx] = useState(0);
@@ -710,8 +712,8 @@ export default function TimerRunScreen() {
     const tick = () => {
       const n = new Date();
       setClockStr(
-        n.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
-        '  ' + n.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        formatDate(n, { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+        '  ' + formatClockTime(n, { hour: '2-digit', minute: '2-digit', second: '2-digit' })
       );
     };
     clockRef.current = setInterval(tick, 1000);
@@ -1175,7 +1177,7 @@ export default function TimerRunScreen() {
     if (mic && !micPermission?.granted) {
       const result = await requestMicPermission();
       if (!result.granted) {
-        Alert.alert('Permission requise', 'Le micro est nécessaire pour enregistrer le son de la vidéo.');
+        Alert.alert(t('timer.run.permissionTitle'), t('timer.run.micNeeded'));
         return;
       }
     }
@@ -1203,16 +1205,16 @@ export default function TimerRunScreen() {
     nativeStartRec({
       outputPath, facing, isLandscape, fps: videoOpts.videoFps, mic,
       beeps, beepFiles: beeps ? beepFilesRef.current! : undefined,
-    }).catch((err: any) => {
+    }).catch(async (err: any) => {
       // Session de capture en échec (exception AVFoundation rattrapée, caméra
       // absente…) : on reste sur l'écran, prêt à réessayer.
       captureError(err, { screen: 'TimerRun', action: 'nativeStartRec' });
       recordingActiveRef.current = false;
       setIsRecordingActive(false);
       Alert.alert(
-        "Démarrage de l'enregistrement échoué",
-        `La caméra n'a pas pu démarrer l'enregistrement.\n\nErreur : ${err?.message ?? String(err)}\n\nVérifie que l'app a accès à la Caméra et au Micro dans les Réglages iOS.`,
-        [{ text: 'OK' }]
+        t('timer.run.recStartFailed'),
+        t('timer.run.recStartFailedBody', { error: await errorMessage(err) }),
+        [{ text: t('common.ok') }]
       );
     }).finally(() => setStartingRec(false));
   }
@@ -1261,9 +1263,9 @@ export default function TimerRunScreen() {
     } catch (e) {
       captureError(e, { screen: 'TimerRun', action: 'stopRecording' });
       Alert.alert(
-        'Enregistrement échoué',
-        "La vidéo n'a pas pu être sauvegardée. Vérifie que l'app a accès à la caméra, au micro et à la galerie dans les Réglages iOS.",
-        [{ text: 'OK' }]
+        t('timer.run.recFailed'),
+        t('timer.run.recFailedBody'),
+        [{ text: t('common.ok') }]
       );
       setPhase('done');
     } finally {
@@ -1549,7 +1551,7 @@ export default function TimerRunScreen() {
     }
     const at = sequenceElapsedRef.current;
     const duration = at - splitExerciseStart;
-    setSplitLog((l) => [...l, { label: list.length > 1 ? `${cur.name} · série ${set}/${cur.sets}` : `${cur.name} ${set}/${cur.sets}`, duration, at }]);
+    setSplitLog((l) => [...l, { label: list.length > 1 ? t('timer.run.splitSetLabel', { name: cur.name, set, sets: cur.sets }) : `${cur.name} ${set}/${cur.sets}`, duration, at }]);
     const next = set < cur.sets ? { ex, set: set + 1 } : { ex: ex + 1, set: 1 };
     if (!list[next.ex]) { Vibration.vibrate([0, 350, 120, 350]); seqBlockDone(); return; }
     if (next.ex !== ex) setSplitExerciseStart(at);
@@ -1654,25 +1656,25 @@ export default function TimerRunScreen() {
     if (b.emomInterval === 0) {
       const s = b.emomCustomSec ?? 90;
       const m = Math.floor(s / 60); const ss = s % 60;
-      return `EMOM ${m > 0 ? m + 'min' : ''}${ss > 0 ? (m > 0 ? ' ' : '') + ss + 's' : ''}`.trim() || 'EMOM PERSO';
+      return `EMOM ${m > 0 ? m + 'min' : ''}${ss > 0 ? (m > 0 ? ' ' : '') + ss + 's' : ''}`.trim() || t('timer.run.type.emomCustom');
     }
-    return b.emomInterval === 1 ? 'EMOM' : `E${b.emomInterval}MOM`;
+    return b.emomInterval === 1 ? t('timer.run.type.emom') : t('bo.wods.emomEvery', { n: b.emomInterval });
   };
-  const blkLabel = curBlk
-    ? ({ 'for-time': 'FOR TIME', amrap: 'AMRAP', emom: emomLabelFor(curBlk), tabata: 'TABATA', ywyr: 'YWYR', split: 'SPLIT' } as Record<string, string>)[curBlk.type] ?? 'PERSONNALISÉ'
-    : 'PERSONNALISÉ';
-  const displayLabel = timerType === 'for-time' ? 'FOR TIME'
-    : timerType === 'amrap'   ? 'AMRAP'
-    : timerType === 'emom'    ? (interval === 1 ? 'EMOM' : `E${interval}MOM`)
-    : timerType === 'tabata'  ? 'TABATA'
-    : timerType === 'ywyr'    ? 'YWYR'
-    : timerType === 'splits'  ? 'SPLITS'
+  // Libellés des types : clés `timer.run.type.*`, traduites au rendu.
+  const BLOCK_TYPE_KEYS: Record<string, string> = { 'for-time': 'forTime', amrap: 'amrap', tabata: 'tabata', ywyr: 'ywyr', split: 'split' };
+  const blockTypeLabel = (b: SeqBlock) => b.type === 'emom' ? emomLabelFor(b)
+    : BLOCK_TYPE_KEYS[b.type] ? t(`timer.run.type.${BLOCK_TYPE_KEYS[b.type]}`) : null;
+  const blkLabel = curBlk ? blockTypeLabel(curBlk) ?? t('timer.run.type.custom') : t('timer.run.type.custom');
+  const displayLabel = timerType === 'for-time' ? t('timer.run.type.forTime')
+    : timerType === 'amrap'   ? t('timer.run.type.amrap')
+    : timerType === 'emom'    ? (interval === 1 ? t('timer.run.type.emom') : t('bo.wods.emomEvery', { n: interval }))
+    : timerType === 'tabata'  ? t('timer.run.type.tabata')
+    : timerType === 'ywyr'    ? t('timer.run.type.ywyr')
+    : timerType === 'splits'  ? t('timer.run.type.splits')
     : seqTotal === 1          ? blkLabel
-    : `BLOC ${seqIdx + 1} / ${seqTotal}`;
+    : t('timer.run.blockOf', { n: seqIdx + 1, total: seqTotal });
 
-  const seqBlockLabel = curBlk
-    ? ({ 'for-time': 'FOR TIME', amrap: 'AMRAP', emom: emomLabelFor(curBlk), tabata: 'TABATA', ywyr: 'YWYR', split: 'SPLIT' } as Record<string, string>)[curBlk.type] ?? ''
-    : '';
+  const seqBlockLabel = curBlk ? blockTypeLabel(curBlk) ?? '' : '';
 
   const mainTime = (() => {
     if (hasSplit && phase === 'done') return formatTime(sequenceElapsed);
@@ -1786,9 +1788,9 @@ export default function TimerRunScreen() {
   const hasWorkRest = timerType === 'tabata' || timerType === 'ywyr'
     || (timerType === 'libre' && curBlk && (curBlk.type === 'tabata' || curBlk.type === 'ywyr' || curBlk.type === 'split'));
   const phaseLabel = phase === 'countdown' ? t('timer.countdown.prepare')
-    : phase === 'running' && seqPausing ? 'PAUSE'
-    : phase === 'running' && hasWorkRest && innerPhase === 'rest' ? 'REPOS'
-    : phase === 'running' && hasWorkRest ? 'TRAVAIL'
+    : phase === 'running' && seqPausing ? t('timer.run.pause')
+    : phase === 'running' && hasWorkRest && innerPhase === 'rest' ? t('timer.run.rest')
+    : phase === 'running' && hasWorkRest ? t('timer.run.work')
     : '';
 
   // Total WOD time for progress bar
@@ -1889,7 +1891,7 @@ export default function TimerRunScreen() {
     timerType === 'libre' && curBlk?.type === 'for-time' && innerPhase === 'work' && seqBlocksRef.current.length > 1;
   // B5 : bouton « Série terminée » du mode Split (« Round terminé » pour un metcon splitté, « Passer le repos » pendant le repos)
   const showSplitBtn = phase === 'running' && !seqPausing && timerType === 'libre' && curBlk?.type === 'split';
-  const splitBtnLabel = innerPhase === 'rest' ? 'PASSER LE REPOS' : (curBlk?.splitExercises?.length ?? 0) > 1 ? 'SÉRIE TERMINÉE' : 'ROUND TERMINÉ';
+  const splitBtnLabel = innerPhase === 'rest' ? t('timer.run.skipRest') : (curBlk?.splitExercises?.length ?? 0) > 1 ? t('timer.run.setDone') : t('timer.run.roundDone');
   const showNormalStop = isActive && !showEndWorkBtn && !showEndBlockBtn;
 
   const qrData = JSON.stringify({
@@ -1910,10 +1912,10 @@ export default function TimerRunScreen() {
     isRecordingActive ? 1 : 0;
 
   const camPrimaryLabel =
-    camState === 0 ? 'Démarrer' :
-    camState === 1 ? 'Lancer le chrono' :
-    camState === 2 ? 'Arrêter le chrono' :
-    'Arrêter la vidéo';
+    camState === 0 ? t('wodGenerator.start') :
+    camState === 1 ? t('timer.run.startTimer') :
+    camState === 2 ? t('timer.run.stopTimer') :
+    t('timer.run.stopVideo');
 
   const camPrimaryAction =
     camState === 0 ? handleStartRecording :
@@ -1924,8 +1926,8 @@ export default function TimerRunScreen() {
   const renderCamPrimary = () => (
     <AxButton testID="timer-cam-primary" veil fullWidth
       variant={camState === 2 || camState === 3 ? 'stop' : 'accent'}
-      label={camState === 0 && (!isCameraReady || !videoOpts) ? 'Initialisation…'
-        : camState === 1 && startingRec ? 'Démarrage…' : camPrimaryLabel}
+      label={camState === 0 && (!isCameraReady || !videoOpts) ? t('timer.run.initializing')
+        : camState === 1 && startingRec ? t('timer.run.starting') : camPrimaryLabel}
       disabled={(camState === 0 && (!isCameraReady || !videoOpts)) || (camState === 1 && startingRec)}
       onPress={camPrimaryAction} />
   );
@@ -1976,7 +1978,7 @@ export default function TimerRunScreen() {
       {hideUI
         ? <View style={{ width: 44 }} />
         : withCamera
-          ? <AxIconButton testID="timer-cam-close" icon={X} veil accessibilityLabel="Fermer" onPress={handleClose} />
+          ? <AxIconButton testID="timer-cam-close" icon={X} veil accessibilityLabel={t('common.close')} onPress={handleClose} />
           : <TouchableOpacity onPress={handleClose} style={styles.iconBtn}>
               <X color="rgba(255,255,255,0.8)" size={24} />
             </TouchableOpacity>
@@ -1986,7 +1988,7 @@ export default function TimerRunScreen() {
             of the preview. Skipping the React label avoids a duplicate row. */}
         {/* modeLabel supprimé — géré par le header de chaque layout */}
         {withCamera && camState >= 1 && camState <= 3 && (
-          <AxTag testID="timer-rec" label="REC" tone="danger" dot veil />
+          <AxTag testID="timer-rec" label={t('timer.run.rec')} tone="danger" dot veil />
         )}
       </View>
       {hideUI
@@ -1998,7 +2000,7 @@ export default function TimerRunScreen() {
             // Once recording starts, both camera facing and orientation are locked
             // (orientation lock is handled in the ScreenOrientation effect above).
             camState === 0
-              ? <AxIconButton testID="timer-cam-flip" icon={RefreshCw} veil accessibilityLabel="Retourner la caméra"
+              ? <AxIconButton testID="timer-cam-flip" icon={RefreshCw} veil accessibilityLabel={t('timer.run.flipCamera')}
                   onPress={() => setFacing(f => f === 'front' ? 'back' : 'front')} />
               : <View style={{ width: 44, alignItems: 'center' }}>
                   {camState >= 1 && camState <= 3 && <RecBlinkDot />}
@@ -2013,10 +2015,10 @@ export default function TimerRunScreen() {
   // Rangée Croix / Réglages du chrono sans vidéo, reprise telle quelle sur le temps final.
   const renderCtrlRow = (testID: string) => (
     <View testID={testID} style={[{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, ctrlRowStyle]}>
-      <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel="Fermer">
+      <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel={t('common.close')}>
         <X color={iconColor} size={24} />
       </TouchableOpacity>
-      <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Design du minuteur">
+      <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={t('timer.design.title')}>
         <Settings color={iconColor} size={20} />
       </TouchableOpacity>
     </View>
@@ -2044,8 +2046,8 @@ export default function TimerRunScreen() {
   const capPaysage = timerType === 'for-time' ? maxTime : curBlk?.type === 'for-time' ? blockDurationSec(curBlk) : 0;
   const plusieursBlocs = timerType === 'libre' && seqTotal > 1;
   const infoPaysage = capPaysage > 0 || plusieursBlocs ? [
-    plusieursBlocs ? seqBlockLabel : `BLOC ${seqTotal > 0 ? seqIdx + 1 : 1}/${Math.max(1, seqTotal)}`,
-    capPaysage > 0 ? `CAP ${formatTime(capPaysage)}` : '',
+    plusieursBlocs ? seqBlockLabel : t('timer.run.blockOfCompact', { n: seqTotal > 0 ? seqIdx + 1 : 1, total: Math.max(1, seqTotal) }),
+    capPaysage > 0 ? t('timer.run.cap', { time: formatTime(capPaysage) }) : '',
   ].filter(Boolean).join(' · ') : '';
   // Le petit total ne répète jamais le grand chrono (For Time : ils sont égaux).
   const totalPaysage = formatTime(totalElapsed);
@@ -2091,7 +2093,7 @@ export default function TimerRunScreen() {
 
     const temps = (
       <View style={{ alignItems: 'center', gap: 2, flexShrink: 1, flexGrow: 1, minHeight: 0, alignSelf: 'stretch', justifyContent: 'center' }}>
-        <Text testID="timer-final-label" style={[axTypography.overline, { color: withCamera ? axVeil.ink : onBg2 }]}>TEMPS FINAL</Text>
+        <Text testID="timer-final-label" style={[axTypography.overline, { color: withCamera ? axVeil.ink : onBg2 }]}>{t('timer.run.finalTime')}</Text>
         <View testID="timer-final-digits-box"
           style={{ flexGrow: 1, flexShrink: 1, minHeight: FINAL_DIGITS_MIN * 1.2, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' }}
           onLayout={(e) => {
@@ -2108,7 +2110,7 @@ export default function TimerRunScreen() {
           <ScrollView style={{ maxHeight: compact ? 90 : 150, marginTop: 6, alignSelf: 'stretch', flexShrink: 1 }} contentContainerStyle={{ alignItems: 'center' }}>
             {splitLog.map((sp, i) => (
               <Text key={i} testID={`timer-split-${i}`} style={{ color: onBg2, fontSize: 12, fontWeight: '700', fontVariant: ['tabular-nums'], textAlign: 'center' }}>
-                {sp.label} — exercice {formatTime(sp.duration)} · total {formatTime(sp.at)}
+                {t('timer.run.splitLine', { label: sp.label, exercise: formatTime(sp.duration), total: formatTime(sp.at) })}
               </Text>
             ))}
           </ScrollView>
@@ -2120,7 +2122,7 @@ export default function TimerRunScreen() {
     const qrCode = withCamera ? (
       <View style={[styles.sessionQRWrap, { marginTop: 4, padding: compact ? 6 : 10, gap: 4, alignSelf: 'center' }]}>
         <QRCode value={qrData} size={qr} color="#111111" backgroundColor="#FFFFFF" />
-        <Text style={[axTypography.caption, styles.sessionQRHint]}>Scanner pour les détails</Text>
+        <Text style={[axTypography.caption, styles.sessionQRHint]}>{t('timer.run.scanForDetails')}</Text>
       </View>
     ) : null;
 
@@ -2129,7 +2131,7 @@ export default function TimerRunScreen() {
         {(saving || savedUri) && (
           <View style={styles.savedBanner}>
             {saving
-              ? <><ActivityIndicator color={axVeil.ink} size="small" /><Text style={[axTypography.label, { color: axVeil.ink }]}>Sauvegarde vidéo…</Text></>
+              ? <><ActivityIndicator color={axVeil.ink} size="small" /><Text style={[axTypography.label, { color: axVeil.ink }]}>{t('timer.run.savingVideo')}</Text></>
               : <><Check testID="timer-video-saved-icon" color={theme.ax.accent} size={18} strokeWidth={3} /><Text testID="timer-video-saved" style={[axTypography.label, { color: axVeil.ink }]}>{t('timer.camera.videoSaved')}</Text></>}
           </View>
         )}
@@ -2139,7 +2141,7 @@ export default function TimerRunScreen() {
           </View>
         )}
         {sessionMeta && (
-          <AxButton testID="timer-play-video" veil variant="outline" fullWidth icon={Play} label="Lire la vidéo"
+          <AxButton testID="timer-play-video" veil variant="outline" fullWidth icon={Play} label={t('timer.run.playVideo')}
             onPress={() => navigation.navigate('VideoPlayback', {
               videoURL: sessionMeta.videoURL,
               title: sessionMeta.title || undefined,
@@ -2162,9 +2164,9 @@ export default function TimerRunScreen() {
     const actions = (
       <View testID="timer-final-actions"
         style={{ flexDirection: isLandscape ? 'column' : 'row', justifyContent: 'center', alignItems: 'center', gap: isLandscape ? 16 : 40 }}>
-        <ActionRonde testID="timer-reset" icon={RotateCcw} label="Recommencer" showLabel={!isLandscape} tone="neutral"
+        <ActionRonde testID="timer-reset" icon={RotateCcw} label={t('timer.run.restart')} showLabel={!isLandscape} tone="neutral"
           ink={ink} danger={danger} veil={withCamera} onPress={handleReset} />
-        <ActionRonde testID="timer-close" icon={X} label="Fermer" showLabel={!isLandscape} tone="stop"
+        <ActionRonde testID="timer-close" icon={X} label={t('common.close')} showLabel={!isLandscape} tone="stop"
           ink={ink} danger={danger} veil={withCamera} onPress={handleClose} />
       </View>
     );
@@ -2221,16 +2223,16 @@ export default function TimerRunScreen() {
 
                   {/* BANDEAU : Fermer · type · bloc et time cap · (total) · Réglages */}
                   <View testID="timer-controls" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                    <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel="Fermer">
+                    <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel={t('common.close')}>
                       <X color={iconColor} size={24} />
                     </TouchableOpacity>
-                    <AxTag testID="timer-format-tag" label={seqPausing ? 'PAUSE' : displayLabel} color={onBg1} />
+                    <AxTag testID="timer-format-tag" label={seqPausing ? t('timer.run.pause') : displayLabel} color={onBg1} />
                     {!seqPausing && !!infoPaysage && (
                       <Text testID="timer-landscape-info" numberOfLines={1} style={[styles.infoPaysage, { color: onBg2 }]}>{infoPaysage}</Text>
                     )}
                     {hasRounds && !seqPausing && (
                       <Text style={[styles.roundText, { color: onBg1 }]}>
-                        ROUND {currentRound} / {curTotalRounds}
+                        {t('timer.splits.round', { n: currentRound, total: curTotalRounds })}
                       </Text>
                     )}
                     {hasWorkRest && phase === 'running' && !seqPausing && (
@@ -2238,18 +2240,18 @@ export default function TimerRunScreen() {
                         backgroundColor: innerPhase === 'work' ? 'rgba(245,158,11,0.15)' : 'rgba(96,165,250,0.15)' }}>
                         <Text style={{ fontSize: 11, fontWeight: '900', letterSpacing: 2,
                           color: ensureContrast(innerPhase === 'work' ? '#F59E0B' : '#60A5FA', currentBg) }}>
-                          {innerPhase === 'work' ? '● TRAVAIL' : '● REPOS'}
+                          {innerPhase === 'work' ? `● ${t('timer.run.work')}` : `● ${t('timer.run.rest')}`}
                         </Text>
                       </View>
                     )}
                     <View style={{ flex: 1 }} />
                     {montrerTotalPaysage && (
                       <Text testID="timer-total" style={[styles.totalText, { color: onBg2 }]}>
-                        {hasSplit ? 'TOTAL ' : ''}
+                        {hasSplit ? `${t('timer.run.total')} ` : ''}
                         {totalPaysage}
                       </Text>
                     )}
-                    <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Design du minuteur">
+                    <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={t('timer.design.title')}>
                       <Settings color={iconColor} size={20} />
                     </TouchableOpacity>
                   </View>
@@ -2269,8 +2271,8 @@ export default function TimerRunScreen() {
                       && (curBlk?.restSec ?? restTime) > 0 && phase === 'running' && (
                       <Text style={{ color: onBg2, fontSize: 11, fontWeight: '700', letterSpacing: 1, textAlign: 'center' }}>
                         {innerPhase === 'work'
-                          ? `REPOS DANS ${formatTime(roundTimeLeft)}`
-                          : `EXERCICE DANS ${formatTime(roundTimeLeft)}`}
+                          ? t('timer.run.restIn', { time: formatTime(roundTimeLeft) })
+                          : t('timer.run.workIn', { time: formatTime(roundTimeLeft) })}
                       </Text>
                     )}
                   </View>
@@ -2287,22 +2289,22 @@ export default function TimerRunScreen() {
                       </View>
                     ) : <View style={{ flex: 1 }} />}
                     {phase === 'ready' && (
-                      <Text testID="timer-ready-hint" numberOfLines={1} style={[styles.hintPaysage, { color: onBg2 }]}>Appuie pour démarrer</Text>
+                      <Text testID="timer-ready-hint" numberOfLines={1} style={[styles.hintPaysage, { color: onBg2 }]}>{t('timer.run.tapToStart')}</Text>
                     )}
                     {showEndWorkBtn && (
                       <TouchableOpacity onPress={ywyrEndWork} style={[styles.ywyrBtn, styles.actionPaysage]} activeOpacity={0.8}>
-                        <Text numberOfLines={1} style={[styles.ywyrBtnText, styles.actionPaysageText, { color: ensureContrast('#4ADE80', currentBg) }]}>FIN DU TRAVAIL</Text>
+                        <Text numberOfLines={1} style={[styles.ywyrBtnText, styles.actionPaysageText, { color: ensureContrast('#4ADE80', currentBg) }]}>{t('timer.run.endWork')}</Text>
                       </TouchableOpacity>
                     )}
                     {showYwyrEndBtn && (
                       <TouchableOpacity onPress={handleStop}
                         style={[styles.ywyrBtn, styles.actionPaysage, { backgroundColor: 'rgba(239,68,68,0.15)', borderColor: 'rgba(239,68,68,0.5)' }]} activeOpacity={0.8}>
-                        <Text numberOfLines={1} style={[styles.ywyrBtnText, styles.actionPaysageText, { color: ensureContrast('#EF4444', currentBg) }]}>TERMINER</Text>
+                        <Text numberOfLines={1} style={[styles.ywyrBtnText, styles.actionPaysageText, { color: ensureContrast('#EF4444', currentBg) }]}>{t('timer.run.finish')}</Text>
                       </TouchableOpacity>
                     )}
                     {showEndBlockBtn && (
                       <TouchableOpacity onPress={libreEndForTimeBlock} style={[styles.ywyrBtn, styles.actionPaysage]} activeOpacity={0.8}>
-                        <Text numberOfLines={1} style={[styles.ywyrBtnText, styles.actionPaysageText, { color: ensureContrast('#4ADE80', currentBg) }]}>FIN DU BLOC</Text>
+                        <Text numberOfLines={1} style={[styles.ywyrBtnText, styles.actionPaysageText, { color: ensureContrast('#4ADE80', currentBg) }]}>{t('timer.run.endBlock')}</Text>
                       </TouchableOpacity>
                     )}
                     {showSplitBtn && (
@@ -2348,9 +2350,9 @@ export default function TimerRunScreen() {
                             {displayOpts.clockStyle === 'digits' && <DigitsTimer time={mainTime} color="#FFFFFF" fontSize={displayOpts.fontSize} fit={chronoBoite} flat />}
                           </View>
                         </View>
-                        {hasSplit && <Text style={{ color: '#FFFFFF', fontSize: 13, marginTop: 8 }}>TOTAL {formatTime(totalElapsed)}</Text>}
+                        {hasSplit && <Text style={{ color: '#FFFFFF', fontSize: 13, marginTop: 8 }}>{t('timer.run.totalTime', { time: formatTime(totalElapsed) })}</Text>}
                         {hasRounds && phase === 'running' && !seqPausing && (
-                          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 4, letterSpacing: 2 }}>ROUND {currentRound} / {currentRound + roundsLeft}</Text>
+                          <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginTop: 4, letterSpacing: 2 }}>{t('timer.splits.round', { n: currentRound, total: currentRound + roundsLeft })}</Text>
                         )}
                       </>
                     )}
@@ -2371,17 +2373,17 @@ export default function TimerRunScreen() {
                 {/* HEADER: X | badge mode | Settings */}
                 <View testID="timer-controls" style={[{ flexDirection: 'row', alignItems: 'center',
                   justifyContent: 'space-between' }, ctrlRowStyle]}>
-                  <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, styles.ctrlTop, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel="Fermer">
+                  <TouchableOpacity testID="timer-ctrl-close" onPress={handleClose} style={[styles.iconBtn, styles.ctrlTop, { backgroundColor: ctrlBtnBg }]} accessibilityRole="button" accessibilityLabel={t('common.close')}>
                     <X color={iconColor} size={24} />
                   </TouchableOpacity>
                   <View style={{ alignItems: 'center', gap: 4 }}>
-                    <AxTag testID="timer-format-tag" label={seqPausing ? 'PAUSE' : displayLabel} color={onBg1} />
+                    <AxTag testID="timer-format-tag" label={seqPausing ? t('timer.run.pause') : displayLabel} color={onBg1} />
                     <Text testID="timer-total" style={[styles.totalText, { color: onBg2 }]}>
-                      {hasSplit ? 'TOTAL ' : ''}
+                      {hasSplit ? `${t('timer.run.total')} ` : ''}
                       {formatTime(totalElapsed)}
                     </Text>
                   </View>
-                  <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, styles.ctrlTop, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Design du minuteur">
+                  <TouchableOpacity testID="timer-ctrl-settings" onPress={() => setShowSettings(true)} style={[styles.iconBtn, styles.ctrlTop, { backgroundColor: ctrlBtnBg }]} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={t('timer.design.title')}>
                     <Settings color={iconColor} size={20} />
                   </TouchableOpacity>
                 </View>
@@ -2389,7 +2391,7 @@ export default function TimerRunScreen() {
                 {/* ROUND LABEL */}
                 {hasRounds && !seqPausing && (
                   <Text style={[styles.roundText, { textAlign: 'center', color: onBg1, marginBottom: 2 }]}>
-                    ROUND {currentRound} / {curTotalRounds}
+                    {t('timer.splits.round', { n: currentRound, total: curTotalRounds })}
                   </Text>
                 )}
 
@@ -2397,7 +2399,7 @@ export default function TimerRunScreen() {
                 {timerType === 'libre' && !!seqBlockLabel && !seqPausing && (
                   <Text style={{ textAlign: 'center', color: onBg2,
                     fontSize: 11, fontWeight: '800', letterSpacing: 2.5, marginBottom: 2 }}>
-                    {seqBlockLabel} · BLOC {seqIdx + 1}/{seqTotal}
+                    {seqBlockLabel} · {t('timer.run.blockOfCompact', { n: seqIdx + 1, total: seqTotal })}
                   </Text>
                 )}
 
@@ -2408,7 +2410,7 @@ export default function TimerRunScreen() {
                       backgroundColor: innerPhase === 'work' ? 'rgba(245,158,11,0.15)' : 'rgba(96,165,250,0.15)' }}>
                       <Text style={{ fontSize: 12, fontWeight: '900', letterSpacing: 2.5,
                         color: ensureContrast(innerPhase === 'work' ? '#F59E0B' : '#60A5FA', currentBg) }}>
-                        {innerPhase === 'work' ? '● TRAVAIL' : '● REPOS'}
+                        {innerPhase === 'work' ? `● ${t('timer.run.work')}` : `● ${t('timer.run.rest')}`}
                       </Text>
                     </View>
                   </View>
@@ -2420,7 +2422,7 @@ export default function TimerRunScreen() {
                     <Text style={{ color: accentColor, fontSize: 24, fontWeight: '900',
                       letterSpacing: 5, marginBottom: 4, textShadowColor: accentColor,
                       textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 14 }}>
-                      PAUSE
+                      {t('timer.run.pause')}
                     </Text>
                   )}
                   {phase === 'countdown' ? null : (
@@ -2434,19 +2436,19 @@ export default function TimerRunScreen() {
                     <Text style={{ color: onBg2, fontSize: 13, fontWeight: '700',
                       letterSpacing: 1, marginTop: 8 }}>
                       {innerPhase === 'work'
-                        ? `REPOS DANS ${formatTime(roundTimeLeft)}`
-                        : `EXERCICE DANS ${formatTime(roundTimeLeft)}`}
+                        ? t('timer.run.restIn', { time: formatTime(roundTimeLeft) })
+                        : t('timer.run.workIn', { time: formatTime(roundTimeLeft) })}
                     </Text>
                   )}
                   {timerType === 'libre' && curBlk?.type === 'split' && phase === 'running' && (() => {
                     const ex = curBlk.splitExercises?.[splitPos.ex];
                     if (!ex) return null;
-                    const unite = (curBlk.splitExercises?.length ?? 0) > 1 ? 'SÉRIE' : 'ROUND';
+                    const unite = (curBlk.splitExercises?.length ?? 0) > 1 ? t('timer.run.unitSet') : t('timer.run.unitRound');
                     return (
                       <Text style={{ color: onBg2, fontSize: 13, fontWeight: '700', letterSpacing: 1, marginTop: 8, textAlign: 'center' }}>
                         {innerPhase === 'rest'
-                          ? `REPOS ${formatTime(roundTimeLeft)} · PUIS ${ex.name.toUpperCase()} ${splitPos.set}/${ex.sets}`
-                          : `${ex.name.toUpperCase()} · ${unite} ${splitPos.set}/${ex.sets}`}
+                          ? t('timer.run.splitRestThen', { time: formatTime(roundTimeLeft), name: ex.name.toUpperCase(), set: splitPos.set, sets: ex.sets })
+                          : t('timer.run.splitCurrent', { name: ex.name.toUpperCase(), unit: unite, set: splitPos.set, sets: ex.sets })}
                       </Text>
                     );
                   })()}
@@ -2479,7 +2481,7 @@ export default function TimerRunScreen() {
                 {!!nextExercise && (
                   <View style={styles.nextCardWrap}>
                     <AxCard testID="timer-next-card" style={styles.nextCard}>
-                      <Text style={[axTypography.overline, { color: theme.ax.accentText }]}>SUIVANT</Text>
+                      <Text style={[axTypography.overline, { color: theme.ax.accentText }]}>{t('timer.run.next')}</Text>
                       <Text style={[axTypography.label, { color: theme.ax.text }]}>{nextExercise}</Text>
                     </AxCard>
                   </View>
@@ -2505,27 +2507,27 @@ export default function TimerRunScreen() {
                   </TouchableOpacity>
                   {/* fixed-height hint slot so the button stays put between play↔stop */}
                   <View style={{ height: 18, justifyContent: 'center' }}>
-                    {phase === 'ready' && <Text style={[styles.readyHint, { color: onBg2 }]}>APPUIE POUR DÉMARRER</Text>}
+                    {phase === 'ready' && <Text style={[styles.readyHint, { color: onBg2 }]}>{t('timer.run.tapToStartCaps')}</Text>}
                     {showYwyrEndBtn && (
                       <Text style={[styles.readyHint, { color: onBg2 }]}>
-                        {innerPhase === 'work' ? 'APPUIE = LANCER LE REPOS' : 'APPUIE = REPRENDRE LE TRAVAIL'}
+                        {innerPhase === 'work' ? t('timer.run.tapStartRest') : t('timer.run.tapBackToWork')}
                       </Text>
                     )}
                   </View>
                   {showEndWorkBtn && (
                     <TouchableOpacity onPress={ywyrEndWork} style={styles.ywyrBtn} activeOpacity={0.8}>
-                      <Text style={[styles.ywyrBtnText, { color: ensureContrast('#4ADE80', currentBg) }]}>FIN DU TRAVAIL</Text>
+                      <Text style={[styles.ywyrBtnText, { color: ensureContrast('#4ADE80', currentBg) }]}>{t('timer.run.endWork')}</Text>
                     </TouchableOpacity>
                   )}
                   {showYwyrEndBtn && (
                     <TouchableOpacity onPress={handleStop}
                       style={[styles.ywyrBtn, { backgroundColor: 'rgba(239,68,68,0.15)', borderColor: 'rgba(239,68,68,0.5)' }]} activeOpacity={0.8}>
-                      <Text style={[styles.ywyrBtnText, { color: ensureContrast('#EF4444', currentBg) }]}>TERMINER</Text>
+                      <Text style={[styles.ywyrBtnText, { color: ensureContrast('#EF4444', currentBg) }]}>{t('timer.run.finish')}</Text>
                     </TouchableOpacity>
                   )}
                   {showEndBlockBtn && (
                     <TouchableOpacity onPress={libreEndForTimeBlock} style={styles.ywyrBtn} activeOpacity={0.8}>
-                      <Text style={[styles.ywyrBtnText, { color: ensureContrast('#4ADE80', currentBg) }]}>FIN DU BLOC</Text>
+                      <Text style={[styles.ywyrBtnText, { color: ensureContrast('#4ADE80', currentBg) }]}>{t('timer.run.endBlock')}</Text>
                     </TouchableOpacity>
                   )}
                   {showSplitBtn && (
@@ -2548,9 +2550,9 @@ export default function TimerRunScreen() {
                     {displayOpts.clockStyle === 'arc' && <ArcTimer time={mainTime} progress={arcProgress} color="#FFFFFF" fontSize={displayOpts.fontSize} strokeColor={phaseColor} flat />}
                     {displayOpts.clockStyle === 'bar' && <BarTimer time={mainTime} progress={arcProgress} color="#FFFFFF" fontSize={displayOpts.fontSize} strokeColor={phaseColor} flat />}
                     {displayOpts.clockStyle === 'digits' && <DigitsTimer time={mainTime} color="#FFFFFF" fontSize={displayOpts.fontSize} flat />}
-                    {hasSplit && <Text style={{ color: '#FFFFFF', fontSize: 13, marginTop: 8 }}>TOTAL {formatTime(totalElapsed)}</Text>}
+                    {hasSplit && <Text style={{ color: '#FFFFFF', fontSize: 13, marginTop: 8 }}>{t('timer.run.totalTime', { time: formatTime(totalElapsed) })}</Text>}
                     {hasRounds && phase === 'running' && !seqPausing && (
-                      <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 15, marginTop: 12, letterSpacing: 2, fontWeight: '700' }}>ROUND {currentRound} / {currentRound + roundsLeft}</Text>
+                      <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 15, marginTop: 12, letterSpacing: 2, fontWeight: '700' }}>{t('timer.splits.round', { n: currentRound, total: currentRound + roundsLeft })}</Text>
                     )}
                   </View>
                 )}
@@ -2561,12 +2563,12 @@ export default function TimerRunScreen() {
                   <View style={{ alignItems: 'center' }} pointerEvents="box-none">
                     {showEndWorkBtn && (
                       <TouchableOpacity onPress={ywyrEndWork} style={styles.ywyrBtn} activeOpacity={0.8}>
-                        <Text style={styles.ywyrBtnText}>FIN DU TRAVAIL</Text>
+                        <Text style={styles.ywyrBtnText}>{t('timer.run.endWork')}</Text>
                       </TouchableOpacity>
                     )}
                     {showEndBlockBtn && (
                       <TouchableOpacity onPress={libreEndForTimeBlock} style={styles.ywyrBtn} activeOpacity={0.8}>
-                        <Text style={styles.ywyrBtnText}>FIN DU BLOC</Text>
+                        <Text style={styles.ywyrBtnText}>{t('timer.run.endBlock')}</Text>
                       </TouchableOpacity>
                     )}
                     {showSplitBtn && (
@@ -2615,7 +2617,7 @@ export default function TimerRunScreen() {
               isLandscape={isLandscape}
               onReady={() => setIsCameraReady(true)}
             />
-          : <View style={[StyleSheet.absoluteFill, styles.noCamera]}><Text style={styles.noCameraText}>Caméra non disponible</Text></View>
+          : <View style={[StyleSheet.absoluteFill, styles.noCamera]}><Text style={styles.noCameraText}>{t('timer.run.cameraUnavailable')}</Text></View>
         }
         <View testID="timer-cam-dim" style={[StyleSheet.absoluteFill, styles.cameraDim, camState === 4 && { backgroundColor: axVeil.background }]} />
         {renderContent()}

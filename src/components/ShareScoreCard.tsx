@@ -4,6 +4,7 @@ import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { Medal } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { splitScoreForDisplay } from '../utils/scoreFormat';
+import { formatDate } from '../i18n/locale';
 import { useTheme } from '../context/ThemeContext';
 import { axFonts } from '../theme/axTokens';
 import { AxTag } from './ax';
@@ -63,7 +64,7 @@ const ShareScoreCard = forwardRef<View, ShareScoreCardProps>(
     const scoreSize = Math.max(SCORE_MIN * u, SCORE_SIZE * u - (cut - headerCut) / SCORE_BOX);
     const { value, unit } = splitScoreForDisplay(score, scoreType, capped);
     const typeLabel = t(`sharePerf.types.${wodType ?? 'custom'}`, { defaultValue: 'WOD' });
-    const formattedDate = new Date(date).toLocaleDateString('fr-FR', {
+    const formattedDate = formatDate(date, {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
     });
     const oswald = (size: number, line: number, spacing = -0.3) =>
@@ -124,7 +125,7 @@ const ShareScoreCard = forwardRef<View, ShareScoreCardProps>(
               {unit ? (
                 <Text testID="share-unit" style={[oswald(40, 44, -1), { color: c.text, textTransform: 'uppercase' }]}>{unit}</Text>
               ) : null}
-              <AxTag label={rx ? 'RX' : 'SCALED'} scale={u} testID="share-level" />
+              <AxTag label={rx ? 'RX' : t('sharePerf.scaled')} scale={u} testID="share-level" />
             </View>
           </View>
 
@@ -151,7 +152,7 @@ const ShareScoreCard = forwardRef<View, ShareScoreCardProps>(
             <View style={{ flex: 1, gap: 2 * u }}>
               <Text numberOfLines={1} style={[oswald(18, 24), { color: c.text, textTransform: 'uppercase' }]}>{username}</Text>
               <Text numberOfLines={1} style={[inter(axFonts.interRegular, 12, 16), { color: c.textMuted }]}>
-                {boxName} · athlexapp.eu
+                {t('sharePerf.site', { box: boxName })}
               </Text>
             </View>
           </View>

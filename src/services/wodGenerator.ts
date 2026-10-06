@@ -524,7 +524,7 @@ export async function addToWhiteboard(
   if (error) throw error;
   const ids = (data ?? []).map((d) => d.id as string);
   const boxWodId = ids[0];
-  if (!boxWodId) throw new Error('aucune ligne posée sur le Whiteboard');
+  if (!boxWodId) throw new Error('aucune ligne posée sur le Whiteboard'); // i18n-ignore : message technique (journal), jamais affiché
 
   const { error: linkError } = await supabase
     .from('generated_wods')
@@ -551,6 +551,7 @@ export async function addToWhiteboard(
 }
 
 function scoreNotes(wod: AnyWod, s: Pick<ScoreSubmission, 'category' | 'notes'>): string {
+  // i18n-ignore : texte enregistré dans wod_scores.notes (lu par les membres de la box), écrit en français
   const head = isMuscuWod(wod) ? 'Tonnage (kg × reps)' : `Catégorie : ${CATEGORY_LABEL[s.category]}`;
   return [head, s.notes.trim()].filter(Boolean).join('\n');
 }

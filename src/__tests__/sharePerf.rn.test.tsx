@@ -112,6 +112,24 @@ describe('ShareScoreCard : les six types de la maquette', () => {
   });
 });
 
+describe('i18n 1a : date de l’image selon la langue', () => {
+  it('la date suit la langue de l’app au moment du partage', async () => {
+    const p = { ...BASE, ...CASES[1].p, width: 390, height: 844 };
+    let r = await render(<ShareScoreCard {...p} />);
+    expect(texts(r).some((s) => /octobre 2026/.test(s))).toBe(true);
+    const before = i18n.language;
+    await act(async () => { await i18n.changeLanguage('en'); });
+    try {
+      r = await render(<ShareScoreCard {...p} />);
+      expect(texts(r).some((s) => /October 2026/.test(s))).toBe(true);
+      expect(texts(r).some((s) => /octobre/.test(s))).toBe(false);
+      expect(textOf(all(r, 'share-level')[0])).toBe('SCALED');
+    } finally {
+      await act(async () => { await i18n.changeLanguage(before); });
+    }
+  });
+});
+
 describe('« Partager ma perf » en plein écran', () => {
   async function screen() {
     const onShare = jest.fn();

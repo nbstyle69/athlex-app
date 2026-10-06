@@ -3,6 +3,7 @@
 import { BoxWOD } from '../types';
 import { SeqBlock, BlockType, SplitExercise } from '../navigation';
 import { formatCap } from './scoreFormat';
+import i18n from '../i18n';
 
 function newId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -111,31 +112,31 @@ export function formatWODPreconfig(wod: WODConfigFields): string {
 
   switch (type) {
     case 'amrap':
-      return `AMRAP · ${formatDurationLabel(capSec > 0 ? capSec : 600)}`;
+      return i18n.t('timer.preconfig.amrap', { duration: formatDurationLabel(capSec > 0 ? capSec : 600) });
     case 'emom': {
-      const label = emomInterval === 1 ? 'EMOM' : `E${emomInterval}MOM`;
+      const label = emomInterval === 1 ? i18n.t('timer.run.type.emom') : i18n.t('bo.wods.emomEvery', { n: emomInterval });
       const nRounds = rounds ?? (capMin > 0 ? Math.max(1, Math.floor(capMin / emomInterval)) : 10);
-      return `${label} · ${nRounds} rounds`;
+      return i18n.t('timer.preconfig.emom', { label, rounds: nRounds });
     }
     case 'tabata':
-      return `Tabata · ${rounds ?? 8} × ${tabWork}/${tabRest}s`;
+      return i18n.t('timer.preconfig.tabata', { rounds: rounds ?? 8, work: tabWork, rest: tabRest });
     case 'for-time':
-      return capSec > 0 ? `For Time · Cap ${formatDurationLabel(capSec)}` : 'For Time · Chrono libre';
+      return capSec > 0 ? i18n.t('timer.preconfig.forTimeCap', { duration: formatDurationLabel(capSec) }) : i18n.t('timer.preconfig.forTimeFree');
     case 'strength':
-      return capSec > 0 ? `Strength · ${formatDurationLabel(capSec)}` : 'Strength · Chrono libre';
+      return capSec > 0 ? i18n.t('timer.preconfig.strengthCap', { duration: formatDurationLabel(capSec) }) : i18n.t('timer.preconfig.strengthFree');
     default:
-      return capSec > 0 ? `Chrono · ${formatDurationLabel(capSec)}` : 'Chrono libre';
+      return capSec > 0 ? i18n.t('timer.preconfig.chronoCap', { duration: formatDurationLabel(capSec) }) : i18n.t('wodGenerator.freeTimer');
   }
 }
 
-/** Timer modes selectable from the whiteboard launcher (mirror TimerScreen). */
-export const TIMER_BLOCK_TYPES: { key: BlockType; label: string }[] = [
-  { key: 'for-time', label: 'FOR TIME' },
-  { key: 'amrap', label: 'AMRAP' },
-  { key: 'emom', label: 'EMOM' },
-  { key: 'tabata', label: 'TABATA' },
-  { key: 'ywyr', label: 'YWYR' },
-  { key: 'split', label: 'SPLIT' },
+/** Timer modes selectable from the whiteboard launcher (mirror TimerScreen) ; `labelKey` traduit au rendu. */
+export const TIMER_BLOCK_TYPES: { key: BlockType; labelKey: string }[] = [
+  { key: 'for-time', labelKey: 'timer.run.type.forTime' },
+  { key: 'amrap', labelKey: 'timer.run.type.amrap' },
+  { key: 'emom', labelKey: 'timer.run.type.emom' },
+  { key: 'tabata', labelKey: 'timer.run.type.tabata' },
+  { key: 'ywyr', labelKey: 'timer.run.type.ywyr' },
+  { key: 'split', labelKey: 'timer.run.type.split' },
 ];
 
 const SUPPORTED_BLOCK_TYPES: BlockType[] = ['for-time', 'amrap', 'emom', 'tabata', 'ywyr', 'split'];
@@ -205,24 +206,24 @@ export function formatBlockPreconfig(b: SeqBlock): string {
   const durSec = blockDurationSec(b);
   switch (b.type) {
     case 'amrap':
-      return `AMRAP · ${formatDurationLabel(durSec > 0 ? durSec : 600)}`;
+      return i18n.t('timer.preconfig.amrap', { duration: formatDurationLabel(durSec > 0 ? durSec : 600) });
     case 'emom': {
       const isPerso = b.emomInterval === 0;
-      const label = isPerso ? 'EMOM PERSO' : b.emomInterval === 1 ? 'EMOM' : `E${b.emomInterval}MOM`;
-      return `${label} · ${b.emomRounds} rounds`;
+      const label = isPerso ? i18n.t('timer.run.type.emomCustom') : b.emomInterval === 1 ? i18n.t('timer.run.type.emom') : i18n.t('bo.wods.emomEvery', { n: b.emomInterval });
+      return i18n.t('timer.preconfig.emom', { label, rounds: b.emomRounds });
     }
     case 'tabata':
-      return `Tabata · ${b.tabRounds} × ${b.workSec}/${b.restSec}s`;
+      return i18n.t('timer.preconfig.tabata', { rounds: b.tabRounds, work: b.workSec, rest: b.restSec });
     case 'ywyr':
-      return 'YWYR · Your Work Your Rest';
+      return i18n.t('timer.preconfig.ywyr');
     case 'split': {
       const n = b.splitExercises?.length ?? 0;
       const sets = splitTotalSets(b);
-      return n <= 1 ? `Split · ${sets} round${sets > 1 ? 's' : ''}` : `Split · ${n} exercices · ${sets} séries`;
+      return n <= 1 ? i18n.t('timer.preconfig.splitRounds', { count: sets }) : i18n.t('timer.preconfig.splitExercises', { n, sets });
     }
     case 'for-time':
     default:
-      return durSec > 0 ? `For Time · Cap ${formatDurationLabel(durSec)}` : 'For Time · Chrono libre';
+      return durSec > 0 ? i18n.t('timer.preconfig.forTimeCap', { duration: formatDurationLabel(durSec) }) : i18n.t('timer.preconfig.forTimeFree');
   }
 }
 

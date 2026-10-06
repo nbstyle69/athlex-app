@@ -403,3 +403,45 @@ describe('i18n 1b : « Ton WOD » en anglais', () => {
     }
   });
 });
+
+describe('i18n 1a : le générateur envoie les mêmes valeurs en français et en anglais', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const i18n = require('../i18n').default;
+  afterAll(() => i18n.changeLanguage('fr'));
+
+  const choix: Record<Sport, string[]> = {
+    functional: ['wodgen-entry-express', 'wodgen-format-emom'],
+    hybrid: ['wodgen-entry-after_class'],
+    musculation: ['wodgen-equipment-gym', 'wodgen-target-dos'],
+  };
+  async function envoi(sport: Sport, lang: 'fr' | 'en') {
+    await i18n.changeLanguage(lang);
+    mockGenerateForUser.mockReset();
+    mockGenerateForUser.mockResolvedValue(RESULTS[sport].result);
+    const root = await mountGenerator(sport);
+    for (const id of choix[sport]) if (root.findAll((n) => n.props.testID === id && typeof n.props.onPress === 'function').length) await press(root, id);
+    await press(root, 'wodgen-generate');
+    const screen = mockGenerateForUser.mock.calls[0][2];
+    await act(async () => renderer.unmount());
+    return screen;
+  }
+
+  it.each(SPORTS)('%s : paramètres identiques', async (sport) => {
+    const fr = await envoi(sport, 'fr');
+    const en = await envoi(sport, 'en');
+    expect(en).toEqual(fr);
+    expect(fr).toMatchObject({ discipline: sport === 'musculation' ? 'musculation' : sport });
+    // les choix ont bien été faits (valeurs internes, pas les libellés)
+    if (sport === 'functional') expect(fr).toMatchObject({ format: 'emom' });
+    if (sport === 'hybrid') expect(fr).toMatchObject({ entry: 'after_class' });
+    if (sport === 'musculation') expect(fr).toMatchObject({ equipment: 'gym', target: 'dos' });
+  });
+
+  it('en anglais, la discipline Musculation s’affiche « Strength »', async () => {
+    await i18n.changeLanguage('en');
+    const root = await mountGenerator('musculation');
+    const texts = structure(root);
+    expect(texts).toContain('Strength');
+    expect(texts.filter((t) => /musculation/i.test(t))).toEqual([]);
+  });
+});
