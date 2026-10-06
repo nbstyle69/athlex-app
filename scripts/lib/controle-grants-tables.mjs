@@ -57,7 +57,7 @@ const TABLES_FERMEES = [
     id: 'T14',
     table: 'box_manager_notifications',
     declencheurs: 'trg_notif_gerant_',
-    nbDeclencheurs: 5,
+    nbDeclencheurs: 6, // 20270143 : cinq ; 20270147 : demande de changement de formule
     libelle: 'la file des notifications du gérant est fermée aux clients',
     risque: 'un membre lit qui paie, qui est en impayé et qui rejoint la box, ou '
       + 'met en file une notification signée AthleX au gérant. Rejoue 20270143.',
@@ -125,7 +125,7 @@ const GARDES_DECLENCHEUR = [
  * décompte le dirait au lieu de le taire.
  */
 export const ASSERTIONS_GRANTS_TABLES = 9 + TABLES_ECRITURE_SERVEUR.size + GARDES_DECLENCHEUR.length
-  + TABLES_FERMEES.length; // T1..T9, T10 par table, T11..T13 par garde, T14+ par table fermée
+  + TABLES_FERMEES.length + 1; // T1..T9, T10 par table, T11..T13 par garde, T14 par table fermée, T15
 
 const PRIV_LISTE = privs => privs.map(p => `'${p}'`).join(', ');
 
@@ -373,6 +373,7 @@ export function controlerGrantsTables(query, assert) {
   controlerTablesEcritureServeur(query, assert);
   for (const garde of GARDES_DECLENCHEUR) controlerGardeDeclencheur(query, assert, garde);
   for (const t of TABLES_FERMEES) controlerTableFermee(query, assert, t);
+  controlerChangementFormule(query, assert);
 }
 
 /**
@@ -485,6 +486,91 @@ function controlerTableFermee(query, assert, t) {
     ecarts.length === 0,
     ecarts.join(' ; ') + '\n'
       + `       → sans cette fermeture, ${t.risque}`,
+  );
+}
+
+/** T15 : colonnes et objets du changement de formule (20270147). */
+const CHANGEMENT_FORMULE = {
+  fonctions: [
+    'public.request_plan_change(uuid,uuid,uuid)',
+    'public.cancel_plan_change_request(uuid,uuid)',
+    'public.decide_plan_change_request(uuid,uuid,boolean)',
+  ],
+  colonnes: ['scheduled_plan_id', 'scheduled_change_at', 'stripe_schedule_id'],
+};
+
+/**
+ * T15 : le changement de formule ne s'écrit que par le serveur.
+ *   - `box_plan_change_requests` : RLS active, ses deux règles de lecture et
+ *     aucune autre, rien pour `anon`, `authenticated` en lecture seule ;
+ *   - les trois fonctions : exécutables par `service_role`, par aucun client ;
+ *   - `box_members` : les trois colonnes ne sont lues par aucun client, et la
+ *     garde de facturation les couvre (liste UPDATE OF et corps) ;
+ *   - `box_stripe_portal` : RLS active sans règle, aucun droit client.
+ * Lu par oid ou nom qualifié de public, sans résoudre de nom dans `internal`.
+ */
+function controlerChangementFormule(query, assert) {
+  const cf = CHANGEMENT_FORMULE;
+  const droitsClient = (table, sauf) => `
+    coalesce((select string_agg(distinct r || ':' || p, ',')
+              from unnest(array['anon', 'authenticated']) r,
+                   unnest(array['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']) p
+              where to_regclass('public.${table}') is not null
+                and not (r || ':' || p = '${sauf}')
+                and (has_table_privilege(r, 'public.${table}', p)
+                     or (p in ('SELECT', 'INSERT', 'UPDATE', 'REFERENCES')
+                         and has_any_column_privilege(r, 'public.${table}', p)))), '')`;
+  const [[demandes, regles, droitsDemandes, portail, droitsPortail]] = query(`
+    select coalesce((select relrowsecurity::text from pg_class where oid = to_regclass('public.box_plan_change_requests')), 'absente'),
+           coalesce((select string_agg(policyname || ':' || cmd, ',' order by policyname) from pg_policies
+                      where schemaname = 'public' and tablename = 'box_plan_change_requests'), ''),
+           ${droitsClient('box_plan_change_requests', 'authenticated:SELECT')},
+           coalesce((select relrowsecurity::text || ':'
+                            || (select count(*) from pg_policies where schemaname = 'public' and tablename = 'box_stripe_portal')
+                       from pg_class where oid = to_regclass('public.box_stripe_portal')), 'absente'),
+           ${droitsClient('box_stripe_portal', '')}
+  `);
+
+  const fonctions = query(`
+    select f, coalesce((select (has_function_privilege('anon', p.oid, 'EXECUTE')
+                                or has_function_privilege('authenticated', p.oid, 'EXECUTE'))::text
+                                || ':' || has_function_privilege('service_role', p.oid, 'EXECUTE')::text
+                          from pg_proc p where p.oid = to_regprocedure(f)), 'absente')
+    from unnest(array[${cf.fonctions.map(f => `'${f}'`).join(', ')}]) f
+  `).filter(([, etat]) => etat !== 'false:true').map(([f, etat]) => `${f} (${etat})`);
+
+  const colonnes = query(`
+    select c, coalesce((select (has_column_privilege('anon', a.attrelid, a.attnum, 'SELECT')
+                                or has_column_privilege('authenticated', a.attrelid, a.attnum, 'SELECT'))::text
+                                || ':' || coalesce((select (a.attnum = any (t.tgattr::int2[])
+                                                            and strpos(p.prosrc, 'NEW.' || c) > 0
+                                                            and strpos(p.prosrc, 'OLD.' || c) > 0)::text
+                                                      from pg_trigger t join pg_proc p on p.oid = t.tgfoid
+                                                     where t.tgrelid = a.attrelid
+                                                       and t.tgname = 'trg_box_members_garde_facturation'), 'sans garde')
+                          from pg_attribute a
+                          where a.attrelid = 'public.box_members'::regclass and a.attname = c and not a.attisdropped), 'absente')
+    from unnest(array[${cf.colonnes.map(c => `'${c}'`).join(', ')}]) c
+  `).filter(([, etat]) => etat !== 'false:true').map(([c, etat]) => `box_members.${c} (${etat})`);
+
+  const ecarts = [
+    ...(demandes === 'true' ? [] : [`box_plan_change_requests : ${demandes === 'absente' ? 'absente' : 'RLS désactivée'}`]),
+    ...(regles === 'box_plan_change_requests_lecture_gerant:SELECT,box_plan_change_requests_lecture_membre:SELECT' ? []
+      : [`règles de box_plan_change_requests : ${regles || 'aucune'}`]),
+    ...(droitsDemandes === '' ? [] : [`droits client sur box_plan_change_requests : ${droitsDemandes}`]),
+    ...(portail === 'true:0' ? [] : [`box_stripe_portal : ${portail} (attendu : RLS active, aucune règle)`]),
+    ...(droitsPortail === '' ? [] : [`droits client sur box_stripe_portal : ${droitsPortail}`]),
+    ...(fonctions.length ? [`fonctions (client:service_role) : ${fonctions.join(', ')}`] : []),
+    ...(colonnes.length ? [`colonnes (lue par un client:couverte par la garde) : ${colonnes.join(', ')}`] : []),
+  ];
+
+  assert(
+    'T15 — le changement de formule ne s\'écrit que par le serveur (box_plan_change_requests, '
+      + 'box_stripe_portal, trois fonctions, colonnes programmées de box_members)',
+    ecarts.length === 0,
+    ecarts.join(' ; ') + '\n'
+      + '       → sans cette fermeture, un membre se donne une autre formule, lit ou réécrit la '
+      + 'demande d\'un autre, ou lit la configuration Stripe d\'une box. Rejoue 20270147.',
   );
 }
 
