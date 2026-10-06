@@ -1982,6 +1982,12 @@
     "resumeEntry": "Reprendre ma saisie"
   },
   "timer": {
+    "splits": {
+      "round": "ROUND {{n}} / {{total}}",
+      "tapToStart": "TAP POUR LANCER",
+      "hint": "Récup libre · Touche n’importe où",
+      "doneRound": "ROUND {{n}}"
+    },
     "themes": {
       "athlex": "AthleX",
       "athlex2": "AthleX 2",

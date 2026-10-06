@@ -1982,6 +1982,12 @@
     "resumeEntry": "Resume my entry"
   },
   "timer": {
+    "splits": {
+      "round": "ROUND {{n}} / {{total}}",
+      "tapToStart": "TAP TO START",
+      "hint": "Free rest · Tap anywhere",
+      "doneRound": "ROUND {{n}}"
+    },
     "themes": {
       "athlex": "AthleX",
       "athlex2": "AthleX 2",
