@@ -1,7 +1,22 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- « Mon abonnement », PR A (base) : changement de formule par le membre
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : OUI, le 06/10/2026 à 15:00 UTC, avec PGCLIENTENCODING=UTF8,
+-- en une transaction, sur GO de Nab. Dump des schémas public et internal avec
+-- droits db-dumps/2026-10-06/athlex-prod-public-internal-20261006T145926Z.dump,
+-- sha256 ff67d5b14cf3f83bf60d56d2e5a663867a8554c5066682d0467756bfc6c4e3c1 vérifié
+-- après aller-retour, 136 TABLE DATA, 460 ACL, 346 POLICY ; précontrôles (deux
+-- passages identiques, search_path de la prod) : get_my_membership_billing
+-- 6b3770f8…, garder_facturation_membre 2c8c6335…, filer_notification_gerant
+-- 6b0bb58f…, sans retour chariot, déclencheur de la garde 28761293…, contrainte
+-- à quatre types, cinq déclencheurs trg_notif_gerant_*, colonnes, tables et
+-- fonctions absentes ; 174 adhésions actives au comptoir dont 0 avec
+-- amount_cents ; vérifications : les sept définitions et le déclencheur aux
+-- empreintes du test (b4ca5500…, b50e8f88…, df14724f…, 06fadcdb…, 0208fa64…,
+-- a9870f67…, 8cc12cb3…, déclencheur 05e9de13…), droits, règles et commentaire
+-- conformes, données de box_members (183 lignes, colonnes existantes), boxes
+-- (4) et box_manager_notifications (0) à la même empreinte avant/après ; audit
+-- des droits en prod 40/40 (T14, T15) lancé depuis la branche.
 --
 -- Une seule règle, depuis l'app comme depuis le site /compte :
 --   - membre payant en ligne (abonnement Stripe sur le compte connecté de la

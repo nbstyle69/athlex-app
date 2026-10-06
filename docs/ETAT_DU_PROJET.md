@@ -213,8 +213,9 @@ Supabase/Resend.
 
 ## En cours
 
-**« Mon abonnement », PR A : changement de formule, la base** (migration `20270147`, **appliquée en prod : non** ;
-PR non mergée). Une seule règle pour l'app et le site /compte : un membre payant en ligne verra son changement
+**« Mon abonnement », PR A : changement de formule, la base** (migration `20270147`, **appliquée en prod le
+06/10/2026 à 15:00 UTC** ; dump `db-dumps/2026-10-06/athlex-prod-public-internal-20261006T145926Z.dump` ; données de
+box_members, boxes et de la file des notifications identiques avant/après ; audit des droits 40/40 ; PR non mergée). Une seule règle pour l'app et le site /compte : un membre payant en ligne verra son changement
 programmé à la prochaine échéance (échéancier Stripe, sans prorata, écrit par le webhook à la bascule — PR B) ; un
 membre payant au comptoir envoie une demande que le gérant accepte (formule appliquée tout de suite) ou refuse dans
 Abonnés du Manager. Refusé en impayé, en pause, résiliation programmée, box archivée ou en archivage ; possible pendant
