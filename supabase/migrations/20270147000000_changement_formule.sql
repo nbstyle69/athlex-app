@@ -53,7 +53,10 @@
 --        (PLAN_CHANGE_FORBIDDEN) ; transition pending → accepted / refused par
 --        écriture conditionnelle (decided false si déjà décidée) ; acceptée :
 --        box_members.plan_id = to_plan_id dans la même transaction
---        (trg_sync_member_plan_groups suit), après avoir rejoué la règle.
+--        (trg_sync_member_plan_groups suit), après avoir rejoué la règle ;
+--        amount_cents, s'il est renseigné, passe au prix de la nouvelle
+--        formule dans la même instruction (NULL reste NULL : /compte et l'app
+--        affichent amount_cents avant le prix de la formule).
 --    La règle : `internal.refus_changement_formule`, check_violation
 --    PLAN_CHANGE_NOT_MEMBER, _BOX_CLOSED, _NOT_COUNTER, _PAST_DUE, _PAUSED,
 --    _CANCEL_SCHEDULED, _INVALID_PLAN (formule active, de la box, plan_type
@@ -429,8 +432,13 @@ BEGIN
   END IF;
   IF p_accept THEN
     -- trg_sync_member_plan_groups suit plan_id ; l'engagement ne change pas.
-    UPDATE public.box_members SET plan_id = r.to_plan_id
-     WHERE box_id = r.box_id AND member_id = r.member_id;
+    -- Un montant noté suit le prix de la nouvelle formule ; NULL reste NULL
+    -- (l'affichage retombe alors sur le prix de la formule).
+    UPDATE public.box_members bm
+       SET plan_id = r.to_plan_id,
+           amount_cents = CASE WHEN bm.amount_cents IS NULL THEN NULL
+                               ELSE (SELECT mp.price_cents FROM public.membership_plans mp WHERE mp.id = r.to_plan_id) END
+     WHERE bm.box_id = r.box_id AND bm.member_id = r.member_id;
   END IF;
   RETURN jsonb_build_object('decided', true, 'status', r.status);
 END;

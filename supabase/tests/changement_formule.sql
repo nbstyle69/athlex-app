@@ -29,7 +29,9 @@
 --   C5  decide_plan_change_request : coach, membre, gérant d'une autre box et
 --       acteur absent refusés (PLAN_CHANGE_FORBIDDEN), demande inconnue
 --       (PLAN_CHANGE_NOT_FOUND) ; acceptation par le co-gérant : plan_id écrit,
---       engagement intact, groupes de la formule suivis ; double décision sans
+--       engagement intact, groupes de la formule suivis, amount_cents NULL
+--       reste NULL ; acceptation pour MSC (montant noté 45 €) : amount_cents
+--       passe au prix de la nouvelle formule ; double décision sans
 --       effet ; refus par le gérant principal ; acceptation refusée si le
 --       membre est passé en impayé, la demande reste en attente et se refuse ;
 --   C6  RLS : le membre lit ses lignes, le gérant et le co-gérant leur box, le
@@ -63,7 +65,8 @@ INSERT INTO public.boxes (id, name, invite_code, owner_id) VALUES
   ('00000000-0000-4000-b9e7-000000000003', 'Box formule Z', 'CFMZ', '00000000-0000-4000-a9e7-0000000000e4'),
   ('00000000-0000-4000-b9e7-000000000004', 'Box formule X', 'CFMX', '00000000-0000-4000-a9e7-0000000000e5');
 INSERT INTO public.membership_plans (id, box_id, name, price_cents, plan_type, is_active)
-SELECT ('00000000-0000-4000-c9e7-0000000000' || p)::uuid, ('00000000-0000-4000-b9e7-00000000000' || b)::uuid, n, 5000, t, act
+SELECT ('00000000-0000-4000-c9e7-0000000000' || p)::uuid, ('00000000-0000-4000-b9e7-00000000000' || b)::uuid, n,
+       CASE p WHEN 'a2' THEN 9000 ELSE 5000 END, t, act
   FROM (VALUES
     ('a1', '1', 'Mensuel', 'subscription', true),
     ('a2', '1', 'Annuel',  'subscription', true),
@@ -100,6 +103,8 @@ SELECT ('00000000-0000-4000-b9e7-00000000000' || b)::uuid, ('00000000-0000-4000-
     ('3', '21', 'member', 'active',   'd1', 'active',   NULL,      NULL, false, false),
     ('4', '22', 'member', 'active',   'e1', 'active',   NULL,      NULL, false, false)
   ) v(b, m, r, st, p, ss, sub, depuis, pause, resil);
+-- MSC a un montant noté (comptoir) : il suit le prix à l'acceptation.
+UPDATE public.box_members SET amount_cents = 4500 WHERE member_id = '00000000-0000-4000-a9e7-000000000018';
 UPDATE public.boxes SET archive_scheduled_at = now() + interval '20 days' WHERE id = '00000000-0000-4000-b9e7-000000000003';
 UPDATE public.boxes SET archived_at = now() WHERE id = '00000000-0000-4000-b9e7-000000000004';
 -- Groupes de messagerie suivis par formule (trg_sync_member_plan_groups).
@@ -180,9 +185,10 @@ CREATE FUNCTION pg_temp.demande_en_file(m text) RETURNS text LANGUAGE sql AS $$
     format('SELECT public.request_plan_change(%L, %L, %L)::text', pg_temp.u(m), pg_temp.b(1), pg_temp.p('a2')),
     format('SELECT count(*)::text FROM public.box_manager_notifications WHERE type = ''plan_change_request'' AND member_id = %L', pg_temp.u(m))), '|', 2);
 $$;
-CREATE FUNCTION pg_temp.acceptee_puis_formule(r uuid) RETURNS text LANGUAGE sql AS $$
+-- Acceptation par G (annulée), puis « formule:montant » de `m`.
+CREATE FUNCTION pg_temp.acceptee_puis(r uuid, m text) RETURNS text LANGUAGE sql AS $$
   SELECT pg_temp.essai(format('SELECT public.decide_plan_change_request(%L, %L, true)::text', r, pg_temp.u('e0')),
-                       format('SELECT right(plan_id::text, 2) FROM public.box_members WHERE member_id = %L', pg_temp.u('10')));
+                       format('SELECT right(plan_id::text, 2) || '':'' || coalesce(amount_cents::text, ''null'') FROM public.box_members WHERE member_id = %L', pg_temp.u(m)));
 $$;
 CREATE FUNCTION pg_temp.annuler_demande(m text, b int) RETURNS text LANGUAGE sql AS $$
   SELECT pg_temp.faire('service', format('SELECT public.cancel_plan_change_request(%L, %L)::text', pg_temp.u(m), pg_temp.b(b)));
@@ -211,7 +217,7 @@ DECLARE
   REFUS constant text := '42501: %';
   v text;
   v_cas record;
-  r1 uuid; r2 uuid; r3 uuid; rb uuid;
+  r1 uuid; r2 uuid; r3 uuid; r4 uuid; rb uuid;
   v_def text;
 BEGIN
   -- ── C0 : structure ────────────────────────────────────────────────────────
@@ -265,7 +271,7 @@ BEGIN
   FROM (VALUES
     ('public.request_plan_change(uuid,uuid,uuid)', '06fadcdb84857ec179f014cfc7f77690'),
     ('public.cancel_plan_change_request(uuid,uuid)', '0208fa64ff58d791616d4082d2d70cf3'),
-    ('public.decide_plan_change_request(uuid,uuid,boolean)', 'e30941fe71a7eb3fc1bc84992e06fb35'),
+    ('public.decide_plan_change_request(uuid,uuid,boolean)', 'a9870f673308612fa98420b29cd84de6'),
     ('internal.refus_changement_formule(uuid,uuid,uuid)', '8cc12cb3197cc5cf71c284357a1fba2f'),
     ('public.get_my_membership_billing()', 'b4ca55006146fc83bc3da8eff1260234'),
     ('internal.garder_facturation_membre()', 'b50e8f8843dbe51848862942b3f3602f'),
@@ -379,6 +385,17 @@ BEGIN
      OR (SELECT decided_by FROM public.box_plan_change_requests WHERE id = r1) <> pg_temp.u('e1') THEN
     RAISE EXCEPTION 'C5 : acceptation : formule, engagement ou décideur';
   END IF;
+  IF (SELECT amount_cents FROM public.box_members WHERE member_id = pg_temp.u('10')) IS NOT NULL THEN
+    RAISE EXCEPTION 'C5 : montant NULL non conservé à l''acceptation';
+  END IF;
+  -- Montant noté : il passe au prix de la nouvelle formule (45 € → 90 €).
+  r4 := pg_temp.demander('18', 1, 'a2')::uuid;
+  v := pg_temp.decider(r4, 'e0', true);
+  IF v <> '{"status": "accepted", "decided": true}'
+     OR (SELECT right(plan_id::text, 2) || ':' || amount_cents FROM public.box_members WHERE member_id = pg_temp.u('18')) <> 'a2:9000' THEN
+    RAISE EXCEPTION 'C5 : montant noté non porté au prix de la nouvelle formule (%)',
+      (SELECT right(plan_id::text, 2) || ':' || amount_cents FROM public.box_members WHERE member_id = pg_temp.u('18'));
+  END IF;
   IF (SELECT string_agg(right(id::text, 2), ',' ORDER BY id) FROM public.message_groups
        WHERE box_id = pg_temp.b(1) AND pg_temp.u('10') = ANY (members)) IS DISTINCT FROM 'a2' THEN
     RAISE EXCEPTION 'C5 : groupes de formule non suivis';
@@ -407,7 +424,7 @@ BEGIN
   r3 := pg_temp.demander('10', 1, 'a1')::uuid;
   FOR v_cas IN SELECT * FROM (VALUES
     ('10', '3:10:1'), ('11', '2:11:1'), ('20', '1:20:2'),
-    ('e0', '5:10,11:1'), ('e1', '5:10,11:1'), ('e3', '1:20:2'),
+    ('e0', '6:10,11,18:1'), ('e1', '6:10,11,18:1'), ('e3', '1:20:2'),
     ('e2', '0::'), ('30', '0::')
   ) t(qui, attendu) LOOP
     IF pg_temp.lu(v_cas.qui) IS DISTINCT FROM v_cas.attendu THEN
@@ -480,6 +497,7 @@ BEGIN
   END LOOP;
 
   -- ── M : mutations ─────────────────────────────────────────────────────────
+  r4 := pg_temp.demander('18', 1, 'a1')::uuid;  -- MSC, 90 € noté, vers la formule à 50 €
   -- C1 : chaque refus retiré de la règle laisse passer son cas.
   v_def := pg_temp.def('internal.refus_changement_formule(uuid,uuid,uuid)');
   FOR v_cas IN SELECT * FROM (VALUES
@@ -543,15 +561,28 @@ BEGIN
   v := pg_temp.decider(r1, 'e0', false, true);
   EXECUTE v_def;
   IF v <> '{"status": "refused", "decided": true}' THEN RAISE EXCEPTION 'M : sans condition, la double décision est encore sans effet : C5 ne prouve rien (%)', v; END IF;
-  PERFORM pg_temp.muter('public.decide_plan_change_request(uuid,uuid,boolean)',
-    'UPDATE public.box_members SET plan_id = r.to_plan_id' || E'
-' || '     WHERE box_id = r.box_id AND member_id = r.member_id;', 'NULL;');
-  v := pg_temp.acceptee_puis_formule(r3);
+  PERFORM pg_temp.muter('public.decide_plan_change_request(uuid,uuid,boolean)', 'SET plan_id = r.to_plan_id,', 'SET plan_id = bm.plan_id,');
+  v := pg_temp.acceptee_puis(r3, '10');
   EXECUTE v_def;
-  IF v NOT LIKE '%"decided": true}|a2' THEN RAISE EXCEPTION 'M : sans écriture, plan_id change encore : C5 ne prouve rien (%)', v; END IF;
-  IF pg_temp.acceptee_puis_formule(r3) NOT LIKE '%"decided": true}|a1' THEN
-    RAISE EXCEPTION 'M : l''écriture de plan_id n''est pas observée';
+  IF v NOT LIKE '%"decided": true}|a2:%' THEN RAISE EXCEPTION 'M : sans écriture, plan_id change encore : C5 ne prouve rien (%)', v; END IF;
+  IF pg_temp.acceptee_puis(r3, '10') NOT LIKE '%"decided": true}|a1:null' THEN
+    RAISE EXCEPTION 'M : l''écriture de plan_id ou le montant NULL n''est pas observé';
   END IF;
+  -- Montant noté non suivi : il garde l'ancien prix.
+  IF pg_temp.acceptee_puis(r4, '18') NOT LIKE '%"decided": true}|a1:5000' THEN
+    RAISE EXCEPTION 'M : le montant noté ne suit pas le prix (%)', pg_temp.acceptee_puis(r4, '18');
+  END IF;
+  PERFORM pg_temp.muter('public.decide_plan_change_request(uuid,uuid,boolean)',
+    'amount_cents = CASE WHEN bm.amount_cents IS NULL THEN NULL', 'amount_cents = CASE WHEN true THEN bm.amount_cents');
+  v := pg_temp.acceptee_puis(r4, '18');
+  EXECUTE v_def;
+  IF v NOT LIKE '%|a1:9000' THEN RAISE EXCEPTION 'M : montant non réécrit, encore au nouveau prix : C5 ne prouve rien (%)', v; END IF;
+  -- Montant NULL remplacé par le prix : M1 en aurait un.
+  PERFORM pg_temp.muter('public.decide_plan_change_request(uuid,uuid,boolean)',
+    'CASE WHEN bm.amount_cents IS NULL THEN NULL', 'CASE WHEN false THEN NULL');
+  v := pg_temp.acceptee_puis(r3, '10');
+  EXECUTE v_def;
+  IF v NOT LIKE '%|a1:5000' THEN RAISE EXCEPTION 'M : NULL remplacé, encore NULL : C5 ne prouve rien (%)', v; END IF;
   UPDATE public.box_members SET past_due_since = now() WHERE member_id = pg_temp.u('10');
   PERFORM pg_temp.muter('public.decide_plan_change_request(uuid,uuid,boolean)', 'v_refus := internal.refus_changement_formule(r.member_id, r.box_id, r.to_plan_id);', 'v_refus := NULL;');
   v := pg_temp.decider(r3, 'e1', true, true);
@@ -619,7 +650,7 @@ BEGIN
         'public.cancel_plan_change_request(uuid,uuid)', 'public.decide_plan_change_request(uuid,uuid,boolean)',
         'internal.refus_changement_formule(uuid,uuid,uuid)', 'internal.garder_facturation_membre()',
         'internal.filer_notification_gerant()']) f)
-     IS DISTINCT FROM '0208fa64ff58d791616d4082d2d70cf3,e30941fe71a7eb3fc1bc84992e06fb35,8cc12cb3197cc5cf71c284357a1fba2f,b50e8f8843dbe51848862942b3f3602f,df14724f0a600ea18fb1056e7148b940'
+     IS DISTINCT FROM '0208fa64ff58d791616d4082d2d70cf3,a9870f673308612fa98420b29cd84de6,8cc12cb3197cc5cf71c284357a1fba2f,b50e8f8843dbe51848862942b3f3602f,df14724f0a600ea18fb1056e7148b940'
      OR (SELECT md5(pg_get_triggerdef(oid)) FROM pg_trigger WHERE tgname = 'trg_box_members_garde_facturation') <> '05e9de13a14666cd9b5d99040e8da0c3' THEN
     RAISE EXCEPTION 'M : une définition mutée n''est pas revenue';
   END IF;
