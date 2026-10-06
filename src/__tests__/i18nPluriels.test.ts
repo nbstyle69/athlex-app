@@ -47,7 +47,23 @@ describe('pluriels _one / _other', () => {
   });
 
   it("le polyfill n'écrase pas un Intl.PluralRules existant", () => {
+    const natif = Intl.PluralRules;
     expect(installPluralRules()).toBe(false);
+    expect(Intl.PluralRules).toBe(natif);
+  });
+
+  it("sans Intl, rien n'est installé et Intl reste absent", () => {
+    const cible: { Intl?: unknown } = {};
+    expect(installPluralRules(cible)).toBe(false);
+    expect('Intl' in cible).toBe(false);
+  });
+
+  it('avec un Intl sans PluralRules, la règle fr / en est installée', () => {
+    const cible: { Intl?: { PluralRules?: new (l: string) => Intl.PluralRules } } = { Intl: {} };
+    expect(installPluralRules(cible)).toBe(true);
+    const R = cible.Intl!.PluralRules!;
+    expect([0, 1, 2].map(n => new R('fr').select(n))).toEqual(['one', 'one', 'other']);
+    expect([0, 1, 2].map(n => new R('en').select(n))).toEqual(['other', 'one', 'other']);
   });
 
   it("une clé de pluriel de l'app rend 1 et 2 en fr et en en", async () => {

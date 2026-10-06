@@ -11,7 +11,7 @@ jest.mock('../lib/supabase', () => ({
 }));
 jest.mock('../lib/sentry', () => ({ captureError: jest.fn() }));
 
-import i18n, { initLanguage, pushLanguage, setLanguage } from '../i18n';
+import i18n, { LANGUAGE_KEY, initLanguage, pushLanguage, setLanguage } from '../i18n';
 import { savePushToken, refreshPushTokenLanguage, removePushToken } from '../services/notifications';
 
 const telephone = (code: string | null) => { mockLocales = [{ languageCode: code }]; };
@@ -37,13 +37,19 @@ describe("pushLanguage : langue de l'app, pas celle du téléphone", () => {
     expect(pushLanguage()).toBe('en');
   });
 
-  it("sans choix enregistré, suit la langue détectée au démarrage", async () => {
-    telephone('en');
-    await initLanguage();
-    expect(pushLanguage()).toBe('en');
-    telephone('de'); // langue non gérée : l'app démarre en français
-    await initLanguage();
-    expect(pushLanguage()).toBe('fr');
+  it.each([
+    // téléphone, choix enregistré dans le Profil → langue de l'app et des push
+    ['fr', null, 'fr'],
+    ['en', null, 'en'],
+    ['de', null, 'en'], // ni français ni anglais : anglais
+    ['de', 'fr', 'fr'], // le choix du Profil l'emporte
+    ['fr', 'en', 'en'],
+  ])('téléphone %s, choix enregistré %s → app et push en %s', async (code, choix, attendu) => {
+    telephone(code);
+    if (choix) await AsyncStorage.setItem(LANGUAGE_KEY, choix);
+    expect(await initLanguage()).toBe(attendu);
+    expect(i18n.language).toBe(attendu);
+    expect(pushLanguage()).toBe(attendu);
   });
 });
 

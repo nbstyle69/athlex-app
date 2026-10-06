@@ -213,6 +213,13 @@ Supabase/Resend.
 
 ## En cours
 
+**Chantier anglais, PR 0 : socle i18n (app seule, aucune migration ; PR #487 non mergée).** Dates et nombres selon la
+langue de l'app et la région du téléphone (`src/i18n/locale.ts`, plus de `'fr-FR'` en dur hors minuteur et carte de
+partage, laissés à la PR 1a), `errorMessage()` qui traduit les refus de la base et des fonctions Edge, app et push en
+anglais pour un téléphone ni français ni anglais (le choix du Profil l'emporte, le jeton est réenregistré au changement),
+« Strength » pour « Musculation » en anglais, polyfill des pluriels pour Hermes, et garde (`scripts/i18n/`, test
+`i18nGarde`) contre le français hors `t()` dans les fichiers déclarés traduits.
+
 **Minuteur Split « Tap pour lancer » refait d'après la maquette (refonte Split & Partage, PR 1 ; app seule, apparence,
 aucune migration ; PR non mergée, vérifiée sur l'émulateur Android, à vérifier sur build).** L'écran entre deux rounds
 Splits devient un plein écran aux jetons du thème (Figma 580:772 sombre / 580:892 clair) : surtitre « ROUND n / total » et

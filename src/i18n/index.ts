@@ -19,10 +19,10 @@ export const resources = {
   en: { translation: en },
 } as const;
 
-// Resolve the phone's language, falling back to French (the app default).
+// Langue du téléphone : français s'il est en français, anglais pour toute
+// autre langue (décision produit). Le choix du Profil l'emporte (initLanguage).
 export function deviceLanguage(): AppLanguage {
-  const code = getLocales()[0]?.languageCode?.toLowerCase();
-  return SUPPORTED_LANGUAGES.includes(code as AppLanguage) ? (code as AppLanguage) : DEFAULT_LANGUAGE;
+  return getLocales()[0]?.languageCode?.toLowerCase() === 'fr' ? 'fr' : 'en';
 }
 
 // Langue des notifications, enregistrée avec le jeton : celle de l'app (choix
@@ -42,7 +42,8 @@ export function onLanguageSaved(listener: LanguageListener): void {
 
 i18n.use(initReactI18next).init({
   resources,
-  lng: DEFAULT_LANGUAGE,
+  // Langue du téléphone dès le premier rendu, avant que initLanguage lise le choix enregistré.
+  lng: deviceLanguage(),
   fallbackLng: DEFAULT_LANGUAGE,
   supportedLngs: [...SUPPORTED_LANGUAGES],
   defaultNS: 'translation',

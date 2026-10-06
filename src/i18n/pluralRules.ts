@@ -25,10 +25,10 @@ class FrEnPluralRules {
   }
 }
 
+/** Complète un Intl existant auquel il manque PluralRules ; ne crée jamais Intl. */
 export function installPluralRules(target: { Intl?: unknown } = globalThis as { Intl?: unknown }): boolean {
-  const intl = (target.Intl ?? {}) as { PluralRules?: unknown };
-  if (typeof intl.PluralRules === 'function') return false;
+  const intl = target.Intl as { PluralRules?: unknown } | undefined;
+  if (!intl || typeof intl.PluralRules === 'function') return false;
   intl.PluralRules = FrEnPluralRules;
-  target.Intl = intl;
   return true;
 }
