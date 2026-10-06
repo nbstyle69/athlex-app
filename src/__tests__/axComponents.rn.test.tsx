@@ -448,6 +448,9 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     ...R9A_FILES.map((f) => path.join(SRC, f)),
     // R12 : profil (écran racine de l'onglet) au nouveau design.
     path.join(SRC, 'screens', 'profile', 'ProfileScreen.tsx'),
+    // Split & Partage PR 2 : « Partager ma perf » en plein écran et image partagée.
+    path.join(SRC, 'components', 'ShareScoreCard.tsx'),
+    path.join(SRC, 'components', 'SharePerfScreen.tsx'),
     // Lot 4 « Rejoindre une box en payant » : bandeau « Formule à activer » et bienvenue.
     path.join(SRC, 'components', 'PlanToActivateNotice.tsx'),
     path.join(SRC, 'screens', 'onboarding', 'BoxWelcomeScreen.tsx'),
