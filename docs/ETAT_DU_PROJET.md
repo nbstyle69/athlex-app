@@ -213,6 +213,18 @@ Supabase/Resend.
 
 ## En cours
 
+**Sécurité, stockage `tournament-banners` : écriture réservée au staff de la box du tournoi et aux admins** (migration
+`20270149`, **non appliquée en prod** ; PR non mergée ; même méthode que `20270148`). Constat du 07/10/2026 en lecture
+seule : « Authenticated users can upload / update tournament banners » ne demandaient que `bucket_id =
+'tournament-banners'` — tout compte connecté déposait ou remplaçait la bannière de n'importe quelle box (stockage
+public, 6 objets `<box_id>/<horodatage>.<ext>`, 0 `banner_url` renseignée ; aucune policy DELETE). Dépôt et
+modification (USING et WITH CHECK) passent au rôle `authenticated` avec `public.is_box_admin` du premier dossier du
+chemin (gérant, co-gérant, coach actif, admins — le prédicat de `tournaments_box_admin_manage`), dossier uuid vérifié
+avant conversion ; toujours aucune suppression. Lecture publique, stockage public, policies de `tournaments` et
+`is_box_admin` inchangés ; aucun changement de code (le Manager dépose déjà sous `<boxId>/`). Test
+`supabase/tests/tournament_banners_staff.sql` (Q0 à Q6), contrôle S7 de l'audit des droits, retour arrière
+`supabase/retours/20270149000000_tournament_banners_staff.sql`.
+
 **Sécurité, stockage `partner-logos` : écriture réservée aux admins** (migration `20270148`, **appliquée en prod le
 06/10/2026 à 22:01 UTC** ; dump `db-dumps/2026-10-06/athlex-prod-public-storage-20261006T220052Z.dump` (sha256
 `f87e3d92…84d0`, aller-retour vérifié) ; objets et partenaires inchangés ; audit des droits 41/41 avec S6 ; PR non

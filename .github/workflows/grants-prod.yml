@@ -29,6 +29,7 @@ on:
       - 'scripts/lib/controle-stockage-documents.mjs'
       - 'scripts/lib/controle-stockage-pieces-jointes.mjs'
       - 'scripts/lib/controle-stockage-partner-logos.mjs'
+      - 'scripts/lib/controle-stockage-tournament-banners.mjs'
       - '.github/workflows/grants-prod.yml'
 
   workflow_dispatch:
