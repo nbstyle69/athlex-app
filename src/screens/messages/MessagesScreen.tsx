@@ -725,7 +725,7 @@ export default function MessagesScreen() {
         <TouchableOpacity onPress={pickImage} style={S.imgBtn} activeOpacity={0.7}>
           <ImagePlus color={theme.textMuted} size={22} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={openGifPicker} style={S.imgBtn} activeOpacity={0.7}>
+        <TouchableOpacity onPress={openGifPicker} style={S.imgBtn} activeOpacity={0.7} testID="messages-gif">
           <Text style={S.gifBtnLabel}>GIF</Text>
         </TouchableOpacity>
         <View style={S.inputWrap}>

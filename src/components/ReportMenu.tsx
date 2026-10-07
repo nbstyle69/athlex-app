@@ -103,6 +103,7 @@ export default function ReportMenu({
     <>
       <TouchableOpacity
         onPress={() => setMenuOpen(true)}
+        testID="report-menu-open"
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         activeOpacity={0.7}
       >
@@ -114,13 +115,13 @@ export default function ReportMenu({
         <TouchableOpacity style={S.backdrop} activeOpacity={1} onPress={() => setMenuOpen(false)}>
           <View style={S.sheet}>
             {!isSelf && (
-              <TouchableOpacity style={S.sheetItem} onPress={openReport} activeOpacity={0.7}>
+              <TouchableOpacity style={S.sheetItem} onPress={openReport} activeOpacity={0.7} testID="report-menu-report">
                 <Flag size={18} color={theme.error} />
                 <Text style={[S.sheetItemText, { color: theme.error }]}>Signaler</Text>
               </TouchableOpacity>
             )}
             {canBlock && (
-              <TouchableOpacity style={S.sheetItem} onPress={handleBlock} activeOpacity={0.7}>
+              <TouchableOpacity style={S.sheetItem} onPress={handleBlock} activeOpacity={0.7} testID="report-menu-block">
                 <UserX size={18} color={theme.error} />
                 <Text style={[S.sheetItemText, { color: theme.error }]}>Bloquer cet utilisateur</Text>
               </TouchableOpacity>
@@ -153,6 +154,7 @@ export default function ReportMenu({
                     key={r.value}
                     style={[S.reasonRow, reason === r.value && S.reasonRowActive]}
                     onPress={() => setReason(r.value)}
+                    testID={`report-reason-${r.value}`}
                     activeOpacity={0.7}
                   >
                     <View style={[S.radio, reason === r.value && S.radioActive]}>
@@ -173,6 +175,7 @@ export default function ReportMenu({
               />
               <TouchableOpacity
                 onPress={submitReport}
+                testID="report-submit"
                 disabled={!reason || submitting}
                 activeOpacity={0.85}
                 style={(!reason || submitting) ? { opacity: 0.5 } : undefined}
