@@ -19,7 +19,7 @@ export const HUES = {
   pink: { light: '#BE185D', dark: '#EC4899' },
   emerald: { light: '#176B57', dark: '#9AE6D2' },
   orange: { light: '#C2410C', dark: '#F97316' },
-  yellow: { light: '#A16207', dark: '#EAB308' },
+  yellow: { light: '#9A5D06', dark: '#EAB308' },
   red: { light: '#B91C1C', dark: '#F87171' },
   indigo: { light: '#4338CA', dark: '#818CF8' },
   teal: { light: '#0F766E', dark: '#14B8A6' },

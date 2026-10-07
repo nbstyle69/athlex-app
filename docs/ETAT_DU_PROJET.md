@@ -213,6 +213,13 @@ Supabase/Resend.
 
 ## En cours
 
+**Design : étiquette du type de séance en couleur (app seule, aucune migration, apparence seule ; PR #496 non mergée).**
+`wodTypeColor()` (`src/theme/wodTypeColor.ts`) donne la couleur du type sur le texte et le filet de l'étiquette : For Time
+jaune, AMRAP bleu, EMOM violet, Tabata vert, Musculation menthe, autre ou inconnu atténué. Elle s'applique à Ma Box, au
+détail du WOD et au détail d'un programme (Figma 638:501). `HUES.yellow.light` passe à `#9A5D06` (≈ 4,87:1 sur
+`ax.background`, contre 4,496:1 pour `#A16207`). Contraste ≥ 4,5:1 vérifié par test sur la carte et sur le fond, dans
+les deux thèmes.
+
 **Chantier anglais, PR 0c : déclarer les fichiers déjà traduits (outillage, aucun code ni migration ; PR #494
 mergée le 07/10/2026).** Les 47 fichiers que l'inventaire du 07/10 trouve sans texte affiché hors `t()` (garde stricte et scanner
 français à 0) entrent dans `scripts/i18n/fichiers-traduits.json` (43 → 90 entrées) : composants `ax/*` et `glass/*`,

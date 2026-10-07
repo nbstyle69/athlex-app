@@ -541,3 +541,18 @@ describe('R4b : textes longs sans débordement', () => {
   });
 });
 function root2(root: ReactTestInstance, id: string) { return byID(root, id); }
+
+/** Étiquette du type de séance à la couleur du type (Figma 630:72542), texte ET filet. */
+describe.each([['sombre', darkTheme], ['clair', lightTheme]] as const)('Détail d\'un programme : étiquette du type en couleur — %s', (name, theme) => {
+  const INK = {
+    sombre: { 'for-time': '#EAB308', tabata: '#22C55E', strength: '#9AE6D2', skill: '#989FA3' },
+    clair: { 'for-time': '#9A5D06', tabata: '#15803D', strength: '#176B57', skill: '#52605B' },
+  }[name];
+  it.each(Object.entries(INK))('%s', async (type, ink) => {
+    mockTables.program_wods = [{ ...PROGRAM_WODS[0], wod_type: type }];
+    const root = await mountProgram(theme);
+    await pressID(root, 'program-wod-p-1');
+    const box = root.findAll((n) => n.props.testID === 'program-detail-type' && typeof n.type === 'string')[0];
+    expect({ text: flat(box.findAll(isHostText)[0]).color, edge: flat(box).borderColor }).toEqual({ text: ink, edge: ink });
+  });
+});

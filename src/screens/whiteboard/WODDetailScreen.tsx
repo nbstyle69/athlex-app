@@ -36,6 +36,7 @@ import {
 } from '../../services/strengthSets';
 import i18n from '../../i18n';
 import { wodTypeLabel } from '../../utils/wodTypeLabel';
+import { wodTypeColor } from '../../theme/wodTypeColor';
 import GymRecordSheet from '../../components/wod/GymRecordSheet';
 import { MODAL_DISMISS_MS } from '../../components/ConfirmDialog';
 import StrengthSetGrid, {
@@ -831,7 +832,7 @@ export default function WODDetailScreen() {
         <AxCard variant="featured" style={S.wodCard} testID="wod-card">
           <AxContentTitle title={wod.title} testID="wod-detail-title" />
           <View style={S.wodMeta}>
-            <AxTag label={wodTypeLabel(wod.wod_type ?? 'custom')} tone="accent" testID="wod-type-tag" />
+            <AxTag label={wodTypeLabel(wod.wod_type ?? 'custom')} tone="accent" color={wodTypeColor(wod.wod_type ?? 'custom', theme.mode, c)} testID="wod-type-tag" />
             {wod.time_cap_seconds && (
               <View style={S.timeCap}>
                 <Clock color={c.textMuted} size={12} />
