@@ -648,7 +648,7 @@ describe('Lot 4 : Ma Box sans formule', () => {
 /** Étiquette du type de séance à la couleur du type (Figma 630:72542), texte ET filet. */
 const TYPE_INK = {
   sombre: { 'for-time': '#EAB308', tabata: '#22C55E', strength: '#9AE6D2', skill: '#989FA3' },
-  clair: { 'for-time': '#A16207', tabata: '#15803D', strength: '#176B57', skill: '#52605B' },
+  clair: { 'for-time': '#9A5D06', tabata: '#15803D', strength: '#176B57', skill: '#52605B' },
 } as const;
 const tagInk = (root: ReactTestInstance, id: string) => {
   const box = byID(root, id);

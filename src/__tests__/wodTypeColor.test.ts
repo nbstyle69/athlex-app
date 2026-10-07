@@ -5,7 +5,7 @@ import { wodTypeColor } from '../theme/wodTypeColor';
 
 /** Valeurs de la maquette (Figma 630:72542, « Étiquette · Type de séance »). */
 const EXPECTED: Record<string, Record<ThemeMode, string>> = {
-  'for-time': { dark: '#EAB308', light: '#A16207' },
+  'for-time': { dark: '#EAB308', light: '#9A5D06' },
   amrap: { dark: '#60A5FA', light: '#1D4ED8' },
   emom: { dark: '#A78BFA', light: '#6D28D9' },
   tabata: { dark: '#22C55E', light: '#15803D' },
@@ -39,5 +39,9 @@ describe.each([['dark', darkTheme], ['light', lightTheme]] as const)('contraste 
   it.each(Object.keys(EXPECTED))('%s ≥ 4,5:1 sur la surface des cartes', (type) => {
     const ink = wodTypeColor(type, mode, t.ax);
     expect(contrast(ink, t.ax.surface, t.ax.background)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it.each(Object.keys(EXPECTED))('%s ≥ 4,5:1 sur le fond (feuille du détail d’un programme)', (type) => {
+    expect(contrast(wodTypeColor(type, mode, t.ax), t.ax.background)).toBeGreaterThanOrEqual(4.5);
   });
 });

@@ -546,7 +546,7 @@ function root2(root: ReactTestInstance, id: string) { return byID(root, id); }
 describe.each([['sombre', darkTheme], ['clair', lightTheme]] as const)('Détail d\'un programme : étiquette du type en couleur — %s', (name, theme) => {
   const INK = {
     sombre: { 'for-time': '#EAB308', tabata: '#22C55E', strength: '#9AE6D2', skill: '#989FA3' },
-    clair: { 'for-time': '#A16207', tabata: '#15803D', strength: '#176B57', skill: '#52605B' },
+    clair: { 'for-time': '#9A5D06', tabata: '#15803D', strength: '#176B57', skill: '#52605B' },
   }[name];
   it.each(Object.entries(INK))('%s', async (type, ink) => {
     mockTables.program_wods = [{ ...PROGRAM_WODS[0], wod_type: type }];
