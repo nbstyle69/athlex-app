@@ -213,6 +213,12 @@ Supabase/Resend.
 
 ## En cours
 
+**Chantier anglais, PR 0c : déclarer les fichiers déjà traduits (outillage, aucun code ni migration ; PR #494
+mergée le 07/10/2026).** Les 47 fichiers que l'inventaire du 07/10 trouve sans texte affiché hors `t()` (garde stricte et scanner
+français à 0) entrent dans `scripts/i18n/fichiers-traduits.json` (43 → 90 entrées) : composants `ax/*` et `glass/*`,
+Réservation, Entraînement, onboarding, plusieurs écrans de Compétition et du Manager in-app. La garde les protège
+désormais d'une régression. « Scaled » rejoint les termes techniques (`scripts/i18n/termes-techniques.json`).
+
 **Chantier anglais, PR 2 : Ma Box + Réservation (app seule, aucune migration ; PR non mergée).** Détail du WOD
 (score, saisie, classement, commentaires), WOD perso, Actualités, Messages (dont GIF), Infos de la box, Membres,
 Signaler / Bloquer (`ReportMenu`, motifs de `moderation.ts` en clés), sélecteurs de semaine du Whiteboard et de la
@@ -226,7 +232,7 @@ rejoignent `scripts/i18n/fichiers-traduits.json` ; « Scaled » devient terme te
 **Sécurité, stockage `tournament-banners` : écriture réservée au staff de la box du tournoi et aux admins** (migration
 `20270149`, **appliquée en prod le 07/10/2026 à 09:02 UTC** ; dump
 `db-dumps/2026-10-07/athlex-prod-public-storage-20261007T090131Z.dump` (sha256 `634ecc6e…7fda`, aller-retour vérifié) ;
-objets inchangés ; audit des droits 42/42 avec S6 et S7 ; PR non mergée, test de Nab avant merge ; même méthode que
+objets inchangés ; audit des droits 42/42 avec S6 et S7 ; PR #493 mergée le 07/10/2026 (`0004fc0`) ; même méthode que
 `20270148`). Constat du 07/10/2026 en lecture
 seule : « Authenticated users can upload / update tournament banners » ne demandaient que `bucket_id =
 'tournament-banners'` — tout compte connecté déposait ou remplaçait la bannière de n'importe quelle box (stockage
