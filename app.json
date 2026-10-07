@@ -25,7 +25,7 @@
         "NSPhotoLibraryUsageDescription": "AthleX accède à ta galerie pour soumettre tes vidéos.",
         "NSPhotoLibraryAddUsageDescription": "AthleX enregistre tes vidéos de performance dans ta galerie."
       },
-      "buildNumber": "64"
+      "buildNumber": "65"
     },
     "android": {
       "adaptiveIcon": {
@@ -48,7 +48,7 @@
         "android.permission.FOREGROUND_SERVICE_MICROPHONE"
       ],
       "package": "com.athlex.app",
-      "versionCode": 79,
+      "versionCode": 80,
       "intentFilters": [
         {
           "action": "VIEW",
