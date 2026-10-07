@@ -2,7 +2,17 @@
 -- Stockage « tournament-banners » : dépôt et modification réservés au staff de
 -- la box du tournoi (gérant, co-gérant, coach actif) et aux admins
 --
--- Appliquée en prod : NON
+-- Appliquée en prod : OUI, le 07/10/2026 à 09:02 UTC, avec PGCLIENTENCODING=UTF8
+-- (dump des schémas public et storage avec droits
+-- db-dumps/2026-10-07/athlex-prod-public-storage-20261007T090131Z.dump,
+-- sha256 634ecc6e057b770cd4d1f26c1fc28728f34bf94163efc038c15570b66cfe7fda vérifié
+-- après aller-retour, 145 TABLE DATA, 446 ACL, 380 POLICY ; précontrôle en
+-- lecture seule identique au constat ci-dessous ; vérifications : anciennes
+-- policies absentes, tournament_banners_staff_insert et _update à
+-- authenticated, md5 cbaed6906b7eef101dbdbddecd1bc10b comme au rejeu ; lecture,
+-- stockage, is_box_admin, tournaments_box_admin_manage, 6 objets, 0 banner_url
+-- et 31 policies sur storage.objects inchangés ; audit des droits
+-- grants-prod.yml sur fix/tournament-banners-staff 42/42, S6 et S7 compris.)
 --
 -- Constat en prod, lecture seule (session en default_transaction_read_only et
 -- transaction READ ONLY), les 06 et 07/10/2026 — md5 calculés par la base, avec

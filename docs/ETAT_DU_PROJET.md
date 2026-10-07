@@ -214,7 +214,10 @@ Supabase/Resend.
 ## En cours
 
 **Sécurité, stockage `tournament-banners` : écriture réservée au staff de la box du tournoi et aux admins** (migration
-`20270149`, **non appliquée en prod** ; PR non mergée ; même méthode que `20270148`). Constat du 07/10/2026 en lecture
+`20270149`, **appliquée en prod le 07/10/2026 à 09:02 UTC** ; dump
+`db-dumps/2026-10-07/athlex-prod-public-storage-20261007T090131Z.dump` (sha256 `634ecc6e…7fda`, aller-retour vérifié) ;
+objets inchangés ; audit des droits 42/42 avec S6 et S7 ; PR non mergée, test de Nab avant merge ; même méthode que
+`20270148`). Constat du 07/10/2026 en lecture
 seule : « Authenticated users can upload / update tournament banners » ne demandaient que `bucket_id =
 'tournament-banners'` — tout compte connecté déposait ou remplaçait la bannière de n'importe quelle box (stockage
 public, 6 objets `<box_id>/<horodatage>.<ext>`, 0 `banner_url` renseignée ; aucune policy DELETE). Dépôt et
