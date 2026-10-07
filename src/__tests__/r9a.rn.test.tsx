@@ -644,3 +644,34 @@ describe('Lot 4 : Ma Box sans formule', () => {
     }
   });
 });
+
+/** Étiquette du type de séance à la couleur du type (Figma 630:72542), texte ET filet. */
+const TYPE_INK = {
+  sombre: { 'for-time': '#EAB308', tabata: '#22C55E', strength: '#9AE6D2', skill: '#989FA3' },
+  clair: { 'for-time': '#A16207', tabata: '#15803D', strength: '#176B57', skill: '#52605B' },
+} as const;
+const tagInk = (root: ReactTestInstance, id: string) => {
+  const box = byID(root, id);
+  return { text: flat(box.findAll(isHostText)[0]).color, edge: flat(box).borderColor };
+};
+
+describe.each(THEMES)('Étiquette du type de séance en couleur — %s', (name, theme) => {
+  const types = Object.keys(TYPE_INK[name]) as (keyof typeof TYPE_INK['clair'])[];
+
+  it('Ma Box : chaque carte porte la couleur de son type', async () => {
+    const wods = types.map((type, i) => ({ ...WOD_AMRAP, id: `wt${i}`, title: `Séance ${type}`, wod_type: type, sort_order: i }));
+    mockTables['box_wods|*'] = wods;
+    mockTables['box_wods|id, track, wod_type'] = wods.map(({ id, track, wod_type }) => ({ id, track, wod_type }));
+    const root = await mount(<WhiteboardScreen />, theme);
+    for (const [i, type] of types.entries()) {
+      const ink = TYPE_INK[name][type];
+      expect({ type, ...tagInk(root, `wod-tag-wt${i}`) }).toEqual({ type, text: ink, edge: ink });
+    }
+  });
+
+  it.each(types)('Détail du WOD : %s', async (type) => {
+    const root = await mount(detail({ ...WOD_AMRAP, wod_type: type }), theme);
+    const ink = TYPE_INK[name][type];
+    expect(tagInk(root, 'wod-type-tag')).toEqual({ text: ink, edge: ink });
+  });
+});
