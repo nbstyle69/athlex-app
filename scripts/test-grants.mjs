@@ -36,6 +36,7 @@ import { controlerSchemaInternal } from './lib/controle-schema-internal.mjs';
 import { controlerStockageDocuments } from './lib/controle-stockage-documents.mjs';
 import { controlerStockagePiecesJointes } from './lib/controle-stockage-pieces-jointes.mjs';
 import { controlerStockagePartnerLogos } from './lib/controle-stockage-partner-logos.mjs';
+import { controlerStockageTournamentBanners } from './lib/controle-stockage-tournament-banners.mjs';
 
 const { url: SUPABASE_URL, anonKey: ANON_KEY } = requireTestTarget();
 
@@ -237,6 +238,10 @@ controlerStockagePiecesJointes(query, assert);
 // ── Stockage `partner-logos` (S6) ──────────────────────────────────────────────
 console.log('\n=== Contrôle du stockage `partner-logos` ===\n');
 controlerStockagePartnerLogos(query, assert);
+
+// ── Stockage `tournament-banners` (S7) ─────────────────────────────────────────
+console.log('\n=== Contrôle du stockage `tournament-banners` ===\n');
+controlerStockageTournamentBanners(query, assert);
 
 // ── Le geste réel, et son effet mesuré ───────────────────────────────────────
 // Ici — pile jetable — la sonde peut être complète, et elle doit l'être : le

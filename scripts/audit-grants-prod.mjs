@@ -49,6 +49,9 @@ import {
 import {
   controlerStockagePartnerLogos, ASSERTIONS_STOCKAGE_PARTNER_LOGOS,
 } from './lib/controle-stockage-partner-logos.mjs';
+import {
+  controlerStockageTournamentBanners, ASSERTIONS_STOCKAGE_TOURNAMENT_BANNERS,
+} from './lib/controle-stockage-tournament-banners.mjs';
 import { signalerCorrespondancesCatalogue } from './lib/signal-correspondances-catalogue.mjs';
 import { PROD_PROJECT_REF } from './lib/prod-ref.mjs';
 
@@ -123,6 +126,7 @@ const ASSERTIONS_ATTENDUES = ASSERTIONS_FIXES
   + ASSERTIONS_STOCKAGE_DOCUMENTS // S1..S3 : le stockage `documents` (20270136)
   + ASSERTIONS_STOCKAGE_PIECES_JOINTES // S4, S5 : le stockage `message-attachments` (20270137)
   + ASSERTIONS_STOCKAGE_PARTNER_LOGOS // S6 : le stockage `partner-logos` (20270148)
+  + ASSERTIONS_STOCKAGE_TOURNAMENT_BANNERS // S7 : le stockage `tournament-banners` (20270149)
   - (REJEU ? SONDES_ANONYMES.length + 1 + 2 : 0) // en rejeu, aucun appel REST…
   + (REJEU ? 1 : 0); // …mais le rôle doit voir le catalogue du signal
 
@@ -393,6 +397,12 @@ controlerStockagePiecesJointes(query, assert);
 // supprimait les logos des partenaires.
 console.log('\n=== Stockage `partner-logos` — PRODUCTION (lecture seule) ===\n');
 controlerStockagePartnerLogos(query, assert);
+
+// ── Stockage `tournament-banners` ────────────────────────────────────────────
+// Jusqu'au 07/10/2026 : tout compte connecté y déposait ou remplaçait la
+// bannière de n'importe quelle box.
+console.log('\n=== Stockage `tournament-banners` — PRODUCTION (lecture seule) ===\n');
+controlerStockageTournamentBanners(query, assert);
 
 // ── Correspondance catalogue → clés : un signal, pas une assertion ───────────
 // Le catalogue se modifie depuis le back-office admin ; un mouvement ajouté sans
