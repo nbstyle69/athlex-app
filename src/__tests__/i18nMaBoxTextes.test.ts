@@ -2,6 +2,7 @@
 // (i18nMaBox.rn.test.tsx) n'atteint pas (partage, nouveau 1RM, singuliers,
 // recherche de GIF…). Le français doit rester le littéral de master, au caractère près.
 import i18n from '../i18n';
+import en from '../i18n/locales/en.json';
 
 afterAll(async () => { await i18n.changeLanguage('fr'); });
 
@@ -46,6 +47,21 @@ describe('Ma Box + Réservation : anglais', () => {
     expect(i18n.t('community.athleteCount', { count: 2 })).toBe('2 athletes');
     expect(i18n.t('articles.likes', { count: 1 })).toBe('1 like');
     expect(i18n.t('articles.likes', { count: 0 })).toBe('0 likes');
+  });
+  // Clés à formes _one / _other de la PR : singulier et pluriel distincts, sans « (s) ».
+  it.each([
+    ['wodDetail.rankingTitle', 'Leaderboard · 1 score', 'Leaderboard · 12 scores'],
+    ['community.athleteCount', '1 athlete', '12 athletes'],
+    ['articles.likes', '1 like', '12 likes'],
+  ])('pluriel anglais de %s : count = 1 et count = 12', (key, one, twelve) => {
+    expect(i18n.t(key, { count: 1 })).toBe(one);
+    expect(i18n.t(key, { count: 12 })).toBe(twelve);
+  });
+  it('aucune forme _one / _other de en.json ne contient « (s) »', () => {
+    const flat = (o: Record<string, unknown>, p = ''): [string, unknown][] => Object.entries(o).flatMap(([k, v]) =>
+      v && typeof v === 'object' && !Array.isArray(v) ? flat(v as Record<string, unknown>, `${p}${k}.`) : [[`${p}${k}`, v] as [string, unknown]]);
+    const fautives = flat(en).filter(([k, v]) => /_(one|other)$/.test(k) && typeof v === 'string' && v.includes('(s)')).map(([k]) => k);
+    expect(fautives).toEqual([]);
   });
   it('jours de la semaine et motifs de signalement', () => {
     expect(i18n.t('weekPicker.days', { returnObjects: true })).toEqual(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']);
