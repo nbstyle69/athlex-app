@@ -13,6 +13,7 @@ import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { errorMessage } from '../../utils/refusals';
 
 export default function BOBoxInfoScreen({ navigation }: any) {
   const { currentBox, refreshBox } = useAuth();
@@ -84,7 +85,7 @@ export default function BOBoxInfoScreen({ navigation }: any) {
         });
 
       if (upErr) {
-        Alert.alert(t('bo.boxInfo.uploadError'), upErr.message);
+        Alert.alert(t('bo.boxInfo.uploadError'), await errorMessage(upErr));
         setUploadingLogo(false);
         return;
       }
@@ -97,7 +98,7 @@ export default function BOBoxInfoScreen({ navigation }: any) {
       refreshBox?.();
     } catch (e: any) {
       captureError(e, { screen: 'BOBoxInfo', action: 'uploadLogo' });
-      Alert.alert(t('common.error'), e?.message ?? t('bo.boxInfo.logoUploadError'));
+      Alert.alert(t('common.error'), e?.message ? await errorMessage(e) : t('bo.boxInfo.logoUploadError'));
     }
     setUploadingLogo(false);
   }
@@ -142,7 +143,7 @@ export default function BOBoxInfoScreen({ navigation }: any) {
     } as any).eq('id', currentBox.id);
     setSaving(false);
 
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     refreshBox?.();
     Alert.alert(t('bo.boxInfo.savedTitle'), t('bo.boxInfo.savedMsg'));
   }
@@ -233,7 +234,7 @@ export default function BOBoxInfoScreen({ navigation }: any) {
               style={S.input}
               value={websiteUrl}
               onChangeText={setWebsiteUrl}
-              placeholder="https://www.mabox.fr"
+              placeholder={t('bo.boxInfo.websitePlaceholder')}
               placeholderTextColor={theme.textMuted}
               autoCapitalize="none"
               keyboardType="url"
@@ -246,7 +247,7 @@ export default function BOBoxInfoScreen({ navigation }: any) {
               style={S.input}
               value={contactEmail}
               onChangeText={setContactEmail}
-              placeholder="contact@mabox.fr"
+              placeholder={t('bo.boxInfo.emailPlaceholder')}
               placeholderTextColor={theme.textMuted}
               autoCapitalize="none"
               keyboardType="email-address"

@@ -213,6 +213,16 @@ Supabase/Resend.
 
 ## En cours
 
+**Chantier anglais, PR 2 : Ma Box + Réservation (app seule, aucune migration ; PR non mergée).** Détail du WOD
+(score, saisie, classement, commentaires), WOD perso, Actualités, Messages (dont GIF), Infos de la box, Membres,
+Signaler / Bloquer (`ReportMenu`, motifs de `moderation.ts` en clés), sélecteurs de semaine du Whiteboard et de la
+Réservation, et les placeholders d'Infos de la box côté gérant passent par `t()` en français et en anglais : texte
+français inchangé au caractère près (instantané de 39 états pris sur master, `i18nMaBox.rn.test.tsx`, alertes
+comprises), aucun texte français en anglais. 113 clés, pluriels par l'outil du socle (« 1 athlete »,
+« Leaderboard · 1 score », « 1 like »), messages d'erreur bruts de ces écrans par `errorMessage()`. Les 11 fichiers
+rejoignent `scripts/i18n/fichiers-traduits.json` ; « Scaled » devient terme technique. Captures 390 px FR / EN dans
+`athlex-captures/i18n-ma-box` : aucun libellé anglais tronqué ni hors écran.
+
 **Sécurité, stockage `tournament-banners` : écriture réservée au staff de la box du tournoi et aux admins** (migration
 `20270149`, **appliquée en prod le 07/10/2026 à 09:02 UTC** ; dump
 `db-dumps/2026-10-07/athlex-prod-public-storage-20261007T090131Z.dump` (sha256 `634ecc6e…7fda`, aller-retour vérifié) ;

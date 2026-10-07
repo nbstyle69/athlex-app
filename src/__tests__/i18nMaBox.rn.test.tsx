@@ -4,8 +4,8 @@
  * - FR : textes affichés, placeholders, libellés d'accessibilité et alertes
  *   identiques à l'instantané pris sur master avant la traduction
  *   (i18nMaBoxAvant.json ; I18N_MABOX_CAPTURE=<fichier> pour le reprendre).
- * - EN : aucun texte français. Les données fictives sont neutres (ni accent ni
- *   mot français) : un texte français à l'écran vient donc de l'interface.
+ * - EN : aucun texte accentué, et aucun texte resté identique au français hors
+ *   données fictives (contenu de box) et libellés identiques par nature.
  */
 import React from 'react';
 import { Alert, Modal, StyleSheet } from 'react-native';
@@ -26,7 +26,7 @@ import WeekDayPicker from '../components/WeekDayPicker';
 import ReservationWeekPicker from '../screens/reservation/ReservationWeekPicker';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { isFrench } = require('../../scripts/i18n/scanner');
+const { strictAllowed } = require('../../scripts/i18n/scanner');
 
 const mockNavigate = jest.fn();
 const mockGoBack = jest.fn();
@@ -449,7 +449,7 @@ const VARIANTS: Variant[] = [
     const root = await mount(<ReportMenu contentType="message" contentId="m1" reportedUserId="u2" />);
     await press(root, 'report-menu-open');
     await press(root, 'report-menu-report');
-    await act(async () => { jest.advanceTimersByTime(150); });
+    await act(async () => { await new Promise((r) => setTimeout(r, 150)); });
     await settle();
     return root;
   } },
@@ -457,13 +457,13 @@ const VARIANTS: Variant[] = [
     const root = await mount(<ReportMenu contentType="message" contentId="m1" reportedUserId="u2" />);
     await press(root, 'report-menu-open');
     await press(root, 'report-menu-report');
-    await act(async () => { jest.advanceTimersByTime(150); });
+    await act(async () => { await new Promise((r) => setTimeout(r, 150)); });
     await press(root, 'report-reason-spam');
     await press(root, 'report-submit');
     mockReportId = null;
     await press(root, 'report-menu-open');
     await press(root, 'report-menu-report');
-    await act(async () => { jest.advanceTimersByTime(150); });
+    await act(async () => { await new Promise((r) => setTimeout(r, 150)); });
     await press(root, 'report-reason-other');
     await press(root, 'report-submit');
     return root;
@@ -489,10 +489,23 @@ const VARIANTS: Variant[] = [
   { name: 'gerant-infos-box', run: () => mount(<BOBoxInfoScreen navigation={{ navigate: mockNavigate, goBack: mockGoBack }} />) },
 ];
 
-/** Libellés laissés identiques en anglais : termes techniques, noms propres, données, chiffres. */
-const SAME_IN_EN = new Set([
-  'Box Alpha', 'Cindy', 'Fran', 'Helen', 'Julie', 'Sam', 'Karim', 'Lea', 'Coach Lea', 'Team A', 'Open Gym',
-]);
+/** Textes des données fictives (contenu des box, jamais traduit), ligne par ligne. */
+function dataTexts(): Set<string> {
+  const out = new Set<string>();
+  (function walk(v: unknown) {
+    if (typeof v === 'string') [v, ...v.split('\n')].forEach((l) => out.add(l.toLowerCase()));
+    else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+  })([BOX, mockAuth.user, mockTables]);
+  return out;
+}
+/** Libellés identiques dans les deux langues : termes techniques, noms propres, mentions imposées. */
+const SAME_IN_EN = [
+  /^(Tabata|For Time|Custom|GIF|REPS|ROUNDS|NOTES|DESCRIPTION|TYPE|CONTACT|Messages|Article|Violence|Coach|MM|SS)$/i,
+  /^DATE \*$/, /^TIME CAP \(mm:ss\)$/i, /^(WORK|REST) \(sec\)$/i, /^\d+(min|h)$/, /^Cap \d/,
+  /^21-15-9 Thrusters \+ Pull-ups…$/, /^Powered by GIPHY$/,
+  /^Functional Lyon, Box Forge…$/, // exemple de nom de box, identique en EN (disciplineLabels.test.ts)
+];
+const ACCENT = /[àâäçéèêëîïôöùûüÿœæ«»]/i;
 
 describe('Ma Box + Réservation, français : textes identiques à master', () => {
   beforeAll(async () => { await i18n.changeLanguage('fr'); });
@@ -517,12 +530,16 @@ describe('Ma Box + Réservation, anglais : aucun texte français', () => {
   afterAll(async () => { await i18n.changeLanguage('fr'); });
   it.each(VARIANTS.map((v) => [v.name, v] as const))('%s', async (name, v) => {
     const en = collect(await v.run());
-    const fr = (BEFORE as Record<string, string[]>)[name];
-    const strip = (s: string) => s.replace(/^(placeholder|a11y): /, '');
-    // Français repérable (accent ou mot courant), ou texte resté identique au français alors qu'il a des lettres.
-    const french = en.filter((s) => isFrench(strip(s)));
-    const unchanged = en.filter((s) => fr.includes(s) && /\p{L}{2,}/u.test(strip(s))
-      && !strip(s).split(/[\s·|,:()#/]+/).every((w) => !/\p{L}{2,}/u.test(w) || SAME_IN_EN.has(w) || SAME_IN_EN.has(strip(s)) || /^(RX|WOD|AMRAP|EMOM|ELO|GIF|GIPHY|reps?|kg|min|sec|Scaled|Coach|Box|https?|www|com|local)$/i.test(w) || /@|\.local|https?:/.test(w)));
+    const DATA = dataTexts();
+    const fr =(BEFORE as Record<string, string[]>)[name];
+    const strip = (s: string) => s.replace(/^(placeholder|a11y): /, '').replace(/^ALERTE \| /, '');
+    const shown = en.filter((s) => s !== '── fenêtre ──');
+    // Un accent ne s'écrit pas en anglais : c'est du français.
+    const french = shown.filter((s) => ACCENT.test(strip(s)) && !DATA.has(strip(s).toLowerCase()));
+    // Texte resté identique à l'instantané français : non traduit, sauf donnée de box ou libellé identique par nature.
+    const frSet = new Set(fr.map((s) => s.toLowerCase()));
+    const unchanged = shown.filter((s) => frSet.has(s.toLowerCase()) && /\p{L}{2,}/u.test(strip(s))
+      && !strip(s).split('\n').every((l) => DATA.has(l.toLowerCase())) && !strictAllowed(strip(s)) && !SAME_IN_EN.some((re) => re.test(strip(s))));
     expect({ name, french, unchanged }).toEqual({ name, french: [], unchanged: [] });
   });
 });

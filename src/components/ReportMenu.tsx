@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { MoreVertical, Flag, UserX, X } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import { useTheme, AppTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -39,6 +40,7 @@ export default function ReportMenu({
 }: Props) {
   const { theme } = useTheme();
   const { user } = useAuth();
+  const { t } = useTranslation();
   const S = createStyles(theme);
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportModal, setReportModal] = useState(false);
@@ -58,18 +60,18 @@ export default function ReportMenu({
     if (!reportedUserId) return;
     setMenuOpen(false);
     Alert.alert(
-      'Bloquer cet utilisateur ?',
-      'Tu ne verras plus ses messages, ses vidéos, son profil ni ses commentaires.',
+      t('moderation.blockTitle'),
+      t('moderation.blockMsg'),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Bloquer', style: 'destructive', onPress: async () => {
+          text: t('moderation.block'), style: 'destructive', onPress: async () => {
             const ok = await blockUser(reportedUserId);
             if (ok) {
-              Alert.alert('Bloqué', 'Cet utilisateur ne peut plus interagir avec toi.');
+              Alert.alert(t('moderation.blockedTitle'), t('moderation.blockedMsg'));
               onActionDone?.();
             } else {
-              Alert.alert('Erreur', 'Impossible de bloquer cet utilisateur.');
+              Alert.alert(t('common.error'), t('moderation.blockFailed'));
             }
           },
         },
@@ -89,13 +91,10 @@ export default function ReportMenu({
       setReportModal(false);
       setReason(null);
       setDetails('');
-      Alert.alert(
-        'Merci',
-        'Ton signalement a bien été enregistré. Notre équipe le traitera sous 24h.',
-      );
+      Alert.alert(t('moderation.reportedTitle'), t('moderation.reportedMsg'));
       onActionDone?.();
     } else {
-      Alert.alert('Erreur', 'Impossible d\'envoyer le signalement. Réessaie plus tard.');
+      Alert.alert(t('common.error'), t('moderation.reportFailed'));
     }
   }
 
@@ -117,17 +116,17 @@ export default function ReportMenu({
             {!isSelf && (
               <TouchableOpacity style={S.sheetItem} onPress={openReport} activeOpacity={0.7} testID="report-menu-report">
                 <Flag size={18} color={theme.error} />
-                <Text style={[S.sheetItemText, { color: theme.error }]}>Signaler</Text>
+                <Text style={[S.sheetItemText, { color: theme.error }]}>{t('moderation.report')}</Text>
               </TouchableOpacity>
             )}
             {canBlock && (
               <TouchableOpacity style={S.sheetItem} onPress={handleBlock} activeOpacity={0.7} testID="report-menu-block">
                 <UserX size={18} color={theme.error} />
-                <Text style={[S.sheetItemText, { color: theme.error }]}>Bloquer cet utilisateur</Text>
+                <Text style={[S.sheetItemText, { color: theme.error }]}>{t('moderation.blockUser')}</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={[S.sheetItem, S.cancelItem]} onPress={() => setMenuOpen(false)} activeOpacity={0.7}>
-              <Text style={[S.sheetItemText, { color: theme.text, fontWeight: '700' }]}>Annuler</Text>
+              <Text style={[S.sheetItemText, { color: theme.text, fontWeight: '700' }]}>{t('common.cancel')}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -142,31 +141,31 @@ export default function ReportMenu({
           <View style={S.reportBackdrop}>
             <View style={S.reportCard}>
               <View style={S.reportHeader}>
-                <Text style={S.reportTitle}>Signaler ce contenu</Text>
+                <Text style={S.reportTitle}>{t('moderation.reportTitle')}</Text>
                 <TouchableOpacity onPress={() => setReportModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                   <X size={20} color={theme.textMuted} />
                 </TouchableOpacity>
               </View>
-              <Text style={S.reportSubtitle}>Pourquoi signales-tu ce contenu ?</Text>
+              <Text style={S.reportSubtitle}>{t('moderation.reportQuestion')}</Text>
               <ScrollView style={{ maxHeight: 280 }} showsVerticalScrollIndicator={false}>
                 {REPORT_REASONS.map((r) => (
                   <TouchableOpacity
-                    key={r.value}
-                    style={[S.reasonRow, reason === r.value && S.reasonRowActive]}
-                    onPress={() => setReason(r.value)}
-                    testID={`report-reason-${r.value}`}
+                    key={r}
+                    style={[S.reasonRow, reason === r && S.reasonRowActive]}
+                    onPress={() => setReason(r)}
+                    testID={`report-reason-${r}`}
                     activeOpacity={0.7}
                   >
-                    <View style={[S.radio, reason === r.value && S.radioActive]}>
-                      {reason === r.value && <View style={S.radioDot} />}
+                    <View style={[S.radio, reason === r && S.radioActive]}>
+                      {reason === r && <View style={S.radioDot} />}
                     </View>
-                    <Text style={S.reasonText}>{r.label}</Text>
+                    <Text style={S.reasonText}>{t(`moderation.reason.${r}`)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
               <TextInput
                 style={S.detailsInput}
-                placeholder="Détails (optionnel)"
+                placeholder={t('moderation.detailsPlaceholder')}
                 placeholderTextColor={theme.textMuted}
                 value={details}
                 onChangeText={setDetails}
@@ -187,7 +186,7 @@ export default function ReportMenu({
                 >
                   {submitting
                     ? <ActivityIndicator color="#fff" />
-                    : <Text style={S.submitBtnText}>ENVOYER LE SIGNALEMENT</Text>}
+                    : <Text style={S.submitBtnText}>{t('moderation.submit')}</Text>}
                 </LinearGradient>
               </TouchableOpacity>
             </View>

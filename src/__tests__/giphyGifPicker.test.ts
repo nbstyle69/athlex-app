@@ -10,6 +10,8 @@ import { execFileSync } from 'child_process';
 const ROOT = path.join(__dirname, '..', '..');
 const read = (p: string) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const screen = read('src/screens/messages/MessagesScreen.tsx');
+const fr = JSON.parse(read('src/i18n/locales/fr.json'));
+const en = JSON.parse(read('src/i18n/locales/en.json'));
 const fn = screen.slice(screen.indexOf('async function searchGifs('), screen.indexOf('function openGifPicker('));
 
 describe('GIPHY remplace Tenor', () => {
@@ -42,8 +44,11 @@ describe('GIPHY remplace Tenor', () => {
     expect(screen).toContain("const GIPHY_KEY_TAG = 'giphy-key:' + (process.env.EXPO_PUBLIC_GIPHY_KEY ?? '') + ':giphy-end';");
     expect(screen).toContain('const gifUnavailable = !GIPHY_API_KEY;');
     expect(screen).toContain("if (!gifUnavailable) searchGifs('');");
-    expect(screen).toMatch(/\{gifUnavailable \? \([\s\S]*?GIF indisponibles<\/Text>/);
-    expect(screen).toContain('>Powered by GIPHY</Text>');
+    expect(screen).toMatch(/\{gifUnavailable \? \([\s\S]*?\{i18n\.t\('messages\.gifUnavailableTitle'\)\}<\/Text>/);
+    expect(screen).toContain(">{i18n.t('messages.giphyAttribution')}</Text>");
+    expect(fr.messages.gifUnavailableTitle).toBe('GIF indisponibles');
+    expect(fr.messages.giphyAttribution).toBe('Powered by GIPHY');
+    expect(en.messages.giphyAttribution).toBe('Powered by GIPHY');
   });
 
   it('les garde-fous de livraison exigent la clé GIPHY dans le bundle (OTA, IPA, AAB)', () => {

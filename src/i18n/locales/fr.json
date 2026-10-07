@@ -341,7 +341,9 @@
       "addressPlaceholder": "12 rue du Sport, 69001 Lyon",
       "websiteLabel": "SITE WEB",
       "emailLabel": "EMAIL DE CONTACT",
-      "saving": "Enregistrement…"
+      "saving": "Enregistrement…",
+      "websitePlaceholder": "https://www.mabox.fr",
+      "emailPlaceholder": "contact@mabox.fr"
     },
     "stats": {
       "title": "Statistiques",
@@ -745,7 +747,20 @@
     }
   },
   "messages": {
-    "deletedAccount": "Compte supprimé"
+    "deletedAccount": "Compte supprimé",
+    "noBox": "Rejoins une box pour accéder aux messages",
+    "announcement": "Annonce",
+    "empty": "Aucun message pour l'instant.",
+    "emptyHint": "Soyez le premier à écrire !",
+    "gifButton": "GIF",
+    "inputPlaceholder": "Écrire un message…",
+    "gifTitle": "Envoyer un GIF",
+    "gifSearchPlaceholder": "Rechercher un GIF...",
+    "gifUnavailableTitle": "GIF indisponibles",
+    "gifUnavailableHint": "La recherche de GIF n'est pas configurée dans cette version de l'app.",
+    "gifSearchUnavailable": "Recherche de GIF indisponible",
+    "gifNoResult": "Aucun résultat",
+    "giphyAttribution": "Powered by GIPHY"
   },
   "eloHistory": {
     "deletedWod": "WOD supprimé",
@@ -2670,5 +2685,137 @@
     "nextSet": "Série suivante",
     "sessionDone": "Séance terminée",
     "setsProgress": "{{done}}/{{total}} séries"
+  },
+  "comments": {
+    "title": "Commentaires ({{count}})",
+    "empty": "Aucun commentaire",
+    "placeholder": "Écrire un commentaire..."
+  },
+  "wodDetail": {
+    "shareUnavailable": "Partage non disponible sur cet appareil",
+    "shareFailed": "Impossible de partager la card.",
+    "capRepsRequired": "Entre le nombre de répétitions complétées.",
+    "tooHighTitle": "Score trop élevé",
+    "tooHighMsg": "Le maximum estimé pour ce WOD est de {{max}} {{unit}}. Vérifie ta saisie.",
+    "newOneRmTitle": "Nouveau 1RM 🏋️",
+    "newOneRmLine": "{{movement}} : {{kg}} kg",
+    "newOneRmLineWas": "{{movement}} : {{kg}} kg (avant {{previous}} kg)",
+    "someone": "Quelqu'un",
+    "notFound": "WOD introuvable",
+    "shareMessage": "{{title}} — Rejoins le WOD sur AthleX ! {{url}}",
+    "programDay": "Programme · semaine {{week}} · {{day}}",
+    "dayNames": [
+      "lundi",
+      "mardi",
+      "mercredi",
+      "jeudi",
+      "vendredi",
+      "samedi",
+      "dimanche"
+    ],
+    "coachNotes": "Notes coach",
+    "myNote": "MA NOTE",
+    "submissionClosed": "Soumission de score terminée (minuit passé)",
+    "rankingTitle_one": "Classement · {{count}} score",
+    "rankingTitle_other": "Classement · {{count}} scores",
+    "notFinished": "WOD pas fini (CAP)",
+    "capRepsLabel": "NOMBRE DE RÉPÉTITIONS COMPLÉTÉES",
+    "capRepsPlaceholder": "Ex: 87",
+    "timeLabel": "TEMPS (MM:SS)",
+    "weightLabel": "POIDS (kg)",
+    "repsLabel": "REPS",
+    "roundsLabel": "ROUNDS",
+    "minutesPlaceholder": "MM",
+    "secondsPlaceholder": "SS",
+    "levelLabel": "NIVEAU",
+    "notesLabel": "NOTES (optionnel)",
+    "notesPlaceholder": "Commentaire, mouvements adaptés…",
+    "submitScore": "Valider le score",
+    "agoMinutes": "{{n}}min",
+    "agoHours": "{{n}}h",
+    "agoDays": "{{n}}j",
+    "firstComment": "Sois le premier à commenter !"
+  },
+  "personalWod": {
+    "requiredTitle": "Champs requis",
+    "requiredMsg": "Le titre et la date sont obligatoires.",
+    "saveFailed": "Impossible de sauvegarder le WOD.",
+    "editTitle": "Modifier mon WOD",
+    "titlePlaceholder": "Fran, Cindy, mon WOD perso…",
+    "tabataWork": "WORK (sec)",
+    "tabataRest": "REST (sec)",
+    "notesLabel": "NOTES",
+    "notesPlaceholder": "Scaling, conseils, intentions…",
+    "create": "Créer le WOD"
+  },
+  "articles": {
+    "byline": "Par {{author}} · {{date}}",
+    "by": "Par {{author}}",
+    "likes_one": "{{count}} J'aime",
+    "likes_other": "{{count}} J'aime",
+    "deleteComment": "Supprimer le commentaire",
+    "empty": "Aucune actualité pour le moment"
+  },
+  "moderation": {
+    "report": "Signaler",
+    "blockUser": "Bloquer cet utilisateur",
+    "blockTitle": "Bloquer cet utilisateur ?",
+    "blockMsg": "Tu ne verras plus ses messages, ses vidéos, son profil ni ses commentaires.",
+    "block": "Bloquer",
+    "blockedTitle": "Bloqué",
+    "blockedMsg": "Cet utilisateur ne peut plus interagir avec toi.",
+    "blockFailed": "Impossible de bloquer cet utilisateur.",
+    "reportTitle": "Signaler ce contenu",
+    "reportQuestion": "Pourquoi signales-tu ce contenu ?",
+    "detailsPlaceholder": "Détails (optionnel)",
+    "submit": "ENVOYER LE SIGNALEMENT",
+    "reportedTitle": "Merci",
+    "reportedMsg": "Ton signalement a bien été enregistré. Notre équipe le traitera sous 24h.",
+    "reportFailed": "Impossible d'envoyer le signalement. Réessaie plus tard.",
+    "reason": {
+      "spam": "Spam / publicité",
+      "harassment": "Harcèlement",
+      "inappropriate": "Contenu inapproprié",
+      "hate": "Discours haineux",
+      "nudity": "Nudité / sexuel",
+      "violence": "Violence",
+      "cheating": "Tricherie (score)",
+      "other": "Autre"
+    }
+  },
+  "community": {
+    "noBoxTitle": "Aucune box",
+    "noBoxSub": "Rejoins une box pour voir ses membres.",
+    "athleteCount_one": "{{count}} athlète",
+    "athleteCount_other": "{{count}} athlètes",
+    "searchPlaceholder": "Rechercher un athlète…",
+    "noResult": "Aucun membre trouvé.",
+    "record": "{{wins}}V/{{matches}}M"
+  },
+  "boxInfo": {
+    "title": "Informations",
+    "empty": "Aucune information disponible",
+    "avgElo": "ELO moyen",
+    "created": "Création",
+    "contact": "CONTACT",
+    "phone": "TÉLÉPHONE",
+    "location": "LOCALISATION",
+    "openMaps": "Voir sur Google Maps",
+    "owner": "PROPRIÉTAIRE",
+    "coaches": "COACHS",
+    "foundedAt": "Ouverture de la salle",
+    "createdAt": "Création de la box",
+    "memberSince": "Inscrit depuis le"
+  },
+  "weekPicker": {
+    "days": [
+      "LUN",
+      "MAR",
+      "MER",
+      "JEU",
+      "VEN",
+      "SAM",
+      "DIM"
+    ]
   }
 }

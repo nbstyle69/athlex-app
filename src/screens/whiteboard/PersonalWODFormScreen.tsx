@@ -21,17 +21,18 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import DateField from '../../components/DateField';
 import { formatCap, parseCap } from '../../utils/scoreFormat';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { errorMessage } from '../../utils/refusals';
 
 type Nav = NativeStackNavigationProp<WhiteboardStackParamList, 'PersonalWODForm'>;
 type Rt = RouteProp<WhiteboardStackParamList, 'PersonalWODForm'>;
 
-const WOD_TYPES: { value: BoxWODType; label: string }[] = [
-  { value: 'for-time', label: 'For Time' },
-  { value: 'amrap',    label: 'AMRAP' },
-  { value: 'emom',     label: 'EMOM' },
-  { value: 'tabata',   label: 'Tabata' },
-  { value: 'strength', label: 'Force' },
-  { value: 'custom',   label: 'Custom' },
+const WOD_TYPES: { value: BoxWODType; labelKey: string }[] = [
+  { value: 'for-time', labelKey: 'bo.wods.typeForTime' },
+  { value: 'amrap',    labelKey: 'bo.wods.typeAmrap' },
+  { value: 'emom',     labelKey: 'bo.wods.typeEmom' },
+  { value: 'tabata',   labelKey: 'bo.wods.typeTabata' },
+  { value: 'strength', labelKey: 'bo.wods.typeStrength' },
+  { value: 'custom',   labelKey: 'bo.wods.typeCustom' },
 ];
 
 function toISO(d: Date): string {
@@ -112,7 +113,7 @@ export default function PersonalWODFormScreen() {
 
   async function save() {
     if (!user || !title.trim() || !date) {
-      Alert.alert('Champs requis', 'Le titre et la date sont obligatoires.');
+      Alert.alert(t('personalWod.requiredTitle'), t('personalWod.requiredMsg'));
       return;
     }
     setSubmitting(true);
@@ -147,7 +148,7 @@ export default function PersonalWODFormScreen() {
       navigation.goBack();
     } catch (e: any) {
       captureError(e, { screen: 'PersonalWODForm', action: editId ? 'update' : 'insert' });
-      Alert.alert('Erreur', e.message ?? 'Impossible de sauvegarder le WOD.');
+      Alert.alert(t('common.error'), e?.message ? await errorMessage(e) : t('personalWod.saveFailed'));
     } finally {
       setSubmitting(false);
     }
@@ -163,13 +164,13 @@ export default function PersonalWODFormScreen() {
 
   async function remove() {
     if (!editId) return;
-    Alert.alert('Supprimer ce WOD ?', title, [
-      { text: 'Annuler', style: 'cancel' },
+    Alert.alert(t('bo.wods.deleteTitle'), title, [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Supprimer', style: 'destructive',
+        text: t('common.delete'), style: 'destructive',
         onPress: async () => {
           const { error } = await supabase.from('box_wods').delete().eq('id', editId);
-          if (error) Alert.alert('Erreur', error.message);
+          if (error) Alert.alert(t('common.error'), await errorMessage(error));
           else navigation.goBack();
         },
       },
@@ -192,14 +193,14 @@ export default function PersonalWODFormScreen() {
     >
       <GlassBackground />
       <AxScreenHeader
-        title={editId ? 'Modifier mon WOD' : 'Créer un WOD'}
+        title={editId ? t('personalWod.editTitle') : t('bo.wods.createWod')}
         right={editId ? <AxIconButton icon={Trash2} onPress={remove} accessibilityLabel={i18n.t('common.delete')} testID="header-delete" /> : undefined}
       />
 
       <ScrollView contentContainerStyle={[S.body, { paddingBottom: tabSpace }]} keyboardShouldPersistTaps="handled">
         <View style={S.row}>
           <View style={S.col}>
-            <Text style={S.label}>DATE *</Text>
+            <Text style={S.label}>{t('bo.wods.labelDate')}</Text>
             <DateField
               style={S.dateInput}
               value={date}
@@ -210,40 +211,40 @@ export default function PersonalWODFormScreen() {
           </View>
         </View>
 
-        <Text style={S.label}>TITRE *</Text>
+        <Text style={S.label}>{t('bo.wods.labelTitle')}</Text>
         <AxTextField
           testID="pwod-title"
           value={title}
           onChangeText={setTitle}
-          placeholder="Fran, Cindy, mon WOD perso…"
+          placeholder={t('personalWod.titlePlaceholder')}
         />
 
-        <Text style={S.label}>TYPE</Text>
+        <Text style={S.label}>{t('bo.wods.labelType')}</Text>
         <View style={S.typeGrid}>
           {WOD_TYPES.map(type => (
             <AxChip
               key={type.value}
               testID={`pwod-type-${type.value}`}
-              label={type.label}
+              label={t(type.labelKey)}
               selected={wodType === type.value}
               onPress={() => setWodType(type.value)}
             />
           ))}
         </View>
 
-        <Text style={S.label}>DESCRIPTION</Text>
+        <Text style={S.label}>{t('bo.wods.labelDescription')}</Text>
         <AxTextField
           testID="pwod-description"
           value={description}
           onChangeText={setDescription}
-          placeholder="21-15-9 Thrusters + Pull-ups…"
+          placeholder={t('bo.wods.descriptionPlaceholder')}
           multiline
           minInputHeight={80}
         />
 
         <View style={S.row}>
           <View style={S.col}>
-            <Text style={S.label}>TIME CAP (mm:ss)</Text>
+            <Text style={S.label}>{t('bo.wods.labelTimeCap')}</Text>
             <AxTextField
               testID="pwod-timecap"
               value={timeCap}
@@ -253,7 +254,7 @@ export default function PersonalWODFormScreen() {
             />
           </View>
           <View style={S.col}>
-            <Text style={S.label}>ROUNDS</Text>
+            <Text style={S.label}>{t('bo.wods.labelRounds')}</Text>
             <AxTextField
               testID="pwod-rounds"
               value={rounds}
@@ -266,7 +267,7 @@ export default function PersonalWODFormScreen() {
 
         {wodType === 'emom' && (
           <>
-            <Text style={S.label}>INTERVALLE EMOM (min)</Text>
+            <Text style={S.label}>{t('bo.wods.labelEmomInterval')}</Text>
             <AxTextField
               testID="pwod-emom"
               value={emomInterval}
@@ -280,7 +281,7 @@ export default function PersonalWODFormScreen() {
         {wodType === 'tabata' && (
           <View style={S.row}>
             <View style={S.col}>
-              <Text style={S.label}>WORK (sec)</Text>
+              <Text style={S.label}>{t('personalWod.tabataWork')}</Text>
               <AxTextField
                 testID="pwod-tabata-work"
                 value={tabataWork}
@@ -290,7 +291,7 @@ export default function PersonalWODFormScreen() {
               />
             </View>
             <View style={S.col}>
-              <Text style={S.label}>REST (sec)</Text>
+              <Text style={S.label}>{t('personalWod.tabataRest')}</Text>
               <AxTextField
                 testID="pwod-tabata-rest"
                 value={tabataRest}
@@ -302,12 +303,12 @@ export default function PersonalWODFormScreen() {
           </View>
         )}
 
-        <Text style={S.label}>NOTES</Text>
+        <Text style={S.label}>{t('personalWod.notesLabel')}</Text>
         <AxTextField
           testID="pwod-notes"
           value={notes}
           onChangeText={setNotes}
-          placeholder="Scaling, conseils, intentions…"
+          placeholder={t('personalWod.notesPlaceholder')}
           multiline
           minInputHeight={80}
         />
@@ -327,7 +328,7 @@ export default function PersonalWODFormScreen() {
             <AxButton
               testID="pwod-save"
               variant="accent"
-              label={editId ? 'Enregistrer' : 'Créer le WOD'}
+              label={editId ? t('common.save') : t('personalWod.create')}
               onPress={save}
               disabled={!title.trim()}
               loading={submitting}

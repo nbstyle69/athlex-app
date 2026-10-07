@@ -5,8 +5,6 @@ import { AppTheme } from '../context/ThemeContext';
 import i18n from '../i18n';
 import { AxDayItem } from './ax';
 
-const DAY_LABELS = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
-
 /** Lundi → dimanche de la semaine affichée ; le Whiteboard s'en sert aussi pour ses onglets. */
 export function getWeekDates(offset = 0): Date[] {
   const today = new Date();
@@ -42,6 +40,7 @@ interface Props {
 
 export default function WeekDayPicker({ weekOffset, setWeekOffset, selectedDate, onSelectDate, theme, maxDate, variant = 'legacy' }: Props) {
   const weekDates = getWeekDates(weekOffset);
+  const DAY_LABELS = i18n.t('weekPicker.days', { returnObjects: true }) as string[];
   const todayISO = toISO(new Date());
   // Disable forward arrow when the next week is fully beyond maxDate
   const nextWeekFirstISO = (() => {

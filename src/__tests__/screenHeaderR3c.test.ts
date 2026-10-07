@@ -66,7 +66,7 @@ describe('R3c : écrans secondaires de l’athlète', () => {
   });
 
   it('MessagesScreen : Retour seulement quand l’écran a été ouvert depuis un autre', () => {
-    expect(read('messages/MessagesScreen.tsx')).toMatch(/\{canGoBack \? \(\s*<AxScreenHeader title="Messages">/);
+    expect(read('messages/MessagesScreen.tsx')).toMatch(/\{canGoBack \? \(\s*<AxScreenHeader title=\{i18n\.t\('whiteboard\.messages'\)\}>/);
   });
 });
 

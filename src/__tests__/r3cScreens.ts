@@ -11,7 +11,7 @@ export interface R3cScreen {
 }
 
 export const R3C_SCREENS: R3cScreen[] = [
-  { file: 'home/BoxInfoScreen.tsx', titles: ['title="Informations"'] },
+  { file: 'home/BoxInfoScreen.tsx', titles: ["title={t('boxInfo.title')}"] },
   { file: 'home/ChangelogScreen.tsx', titles: ['title="Nouveautés"'] },
   { file: 'home/FriendsScreen.tsx', titles: ['title="Amis"'] },
   { file: 'home/OneRMCalculatorScreen.tsx', titles: ["title={t('oneRm.title')}"] },
@@ -56,15 +56,15 @@ export const R3C_SCREENS: R3cScreen[] = [
   { file: 'competition/InterScoreSubmitScreen.tsx', titles: ["title={t('interScore.title')}"] },
   { file: 'competition/InterTeamScreen.tsx', titles: ["title={t('interTeam.myTeam')}"] },
   {
-    file: 'whiteboard/WODDetailScreen.tsx', titles: ["title={wod.scheduled_date ? i18n.t('screenTitles.wodOfDay') : i18n.t('screenTitles.wod')}", 'title="WOD introuvable"'],
+    file: 'whiteboard/WODDetailScreen.tsx', titles: ["title={wod.scheduled_date ? i18n.t('screenTitles.wodOfDay') : i18n.t('screenTitles.wod')}", "title={i18n.t('wodDetail.notFound')}"],
     right: ['testID="header-share"', 'athlex://wod/${wodId}'],
   },
   {
-    file: 'whiteboard/ArticlesScreen.tsx', titles: ['title="Actualités"', "title={t('screenTitles.article')}"],
+    file: 'whiteboard/ArticlesScreen.tsx', titles: ["title={t('whiteboard.news')}", "title={t('screenTitles.article')}"],
     onBack: ['onBack={() => { setSelectedArticle(null); setComments([]); }}'],
   },
   {
-    file: 'whiteboard/PersonalWODFormScreen.tsx', titles: ["title={editId ? 'Modifier mon WOD' : 'Créer un WOD'}"],
+    file: 'whiteboard/PersonalWODFormScreen.tsx', titles: ["title={editId ? t('personalWod.editTitle') : t('bo.wods.createWod')}"],
     right: ['icon={Trash2} onPress={remove}'],
   },
   { file: 'reservation/MyReservationsScreen.tsx', titles: ["title={t('myReservations.title')}"] },
@@ -79,7 +79,7 @@ export const R3C_SCREENS: R3cScreen[] = [
   { file: 'explorer/PartnersScreen.tsx', titles: ['title="Partenaires"'] },
   { file: 'explorer/PartnerDetailScreen.tsx', titles: ["title={i18n.t('screenTitles.partner')}"] },
   { file: 'explorer/BoxProgramsScreen.tsx', titles: ['title="Programmes des Boxs"'] },
-  { file: 'messages/MessagesScreen.tsx', titles: ['title="Messages"'] },
+  { file: 'messages/MessagesScreen.tsx', titles: ["title={i18n.t('whiteboard.messages')}"] },
 ];
 
 /** Écrans racine des 5 onglets de l'athlète : jamais de Retour. */
