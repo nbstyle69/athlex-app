@@ -13,6 +13,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { AxButton, AxCard, AxTag } from '../../components/ax';
 import { wodTypeLabel } from '../../utils/wodTypeLabel';
+import { wodTypeColor } from '../../theme/wodTypeColor';
 import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { WODScore } from '../../types';
 import { formatCap, formatScoreValue } from '../../utils/scoreFormat';
@@ -344,7 +345,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
           </View>
           <ScrollView contentContainerStyle={S.modalBody}>
             <View style={S.detailBadges}>
-              <AxTag testID="program-detail-type" label={wodTypeLabel(selected?.wod_type)} tone="accent" />
+              <AxTag testID="program-detail-type" label={wodTypeLabel(selected?.wod_type)} tone="accent" color={wodTypeColor(selected?.wod_type, theme.mode, c)} />
               {!!selected?.time_cap_seconds && (
                 <View style={S.metaBadge}>
                   <Clock color={c.textMuted} size={13} />
