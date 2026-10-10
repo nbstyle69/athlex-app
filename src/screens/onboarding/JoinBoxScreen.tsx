@@ -56,7 +56,7 @@ export default function JoinBoxScreen({ navigation }: any) {
 
         <AxTextField
           testID="join-code"
-          placeholder="ABC123"
+          placeholder={t('onboarding.codePlaceholder')}
           value={code}
           onChangeText={v => setCode(v.toUpperCase())}
           autoCapitalize="characters"

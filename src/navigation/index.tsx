@@ -688,10 +688,10 @@ function BoxOwnerTabs() {
     >
       <BOTab.Screen name="BODashboard" component={BODashboardNavigator} options={{ tabBarLabel: t('tabs.boTracking') }} />
       <BOTab.Screen name="BOWODs"      component={BOWODsScreen}          options={{ tabBarLabel: 'WODs' }} />
-      <BOTab.Screen name="BOSchedule"  component={BOScheduleScreen}      options={{ tabBarLabel: 'Horaires' }} />
-      <BOTab.Screen name="BOMembers"   component={BOMembersScreen}       options={{ tabBarLabel: 'Membres' }} />
+      <BOTab.Screen name="BOSchedule"  component={BOScheduleScreen}      options={{ tabBarLabel: t('tabs.schedule') }} />
+      <BOTab.Screen name="BOMembers"   component={BOMembersScreen}       options={{ tabBarLabel: t('tabs.members') }} />
       <BOTab.Screen name="BOMessages"  component={MessagesScreen}        options={{ tabBarLabel: 'Messages' }} />
-      <BOTab.Screen name="BOProfile"   component={BOProfileNavigator}    options={{ tabBarLabel: 'Profil' }} />
+      <BOTab.Screen name="BOProfile"   component={BOProfileNavigator}    options={{ tabBarLabel: t('tabs.profile') }} />
     </BOTab.Navigator>
   );
 }
@@ -715,6 +715,7 @@ function BOProfileNavigator() {
 }
 
 function CoachTabs() {
+  const { t } = useTranslation();
   const { theme, mode } = useTheme();
   const insets = useSafeAreaInsets();
   useAndroidNavBar(theme.tabBar, mode);
@@ -751,10 +752,10 @@ function CoachTabs() {
       })}
     >
       <CoachTab.Screen name="CoachWODs"       component={BOWODsScreen}       options={{ tabBarLabel: 'WODs' }} />
-      <CoachTab.Screen name="CoachSchedule"   component={BOScheduleScreen}   options={{ tabBarLabel: 'Horaires' }} />
+      <CoachTab.Screen name="CoachSchedule"   component={BOScheduleScreen}   options={{ tabBarLabel: t('tabs.schedule') }} />
       <CoachTab.Screen name="CoachWhiteboard" component={WhiteboardNavigator} options={{ tabBarLabel: 'Whiteboard' }} />
       <CoachTab.Screen name="CoachMessages"   component={MessagesScreen}     options={{ tabBarLabel: 'Messages' }} />
-      <CoachTab.Screen name="CoachProfile"    component={BOProfileNavigator} options={{ tabBarLabel: 'Profil' }} />
+      <CoachTab.Screen name="CoachProfile"    component={BOProfileNavigator} options={{ tabBarLabel: t('tabs.profile') }} />
     </CoachTab.Navigator>
   );
 }

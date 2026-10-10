@@ -215,6 +215,21 @@ Supabase/Resend.
 
 **Classement général : nom du podium entier (apparence seule, app seule ; PR non mergée).** Les cases du podium avaient une hauteur fixe (56 / 76 / 44 px) plus petite que leur contenu (médaille, nom, ELO, marges : 62 px mesurés sur le web) : le nom était écrasé à 6 px sur la 2e marche et à 0 sur la 3e, coupé en bas de sa case, en français comme en anglais. La case suit désormais son contenu, l'écart entre marches (12 et 32 px) devient une marge haute : podium plus haut de 18 px, ordre, couleurs et textes inchangés ; nom sur une ligne, « … » si trop long. Test `podiumClassement.rn.test.tsx` (positions calculées depuis les styles rendus et la ligne native d'Inter, clair / sombre, noms courts / longs), qui échoue avec les hauteurs fixes d'origine, sans `numberOfLines` ou sans écart de marche. Mesure réelle à 390 px avant / après dans `athlex-captures/podium`.
 
+**Chantier anglais, PR 5 : Profil & Accueil (app seule, aucune migration ; PR non mergée).** Profil (Compte, PR,
+séries réalisées, Stats, Badges), Amis, profil public, utilisateurs bloqués, historique ELO, Nouveautés, Accueil
+(sélecteur de box, badge débloqué, semaine), Notifications, connexion, inscription, mot de passe oublié et code,
+rejoindre une box, tutoriel, tours guidés gérant et coach, mise à jour requise, champ date et onglets gérant / coach
+passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de 67 états pris
+sur master, `i18nProfil.rn.test.tsx`, alertes et partage compris), aucun texte français en anglais. 113 clés ;
+erreurs rendues par AuthContext (`joinBox`, `leaveBox`, `deleteAccount`) traduites, messages bruts par
+`errorMessage()` ; dates de l'historique ELO par `src/i18n/locale.ts` ; initiales des jours et récapitulatif de la
+semaine de l'Accueil en vrais pluriels anglais. Corrections validées par Nab : « 1 membre », « Top : », « Rejoints »,
+« {{cat}} leaderboard », récapitulatif AMRAP « 1 round / 4 rounds » ; catégories de badges « Leaderboard ». Les 25
+fichiers rejoignent `scripts/i18n/fichiers-traduits.json` (119 → 144) ; chaînes techniques (erreurs de build,
+journaux, nom de route) en `i18n-ignore` avec raison. LegalScreen (PR à part) et AdminScreen (reste en français)
+hors périmètre. Captures 390 px FR / EN dans `athlex-captures/i18n-profil` : aucun libellé anglais tronqué ni hors
+écran.
+
 **Chantier anglais, PR 4 : Compétition (app seule, aucune migration ; PR non mergée).** Mini-tournois (liste,
 création, détail, saisie et contestation de score, WOD du Jour RX / Scaled), Classement (individuel, équipes, box),
 Classement de la box, détail d'une compétition inter-box (onglets, BYE), saisie d'un score inter-box, tableau et WOD

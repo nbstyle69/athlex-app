@@ -12,8 +12,8 @@ export interface R3cScreen {
 
 export const R3C_SCREENS: R3cScreen[] = [
   { file: 'home/BoxInfoScreen.tsx', titles: ["title={t('boxInfo.title')}"] },
-  { file: 'home/ChangelogScreen.tsx', titles: ['title="Nouveautés"'] },
-  { file: 'home/FriendsScreen.tsx', titles: ['title="Amis"'] },
+  { file: 'home/ChangelogScreen.tsx', titles: ["title={t('home.whatsNew')}"] },
+  { file: 'home/FriendsScreen.tsx', titles: ["title={t('home.friends')}"] },
   { file: 'home/OneRMCalculatorScreen.tsx', titles: ["title={t('oneRm.title')}"] },
   { file: 'wod/WodGeneratorScreen.tsx', titles: ["title={t('wodGen.title')}"] },
   { file: 'wod/WodResultScreen.tsx', titles: ["title={t('wodResult.title')}"] },
@@ -21,11 +21,11 @@ export const R3C_SCREENS: R3cScreen[] = [
   { file: 'timer/TimerScreen.tsx', titles: ["title={t('training.tools.timer')}"] },
   { file: 'leaderboard/LeaderboardScreen.tsx', titles: ["title={t('tabs.leaderboard')}"] },
   { file: 'leaderboard/BoxRankingScreen.tsx', titles: ["title={i18n.t('boxRanking.title')}"] },
-  { file: 'settings/NotificationSettingsScreen.tsx', titles: ['title="Notifications"'] },
-  { file: 'profile/BlockedUsersScreen.tsx', titles: ['title="Utilisateurs bloqués"'] },
-  { file: 'profile/EloHistoryScreen.tsx', titles: ['title="Historique ELO"'], onBack: ['onBack={() => nav.goBack()}'] },
+  { file: 'settings/NotificationSettingsScreen.tsx', titles: ["title={t('profile.notifications')}"] },
+  { file: 'profile/BlockedUsersScreen.tsx', titles: ["title={t('profile.blockedUsers')}"] },
+  { file: 'profile/EloHistoryScreen.tsx', titles: ["title={t('eloHistory.title')}"], onBack: ['onBack={() => nav.goBack()}'] },
   {
-    file: 'profile/PublicProfileScreen.tsx', titles: ['title="Profil"'],
+    file: 'profile/PublicProfileScreen.tsx', titles: ["title={t('tabs.profile')}"],
     right: ['testID="header-share"', 'athlex://profile/${route.params.userId}', '<ReportMenu'],
   },
   {

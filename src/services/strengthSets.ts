@@ -278,6 +278,7 @@ export async function logStrengthSets(p: LogStrengthSetsParams): Promise<Perform
     .upsert(rows, { onConflict: 'user_id,source_type,source_id,movement,set_index' })
     .select('id, movement, reps, load_kg');
   if (error || !data) {
+    // i18n-ignore : message de journal Sentry, jamais affiché
     captureError(error ?? new Error('upsert strength_set_logs sans données'),
       { service: 'strengthSets', action: 'upsert' });
     return [];
