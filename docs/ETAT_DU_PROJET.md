@@ -214,7 +214,12 @@ Supabase/Resend.
 ## En cours
 
 **Notification au gérant d'une demande de changement de formule** (fonction `deliver-manager-notifications`,
-**déployée : non** ; PR non mergée ; aucune migration). Le type `plan_change_request` (migration 20270147, en prod) a
+**déployée le 10/10/2026 à 12:33 UTC** par `scripts/deploy-edge.mjs` depuis master `6d819d0`, PR #498 ; code
+déployé avant identique octet pour octet à master avant le merge, copie gardée hors dépôt
+(`athlex-retour-arriere-deliver-manager-notifications/avant-498`) ; source en prod identique à master après ; sondes
+sans secret, faux secret, secret vide, GET et OPTIONS : 401 ; pg_cron chaque minute, 12 exécutions réussies sur
+12 minutes, réponses 200, aucune erreur d'exécution ; file vide, aucune ligne en attente ; aucune donnée écrite ni
+envoi de test ; aucune migration). Le type `plan_change_request` (migration 20270147, en prod) a
 désormais son texte : FR « Demande de changement de formule » / « {pseudo} demande à passer à {formule}. », EN
 « Plan change request » / « {pseudo} asked to switch to {formule}. ». Rien d'autre ne change : mêmes destinataires,
 même réservation avant envoi, même délai de 24 h, même purge. Les types de `regles.ts` sont contrôlés contre la
