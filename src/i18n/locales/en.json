@@ -338,10 +338,12 @@
       "nameLabel": "BOX NAME *",
       "namePlaceholder": "Functional Lyon, Box Forge…",
       "addressLabel": "ADDRESS",
-      "addressPlaceholder": "12 rue du Sport, 69001 Lyon",
+      "addressPlaceholder": "12 Main Street, London",
       "websiteLabel": "WEBSITE",
       "emailLabel": "CONTACT EMAIL",
-      "saving": "Saving…"
+      "saving": "Saving…",
+      "websitePlaceholder": "https://www.mybox.com",
+      "emailPlaceholder": "contact@mybox.com"
     },
     "stats": {
       "title": "Statistics",
@@ -745,7 +747,20 @@
     }
   },
   "messages": {
-    "deletedAccount": "Deleted account"
+    "deletedAccount": "Deleted account",
+    "noBox": "Join a box to access messages",
+    "announcement": "Announcement",
+    "empty": "No messages yet.",
+    "emptyHint": "Be the first to write!",
+    "gifButton": "GIF",
+    "inputPlaceholder": "Write a message…",
+    "gifTitle": "Send a GIF",
+    "gifSearchPlaceholder": "Search for a GIF...",
+    "gifUnavailableTitle": "GIFs unavailable",
+    "gifUnavailableHint": "GIF search isn't set up in this version of the app.",
+    "gifSearchUnavailable": "GIF search unavailable",
+    "gifNoResult": "No results",
+    "giphyAttribution": "Powered by GIPHY"
   },
   "eloHistory": {
     "deletedWod": "Deleted WOD",
@@ -2670,5 +2685,137 @@
     "nextSet": "Next set",
     "sessionDone": "Session done",
     "setsProgress": "{{done}}/{{total}} sets"
+  },
+  "comments": {
+    "title": "Comments ({{count}})",
+    "empty": "No comments",
+    "placeholder": "Write a comment..."
+  },
+  "wodDetail": {
+    "shareUnavailable": "Sharing isn't available on this device",
+    "shareFailed": "Couldn't share the card.",
+    "capRepsRequired": "Enter the number of reps completed.",
+    "tooHighTitle": "Score too high",
+    "tooHighMsg": "The estimated maximum for this WOD is {{max}} {{unit}}. Check your entry.",
+    "newOneRmTitle": "New 1RM 🏋️",
+    "newOneRmLine": "{{movement}}: {{kg}} kg",
+    "newOneRmLineWas": "{{movement}}: {{kg}} kg (was {{previous}} kg)",
+    "someone": "Someone",
+    "notFound": "WOD not found",
+    "shareMessage": "{{title}} — Join the WOD on AthleX! {{url}}",
+    "programDay": "Program · week {{week}} · {{day}}",
+    "dayNames": [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+      "Sunday"
+    ],
+    "coachNotes": "Coach notes",
+    "myNote": "MY NOTE",
+    "submissionClosed": "Score submission closed (past midnight)",
+    "rankingTitle_one": "Leaderboard · {{count}} score",
+    "rankingTitle_other": "Leaderboard · {{count}} scores",
+    "notFinished": "WOD not finished (CAP)",
+    "capRepsLabel": "NUMBER OF REPS COMPLETED",
+    "capRepsPlaceholder": "e.g. 87",
+    "timeLabel": "TIME (MM:SS)",
+    "weightLabel": "WEIGHT (kg)",
+    "repsLabel": "REPS",
+    "roundsLabel": "ROUNDS",
+    "minutesPlaceholder": "MM",
+    "secondsPlaceholder": "SS",
+    "levelLabel": "LEVEL",
+    "notesLabel": "NOTES (optional)",
+    "notesPlaceholder": "Comment, scaled movements…",
+    "submitScore": "Submit score",
+    "agoMinutes": "{{n}}min",
+    "agoHours": "{{n}}h",
+    "agoDays": "{{n}}d",
+    "firstComment": "Be the first to comment!"
+  },
+  "personalWod": {
+    "requiredTitle": "Required fields",
+    "requiredMsg": "Title and date are required.",
+    "saveFailed": "Couldn't save the WOD.",
+    "editTitle": "Edit my WOD",
+    "titlePlaceholder": "Fran, Cindy, my own WOD…",
+    "tabataWork": "WORK (sec)",
+    "tabataRest": "REST (sec)",
+    "notesLabel": "NOTES",
+    "notesPlaceholder": "Scaling, tips, intent…",
+    "create": "Create WOD"
+  },
+  "articles": {
+    "byline": "By {{author}} · {{date}}",
+    "by": "By {{author}}",
+    "likes_one": "{{count}} like",
+    "likes_other": "{{count}} likes",
+    "deleteComment": "Delete comment",
+    "empty": "No news yet"
+  },
+  "moderation": {
+    "report": "Report",
+    "blockUser": "Block this user",
+    "blockTitle": "Block this user?",
+    "blockMsg": "You won't see their messages, videos, profile or comments anymore.",
+    "block": "Block",
+    "blockedTitle": "Blocked",
+    "blockedMsg": "This user can no longer interact with you.",
+    "blockFailed": "Couldn't block this user.",
+    "reportTitle": "Report this content",
+    "reportQuestion": "Why are you reporting this content?",
+    "detailsPlaceholder": "Details (optional)",
+    "submit": "SEND REPORT",
+    "reportedTitle": "Thank you",
+    "reportedMsg": "Your report has been recorded. Our team will review it within 24 hours.",
+    "reportFailed": "Couldn't send the report. Try again later.",
+    "reason": {
+      "spam": "Spam / advertising",
+      "harassment": "Harassment",
+      "inappropriate": "Inappropriate content",
+      "hate": "Hate speech",
+      "nudity": "Nudity / sexual content",
+      "violence": "Violence",
+      "cheating": "Cheating (score)",
+      "other": "Other"
+    }
+  },
+  "community": {
+    "noBoxTitle": "No box",
+    "noBoxSub": "Join a box to see its members.",
+    "athleteCount_one": "{{count}} athlete",
+    "athleteCount_other": "{{count}} athletes",
+    "searchPlaceholder": "Search for an athlete…",
+    "noResult": "No members found.",
+    "record": "{{wins}}W/{{matches}}M"
+  },
+  "boxInfo": {
+    "title": "Information",
+    "empty": "No information available",
+    "avgElo": "Avg ELO",
+    "created": "Created",
+    "contact": "CONTACT",
+    "phone": "PHONE",
+    "location": "LOCATION",
+    "openMaps": "View on Google Maps",
+    "owner": "OWNER",
+    "coaches": "COACHES",
+    "foundedAt": "Gym opened",
+    "createdAt": "Box created",
+    "memberSince": "Member since"
+  },
+  "weekPicker": {
+    "days": [
+      "MON",
+      "TUE",
+      "WED",
+      "THU",
+      "FRI",
+      "SAT",
+      "SUN"
+    ]
   }
 }

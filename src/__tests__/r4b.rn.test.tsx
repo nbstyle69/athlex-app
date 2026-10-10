@@ -373,7 +373,7 @@ describe('R4b : une seule action accent par écran', () => {
 
   it('séance de programme (écran de WOD) : une seule action accent dans la saisie de musculation', () => {
     const code = fs.readFileSync(path.join(__dirname, '..', 'screens', 'whiteboard', 'WODDetailScreen.tsx'), 'utf8');
-    const block = code.slice(code.indexOf('{isStrengthSession ? (\n                <View style={{ gap: 12'), code.indexOf('Valider le score'));
+    const block = code.slice(code.indexOf('{isStrengthSession ? (\n                <View style={{ gap: 12'), code.indexOf("i18n.t('wodDetail.submitScore')"));
     expect(block.match(/variant="accent"/g)).toHaveLength(1);
     expect(block).toContain('testID="strength-validate"');
     expect(block).toContain('testID="strength-save-later"');

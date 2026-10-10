@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Users, Search, ChevronRight, Trophy, Zap } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { supabase } from '../../lib/supabase';
 import { readRows } from '../../lib/db';
@@ -34,6 +35,7 @@ export default function CommunityScreen() {
   const tabSpace = useTabBarScrollSpace();
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const S = createStyles(theme);
 
@@ -81,8 +83,8 @@ export default function CommunityScreen() {
       <View style={[S.container, S.center]}>
         <GlassBackground />
         <Users color={theme.textMuted} size={48} />
-        <Text style={S.emptyTitle}>Aucune box</Text>
-        <Text style={S.emptySub}>Rejoins une box pour voir ses membres.</Text>
+        <Text style={S.emptyTitle}>{t('community.noBoxTitle')}</Text>
+        <Text style={S.emptySub}>{t('community.noBoxSub')}</Text>
       </View>
     );
   }
@@ -92,8 +94,8 @@ export default function CommunityScreen() {
       <GlassBackground />
       <View style={S.header}>
         <View>
-          <Text style={S.headerTitle}>Membres</Text>
-          <Text style={S.headerSub}>{currentBox.name} · {members.length} athlète{members.length > 1 ? 's' : ''}</Text>
+          <Text style={S.headerTitle}>{t('whiteboard.members')}</Text>
+          <Text style={S.headerSub}>{currentBox.name} · {t('community.athleteCount', { count: members.length })}</Text>
         </View>
         {myRank > 0 && (
           <View style={S.myRankBadge}>
@@ -107,7 +109,7 @@ export default function CommunityScreen() {
         <Search color={theme.textMuted} size={16} style={S.searchIcon} />
         <TextInput
           style={S.searchInput}
-          placeholder="Rechercher un athlète…"
+          placeholder={t('community.searchPlaceholder')}
           placeholderTextColor={theme.textMuted}
           value={search}
           onChangeText={handleSearch}
@@ -130,7 +132,7 @@ export default function CommunityScreen() {
           }
           ListEmptyComponent={
             <View style={S.center}>
-              <Text style={S.emptySub}>Aucun membre trouvé.</Text>
+              <Text style={S.emptySub}>{t('community.noResult')}</Text>
             </View>
           }
           renderItem={({ item, index }) => {
@@ -146,14 +148,14 @@ export default function CommunityScreen() {
                 <Text style={S.rank}>{medal ?? `${index + 1}`}</Text>
                 <UserAvatar uri={item.avatar_url} name={item.username} size={40} borderRadius={20} backgroundColor={`${levelColor}30`} textColor={readableInk(levelColor, theme.ax)} />
                 <View style={S.info}>
-                  <Text style={S.name}>{item.username}{isMe ? ' (moi)' : ''}</Text>
+                  <Text style={S.name}>{item.username}{isMe ? ` ${t('interTeam.me')}` : ''}</Text>
                   <View style={S.pills}>
                     <View style={[S.levelPill, { backgroundColor: `${levelColor}20` }]}>
                       <View style={[S.levelDot, { backgroundColor: levelColor }]} />
                       <Text style={[S.levelText, { color: readableInk(levelColor, theme.ax) }]}>{item.level?.toUpperCase()}</Text>
                     </View>
                     {(item.total_matches ?? 0) > 0 && (
-                      <Text style={S.matchText}>{item.wins ?? 0}V/{item.total_matches ?? 0}M</Text>
+                      <Text style={S.matchText}>{t('community.record', { wins: item.wins ?? 0, matches: item.total_matches ?? 0 })}</Text>
                     )}
                   </View>
                 </View>

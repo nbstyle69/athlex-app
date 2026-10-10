@@ -1,12 +1,11 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { AxDayItem } from '../../components/ax';
 import { hitSlopFor } from '../../components/ax/color';
 import { axSpacing } from '../../theme/axTokens';
-
-const DAY_LABELS = ['LUN', 'MAR', 'MER', 'JEU', 'VEN', 'SAM', 'DIM'];
 
 export interface WeekDay { iso: string; dayNumber: number }
 
@@ -27,6 +26,8 @@ export default function ReservationWeekPicker({
   days, selectedDate, todayISO, maxDate, forwardDisabled, onSelectDate, onPrev, onNext,
 }: Props) {
   const c = useTheme().theme.ax;
+  const { t } = useTranslation();
+  const DAY_LABELS = t('weekPicker.days', { returnObjects: true }) as string[];
   return (
     <View style={styles.row} testID="r10-week">
       <Pressable

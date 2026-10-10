@@ -4,15 +4,9 @@ import { captureError } from '../lib/sentry';
 export type ReportContentType = 'video' | 'message' | 'profile' | 'comment' | 'score' | 'box';
 export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'hate' | 'cheating' | 'nudity' | 'violence' | 'other';
 
-export const REPORT_REASONS: { value: ReportReason; label: string }[] = [
-  { value: 'spam', label: 'Spam / publicité' },
-  { value: 'harassment', label: 'Harcèlement' },
-  { value: 'inappropriate', label: 'Contenu inapproprié' },
-  { value: 'hate', label: 'Discours haineux' },
-  { value: 'nudity', label: 'Nudité / sexuel' },
-  { value: 'violence', label: 'Violence' },
-  { value: 'cheating', label: 'Tricherie (score)' },
-  { value: 'other', label: 'Autre' },
+/** Motifs proposés, dans l'ordre affiché ; libellé : `moderation.reason.<value>`. */
+export const REPORT_REASONS: ReportReason[] = [
+  'spam', 'harassment', 'inappropriate', 'hate', 'nudity', 'violence', 'cheating', 'other',
 ];
 
 /**

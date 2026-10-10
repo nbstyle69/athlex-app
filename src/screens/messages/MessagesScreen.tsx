@@ -184,7 +184,7 @@ export default function MessagesScreen() {
         read_by:         [],
         sender:          m.sender_id === null
           ? { username: i18n.t('messages.deletedAccount') }
-          : (profMap[m.sender_id] ?? { username: 'Inconnu' }),
+          : (profMap[m.sender_id] ?? { username: i18n.t('compDetail.unknown') }),
       }));
     }
 
@@ -295,7 +295,7 @@ export default function MessagesScreen() {
             is_announcement: false,
             created_at: raw.created_at,
             read_by: [],
-            sender: profile ? { username: profile.username, avatar_url: profile.avatar_url ?? undefined } : { username: 'Inconnu' },
+            sender: profile ? { username: profile.username, avatar_url: profile.avatar_url ?? undefined } : { username: i18n.t('compDetail.unknown') },
           };
           setMessages(prev => {
             const filtered = prev.filter(m => !(m.id.startsWith('temp-') && m.sender_id === raw.sender_id));
@@ -319,6 +319,7 @@ export default function MessagesScreen() {
     setGifLoading(true);
     setGifError(false);
     try {
+      // i18n-ignore : message technique (journal Sentry), jamais affiché
       if (!GIPHY_API_KEY) throw new Error('EXPO_PUBLIC_GIPHY_KEY absente du bundle');
       const endpoint = query.trim()
         ? `https://api.giphy.com/v1/gifs/search?api_key=${GIPHY_API_KEY}&q=${encodeURIComponent(query)}&limit=20&rating=pg-13`
@@ -490,9 +491,9 @@ export default function MessagesScreen() {
     const d = new Date(iso);
     const today = new Date();
     const diff = today.toDateString() === d.toDateString();
-    if (diff) return "Aujourd'hui";
+    if (diff) return i18n.t('training.last.today');
     const yest = new Date(today); yest.setDate(today.getDate() - 1);
-    if (yest.toDateString() === d.toDateString()) return 'Hier';
+    if (yest.toDateString() === d.toDateString()) return i18n.t('training.last.yesterday');
     return d.toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long' });
   }
 
@@ -500,8 +501,8 @@ export default function MessagesScreen() {
     return (
       <View style={S.container}>
       <GlassBackground />
-        <View style={S.header}><Text style={S.headerTitle}>Messages</Text></View>
-        <View style={S.empty}><EmptyState testID="messages-no-box" icon={Dumbbell} title="Rejoins une box pour accéder aux messages" /></View>
+        <View style={S.header}><Text style={S.headerTitle}>{i18n.t('whiteboard.messages')}</Text></View>
+        <View style={S.empty}><EmptyState testID="messages-no-box" icon={Dumbbell} title={i18n.t('messages.noBox')} /></View>
       </View>
     );
   }
@@ -545,7 +546,7 @@ export default function MessagesScreen() {
       <GlassBackground />
       {/* Header */}
       {canGoBack ? (
-        <AxScreenHeader title="Messages">
+        <AxScreenHeader title={i18n.t('whiteboard.messages')}>
             <Text style={S.headerSub}>{currentBox.name}</Text>
         </AxScreenHeader>
       ) : (
@@ -557,7 +558,7 @@ export default function MessagesScreen() {
             </TouchableOpacity>
           )}
           <View>
-            <Text style={S.headerTitle}>Messages</Text>
+            <Text style={S.headerTitle}>{i18n.t('whiteboard.messages')}</Text>
             <Text style={S.headerSub}>{currentBox.name}</Text>
           </View>
         </View>
@@ -633,12 +634,12 @@ export default function MessagesScreen() {
               >
                 <View testID={`bubble-${msg.id}`} style={[S.bubble, isMe ? S.bubbleMe : S.bubbleThem]}>
                   {!isMe && showSender && (
-                    <Text testID={`bubble-sender-${msg.id}`} style={S.senderName} numberOfLines={1}>{msg.sender?.username ?? 'Inconnu'}</Text>
+                    <Text testID={`bubble-sender-${msg.id}`} style={S.senderName} numberOfLines={1}>{msg.sender?.username ?? i18n.t('compDetail.unknown')}</Text>
                   )}
                   {msg.is_announcement && (
                     <View style={S.announcementTag}>
                       <Megaphone color={theme.ax.warning} size={10} />
-                      <Text style={S.announcementText}>Annonce</Text>
+                      <Text style={S.announcementText}>{i18n.t('messages.announcement')}</Text>
                     </View>
                   )}
                   {(() => {
@@ -696,7 +697,7 @@ export default function MessagesScreen() {
         ListEmptyComponent={
           <View style={S.empty}>
             <MessageCircle color={theme.ax.textMuted} size={40} />
-            <Text style={S.emptyText}>Aucun message pour l'instant.{'\n'}Soyez le premier à écrire !</Text>
+            <Text style={S.emptyText}>{i18n.t('messages.empty')}{'\n'}{i18n.t('messages.emptyHint')}</Text>
           </View>
         }
       />
@@ -725,13 +726,13 @@ export default function MessagesScreen() {
         <TouchableOpacity onPress={pickImage} style={S.imgBtn} activeOpacity={0.7}>
           <ImagePlus color={theme.textMuted} size={22} />
         </TouchableOpacity>
-        <TouchableOpacity onPress={openGifPicker} style={S.imgBtn} activeOpacity={0.7}>
-          <Text style={S.gifBtnLabel}>GIF</Text>
+        <TouchableOpacity onPress={openGifPicker} style={S.imgBtn} activeOpacity={0.7} testID="messages-gif">
+          <Text style={S.gifBtnLabel}>{i18n.t('messages.gifButton')}</Text>
         </TouchableOpacity>
         <View style={S.inputWrap}>
           <AxTextField
             testID="messages-input"
-            placeholder="Écrire un message…"
+            placeholder={i18n.t('messages.inputPlaceholder')}
             value={input}
             onChangeText={setInput}
             multiline
@@ -783,7 +784,7 @@ export default function MessagesScreen() {
       <Modal visible={gifOpen} animationType="slide" onRequestClose={() => setGifOpen(false)}>
         <View style={S.gifModal}>
           <View style={S.gifHeader}>
-            <Text style={S.gifHeaderTitle}>Envoyer un GIF</Text>
+            <Text style={S.gifHeaderTitle}>{i18n.t('messages.gifTitle')}</Text>
             <TouchableOpacity onPress={() => setGifOpen(false)}>
               <X color={theme.textMuted} size={22} />
             </TouchableOpacity>
@@ -792,7 +793,7 @@ export default function MessagesScreen() {
             <Search color={theme.textMuted} size={16} />
             <TextInput
               style={S.gifSearchInput}
-              placeholder="Rechercher un GIF..."
+              placeholder={i18n.t('messages.gifSearchPlaceholder')}
               placeholderTextColor={theme.textMuted}
               value={gifSearch}
               onChangeText={t => { setGifSearch(t); searchGifs(t); }}
@@ -801,9 +802,9 @@ export default function MessagesScreen() {
             />
           </View>
           {gifUnavailable ? (
-            <View style={S.gifUnavailable} accessibilityLabel="GIF indisponibles">
-              <Text style={S.gifUnavailableTitle}>GIF indisponibles</Text>
-              <Text style={S.gifUnavailableHint}>La recherche de GIF n'est pas configurée dans cette version de l'app.</Text>
+            <View style={S.gifUnavailable} accessibilityLabel={i18n.t('messages.gifUnavailableTitle')}>
+              <Text style={S.gifUnavailableTitle}>{i18n.t('messages.gifUnavailableTitle')}</Text>
+              <Text style={S.gifUnavailableHint}>{i18n.t('messages.gifUnavailableHint')}</Text>
             </View>
           ) : gifLoading ? (
             <ActivityIndicator style={{ marginTop: 40 }} size="large" color={theme.accent} />
@@ -824,12 +825,12 @@ export default function MessagesScreen() {
               )}
               ListEmptyComponent={
                 <Text style={[S.emptyText, { marginTop: 40 }]}>
-                  {gifError ? 'Recherche de GIF indisponible' : 'Aucun r\u00e9sultat'}
+                  {gifError ? i18n.t('messages.gifSearchUnavailable') : i18n.t('messages.gifNoResult')}
                 </Text>
               }
             />
           )}
-          <Text style={S.gifAttribution} accessibilityLabel="Powered by GIPHY">Powered by GIPHY</Text>
+          <Text style={S.gifAttribution} accessibilityLabel={i18n.t('messages.giphyAttribution')}>{i18n.t('messages.giphyAttribution')}</Text>
         </View>
       </Modal>
     </KeyboardAvoidingView>

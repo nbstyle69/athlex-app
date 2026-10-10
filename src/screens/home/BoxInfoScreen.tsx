@@ -15,6 +15,7 @@ import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { dateLocale } from '../../i18n/locale';
+import { useTranslation } from 'react-i18next';
 
 interface BoxInfo {
   name: string;
@@ -38,6 +39,7 @@ export default function BoxInfoScreen({ navigation }: any) {
   const tabSpace = useTabBarScrollSpace();
   const { currentBox, user } = useAuth();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const S = createStyles(theme);
   const c = theme.ax;
   const [info, setInfo] = useState<BoxInfo | null>(null);
@@ -73,7 +75,7 @@ export default function BoxInfoScreen({ navigation }: any) {
           .eq('role', 'coach');
         const coaches = (coachMembers ?? []).map((c: any) => ({
           id: c.member_id,
-          username: (Array.isArray(c.profiles) ? c.profiles[0] : c.profiles)?.username ?? 'Coach',
+          username: (Array.isArray(c.profiles) ? c.profiles[0] : c.profiles)?.username ?? t('whiteboard.roleCoach'),
           avatar_url: (Array.isArray(c.profiles) ? c.profiles[0] : c.profiles)?.avatar_url ?? null,
         }));
 
@@ -114,7 +116,7 @@ export default function BoxInfoScreen({ navigation }: any) {
     return (
       <View style={[S.container, S.center]}>
       <GlassBackground />
-        <Text style={S.emptyText}>Aucune information disponible</Text>
+        <Text style={S.emptyText}>{t('boxInfo.empty')}</Text>
       </View>
     );
   }
@@ -126,7 +128,7 @@ export default function BoxInfoScreen({ navigation }: any) {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title="Informations" />
+      <AxScreenHeader title={t('boxInfo.title')} />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {/* Logo + Name */}
@@ -149,17 +151,17 @@ export default function BoxInfoScreen({ navigation }: any) {
           <AxCard testID="boxinfo-stat-members" style={S.statCard}>
             <Users color={c.accentText} size={20} />
             <Text style={S.statValue}>{info.memberCount}</Text>
-            <Text style={S.statLabel} numberOfLines={1}>Membres</Text>
+            <Text style={S.statLabel} numberOfLines={1}>{t('whiteboard.members')}</Text>
           </AxCard>
           <AxCard testID="boxinfo-stat-elo" style={S.statCard}>
             <Trophy color={c.warning} size={20} />
             <Text style={S.statValue}>{info.avgElo}</Text>
-            <Text style={S.statLabel} numberOfLines={1}>ELO moyen</Text>
+            <Text style={S.statLabel} numberOfLines={1}>{t('boxInfo.avgElo')}</Text>
           </AxCard>
           <AxCard testID="boxinfo-stat-created" style={S.statCard}>
             <Calendar color={c.textMuted} size={20} />
             <Text style={S.statValue}>{new Date(info.created_at).getFullYear()}</Text>
-            <Text style={S.statLabel} numberOfLines={1}>Création</Text>
+            <Text style={S.statLabel} numberOfLines={1}>{t('boxInfo.created')}</Text>
           </AxCard>
         </View>
 
@@ -169,7 +171,7 @@ export default function BoxInfoScreen({ navigation }: any) {
             <View style={S.infoRow}>
               <MapPin color={c.accentText} size={18} />
               <View style={S.infoContent}>
-                <Text style={S.infoLabel}>ADRESSE</Text>
+                <Text style={S.infoLabel}>{t('bo.boxInfo.addressLabel')}</Text>
                 <Text style={S.infoValue}>{info.address}</Text>
               </View>
             </View>
@@ -179,7 +181,7 @@ export default function BoxInfoScreen({ navigation }: any) {
             <TouchableOpacity testID="boxinfo-website" style={S.infoRow} onPress={() => Linking.openURL(info.website_url!)} activeOpacity={0.7}>
               <Globe color={c.accentText} size={18} />
               <View style={S.infoContent}>
-                <Text style={S.infoLabel}>SITE WEB</Text>
+                <Text style={S.infoLabel}>{t('bo.boxInfo.websiteLabel')}</Text>
                 <Text style={[S.infoValue, S.link]}>{info.website_url}</Text>
               </View>
             </TouchableOpacity>
@@ -189,7 +191,7 @@ export default function BoxInfoScreen({ navigation }: any) {
             <TouchableOpacity testID="boxinfo-email" style={S.infoRow} onPress={() => Linking.openURL(`mailto:${info.contact_email}`)} activeOpacity={0.7}>
               <Mail color={c.accentText} size={18} />
               <View style={S.infoContent}>
-                <Text style={S.infoLabel}>CONTACT</Text>
+                <Text style={S.infoLabel}>{t('boxInfo.contact')}</Text>
                 <Text style={[S.infoValue, S.link]}>{info.contact_email}</Text>
               </View>
             </TouchableOpacity>
@@ -199,7 +201,7 @@ export default function BoxInfoScreen({ navigation }: any) {
             <TouchableOpacity testID="boxinfo-phone" style={S.infoRow} onPress={() => Linking.openURL(`tel:${info.phone}`)} activeOpacity={0.7}>
               <Phone color={c.accentText} size={18} />
               <View style={S.infoContent}>
-                <Text style={S.infoLabel}>TÉLÉPHONE</Text>
+                <Text style={S.infoLabel}>{t('boxInfo.phone')}</Text>
                 <Text style={[S.infoValue, S.link]}>{info.phone}</Text>
               </View>
             </TouchableOpacity>
@@ -209,8 +211,8 @@ export default function BoxInfoScreen({ navigation }: any) {
             <TouchableOpacity testID="boxinfo-maps" style={[S.infoRow, S.infoRowLast]} onPress={() => Linking.openURL(info.google_maps_url!)} activeOpacity={0.7}>
               <Navigation color={c.accentText} size={18} />
               <View style={S.infoContent}>
-                <Text style={S.infoLabel}>LOCALISATION</Text>
-                <Text style={[S.infoValue, S.link]}>Voir sur Google Maps</Text>
+                <Text style={S.infoLabel}>{t('boxInfo.location')}</Text>
+                <Text style={[S.infoValue, S.link]}>{t('boxInfo.openMaps')}</Text>
               </View>
             </TouchableOpacity>
           ) : null}
@@ -223,7 +225,7 @@ export default function BoxInfoScreen({ navigation }: any) {
               <View style={S.infoRow}>
                 <User color={c.accentText} size={18} />
                 <View style={S.infoContent}>
-                  <Text style={S.infoLabel}>PROPRIÉTAIRE</Text>
+                  <Text style={S.infoLabel}>{t('boxInfo.owner')}</Text>
                   <Text style={S.infoValue}>{info.ownerName}</Text>
                 </View>
               </View>
@@ -232,7 +234,7 @@ export default function BoxInfoScreen({ navigation }: any) {
               <View style={[S.infoRow, S.infoRowLast]}>
                 <Users color={c.accentText} size={18} />
                 <View style={S.infoContent}>
-                  <Text style={S.infoLabel}>COACHS</Text>
+                  <Text style={S.infoLabel}>{t('boxInfo.coaches')}</Text>
                   <View style={S.coachList}>
                     {info.coaches.map(co => (
                       <View key={co.id} style={S.coachChip}>
@@ -251,17 +253,17 @@ export default function BoxInfoScreen({ navigation }: any) {
         <AxCard testID="boxinfo-dates" style={S.datesCard}>
           {foundedDate ? (
             <View style={S.dateRow}>
-              <Text style={S.dateLabel}>Ouverture de la salle</Text>
+              <Text style={S.dateLabel}>{t('boxInfo.foundedAt')}</Text>
               <Text style={S.dateValue}>{foundedDate}</Text>
             </View>
           ) : null}
           <View style={[S.dateRow, foundedDate ? S.dateRowSep : null]}>
-            <Text style={S.dateLabel}>Création de la box</Text>
+            <Text style={S.dateLabel}>{t('boxInfo.createdAt')}</Text>
             <Text style={S.dateValue}>{createdDate}</Text>
           </View>
           {joinedDate ? (
             <View style={[S.dateRow, S.dateRowSep]}>
-              <Text style={S.dateLabel}>Inscrit depuis le</Text>
+              <Text style={S.dateLabel}>{t('boxInfo.memberSince')}</Text>
               <Text style={S.dateValue}>{joinedDate}</Text>
             </View>
           ) : null}

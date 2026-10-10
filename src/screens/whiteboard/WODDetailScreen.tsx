@@ -60,8 +60,7 @@ import ReportMenu from '../../components/ReportMenu';
 import { readRows } from '../../lib/db';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { dateLocale } from '../../i18n/locale';
-
-const DAY_LABELS_LONG = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+import { errorMessage } from '../../utils/refusals';
 
 type Nav   = NativeStackNavigationProp<WhiteboardStackParamList>;
 type Route = RouteProp<WhiteboardStackParamList, 'WODDetail'>;
@@ -464,12 +463,12 @@ export default function WODDetailScreen() {
     try {
       const uri = await viewShotRef.current.capture();
       const available = await Sharing.isAvailableAsync();
-      if (!available) { Alert.alert('Partage non disponible sur cet appareil'); return; }
-      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: 'Partager ma performance' });
+      if (!available) { Alert.alert(i18n.t('wodDetail.shareUnavailable')); return; }
+      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: i18n.t('sharePerf.share') });
     } catch (e: any) {
       if (!e?.message?.includes('cancel')) {
         captureError(e, { screen: 'WODDetail', action: 'shareCard' });
-        Alert.alert('Erreur', 'Impossible de partager la card.');
+        Alert.alert(i18n.t('common.error'), i18n.t('wodDetail.shareFailed'));
       }
     } finally {
       setSharing(false);
@@ -484,7 +483,7 @@ export default function WODDetailScreen() {
     let capped = false;
     if (scoreType === 'time' && dnf) {
       const reps = parseInt(capReps) || 0;
-      if (reps <= 0) { Alert.alert('Score invalide', 'Entre le nombre de répétitions complétées.'); return; }
+      if (reps <= 0) { Alert.alert(i18n.t('wodResult.invalidScore'), i18n.t('wodDetail.capRepsRequired')); return; }
       ({ score_value: value, capped } = mapForTimeScore({ capped: true, reps }));
     } else if (scoreType === 'time') {
       ({ score_value: value, capped } = mapForTimeScore({
@@ -493,12 +492,12 @@ export default function WODDetailScreen() {
     } else {
       value = parseFloat(scoreInput);
     }
-    if (isNaN(value) || value <= 0) { Alert.alert('Score invalide'); return; }
+    if (isNaN(value) || value <= 0) { Alert.alert(i18n.t('wodResult.invalidScore')); return; }
 
     // Cap validation for AMRAP / EMOM / Tabata
     const maxScore = computeMaxScore(wod.wod_type, wod.description, wod.time_cap_seconds, wod.rounds, scoreType);
     if (maxScore && !capped && value > maxScore) {
-      Alert.alert('Score trop élevé', `Le maximum estimé pour ce WOD est de ${maxScore} ${scoreType === 'rounds' ? 'rounds' : 'reps'}. Vérifie ta saisie.`);
+      Alert.alert(i18n.t('wodDetail.tooHighTitle'), i18n.t('wodDetail.tooHighMsg', { max: maxScore, unit: scoreType === 'rounds' ? 'rounds' : 'reps' }));
       return;
     }
 
@@ -515,7 +514,7 @@ export default function WODDetailScreen() {
       notes: noteInput.trim() || null,
     }, { onConflict: 'wod_id,member_id' });
 
-    if (error) { setSubmitting(false); Alert.alert('Erreur', error.message); return; }
+    if (error) { setSubmitting(false); Alert.alert(i18n.t('common.error'), await errorMessage(error)); return; }
 
     await creditScoreSubmission(value, scoreType);
 
@@ -534,8 +533,10 @@ export default function WODDetailScreen() {
         .then(performed => (performed.length > 0 ? recordStrengthPRs(performed) : []))
         .then(beaten => {
           if (beaten.length === 0) return;
-          const lines = beaten.map(b => `${b.movement} : ${b.kg} kg${b.previousKg != null ? ` (avant ${b.previousKg} kg)` : ''}`);
-          Alert.alert('Nouveau 1RM 🏋️', lines.join('\n'));
+          const lines = beaten.map(b => (b.previousKg != null
+            ? i18n.t('wodDetail.newOneRmLineWas', { movement: b.movement, kg: b.kg, previous: b.previousKg })
+            : i18n.t('wodDetail.newOneRmLine', { movement: b.movement, kg: b.kg })));
+          Alert.alert(i18n.t('wodDetail.newOneRmTitle'), lines.join('\n'));
         })
         .catch(e => captureError(e, { action: 'logStrengthSets' }));
     }
@@ -750,7 +751,7 @@ export default function WODDetailScreen() {
       if (selectedScore.member_id !== user.id) {
         sendScoreNotification(
           selectedScore.member_id,
-          user.username ?? 'Quelqu\'un',
+          user.username ?? i18n.t('wodDetail.someone'),
           'comment',
         ).catch(e => captureError(e, { action: 'sendCommentNotif' }));
       }
@@ -773,7 +774,7 @@ export default function WODDetailScreen() {
       if (selectedScore.member_id !== user.id) {
         sendScoreNotification(
           selectedScore.member_id,
-          user.username ?? 'Quelqu\'un',
+          user.username ?? i18n.t('wodDetail.someone'),
           'reaction',
           emoji,
         ).catch(e => captureError(e, { action: 'sendReactionNotif' }));
@@ -804,7 +805,7 @@ export default function WODDetailScreen() {
     return (
       <View style={S.container}>
       <GlassBackground />
-        <AxScreenHeader title="WOD introuvable" />
+        <AxScreenHeader title={i18n.t('wodDetail.notFound')} />
       </View>
     );
   }
@@ -819,7 +820,7 @@ export default function WODDetailScreen() {
       <GlassBackground />
       <AxScreenHeader
         title={wod.scheduled_date ? i18n.t('screenTitles.wodOfDay') : i18n.t('screenTitles.wod')}
-        right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: `${wod.title} — Rejoins le WOD sur AthleX ! athlex://wod/${wodId}` })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
+        right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: i18n.t('wodDetail.shareMessage', { title: wod.title, url: `athlex://wod/${wodId}` }) })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
       />
 
       <ScrollView
@@ -835,7 +836,7 @@ export default function WODDetailScreen() {
             {wod.time_cap_seconds && (
               <View style={S.timeCap}>
                 <Clock color={c.textMuted} size={12} />
-                <Text style={S.timeCapText}>Cap {formatCap(wod.time_cap_seconds)}</Text>
+                <Text style={S.timeCapText}>{i18n.t('whiteboard.cap', { cap: formatCap(wod.time_cap_seconds) })}</Text>
               </View>
             )}
           </View>
@@ -843,7 +844,7 @@ export default function WODDetailScreen() {
           <Text style={S.wodDate}>
             {wod.scheduled_date
               ? new Date(wod.scheduled_date).toLocaleDateString(dateLocale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-              : `Programme · semaine ${wod.program_week ?? '?'} · ${DAY_LABELS_LONG[(wod.program_day ?? 1) - 1] ?? ''}`}
+              : i18n.t('wodDetail.programDay', { week: wod.program_week ?? '?', day: (i18n.t('wodDetail.dayNames', { returnObjects: true }) as string[])[(wod.program_day ?? 1) - 1] ?? '' })}
           </Text>
 
           {wod.description && (
@@ -851,7 +852,7 @@ export default function WODDetailScreen() {
           )}
           {wod.notes && (
             <AxCard style={S.notesBox} testID="wod-coach-notes">
-              <Text style={S.notesLabel}>Notes coach</Text>
+              <Text style={S.notesLabel}>{i18n.t('wodDetail.coachNotes')}</Text>
               <Text style={S.notesText}>{wod.notes}</Text>
             </AxCard>
           )}
@@ -865,7 +866,7 @@ export default function WODDetailScreen() {
               <View style={S.videoBox}>
                 <View style={S.videoLabel}>
                   <Play color={c.danger} size={13} />
-                  <Text style={S.videoLabelText}>Vidéo</Text>
+                  <Text style={S.videoLabelText}>{i18n.t('whiteboard.video')}</Text>
                 </View>
                 <View style={S.videoWrapper}>
                   <WebView
@@ -887,7 +888,7 @@ export default function WODDetailScreen() {
           {myScore ? (
             <AxCard style={S.myScoreWrapper} testID="my-score">
               <View style={S.myScoreRow}>
-                <Text style={S.myScoreLabel}>Mon score</Text>
+                <Text style={S.myScoreLabel}>{i18n.t('wodResult.myScore')}</Text>
                 <Text style={S.myScoreValue} testID="my-score-value">{formatScore(myScore)}</Text>
                 <AxTag label={myScore.rx ? 'RX' : 'Scaled'} tone={myScore.rx ? 'accent' : 'muted'} />
                 {leaderboardAvailable(wod) && myRank && (
@@ -899,17 +900,17 @@ export default function WODDetailScreen() {
               </View>
               <View style={S.myScoreActions}>
                 <View style={S.myScoreAction}>
-                  <AxButton variant="outline" icon={Share2} label="Partager" onPress={() => setShareModal(true)} fullWidth testID="my-score-share" />
+                  <AxButton variant="outline" icon={Share2} label={i18n.t('common.share')} onPress={() => setShareModal(true)} fullWidth testID="my-score-share" />
                 </View>
                 {!isExpired && !isStrengthSession && (
                   <View style={S.myScoreAction}>
-                    <AxButton variant="outline" icon={RotateCcw} label="Modifier" onPress={openEditModal} fullWidth testID="my-score-edit" />
+                    <AxButton variant="outline" icon={RotateCcw} label={i18n.t('common.edit')} onPress={openEditModal} fullWidth testID="my-score-edit" />
                   </View>
                 )}
               </View>
               {myScore.notes ? (
                 <View style={S.myScoreNotesBox}>
-                  <Text style={S.myScoreNotesLabel}>MA NOTE</Text>
+                  <Text style={S.myScoreNotesLabel}>{i18n.t('wodDetail.myNote')}</Text>
                   <Text style={S.myScoreNotesText}>{myScore.notes}</Text>
                 </View>
               ) : null}
@@ -948,7 +949,7 @@ export default function WODDetailScreen() {
           {myScore || (isStrengthSession && strengthValidated) ? null : isExpired ? (
             <View style={S.expiredBanner}>
               <Clock color={c.textMuted} size={14} />
-              <Text style={S.expiredText}>Soumission de score terminée (minuit passé)</Text>
+              <Text style={S.expiredText}>{i18n.t('wodDetail.submissionClosed')}</Text>
             </View>
           ) : (
             <>
@@ -964,7 +965,7 @@ export default function WODDetailScreen() {
               )}
               <AxButton
                 icon={Plus}
-                label="Entrer mon score"
+                label={i18n.t('whiteboard.enterScore')}
                 onPress={() => { prefillStrengthLoads(); setModalOpen(true); }}
                 fullWidth
                 testID="enter-score"
@@ -980,7 +981,7 @@ export default function WODDetailScreen() {
             onLayout={e => { leaderboardY.current = e.nativeEvent.layout.y; }}
           >
             <Text style={S.sectionTitle} testID="score-list-title">
-              {ranked ? `Classement · ${scores.length} score${scores.length > 1 ? 's' : ''}` : i18n.t('whiteboard.scoresTitle')}
+              {ranked ? i18n.t('wodDetail.rankingTitle', { count: scores.length }) : i18n.t('whiteboard.scoresTitle')}
             </Text>
             <View style={S.leaderboard}>
               {(() => {
@@ -1015,7 +1016,7 @@ export default function WODDetailScreen() {
                     />
                     <View style={S.leaderMid}>
                       <Text style={S.leaderName} numberOfLines={1}>
-                        {(sc.profile as any)?.username ?? 'Athlète'}{isMe ? ' (moi)' : ''}
+                        {(sc.profile as any)?.username ?? i18n.t('onboarding.athleteFallback')}{isMe ? ` ${i18n.t('interTeam.me')}` : ''}
                       </Text>
                       <View style={S.leaderSubRow}>
                         {ranked && <Text style={S.leaderElo}>{elo} ELO</Text>}
@@ -1056,9 +1057,9 @@ export default function WODDetailScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <View style={S.modalContainer}>
             <View style={S.modalHeader}>
-              <Text style={S.modalTitle}>Entrer mon score</Text>
+              <Text style={S.modalTitle}>{i18n.t('whiteboard.enterScore')}</Text>
               <TouchableOpacity onPress={closeScoreModal} accessibilityRole="button" hitSlop={8} testID="score-cancel">
-                <Text style={S.modalCloseText}>Annuler</Text>
+                <Text style={S.modalCloseText}>{i18n.t('common.cancel')}</Text>
               </TouchableOpacity>
             </View>
 
@@ -1109,7 +1110,7 @@ export default function WODDetailScreen() {
                   <View style={[S.dnfCheck, dnf && S.dnfCheckActive]}>
                     {dnf && <Check color={c.onAccent} size={14} strokeWidth={3} />}
                   </View>
-                  <Text style={S.dnfLabel}>WOD pas fini (CAP)</Text>
+                  <Text style={S.dnfLabel}>{i18n.t('wodDetail.notFinished')}</Text>
                 </TouchableOpacity>
               )}
 
@@ -1117,9 +1118,9 @@ export default function WODDetailScreen() {
                 strengthDrafts.some(d => !isRepsOnly(d)) ? <StrengthMaxLoadRow maxLoadKg={computedMaxLoad(strengthDrafts)} /> : null
               ) : scoreType === 'time' && dnf ? (
                 <>
-                  <Text style={S.modalLabel}>NOMBRE DE RÉPÉTITIONS COMPLÉTÉES</Text>
+                  <Text style={S.modalLabel}>{i18n.t('wodDetail.capRepsLabel')}</Text>
                   <AxTextField
-                    placeholder="Ex: 87"
+                    placeholder={i18n.t('wodDetail.capRepsPlaceholder')}
                     value={capReps}
                     onChangeText={setCapReps}
                     keyboardType="number-pad"
@@ -1130,14 +1131,14 @@ export default function WODDetailScreen() {
               ) : (
                 <>
                   <Text style={S.modalLabel}>
-                    {scoreType === 'time' ? 'TEMPS (MM:SS)' : scoreType === 'weight' ? 'POIDS (kg)' : scoreType === 'reps' ? 'REPS' : 'ROUNDS'}
+                    {i18n.t(scoreType === 'time' ? 'wodDetail.timeLabel' : scoreType === 'weight' ? 'wodDetail.weightLabel' : scoreType === 'reps' ? 'wodDetail.repsLabel' : 'wodDetail.roundsLabel')}
                   </Text>
                   {scoreType === 'time' ? (
                     <View style={S.timeRow}>
                       <View style={S.timeInput}>
                       <AxTextField
                         compact
-                        placeholder="MM"
+                        placeholder={i18n.t('wodDetail.minutesPlaceholder')}
                         value={timeMin}
                         onChangeText={(t) => {
                           const d = t.replace(/\D/g, '').slice(0, 2);
@@ -1155,7 +1156,7 @@ export default function WODDetailScreen() {
                       <AxTextField
                         compact
                         inputRef={secRef}
-                        placeholder="SS"
+                        placeholder={i18n.t('wodDetail.secondsPlaceholder')}
                         value={timeSec}
                         onChangeText={(t) => setTimeSec(t.replace(/\D/g, '').slice(0, 2))}
                         keyboardType="number-pad"
@@ -1195,15 +1196,15 @@ export default function WODDetailScreen() {
                 onRemoveSet={index => onStrengthGridEdit(prev => removeStrengthSet(prev, index))}
               />
 
-              <Text style={S.modalLabel}>NIVEAU</Text>
+              <Text style={S.modalLabel}>{i18n.t('wodDetail.levelLabel')}</Text>
               <View style={S.rxRow}>
                 <AxChip label="RX" selected={isRx} onPress={() => setIsRx(true)} testID="score-level-rx" />
                 <AxChip label="Scaled" selected={!isRx} onPress={() => setIsRx(false)} testID="score-level-scaled" />
               </View>
 
-              <Text style={S.modalLabel}>NOTES (optionnel)</Text>
+              <Text style={S.modalLabel}>{i18n.t('wodDetail.notesLabel')}</Text>
               <AxTextField
-                placeholder="Commentaire, mouvements adaptés…"
+                placeholder={i18n.t('wodDetail.notesPlaceholder')}
                 value={noteInput}
                 onChangeText={setNoteInput}
                 multiline
@@ -1236,7 +1237,7 @@ export default function WODDetailScreen() {
               ) : (
                 <View style={{ marginTop: 8 }}>
                   <AxButton
-                    label="Valider le score"
+                    label={i18n.t('wodDetail.submitScore')}
                     variant="accent"
                     loading={submitting}
                     disabled={!(dnf ? capReps.trim() : scoreType === 'time' ? (timeMin.trim() || timeSec.trim()) : scoreInput.trim())}
@@ -1265,9 +1266,9 @@ export default function WODDetailScreen() {
           rx: myScore.rx,
           rank: myRank,
           totalParticipants: scores.length,
-          username: user?.username ?? 'Athlète',
+          username: user?.username ?? i18n.t('onboarding.athleteFallback'),
           avatarUrl: user?.avatar_url,
-          boxName: currentBox?.name ?? 'Ma Box',
+          boxName: currentBox?.name ?? i18n.t('whiteboard.title'),
           date: wod.scheduled_date ?? new Date().toISOString().slice(0, 10),
         } : null}
         viewShotRef={viewShotRef}
@@ -1284,7 +1285,7 @@ export default function WODDetailScreen() {
             <View style={S.sdHeader}>
               <View style={{ flex: 1 }}>
                 <Text style={S.sdTitle}>
-                  {(selectedScore?.profile as any)?.username ?? 'Athlète'}
+                  {(selectedScore?.profile as any)?.username ?? i18n.t('onboarding.athleteFallback')}
                 </Text>
                 <Text style={S.sdSub}>
                   {selectedScore ? formatScore(selectedScore) : ''} · {selectedScore?.rx ? 'RX' : 'Scaled'}
@@ -1393,7 +1394,7 @@ export default function WODDetailScreen() {
             {/* Comments */}
             <View style={{ flex: 1 }}>
               <Text style={S.sdCommentsTitle}>
-                <MessageSquare color={theme.textMuted} size={14} /> Commentaires ({comments.length})
+                <MessageSquare color={theme.textMuted} size={14} /> {i18n.t('comments.title', { count: comments.length })}
               </Text>
               <FlatList
                 data={comments}
@@ -1403,7 +1404,7 @@ export default function WODDetailScreen() {
                   const author = Array.isArray(item.author) ? item.author[0] : item.author;
                   const isMyComment = author?.id === user?.id;
                   const ago = Math.floor((Date.now() - new Date(item.created_at).getTime()) / 60000);
-                  const timeLabel = ago < 60 ? `${ago}min` : ago < 1440 ? `${Math.floor(ago / 60)}h` : `${Math.floor(ago / 1440)}j`;
+                  const timeLabel = ago < 60 ? i18n.t('wodDetail.agoMinutes', { n: ago }) : ago < 1440 ? i18n.t('wodDetail.agoHours', { n: Math.floor(ago / 60) }) : i18n.t('wodDetail.agoDays', { n: Math.floor(ago / 1440) });
                   return (
                     <AxCard style={[S.sdComment, isMyComment && S.sdCommentMine]} testID={`comment-${item.id}`}>
                       <View style={S.sdCommentHeader}>
@@ -1416,7 +1417,7 @@ export default function WODDetailScreen() {
                           textColor={theme.text}
                           fontSize={10}
                         />
-                        <Text style={S.sdCommentAuthor}>{author?.username ?? 'Inconnu'}</Text>
+                        <Text style={S.sdCommentAuthor}>{author?.username ?? i18n.t('compDetail.unknown')}</Text>
                         <Text style={S.sdCommentTime}>{timeLabel}</Text>
                         {!isMyComment && author?.id && (
                           <ReportMenu
@@ -1435,8 +1436,8 @@ export default function WODDetailScreen() {
                 ListEmptyComponent={
                   <View style={S.sdEmptyComments}>
                     <MessageSquare color={theme.textMuted} size={24} />
-                    <Text style={S.sdEmptyText}>Aucun commentaire</Text>
-                    <Text style={S.sdEmptySubText}>Sois le premier à commenter !</Text>
+                    <Text style={S.sdEmptyText}>{i18n.t('comments.empty')}</Text>
+                    <Text style={S.sdEmptySubText}>{i18n.t('wodDetail.firstComment')}</Text>
                   </View>
                 }
               />
@@ -1446,7 +1447,7 @@ export default function WODDetailScreen() {
             <View style={S.sdInputRow}>
               <View style={S.sdInput}>
                 <AxTextField
-                  placeholder="Écrire un commentaire..."
+                  placeholder={i18n.t('comments.placeholder')}
                   value={commentText}
                   onChangeText={setCommentText}
                   multiline
@@ -1460,7 +1461,7 @@ export default function WODDetailScreen() {
                 disabled={!commentText.trim() || sendingComment}
                 style={[S.sdSendBtn, (!commentText.trim() || sendingComment) && { opacity: 0.4 }]}
                 accessibilityRole="button"
-                accessibilityLabel="Envoyer"
+                accessibilityLabel={i18n.t('bo.notifications.send')}
                 testID="comment-send"
               >
                 {sendingComment

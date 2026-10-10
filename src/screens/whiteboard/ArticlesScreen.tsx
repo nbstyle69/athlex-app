@@ -209,7 +209,7 @@ export default function ArticlesScreen() {
           <View style={S.detailBodyWrap}>
             <Text testID="article-detail-title" style={S.detailTitle}>{selectedArticle.title}</Text>
             <Text testID="article-detail-meta" style={S.detailMeta}>
-              Par {selectedArticle.author_username} · {new Date(selectedArticle.created_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' })}
+              {t('articles.byline', { author: selectedArticle.author_username, date: new Date(selectedArticle.created_at).toLocaleDateString(dateLocale(), { day: 'numeric', month: 'long', year: 'numeric' }) })}
             </Text>
             {selectedArticle.body ? <Text style={S.detailBody}>{selectedArticle.body}</Text> : null}
 
@@ -227,15 +227,15 @@ export default function ArticlesScreen() {
                 size={16}
               />
               <Text style={[S.likeBtnText, selectedArticle.liked_by_me && { color: c.onAccent }]}>
-                {selectedArticle.likes_count} J'aime
+                {t('articles.likes', { count: selectedArticle.likes_count })}
               </Text>
             </Pressable>
 
-            <Text testID="article-comments-title" style={S.commentsTitle}>Commentaires ({selectedArticle.comments_count})</Text>
+            <Text testID="article-comments-title" style={S.commentsTitle}>{t('comments.title', { count: selectedArticle.comments_count })}</Text>
             {loadingComments ? (
               <ActivityIndicator color={c.accentText} />
             ) : comments.length === 0 ? (
-              <Text style={S.emptyText}>Aucun commentaire</Text>
+              <Text style={S.emptyText}>{t('comments.empty')}</Text>
             ) : comments.map(cm => (
               <AxCard key={cm.id} testID={`article-comment-${cm.id}`} style={S.commentCard}>
                 <View style={S.shrink}>
@@ -246,7 +246,7 @@ export default function ArticlesScreen() {
                   </Text>
                 </View>
                 {cm.user_id === user?.id && (
-                  <TouchableOpacity testID={`article-comment-delete-${cm.id}`} onPress={() => deleteComment(cm.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityLabel="Supprimer le commentaire">
+                  <TouchableOpacity testID={`article-comment-delete-${cm.id}`} onPress={() => deleteComment(cm.id)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} accessibilityLabel={t('articles.deleteComment')}>
                     <Trash2 color={c.danger} size={14} />
                   </TouchableOpacity>
                 )}
@@ -259,12 +259,12 @@ export default function ArticlesScreen() {
           <View style={S.shrink}>
             <AxTextField
               testID="article-comment-input"
-              placeholder="Écrire un commentaire..."
+              placeholder={t('comments.placeholder')}
               value={commentText}
               onChangeText={setCommentText}
             />
           </View>
-          <TouchableOpacity testID="article-comment-send" onPress={sendComment} disabled={!commentText.trim()} activeOpacity={0.8} accessibilityLabel="Envoyer">
+          <TouchableOpacity testID="article-comment-send" onPress={sendComment} disabled={!commentText.trim()} activeOpacity={0.8} accessibilityLabel={t('bo.notifications.send')}>
             <Send color={commentText.trim() ? c.accentText : c.textMuted} size={20} />
           </TouchableOpacity>
         </View>
@@ -276,7 +276,7 @@ export default function ArticlesScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title="Actualités" />
+      <AxScreenHeader title={t('whiteboard.news')} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -284,7 +284,7 @@ export default function ArticlesScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
       >
         {articles.length === 0 ? (
-          <Text style={S.emptyText}>Aucune actualité pour le moment</Text>
+          <Text style={S.emptyText}>{t('articles.empty')}</Text>
         ) : articles.map(a => (
           <AxCard key={a.id} testID={`article-${a.id}`} onPress={() => openArticle(a)} accessibilityLabel={a.title} style={S.articleCard}>
             {a.image_url && (
@@ -292,7 +292,7 @@ export default function ArticlesScreen() {
             )}
             <View style={S.articleContent}>
               <Text testID={`article-title-${a.id}`} style={S.articleTitle} numberOfLines={2}>{a.title}</Text>
-              <Text testID={`article-author-${a.id}`} style={S.articleAuthor} numberOfLines={1}>Par {a.author_username}</Text>
+              <Text testID={`article-author-${a.id}`} style={S.articleAuthor} numberOfLines={1}>{t('articles.by', { author: a.author_username })}</Text>
               {a.body ? <Text testID={`article-body-${a.id}`} style={S.articleBody} numberOfLines={2}>{a.body}</Text> : null}
               <View style={S.articleMeta}>
                 <Text testID={`article-date-${a.id}`} style={S.dateText}>
@@ -303,7 +303,7 @@ export default function ArticlesScreen() {
                   style={S.counter}
                   onPress={(e) => { e.stopPropagation?.(); toggleLike(a); }}
                   activeOpacity={0.7}
-                  accessibilityLabel={`${a.likes_count} J'aime`}
+                  accessibilityLabel={t('articles.likes', { count: a.likes_count })}
                 >
                   <Heart
                     color={a.liked_by_me ? c.accentText : c.textMuted}
