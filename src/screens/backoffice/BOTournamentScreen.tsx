@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { sendTournamentClosedNotification } from '../../services/notifications';
@@ -182,7 +183,7 @@ export default function BOTournamentScreen() {
             .delete()
             .eq('tournament_id', selectedId!)
             .eq('athlete_id', athleteId);
-          if (error) { Alert.alert(t('common.error'), error.message); return; }
+          if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
           loadData();
         }},
       ]
@@ -212,7 +213,7 @@ export default function BOTournamentScreen() {
         const { error } = await supabase.from('tournament_scores').update({
           status: 'validated', validated_at: new Date().toISOString(),
         }).eq('id', score.id);
-        if (error) { Alert.alert(t('common.error'), error.message); return; }
+        if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
 
         // Update movement rep counts + badges.
         // Reps are scaled by the athlete's actual score (e.g. an AMRAP score of 250
@@ -272,7 +273,7 @@ export default function BOTournamentScreen() {
     }).eq('id', rejectModal.id);
     setRejectModal(null);
     setRejectReason('');
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     loadData();
   }
 
@@ -294,7 +295,7 @@ export default function BOTournamentScreen() {
     } catch (e: any) {
       captureError(e, { screen: 'BOTournament', action: 'aiAnalysis' });
       setAiLoading(null);
-      Alert.alert(t('bo.tournament.aiError'), e?.message ?? t('bo.tournament.apiUnreachable'));
+      Alert.alert(t('bo.tournament.aiError'), e?.message ? await errorMessage(e) : t('bo.tournament.apiUnreachable'));
     }
   }
 
@@ -363,7 +364,7 @@ export default function BOTournamentScreen() {
             eloChanges = await performTournamentClose(selectedId);
           } catch (e) {
             setClosingTourn(false);
-            Alert.alert(t('common.error'), e instanceof Error ? e.message : String(e));
+            Alert.alert(t('common.error'), await errorMessage(e));
             return;
           }
           setClosingTourn(false);

@@ -219,6 +219,19 @@ pastille désormais, qui retient les programmes des deux valeurs (`matchesDiscip
 change. Test `programmationHybrid.rn.test.tsx` (une seule pastille, programmes 'hyrox' et 'hybrid' retenus,
 « Functional » inchangé), qui échoue sans le regroupement ou avec l'ancienne pastille 'hyrox'.
 
+**Chantier anglais, PR 7 : erreurs brutes et corrections (app seule, aucune migration ; PR non mergée).** Les
+dernières alertes qui affichaient un `error.message` brut (28 appels dans 16 écrans, plus `joinBox` et `leaveBox`
+d'AuthContext) passent par `errorMessage()` ; une garde (`i18nErreursTextes.test.ts`) refuse désormais tout
+`Alert.alert` avec un `.message` brut hors fichiers exclus (AdminScreen). Aucun code connu ne manquait à
+`refusals.ts`. Corrections validées par Nab : type de séance « Musculation » (éditeur de WOD, éditeur de programme,
+et formulaire de WOD perso qui partage la clé), vrais pluriels du back-office (« 1 inscrit », « 12 participants »…),
+types de cours « Musculation », « Mobilité », « Enfants », « Ados » (libellé seul : la valeur enregistrée comme titre
+du cours ne change pas, `src/lib/classTypes.ts`, et les cours existants s'affichent sous leur libellé traduit dans
+les horaires, la réservation et « Mes réservations »), « BLOC », « En continu ». Anglais : limite de réservation
+« session / sessions », clé inutilisée `bo.notifications.sentMsg` supprimée, « Program » au lieu de « Programme »,
+prix de la programmation « €29/month » (français inchangé, montant par `locale.ts`). Captures 390 px FR / EN dans
+`athlex-captures/i18n-erreurs`.
+
 **Classement général : nom du podium entier (apparence seule, app seule ; PR non mergée).** Les cases du podium avaient une hauteur fixe (56 / 76 / 44 px) plus petite que leur contenu (médaille, nom, ELO, marges : 62 px mesurés sur le web) : le nom était écrasé à 6 px sur la 2e marche et à 0 sur la 3e, coupé en bas de sa case, en français comme en anglais. La case suit désormais son contenu, l'écart entre marches (12 et 32 px) devient une marge haute : podium plus haut de 18 px, ordre, couleurs et textes inchangés ; nom sur une ligne, « … » si trop long. Test `podiumClassement.rn.test.tsx` (positions calculées depuis les styles rendus et la ligne native d'Inter, clair / sombre, noms courts / longs), qui échoue avec les hauteurs fixes d'origine, sans `numberOfLines` ou sans écart de marche. Mesure réelle à 390 px avant / après dans `athlex-captures/podium`.
 
 **Chantier anglais, PR 6 : Gérant (app seule, aucune migration ; PR non mergée).** Bandeau d'abonnement du tableau

@@ -28,7 +28,7 @@ const FR: [string, Record<string, unknown> | undefined, string][] = [
   ['messages.gifNoResult', undefined, 'Aucun résultat'],
   ['bo.wods.typeAmrap', undefined, 'AMRAP'],
   ['bo.wods.typeEmom', undefined, 'EMOM'],
-  ['bo.wods.typeStrength', undefined, 'Force'],
+  ['bo.wods.typeStrength', undefined, 'Musculation'], // correction validée par Nab (PR erreurs et corrections)
 ];
 
 describe('Ma Box + Réservation : français inchangé hors instantané', () => {

@@ -36,7 +36,7 @@ import TournamentDivisionsView from './TournamentDivisionsView';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import i18n from '../../i18n';
-import { tournamentRefusal } from '../../utils/refusals';
+import { tournamentRefusal, errorMessage } from '../../utils/refusals';
 import { libelleEtape } from '../../utils/bracketWods';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { useConfirmDialog } from '../../components/ConfirmDialog';
@@ -226,7 +226,7 @@ export default function TournamentScreen() {
       );
     } catch (e: any) {
       captureError(e, { screen: 'Tournament', action: 'register' });
-      Alert.alert(t('common.error'), e?.message ?? t('tournament.registerImpossible'));
+      Alert.alert(t('common.error'), e?.message ? await errorMessage(e) : t('tournament.registerImpossible'));
     } finally {
       setRegistering(false);
     }
@@ -292,7 +292,7 @@ export default function TournamentScreen() {
     const { error } = await supabase.from('tournament_scores')
       .update({ status: 'validated', validated_at: new Date().toISOString() })
       .eq('id', scoreId);
-    if (error) { Alert.alert(t('common.error'), error.message); setProcessing(null); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); setProcessing(null); return; }
     setAllScores(prev => prev.map(s => s.id === scoreId ? { ...s, status: 'validated' as const } : s));
     setProcessing(null);
     load();
@@ -303,7 +303,7 @@ export default function TournamentScreen() {
     const { error } = await supabase.from('tournament_scores')
       .update({ status: 'rejected' })
       .eq('id', scoreId);
-    if (error) { Alert.alert(t('common.error'), error.message); setProcessing(null); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); setProcessing(null); return; }
     setAllScores(prev => prev.map(s => s.id === scoreId ? { ...s, status: 'rejected' as const } : s));
     setProcessing(null);
     load(); // le score rejeté sort du classement calculé par la base
@@ -322,7 +322,7 @@ export default function TournamentScreen() {
             .delete()
             .eq('tournament_id', tournamentId)
             .eq('athlete_id', athleteId);
-          if (error) { Alert.alert(t('common.error'), error.message); return; }
+          if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
           load();
         }},
       ]
@@ -342,7 +342,7 @@ export default function TournamentScreen() {
             .delete()
             .eq('tournament_id', tournamentId)
             .eq('athlete_id', user.id);
-          if (error) { Alert.alert(t('common.error'), error.message); return; }
+          if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
           setIsRegistered(false);
           load();
         }},

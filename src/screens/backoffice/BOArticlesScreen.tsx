@@ -7,6 +7,7 @@ import { Newspaper, Plus, Trash2, X, Image as ImageIcon, ChevronLeft } from 'luc
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
@@ -114,7 +115,7 @@ export default function BOArticlesScreen() {
     });
 
     setSaving(false);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
 
     setTitle('');
     setBody('');

@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Settings, ChevronLeft, Save } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { supabase } from '../../lib/supabase';
 import { readRows } from '../../lib/db';
 import { captureError } from '../../lib/sentry';
@@ -58,7 +59,7 @@ export default function BOSettingsScreen({ navigation }: any) {
       weekly_publish_hour: wh,
     }).eq('id', currentBox.id);
     setSaving(false);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     Alert.alert(t('bo.settings.savedTitle'), t('bo.settings.savedMsg'));
   }
 

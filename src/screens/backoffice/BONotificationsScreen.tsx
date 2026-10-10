@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Bell, BellOff, Send, Clock, CircleCheck, ChevronLeft, User } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
@@ -94,7 +95,7 @@ export default function BONotificationsScreen() {
 
     if (error || !inserted) {
       captureError(error, { screen: 'BONotifications', action: 'send' });
-      Alert.alert(t('common.error'), error?.message ?? t('bo.notifications.saveFailed'));
+      Alert.alert(t('common.error'), error?.message ? await errorMessage(error) : t('bo.notifications.saveFailed'));
       setSending(false);
       return;
     }

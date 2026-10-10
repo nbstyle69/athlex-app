@@ -243,9 +243,9 @@
   "dialogs": {
     "screens/reservation/ReservationScreen.tsx": [
       "t('reservation.tooLateTitle'), t('reservation.cancelTooLate', { min: CANCEL_CUTOFF_MIN })",
-      "item.my_status === 'confirmed' ? t('reservation.cancelReservationTitle') : t('reservation.leaveWaitlistTitle'), label, [ { text: t('common.no'), style: 'cancel', onPress: () => setBooking(null) }, { text: t('common.yes'), style: 'destructive', onPress: async () => { const { error } = await supabase .from('class_reservations') .delete() .eq('schedule_id', item.id) .eq('member_id', user.id); if (error) Alert.alert(t('common.error'), error.message); else await cancelClassReminder(item.id); setBooking(null); load(); }, }]",
+      "item.my_status === 'confirmed' ? t('reservation.cancelReservationTitle') : t('reservation.leaveWaitlistTitle'), label, [ { text: t('common.no'), style: 'cancel', onPress: () => setBooking(null) }, { text: t('common.yes'), style: 'destructive', onPress: async () => { const { error } = await supabase .from('class_reservations') .delete() .eq('schedule_id', item.id) .eq('member_id', user.id); if (error) Alert.alert(t('common.error'), await errorMessage(error)); else await cancelClassReminder(item.id); setBooking(null); load(); }, }]",
       "t('reservation.tooLateTitle'), t('reservation.registerTooLate', { min: REGISTER_CUTOFF_MIN })",
-      "t('reservation.limitReachedTitle'), t('reservation.limitReachedBody', { max: wl.max, used: wl.used })",
+      "t('reservation.limitReachedTitle'), t('reservation.limitReachedBody', { count: wl.max, max: wl.max, used: wl.used })",
       "t('reservation.dailyLimitTitle'), t('reservation.dailyLimitBody')",
       "refusal.title, refusal.body, noPlanButtons(planActivationUrl(planStatus, currentBox.slug)), { icon: CreditCard }",
       "refusal.title, refusal.body",
@@ -253,14 +253,14 @@
     ],
     "screens/reservation/MyReservationsScreen.tsx": [
       "t('reservation.tooLateTitle'), t('reservation.cancelTooLate', { min: CANCEL_CUTOFF_MIN })",
-      "isConfirmed ? t('reservation.cancelReservationTitle') : t('reservation.leaveWaitlistTitle'), isConfirmed ? t('myReservations.cancelConfirmedBody') : t('myReservations.cancelWaitingBody'), [ { text: t('common.no'), style: 'cancel' }, { text: t('myReservations.yesCancel'), style: 'destructive', onPress: async () => { const { error } = await supabase .from('class_reservations') .delete() .eq('id', item.id); if (error) Alert.alert(t('common.error'), error.message); else { await cancelClassReminder(item.schedule_id); load(); } }, }]"
+      "isConfirmed ? t('reservation.cancelReservationTitle') : t('reservation.leaveWaitlistTitle'), isConfirmed ? t('myReservations.cancelConfirmedBody') : t('myReservations.cancelWaitingBody'), [ { text: t('common.no'), style: 'cancel' }, { text: t('myReservations.yesCancel'), style: 'destructive', onPress: async () => { const { error } = await supabase .from('class_reservations') .delete() .eq('id', item.id); if (error) Alert.alert(t('common.error'), await errorMessage(error)); else { await cancelClassReminder(item.schedule_id); load(); } }, }]"
     ],
     "screens/competition/TournamentScreen.tsx": [
-      "t('tournament.kickTitle'), t('tournament.kickMsg', { username }), [ { text: t('common.cancel'), style: 'cancel' }, { text: t('tournament.kick'), style: 'destructive', onPress: async () => { const { error } = await supabase .from('tournament_participants') .delete() .eq('tournament_id', tournamentId) .eq('athlete_id', athleteId); if (error) { Alert.alert(t('common.error'), error.message); return; } load(); }}]",
-      "t('tournament.leaveTitle'), t('tournament.leaveMsg'), [ { text: t('common.cancel'), style: 'cancel' }, { text: t('tournament.leave'), style: 'destructive', onPress: async () => { const { error } = await supabase .from('tournament_participants') .delete() .eq('tournament_id', tournamentId) .eq('athlete_id', user.id); if (error) { Alert.alert(t('common.error'), error.message); return; } setIsRegistered(false); load(); }}]"
+      "t('tournament.kickTitle'), t('tournament.kickMsg', { username }), [ { text: t('common.cancel'), style: 'cancel' }, { text: t('tournament.kick'), style: 'destructive', onPress: async () => { const { error } = await supabase .from('tournament_participants') .delete() .eq('tournament_id', tournamentId) .eq('athlete_id', athleteId); if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; } load(); }}]",
+      "t('tournament.leaveTitle'), t('tournament.leaveMsg'), [ { text: t('common.cancel'), style: 'cancel' }, { text: t('tournament.leave'), style: 'destructive', onPress: async () => { const { error } = await supabase .from('tournament_participants') .delete() .eq('tournament_id', tournamentId) .eq('athlete_id', user.id); if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; } setIsRegistered(false); load(); }}]"
     ],
     "screens/backoffice/BOTournamentScreen.tsx": [
-      "t('bo.tournament.kickTitle'), t('bo.tournament.kickMsg', { username }), [ { text: t('common.cancel'), style: 'cancel' }, { text: t('bo.tournament.kick'), style: 'destructive', onPress: async () => { const { error } = await supabase .from('tournament_participants') .delete() .eq('tournament_id', selectedId!) .eq('athlete_id', athleteId); if (error) { Alert.alert(t('common.error'), error.message); return; } loadData(); }}]"
+      "t('bo.tournament.kickTitle'), t('bo.tournament.kickMsg', { username }), [ { text: t('common.cancel'), style: 'cancel' }, { text: t('bo.tournament.kick'), style: 'destructive', onPress: async () => { const { error } = await supabase .from('tournament_participants') .delete() .eq('tournament_id', selectedId!) .eq('athlete_id', athleteId); if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; } loadData(); }}]"
     ],
     "screens/wod/WodResultScreen.tsx": [
       "i18n.t('wodGenerator.scoreSavedTitle'), i18n.t('wodGenerator.scoreSavedBody'), [ { text: i18n.t('common.ok'), style: 'cancel' }, { text: i18n.t('wodGenerator.seeMyHistory'), onPress: () => navigation.navigate('WodHistory') }]",

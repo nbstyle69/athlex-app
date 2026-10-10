@@ -19,6 +19,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { CompetitionStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import {
   isRepsScoredType, isTimeScoredType, repsPerRoundFromMovements, formatScoreDisplay,
 } from '../../utils/tournamentUtils';
@@ -142,7 +143,7 @@ export default function TournamentWODScreen() {
     }
 
     setSubmitting(false);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     if (intervalRef.current) clearInterval(intervalRef.current);
     setPhase('success');
   }

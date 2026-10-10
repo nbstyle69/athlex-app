@@ -17,7 +17,8 @@ import { getMyMemberships, needsPlan, planActivationUrl } from '../../services/m
 import { usePlanStatuses } from '../../hooks/usePlanStatuses';
 import PlanToActivateNotice from '../../components/PlanToActivateNotice';
 import { WEB_URL } from '../../lib/urls';
-import { reservationRefusal } from '../../utils/refusals';
+import { reservationRefusal, errorMessage } from '../../utils/refusals';
+import { classTitleLabel } from '../../lib/classTypes';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { useConfirmDialog } from '../../components/ConfirmDialog';
 import EmptyState from '../../components/EmptyState';
@@ -242,7 +243,7 @@ export default function ReservationScreen() {
                 .delete()
                 .eq('schedule_id', item.id)
                 .eq('member_id', user.id);
-              if (error) Alert.alert(t('common.error'), error.message);
+              if (error) Alert.alert(t('common.error'), await errorMessage(error));
               else await cancelClassReminder(item.id);
               setBooking(null);
               load();
@@ -269,7 +270,7 @@ export default function ReservationScreen() {
         if (wl && !wl.allowed) {
           dialog.show(
             t('reservation.limitReachedTitle'),
-            t('reservation.limitReachedBody', { max: wl.max, used: wl.used }),
+            t('reservation.limitReachedBody', { count: wl.max, max: wl.max, used: wl.used }),
           );
           setBooking(null);
           return;
@@ -305,13 +306,13 @@ export default function ReservationScreen() {
           const refusal = reservationRefusal(error);
           if (refusal?.code === 'NO_ACTIVE_PLAN') dialog.show(refusal.title, refusal.body, noPlanButtons(planActivationUrl(planStatus, currentBox.slug)), { icon: CreditCard });
           else if (refusal) dialog.show(refusal.title, refusal.body);
-          else Alert.alert(t('common.error'), error.message);
+          else Alert.alert(t('common.error'), await errorMessage(error));
         }
         else if (data?.status === 'waiting') {
           Alert.alert(t('reservation.waitlistTitle'), t('reservation.waitlistDowngrade'));
         }
         else {
-          await scheduleClassReminder(item.id, item.title, item.scheduled_date, item.start_time);
+          await scheduleClassReminder(item.id, classTitleLabel(item.title), item.scheduled_date, item.start_time);
         }
         setBooking(null);
         load();
@@ -463,7 +464,7 @@ export default function ReservationScreen() {
                             <Text style={S.slotTime}>
                               {item.start_time} – {item.end_time}
                             </Text>
-                            <AxTag testID={`r10-tag-${item.id}`} label={item.title} numberOfLines={2} />
+                            <AxTag testID={`r10-tag-${item.id}`} label={classTitleLabel(item.title)} numberOfLines={2} />
                             {item.coach ? (
                               <View style={S.metaRow}>
                                 <User color={c.textMuted} size={12} />

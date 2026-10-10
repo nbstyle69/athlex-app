@@ -7,6 +7,8 @@ import {
 import { Calendar, Clock, User, X as XIcon } from 'lucide-react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
+import { classTitleLabel } from '../../lib/classTypes';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
@@ -147,7 +149,7 @@ export default function MyReservationsScreen() {
               <AxCard testID={`r10-res-${item.id}`} style={isPast ? S.cardPast : undefined}>
                 <View style={S.cardBody}>
                   <View style={S.cardTop}>
-                    <Text style={S.cardTitle} numberOfLines={2}>{s.title}</Text>
+                    <Text style={S.cardTitle} numberOfLines={2}>{classTitleLabel(s.title)}</Text>
                     <AxStatusDot
                       testID={`r10-res-status-${item.id}`}
                       tone={isConfirmed ? 'active' : 'warning'}
@@ -201,7 +203,7 @@ export default function MyReservationsScreen() {
                                   .from('class_reservations')
                                   .delete()
                                   .eq('id', item.id);
-                                if (error) Alert.alert(t('common.error'), error.message);
+                                if (error) Alert.alert(t('common.error'), await errorMessage(error));
                                 else {
                                   await cancelClassReminder(item.schedule_id);
                                   load();
