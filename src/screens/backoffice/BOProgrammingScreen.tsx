@@ -15,7 +15,12 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import { boxClosedRefusal, errorMessage } from '../../utils/refusals';
 import i18n from '../../i18n';
 
-const DISCIPLINES = ['crossfit', 'hyrox', 'hybrid', 'haltero', 'endurance'];
+// Pastilles du filtre. « Hybrid » couvre deux valeurs enregistrées ('hybrid' et l'ancienne 'hyrox') :
+// une seule pastille, qui retient les programmes des deux ; les valeurs en base ne changent pas.
+const DISCIPLINES = ['crossfit', 'hybrid', 'haltero', 'endurance'];
+const DISCIPLINE_VALUES: Record<string, string[]> = { hybrid: ['hybrid', 'hyrox'] };
+export const matchesDiscipline = (filter: string, value: string | null) =>
+  (DISCIPLINE_VALUES[filter] ?? [filter]).includes(value ?? '');
 // Clés i18n des disciplines (valeurs internes inchangées : crossfit → Functional, hyrox → Hybrid).
 export const DISCIPLINE_LABEL: Record<string, string> = {
   crossfit: 'training.disciplines.functional',
@@ -149,7 +154,7 @@ export default function BOProgrammingScreen({ navigation }: any) {
 
   const visible = catalogue.filter((p) => {
     if (q && !p.title.toLowerCase().includes(q.toLowerCase())) return false;
-    if (fDiscipline && p.discipline !== fDiscipline) return false;
+    if (fDiscipline && !matchesDiscipline(fDiscipline, p.discipline)) return false;
     if (fFree && p.billing !== 'free') return false;
     return true;
   });
@@ -206,6 +211,7 @@ export default function BOProgrammingScreen({ navigation }: any) {
                 onPress={() => setFDiscipline(fDiscipline === d ? '' : d)}
                 style={[S.filterChip, fDiscipline === d && S.filterChipActive]}
                 activeOpacity={0.8}
+                testID={`programming-discipline-${d}`}
               >
                 <Text style={[S.filterChipText, fDiscipline === d && S.filterChipTextActive]}>{disciplineLabel(d)}</Text>
               </TouchableOpacity>

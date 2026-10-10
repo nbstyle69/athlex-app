@@ -213,6 +213,12 @@ Supabase/Resend.
 
 ## En cours
 
+**Programmation : une seule pastille « Hybrid » (comportement, app seule, aucune migration ; PR non mergée).** Le
+Marketplace du gérant affichait deux pastilles « Hybrid » (valeurs enregistrées 'hyrox' et 'hybrid'). Une seule
+pastille désormais, qui retient les programmes des deux valeurs (`matchesDiscipline`) ; aucune valeur en base ne
+change. Test `programmationHybrid.rn.test.tsx` (une seule pastille, programmes 'hyrox' et 'hybrid' retenus,
+« Functional » inchangé), qui échoue sans le regroupement ou avec l'ancienne pastille 'hyrox'.
+
 **Classement général : nom du podium entier (apparence seule, app seule ; PR non mergée).** Les cases du podium avaient une hauteur fixe (56 / 76 / 44 px) plus petite que leur contenu (médaille, nom, ELO, marges : 62 px mesurés sur le web) : le nom était écrasé à 6 px sur la 2e marche et à 0 sur la 3e, coupé en bas de sa case, en français comme en anglais. La case suit désormais son contenu, l'écart entre marches (12 et 32 px) devient une marge haute : podium plus haut de 18 px, ordre, couleurs et textes inchangés ; nom sur une ligne, « … » si trop long. Test `podiumClassement.rn.test.tsx` (positions calculées depuis les styles rendus et la ligne native d'Inter, clair / sombre, noms courts / longs), qui échoue avec les hauteurs fixes d'origine, sans `numberOfLines` ou sans écart de marche. Mesure réelle à 390 px avant / après dans `athlex-captures/podium`.
 
 **Chantier anglais, PR 6 : Gérant (app seule, aucune migration ; PR non mergée).** Bandeau d'abonnement du tableau
