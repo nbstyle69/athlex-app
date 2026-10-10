@@ -226,6 +226,8 @@ victoire ». AdminScreen exclu explicitement de la garde (`scripts/i18n/fichiers
 Nab). Les 11 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` (144 → 155). Captures 390 px FR / EN dans
 `athlex-captures/i18n-gerant` : aucun libellé anglais tronqué ni hors écran.
 
+**WOD de tournoi : compte à rebours unique (app seule, aucune migration ; PR non mergée).** `startCountdown` (TournamentWODScreen) remplaçait l'intervalle lancé au montage sans l'arrêter : il tournait sans fin, même écran quitté. Il arrête désormais le précédent avant d'en lancer un ; le démontage arrête le dernier. Aucun changement d'affichage. Test `tournamentWodCountdown.rn.test.tsx` (minuteurs simulés : un intervalle après relance, zéro après démontage), échoue si l'on retire l'un ou l'autre arrêt ; le contournement qui arrêtait ces intervalles à la main est retiré de `i18nCompetition.rn.test.tsx` et de `r8a.rn.test.tsx`, qui se terminent seuls.
+
 **Chantier anglais, PR 5 : Profil & Accueil (app seule, aucune migration ; PR non mergée).** Profil (Compte, PR,
 séries réalisées, Stats, Badges), Amis, profil public, utilisateurs bloqués, historique ELO, Nouveautés, Accueil
 (sélecteur de box, badge débloqué, semaine), Notifications, connexion, inscription, mot de passe oublié et code,

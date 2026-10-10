@@ -92,18 +92,7 @@ async function mount(el: React.ReactElement, theme: Theme = lightTheme) {
 }
 const ctx: Ctx = { db: mockDb, route: mockRoute, auth: mockAuth, mount };
 
-// startCountdown (TournamentWODScreen) écrase intervalRef sans nettoyer l'intervalle du montage :
-// on libère ici tous les intervalles créés pendant un test pour que Jest se termine.
-const realSetInterval = global.setInterval;
-let intervals: ReturnType<typeof setInterval>[] = [];
-
 beforeEach(() => {
-  intervals = [];
-  jest.spyOn(global, 'setInterval').mockImplementation(((fn: () => void, ms?: number) => {
-    const id = realSetInterval(fn, ms);
-    intervals.push(id);
-    return id;
-  }) as typeof setInterval);
   jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick', 'queueMicrotask', 'setTimeout', 'setInterval', 'clearInterval', 'clearTimeout'] });
   jest.setSystemTime(NOW);
   mockNavigate.mockClear();
@@ -118,7 +107,6 @@ beforeEach(() => {
 afterEach(() => {
   act(() => { renderer?.unmount(); });
   renderer = null;
-  intervals.forEach(clearInterval);
   jest.restoreAllMocks();
   jest.useRealTimers();
 });
