@@ -7,6 +7,7 @@ import {
 import { Plus, ChevronLeft, Pencil, Trash2, Copy, Users, Calendar, BookOpen } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
@@ -118,7 +119,7 @@ export default function BOProgramsScreen({ navigation }: any) {
       setModalOpen(false);
       load();
     } catch (e: any) {
-      Alert.alert(t('common.error'), e.message);
+      Alert.alert(t('common.error'), await errorMessage(e));
     }
     setSubmitting(false);
   }

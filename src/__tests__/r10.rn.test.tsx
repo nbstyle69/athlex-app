@@ -626,7 +626,9 @@ describe('R10 : garde-fous', () => {
       fp(m, 'const minsLeft = minutesUntilSlot(s.scheduled_date', 'await cancelClassReminder(item.schedule_id);'),
     // Première empreinte relevée de nouveau au lot 4 « Rejoindre une box en payant » : état de la
     // formule (usePlanStatuses) et boutons du refus NO_ACTIVE_PLAN ; le reste de la logique est inchangé.
-    ]).toEqual(['6c560a4251bc58f3', '5479c602315099b6', '3d0c0e51770f9357', 'b3e544429aca2467']);
+    // Relevées de nouveau (PR erreurs et corrections) : messages d'erreur par errorMessage(), libellé du type
+    // de cours (classTitleLabel) et pluriel du refus de limite hebdomadaire ; aucune règle modifiée.
+    ]).toEqual(['4d3a4ff83b6353b2', '5479c602315099b6', '3d0c0e51770f9357', 'db89b14584f7f8cc']);
   });
 
   it('filtre de visibilité et fenêtre d’inscription inchangés dans le rendu', () => {

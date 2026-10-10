@@ -16,6 +16,7 @@ import { CompetitionStackParamList } from '../../navigation';
 import { trackInterCompScoreSubmit } from '../../lib/analytics';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import ScoreEntryFields, { ScoreKind } from '../../components/score/ScoreEntryFields';
 import { secondsToTimeString } from '../../utils/tournamentUtils';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
@@ -90,7 +91,7 @@ export default function InterScoreSubmitScreen() {
     setSubmitting(false);
     if (error) {
       if (error.code === '23505') Alert.alert(t('interScore.alreadySubmitted'), t('interScore.alreadySubmittedMsg'));
-      else Alert.alert(t('common.error'), error.message);
+      else Alert.alert(t('common.error'), await errorMessage(error));
       return;
     }
     trackInterCompScoreSubmit(competitionId, scoringType, !!trimmedVideo);

@@ -423,7 +423,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!joinErr || joinErr.message === 'Code invalide ou box introuvable') {
         return { error: i18n.t('boxAccess.invalidCode') };
       }
-      return { error: joinErr.message };
+      return { error: await errorMessage(joinErr) };
     }
 
     const box = await readRows(
@@ -456,7 +456,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .delete()
       .eq('member_id', user.id)
       .eq('box_id', currentBox.id);
-    if (error) return { error: error.message };
+    if (error) return { error: await errorMessage(error) };
     const remaining = myBoxes.filter(e => e.box.id !== currentBox.id);
     setMyBoxes(remaining);
     if (remaining.length > 0) {

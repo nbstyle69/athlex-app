@@ -7,6 +7,7 @@ import {
 import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Users, CalendarClock, Timer, Check, X, UserPlus, Search, Download, ClipboardCheck } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../../utils/refusals';
+import { CLASS_TYPES, CLASS_TYPE_KEYS, OTHER_CLASS_TYPE, classTitleLabel } from '../../lib/classTypes';
 import { supabase } from '../../lib/supabase';
 import { readRows } from '../../lib/db';
 import { normalizeTimeString } from '../../lib/timeInput';
@@ -45,24 +46,7 @@ interface BoxMember {
   username: string;
 }
 
-// Valeurs enregistrées telles quelles comme titre du cours (class_schedules.title) :
-// elles ne changent pas avec la langue ; seul leur libellé à l'écran est traduit.
-const CLASS_TYPE_KEYS: Record<string, string> = {
-  WOD: 'bo.schedule.classTypes.wod',
-  // i18n-ignore : valeur enregistrée en base (titre du cours), affichée par sa clé
-  'Haltérophilie': 'bo.schedule.classTypes.weightlifting',
-  Cardio: 'bo.schedule.classTypes.cardio',
-  'Open Gym': 'bo.schedule.classTypes.openGym',
-  Strength: 'bo.schedule.classTypes.strength',
-  Mobility: 'bo.schedule.classTypes.mobility',
-  Kids: 'bo.schedule.classTypes.kids',
-  Teens: 'bo.schedule.classTypes.teens',
-  // i18n-ignore : valeur sentinelle « autre » (titre personnalisé), affichée par sa clé
-  Autre: 'bo.schedule.classTypes.other',
-};
-const CLASS_TYPES = Object.keys(CLASS_TYPE_KEYS);
-// i18n-ignore : valeur sentinelle du type « autre », jamais affichée telle quelle
-const OTHER = 'Autre';
+const OTHER = OTHER_CLASS_TYPE;
 
 function getWeekDates(offset = 0): Date[] {
   const today = new Date();
@@ -253,7 +237,7 @@ export default function BOScheduleScreen({ navigation }: any) {
   }
 
   async function deleteItem(item: ClassSchedule) {
-    Alert.alert(t('bo.schedule.deleteTitle'), `${item.title} — ${item.start_time}`, [
+    Alert.alert(t('bo.schedule.deleteTitle'), `${classTitleLabel(item.title)} — ${item.start_time}`, [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'), style: 'destructive',
@@ -462,7 +446,7 @@ export default function BOScheduleScreen({ navigation }: any) {
                       <TouchableOpacity key={item.id} style={S.slotCard} activeOpacity={0.7} onPress={() => openAttendance(item)}>
                         <View style={S.slotLeft}>
                           <Text style={S.slotTime}>{item.start_time} – {item.end_time}</Text>
-                          <Text style={S.slotTitle}>{item.title}</Text>
+                          <Text style={S.slotTitle}>{classTitleLabel(item.title)}</Text>
                           {item.coach ? <Text style={S.slotCoach}>👤 {item.coach}</Text> : null}
                         </View>
                         <View style={S.slotRight}>

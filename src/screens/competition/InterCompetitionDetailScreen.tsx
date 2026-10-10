@@ -18,6 +18,7 @@ import { CompetitionStackParamList } from '../../navigation';
 import { trackInterCompRegister, trackInterCompScoreSubmit } from '../../lib/analytics';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { dateLocale } from '../../i18n/locale';
 
@@ -236,7 +237,7 @@ export default function InterCompetitionDetailScreen() {
       box_id: null,
     });
     if (error) {
-      Alert.alert(t('common.error'), error.code === '23505' ? t('interDetail.alreadyRegistered') : error.message);
+      Alert.alert(t('common.error'), error.code === '23505' ? t('interDetail.alreadyRegistered') : await errorMessage(error));
     } else {
       trackInterCompRegister(competitionId, comp?.format ?? 'unknown');
       await load();

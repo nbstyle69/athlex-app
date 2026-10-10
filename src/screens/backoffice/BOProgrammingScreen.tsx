@@ -14,6 +14,7 @@ import { WEB_URL } from '../../lib/urls';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { boxClosedRefusal, errorMessage } from '../../utils/refusals';
 import i18n from '../../i18n';
+import { programmingPrice } from '../../utils/programmingPrice';
 
 const DISCIPLINES = ['crossfit', 'hyrox', 'hybrid', 'haltero', 'endurance'];
 // Clés i18n des disciplines (valeurs internes inchangées : crossfit → Functional, hyrox → Hybrid).
@@ -124,7 +125,7 @@ export default function BOProgrammingScreen({ navigation }: any) {
   }
 
   function onSubscribe(item: CatalogueItem) {
-    const priceLabel = `${(item.price_cents / 100).toFixed(0)}${item.currency === 'eur' ? '€' : ''}${item.billing === 'monthly' ? t('bo.programming.perMonth') : ''}`;
+    const priceLabel = programmingPrice(item);
     if (item.billing === 'free') {
       Alert.alert(
         t('bo.programming.subscribeConfirmTitle'),
@@ -222,7 +223,7 @@ export default function BOProgrammingScreen({ navigation }: any) {
               const subscribed = subscribedIds.has(p.id);
               const priceLabel = p.billing === 'free'
                 ? t('bo.programming.free')
-                : `${(p.price_cents / 100).toFixed(0)}${p.currency === 'eur' ? '€' : ''}${p.billing === 'monthly' ? t('bo.programming.perMonth') : ''}`;
+                : programmingPrice(p);
               return (
                 <View key={p.id} style={S.card}>
                   <View style={S.cardTop}>
