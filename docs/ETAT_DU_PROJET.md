@@ -213,6 +213,12 @@ Supabase/Resend.
 
 ## En cours
 
+**Programmation : une seule pastille « Hybrid » (comportement, app seule, aucune migration ; PR non mergée).** Le
+Marketplace du gérant affichait deux pastilles « Hybrid » (valeurs enregistrées 'hyrox' et 'hybrid'). Une seule
+pastille désormais, qui retient les programmes des deux valeurs (`matchesDiscipline`) ; aucune valeur en base ne
+change. Test `programmationHybrid.rn.test.tsx` (une seule pastille, programmes 'hyrox' et 'hybrid' retenus,
+« Functional » inchangé), qui échoue sans le regroupement ou avec l'ancienne pastille 'hyrox'.
+
 **Chantier anglais, PR 7 : erreurs brutes et corrections (app seule, aucune migration ; PR non mergée).** Les
 dernières alertes qui affichaient un `error.message` brut (28 appels dans 16 écrans, plus `joinBox` et `leaveBox`
 d'AuthContext) passent par `errorMessage()` ; une garde (`i18nErreursTextes.test.ts`) refuse désormais tout

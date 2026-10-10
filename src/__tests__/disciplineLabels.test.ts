@@ -6,7 +6,8 @@ const read = (p: string) => fs.readFileSync(path.join(__dirname, '..', p), 'utf8
 describe('Libellés gérant : Functional / Hybrid (valeurs internes inchangées)', () => {
   it('BOProgramming : crossfit → Functional, hyrox → Hybrid, valeurs conservées', () => {
     const src = read('screens/backoffice/BOProgrammingScreen.tsx');
-    expect(src).toMatch(/const DISCIPLINES = \['crossfit', 'hyrox', 'hybrid', 'haltero', 'endurance'\]/);
+    expect(src).toMatch(/const DISCIPLINES = \['crossfit', 'hybrid', 'haltero', 'endurance'\]/);
+    expect(src).toMatch(/hybrid: \['hybrid', 'hyrox'\]/);
     expect(src).toMatch(/crossfit: 'training\.disciplines\.functional'/);
     expect(src).toMatch(/hyrox: 'training\.disciplines\.hybrid'/);
     expect(src).toMatch(/\{disciplineLabel\(d\)\}/);
