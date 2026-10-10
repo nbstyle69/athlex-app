@@ -9,7 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import {
   type Acces, type Box, type Jeton, type Ligne, type LigneStaff, type MessageExpo, type TypeNotif,
-  Echec, MAX_TENTATIVES, compterAcceptes, destinataires, heureParis, rediger, traiterFile,
+  Echec, MAX_TENTATIVES, TYPES_NOTIF, compterAcceptes, destinataires, heureParis, rediger, traiterFile,
 } from '../../supabase/functions/deliver-manager-notifications/regles';
 import { compterAcceptes as compterAcceptesAnnonces } from '../../supabase/functions/send-box-notification/regles';
 
@@ -130,7 +130,20 @@ describe('textes validés (FR / EN), heure à Paris', () => {
     ['booked_without_plan', 'Inscription sans formule', 'nab_wod a été inscrit au cours de 18:30 sans formule active.',
       'Booking without a plan', 'nab_wod was booked into the 18:30 class without an active plan.'],
     ['invitation_accepted', 'Invitation acceptée', 'nab_wod a rejoint CrossFit Lyon.', 'Invitation accepted', 'nab_wod joined CrossFit Lyon.'],
+    ['plan_change_request', 'Demande de changement de formule', 'nab_wod demande à passer à Illimité.',
+      'Plan change request', 'nab_wod asked to switch to Illimité.'],
   ];
+
+  it('chaque type de la file a son texte, en français et en anglais', () => {
+    expect(attendus.map(([t]) => t).sort()).toEqual([...TYPES_NOTIF].sort());
+    for (const type of TYPES_NOTIF) {
+      for (const langue of ['fr', 'en'] as const) {
+        const m = rediger(type, langue, v);
+        expect(m?.title).toBeTruthy();
+        expect(m?.body).toBeTruthy();
+      }
+    }
+  });
   it.each(attendus)('%s', (type, titreFr, corpsFr, titreEn, corpsEn) => {
     expect(rediger(type, 'fr', v)).toEqual({ title: titreFr, body: corpsFr });
     expect(rediger(type, 'en', v)).toEqual({ title: titreEn, body: corpsEn });
@@ -148,6 +161,25 @@ describe('textes validés (FR / EN), heure à Paris', () => {
       for (const langue of ['fr', 'en'] as const) expect(rediger(type, langue, vide).body).not.toMatch(/null|undefined/);
     }
     expect(rediger('booked_without_plan', 'fr', vide).body).toBe('Un membre a été inscrit à un cours sans formule active.');
+  });
+});
+
+describe('parité avec la base : les types de la file', () => {
+  // La dernière migration qui (re)définit box_manager_notifications_type_check fait foi.
+  const typesDeLaBase = (): string[] => {
+    const dossier = 'supabase/migrations';
+    const motif = /box_manager_notifications_type_check\s+CHECK \(type IN \(([^)]*)\)\)/;
+    const fichier = fs.readdirSync(path.join(RACINE, dossier)).filter((f) => f.endsWith('.sql')).sort()
+      .filter((f) => motif.test(lire(`${dossier}/${f}`))).pop();
+    expect(fichier).toBeDefined();
+    const liste = (lire(`${dossier}/${fichier}`).match(motif) as RegExpMatchArray)[1];
+    return [...liste.matchAll(/'([a-z_]+)'/g)].map((m) => m[1]);
+  };
+
+  it('regles.ts connaît exactement les types de la contrainte (ni plus, ni moins)', () => {
+    const base = typesDeLaBase();
+    expect(base).toContain('plan_change_request');
+    expect([...TYPES_NOTIF].sort()).toEqual([...base].sort());
   });
 });
 

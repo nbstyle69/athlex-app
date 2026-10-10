@@ -2,7 +2,8 @@
 // ------------------------------------------------------------------
 // Envoie au gérant et aux co-gérants les notifications push mises en file
 // dans `box_manager_notifications` (migration 20270143) : nouvel abonnement,
-// paiement échoué, inscription sans formule, invitation acceptée.
+// paiement échoué, inscription sans formule, invitation acceptée, demande de
+// changement de formule (migration 20270147).
 //
 // Auth : appelée seulement par pg_cron, chaque minute, avec `x-cron-secret`
 // (comparé à CRON_SECRET, refus si l'un manque — fail-closed, comme les autres

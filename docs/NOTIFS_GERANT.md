@@ -82,10 +82,13 @@ ligne dont la clause `WHEN` porte la transition :
 | invitation_accepted | `trg_notif_gerant_invitation` (UPDATE OF status box_invitations) | passe à `accepted` | id de l'invitation |
 | plan_change_request | `trg_notif_gerant_changement_formule` (INSERT box_plan_change_requests, migration 20270147) | aucune : une demande naît en attente | id de la demande |
 
-`plan_change_request` (« {pseudo} demande à passer à {formule} », `plan_id` = formule
-demandée) n'est pas encore rédigé par `deliver-manager-notifications` : `rediger()`
-(`regles.ts`) ne connaît que les quatre types ci-dessus. À ajouter avant qu'une
-demande puisse être créée (PR B du changement de formule).
+`plan_change_request` (`plan_id` = formule demandée) est rédigé par
+`deliver-manager-notifications` comme les autres types : FR « Demande de changement
+de formule » / « {pseudo} demande à passer à {formule}. », EN « Plan change request » /
+« {pseudo} asked to switch to {formule}. ». Le nom de la formule est lu depuis
+`plan_id`, comme pour les autres types. Les types de `regles.ts` (`TYPES_NOTIF`) sont
+contrôlés par Jest contre la contrainte `box_manager_notifications_type_check` de la
+dernière migration qui la définit : un type ajouté d'un seul côté fait échouer le test.
 
 « Nouvel abonnement » = **un nouvel identifiant d'abonnement Stripe arrive
 actif**, pas « statut vers actif » : le retour d'impayé, la reprise après pause

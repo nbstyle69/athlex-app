@@ -213,6 +213,14 @@ Supabase/Resend.
 
 ## En cours
 
+**Notification au gérant d'une demande de changement de formule** (fonction `deliver-manager-notifications`,
+**déployée : non** ; PR non mergée ; aucune migration). Le type `plan_change_request` (migration 20270147, en prod) a
+désormais son texte : FR « Demande de changement de formule » / « {pseudo} demande à passer à {formule}. », EN
+« Plan change request » / « {pseudo} asked to switch to {formule}. ». Rien d'autre ne change : mêmes destinataires,
+même réservation avant envoi, même délai de 24 h, même purge. Les types de `regles.ts` sont contrôlés contre la
+contrainte de la base (test de parité). À déployer avant la PR B du Manager, la seule qui crée des demandes. Tests
+Jest : textes FR / EN et parité, 11 mutations tuées.
+
 **Chantier anglais, PR 3 : Explorer (app seule, aucune migration ; PR non mergée).** Annuaire des box (liste,
 recherche, filtres de sport, carte et sa fiche, variante web), détail d'une box, Partenaires et détail d'un
 partenaire (alerte du code promo comprise), Programmes et Programmes des box passent par `t()` en français et en
@@ -323,8 +331,8 @@ un engagement, sans le changer.
   serveur : `request_plan_change`, `cancel_plan_change_request`, `decide_plan_change_request` (gérant ou co-gérant,
   jamais le coach ; une demande décidée ne bouge plus ; à l'acceptation, un montant noté suit le prix de la
   nouvelle formule, un montant vide le reste). Codes `PLAN_CHANGE_…`.
-- Le gérant est notifié de chaque demande (`plan_change_request` dans la file des notifications) ; le texte reste à
-  ajouter à `deliver-manager-notifications` avant la PR B.
+- Le gérant est notifié de chaque demande (`plan_change_request` dans la file des notifications) ; le texte est
+  ajouté à `deliver-manager-notifications` (voir « En cours »).
 - Tests `changement_formule.sql` (C0 à C9, mutations intégrées, retour arrière), contrôle T15 de l'audit des droits ;
   retour arrière `supabase/retours/20270147000000_changement_formule.sql`.
 
