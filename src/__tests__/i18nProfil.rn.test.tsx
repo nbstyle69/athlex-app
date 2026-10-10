@@ -332,6 +332,7 @@ beforeEach(async () => {
 });
 afterEach(async () => {
   if (renderer) { const r = renderer; renderer = null; await act(async () => r.unmount()); }
+  jest.clearAllTimers();
   jest.useRealTimers();
   jest.restoreAllMocks();
   jest.clearAllMocks();
@@ -596,6 +597,8 @@ const VARIANTS: Variant[] = [
     return r;
   } },
   { name: 'accueil-badge', run: () => {
+    // Fermeture automatique du badge par minuterie : figée, sinon elle se déclenche dans un autre test.
+    jest.useFakeTimers({ now: NOW, doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'queueMicrotask'] });
     mockState.badgeQueue = [{ badge_key: 'first_wod', title: 'First WOD', description: 'Finish one WOD', icon: '🏋️' }];
     mockState.auth = { ...mockState.auth, user: { ...mockState.auth.user, username: undefined } };
     return mount(<HomeScreen />);
