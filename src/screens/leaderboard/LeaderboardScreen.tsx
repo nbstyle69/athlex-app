@@ -23,6 +23,7 @@ import { useTranslation } from 'react-i18next';
 
 const LEVELS: (AthleteLevel | 'all')[] = ['all', 'scaled', 'inter', 'rx', 'rx+', 'elite', 'pro'];
 const MAIN_TABS = ['interComp.individual', 'leaderboard.tabTeams', 'whiteboard.track.box'];
+const PODIUM_PAD = 6;
 
 function RankBadge({ rank }: { rank: number }) {
   const { theme } = useTheme();
@@ -212,7 +213,9 @@ export default function LeaderboardScreen() {
 
         <View style={S.podium}>
           {[top3[1], top3[0], top3[2]].map((p, idx) => {
-            const heights = [56, 76, 44];
+            // Hauteur de marche = contenu (médaille, nom, ELO) + écart du rang : une hauteur fixe
+            // plus petite que le contenu écrasait le nom du 3e.
+            const steps = [12, 32, 0];
             const medals = ['🥈', '🥇', '🥉'];
             return (
               <TouchableOpacity key={idx} style={S.podiumCol} activeOpacity={0.7}
@@ -225,9 +228,9 @@ export default function LeaderboardScreen() {
                   backgroundColor={theme.surface}
                   textColor={theme.text}
                 />
-                <View style={[S.podiumBase, { height: heights[idx] }]}>
+                <View style={[S.podiumBase, { paddingTop: PODIUM_PAD + steps[idx] }]} testID={`podium-step-${idx}`}>
                   <Text style={S.podiumMedal}>{medals[idx]}</Text>
-                  <Text style={S.podiumName} numberOfLines={1}>{p?.username}</Text>
+                  <Text style={S.podiumName} numberOfLines={1} ellipsizeMode="tail" testID={`podium-name-${idx}`}>{p?.username}</Text>
                   <Text style={S.podiumElo}>{p?.elo}</Text>
                 </View>
               </TouchableOpacity>
@@ -440,7 +443,7 @@ function createStyles(theme: AppTheme) { return StyleSheet.create({
   podiumAvatarText: { fontSize: 18, fontWeight: '900', color: theme.text },
   podiumBase: {
     width: '100%', backgroundColor: theme.surface, borderRadius: 8,
-    alignItems: 'center', justifyContent: 'flex-end', padding: 6,
+    alignItems: 'center', justifyContent: 'flex-end', padding: PODIUM_PAD,
     borderWidth: 1, borderColor: theme.border,
   },
   podiumMedal: { fontSize: 14 },
