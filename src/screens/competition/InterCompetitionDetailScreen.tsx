@@ -29,7 +29,7 @@ function stripGlyph(label: string): string {
   return label.replace(/^[^\p{L}\p{N}]+/u, '');
 }
 
-type Tab = 'Infos' | 'WODs' | 'Inscription' | 'Classement' | 'Bracket' | 'Ligue' | 'Poules' | 'Suisse';
+type Tab = 'info' | 'wods' | 'register' | 'ranking' | 'bracket' | 'league' | 'pool' | 'swiss';
 
 export default function InterCompetitionDetailScreen() {
   const tabSpace = useTabBarScrollSpace();
@@ -53,17 +53,17 @@ export default function InterCompetitionDetailScreen() {
     swiss: t('interComp.formatSwiss'),
   };
   const TAB_LABEL: Record<Tab, string> = {
-    Infos: t('interDetail.tabInfos'),
-    WODs: t('interDetail.tabWods'),
-    Inscription: t('interDetail.tabRegistration'),
-    Classement: t('interDetail.tabStandings'),
-    Bracket: t('interComp.formatBracket'),
-    Ligue: t('interComp.formatLeague'),
-    Poules: t('interComp.formatPool'),
-    Suisse: t('interComp.formatSwiss'),
+    info: t('interDetail.tabInfos'),
+    wods: t('interDetail.tabWods'),
+    register: t('interDetail.tabRegistration'),
+    ranking: t('interDetail.tabStandings'),
+    bracket: t('interComp.formatBracket'),
+    league: t('interComp.formatLeague'),
+    pool: t('interComp.formatPool'),
+    swiss: t('interComp.formatSwiss'),
   };
 
-  const [tab, setTab] = useState<Tab>('Infos');
+  const [tab, setTab] = useState<Tab>('info');
   const [comp, setComp]               = useState<any>(null);
   const [wods, setWods]               = useState<any[]>([]);
   const [myReg, setMyReg]             = useState<any>(null);
@@ -291,12 +291,12 @@ export default function InterCompetitionDetailScreen() {
       {/* Tab bar */}
       <View style={S.tabBar}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 0 }}>
-        {(['Infos', 'WODs', 'Inscription',
-          ...(comp?.format === 'bracket' ? ['Bracket' as Tab] : []),
-          ...(comp?.format === 'swiss' ? ['Suisse' as Tab] : []),
-          ...(comp?.format === 'league' ? ['Ligue' as Tab] : []),
-          ...(comp?.format === 'pool' ? ['Poules' as Tab] : []),
-          'Classement',
+        {(['info', 'wods', 'register',
+          ...(comp?.format === 'bracket' ? ['bracket' as Tab] : []),
+          ...(comp?.format === 'swiss' ? ['swiss' as Tab] : []),
+          ...(comp?.format === 'league' ? ['league' as Tab] : []),
+          ...(comp?.format === 'pool' ? ['pool' as Tab] : []),
+          'ranking',
         ] as Tab[]).map(tabKey => (
           <TouchableOpacity key={tabKey} style={[S.tabItem, tab === tabKey && S.tabActive]} onPress={() => setTab(tabKey)}>
             <Text style={[S.tabText, tab === tabKey && S.tabTextActive]}>{TAB_LABEL[tabKey]}</Text>
@@ -312,7 +312,7 @@ export default function InterCompetitionDetailScreen() {
       >
 
         {/* ── INFOS ── */}
-        {tab === 'Infos' && (
+        {tab === 'info' && (
           <View style={{ gap: axSpacing.lg }}>
             {comp.description ? (
               <AxCard style={S.infoCard}>
@@ -351,7 +351,7 @@ export default function InterCompetitionDetailScreen() {
         )}
 
         {/* ── WODs ── */}
-        {tab === 'WODs' && (
+        {tab === 'wods' && (
           <View style={{ gap: axSpacing.md }}>
             {wods.length === 0 ? (
               <View style={S.empty}>
@@ -431,7 +431,7 @@ export default function InterCompetitionDetailScreen() {
         )}
 
         {/* ── INSCRIPTION ── */}
-        {tab === 'Inscription' && (
+        {tab === 'register' && (
           <View style={{ gap: axSpacing.lg }}>
             {/* TEAM competition */}
             {comp.type === 'team' ? (
@@ -507,7 +507,7 @@ export default function InterCompetitionDetailScreen() {
         )}
 
         {/* ── BRACKET ── */}
-        {tab === 'Bracket' && comp?.format === 'bracket' && (
+        {tab === 'bracket' && comp?.format === 'bracket' && (
           <View style={{ gap: axSpacing.md }}>
             {bracketMatches.length === 0 ? (
               <View style={S.empty}>
@@ -596,7 +596,7 @@ export default function InterCompetitionDetailScreen() {
         )}
 
         {/* ── LIGUE ── */}
-        {tab === 'Ligue' && comp?.format === 'league' && (
+        {tab === 'league' && comp?.format === 'league' && (
           <View style={{ gap: axSpacing.lg }}>
             {/* League standings */}
             <AxCard style={S.infoCard}>
@@ -652,7 +652,7 @@ export default function InterCompetitionDetailScreen() {
         )}
 
         {/* ── POULES ── */}
-        {tab === 'Poules' && comp?.format === 'pool' && (
+        {tab === 'pool' && comp?.format === 'pool' && (
           <View style={{ gap: axSpacing.lg }}>
             {poolGroups.length === 0 ? (
               <View style={S.empty}>
@@ -725,7 +725,7 @@ export default function InterCompetitionDetailScreen() {
         )}
 
         {/* ── SUISSE ── */}
-        {tab === 'Suisse' && comp?.format === 'swiss' && (
+        {tab === 'swiss' && comp?.format === 'swiss' && (
           <View style={{ gap: axSpacing.lg }}>
             {swissStandings.length === 0 && swissRounds.length === 0 ? (
               <View style={S.empty}>
@@ -805,7 +805,7 @@ export default function InterCompetitionDetailScreen() {
         )}
 
         {/* ── CLASSEMENT ── */}
-        {tab === 'Classement' && (
+        {tab === 'ranking' && (
           <View style={{ gap: axSpacing.lg }}>
             {wods.length === 0 ? (
               <View style={S.empty}>

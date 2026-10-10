@@ -188,14 +188,11 @@ export function roundsRepsToTotal(
  */
 export type RoundsLabel = (rounds: number) => string;
 
-// Repli des écrans pas encore traduits (PR Compétition).
-const roundsLabelFr: RoundsLabel = (n) => `${n} tour${n > 1 ? 's' : ''}`; // i18n-ignore : repli français
-
 // "123 reps (3 tours + 12)" — or just "123 reps" when reps_per_round is unknown.
 export function formatAmrapScore(
   total: number,
   repsPerRound: number | null | undefined,
-  roundsLabel: RoundsLabel = roundsLabelFr,
+  roundsLabel: RoundsLabel,
 ): string {
   const repsLabel = `${total} reps`;
   if (!repsPerRound || repsPerRound <= 0) return repsLabel;
@@ -268,9 +265,9 @@ export function parseScoreToNumber(
 export function formatScoreDisplay(
   value: string | number | null | undefined,
   wodType: string | null | undefined,
-  repsPerRound?: number | null,
-  capped?: boolean | null,
-  roundsLabel?: RoundsLabel,
+  repsPerRound: number | null | undefined,
+  capped: boolean | null | undefined,
+  roundsLabel: RoundsLabel,
 ): string {
   const raw = (value ?? '').toString();
   if (isTimeScoredType(wodType)) {

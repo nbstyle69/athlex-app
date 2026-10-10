@@ -103,9 +103,10 @@ describe('blocs de force et cardio : l’analyse ne dépend pas de la langue de 
 });
 
 describe('tournamentUtils : libellé des tours fourni par l’écran', () => {
-  it('repli français inchangé pour les écrans pas encore traduits', () => {
-    expect(formatAmrapScore(123, 37)).toBe('123 reps (3 tours + 12)');
-    expect(formatAmrapScore(37, 37)).toBe('37 reps (1 tour)');
+  it('en français, le libellé traduit donne le texte de master', async () => {
+    const label = (n: number) => i18n.t('score.amrapRounds', { count: n });
+    expect(await enLangue('fr', () => [formatAmrapScore(123, 37, label), formatAmrapScore(37, 37, label)]))
+      .toEqual(['123 reps (3 tours + 12)', '37 reps (1 tour)']);
   });
 
   it('avec t(), le pluriel suit la langue', async () => {

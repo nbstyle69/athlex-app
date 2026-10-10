@@ -19,6 +19,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useFocusQuery } from '../../hooks/useFocusQuery';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import i18n from '../../i18n';
 
 type Nav = NativeStackNavigationProp<WhiteboardStackParamList, 'BoxRanking'>;
 
@@ -41,7 +42,7 @@ function RankBadge({ rank }: { rank: number }) {
   const S = createStyles(theme);
   if (rank <= 3) {
     return (
-      <View testID={`rank-medal-${rank}`} accessible accessibilityLabel={`Rang ${rank}`}>
+      <View testID={`rank-medal-${rank}`} accessible accessibilityLabel={i18n.t('boxRanking.rankA11y', { rank })}>
         <Medal size={22} color={MEDALS[rank - 1]} strokeWidth={2} />
       </View>
     );
@@ -89,7 +90,7 @@ export default function BoxRankingScreen() {
           const e = eloMap[m.member_id] ?? { elo: 1000, matches: 0, wins: 0 };
           return {
             id: m.member_id,
-            username: p?.username ?? 'Athlète',
+            username: p?.username ?? i18n.t('onboarding.athleteFallback'),
             avatar_url: p?.avatar_url ?? null,
             level: (p?.level as AthleteLevel) ?? null,
             elo: e.elo,
@@ -112,8 +113,8 @@ export default function BoxRankingScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title="Classement de la box">
-        <Text testID="ranking-sub" style={S.headerSub}>ELO propre à {currentBox?.name ?? 'la box'} — WODs de la box uniquement</Text>
+      <AxScreenHeader title={i18n.t('boxRanking.title')}>
+        <Text testID="ranking-sub" style={S.headerSub}>{i18n.t('boxRanking.subtitle', { box: currentBox?.name ?? i18n.t('boxRanking.theBox') })}</Text>
       </AxScreenHeader>
 
       {isLoading ? (
@@ -128,7 +129,7 @@ export default function BoxRankingScreen() {
           ListEmptyComponent={
             <View style={{ alignItems: 'center', paddingTop: 40 }}>
               <Trophy size={40} color={c.textMuted} />
-              <Text style={S.emptyText}>Aucun membre pour l'instant</Text>
+              <Text style={S.emptyText}>{i18n.t('boxRanking.empty')}</Text>
             </View>
           }
           renderItem={({ item }) => (
@@ -154,11 +155,11 @@ export default function BoxRankingScreen() {
                 <Text testID={`ranking-name-${item.id}`} style={[S.name, item.isMe && { color: c.accentText }]} numberOfLines={1}>
                   {item.username}
                 </Text>
-                <Text testID={`ranking-wins-${item.id}`} style={S.winsText} numberOfLines={1}>{item.wins}V · {item.matches} WOD{item.matches > 1 ? 's' : ''}</Text>
+                <Text testID={`ranking-wins-${item.id}`} style={S.winsText} numberOfLines={1}>{i18n.t('boxRanking.record', { wins: item.wins, count: item.matches })}</Text>
               </View>
               <View style={S.eloCell}>
                 <Text testID={`ranking-elo-${item.id}`} style={S.eloValue}>{item.elo}</Text>
-                <Text style={S.eloLabel}>ELO box</Text>
+                <Text style={S.eloLabel}>{i18n.t('boxRanking.boxElo')}</Text>
               </View>
             </AxCard>
           )}

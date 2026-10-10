@@ -26,6 +26,7 @@ import { computeMaxScore } from '../../utils/computeMaxScore';
 import { syncLevelAndBadges } from '../../utils/eloLevels';
 import { formatScoreValue, mapForTimeScore, compareScores } from '../../utils/scoreFormat';
 import { getScaledMovements } from '../../utils/wodScaling';
+import { errorMessage } from '../../utils/refusals';
 
 import { trackDailyTournamentJoin, trackDailyTournamentScoreSubmit } from '../../lib/analytics';
 import { HomeStackParamList, TimerType } from '../../navigation';
@@ -254,12 +255,11 @@ export default function DailyTournamentDetailScreen() {
     if (tournament?.gender_target && tournament.gender_target !== 'mix') {
       const profile = await fetchMyProfile();
       if (profile?.gender && profile.gender !== tournament.gender_target) {
-        const label = tournament.gender_target === 'male' ? 'hommes' : 'femmes';
-        Alert.alert('Accès restreint', `Ce tournoi est réservé aux ${label}.`);
+        Alert.alert(i18n.t('mini.restrictedTitle'), i18n.t(tournament.gender_target === 'male' ? 'mini.reservedMale' : 'mini.reservedFemale'));
         return;
       }
       if (!profile?.gender) {
-        Alert.alert('Genre non renseigné', 'Renseigne ton genre dans ton profil pour rejoindre ce tournoi.');
+        Alert.alert(i18n.t('mini.genderMissingTitle'), i18n.t('mini.genderMissingMsg'));
         return;
       }
     }
@@ -269,7 +269,7 @@ export default function DailyTournamentDetailScreen() {
       user_id: user.id,
     }, { onConflict: 'tournament_id,user_id', ignoreDuplicates: true });
     setJoining(false);
-    if (error) { Alert.alert('Erreur', error.message); return; }
+    if (error) { Alert.alert(i18n.t('common.error'), await errorMessage(error)); return; }
     trackDailyTournamentJoin(tournamentId);
     load();
   }
@@ -285,7 +285,7 @@ export default function DailyTournamentDetailScreen() {
     let capped = false;
     if (tournament?.score_mode === 'time') {
       if (scoreCapped && !(parseInt(capReps) > 0)) {
-        Alert.alert('Score invalide', 'Entre le nombre de répétitions complétées au cap.');
+        Alert.alert(i18n.t('wodResult.invalidScore'), i18n.t('mini.capRepsRequired'));
         setSubmitting(false);
         return;
       }
@@ -297,7 +297,7 @@ export default function DailyTournamentDetailScreen() {
     }
 
     if (isNaN(value) || value <= 0) {
-      Alert.alert('Valeur invalide', 'Entre un score valide.');
+      Alert.alert(i18n.t('mini.invalidValueTitle'), i18n.t('mini.invalidValueMsg'));
       setSubmitting(false);
       return;
     }
@@ -305,7 +305,7 @@ export default function DailyTournamentDetailScreen() {
     // Validate video URL if provided
     const trimmedVideo = videoUrl.trim();
     if (trimmedVideo && !/^https?:\/\/.+/i.test(trimmedVideo)) {
-      Alert.alert('Lien vidéo invalide', 'Le lien vidéo doit commencer par http:// ou https://');
+      Alert.alert(i18n.t('interScore.invalidVideo'), i18n.t('mini.videoUrlScheme'));
       setSubmitting(false);
       return;
     }
@@ -320,7 +320,7 @@ export default function DailyTournamentDetailScreen() {
       sType,
     );
     if (maxScore && !capped && value > maxScore) {
-      Alert.alert('Score trop élevé', `Le maximum estimé pour ce WOD est de ${maxScore} reps. Vérifie ta saisie.`);
+      Alert.alert(i18n.t('wodDetail.tooHighTitle'), i18n.t('wodDetail.tooHighMsg', { max: maxScore, unit: 'reps' }));
       setSubmitting(false);
       return;
     }
@@ -345,7 +345,7 @@ export default function DailyTournamentDetailScreen() {
     }, { onConflict: 'tournament_id,user_id' });
 
     setSubmitting(false);
-    if (error) { Alert.alert('Erreur', error.message); return; }
+    if (error) { Alert.alert(i18n.t('common.error'), await errorMessage(error)); return; }
     incrementCounter(user.id, 'total_scores_submitted', 1, currentBox?.id).catch(e => captureError(e, { action: 'incrementScores' }));
     cancelTodayScoreReminder().catch(e => captureError(e, { action: 'cancelScoreReminder' }));
 
@@ -409,8 +409,8 @@ export default function DailyTournamentDetailScreen() {
     const { error } = await supabase.rpc('peer_review_daily_score', {
       p_tournament_id: tournamentId, p_user_id: participantId, p_action: 'validated',
     });
-    if (error) { Alert.alert('Erreur', error.message); return; }
-    Alert.alert('Score validé !');
+    if (error) { Alert.alert(i18n.t('common.error'), await errorMessage(error)); return; }
+    Alert.alert(i18n.t('mini.scoreValidated'));
     load();
   }
 
@@ -420,20 +420,20 @@ export default function DailyTournamentDetailScreen() {
       p_tournament_id: tournamentId, p_user_id: contestModal.user_id,
       p_action: 'contested', p_reason: contestReason.trim() || undefined,
     });
-    if (error) { Alert.alert('Erreur', error.message); return; }
+    if (error) { Alert.alert(i18n.t('common.error'), await errorMessage(error)); return; }
     setContestModal(null);
     setContestReason('');
-    Alert.alert('Score contesté — un administrateur vérifiera.');
+    Alert.alert(i18n.t('mini.scoreContested'));
     load();
   }
 
   function timeLeft(): string {
     if (!tournament) return '';
     const diff = new Date(tournament.ends_at).getTime() - Date.now();
-    if (diff <= 0) return 'Terminé';
+    if (diff <= 0) return i18n.t('mini.ended');
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
-    return `${h}h${String(m).padStart(2, '0')} restantes`;
+    return i18n.t('mini.timeLeft', { h, m: String(m).padStart(2, '0') });
   }
 
   if (loading || !tournament) {
@@ -475,8 +475,8 @@ export default function DailyTournamentDetailScreen() {
     const rankColor = rank === 1 ? theme.gold : rank === 2 ? theme.silver : rank === 3 ? theme.bronze : c.textMuted;
     const statusTone = p.status === 'validated' ? 'active'
       : p.status === 'contested' ? 'danger' : 'warning';
-    const statusLabel = p.status === 'validated' ? 'Validé'
-      : p.status === 'contested' ? 'Contesté' : 'En attente';
+    const statusLabel = i18n.t(p.status === 'validated' ? 'mini.status.validated'
+      : p.status === 'contested' ? 'mini.status.contested' : 'mini.status.pending');
     const delta = eloDeltas[p.user_id];
 
     return (
@@ -490,7 +490,7 @@ export default function DailyTournamentDetailScreen() {
             )}
           </View>
           <View style={S.playerInfo}>
-            <Text style={S.playerName} numberOfLines={2}>{p.username} {isMe ? '(moi)' : ''}</Text>
+            <Text style={S.playerName} numberOfLines={2}>{p.username} {isMe ? i18n.t('interTeam.me') : ''}</Text>
             <View style={S.playerMeta}>
               <AxStatusDot label={p.level.toUpperCase()} color={levelInk(p.level, c)} />
               <Text style={S.caption}>{p.elo} ELO</Text>
@@ -504,10 +504,10 @@ export default function DailyTournamentDetailScreen() {
           {p.score_value !== null ? (
             <View style={S.scoreCol}>
               <Text style={S.scoreValue}>{formatScore(p.score_value, tournament!.score_mode, p.capped)}</Text>
-              <Text style={S.scoreRx}>{p.rx ? 'RX' : 'SC'}</Text>
+              <Text style={S.scoreRx}>{p.rx ? 'RX' : i18n.t('mini.scaledShort')}</Text>
             </View>
           ) : (
-            <Text style={S.pendingTxt}>En attente…</Text>
+            <Text style={S.pendingTxt}>{i18n.t('mini.waitingScore')}</Text>
           )}
         </View>
 
@@ -515,20 +515,20 @@ export default function DailyTournamentDetailScreen() {
           <View style={S.playerActions}>
             <View style={S.playerActionsTop}>
               {p.video_url ? (
-                <AxButton label="Vidéo" variant="outline" icon={Youtube} testID={`mini-video-${p.user_id}`} onPress={async () => {
+                <AxButton label={i18n.t('whiteboard.video')} variant="outline" icon={Youtube} testID={`mini-video-${p.user_id}`} onPress={async () => {
                   try {
                     const canOpen = await Linking.canOpenURL(p.video_url!);
                     if (canOpen) {
                       await Linking.openURL(p.video_url!);
                     } else {
-                      Alert.alert('Lien invalide', `Impossible d'ouvrir ce lien vidéo.\n\n${p.video_url}`);
+                      Alert.alert(i18n.t('mini.invalidLinkTitle'), i18n.t('mini.cannotOpenVideo', { url: p.video_url }));
                     }
                   } catch (e: any) {
-                    Alert.alert('Erreur vidéo', e?.message ?? 'Erreur inconnue');
+                    Alert.alert(i18n.t('mini.videoErrorTitle'), e?.message ? await errorMessage(e) : i18n.t('bo.wods.unknownError'));
                   }
                 }} />
               ) : (
-                <AxTag label="Pas de vidéo" tone="muted" />
+                <AxTag label={i18n.t('mini.noVideo')} tone="muted" />
               )}
               <AxStatusDot label={statusLabel} tone={statusTone} testID={`mini-player-status-${p.user_id}`} />
             </View>
@@ -536,10 +536,10 @@ export default function DailyTournamentDetailScreen() {
             {!isMe && hasJoined && p.status === 'pending' && (
               <View style={S.voteRow}>
                 <View style={S.voteCell}>
-                  <AxButton label="Valider" variant="outline" icon={ThumbsUp} fullWidth onPress={() => handleValidateScore(p.user_id)} testID={`mini-validate-${p.user_id}`} />
+                  <AxButton label={i18n.t('bo.tournament.validate')} variant="outline" icon={ThumbsUp} fullWidth onPress={() => handleValidateScore(p.user_id)} testID={`mini-validate-${p.user_id}`} />
                 </View>
                 <View style={S.voteCell}>
-                  <AxButton label="Contester" variant="stop" icon={AlertTriangle} fullWidth onPress={() => { setContestModal(p); setContestReason(''); }} testID={`mini-contest-${p.user_id}`} />
+                  <AxButton label={i18n.t('mini.contest')} variant="stop" icon={AlertTriangle} fullWidth onPress={() => { setContestModal(p); setContestReason(''); }} testID={`mini-contest-${p.user_id}`} />
                 </View>
               </View>
             )}
@@ -554,7 +554,7 @@ export default function DailyTournamentDetailScreen() {
       <GlassBackground />
       <AxScreenHeader
         title={i18n.t('screenTitles.miniTournament')}
-        right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: `${tournament.wod_name} — Rejoins le mini-tournoi sur AthleX ! athlex://daily/${tournamentId}` })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
+        right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: i18n.t('mini.shareMessage', { name: tournament.wod_name, url: `athlex://daily/${tournamentId}` }) })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
       />
 
       <ScrollView
@@ -564,25 +564,25 @@ export default function DailyTournamentDetailScreen() {
       >
         <AxContentTitle title={tournament.wod_name} testID="mini-detail-title" />
         <View style={S.badges}>
-          {isOfficial && <AxTag label="WOD DU JOUR" dot testID="mini-official-tag" />}
+          {isOfficial && <AxTag label={i18n.t('mini.officialTag')} dot testID="mini-official-tag" />}
           <AxTag label={tournament.wod_type} testID="mini-detail-type" />
           <AxTag label={tournament.level.toUpperCase()} color={levelInk(tournament.level, c)} />
           {tournament.duration > 0 && <AxTag label={`${tournament.duration} min`} tone="muted" />}
-          <AxStatusDot label={isCompleted ? 'TERMINÉ' : timeLeft()} tone={isCompleted ? 'danger' : 'active'} testID="mini-detail-status" />
+          <AxStatusDot label={isCompleted ? i18n.t('mini.endedTag') : timeLeft()} tone={isCompleted ? 'danger' : 'active'} testID="mini-detail-status" />
           {tournament.gender_target && tournament.gender_target !== 'mix' && (
-            <AxTag label={tournament.gender_target === 'male' ? 'Homme' : 'Femme'} tone="muted" />
+            <AxTag label={i18n.t(tournament.gender_target === 'male' ? 'auth.male' : 'auth.female')} tone="muted" />
           )}
         </View>
 
         {isOfficial ? (
           <AxCard style={S.rewardCard}>
             <Flame color={c.accentText} size={18} />
-            <Text style={S.rewardTxt}>WOD du Jour officiel · classement RX / Scaled · ouvert à toute la communauté</Text>
+            <Text style={S.rewardTxt}>{i18n.t('mini.officialInfo')}</Text>
           </AxCard>
         ) : (
           <AxCard style={S.rewardCard}>
             <Trophy color={c.accentText} size={18} />
-            <Text style={S.rewardTxt}>Récompense : +{tournament.elo_reward} ELO pour le 1er</Text>
+            <Text style={S.rewardTxt}>{i18n.t('mini.reward', { elo: tournament.elo_reward })}</Text>
           </AxCard>
         )}
 
@@ -602,7 +602,7 @@ export default function DailyTournamentDetailScreen() {
             <Text key={i} style={line.startsWith('  ') ? S.wodLine : S.wodHeader}>{line}</Text>
           ))}
           {isOfficial && boardTab === 'scaled' && (
-            <Text style={S.wodScaledHint}>Version allégée — adapte encore les charges à ton niveau si besoin.</Text>
+            <Text style={S.wodScaledHint}>{i18n.t('mini.scaledHint')}</Text>
           )}
           {tournament.scoring && (
             <View style={S.scoringRow}>
@@ -614,9 +614,9 @@ export default function DailyTournamentDetailScreen() {
 
         {isOfficial ? (
           <>
-            <Text style={S.sectionTitle}>Classement {boardTab === 'rx' ? 'RX' : 'Scaled'} ({shownRanked.length})</Text>
+            <Text style={S.sectionTitle}>{i18n.t('mini.boardTitleCategory', { cat: boardTab === 'rx' ? 'RX' : 'Scaled', n: shownRanked.length })}</Text>
             {shownRanked.length === 0 ? (
-              <Text style={S.noParticipants}>Aucun score {boardTab === 'rx' ? 'RX' : 'Scaled'} pour le moment.</Text>
+              <Text style={S.noParticipants}>{i18n.t('mini.noScoreCategory', { cat: boardTab === 'rx' ? 'RX' : 'Scaled' })}</Text>
             ) : (
               shownRanked.map((p, i) => renderPlayerRow(p, i + 1, p.user_id === user?.id))
             )}
@@ -624,10 +624,10 @@ export default function DailyTournamentDetailScreen() {
         ) : (
           <>
             <Text style={S.sectionTitle}>
-              Classement ({participants.length}/{tournament.max_players})
+              {i18n.t('mini.boardTitle', { n: participants.length, max: tournament.max_players })}
             </Text>
             {participants.length === 0 ? (
-              <Text style={S.noParticipants}>Aucun participant pour le moment.</Text>
+              <Text style={S.noParticipants}>{i18n.t('mini.noParticipants')}</Text>
             ) : (
               participants.map((p) => renderPlayerRow(p, rankByUser.get(p.user_id) ?? null, p.user_id === user?.id))
             )}
@@ -639,30 +639,30 @@ export default function DailyTournamentDetailScreen() {
             {isOfficial ? (
               !hasScored ? (
                 <>
-                  <AxButton label="Lancer le WOD" icon={Play} fullWidth onPress={handleLaunchWOD} testID="mini-launch" />
-                  <AxButton label="Entrer mon score manuellement" variant="outline" icon={Edit3} fullWidth onPress={() => { setScoreRx(boardTab === 'rx'); setScoreModal(true); }} testID="mini-manual" />
+                  <AxButton label={i18n.t('tournament.launchWod')} icon={Play} fullWidth onPress={handleLaunchWOD} testID="mini-launch" />
+                  <AxButton label={i18n.t('mini.enterScoreManually')} variant="outline" icon={Edit3} fullWidth onPress={() => { setScoreRx(boardTab === 'rx'); setScoreModal(true); }} testID="mini-manual" />
                 </>
               ) : (
                 <AxCard style={S.doneBadge}>
                   <Check color={c.accentText} size={16} />
-                  <Text style={S.doneTxt}>Score soumis</Text>
+                  <Text style={S.doneTxt}>{i18n.t('competition.wodOfDayScored')}</Text>
                 </AxCard>
               )
             ) : (
             <>
             {!hasJoined && !isFull && (
-              <AxButton label="Rejoindre" icon={Users} fullWidth onPress={handleJoin} disabled={joining} loading={joining} testID="mini-join" />
+              <AxButton label={i18n.t('mini.join')} icon={Users} fullWidth onPress={handleJoin} disabled={joining} loading={joining} testID="mini-join" />
             )}
             {hasJoined && !hasScored && (
               <>
-                <AxButton label="Lancer le WOD" icon={Play} fullWidth onPress={handleLaunchWOD} testID="mini-launch" />
-                <AxButton label="Entrer mon score manuellement" variant="outline" icon={Edit3} fullWidth onPress={() => setScoreModal(true)} testID="mini-manual" />
+                <AxButton label={i18n.t('tournament.launchWod')} icon={Play} fullWidth onPress={handleLaunchWOD} testID="mini-launch" />
+                <AxButton label={i18n.t('mini.enterScoreManually')} variant="outline" icon={Edit3} fullWidth onPress={() => setScoreModal(true)} testID="mini-manual" />
               </>
             )}
             {hasScored && (
               <AxCard style={S.doneBadge}>
                 <Check color={c.accentText} size={16} />
-                <Text style={S.doneTxt}>Score soumis</Text>
+                <Text style={S.doneTxt}>{i18n.t('competition.wodOfDayScored')}</Text>
               </AxCard>
             )}
             </>
@@ -673,7 +673,7 @@ export default function DailyTournamentDetailScreen() {
         {!isOfficial && isCompleted && participants.length > 0 && participants[0].score_value !== null && (
           <AxCard variant="featured" style={S.winnerCard} testID="mini-winner">
             <Crown color={theme.gold} size={22} />
-            <Text style={S.winnerTxt}>{participants[0].username} remporte +{tournament.elo_reward} ELO !</Text>
+            <Text style={S.winnerTxt}>{i18n.t('mini.winner', { name: participants[0].username, elo: tournament.elo_reward })}</Text>
           </AxCard>
         )}
       </ScrollView>
@@ -684,23 +684,23 @@ export default function DailyTournamentDetailScreen() {
           <View style={S.modalSheet} testID="mini-score-sheet">
             <View style={S.modalHandle} />
             <View style={S.modalHeader}>
-              <Text style={S.modalTitle}>Entrer mon score</Text>
+              <Text style={S.modalTitle}>{i18n.t('whiteboard.enterScore')}</Text>
               <AxIconButton icon={X} onPress={() => setScoreModal(false)} accessibilityLabel={i18n.t('common.close')} testID="mini-score-close" />
             </View>
 
             <Text style={S.modalLabel}>
-              {tournament.score_mode === 'time' && scoreCapped ? 'REPS AU CAP' :
-               tournament.score_mode === 'time' ? 'TEMPS (MM:SS)' :
-               tournament.score_mode === 'reps' ? 'NOMBRE DE REPS' :
-               tournament.score_mode === 'rounds' ? 'NOMBRE DE ROUNDS' : 'POIDS (KG)'}
+              {i18n.t(tournament.score_mode === 'time' && scoreCapped ? 'mini.label.capReps' :
+               tournament.score_mode === 'time' ? 'wodDetail.timeLabel' :
+               tournament.score_mode === 'reps' ? 'mini.label.reps' :
+               tournament.score_mode === 'rounds' ? 'mini.label.rounds' : 'mini.label.weight')}
             </Text>
             {tournament.score_mode === 'time' && (
               <View style={S.cappedRow}>
-                <Text style={S.cappedLabel}>Temps limite atteint (CAP)</Text>
+                <Text style={S.cappedLabel}>{i18n.t('tourWod.cappedLabel')}</Text>
                 <AxSwitch
                   value={scoreCapped}
                   onValueChange={() => { setScoreCapped(!scoreCapped); setCapReps(''); setTimeMin(''); setTimeSec(''); }}
-                  accessibilityLabel="Temps limite atteint (CAP)"
+                  accessibilityLabel={i18n.t('tourWod.cappedLabel')}
                   testID="mini-score-capped"
                 />
               </View>
@@ -711,7 +711,7 @@ export default function DailyTournamentDetailScreen() {
                 value={capReps}
                 onChangeText={v => setCapReps(v.replace(/\D/g, ''))}
                 keyboardType="number-pad"
-                placeholder="Reps complétées au cap"
+                placeholder={i18n.t('tourWod.cappedPlaceholder')}
                 placeholderTextColor={c.textMuted}
                 autoFocus
               />
@@ -719,7 +719,7 @@ export default function DailyTournamentDetailScreen() {
               <View style={S.timeRow}>
                 <TextInput
                   style={[S.modalInput, S.timeInput]}
-                  placeholder="MM"
+                  placeholder={i18n.t('wodDetail.minutesPlaceholder')}
                   placeholderTextColor={c.textMuted}
                   value={timeMin}
                   onChangeText={(t) => {
@@ -735,7 +735,7 @@ export default function DailyTournamentDetailScreen() {
                 <TextInput
                   ref={secRef}
                   style={[S.modalInput, S.timeInput]}
-                  placeholder="SS"
+                  placeholder={i18n.t('wodDetail.secondsPlaceholder')}
                   placeholderTextColor={c.textMuted}
                   value={timeSec}
                   onChangeText={(t) => setTimeSec(t.replace(/\D/g, '').slice(0, 2))}
@@ -763,26 +763,26 @@ export default function DailyTournamentDetailScreen() {
             <AxTextField
               value={scoreNotes}
               onChangeText={setScoreNotes}
-              placeholder="Notes (optionnel)"
+              placeholder={i18n.t('wodResult.phNotes')}
               multiline
-              accessibilityLabel="Notes (optionnel)"
+              accessibilityLabel={i18n.t('wodResult.phNotes')}
               testID="mini-score-notes"
             />
 
-            <Text style={S.modalLabel}>LIEN VIDÉO YOUTUBE (recommandé)</Text>
+            <Text style={S.modalLabel}>{i18n.t('mini.videoLabel')}</Text>
             <AxTextField
               icon={Link}
               value={videoUrl}
               onChangeText={setVideoUrl}
-              placeholder="https://youtube.com/..."
+              placeholder={i18n.t('common.youtubePlaceholder')}
               autoCapitalize="none"
               keyboardType="url"
-              accessibilityLabel="Lien vidéo YouTube"
+              accessibilityLabel={i18n.t('mini.videoA11y')}
               testID="mini-score-video"
             />
 
             <AxButton
-              label="Valider mon score"
+              label={i18n.t('mini.submitScore')}
               icon={Check}
               fullWidth
               onPress={handleSubmitScore}
@@ -800,7 +800,7 @@ export default function DailyTournamentDetailScreen() {
           <View style={S.modalSheet} testID="mini-contest-sheet">
             <View style={S.modalHandle} />
             <View style={S.modalHeader}>
-              <Text style={S.modalTitle}>Contester le score</Text>
+              <Text style={S.modalTitle}>{i18n.t('mini.contestTitle')}</Text>
               <AxIconButton icon={X} onPress={() => setContestModal(null)} accessibilityLabel={i18n.t('common.close')} testID="mini-contest-close" />
             </View>
             <Text style={S.contestInfo}>
@@ -809,13 +809,13 @@ export default function DailyTournamentDetailScreen() {
             <AxTextField
               value={contestReason}
               onChangeText={setContestReason}
-              placeholder="Raison de la contestation..."
+              placeholder={i18n.t('mini.contestReasonPlaceholder')}
               multiline
-              accessibilityLabel="Raison de la contestation"
+              accessibilityLabel={i18n.t('mini.contestReason')}
               testID="mini-contest-reason"
             />
-            <AxButton label="Confirmer la contestation" variant="stop" icon={AlertTriangle} fullWidth onPress={handleContestScore} testID="mini-contest-confirm" />
-            <AxButton label="Annuler" variant="outline" fullWidth onPress={() => setContestModal(null)} testID="mini-contest-cancel" />
+            <AxButton label={i18n.t('mini.contestConfirm')} variant="stop" icon={AlertTriangle} fullWidth onPress={handleContestScore} testID="mini-contest-confirm" />
+            <AxButton label={i18n.t('common.cancel')} variant="outline" fullWidth onPress={() => setContestModal(null)} testID="mini-contest-cancel" />
           </View>
         </KeyboardAvoidingView>
       </Modal>

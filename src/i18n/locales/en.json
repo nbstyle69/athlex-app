@@ -794,7 +794,8 @@
     "no": "No",
     "ok": "OK",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "youtubePlaceholder": "https://youtube.com/..."
   },
   "auth": {
     "loginTitle": "Sign in",
@@ -1629,7 +1630,8 @@
       "7. Copy the link and paste it here"
     ],
     "openYtStudio": "Open YouTube Studio",
-    "close": "Close"
+    "close": "Close",
+    "youtubePlaceholder": "https://youtube.com/watch?v=..."
   },
   "interTeam": {
     "myTeam": "My team",
@@ -2897,5 +2899,103 @@
     "specialOffer": "Special offer",
     "links": "Links",
     "website": "Website"
+  },
+  "mini": {
+    "title": "Mini-Tournaments",
+    "restrictedTitle": "Restricted access",
+    "reservedMale": "This tournament is for men only.",
+    "reservedFemale": "This tournament is for women only.",
+    "genderMissingTitle": "Gender not set",
+    "genderMissingMsg": "Add your gender to your profile to join this tournament.",
+    "capRepsRequired": "Enter the number of reps completed at the cap.",
+    "invalidValueTitle": "Invalid value",
+    "invalidValueMsg": "Enter a valid score.",
+    "videoUrlScheme": "The video link must start with http:// or https://",
+    "scoreValidated": "Score validated!",
+    "scoreContested": "Score disputed — an admin will review it.",
+    "ended": "Ended",
+    "endedTag": "ENDED",
+    "timeLeft": "{{h}}h{{m}} left",
+    "status": {
+      "validated": "Validated",
+      "contested": "Disputed",
+      "pending": "Pending"
+    },
+    "scaledShort": "SC",
+    "waitingScore": "Pending…",
+    "invalidLinkTitle": "Invalid link",
+    "cannotOpenVideo": "Couldn't open this video link.\n\n{{url}}",
+    "videoErrorTitle": "Video error",
+    "noVideo": "No video",
+    "contest": "Dispute",
+    "shareMessage": "{{name}} — Join the mini-tournament on AthleX! {{url}}",
+    "officialTag": "WOD OF THE DAY",
+    "officialInfo": "Official WOD of the Day · RX / Scaled leaderboard · open to the whole community",
+    "reward": "Reward: +{{elo}} ELO for 1st place",
+    "scaledHint": "Scaled version — adjust the loads to your level if needed.",
+    "boardTitleCategory": "Leaderboard {{cat}} ({{n}})",
+    "noScoreCategory": "No {{cat}} score yet.",
+    "boardTitle": "Leaderboard ({{n}}/{{max}})",
+    "noParticipants": "No participants yet.",
+    "enterScoreManually": "Enter my score manually",
+    "join": "Join",
+    "winner": "{{name}} wins +{{elo}} ELO!",
+    "label": {
+      "capReps": "REPS AT CAP",
+      "reps": "NUMBER OF REPS",
+      "rounds": "NUMBER OF ROUNDS",
+      "weight": "WEIGHT (KG)"
+    },
+    "videoLabel": "YOUTUBE VIDEO LINK (recommended)",
+    "videoA11y": "YouTube video link",
+    "submitScore": "Submit my score",
+    "contestTitle": "Dispute the score",
+    "contestReasonPlaceholder": "Reason for the dispute...",
+    "contestReason": "Reason for the dispute",
+    "contestConfirm": "Confirm the dispute",
+    "by": "by {{name}}",
+    "statActive": "Active",
+    "statJoined": "Joined",
+    "statScored": "Scored",
+    "empty": "No mini-tournament in progress",
+    "emptyHint": "Create the first one and challenge the community!",
+    "create": "Create a mini-tournament",
+    "newTitle": "New mini-tournament",
+    "launch": "Start the mini-tournament",
+    "form": {
+      "name": "WOD name",
+      "namePlaceholder": "e.g. Flash Burner",
+      "duration": "Duration (min)",
+      "scoreMode": "Score mode",
+      "weightMode": "Weight (kg)",
+      "gender": "Target gender",
+      "genderMix": "Mix",
+      "movements": "Movements",
+      "movementsPlaceholder": "21-15-9\nThrusters (43/30 kg)\nPull-ups"
+    }
+  },
+  "leaderboard": {
+    "subtitle": "Who rules AthleX?",
+    "tabTeams": "Teams",
+    "emptyLevel": "No athletes at this level",
+    "record": "{{wins}}W – {{losses}}L",
+    "noTeams": "No teams yet",
+    "noTeamsHint": "Teams show up here after inter-box competitions",
+    "teamMembers_one": "{{count}} member",
+    "teamMembers_other": "{{count}} members",
+    "avgElo": "Avg ELO",
+    "boxesHint": "Boxes ranked by their athletes' average ELO",
+    "noBoxes": "No boxes yet",
+    "top": "Top: {{name}}"
+  },
+  "boxRanking": {
+    "title": "Box leaderboard",
+    "subtitle": "ELO specific to {{box}} — box WODs only",
+    "theBox": "the box",
+    "empty": "No members yet",
+    "rankA11y": "Rank {{rank}}",
+    "record_one": "{{wins}}W · {{count}} WOD",
+    "record_other": "{{wins}}W · {{count}} WODs",
+    "boxElo": "Box ELO"
   }
 }
