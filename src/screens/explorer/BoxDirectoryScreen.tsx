@@ -21,20 +21,9 @@ import { HomeStackParamList } from '../../navigation';
 import { Box } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { sportLabel } from './explorerLabels';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
-
-const SPORT_LABELS: Record<string, string> = {
-  crossfit: 'Functional',
-  weightlifting: 'Haltérophilie',
-  gymnastics: 'Gymnastique',
-  hiit: 'HIIT',
-  yoga: 'Yoga',
-  boxing: 'Boxe',
-  mma: 'MMA',
-  functional: 'Functional',
-  hyrox: 'Hybrid',
-};
 
 export default function BoxDirectoryScreen() {
   const tabSpace = useTabBarScrollSpace();
@@ -139,13 +128,13 @@ export default function BoxDirectoryScreen() {
             ) : null}
             <View style={s.metaRow}>
               <Users size={12} color={c.textMuted} />
-              <Text style={s.metaText} numberOfLines={1}>{item.member_count ?? 0} membres</Text>
+              <Text style={s.metaText} numberOfLines={1}>{i18n.t('explorer.membersCount', { count: item.member_count ?? 0 })}</Text>
             </View>
           </View>
           {(item.sport_type ?? []).length > 0 && (
             <View style={s.sportRow}>
               {(item.sport_type ?? []).slice(0, 3).map(sp => (
-                <AxTag key={sp} tone="muted" label={SPORT_LABELS[sp] ?? sp} />
+                <AxTag key={sp} tone="muted" label={sportLabel(sp)} />
               ))}
             </View>
           )}
@@ -159,10 +148,10 @@ export default function BoxDirectoryScreen() {
       <GlassBackground />
       {/* Header */}
       <AxScreenHeader
-        title="Annuaire des Boxs"
+        title={i18n.t('explorer.directory.title')}
         right={<AxIconButton icon={Map} onPress={() => navigation.navigate('BoxDirectoryMap', { boxes: filtered.filter(b => b.latitude && b.longitude) })} accessibilityLabel={i18n.t('common.map')} testID="header-map" />}
       >
-          <Text style={s.headerSub}>{filtered.length} box{filtered.length > 1 ? 's' : ''} référencée{filtered.length > 1 ? 's' : ''}</Text>
+          <Text style={s.headerSub}>{i18n.t('explorer.directory.count', { count: filtered.length })}</Text>
       </AxScreenHeader>
 
       {/* Search */}
@@ -170,7 +159,7 @@ export default function BoxDirectoryScreen() {
         <AxTextField
           value={search}
           onChangeText={setSearch}
-          placeholder="Rechercher une box ou une ville..."
+          placeholder={i18n.t('explorer.directory.searchPlaceholder')}
           icon={search.length > 0 ? undefined : Search}
           testID="box-search"
           trailing={search.length > 0 ? (
@@ -178,7 +167,7 @@ export default function BoxDirectoryScreen() {
               onPress={() => setSearch('')}
               hitSlop={hitSlopFor(18, 18)}
               accessibilityRole="button"
-              accessibilityLabel="Effacer la recherche"
+              accessibilityLabel={i18n.t('whiteboard.memberSearchClear')}
               testID="box-search-clear"
             >
               <X size={18} color={c.textMuted} />
@@ -199,7 +188,7 @@ export default function BoxDirectoryScreen() {
             contentContainerStyle={s.filtersList}
             renderItem={({ item: sp }) => (
               <AxChip
-                label={SPORT_LABELS[sp] ?? sp}
+                label={sportLabel(sp)}
                 selected={selectedSport === sp}
                 onPress={() => setSelectedSport(selectedSport === sp ? null : sp)}
                 testID={`box-filter-${sp}`}
@@ -216,7 +205,7 @@ export default function BoxDirectoryScreen() {
         </View>
       ) : filtered.length === 0 ? (
         <View style={s.center}>
-          <Text style={s.emptyText}>Aucune box trouvée</Text>
+          <Text style={s.emptyText}>{i18n.t('explorer.directory.empty')}</Text>
         </View>
       ) : (
         <FlatList

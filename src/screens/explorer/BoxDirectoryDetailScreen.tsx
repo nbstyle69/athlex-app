@@ -19,21 +19,10 @@ import { HomeStackParamList } from '../../navigation';
 import { Box } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { serviceLabel, sportLabel } from './explorerLabels';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 type Route = RouteProp<HomeStackParamList, 'BoxDirectoryDetail'>;
-
-const SPORT_LABELS: Record<string, string> = {
-  crossfit: 'Functional', weightlifting: 'Haltérophilie', gymnastics: 'Gymnastique',
-  hiit: 'HIIT', yoga: 'Yoga', boxing: 'Boxe', mma: 'MMA',
-  functional: 'Functional', hyrox: 'Hybrid',
-};
-
-const SERVICE_LABELS: Record<string, string> = {
-  parking: 'Parking', showers: 'Douches', lockers: 'Casiers',
-  shop: 'Boutique', nutrition: 'Nutrition', physio: 'Kiné',
-  childcare: 'Garderie', sauna: 'Sauna', openGym: 'Open Gym',
-};
 
 export default function BoxDirectoryDetailScreen() {
   const tabSpace = useTabBarScrollSpace();
@@ -92,8 +81,8 @@ export default function BoxDirectoryDetailScreen() {
     if (url) Linking.openURL(url).catch(() => {});
   }
 
-  const sports = (box.sport_type ?? []).map(s => SPORT_LABELS[s] ?? s);
-  const services = (box.services ?? []).map(s => SERVICE_LABELS[s] ?? s);
+  const sports = (box.sport_type ?? []).map(sportLabel);
+  const services = (box.services ?? []).map(serviceLabel);
 
   return (
     <View style={s.container}>
@@ -131,20 +120,20 @@ export default function BoxDirectoryDetailScreen() {
               <View style={s.statItem}>
                 <Users size={14} color={c.accentText} />
                 <Text style={s.statVal}>{memberCount}</Text>
-                <Text style={s.statLabel}>membres</Text>
+                <Text style={s.statLabel}>{t('explorer.detail.members', { count: memberCount })}</Text>
               </View>
               {box.founded_at ? (
                 <View style={s.statItem}>
                   <Calendar size={14} color={c.accentText} />
                   <Text style={s.statVal}>{new Date(box.founded_at).getFullYear()}</Text>
-                  <Text style={s.statLabel}>fondée</Text>
+                  <Text style={s.statLabel}>{t('explorer.detail.founded')}</Text>
                 </View>
               ) : null}
               {sports.length > 0 ? (
                 <View style={s.statItem}>
                   <Dumbbell size={14} color={c.accentText} />
                   <Text style={s.statVal}>{sports.length}</Text>
-                  <Text style={s.statLabel}>sports</Text>
+                  <Text style={s.statLabel}>{t('explorer.detail.sports', { count: sports.length })}</Text>
                 </View>
               ) : null}
             </View>
@@ -153,7 +142,7 @@ export default function BoxDirectoryDetailScreen() {
           {/* Description */}
           {box.description ? (
             <View style={s.section}>
-              <Text style={s.sectionTitle}>À propos</Text>
+              <Text style={s.sectionTitle}>{t('interDetail.about')}</Text>
               <Text style={s.descText}>{box.description}</Text>
             </View>
           ) : null}
@@ -161,7 +150,7 @@ export default function BoxDirectoryDetailScreen() {
           {/* Sports */}
           {sports.length > 0 && (
             <View style={s.section}>
-              <Text style={s.sectionTitle}>Sports</Text>
+              <Text style={s.sectionTitle}>{t('explorer.detail.sportsTitle')}</Text>
               <View style={s.badgeRow}>
                 {sports.map(sp => (
                   <AxTag key={sp} label={sp} />
@@ -173,7 +162,7 @@ export default function BoxDirectoryDetailScreen() {
           {/* Services */}
           {services.length > 0 && (
             <View style={s.section}>
-              <Text style={s.sectionTitle}>Services</Text>
+              <Text style={s.sectionTitle}>{t('explorer.detail.servicesTitle')}</Text>
               <View style={s.badgeRow}>
                 {services.map(sv => (
                   <AxTag key={sv} tone="muted" label={sv} />
@@ -184,7 +173,7 @@ export default function BoxDirectoryDetailScreen() {
 
           {/* Contact info */}
           <View style={s.section}>
-            <Text style={s.sectionTitle}>Contact</Text>
+            <Text style={s.sectionTitle}>{t('explorer.detail.contactTitle')}</Text>
             <View style={s.infoList}>
               {box.address && (
                 <Pressable style={s.infoRow} onPress={() => openLink(box.google_maps_url)} accessibilityRole="link">
@@ -223,7 +212,7 @@ export default function BoxDirectoryDetailScreen() {
           {/* Opening hours */}
           {box.opening_hours && Object.keys(box.opening_hours).length > 0 && (
             <View style={s.section}>
-              <Text style={s.sectionTitle}>Horaires</Text>
+              <Text style={s.sectionTitle}>{t('explorer.detail.hoursTitle')}</Text>
               <AxCard style={s.hoursCard} testID="box-detail-hours">
                 {Object.entries(box.opening_hours).map(([day, hours]) => (
                   <View key={day} style={s.hoursRow}>

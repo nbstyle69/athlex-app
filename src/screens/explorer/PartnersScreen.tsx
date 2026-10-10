@@ -16,19 +16,10 @@ import { HomeStackParamList } from '../../navigation';
 import { Partner, PartnerCategory } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { useTranslation } from 'react-i18next';
+import { partnerCategoryLabel } from './explorerLabels';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
-
-const CATEGORY_LABELS: Record<PartnerCategory, string> = {
-  nutrition: 'Nutrition',
-  equipment: 'Équipement',
-  apparel: 'Vêtements',
-  supplements: 'Compléments',
-  recovery: 'Récupération',
-  coaching: 'Coaching',
-  software: 'Logiciel',
-  other: 'Autres',
-};
 
 const CATEGORY_ORDER: PartnerCategory[] = [
   'nutrition', 'equipment', 'apparel', 'supplements', 'recovery', 'coaching', 'software', 'other',
@@ -37,6 +28,7 @@ const CATEGORY_ORDER: PartnerCategory[] = [
 export default function PartnersScreen() {
   const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const c = theme.ax;
   const s = createStyles(c);
@@ -71,8 +63,8 @@ export default function PartnersScreen() {
     });
     return CATEGORY_ORDER
       .filter(cat => grouped[cat]?.length)
-      .map(cat => ({ title: CATEGORY_LABELS[cat], data: grouped[cat] }));
-  }, [partners]);
+      .map(cat => ({ title: partnerCategoryLabel(cat), data: grouped[cat] }));
+  }, [partners, t]);
 
   function renderPartner({ item }: { item: Partner }) {
     return (
@@ -109,8 +101,8 @@ export default function PartnersScreen() {
     <View style={s.container}>
       <GlassBackground />
       {/* Header */}
-      <AxScreenHeader title="Partenaires">
-          <Text style={s.headerSub}>Offres exclusives pour les athlètes AthleX</Text>
+      <AxScreenHeader title={t('home.explorer.partners')}>
+          <Text style={s.headerSub}>{t('partners.subtitle')}</Text>
       </AxScreenHeader>
 
       {loading ? (
@@ -120,7 +112,7 @@ export default function PartnersScreen() {
       ) : sections.length === 0 ? (
         <View style={s.center}>
           <Handshake size={40} color={c.textMuted} />
-          <Text style={s.emptyText}>Aucun partenaire pour le moment</Text>
+          <Text style={s.emptyText}>{t('partners.empty')}</Text>
         </View>
       ) : (
         <SectionList

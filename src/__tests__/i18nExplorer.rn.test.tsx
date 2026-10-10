@@ -226,7 +226,7 @@ function dataTexts(): Set<string> {
   const out = new Set<string>();
   (function walk(v: unknown) {
     if (typeof v === 'string') [v, ...v.split('\n')].forEach((l) => out.add(l.toLowerCase()));
-    else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+    else if (v && typeof v === 'object') { Object.keys(v).forEach(walk); Object.values(v).forEach(walk); }
   })([mockTables, mockRouteParams, BOX_A, BOX_B, BOX_MIN, PARTNERS, PARTNER_FULL, PROGRAMS]);
   return out;
 }
@@ -234,6 +234,7 @@ function dataTexts(): Set<string> {
 const SAME_IN_EN = [
   /^(Functional|Hybrid|HIIT|Yoga|MMA|Parking|Sauna|Open Gym|Nutrition|Coaching|Sports|Services|Contact|Violence|Ongoing|Instagram)$/i,
   /^Map not available on web$/,
+  /^Box$/i, /^\d+ box$/, // « Box » garde son nom (glossaire)
 ];
 const ACCENT = /[àâäçéèêëîïôöùûüÿœæ«»]/i;
 
@@ -267,7 +268,7 @@ describe('Explorer, anglais : aucun texte français', () => {
     const french = shown.filter((s) => ACCENT.test(strip(s)) && !DATA.has(strip(s).toLowerCase()));
     const frSet = new Set(fr.map((s) => s.toLowerCase()));
     const unchanged = shown.filter((s) => frSet.has(s.toLowerCase()) && /\p{L}{2,}/u.test(strip(s))
-      && !strip(s).split('\n').every((l) => DATA.has(l.toLowerCase())) && !strictAllowed(strip(s))
+      && !strip(s).split(/\n|, /).every((l) => DATA.has(l.toLowerCase())) && !strictAllowed(strip(s))
       && !SAME_IN_EN.some((re) => re.test(strip(s))));
     expect({ name, french, unchanged }).toEqual({ name, french: [], unchanged: [] });
   });

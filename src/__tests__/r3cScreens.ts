@@ -70,15 +70,15 @@ export const R3C_SCREENS: R3cScreen[] = [
   { file: 'reservation/MyReservationsScreen.tsx', titles: ["title={t('myReservations.title')}"] },
   { file: 'documents/LegalScreen.tsx', titles: ['title="Mentions légales"'], onBack: ['onBack={() => nav.goBack()}'] },
   { file: 'programs/ProgramDetailScreen.tsx', titles: ["title={t('screenTitles.program')}"], right: ['style={S.dateBtn}'] },
-  { file: 'explorer/ProgrammationScreen.tsx', titles: ['title="Programmes"'] },
+  { file: 'explorer/ProgrammationScreen.tsx', titles: ["title={t('home.explorer.programs')}"] },
   {
-    file: 'explorer/BoxDirectoryScreen.tsx', titles: ['title="Annuaire des Boxs"'],
+    file: 'explorer/BoxDirectoryScreen.tsx', titles: ["title={i18n.t('explorer.directory.title')}"],
     right: ["icon={Map} onPress={() => navigation.navigate('BoxDirectoryMap'"],
   },
   { file: 'explorer/BoxDirectoryDetailScreen.tsx', titles: ["title={t('screenTitles.box')}", "title={t('boxAccess.notFoundTitle')}"] },
-  { file: 'explorer/PartnersScreen.tsx', titles: ['title="Partenaires"'] },
+  { file: 'explorer/PartnersScreen.tsx', titles: ["title={t('home.explorer.partners')}"] },
   { file: 'explorer/PartnerDetailScreen.tsx', titles: ["title={i18n.t('screenTitles.partner')}"] },
-  { file: 'explorer/BoxProgramsScreen.tsx', titles: ['title="Programmes des Boxs"'] },
+  { file: 'explorer/BoxProgramsScreen.tsx', titles: ["title={t('explorer.programs.title')}"] },
   { file: 'messages/MessagesScreen.tsx', titles: ["title={i18n.t('whiteboard.messages')}"] },
 ];
 
