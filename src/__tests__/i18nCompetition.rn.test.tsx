@@ -535,7 +535,6 @@ const SAME_IN_EN = [
   /^CAP \+ \d+ reps$/, /^ROUND \d+$/, /^\d+ (pts|rnds)$/, /^\d+ MIN CAP$/,
   /^https:\/\/youtube\.com\//,
   /^21-15-9\nThrusters/, // exemple de mouvements, identique en anglais
-  /^Top: /, // « Top: » suivi d'un nom, identique en anglais (leaderboard.top)
 ];
 const ACCENT = /[àâäçéèêëîïôöùûüÿœæ«»]/i;
 

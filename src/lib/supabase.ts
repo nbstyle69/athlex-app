@@ -14,7 +14,9 @@ const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
 // « supabaseUrl is required. », un message qui ne dit pas d'où vient le trou.
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(
+    // i18n-ignore : erreur de build levée au chargement du module, avant toute interface
     'Configuration Supabase absente du bundle (EXPO_PUBLIC_SUPABASE_URL / '
+    // i18n-ignore : suite du même message de build
     + "EXPO_PUBLIC_SUPABASE_ANON_KEY) : l'update a été publié sans ses variables "
     + "d'environnement.",
   );

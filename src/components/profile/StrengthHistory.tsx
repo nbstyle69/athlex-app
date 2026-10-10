@@ -11,6 +11,7 @@
 
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { StrengthSession } from '../../services/strengthSets';
@@ -30,16 +31,14 @@ function formatDay(iso: string): string {
 
 export default function StrengthHistory({ sessions, prSourceIds }: Props) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const S = createStyles(theme);
 
   return (
     <View style={S.wrap}>
-      <Text style={S.title}>SÉRIES RÉALISÉES</Text>
+      <Text style={S.title}>{t('strengthHistory.title')}</Text>
       {sessions.length === 0 ? (
-        <Text style={S.empty}>
-          Aucune série enregistrée pour l'instant. Les blocs de musculation que tu valides
-          depuis un WOD ou un programme apparaîtront ici, série par série.
-        </Text>
+        <Text style={S.empty}>{t('strengthHistory.empty')}</Text>
       ) : (
         sessions.map(s => {
           const establishedPr = s.sets.some(set => prSourceIds.has(set.id));
@@ -50,13 +49,13 @@ export default function StrengthHistory({ sessions, prSourceIds }: Props) {
                 <Text style={S.date}>{formatDay(s.performedAt)}</Text>
               </View>
               <Text style={S.source} numberOfLines={1}>
-                {s.sourceTitle ?? 'Séance supprimée'}
+                {s.sourceTitle ?? t('strengthHistory.deletedSession')}
                 {' · '}
-                {s.sourceType === 'program' ? 'programme' : 'WOD de box'}
+                {s.sourceType === 'program' ? t('strengthHistory.sourceProgram') : t('strengthHistory.sourceBoxWod')}
               </Text>
               {s.sets.map(set => (
                 <View key={set.id} style={S.row}>
-                  <Text style={S.setLabel}>Série {set.setIndex}</Text>
+                  <Text style={S.setLabel}>{t('strengthHistory.set', { n: set.setIndex })}</Text>
                   <Text style={S.setValue}>
                     {set.reps} reps{set.loadKg != null ? ` × ${set.loadKg} kg` : ''}
                   </Text>
@@ -64,7 +63,7 @@ export default function StrengthHistory({ sessions, prSourceIds }: Props) {
                 </View>
               ))}
               {establishedPr && (
-                <Text style={S.prNote}>Ton 1RM affiché vient de cette séance.</Text>
+                <Text style={S.prNote}>{t('strengthHistory.prNote')}</Text>
               )}
             </View>
           );

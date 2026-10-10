@@ -9,7 +9,9 @@ import { ChevronRight, UserPlus, Check, X, Search, UserCheck, Users, Inbox } fro
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
+import { errorMessage } from '../../utils/refusals';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { captureError } from '../../lib/sentry';
@@ -47,6 +49,7 @@ export default function FriendsScreen() {
   const tabSpace = useTabBarScrollSpace();
   const { user, currentBox } = useAuth();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const S = createStyles(theme);
   const levelInk = (level?: string) => readableInk(LevelColors[level ?? ''] ?? '#6B7280', theme.ax);
@@ -125,12 +128,12 @@ export default function FriendsScreen() {
       status: 'pending',
     });
     if (error) {
-      if (error.code === '23505') Alert.alert('Invitation déjà envoyée');
-      else Alert.alert('Erreur', error.message);
+      if (error.code === '23505') Alert.alert(t('friends.alreadySent'));
+      else Alert.alert(t('common.error'), await errorMessage(error));
       return;
     }
     sendFriendRequestNotification(targetId, user.username).catch(e => captureError(e, { action: 'sendFriendRequest' }));
-    Alert.alert('✅', 'Invitation envoyée !');
+    Alert.alert('✅', t('friends.requestSent'));
     load();
   }
 
@@ -169,15 +172,15 @@ export default function FriendsScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title="Amis">
-          <Text style={S.headerSub}>{friends.length} ami{friends.length > 1 ? 's' : ''}</Text>
+      <AxScreenHeader title={t('home.friends')}>
+          <Text style={S.headerSub}>{t('friends.count', { count: friends.length })}</Text>
       </AxScreenHeader>
 
       <View style={S.tabRow} testID="friends-tabs">
         {([
-          { key: 'friends',  label: 'Mes amis' },
-          { key: 'requests', label: `Invitations${pendingCount > 0 ? ` (${pendingCount})` : ''}` },
-          { key: 'search',   label: 'Rechercher' },
+          { key: 'friends',  label: t('friends.tabFriends') },
+          { key: 'requests', label: pendingCount > 0 ? t('friends.tabRequestsCount', { count: pendingCount }) : t('friends.tabRequests') },
+          { key: 'search',   label: t('common.search') },
         ] as const).map(({ key, label }) => (
           <AxChip
             key={key}
@@ -204,9 +207,9 @@ export default function FriendsScreen() {
               {friends.length === 0 ? (
                 <AxCard style={S.emptyCard} testID="friends-empty">
                   <Users color={theme.ax.textMuted} size={40} />
-                  <Text style={S.emptyTitle}>Pas encore d'amis</Text>
-                  <Text style={S.emptySub}>Recherche des athlètes et envoie des invitations !</Text>
-                  <AxButton label="Rechercher" icon={Search} onPress={() => setTab('search')} testID="friends-empty-search" />
+                  <Text style={S.emptyTitle}>{t('friends.emptyTitle')}</Text>
+                  <Text style={S.emptySub}>{t('friends.emptySub')}</Text>
+                  <AxButton label={t('common.search')} icon={Search} onPress={() => setTab('search')} testID="friends-empty-search" />
                 </AxCard>
               ) : (
                 friends.map(friend => (
@@ -239,7 +242,7 @@ export default function FriendsScreen() {
             <>
               {pendingReceived.length > 0 && (
                 <>
-                  <Text style={S.subTitle}>Reçues</Text>
+                  <Text style={S.subTitle}>{t('friends.received')}</Text>
                   {pendingReceived.map(req => {
                     const sender = req.requester as any;
                     return (
@@ -251,7 +254,7 @@ export default function FriendsScreen() {
                         >
                           <UserAvatar uri={sender?.avatar_url} name={sender?.username ?? '?'} size={44} backgroundColor={theme.ax.field} textColor={theme.ax.text} />
                           <View style={S.friendInfo}>
-                            <Text style={S.friendName} numberOfLines={1}>{sender?.username ?? 'Athlète'}</Text>
+                            <Text style={S.friendName} numberOfLines={1}>{sender?.username ?? t('onboarding.athleteFallback')}</Text>
                             <View style={S.levelPill}>
                               <View style={[S.levelDot, { backgroundColor: levelInk(sender?.level) }]} />
                               <Text style={[S.levelText, { color: levelInk(sender?.level) }]}>
@@ -261,10 +264,10 @@ export default function FriendsScreen() {
                           </View>
                         </TouchableOpacity>
                         <View style={S.actionBtns}>
-                          <TouchableOpacity style={S.acceptBtn} onPress={() => handleAccept(req.id)} accessibilityRole="button" accessibilityLabel="Accepter" testID={`accept-${req.id}`}>
+                          <TouchableOpacity style={S.acceptBtn} onPress={() => handleAccept(req.id)} accessibilityRole="button" accessibilityLabel={t('friends.accept')} testID={`accept-${req.id}`}>
                             <Check color={theme.ax.onAccent} size={16} />
                           </TouchableOpacity>
-                          <TouchableOpacity style={S.declineBtn} onPress={() => handleDecline(req.id)} accessibilityRole="button" accessibilityLabel="Refuser" testID={`decline-${req.id}`}>
+                          <TouchableOpacity style={S.declineBtn} onPress={() => handleDecline(req.id)} accessibilityRole="button" accessibilityLabel={t('friends.decline')} testID={`decline-${req.id}`}>
                             <X color={theme.ax.danger} size={16} />
                           </TouchableOpacity>
                         </View>
@@ -275,7 +278,7 @@ export default function FriendsScreen() {
               )}
               {pendingSent.length > 0 && (
                 <>
-                  <Text style={[S.subTitle, { marginTop: 20 }]}>Envoyées</Text>
+                  <Text style={[S.subTitle, { marginTop: 20 }]}>{t('friends.sent')}</Text>
                   {pendingSent.map(req => {
                     const receiver = req.addressee as any;
                     return (
@@ -287,12 +290,12 @@ export default function FriendsScreen() {
                         >
                           <UserAvatar uri={receiver?.avatar_url} name={receiver?.username ?? '?'} size={44} backgroundColor={theme.ax.field} textColor={theme.ax.text} />
                           <View style={S.friendInfo}>
-                            <Text style={S.friendName} numberOfLines={1}>{receiver?.username ?? 'Athlète'}</Text>
-                            <Text style={S.pendingLabel}>En attente…</Text>
+                            <Text style={S.friendName} numberOfLines={1}>{receiver?.username ?? t('onboarding.athleteFallback')}</Text>
+                            <Text style={S.pendingLabel}>{t('friends.pendingDots')}</Text>
                           </View>
                         </TouchableOpacity>
                         <TouchableOpacity style={S.cancelBtn} onPress={() => handleCancelRequest(req.id)} testID={`cancel-${req.id}`}>
-                          <Text style={S.cancelBtnText}>Annuler</Text>
+                          <Text style={S.cancelBtnText}>{t('common.cancel')}</Text>
                         </TouchableOpacity>
                       </AxCard>
                     );
@@ -302,8 +305,8 @@ export default function FriendsScreen() {
               {pendingReceived.length === 0 && pendingSent.length === 0 && (
                 <AxCard style={S.emptyCard} testID="requests-empty">
                   <Inbox color={theme.ax.textMuted} size={40} />
-                  <Text style={S.emptyTitle}>Aucune invitation</Text>
-                  <Text style={S.emptySub}>Quand quelqu'un t'enverra une invitation, elle apparaîtra ici.</Text>
+                  <Text style={S.emptyTitle}>{t('friends.emptyRequestsTitle')}</Text>
+                  <Text style={S.emptySub}>{t('friends.emptyRequestsSub')}</Text>
                 </AxCard>
               )}
             </>
@@ -314,7 +317,7 @@ export default function FriendsScreen() {
               <View style={S.searchRow}>
                 <TextInput
                   style={S.searchInput}
-                  placeholder="Rechercher un athlète…"
+                  placeholder={t('friends.searchPlaceholder')}
                   placeholderTextColor={theme.ax.textMuted}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
@@ -322,7 +325,7 @@ export default function FriendsScreen() {
                   returnKeyType="search"
                   autoCapitalize="none"
                 />
-                <TouchableOpacity style={S.searchBtn} onPress={handleSearch} disabled={searching} accessibilityRole="button" accessibilityLabel="Rechercher" testID="friends-search-submit">
+                <TouchableOpacity style={S.searchBtn} onPress={handleSearch} disabled={searching} accessibilityRole="button" accessibilityLabel={t('common.search')} testID="friends-search-submit">
                   {searching ? <ActivityIndicator color={theme.ax.onAccent} size="small" /> : <Search color={theme.ax.onAccent} size={18} />}
                 </TouchableOpacity>
               </View>
@@ -351,11 +354,11 @@ export default function FriendsScreen() {
                     {alreadyFriend ? (
                       <View style={S.alreadyFriendTag}>
                         <UserCheck size={14} color={theme.ax.accentText} />
-                        <Text style={[S.alreadyFriendText, { color: theme.ax.accentText }]}>Ami</Text>
+                        <Text style={[S.alreadyFriendText, { color: theme.ax.accentText }]}>{t('friends.friend')}</Text>
                       </View>
                     ) : pending ? (
                       <View style={S.alreadyFriendTag}>
-                        <Text style={[S.alreadyFriendText, { color: theme.ax.textMuted }]}>En attente</Text>
+                        <Text style={[S.alreadyFriendText, { color: theme.ax.textMuted }]}>{t('friends.pending')}</Text>
                       </View>
                     ) : (
                       <TouchableOpacity
@@ -365,7 +368,7 @@ export default function FriendsScreen() {
                         testID={`add-${result.id}`}
                       >
                         <UserPlus size={15} color={theme.ax.onAccent} />
-                        <Text style={S.addBtnText}>Ajouter</Text>
+                        <Text style={S.addBtnText}>{t('friends.add')}</Text>
                       </TouchableOpacity>
                     )}
                   </AxCard>

@@ -49,21 +49,20 @@ export default function RegisterScreen({ navigation }: Props) {
 
     // Inform the user if their pseudo was auto-suffixed because the requested one was taken
     const pseudoChanged = !!finalUsername && finalUsername !== requestedUsername;
-    const pseudoNotice = pseudoChanged
-      ? `\n\nLe pseudo « ${requestedUsername} » était déjà pris, le tien est devenu « ${finalUsername} ». Tu peux le changer plus tard dans ton profil.`
-      : '';
+    const takenNotice = t('auth.usernameTakenNotice', { requested: requestedUsername, final: finalUsername });
+    const pseudoNotice = pseudoChanged ? `\n\n${takenNotice}` : '';
 
     if (error === 'CONFIRM_EMAIL') {
       dialog.show(
-        'Confirme ton email',
-        `Un lien de confirmation a été envoyé à ${email.trim()}.\n\nClique sur le lien dans l'email pour activer ton compte, puis connecte-toi.${pseudoNotice}`,
-        [{ text: 'OK', onPress: () => navigation.navigate('Login') }],
+        t('auth.confirmEmailTitle'),
+        `${t('auth.confirmEmailSent', { email: email.trim() })}${pseudoNotice}`,
+        [{ text: t('common.ok'), onPress: () => navigation.navigate('Login') }],
         { icon: Mail },
       );
     } else if (error) {
       Alert.alert(t('auth.registerFailed'), translateAuthError(t, error));
     } else if (pseudoChanged) {
-      Alert.alert('Pseudo modifié', `Le pseudo « ${requestedUsername} » était déjà pris, le tien est devenu « ${finalUsername} ». Tu peux le changer plus tard dans ton profil.`);
+      Alert.alert(t('auth.usernameChangedTitle'), takenNotice);
     }
   }
 
@@ -94,7 +93,7 @@ export default function RegisterScreen({ navigation }: Props) {
               <AxTextField
                 testID="register-username"
                 icon={AtSign}
-                placeholder="TonPseudo"
+                placeholder={t('auth.usernamePlaceholder')}
                 accessibilityLabel={t('auth.username')}
                 value={username}
                 onChangeText={setUsername}
@@ -110,7 +109,7 @@ export default function RegisterScreen({ navigation }: Props) {
               <AxTextField
                 testID="register-email"
                 icon={Mail}
-                placeholder="ton@email.com"
+                placeholder={t('auth.emailPlaceholder')}
                 accessibilityLabel={t('auth.email')}
                 value={email}
                 onChangeText={setEmail}
@@ -139,7 +138,7 @@ export default function RegisterScreen({ navigation }: Props) {
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    accessibilityLabel={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    accessibilityLabel={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     {showPassword
                       ? <EyeOff color={c.textMuted} size={20} />
@@ -183,7 +182,7 @@ export default function RegisterScreen({ navigation }: Props) {
                 testID="register-cgu"
                 checked={acceptedCGU}
                 onChange={() => setAcceptedCGU(!acceptedCGU)}
-                accessibilityLabel={acceptedCGU ? 'Décocher les CGU' : 'Accepter les CGU'}
+                accessibilityLabel={acceptedCGU ? t('auth.cguUncheck') : t('auth.cguCheck')}
               />
               <Text style={S.cguText}>
                 {t('auth.acceptPrefix')}{' '}
@@ -194,7 +193,7 @@ export default function RegisterScreen({ navigation }: Props) {
             <AxButton
               testID="register-submit"
               label={t('auth.joinBattle')}
-              accessibilityLabel="Créer un compte"
+              accessibilityLabel={t('auth.registerTitle')}
               onPress={handleRegister}
               loading={loading}
               disabled={!acceptedCGU}
@@ -206,7 +205,7 @@ export default function RegisterScreen({ navigation }: Props) {
               onPress={() => Linking.openURL(OWNER_ONBOARDING_URL)}
               activeOpacity={0.7}
               accessibilityRole="link"
-              accessibilityLabel="Créer un compte gérant de box sur athlexapp.eu"
+              accessibilityLabel={t('auth.ownerA11y')}
             >
               <Text style={S.ownerText}>
                 {t('auth.ownerPrompt')}{' '}

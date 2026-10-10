@@ -14,7 +14,7 @@ import { isPurgedAtSignOut } from '../lib/storageKeys';
 import { runSignOutSequence } from '../lib/signOutSequence';
 import { ONBOARDING_KEY } from '../lib/onboardingStatus';
 import { EMAIL_CONFIRMED_URL, UPDATE_PASSWORD_URL } from '../lib/urls';
-import { boxClosedRefusal } from '../utils/refusals';
+import { boxClosedRefusal, errorMessage } from '../utils/refusals';
 import i18n from '../i18n';
 import { setNotificationActiveBox } from '../services/notificationRouter';
 
@@ -172,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!data) {
         // Une session valide sans profil est un état incohérent, pas un vide
         // ordinaire : le trigger d'inscription doit avoir posé la ligne.
+        // i18n-ignore : détail technique pour le support, affiché tel quel sous le message traduit auth.profileLoadFailed
         throw new Error(`get_my_profile n'a rendu aucune ligne pour ${userId}`);
       }
       setProfileError(null);
@@ -314,6 +315,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
       if (probeError) {
         captureError(probeError, { action: 'signUp.usernameProbe' });
+        // i18n-ignore : erreur d'inscription, l'écran n'affiche que translateAuthError (message générique)
         return { error: `Vérification du pseudo impossible : ${probeError.message}` };
       }
       if (existing) {
@@ -328,6 +330,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .maybeSingle();
           if (clashError) {
             captureError(clashError, { action: 'signUp.usernameProbe' });
+            // i18n-ignore : erreur d'inscription, l'écran n'affiche que translateAuthError (message générique)
             return { error: `Vérification du pseudo impossible : ${clashError.message}` };
           }
           if (!clash) {
@@ -337,6 +340,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           attempts++;
         }
         if (finalUsername === baseUsername) {
+          // i18n-ignore : erreur d'inscription, l'écran n'affiche que translateAuthError (message générique)
           return { error: 'Impossible de générer un pseudo libre. Réessaie avec un autre pseudo.' };
         }
       }
@@ -385,6 +389,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (profileError) {
           // Best-effort sign-out so the auth state stays clean even if an orphan was created.
           await supabase.auth.signOut().catch(() => {});
+          // i18n-ignore : erreur d'inscription, l'écran n'affiche que translateAuthError (message générique)
           return { error: `Profil: ${profileError.message}` };
         }
       }
@@ -408,7 +413,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function joinBox(inviteCode: string): Promise<{ error: string | null }> {
-    if (!user) return { error: 'Non connecté' };
+    if (!user) return { error: i18n.t('errors.notConnected') };
     const { data: boxId, error: joinErr } = await supabase.rpc('join_box_by_invite', {
       p_invite_code: inviteCode,
     });
@@ -445,7 +450,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function leaveBox(): Promise<{ error: string | null }> {
-    if (!user || !currentBox) return { error: 'Pas dans une box' };
+    if (!user || !currentBox) return { error: i18n.t('errors.notInBox') };
     const { error } = await supabase
       .from('box_members')
       .delete()
@@ -546,7 +551,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       if (user) await removePushToken(user.id).catch(e => captureError(e, { action: 'removePushDelete' }));
       const { error } = await supabase.rpc('delete_user_account');
-      if (error) return { error: error.message };
+      if (error) return { error: await errorMessage(error) };
       trackDeleteAccount();
       const forgotten = forgetUser();
       if (forgotten.error) captureError(forgotten.error, { action: 'mixpanelDeleteUser' });
@@ -561,7 +566,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.removeItem(ACTIVE_BOX_KEY);
       return { error: null };
     } catch (e: any) {
-      return { error: e.message ?? 'Erreur inconnue' };
+      return { error: e?.message ? await errorMessage(e) : i18n.t('bo.wods.unknownError') };
     }
   }
 

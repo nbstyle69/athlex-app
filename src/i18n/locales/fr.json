@@ -47,7 +47,8 @@
         "title": "Badge débloqué !",
         "description": "First Step — Tu as rejoint la communauté AthleX !"
       }
-    }
+    },
+    "codePlaceholder": "ABC123"
   },
   "bo": {
     "interComp": {
@@ -773,7 +774,18 @@
     "tiers": "Paliers",
     "you": "Toi",
     "passage": "Passage {{tier}} · {{date}}",
-    "best": "Meilleur · {{value}}"
+    "best": "Meilleur · {{value}}",
+    "progression": "PROGRESSION ELO",
+    "period7d": "7j",
+    "period30d": "30j",
+    "period1y": "1an",
+    "periodAll": "Tout",
+    "title": "Historique ELO",
+    "current": "ELO actuel",
+    "emptyTitle": "Aucun historique ELO",
+    "emptySub": "Participe à des WODs ou tournois pour voir ton historique ici.",
+    "historyCount": "HISTORIQUE ({{count}})",
+    "dateTime": "{{date}} à {{time}}"
   },
   "common": {
     "save": "Enregistrer",
@@ -843,7 +855,20 @@
       "rateLimited": "Trop d'e-mails envoyés. Patiente quelques minutes avant de réessayer.",
       "invalidEmail": "Cette adresse e-mail n'est pas valide.",
       "weakPassword": "Mot de passe trop court (6 caractères min)"
-    }
+    },
+    "emailPlaceholder": "ton@email.com",
+    "usernamePlaceholder": "TonPseudo",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "versionA11y": "Version {{version}}",
+    "cguCheck": "Accepter les CGU",
+    "cguUncheck": "Décocher les CGU",
+    "ownerA11y": "Créer un compte gérant de box sur athlexapp.eu",
+    "confirmEmailTitle": "Confirme ton email",
+    "confirmEmailSent": "Un lien de confirmation a été envoyé à {{email}}.\n\nClique sur le lien dans l'email pour activer ton compte, puis connecte-toi.",
+    "usernameChangedTitle": "Pseudo modifié",
+    "usernameTakenNotice": "Le pseudo « {{requested}} » était déjà pris, le tien est devenu « {{final}} ». Tu peux le changer plus tard dans ton profil.",
+    "embeddedBundle": "embarqué"
   },
   "forgot": {
     "title": "Mot de passe oublié",
@@ -877,7 +902,9 @@
     "community": "Communauté",
     "training": "Entraînement",
     "boTracking": "Suivi",
-    "myBox": "Ma Box"
+    "myBox": "Ma Box",
+    "schedule": "Horaires",
+    "members": "Membres"
   },
   "home": {
     "elo": "ELO",
@@ -889,9 +916,9 @@
     "wods": "WODs",
     "reservations": "Réservations",
     "wodsCompleted": "WODs complétés",
-    "weekTotal": "{{res}} cours · {{wods}} WODs cette semaine",
+    "weekTotal": "{{res}} · {{wods}} cette semaine",
     "dayStreak": "{{count}} jours d'affilée",
-    "dayDetail": "{{day}} : {{res}} cours · {{wods}} WODs",
+    "dayDetail": "{{day}} : {{res}} · {{wods}}",
     "dayNamesFull": [
       "Lundi",
       "Mardi",
@@ -940,7 +967,27 @@
         "days_one": "Il y a {{count}} jour",
         "days_other": "Il y a {{count}} jours"
       }
-    }
+    },
+    "perWeek": "{{done}}/{{max}} sem.",
+    "matches_one": "{{count}} matchs",
+    "matches_other": "{{count}} matchs",
+    "badgeUnlocked": "Badge débloqué !",
+    "resultApproved": "Validé",
+    "resultRejected": "Rejeté",
+    "resultPending": "En attente",
+    "classesCount_one": "{{count}} cours",
+    "classesCount_other": "{{count}} cours",
+    "wodsCount_one": "{{count}} WODs",
+    "wodsCount_other": "{{count}} WODs",
+    "dayInitials": [
+      "L",
+      "M",
+      "M",
+      "J",
+      "V",
+      "S",
+      "D"
+    ]
   },
   "training": {
     "title": "Entraînement",
@@ -1011,7 +1058,8 @@
     "elo": {
       "toward": "Vers {{level}}",
       "maxLevel": "Niveau maximum atteint",
-      "currentLevel": "Niveau actuel : {{level}}"
+      "currentLevel": "Niveau actuel : {{level}}",
+      "maxLevelNote": "{{elo}} ELO · Pro Legend"
     },
     "pr": {
       "recordsCount": "{{count}} records",
@@ -1022,7 +1070,9 @@
         "gymnastics": "Gymnastique",
         "benchmarks": "Benchmarks Functional",
         "cardio": "Cardio & Endurance"
-      }
+      },
+      "invalidTimeTitle": "Temps invalide",
+      "invalidTimeMsg": "Saisis un temps au format mm:ss, par exemple 1:42."
     },
     "badges": {
       "earnedOf": "badges obtenus sur",
@@ -1100,7 +1150,9 @@
         "suspended": "Abonnement suspendu : paiement en retard.",
         "toActivate": "Formule à activer",
         "toActivateHint": "Choisis ta formule et ton jour de prélèvement. Tu paies au comptoir ? Rapproche-toi de ta box."
-      }
+      },
+      "joinCodePlaceholder": "Ex : ABC123",
+      "joinProgramPlaceholder": "Ex : FORCE6"
     },
     "password": {
       "title": "Changer le mot de passe",
@@ -1479,7 +1531,8 @@
     "totalRepsField": "Total de reps",
     "perRoundInfo": "1 tour = {{reps}} reps",
     "scoreRecap": "= {{total}} reps",
-    "scoreRecapRounds": "= {{total}} reps ({{rounds}} tour(s) + {{reps}})",
+    "scoreRecapRounds_one": "= {{total}} reps ({{count}} tour(s) + {{reps}})",
+    "scoreRecapRounds_other": "= {{total}} reps ({{count}} tour(s) + {{reps}})",
     "repsHelp": "Peu importe le mode choisi : on enregistre le total de reps pour un classement cohérent."
   },
   "interScore": {
@@ -1606,7 +1659,8 @@
     "totalRepsField": "Total de reps",
     "perRoundInfo": "1 tour = {{reps}} reps",
     "scoreRecap": "= {{total}} reps",
-    "scoreRecapRounds": "= {{total}} reps ({{rounds}} tour(s) + {{reps}})",
+    "scoreRecapRounds_one": "= {{total}} reps ({{count}} tour(s) + {{reps}})",
+    "scoreRecapRounds_other": "= {{total}} reps ({{count}} tour(s) + {{reps}})",
     "repsHelp": "Peu importe le mode choisi : on enregistre le total de reps pour un classement cohérent.",
     "tiebreakLabel": "TIE-BREAK (optionnel)",
     "tiebreakHint": "Reps du dernier mouvement réalisé — départage en cas d'ex-aequo.",
@@ -1921,7 +1975,43 @@
         "label": "Réservations",
         "description": "Tu pourras t'inscrire aux cours de ta salle."
       }
-    ]
+    ],
+    "owner": {
+      "dashboard": {
+        "label": "Dashboard",
+        "description": "Vue d'ensemble de votre box — stats, membres, compétitions"
+      },
+      "wods": {
+        "label": "WODs",
+        "description": "Programmez et publiez les WODs quotidiens pour vos athlètes"
+      },
+      "members": {
+        "label": "Membres",
+        "description": "Gérez les athlètes inscrits à votre box"
+      },
+      "profile": {
+        "label": "Profil",
+        "description": "Vos infos personnelles, paramètres et abonnement"
+      }
+    },
+    "coach": {
+      "wods": {
+        "label": "WODs",
+        "description": "Consultez et programmez les WODs de la box"
+      },
+      "whiteboard": {
+        "label": "Whiteboard",
+        "description": "Le tableau blanc — WODs du jour et résultats des athlètes"
+      },
+      "messages": {
+        "label": "Messages",
+        "description": "Communiquez avec les membres de la box"
+      },
+      "profile": {
+        "label": "Profil",
+        "description": "Vos infos et paramètres"
+      }
+    }
   },
   "boxAccess": {
     "joinRefused": "Cette box n'accepte plus de nouveaux membres.",
@@ -2342,7 +2432,9 @@
     "notFound": "Introuvable : cet élément a peut-être été supprimé.",
     "wodNotFound": "Ce WOD n'existe plus.",
     "banned": "Ton accès à cette box a été révoqué.",
-    "registrationClosed": "Les inscriptions sont closes."
+    "registrationClosed": "Les inscriptions sont closes.",
+    "notConnected": "Non connecté",
+    "notInBox": "Pas dans une box"
   },
   "gymZones": {
     "zone": {
@@ -2955,7 +3047,7 @@
     "contestConfirm": "Confirmer la contestation",
     "by": "par {{name}}",
     "statActive": "Actifs",
-    "statJoined": "Mes inscrits",
+    "statJoined": "Rejoints",
     "statScored": "Scorés",
     "empty": "Aucun mini-tournoi en cours",
     "emptyHint": "Crée le premier et défie la communauté !",
@@ -2981,12 +3073,12 @@
     "record": "{{wins}}V – {{losses}}D",
     "noTeams": "Aucune équipe enregistrée",
     "noTeamsHint": "Les équipes apparaissent ici après les compétitions inter-box",
-    "teamMembers_one": "{{count}} membres",
+    "teamMembers_one": "{{count}} membre",
     "teamMembers_other": "{{count}} membres",
     "avgElo": "ELO moy.",
     "boxesHint": "Classement des boxs par ELO moyen de leurs athlètes",
     "noBoxes": "Aucune box enregistrée",
-    "top": "Top: {{name}}"
+    "top": "Top : {{name}}"
   },
   "boxRanking": {
     "title": "Classement de la box",
@@ -2997,5 +3089,66 @@
     "record_one": "{{wins}}V · {{count}} WOD",
     "record_other": "{{wins}}V · {{count}} WODs",
     "boxElo": "ELO box"
+  },
+  "friends": {
+    "count_one": "{{count}} ami",
+    "count_other": "{{count}} amis",
+    "tabFriends": "Mes amis",
+    "tabRequests": "Invitations",
+    "tabRequestsCount": "Invitations ({{count}})",
+    "emptyTitle": "Pas encore d'amis",
+    "emptySub": "Recherche des athlètes et envoie des invitations !",
+    "received": "Reçues",
+    "sent": "Envoyées",
+    "pendingDots": "En attente…",
+    "pending": "En attente",
+    "friend": "Ami",
+    "add": "Ajouter",
+    "accept": "Accepter",
+    "decline": "Refuser",
+    "emptyRequestsTitle": "Aucune invitation",
+    "emptyRequestsSub": "Quand quelqu'un t'enverra une invitation, elle apparaîtra ici.",
+    "searchPlaceholder": "Rechercher un athlète…",
+    "alreadySent": "Invitation déjà envoyée",
+    "requestSent": "Invitation envoyée !"
+  },
+  "publicProfile": {
+    "notFound": "Profil introuvable",
+    "requestSent": "Demande envoyée",
+    "addFriend": "Demander en ami",
+    "trophies": "Trophées",
+    "shareMessage": "Découvre mon profil sur AthleX ! {{link}}"
+  },
+  "blockedUsers": {
+    "unblockTitle": "Débloquer ?",
+    "unblockMsg": "Débloquer {{username}} ? Cet utilisateur pourra à nouveau te contacter.",
+    "unblock": "Débloquer",
+    "unblockFailed": "Impossible de débloquer.",
+    "emptyTitle": "Aucun utilisateur bloqué",
+    "emptyText": "Les utilisateurs que tu bloques apparaîtront ici. Tu peux les débloquer à tout moment."
+  },
+  "changelog": {
+    "typeFeature": "Nouveauté",
+    "typeFix": "Correction",
+    "typeUpdate": "Mise à jour",
+    "empty": "Aucune nouveauté pour le moment"
+  },
+  "strengthHistory": {
+    "title": "SÉRIES RÉALISÉES",
+    "empty": "Aucune série enregistrée pour l'instant. Les blocs de musculation que tu valides depuis un WOD ou un programme apparaîtront ici, série par série.",
+    "deletedSession": "Séance supprimée",
+    "sourceProgram": "programme",
+    "sourceBoxWod": "WOD de box",
+    "set": "Série {{n}}",
+    "prNote": "Ton 1RM affiché vient de cette séance."
+  },
+  "forceUpdate": {
+    "title": "Mise à jour requise",
+    "subtitle": "Une nouvelle version d'AthleX est disponible.\nMets à jour pour continuer à utiliser l'app.",
+    "installed": "Version installée : {{version}}",
+    "button": "Mettre à jour"
+  },
+  "dateField": {
+    "invalid": "Date invalide (format AAAA-MM-JJ)"
   }
 }

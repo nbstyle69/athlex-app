@@ -1,8 +1,9 @@
-import i18n from '../../i18n';
 import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import { AxIconButton } from '../../components/ax/AxIconButton';
 import { AxButton, AxCard, AxChip } from '../../components/ax';
 import React, { useEffect, useState, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import {
   View, Text, ScrollView, StyleSheet, Alert, ActivityIndicator, Share, Dimensions,
 } from 'react-native';
@@ -67,6 +68,7 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
   const { userId } = route.params;
   const { user: me } = useAuth();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const S = createStyles(theme);
   const [profile, setProfile] = useState<PublicUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -169,7 +171,7 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
       .from('friendships')
       .insert({ requester_id: me.id, addressee_id: userId, status: 'pending' });
     setActionLoading(false);
-    if (error) { Alert.alert('Erreur', error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     setFriendStatus('pending_sent');
   }
 
@@ -182,7 +184,7 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
       .eq('requester_id', userId)
       .eq('addressee_id', me.id);
     setActionLoading(false);
-    if (error) { Alert.alert('Erreur', error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     setFriendStatus('friends');
   }
 
@@ -194,7 +196,7 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
 
   if (!profile) return (
     <View style={S.loadingContainer}>
-      <Text style={S.notFound}>Profil introuvable</Text>
+      <Text style={S.notFound}>{t('publicProfile.notFound')}</Text>
     </View>
   );
 
@@ -208,25 +210,25 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
     if (friendStatus === 'friends') return (
       <View style={S.friendsBadge} testID="public-friends">
         <Check color={theme.ax.accentText} size={14} />
-        <Text style={S.friendsBadgeText}>Amis</Text>
+        <Text style={S.friendsBadgeText}>{t('home.friends')}</Text>
       </View>
     );
     if (friendStatus === 'pending_sent') return (
       <View style={S.pendingBadge} testID="public-pending">
         <Clock color={theme.ax.textMuted} size={14} />
-        <Text style={S.pendingBadgeText}>Demande envoyée</Text>
+        <Text style={S.pendingBadgeText}>{t('publicProfile.requestSent')}</Text>
       </View>
     );
     // Centrés dans la carte comme le reste du héros : AxButton se cale à gauche
     // quand il n'occupe pas toute la largeur (retour D3 du build 1.0.60).
     if (friendStatus === 'pending_received') return (
       <View style={S.friendAction} testID="public-friend-action">
-        <AxButton label="Accepter" icon={Check} onPress={handleAcceptFriend} loading={actionLoading} testID="public-accept" />
+        <AxButton label={t('friends.accept')} icon={Check} onPress={handleAcceptFriend} loading={actionLoading} testID="public-accept" />
       </View>
     );
     return (
       <View style={S.friendAction} testID="public-friend-action">
-        <AxButton label="Demander en ami" icon={UserPlus} onPress={handleAddFriend} loading={actionLoading} testID="public-add-friend" />
+        <AxButton label={t('publicProfile.addFriend')} icon={UserPlus} onPress={handleAddFriend} loading={actionLoading} testID="public-add-friend" />
       </View>
     );
   }
@@ -235,10 +237,10 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
     <View style={S.container}>
       <GlassBackground />
       <AxScreenHeader
-        title="Profil"
+        title={t('tabs.profile')}
         right={(
           <>
-            <AxIconButton icon={Share2} onPress={() => Share.share({ message: `Découvre mon profil sur AthleX ! athlex://profile/${route.params.userId}` })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />
+            <AxIconButton icon={Share2} onPress={() => Share.share({ message: t('publicProfile.shareMessage', { link: `athlex://profile/${route.params.userId}` }) })} accessibilityLabel={t('common.share')} testID="header-share" />
           {me?.id !== route.params.userId && (
             <View style={S.backBtn}>
               <ReportMenu
@@ -280,7 +282,7 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
         {/* Featured badges trophy case */}
         {featuredBadges.length > 0 && (
           <AxCard style={S.trophyCase} testID="public-trophies">
-            <Text style={S.trophyCaseTitle}>Trophées</Text>
+            <Text style={S.trophyCaseTitle}>{t('publicProfile.trophies')}</Text>
             <View style={S.trophyRow}>
               {featuredBadges.map(b => {
                 const Icon = TROPHY_ICONS[b.category] ?? Award;
@@ -299,8 +301,8 @@ export default function PublicProfileScreen({ navigation, route }: Props) {
         <View style={S.statsRow}>
           {[
             { icon: Zap, color: theme.ax.accentText, value: profile.elo, label: 'ELO' },
-            { icon: Trophy, color: theme.ax.textMuted, value: profile.wins, label: 'Victoires' },
-            { icon: TrendingUp, color: theme.ax.textMuted, value: `${winRate}%`, label: 'Win Rate' },
+            { icon: Trophy, color: theme.ax.textMuted, value: profile.wins, label: t('home.wins') },
+            { icon: TrendingUp, color: theme.ax.textMuted, value: `${winRate}%`, label: t('profile.stats.winRate') },
           ].map(({ icon: Icon, color, value, label }, i) => (
             <AxCard key={label} style={S.statCard} testID={`public-stat-${i}`}>
               <Icon color={color} size={16} />
@@ -385,10 +387,13 @@ const PUB_CHART_W = Dimensions.get('window').width - 64;
 const PUB_CHART_H = 160;
 const PUB_PAD = { top: 18, right: 14, bottom: 26, left: 42 };
 
+const PERIOD_KEYS = { '7d': 'eloHistory.period7d', '30d': 'eloHistory.period30d', '365d': 'eloHistory.period1y', all: 'eloHistory.periodAll' } as const;
+
 function PublicEloChart({ points, currentElo, theme, period, setPeriod }: {
   points: EloPoint[]; currentElo: number; theme: AppTheme;
   period: '7d' | '30d' | '365d' | 'all'; setPeriod: (p: '7d' | '30d' | '365d' | 'all') => void;
 }) {
+  const { t } = useTranslation();
   const filtered = useMemo(() => {
     if (period === 'all') return points;
     const days = period === '7d' ? 7 : period === '30d' ? 30 : 365;
@@ -445,14 +450,14 @@ function PublicEloChart({ points, currentElo, theme, period, setPeriod }: {
   return (
     <AxCard style={{ gap: 0, padding: 16 }} testID="public-elo-chart">
       <Text style={[axTypography.overline, { color: theme.ax.textMuted, marginBottom: 8 }]}>
-        PROGRESSION ELO
+        {t('eloHistory.progression')}
       </Text>
       {/* Period pills */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
         {(['7d', '30d', '365d', 'all'] as const).map(p => (
           <AxChip
             key={p}
-            label={p === '7d' ? '7j' : p === '30d' ? '30j' : p === '365d' ? '1an' : 'Tout'}
+            label={t(PERIOD_KEYS[p])}
             selected={period === p}
             onPress={() => setPeriod(p)}
             testID={`public-period-${p}`}
