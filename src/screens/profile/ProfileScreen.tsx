@@ -22,6 +22,7 @@ import { WEB_URL } from '../../lib/urls';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import i18n, { setLanguage } from '../../i18n';
 import { LevelColors } from '../../theme/designTokens';
 import { spacing, borderRadius, typography, shadows } from '../../theme/designTokens';
@@ -302,7 +303,7 @@ export default function ProfileScreen() {
       );
       setProgModal(false); setProgCode('');
     } catch (e: any) {
-      Alert.alert(t('common.error'), e.message);
+      Alert.alert(t('common.error'), await errorMessage(e));
     }
     setJoiningProg(false);
   }
@@ -553,13 +554,13 @@ export default function ProfileScreen() {
         const { error: authErr } = await supabase.auth.updateUser({ email: newEmail });
         if (authErr) {
           setSaving(false);
-          Alert.alert(t('profile.alerts.emailError'), authErr.message);
+          Alert.alert(t('profile.alerts.emailError'), await errorMessage(authErr));
           return;
         }
       }
 
       const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
-      if (error) { setSaving(false); Alert.alert(t('common.error'), error.message); return; }
+      if (error) { setSaving(false); Alert.alert(t('common.error'), await errorMessage(error)); return; }
       const bwText = editBodyweight.trim().replace(',', '.');
       const bwParsed = bwText ? parseFloat(bwText) : NaN;
       const bwStored = readBodyweightKg(prValues);
@@ -588,7 +589,7 @@ export default function ProfileScreen() {
       }
     } catch (e: any) {
       setSaving(false);
-      Alert.alert(t('common.error'), e.message ?? t('profile.alerts.genericError'));
+      Alert.alert(t('common.error'), e?.message ? await errorMessage(e) : t('profile.alerts.genericError'));
     }
   }
 
@@ -634,7 +635,7 @@ export default function ProfileScreen() {
     if (error) {
       // Jamais le mot de passe, ni en log ni dans Sentry.
       captureError(new Error(`changePassword: ${error.message}`), { screen: 'Profile', action: 'changePassword' });
-      Alert.alert(t('common.error'), error.message);
+      Alert.alert(t('common.error'), await errorMessage(error));
       return;
     }
     setPwdModal(false);

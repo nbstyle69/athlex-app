@@ -17,6 +17,7 @@ import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { useFocusQuery } from '../../hooks/useFocusQuery';
 import { fetchEloRank } from '../../services/eloRank';
@@ -214,7 +215,7 @@ export default function CompetitionScreen() {
     });
     if (error) {
       if (error.code === '23505') Alert.alert(t('competition.alreadyJoined'), t('competition.alreadyParticipating'));
-      else Alert.alert(t('common.error'), error.message);
+      else Alert.alert(t('common.error'), await errorMessage(error));
       return;
     }
     loadMiniTournaments();

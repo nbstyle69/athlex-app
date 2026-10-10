@@ -13,15 +13,20 @@ describe('Gérant : français', () => {
     // Bandeau d'essai : même texte que le « jour{s} restant{s} » de master.
     ['bo.trialBanner.daysLeft', { count: 1 }, '1 jour restant sur ton essai'],
     ['bo.trialBanner.daysLeft', { count: 12 }, '12 jours restants sur ton essai'],
-    // Pluriels anglais ajoutés : le français garde la forme de master (faute signalée, non corrigée).
-    ['bo.interComp.entrants', { count: 1 }, '1 inscrit(s)'],
-    ['bo.dashboard.participantCount', { count: 12 }, '12 participant(s)'],
-    ['bo.wods.importSuccessMsg', { count: 1 }, '1 WOD(s) importé(s) !'],
-    ['bo.tournament.pendingScoresMsg', { count: 1 }, "1 score(s) non traité(s). Valide ou rejette-les d'abord."],
+    // Vrais pluriels français du back-office (corrections validées, PR erreurs et corrections).
+    ['bo.interComp.entrants', { count: 1 }, '1 inscrit'],
+    ['bo.interComp.entrants', { count: 12 }, '12 inscrits'],
+    ['bo.dashboard.participantCount', { count: 1 }, '1 participant'],
+    ['bo.dashboard.participantCount', { count: 12 }, '12 participants'],
+    ['bo.wods.importSuccessMsg', { count: 1 }, '1 WOD importé !'],
+    ['bo.wods.importSuccessMsg', { count: 12 }, '12 WODs importés !'],
+    ['bo.tournament.pendingScoresMsg', { count: 1 }, "1 score non traité. Valide-le ou rejette-le d'abord."],
+    ['bo.tournament.pendingScoresMsg', { count: 12 }, "12 scores non traités. Valide ou rejette-les d'abord."],
     ['errors.openLink', undefined, "Impossible d'ouvrir le lien."],
-    // L'intention Functional et le type de séance gardent « Force » en français.
+    // L'intention Functional garde « Force » ; le type de séance 'strength' est la Musculation (validé).
     ['wodGenerator.intentOpt.strength', undefined, 'Force'],
-    ['bo.wods.typeStrength', undefined, 'Force'],
+    ['bo.wods.typeStrength', undefined, 'Musculation'],
+    ['bo.programEditor.typeStrength', undefined, 'Musculation'],
     // Corrections validées par Nab.
     ['profile.account.progOngoing', { days: 3 }, 'En continu · 3j/sem'],
     ['home.matches', { count: 1 }, '1 match'],

@@ -22,6 +22,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { CompetitionStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 
 type Nav   = NativeStackNavigationProp<CompetitionStackParamList, 'InterTeam'>;
@@ -123,7 +124,7 @@ export default function InterTeamScreen() {
       captain_id: user.id,
       box_id: currentBox?.id ?? null,
     }).select('*').single();
-    if (error) { Alert.alert(t('common.error'), error.message); setSaving(false); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); setSaving(false); return; }
 
     await supabase.from('inter_registrations').upsert({
       competition_id: competitionId,
@@ -207,7 +208,7 @@ export default function InterTeamScreen() {
       user_id: targetUserId,
       status: 'pending',
     });
-    if (error) Alert.alert(t('common.error'), error.code === '23505' ? t('interTeam.alreadyInvited') : error.message);
+    if (error) Alert.alert(t('common.error'), error.code === '23505' ? t('interTeam.alreadyInvited') : await errorMessage(error));
     else { await load(); setSearchResults([]); setSearchQuery(''); }
     setInviting(null);
   }
