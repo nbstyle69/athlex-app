@@ -58,7 +58,7 @@ function SwissPairingCard({ pairing, theme, S, onResolve }: {
             onResolve(pairing, n1, n2);
           }}
         >
-          <Text style={{ fontSize: 11, fontWeight: '700', color: '#fff' }}>OK</Text>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: '#fff' }}>{t('common.ok')}</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -14,7 +14,7 @@ import { LevelColors } from '../../theme/designTokens';
 import UserAvatar from '../../components/UserAvatar';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { AxButton } from '../../components/ax';
-import { memberWriteRefusal } from '../../utils/refusals';
+import { errorMessage, memberWriteRefusal } from '../../utils/refusals';
 import { assignableRoles, memberRowPermissions, MemberViewer } from '../../utils/memberPermissions';
 import { dateLocale } from '../../i18n/locale';
 
@@ -97,7 +97,7 @@ export default function BOMembersScreen({ navigation }: any) {
     // membres, c'est un symptôme — on le remonte désormais.
     if (error) {
       captureError(error, { screen: 'BOMembers', action: 'load' });
-      Alert.alert('Erreur', error.message);
+      Alert.alert(t('common.error'), await errorMessage(error));
     }
     // `email` ne peut plus venir de l'embed : la Phase 3 le révoque à
     // `authenticated`, et une colonne interdite fait échouer TOUTE la requête.

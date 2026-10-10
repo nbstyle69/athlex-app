@@ -12,6 +12,8 @@ const { scanFile, scanFileStrict, scanStrict, ignoresWithoutReason } = require('
 
 const RACINE = path.join(__dirname, '..', '..');
 const FICHIERS: string[] = JSON.parse(fs.readFileSync(path.join(RACINE, 'scripts/i18n/fichiers-traduits.json'), 'utf8'));
+// Fichiers volontairement laissés en français, chacun avec sa raison (scripts/i18n/fichiers-exclus.json).
+const EXCLUS: Record<string, string> = JSON.parse(fs.readFileSync(path.join(RACINE, 'scripts/i18n/fichiers-exclus.json'), 'utf8'));
 const LOCALES = path.join(RACINE, 'src/i18n/locales');
 const lire = (lang: string) => JSON.parse(fs.readFileSync(path.join(LOCALES, `${lang}.json`), 'utf8'));
 
@@ -36,6 +38,12 @@ describe('garde i18n', () => {
     };
     expect(strict.map(r => `${fichier}:${r.line} ${r.text}`)).toEqual([]);
     expect(sansRaison.map(r => `${fichier}:${r.line} ${r.text}`)).toEqual([]);
+  });
+
+  it.each(Object.entries(EXCLUS))('%s : exclu avec sa raison, absent des fichiers traduits', (fichier, raison) => {
+    expect(fs.existsSync(path.join(RACINE, fichier))).toBe(true);
+    expect(raison.trim().length).toBeGreaterThan(10);
+    expect(FICHIERS).not.toContain(fichier);
   });
 
   it('fr.json et en.json ont exactement les mêmes clés', () => {

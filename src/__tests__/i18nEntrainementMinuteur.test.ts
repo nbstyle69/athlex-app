@@ -37,7 +37,7 @@ describe('options : la valeur envoyée ne dépend pas de la langue, seul le libe
   it('en anglais : libellés traduits, l’objectif « Force » devient « Max Strength »', async () => {
     await i18n.changeLanguage('en');
     expect(MUSCU_OBJECTIVES.map((o) => i18n.t(o.labelKey))).toEqual(['Muscle gain', 'Max Strength', 'Toning']);
-    expect(INTENTIONS.functional.map((i) => i18n.t(i.labelKey))).toEqual(['Mixed', 'Cardio', 'Strength', 'Gym']);
+    expect(INTENTIONS.functional.map((i) => i18n.t(i.labelKey))).toEqual(['Mixed', 'Cardio', 'Heavy', 'Gym']); // « Heavy » validé par Nab (PR Gérant)
     expect(i18n.t('training.disciplines.musculation')).toBe('Strength');
     expect(targetLabel('fessiers_ischios')).toBe('Glutes + hamstrings');
     expect(muscuDisplayedFor(null).text).toBe('Shown for: Beginner · level not set');

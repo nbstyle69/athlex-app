@@ -8,6 +8,7 @@ import {
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useAuth } from '../../context/AuthContext';
@@ -274,7 +275,7 @@ export default function BOInterCompetitionScreen() {
       created_by: user?.id,
     }).select().single();
     setCreating(false);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     trackInterCompCreate(newFormat, newType);
     setCreateModal(false);
     setNewTitle('');
@@ -287,7 +288,7 @@ export default function BOInterCompetitionScreen() {
     if (newStatus === 'closed') { await handleCloseCompetition(); return; }
     const { error } = await supabase.from('inter_competitions')
       .update({ status: newStatus }).eq('id', selectedId);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     setCompetitions(prev => prev.map(c => c.id === selectedId ? { ...c, status: newStatus as InterCompetition['status'] } : c));
   }
 
@@ -307,7 +308,7 @@ export default function BOInterCompetitionScreen() {
             );
             if (eloErr) {
               captureError(eloErr, { screen: 'BOInterCompetition', action: 'computeElo' });
-              Alert.alert(t('common.error'), eloErr.message ?? t('bo.interComp.closeError'));
+              Alert.alert(t('common.error'), eloErr.message ? await errorMessage(eloErr) : t('bo.interComp.closeError'));
               return;
             }
 
@@ -335,7 +336,7 @@ export default function BOInterCompetitionScreen() {
             }
           } catch (e: unknown) {
             captureError(e, { screen: 'BOInterCompetition', action: 'close' });
-            Alert.alert(t('common.error'), (e as Error)?.message ?? t('bo.interComp.closeError'));
+            Alert.alert(t('common.error'), (e as Error)?.message ? await errorMessage(e) : t('bo.interComp.closeError'));
           }
         }},
       ]
@@ -352,7 +353,7 @@ export default function BOInterCompetitionScreen() {
       scoring_type: wodScoring,
       order_index: wods.length + 1,
     });
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     setWodModal(false);
     setWodTitle(''); setWodDesc(''); setWodTimeCap('');
     loadData();
@@ -361,7 +362,7 @@ export default function BOInterCompetitionScreen() {
   async function handleRevealWod(wodId: string) {
     const { error } = await supabase.from('inter_competition_wods')
       .update({ revealed_at: new Date().toISOString() }).eq('id', wodId);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     loadData();
     const comp = competitions.find(c => c.id === selectedId);
     const wod = wods.find(w => w.id === wodId);
@@ -383,11 +384,11 @@ export default function BOInterCompetitionScreen() {
 
   async function handleScheduleReveal(wodId: string) {
     const when = parseScheduleInput(scheduleInput);
-    if (!when) { Alert.alert(t('common.error'), 'Format attendu : AAAA-MM-JJ HH:mm'); return; }
-    if (when.getTime() <= Date.now()) { Alert.alert(t('common.error'), 'La date doit être dans le futur.'); return; }
+    if (!when) { Alert.alert(t('common.error'), t('bo.interComp.scheduleFormatError')); return; }
+    if (when.getTime() <= Date.now()) { Alert.alert(t('common.error'), t('bo.interComp.scheduleInFuture')); return; }
     const { error } = await supabase.from('inter_competition_wods')
       .update({ revealed_at: when.toISOString() }).eq('id', wodId);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     setSchedulingWodId(null); setScheduleInput('');
     loadData();
   }
@@ -395,7 +396,7 @@ export default function BOInterCompetitionScreen() {
   async function handleCancelSchedule(wodId: string) {
     const { error } = await supabase.from('inter_competition_wods')
       .update({ revealed_at: null }).eq('id', wodId);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     loadData();
   }
 
@@ -403,7 +404,7 @@ export default function BOInterCompetitionScreen() {
     const { error } = await supabase.from('inter_scores')
       .update({ status: 'validated', reviewed_by: user?.id, reviewed_at: new Date().toISOString() })
       .eq('id', scoreId);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     loadData();
   }
 
@@ -414,7 +415,7 @@ export default function BOInterCompetitionScreen() {
         const { error } = await supabase.from('inter_scores')
           .update({ status: 'rejected', reviewed_by: user?.id, reviewed_at: new Date().toISOString() })
           .eq('id', scoreId);
-        if (error) { Alert.alert(t('common.error'), error.message); return; }
+        if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
         loadData();
       }},
     ]);
@@ -433,7 +434,7 @@ export default function BOInterCompetitionScreen() {
           const { error } = await supabase.rpc('generate_inter_bracket_round_1', {
             p_competition_id: selectedId,
           });
-          if (error) { Alert.alert(t('common.error'), error.message); return; }
+          if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
           trackBracketGenerate(selectedId!, registrationCount);
           loadData();
           Alert.alert(t('bo.interComp.bracketGenerated'));
@@ -453,7 +454,7 @@ export default function BOInterCompetitionScreen() {
           const { error } = await supabase.from('inter_bracket_matches')
             .update({ winner_id: winnerId, loser_id: loserId, status: 'completed', completed_at: new Date().toISOString() })
             .eq('id', match.id);
-          if (error) { Alert.alert(t('common.error'), error.message); return; }
+          if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
           trackBracketResolve(selectedId!, match.round);
           loadData();
           const comp = competitions.find(c => c.id === selectedId);
@@ -477,7 +478,7 @@ export default function BOInterCompetitionScreen() {
       p_competition_id: selectedId,
       p_completed_round: lastCompleted,
     });
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     loadData();
     Alert.alert(t('bo.interComp.nextRoundGenerated'));
   }
@@ -495,7 +496,7 @@ export default function BOInterCompetitionScreen() {
       wod_id: availableWod?.id ?? null,
       status: 'pending',
     });
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     trackLeagueRoundCreate(selectedId!, nextNumber);
     loadData();
     Alert.alert(t('bo.interComp.roundCreated', { n: nextNumber }));
@@ -507,7 +508,7 @@ export default function BOInterCompetitionScreen() {
       p_competition_id: selectedId,
       p_round_number: roundNumber,
     });
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     loadData();
     Alert.alert(t('bo.interComp.pointsComputed', { n: data }));
   }
@@ -528,7 +529,7 @@ export default function BOInterCompetitionScreen() {
             p_groups_count: groupsCount,
             p_advance_count: 2,
           });
-          if (error) { Alert.alert(t('common.error'), error.message); return; }
+          if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
           trackPoolGenerate(selectedId!, groupsCount);
           loadData();
           Alert.alert(t('bo.interComp.poolsGenerated', { n: groupsCount }));
@@ -545,7 +546,7 @@ export default function BOInterCompetitionScreen() {
       p_score2: s2,
       p_scoring_type: scoringType,
     });
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     trackPoolMatchResolve(selectedId!);
     loadData();
   }
@@ -557,7 +558,7 @@ export default function BOInterCompetitionScreen() {
     const { data, error } = await supabase.rpc('generate_inter_swiss_round', {
       p_competition_id: selectedId,
     });
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     trackSwissRoundGenerate(selectedId!, swissRounds.length + 1);
     Alert.alert(t('bo.interComp.swissRoundGenerated'), t('bo.interComp.swissPairingsCreated', { n: data }));
     loadData();
@@ -571,7 +572,7 @@ export default function BOInterCompetitionScreen() {
       p_score2: s2,
       p_scoring_type: scoringType,
     });
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     trackSwissPairingResolve(selectedId!);
     loadData();
   }
@@ -695,7 +696,7 @@ export default function BOInterCompetitionScreen() {
                           style={S.scheduleBtn}
                           onPress={() => { setSchedulingWodId(schedulingWodId === w.id ? null : w.id); setScheduleInput(''); }}
                         >
-                          <Text style={S.scheduleBtnText}>Programmer</Text>
+                          <Text style={S.scheduleBtnText}>{t('bo.interComp.scheduleWod')}</Text>
                         </TouchableOpacity>
                       </View>
                     ) : new Date(w.revealed_at) > new Date() ? (
@@ -703,7 +704,7 @@ export default function BOInterCompetitionScreen() {
                       <TouchableOpacity style={S.scheduledChip} onPress={() => handleCancelSchedule(w.id)}>
                         <Text style={S.scheduledChipText}>
                           🕐 {new Date(w.revealed_at).toLocaleDateString(dateLocale(), { day: '2-digit', month: '2-digit' })}{' '}
-                          {new Date(w.revealed_at).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' })} · annuler
+                          {new Date(w.revealed_at).toLocaleTimeString(dateLocale(), { hour: '2-digit', minute: '2-digit' })} · {t('bo.interComp.cancelSchedule')}
                         </Text>
                       </TouchableOpacity>
                     ) : (
@@ -714,14 +715,14 @@ export default function BOInterCompetitionScreen() {
                     <View style={S.scheduleRow}>
                       <TextInput
                         style={S.scheduleInput}
-                        placeholder="AAAA-MM-JJ HH:mm"
+                        placeholder={t('bo.interComp.scheduleFormat')}
                         placeholderTextColor={theme.textMuted}
                         value={scheduleInput}
                         onChangeText={setScheduleInput}
                         autoCapitalize="none"
                       />
                       <TouchableOpacity style={S.revealBtn} onPress={() => handleScheduleReveal(w.id)}>
-                        <Text style={S.revealBtnText}>OK</Text>
+                        <Text style={S.revealBtnText}>{t('common.ok')}</Text>
                       </TouchableOpacity>
                     </View>
                   )}

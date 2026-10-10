@@ -1,4 +1,5 @@
 import { Alert, Linking } from 'react-native';
+import i18n from '../i18n';
 import { log } from './logger';
 
 /**
@@ -6,11 +7,12 @@ import { log } from './logger';
  * - Uses `canOpenURL` to detect when no handler is available on the device.
  * - Shows a localized error Alert on failure.
  */
-export async function openExternalUrl(url: string, errorMessage = 'Impossible d\'ouvrir le lien.'): Promise<boolean> {
+export async function openExternalUrl(url: string, errorMessage?: string): Promise<boolean> {
+  const message = errorMessage ?? i18n.t('errors.openLink');
   try {
     const supported = await Linking.canOpenURL(url);
     if (!supported) {
-      Alert.alert('Erreur', errorMessage);
+      Alert.alert(i18n.t('common.error'), message);
       log.warn('[openExternalUrl] canOpenURL returned false for', url);
       return false;
     }
@@ -18,7 +20,7 @@ export async function openExternalUrl(url: string, errorMessage = 'Impossible d\
     return true;
   } catch (e) {
     log.error('[openExternalUrl] failed', e, { url });
-    Alert.alert('Erreur', errorMessage);
+    Alert.alert(i18n.t('common.error'), message);
     return false;
   }
 }
