@@ -467,7 +467,7 @@ export default function BOScheduleScreen({ navigation }: any) {
                           <View style={S.slotActions}>
                             {isOwner && (
                               <>
-                                <TouchableOpacity onPress={() => openEdit(item)} style={S.actionBtn}>
+                                <TouchableOpacity onPress={() => openEdit(item)} style={S.actionBtn} testID={`schedule-edit-${item.id}`}>
                                   <Pencil color={theme.textMuted} size={16} />
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={() => deleteItem(item)} style={S.actionBtn}>
