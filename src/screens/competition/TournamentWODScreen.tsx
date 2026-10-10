@@ -91,6 +91,8 @@ export default function TournamentWODScreen() {
   }, []);
 
   function startCountdown() {
+    // Un seul intervalle actif : arrêter celui du montage (ou d'une relance) avant d'en lancer un.
+    if (intervalRef.current) clearInterval(intervalRef.current);
     deadlineMsRef.current = Date.now() + wod.deadline_hours * 3600 * 1000;
     intervalRef.current = setInterval(() => {
       const rem = deadlineMsRef.current - Date.now();
