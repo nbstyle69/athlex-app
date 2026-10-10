@@ -203,16 +203,7 @@ const bracketMatch = (i: number, status: string) => ({
 
 let renderer: TestRenderer.ReactTestRenderer | undefined;
 let alerts: string[] = [];
-// TournamentWODScreen relance son compte à rebours sans arrêter le premier intervalle
-// (défaut de l'app, signalé hors de cette PR) : les intervalles restants sont arrêtés ici.
-const intervals: ReturnType<typeof setInterval>[] = [];
-const realSetInterval = global.setInterval;
 beforeEach(() => {
-  jest.spyOn(global, 'setInterval').mockImplementation(((fn: () => void, ms?: number) => {
-    const id = realSetInterval(fn, ms);
-    intervals.push(id);
-    return id;
-  }) as typeof setInterval);
   jest.useFakeTimers({
     now: NOW,
     doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval',
@@ -231,7 +222,6 @@ beforeEach(() => {
 });
 afterEach(async () => {
   if (renderer) { const r = renderer; await act(async () => r.unmount()); renderer = undefined; }
-  intervals.splice(0).forEach((id) => clearInterval(id));
   jest.useRealTimers();
   jest.restoreAllMocks();
   jest.clearAllMocks();

@@ -213,6 +213,8 @@ Supabase/Resend.
 
 ## En cours
 
+**WOD de tournoi : compte à rebours unique (app seule, aucune migration ; PR non mergée).** `startCountdown` (TournamentWODScreen) remplaçait l'intervalle lancé au montage sans l'arrêter : il tournait sans fin, même écran quitté. Il arrête désormais le précédent avant d'en lancer un ; le démontage arrête le dernier. Aucun changement d'affichage. Test `tournamentWodCountdown.rn.test.tsx` (minuteurs simulés : un intervalle après relance, zéro après démontage), échoue si l'on retire l'un ou l'autre arrêt ; le contournement qui arrêtait ces intervalles à la main est retiré de `i18nCompetition.rn.test.tsx` et de `r8a.rn.test.tsx`, qui se terminent seuls.
+
 **Chantier anglais, PR 4 : Compétition (app seule, aucune migration ; PR non mergée).** Mini-tournois (liste,
 création, détail, saisie et contestation de score, WOD du Jour RX / Scaled), Classement (individuel, équipes, box),
 Classement de la box, détail d'une compétition inter-box (onglets, BYE), saisie d'un score inter-box, tableau et WOD
