@@ -226,6 +226,18 @@ même réservation avant envoi, même délai de 24 h, même purge. Les types de 
 contrainte de la base (test de parité). À déployer avant la PR B du Manager, la seule qui crée des demandes. Tests
 Jest : textes FR / EN et parité, 11 mutations tuées.
 
+**Chantier anglais, PR 3 : Explorer (app seule, aucune migration ; PR non mergée).** Annuaire des box (liste,
+recherche, filtres de sport, carte et sa fiche, variante web), détail d'une box, Partenaires et détail d'un
+partenaire (alerte du code promo comprise), Programmes et Programmes des box passent par `t()` en français et en
+anglais : texte français inchangé au caractère près (instantané de 20 états pris sur master,
+`i18nExplorer.rn.test.tsx`), aucun texte français en anglais. 60 clés ; sports, services et catégories de
+partenaire, valeurs enregistrées, traduits au rendu par `src/screens/explorer/explorerLabels.ts` (une valeur
+inconnue s'affiche telle quelle ; crossfit → Functional, hyrox → Hybrid). Pluriels anglais par l'outil du socle
+(« 1 member », « 12 listed boxes », « 1 day/week »), testés à 1 et à 12 ; en français, singuliers corrigés
+(validés par Nab) : « 1 membre », « 1 jour/semaine », et « Carte indisponible sur le web » sur la variante web. Les 9 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` ;
+« Instagram » devient terme technique. Captures 390 px FR / EN dans `athlex-captures/i18n-explorer` : aucun
+libellé anglais tronqué ni hors écran.
+
 **Design : étiquette du type de séance en couleur (app seule, aucune migration, apparence seule ; PR #496 non mergée).**
 `wodTypeColor()` (`src/theme/wodTypeColor.ts`) donne la couleur du type sur le texte et le filet de l'étiquette : For Time
 jaune, AMRAP bleu, EMOM violet, Tabata vert, Musculation menthe, autre ou inconnu atténué. Elle s'applique à Ma Box, au

@@ -16,6 +16,7 @@ import { captureError } from '../../lib/sentry';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { WEB_URL } from '../../lib/urls';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { useTranslation } from 'react-i18next';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -38,6 +39,7 @@ const SITE_BASE_URL = WEB_URL;
 export default function BoxProgramsScreen() {
   const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const c = theme.ax;
   const s = createStyles(c);
@@ -100,8 +102,8 @@ export default function BoxProgramsScreen() {
   return (
     <View style={s.container}>
       <GlassBackground />
-      <AxScreenHeader title="Programmes des Boxs">
-          <Text style={s.headerSub}>{programs.length} programme{programs.length > 1 ? 's' : ''} disponible{programs.length > 1 ? 's' : ''}</Text>
+      <AxScreenHeader title={t('explorer.programs.title')}>
+          <Text style={s.headerSub}>{t('explorer.programs.count', { count: programs.length })}</Text>
       </AxScreenHeader>
 
       {loading ? (
@@ -118,7 +120,7 @@ export default function BoxProgramsScreen() {
           ListEmptyComponent={
             <View style={s.center}>
               <Building2 color={c.textMuted} size={40} />
-              <Text style={s.emptyTxt}>Aucune box ne propose de programme pour le moment</Text>
+              <Text style={s.emptyTxt}>{t('explorer.programs.empty')}</Text>
             </View>
           }
           renderSectionHeader={({ section }) => (
@@ -153,13 +155,13 @@ export default function BoxProgramsScreen() {
                 <Text style={s.cardName} numberOfLines={1}>{item.title}</Text>
                 <AxTag
                   tone={item.type === 'fixed' ? 'accent' : 'muted'}
-                  label={item.type === 'fixed' ? `${item.duration_weeks} sem.` : 'Ongoing'}
+                  label={item.type === 'fixed' ? t('explorer.programs.weeks', { n: item.duration_weeks }) : t('bo.programs.ongoing')}
                 />
               </View>
               {item.description && <Text style={s.cardDesc} numberOfLines={2}>{item.description}</Text>}
               <View style={s.metaRow}>
                 <Calendar color={c.textMuted} size={12} />
-                <Text style={s.metaTxt}>{item.days_per_week} jours/semaine</Text>
+                <Text style={s.metaTxt}>{t('explorer.programs.daysPerWeek', { count: item.days_per_week })}</Text>
               </View>
             </AxCard>
           )}

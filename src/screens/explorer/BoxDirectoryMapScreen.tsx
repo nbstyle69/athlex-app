@@ -56,10 +56,10 @@ export default function BoxDirectoryMapScreen() {
         <GlassBackground />
         <View style={s.headerAbs}>
           <AxIconButton icon={ChevronLeft} onPress={() => navigation.goBack()} accessibilityLabel={i18n.t('common.back')} testID="map-back" />
-          <Text style={s.headerTitle}>Carte des Boxs</Text>
+          <Text style={s.headerTitle}>{i18n.t('explorer.map.title')}</Text>
         </View>
         <Text style={s.emptyText}>
-          react-native-maps non installé.{'\n'}Installez-le pour afficher la carte.
+          {i18n.t('explorer.map.missing')}{'\n'}{i18n.t('explorer.map.missingHint')}
         </Text>
       </View>
     );
@@ -71,8 +71,8 @@ export default function BoxDirectoryMapScreen() {
       {/* Header floating */}
       <View style={s.headerAbs}>
         <AxIconButton icon={ChevronLeft} onPress={() => navigation.goBack()} accessibilityLabel={i18n.t('common.back')} testID="map-back" />
-        <Text style={s.headerTitle} numberOfLines={1}>Carte des Boxs</Text>
-        <Text style={s.headerSub} numberOfLines={1}>{boxes.length} box{boxes.length > 1 ? 's' : ''}</Text>
+        <Text style={s.headerTitle} numberOfLines={1}>{i18n.t('explorer.map.title')}</Text>
+        <Text style={s.headerSub} numberOfLines={1}>{i18n.t('explorer.map.count', { count: boxes.length })}</Text>
       </View>
 
       <MapView
@@ -133,7 +133,7 @@ export default function BoxDirectoryMapScreen() {
               ) : null}
               <View style={s.metaRow}>
                 <Users size={12} color={c.textMuted} />
-                <Text style={s.metaText} numberOfLines={1}>{selected.member_count ?? 0} membres</Text>
+                <Text style={s.metaText} numberOfLines={1}>{i18n.t('explorer.membersCount', { count: selected.member_count ?? 0 })}</Text>
               </View>
             </View>
             <Navigation size={18} color={c.accentText} />
@@ -144,7 +144,7 @@ export default function BoxDirectoryMapScreen() {
             accessibilityRole="button"
             testID="map-sheet-close"
           >
-            <Text style={s.sheetCloseText}>Fermer</Text>
+            <Text style={s.sheetCloseText}>{i18n.t('common.close')}</Text>
           </Pressable>
         </View>
       )}

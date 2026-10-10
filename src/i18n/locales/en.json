@@ -2817,5 +2817,85 @@
       "SAT",
       "SUN"
     ]
+  },
+  "explorer": {
+    "sport": {
+      "hiit": "HIIT",
+      "yoga": "Yoga",
+      "boxing": "Boxing",
+      "mma": "MMA"
+    },
+    "service": {
+      "parking": "Parking",
+      "showers": "Showers",
+      "lockers": "Lockers",
+      "shop": "Shop",
+      "nutrition": "Nutrition",
+      "physio": "Physio",
+      "childcare": "Childcare",
+      "sauna": "Sauna",
+      "openGym": "Open Gym"
+    },
+    "membersCount_one": "{{count}} member",
+    "membersCount_other": "{{count}} members",
+    "directory": {
+      "title": "Box Directory",
+      "count_one": "{{count}} listed box",
+      "count_other": "{{count}} listed boxes",
+      "searchPlaceholder": "Search for a box or a city...",
+      "empty": "No box found"
+    },
+    "detail": {
+      "members_one": "member",
+      "members_other": "members",
+      "founded": "founded",
+      "sports_one": "sport",
+      "sports_other": "sports",
+      "sportsTitle": "Sports",
+      "servicesTitle": "Services",
+      "contactTitle": "Contact",
+      "hoursTitle": "Opening hours"
+    },
+    "map": {
+      "title": "Box Map",
+      "missing": "react-native-maps isn't installed.",
+      "missingHint": "Install it to show the map.",
+      "count_one": "{{count}} box",
+      "count_other": "{{count}} boxes",
+      "webUnavailable": "Map not available on web"
+    },
+    "programs": {
+      "title": "Box Programs",
+      "count_one": "{{count}} program available",
+      "count_other": "{{count}} programs available",
+      "empty": "No box offers a program yet",
+      "weeks": "{{n}} wk",
+      "daysPerWeek_one": "{{count}} day/week",
+      "daysPerWeek_other": "{{count}} days/week"
+    },
+    "programmation": {
+      "subtitle": "Choose your type of training",
+      "boxProgramsDesc": "Discover the programming offered by boxes"
+    }
+  },
+  "partners": {
+    "subtitle": "Exclusive offers for AthleX athletes",
+    "empty": "No partners yet",
+    "category": {
+      "nutrition": "Nutrition",
+      "equipment": "Equipment",
+      "apparel": "Apparel",
+      "supplements": "Supplements",
+      "recovery": "Recovery",
+      "coaching": "Coaching",
+      "software": "Software",
+      "other": "Other"
+    },
+    "codeCopiedTitle": "Code copied!",
+    "codeCopiedMsg": "The code \"{{code}}\" has been copied to the clipboard.",
+    "notFound": "Partner not found",
+    "specialOffer": "Special offer",
+    "links": "Links",
+    "website": "Website"
   }
 }

@@ -16,10 +16,14 @@ describe('Libellés gérant : Functional / Hybrid (valeurs internes inchangées)
   });
 
   it("annuaire des box : plus de « CrossFit » / « Hyrox » comme catégorie", () => {
+    // Libellés des sports traduits au rendu (explorerLabels.ts) : crossfit → Functional, hyrox → Hybrid.
+    const labels = read('screens/explorer/explorerLabels.ts');
+    expect(labels).toMatch(/crossfit: 'training\.disciplines\.functional'/);
+    expect(labels).toMatch(/hyrox: 'training\.disciplines\.hybrid'/);
+    expect(labels).not.toMatch(/'CrossFit'|'Hyrox'/);
     for (const f of ['screens/explorer/BoxDirectoryScreen.tsx', 'screens/explorer/BoxDirectoryDetailScreen.tsx']) {
       const src = read(f);
-      expect(src).toMatch(/crossfit: 'Functional'/);
-      expect(src).toMatch(/hyrox: 'Hybrid'/);
+      expect(src).toMatch(/sportLabel/);
       expect(src).not.toMatch(/'CrossFit'|'Hyrox'/);
     }
   });

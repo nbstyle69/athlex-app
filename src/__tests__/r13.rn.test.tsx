@@ -393,7 +393,7 @@ describe('R13 : couleurs et typographies clés, dans les deux thèmes', () => {
       expect(sheet.type).toBe(AxCard);
       expect(sheet.props.variant).toBe('featured');
       expect(flat(sheet.findAll((n) => isHostText(n) && hostText(n) === LONG)[0])).toMatchObject({ ...TITLE_M, color: c.text });
-      expect(flat(texts(root, '1 membres')[0])).toMatchObject({ ...BODY_SMALL, color: c.textMuted });
+      expect(flat(texts(root, '1 membre')[0])).toMatchObject({ ...BODY_SMALL, color: c.textMuted });
       expect(flat(texts(root, 'Fermer')[0])).toMatchObject({ fontFamily: axTypography.labelSmall.fontFamily, color: c.textMuted });
     });
 

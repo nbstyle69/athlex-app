@@ -2817,5 +2817,85 @@
       "SAM",
       "DIM"
     ]
+  },
+  "explorer": {
+    "sport": {
+      "hiit": "HIIT",
+      "yoga": "Yoga",
+      "boxing": "Boxe",
+      "mma": "MMA"
+    },
+    "service": {
+      "parking": "Parking",
+      "showers": "Douches",
+      "lockers": "Casiers",
+      "shop": "Boutique",
+      "nutrition": "Nutrition",
+      "physio": "Kiné",
+      "childcare": "Garderie",
+      "sauna": "Sauna",
+      "openGym": "Open Gym"
+    },
+    "membersCount_one": "{{count}} membre",
+    "membersCount_other": "{{count}} membres",
+    "directory": {
+      "title": "Annuaire des Boxs",
+      "count_one": "{{count}} box référencée",
+      "count_other": "{{count}} boxs référencées",
+      "searchPlaceholder": "Rechercher une box ou une ville...",
+      "empty": "Aucune box trouvée"
+    },
+    "detail": {
+      "members_one": "membre",
+      "members_other": "membres",
+      "founded": "fondée",
+      "sports_one": "sports",
+      "sports_other": "sports",
+      "sportsTitle": "Sports",
+      "servicesTitle": "Services",
+      "contactTitle": "Contact",
+      "hoursTitle": "Horaires"
+    },
+    "map": {
+      "title": "Carte des Boxs",
+      "missing": "react-native-maps non installé.",
+      "missingHint": "Installez-le pour afficher la carte.",
+      "count_one": "{{count}} box",
+      "count_other": "{{count}} boxs",
+      "webUnavailable": "Carte indisponible sur le web"
+    },
+    "programs": {
+      "title": "Programmes des Boxs",
+      "count_one": "{{count}} programme disponible",
+      "count_other": "{{count}} programmes disponibles",
+      "empty": "Aucune box ne propose de programme pour le moment",
+      "weeks": "{{n}} sem.",
+      "daysPerWeek_one": "{{count}} jour/semaine",
+      "daysPerWeek_other": "{{count}} jours/semaine"
+    },
+    "programmation": {
+      "subtitle": "Choisis ton type d'entraînement",
+      "boxProgramsDesc": "Découvre les programmations proposées par les boxs"
+    }
+  },
+  "partners": {
+    "subtitle": "Offres exclusives pour les athlètes AthleX",
+    "empty": "Aucun partenaire pour le moment",
+    "category": {
+      "nutrition": "Nutrition",
+      "equipment": "Équipement",
+      "apparel": "Vêtements",
+      "supplements": "Compléments",
+      "recovery": "Récupération",
+      "coaching": "Coaching",
+      "software": "Logiciel",
+      "other": "Autres"
+    },
+    "codeCopiedTitle": "Code copié !",
+    "codeCopiedMsg": "Le code \"{{code}}\" a été copié dans le presse-papier.",
+    "notFound": "Partenaire introuvable",
+    "specialOffer": "Offre spéciale",
+    "links": "Liens",
+    "website": "Site web"
   }
 }

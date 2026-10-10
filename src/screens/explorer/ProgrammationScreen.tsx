@@ -9,11 +9,13 @@ import { useTheme } from '../../context/ThemeContext';
 import { axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 import { HomeStackParamList } from '../../navigation';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useTranslation } from 'react-i18next';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
 export default function ProgrammationScreen() {
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const c = theme.ax;
   const s = createStyles(c);
@@ -21,8 +23,8 @@ export default function ProgrammationScreen() {
   return (
     <View style={s.container}>
       <GlassBackground />
-      <AxScreenHeader title="Programmes">
-          <Text style={s.headerSub}>Choisis ton type d'entraînement</Text>
+      <AxScreenHeader title={t('home.explorer.programs')}>
+          <Text style={s.headerSub}>{t('explorer.programmation.subtitle')}</Text>
       </AxScreenHeader>
 
       <View style={s.content}>
@@ -30,15 +32,15 @@ export default function ProgrammationScreen() {
         <AxCard
           style={s.categoryBtn}
           onPress={() => navigation.navigate('BoxPrograms')}
-          accessibilityLabel="Programmes des Boxs"
+          accessibilityLabel={t('explorer.programs.title')}
           testID="programmation-box-programs"
         >
           <View style={s.categoryIcon}>
             <Building2 color={c.accentText} size={24} />
           </View>
           <View style={s.categoryContent}>
-            <Text style={s.categoryTitle}>Programmes des Boxs</Text>
-            <Text style={s.categoryDesc}>Découvre les programmations proposées par les boxs</Text>
+            <Text style={s.categoryTitle}>{t('explorer.programs.title')}</Text>
+            <Text style={s.categoryDesc}>{t('explorer.programmation.boxProgramsDesc')}</Text>
           </View>
           <ChevronRight color={c.textMuted} size={20} />
         </AxCard>

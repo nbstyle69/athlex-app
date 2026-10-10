@@ -18,15 +18,10 @@ import { HomeStackParamList } from '../../navigation';
 import { Partner } from '../../types';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { partnerCategoryLabel } from './explorerLabels';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 type Route = RouteProp<HomeStackParamList, 'PartnerDetail'>;
-
-const CATEGORY_LABELS: Record<string, string> = {
-  nutrition: 'Nutrition', equipment: 'Équipement', apparel: 'Vêtements',
-  supplements: 'Compléments', recovery: 'Récupération', coaching: 'Coaching',
-  software: 'Logiciel', other: 'Autres',
-};
 
 export default function PartnerDetailScreen() {
   const tabSpace = useTabBarScrollSpace();
@@ -62,7 +57,7 @@ export default function PartnerDetailScreen() {
       const { Clipboard: RNClipboard } = require('react-native');
       RNClipboard?.setString?.(code);
     } catch (_) {}
-    Alert.alert('Code copié !', `Le code "${code}" a été copié dans le presse-papier.`);
+    Alert.alert(i18n.t('partners.codeCopiedTitle'), i18n.t('partners.codeCopiedMsg', { code }));
   }
 
   if (loading) {
@@ -78,7 +73,7 @@ export default function PartnerDetailScreen() {
     return (
       <View style={[s.container, s.center]}>
         <GlassBackground />
-        <Text style={s.emptyText}>Partenaire introuvable</Text>
+        <Text style={s.emptyText}>{i18n.t('partners.notFound')}</Text>
       </View>
     );
   }
@@ -100,14 +95,14 @@ export default function PartnerDetailScreen() {
             </View>
           )}
           <Text style={s.name}>{partner.name}</Text>
-          <AxTag label={CATEGORY_LABELS[partner.category] ?? partner.category} />
+          <AxTag label={partnerCategoryLabel(partner.category)} />
         </View>
 
         <View style={s.body}>
           {/* Description */}
           {partner.description ? (
             <View style={s.section}>
-              <Text style={s.sectionTitle}>À propos</Text>
+              <Text style={s.sectionTitle}>{i18n.t('interDetail.about')}</Text>
               <Text style={s.descText}>{partner.description}</Text>
             </View>
           ) : null}
@@ -117,7 +112,7 @@ export default function PartnerDetailScreen() {
             <AxCard variant="featured" style={s.offerCard} testID="partner-offer">
               <View style={s.offerHeader}>
                 <Tag size={16} color={c.accentText} />
-                <Text style={s.offerTitle}>{partner.offer_title ?? 'Offre spéciale'}</Text>
+                <Text style={s.offerTitle}>{partner.offer_title ?? i18n.t('partners.specialOffer')}</Text>
               </View>
               {partner.offer_description ? (
                 <Text style={s.offerDesc}>{partner.offer_description}</Text>
@@ -136,17 +131,17 @@ export default function PartnerDetailScreen() {
 
           {/* Links */}
           <View style={s.section}>
-            <Text style={s.sectionTitle}>Liens</Text>
+            <Text style={s.sectionTitle}>{i18n.t('partners.links')}</Text>
             <View style={s.linkList}>
               {partner.website_url && (
                 <AxCard
                   style={s.linkBtn}
                   onPress={() => Linking.openURL(partner.website_url!)}
-                  accessibilityLabel="Site web"
+                  accessibilityLabel={i18n.t('partners.website')}
                   testID="partner-link-website"
                 >
                   <Globe size={16} color={c.accentText} />
-                  <Text style={s.linkText}>Site web</Text>
+                  <Text style={s.linkText}>{i18n.t('partners.website')}</Text>
                   <ExternalLink size={14} color={c.textMuted} />
                 </AxCard>
               )}
