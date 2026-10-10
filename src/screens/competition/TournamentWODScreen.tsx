@@ -49,6 +49,7 @@ export default function TournamentWODScreen() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const roundsLabel = (n: number) => t('score.amrapRounds', { count: n });
   const S = createStyles(theme);
   const c = theme.ax;
   const scrollPadBottom = tabSpace;
@@ -196,7 +197,7 @@ export default function TournamentWODScreen() {
         <Text style={S.successLabel}>{t('tourWod.wod')}</Text>
         <Text style={S.successValue}>{wod.title}</Text>
         <Text style={[S.successLabel, S.successGap]}>{t('tourWod.score')}</Text>
-        <Text style={S.successScore}>{formatScoreDisplay(capped ? capReps : canonicalScore, wod.type, repsPerRound, capped)}</Text>
+        <Text style={S.successScore}>{formatScoreDisplay(capped ? capReps : canonicalScore, wod.type, repsPerRound, capped, roundsLabel)}</Text>
         {tiebreakValue ? (
           <>
             <Text style={[S.successLabel, S.successGap]}>{t('tourWod.tiebreak')}</Text>
@@ -266,7 +267,7 @@ export default function TournamentWODScreen() {
         {existingScore && (
           <AxCard style={[S.card, S.cardWarning]} testID="tourwod-prev-score">
             <Text style={S.cardLabel}>{t('tourWod.prevScore')}</Text>
-            <Text style={S.prevScore}>{formatScoreDisplay(existingScore.score_value, wod.type, repsPerRound, existingScore.capped)}</Text>
+            <Text style={S.prevScore}>{formatScoreDisplay(existingScore.score_value, wod.type, repsPerRound, existingScore.capped, roundsLabel)}</Text>
             {existingScore.video_url ? (
               <TouchableOpacity style={S.ytPrevBtn} onPress={() => Linking.openURL(existingScore.video_url!)} accessibilityRole="link">
                 <Youtube color={c.danger} size={16} />
@@ -377,7 +378,7 @@ export default function TournamentWODScreen() {
               style={S.ytInput}
               value={youtubeUrl}
               onChangeText={v => { setYoutubeUrl(v); setUrlValid(YOUTUBE_REGEX.test(v)); }}
-              placeholder="https://youtube.com/watch?v=..."
+              placeholder={t('tourWod.youtubePlaceholder')}
               placeholderTextColor={c.textMuted}
               autoCapitalize="none"
               autoCorrect={false}

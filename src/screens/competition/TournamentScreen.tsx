@@ -60,6 +60,7 @@ export default function TournamentScreen() {
   const isAdmin = user?.role === 'admin' || user?.role === 'super_admin' || user?.role === 'box_owner';
   const { theme } = useTheme();
   const { t } = useTranslation();
+  const roundsLabel = (n: number) => t('score.amrapRounds', { count: n });
   const S = createStyles(theme);
   const dialog = useConfirmDialog();
   const c = theme.ax;
@@ -663,7 +664,7 @@ export default function TournamentScreen() {
                     <View style={S.myScoreBadge} testID={`tournament-my-score-${wod.id}`}>
                       <CheckCircle color={scoreColor} size={16} />
                       <View style={S.flex}>
-                        <Text style={S.myScoreValue}>{t('tournament.scoreSubmitted', { value: formatScoreDisplay(myScore.score_value, wod.type, wod.reps_per_round, myScore.capped) })}</Text>
+                        <Text style={S.myScoreValue}>{t('tournament.scoreSubmitted', { value: formatScoreDisplay(myScore.score_value, wod.type, wod.reps_per_round, myScore.capped, roundsLabel) })}</Text>
                         <Text style={[S.myScoreStatus, { color: scoreColor }]}>
                           {myScore.status === 'pending' ? t('tournament.pendingValidation')
                             : myScore.status === 'validated' ? t('tournament.validatedEmoji') : t('tournament.rejectedEmoji')}
@@ -886,7 +887,7 @@ export default function TournamentScreen() {
                             {profile?.username ?? '?'}{isMe ? t('tournament.youSuffix') : ''}
                           </Text>
                         </View>
-                        <Text style={S.rankScore} numberOfLines={1}>{formatScoreDisplay(s.score_value, wod.type, wod.reps_per_round, s.capped)}</Text>
+                        <Text style={S.rankScore} numberOfLines={1}>{formatScoreDisplay(s.score_value, wod.type, wod.reps_per_round, s.capped, roundsLabel)}</Text>
                       </View>
                     );
                   })}
@@ -922,7 +923,7 @@ export default function TournamentScreen() {
                   </View>
 
                   <View style={S.scoreValueRow}>
-                    <Text style={S.scoreValue} numberOfLines={1}>{formatScoreDisplay(score.score_value, (score as any).tw?.type, (score as any).tw?.reps_per_round, score.capped)}</Text>
+                    <Text style={S.scoreValue} numberOfLines={1}>{formatScoreDisplay(score.score_value, (score as any).tw?.type, (score as any).tw?.reps_per_round, score.capped, roundsLabel)}</Text>
                     {score.tiebreak_value != null && (
                       <Text style={S.scoreTiebreak}>{t('tournament.tiebreakShort', { value: score.tiebreak_value })}</Text>
                     )}

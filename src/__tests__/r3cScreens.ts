@@ -19,8 +19,8 @@ export const R3C_SCREENS: R3cScreen[] = [
   { file: 'wod/WodResultScreen.tsx', titles: ["title={t('wodResult.title')}"] },
   { file: 'wod/WodHistoryScreen.tsx', titles: ["title={t('wodHistory.title')}"] },
   { file: 'timer/TimerScreen.tsx', titles: ["title={t('training.tools.timer')}"] },
-  { file: 'leaderboard/LeaderboardScreen.tsx', titles: ['title="Classement"'] },
-  { file: 'leaderboard/BoxRankingScreen.tsx', titles: ['title="Classement de la box"'] },
+  { file: 'leaderboard/LeaderboardScreen.tsx', titles: ["title={t('tabs.leaderboard')}"] },
+  { file: 'leaderboard/BoxRankingScreen.tsx', titles: ["title={i18n.t('boxRanking.title')}"] },
   { file: 'settings/NotificationSettingsScreen.tsx', titles: ['title="Notifications"'] },
   { file: 'profile/BlockedUsersScreen.tsx', titles: ['title="Utilisateurs bloqués"'] },
   { file: 'profile/EloHistoryScreen.tsx', titles: ['title="Historique ELO"'], onBack: ['onBack={() => nav.goBack()}'] },
@@ -29,7 +29,7 @@ export const R3C_SCREENS: R3cScreen[] = [
     right: ['testID="header-share"', 'athlex://profile/${route.params.userId}', '<ReportMenu'],
   },
   {
-    file: 'tournament/DailyTournamentsScreen.tsx', titles: ['title="Mini-Tournois"'],
+    file: 'tournament/DailyTournamentsScreen.tsx', titles: ["title={i18n.t('mini.title')}"],
     right: ['icon={Plus} onPress={() => setCreateModal(true)}'],
   },
   {

@@ -15,8 +15,6 @@ describe('Explorer : français inchangé hors instantané', () => {
     ['explorer.directory.count', { count: 0 }, '0 box référencée'],
     ['explorer.map.count', { count: 1 }, '1 box'],
     ['explorer.programs.count', { count: 0 }, '0 programme disponible'],
-    // « 1 sports » : forme de master gardée, non corrigée dans cette PR.
-    ['explorer.detail.sports', { count: 1 }, 'sports'],
     ['partners.codeCopiedMsg', { code: 'ATHLEX10' }, 'Le code "ATHLEX10" a été copié dans le presse-papier.'],
   ] as const)('%s %j', (key, opts, expected) => {
     expect(i18n.t(key, opts)).toBe(expected);
@@ -26,6 +24,7 @@ describe('Explorer : français inchangé hors instantané', () => {
     ['explorer.membersCount', '1 membre', '12 membres'],
     ['explorer.detail.members', 'membre', 'membres'],
     ['explorer.programs.daysPerWeek', '1 jour/semaine', '12 jours/semaine'],
+    ['explorer.detail.sports', 'sport', 'sports'],
   ])('singulier français de %s : count = 1 et count = 12', (key, one, twelve) => {
     expect(i18n.t(key, { count: 1 })).toBe(one);
     expect(i18n.t(key, { count: 12 })).toBe(twelve);

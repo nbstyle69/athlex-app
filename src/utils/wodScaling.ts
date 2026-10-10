@@ -23,12 +23,15 @@ const SCALED_WODS: Record<string, string> = {
   'Karen':
     'For Time\n150 Wall balls (6/4 kg)',
   'AMRAP 12 — Gymnastique':
+  // i18n-ignore : prescription de WOD (contenu d'entraînement, traduit avec le moteur)
     'AMRAP 12 min\n7 Pike push-ups\n14 Fentes alternées\n21 Single-unders',
   'EMOM 16 — Mixte':
+  // i18n-ignore : prescription de WOD (contenu d'entraînement, traduit avec le moteur)
     'EMOM 16 min\nMin 1 : 15 Cal Bike\nMin 2 : 12 Dumbbell snatch (12/8 kg)\nMin 3 : 10 Burpees\nMin 4 : Repos',
   'Jackie':
     'For Time\n1000 m Row\n50 Thrusters (15/10 kg)\n30 Ring rows',
   'AMRAP 18 — Hero-lite':
+  // i18n-ignore : prescription de WOD (contenu d'entraînement, traduit avec le moteur)
     'AMRAP 18 min\n10 Deadlifts (40/30 kg)\n10 Hang power cleans (barre légère)\n10 Front squats\n10 Push press',
   'Barbara-lite':
     '3 rounds\n20 Ring rows\n30 Push-ups (genoux)\n40 Sit-ups\n50 Air squats',

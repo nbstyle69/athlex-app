@@ -19,9 +19,10 @@ import UserAvatar from '../../components/UserAvatar';
 import { useAuth } from '../../context/AuthContext';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { useTranslation } from 'react-i18next';
 
 const LEVELS: (AthleteLevel | 'all')[] = ['all', 'scaled', 'inter', 'rx', 'rx+', 'elite', 'pro'];
-const MAIN_TABS = ['Individuel', 'Équipes', 'Box'];
+const MAIN_TABS = ['interComp.individual', 'leaderboard.tabTeams', 'whiteboard.track.box'];
 
 function RankBadge({ rank }: { rank: number }) {
   const { theme } = useTheme();
@@ -38,6 +39,7 @@ export default function LeaderboardScreen() {
   const tabSpace = useTabBarScrollSpace();
   const navigation = useNavigation<Nav>();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const { user } = useAuth();
   const S = createStyles(theme);
   const [mainTab, setMainTab] = useState(0);
@@ -205,8 +207,8 @@ export default function LeaderboardScreen() {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title="Classement">
-        <Text style={S.headerSub}>Qui domine AthleX ?</Text>
+      <AxScreenHeader title={t('tabs.leaderboard')}>
+        <Text style={S.headerSub}>{t('leaderboard.subtitle')}</Text>
 
         <View style={S.podium}>
           {[top3[1], top3[0], top3[2]].map((p, idx) => {
@@ -235,10 +237,10 @@ export default function LeaderboardScreen() {
       </AxScreenHeader>
 
       <View style={S.mainTabs}>
-        {MAIN_TABS.map((t, i) => (
-          <TouchableOpacity key={t} onPress={() => setMainTab(i)}
+        {MAIN_TABS.map((tab, i) => (
+          <TouchableOpacity key={tab} onPress={() => setMainTab(i)}
             style={[S.mainTab, mainTab === i && S.mainTabActive]}>
-            <Text style={[S.mainTabText, mainTab === i && S.mainTabTextActive]}>{t}</Text>
+            <Text style={[S.mainTabText, mainTab === i && S.mainTabTextActive]}>{t(tab)}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -254,7 +256,7 @@ export default function LeaderboardScreen() {
               const isAll = l === 'all';
               const isSel = selectedLevel === l;
               const color = isAll ? theme.accent : (LevelColors[l as AthleteLevel] ?? theme.accent);
-              const libelle = isAll ? 'Tous' : l.toUpperCase();
+              const libelle = isAll ? t('wodHistory.filterAll') : l.toUpperCase();
               return (
                 <TouchableOpacity key={l} onPress={() => setSelectedLevel(l)}
                   accessibilityLabel={libelle}
@@ -291,7 +293,7 @@ export default function LeaderboardScreen() {
               ListFooterComponent={loadingMore ? <ActivityIndicator style={{ marginVertical: 16 }} color={theme.accent} /> : <View style={{ height: 24 }} />}
               ListEmptyComponent={
                 <View style={{ alignItems: 'center', paddingTop: 40 }}>
-                  <Text style={{ color: theme.textMuted, fontWeight: '600' }}>Aucun athlète pour ce niveau</Text>
+                  <Text style={{ color: theme.textMuted, fontWeight: '600' }}>{t('leaderboard.emptyLevel')}</Text>
                 </View>
               }
               renderItem={({ item }: { item: any }) => (
@@ -325,7 +327,7 @@ export default function LeaderboardScreen() {
                       )}
                       {item.wins != null && (
                         <Text style={S.winsText}>
-                          {item.wins}V – {(item.total_matches ?? item.wins) - item.wins}D
+                          {t('leaderboard.record', { wins: item.wins, losses: (item.total_matches ?? item.wins) - item.wins })}
                         </Text>
                       )}
                     </View>
@@ -349,8 +351,8 @@ export default function LeaderboardScreen() {
             {teams.length === 0 ? (
               <View style={{ alignItems: 'center', paddingTop: 40 }}>
                 <Users size={40} color={theme.textMuted} />
-                <Text style={{ color: theme.textMuted, fontWeight: '600', marginTop: 12 }}>Aucune équipe enregistrée</Text>
-                <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 4 }}>Les équipes apparaissent ici après les compétitions inter-box</Text>
+                <Text style={{ color: theme.textMuted, fontWeight: '600', marginTop: 12 }}>{t('leaderboard.noTeams')}</Text>
+                <Text style={{ color: theme.textMuted, fontSize: 12, marginTop: 4 }}>{t('leaderboard.noTeamsHint')}</Text>
               </View>
             ) : teams.map((team: any) => (
               <View key={team.id} style={S.teamRow}>
@@ -364,12 +366,12 @@ export default function LeaderboardScreen() {
                     <MapPin color={theme.textMuted} size={11} />
                     <Text style={S.gymText}>{team.boxName}</Text>
                     <Users color={theme.textMuted} size={11} />
-                    <Text style={S.gymText}>{team.memberCount} membres</Text>
+                    <Text style={S.gymText}>{t('leaderboard.teamMembers', { count: team.memberCount })}</Text>
                   </View>
                 </View>
                 <View style={S.eloCell}>
                   <Text style={S.eloValue}>{team.avgElo}</Text>
-                  <Text style={S.eloLabel}>ELO moy.</Text>
+                  <Text style={S.eloLabel}>{t('leaderboard.avgElo')}</Text>
                 </View>
               </View>
             ))}
@@ -383,11 +385,11 @@ export default function LeaderboardScreen() {
           <ActivityIndicator style={{ marginTop: 40 }} color={theme.accent} />
         ) : (
           <ScrollView contentContainerStyle={[S.list, { paddingBottom: tabSpace }]} showsVerticalScrollIndicator={false}>
-            <Text style={S.sectionHint}>Classement des boxs par ELO moyen de leurs athlètes</Text>
+            <Text style={S.sectionHint}>{t('leaderboard.boxesHint')}</Text>
             {boxes.length === 0 ? (
               <View style={{ alignItems: 'center', paddingTop: 40 }}>
                 <MapPin size={40} color={theme.textMuted} />
-                <Text style={{ color: theme.textMuted, fontWeight: '600', marginTop: 12 }}>Aucune box enregistrée</Text>
+                <Text style={{ color: theme.textMuted, fontWeight: '600', marginTop: 12 }}>{t('leaderboard.noBoxes')}</Text>
               </View>
             ) : boxes.map((gym: any) => (
               <View key={gym.id} style={S.gymRow}>
@@ -399,14 +401,14 @@ export default function LeaderboardScreen() {
                   <Text style={S.name}>{gym.name}</Text>
                   <View style={S.metaRow}>
                     {gym.city ? <><Text style={S.gymText}>{gym.city}</Text><Text style={S.dotSep}>·</Text></> : null}
-                    <Text style={S.gymText}>{gym.memberCount} athlète{gym.memberCount > 1 ? 's' : ''}</Text>
+                    <Text style={S.gymText}>{t('community.athleteCount', { count: gym.memberCount })}</Text>
                     <Text style={S.dotSep}>·</Text>
-                    <Text style={S.gymText}>Top: {gym.topAthlete}</Text>
+                    <Text style={S.gymText}>{t('leaderboard.top', { name: gym.topAthlete })}</Text>
                   </View>
                 </View>
                 <View style={S.eloCell}>
                   <Text style={S.eloValue}>{gym.avgElo}</Text>
-                  <Text style={S.eloLabel}>ELO moy.</Text>
+                  <Text style={S.eloLabel}>{t('leaderboard.avgElo')}</Text>
                 </View>
               </View>
             ))}

@@ -176,7 +176,7 @@ export default function InterScoreSubmitScreen() {
               icon={Video}
               value={videoUrl}
               onChangeText={setVideoUrl}
-              placeholder="https://youtube.com/..."
+              placeholder={t('common.youtubePlaceholder')}
               autoCapitalize="none"
               keyboardType="url"
               accessibilityLabel={t('interScore.step3')}

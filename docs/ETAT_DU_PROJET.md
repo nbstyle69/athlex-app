@@ -213,6 +213,19 @@ Supabase/Resend.
 
 ## En cours
 
+**Chantier anglais, PR 4 : Compétition (app seule, aucune migration ; PR non mergée).** Mini-tournois (liste,
+création, détail, saisie et contestation de score, WOD du Jour RX / Scaled), Classement (individuel, équipes, box),
+Classement de la box, détail d'une compétition inter-box (onglets, BYE), saisie d'un score inter-box, tableau et WOD
+d'un tournoi passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de
+37 états pris sur master, `i18nCompetition.rn.test.tsx`, alertes comprises), aucun texte français en anglais.
+88 clés ; « Classement » = « Leaderboard » ; messages d'erreur bruts par `errorMessage()`. Le libellé des tours d'un
+score AMRAP est désormais fourni par chaque écran (`t('score.amrapRounds')`) : plus de repli français dans
+`tournamentUtils.ts` (TournamentScreen et BOTournamentScreen passent aussi le libellé). Les 9 fichiers rejoignent
+`scripts/i18n/fichiers-traduits.json` ; « BYE » et « VS » deviennent termes techniques ; les prescriptions Scaled de
+`wodScaling.ts` restent du contenu d'entraînement (`i18n-ignore`, traduites avec le moteur). Explorer :
+`explorer.detail.sports_one` passe à « sport » (validé par Nab). Captures 390 px FR / EN dans
+`athlex-captures/i18n-competition` : aucun libellé anglais tronqué ni hors écran.
+
 **Notification au gérant d'une demande de changement de formule** (fonction `deliver-manager-notifications`,
 **déployée le 10/10/2026 à 12:33 UTC** par `scripts/deploy-edge.mjs` depuis master `6d819d0`, PR #498 ; code
 déployé avant identique octet pour octet à master avant le merge, copie gardée hors dépôt

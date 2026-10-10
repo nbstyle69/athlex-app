@@ -23,6 +23,7 @@ import { trackDailyTournamentJoin, trackDailyTournamentCreate } from '../../lib/
 import GlassBackground from '../../components/glass/GlassBackground';
 import { fetchMyProfile } from '../../services/myProfile';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
+import { errorMessage } from '../../utils/refusals';
 
 type Nav = NativeStackNavigationProp<any>;
 
@@ -49,12 +50,13 @@ interface DailyTournament {
 }
 
 const WOD_TYPES = ['For Time', 'AMRAP', 'EMOM'] as const;
-const SCORE_MODES: { key: string; label: string }[] = [
-  { key: 'time', label: 'Temps' },
-  { key: 'reps', label: 'Reps' },
-  { key: 'rounds', label: 'Rounds' },
-  { key: 'weight', label: 'Poids (kg)' },
+const SCORE_MODES: { key: string; labelKey: string }[] = [
+  { key: 'time', labelKey: 'wod.scoreType.time' },
+  { key: 'reps', labelKey: 'wod.scoreType.reps' },
+  { key: 'rounds', labelKey: 'whiteboard.rounds' },
+  { key: 'weight', labelKey: 'mini.form.weightMode' },
 ];
+const GENDERS: [GenderTarget, string][] = [['mix', 'mini.form.genderMix'], ['male', 'auth.male'], ['female', 'auth.female']];
 
 export default function DailyTournamentsScreen() {
   const tabSpace = useTabBarScrollSpace();
@@ -120,12 +122,11 @@ export default function DailyTournamentsScreen() {
     if (gt && gt !== 'mix') {
       const profile = await fetchMyProfile();
       if (profile?.gender && profile.gender !== gt) {
-        const label = gt === 'male' ? 'hommes' : 'femmes';
-        Alert.alert('Accès restreint', `Ce tournoi est réservé aux ${label}.`);
+        Alert.alert(i18n.t('mini.restrictedTitle'), i18n.t(gt === 'male' ? 'mini.reservedMale' : 'mini.reservedFemale'));
         return;
       }
       if (!profile?.gender) {
-        Alert.alert('Genre non renseigné', 'Renseigne ton genre dans ton profil pour rejoindre ce tournoi.');
+        Alert.alert(i18n.t('mini.genderMissingTitle'), i18n.t('mini.genderMissingMsg'));
         return;
       }
     }
@@ -133,7 +134,7 @@ export default function DailyTournamentsScreen() {
       tournament_id: tournamentId,
       user_id: user.id,
     }, { onConflict: 'tournament_id,user_id', ignoreDuplicates: true });
-    if (error) { Alert.alert('Erreur', error.message); return; }
+    if (error) { Alert.alert(i18n.t('common.error'), await errorMessage(error)); return; }
     trackDailyTournamentJoin(tournamentId);
     load();
   }
@@ -156,7 +157,7 @@ export default function DailyTournamentsScreen() {
     }).select().single();
 
     setCreating(false);
-    if (error) { Alert.alert('Erreur', error.message); return; }
+    if (error) { Alert.alert(i18n.t('common.error'), await errorMessage(error)); return; }
 
     // Auto-join
     if (data) {
@@ -184,7 +185,7 @@ export default function DailyTournamentsScreen() {
 
   function timeLeft(endsAt: string): string {
     const diff = new Date(endsAt).getTime() - Date.now();
-    if (diff <= 0) return 'Terminé';
+    if (diff <= 0) return i18n.t('mini.ended');
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     return `${h}h${String(m).padStart(2, '0')}`;
@@ -193,6 +194,7 @@ export default function DailyTournamentsScreen() {
   function renderTournament({ item }: { item: DailyTournament }) {
     const isFull = item.participant_count >= item.max_players;
     const remaining = timeLeft(item.ends_at);
+    const ended = new Date(item.ends_at).getTime() <= Date.now();
 
     return (
       <AxCard
@@ -206,12 +208,12 @@ export default function DailyTournamentsScreen() {
             <AxTag label={item.level.toUpperCase()} color={levelInk(item.level, c)} testID={`mini-level-${item.id}`} />
             {item.duration > 0 && <AxTag label={`${item.duration}m`} tone="muted" />}
           </View>
-          <AxStatusDot label={remaining} tone={remaining === 'Terminé' ? 'danger' : 'active'} testID={`mini-status-${item.id}`} />
+          <AxStatusDot label={remaining} tone={ended ? 'danger' : 'active'} testID={`mini-status-${item.id}`} />
         </View>
 
         <View style={S.cardHead}>
           <Text style={S.cardName} numberOfLines={2}>{item.wod_name}</Text>
-          <Text style={S.caption} numberOfLines={1}>par {item.creator_name}</Text>
+          <Text style={S.caption} numberOfLines={1}>{i18n.t('mini.by', { name: item.creator_name })}</Text>
         </View>
 
         <Text style={S.cardMovements} numberOfLines={2}>{item.movements}</Text>
@@ -229,10 +231,10 @@ export default function DailyTournamentsScreen() {
           </View>
           <View style={S.footerEnd}>
             {!item.has_joined && !isFull && (
-              <AxButton label="Rejoindre" variant="outline" onPress={() => handleJoin(item.id)} testID={`mini-join-${item.id}`} />
+              <AxButton label={i18n.t('mini.join')} variant="outline" onPress={() => handleJoin(item.id)} testID={`mini-join-${item.id}`} />
             )}
-            {item.has_joined && !item.has_scored && <AxTag label="Inscrit" dot />}
-            {item.has_scored && <AxTag label="Score" tone="muted" dot />}
+            {item.has_joined && !item.has_scored && <AxTag label={i18n.t('competition.registered')} dot />}
+            {item.has_scored && <AxTag label={i18n.t('bo.interComp.score')} tone="muted" dot />}
             <ChevronRight color={c.textMuted} size={16} />
           </View>
         </View>
@@ -245,7 +247,7 @@ export default function DailyTournamentsScreen() {
       <GlassBackground />
       {/* Header */}
       <AxScreenHeader
-        title="Mini-Tournois"
+        title={i18n.t('mini.title')}
         right={<AxIconButton icon={Plus} onPress={() => setCreateModal(true)} accessibilityLabel={i18n.t('common.create')} testID="header-create" />}
       />
 
@@ -253,15 +255,15 @@ export default function DailyTournamentsScreen() {
       <View style={S.statsRow}>
         <View style={S.statBox}>
           <Text style={S.statNum} testID="mini-stat-active">{tournaments.length}</Text>
-          <Text style={S.statLabel}>Actifs</Text>
+          <Text style={S.statLabel}>{i18n.t('mini.statActive')}</Text>
         </View>
         <View style={S.statBox}>
           <Text style={S.statNum}>{tournaments.filter(t => t.has_joined).length}</Text>
-          <Text style={S.statLabel}>Mes inscrits</Text>
+          <Text style={S.statLabel}>{i18n.t('mini.statJoined')}</Text>
         </View>
         <View style={S.statBox}>
           <Text style={S.statNum}>{tournaments.filter(t => t.has_scored).length}</Text>
-          <Text style={S.statLabel}>Scorés</Text>
+          <Text style={S.statLabel}>{i18n.t('mini.statScored')}</Text>
         </View>
       </View>
 
@@ -279,9 +281,9 @@ export default function DailyTournamentsScreen() {
           ListEmptyComponent={
             <View style={S.empty}>
               <Zap color={c.textMuted} size={40} />
-              <Text style={S.emptyTitle}>Aucun mini-tournoi en cours</Text>
-              <Text style={S.emptySub}>Crée le premier et défie la communauté !</Text>
-              <AxButton label="Créer un mini-tournoi" icon={Plus} onPress={() => setCreateModal(true)} testID="mini-empty-create" />
+              <Text style={S.emptyTitle}>{i18n.t('mini.empty')}</Text>
+              <Text style={S.emptySub}>{i18n.t('mini.emptyHint')}</Text>
+              <AxButton label={i18n.t('mini.create')} icon={Plus} onPress={() => setCreateModal(true)} testID="mini-empty-create" />
             </View>
           }
         />
@@ -292,56 +294,56 @@ export default function DailyTournamentsScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={S.modalOverlay}>
           <View style={S.modalSheet} testID="mini-create-sheet">
             <View style={S.modalHandle} />
-            <Text style={S.modalTitle}>Nouveau mini-tournoi</Text>
+            <Text style={S.modalTitle}>{i18n.t('mini.newTitle')}</Text>
 
             <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 400 }} contentContainerStyle={S.form}>
-              <Text style={S.label}>Nom du WOD</Text>
-              <AxTextField value={formName} onChangeText={setFormName} placeholder="Ex: Flash Burner" accessibilityLabel="Nom du WOD" testID="mini-form-name" />
+              <Text style={S.label}>{i18n.t('mini.form.name')}</Text>
+              <AxTextField value={formName} onChangeText={setFormName} placeholder={i18n.t('mini.form.namePlaceholder')} accessibilityLabel={i18n.t('mini.form.name')} testID="mini-form-name" />
 
-              <Text style={S.label}>Type</Text>
+              <Text style={S.label}>{i18n.t('interDetail.type')}</Text>
               <View style={S.chipRow}>
                 {WOD_TYPES.map(t => (
                   <AxChip key={t} label={t} selected={formType === t} onPress={() => setFormType(t)} testID={`mini-form-type-${t}`} />
                 ))}
               </View>
 
-              <Text style={S.label}>Durée (min)</Text>
-              <AxTextField value={formDuration} onChangeText={setFormDuration} keyboardType="numeric" placeholder="12" accessibilityLabel="Durée (min)" testID="mini-form-duration" />
+              <Text style={S.label}>{i18n.t('mini.form.duration')}</Text>
+              <AxTextField value={formDuration} onChangeText={setFormDuration} keyboardType="numeric" placeholder="12" accessibilityLabel={i18n.t('mini.form.duration')} testID="mini-form-duration" />
 
-              <Text style={S.label}>Niveau</Text>
+              <Text style={S.label}>{i18n.t('profile.account.levelLabel')}</Text>
               <View style={S.chipRow}>
                 {Object.keys(LevelColors).map(l => (
                   <AxChip key={l} label={l.toUpperCase()} selected={formLevel === l} onPress={() => setFormLevel(l)} testID={`mini-form-level-${l}`} />
                 ))}
               </View>
 
-              <Text style={S.label}>Mode de score</Text>
+              <Text style={S.label}>{i18n.t('mini.form.scoreMode')}</Text>
               <View style={S.chipRow}>
                 {SCORE_MODES.map(m => (
-                  <AxChip key={m.key} label={m.label} selected={formScoreMode === m.key} onPress={() => setFormScoreMode(m.key)} testID={`mini-form-mode-${m.key}`} />
+                  <AxChip key={m.key} label={i18n.t(m.labelKey)} selected={formScoreMode === m.key} onPress={() => setFormScoreMode(m.key)} testID={`mini-form-mode-${m.key}`} />
                 ))}
               </View>
 
-              <Text style={S.label}>Genre cible</Text>
+              <Text style={S.label}>{i18n.t('mini.form.gender')}</Text>
               <View style={S.chipRow}>
-                {([['mix', 'Mix'], ['male', 'Homme'], ['female', 'Femme']] as [GenderTarget, string][]).map(([val, lbl]) => (
-                  <AxChip key={val} label={lbl} selected={formGender === val} onPress={() => setFormGender(val)} testID={`mini-form-gender-${val}`} />
+                {GENDERS.map(([val, lblKey]) => (
+                  <AxChip key={val} label={i18n.t(lblKey)} selected={formGender === val} onPress={() => setFormGender(val)} testID={`mini-form-gender-${val}`} />
                 ))}
               </View>
 
-              <Text style={S.label}>Mouvements</Text>
+              <Text style={S.label}>{i18n.t('mini.form.movements')}</Text>
               <AxTextField
                 value={formMovements}
                 onChangeText={setFormMovements}
                 multiline
-                placeholder="21-15-9&#10;Thrusters (43/30 kg)&#10;Pull-ups"
-                accessibilityLabel="Mouvements"
+                placeholder={i18n.t('mini.form.movementsPlaceholder')}
+                accessibilityLabel={i18n.t('mini.form.movements')}
                 testID="mini-form-movements"
               />
             </ScrollView>
 
             <AxButton
-              label="Lancer le mini-tournoi"
+              label={i18n.t('mini.launch')}
               icon={Zap}
               onPress={handleCreate}
               disabled={!formName.trim() || !formMovements.trim()}
@@ -349,7 +351,7 @@ export default function DailyTournamentsScreen() {
               fullWidth
               testID="mini-form-create"
             />
-            <AxButton label="Annuler" variant="outline" onPress={() => setCreateModal(false)} fullWidth testID="mini-form-cancel" />
+            <AxButton label={i18n.t('common.cancel')} variant="outline" onPress={() => setCreateModal(false)} fullWidth testID="mini-form-cancel" />
           </View>
         </KeyboardAvoidingView>
       </Modal>

@@ -22,6 +22,7 @@ import InterCompetitionDetailScreen from '../screens/competition/InterCompetitio
 import InterScoreSubmitScreen from '../screens/competition/InterScoreSubmitScreen';
 import TournamentBracketView from '../screens/competition/TournamentBracketView';
 import TournamentWODScreen from '../screens/competition/TournamentWODScreen';
+import { getScaledMovements } from '../utils/wodScaling';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { strictAllowed } = require('../../scripts/i18n/scanner');
@@ -519,15 +520,22 @@ function dataTexts(): Set<string> {
   (function walk(v: unknown) {
     if (typeof v === 'string') [v, ...v.split('\n')].forEach((l) => out.add(l.toLowerCase()));
     else if (v && typeof v === 'object') { Object.keys(v).forEach(walk); Object.values(v).forEach(walk); }
-  })([mockDb, mockParams, mockAuth]);
+    // Prescription Scaled du WOD du Jour : contenu d'entraînement (wodScaling.ts), traduit avec le moteur.
+  })([mockDb, mockParams, mockAuth, getScaledMovements(T_OFFICIAL.wod_name, T_OFFICIAL.movements)]);
   return out;
 }
-/** Libellés identiques dans les deux langues : termes techniques, noms propres, mots identiques. */
+/** Un texte de données : chaque morceau (ligne, « , », « — ») est une donnée, ou n'a pas de lettre. */
+const isData = (DATA: Set<string>, s: string) =>
+  s.replace(/\s*👈$/u, '').split(/\n|, | — /).map((l) => l.trim()).every((l) => !/\p{L}/u.test(l) || DATA.has(l.toLowerCase()));
+/** Libellés identiques dans les deux langues : termes techniques, niveaux, noms propres, mots identiques. */
 const SAME_IN_EN = [
-  /^(Box|Scaled|SCALED|RX|SC|Mix|Bracket|Infos|Type|Score|Classement)$/i,
+  /^(Box|Scaled|SCALED|RX|SC|Mix|Bracket|Infos|Type|Score|Rounds)$/i,
+  /^(SCALED|INTER|RX\+?|ELITE|PRO)$/, // niveaux d'athlète
   /^(MM|SS|VS|BYE|· BYE)$/,
+  /^CAP \+ \d+ reps$/, /^ROUND \d+$/, /^\d+ (pts|rnds)$/, /^\d+ MIN CAP$/,
   /^https:\/\/youtube\.com\//,
-  /^Top: /, // nom propre après « Top: », voir clé leaderboard.boxes.top
+  /^21-15-9\nThrusters/, // exemple de mouvements, identique en anglais
+  /^Top: /, // « Top: » suivi d'un nom, identique en anglais (leaderboard.top)
 ];
 const ACCENT = /[àâäçéèêëîïôöùûüÿœæ«»]/i;
 
@@ -558,10 +566,10 @@ describe('Compétition, anglais : aucun texte français', () => {
     const fr = (BEFORE as Record<string, string[]>)[name];
     const strip = (s: string) => s.replace(/^(placeholder|a11y): /, '').replace(/^ALERTE \| /, '');
     const shown = en.filter((s) => s !== '── fenêtre ──');
-    const french = shown.filter((s) => ACCENT.test(strip(s)) && !strip(s).split(/\n|, | — /).every((l) => DATA.has(l.toLowerCase())));
+    const french = shown.filter((s) => ACCENT.test(strip(s)) && !isData(DATA, strip(s)));
     const frSet = new Set(fr.map((s) => s.toLowerCase()));
     const unchanged = shown.filter((s) => frSet.has(s.toLowerCase()) && /\p{L}{2,}/u.test(strip(s))
-      && !strip(s).split(/\n|, | — /).every((l) => DATA.has(l.toLowerCase())) && !strictAllowed(strip(s))
+      && !isData(DATA, strip(s)) && !strictAllowed(strip(s))
       && !SAME_IN_EN.some((re) => re.test(strip(s))));
     expect({ name, french, unchanged }).toEqual({ name, french: [], unchanged: [] });
   });

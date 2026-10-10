@@ -14,6 +14,9 @@ import {
   formatScoreDisplay,
 } from '../utils/tournamentUtils';
 
+// Libellé des tours en français (fourni par l'écran dans l'app : t('score.amrapRounds')).
+const frRounds = (n: number) => `${n} tour${n > 1 ? 's' : ''}`;
+
 // ── normalizeMovement ─────────────────────────────────────────────────────────
 describe('normalizeMovement', () => {
   it('normalizes known movement — deadlift', () => {
@@ -120,12 +123,12 @@ describe('AMRAP / Max Reps score normalization', () => {
 
   it('falls back to raw total when reps-per-round is unknown', () => {
     expect(amrapTotalToRoundsReps(50, 0)).toEqual({ rounds: 0, reps: 50 });
-    expect(formatAmrapScore(50, 0)).toBe('50 reps');
+    expect(formatAmrapScore(50, 0, frRounds)).toBe('50 reps');
   });
 
   it('formats the recap label', () => {
-    expect(formatAmrapScore(123, 37)).toBe('123 reps (3 tours + 12)');
-    expect(formatAmrapScore(37, 37)).toBe('37 reps (1 tour)');
+    expect(formatAmrapScore(123, 37, frRounds)).toBe('123 reps (3 tours + 12)');
+    expect(formatAmrapScore(37, 37, frRounds)).toBe('37 reps (1 tour)');
   });
 });
 
@@ -176,8 +179,8 @@ describe('parseScoreToNumber / formatScoreDisplay', () => {
   });
 
   it('displays For Time as mm:ss and AMRAP as a reps recap', () => {
-    expect(formatScoreDisplay('750', 'For Time')).toBe('12:30');
-    expect(formatScoreDisplay('123', 'AMRAP', 37)).toBe('123 reps (3 tours + 12)');
-    expect(formatScoreDisplay('abc', 'Custom')).toBe('abc');
+    expect(formatScoreDisplay('750', 'For Time', null, false, frRounds)).toBe('12:30');
+    expect(formatScoreDisplay('123', 'AMRAP', 37, false, frRounds)).toBe('123 reps (3 tours + 12)');
+    expect(formatScoreDisplay('abc', 'Custom', null, false, frRounds)).toBe('abc');
   });
 });

@@ -794,7 +794,8 @@
     "no": "Non",
     "ok": "OK",
     "error": "Erreur",
-    "success": "Succès"
+    "success": "Succès",
+    "youtubePlaceholder": "https://youtube.com/..."
   },
   "auth": {
     "loginTitle": "Connexion",
@@ -1629,7 +1630,8 @@
       "7. Copie le lien et colle-le ici"
     ],
     "openYtStudio": "Ouvrir YouTube Studio",
-    "close": "Fermer"
+    "close": "Fermer",
+    "youtubePlaceholder": "https://youtube.com/watch?v=..."
   },
   "interTeam": {
     "myTeam": "Mon équipe",
@@ -2849,7 +2851,7 @@
       "members_one": "membre",
       "members_other": "membres",
       "founded": "fondée",
-      "sports_one": "sports",
+      "sports_one": "sport",
       "sports_other": "sports",
       "sportsTitle": "Sports",
       "servicesTitle": "Services",
@@ -2897,5 +2899,103 @@
     "specialOffer": "Offre spéciale",
     "links": "Liens",
     "website": "Site web"
+  },
+  "mini": {
+    "title": "Mini-Tournois",
+    "restrictedTitle": "Accès restreint",
+    "reservedMale": "Ce tournoi est réservé aux hommes.",
+    "reservedFemale": "Ce tournoi est réservé aux femmes.",
+    "genderMissingTitle": "Genre non renseigné",
+    "genderMissingMsg": "Renseigne ton genre dans ton profil pour rejoindre ce tournoi.",
+    "capRepsRequired": "Entre le nombre de répétitions complétées au cap.",
+    "invalidValueTitle": "Valeur invalide",
+    "invalidValueMsg": "Entre un score valide.",
+    "videoUrlScheme": "Le lien vidéo doit commencer par http:// ou https://",
+    "scoreValidated": "Score validé !",
+    "scoreContested": "Score contesté — un administrateur vérifiera.",
+    "ended": "Terminé",
+    "endedTag": "TERMINÉ",
+    "timeLeft": "{{h}}h{{m}} restantes",
+    "status": {
+      "validated": "Validé",
+      "contested": "Contesté",
+      "pending": "En attente"
+    },
+    "scaledShort": "SC",
+    "waitingScore": "En attente…",
+    "invalidLinkTitle": "Lien invalide",
+    "cannotOpenVideo": "Impossible d'ouvrir ce lien vidéo.\n\n{{url}}",
+    "videoErrorTitle": "Erreur vidéo",
+    "noVideo": "Pas de vidéo",
+    "contest": "Contester",
+    "shareMessage": "{{name}} — Rejoins le mini-tournoi sur AthleX ! {{url}}",
+    "officialTag": "WOD DU JOUR",
+    "officialInfo": "WOD du Jour officiel · classement RX / Scaled · ouvert à toute la communauté",
+    "reward": "Récompense : +{{elo}} ELO pour le 1er",
+    "scaledHint": "Version allégée — adapte encore les charges à ton niveau si besoin.",
+    "boardTitleCategory": "Classement {{cat}} ({{n}})",
+    "noScoreCategory": "Aucun score {{cat}} pour le moment.",
+    "boardTitle": "Classement ({{n}}/{{max}})",
+    "noParticipants": "Aucun participant pour le moment.",
+    "enterScoreManually": "Entrer mon score manuellement",
+    "join": "Rejoindre",
+    "winner": "{{name}} remporte +{{elo}} ELO !",
+    "label": {
+      "capReps": "REPS AU CAP",
+      "reps": "NOMBRE DE REPS",
+      "rounds": "NOMBRE DE ROUNDS",
+      "weight": "POIDS (KG)"
+    },
+    "videoLabel": "LIEN VIDÉO YOUTUBE (recommandé)",
+    "videoA11y": "Lien vidéo YouTube",
+    "submitScore": "Valider mon score",
+    "contestTitle": "Contester le score",
+    "contestReasonPlaceholder": "Raison de la contestation...",
+    "contestReason": "Raison de la contestation",
+    "contestConfirm": "Confirmer la contestation",
+    "by": "par {{name}}",
+    "statActive": "Actifs",
+    "statJoined": "Mes inscrits",
+    "statScored": "Scorés",
+    "empty": "Aucun mini-tournoi en cours",
+    "emptyHint": "Crée le premier et défie la communauté !",
+    "create": "Créer un mini-tournoi",
+    "newTitle": "Nouveau mini-tournoi",
+    "launch": "Lancer le mini-tournoi",
+    "form": {
+      "name": "Nom du WOD",
+      "namePlaceholder": "Ex: Flash Burner",
+      "duration": "Durée (min)",
+      "scoreMode": "Mode de score",
+      "weightMode": "Poids (kg)",
+      "gender": "Genre cible",
+      "genderMix": "Mix",
+      "movements": "Mouvements",
+      "movementsPlaceholder": "21-15-9\nThrusters (43/30 kg)\nPull-ups"
+    }
+  },
+  "leaderboard": {
+    "subtitle": "Qui domine AthleX ?",
+    "tabTeams": "Équipes",
+    "emptyLevel": "Aucun athlète pour ce niveau",
+    "record": "{{wins}}V – {{losses}}D",
+    "noTeams": "Aucune équipe enregistrée",
+    "noTeamsHint": "Les équipes apparaissent ici après les compétitions inter-box",
+    "teamMembers_one": "{{count}} membres",
+    "teamMembers_other": "{{count}} membres",
+    "avgElo": "ELO moy.",
+    "boxesHint": "Classement des boxs par ELO moyen de leurs athlètes",
+    "noBoxes": "Aucune box enregistrée",
+    "top": "Top: {{name}}"
+  },
+  "boxRanking": {
+    "title": "Classement de la box",
+    "subtitle": "ELO propre à {{box}} — WODs de la box uniquement",
+    "theBox": "la box",
+    "empty": "Aucun membre pour l'instant",
+    "rankA11y": "Rang {{rank}}",
+    "record_one": "{{wins}}V · {{count}} WOD",
+    "record_other": "{{wins}}V · {{count}} WODs",
+    "boxElo": "ELO box"
   }
 }
