@@ -1,5 +1,6 @@
 import * as Updates from 'expo-updates';
 import Constants from 'expo-constants';
+import i18n from '../i18n';
 
 /**
  * Identité du code réellement exécuté, affichée sur l'écran de connexion.
@@ -17,7 +18,7 @@ export function versionLabel(): string {
 // tourne : c'est une information, pas une absence d'information.
 export function updateSource(): string {
   const updateId = Updates.updateId;
-  return updateId ? updateId.slice(0, 8) : 'embarqué';
+  return updateId ? updateId.slice(0, 8) : i18n.t('auth.embeddedBundle');
 }
 
 /** Forme complète, révélée au toucher de la version sur l'écran de connexion. */

@@ -7,6 +7,7 @@ import {
 import { Sparkles, Bug, RefreshCw, type LucideIcon } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { writeOk } from '../../lib/db';
@@ -28,16 +29,17 @@ interface ChangelogEntry {
   isRead: boolean;
 }
 
-const TYPE_META: Record<string, { icon: LucideIcon; label: string; color: string }> = {
-  feature: { icon: Sparkles,  label: 'Nouveauté', color: '#4ADE80' },
-  fix:     { icon: Bug,       label: 'Correction', color: '#EF4444' },
-  update:  { icon: RefreshCw, label: 'Mise à jour', color: '#60A5FA' },
+const TYPE_META: Record<string, { icon: LucideIcon; labelKey: string; color: string }> = {
+  feature: { icon: Sparkles,  labelKey: 'changelog.typeFeature', color: '#4ADE80' },
+  fix:     { icon: Bug,       labelKey: 'changelog.typeFix', color: '#EF4444' },
+  update:  { icon: RefreshCw, labelKey: 'changelog.typeUpdate', color: '#60A5FA' },
 };
 
 export default function ChangelogScreen() {
   const tabSpace = useTabBarScrollSpace();
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const queryClient = useQueryClient();
   const S = createStyles(theme);
@@ -103,7 +105,7 @@ export default function ChangelogScreen() {
         <View style={S.cardHeader}>
           <View style={[S.typeBadge, { borderColor: ink }]} testID={`changelog-${item.id}-type`}>
             <meta.icon color={ink} size={12} />
-            <Text style={[S.typeBadgeText, { color: ink }]}>{meta.label}</Text>
+            <Text style={[S.typeBadgeText, { color: ink }]}>{t(meta.labelKey)}</Text>
           </View>
           <Text style={S.date}>{formatDate(item.created_at)}</Text>
           {!item.isRead && <View style={S.unreadDot} testID={`changelog-${item.id}-unread`} />}
@@ -118,14 +120,14 @@ export default function ChangelogScreen() {
     <View style={S.container}>
       <GlassBackground />
       {/* Header */}
-      <AxScreenHeader title="Nouveautés" />
+      <AxScreenHeader title={t('home.whatsNew')} />
 
       {loading ? (
         <ActivityIndicator size="large" color={theme.ax.accentText} style={{ marginTop: 40 }} />
       ) : entries.length === 0 ? (
         <View style={S.empty}>
           <Sparkles size={48} color={theme.ax.textMuted} />
-          <Text style={S.emptyText}>Aucune nouveauté pour le moment</Text>
+          <Text style={S.emptyText}>{t('changelog.empty')}</Text>
         </View>
       ) : (
         <FlatList

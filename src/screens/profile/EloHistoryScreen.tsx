@@ -23,11 +23,14 @@ import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { AxCard, AxChip, withAlpha } from '../../components/ax';
 import { axFonts, axRadius, axSpacing, axTypography, AxColors } from '../../theme/axTokens';
 import { levelInk } from '../home/homeLevelColor';
+import { formatDate as formatLocaleDate, formatTime } from '../../i18n/locale';
 import {
   ELO_TIERS, tierOf, tierProgress, tierPassageIndex, bestIndex, tierBands, thresholdsIn,
 } from '../../utils/eloTiers';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
+
+const PERIOD_KEYS = { '7d': 'eloHistory.period7d', '30d': 'eloHistory.period30d', '365d': 'eloHistory.period1y', all: 'eloHistory.periodAll' } as const;
 
 export default function EloHistoryScreen() {
   const tabSpace = useTabBarScrollSpace();
@@ -179,12 +182,10 @@ export default function EloHistoryScreen() {
   const totalLoss = filtered.reduce((sum, e) => sum + (e.delta < 0 ? e.delta : 0), 0);
 
   function formatDate(iso: string) {
-    const d = new Date(iso);
-    const day = d.getDate().toString().padStart(2, '0');
-    const month = (d.getMonth() + 1).toString().padStart(2, '0');
-    const hours = d.getHours().toString().padStart(2, '0');
-    const mins = d.getMinutes().toString().padStart(2, '0');
-    return `${day}/${month} à ${hours}:${mins}`;
+    return t('eloHistory.dateTime', {
+      date: formatLocaleDate(iso, { day: '2-digit', month: '2-digit' }),
+      time: formatTime(iso, { hour: '2-digit', minute: '2-digit' }),
+    });
   }
 
   const MEDAL_COLORS = [c.warning, c.textMuted, c.orange];
@@ -214,7 +215,7 @@ export default function EloHistoryScreen() {
     <View style={S.container}>
       <GlassBackground />
       {/* Header */}
-      <AxScreenHeader title="Historique ELO" onBack={() => nav.goBack()} />
+      <AxScreenHeader title={t('eloHistory.title')} onBack={() => nav.goBack()} />
 
       <ScrollView
         contentContainerStyle={[S.scroll, { paddingBottom: tabSpace }]}
@@ -223,7 +224,7 @@ export default function EloHistoryScreen() {
         {/* Current ELO card */}
         <AxCard testID="elo-card" style={S.eloCard}>
           <Text style={S.eloCardValue} testID="elo-current">{currentElo}</Text>
-          <Text style={S.eloCardLabel}>ELO actuel</Text>
+          <Text style={S.eloCardLabel}>{t('eloHistory.current')}</Text>
           <View style={S.tierRow} testID="elo-tier-current">
             <View style={[S.tierDot, { backgroundColor: tierInk }]} testID="elo-tier-current-dot" />
             <Text style={[S.tierName, { color: tierInk }]} testID="elo-tier-current-name">{progress.tier.name}</Text>
@@ -264,7 +265,7 @@ export default function EloHistoryScreen() {
               <AxChip
                 key={p}
                 testID={`elo-period-${p}`}
-                label={p === '7d' ? '7j' : p === '30d' ? '30j' : p === '365d' ? '1an' : 'Tout'}
+                label={t(PERIOD_KEYS[p])}
                 selected={period === p}
                 onPress={() => setPeriod(p)}
               />
@@ -315,12 +316,12 @@ export default function EloHistoryScreen() {
         ) : filtered.length === 0 ? (
           <View style={S.emptyState}>
             <Trophy color={c.textMuted} size={40} />
-            <Text style={S.emptyText}>Aucun historique ELO</Text>
-            <Text style={S.emptySubtext}>Participe à des WODs ou tournois pour voir ton historique ici.</Text>
+            <Text style={S.emptyText}>{t('eloHistory.emptyTitle')}</Text>
+            <Text style={S.emptySubtext}>{t('eloHistory.emptySub')}</Text>
           </View>
         ) : (
           <View style={S.list}>
-            <Text style={S.sectionTitle}>HISTORIQUE ({filtered.length})</Text>
+            <Text style={S.sectionTitle}>{t('eloHistory.historyCount', { count: filtered.length })}</Text>
             {filtered.map((entry) => {
               const tone = entryTone(entry.type);
               return (
@@ -447,7 +448,7 @@ function EloChart({ entries, currentElo, c, t }: {
 
   return (
     <AxCard testID="elo-chart" style={S_CHART.card}>
-      <Text style={S_CHART.title(c)}>PROGRESSION ELO</Text>
+      <Text style={S_CHART.title(c)}>{t('eloHistory.progression')}</Text>
       <Svg width={CHART_WIDTH} height={CHART_HEIGHT}>
         {/* Bandes de palier */}
         {tierBands(padded.min, padded.max).map((b) => (

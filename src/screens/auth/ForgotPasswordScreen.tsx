@@ -70,7 +70,7 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
               <AxTextField
                 testID="forgot-email"
                 icon={Mail}
-                placeholder="ton@email.com"
+                placeholder={t('auth.emailPlaceholder')}
                 accessibilityLabel={t('auth.email')}
                 value={email}
                 onChangeText={setEmail}

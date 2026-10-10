@@ -90,14 +90,14 @@ export default function LoginScreen({ navigation }: Props) {
             )}
 
             {unconfirmedEmail && (
-              <View style={S.confirmBox} accessibilityLabel="Confirme d'abord ton e-mail">
+              <View style={S.confirmBox} accessibilityLabel={t('auth.confirmEmailFirst')}>
                 <Text style={S.confirmTitle}>{t('auth.confirmEmailFirst')}</Text>
                 <Text style={S.confirmHint}>{t('auth.confirmEmailHint', { email: unconfirmedEmail })}</Text>
                 <TouchableOpacity
                   onPress={handleResend}
                   disabled={resending}
                   style={S.resendButton}
-                  accessibilityLabel="Renvoyer le mail"
+                  accessibilityLabel={t('auth.resendMail')}
                   accessibilityRole="button"
                 >
                   {resending
@@ -117,7 +117,7 @@ export default function LoginScreen({ navigation }: Props) {
               <AxTextField
                 testID="login-email"
                 icon={Mail}
-                placeholder="ton@email.com"
+                placeholder={t('auth.emailPlaceholder')}
                 accessibilityLabel={t('auth.email')}
                 value={email}
                 onChangeText={setEmail}
@@ -147,7 +147,7 @@ export default function LoginScreen({ navigation }: Props) {
                   <TouchableOpacity
                     onPress={() => setShowPassword(!showPassword)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    accessibilityLabel={showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+                    accessibilityLabel={showPassword ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
                     {showPassword
                       ? <EyeOff color={c.textMuted} size={20} />
@@ -157,13 +157,13 @@ export default function LoginScreen({ navigation }: Props) {
               />
             </View>
 
-            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={S.forgotLink} accessibilityLabel="Mot de passe oublié">
+            <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={S.forgotLink} accessibilityLabel={t('forgot.title')}>
               <Text style={S.forgotText}>{t('auth.forgotPassword')}</Text>
             </TouchableOpacity>
 
-            <AxButton testID="login-submit" label={t('auth.login')} accessibilityLabel="Se connecter" onPress={handleLogin} loading={loading} fullWidth />
+            <AxButton testID="login-submit" label={t('auth.login')} accessibilityLabel={t('auth.login')} onPress={handleLogin} loading={loading} fullWidth />
 
-            <TouchableOpacity onPress={() => navigation.navigate('Register')} style={S.registerLink} accessibilityLabel="Créer un compte" accessibilityRole="button">
+            <TouchableOpacity onPress={() => navigation.navigate('Register')} style={S.registerLink} accessibilityLabel={t('auth.registerTitle')} accessibilityRole="button">
               <Text style={S.registerText}>
                 {t('auth.noAccount')} <Text style={S.registerHighlight}>{t('auth.registerTitle')}</Text>
               </Text>
@@ -174,7 +174,7 @@ export default function LoginScreen({ navigation }: Props) {
             style={S.buildIdentity}
             testID="login-version"
             accessibilityRole="button"
-            accessibilityLabel={`Version ${versionDisplay(showBuildIdentity)}`}
+            accessibilityLabel={t('auth.versionA11y', { version: versionDisplay(showBuildIdentity) })}
             onPress={() => setShowBuildIdentity(v => !v)}
           >
             {versionDisplay(showBuildIdentity)}

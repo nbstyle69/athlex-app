@@ -16,8 +16,8 @@ describe('Compétition : français inchangé hors instantané', () => {
     ['mini.cannotOpenVideo', { url: 'https://x' }, "Impossible d'ouvrir ce lien vidéo.\n\nhttps://x"],
     ['boxRanking.subtitle', { box: i18n.t('boxRanking.theBox') }, 'ELO propre à la box — WODs de la box uniquement'],
     ['boxRanking.record', { wins: 0, count: 0 }, '0V · 0 WOD'],
-    // Forme de master gardée (faute signalée, non corrigée) : « 1 membres ».
-    ['leaderboard.teamMembers', { count: 1 }, '1 membres'],
+    // Correction validée : singulier « 1 membre ».
+    ['leaderboard.teamMembers', { count: 1 }, '1 membre'],
   ] as const)('%s %j', (key, opts, expected) => {
     expect(i18n.t(key, opts)).toBe(expected);
   });

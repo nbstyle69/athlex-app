@@ -31,6 +31,12 @@ interface Props {
  *   both modes converge to the same stored TOTAL REPS number.
  * - Free: a plain text field (loads, custom scoring, …).
  */
+/** Paramètres du récapitulatif « tours + reps » : `count` porte le pluriel de « tour ». */
+function recapRoundsParams(total: number, perRound: number) {
+  const { rounds, reps } = amrapTotalToRoundsReps(total, perRound);
+  return { total, count: rounds, reps };
+}
+
 export default function ScoreEntryFields({
   kind, movements, repsPerRound, initialCanonical, onChange, freePlaceholder,
 }: Props) {
@@ -179,7 +185,7 @@ export default function ScoreEntryFields({
       )}
       <Text style={S.recapTotal}>
         {perRound > 0
-          ? t('scoreEntry.scoreRecapRounds', { total: repsTotal, ...amrapTotalToRoundsReps(repsTotal, perRound) })
+          ? t('scoreEntry.scoreRecapRounds', recapRoundsParams(repsTotal, perRound))
           : t('scoreEntry.scoreRecap', { total: repsTotal })}
       </Text>
       <Text style={S.hint}>{t('scoreEntry.repsHelp')}</Text>

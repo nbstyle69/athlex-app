@@ -57,6 +57,7 @@ export function routeNotification(data: Record<string, any> | undefined) {
     //    (sinon l'app s'ouvre simplement) ──
     case 'box_notification':
       if (data.box_id && data.box_id === activeBoxId) {
+        // i18n-ignore : nom de route de navigation, pas un texte affiché
         navigateToTab('Whiteboard', 'Annonces');
       }
       break;

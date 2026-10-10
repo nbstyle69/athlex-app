@@ -215,6 +215,21 @@ Supabase/Resend.
 
 **WOD de tournoi : compte à rebours unique (app seule, aucune migration ; PR non mergée).** `startCountdown` (TournamentWODScreen) remplaçait l'intervalle lancé au montage sans l'arrêter : il tournait sans fin, même écran quitté. Il arrête désormais le précédent avant d'en lancer un ; le démontage arrête le dernier. Aucun changement d'affichage. Test `tournamentWodCountdown.rn.test.tsx` (minuteurs simulés : un intervalle après relance, zéro après démontage), échoue si l'on retire l'un ou l'autre arrêt ; le contournement qui arrêtait ces intervalles à la main est retiré de `i18nCompetition.rn.test.tsx` et de `r8a.rn.test.tsx`, qui se terminent seuls.
 
+**Chantier anglais, PR 5 : Profil & Accueil (app seule, aucune migration ; PR non mergée).** Profil (Compte, PR,
+séries réalisées, Stats, Badges), Amis, profil public, utilisateurs bloqués, historique ELO, Nouveautés, Accueil
+(sélecteur de box, badge débloqué, semaine), Notifications, connexion, inscription, mot de passe oublié et code,
+rejoindre une box, tutoriel, tours guidés gérant et coach, mise à jour requise, champ date et onglets gérant / coach
+passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de 67 états pris
+sur master, `i18nProfil.rn.test.tsx`, alertes et partage compris), aucun texte français en anglais. 113 clés ;
+erreurs rendues par AuthContext (`joinBox`, `leaveBox`, `deleteAccount`) traduites, messages bruts par
+`errorMessage()` ; dates de l'historique ELO par `src/i18n/locale.ts` ; initiales des jours et récapitulatif de la
+semaine de l'Accueil en vrais pluriels anglais. Corrections validées par Nab : « 1 membre », « Top : », « Rejoints »,
+« {{cat}} leaderboard », récapitulatif AMRAP « 1 round / 4 rounds » ; catégories de badges « Leaderboard ». Les 25
+fichiers rejoignent `scripts/i18n/fichiers-traduits.json` (119 → 144) ; chaînes techniques (erreurs de build,
+journaux, nom de route) en `i18n-ignore` avec raison. LegalScreen (PR à part) et AdminScreen (reste en français)
+hors périmètre. Captures 390 px FR / EN dans `athlex-captures/i18n-profil` : aucun libellé anglais tronqué ni hors
+écran.
+
 **Chantier anglais, PR 4 : Compétition (app seule, aucune migration ; PR non mergée).** Mini-tournois (liste,
 création, détail, saisie et contestation de score, WOD du Jour RX / Scaled), Classement (individuel, équipes, box),
 Classement de la box, détail d'une compétition inter-box (onglets, BYE), saisie d'un score inter-box, tableau et WOD

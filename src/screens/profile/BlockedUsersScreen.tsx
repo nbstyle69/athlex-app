@@ -5,6 +5,7 @@ import {
   View, Text, StyleSheet, FlatList, ActivityIndicator, Alert,
 } from 'react-native';
 import { UserX } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { getMyBlockedUsers, unblockUser } from '../../services/moderation';
 import UserAvatar from '../../components/UserAvatar';
@@ -15,6 +16,7 @@ import { axSpacing, axTypography } from '../../theme/axTokens';
 export default function BlockedUsersScreen({ navigation }: any) {
   const tabSpace = useTabBarScrollSpace();
   const { theme } = useTheme();
+  const { t } = useTranslation();
   const S = createStyles(theme);
   const [users, setUsers] = useState<{ id: string; username: string; avatar_url: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,15 +32,15 @@ export default function BlockedUsersScreen({ navigation }: any) {
 
   async function handleUnblock(id: string, username: string) {
     Alert.alert(
-      'Débloquer ?',
-      `Débloquer ${username} ? Cet utilisateur pourra à nouveau te contacter.`,
+      t('blockedUsers.unblockTitle'),
+      t('blockedUsers.unblockMsg', { username }),
       [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Débloquer', onPress: async () => {
+          text: t('blockedUsers.unblock'), onPress: async () => {
             const ok = await unblockUser(id);
             if (ok) load();
-            else Alert.alert('Erreur', 'Impossible de débloquer.');
+            else Alert.alert(t('common.error'), t('blockedUsers.unblockFailed'));
           },
         },
       ],
@@ -48,17 +50,15 @@ export default function BlockedUsersScreen({ navigation }: any) {
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title="Utilisateurs bloqués" />
+      <AxScreenHeader title={t('profile.blockedUsers')} />
 
       {loading ? (
         <View style={S.center}><ActivityIndicator color={theme.ax.accentText} /></View>
       ) : users.length === 0 ? (
         <View style={S.center}>
           <UserX size={48} color={theme.ax.textMuted} />
-          <Text style={S.emptyTitle}>Aucun utilisateur bloqué</Text>
-          <Text style={S.emptyText}>
-            Les utilisateurs que tu bloques apparaîtront ici. Tu peux les débloquer à tout moment.
-          </Text>
+          <Text style={S.emptyTitle}>{t('blockedUsers.emptyTitle')}</Text>
+          <Text style={S.emptyText}>{t('blockedUsers.emptyText')}</Text>
         </View>
       ) : (
         <FlatList
@@ -71,7 +71,7 @@ export default function BlockedUsersScreen({ navigation }: any) {
               <Text style={S.username} numberOfLines={1}>{item.username}</Text>
               <AxButton
                 variant="outline"
-                label="Débloquer"
+                label={t('blockedUsers.unblock')}
                 onPress={() => handleUnblock(item.id, item.username)}
                 testID={`unblock-${item.id}`}
               />

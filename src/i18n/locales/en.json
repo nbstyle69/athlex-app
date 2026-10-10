@@ -47,7 +47,8 @@
         "title": "Badge unlocked!",
         "description": "First Step — You've joined the AthleX community!"
       }
-    }
+    },
+    "codePlaceholder": "ABC123"
   },
   "bo": {
     "interComp": {
@@ -773,7 +774,18 @@
     "tiers": "Tiers",
     "you": "You",
     "passage": "Reached {{tier}} · {{date}}",
-    "best": "Best · {{value}}"
+    "best": "Best · {{value}}",
+    "progression": "ELO PROGRESS",
+    "period7d": "7d",
+    "period30d": "30d",
+    "period1y": "1y",
+    "periodAll": "All",
+    "title": "ELO history",
+    "current": "Current ELO",
+    "emptyTitle": "No ELO history",
+    "emptySub": "Take part in WODs or tournaments to see your history here.",
+    "historyCount": "HISTORY ({{count}})",
+    "dateTime": "{{date}} at {{time}}"
   },
   "common": {
     "save": "Save",
@@ -843,7 +855,20 @@
       "rateLimited": "Too many emails sent. Please wait a few minutes before trying again.",
       "invalidEmail": "This email address is not valid.",
       "weakPassword": "Password too short (6 characters min)"
-    }
+    },
+    "emailPlaceholder": "you@email.com",
+    "usernamePlaceholder": "YourUsername",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
+    "versionA11y": "Version {{version}}",
+    "cguCheck": "Accept the terms",
+    "cguUncheck": "Uncheck the terms",
+    "ownerA11y": "Create a box owner account on athlexapp.eu",
+    "confirmEmailTitle": "Confirm your email",
+    "confirmEmailSent": "A confirmation link has been sent to {{email}}.\n\nTap the link in the email to activate your account, then sign in.",
+    "usernameChangedTitle": "Username changed",
+    "usernameTakenNotice": "The username \"{{requested}}\" was already taken, so yours is now \"{{final}}\". You can change it later in your profile.",
+    "embeddedBundle": "embedded"
   },
   "forgot": {
     "title": "Forgot password",
@@ -877,7 +902,9 @@
     "community": "Community",
     "training": "Training",
     "boTracking": "Tracking",
-    "myBox": "My Box"
+    "myBox": "My Box",
+    "schedule": "Schedule",
+    "members": "Members"
   },
   "home": {
     "elo": "ELO",
@@ -889,9 +916,9 @@
     "wods": "WODs",
     "reservations": "Bookings",
     "wodsCompleted": "WODs completed",
-    "weekTotal": "{{res}} classes · {{wods}} WODs this week",
+    "weekTotal": "{{res}} · {{wods}} this week",
     "dayStreak": "{{count}}-day streak",
-    "dayDetail": "{{day}}: {{res}} classes · {{wods}} WODs",
+    "dayDetail": "{{day}}: {{res}} · {{wods}}",
     "dayNamesFull": [
       "Monday",
       "Tuesday",
@@ -940,7 +967,27 @@
         "days_one": "{{count}} day ago",
         "days_other": "{{count}} days ago"
       }
-    }
+    },
+    "perWeek": "{{done}}/{{max}} wk",
+    "matches_one": "{{count}} match",
+    "matches_other": "{{count}} matches",
+    "badgeUnlocked": "Badge unlocked!",
+    "resultApproved": "Validated",
+    "resultRejected": "Rejected",
+    "resultPending": "Pending",
+    "classesCount_one": "{{count}} class",
+    "classesCount_other": "{{count}} classes",
+    "wodsCount_one": "{{count}} WOD",
+    "wodsCount_other": "{{count}} WODs",
+    "dayInitials": [
+      "M",
+      "T",
+      "W",
+      "T",
+      "F",
+      "S",
+      "S"
+    ]
   },
   "training": {
     "title": "Training",
@@ -1011,7 +1058,8 @@
     "elo": {
       "toward": "Toward {{level}}",
       "maxLevel": "Max level reached",
-      "currentLevel": "Current level: {{level}}"
+      "currentLevel": "Current level: {{level}}",
+      "maxLevelNote": "{{elo}} ELO · Pro Legend"
     },
     "pr": {
       "recordsCount": "{{count}} records",
@@ -1022,7 +1070,9 @@
         "gymnastics": "Gymnastics",
         "benchmarks": "Functional benchmarks",
         "cardio": "Cardio & Endurance"
-      }
+      },
+      "invalidTimeTitle": "Invalid time",
+      "invalidTimeMsg": "Enter a time as mm:ss, for example 1:42."
     },
     "badges": {
       "earnedOf": "badges earned out of",
@@ -1035,8 +1085,8 @@
         "tournament": "Competition",
         "social": "Community",
         "wod": "Training",
-        "elo": "ELO ranking",
-        "Classement": "Ranking"
+        "elo": "ELO leaderboard",
+        "Classement": "Leaderboard"
       }
     },
     "roles": {
@@ -1100,7 +1150,9 @@
         "suspended": "Membership suspended: payment overdue.",
         "toActivate": "Plan to activate",
         "toActivateHint": "Choose your plan and billing day. Paying at the front desk? Talk to your box."
-      }
+      },
+      "joinCodePlaceholder": "E.g. ABC123",
+      "joinProgramPlaceholder": "E.g. FORCE6"
     },
     "password": {
       "title": "Change password",
@@ -1479,7 +1531,8 @@
     "totalRepsField": "Total reps",
     "perRoundInfo": "1 round = {{reps}} reps",
     "scoreRecap": "= {{total}} reps",
-    "scoreRecapRounds": "= {{total}} reps ({{rounds}} round(s) + {{reps}})",
+    "scoreRecapRounds_one": "= {{total}} reps ({{count}} round + {{reps}})",
+    "scoreRecapRounds_other": "= {{total}} reps ({{count}} rounds + {{reps}})",
     "repsHelp": "Whichever mode you pick: we store the total reps for a coherent ranking."
   },
   "interScore": {
@@ -1606,7 +1659,8 @@
     "totalRepsField": "Total reps",
     "perRoundInfo": "1 round = {{reps}} reps",
     "scoreRecap": "= {{total}} reps",
-    "scoreRecapRounds": "= {{total}} reps ({{rounds}} round(s) + {{reps}})",
+    "scoreRecapRounds_one": "= {{total}} reps ({{count}} round + {{reps}})",
+    "scoreRecapRounds_other": "= {{total}} reps ({{count}} rounds + {{reps}})",
     "repsHelp": "Whichever mode you pick: we store the total reps for a coherent ranking.",
     "tiebreakLabel": "TIE-BREAK (optional)",
     "tiebreakHint": "Reps of the last completed movement — tiebreaker in case of a draw.",
@@ -1921,7 +1975,43 @@
         "label": "Bookings",
         "description": "Book the classes at your gym."
       }
-    ]
+    ],
+    "owner": {
+      "dashboard": {
+        "label": "Dashboard",
+        "description": "An overview of your box — stats, members, competitions"
+      },
+      "wods": {
+        "label": "WODs",
+        "description": "Program and publish the daily WODs for your athletes"
+      },
+      "members": {
+        "label": "Members",
+        "description": "Manage the athletes registered in your box"
+      },
+      "profile": {
+        "label": "Profile",
+        "description": "Your personal details, settings and subscription"
+      }
+    },
+    "coach": {
+      "wods": {
+        "label": "WODs",
+        "description": "View and program the box's WODs"
+      },
+      "whiteboard": {
+        "label": "Whiteboard",
+        "description": "The whiteboard — today's WODs and athletes' results"
+      },
+      "messages": {
+        "label": "Messages",
+        "description": "Talk with the members of the box"
+      },
+      "profile": {
+        "label": "Profile",
+        "description": "Your details and settings"
+      }
+    }
   },
   "boxAccess": {
     "joinRefused": "This box is no longer accepting new members.",
@@ -2342,7 +2432,9 @@
     "notFound": "Not found: it may have been deleted.",
     "wodNotFound": "This WOD no longer exists.",
     "banned": "Your access to this box has been revoked.",
-    "registrationClosed": "Registration is closed."
+    "registrationClosed": "Registration is closed.",
+    "notConnected": "Not signed in",
+    "notInBox": "Not in a box"
   },
   "gymZones": {
     "zone": {
@@ -2933,7 +3025,7 @@
     "officialInfo": "Official WOD of the Day · RX / Scaled leaderboard · open to the whole community",
     "reward": "Reward: +{{elo}} ELO for 1st place",
     "scaledHint": "Scaled version — adjust the loads to your level if needed.",
-    "boardTitleCategory": "Leaderboard {{cat}} ({{n}})",
+    "boardTitleCategory": "{{cat}} leaderboard ({{n}})",
     "noScoreCategory": "No {{cat}} score yet.",
     "boardTitle": "Leaderboard ({{n}}/{{max}})",
     "noParticipants": "No participants yet.",
@@ -2997,5 +3089,66 @@
     "record_one": "{{wins}}W · {{count}} WOD",
     "record_other": "{{wins}}W · {{count}} WODs",
     "boxElo": "Box ELO"
+  },
+  "friends": {
+    "count_one": "{{count}} friend",
+    "count_other": "{{count}} friends",
+    "tabFriends": "My friends",
+    "tabRequests": "Requests",
+    "tabRequestsCount": "Requests ({{count}})",
+    "emptyTitle": "No friends yet",
+    "emptySub": "Search for athletes and send them friend requests!",
+    "received": "Received",
+    "sent": "Sent",
+    "pendingDots": "Pending…",
+    "pending": "Pending",
+    "friend": "Friend",
+    "add": "Add",
+    "accept": "Accept",
+    "decline": "Decline",
+    "emptyRequestsTitle": "No requests",
+    "emptyRequestsSub": "When someone sends you a friend request, it will show up here.",
+    "searchPlaceholder": "Search for an athlete…",
+    "alreadySent": "Request already sent",
+    "requestSent": "Request sent!"
+  },
+  "publicProfile": {
+    "notFound": "Profile not found",
+    "requestSent": "Request sent",
+    "addFriend": "Add friend",
+    "trophies": "Trophies",
+    "shareMessage": "Check out my profile on AthleX! {{link}}"
+  },
+  "blockedUsers": {
+    "unblockTitle": "Unblock?",
+    "unblockMsg": "Unblock {{username}}? This user will be able to contact you again.",
+    "unblock": "Unblock",
+    "unblockFailed": "Could not unblock this user.",
+    "emptyTitle": "No blocked users",
+    "emptyText": "Users you block will show up here. You can unblock them at any time."
+  },
+  "changelog": {
+    "typeFeature": "New",
+    "typeFix": "Fix",
+    "typeUpdate": "Update",
+    "empty": "Nothing new for now"
+  },
+  "strengthHistory": {
+    "title": "COMPLETED SETS",
+    "empty": "No sets recorded yet. The strength blocks you complete from a WOD or a program will show up here, set by set.",
+    "deletedSession": "Deleted session",
+    "sourceProgram": "program",
+    "sourceBoxWod": "box WOD",
+    "set": "Set {{n}}",
+    "prNote": "Your displayed 1RM comes from this session."
+  },
+  "forceUpdate": {
+    "title": "Update required",
+    "subtitle": "A new version of AthleX is available.\nUpdate to keep using the app.",
+    "installed": "Installed version: {{version}}",
+    "button": "Update"
+  },
+  "dateField": {
+    "invalid": "Invalid date (format YYYY-MM-DD)"
   }
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Linking, Platform, ActivityIndicator } from 'react-native';
 import { TouchableOpacity } from 'react-native';
 import Constants from 'expo-constants';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
 import { axColors } from '../theme/axTokens';
 
@@ -33,6 +34,7 @@ interface Props {
 }
 
 export default function ForceUpdateGate({ children }: Props) {
+  const { t } = useTranslation();
   const [checking, setChecking] = useState(true);
   const [blocked, setBlocked] = useState(false);
 
@@ -69,18 +71,15 @@ export default function ForceUpdateGate({ children }: Props) {
     return (
       <View style={styles.container}>
         <Text style={styles.emoji}>🔄</Text>
-        <Text style={styles.title}>Mise à jour requise</Text>
-        <Text style={styles.subtitle}>
-          Une nouvelle version d'AthleX est disponible.{'\n'}
-          Mets à jour pour continuer à utiliser l'app.
-        </Text>
-        <Text style={styles.version}>Version installée : {APP_VERSION}</Text>
+        <Text style={styles.title}>{t('forceUpdate.title')}</Text>
+        <Text style={styles.subtitle}>{t('forceUpdate.subtitle')}</Text>
+        <Text style={styles.version}>{t('forceUpdate.installed', { version: APP_VERSION })}</Text>
         <TouchableOpacity
           style={styles.button}
           onPress={() => Linking.openURL(STORE_URL)}
           activeOpacity={0.85}
         >
-          <Text style={styles.buttonText}>Mettre à jour</Text>
+          <Text style={styles.buttonText}>{t('forceUpdate.button')}</Text>
         </TouchableOpacity>
       </View>
     );

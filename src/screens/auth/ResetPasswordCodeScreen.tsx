@@ -77,7 +77,7 @@ export default function ResetPasswordCodeScreen({ navigation, route }: Props) {
     <TouchableOpacity
       onPress={toggle}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      accessibilityLabel={shown ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+      accessibilityLabel={shown ? t('auth.hidePassword') : t('auth.showPassword')}
     >
       {shown ? <EyeOff color={c.textMuted} size={20} /> : <Eye color={c.textMuted} size={20} />}
     </TouchableOpacity>

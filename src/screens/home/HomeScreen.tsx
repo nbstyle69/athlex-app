@@ -415,7 +415,7 @@ export default function HomeScreen() {
         {/* ── Header row ──────────────────────────────────────────────── */}
         <View style={S.headerRow} testID="home-header">
           <View style={S.headerText}>
-            <Text style={S.username} numberOfLines={1} testID="home-username">{user?.username ?? 'Athlète'}</Text>
+            <Text style={S.username} numberOfLines={1} testID="home-username">{user?.username ?? t('onboarding.athleteFallback')}</Text>
             {currentBox && (
               <TouchableOpacity
                 onPress={() => myBoxes.length > 1 ? setBoxPickerVisible(true) : null}
@@ -472,7 +472,7 @@ export default function HomeScreen() {
                 <Flame size={14} color={c.warning} />
                 <Text style={S.heroStatNum} numberOfLines={1} testID="home-stat-value">{streak.current_streak}</Text>
               </View>
-              <Text style={S.heroStatLabel} numberOfLines={1}>{streak.week_session_count}/{streak.max_sessions_per_week ?? '∞'} sem.</Text>
+              <Text style={S.heroStatLabel} numberOfLines={1}>{t('home.perWeek', { done: streak.week_session_count, max: streak.max_sessions_per_week ?? '∞' })}</Text>
             </View>
             <View style={S.heroStat}>
               <Text style={S.heroStatNum} numberOfLines={1} testID="home-stat-value">{user?.wins ?? 0}</Text>
@@ -482,7 +482,7 @@ export default function HomeScreen() {
 
           <View style={S.heroLevelRow}>
             <AxStatusDot label={level.toUpperCase()} color={levelColor} testID="home-level" />
-            <Text style={S.matchesTxt} numberOfLines={1}>{user?.total_matches ?? 0} matchs</Text>
+            <Text style={S.matchesTxt} numberOfLines={1}>{t('home.matches', { count: user?.total_matches ?? 0 })}</Text>
           </View>
         </AxCard>
 
@@ -540,7 +540,7 @@ export default function HomeScreen() {
             </View>
 
             <View style={S.weekRow}>
-              {['L','M','M','J','V','S','D'].map((day, i) => {
+              {(t('home.dayInitials', { returnObjects: true }) as string[]).map((day, i) => {
                 const wods = weekActivity[i];
                 const res = weekReservations[i];
                 const maxAll = Math.max(...weekActivity, ...weekReservations, 1);
@@ -571,8 +571,8 @@ export default function HomeScreen() {
               <Text style={S.dayDetailTxt}>
                 {t('home.dayDetail', {
                   day: (t('home.dayNamesFull', { returnObjects: true }) as string[])[selectedDay],
-                  res: weekReservations[selectedDay],
-                  wods: weekActivity[selectedDay],
+                  res: t('home.classesCount', { count: weekReservations[selectedDay] }),
+                  wods: t('home.wodsCount', { count: weekActivity[selectedDay] }),
                 })}
               </Text>
             )}
@@ -588,7 +588,7 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            <Text style={S.weekTotalTxt}>{t('home.weekTotal', { res: weekResTotal, wods: weekWodsTotal })}</Text>
+            <Text style={S.weekTotalTxt}>{t('home.weekTotal', { res: t('home.classesCount', { count: weekResTotal }), wods: t('home.wodsCount', { count: weekWodsTotal }) })}</Text>
 
             <View style={S.progStrip}>
               {[
@@ -648,7 +648,7 @@ export default function HomeScreen() {
                       )}
                       <View style={S.flexShrink}>
                         <Text style={[S.boxPickerName, isActive && { color: c.accentText }]} numberOfLines={1}>{entry.box.name}</Text>
-                        <Text style={S.boxPickerRole}>{entry.role === 'owner' ? 'Propriétaire' : entry.role === 'coach' ? 'Coach' : 'Membre'}</Text>
+                        <Text style={S.boxPickerRole}>{entry.role === 'owner' ? t('profile.account.roleOwner') : entry.role === 'coach' ? t('profile.account.roleCoach') : t('profile.account.roleMember')}</Text>
                       </View>
                       {isActive && <Check size={18} color={c.accentText} />}
                     </TouchableOpacity>
@@ -675,7 +675,7 @@ export default function HomeScreen() {
               <View style={S.flexShrink}>
                 <View style={S.badgePopupHeaderRow}>
                   <Medal size={12} color={c.accentText} />
-                  <Text style={S.badgePopupHeader}>Badge débloqué !</Text>
+                  <Text style={S.badgePopupHeader}>{t('home.badgeUnlocked')}</Text>
                 </View>
                 <Text style={S.badgePopupTitle}>{badgePopup.title}</Text>
                 <Text style={S.badgePopupDesc} numberOfLines={2}>{badgePopup.description}</Text>
@@ -800,7 +800,7 @@ export default function HomeScreen() {
                   <Text testID="home-result-status" style={[S.resultStatus, {
                     color: r.status === 'approved' ? c.success : r.status === 'rejected' ? c.danger : c.textMuted,
                   }]}>
-                    {r.status === 'approved' ? 'Validé' : r.status === 'rejected' ? 'Rejeté' : 'En attente'}
+                    {r.status === 'approved' ? t('home.resultApproved') : r.status === 'rejected' ? t('home.resultRejected') : t('home.resultPending')}
                   </Text>
                   <Text style={S.resultScore} numberOfLines={1}>{r.score_value}</Text>
                 </View>
