@@ -3,7 +3,11 @@
 // index.ts qui leur fournit les accès à la base (clé serveur) et à Expo.
 // Conception : docs/NOTIFS_GERANT.md.
 
-export type TypeNotif = 'subscription_paid' | 'payment_failed' | 'booked_without_plan' | 'invitation_accepted';
+/** Les types de la file : ceux de la contrainte box_manager_notifications_type_check (contrôlé par le test). */
+export const TYPES_NOTIF = [
+  'subscription_paid', 'payment_failed', 'booked_without_plan', 'invitation_accepted', 'plan_change_request',
+] as const;
+export type TypeNotif = typeof TYPES_NOTIF[number];
 
 /** Une ligne de `box_manager_notifications` à envoyer (migration 20270143). */
 export type Ligne = {
@@ -115,6 +119,7 @@ export function rediger(type: TypeNotif, langue: 'fr' | 'en', v: Valeurs): { tit
           : `${membre} was booked into a class without an active plan.`,
       };
       case 'invitation_accepted': return { title: 'Invitation accepted', body: `${membre} joined ${v.box}.` };
+      case 'plan_change_request': return { title: 'Plan change request', body: `${membre} asked to switch to ${formule}.` };
     }
   }
   const membre = v.membre ?? 'Un membre';
@@ -129,6 +134,7 @@ export function rediger(type: TypeNotif, langue: 'fr' | 'en', v: Valeurs): { tit
         : `${membre} a été inscrit à un cours sans formule active.`,
     };
     case 'invitation_accepted': return { title: 'Invitation acceptée', body: `${membre} a rejoint ${v.box}.` };
+    case 'plan_change_request': return { title: 'Demande de changement de formule', body: `${membre} demande à passer à ${formule}.` };
   }
 }
 
