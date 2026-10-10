@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleProp, StyleSheet, Text, TextInput, TextStyle, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { AppTheme } from '../context/ThemeContext';
 import { formatDateInput, isValidDateString, todayDateString } from '../lib/dateInput';
 
@@ -24,6 +25,7 @@ export default function DateField({
   placeholderTextColor,
   onValidityChange,
 }: DateFieldProps) {
+  const { t } = useTranslation();
   const handleChange = (raw: string) => {
     const formatted = formatDateInput(raw);
     onChangeText(formatted);
@@ -44,7 +46,7 @@ export default function DateField({
         maxLength={10}
       />
       {invalid && (
-        <Text style={[styles.error, { color: theme.error }]}>Date invalide (format AAAA-MM-JJ)</Text>
+        <Text style={[styles.error, { color: theme.error }]}>{t('dateField.invalid')}</Text>
       )}
     </View>
   );

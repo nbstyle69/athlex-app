@@ -379,7 +379,7 @@ export default function OnboardingTutorialScreen({ onDone }: Props) {
                             <View style={S.boxCodeField}>
                               <AxTextField
                                 testID="tutorial-box-code"
-                                placeholder="ABC123"
+                                placeholder={t('onboarding.codePlaceholder')}
                                 value={boxCode}
                                 onChangeText={v => setBoxCode(v.toUpperCase())}
                                 autoCapitalize="characters"

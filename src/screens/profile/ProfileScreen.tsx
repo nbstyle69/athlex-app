@@ -50,7 +50,6 @@ const TAB_KEYS = ['account', 'pr', 'stats', 'badges'] as const;
 
 const PR_CATEGORIES = [
   {
-    label: 'Haltérophilie',
     titleKey: 'weightlifting',
     icon: Dumbbell,
     // Une seule liste de libellés : c'est elle qui compose les clés en base et
@@ -58,7 +57,6 @@ const PR_CATEGORIES = [
     items: WEIGHTLIFTING_PR_MOVEMENTS.map(movement => ({ movement, value: '', unit: 'kg', date: '' })),
   },
   {
-    label: 'Gymnastics',
     titleKey: 'gymnastics',
     icon: PersonStanding,
     items: [
@@ -76,7 +74,6 @@ const PR_CATEGORIES = [
     ],
   },
   {
-    label: 'Benchmarks CrossFit',
     titleKey: 'benchmarks',
     icon: Trophy,
     items: [
@@ -90,7 +87,6 @@ const PR_CATEGORIES = [
     ],
   },
   {
-    label: 'Cardio & Endurance',
     titleKey: 'cardio',
     icon: Timer,
     items: [
@@ -105,14 +101,7 @@ const PR_CATEGORIES = [
   },
 ];
 
-const BADGE_CATEGORY_MAP: Record<string, string> = {
-  activity: 'Régularité',
-  tournament: 'Compétition',
-  social: 'Communauté',
-  wod: 'Entraînement',
-  elo: 'Classement ELO',
-  Classement: 'Classement',
-};
+// i18n-ignore : clés de catégorie de badge en base, jamais affichées telles quelles
 const CATEGORY_ORDER = ['activity', 'tournament', 'wod', 'elo', 'Classement', 'social'];
 
 const ATHLETE_LEVELS: readonly AthleteLevel[] = ['scaled', 'inter', 'rx', 'rx+', 'elite', 'pro'];
@@ -739,7 +728,7 @@ export default function ProfileScreen() {
     const extras  = allCats.filter(c => !CATEGORY_ORDER.includes(c));
     return [...ordered, ...extras].map(cat => ({
       key: cat,
-      label: t(`profile.badges.categories.${cat}`, { defaultValue: BADGE_CATEGORY_MAP[cat] ?? cat }),
+      label: t(`profile.badges.categories.${cat}`, { defaultValue: cat }),
       badges: visibleCatalog.filter(b => b.category === cat),
     }));
   })();
@@ -761,7 +750,7 @@ export default function ProfileScreen() {
             fontSize={28}
           />
           <View style={S.userInfo}>
-            <Text style={S.username} numberOfLines={2} testID="profile-username">{user?.username ?? 'Athlète'}</Text>
+            <Text style={S.username} numberOfLines={2} testID="profile-username">{user?.username ?? t('onboarding.athleteFallback')}</Text>
             <Text style={S.email} numberOfLines={1}>{user?.email}</Text>
             <View style={[S.levelBadge, { borderColor: levelText }]} testID="profile-level">
               <View style={[S.levelDot, { backgroundColor: levelText }]} />
@@ -809,7 +798,7 @@ export default function ProfileScreen() {
           <Text style={S.progressNote}>
             {nextStep
               ? `${currentElo} / ${nextStep.min} ELO · ${t('profile.elo.currentLevel', { level: currentStep.label })}`
-              : `${currentElo} ELO · Pro Legend`}
+              : t('profile.elo.maxLevelNote', { elo: currentElo })}
           </Text>
         </View>
       </View>
@@ -945,7 +934,7 @@ export default function ProfileScreen() {
                                 let value = prValues[key] ?? '';
                                 if (isTimeUnit(pr.unit)) {
                                   const parsed = parseTimeInput(value);
-                                  if (parsed === null) { Alert.alert('Temps invalide', 'Saisis un temps au format mm:ss, par exemple 1:42.'); return; }
+                                  if (parsed === null) { Alert.alert(t('profile.pr.invalidTimeTitle'), t('profile.pr.invalidTimeMsg')); return; }
                                   value = parsed;
                                 }
                                 const today = new Date().toISOString().split('T')[0];
@@ -1243,7 +1232,7 @@ export default function ProfileScreen() {
                       <Image source={{ uri: avatarUrl }} style={S.photoPreview} />
                     ) : (
                       <View style={S.photoPlaceholder}>
-                        <Text style={S.photoPlaceholderText}>{user?.username?.[0]?.toUpperCase() ?? 'A'}</Text>
+                        <Text style={S.photoPlaceholderText}>{(user?.username ?? t('onboarding.athleteFallback'))[0]?.toUpperCase()}</Text>
                       </View>
                     )}
                     <View style={S.photoPickerBtns}>
@@ -1466,6 +1455,7 @@ export default function ProfileScreen() {
                 {(['fr', 'en'] as const).map(lng => (
                   <AxChip
                     key={lng}
+                    // i18n-ignore : chaque langue est nommée dans sa propre langue, quelle que soit celle de l'app
                     label={lng === 'fr' ? 'Français' : 'English'}
                     selected={i18n.language === lng}
                     onPress={() => setLanguage(lng)}
@@ -1563,7 +1553,7 @@ export default function ProfileScreen() {
               inputStyle={S.codeInput}
               value={joinCode}
               onChangeText={v => setJoinCode(v.toUpperCase())}
-              placeholder="Ex : ABC123"
+              placeholder={t('profile.account.joinCodePlaceholder')}
               maxLength={6}
               autoCapitalize="characters"
               autoFocus
@@ -1642,7 +1632,7 @@ export default function ProfileScreen() {
               style={S.codeInput}
               value={progCode}
               onChangeText={v => setProgCode(v.toUpperCase())}
-              placeholder="Ex : FORCE6"
+              placeholder={t('profile.account.joinProgramPlaceholder')}
               placeholderTextColor={theme.textMuted}
               maxLength={6}
               autoCapitalize="characters"

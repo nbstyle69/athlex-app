@@ -32,6 +32,7 @@ import ForceUpdateGate from '../components/ForceUpdateGate';
 import DateField from '../components/DateField';
 import StrengthHistory from '../components/profile/StrengthHistory';
 import { lightTheme } from '../theme/palette';
+import { WEIGHTLIFTING_PR_MOVEMENTS } from '../screens/profile/prStorage';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { strictAllowed } = require('../../scripts/i18n/scanner');
@@ -450,7 +451,7 @@ async function register(result: { error: string | null; finalUsername?: string }
   await typeAt(root, 1, 'sam@example.test');
   await typeAt(root, 2, 'secret123');
   await tap(root.findAll((n) => n.props.accessibilityRole === 'checkbox' && typeof n.props.onPress === 'function')[0]);
-  await pressA11y(root, { fr: 'Créer un compte', en: 'Create an account' });
+  await pressA11y(root, { fr: 'Créer un compte', en: 'Create account' });
   return root;
 }
 
@@ -514,7 +515,7 @@ const VARIANTS: Variant[] = [
     mockState.received = [...mockState.received, ...mockState.receivedNoName];
     mockState.sent = [...mockState.sent, { id: 's2', requester_id: 'me', addressee_id: 'u8', status: 'pending', addressee: null }];
     const r = await mount(<FriendsScreen />);
-    await pressText(r, { fr: 'Invitations (2)', en: 'Invitations (2)' });
+    await pressText(r, { fr: 'Invitations (2)', en: 'Requests (2)' });
     return r;
   } },
   { name: 'amis-recherche', run: friendsSearch },
@@ -534,7 +535,7 @@ const VARIANTS: Variant[] = [
   { name: 'amis-vide', run: async () => {
     mockState.accepted = []; mockState.received = []; mockState.sent = [];
     const r = await mount(<FriendsScreen />);
-    await pressText(r, { fr: 'Invitations', en: 'Invitations' });
+    await pressText(r, { fr: 'Invitations', en: 'Requests' });
     return r;
   } },
   { name: 'amis-vide-liste', run: () => { mockState.accepted = []; return mount(<FriendsScreen />); } },
@@ -629,7 +630,12 @@ const VARIANTS: Variant[] = [
   } },
   // ── Embarquement ──
   { name: 'rejoins-ta-box', run: () => mount(<JoinBoxScreen navigation={nav} />) },
-  { name: 'tutoriel', run: () => { mockState.auth = { ...mockState.auth, currentBox: null }; return mount(<OnboardingTutorialScreen onDone={jest.fn()} />); } },
+  { name: 'tutoriel', run: () => {
+    // Compteur ELO animé en boucle : animations figées pour un texte stable (ELO 1000).
+    jest.useFakeTimers({ now: NOW, doNotFake: ['nextTick', 'setImmediate', 'clearImmediate', 'queueMicrotask'] });
+    mockState.auth = { ...mockState.auth, currentBox: null };
+    return mount(<OnboardingTutorialScreen onDone={jest.fn()} />);
+  } },
   // ── Composants ──
   { name: 'mise-a-jour-requise', run: () => { mockState.minVersion = '99.0.0'; return mount(<ForceUpdateGate><></></ForceUpdateGate>); } },
   { name: 'date-invalide', run: () => mount(<DateField value="2026-13-45" onChangeText={jest.fn()} theme={lightTheme} />) },
@@ -642,12 +648,19 @@ function dataTexts(): Set<string> {
     if (typeof v === 'string') [v, ...v.split('\n')].forEach((l) => out.add(l.toLowerCase()));
     else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => { out.add(k.toLowerCase()); walk(x); });
   })([mockState, BADGES, SESSIONS]);
+  // Noms de mouvements des PR : clés stockées en base (prKey), jamais traduites.
+  const src = require('fs').readFileSync(require.resolve('../screens/profile/ProfileScreen.tsx'), 'utf8') as string;
+  for (const m of src.matchAll(/movement: '([^']+)'/g)) out.add(m[1].toLowerCase());
+  for (const m of WEIGHTLIFTING_PR_MOVEMENTS) out.add(m.toLowerCase());
   return out;
 }
 /** Libellés identiques dans les deux langues : termes techniques, noms propres, mentions imposées. */
 const SAME_IN_EN = [
-  /^(PR|Stats|Badges|Notifications|Messages|Whiteboard|Dashboard|WODs|Coach|Invitations|Version|English|Fran|Grace|Helen|Cindy|Diane|DT|Murph|Box|Cardio|Bio|Email|E-mail|OK)$/i,
-  /^Invitations \(\d+\)$/,
+  /^(PR|Stats|Badges|Notifications|Messages|Whiteboard|Dashboard|WODs|Coach|English|Fran|Grace|Helen|Cindy|Diane|DT|Murph|Box|Cardio|Bio|Email|E-mail|OK|ABC123|Photo|Scores|Français|ATH-7K2|Win rate|Cardio & Endurance|ELO & inter-box)$/i,
+  / · vs /, // « vs » devant l'adversaire, identique en anglais (eloHistory.versus)
+  /^\d+ records?$/, /^\d+\/\d+ participants$/,
+  /^Version v\d/, // « Version » suivi du numéro, identique en anglais (auth.versionA11y)
+  /ELO · Pro Legend$/, // nom du palier le plus haut, identique en anglais (profile.elo.maxLevelNote)
 ];
 const ACCENT = /[àâäçéèêëîïôöùûüÿœæ«»]/i;
 
@@ -679,7 +692,7 @@ describe('Profil & Accueil, anglais : aucun texte français', () => {
     const strip = (s: string) => s.replace(/^(placeholder|a11y): /, '').replace(/^(ALERTE|PARTAGE) \| /, '');
     const isData = (s: string) => s.split(/\n|, | — | · | \| /).every((l) => !/\p{L}/u.test(l) || DATA.has(l.trim().toLowerCase()));
     const shown = en.filter((s) => s !== '── fenêtre ──');
-    const french = shown.filter((s) => ACCENT.test(strip(s)) && !isData(strip(s)));
+    const french = shown.filter((s) => ACCENT.test(strip(s)) && !isData(strip(s)) && !SAME_IN_EN.some((re) => re.test(strip(s))));
     const frSet = new Set(fr.map((s) => s.toLowerCase()));
     const unchanged = shown.filter((s) => frSet.has(s.toLowerCase()) && /\p{L}{2,}/u.test(strip(s))
       && !isData(strip(s)) && !strictAllowed(strip(s)) && !SAME_IN_EN.some((re) => re.test(strip(s))));

@@ -15,8 +15,9 @@ import { TOUR_DONE_KEY } from '../lib/storageKeys';
 const { width: W, height: H } = Dimensions.get('window');
 
 export interface TourStep {
-  label: string;
-  description: string;
+  /** Clés i18n du titre et du texte de l'étape. */
+  labelKey: string;
+  descriptionKey: string;
   x: number;
   y: number;
   w: number;
@@ -43,19 +44,19 @@ const NAV_ICONS: IconCmp[] = [Swords, Dumbbell, Building2, CalendarClock];
 // ── Box Owner tabs: Dashboard | WODs | Horaires | Membres | Messages | Profil (6 tabs)
 const BO_W = W / 6;
 export const BO_TOUR_STEPS: TourStep[] = [
-  { label: 'Dashboard', description: 'Vue d\'ensemble de votre box — stats, membres, compétitions', x: 0, y: TAB_Y, w: BO_W, h: TAB_H },
-  { label: 'WODs', description: 'Programmez et publiez les WODs quotidiens pour vos athlètes', x: BO_W, y: TAB_Y, w: BO_W, h: TAB_H },
-  { label: 'Membres', description: 'Gérez les athlètes inscrits à votre box', x: BO_W * 3, y: TAB_Y, w: BO_W, h: TAB_H },
-  { label: 'Profil', description: 'Vos infos personnelles, paramètres et abonnement', x: BO_W * 5, y: TAB_Y, w: BO_W, h: TAB_H },
+  { labelKey: 'tour.owner.dashboard.label', descriptionKey: 'tour.owner.dashboard.description', x: 0, y: TAB_Y, w: BO_W, h: TAB_H },
+  { labelKey: 'tour.owner.wods.label', descriptionKey: 'tour.owner.wods.description', x: BO_W, y: TAB_Y, w: BO_W, h: TAB_H },
+  { labelKey: 'tour.owner.members.label', descriptionKey: 'tour.owner.members.description', x: BO_W * 3, y: TAB_Y, w: BO_W, h: TAB_H },
+  { labelKey: 'tour.owner.profile.label', descriptionKey: 'tour.owner.profile.description', x: BO_W * 5, y: TAB_Y, w: BO_W, h: TAB_H },
 ];
 
 // ── Coach tabs: WODs | Horaires | Whiteboard | Messages | Profil (5 tabs)
 const CO_W = W / 5;
 export const COACH_TOUR_STEPS: TourStep[] = [
-  { label: 'WODs', description: 'Consultez et programmez les WODs de la box', x: 0, y: TAB_Y, w: CO_W, h: TAB_H },
-  { label: 'Whiteboard', description: 'Le tableau blanc — WODs du jour et résultats des athlètes', x: CO_W * 2, y: TAB_Y, w: CO_W, h: TAB_H },
-  { label: 'Messages', description: 'Communiquez avec les membres de la box', x: CO_W * 3, y: TAB_Y, w: CO_W, h: TAB_H },
-  { label: 'Profil', description: 'Vos infos et paramètres', x: CO_W * 4, y: TAB_Y, w: CO_W, h: TAB_H },
+  { labelKey: 'tour.coach.wods.label', descriptionKey: 'tour.coach.wods.description', x: 0, y: TAB_Y, w: CO_W, h: TAB_H },
+  { labelKey: 'tour.coach.whiteboard.label', descriptionKey: 'tour.coach.whiteboard.description', x: CO_W * 2, y: TAB_Y, w: CO_W, h: TAB_H },
+  { labelKey: 'tour.coach.messages.label', descriptionKey: 'tour.coach.messages.description', x: CO_W * 3, y: TAB_Y, w: CO_W, h: TAB_H },
+  { labelKey: 'tour.coach.profile.label', descriptionKey: 'tour.coach.profile.description', x: CO_W * 4, y: TAB_Y, w: CO_W, h: TAB_H },
 ];
 
 interface Props {
@@ -190,8 +191,8 @@ export default function InteractiveTour({ steps, onComplete }: Props) {
         </View>
 
         <View style={[S.tooltip, { top: tooltipTop, left: tooltipLeft }]}>
-          <Text style={S.tooltipLabel}>{step.label}</Text>
-          <Text style={S.tooltipDesc}>{step.description}</Text>
+          <Text style={S.tooltipLabel}>{t(step.labelKey)}</Text>
+          <Text style={S.tooltipDesc}>{t(step.descriptionKey)}</Text>
           <View style={S.tooltipFooter}>
             <Text style={S.tooltipStep}>{stepIndex + 1}/{total}</Text>
             <View style={S.tooltipBtns}>

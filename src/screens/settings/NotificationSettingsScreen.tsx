@@ -177,7 +177,7 @@ export default function NotificationSettingsScreen() {
   return (
     <View style={S.screen}>
       <GlassBackground />
-      <AxScreenHeader title="Notifications" />
+      <AxScreenHeader title={t('profile.notifications')} />
 
       <ScrollView contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
         {/* Interrupteur maître */}

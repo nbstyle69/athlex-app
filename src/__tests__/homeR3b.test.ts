@@ -11,7 +11,7 @@ describe('Accueil R3b', () => {
     const home = read('HomeScreen.tsx');
     // Instantané de l'ordre des blocs relevé sur master avant R3b.
     const markers = [
-      "{user?.username ?? 'Athlète'}",
+      "{user?.username ?? t('onboarding.athleteFallback')}",
       "navigation.navigate('EloHistory' as never)",
       "navigation.navigate('Friends')",
       "navigation.navigate('Profile')",
