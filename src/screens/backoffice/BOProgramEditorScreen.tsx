@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2, Copy } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { supabase } from '../../lib/supabase';
 import { captureError } from '../../lib/sentry';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
@@ -83,7 +84,7 @@ export default function BOProgramEditorScreen({ navigation, route }: any) {
       setWods(await listProgramWods(programId));
     } catch (e) {
       captureError(e, { screen: 'BOProgramEditor', action: 'load' });
-      setErreur(e instanceof Error ? e.message : String(e));
+      setErreur(await errorMessage(e));
     }
     setLoading(false);
   }, [programId]);
@@ -142,7 +143,7 @@ export default function BOProgramEditorScreen({ navigation, route }: any) {
       setModalOpen(false);
       load();
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : String(e));
+      Alert.alert(t('common.error'), await errorMessage(e));
     }
     setSubmitting(false);
   }
@@ -156,7 +157,7 @@ export default function BOProgramEditorScreen({ navigation, route }: any) {
           try {
             await deleteProgramWod(w.id);
           } catch (e) {
-            Alert.alert(t('common.error'), e instanceof Error ? e.message : String(e));
+            Alert.alert(t('common.error'), await errorMessage(e));
           }
           load();
         },
@@ -171,7 +172,7 @@ export default function BOProgramEditorScreen({ navigation, route }: any) {
     try {
       await duplicateProgramWeek(programId, boxId, currentWods);
     } catch (e) {
-      Alert.alert(t('common.error'), e instanceof Error ? e.message : String(e));
+      Alert.alert(t('common.error'), await errorMessage(e));
       return;
     }
     setWeekIdx(prev => prev + 1);
@@ -296,7 +297,7 @@ export default function BOProgramEditorScreen({ navigation, route }: any) {
               <TextInput
                 style={[S.mInput, S.mTextarea]}
                 value={fDesc} onChangeText={setFDesc}
-                placeholder={"A. Back Squat 5×5 @ 80%\nB. 3 RFT:\n  15 Wall Balls\n  10 T2B"}
+                placeholder={t('bo.programEditor.descriptionPlaceholder')}
                 placeholderTextColor={theme.textMuted} multiline
               />
 

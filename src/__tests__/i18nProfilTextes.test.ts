@@ -20,12 +20,12 @@ describe('Profil & Accueil : français', () => {
     ['friends.count', { count: 0 }, '0 ami'],
     ['friends.count', { count: 1 }, '1 ami'],
     ['friends.count', { count: 12 }, '12 amis'],
-    // Forme de master gardée (faute signalée, non corrigée) : « 1 matchs ».
-    ['home.matches', { count: 1 }, '1 matchs'],
-    // Récap de la semaine : même texte que master (« WODs » au singulier aussi, faute signalée).
-    ['home.weekTotal', { res: '1 cours', wods: '1 WODs' }, '1 cours · 1 WODs cette semaine'],
+    // Correction validée (PR Gérant) : « 1 match ».
+    ['home.matches', { count: 1 }, '1 match'],
+    // Récap de la semaine ; « 1 WOD » corrigé (validé, PR Gérant).
+    ['home.weekTotal', { res: '1 cours', wods: '1 WOD' }, '1 cours · 1 WOD cette semaine'],
     ['home.classesCount', { count: 1 }, '1 cours'],
-    ['home.wodsCount', { count: 1 }, '1 WODs'],
+    ['home.wodsCount', { count: 1 }, '1 WOD'],
     ['scoreEntry.scoreRecapRounds', { total: 87, count: 4, reps: 7 }, '= 87 reps (4 tour(s) + 7)'],
     ['scoreEntry.scoreRecapRounds', { total: 27, count: 1, reps: 7 }, '= 27 reps (1 tour(s) + 7)'],
     ['tourWod.scoreRecapRounds', { total: 87, count: 4, reps: 7 }, '= 87 reps (4 tour(s) + 7)'],

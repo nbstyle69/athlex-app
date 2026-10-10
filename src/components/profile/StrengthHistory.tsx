@@ -57,7 +57,7 @@ export default function StrengthHistory({ sessions, prSourceIds }: Props) {
                 <View key={set.id} style={S.row}>
                   <Text style={S.setLabel}>{t('strengthHistory.set', { n: set.setIndex })}</Text>
                   <Text style={S.setValue}>
-                    {set.reps} reps{set.loadKg != null ? ` × ${set.loadKg} kg` : ''}
+                    {t('strengthSession.repsCount', { count: set.reps })}{set.loadKg != null ? ` × ${set.loadKg} kg` : ''}
                   </Text>
                   {prSourceIds.has(set.id) && <Text style={S.prTag}>1RM</Text>}
                 </View>

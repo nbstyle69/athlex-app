@@ -108,7 +108,8 @@
       "header": "Inter-box competitions",
       "titleRequired": "Title required",
       "noCompetition": "No competition. Create one!",
-      "entrants": "{{count}} entrant(s)",
+      "entrants_one": "{{count}} entrant",
+      "entrants_other": "{{count}} entrants",
       "openRegistrations": "Open registrations",
       "launch": "Launch",
       "close": "Close",
@@ -158,7 +159,12 @@
       "labelTimeCap": "Time cap (min)",
       "placeholderOptional": "Optional",
       "labelScoring": "Scoring",
-      "add": "Add"
+      "add": "Add",
+      "scheduleWod": "Schedule",
+      "cancelSchedule": "cancel",
+      "scheduleFormat": "YYYY-MM-DD HH:mm",
+      "scheduleFormatError": "Expected format: YYYY-MM-DD HH:mm",
+      "scheduleInFuture": "The date must be in the future."
     },
     "settings": {
       "title": "Publishing settings",
@@ -489,7 +495,8 @@
       "labelTimeCap": "TIME CAP (mm:ss)",
       "labelNotes": "COACH NOTES",
       "notesPlaceholder": "Scaling, tips…",
-      "addWodBtn": "Add WOD"
+      "addWodBtn": "Add WOD",
+      "descriptionPlaceholder": "A. Back Squat 5×5 @ 80%\nB. 3 RFT:\n  15 Wall Balls\n  10 T2B"
     },
     "dashboard": {
       "backOffice": "BACK OFFICE",
@@ -522,7 +529,8 @@
       "competitions": "Competitions",
       "inProgress": "In progress",
       "participants": "Participants",
-      "participantCount": "{{count}} participant(s)",
+      "participantCount_one": "{{count}} participant",
+      "participantCount_other": "{{count}} participants",
       "fmtBracket": "Bracket",
       "fmtLeague": "League",
       "fmtPool": "Pools",
@@ -588,7 +596,18 @@
       "addMember": "Add a member",
       "searchMember": "Search a member…",
       "exportDay": "Export day",
-      "exportWeek": "Export week"
+      "exportWeek": "Export week",
+      "classTypes": {
+        "wod": "WOD",
+        "weightlifting": "Weightlifting",
+        "cardio": "Cardio",
+        "openGym": "Open Gym",
+        "strength": "Strength",
+        "mobility": "Mobility",
+        "kids": "Kids",
+        "teens": "Teens",
+        "other": "Other"
+      }
     },
     "wods": {
       "title": "WOD Calendar",
@@ -616,7 +635,8 @@
       "warning": "Warning",
       "groupError": "WODs imported but group error: {{msg}}",
       "importSuccess": "Import successful",
-      "importSuccessMsg": "{{count}} WOD(s) imported!",
+      "importSuccessMsg_one": "{{count}} WOD imported!",
+      "importSuccessMsg_other": "{{count}} WODs imported!",
       "importFailed": "Import failed",
       "editWod": "Edit WOD",
       "createWod": "Create a WOD",
@@ -682,7 +702,8 @@
       "apiUnreachable": "Unable to reach the API.",
       "tournamentFallback": "Tournament",
       "pendingScores": "Pending scores",
-      "pendingScoresMsg": "{{count}} unprocessed score(s). Validate or reject them first.",
+      "pendingScoresMsg_one": "{{count}} unprocessed score. Validate or reject it first.",
+      "pendingScoresMsg_other": "{{count}} unprocessed scores. Validate or reject them first.",
       "closeTitle": "Close the tournament?",
       "closeMsg": "ELO points will be computed and distributed. Irreversible action.",
       "close": "Close",
@@ -744,7 +765,23 @@
       "subscribedOk": "Subscription active",
       "paidTitle": "Paid offer",
       "paidMsg": "This programming ({{price}}) is paid on the web via secure Stripe checkout. Open the payment page?",
-      "payOnWeb": "Pay on the web"
+      "payOnWeb": "Pay on the web",
+      "disciplineHaltero": "Weightlifting",
+      "disciplineEndurance": "Endurance"
+    },
+    "trialBanner": {
+      "activeSub": "All features are unlocked",
+      "pastDueTitle": "Payment failed",
+      "pastDueSub": "Update your payment method to continue",
+      "manageCta": "Manage →",
+      "expiredSub": "Subscribe to keep using the back office",
+      "subscribeCta": "Subscribe →",
+      "founder": "Founder",
+      "trialTitle": "Free trial · D-{{days}}",
+      "urgentSub": "Only a few days left! Subscribe so you don't lose anything.",
+      "daysLeft_one": "{{count}} day left in your trial",
+      "daysLeft_other": "{{count}} days left in your trial",
+      "seeCta": "View →"
     }
   },
   "messages": {
@@ -917,7 +954,8 @@
     "reservations": "Bookings",
     "wodsCompleted": "WODs completed",
     "weekTotal": "{{res}} · {{wods}} this week",
-    "dayStreak": "{{count}}-day streak",
+    "dayStreak_one": "{{count}}-day streak",
+    "dayStreak_other": "{{count}}-day streak",
     "dayDetail": "{{day}}: {{res}} · {{wods}}",
     "dayNamesFull": [
       "Monday",
@@ -1419,7 +1457,7 @@
     "intentOpt": {
       "mixed": "Mixed",
       "cardio": "Cardio",
-      "strength": "Strength",
+      "strength": "Heavy",
       "gymnastics": "Gym"
     },
     "vestOpt": {
@@ -2434,7 +2472,8 @@
     "banned": "Your access to this box has been revoked.",
     "registrationClosed": "Registration is closed.",
     "notConnected": "Not signed in",
-    "notInBox": "Not in a box"
+    "notInBox": "Not in a box",
+    "openLink": "Could not open the link."
   },
   "gymZones": {
     "zone": {

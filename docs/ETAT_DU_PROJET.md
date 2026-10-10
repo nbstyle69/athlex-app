@@ -213,6 +213,19 @@ Supabase/Resend.
 
 ## En cours
 
+**Chantier anglais, PR 6 : Gérant (app seule, aucune migration ; PR non mergée).** Bandeau d'abonnement du tableau
+de bord, horaires (types de cours traduits à l'écran, valeur enregistrée inchangée), compétition inter-box (WODs
+programmés, onglets poules et suisse), programmation, éditeur de programme, membres, éditeur de WOD et ouverture d'un
+lien externe passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de
+20 états pris sur master, `i18nGerant.rn.test.tsx`, alertes comprises), aucun texte français en anglais. 40 clés ;
+messages bruts par `errorMessage()` dans les 7 fichiers du groupe ; vrais pluriels anglais pour 4 clés du back-office
+qui gardaient « (s) ». « Heavy » pour l'intention Functional du générateur (le français garde « Force ») ; le type
+« Force » de l'éditeur de WOD désigne la séance de Musculation (`wod_type: 'strength'`) : non renommé, point remonté à
+Nab. Corrections validées : « En continu », « 1 match », « 1 WOD », « 1 jour d'affilée », « 1 rep », « Taux de
+victoire ». AdminScreen exclu explicitement de la garde (`scripts/i18n/fichiers-exclus.json`, outil interne réservé à
+Nab). Les 11 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` (144 → 155). Captures 390 px FR / EN dans
+`athlex-captures/i18n-gerant` : aucun libellé anglais tronqué ni hors écran.
+
 **WOD de tournoi : compte à rebours unique (app seule, aucune migration ; PR non mergée).** `startCountdown` (TournamentWODScreen) remplaçait l'intervalle lancé au montage sans l'arrêter : il tournait sans fin, même écran quitté. Il arrête désormais le précédent avant d'en lancer un ; le démontage arrête le dernier. Aucun changement d'affichage. Test `tournamentWodCountdown.rn.test.tsx` (minuteurs simulés : un intervalle après relance, zéro après démontage), échoue si l'on retire l'un ou l'autre arrêt ; le contournement qui arrêtait ces intervalles à la main est retiré de `i18nCompetition.rn.test.tsx` et de `r8a.rn.test.tsx`, qui se terminent seuls.
 
 **Chantier anglais, PR 5 : Profil & Accueil (app seule, aucune migration ; PR non mergée).** Profil (Compte, PR,

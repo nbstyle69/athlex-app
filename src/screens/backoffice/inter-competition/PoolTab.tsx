@@ -47,7 +47,7 @@ function PoolMatchCard({ match, theme, S, onResolve }: {
             onResolve(match, n1, n2);
           }}
         >
-          <Text style={{ fontSize: 11, fontWeight: '700', color: '#fff' }}>OK</Text>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: '#fff' }}>{t('common.ok')}</Text>
         </TouchableOpacity>
       </View>
     </View>
