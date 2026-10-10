@@ -149,16 +149,6 @@ export interface SwissStanding {
   username?: string;
 }
 
-export const FORMAT_LABELS: Record<string, string> = {
-  league: 'Ligue', bracket: 'Elimination', pool: 'Poules', swiss: 'Suisse',
-};
-export const STATUS_LABELS: Record<string, string> = {
-  draft: 'Brouillon', open: 'Ouvert', active: 'En cours', closed: 'Termine',
-};
-export const SCORING_LABELS: Record<string, string> = {
-  reps: 'Reps', time: 'Temps', weight: 'Poids', rounds_reps: 'Rounds+Reps',
-};
-
 export interface TabStyleSheet {
   section: object;
   emptyText: object;

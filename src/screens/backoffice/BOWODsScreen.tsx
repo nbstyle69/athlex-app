@@ -8,6 +8,7 @@ import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Eye, EyeOff, Upload, C
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { supabase } from '../../lib/supabase';
 import { readRows } from '../../lib/db';
 import { captureError } from '../../lib/sentry';
@@ -208,7 +209,7 @@ export default function BOWODsScreen({ navigation }: any) {
     }
     const error = dbError;
     setSubmitting(false);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     // Only send notification if publishing now (no future schedule)
     if (published && publishMode === 'now' && currentBox && user) {
       sendWodPublishedNotification(currentBox.id, title.trim(), user.id).catch(e => captureError(e, { action: 'sendWodPublishedNotif' }));
@@ -329,7 +330,7 @@ export default function BOWODsScreen({ navigation }: any) {
       }));
 
       const { data: inserted, error } = await supabase.from('box_wods').insert(payloads).select('id');
-      if (error || !inserted) { Alert.alert(t('bo.wods.importError'), error?.message ?? t('bo.wods.unknownError')); return; }
+      if (error || !inserted) { Alert.alert(t('bo.wods.importError'), error ? await errorMessage(error) : t('bo.wods.unknownError')); return; }
 
       // Insérer wod_group_access
       const accessRows: { wod_id: string; group_id: string }[] = [];
@@ -341,14 +342,14 @@ export default function BOWODsScreen({ navigation }: any) {
       });
       if (accessRows.length > 0) {
         const { error: gErr } = await supabase.from('wod_group_access').insert(accessRows);
-        if (gErr) Alert.alert(t('bo.wods.warning'), t('bo.wods.groupError', { msg: gErr.message }));
+        if (gErr) Alert.alert(t('bo.wods.warning'), t('bo.wods.groupError', { msg: await errorMessage(gErr) }));
       }
 
       Alert.alert(t('bo.wods.importSuccess'), t('bo.wods.importSuccessMsg', { count: inserted.length }));
       load();
     } catch (e: any) {
       captureError(e, { screen: 'BOWODs', action: 'importCSV' });
-      Alert.alert(t('common.error'), e.message || t('bo.wods.importFailed'));
+      Alert.alert(t('common.error'), e?.message ? await errorMessage(e) : t('bo.wods.importFailed'));
     }
   }
 

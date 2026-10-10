@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { Plus, ChevronLeft, ChevronRight, Pencil, Trash2, Users, CalendarClock, Timer, Check, X, UserPlus, Search, Download, ClipboardCheck } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { errorMessage } from '../../utils/refusals';
 import { supabase } from '../../lib/supabase';
 import { readRows } from '../../lib/db';
 import { normalizeTimeString } from '../../lib/timeInput';
@@ -44,9 +45,24 @@ interface BoxMember {
   username: string;
 }
 
-const CLASS_TYPES = [
-  'WOD', 'Haltérophilie', 'Cardio', 'Open Gym', 'Strength', 'Mobility', 'Kids', 'Teens', 'Autre',
-];
+// Valeurs enregistrées telles quelles comme titre du cours (class_schedules.title) :
+// elles ne changent pas avec la langue ; seul leur libellé à l'écran est traduit.
+const CLASS_TYPE_KEYS: Record<string, string> = {
+  WOD: 'bo.schedule.classTypes.wod',
+  // i18n-ignore : valeur enregistrée en base (titre du cours), affichée par sa clé
+  'Haltérophilie': 'bo.schedule.classTypes.weightlifting',
+  Cardio: 'bo.schedule.classTypes.cardio',
+  'Open Gym': 'bo.schedule.classTypes.openGym',
+  Strength: 'bo.schedule.classTypes.strength',
+  Mobility: 'bo.schedule.classTypes.mobility',
+  Kids: 'bo.schedule.classTypes.kids',
+  Teens: 'bo.schedule.classTypes.teens',
+  // i18n-ignore : valeur sentinelle « autre » (titre personnalisé), affichée par sa clé
+  Autre: 'bo.schedule.classTypes.other',
+};
+const CLASS_TYPES = Object.keys(CLASS_TYPE_KEYS);
+// i18n-ignore : valeur sentinelle du type « autre », jamais affichée telle quelle
+const OTHER = 'Autre';
 
 function getWeekDates(offset = 0): Date[] {
   const today = new Date();
@@ -191,7 +207,7 @@ export default function BOScheduleScreen({ navigation }: any) {
   function openEdit(item: ClassSchedule) {
     setEditItem(item);
     const isPreset = CLASS_TYPES.includes(item.title);
-    setTitle(isPreset ? item.title : 'Autre');
+    setTitle(isPreset ? item.title : OTHER);
     setCustomTitle(isPreset ? '' : item.title);
     setDescription(item.description ?? '');
     setCoach(item.coach ?? '');
@@ -203,7 +219,7 @@ export default function BOScheduleScreen({ navigation }: any) {
   }
 
   async function save() {
-    const finalTitle = title === 'Autre' ? customTitle.trim() : title;
+    const finalTitle = title === OTHER ? customTitle.trim() : title;
     if (!finalTitle || !date || !startTime || !endTime || !currentBox || !user) return;
     const cap = parseInt(maxCapacity);
     if (isNaN(cap) || cap < 1) { Alert.alert(t('bo.schedule.invalidCapacity')); return; }
@@ -231,7 +247,7 @@ export default function BOScheduleScreen({ navigation }: any) {
       : await supabase.from('class_schedules').insert(payload);
 
     setSubmitting(false);
-    if (error) { Alert.alert(t('common.error'), error.message); return; }
+    if (error) { Alert.alert(t('common.error'), await errorMessage(error)); return; }
     setModalOpen(false);
     load();
   }
@@ -286,7 +302,7 @@ export default function BOScheduleScreen({ navigation }: any) {
       .update({ attended: next })
       .eq('id', resId);
     if (error) {
-      Alert.alert(t('common.error'), error.message);
+      Alert.alert(t('common.error'), await errorMessage(error));
       setReservations(prev => prev.map(r => r.id === resId ? { ...r, attended: current } : r));
     }
   }
@@ -332,7 +348,7 @@ export default function BOScheduleScreen({ navigation }: any) {
       });
     if (error) {
       if (error.code === '23505') Alert.alert(t('bo.schedule.alreadyRegistered'), t('bo.schedule.alreadyRegisteredMsg'));
-      else Alert.alert(t('common.error'), error.message);
+      else Alert.alert(t('common.error'), await errorMessage(error));
       return;
     }
     setReservations(prev => [
@@ -509,12 +525,12 @@ export default function BOScheduleScreen({ navigation }: any) {
                     style={[S.typePill, title === ct && S.typePillActive]}
                     onPress={() => setTitle(ct)}
                   >
-                    <Text style={[S.typePillText, title === ct && S.typePillTextActive]}>{ct}</Text>
+                    <Text style={[S.typePillText, title === ct && S.typePillTextActive]}>{t(CLASS_TYPE_KEYS[ct])}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
 
-              {title === 'Autre' && (
+              {title === OTHER && (
                 <>
                   <Text style={S.fieldLabel}>{t('bo.schedule.customName')}</Text>
                   <TextInput

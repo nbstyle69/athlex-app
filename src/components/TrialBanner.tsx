@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Crown, AlertTriangle, Clock, Zap } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme, AppTheme } from '../context/ThemeContext';
 import { SubscriptionStatus } from '../types';
 
@@ -13,16 +14,15 @@ interface Props {
 
 export default function TrialBanner({ daysLeft, status, isEarlyAdopter, onUpgrade }: Props) {
   const { theme } = useTheme();
+  const { t } = useTranslation();
 
   if (status === 'active') {
     return (
       <View style={[styles.container, { backgroundColor: `${theme.success}12`, borderColor: `${theme.success}30` }]}>
         <Crown color={theme.success} size={18} />
         <View style={styles.textWrap}>
-          <Text style={[styles.title, { color: theme.success }]}>Plan Complet actif</Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Toutes les fonctionnalités sont débloquées
-          </Text>
+          <Text style={[styles.title, { color: theme.success }]}>{t('bo.subscription.statusActive')}</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{t('bo.trialBanner.activeSub')}</Text>
         </View>
       </View>
     );
@@ -37,12 +37,10 @@ export default function TrialBanner({ daysLeft, status, isEarlyAdopter, onUpgrad
       >
         <AlertTriangle color={theme.error} size={18} />
         <View style={styles.textWrap}>
-          <Text style={[styles.title, { color: theme.error }]}>Paiement échoué</Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Mets à jour ton moyen de paiement pour continuer
-          </Text>
+          <Text style={[styles.title, { color: theme.error }]}>{t('bo.trialBanner.pastDueTitle')}</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{t('bo.trialBanner.pastDueSub')}</Text>
         </View>
-        <Text style={[styles.cta, { color: theme.error }]}>Gérer →</Text>
+        <Text style={[styles.cta, { color: theme.error }]}>{t('bo.trialBanner.manageCta')}</Text>
       </TouchableOpacity>
     );
   }
@@ -56,12 +54,10 @@ export default function TrialBanner({ daysLeft, status, isEarlyAdopter, onUpgrad
       >
         <AlertTriangle color={theme.error} size={18} />
         <View style={styles.textWrap}>
-          <Text style={[styles.title, { color: theme.error }]}>Essai terminé</Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Souscris pour continuer à utiliser le back-office
-          </Text>
+          <Text style={[styles.title, { color: theme.error }]}>{t('bo.subscription.statusExpired')}</Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary }]}>{t('bo.trialBanner.expiredSub')}</Text>
         </View>
-        <Text style={[styles.cta, { color: theme.error }]}>Souscrire →</Text>
+        <Text style={[styles.cta, { color: theme.error }]}>{t('bo.trialBanner.subscribeCta')}</Text>
       </TouchableOpacity>
     );
   }
@@ -83,15 +79,13 @@ export default function TrialBanner({ daysLeft, status, isEarlyAdopter, onUpgrad
       <Icon color={color} size={18} />
       <View style={styles.textWrap}>
         <Text style={[styles.title, { color }]}>
-          {isEarlyAdopter ? '🏅 Fondateur · ' : ''}Essai gratuit · J-{daysLeft}
+          {isEarlyAdopter ? `🏅 ${t('bo.trialBanner.founder')} · ` : ''}{t('bo.trialBanner.trialTitle', { days: daysLeft })}
         </Text>
         <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-          {isUrgent
-            ? 'Plus que quelques jours ! Souscris pour ne rien perdre.'
-            : `${daysLeft} jour${daysLeft > 1 ? 's' : ''} restant${daysLeft > 1 ? 's' : ''} sur ton essai`}
+          {isUrgent ? t('bo.trialBanner.urgentSub') : t('bo.trialBanner.daysLeft', { count: daysLeft })}
         </Text>
       </View>
-      <Text style={[styles.cta, { color }]}>Voir →</Text>
+      <Text style={[styles.cta, { color }]}>{t('bo.trialBanner.seeCta')}</Text>
     </TouchableOpacity>
   );
 }

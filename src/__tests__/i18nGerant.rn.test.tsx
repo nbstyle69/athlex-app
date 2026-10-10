@@ -233,7 +233,7 @@ const banner = (p: Partial<React.ComponentProps<typeof TrialBanner>>) => mount(
 const PROGRAMMER = { fr: 'Programmer', en: 'Schedule' };
 const DATE_PH = { fr: 'AAAA-MM-JJ HH:mm', en: 'YYYY-MM-DD HH:mm' };
 async function scheduleReveal(value: string) {
-  const r = await mount(<BOInterCompetitionScreen navigation={nav} />);
+  const r = await mount(<BOInterCompetitionScreen />);
   await pressText(r, PROGRAMMER);
   await typeIn(r, DATE_PH, value);
   await pressText(r, { fr: 'OK', en: 'OK' });
@@ -273,8 +273,8 @@ const VARIANTS: Variant[] = [
   } },
   { name: 'horaires-modifier-autre', run: async () => { const r = await mount(<BOScheduleScreen navigation={nav} />); await press(r, 'schedule-edit-s2'); return r; } },
   // ── Compétition inter-box ──
-  { name: 'inter-wods', run: () => mount(<BOInterCompetitionScreen navigation={nav} />) },
-  { name: 'inter-programmer', run: async () => { const r = await mount(<BOInterCompetitionScreen navigation={nav} />); await pressText(r, PROGRAMMER); return r; } },
+  { name: 'inter-wods', run: () => mount(<BOInterCompetitionScreen />) },
+  { name: 'inter-programmer', run: async () => { const r = await mount(<BOInterCompetitionScreen />); await pressText(r, PROGRAMMER); return r; } },
   { name: 'inter-programmer-format', run: () => scheduleReveal('demain') },
   { name: 'inter-programmer-passe', run: () => scheduleReveal('2020-01-01 10:00') },
   { name: 'inter-poules', run: () => mount(
@@ -322,7 +322,7 @@ function dataTexts(): Set<string> {
   (function walk(v: unknown) {
     if (typeof v === 'string') [v, ...v.split('\n')].forEach((l) => out.add(l.toLowerCase()));
     else if (v && typeof v === 'object') Object.values(v).forEach(walk);
-  })(mockState);
+  })([mockState, { box: 'Box Alpha', program: 'Engine Six', athletes: ['Lea', 'Kim'] }]);
   // Catalogue de mouvements de l'éditeur de WOD : noms de mouvements, jamais traduits.
   const { MOVEMENT_CATALOG } = jest.requireActual('../utils/movementsCatalog');
   for (const m of MOVEMENT_CATALOG as { name: string }[]) out.add(m.name.toLowerCase());
@@ -330,7 +330,9 @@ function dataTexts(): Set<string> {
 }
 /** Libellés identiques dans les deux langues : termes techniques, noms propres, mentions imposées. */
 const SAME_IN_EN = [
-  /^(OK|WOD|WODs|Cardio|Open Gym|Strength|Mobility|Kids|Teens|Functional|Hybrid|Endurance|Box|Coach|Lea|vs|BYE|Tabata|Custom|Notes|Description)$/i,
+  /^(OK|WOD|WODs|Cardio|Open Gym|Strength|Mobility|Kids|Teens|Functional|Hybrid|Endurance|Box|Coach|vs|BYE|Tabata|Custom|Notes|Description|Score|Marketplace|Type|Block|Rounds|Date \*|Description \*|Time cap \(mm:ss\))$/i,
+  /^Scores \(\d+\)$/, /^Round \d+$/, /^👤 /, // « Scores (n) », « Round n », coach précédé de l'icône : identiques en anglais
+  /^(Back Squat 5×5 \+ Metcon|A, B, Metcon…|Fran, Cindy, Helen…|https:\/\/www\.youtube\.com\/watch\?v=…)$/, // exemples de saisie
   /^A\. Back Squat 5×5 @ 80%/, // exemple de séance de l'éditeur de programme, écrit en anglais technique
 ];
 const ACCENT = /[àâäçéèêëîïôöùûüÿœæ«»]/i;

@@ -108,7 +108,8 @@
       "header": "Compétitions Inter-box",
       "titleRequired": "Titre requis",
       "noCompetition": "Aucune compétition. Crée-en une !",
-      "entrants": "{{count}} inscrit(s)",
+      "entrants_one": "{{count}} inscrit(s)",
+      "entrants_other": "{{count}} inscrit(s)",
       "openRegistrations": "Ouvrir inscriptions",
       "launch": "Lancer",
       "close": "Clôturer",
@@ -158,7 +159,12 @@
       "labelTimeCap": "Time cap (min)",
       "placeholderOptional": "Optionnel",
       "labelScoring": "Scoring",
-      "add": "Ajouter"
+      "add": "Ajouter",
+      "scheduleWod": "Programmer",
+      "cancelSchedule": "annuler",
+      "scheduleFormat": "AAAA-MM-JJ HH:mm",
+      "scheduleFormatError": "Format attendu : AAAA-MM-JJ HH:mm",
+      "scheduleInFuture": "La date doit être dans le futur."
     },
     "settings": {
       "title": "Paramètres publication",
@@ -489,7 +495,8 @@
       "labelTimeCap": "TIME CAP (mm:ss)",
       "labelNotes": "NOTES COACH",
       "notesPlaceholder": "Scaling, conseils…",
-      "addWodBtn": "Ajouter le WOD"
+      "addWodBtn": "Ajouter le WOD",
+      "descriptionPlaceholder": "A. Back Squat 5×5 @ 80%\nB. 3 RFT:\n  15 Wall Balls\n  10 T2B"
     },
     "dashboard": {
       "backOffice": "BACK OFFICE",
@@ -522,7 +529,8 @@
       "competitions": "Compétitions",
       "inProgress": "En cours",
       "participants": "Participants",
-      "participantCount": "{{count}} participant(s)",
+      "participantCount_one": "{{count}} participant(s)",
+      "participantCount_other": "{{count}} participant(s)",
       "fmtBracket": "Elimination",
       "fmtLeague": "Ligue",
       "fmtPool": "Poules",
@@ -588,7 +596,18 @@
       "addMember": "Ajouter un membre",
       "searchMember": "Rechercher un membre…",
       "exportDay": "Export jour",
-      "exportWeek": "Export semaine"
+      "exportWeek": "Export semaine",
+      "classTypes": {
+        "wod": "WOD",
+        "weightlifting": "Haltérophilie",
+        "cardio": "Cardio",
+        "openGym": "Open Gym",
+        "strength": "Strength",
+        "mobility": "Mobility",
+        "kids": "Kids",
+        "teens": "Teens",
+        "other": "Autre"
+      }
     },
     "wods": {
       "title": "Calendrier WODs",
@@ -616,7 +635,8 @@
       "warning": "Attention",
       "groupError": "WODs importés mais erreur groupes : {{msg}}",
       "importSuccess": "Import réussi",
-      "importSuccessMsg": "{{count}} WOD(s) importé(s) !",
+      "importSuccessMsg_one": "{{count}} WOD(s) importé(s) !",
+      "importSuccessMsg_other": "{{count}} WOD(s) importé(s) !",
       "importFailed": "Import échoué",
       "editWod": "Modifier le WOD",
       "createWod": "Créer un WOD",
@@ -682,7 +702,8 @@
       "apiUnreachable": "Impossible de contacter l'API.",
       "tournamentFallback": "Tournoi",
       "pendingScores": "Scores en attente",
-      "pendingScoresMsg": "{{count}} score(s) non traité(s). Valide ou rejette-les d'abord.",
+      "pendingScoresMsg_one": "{{count}} score(s) non traité(s). Valide ou rejette-les d'abord.",
+      "pendingScoresMsg_other": "{{count}} score(s) non traité(s). Valide ou rejette-les d'abord.",
       "closeTitle": "Clôturer le tournoi ?",
       "closeMsg": "Les points ELO seront calculés et distribués. Action irréversible.",
       "close": "Clôturer",
@@ -744,7 +765,23 @@
       "subscribedOk": "Abonnement activé",
       "paidTitle": "Offre payante",
       "paidMsg": "Cette programmation ({{price}}) se règle sur le web via paiement sécurisé Stripe. Ouvrir la page de paiement ?",
-      "payOnWeb": "Payer sur le web"
+      "payOnWeb": "Payer sur le web",
+      "disciplineHaltero": "Haltéro",
+      "disciplineEndurance": "Endurance"
+    },
+    "trialBanner": {
+      "activeSub": "Toutes les fonctionnalités sont débloquées",
+      "pastDueTitle": "Paiement échoué",
+      "pastDueSub": "Mets à jour ton moyen de paiement pour continuer",
+      "manageCta": "Gérer →",
+      "expiredSub": "Souscris pour continuer à utiliser le back-office",
+      "subscribeCta": "Souscrire →",
+      "founder": "Fondateur",
+      "trialTitle": "Essai gratuit · J-{{days}}",
+      "urgentSub": "Plus que quelques jours ! Souscris pour ne rien perdre.",
+      "daysLeft_one": "{{count}} jour restant sur ton essai",
+      "daysLeft_other": "{{count}} jours restants sur ton essai",
+      "seeCta": "Voir →"
     }
   },
   "messages": {
@@ -917,7 +954,8 @@
     "reservations": "Réservations",
     "wodsCompleted": "WODs complétés",
     "weekTotal": "{{res}} · {{wods}} cette semaine",
-    "dayStreak": "{{count}} jours d'affilée",
+    "dayStreak_one": "{{count}} jour d'affilée",
+    "dayStreak_other": "{{count}} jours d'affilée",
     "dayDetail": "{{day}} : {{res}} · {{wods}}",
     "dayNamesFull": [
       "Lundi",
@@ -969,7 +1007,7 @@
       }
     },
     "perWeek": "{{done}}/{{max}} sem.",
-    "matches_one": "{{count}} matchs",
+    "matches_one": "{{count}} match",
     "matches_other": "{{count}} matchs",
     "badgeUnlocked": "Badge débloqué !",
     "resultApproved": "Validé",
@@ -977,7 +1015,7 @@
     "resultPending": "En attente",
     "classesCount_one": "{{count}} cours",
     "classesCount_other": "{{count}} cours",
-    "wodsCount_one": "{{count}} WODs",
+    "wodsCount_one": "{{count}} WOD",
     "wodsCount_other": "{{count}} WODs",
     "dayInitials": [
       "L",
@@ -1048,7 +1086,7 @@
       "wins": "Victoires",
       "matches": "Matchs",
       "losses": "Défaites",
-      "winRate": "Win Rate",
+      "winRate": "Taux de victoire",
       "currentStreak": "Série actuelle",
       "badgesEarned": "Badges obtenus",
       "wodsDone": "WODs effectués",
@@ -1118,7 +1156,7 @@
       "joinProgram": "Rejoindre un programme",
       "joinProgramSub": "Entre le code du programme (6 caractères)",
       "progFixed": "S{{week}}/{{total}} · {{days}}j/sem",
-      "progOngoing": "Ongoing · {{days}}j/sem",
+      "progOngoing": "En continu · {{days}}j/sem",
       "progChooseStart": "Choisir ma date de début",
       "usernameLabel": "Pseudo",
       "levelLabel": "Niveau",
@@ -2434,7 +2472,8 @@
     "banned": "Ton accès à cette box a été révoqué.",
     "registrationClosed": "Les inscriptions sont closes.",
     "notConnected": "Non connecté",
-    "notInBox": "Pas dans une box"
+    "notInBox": "Pas dans une box",
+    "openLink": "Impossible d'ouvrir le lien."
   },
   "gymZones": {
     "zone": {

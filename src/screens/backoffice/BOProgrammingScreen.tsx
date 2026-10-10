@@ -12,18 +12,20 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { WEB_URL } from '../../lib/urls';
 import GlassBackground from '../../components/glass/GlassBackground';
-import { boxClosedRefusal } from '../../utils/refusals';
+import { boxClosedRefusal, errorMessage } from '../../utils/refusals';
+import i18n from '../../i18n';
 
 const DISCIPLINES = ['crossfit', 'hyrox', 'hybrid', 'haltero', 'endurance'];
+// Clés i18n des disciplines (valeurs internes inchangées : crossfit → Functional, hyrox → Hybrid).
 export const DISCIPLINE_LABEL: Record<string, string> = {
-  crossfit: 'Functional',
-  hyrox: 'Hybrid',
-  hybrid: 'Hybrid',
-  functional: 'Functional',
-  haltero: 'Haltéro',
-  endurance: 'Endurance',
+  crossfit: 'training.disciplines.functional',
+  hyrox: 'training.disciplines.hybrid',
+  hybrid: 'training.disciplines.hybrid',
+  functional: 'training.disciplines.functional',
+  haltero: 'bo.programming.disciplineHaltero',
+  endurance: 'bo.programming.disciplineEndurance',
 };
-export const disciplineLabel = (d: string) => DISCIPLINE_LABEL[d] ?? d;
+export const disciplineLabel = (d: string) => (DISCIPLINE_LABEL[d] ? i18n.t(DISCIPLINE_LABEL[d]) : d);
 
 interface CatalogueItem {
   id: string;
@@ -116,7 +118,7 @@ export default function BOProgrammingScreen({ navigation }: any) {
       setSubscribedIds((prev) => new Set(prev).add(item.id));
       Alert.alert(t('bo.programming.subscribedOk'), t('bo.programming.revealNote'));
     } catch (e: any) {
-      Alert.alert(t('common.error'), boxClosedRefusal(e?.message, 'offer') ?? e?.message ?? String(e));
+      Alert.alert(t('common.error'), boxClosedRefusal(e?.message, 'offer') ?? await errorMessage(e));
     }
     setSubscribing(null);
   }
