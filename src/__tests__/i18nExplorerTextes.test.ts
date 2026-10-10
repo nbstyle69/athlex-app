@@ -15,14 +15,23 @@ describe('Explorer : français inchangé hors instantané', () => {
     ['explorer.directory.count', { count: 0 }, '0 box référencée'],
     ['explorer.map.count', { count: 1 }, '1 box'],
     ['explorer.programs.count', { count: 0 }, '0 programme disponible'],
-    // Les deux formes françaises restent celles de master (« 1 membres », « 1 jours/semaine »).
-    ['explorer.membersCount', { count: 1 }, '1 membres'],
-    ['explorer.programs.daysPerWeek', { count: 1 }, '1 jours/semaine'],
-    ['explorer.detail.members', { count: 1 }, 'membres'],
+    // « 1 sports » : forme de master gardée, non corrigée dans cette PR.
     ['explorer.detail.sports', { count: 1 }, 'sports'],
     ['partners.codeCopiedMsg', { code: 'ATHLEX10' }, 'Le code "ATHLEX10" a été copié dans le presse-papier.'],
   ] as const)('%s %j', (key, opts, expected) => {
     expect(i18n.t(key, opts)).toBe(expected);
+  });
+  // Singuliers français corrigés (validés par Nab) ; le pluriel ne change pas.
+  it.each([
+    ['explorer.membersCount', '1 membre', '12 membres'],
+    ['explorer.detail.members', 'membre', 'membres'],
+    ['explorer.programs.daysPerWeek', '1 jour/semaine', '12 jours/semaine'],
+  ])('singulier français de %s : count = 1 et count = 12', (key, one, twelve) => {
+    expect(i18n.t(key, { count: 1 })).toBe(one);
+    expect(i18n.t(key, { count: 12 })).toBe(twelve);
+  });
+  it('carte sur le web : « Carte indisponible sur le web »', () => {
+    expect(i18n.t('explorer.map.webUnavailable')).toBe('Carte indisponible sur le web');
   });
   it('valeur inconnue affichée telle quelle', () => {
     expect([sportLabel('padel'), serviceLabel('pool'), partnerCategoryLabel('travel')]).toEqual(['padel', 'pool', 'travel']);

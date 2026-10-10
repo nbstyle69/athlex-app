@@ -2836,7 +2836,7 @@
       "sauna": "Sauna",
       "openGym": "Open Gym"
     },
-    "membersCount_one": "{{count}} membres",
+    "membersCount_one": "{{count}} membre",
     "membersCount_other": "{{count}} membres",
     "directory": {
       "title": "Annuaire des Boxs",
@@ -2846,7 +2846,7 @@
       "empty": "Aucune box trouvée"
     },
     "detail": {
-      "members_one": "membres",
+      "members_one": "membre",
       "members_other": "membres",
       "founded": "fondée",
       "sports_one": "sports",
@@ -2862,7 +2862,7 @@
       "missingHint": "Installez-le pour afficher la carte.",
       "count_one": "{{count}} box",
       "count_other": "{{count}} boxs",
-      "webUnavailable": "Map not available on web"
+      "webUnavailable": "Carte indisponible sur le web"
     },
     "programs": {
       "title": "Programmes des Boxs",
@@ -2870,7 +2870,7 @@
       "count_other": "{{count}} programmes disponibles",
       "empty": "Aucune box ne propose de programme pour le moment",
       "weeks": "{{n}} sem.",
-      "daysPerWeek_one": "{{count}} jours/semaine",
+      "daysPerWeek_one": "{{count}} jour/semaine",
       "daysPerWeek_other": "{{count}} jours/semaine"
     },
     "programmation": {

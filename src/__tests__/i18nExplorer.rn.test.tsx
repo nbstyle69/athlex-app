@@ -233,7 +233,6 @@ function dataTexts(): Set<string> {
 /** Libellés identiques dans les deux langues : termes techniques, noms propres, mots identiques. */
 const SAME_IN_EN = [
   /^(Functional|Hybrid|HIIT|Yoga|MMA|Parking|Sauna|Open Gym|Nutrition|Coaching|Sports|Services|Contact|Violence|Ongoing|Instagram)$/i,
-  /^Map not available on web$/,
   /^Box$/i, /^\d+ box$/, // « Box » garde son nom (glossaire)
 ];
 const ACCENT = /[àâäçéèêëîïôöùûüÿœæ«»]/i;

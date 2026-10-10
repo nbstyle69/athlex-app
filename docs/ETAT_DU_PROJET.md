@@ -220,8 +220,8 @@ anglais : texte français inchangé au caractère près (instantané de 20 état
 `i18nExplorer.rn.test.tsx`), aucun texte français en anglais. 60 clés ; sports, services et catégories de
 partenaire, valeurs enregistrées, traduits au rendu par `src/screens/explorer/explorerLabels.ts` (une valeur
 inconnue s'affiche telle quelle ; crossfit → Functional, hyrox → Hybrid). Pluriels anglais par l'outil du socle
-(« 1 member », « 12 listed boxes », « 1 day/week »), testés à 1 et à 12 ; le français garde ses formes de master,
-dont « 1 membres » et « 1 jours/semaine ». Les 9 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` ;
+(« 1 member », « 12 listed boxes », « 1 day/week »), testés à 1 et à 12 ; en français, singuliers corrigés
+(validés par Nab) : « 1 membre », « 1 jour/semaine », et « Carte indisponible sur le web » sur la variante web. Les 9 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` ;
 « Instagram » devient terme technique. Captures 390 px FR / EN dans `athlex-captures/i18n-explorer` : aucun
 libellé anglais tronqué ni hors écran.
 
