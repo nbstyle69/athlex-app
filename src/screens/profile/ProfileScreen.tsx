@@ -1122,7 +1122,8 @@ export default function ProfileScreen() {
                 <>
                   <TouchableOpacity
                     style={[S.manageSubBtn, { marginTop: 10 }]}
-                    onPress={() => Linking.openURL(`${WEB_URL}/compte`)}
+                    testID="profile-manage-subscription"
+                    onPress={() => navigation.navigate('MyMembership')}
                     activeOpacity={0.8}
                   >
                     <ExternalLink color={theme.ax.accentText} size={16} />

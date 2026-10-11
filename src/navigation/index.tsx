@@ -116,6 +116,9 @@ import InterTeamScreen from '../screens/competition/InterTeamScreen';
 import EloHistoryScreen from '../screens/profile/EloHistoryScreen';
 import LegalScreen from '../screens/documents/LegalScreen';
 import BlockedUsersScreen from '../screens/profile/BlockedUsersScreen';
+import MyMembershipScreen from '../screens/profile/MyMembershipScreen';
+import ChangeMembershipPlanScreen from '../screens/profile/ChangeMembershipPlanScreen';
+import type { MembershipOverview } from '../services/membership';
 import ChangelogScreen from '../screens/home/ChangelogScreen';
 import ProgrammationScreen from '../screens/explorer/ProgrammationScreen';
 import BoxDirectoryScreen from '../screens/explorer/BoxDirectoryScreen';
@@ -173,6 +176,8 @@ export type ProgramDetailParams = {
 
 export type BOProfileStackParamList = {
   ProfileMain: undefined;
+  MyMembership: undefined;
+  ChangeMembershipPlan: { overview: MembershipOverview };
   EloHistory: undefined;
   WodHistory: undefined;
   BlockedUsers: undefined;
@@ -226,7 +231,7 @@ export type MainTabParamList = {
  */
 export type TrainingStackParamList = { TrainingMain: undefined } & Pick<HomeStackParamList,
   | 'WodGenerator' | 'WodResult' | 'WodHistory' | 'OneRMCalculator' | 'Timer' | 'TimerRun' | 'VideoPlayback'
-  | 'Profile' | 'WODDetail' | 'EloHistory' | 'NotificationSettings' | 'BlockedUsers' | 'Legal' | 'ProgramDetail' | 'PublicProfile'>;
+  | 'Profile' | 'MyMembership' | 'ChangeMembershipPlan' | 'WODDetail' | 'EloHistory' | 'NotificationSettings' | 'BlockedUsers' | 'Legal' | 'ProgramDetail' | 'PublicProfile'>;
 
 export type TimerType = 'for-time' | 'amrap' | 'emom' | 'tabata' | 'ywyr' | 'splits' | 'libre';
 export type BlockType = Exclude<TimerType, 'libre' | 'splits'> | 'split';
@@ -282,6 +287,9 @@ export type HomeStackParamList = {
   Timer: undefined;
   Leaderboard: undefined;
   Profile: { editLevel?: boolean; prCategory?: PrCategorySlug } | undefined;
+  /** « Mon abonnement » et le choix d'une formule, depuis le Profil. */
+  MyMembership: undefined;
+  ChangeMembershipPlan: { overview: MembershipOverview };
   EloHistory: undefined;
   WODDetail: { wodId: string; scrollToLeaderboard?: boolean };
   Legal: undefined;
@@ -411,6 +419,8 @@ export type WhiteboardStackParamList = {
   BoxRanking: undefined;
   PublicProfile: { userId: string };
   Profile: HomeStackParamList['Profile'];
+  MyMembership: undefined;
+  ChangeMembershipPlan: { overview: MembershipOverview };
   Messages: undefined;
   Articles: undefined;
   Annonces: undefined;
@@ -519,6 +529,8 @@ function HomeNavigator() {
       <HomeStack.Screen name="DailyTournaments" component={DailyTournamentsScreen} />
       <HomeStack.Screen name="DailyTournamentDetail" component={DailyTournamentDetailScreen} />
       <HomeStack.Screen name="Profile" component={user?.role === 'admin' || user?.role === 'super_admin' ? AdminScreen : ProfileScreen} />
+      <HomeStack.Screen name="MyMembership" component={MyMembershipScreen} />
+      <HomeStack.Screen name="ChangeMembershipPlan" component={ChangeMembershipPlanScreen} />
       <HomeStack.Screen name="CompetitionDetail" component={CompetitionDetailScreen} />
       <HomeStack.Screen name="PublicProfile" component={PublicProfileScreen} />
       <HomeStack.Screen name="EloHistory" component={EloHistoryScreen} />
@@ -547,6 +559,8 @@ function WhiteboardNavigator() {
       <WhiteboardStack.Screen name="BoxRanking"     component={BoxRankingScreen} />
       <WhiteboardStack.Screen name="PublicProfile"  component={PublicProfileScreen} />
       <WhiteboardStack.Screen name="Profile" component={user?.role === 'admin' || user?.role === 'super_admin' ? AdminScreen : ProfileScreen} />
+      <WhiteboardStack.Screen name="MyMembership" component={MyMembershipScreen} />
+      <WhiteboardStack.Screen name="ChangeMembershipPlan" component={ChangeMembershipPlanScreen} />
       <WhiteboardStack.Screen name="Messages"       component={MessagesScreen} />
       <WhiteboardStack.Screen name="Articles"        component={ArticlesScreen} />
       <WhiteboardStack.Screen name="Annonces"        component={AnnoncesScreen} />
@@ -591,6 +605,8 @@ function TrainingNavigator() {
       <TrainingStack.Screen name="TimerRun" component={TimerRunScreen} />
       <TrainingStack.Screen name="VideoPlayback" component={VideoPlaybackScreen} />
       <TrainingStack.Screen name="Profile" component={user?.role === 'admin' || user?.role === 'super_admin' ? AdminScreen : ProfileScreen} />
+      <TrainingStack.Screen name="MyMembership" component={MyMembershipScreen} />
+      <TrainingStack.Screen name="ChangeMembershipPlan" component={ChangeMembershipPlanScreen} />
       <TrainingStack.Screen name="WODDetail" component={WODDetailScreen} />
       <TrainingStack.Screen name="EloHistory" component={EloHistoryScreen} />
       <TrainingStack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
@@ -702,6 +718,8 @@ function BOProfileNavigator() {
   return (
     <BOProfileStack.Navigator screenOptions={shell}>
       <BOProfileStack.Screen name="ProfileMain" component={user?.role === 'admin' || user?.role === 'super_admin' ? AdminScreen : ProfileScreen} />
+      <BOProfileStack.Screen name="MyMembership" component={MyMembershipScreen} />
+      <BOProfileStack.Screen name="ChangeMembershipPlan" component={ChangeMembershipPlanScreen} />
       <BOProfileStack.Screen name="EloHistory" component={EloHistoryScreen} />
       <BOProfileStack.Screen name="WodHistory" component={WodHistoryScreen} />
       <BOProfileStack.Screen name="WODDetail" component={WODDetailScreen} />

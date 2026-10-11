@@ -461,6 +461,9 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
     path.join(SRC, 'screens', 'backoffice', 'BOMembersScreen.tsx'),
     // Annonces de la box : écran neuf, au design ax.
     path.join(SRC, 'screens', 'whiteboard', 'AnnoncesScreen.tsx'),
+    // Mon abonnement (C2) : écrans neufs, au design ax.
+    path.join(SRC, 'screens', 'profile', 'MyMembershipScreen.tsx'),
+    path.join(SRC, 'screens', 'profile', 'ChangeMembershipPlanScreen.tsx'),
   ];
 
   it('R9b : les écrans secondaires de Ma Box consomment ax, rien d’autre dans src/screens/whiteboard', () => {
@@ -569,9 +572,10 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       .map((f) => path.basename(f))
       .sort();
     // BlockedUsers et PublicProfile : adoptants R3c ; eux et ProfileScreen passent aux cartes au lot R12.
-    expect(profile).toEqual(['BlockedUsersScreen.tsx', 'EloHistoryScreen.tsx', 'ProfileScreen.tsx', 'PublicProfileScreen.tsx']);
+    // Mon abonnement (C2) : deux écrans neufs au design ax.
+    expect(profile).toEqual(['BlockedUsersScreen.tsx', 'ChangeMembershipPlanScreen.tsx', 'EloHistoryScreen.tsx', 'MyMembershipScreen.tsx', 'ProfileScreen.tsx', 'PublicProfileScreen.tsx']);
     const withCards = profile.filter((f) => /\bAxCard\b/.test(fs.readFileSync(path.join(SRC, 'screens', 'profile', f), 'utf8')));
-    expect(withCards).toEqual(['BlockedUsersScreen.tsx', 'EloHistoryScreen.tsx', 'ProfileScreen.tsx', 'PublicProfileScreen.tsx']);
+    expect(withCards).toEqual(['BlockedUsersScreen.tsx', 'ChangeMembershipPlanScreen.tsx', 'EloHistoryScreen.tsx', 'MyMembershipScreen.tsx', 'ProfileScreen.tsx', 'PublicProfileScreen.tsx']);
     expect(IMPORTS_AX.test(fs.readFileSync(path.join(SRC, 'utils', 'eloTiers.ts'), 'utf8'))).toBe(false);
   });
 
@@ -586,6 +590,9 @@ describe('isolement : rien d’existant ne consomme src/components/ax', () => {
       path.join('profile', 'EloHistoryScreen.tsx'),
       path.join('profile', 'ProfileScreen.tsx'),
       path.join('profile', 'PublicProfileScreen.tsx'),
+      // Mon abonnement (C2).
+      path.join('profile', 'MyMembershipScreen.tsx'),
+      path.join('profile', 'ChangeMembershipPlanScreen.tsx'),
       path.join('settings', 'NotificationSettingsScreen.tsx'),
     ].sort());
   });
