@@ -2,7 +2,7 @@
 -- get_box_billing renvoie aussi le changement de formule programmé
 -- (scheduled_plan_id, scheduled_change_at)
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : oui, le 11/10/2026 à 21:34 UTC.
 --
 -- Pour que la page Abonnés du Manager (PR AthleX-Manager #425) affiche
 -- « Changement programmé → {formule} le {date} » sur la ligne d'un membre dont
