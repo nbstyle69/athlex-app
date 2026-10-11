@@ -1,6 +1,6 @@
 # État du projet AthleX
 
-Dernière mise à jour : **1er octobre 2026**.
+Dernière mise à jour : **11 octobre 2026**.
 
 Ce fichier est écrit pour être lu en deux minutes, sans être développeur. Il dit ce qui
 marche aujourd'hui, ce qui est en train de se faire, ce qui vient ensuite, et ce qui est
@@ -41,6 +41,9 @@ Une ligne par capacité, avec la date du lot qui l'a fermée.
 | Le classement affiché suit exactement l'ordre du serveur : secondes, sens du tri, scores au time cap, ex aequo signalés | 23 août 2026 |
 | Le vainqueur d'un match de bracket est calculé par une seule règle, partagée avec le reste de l'app | 23 août 2026 |
 | Preuve vidéo disponible sur tous les formats de tournoi | 16 août 2026 |
+| **Logique sportive des tournois** — mergée le 29/09/2026 (dernière PR du chantier : #421 et AthleX-Manager #414). (chantier en dix PR, état des lieux et plan dans [`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).<br>- WOD de tableau préparés à l'avance (migration `20270133000000_bracket_wods_prevus.sql`, appliquée en prod le 26/09/2026 ; même préfixe que la réservation sans formule, voir plus haut) : `tournament_wods.bracket_board` (`winner` = distance à la finale des gagnants, `loser` = tour des perdants depuis 1, `grand_final`, `grand_final_reset`, `third_place`), contrainte et un seul WOD par étape ; un déclencheur pose à la création de chaque match (hors exemption, sans WOD donné) le WOD prévu pour son étape, calculée par la base seule (tirage, tour suivant, finales, grande finale créée à la main) ; la petite finale sans WOD prévu reçoit celui de la finale, le match décisif sans WOD prévu reste sans WOD ; `tournament_bracket_stages(tournoi)` rend les étapes à proposer et leurs libellés FR et EN. Aucun match existant modifié. Manager branché (AthleX-Manager #403).<br>- App, WOD par étape (sans migration, **à diffuser au prochain build**) : `TournamentBracketView` affiche le WOD posé sur les matchs (`wod_id`), aussi dans le tableau des perdants, la grande finale, le match décisif et la petite finale ; l'ancien calcul par étape ne sert qu'aux anciens matchs des gagnants sans WOD, compté sur les participants du tour 1 comme le Manager. `TournamentScreen` dit l'étape d'un WOD avec son tableau (`bracket_board`) : libellés de `tournament_bracket_stages`, recopiés dans les traductions parce que la fonction est réservée au gérant, et tenus égaux à ceux de la migration par `bracketWods.test.ts`. Élimination simple : libellés inchangés.<br>- App, classement de la compétition classique (sans migration, à livrer après la migration `20270116`) : l'app lit le classement calculé par la base (`tournament_classique_standings`, `tournament_classique_wod_ranks`) et n'écrit plus `tournament_participants.score` ; plus de bouton « Recalculer le classement » ; un For Time illisible n'est plus premier, il est ignoré ; un score rejeté sort du classement dès le rejet.<br>- App, ligue (sans migration, à livrer après la migration `20270119`) : l'onglet « Général » d'une ligue se limite à la saison en cours ; nouvel onglet « Saisons précédentes » (FR/EN), affiché dès qu'une saison est terminée, où l'athlète choisit la saison et voit son général final.<br>- PR 1, ELO de match idempotent (migration `20270106`, **appliquée en prod le 24/09/2026 à 12:19 UTC**) : réécrire un match terminé sans changer de vainqueur ne réapplique plus l'ELO ni les compteurs ; changer de vainqueur, de perdant ou remettre le match à jouer défait exactement l'effet enregistré avant d'appliquer le nouveau.<br>- PR 2, fin de saison idempotente (migration `20270107`, **appliquée en prod le 24/09/2026 à 12:20 UTC**) : un second appel à `end_season_and_advance` ne saute plus de saison ; saison attendue facultative (`p_saison_attendue`).<br>- PR 3, divisions figées au moment du WOD (migration `20270108`, **appliquée en prod le 24/09/2026 à 12:20 UTC**) : la division est enregistrée avec le score (`tournament_scores.division_id`, posée par le serveur, réservée au staff) ; les points se classent dans cette division, sur la saison en cours seulement.<br>- Recalcul des points quand la division d'un score change (migration `20270140`, **appliquée en prod le 29/09/2026 à 15:41 UTC**, dump `db-dumps/2026-09-29/athlex-prod-public-internal-20260929T154044Z.dump` ; audit 37/37) : `trg_recalc_division_points_on_scores` réagit aussi à `division_id` (correction du Manager #413) ; le tournoi entier, donc l'ancienne et la nouvelle division, est recalculé. Fonction inchangée.<br>- PR 4, suppression d'un tournoi (migration `20270109`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : l'ELO qu'il a apporté (matchs, WOD de ligue, clôture classique) est retiré exactement, compteurs compris, et ses historiques effacés ; supprimer un match seul rend aussi son effet. **Remplacée par la migration `20270124`** ci-dessous.<br>- Résultats validés conservés et archivage (migration `20270124`, **appliquée en prod le 25/09/2026 à 17:02 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T170104Z.dump`) : un tournoi qui a un résultat validé (clôturé, match terminé ou forfait, score validé, saison close, historique ELO) ne se supprime plus, on l'archive (`archived_at`, `archive_tournament` / `unarchive_tournament`, droits `is_box_admin`) ; un match terminé ne se supprime plus, il se corrige (remise à jouer, choix du vainqueur, forfait : ELO recalculé, inchangé). Les déclencheurs de la PR 4 qui retiraient l'ELO à la suppression sont retirés. Masquer les tournois archivés : lots app et Manager.<br>- PR 10, démarrage à la date et inscriptions pendant le tournoi (migration `20270125`, **appliquée en prod le 25/09/2026 à 17:55 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T175423Z.dump`) : un tournoi « open » démarre à sa date de début à 00:00 heure de Paris, ou au premier WOD ouvert s'il vient avant (cron `tournament_activation_sweep`), jamais s'il est archivé. Option `registrations_open_during_tournament` (fausse par défaut) : classique, inscription permise (WOD fermés le restent) ; tableau, jusqu'au tirage ; ligue, dans la division la plus basse tant qu'elle a de la place, sans débordement. Règle unique `internal.motif_refus_inscription`, refus en clair ; aucune inscription sur un tournoi archivé, staff compris. App et Manager : lots séparés.<br>- Garde du format et du statut (migration `20270126`, **appliquée en prod le 25/09/2026 à 18:39 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T183843Z.dump`) : le format d'un tournoi ne change jamais ; le statut n'avance que vers l'avant (`open` → `active`, jamais de retour, rien après `completed`) ; « completed » seulement par la clôture dédiée `finalize_tournament_elo`, qui se signale par un réglage local à la transaction (`athlex.cloture_tournoi`, à l'identifiant du tournoi). Déclencheur dans `internal`.<br>- PR 5, double élimination complète (migration `20270110`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : un athlète n'est éliminé qu'à sa deuxième défaite, personne n'est omis entre les deux tableaux, exemption si l'effectif est impair ; les deux tableaux avancent au même numéro de tour (le tableau des perdants commence au tour 2). Prouvée de 3 à 9 athlètes.<br>- PR 6, grande finale avec reset (migration `20270111`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : le serveur crée la grande finale quand les deux tableaux sont joués, puis le match décisif si le vainqueur du tableau des perdants la gagne ; le classement suit la dernière finale, et la clôture refuse tant que le match décisif est dû. Une finale créée à la main par le Manager est tolérée. L'app affiche les deux matchs (« Grande finale — match décisif », FR/EN).<br>- PR 7, comparaison en tableau (migration `20270112`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : la règle est au serveur (`tournament_score_cle`, l'ordre de la compétition classique) et une RPC décide les matchs d'un tour (`decide_bracket_round`) : un terminé bat un CAP, entre CAP le plus de reps, puis le tie-break. Le Manager la branchera à la place de sa comparaison dans le navigateur.<br>- PR 8, forfait (migration `20270113`, **appliquée en prod le 24/09/2026 à 12:22 UTC**) : statut `forfeit` sur un match de tableau ; l'absent perd, l'adversaire passe, aucun ELO ne bouge (un match terminé passé en forfait rend le sien). L'app affiche « Forfait » (FR/EN).<br>- PR 9, petite finale (migration `20270114`, **appliquée en prod le 24/09/2026 à 12:22 UTC**) : option `third_place_match` du tournoi ; en élimination simple, la petite finale naît avec la finale entre les perdants des demi-finales, porte l'ELO de match, et départage les 3e et 4e. L'app l'affiche (« Petite finale (3e place) », FR/EN).<br>- PR 10, divisions (migration `20270115`, **appliquée en prod le 24/09/2026 à 12:22 UTC**) : affectation par ELO du haut vers le bas dans la limite de `max_members`, débordement vers la division suivante, la dernière prend le reste ; placement du gérant marqué `manual` et jamais déplacé. Recalcul complet tant que la ligue n'a aucun score validé, ensuite les seuls nouveaux inscrits, depuis la division de leur ELO.<br>- Barème de la compétition classique (migration `20270116`, **appliquée en prod le 24/09/2026 à 18:40 UTC**) : décision du 24/09, la référence est le barème de l'app (table CF Games 100, 97, 95, 93, 91…) ; sur un WOD, le tie-break départage d'abord, puis rang partagé et mêmes points. La base seule le calcule (`tournament_classique_wod_ranks`, `tournament_classique_standings`), la clôture ELO `simple` le suit.<br>- Points de division (migration `20270117`, **appliquée en prod le 24/09/2026 à 18:40 UTC**) : même règle d'égalité (tie-break, puis rang partagé et mêmes points) ; barème des divisions inchangé (100, 97, 94…) ; score lu comme partout (« 8:00 » vaut 480 s), score illisible ignoré.<br>- Barème des divisions (migration `20270118`, **appliquée en prod le 24/09/2026 à 20:20 UTC**) : décision du 24/09, la table de la compétition classique (`tournament_cf_points` : 100, 97, 95, 93…) à la place du barème linéaire ; règle d'égalité inchangée.<br>- Ligue, général par saison (migration `20270119`, **appliquée en prod le 24/09/2026 à 20:21 UTC**) : `tournament_ligue_standings` (tournoi, saison — la saison en cours par défaut) additionne les points de WOD de cette seule saison ; sert à l'onglet « Général » d'une ligue et aux « Saisons précédentes ». | 29 septembre 2026 |
+| **Classement général : nom du podium entier (apparence seule, app seule ; mergée le 10/10/2026 (#502)).** Les cases du podium avaient une hauteur fixe (56 / 76 / 44 px) plus petite que leur contenu (médaille, nom, ELO, marges : 62 px mesurés sur le web) : le nom était écrasé à 6 px sur la 2e marche et à 0 sur la 3e, coupé en bas de sa case, en français comme en anglais. La case suit désormais son contenu, l'écart entre marches (12 et 32 px) devient une marge haute : podium plus haut de 18 px, ordre, couleurs et textes inchangés ; nom sur une ligne, « … » si trop long. Test `podiumClassement.rn.test.tsx` (positions calculées depuis les styles rendus et la ligne native d'Inter, clair / sombre, noms courts / longs), qui échoue avec les hauteurs fixes d'origine, sans `numberOfLines` ou sans écart de marche. Mesure réelle à 390 px avant / après dans `athlex-captures/podium`. | 10 octobre 2026 |
+| **WOD de tournoi : compte à rebours unique (app seule, aucune migration ; mergée le 10/10/2026 (#501)).** `startCountdown` (TournamentWODScreen) remplaçait l'intervalle lancé au montage sans l'arrêter : il tournait sans fin, même écran quitté. Il arrête désormais le précédent avant d'en lancer un ; le démontage arrête le dernier. Aucun changement d'affichage. Test `tournamentWodCountdown.rn.test.tsx` (minuteurs simulés : un intervalle après relance, zéro après démontage), échoue si l'on retire l'un ou l'autre arrêt ; le contournement qui arrêtait ces intervalles à la main est retiré de `i18nCompetition.rn.test.tsx` et de `r8a.rn.test.tsx`, qui se terminent seuls. | 10 octobre 2026 |
 
 ### Musculation et records
 
@@ -51,6 +54,24 @@ Une ligne par capacité, avec la date du lot qui l'a fermée.
 | Journal des séries réellement réalisées : le 1RM se calcule sur les reps faites et les charges utilisées, pas sur le prévu | 20 août 2026 |
 | Fiche athlète dans le back-office : 1RM, séries réalisées, et la provenance de chaque record | 20 août 2026 |
 | Le time cap se décompte à la seconde exacte (côté app et dans les deux éditeurs web) | 19 août 2026 |
+| **Cardio dans « Créer un WOD » — étape 1, compteurs par unité.** — mergée le 08/09/2026 (#271). Recon : le crédit de badges est calculé entièrement côté app (`parseMovementLine` → `logMovementReps` → RPC `increment_movement_stats`), sans trigger ni edge function, et les trois tables de compteurs (`movement_logs`, `user_movement_stats`, `movement_rep_counts`) portaient un seul entier par mouvement : un « 20 cal Row » s'ajoutait aux reps, un « 500m Run » valait 1. La migration `20261204_movement_stats_unit.sql` ajoute `unit` (`reps` par défaut, `m`, `cal`) aux trois tables, étend PK / UNIQUE avec l'unité, regroupe la vue `movement_totals` par unité et ajoute une surcharge `increment_movement_stats(…, p_unit)` — l'ancienne signature reste en wrapper vers `reps`, l'app en place ne change pas de comportement. Les badges `mv_row/bike/ski_*` existants sont requalifiés en calories (clés et libellés conservés) ; `20261204_badges_cardio_paliers.sql` ajoute les paliers en mètres (`mv_row_m_*`, `mv_bike_m_*`, `mv_ski_m_*`), les compléments en calories et le nouveau préfixe `mv_run_*` (42 195 m = « Marathon »). Compteurs cardio à zéro en prod : aucune donnée à migrer. Suite : PR app (parseurs avec unité et choix ♂/♀, bloc `~` cardio, badges par unité, méta-badges sur `reps` seulement), puis PR TheHub (catalogue `unit`, bloc Cardio, charge libre des lignes force). | 8 septembre 2026 |
+| **Cardio — étape 2, l'app lit et crédite par unité.** — mergée le 08/09/2026 (#272, #273). `parseMovementLine` porte désormais l'unité : `20 cal Row` → 20 cal, `500 m Run` / `400m Course` → des mètres (plus « 1 rep »), une ligne sans unité reste des reps à l'identique. Les splits `20/15 cal Row`, `21/15 Pull-ups` et `(43/30 kg)` choisissent la valeur ♀ quand le profil est féminin (`user.gender` passé par tous les écrans qui créditent ; le back-office, qui ne lit pas le genre d'un autre athlète, crédite en ♂). Nouveau bloc cardio `src/utils/cardioBlock.ts` (`Row ~ 2 × 500 m ~ 250 W ~ repos 2:00`, cible watts OU allure, RPE), crédité `séries × qté` sans multiplication par les rounds, affiché réécrit dans le détail de WOD / programme. `logMovementReps` écrit `unit` dans `movement_logs`, appelle la surcharge `increment_movement_stats(…, p_unit)` et cumule les badges par `(mouvement, unité)` : `mv_row/bike/ski` = calories, `mv_row_m/bike_m/ski_m/run` = mètres, une rep de Row ne donne rien ; `mv_polyvalent_*` et `mv_total_*` ne lisent que `reps`. Lignes force : segment libre `charge <texte>` (`RPE 8`, `RM du jour`) sérialisé, relu, affiché, et jamais pris pour un mouvement metcon. Dépend de la migration étape 1 (colonne `unit`, surcharge RPC) — à merger après elle. Suite : PR TheHub. | 8 septembre 2026 |
+| **Cardio — étape 2 bis, défaut d'unité et genre côté owner.** — mergée le 08/09/2026 (#273). Une ligne sans unité sur un mouvement cardio prend l'unité par défaut du catalogue (`MOVEMENT_CATALOG.unit`, résolu via la clé `normalizeMovement` : `20 Row` / `20 rameur` → 20 cal, `800 Run` / `400 Course` → 800 / 400 m, `500m Ski` = `500 m Ski`) ; tout autre mouvement reste en reps. Même règle et mêmes cas de test côté TheHub (#322). La validation d'un score au back-office (`BOTournamentScreen`) lit le genre de l'athlète via `get_athlete_private_profile` et crédite la valeur ♀ ou ♂ du split ; genre absent → ♂ avec mention explicite dans l'alerte. | 8 septembre 2026 |
+| **Catalogue haltéro élargi + libellés Assault Bike.** — mergée le 08/09/2026 (#274). Douze mouvements ajoutés au `MOVEMENT_CATALOG` en `unit: 'reps'` (Snatch Balance, Snatch High Pull, Clean Pull, Tall Clean, Power Jerk, Split Jerk, Back Rack Split Jerk, Strict Press, DB Strict Press, Bench Press, Zercher Squat, Wall Walk), avec clés canoniques et alias dans `normalizeMovement` (`bench`, `shoulder press`, `WW`, `jerk`, `snatch pull`…). Les variantes d'une famille existante créditent les compteurs et badges de la famille (`mv_clean`, `mv_press`, `mv_squat`, `mv_wallwalk`) ; cinq nouvelles clés (`bench_press`, `snatch_balance`, `snatch_high_pull`, `clean_pull`, `db_strict_press`) reçoivent les paliers du schéma existant (100/500/1000/5000 barre, 100/500/1000 DB), aucun palier nouveau. Migration `20261205_badges_haltero_catalogue.sql` : renomme les badges mètres du bike en « Assault Bike 25K / Centurion / Légende » (mise à jour sur place, pas de nouveau seed) et ajoute les 19 badges ci-dessus. Miroir catalogue + synonymes d'import PDF côté TheHub. | 8 septembre 2026 |
+| **Strict Press, clé propre.** — mergée le 08/09/2026 (#275). `strict press` / `shoulder press` / `military press` ne créditent plus la famille `press` (Push Press / Push Jerk / S2OH) mais une clé `strict_press` avec ses badges `mv_strict_press_100/500/1000/5000` (schéma barre, migration `20261206_badges_strict_press.sql`). Wall Walk reste sa propre clé (`mv_wallwalk`) ; Tall Clean → Clean, Jerks → famille `press` (où vit `push jerk`), Zercher → Squat, validés.<br><br> --- | 8 septembre 2026 |
+| **Écran Musculation — PR M2 (`athlex-app`, aucune migration).** — mergée le 16/09/2026 (#293). Troisième discipline du générateur (haltère, bleu `#3B82F6`) : Séance / Après ma classe, objectif Prise de muscle · Force · Tonification (Force grisée en Tronc, Après ma classe et Sans matériel), cibles ordonnées d'après le genre du profil (Full body en tête sans genre, lien « modifier »), durées filtrées par `availableDurations` (jamais de `budget_short` proposé), matériel Sans matériel · Box · Salle persisté dans `user_generation_settings.last_params.muscu_equipment`, exclusions réutilisées, niveau déduit de `profiles.level` (`muscuLevelFor` : Scaled → Débutant, Inter / RX → Intermédiaire, RX+ et au-delà → Avancé), ligne 1RM (`personal_records`, clés `weightlifting_<Label>`) ou renvoi au calculateur. Service `generateForUser` sur une union discriminée `ScreenParams` → `generateMuscu` (1RM, poids du corps `personal_records._bodyweight_kg` — champ de profil temporaire, éditable dans Profil → Modifier —, classe du jour). Page résultat : `MuscuSessionCard` (une ligne par exercice, séries × reps, charge kg ou « RPE 7 (≈ 52 % du 1RM) », repos, note dépliable), durée estimée sans plafond, minuteur libre (compte à rebours de la durée estimée, **pas de mode Split**), repos + « Série suivante », saisie reps / kg réalisés → tonnage = Σ charge × reps en `score_type = 'weight'`, badges crédités depuis les reps réalisées via `logMovementReps` (verrou `strengthJournalSeparation`, jamais `strength_set_logs`). Quatre retouches moteur sans régénération des samples : bonus ≤ 1 tronc hors cible Tronc et sans Mountain Climber / Vacuum / Russian Twist en Prise de muscle / Force (isolation d'un muscle secondaire d'abord) ; piste box au niveau intermédiaire pour M5 ; `weekly_cap` → isolation d'un autre muscle au lieu de raccourcir ; finishers « Marche » retirés (respiratoires sur rameur / vélo seulement). Samples inchangés. **Appliquée en prod : sans objet** (aucune migration). | 16 septembre 2026 |
+| **Repli Musculation avant M1 en prod — PR M2b (`athlex-app`, aucune migration).** — mergée le 16/09/2026 (#294). Tant que la migration `20261214` n'est pas appliquée, `movement_catalog` en prod n'a pas les colonnes muscu : `loadEngineData()` acceptait ce catalogue (Functional / Hybrid valide) et l'écran Musculation tournait sur un catalogue sans aucun exercice muscu. `withSnapshotMuscu()` greffe alors la part Musculation du snapshot embarqué sur le catalogue distant (métadonnées muscu sur les mouvements partagés, exercices muscu seuls ajoutés), source tracée `supabase+snapshot_muscu` ; les squelettes suivaient déjà cette logique dans `bankFromRows`. Devient sans effet une fois M1 appliquée. **Appliquée en prod : sans objet** (aucune migration). | 16 septembre 2026 |
+| **Générateur Musculation V1 — PR M1 (`athlex-app`, migrations `20261214` + `20261215`).** — mergée le 16/09/2026 (#289). Troisième discipline du moteur (`packages/wod-engine/src/muscu.ts`, `generateMuscu`, RNG à graine, aucun réseau) : 13 cibles × 3 objectifs (hypertrophie / force / endurance) = 39 squelettes `strength_session` embarqués et exportés dans `wod_skeletons` (`discipline = 'musculation'`, repli hors ligne comme le metcon). Le catalogue reçoit les 178 exercices du CSV Musculation v1 (173 + 5 variantes faciles sans matériel : Incline / Wall Push-Ups, Bird Dog, Reverse Lunge sans charge, Squat Hold ; Glute Bridge ouvert à l'hypertrophie) en colonnes sur `movement_catalog` (familles `machine` / `cable`, muscles, `level_min`, `load_mode`, `rm_reference` / `rm_factor`, cadences, plages par objectif, poids `none` / `box` / `gym`) : 18 exercices déjà présents (13 annoncés + 5 alignés par nom, écart signalé) gardent leur ligne, 160 sont créés avec poids metcon à 0, les 14 legacy inactifs le restent. Charges : 1RM du calculateur (`profiles.personal_records`, passés en paramètre) × facteur × % de l'objectif arrondi à 2,5 kg, sinon RPE 7 / 8 ; lest des tractions / dips en Force = 10 % de `bodyweight_kg` arrondi à 2,5 kg, sinon « lesté léger » ; Après ma classe exclut les muscles du WOD du jour et interdit Force ; débutant sans unilatéral ni lesté, 4 exercices max ; jamais deux exercices consécutifs sur le même muscle ; règles M1–M10 de relecture : `priority` (1-5) et `movement_group` au catalogue, exercice principal par priorité, un seul exercice par geste, ≤ 2 lourds en Force (3e compound rétrogradé 70-75 % × 6-8), Pull / Dos avec tirage vertical + horizontal, ≤ 1 poids du corps hors tronc en box / salle, tractions remplacées en Tonification, remplissage sans repos ni 5 × 20, Tronc sans Force ni compound jambes (15 · 20 · 30'), libellés Prise de muscle / Force / Tonification et « RPE 7 (≈ 52 % du 1RM) », Hip Thrust obligatoire en Fessiers + ischios ; compteurs M1–M10 à zéro en conformité ; durée ±10 % (trop long : slots optionnels → séries → squelette ; trop court : reps → une série de plus (≤ 5) → exercice optionnel sur un muscle secondaire de la cible → tempo 3-1-1 compté dans la durée → repos → 5e exercice optionnel en débutant, `budget_short` tracé sur 0,17 % des tirages, tous débutant 60') ; signature `musculation \| <squelette> \| <exercices>` sur les 10 dernières. Grammaire `strength` étendue (`s`, `m`, `/ jambe`, `/ bras`, `/ côté`) rétro-compatible. Tests §7 : 1 152 combinaisons × 200 graines (230 400 séances) sans échec, 1RM connu / inconnu, fixture Back Squat + Thrusters. **Migrations `20261214` + `20261215` appliquées en prod : oui** (16/09/2026 19:41 UTC, après « 1.0.54 installé », dump `20260916T194119Z` dans `db-dumps` : `movement_catalog` 269 lignes dont 179 `discipline_muscu`, `wod_skeletons` 15 / 10 / 39 / 6, générateur Functional, Hybrid et Musculation vérifié par Nab dans l'app 1.0.54). **Écart révélé par `seed-sync.test.ts` le 16/09/2026 : le seed `20261215` (c2f88b1) est antérieur aux règles M1–M10 (91b3854 : `groups`, `pair`, listes `ids`) et à M2, la prod lisait donc 39 squelettes musculation jamais testés** ; migration `20261220` (UPDATE des 39 squelettes = snapshot, `MUSCU_BANK_VERSION` 2, **appliquée en prod : oui**, 16/09/2026 22:41 UTC). Aucun écran : M2 attend la relecture de `packages/wod-engine/samples-musculation.md`. Dépendances tranchées pour M2 : badges Musculation crédités depuis les séries réalisées saisies par l'athlète (`logMovementReps`, reps × séries par mouvement, verrou `strengthJournalSeparation`, jamais depuis `strength_set_logs`) ; mode Split du minuteur vidéo (`SeqBlock.type = 'split'`, chrono global, « Série terminée » → split + compte à rebours `rest_s`, exercice suivant quand ses séries sont faites, liste des splits en fin de séance, réutilisable pour splitter un metcon par round ; `wod_json` porte déjà `sets` et `rest_s`) ; `bodyweight_kg`, genre et niveau en champs de profil. | 16 septembre 2026 |
+| **Saisie des charges en musculation, PR 2 « Whiteboard » (app seule, aucune migration).** — mergée le 29/09/2026 (#406).<br>- Séance de musculation du Whiteboard : la grille se recharge depuis le serveur (`strength_sessions` et `strength_set_logs`, migration `20270138` déjà en prod), sinon depuis la prescription ; brouillon enregistré 0,8 s après la dernière frappe et bouton « Enregistrer et continuer plus tard » ; état « En cours · n / N séries » et « Enregistré il y a … ».<br>- Hors connexion : copie locale renvoyée au retour du réseau, jamais au-dessus d'une version serveur plus récente ni d'une séance validée.<br>- Plus de champ POIDS : « Charge max (score) · calculée » depuis les séries valides. « Valider la séance » appelle `validate_strength_session` (séries, charge max, score et 1RM, calculés avec `estimateOneRepMax`, en une transaction) ; compteurs, streak, crédit et notifications seulement si `premiere_validation`. Séance validée : charges enregistrées et « Modifier mes charges ».<br>- Saisie décimale iOS : virgule et point acceptés (102,5 → 102.5).<br>- Séances générées (`MuscuSessionCard`) : PR 3, après le merge de celle-ci (elle réutilise son service). | 29 septembre 2026 |
+| **Saisie des charges en musculation, PR 3 « Séances générées » (app seule, aucune migration).** — mergée le 29/09/2026 (#408).<br>- Carte Séance du générateur (`MuscuSessionCard`, `WodResultScreen`) : brouillon côté serveur (`strength_sessions` / `strength_set_logs`, source `generated`, clé = WOD enregistré dans `generated_wods`) 0,8 s après la dernière frappe, bouton « Enregistrer et continuer plus tard » (`AxButton` contour) et « En cours · n / N séries » ; copie locale hors connexion, jamais au-dessus d'une version serveur plus récente ; reprise sur un autre appareil depuis le générateur.<br>- Validation par `validate_strength_session` ; le score reste le tonnage (`generated_wod_scores`) ; compteur, rappel et crédit `movement_logs` seulement si `premiere_validation`. « Modifier mon score » repasse par la RPC et ne remplace que le tonnage. | 29 septembre 2026 |
+| **Saisie des charges en musculation, PR 4 « Ma Box et mes charges » (app seule, aucune migration).** — mergée le 29/09/2026 (#413).<br>- Carte d'un WOD de musculation dans Ma Box (`WhiteboardScreen`) : « En cours · n / N séries » (`AxStatusDot` warning) et lien « Reprendre ma saisie » quand un brouillon existe, « Validée » (ton actif) quand la séance est validée, rien sinon. États de toute la semaine lus en une lecture groupée (`fetchStrengthSummaries`, une requête par table pour la semaine, jamais une par carte).<br>- Séance validée (`WODDetailScreen`) : bloc « Mes charges » (`AxCard`) série par série, écart à la prescription (« 6 au lieu de 7 », en `accentText`), tonnage et charge max, puis « Modifier mes charges » qui rouvre la saisie pré-remplie et repasse par `validate_strength_session` sans recomptage. | 29 septembre 2026 |
+| **Correctif musculation : même mouvement dans deux blocs (app seule, aucune migration).** — mergée le 30/09/2026 (#446). Retours de Nab sur le build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).<br>- Cause, prouvée en prod (lecture seule) et sur la base rejouée : chaque bloc numérotait ses séries à partir de 1, la clé (athlète, source, mouvement, série) se dédoublait — brouillon refusé en `21000` (~45 fois le 30/09), validation en `SERIES_EN_DOUBLE`. Le refus était affiché « Hors connexion », et la séance écrite avant l'échec des séries passait au tour suivant pour une version « plus récente d'un autre appareil » : la saisie était remplacée par une grille vide.<br>- Numéro de stockage continu par mouvement sur toute la séance (`numberSetsByMovement` : 1, 2 puis 3, 4), affichage du rang dans le bloc (« Série 1, 2 » dans chaque bloc, `setRanks`, grille et « Mes charges ») ; plafond client de 50 séries par mouvement (CHECK `set_index ≤ 50`, commenté) ; une grille encore numérotée par bloc (copie locale de la 1.0.58 comprise) est renumérotée avant écriture (brouillon, validation, ancien journal `logStrengthSets`) ; séances générées : `performedToDrafts` numéroté pareil, `draftsToPerformed` par bloc et rang.<br>- Un refus de la base n'est jamais classé « hors connexion » (`isNetworkError` : seule une coupure rend `code ''`) : brouillon `refused` avec son code, « Enregistrement refusé par le serveur… » (FR / EN), copie locale gardée, pas de boucle de nouvel essai ; même tri dans la validation des deux écrans. La copie locale reprend l'`updated_at` de la séance dès qu'elle est écrite : plus d'écrasement par sa propre écriture.<br>- Tests : faux clients fidèles à Postgres (`21000` sur doublon, `SERIES_EN_DOUBLE`, CHECK 1..50, codes d'erreur, coupure en `code ''`) ; scénarios sur les deux séances réelles (brouillon, rechargement, validation, modification, copie 1.0.58, refus, coupure) et un exercice présent deux fois dans une séance générée ; 6 mutations tuées (numérotation par bloc ×2, sans reprise d'`updated_at`, tout « hors connexion », n° stocké affiché ×2). Protocole manuel : [`audits/protocole-muscu-meme-mouvement-deux-blocs.md`](./audits/protocole-muscu-meme-mouvement-deux-blocs.md). Les deux brouillons de test du 30/09 restent en l'état (décision de Nab : ressaisie sur une nouvelle séance). | 30 septembre 2026 |
+| **R1 (retour 1.0.61) : 1RM exact du libellé pour les blocs de musculation (app seule ; mergée le 04/10/2026 (#477), à vérifier par Nab).** Un bloc `%1RM` (texte des WOD, grille pré-remplie) prend d'abord le record de son libellé de la page Records (`weightlifting_<Libellé>` et anciennes clés, rapprochement casse/tirets/espaces/pluriel comme la gymnastique) : Bench Press et Hip Thrust ont enfin leur kg, Strict Press n'utilise plus le max de Push Press. Sans record exact, repli sur la famille du générateur (Squat Clean → clean). Générateur inchangé (`parsePersonalRecords`, `resolveLoad`). Charges toujours arrondies à 2,5 kg (91 % de 100 → ≈ 90 kg). Tests `oneRepMaxExactLabel.test.ts`, `oneRepMaxHook.rn.test.tsx`. | 4 octobre 2026 |
+| **Crédit R2b : « N% Mouvement » ne crédite plus N reps (app seule, aucune migration ; mergée le 04/10/2026 (#478), à vérifier par Nab).** Une ligne de WOD qui commence par un nombre suivi de « % » (`40% Ring Muscle-ups`, `40 % RMU`, `35%du max Toes-to-Bar`) n'est plus une quantité de reps : `parseMovementLine` rend `null`, la ligne garde sa place dans le tour (cycles d'EMOM) sans rien créditer ; AMRAP en reps et Max Reps avec une telle ligne ne créditent rien (répartition du score inconnue). Serveur non concerné (le crédit tournois lit `movement_lines`, structuré). Prod, lecture seule : 34 `box_wods` en %, 4 `movement_logs` faux sur 2 WOD pour 1 athlète (30 `ring_muscle_up`, 76 `bar_muscle_up`), non retirés, décision à Nab. Tests dans `movementParser.test.ts`, prouvés par 8 mutations ; rapport dans `athlex-captures/retours-1.0.61/R2b`. | 4 octobre 2026 |
+| **Gymnastique G4 : fenêtre « Nouveau record ? » (app seule ; mergée le 04/10/2026 (#475), à vérifier par Nab).** Spec Figma 501:812 / 501:899. Après une validation réussie (WOD du Whiteboard et séance générée), les séries sont relues du serveur ; pour chacun des 11 mouvements de gymnastique dont une série sans charge dépasse un record existant, une ligne « <mouvement> · N reps · avant R » (meilleure série du mouvement). Sans record, série égale ou en dessous, mouvement chargé ou gymnastique lestée : rien. « Enregistrer N reps comme record » (« Enregistrer ces records » à plusieurs lignes) appelle `confirm_gym_record(id de la série du serveur, libellé de la page Records)` ligne par ligne ; une erreur (`RECORD_NON_PROUVE`, `RECORD_NON_AMELIORE`, `MOUVEMENT_NON_GYMNIQUE`, réseau) reste sur sa ligne, un nouvel appui ne renvoie que les lignes non enregistrées ; après un succès, records relus, et la fenêtre se ferme quand tout est enregistré. « Pas maintenant » ferme sans rien écrire. Le partage (Whiteboard) et « Score enregistré » (séance générée) suivent la fermeture. Séance générée au poids du corps seule : n'est plus arrêtée par « Aucune série chargée » (reste de G3), seule une séance sans série valide l'est. `GymRecordSheet` (feuille en bas, voile, zone sûre, liste défilable), i18n FR/EN. Tests `gymRecordSheet.rn.test.tsx`, `gymRecordResult.rn.test.tsx` ; captures banc web local 390 px sombre/clair FR/EN dans `athlex-captures/gymnastique-G4`. | 4 octobre 2026 |
+| **Gymnastique G3 : grille en reps seules, « Ajouter une série », totaux, séance validée (app seule ; mergée le 04/10/2026 (#474), à vérifier par Nab).** Spec Figma 501:514 / 501:648 (A) et 501:604 / 501:738 (C), base G2 en prod (20270145). Passent en reps seules : une ligne « % du max », une ligne d'un des 11 mouvements de gymnastique sans charge en kg, un exercice au poids du corps en reps d'une séance générée ; toute autre ligne garde reps × kg, charge exigée même sans charge prescrite (« Push Press — 2 × 5 »), gymnastique lestée comprise. Reps seules : pas de champ kg, « Ajouter une série » (série vide, `is_added`, sans reps prévues, retirable par la corbeille ; une série prescrite ne se retire pas), « Total <mouvement> », séparateur, « Reps totales (score) · calculées » ; la pastille « En cours · n / N » compte les séries ajoutées. Ligne chargée (kg, %1RM résolu ou non, charge notée), ligne en secondes ou en mètres et grille d'avant G2 : champ kg comme avant. Envoi : séries sans charge au brouillon et à la validation (`load_required` faux), `is_added` ; `logStrengthSets` inchangé. Séance sans aucune série chargée : même crédit de compteurs qu'une séance chargée (score envoyé, série de jours), une seule fois, sans rep de badge (ni `logMovementReps`, ni `movement_logs`) ni ligne de score (Whiteboard et séance générée). Écran C : séries en reps, « ajoutée », totaux, « Reps totales », pastille « Validée le … · Score N reps » (séance sans charge), « Modifier mes séries » et son texte ; séance mixte : tonnage et charge max gardés, reps totales en plus. Fenêtre de saisie : zone sûre en bas. i18n FR/EN, dont « S × P % du max » (EN « S × P% of max »). Tests `gymRepsGrid.rn.test.tsx` et blocs G3 de `strengthSession.test.ts`, `muscuSession.test.ts` ; captures banc web local 390 px sombre/clair FR/EN dans `athlex-captures/gymnastique-G3`. | 4 octobre 2026 |
+| **Gymnastique G2 : validation sans charge, reps totales, séries ajoutées, record confirmé (migration 20270145 ; **appliquée en prod : oui**, le 04/10/2026 à 17:48 UTC, dump `db-dumps/2026-10-04/athlex-prod-public-internal-20261004T170427Z.dump` (sha256 `23c056b6…56a9`, aller-retour vérifié) ; données inchangées avant/après (séances, séries, records, scores, movement_logs), définitions aux empreintes du rejeu, test réel G1 à G9 sur données fictives annulé sans trace, audit grants-prod 39/39 ; mergée le 04/10/2026 (#473)).** `validate_strength_session` garde et valide les séries sans charge quand aucune charge n'était prescrite (une séance de gymnastique seule se valide ; une série à charge prescrite, ou marquée `load_required` par l'app pour une ligne en kg ou en %1RM même non résolu, reste exigée avec sa charge) ; `strength_sessions.total_reps` (reps des séries sans charge, calculées par le serveur seul, refusées en écriture directe) ; `statut_coherent` : validée = charge max ou reps totales ; aucune ligne `wod_scores` sans série chargée, séance chargée ou mixte inchangée (score en charge) ; jamais de `movement_logs`. `strength_set_logs.is_added` (série ajoutée, sans reps prévues), renvoyé en dernière colonne par `list_athlete_strength_sets` (pour GM2). `confirm_gym_record(p_set_log_id, p_label)` : record de gymnastique prouvé par une série sans charge d'une séance validée de l'appelant, valeur = reps de la série, jamais abaissé, clé `gymnastics_<Libellé>` + `_date` + `_src` ; erreurs `RECORD_NON_PROUVE`, `RECORD_NON_AMELIORE`, `MOUVEMENT_NON_GYMNIQUE` ; authenticated seul. Rapprochement des noms en SQL (`internal.gym_pr_label`, miroir de `gymPrLabel`). App : `is_added: false` et `load_required` (`StrengthSetDraft.loadRequired`, posé par `buildStrengthGrid`) envoyés dans `p_sets`, aucun changement d'écran. Test `gymnastique_validation_sans_charge.sql` (G1 à G10 et retour arrière exact aux empreintes de prod, 32 mutations tuées, plus 5 côté app) ; retour arrière `supabase/retours/20270145000000_gymnastique_validation_sans_charge.sql`. | 4 octobre 2026 |
+| **Gymnastique G1 : % du max → reps (app seule, aucune migration ; mergée le 04/10/2026 (#472) ; à vérifier sur téléphone au prochain build).** Spec Figma 501:513, arbitrage G0 du 04/10. Sur un mouvement de gymnastique (les 11 libellés de `GYM_PR_MOVEMENTS`, rapprochés sans casse, tirets, espaces ni pluriel, plus les abréviations sans ambiguïté T2B/TTB, C2B/CTB, RMU, BMU, Strict HSPU, Wall Facing HSPU ; ni « HSPU » ni « MU » seuls, ni « Strict Pull-Ups »), un % est un % du record (max unbroken) : reps = max(1, arrondi(record × P / 100)), rien sans record. Grille (WOD strength seulement) : nouvelles formes « Mvt — S × P % du max » et « Mvt — S × P % » (reps pré-remplies depuis le record, vides sans record), ligne « P % de ton max (R reps) → N reps » sous le mouvement, ou « P % de ton max · aucun record enregistré » et le lien « Renseigner mon record › » (ferme la saisie en gardant le brouillon, ouvre Profil → PR, Gymnastique dépliée ; écran Profil ajouté à la pile Ma Box). « Mvt — S × R @ P % » : R gagne, rien de calculé. Texte des WOD (tous types : cartes Ma Box, détail, programme) : « (≈ N reps) » après le % quand la ligne porte exactement un mouvement reconnu, un seul %, aucune charge, aucun mouvement à 1RM, et pas de reps écrites ; sinon rien. Aucun effet sur score, crédits ni badges ; le champ kg reste affiché (G3). Tests `gymPercentReps.test.ts` (18 tests, 11 mutations tuées) ; captures banc web local 390 px sombre/clair FR/EN dans `athlex-captures/gymnastique-G1`. Relecture (bis) : records relus à chaque retour sur le détail du WOD (`useMyRecords().reload` au focus) ; un record arrivé recalcule les reps prévues des lignes « % du max » et ne remplit que les reps encore vides (`applyGymRecordsToGrid`) ; une grille saisie n'est plus remise à la prescription après l'enregistrement du brouillon (défaut existant, rendu visible par le rechargement) ; `logStrengthSets` envoie `prescribed_reps` NULL au lieu de 0, comme le brouillon et la validation. Tests `gymRecordFocus.rn.test.tsx`, `strengthSession.test.ts` (CHECK `prescribed_reps` simulé), 5 mutations tuées. Contrat de format partagé avec le Manager : `src/__tests__/fixtures/strength-line-contract.json` (5 cas, identique octet pour octet à AthleX-Manager `lib/__fixtures__/strength-line-contract.json`, sha256 `52b03e77…7025`), vérifié par `strengthLineContract.test.ts` (lecture et écriture). | 4 octobre 2026 |
 
 ### Semaines types et programmation
 
@@ -64,6 +85,12 @@ Une ligne par capacité, avec la date du lot qui l'a fermée.
 | Un seul éditeur de WOD pour deux contextes (Whiteboard et programmation) | 18 août 2026 |
 | Libellés « Functional » / « Hybrid » partout où le gérant voyait « CrossFit » / « Hyrox » comme catégorie ou filtre (catalogue de programmation mobile `BOProgrammingScreen` et web `programming/page.tsx`, annuaire des box `BoxDirectory*`) — libellés seuls, les valeurs internes `crossfit`/`hyrox`/`functional`/`hybrid` et les noms de box sont inchangés ; test `disciplineLabels.test.ts` dans chaque dépôt | 5 septembre 2026 |
 | Marques côté utilisateur (règle transverse) : piste et groupe de programmation « Functional / Hybrid » (clé interne `functional`), squelettes de séance et fonction `generate-box-week` nettoyés, test `packages/wod-engine/__tests__/brands.test.ts` qui échoue si « CrossFit » ou « Hyrox » sort d’un `title`, d’une `description`, d’un libellé de piste, d’un nom de groupe ou d’un `samples*.md` | 16 septembre 2026 |
+| **Importateur PDF de programmation par profil de source (TheHub).** — mergée le 07/09/2026 (#270, AthleX-Manager #319). Le socle base est posé par la migration `20261203_box_wods_source_pdf.sql` : trois colonnes nullables sur `box_wods` (`source_pdf_url`, `source_page`, `source_profile`) et un bucket privé `wod-sources` (PDF rangé par box, lecture et écriture réservées au staff de la box par `is_box_staff`). Aucun écran ne les lit encore ; l'app n'est pas concernée. Le cœur d'analyse (profil « K+ Perf » puis profil générique par IA), la preview et l'insertion en lot arrivent dans une PR TheHub séparée, à merger après celle-ci. | 7 septembre 2026 |
+| **Désabonnement d'une programmation Marketplace (`athlex-app`, migration `20261210`).** — mergée le 10/09/2026 (#280). Aucun désabonnement n'existait. RPC `unsubscribe_programming(p_subscription_id, p_remove_future)` SECURITY DEFINER, gardée par `is_box_owner_admin` de la box abonnée : gratuit → statut `canceled` immédiat (ignoré par `materialize_box_programming`), `color` conservée pour un réabonnement (`subscribe_free_programming` réactive la même ligne) ; payant → demande mémorisée (`cancel_requested_at`, `remove_future_on_cancel`), conclue par le backend au webhook Stripe de fin de période. Les cartes reçues futures ne partent qu'à partir du lundi suivant (Paris) et seulement si demandé ; le passé et la semaine en cours restent toujours (scores, ELO). Suite `desabonnement-programmation` (31 assertions, JWT réels, garde validée par mutation inverse). **Migration appliquée en prod** (10/09/2026, dump avant). Le Manager (#329) suit : lien « Se désabonner », confirmation, `cancel_at_period_end`. | 10 septembre 2026 |
+| **Marketplace ↔ Whiteboard — PR 1/2 (`athlex-app`, migration `20261209`).** — mergée le 10/09/2026 (#278, AthleX-Manager #328). Constat de recon : l'offre publiée « ATHX BLOC 2 Building » (RAW) comptait 0 WOD, le contenu était dans une semaine type privée, et le cron du dimanche visait toujours la semaine 2 — le Whiteboard de NBS2 restait vide. Le serveur porte maintenant : une visibilité explicite `box_wods.audience` (`all` / `groups` / `none`, défaut `all` pour ne pas imposer de build store au back-office mobile ; triggers de cohérence avec `wod_group_access` ; la branche programme de `wod_access_allowed` est conservée) ; un ancrage d'abonnement déterministe (lundi suivant au gratuit, recalé par la pose manuelle) ; une pose automatique gardée à 18 h Paris et journalisée (`box_programming_runs`, `empty_week` quand l'offre est vide) ; les cartes reçues d'une autre box verrouillées en contenu mais déplaçables et supprimables ; le remplissage d'une offre depuis le Whiteboard ou une semaine type (`sync_wod_to_offer`, `copy_week_to_offer`, provenance `origin_box_wod_id`, propagation des retouches maison sans toucher aux snapshots des abonnés) ; `publish_programming` refuse une offre sans objectif, sans public ou avec une semaine vide. Suite `marketplace-whiteboard` (71 assertions, JWT réels). **Migration appliquée en prod** (constaté le 29/09/2026 en lecture seule, date d'application inconnue : le fichier n'a pas d'en-tête « Appliquée en prod ») : présents en base `box_wods.audience`, `box_programming_subscriptions.color`, `box_programming_wods.origin_box_wod_id`, la table `box_programming_runs` et sa policy `box_programming_runs_select`, les quatre déclencheurs `trg_box_wods_audience_*`, les fonctions `box_wods_audience_from_group_access`, `box_wods_audience_from_program_access`, `box_wods_audience_relative_session`, `assert_offer_editor`, `sync_wod_to_offer`, `unsync_wod_from_offer`, et les index `idx_box_wods_audience`, `uniq_programming_wods_origin`, `idx_box_programming_runs_box`. Elle recalait l'ancrage NBS2 au 14 septembre, voulu. Le choix explicite d'audience côté back-office mobile ira dans le prochain build store. PR 2 (`AthleX-Manager`) suit. | 10 septembre 2026 |
+| **Programmation automatique AthleX Fitness — PR J1 (`athlex-app`, migrations `20261216` + `20261217`).** — mergée le 16/09/2026 (#290). Une box `auto_programming` reçoit chaque semaine ISO suivante, par piste (`auto_programming_tracks` ⊆ {`functional`, `musculation`}), ses séances posées dans `box_wods` (`source = 'auto'`, `audience = 'all'`, `publish_at` dimanche 18:00 Paris). Piste Functional / Hybrid (clé interne `functional`, seed figé sur l’ancienne clé) : `generateSession` (`packages/wod-engine/src/session.ts`) assemble six séances lundi → samedi autour de 60 min depuis six squelettes de séance (`S1_snatch` … `S6_long`, exportés dans `wod_skeletons` en `discipline = 'session'`) : Block A haltéro / force (%1RM, tempo), Block C tiré par `generateBlocC` avec le pattern lourd du jour interdit (jamais relâché), squelette du jour précédent évité, plafonds Gym hebdo (150 tractions / 80 HSPU) avec remplacement tracé `weekly_gym_cap`. Piste Musculation : `generateMuscuWeek` réutilise `generateMuscu` (M1) sur cinq jours, objectif par cycle de six semaines ISO (Prise de muscle → Tonification → Force, Tronc jamais en Force), bloc B par squelette (≠ A, pattern ≠ lourd de A, unique dans la semaine), 26 finishers anti-répétition semaine + 4 semaines, progressions propres aux 7 skills S3, compteurs P1–P3 et M1–M10 à zéro, ≤ 16 séries hebdo par muscle, `leaderboard_enabled = false`. Orchestration pure dans `programming.ts` (`runWeekGeneration`) : seed = `box + piste + année + semaine + regen_counter`, idempotence sur `box_auto_programming_runs` (`box_id, track, iso_year, iso_week`), régénération qui garde les jours édités (`box_wods.edited_at`, trigger) ou scorés. Edge Function `generate-box-week` (bundle ESM commité, `CRON_SECRET` fail-closed, catalogue et banque lus en base avec snapshot en repli), **cron désactivé par défaut** (`docs/RUNBOOK_CRONS.md`). Flags de box réservés admin / backend par trigger (message « Accès refusé : programmation automatique réservée à un administrateur »), journal en lecture propriétaire seule. Tests §8 : `session.test.ts`, `programming.test.ts`, `edge-bundle.test.ts`, suite serveur `scripts/test-auto-programming.mjs` (27 contrôles, mutation inverse). **Migrations `20261216` + `20261217` appliquées en prod : oui** (16/09/2026 19:41 UTC, dump `20260916T194119Z` dans `db-dumps` ; `boxes.auto_programming` à `false` partout, `box_auto_programming_runs` vide, 887 `box_wods` toutes `manual`). **Premier appel prod (16/09/2026 20:26 UTC, AthleX Fitness, semaine 39) : piste musculation `done` (5 cartes), piste functional en `TypeError`** : le seed `20261217` datait d'avant les progressions A / B des skills S3 (a265d33), la prod lisait des options skill sans `progression`. Correctif : migration `20261219` (UPDATE des 6 squelettes `session` = snapshot, version 2, **appliquée en prod : oui**, 16/09/2026 22:41 UTC), `withSkillProgression` (repli sur le snapshot, erreur nommant le skill sinon), test `seed-sync.test.ts` qui rejoue les seeds SQL et les compare au snapshot pour séance, musculation, metcon et plafonds. **Révélation par box** (migration `20261221`, **appliquée en prod : oui**, 17/09/2026, fonction redéployée dans la foulée) : `boxes.auto_programming_reveal_mode` (`weekly` / `daily`), `_dow` (0 = dimanche) et `_time` (heure locale Paris) remplacent le dimanche 18:00 codé en dur ; `weekly` pose toutes les cartes au jour `dow` précédant le lundi ciblé (le lundi même si `dow = 1`), `daily` pose chaque carte le jour de sa séance ; défauts identiques au comportement J1, repli `42703` si les colonnes manquent. **Trois pistes** (migration `20261222`, **appliquée en prod : oui**, 17/09/2026 15:08 UTC, dump `20260917T150804Z` dans `db-dumps/2026-09-17` ; contraintes à `{functional, hybrid, musculation}`, 13 squelettes de séance avec leur piste, groupe renommé « Functional », aucune box modifiée). Banque Hybrid partagée élargie au passage, ce qui profite aussi au générateur athlète : `engine_negative_split` (30, 35 et 40 minutes, consigne d'accélération sur la seconde moitié) et durées de `engine_continuous` portées à 35 et 40. Sans cela le jeudi de la piste n'avait qu'une combinaison possible, et aucune durée n'existait entre 30 et 45 minutes : J1 avait livré deux pistes dont une nommée « Functional / Hybrid » ; Functional et Hybrid sont deux disciplines distinctes du générateur athlète, elles le deviennent dans la programmation de box, activables séparément (`{functional, hybrid, musculation}`). La piste Hybrid a ses sept squelettes de semaine (`H1_intervals` … `H6_simulation`, plus `H6_simulation_full` une semaine sur huit, seule séance à 75') ; son bloc de travail est tiré dans les dix squelettes `discipline = 'hybrid'` déjà en base, restreints par jour ; ses blocs A (stations `Every X'`, intervalles de course en rotation sur quatre semaines, enchaînement chronométré) vivent dans les squelettes. Règles testées sur 52 semaines : aucun haltéro technique ni gymnique avancé, bandes légère et moyenne sauf le sled du vendredi, ≥ 12 km de course ou d'erg par semaine, jeudi facile, plafond de 60 sauts, un mouvement fonctionnel par semaine, classement sur le seul bloc `wod`. Aucune box n'est migrée : AthleX Fitness garde `{functional, musculation}`. Ni Manager ni écran : J2 / J3 attendent la relecture de `packages/wod-engine/samples-programmation.md`. **Pistes en onglets sur le Whiteboard** (migration `20261223`, **appliquée en prod : oui**, 17/09/2026 17:38 UTC, dump `20260917T173726Z` dans `db-dumps/2026-09-17` ; `UPDATE 52`, les 890 lignes `manual` inchangées, même empreinte md5 avant et après, fonction redéployée en version 5) : les trois programmations coexistent, visibles de tous, et l'athlète bascule par onglets **Functional · Hybrid · Musculation · Box · Tout**, posés sous les raccourcis et au-dessus du sélecteur de jours — la piste est un filtre global de la partie basse de l'écran, choisie avant le jour. `box_wods.track` (nullable, CHECK `{functional, hybrid, musculation}`, index partiel `(box_id, scheduled_date, track)` sur les seules lignes auto) porte la piste ; `null` n'est pas un défaut en attente mais la valeur des WODs saisis par un coach, qui forment l'onglet « Box ». `generate-box-week` l'écrit sur chaque ligne posée, avec repli `42703` / `PGRST204` à l'insertion — le repli est sur l'écriture, une lecture `select('*')` ne pouvant pas lever `42703`. Rétroactif par `auto_run_id` → `box_auto_programming_runs.track`, garde `source = 'auto'` : aucune ligne `manual` touchée. Onglets restreints aux pistes qui ont du contenu sur la semaine (requête à deux colonnes sur les sept jours, le chargement des cartes reste au jour) ; aucune piste → pas de barre et écran d'avant. Défaut Functional, choix mémorisé par box (`@athlex:whiteboardTrack:<box_id>`), repli Functional puis « Tout » si l'onglet mémorisé est vide. Puce identique à celle du générateur de WOD, teinte d'accent prise dans `HUES` et non dans les constantes d'écran : `#F97316` tombe à 2,1:1 sur carte claire, les deux thèmes sont mesurés au ratio WCAG. Nettoyage préalable : les 42 cartes auto de la semaine 38 sur AthleX Fitness (générées avec les trois pistes avant les onglets, aucune éditée ni scorée) supprimées le 17/09/2026 par les conditions de la régénération, runs repassées en `skipped` pour que la semaine reste regénérable ; semaines 39 et 40 intactes. Lot 2 (Manager) à suivre. **Déploiement de la fonction : `node scripts/deploy-edge.mjs generate-box-week`, jamais `supabase functions deploy` en direct** — la CLI collecte les sources depuis l'entrée, suit `@deno-types` et l'`import type` vers `packages/wod-engine/src/index.ts`, puis ouvre les spécificateurs de ce fichier sans ajouter `.ts` ; `src/bank` étant un répertoire, elle échoue en `EISDIR` avant même de téléverser le bundle. Le script déploie depuis une copie privée de ces deux lignes type-only, effacées à l'exécution : la fonction déployée est identique au dépôt, qui garde son type-check. `--check` refuse un import de **valeur** hors du dossier de la fonction (vraie dépendance, que le script ne peut pas retirer sans la casser) ; `src/__tests__/deployEdge.test.ts` le rejoue sur la source et sur deux mutations. Procédure dans `docs/RUNBOOK_CRONS.md`. **Lot A — corrections du générateur après tests réels** (migrations `20261225`, `20261226`, `20261227`, **appliquées en prod le 18/09/2026** entre 20:26:48 et 20:26:49 UTC, dump `db-dumps/2026-09-18/athlex-prod-public-20260918T202555Z.dump` avant, d'après l'en-tête de chaque fichier). A3 : la corde à sauter ne sortait jamais en Functional (0 sur 3 000 tirages) — cause : le plafond générique de volume, 100 reps en RX, le même pour un thruster et un double under ; correctif `FAMILY_CAP_FACTOR` (jump_rope × 4), plafond de classe qui REMPLACE le générique au lieu de s'y minimiser (les wall balls passent à 150 comme la table le disait), trois squelettes de plus ouverts à la corde, poids 10 (le haut de l'échelle 0–10 des poids de tirage, bornée par contrainte — 13 avait été retenu avant de le savoir), plafond de classe 200 reps ; 4,8 % d'apparition, arbitrage volume contre fréquence assumé. A1 : 55 exercices sans matériel (dos, biceps, trapèzes, avant-bras, coiffe étaient à zéro), colonne `priority_bodyweight` pour un ordre propre au mode, trois rangs de priorité en concurrence (puis dans tous les modes : `bench_press` sortait dans 100 % des séances Push), pénalité de répétition. A2 : anti-répétition hebdomadaire sur la piste box, relâchement tracé qui nomme l'exercice, sur les deux chemins de tirage. Tests réels G1–G5 : le format demandé était relâché en silence (budget de palier 200 quand il est explicite, relâchement affiché, table de faisabilité générée depuis la banque qui grise les combinaisons infaisables et retire EMOM / Chipper de Hybrid), titre qui dit sa troncature, « Durée » et non « Cap » sur les formats bornés, cadence par bande de charge (+5,9 % de travail estimé en Functional). Six squelettes jamais tirés et trois contrôles qui recopient le moteur : issue #313. **Suite du lot A — relecture de l'échantillon et tests réels** (migration `20261228`, **appliquée en prod le 18/09/2026 à 20:26:49 UTC** avec les trois du lot A, même dump, d'après l'en-tête du fichier). S1 : une séance Push ne contient aucun tirage, une séance Pull aucune poussée — filtre sur le geste (`push_h`/`push_v` contre `pull_h`/`pull_v`) et non sur le muscle ; « Écartés à l'élastique » devient « Pull-apart à l'élastique » (tirage) ; conséquence assumée : les quatre isolations d'arrière d'épaule du catalogue (`face_pull`, `rear_delt_fly`, `bent_over_lateral_raise`, `rear_delt_machine`), toutes en `pull_h`, ne sortent plus en Push — sauf exception nominative (`REAR_DELT_PUSH_IDS`) : admises en rôle isolation uniquement, jamais en principal ni en secondaire, l'accessoire d'équilibre de fin de séance Push. S2 : les 55 ajouts sans matériel sont des replis en Box et en Salle (priorité 4 ou 5, `priority_bodyweight` inchangée) ; la priorité ne jouait que sur le slot principal, ils entraient par les slots accessoires au poids de tirage — désormais un poids du corps de priorité 4–5 ne sort en Box / Salle qu'après toute l'échelle de relâchement. S3 : M5 se compte mollets compris et la place unique est réservée quand un muscle de la cible n'a rien de chargé (mollets en box) — sur la piste box, 52 semaines sans un jour à deux poids du corps hors tronc. S4 : libellé « charge élastique ». E1 : en Force, un mouvement en bande lourde fait 3 à 5 reps par station sur EMOM, intervalles et stations, quelle que soit la cadence (7 front squats lourds dans la minute ne sortent plus) ; les formats relâchés (rounds for time, death by) ne sont pas des stations et gardent leur logique. E2 : le relâchement de durée est annoncé comme celui du format (« Demandé 20 min, généré 24 min »). Mémoire des tirages Musculation : lot B. **Lot B (1/3) — écran du générateur** (aucune migration). Mémoire des tirages Musculation branchée pour de bon : le moteur acceptait `recent_exercise_ids` (pénalité ×4 en « Sans matériel ») mais l'écran ne les renseignait jamais — désormais les trois derniers tirages sont retenus sous `@athlex:muscuRecent:<user_id>` (purgée à la déconnexion), relus à chaque génération, re-tirage compris. B1 : titre sur deux lignes centrées, la discipline toujours nommée (Functional compris). B2 : encart « Classe du jour » en padding 16, hauteur libre, corps de texte des cartes résultat. B3 : matériel exclu affiché en français (`utils/wod/equipmentLabels.ts`, valeur interne inchangée, table confrontée au catalogue par test), champ de recherche sous `KeyboardAvoidingView`. Suivent : navigation et minuteur (B4–B6), Whiteboard et PR (B7–B11). **Lot B (2/3) — navigation et minuteur** (aucune migration). B4 : chaque onglet garde sa pile — cause : les cinq `Tab.Screen` portaient un `tabPress` qui naviguait vers leur racine à chaque appui ; retiré, la barre conserve nativement les piles, et un **double appui** sur l'onglet actif ramène à sa racine (`navigation/tabPress.ts`, fonction pure testée). B5 : mode **Split** du minuteur (`SeqBlock.type = 'split'`) — chrono global, « Série terminée » enregistre un split et lance le repos `rest_s` de l'exercice courant, exercice suivant quand ses séries sont faites, liste des splits en fin de séance ; défaut d'une séance Musculation, un metcon se splitte par round (« Round terminé »). B6 : brouillon local `@athlex:wodDraft:<user_id>` écrit dès la génération, tenu à jour avec les charges saisies et le score, remplacé au tirage suivant, effacé à l'enregistrement, purgé à la déconnexion ; « Reprendre la séance » sur l'écran du générateur rouvre la page résultat avec la même séance et son état. **Lot B (3/3) — Whiteboard et PR** (aucune migration ; moteur : `gym_records`). B7 : « Ajouter au Whiteboard » demande une date (libre, passé et futur, jour même par défaut) et pose **une ligne `box_wods` par exercice** (Musculation : `block_name = strength`, `sort_order`, `wod_json` restreint à l'exercice, description rendue) ou par bloc (Functional / Hybrid) — chaque ligne se valide et se score depuis le Whiteboard. B8 : section **Gymnastique** du calculateur 1RM, même table que les barres, records en reps du profil, paliers de 10 % en 10 % jusqu'à 150 %, zones volume facile / volume de travail / série limite / record / au-delà. B9 : le bloc « Gymnastique — ce que je maîtrise » n'était consommé par aucun générateur (`gym_declaration` de `user_generation_settings` n'avait que le composant pour lecteur) — supprimé avec `wodPersonalization.ts` et `athleteLevels.ts`, colonne conservée. B10 : les records gym du profil pilotent le générateur (`GenerateParams.gym_records`, id catalogue → reps) — record absent ou à 0 ⇒ variante accessible par la chaîne de substitution du catalogue (Ring MU → Bar MU → Chest-to-Bar → Pull-ups → élastique) ; jamais plus de **50 % du record dans une même série ou un même round** (`GYM_RECORD_FRACTION` : record 30 → 15 par round, 12 → 6), le total du WOD n'étant borné que par les plafonds de volume existants — un plafond par WOD à 60 % avait été mesuré trop serré (aucune traction stricte sous 50 de record) ; avec le plafond par série, un record de 30 donne des tractions strictes dans 65 tirages sur 400. Sans record gym, rien ne change (signatures identiques). B11 : records en temps saisis en `mm:ss`, stockés en minutes décimales comme avant. **Durée = indicateur, pas obligation** : tolérance du moteur de ±10 % à **±20 %** sur les trois disciplines (`TOLERANCE`, `SESSION_TOLERANCE`, `MUSCU_TOLERANCE` ; 15 min → 12 à 18, 30 min → 24 à 36), table de faisabilité regénérée : 85 → 87 combinaisons servies sur 112 (regagnées : chipper descendant 15 min Mixed, intervalles de course Hybrid 10 min Run) ; le For time en Force à 8 min reste infaisable, un 21-15-9 en bande lourde dépassant 9,6 min. « Demandé X min, généré Y min » ne s'affiche qu'au-delà de la fourchette, l'estimation réelle reste sur la page résultat. **`generate-box-week` accepte `tracks`** (PR séparée, empilée sur le lot A) : tableau parmi `functional \| hybrid \| musculation`, intersecté avec les pistes actives de la box, valable aussi en régénération ; absent = toutes les pistes actives, inchangé ; une ligne de journal par piste traitée. Prérequis du lot 2 Manager (un appel par piste cochée). Redéploiement par `node scripts/deploy-edge.mjs generate-box-week` après merge. | 16 septembre 2026 |
+| **Pilotage de la programmation automatique — PR J2 ([`AthleX-Manager` #338](https://github.com/nbstyle69/AthleX-Manager/pull/338), aucune migration ici).** — mergée le 17/09/2026 (AthleX-Manager #338). Les trois écrans qui manquaient à J1, côté Manager : ni le moteur, ni la fonction edge, ni le cron ne sont touchés. `/admin/boxes` porte l'interrupteur par box (pistes Functional / Hybrid et Musculation) et le réglage de révélation de `20261221`, via `PATCH /api/admin/boxes/[id]/auto-programming` — rôle `admin` / `super_admin` revérifié, écriture en service role, refus du trigger `boxes_auto_programming_guard` rendu tel quel plutôt que contourné. Le Whiteboard d'une box flaguée gagne un bandeau (« générée le samedi 8h · visible par les athlètes *selon le réglage* ») avec **Générer maintenant** (corps `{ box_id }`, désactivé quand chaque piste active a déjà sa semaine suivante) et **Régénérer la semaine** (confirmation disant que les jours scorés ou édités sont conservés, puis un appel par piste, agrégé) ; les deux passent par `POST /api/box/[id]/auto-programming/run`, garde owner/coach explicite et `CRON_SECRET` côté serveur, jamais depuis le client. Badges `AUTO` / `AUTO · modifiée` (`box_wods.source`, `edited_at`) dans le Manager seul — le trigger marquant toute main humaine, un simple déplacement de jour suffit à afficher « modifiée », ce qui est la promesse voulue : ce jour sera conservé. `/admin/auto-programming` journalise en lecture seule les runs des 8 dernières semaines (`cardinality(wod_ids)` pour le nombre de lignes). Écart E12 fermé : familles `machine` et `cable` ajoutées à `CATALOG_FAMILIES` et à la validation de la route — les 55 exercices de musculation du catalogue étaient inéditables — et colonnes muscu affichées en lecture seule. `createServiceClient` n'a plus de repli sur la clé anon : un client « service » portant la clé anon faisait passer une variable d'environnement absente pour un refus RLS. Le Manager garde le repli `42703` de `20261221`, désormais appliquée en prod (17/09/2026) : la route enregistre interrupteur et pistes, et le réglage de révélation est pris en compte. Le repli reste en place pour une base antérieure à la migration ; le défaut montré (dimanche 18:00) est le comportement en vigueur. `CRON_SECRET` est présente dans les variables Vercel de production du Manager (constaté le 29/09/2026 par `vercel env ls production`, créée vers le 17/09) : les deux boutons peuvent appeler la fonction ; sans elle, ils rendraient un 500 explicite. Tests : 749 jest verts, `tsc` et `check:elo-writes` verts. **Validation navigateur et captures non faites** : la pile jetable exige `psql`, absent de la machine de développement. **Appliquée en prod : sans objet** (aucune migration dans ce lot). | 17 septembre 2026 |
+| **Programmation : une seule pastille « Hybrid » (comportement, app seule, aucune migration ; mergée le 10/10/2026 (#506)).** Le Marketplace du gérant affichait deux pastilles « Hybrid » (valeurs enregistrées 'hyrox' et 'hybrid'). Une seule pastille désormais, qui retient les programmes des deux valeurs (`matchesDiscipline`) ; aucune valeur en base ne change. Test `programmationHybrid.rn.test.tsx` (une seule pastille, programmes 'hyrox' et 'hybrid' retenus, « Functional » inchangé), qui échoue sans le regroupement ou avec l'ancienne pastille 'hyrox'. | 10 octobre 2026 |
 
 ### Adhérents, argent et programmes
 
@@ -84,6 +111,14 @@ Une ligne par capacité, avec la date du lot qui l'a fermée.
 | Socle serveur de l'offre Essai : un visiteur sans compte réserve un cours, l'essai est gratuit parce que la base refuse un essai payant, un cours complet est refusé au lieu de faire espérer | 24 août 2026 |
 | Tunnel Essai complet : le visiteur réserve depuis la page publique de la box, la place se décompte réellement, le doublon est refusé, le prospect arrive dans Prospects et en liste de présence — constaté en production le 30 août | 30 août 2026 |
 | Récapitulatif hebdomadaire du gérant : un essai ne compte plus comme une présence d'adhérent, et les essais réservés ont leur propre ligne | 30 août 2026 |
+| **Offre Essai (tunnel d'acquisition de prospects).** — mergée le 30/08/2026 (#221, #223, AthleX-Manager #301). Le socle serveur est en production depuis le 24 août, et il y est constaté sur la vraie base : le type d'offre « Essai » est accepté à 0 €, refusé à 30 € ; une réservation sans adhérent et sans prospect est refusée ; la table des prospects est fermée à la clé publique, en lecture comme en écriture.<br><br> **Les écrans sont écrits et livrés côté web** (le 4e type d'offre « Essai », le bouton et le calendrier public sur la page de la box, les prospects sans compte dans Prospects, la mention « Essai » en liste de présence, l'e-mail de confirmation, et l'essai qui ne compte plus comme un adhérent actif dans les statistiques).<br><br> **Le chemin heureux est constaté en production le 30 août**, au clic et sur la vraie base : offre Essai créée sur Crossfit NBS2, réservation anonyme sur le cours du dimanche 10:00, le créneau passe de 15 à 14 places restantes, la réservation est écrite en `confirmed` (jamais en liste d'attente), le même e-mail sur le même cours est refusé par son message nommé, le prospect apparaît dans Prospects et en liste de présence, et le pointage « présent » le fait passer à « venu ». Cette ligne monte donc dans « En production ».<br><br> **Le récapitulatif hebdomadaire est corrigé et appliqué à la production le 30 août**, avec la mesure qui distingue : sur Crossfit NBS2, la seule présence pointée de la semaine est un essai, et le récapitulatif affiche désormais 0 présence d'adhérent et 2 essais réservés — avant l'application, cette même semaine aurait affiché 1 présence d'adhérent qui n'existe pas. Le pipeline de relance historique refuse explicitement les essais au lieu de tenir par accident de schéma.<br><br> **Ce qui bloque :** rien.<br><br> **Ce qui n'est pas constaté, et je ne le compte pas :** le refus d'un cours complet en production (le provoquer demanderait de remplir un vrai cours ou d'en créer un factice sur le planning), les plafonds anti-abus par IP et par e-mail sur la vraie base, et la réception effective de l'e-mail de confirmation — seule la phrase affichée à l'écran est constatée.<br><br> **Une limite nommée plutôt que supposée :** le plafond par adresse e-mail est tenu par la base (donc prouvable). Le plafond par adresse Internet du visiteur sera tenu par le site web : la base n'a pas accès à cette information, et une limite supposée n'est pas une limite. | 30 août 2026 |
+| **Bloc « Abonnement AthleX » du profil gérant (#241), mergée le 05/09/2026 (#241).** Chemin : barre gérant → onglet **Profil** → onglet interne **Compte** (4e) → carte après « Mes amis », avant « Mes entraînements ». Il n'apparaissait que sous `isOwnerAdmin && currentBox`, et la lecture de `owner_subscriptions` exigeait aussi une box courante : un gérant sans box courante ne le voyait pas. Désormais visible pour tout gérant (`boxRole === 'owner'` ou `role === 'box_owner'`) ; avec abonnement (box ou Multi actif) : formule + statut + « Gérer » ; sans : « Aucun abonnement actif » + « S'abonner ». Les deux états ouvrent `BOSubscription`. Test `profileAthlexSubscriptionBlock.test.ts` (position, condition, deux états ; mutation inverse : le `&& currentBox` rétabli est rouge). Non fait : un compte `admin`/`super_admin` voit `AdminScreen` à la place du Profil (`navigation/index.tsx`), donc jamais ce bloc — dit, non changé. | 5 septembre 2026 |
+| **Séances de programme athlète relatives (semaine × jour) — lot a/c.** — mergée le 09/09/2026 (#277, AthleX-Manager #324). Une séance de programme payant (« Prog Muscu — 13 semaines · 5j/sem ») n'a plus de date : elle a une position (`program_week`, `program_day`) sur `box_wods`, exclusive de `scheduled_date` par contrainte de base. Le Whiteboard de la box lit toujours par date : une séance de programme n'y entre jamais, et un WOD de box n'est jamais requalifié en séance de programme (13 tests `programSchedule`). L'athlète abonné la reçoit le jour où elle tombe pour lui, à partir de SA date de début, en plus des blocs de la box. **Migration `20261207` appliquée en prod** (constaté le 11/10/2026 en lecture seule : colonnes `program_week` / `program_day` de `box_wods` et contrainte d’exclusivité `box_wods_ancrage_check` présentes, dans sa forme redéfinie par `20261208`) ; la page « Séances » du Manager et l'import PDF qui écrivent ce format arrivent dans deux PR séparées côté `AthleX-Manager`. **Rien n'est constaté à l'écran** : la ligne ne monte qu'après validation de Nab sur la preview et une séance réelle vue dans l'app. | 9 septembre 2026 |
+| **Archivage réversible d'une box — PR archivage ([`athlex-app` #311](https://github.com/nbstyle69/athlex-app/pull/311), migration `20261224`).** — mergée le 17/09/2026 (#311). `boxes.archived_at` / `archived_by` : une box archivée sort des annuaires, des recherches et des listes, ses membres perdent l'accès, et le cron ne la génère plus — sans qu'aucune ligne ne soit supprimée, `archived_at = NULL` la réveillant telle quelle. Le masquage passe par une policy **RESTRICTIVE** et non par un filtre ajouté aux policies existantes : `boxes` en porte sept, toutes PERMISSIVE, dont deux `USING (true)` ; les permissives se combinent par OU, donc un filtre ajouté à l'une d'elles n'aurait rien refusé et il aurait fallu réécrire les sept. Une restrictive se combine par ET : une ligne suffit, les sept ne bougent pas, et le masquage couvre l'app mobile — annuaire, fiche de box, sélecteur de box du classement, qui n'avait aucun filtre — **sans livrer de nouvelle version**. `FOR ALL` et pas `FOR SELECT` : une restriction en lecture ne borne pas les policies d'écriture, et une box archivée ne doit pas rester modifiable par son gérant. `service_role` contourne la RLS, donc le back-office continue de la voir, ce qui est nécessaire pour la rouvrir. Les deux fonctions SECURITY DEFINER qui listent des box (`get_my_admin_boxes()`, `get_user_box_ids()`) échappent à toute policy et filtrent donc dans leur corps. `listEnabledBoxes` de `generate-box-week` tourne aussi en service role : elle ajoute `archived_at is null`, avec repli si la colonne manque. Contrôle `scripts/test-box-archivage.mjs` : 18 assertions sous de vraies identités (gérant, membre, anonyme, service role), dont la **mutation inverse** — policy retirée, le membre revoit la box archivée ; migration rejouée, il ne la voit plus — et la réactivation, qui rend tout à l'identique. Les écrans sont côté Manager ([#341](https://github.com/nbstyle69/AthleX-Manager/pull/341)) : archiver, réactiver, filtre « Archivées », et suppression définitive d'une box vide dont le décompte porte sur les 35 tables en cascade. **Appliquée en prod : oui** (17/09/2026 20:44 UTC, dump `athlex-prod-public-20260917T204118Z.dump` dans `db-dumps/2026-09-17` ; après application : colonnes et index en place, policy RESTRICTIVE active sur `anon, authenticated`, les deux fonctions filtrées, **aucune box archivée** — 4 box, `archived_at` nul partout, et le gérant d'AthleX Fitness voit toujours sa box). | 17 septembre 2026 |
+| **Impayés : blocage des réservations après le délai avant suspension** — mergée le 25/09/2026 (#368). (décision produit du 25/09).<br>- Migration `20270121` (**appliquée en prod le 25/09/2026**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T142741Z.dump`) : un membre `past_due` au-delà du délai de sa box (`boxes.dunning_grace_days`, 0 à 90 jours, réglé dans le Manager, défaut 7 — la formule est celle du drapeau « suspended » de `get_box_dunning`) ne peut plus créer de réservation ni s'inscrire en liste d'attente (même table, statut `waiting`) ; refus `MEMBERSHIP_PAST_DUE`, que l'app affiche déjà. Le staff qui inscrit le membre passe (auth.uid() ≠ member_id) ; les réservations déjà prises restent ; le retour à `active` rétablit tout ; `consume_credit_on_reservation` ne tient plus un suspendu pour abonné valide (il bascule sur ses crédits). Écrans app à adapter listés dans la PR (lot app séparé). | 25 septembre 2026 |
+| **Arrêt des abonnements par le gérant** — mergée le 27/09/2026 (dernière PR du chantier : #393 et AthleX-Manager #407). (chantier en plusieurs lots ; diagnostic côté Manager).<br>- S1, journal des arrêts (migration `20270120`, **appliquée en prod le 24/09/2026 à 21:28 UTC**, dump `db-dumps/2026-09-24/athlex-prod-public-internal-20260924T212721Z.dump` ; audit relancé aussitôt : **29/29**) : table `box_member_subscription_actions` en ajout seul — un trigger (fonction dans `internal`) refuse réécriture, suppression et TRUNCATE, sauf `notified_at` renseigné une seule fois ; sans clé étrangère, pour que l'historique survive à la suppression d'un membre ou d'une box sans la bloquer, l'intégrité étant vérifiée à l'insertion ; une souscription Stripe ne s'arrête qu'une fois ; lecture par le gérant de la box, écriture par la clé serveur seulement. `notified_at` reste le fait « e-mail parti » ; le push `membership_stopped` (S5) part à côté, sans marqueur dans le journal (voir plus bas).<br>- S4, moyen de paiement (migration `20270122`, **appliquée en prod le 25/09/2026 à 15:06 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T150516Z.dump`) : `get_box_billing` renvoie aussi `payment_method_type` (card, sepa_debit… ou NULL), pour que la boîte d'arrêt du Manager (PR AthleX-Manager #385) affiche « carte » ou « prélèvement SEPA ». Corps repris de la prod ; garde, droits et commentaire inchangés.<br>- S4, programme désactivé (migration `20270123`, **appliquée en prod le 25/09/2026 à 15:40 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T153958Z.dump`) : l'acheteur actif (`program_members.status = 'active'`) lit encore un programme désactivé, jusqu'à ce que le webhook passe sa ligne à `cancelled` en fin de période. Règle `buyer_read_purchased_programs` sur `programs`, adossée à `program_in_my_active_membership` (SECURITY DEFINER) : une règle qui lirait `program_members` directement ferait boucler PostgreSQL, ses règles relisant `programs`. `read_active_programs` et les règles de `program_members` inchangées.<br>- S5, la base et `send-push` (migration `20270128`, **appliquée en prod le 25/09/2026 à 21:11 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T211012Z.dump` ; audit 29/29) : `get_my_membership_billing` renvoie aussi `past_due_since`, `dunning_grace_days`, `suspended` (la règle qui bloque les réservations), `has_stripe_subscription`, et le dernier arrêt décidé par un gérant (`stopped_at`, `stop_mode`) ; `push_tokens.language` (`fr` / `en`, NULL pour les versions d'app d'avant) ; `list_programming_catalog` ne liste plus les offres d'une box archivée ou en archivage programmé, sauf celles où la box est déjà abonnée. `send-push` : type `membership_stopped` (réglage « annonces de la box ») et version anglaise facultative (`en`) choisie jeton par jeton, le français pour un jeton sans langue ; **déployée le 25/09/2026 à 21:14 UTC** (code en prod identique au commit ; retour arrière : les sources déployées avant, identiques à master, hors dépôt dans `C:\Users\NBS\athlex-retour-arriere-send-push\avant-375`, à redéployer AVANT de jouer le retour arrière de la migration). Côté app (bandeau, état de l'abonnement, langue du jeton) : PR séparée. L'envoi à l'arrêt est fait côté Manager (AthleX-Manager #396, **mergée le 26/09/2026 à 10:07 UTC**) : `lib/members/membershipPush.ts` appelle `send-push` par le chemin serveur (`x-cron-secret`), FR et EN ; `lib/members/stopMembership.ts` l'appelle après le journal et l'e-mail, pour S2 (route `stop-subscription`), le bannissement (route `ban`, seulement s'il y a un abonnement Stripe), S4 (`membership-plans/delete`) et l'archivage (`lib/boxArchiveSchedule.ts`) ; la route d'une demande de résiliation acceptée l'appelle aussi. Un échec d'envoi ne bloque jamais l'arrêt. `notified_at` reste le fait « e-mail parti ».<br>- S5, `membership_stopped` réservé au serveur (`send-push`, sans migration, **déployée le 25/09/2026 à 22:29 UTC** ; retour arrière : sources déployées avant, identiques à master, dans `C:\Users\NBS\athlex-retour-arriere-send-push\avant-377`) : accepté par le seul chemin serveur (`x-cron-secret`) ; demandé par un utilisateur connecté, même gérant ou co-membre, par `data.type`, `category` ou `pref_key`, l'appel est refusé en 403 `SERVER_ONLY_TYPE`. Les autres types ne changent pas.<br>- `send-push`, `box_notification` et `elo_change` réservés au serveur aussi (sans migration, **déployée le 25/09/2026 à 23:24 UTC** ; retour arrière : sources déployées avant, identiques à master, dans `C:\Users\NBS\athlex-retour-arriere-send-push\avant-380`) : même refus (`SERVER_ONLY_TYPE`, par `data.type`, `category` ou `pref_key`). Aucun code ne les envoyait en tant qu'utilisateur (les annonces passent par `send-box-notification`, `elo_change` n'a aucun émetteur). Restent ouverts, en attendant que leur envoi passe côté serveur : `tournament_closed`, `inter_competition_closed`, `inter_bracket_result` (backlog).<br>- `send-push`, catégorie « annonces de la box » (`box_announcements`) réservée au serveur (sans migration, **déployée le 26/09/2026 à 09:07 UTC** ; retour arrière : sources déployées avant, identiques à master, dans `C:\Users\NBS\athlex-retour-arriere-send-push\avant-381`) : un utilisateur connecté qui la demande, par `category` ou `pref_key`, avec ou sans type, est refusé en 403 `SERVER_ONLY_CATEGORY` (la règle porte sur la catégorie résolue). Aucun envoi de l'app ne l'utilise (l'app ne passe jamais `category` ni `pref_key`) ; le prototype `_cles_edge_proto.mjs` passe à `group_messages`.<br>- `send-push`, « Nouveau WOD » (`new_wod`) réservé au staff (sans migration, **déployée le 26/09/2026 à 09:59 UTC** ; retour arrière : sources déployées avant, identiques à master, dans `C:\Users\NBS\athlex-retour-arriere-send-push\avant-382`) : un utilisateur connecté ne l'envoie (par type, `category` ou `pref_key`) que s'il gère (propriétaire, rôle `owner` ou `coach` actif) une box qui contient tous les destinataires ; sinon 403 `STAFF_ONLY_CATEGORY`. Le chemin serveur passe. `tournament_updates` et `elo_updates` restent au backlog (lot tournois).<br>- Facturation de `box_members` réservée au serveur (migration `20270132`, **appliquée en prod le 26/09/2026 à 11:33 UTC**, après le Manager #397 qui fait passer `assignPlan` et le débannissement côté serveur ; dump `db-dumps/2026-09-26/athlex-prod-public-internal-20260926T113223Z.dump` ; audit 29/29) : un rôle client n'écrit plus les 18 colonnes de facturation (`MEMBRE_FACTURATION_RESERVEE`) ; il ne bannit plus un membre qui a un abonnement Stripe en cours (`MEMBRE_ABONNEMENT_EN_COURS`, le Manager bannit par sa route, qui arrête l'abonnement) ; `reactivate_box_member` refuse un membre dont l'abonnement Stripe court encore (`REACTIVATION_ABONNEMENT_EN_COURS`). Ni `status` (hors ce cas) ni `role` ne sont gardés. Refus à traduire dans l'app (`BOMembersScreen`).<br>- Rôle co-gérant réservé au gérant principal (écart A du lot sécurité Manager ; migration `20270139`, **appliquée en prod le 29/09/2026 à 08:05 UTC**, dump `db-dumps/2026-09-29/athlex-prod-public-internal-20260929T080359Z.dump` ; audit 37/37) : seul `boxes.owner_id` donne ou retire le rôle `owner` d'une ligne de `box_members` (insertion, changement de rôle, de statut, de personne ou de box, suppression de la ligne d'un autre), refus 42501 `MEMBRE_ROLE_COGERANT_RESERVE`. Un co-gérant gère toujours membres et coachs, renonce à son propre rôle et quitte la box ; clé serveur et fonctions SECURITY DEFINER non concernées. Parcours du Manager « nommer un co-gérant » (rétrogradation puis promotion par le gérant principal) inchangé. Contrôle T12 de l'audit des droits. Refus à traduire côté Manager (`/members`).<br>- Réservation sans formule refusée (chantier « argent », lot 1 de « Rejoindre une box en payant » ; migration `20270133000000_reservation_sans_formule_bloquee.sql`, **appliquée en prod le 27/09/2026 à 10:18 UTC** ; dump `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T101714Z.dump` ; audit 30/30) : jusqu'ici, un membre sans abonnement valable ni aucun crédit réservait gratuitement et sans limite. Il est désormais refusé (`NO_ACTIVE_PLAN`), pour une réservation comme pour la liste d'attente, quand il s'inscrit lui-même. Le contrôle d'impayé (`MEMBERSHIP_PAST_DUE`) reste prioritaire, et `consume_credit_on_reservation` n'est pas modifiée (`NO_CREDITS_LEFT` inchangé). Restent acceptés : le staff de la box, l'essai, la clé serveur, l'inscription par le staff et la promotion depuis la liste d'attente. Quand le staff inscrit un membre sans formule, la base ouvre une alerte dans `box_member_alerts`, une seule ouverte par membre et par box. Seul le gérant ou co-gérant la lit et la résout (`resoudre_alerte_membre`) ; aucun rôle client n'écrit la table (contrôle T10 de l'audit des droits). Affichage Manager et message traduit dans l'app : lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à venir). **Préfixe en double** : deux migrations portent `20270133` — `20270133000000_bracket_wods_prevus.sql` (appliquée le 26/09/2026) et `20270133000000_reservation_sans_formule_bloquee.sql` (appliquée le 27/09/2026). Le rejeu les passe dans l'ordre du nom complet : `bracket_wods_prevus` d'abord, `reservation_sans_formule_bloquee` ensuite. Elles ne touchent pas les mêmes objets ; les fichiers ne sont pas renommés (déjà appliqués). Toujours citer le nom complet.<br>- Saisie des charges en musculation, base (migration `20270138`, **appliquée en prod le 29/09/2026 à 05:36 UTC** ; dump `db-dumps/2026-09-29/athlex-prod-public-internal-storage-20260929T053550Z.dump` ; audit 35/35) : séances de musculation gardées côté serveur. PR 1 du chantier ; les écrans suivent (PR 2 à 4).<br>- `strength_sessions` : une séance par athlète et par source (WOD du Whiteboard ou de programme, séance générée), en brouillon ou validée, avec les séries prévues, la charge max et la date de première validation. L'athlète écrit ses brouillons ; lui seul les voit (le staff ne lit que les séances validées).<br>- Séries rattachées à leur séance par (athlète, source) ; pas encore de clé étrangère : l'app actuelle et les builds installés écrivent leurs séries sans séance, et ce chemin reste permis. Aucune écriture directe dans une séance validée ; une série commencée sans reps est gardée en brouillon.<br>- `validate_strength_session` écrit en une transaction les séries valides, la séance, le score (Whiteboard : charge max des séries) et les 1RM calculés par l'app, chacun prouvé par une série ; un 1RM ne baisse que s'il venait de cette séance. Elle rend `premiere_validation` : compteurs et crédits ne partiront qu'une fois. Rien dans `movement_logs`.<br>- Reprise : les 5 séances existantes deviennent validées, sans toucher séries, scores ni records.<br>- Sécurité, stockage `message-attachments` privé (migration `20270137`, **appliquée en prod le 28/09/2026 à 22:07 UTC** ; dump `db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T220703Z.dump` ; audit 35/35 ; anon et authenticated sans jeton voient 0 objet). Constat du 28/09/2026 : stockage public, `public_read_attachments` ouverte à tous (anon lisait les 2 images), dépôt permis n'importe où à tout compte connecté.<br>- Une pièce jointe se lit, connecté seulement, par son auteur, ou par quiconque peut lire un message du groupe dont le premier dossier porte l'identifiant (la RLS de `group_messages` décide : membre du groupe ou propriétaire de la box ; un co-gérant non membre ne lit pas). Un ancien fichier au chemin plat se lit par qui lit le message de groupe qui le cite (URL publique ou chemin). Celui que seule l'ancienne table `messages` cite reste à son auteur et à la clé serveur.<br>- Dépôt : dans un groupe dont on est membre, nom de fichier préfixé par son uid. Suppression : aucune règle client, comme avant. `delete_user_account` inchangée.<br>- Contrôles S4 et S5 ajoutés à l'audit des droits. Remplace, pour `message-attachments`, la partie jamais appliquée de `migrations_archive/20260820_lot1c_c_buckets_prives.sql`.<br>- App (PR séparée) : un dépôt enregistre le chemin du fichier et plus l'URL publique. Les builds antérieurs au 04/08/2026 (avant 1.0.51) n'affichent plus les images et ne déposent plus.<br>- Incident d'ordre, le même que pour `20270136` : #399 a été mergée à 22:06 UTC, avant l'application (22:07). Le run de `grants-prod.yml` déclenché par ce merge (22:06, S4 et S5 déjà présents, prod pas encore migrée) est rouge ; relancé à la main sur master à 22:08 UTC : **35/35, vert**. L'état « appliquée » est reporté sur master par une PR de correction.<br>- Sécurité, stockage `documents` privé et documents de box fermés aux clients (migration `20270136`, **appliquée en prod le 28/09/2026 à 21:15 UTC** ; dump `db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T211427Z.dump` ; audit 33/33 ; anon et authenticated sans jeton voient 0 objet). Constat du 28/09/2026 : le stockage était public et la policy `public_read_documents` (rôle public, sans condition) laissait n'importe qui, sans compte, lister et lire les 2 PDF d'une box.<br>- Le stockage passe en privé ; ses 3 policies client (lecture, dépôt, suppression) sont supprimées.<br>- `box_documents` : les 4 policies sont supprimées, anon et authenticated n'ont plus aucun droit ; seule la clé serveur lit. La table, ses 2 lignes et les 2 fichiers restent.<br>- `delete_user_account` inchangée : elle efface toujours les fichiers `documents` d'un compte supprimé.<br>- Contrôles S1 à S3 ajoutés à l'audit des droits (CI de rejeu, `test-grants`, `grants-prod.yml`) ; le rôle `athlex_audit_ro` lit pour cela `id` et `public` de `storage.buckets`.<br>- Remplace, pour `documents`, la partie jamais appliquée de `migrations_archive/20260820_lot1c_c_buckets_prives.sql`. `message-attachments`, visé par le même fichier et lui aussi public : lot séparé, avant l'App Store.<br>- Écran Documents retiré de l'app : PR app séparée, prochain build.<br>- Incident d'ordre : #394 a été mergée à 21:08 UTC, avant l'application (21:15). Le run de `grants-prod.yml` déclenché par ce merge (21:08, contrôles S1 à S3 déjà présents, prod pas encore migrée) est rouge ; relancé à la main sur master à 21:47 UTC : **33/33, vert**. L'état « appliquée », poussé sur la branche après le merge, est reporté sur master par une PR de correction. Rappel : application d'abord, merge ensuite.<br>- Réservation : la box est celle du créneau, et seul un membre de la box réserve (migration `20270134`, **appliquée en prod le 27/09/2026 à 15:56 UTC** ; dump `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T155556Z.dump` ; audit 30/30).<br>- Une réservation dont la box déclarée n'est pas celle du créneau est refusée (`RESERVATION_BOX_MISMATCH`), quel que soit l'auteur, clé serveur comprise. Le contrôle passe avant tous les autres déclencheurs.<br>- Un membre ne réserve plus lui-même que dans une box dont il est membre actif et qui n'est pas archivée, ou dont il fait partie du staff. Un non-membre, un membre inactif ou banni est refusé.<br>- Inchangés : l'inscription par le staff, l'essai, la promotion depuis la liste d'attente, l'impayé, l'absence de formule et l'alerte au gérant.<br>- En prod le 27/09, aucune réservation existante n'était dans l'un de ces cas.<br>- Prochaine échéance d'un adhérent migré et jour de prélèvement (lot 3 de « Rejoindre une box en payant », partie base ; migration `20270135`, **appliquée en prod le 27/09/2026 à 18:53 UTC** ; dump `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T185220Z.dump` ; audit 30/30 ; PR app #393, mergée après l'application). Calcul et Stripe : **faits côté Manager** (AthleX-Manager #407, **mergée le 27/09/2026 à 20:58 UTC**) — jour de prélèvement (1 à 10) au paiement et au webhook Stripe Connect, prochaine échéance saisie à l'invitation, unitaire ou par CSV (`billing_day`, `next_due_date`).<br>- Une invitation, unitaire ou importée, porte une prochaine échéance facultative (`next_due_date`). Elle doit être au format AAAA-MM-JJ, tomber strictement après aujourd'hui (heure de Paris) et au plus douze mois après. Refus `DUE_DATE_INVALID`, `DUE_DATE_PAST` ou `DUE_DATE_TOO_FAR` ; à l'import, verdict `refusee` par ligne. Sans échéance, rien ne change.<br>- Le lien de paiement et la page d'invitation renvoient l'échéance.<br>- Jour de prélèvement `box_members.billing_day`, du 1er au 10, écrit par le serveur seulement (19e colonne de la garde de facturation) ; recopié depuis un paiement antérieur au compte (`pending_entitlements.billing_day`).<br>- État de la formule d'un membre pour l'app (lot 4 de « Rejoindre une box en payant », partie base ; migration `20270141`, **appliquée en prod le 01/10/2026 à 00:57 UTC** ; dump `db-dumps/2026-10-01/athlex-prod-public-internal-20261001T005645Z.dump` ; audit 37/37). `my_box_plan_status(box)` rend, pour l'appelant membre actif de la box (aucune ligne sinon) : `is_staff` et `has_plan` — les règles mêmes du refus `NO_ACTIVE_PLAN` (`internal.est_staff_box`, `internal.membre_a_formule`), sans recopie —, `suspended`, `credits_left` (carnets utilisables) et `pays_online` (la box vend au moins une formule par Stripe ; sinon l'app masquera « Activer mon abonnement »). Rien pour PUBLIC ni anon. Parité avec le refus vérifiée par des réservations réelles annulées. En prod le 01/10/2026 : 27 membres actifs non staff sans formule (3 box) ; deux box sur trois ne vendent aucune formule en ligne.<br>- Formule à activer dans l'app (lot 4 de « Rejoindre une box en payant », partie app, sans migration ; **à diffuser au prochain build**). L'app lit `my_box_plan_status` (`getMyPlanStatus`), relu quand l'écran reprend le focus et quand l'app revient au premier plan (retour du site) ; appel échoué ou aucune ligne : rien ne s'affiche.<br>- Bandeau « Formule à activer » (nouveau composant `AxNotice`) dans Ma Box (sous les raccourcis) et Réservation (en tête), ligne « Formule à activer » dans Profil › Compte › Mes boxs ; affichés quand la base refuserait la réservation (ni staff ni formule). Suspendu : seul le bandeau « abonnement suspendu » existant.<br>- « Activer mon abonnement » ouvre `athlexapp.eu/box/<slug>` dans le navigateur (aucun achat dans l'app) ; masqué partout quand la box ne vend aucune formule en ligne (`pays_online` faux), seul « Tu paies au comptoir ? Rapproche-toi de ta box. » reste.<br>- Écran « Bienvenue chez ta box » après avoir rejoint une box par son code, quand la formule est à activer ; « Je paie au comptoir » mène à Ma Box.<br>- Fenêtre de refus `NO_ACTIVE_PLAN` : textes inchangés, icône carte, « Activer mon abonnement » et « Fermer ». L'écran P1 « Délai de régularisation » est reporté au lot P1. | 27 septembre 2026 |
+| **Archivage d'une box et abonnements** — mergée le 29/09/2026 (dernière PR du chantier : #407). (trois PR : la base ici, puis deux lots Manager ; relevé et plan dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).<br>- PR 1, la base (migration `20270127`, **appliquée en prod le 25/09/2026 à 20:05 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T200404Z.dump`) : état « archivage programmé » (`boxes.archive_scheduled_at`, `archive_scheduled_by`) ; règle unique `box_accepts_entries` (fausse si archivée ou programmée), refus en clair `BOX_ARCHIVEE` / `BOX_ARCHIVAGE_PROGRAMME` dans les fonctions d'entrée (rejoindre, invitations, essais, droits en attente, programmes, comptoir) et sur les écritures directes du client (membres, offres, invitations) ; une box programmée sort de l'annuaire (règle restrictive, ses membres et son staff la voient encore) ; archivage automatique quand plus rien ne paie (tâche `box_archive_sweep`, toutes les heures, journal `box_auto_archive_log`) ; annulation (`unschedule_box_archive`) et alerte des 2 jours (`box_archive_overdue`) pour le super-admin. Aligne le dépôt sur `box_subscriptions.billing_source`, présent en prod sans migration.<br>- `boxes.archive_notified_at` (migration `20270129`, **appliquée en prod le 25/09/2026 à 22:36 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T223607Z.dump` ; audit 29/29) : date d'envoi de l'e-mail d'archivage, que le Manager renseignera à l'envoi (sa PR 3, clé serveur, **après** la programmation). Un déclencheur la remet à vide dès que la box n'est plus ni archivée ni en archivage programmé (quel que soit le chemin : `unschedule_box_archive`, réactivation par le Manager, écriture directe) et refuse qu'un rôle client la modifie (`BOX_ARCHIVE_NOTIFIED_AT`). Relevé en passant : `archive_scheduled_at` n'avait aucune garde (corrigé par `20270130`, ci-dessous).<br>- Garde sur l'état d'archivage (migration `20270130`, **appliquée en prod le 25/09/2026 à 23:14 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T231414Z.dump` ; audit 29/29) : un rôle client (`authenticated`, `anon`), gérant et co-gérant compris, ne peut plus ni poser, ni effacer, ni modifier `archive_scheduled_at`, `archive_scheduled_by`, `archived_at` et `archived_by`, quelle que soit la règle RLS d'écriture (42501 `BOX_ARCHIVAGE_RESERVE`). Avant, un gérant pouvait effacer lui-même l'archivage programmé de sa box depuis le navigateur. Le rôle se lit dans `current_user` (garde SECURITY INVOKER), pour que `unschedule_box_archive` appelée par un super-admin avec son jeton passe. Restent autorisés : la clé serveur (routes super-admin du Manager), `unschedule_box_archive`, l'archivage automatique. Remplace la garde de #378 (`internal.garder_archivage_box`, `trg_boxes_garde_archivage`).<br>- Contrôles de l'archivage (sans migration) : `scripts/test-box-archivage.mjs`, jamais branché jusqu'ici, devient la suite `box-archivage` d'`integration.yml` (21 assertions : masquage, réactivation, et le gérant connecté refusé en `BOX_ARCHIVAGE_RESERVE` sur `archive_scheduled_at` et `archived_at`, avec mutation inverse déclencheur désactivé). Contrôle T11 de l'audit des droits (CI, rejeu, prod nocturne) : `trg_boxes_garde_archivage` présent, actif, BEFORE UPDATE sur les quatre colonnes, fonction non exécutable par un client.<br>- App (sans migration, s'appuie sur `20270125`, `20270127` et `20270128`, **à diffuser au prochain build**, lancé par Nab ; aucun build EAS dans ce lot) : inscription à un tournoi décidée par la base (`can_join_tournament`, donc aussi pendant le tournoi quand l'option le permet), pastille et indice « inscriptions ouvertes pendant le tournoi », refus traduits par leur code (FR/EN), « Se désinscrire » réservé aux tournois ouverts ; tournois archivés hors des listes (accueil, compétition, back-office, admin), gardés dans l'historique ELO, état « Archivé » sur le détail ; refus traduits pour rejoindre une box fermée (un seul texte) et pour l'offre gratuite, catalogue lu par `list_programming_catalog` ; « Box introuvable » traduit avec retour dans l'annuaire ; S5 : bandeau « Abonnement suspendu » sur les réservations (lien vers la page de paiement si abonnement Stripe), état de l'abonnement dans le profil, notification `membership_stopped` qui ouvre le profil ; la langue du téléphone (`fr`, sinon `en`) est enregistrée avec le jeton de notification, et revue au retour au premier plan.<br>- App, refus du bannissement et de la réactivation traduits (sans migration, **à diffuser au prochain build**) : `BOMembersScreen` traduit par leur code `MEMBRE_ABONNEMENT_EN_COURS` et `REACTIVATION_ABONNEMENT_EN_COURS` (migration `20270132`), et affiche le texte générique pour tout autre refus, jamais le message brut.<br>- App, réservation sans formule refusée et traduite (sans migration, s'appuie sur `20270133000000_reservation_sans_formule_bloquee.sql`, **à diffuser au prochain build**) : `ReservationScreen` affiche « Tu n'as pas de formule active dans cette box. Rapproche-toi de ta box pour activer ton abonnement. » (EN : « You don't have an active plan at this box. Contact your box to activate your membership. ») pour le refus `NO_ACTIVE_PLAN`, que ce soit une réservation ou une inscription en liste d'attente, au lieu du message brut. L'impayé passe par le même mapping (`reservationRefusal`), avec un texte inchangé.<br>- App, type de score traduit dans la saisie du score (sans migration, **à diffuser au prochain build**) : WODDetail affichait le type brut (« WEIGHT », « TIME »…) ; il affiche « Charge », « Temps », « Reps », « Tours » (EN : Load, Time, Reps, Rounds) et « Type de score », clés `wod.scoreType.*`. Premier lot du chantier « Saisie des charges en musculation ».<br>- App, pièces jointes enregistrées par leur chemin (sans migration, **à diffuser au prochain build** ; la base est fermée par `20270137`, PR séparée) : un dépôt enregistre `<groupe>/<uid>_…` dans `group_messages.attachment_url` au lieu de l'URL publique (`src/lib/messageAttachments.ts`). L'affichage reste sur `resolveStorageUrls`, qui signe aussi les anciennes URL publiques ; les GIF externes sont inchangés. Un build antérieur au 04/08/2026 ne sait pas afficher un chemin nu.<br>- App, refus de box traduits à la réservation (sans migration, s'appuie sur `20270134`, **à diffuser au prochain build**) : un compte qui n'est plus membre actif de la box (refus RLS 42501) lit « Tu ne fais plus partie de cette box. Rejoins-la à nouveau ou contacte-la. », une box déclarée qui n'est pas celle du créneau (`RESERVATION_BOX_MISMATCH`) « Ce cours n'appartient pas à ta box. Actualise l'écran et réessaie. » (FR/EN), au lieu du message brut.<br>- App, écran Documents retiré (sans migration, **à diffuser au prochain build** ; la base est fermée par `20270136`, PR séparée) : plus d'écran Documents ni de route `Documents`, plus de boutons « Import WOD » sur Ma Box (celui du haut et celui de la ligne Actualités, qui prend toute la largeur) ; clés de traduction retirées. Les builds déjà installés gardent l'écran jusqu'à la mise à jour : une fois `20270136` appliquée, il affiche une liste vide et un dépôt est refusé (message d'erreur). `expo-document-picker` reste (import de WOD du back-office). Déclaration App Privacy / Data Safety : la ligne « Documents (PDF) » tombe au prochain envoi.<br>- App, nettoyage : écran `WODScreen` (WODs fictifs écrits en dur) et pile `WODNavigator` supprimés (sans migration, sans effet visible : la pile n'était montée nulle part). Route `WODList`, type `WODStackParamList` et clés de traduction `wod.title`, `wod.subtitle`, `wod.generate`, `wod.all` retirées (FR/EN, `wod.scoreType` gardé) ; `WodGenerator`, `WodResult`, `WodHistory`, `TimerRun`, `VideoPlayback` restent déclarés dans les piles utilisées. Test `wodScreenRetire`. | 29 septembre 2026 |
+| **« Mon abonnement », PR A : changement de formule, la base** (migration `20270147`, **appliquée en prod le 06/10/2026 à 15:00 UTC** ; dump `db-dumps/2026-10-06/athlex-prod-public-internal-20261006T145926Z.dump` ; données de box_members, boxes et de la file des notifications identiques avant/après ; audit des droits 40/40 ; mergée le 06/10/2026 (#486)). Une seule règle pour l'app et le site /compte : un membre payant en ligne verra son changement programmé à la prochaine échéance (échéancier Stripe, sans prorata, écrit par le webhook à la bascule — PR B) ; un membre payant au comptoir envoie une demande que le gérant accepte (formule appliquée tout de suite) ou refuse dans Abonnés du Manager. Refusé en impayé, en pause, résiliation programmée, box archivée ou en archivage ; possible pendant un engagement, sans le changer.<br>- `box_members` : `scheduled_plan_id`, `scheduled_change_at`, `stripe_schedule_id`, gardées comme `plan_id` (aucun client ne les écrit ni ne les lit) ; `get_my_membership_billing()` rend les deux premières à leur membre.<br>- `box_stripe_portal` : configuration du portail Stripe d'une box, clé serveur seule (une colonne de `boxes` aurait été lisible par tout compte connecté).<br>- `box_plan_change_requests` (une seule demande en attente par membre et par box ; le membre lit les siennes, le gérant et les co-gérants celles de leur box ; aucune écriture client) et trois fonctions réservées à la clé serveur : `request_plan_change`, `cancel_plan_change_request`, `decide_plan_change_request` (gérant ou co-gérant, jamais le coach ; une demande décidée ne bouge plus ; à l'acceptation, un montant noté suit le prix de la nouvelle formule, un montant vide le reste). Codes `PLAN_CHANGE_…`.<br>- Le gérant est notifié de chaque demande (`plan_change_request` dans la file des notifications) ; le texte est ajouté à `deliver-manager-notifications` (voir « En cours »).<br>- Tests `changement_formule.sql` (C0 à C9, mutations intégrées, retour arrière), contrôle T15 de l'audit des droits ; retour arrière `supabase/retours/20270147000000_changement_formule.sql`. | 6 octobre 2026 |
 
 ### Sécurité et rôles
 
@@ -109,6 +144,12 @@ Une ligne par capacité, avec la date du lot qui l'a fermée.
 | **Compte reviewer Apple `nbstylz+apple@gmail.com` — ne pas supprimer, ne jamais promouvoir.** Athlète `member` rattaché à Crossfit NBS2 avec la formule « Illimité » attribuée par le chemin staff (`box_members.plan_id`, 0 €, aucun abonnement Stripe, aucune ligne `box_cash_payments`) pour pouvoir réserver des cours, e-mail confirmé à la création, aucun mot de passe transmis (Nab passe par « mot de passe oublié »). Frontière prouvée depuis son JWT : `is_box_owner_admin` = false, `get_my_admin_boxes()` vide, tables d'argent vides ou refusées, promotion de rôle sans effet, réservation puis annulation d'un cours NBS2 OK, `program_members` en écriture refusé (403). Créé le 4 septembre 2026 après la purge des 11 comptes jetables (`@athlex-test.local`, `@e2e.local`, `@audit.athlex.io`, `zz.design@athlex.test`) et du tournoi de démo « Test Bracket 16 » | 4 septembre 2026 |
 | **Mot de passe oublié par code à 6 chiffres dans l'app (D6, mergé le 03/10/2026 (#457), à vérifier par Nab au prochain build)** : « Recevoir un code » envoie toujours par `resetPasswordForEmail` avec `redirectTo` (le lien de l'e-mail reste valable pour le site), puis ouvre l'écran du code dans tous les cas, sans dire si le compte existe ; l'écran « Email envoyé » disparaît. Écran `ResetPasswordCode` : code (pavé numérique, `oneTimeCode` / `sms-otp`, collage filtré), nouveau mot de passe et confirmation (6 caractères min), « Renvoyer le code » grisé 60 s. `resetPasswordWithCode` (AuthContext) : `verifyOtp({ type: 'recovery' })` puis `updateUser({ password })` ; tant que la récupération est en cours, la session ouverte par le code ne charge pas le profil, donc l'app reste sur la pile d'authentification ; échec d'`updateUser` → `signOut`. Erreurs sous le champ concerné, plus aucune fenêtre d'alerte sur ces deux écrans. Réglages Auth (code à 6 chiffres, modèle « Reset Password » avec `{{ .Token }}` et lien) posés par Nab, inchangés | 3 octobre 2026 |
 | **Android ne capte plus que les liens que l'app ouvre (mergé le 03/10/2026 (#458), à vérifier par Nab au prochain build)** : l'intent-filter `autoVerify` d'`app.json` captait tout `https://athlexapp.eu/` (`pathPrefix: "/"`), donc le lien de réinitialisation (`/auth/confirm?…&type=recovery`, puis `/update-password`) ouvrait l'app sans être traité, et les liens que l'app ouvre elle-même vers le site (`/compte`, `/programming`, `/pricing`…) pouvaient lui revenir. Il ne capte plus que `/wod/`, `/profile/`, `/user/`, `/tournament/`, `/inter/`, `/daily/` (les chemins de `src/navigation/linking.ts`) ; schéma `athlex://` inchangé ; iOS sans `associatedDomains`, donc non concerné. Garde : `androidAppLinks.test.ts` | 3 octobre 2026 |
+| **`movement_totals` refermée (migration `20261218`).** — mergée le 16/09/2026 (#291). La vue recréée par `20261204` (un total par unité) était repartie avec `GRANT ALL TO anon / authenticated` et sans `security_invoker`, annulant le lot 5e : le volume de répétitions de tous les athlètes se lisait à la clé anon avec les droits du propriétaire. `security_invoker = true` (chaque lecteur ne voit que ses `movement_logs`), `anon` révoqué, `authenticated` en SELECT seul. `test-grants` 31/31 (T1 / T2 / T8 rouges avant, mutation inverse vérifiée). **Appliquée en prod : oui** (dump horodaté dans la description de la PR). | 16 septembre 2026 |
+| **Migration des clés d'API Supabase** — mergée le 23/09/2026 (#340, #341, #342). (`anon` / `service_role` → `sb_publishable_` / `sb_secret_`). La clé `service_role` a été exposée dans l'historique public d'AthleX-Manager ; elle reste un JWT valide tant que l'ancien secret JWT n'est pas révoqué, et la désactivation des anciennes clés ne suffit pas à la neutraliser. Trois PR, chacune déployable avant comme après la création des nouvelles clés : **A** — les trois garde-fous de livraison (`ota-`, `ipa-`, `aab-verify-bundle`) acceptent `sb_publishable_` ou le JWT `anon`, et refusent toujours une clé secrète (`sb_secret_`, JWT `service_role`) ; **B** — Edge Functions : clé secrète lue par `_shared/cle-secrete.ts` (`SUPABASE_SECRET_KEYS.default`, sinon `SUPABASE_SERVICE_ROLE_KEY`), `verify_jwt = false` versionné pour les huit, chacune authentifiant son appelant (`x-cron-secret` ou `auth.getUser`) ; prouvé sur la pile locale avec les deux clés (`scripts/_cles_edge_proto.mjs`) ; **déployée en prod le 23/09/2026** (17:19–17:21 UTC, en deux temps), les huit fonctions utilisent désormais la clé `sb_secret_` `default`. Ce déploiement a aussi mis en prod deux corrections d'août mergées mais jamais déployées : le filtre des préférences de notification de `send-box-notification` (`cedf24b` / `e4aa095`, une annonce de box respecte `notifications_enabled` et `box_announcements`) et la journalisation des erreurs dans `incidents` de `session-followup-cron` (`6dc97ac`, une ligne fautive ne coupe plus les relances de toutes les box) — **déployées le 23/09/2026**. Retour arrière : les sources déployées avant la #341, hors dépôt, dans `C:\Users\NBS\athlex-retour-arriere-cles\fonctions-avant-341` ; **C** — migration `20270104` (**appliquée en prod le 23/09/2026 à 18:54 UTC**, tâches 8 et 11 constatées à 200 après application) : les cinq tâches `pg_cron` qui appellent une fonction edge n'envoient plus le JWT `anon`, et lisent `x-cron-secret` dans le Vault (`cron_secret`) au lieu de l'avoir en clair. Les clés `default` `sb_publishable_` et `sb_secret_` existent sur le projet depuis le 05/03/2026. Restent les opérations de Nab dans les tableaux de bord, le build 1.0.57, la désactivation des anciennes clés et la révocation de l'ancien secret JWT. | 23 septembre 2026 |
+| **Lot sécurité : l'argent relève du gérant, pas du coach** — mergée le 26/09/2026 (#383). (relevé du 26/09/2026).<br>- Migration `20270131` (**appliquée en prod le 26/09/2026 à 10:33 UTC**, dump `db-dumps/2026-09-26/athlex-prod-public-internal-20260926T103329Z.dump` ; audit 29/29) : demandes de résiliation lues et traitées par `is_box_owner_admin` seulement (plus par le coach) ; abonnements Marketplace : lecture côté abonné par le staff de la box abonnée (coach compris, couleurs de `/wods`), côté éditeur (qui achète) par `is_box_owner_admin` de l'éditrice ; écriture et `subscribe_free_programming` par `is_box_owner_admin` ; `get_box_dunning` lève 42501 pour un non-gérant au lieu d'une liste vide (le Manager adaptera `UnpaidPanel`). Le coach écrit toujours le contenu des offres (`box_programming_wods_write` inchangée). | 26 septembre 2026 |
+| **Écran Membres du gérant (`BOMembersScreen`) : règle du co-gérant (app seule, aucune migration).** — mergée le 29/09/2026 (#415). Un co-gérant ne voit plus d'action sur la ligne d'un autre co-gérant ni du gérant principal (`boxes.owner_id` de la box active, sans nouvelle lecture) et lit « Seul le gérant principal de la box peut nommer ou retirer un co-gérant. » ; le choix du rôle ne propose jamais co-gérant ; tout refus (42501, `MEMBRE_ROLE_COGERANT_RESERVE`, aucune ligne modifiée, RPC à `false`) affiche un message traduit et la liste est relue depuis la base. | 29 septembre 2026 |
+| **Sécurité, stockage `partner-logos` : écriture réservée aux admins** (migration `20270148`, **appliquée en prod le 06/10/2026 à 22:01 UTC** ; dump `db-dumps/2026-10-06/athlex-prod-public-storage-20261006T220052Z.dump` (sha256 `f87e3d92…84d0`, aller-retour vérifié) ; objets et partenaires inchangés ; audit des droits 41/41 avec S6 ; mergée le 06/10/2026 (#491), test de Nab avant merge ; point 2 d'« Avant l'App Store »). Constat du 06/10/2026 en lecture seule : les policies `admin_upload/update/delete_partner_logo` ne demandaient que `auth.uid() IS NOT NULL` — tout compte connecté déposait, remplaçait ou supprimait un logo de partenaire (stockage public, 0 objet, table `partners` vide). Dépôt, modification et suppression passent au rôle `authenticated` avec `profiles.role` `super_admin` ou `admin` (même prédicat que `admin_manage_partners` et le stockage `assets`) ; la modification juge aussi la nouvelle ligne. Lecture publique, stockage public, `admin_manage_partners` et `prevent_role_escalation` inchangés. Test `supabase/tests/partner_logos_admin.sql` (P0 à P6, dont la lecture du rôle sous RLS), contrôle S6 de l'audit des droits, retour arrière `supabase/retours/20270148000000_partner_logos_admin.sql`. Appliquée **avant** le merge, pour que le `grants-prod.yml` du merge (S6) soit vert d'emblée, contrairement à 20270136 et 20270137. | 6 octobre 2026 |
+| **Sécurité, stockage `tournament-banners` : écriture réservée au staff de la box du tournoi et aux admins** — mergée le 07/10/2026 (#493). (migration `20270149`, **appliquée en prod le 07/10/2026 à 09:02 UTC** ; dump `db-dumps/2026-10-07/athlex-prod-public-storage-20261007T090131Z.dump` (sha256 `634ecc6e…7fda`, aller-retour vérifié) ; objets inchangés ; audit des droits 42/42 avec S6 et S7 ; PR #493 mergée le 07/10/2026 (`0004fc0`) ; même méthode que `20270148`). Constat du 07/10/2026 en lecture seule : « Authenticated users can upload / update tournament banners » ne demandaient que `bucket_id = 'tournament-banners'` — tout compte connecté déposait ou remplaçait la bannière de n'importe quelle box (stockage public, 6 objets `<box_id>/<horodatage>.<ext>`, 0 `banner_url` renseignée ; aucune policy DELETE). Dépôt et modification (USING et WITH CHECK) passent au rôle `authenticated` avec `public.is_box_admin` du premier dossier du chemin (gérant, co-gérant, coach actif, admins — le prédicat de `tournaments_box_admin_manage`), dossier uuid vérifié avant conversion ; toujours aucune suppression. Lecture publique, stockage public, policies de `tournaments` et `is_box_admin` inchangés ; aucun changement de code (le Manager dépose déjà sous `<boxId>/`). Test `supabase/tests/tournament_banners_staff.sql` (Q0 à Q6), contrôle S7 de l'audit des droits, retour arrière `supabase/retours/20270149000000_tournament_banners_staff.sql`. | 7 octobre 2026 |
 
 ### Mises à jour de l'app (OTA) et livraison
 
@@ -128,6 +169,7 @@ Une ligne par capacité, avec la date du lot qui l'a fermée.
 | **Badges de mouvement (`mv_*`) reconnus par le serveur** (migration `20261231`, **appliquée en prod le 22/09/2026 à 17:10 UTC**, après dump schéma, données **et droits** `db-dumps/2026-09-22/athlex-prod-public-20260922T170736Z.dump` — première application sous la nouvelle convention, 126 sections `TABLE DATA` et 390 sections `ACL` ; précontrôles : `EXECUTE` de `badge_condition_met` détenu par `postgres` **seul**, et les 187 clés `mv_*` du catalogue de prod identiques à celles du dépôt ; vérifications : 187 règles, `anon` et `authenticated` en lecture seule (`INSERT`/`UPDATE`/`DELETE` à `false`), branche `mv_*` en place lisant `user_movement_stats` et **pas** `movement_rep_counts`, branches non `mv_*` et droits de `claim_badge` inchangés, **md5 du catalogue identique avant et après** — aucune ligne ajoutée ni modifiée — et `athlete_badges` toujours à 2 624 lignes). Constat vérifié en prod : `badge_condition_met` n'avait **aucune** branche `mv_*` et retombait sur `false`, donc `claim_badge` refusait les **187** badges de mouvement du catalogue — l'athlète qui termine un WOD n'en débloquait aucun. Les 1 893 attributions existantes ne venaient pas de là : posées par le chemin gestionnaire de box, elles s'adossent à `movement_rep_counts` (1 814 attributions à palier, **toutes** cohérentes avec cette table, **aucune** avec `user_movement_stats`), toutes horodatées à la seconde pile à 20:00:00 UTC. Arbitrage de Nabil (22/09) : **source de vérité unique `user_movement_stats`**, règles **en base** dans la nouvelle table `badge_rules` (lecture ouverte, écriture réservée aux migrations et à `service_role`), contenu issu du fichier canonique `supabase/seed/badge_rules.json` généré par `scripts/generate-badge-rules.mjs` depuis le TypeScript du client. Méta-badges et regroupements inclus (`mv_total_*`, `mv_polyvalent_*`, `mv_burpee`, `mv_squat`). Parité prouvée sur **un seul fichier de cas** : 12 cas couvrant les trois unités, jugés côté client par `logMovementReps` (jest) et côté serveur par `badge_condition_met` sur les 187 badges (`supabase/tests/badge_rules_mv.sql`, rejoué par la CI ; six mutations vérifiées rattrapables). La migration sème aussi les **147** lignes de `badges_catalog` que seul l'archive portait — sans quoi une base reconstruite n'en a que 40 ; opération blanche en prod. Aucune écriture dans `athlete_badges`, `movement_rep_counts` ni le code de l'app. **Lot de rattrapage annulé** : mesuré en prod, **0 athlète et 0 attribution** manquants sur les deux sources. Réserve portée au backlog : les cumuls restent **déclarés par le client** via `increment_movement_stats`, donc un athlète peut gonfler les siens et débloquer n'importe quel badge `mv_*` — à borner en 4b | 22 septembre 2026 |
 | **Écriture des scores de tournoi et garde du recalcul des divisions** (migration `20261230`, **appliquée en prod le 21/09/2026 à 16:40 UTC**, après dump schéma + données `db-dumps/2026-09-21/athlex-prod-public-20260921T163854Z.dump` et comparaison du corps repris dans `internal` avec celui déployé — identiques ; vérifications : `WITH CHECK` présent sur l'UPDATE, les deux triggers actifs, `internal.recalc_division_points` non exécutable par `anon` / `authenticated` et schéma sans `USAGE`, EXECUTE de la fonction publique inchangé (postgres, service_role), et PostgREST répond `Only the following schemas are exposed: public, graphql_public`). Vérifié en prod avant d'écrire (`docs/audits/VERIF_PROD_TOURNOIS_BADGES.md`) puis prouvé sur base de rejeu : un athlète inscrit pouvait déposer un score déjà `validated` et **écrire lui-même `admin_message`, `validated_by`, `validated_at`** (1 ligne modifiée) ; un athlète **non inscrit** au tournoi pouvait déposer un score ; la correction d'un score **rejeté** — que l'app propose — échouait **en silence** (0 ligne, aucune erreur). Correctifs : INSERT athlète borné à `status = 'pending'` + inscription dans `tournament_participants` ; UPDATE athlète ouvert à une ancienne ligne `pending` **ou** `rejected`, avec un `WITH CHECK` explicite qui force `pending` ; trigger `BEFORE UPDATE` refusant les colonnes réservées au staff (`notes` reste à l'athlète, le staff s'en sert comme motif de rejet — à déplacer vers `admin_message`, lot client). `recalc_division_points` est coupée en deux : `internal.recalc_division_points` (corps actuel, sans garde, schéma hors PostgREST, EXECUTE révoqué aux rôles clients) appelée par le trigger des scores, et la fonction publique de même nom qui porte la garde d'appelant sur le **JWT** (`auth.role()`) — `current_user` était inutilisable, il vaut toujours le propriétaire sous SECURITY DEFINER. `supabase/tests/tournament_scores_gardes.sql`, rejoué par la CI à la suite du rejeu : 14 contrôles, chacun vérifié rattrapable par six mutations. Précision au rapport d'audit : le passage `pending` → `validated` par l'athlète était **déjà refusé** (Postgres applique `USING` comme `WITH CHECK` quand celui-ci manque) | 21 septembre 2026 |
 | Le tirage ne dépend plus de l'ordre des lignes de la base : `bankFromRows` range squelettes et plafonds dans **l'ordre de la banque embarquée** (une ligne que le snapshot ne connaît pas encore se range après, par id), et les deux lectures (`fetchBank` de l'app, `generate-box-week`) portent un `order()` explicite. Cause mesurée le 21/09/2026 en appliquant `20261229` : `select('*')` ne promet aucun ordre, un `UPDATE` déplace les lignes dans le tas, et le moteur filtre les squelettes dans l'ordre du tableau (`movementCapFor` retourne le premier plafond qui correspond) — 232 tirages sur 672 changeaient à définitions identiques. L'ordre canonique est celui du snapshot et non l'alphabet, pour que la base et le repli hors-ligne rendent le **même WOD à graine égale** (`rows.test.ts`, garantie qu'un tri alphabétique cassait) ; `packages/wod-engine/__tests__/bank-order.test.ts` mélange les lignes et exige les mêmes signatures à graine égale, Musculation comprise. Aucune migration | 21 septembre 2026 |
+| Build de test `1.0.64` iOS (65) / Android (80) depuis `build/1.0.64` (`e7f7c97`, sur master `181215b` : #484 scores des membres sur les blocs non classés, #485 minuteur Split « Tap pour lancer », #486 changement de formule par le membre (base), #488 « Partager ma perf » en plein écran, i18n #487 #489 #490 #492 #494, sécurité stockage #491 `partner-logos` et #493 `tournament-banners`, #496 étiquette du type de séance en couleur) — numéros relevés sur EAS (`eas build:list`) : derniers consommés avant ce build iOS 64, Android 79 ; builds EAS `1c5ae482` (iOS, terminé le 07/10/2026 à 14:50 UTC) / `d74d8541` (Android), profil `production`, runtime `1.0.64`. `app.json` 1.0.64 / 65 / 80 sur `build/1.0.64` (`b65dc56`). `verify:ipa` **29/29**, `verify:aab` **31/31** ; IPA soumis à App Store Connect (TestFlight testeurs internes, submission `806a5d4d`), AAB non envoyé par EAS : téléversement manuel par Nab sur la piste Test interne — d’après le rapport du build, branche `fix/etat-build-1.0.64` | 7 octobre 2026 |
 | Build de test `1.0.63` iOS (64) / Android (79) depuis `build/1.0.63` (`214663b`, sur master `2889614` : retour du build 1.0.62 — R3b #482 chiffres du chrono entiers en paysage, mesures natives de la police) — numéros vérifiés libres côté EAS avant build (derniers consommés : iOS 63, Android 78) ; `verify:ipa` **29/29**, `verify:aab` **31/31**, bundle contrôlé dans les deux artefacts : mesures du `.ttf` (`digitAdvance`, `colonAdvance`) du chrono R3b, police `Oswald_700Bold` chargée et son `.ttf` embarqué ; IPA soumis à App Store Connect (TestFlight testeurs internes, submission `0c3ce4a5`), AAB non envoyé par EAS : téléversement manuel par Nab sur la piste Test interne. Builds EAS `61cc5c10` (iOS) / `a3704e96` (Android). `app.json` 1.0.63 / 64 / 79 sur `build/1.0.63` (`24f3ae7`) | 5 octobre 2026 |
 | Build de test `1.0.62` iOS (63) / Android (78) depuis `build/1.0.62` (`d43b93c`, sur master `ea5aee8` : retours du build 1.0.61 — R1 #477 1RM exact du libellé, R2b #478 « N% Mouvement » sans crédit de reps, R3 #479 minuteur en paysage, #480 test daté) — numéros vérifiés libres côté EAS avant build (derniers consommés : iOS 62, Android 77) ; `verify:ipa` **29/29**, `verify:aab` **31/31**, bundle contrôlé dans les deux artefacts : police `Oswald_700Bold` chargée et son `.ttf` embarqué (minuteur), `isPercentLine` (crédit des lignes en %), `oneRepMaxFromRecords` (record exact du 1RM) ; IPA soumis à App Store Connect (TestFlight testeurs internes, submission `4941faf0`), AAB non envoyé par EAS : téléversement manuel par Nab sur la piste Test interne. Builds EAS `1f1dddfc` (iOS) / `586fd345` (Android). `app.json` 1.0.62 / 63 / 78 sur `build/1.0.62` (`c6a8bfb`) | 5 octobre 2026 |
 | Build de test `1.0.61` iOS (62) / Android (77) depuis `build/1.0.61` (`a0ec6df`, sur master `b48d332` : retours du build 1.0.60 #456 à #471, gymnastique G1–G4 #472 à #475) — numéros vérifiés libres côté EAS avant build (derniers consommés : iOS 61, Android 76) ; `verify:ipa` **29/29**, `verify:aab` **31/31** (DSN Sentry, jeton Mixpanel UE, aucune colonne `full_name`), bundle contrôlé dans les deux artefacts : `GymRecordSheet`, « % du max », écran Annonces ; IPA soumis à App Store Connect (TestFlight testeurs internes, submission `7de1cb30`), AAB non envoyé par EAS : téléversement manuel par Nab sur la piste Test interne. Builds EAS `05f32bb7` (iOS) / `80aae1da` (Android). `app.json` 1.0.61 / 62 / 77 sur `build/1.0.61` (`89715f9`) | 4 octobre 2026 |
@@ -147,6 +189,12 @@ Une ligne par capacité, avec la date du lot qui l'a fermée.
 | Compétitions physiques « crossfit » : 7 `physical_competitions` importées supprimées en prod (une transaction, garde : 0 `physical_wods` dépendant, 13 → 6), 5 compétitions passées encore `open` clôturées (HOOKGRIP SHOWDOWN III, 07/11/2026, reste `open`). Vue `physical_competitions_served` (`security_invoker`, lecture seule) : `status` = `closed` dès que la date est passée ; HomeScreen et PhysicalCompetitionScreen lisent la vue. Suite `phys-served` 5/5, mutation inverse (vue sans recalcul) 2/5. Appliquée en prod avant merge | 5 septembre 2026 |
 | Clé Google Maps Android : le dépôt est public, aucune clé n'y entre. `app.config.js` lit `GOOGLE_MAPS_ANDROID_API_KEY` (variable Sensitive de l'env EAS `production`, clé restreinte à `com.athlex.app` + SHA-1) ; plus aucune lecture de l'ancienne `GOOGLE_MAPS_API_KEY` (clé du 15 juin, 33 API, sans restriction — ne doit plus être embarquée). `verify:aab` exige `com.google.android.geo.API_KEY` dans le manifeste et, avec `MAPS_KEY_FORBIDDEN_SUFFIX` / `MAPS_KEY_EXPECTED_SUFFIX` (fins de clé fournies par Nab : `…vIwnw` attendue, `…rZMEE` interdite), refuse l'ancienne clé. Test `mapsKeyNotInRepo.test.ts` | 5 septembre 2026 |
 | Mixpanel « NBS Innovation » vide (règle 20, deuxième cas) : cause prouvée — le projet est en résidence **EU** (Project Settings) et `analytics.ts` faisait `init()` sans URL, donc le SDK visait `https://api.mixpanel.com` (US, seule URL présente dans l'IPA 51 et son `main.jsbundle`) : les événements partaient vers un serveur qui ne connaît pas le projet. Le token `EXPO_PUBLIC_MIXPANEL_TOKEN` est bien dans l'env EAS `production` et inliné dans le bundle du build 51 (ce n'est pas la cause). Correctif : `init(false, {}, 'https://api-eu.mixpanel.com')` ; `track('Login')` part désormais **après** `identify` (armé dans `signIn`, émis dans `fetchProfile`) au lieu d'arriver anonyme. Garde-fous : token encadré `mixpanel-token:…:mixpanel-end` + URL EU exigés par `ota-verify-bundle.mjs`, `verify:ipa`, `verify:aab` (sur l'IPA 51 réel : 19/21, les deux nouvelles assertions rouges comme attendu). Test `mixpanelEuLoginOrder.test.ts`. **Nab : comparer le Project Token Mixpanel à `6a12…233b`** ; preuve de réception : un `Login` de Nab dans Events dans la minute après l'OTA, pas de smoke permanent | 5 septembre 2026 |
+| **Build de soumission 1.0.51 (47) et vérification de l'artefact réel.** — mergée le 02/09/2026 (#229). Le binaire iOS de soumission est produit par EAS depuis `master` et **téléversé** sur App Store Connect ; son traitement par Apple n'est pas constaté (voir résiduels). Ce qui est constaté, c'est l'artefact lui-même, pas ce que la machine locale sait bundler : l'IPA publié par EAS est téléchargé, ouvert, et son JS embarqué lu — 17 assertions vraies sur 17 (`npm run verify:ipa`). Le contrôle est **discriminant**, et c'est ce qui le rend utilisable : rejoué sur l'IPA du build 43, il tombe à 10/17 et nomme exactement les cinq défauts de la fenêtre d'avant-OTA — la RPC `get_my_profile` absente du bundle et les trois colonnes révoquées encore demandées dans des listes de colonnes. Le bytecode Hermes ne contient plus de source : les assertions portent sur sa table de chaînes (nom de RPC, messages d'erreur de la branche, listes de colonnes littérales), et le nombre de listes lisibles est compté avant de conclure à une absence. La clé Supabase embarquée est décodée sans être affichée : rôle `anon`, même référence de projet que l'URL embarquée. | 2 septembre 2026 |
+| **Intégration au vert sur master** — mergée le 27/09/2026 (#392). (tests et CI seulement, sans migration ni code de production).<br>- `integration.yml` joue désormais toutes les suites. Chacune est en `continue-on-error`, et une étape finale (`scripts/bilan-suites.mjs`) publie le résumé par suite et fait échouer le job s'il y a eu un échec ou si aucune suite n'a tourné. Avant, la première suite rouge masquait toutes les suivantes.<br>- `auto-programming` est ajoutée aux choix du paramètre `suite`.<br>- Suites remises au vert :<br>- `programs-par-box` écrit une `start_date` qui est le lundi de la semaine courante (la contrainte exige un lundi) ;<br>- `abonnement-programmation` et `espace-coach` suivent la règle de #383 : le coach reçoit le refus « gérant ou co-gérant », et c'est le gérant qui souscrit.<br>- Sous Windows :<br>- `group-messages` accepte les fins de ligne `\r\n` de psql ;<br>- `auto-programming` force `PGCLIENTENCODING=UTF8` ;<br>- le test Jest `giphyGifPicker` appelle `git grep` sans shell.<br>- Reste hors de la CI : `scripts/test-box-archivage.mjs` (#311), jamais branchée. | 27 septembre 2026 |
+| **Seed de démo : `ON CONFLICT` du lot 4 aligné sur la contrainte de `movement_rep_counts` (script seul, aucune migration).** — mergée le 30/09/2026 (#442).<br>- `scripts/demo-seed/sql/40_lot4_social.sql` : `on conflict (athlete_id, movement_key, unit)`, clé unique posée par `20261204_movement_stats_unit.sql` (l'ancienne clé faisait échouer le lot 4 en `42P10`). Autres `ON CONFLICT` du script vérifiés contre le catalogue (badges, amitiés, streaks, journal, correspondances) : conformes.<br>- Rejeu complet sur pile jetable reconstruite (30/09/2026) : lots 0 à 4 OK, contrôles A, B, D et E tous OK. Écarts restants, hors migrations, listés dans la PR : C8 / C9 / C12 selon le jour et l'heure d'exécution, et `rollback` refusé par la garde `MATCH_TERMINE` (`20270124`). | 30 septembre 2026 |
+| **Tests : instantanés indépendants de l'heure et du fuseau horaire (tests seuls, aucun écran modifié).** — mergée le 01/10/2026 (#453). Demande de Nab (1er octobre).<br>- Suite RN (`npm run test:rn`) en UTC quel que soit le poste (`jest.rn.globalSetup.js`) ; `NOW` des tests R4b, R7, R9a, R9b, R10, R12 écrit en UTC (`…T10:00:00Z`) ; horloge figée (`src/__tests__/fixedClock.ts`) dans `homeR3b`, `trainingScreen`, `classReminders`, `notificationLocalPrefs`. Prouvé : `test:rn` vert en Europe/Paris et en UTC à deux heures simulées chacun (dont 23:59 → minuit).<br>- Défaut d'affichage relevé, non corrigé : les commentaires d'un score (`WODDetailScreen`) affichent un temps négatif (« -60min ») quand `created_at` est plus récent que l'horloge du téléphone (téléphone en retard sur le serveur). | 1er octobre 2026 |
+| État du projet : build de test 1.0.62 consigné (#481) | 5 octobre 2026 |
+| État du projet : build de test 1.0.63 consigné (#483) | 5 octobre 2026 |
 
 ### Soumission — App Privacy (Apple) et Data Safety (Google Play)
 
@@ -208,1955 +256,127 @@ Supabase/Resend.
 | Écran de connexion : `v1.0.53` seul au rendu, l'identifiant OTA (`· 01a01acc` ou `· embarqué`) apparaît au toucher du texte de version (`versionDisplay`). Test : masqué au rendu, visible après appui. | 5 septembre 2026 |
 | Historique d'entraînement, deux points d'entrée vers `WodHistory` : « Mes entraînements » dans le Profil (athlète et gérant — `WodHistory` ajouté à `BOProfileStack`), et après l'enregistrement d'un score dans le générateur, confirmation avec « Voir mon historique ». Test : les deux points d'entrée naviguent vers `WodHistory`. | 5 septembre 2026 |
 | Messagerie de groupe : `group_messages.sender_id` reçoit sa clé étrangère vers `profiles` en `ON DELETE SET NULL` (migration `20261130_group_messages_sender_set_null.sql`, appliquée en prod avant merge, preuve `pg_constraint` `confdeltype='n'`) — la suppression d'un compte laissait ses messages orphelins (24 sur 39 purgés le 4 septembre), elle les anonymise désormais ; `MessagesScreen` affiche « Compte supprimé » pour un expéditeur `NULL`. Suite `group-messages` d'`integration.yml` : `delete_user_account()` sous l'identité de l'athlète → ses messages restent avec `sender_id NULL`, ceux des autres intacts (7/7) ; mutation inverse (clé retirée) rouge sur `GM_ORPHELIN` | 5 septembre 2026 |
+| Landing : nouveau titre du hero, « Une plateforme unique conçue pour tous. » (AthleX-Manager #420) | 5 octobre 2026 |
+| Landing : vrais écrans de l'app et du Manager dans la visite guidée, « Strength » en anglais (AthleX-Manager #421) | 6 octobre 2026 |
+| Landing : visite guidée agrandie sur les grands écrans, apparence seule (AthleX-Manager #422) | 6 octobre 2026 |
+
+### Version anglaise de l'app
+
+| Capacité | Fermé le |
+| --- | --- |
+| **Chantier anglais, PR 1a : minuteur, générateur, Musculation, partage (app seule, aucune migration ; mergée le 06/10/2026 (#492)).** Le minuteur (réglages, lancement, en cours en portrait et paysage, Split, design, vidéo), le générateur (Functional, Hybrid, Musculation et leurs options), la carte Séance de Musculation et « Partager ma perf » (écran et image) passent par `t()` en français et en anglais, texte français inchangé ; dates par `formatDate`, « Strength » en anglais ; les valeurs envoyées au moteur, à la base et aux préférences ne changent pas (mêmes paramètres dans les deux langues). | 6 octobre 2026 |
+| **Chantier anglais, PR 0b : garde stricte (outillage et tests, aucune migration ; mergée le 06/10/2026 (#490)).** Dans un fichier déclaré traduit (`scripts/i18n/fichiers-traduits.json`), la garde refuse désormais tout texte affiché hors `t()`, quelle que soit sa langue, sauf les textes sans lettre, les termes techniques de `scripts/i18n/termes-techniques.json` et les lignes « `// i18n-ignore : <raison>` » (raison obligatoire) ; les onze textes qu’elle a trouvés dans les 29 fichiers déjà déclarés (« pts », « D1 · », « TB: », « BM », « SC », « Cap », « R1 · », « E2MOM ») passent par `t()`, texte inchangé. | 6 octobre 2026 |
+| **Chantier anglais, PR 1b : Résultat du WOD, programmes, calculateur 1RM (app seule, aucune migration ; mergée le 06/10/2026 (#489)).** « Ton WOD », le Détail d'un programme, le calculateur 1RM (zones barres et gymnastique), le matériel du générateur et les affichages des blocs de force et cardio passent par `t()` en français et en anglais (texte français inchangé) ; les clés de records `gymnastics_<Libellé>` et le texte enregistré des WOD ne bougent pas, l'analyse des blocs donne le même résultat dans les deux langues ; textes du moteur (PR 8) et contenus de box restent tels quels. | 6 octobre 2026 |
+| **Chantier anglais, PR 0 : socle i18n (app seule, aucune migration ; mergée le 06/10/2026 (#487)).** Dates et nombres selon la langue de l'app et la région du téléphone (`src/i18n/locale.ts`, plus de `'fr-FR'` en dur hors minuteur et carte de partage, laissés à la PR 1a), `errorMessage()` qui traduit les refus de la base et des fonctions Edge, app et push en anglais pour un téléphone ni français ni anglais (le choix du Profil l'emporte, le jeton est réenregistré au changement), « Strength » pour « Musculation » en anglais, polyfill des pluriels pour Hermes, et garde (`scripts/i18n/`, test `i18nGarde`) contre le français hors `t()` dans les fichiers déclarés traduits. | 6 octobre 2026 |
+| **Chantier anglais, PR 0c : déclarer les fichiers déjà traduits (outillage, aucun code ni migration ; PR #494 mergée le 07/10/2026).** — mergée le 07/10/2026 (#494). Les 47 fichiers que l'inventaire du 07/10 trouve sans texte affiché hors `t()` (garde stricte et scanner français à 0) entrent dans `scripts/i18n/fichiers-traduits.json` (43 → 90 entrées) : composants `ax/*` et `glass/*`, Réservation, Entraînement, onboarding, plusieurs écrans de Compétition et du Manager in-app. La garde les protège désormais d'une régression. « Scaled » rejoint les termes techniques (`scripts/i18n/termes-techniques.json`). | 7 octobre 2026 |
+| **Chantier anglais, PR 7 : erreurs brutes et corrections (app seule, aucune migration ; mergée le 10/10/2026 (#505)).** Les dernières alertes qui affichaient un `error.message` brut (28 appels dans 16 écrans, plus `joinBox` et `leaveBox` d'AuthContext) passent par `errorMessage()` ; une garde (`i18nErreursTextes.test.ts`) refuse désormais tout `Alert.alert` avec un `.message` brut hors fichiers exclus (AdminScreen). Aucun code connu ne manquait à `refusals.ts`. Corrections validées par Nab : type de séance « Musculation » (éditeur de WOD, éditeur de programme, et formulaire de WOD perso qui partage la clé), vrais pluriels du back-office (« 1 inscrit », « 12 participants »…), types de cours « Musculation », « Mobilité », « Enfants », « Ados » (libellé seul : la valeur enregistrée comme titre du cours ne change pas, `src/lib/classTypes.ts`, et les cours existants s'affichent sous leur libellé traduit dans les horaires, la réservation et « Mes réservations »), « BLOC », « En continu ». Anglais : limite de réservation « session / sessions », clé inutilisée `bo.notifications.sentMsg` supprimée, « Program » au lieu de « Programme », prix de la programmation « €29/month » (français inchangé, montant par `locale.ts`). Captures 390 px FR / EN dans `athlex-captures/i18n-erreurs`. | 10 octobre 2026 |
+| **Chantier anglais, PR 6 : Gérant (app seule, aucune migration ; mergée le 10/10/2026 (#504)).** Bandeau d'abonnement du tableau de bord, horaires (types de cours traduits à l'écran, valeur enregistrée inchangée), compétition inter-box (WODs programmés, onglets poules et suisse), programmation, éditeur de programme, membres, éditeur de WOD et ouverture d'un lien externe passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de 20 états pris sur master, `i18nGerant.rn.test.tsx`, alertes comprises), aucun texte français en anglais. 40 clés ; messages bruts par `errorMessage()` dans les 7 fichiers du groupe ; vrais pluriels anglais pour 4 clés du back-office qui gardaient « (s) ». « Heavy » pour l'intention Functional du générateur (le français garde « Force ») ; le type « Force » de l'éditeur de WOD désigne la séance de Musculation (`wod_type: 'strength'`) : non renommé, point remonté à Nab. Corrections validées : « En continu », « 1 match », « 1 WOD », « 1 jour d'affilée », « 1 rep », « Taux de victoire ». AdminScreen exclu explicitement de la garde (`scripts/i18n/fichiers-exclus.json`, outil interne réservé à Nab). Les 11 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` (144 → 155). Captures 390 px FR / EN dans `athlex-captures/i18n-gerant` : aucun libellé anglais tronqué ni hors écran. | 10 octobre 2026 |
+| **Chantier anglais, PR 5 : Profil & Accueil (app seule, aucune migration ; mergée le 10/10/2026 (#503)).** Profil (Compte, PR, séries réalisées, Stats, Badges), Amis, profil public, utilisateurs bloqués, historique ELO, Nouveautés, Accueil (sélecteur de box, badge débloqué, semaine), Notifications, connexion, inscription, mot de passe oublié et code, rejoindre une box, tutoriel, tours guidés gérant et coach, mise à jour requise, champ date et onglets gérant / coach passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de 67 états pris sur master, `i18nProfil.rn.test.tsx`, alertes et partage compris), aucun texte français en anglais. 113 clés ; erreurs rendues par AuthContext (`joinBox`, `leaveBox`, `deleteAccount`) traduites, messages bruts par `errorMessage()` ; dates de l'historique ELO par `src/i18n/locale.ts` ; initiales des jours et récapitulatif de la semaine de l'Accueil en vrais pluriels anglais. Corrections validées par Nab : « 1 membre », « Top : », « Rejoints », « {{cat}} leaderboard », récapitulatif AMRAP « 1 round / 4 rounds » ; catégories de badges « Leaderboard ». Les 25 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` (119 → 144) ; chaînes techniques (erreurs de build, journaux, nom de route) en `i18n-ignore` avec raison. LegalScreen (PR à part) et AdminScreen (reste en français) hors périmètre. Captures 390 px FR / EN dans `athlex-captures/i18n-profil` : aucun libellé anglais tronqué ni hors écran. | 10 octobre 2026 |
+| **Chantier anglais, PR 4 : Compétition (app seule, aucune migration ; mergée le 10/10/2026 (#500)).** Mini-tournois (liste, création, détail, saisie et contestation de score, WOD du Jour RX / Scaled), Classement (individuel, équipes, box), Classement de la box, détail d'une compétition inter-box (onglets, BYE), saisie d'un score inter-box, tableau et WOD d'un tournoi passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de 37 états pris sur master, `i18nCompetition.rn.test.tsx`, alertes comprises), aucun texte français en anglais. 88 clés ; « Classement » = « Leaderboard » ; messages d'erreur bruts par `errorMessage()`. Le libellé des tours d'un score AMRAP est désormais fourni par chaque écran (`t('score.amrapRounds')`) : plus de repli français dans `tournamentUtils.ts` (TournamentScreen et BOTournamentScreen passent aussi le libellé). Les 9 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` ; « BYE » et « VS » deviennent termes techniques ; les prescriptions Scaled de `wodScaling.ts` restent du contenu d'entraînement (`i18n-ignore`, traduites avec le moteur). Explorer : `explorer.detail.sports_one` passe à « sport » (validé par Nab). Captures 390 px FR / EN dans `athlex-captures/i18n-competition` : aucun libellé anglais tronqué ni hors écran. | 10 octobre 2026 |
+| **Chantier anglais, PR 3 : Explorer (app seule, aucune migration ; mergée le 10/10/2026 (#497)).** Annuaire des box (liste, recherche, filtres de sport, carte et sa fiche, variante web), détail d'une box, Partenaires et détail d'un partenaire (alerte du code promo comprise), Programmes et Programmes des box passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de 20 états pris sur master, `i18nExplorer.rn.test.tsx`), aucun texte français en anglais. 60 clés ; sports, services et catégories de partenaire, valeurs enregistrées, traduits au rendu par `src/screens/explorer/explorerLabels.ts` (une valeur inconnue s'affiche telle quelle ; crossfit → Functional, hyrox → Hybrid). Pluriels anglais par l'outil du socle (« 1 member », « 12 listed boxes », « 1 day/week »), testés à 1 et à 12 ; en français, singuliers corrigés (validés par Nab) : « 1 membre », « 1 jour/semaine », et « Carte indisponible sur le web » sur la variante web. Les 9 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` ; « Instagram » devient terme technique. Captures 390 px FR / EN dans `athlex-captures/i18n-explorer` : aucun libellé anglais tronqué ni hors écran. | 10 octobre 2026 |
+| **Chantier anglais, PR 2 : Ma Box + Réservation (app seule, aucune migration ; mergée le 10/10/2026 (#495)).** Détail du WOD (score, saisie, classement, commentaires), WOD perso, Actualités, Messages (dont GIF), Infos de la box, Membres, Signaler / Bloquer (`ReportMenu`, motifs de `moderation.ts` en clés), sélecteurs de semaine du Whiteboard et de la Réservation, et les placeholders d'Infos de la box côté gérant passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de 39 états pris sur master, `i18nMaBox.rn.test.tsx`, alertes comprises), aucun texte français en anglais. 113 clés, pluriels par l'outil du socle (« 1 athlete », « Leaderboard · 1 score », « 1 like »), messages d'erreur bruts de ces écrans par `errorMessage()`. Les 11 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` ; « Scaled » devient terme technique. Captures 390 px FR / EN dans `athlex-captures/i18n-ma-box` : aucun libellé anglais tronqué ni hors écran. | 10 octobre 2026 |
+
+### Notifications
+
+| Capacité | Fermé le |
+| --- | --- |
+| **Profil → Notifications : bouton de test sans fenêtre ni jeton, écran traduit (retour du build 1.0.60, app seule, aucune migration ; mergée le 04/10/2026 (#470), à vérifier par Nab au prochain build).** Le bouton « Tester les notifications » ouvrait une fenêtre de développement « Token enregistré » avec le début du jeton push. Il enregistre toujours le jeton (`registerForPushNotifications` + `savePushToken`), puis programme une notification locale dans 3 s (aucune requête serveur) et affiche le résultat sous le bouton : message succès, ou message alerte et lien « Ouvrir les réglages » (`Linking.openSettings`) si la permission est refusée. Plus aucune `Alert`, aucun jeton, aucun emoji. Tout l'écran passe par i18n (`notifSettings`, FR/EN), textes français inchangés. Tests `notificationSettingsTest.rn.test.tsx` (7 tests, 16 mutations tuées) ; captures avant/après sur banc web local (390 px, sombre/clair, FR/EN), message à 16 px au-dessus de la barre d'onglets. | 4 octobre 2026 |
+| **Notifications push au gérant (D4a), PR C : tâches pg_cron** — mergée le 04/10/2026 (#466). (migration `20270144`, **appliquée en prod le 04/10/2026 à 10:19 UTC**, en dernier, après la migration `20270143` et le déploiement de `deliver-manager-notifications` ; tâches 15 et 16 actives, les 13 autres inchangées ; exécutions de 10:20 à 10:23 réussies, réponses 200, file vide).<br>- `deliver-manager-notifications-minute` (chaque minute) : `net.http_post` vers la fonction, sans clé d'API ni `Authorization`, `x-cron-secret` lu dans le Vault (`cron_secret`) ; sans ce secret (base de rejeu), créée inactive.<br>- `box-manager-notifications-purge` (03:23 UTC) : supprime les lignes de la file de plus de 30 jours.<br>- Tests `notifications_gerant_cron.sql` (C0 à C3 : forme des tâches, Vault avec et sans secret, rejouable sans doublon, autres tâches intactes, purge à 30 jours, retour arrière), 12 mutations tuées. | 4 octobre 2026 |
+| **Notifications push au gérant (D4a), PR B : fonction `deliver-manager-notifications`** — mergée le 04/10/2026 (#465). (**déployée le 04/10/2026 à 10:19 UTC** par `scripts/deploy-edge.mjs`, après la migration `20270143` ; source déployée identique à la branche, copie gardée hors dépôt (`athlex-retour-arriere-deliver-manager-notifications/deploye-d4a`) ; sondes sans secret, faux secret, secret vide, GET et OPTIONS : 401 ; démarrage sans erreur ; appelée chaque minute par pg_cron depuis 10:20 UTC, réponses 200 ; conception dans `docs/NOTIFS_GERANT.md`, PR A).<br>- Appelée seulement par pg_cron avec `x-cron-secret` (401 sinon, `verify_jwt = false` versionné), clé par `_shared/cle-secrete.ts`. Lit au plus 50 lignes non envoyées, non réservées, moins de 5 tentatives, des dernières 24 h ; réserve chaque ligne avant d'envoyer (mise à jour conditionnelle, une seule exécution l'envoie).<br>- Destinataires par leur compte : `boxes.owner_id` et co-gérants actifs (`box_members.role = 'owner'`) ; ni coach, ni membre, ni administrateur de la plateforme ; l'auteur du geste exclu ; interrupteur général coupé respecté. Texte dans la langue de chaque jeton, pseudo du membre (jamais l'e-mail), heure du cours à Paris.<br>- Appareils acceptés = tickets « ok » d'Expo (comme `send-box-notification`) écrits avec `sent_at` ; échec → ligne libérée avec un code sans donnée personnelle, nouvelle tentative la minute suivante ; résultat non écrit après l'envoi → la ligne n'est jamais reprise (pas de double envoi). Données `{ type, box_id }` : au toucher, l'app s'ouvre simplement (`notificationRouter` ignore ces types).<br>- Règles dans `regles.ts`, 33 tests Jest, 28 mutations tuées. | 4 octobre 2026 |
+| **Notifications push au gérant (D4a), PR A : file d'attente et déclencheurs** — mergée le 04/10/2026 (#463). (migration `20270143`, **appliquée en prod le 04/10/2026 à 10:16 UTC** ; dump `db-dumps/2026-10-04/athlex-prod-public-internal-20261004T101510Z.dump` ; test réel en transaction annulée sur AthleX Fitness, sans trace ; audit des droits 39/39 ; conception dans [`NOTIFS_GERANT.md`](./NOTIFS_GERANT.md) ; fonction d'envoi (PR B) déployée et tâches pg_cron (PR C) appliquées le même jour).<br>- Table `box_manager_notifications` : une ligne par événement, clé unique `(type, event_ref)` ; RLS active sans règle, aucun droit pour `anon` et `authenticated`, la clé serveur lit et n'écrit que les colonnes d'envoi ; contrôle T14 de l'audit des droits.<br>- Cinq déclencheurs AFTER sur la transition seulement, une fonction `internal.filer_notification_gerant()` : nouvel abonnement Stripe actif (nouvel `stripe_subscription_id` — ni renouvellement, ni retour d'impayé, ni comptoir), `past_due_since` NULL → date, alerte « réservation sans formule », invitation passée à `accepted`. Box archivée : rien. Une erreur de mise en file ne bloque jamais l'écriture d'origine.<br>- Précontrôle du 04/10/2026 (lecture seule) : déclencheurs existants non redéfinis (md5 dans la note), table absente, `is_box_owner_admin` identique au dépôt. Tests `notifications_gerant_file.sql` (F0 à F9, mutations, retour arrière). | 4 octobre 2026 |
+| **Notifications du gérant (D4b), PR 1 : base et fonction** — mergée le 04/10/2026 (#456). (migration `20270142`, **appliquée en prod le 03/10/2026 à 16:17 UTC** ; dump `db-dumps/2026-10-03/athlex-prod-public-internal-20261003T160601Z.dump` ; audit 38/38 ; fonction `send-box-notification` **déployée le 03/10/2026 à 16:19 UTC** ; maquettes validées par Nab, page « 🧪 Spec · Notifications du gérant », node 475:753 ; PR 2a apparence et PR 2b comportement à suivre).<br>- `box_notifications.delivered_count integer NULL` : appareils acceptés par Expo pour cette notification (0 compris), NULL pour les lignes antérieures ou pas encore envoyées. Garde `internal.garder_resultat_notification()` : un client (`authenticated`, `anon`) ne pose ni ne change ce nombre (42501 `NOTIF_RESULTAT_RESERVE`) ; contrôle T13 de l'audit des droits.<br>- `box_notifs_owner` passe de `is_box_owner(box_id)` (md5 de prod f1c07d7a…) à `is_box_owner_admin(box_id)` : le co-gérant crée et lit les notifications de sa box comme le gérant ; coach et membre restent sans écriture ; lecture des membres inchangée.<br>- `send-box-notification` : gérant ou co-gérant de la box (même règle que `is_box_owner_admin`), 403 sinon ; `sent` = tickets « ok » d'Expo (avant : messages des lots envoyés) ; résultat écrit dans `delivered_count` avec la clé serveur, 0 compris (sans membre, sans jeton, préférences coupées). Une notification ne part qu'une fois : 409 `Already sent` si elle a déjà un résultat ; sinon réservation conditionnelle (`delivered_count` NULL → 0, `WHERE delivered_count IS NULL`) après tous les refus et avant Expo, 409 si un envoi simultané l'a prise ; nombre définitif écrit après l'envoi (une erreur après la réservation laisse 0). Règles dans `regles.ts`, testées par Jest.<br>- Précontrôle du 03/10/2026 (lecture seule) : fonction déployée identique à `d9b3382` (copie de retour arrière dans `C:\Users\NBS\athlex-retour-arriere-send-box-notification\avant-d4b-pr1`) ; 3 lignes dans la table ; en prod, 3 gérants sur 4 n'ont pas de ligne `box_members`, d'où le passage par `boxes.owner_id`.<br>- Appliquée dans l'ordre migration, puis fonction ; test réel en transaction annulée sur AthleX Fitness (co-gérant fictif accepté, résultat refusé au client, coach refusé, réservation conditionnelle par la clé serveur), sans trace. | 4 octobre 2026 |
+| **Notifications du gérant (D4b), PR 2a : apparence de l'écran (app seule, apparence seule ; vérification visuelle par Nab).** — mergée le 04/10/2026 (#464). `BONotificationsScreen` à l'apparence de sa maquette « Notifications (envoi) » (Figma 56:1868 sombre, 56:2536 clair) avec les composants `ax` : en-tête ‹ / cloche menthe / titre Oswald, carte « NOUVELLE NOTIFICATION », destinataires en `AxChip`, champs `AxTextField`, bouton menthe `AxButton`, historique en carte (coche verte, date, cible en menthe). Mêmes libellés, mêmes destinataires, même envoi (logique identique, contenu vérifié sur l'écran d'avant). Tests `boNotificationsApparence.rn.test.tsx`, 11 mutations tuées. Destinataire, résultat de l'envoi et historique enrichi : PR 2b. | 4 octobre 2026 |
+| **Notifications du gérant (D4b), PR 2b : destinataire, résultat de l'envoi, historique (app seule, aucune migration ; vérification visuelle par Nab).** — mergée le 04/10/2026 (#467, #468). Destinataire en deux pastilles, « Tous les membres (N) » par défaut et « Un membre » qui ouvre la feuille « CHOISIR UN MEMBRE » (Figma 479:1161, 479:1366 ; `ChoisirMembreFeuille`) : membres actifs de A à Z sans tenir compte des accents ni de la casse, groupés sous leur lettre, index A–Z qui fait défiler à la lettre, recherche qui filtre dès la première lettre avec compteur et croix ; la feuille se réduit au-dessus du clavier. Membre choisi en carte avec « Changer ». Résultat de l'envoi dans la carte au lieu des fenêtres « Envoyé » : encadré vert « Envoyée à N appareil(s) » si `sent` > 0, sinon encadré d'alerte « non reçue » (texte membre ou tous) ; erreur d'envoi (409 compris) inchangée. Historique : coche verte et « N appareils », cloche barrée « non reçue » à 0, rien si `delivered_count` est NULL ; pseudo du membre au lieu de « Individuel », « Membre retiré » s'il n'est plus là. Raccourci « Envoyer une notification » dans la fiche d'un membre actif (482:3303), qui ouvre l'écran avec ce membre présélectionné. Tri et filtre dans `src/lib/membresAZ.ts`. Tests `membresAZ.test.ts`, `boNotificationsDestinataire.rn.test.tsx`, `boMembersNotifier.rn.test.tsx`, 25 mutations tuées. | 4 octobre 2026 |
+| **Notification au gérant d'une demande de changement de formule** — mergée le 10/10/2026 (#498). (fonction `deliver-manager-notifications`, **déployée le 10/10/2026 à 12:33 UTC** par `scripts/deploy-edge.mjs` depuis master `6d819d0`, PR #498 ; code déployé avant identique octet pour octet à master avant le merge, copie gardée hors dépôt (`athlex-retour-arriere-deliver-manager-notifications/avant-498`) ; source en prod identique à master après ; sondes sans secret, faux secret, secret vide, GET et OPTIONS : 401 ; pg_cron chaque minute, 12 exécutions réussies sur 12 minutes, réponses 200, aucune erreur d'exécution ; file vide, aucune ligne en attente ; aucune donnée écrite ni envoi de test ; aucune migration). Le type `plan_change_request` (migration 20270147, en prod) a désormais son texte : FR « Demande de changement de formule » / « {pseudo} demande à passer à {formule}. », EN « Plan change request » / « {pseudo} asked to switch to {formule}. ». Rien d'autre ne change : mêmes destinataires, même réservation avant envoi, même délai de 24 h, même purge. Les types de `regles.ts` sont contrôlés contre la contrainte de la base (test de parité). À déployer avant la PR B du Manager, la seule qui crée des demandes. Tests Jest : textes FR / EN et parité, 11 mutations tuées. | 10 octobre 2026 |
+| État du projet : déploiement de `deliver-manager-notifications` (demande de changement de formule) consigné (#499) | 10 octobre 2026 |
+
+### Refonte visuelle (nouveau design)
+
+| Capacité | Fermé le |
+| --- | --- |
+| **Phase 1 design, deuxième passe mobile (Notifications, détail tournoi, minuteur).** — mergée le 31/08/2026 (#226). Les défauts sont mesurés, pas supposés : blanc sur la surface du bouton d'appel à l'action à 1,23:1 en clair, l'accent employé en texte sur une carte blanche à 2,56:1, la couleur de la carte prise pour encre sur un aplat d'accent, l'heure de rappel réduite à 2,06:1 par une opacité posée sur tout le conteneur, et deux teintes de domaine pensées pour le sombre posées sur une carte claire (2,17:1 et 2,23:1). Deux cas sont ajoutés au contrôle mécanique et échouent sur l'état d'avant. **Ce n'est pas constaté à l'écran** : la lisibilité se prouve à l'œil, sur un vrai appareil, dans les deux thèmes — la ligne ne montera qu'après ce constat, et après un binaire qui porte le correctif. Remplacée par la refonte visuelle R0–R14 (#404 à #450) ; constat visuel sans objet. | 31 août 2026 |
+| **Coque de verre étendue aux écrans denses (21 écrans).** — mergée le 31/08/2026 (#227). Les 18 écrans de back-office, les préférences de notification, le détail de programme et la carte des box posaient leur fond à plat — blanc pur en mode clair — pendant que l'accueil, Ma Box et le Compte montaient le dégradé argenté. Une mesure a contredit une justification déjà écrite dans le code : le contrôle interdisait le verre sur Notifications au motif que l'encre atténuée n'y tient pas 4,5:1, ce qui est vrai **à même le dégradé** et faux **sur une carte** posée dessus (4,89 à 5,25:1 en clair). Le même contrôle, réécrit sur la règle réelle, a trouvé un défaut **déjà en production** sur l'accueil et Ma Box : sur le troisième arrêt émeraude, l'encre atténuée sur carte tombait à 3,03:1 — l'arrêt est assombri, elle remonte à 4,85:1. Deux appels à l'action du Compte écrivaient la couleur du fond sur la surface translucide du bouton (1,23:1). **Ce n'est pas constaté à l'écran** : la coque et l'encre se prouvent à l'œil, dans les deux thèmes, et la ligne ne montera qu'après ce constat. Remplacée par la refonte visuelle R0–R14 (#404 à #450) ; constat visuel sans objet. | 31 août 2026 |
+| **Phase 1 design, troisième passe : les deux écrans que la charte n'avait pas atteints (détail tournoi, minuteur).** — mergée le 31/08/2026 (#228). Le détail tournoi montait déjà la coque, mais son en-tête était un dégradé bleu-noir écrit en dur, orphelin de la charte, et ses trois pastilles (inscrit, complet, prix) prenaient leurs teintes au thème **clair** alors que l'en-tête est sombre dans les deux thèmes : 3,12:1, 3,55:1 et 3,48:1 mesurés sur son arrêt le plus clair. Les arrêts viennent maintenant de la famille du dégradé de la coque, et l'encre des pastilles du thème sombre (6,76:1, 6,19:1, 12,22:1). L'en-tête **reste** un panneau sombre : son encre blanche y est mesurée haut (titre 17,14:1, métadonnées 7,82:1, glyphes 5,15:1), ce qu'une carte translucide posée sous le blob du coin haut-gauche ne garantit pas. L'écran de réglage du minuteur, lui, était resté hors de toutes les passes : blanc en dur sur l'aplat d'accent (2,56:1), blanc sur l'appel à l'action translucide (1,23:1), libellé et poignée de modale en blanc translucide sur fond clair (1,05:1 et 1,00:1), et l'accent employé onze fois comme encre ou glyphe (2,46:1 sur carte). Le minuteur **en course** n'est pas touché : son fond est choisi par l'athlète. Neuf contrôles mécaniques ajoutés, qui échouent tous sur l'état d'avant. **Ce n'est pas constaté à l'écran** : la ligne ne montera qu'après le constat dans les deux thèmes. Remplacée par la refonte visuelle R0–R14 (#404 à #450) ; constat visuel sans objet. | 31 août 2026 |
+| **Onglet gérant « Dashboard » → « Suivi », mergée le 06/09/2026 (#266).** Le premier des 6 onglets de la barre gérant était tronqué ; libellé seulement, via i18n (`tabs.boTracking` : « Suivi » / « Tracking »), route `BODashboard` et écran `Dashboard` inchangés. Les cinq autres libellés restent en dur comme avant. Test `boTabTrackingLabel.test.ts` (mutation inverse : `tabBarLabel: 'Dashboard'` rétabli est rouge).<br><br> | 6 septembre 2026 |
+| **Refonte visuelle mobile, lot R0 « Fondations » (aucun écran modifié).** — mergée le 28/09/2026 (#404).<br>- Jetons du nouveau design posés dans `src/theme/axTokens.ts` (source Figma, collections « AthleX — Couleurs » et « AthleX — Dimensions ») : couleurs sombre et clair, rayons, espacements, flou du verre, 13 styles typographiques. Couleurs exposées dans `theme.ax` ; aucune valeur existante du thème ne change.<br>- Police Oswald (`Oswald_500Medium`) chargée au démarrage, pas encore utilisée.<br>- Contraste AA vérifié par test dans les deux modes. Les écrans passeront au nouveau design dans les lots suivants (R1 : fond translucide du verre et repli Android). | 28 septembre 2026 |
+| **Refonte R6b : feuille YouTube réduite, partage en action principale et nouveau décompte en mode caméra (app seule, aucune migration).** — mergée le 29/09/2026 (#424).<br>- Feuille « Partager sur YouTube » : titre sans emoji, « Publie ta vidéo depuis YouTube Studio », `AxButton` accent « Ouvrir YouTube Studio » (même lien) et outline « Fermer » ; retirés : champ du lien, « Copier le prompt d'analyse », état `ytLink`, imports `TextInput` / `Clipboard` / `KeyboardAvoidingView` / `Copy`, styles associés. Textes par clés `timer.youtube.*` et `timer.camera.*` (FR / EN).<br>- Temps final avec vidéo : « Partager sur YouTube » seule action accent ; icône Lucide `Check` à la place des ✓.<br>- Décompte caméra : `CountdownView` et `GoFlash` de R5b sur voile `axVeil.countdown` (AA même sur image blanche) ; vibrations 40 ms / 200 ms coupées avec les sons ; démarrage au même tic que GO. Module `realtime-recorder`, `updateOverlayState` et décompte incrusté (chiffre blanc seul, sans libellé ni GO) inchangés.<br>- Tests : `r6b.rn.test.tsx` (15), `npx jest` 1976, `npm run test:rn` 457, `tsc` vert ; 35 mutations tuées. | 29 septembre 2026 |
+| **Refonte R6a : écrans du mode caméra au nouveau design (app seule, aucune migration, apparence seule).** — mergée le 29/09/2026 (#423).<br>- `TimerRunScreen` en mode caméra : pastille REC en `AxTag` danger à point rouge, retourner / fermer en `AxIconButton` sur voile, « Démarrer » / « Lancer le chrono » en `AxButton` accent, « Arrêter le chrono » / « Arrêter la vidéo » en stop ; chiffres Oswald, date et heure en caption, voiles `axVeil` (encre claire AA même sur une image blanche) ; temps final avec vidéo (`AxTag`, overline, « Lire la vidéo », « Sauvegarder la carte », « Fermer » en outline, YouTube inchangé). `VideoPlaybackScreen` : contrôles en `AxIconButton`, temps en caption, barre à l'accent, lecteur non touché.<br>- Module `realtime-recorder`, `updateOverlayState` et incrustations, enregistrement, horodatage, partage, callbacks, texte du décompte caméra et contenu de la feuille YouTube inchangés (empreintes et mocks dans `r6a.rn.test.tsx`).<br>- Tests : `r6a.rn.test.tsx` (17), `npx jest` 1976, `npm run test:rn` 442, `tsc` vert ; 40 mutations tuées. | 29 septembre 2026 |
+| **Refonte R5b : thèmes AthleX liés au thème de l'app, noms traduits et nouveau décompte (app seule, aucune migration serveur).** — mergée le 29/09/2026 (#422).<br>- `TIMER_THEMES` : `athlex` et `athlex2` en tête, ordre AthleX, AthleX 2, Noir, Blanc, Citron vert, Orange, Bleu, Violet, Cyan, Jaune, Rose, Rouge ; identifiants existants inchangés ; noms par clés `timer.themes.*` (FR / EN), champ `emoji` retiré.<br>- Réglage « Suivre le thème de l'app » (`followAppTheme`, même clé AsyncStorage `bwod_timer_display_opts_v2`) : activé sans préférence enregistrée (sombre → AthleX, clair → AthleX 2, change en direct) ; désactivé pour une préférence d'avant R5b et dès qu'on touche une vignette ou une couleur de chiffres.<br>- Décompte : « PRÉPARE-TOI » (+ nom du WOD, anneau) au-dessus de 3, « PRÊT ? » en accent avec halo à 3-2-1, bande « GO ! » inclinée et éclair de 200 ms par-dessus le chrono lancé ; vibration 40 ms à 3-2-1 et 200 ms à GO, coupée avec les sons. Bips, calculs, démarrage au même tic et écran caméra (décompte distinct, inchangé) non touchés.<br>- Tests : `r5b.rn.test.tsx` (23), `npx jest` 1976, `npm run test:rn` 425, `tsc` vert ; 30 mutations tuées. | 29 septembre 2026 |
+| **Refonte R5a : minuteur au nouveau design (app seule, aucune migration, apparence seule).** — mergée le 29/09/2026 (#420).<br>- `TimerScreen` (sélecteur « TYPE DE MINUTEUR » en `AxCard` + feuille des 7 types avec leur description, icônes Lucide ; réglages − / + en `AxIconButton`, options en `AxSwitch`, `DÉMARRER` seule action accent), `TimerLaunchModal` (6 types en `AxChip` sur plusieurs lignes, plus de défilement horizontal ; « Avec caméra » en `AxButton` accent, « Sans caméra » en contour — validés par Nab) et `TimerRunScreen` hors caméra (format en `AxTag`, chiffres Oswald, bloc suivant en `AxCard`, feuille « Design du minuteur » en `AxChip` / `AxSwitch`, temps final) ; logique du chrono (phases, tics, bips, enregistrement), `launch()` et `TIMER_THEMES` figés par empreinte dans `r5a.rn.test.tsx` ; thèmes, noms et décompte réservés à R5b ; ordre des textes comparé à un relevé de master. | 29 septembre 2026 |
+| **Refonte R4b : historique, calculateur 1RM et programmes au nouveau design (app seule, aucune migration, apparence seule).** — mergée le 29/09/2026 (#419).<br>- `WodHistoryScreen` (compteurs en `AxCard`, filtres `AxChip`, entrées `AxCard`), `OneRMCalculatorScreen` (Barres / Gymnastique en `AxChip`, `AxTextField`, `AxSwitch` kg / lbs, zones dans une `AxCard` à filets `border`, couleurs de zone rapprochées de l'encre du thème par `readableInk` jusqu'à l'AA) et `ProgramDetailScreen` (jours en overline, séances en `AxCard`, « Notes coach » en `AxCard`, `AxButton` accent unique) ; la séance de programme reste dans `WODDetailScreen` (grille et boutons déjà en ax depuis R4a) ; formules 1RM, `gymZones.ts`, services programme / musculation, filtres, favoris, mémorisation et date de début inchangés ; emoji des filtres retirés ; ordre des textes comparé à un relevé de master ; tests `r4b.rn.test.tsx` + suites existantes verts. | 29 septembre 2026 |
+| **Refonte R4a : générateur et résultats au nouveau design (app seule, aucune migration, apparence seule).** — mergée le 29/09/2026 (#418).<br>- `WodGeneratorScreen` (Functional / Hybrid / Musculation), `WodResultScreen` (WOD et séance de musculation), `MuscuSessionCard`, `StrengthSetGrid` et `SessionContextCard` en composants ax (`AxChip`, `AxSwitch`, `AxTextField` compact, `AxButton` accent unique « Générer mon WOD » / « Saisir mon score », `AxCard featured`, `AxTag`) ; emoji des disciplines remplacés par des icônes Lucide ; champs, options, libellés, ordre des blocs, génération, brouillon, validation musculation, Whiteboard, favoris et re-tirer inchangés (ordre des textes comparé à un relevé de master) ; écarts maquette / code listés dans la PR ; tests `wodR4a.rn.test.tsx` + suites existantes verts. | 29 septembre 2026 |
+| **Refonte R3c : en-tête « ‹ Retour » uniforme sur les écrans secondaires (app seule, aucune migration, apparence de l'en-tête seule).** — mergée le 29/09/2026 (#417).<br>- Nouveau `AxScreenHeader` (rangée 44, marges 20, chevron 16 + « Retour » label textMuted, titre titleM une ligne centré, emplacement droit de même largeur) sur 37 écrans secondaires de l'athlète ; titres, actions de droite et retours propres conservés ; chevron de retour retiré de l'écran racine Réservation ; écrans racine, plein écran, fenêtres, gérant / coach / connexion inchangés. | 29 septembre 2026 |
+| **Refonte R3b : Accueil au nouveau design (app seule, aucune migration, apparence seule).** — mergée le 29/09/2026 (#416).<br>- `HomeScreen` et ses blocs (`HomeNewsCard`, `HomeExplorerBlock`) en composants ax et `theme.ax` / `axTypography` / `axRadius` / `axSpacing` : en-tête titleXL, carte ELO numberL accentText, palier en couleur `LevelColors` tenue AA (`levelInk`), Amis / Profil en `AxButton` outline, titres de section titleM. Blocs, ordre, libellés, données et navigation inchangés ; plus de couleur en dur ni d'emoji littéral. | 29 septembre 2026 |
+| **Refonte R3a : Accueil — actu de la box, outils retirés, accès au classement (app seule, aucune migration).** — mergée le 29/09/2026 (#414).<br>- Carte ax « Actu de ta box » sous Amis / Profil : dernier article `box_articles` de la box active de moins de 14 jours, avec likes et commentaires en une requête (`fetchHomeNews`), « Nouveau » sous 48 h, ouvre `Articles` (onglet Ma Box) ; masquée sans box ou sans article récent, aucune requête sans box.<br>- Section « Outils » retirée de l'Accueil (`homeTools.ts` et clés `home.tools` supprimés, outils dans Entraînement) ; tutoriel sans étape d'outil. Rang de la carte ELO → `Leaderboard` ; carte ax « Classement » en tête de l'onglet Tournois (ouvert par défaut) de Compétitions ; `Leaderboard` et `PublicProfile` dans la pile. | 29 septembre 2026 |
+| **Refonte R2b : barre d'onglets flottante en verre (app seule, aucune migration, apparence seule).** — mergée le 29/09/2026 (#412).<br>- Barre de l'athlète `AxTabBar` : flottante, centrée (écran − 40, 64 de haut, rayon 24) à inset bas + 12, `AxGlass` `theme.ax.background` à 0.80 (flou iOS, 0.96 sur Android), bordure `theme.ax.border` ; onglet actif en `accentText` avec point, inactifs en `textMuted` ; masquée clavier ouvert. Onglets, libellés, icônes, ordre et comportement inchangés ; barres gérant et coach inchangées.<br>- Espace bas commun `useTabBarScrollSpace()` (64 + 12 + inset + 16) sur tous les écrans des piles de l'athlète ; éléments fixés en bas (carte de la carte des box, commentaire d'article) posés au-dessus.<br>- Correctif (apparence seule) : les 5 onglets ont la même largeur (`flex: 1`, padding horizontal de la barre 6), « Accueil » centré au pixel sur l'écran ; libellés Inter SemiBold 9,5 sans espacement, une ligne, réduits jusqu'à 0,85 (`adjustsFontSizeToFit`) au lieu d'être coupés. Tests : largeurs égales, centre à 390 / 430 px, libellés FR / EN mesurés avec les avances réelles d'Inter (390, 430, 320 px), 5 mutations tuées. | 29 septembre 2026 |
+| **Refonte R2a : onglet Entraînement à la place d'Explorer (app seule, aucune migration).** — mergée le 29/09/2026 (#409).<br>- 2e onglet « Entraînement » (icône Dumbbell) : écran ax `TrainingScreen` (génération en un tap par `generateForUser` avec les réglages mémorisés, lien vers le générateur complet, tuiles Minuteur / 1RM / Historique / Favoris, « Dernière séance » depuis le brouillon ou `generated_wods`). Pile Entraînement : écrans WOD et minuteur, aussi conservés dans Accueil.<br>- Explorer supprimé : ses sept routes passent dans la pile Accueil, bloc ax « Explorer » sous « Cette semaine » (Trouver une box, Programmes, Partenaires). Barre d'onglets inchangée (verre flottant : R2b). | 29 septembre 2026 |
+| **Refonte visuelle mobile, lot R1 « Composants » (aucun écran modifié).** — mergée le 29/09/2026 (#405).<br>- Bibliothèque `src/components/ax/` : verre (`AxGlass`, flou 24 sur iOS, opacités 0.80 / 0.85 portées à 0.96 sur Android), boutons (accent, contour, clair, pointillé, arrêt), bouton carré, pastille, étiquette, badge compteur, cartes (standard, vedette, verre), champ, interrupteur, case à cocher, jour, pastille d'état, en-tête de page. Couleurs, typographie, rayons et espacements tirés des jetons R0.<br>- Catalogue `src/screens/dev/AxCatalogScreen.tsx`, enregistré dans la navigation seulement en développement (`__DEV__`). Aucun écran existant ni ancien composant ne l'importe (vérifié par test).<br>- La barre d'onglets flottante vient au lot R2 ; les écrans adopteront les composants aux lots R2 à R11. | 29 septembre 2026 |
+| **Refonte R11 : entrée, tutoriel, états vides et fenêtres au nouveau design (apparence seule, aucune migration).** — mergée le 30/09/2026 (#434).<br>- Entrée (Connexion, Créer un compte, Mot de passe oublié / Email envoyé, Rejoindre une box, Rejoins ta box, Mentions légales) : champs `AxTextField`, une seule action `AxButton` accent, liens `labelSmall` `accentText`, tokens ax ; symboles ♂ / ♀ et emojis remplacés par des icônes Lucide. Tutoriel : titre `titleXL`, texte `body`, points de progression, « Suivant » accent, « Passer » en texte ; cinq slides, défilement et callbacks inchangés.<br>- États vides : `src/components/EmptyState.tsx` (icône Lucide, `titleM`, `bodySmall` `textMuted`, action `AxButton`) dans Réservation, Mes réservations, Historique, Tournois / Mini-tournois, Amis, Messages sans box ; conditions inchangées.<br>- Fenêtres : `src/components/ConfirmDialog.tsx` (`useConfirmDialog`, `AxCard` centrée sur `axVeil`, destructive = stop, principale = accent, Annuler / Non = outline) à la place d'`Alert.alert` pour annuler la réservation, quitter la liste d'attente, trop tard, abonnement impayé, créneau complet, limites journalière / hebdomadaire, quitter le tournoi, exclure un participant (app et BO), score enregistré ; mêmes titres, textes, boutons et actions.<br>- `AxTextField` / `AxButton` : options rétrocompatibles (`autoComplete`, `textContentType`, `returnKeyType`, `onSubmitEditing`, `autoCorrect`, `autoFocus`, `trailing`, `accessibilityLabel`).<br>- Tests : `r11.rn.test.tsx` (instantané avant / après `r11StructureBefore.json`, navigation, callbacks, conditions, couleurs et typographies dans les deux thèmes, 390 px, aucun emoji, 92 tests) ; isolement R1 élargi aux fichiers du lot ; `npx jest` 1976, `npm run test:rn` 659, `tsc` vert ; 28 mutations tuées. | 30 septembre 2026 |
+| **Refonte R9a : Ma Box et détail du WOD au nouveau design, page Ma Box entièrement défilante (app seule, aucune migration).** — mergée le 30/09/2026 (#437).<br>- `WhiteboardScreen` : tout l'écran (en-tête, Membres / Messages / Actualités / Classement de la box, onglets de piste, jours, « Entrer mon score » / « Classement », séances) dans un seul `ScrollView` avec « tirer pour actualiser » (même action) ; sans box, l'écran perso défile aussi et garde son actualisation. `AxButton`, `AxCounterBadge`, `AxChip` (onglets, `WhiteboardTrackTabs`), `AxDayItem` (`WeekDayPicker` variante `ax`), `AxCard` / `AxTag` / `AxIconButton` pour les séances ; états musculation et « Reprendre ma saisie » inchangés ; 📋 remplacé par l'icône Lucide.<br>- `WODDetailScreen` : carte du WOD `AxCard` featured, « Notes coach » en overline accentText, « Mon score » en `AxCard` (score `numberM`, « Partager » / « Modifier » outline, « Ma note »), « Entrer mon score » `AxButton` accent, classement en liste d'`AxCard` (médailles Lucide `Medal`), commentaires en `AxCard` + `AxTextField` ; fenêtre de saisie : `AxChip` (type, niveau), `AxTextField`, `AxButton` accent « Valider le score ». Saisie, brouillon et validation musculation inchangés.<br>- Options rétrocompatibles : `AxChip.accessibilityRole`, `AxTextField.autoFocus` / `inputRef`, `AxCounterBadge.readableInk` (encre lisible sur le rouge en thème sombre).<br>- Tests : `r9a.rn.test.tsx` (54, instantané avant / après sur 9 variantes `r9aStructureBefore.json`), isolement R1 élargi aux fichiers du lot, `npx jest` 1976, `npm run test:rn` 664, `tsc` vert ; 25 mutations tuées. | 30 septembre 2026 |
+| **Refonte R8a : tournois au nouveau design (apparence seule, aucune migration).** — mergée le 30/09/2026 (#435).<br>- `CompetitionScreen`, `TournamentScreen` (infos, classement, WODs, participants, validation staff, divisions), `TournamentBracketView`, `TournamentDivisionsView`, `TournamentWODScreen` (détail, soumission, envoyé) en composants `src/components/ax` et jetons `theme.ax` / `axTypography` / `axSpacing` / `axRadius` ; en-tête de tournoi en `AxCard` featured (statut `AxStatusDot`, niveau et format `AxTag`), onglets `AxChip`, promus / relégués en `AxTag` success / danger, scores en `numberM`, une seule `AxButton` accent par écran, « Quitter » et « Rejeter » en `stop` ; icônes Lucide, plus aucun emoji (libellés FR / EN des clés `tournament.*`, `tourWod.*`, `divisions.*`, `competition.*` nettoyés). `AxTag` gagne les tons `success` / `warning` et l'option `wrap` (rétrocompatibles).<br>- Données, requêtes, navigation, callbacks, états et règles inchangés ; « Comment ça marche » garde les 4 étapes du code.<br>- Tests : `r8a.rn.test.tsx` (144, 27 états sur une base Supabase simulée : ordre des textes identique à la capture d'avant dans les deux thèmes, aucun emoji, une action accent, adoption ax, navigation, écritures, couleurs et typographies, espace bas, textes longs à 390 px) ; isolement R1 élargi aux 5 écrans ; `npx jest`, `npm run test:rn`, `tsc` verts ; 22 mutations tuées. | 30 septembre 2026 |
+| **Refonte R10 : réservation au nouveau design (app seule, aucune migration, apparence seule).** — mergée le 30/09/2026 (#430).<br>- `ReservationScreen` : semaine en `AxDayItem` (nouveau `ReservationWeekPicker`, options rétrocompatibles `today` / `disabled` d'`AxDayItem`), créneaux en `AxCard` (vedette si réservé, filet warning si en attente), heure en `numberM` Oswald, discipline en `AxTag` (option `numberOfLines`), coach / places en caption, « Réservé » / « Attente #n » / « Complet » en `AxStatusDot`, « Réserver » accent, « File d'attente » contour, « Se désinscrire » / « Quitter la file d'attente » en stop, bandeau « Abonnement suspendu » en ton warning avec « Mettre à jour mon paiement » accent (Stripe seulement). `MyReservationsScreen` : onglets en `AxChip`, cartes `AxCard`, statut `AxStatusDot`, « Annuler » en stop ; `AxScreenHeader` et `useTabBarScrollSpace` gardés, emoji du coach remplacé par l'icône Lucide `User`.<br>- Règles inchangées (limites hebdo / jour, file d'attente, fenêtres 15 / 20 min, 14 jours, refus, rappels) : logique figée par empreinte relevée sur master ; ordre des textes comparé à un relevé de master (10 états).<br>- Tests : `r10.rn.test.tsx` (35), `npx jest` 1976, `npm run test:rn` 606, `tsc` vert ; 36 mutations tuées. | 30 septembre 2026 |
+| **Refonte R8b : mini-tournois, inter-box et compétition physique au nouveau design (app seule, aucune migration, apparence seule).** — mergée le 30/09/2026 (#433).<br>- `DailyTournamentsScreen`, `DailyTournamentDetailScreen`, `InterCompetitionListScreen`, `InterCompetitionDetailScreen`, `InterScoreSubmitScreen`, `InterTeamScreen`, `PhysicalCompetitionScreen` : cartes `AxCard`, statuts `AxStatusDot`, formats / niveaux `AxTag`, métadonnées en `caption`, formulaires `AxTextField` / `AxChip` / `AxSwitch` (CAP), actions `AxButton` (une seule accent par écran et par fenêtre) ; podiums et états vides en icônes Lucide (plus d'emoji). Requêtes, payloads, validations, navigation et ordre des blocs inchangés.<br>- Tests : `r8b.rn.test.tsx` (37 instantanés avant / après pris sur master + emoji, accent, couleurs et typographies dans les deux thèmes, navigation et callbacks, textes longs), isolement R1 élargi aux 7 écrans du lot ; `npx jest` 1976, `npm run test:rn` 672, `tsc` vert ; 19 mutations tuées. | 30 septembre 2026 |
+| **Refonte R12 : profil et écrans sociaux au nouveau design (app seule, aucune migration, apparence seule).** — mergée le 30/09/2026 (#432).<br>- `ProfileScreen` : en-tête (photo ou initiale, pseudo `titleXL`, box `bodySmall`, ELO `numberM`, palier `levelInk` AA), onglets Compte / PR / Stats / Badges en `AxChip`, sections en `AxCard`, thème en `AxSwitch`, « Supprimer mon compte » en `AxButton` stop, PR et stats en `numberM`, badges en grille de cartes, icônes Lucide à la place des emoji.<br>- Amis, Profil public, Utilisateurs bloqués, Notifications, Nouveautés : lignes et blocs en `AxCard`, onglets / périodes / heures en `AxChip`, interrupteurs en `AxSwitch`, couleurs de niveau et de type rendues lisibles (`readableInk`).<br>- Thème, langue, code de box, abonnement, déconnexion, suppression (deux confirmations), requêtes et navigation inchangés.<br>- Tests : `r12.rn.test.tsx` (51, dont ordre des blocs sur 22 états figés sur master), isolement R1 élargi au seul `ProfileScreen` ; `npx jest` 1976, `npm run test:rn` 536, `tsc` vert ; 28 mutations tuées. | 30 septembre 2026 |
+| **Retours iPhone (build 1.0.58) : minuteur, caméra, en-têtes, boutons, profil et outils (app seule, aucune migration, écrans seuls).** — mergée le 30/09/2026 (#450).<br>- Minuteur : compte à rebours en six pastilles `AxChip equal` sur une ligne à 390 px ; décompte PRÉPARE-TOI / PRÊT ? / GO ! centré plein écran (avec et sans caméra, portrait et paysage), chiffre centré dans son cercle, halo circulaire sans ombre de texte ; à 3-2-1 même cercle, même taille et même position du chiffre (seuls couleurs et halo changent) ; temps final sans vidéo avec `assets/athex-logo.png` (120 px), croix et Réglages à la place du chrono, couleur du thème de chrono ; paysage sans vidéo : chiffres centrés, place du bouton réservée des deux côtés.<br>- Caméra : rangée REC 40 px sous la zone sûre, point rouge clignotant à droite pendant l'enregistrement (`RecBlinkDot`, fixe si « réduire les animations »), date et heure sous « Arrêter le chrono ». Module natif, sons et enregistrement inchangés.<br>- « Suivre le thème de l'app » : des options enregistrées sans ce champ (réglages vidéo écrits avant) le désactivaient (`?? false`) ; il suit désormais le thème par défaut quand aucun thème de chrono n'est choisi.<br>- `AxScreenHeader` : titre dans une boîte bornée entre Retour et l'action de droite (plus de chevauchement, titre court entier) ; titres d'écran courts (WOD du jour, Programme, Tournoi, Mini-tournoi, Compétition, WOD du tournoi, Mon équipe, Box, Partenaire, Article), nom long en tête du contenu (`AxContentTitle`, retour à la ligne).<br>- Ton WOD : « Au Whiteboard » / « Ajouté » et « Mon score » / « Modifier » sur une ligne, même hauteur (`AxButton` bordé : bordure comprise dans la hauteur), libellés complets en accessibilité ; Profil : onglets centrés ; Entraînement : tuiles Outils centrées.<br>- Tests : `retoursIphoneTimer.rn.test.tsx` (20) + cas ajoutés à R6c, R4a, R9a, R12, Entraînement ; instantanés R4b / R8a / R8b / R9a / R9b / R13 et contrats R3c / R5a / R6b / R6c mis à jour pour les titres courts ; `npx jest` 1987, `npm run test:rn` 1331, `tsc` vert ; 20 mutations tuées. | 30 septembre 2026 |
+| **Refonte R14c : finitions des écrans athlète — logo, boutons, types traduits, membres, champs (app seule, aucune migration).** — mergée le 30/09/2026 (#445).<br>- Connexion, Créer un compte et écran de démarrage : `assets/athex-logo.png` (120 px, centré) à la place de `assets/logo.png` ; titre texte « AthleX » retiré (le logo le contient), slogan conservé.<br>- Libellés de boutons athlète en écriture normale en FR et en EN (clés i18n et libellés en dur, plus de `toUpperCase`) ; titres et surtitres inchangés.<br>- `wodTypeLabel` (`src/utils/wodTypeLabel.ts`) + clés `wodTypes` : Musculation / Personnalisé / For Time / AMRAP / EMOM / Tabata (EN : Strength / Custom / For Time…), utilisé par Ma Box, détail WOD, historique et programme.<br>- Membres : rôle sous le nom, à côté du palier ; le nom occupe toute la largeur. Profil › Compte : « Rejoindre une box » en `AxButton` outline ; code de box en `AxTextField`.<br>- `AxTextField` : option rétrocompatible `inputStyle` ; plus de contour navigateur en web, focus porté par la seule bordure `accentText` du champ.<br>- Tests : `r14c.rn.test.tsx` (39) ; instantanés R4b / R9a / R11 et contrats R5a / R9b / minuteur mis à jour pour les nouveaux libellés ; `npx jest` 1987, `npm run test:rn` 1292, `tsc` vert ; 16 mutations tuées. | 30 septembre 2026 |
+| **Refonte R14a : fond uni et palette du nouveau design sur tous les écrans (app seule, aucune migration, apparence seule).** — mergée le 30/09/2026 (#441).<br>- `GlassBackground` (même API) rend un fond uni `theme.ax.background` (#101214 / #F3F5F4) : plus de dégradé, de taches SVG ni d'animation ; `GlassCard` / `GlassButton` / `GlassIconBox` / fond de barre d'onglets en surfaces opaques `ax` ; palette historique (`palette.ts`) dérivée des jetons `ax` ; plus aucune couleur émeraude dans `src/` hors chrono plein écran ; teintes de domaine et palier elite ajustés AA ; `StatusBar` claire en sombre, foncée en clair.<br>- `AxScreenHeader` mesure le seul contenu de Retour / action droite (« MINUTEUR » entier à 390 px) ; titres Oswald en capitales avec interligne `axAccentSafeLineHeight` (accents de « RÉSERVATION », « COMPÉTITIONS » non rognés) ; `AxChip` `minHeight` 40 non comprimable et rangées horizontales de pastilles `flexShrink: 0`.<br>- Tests : `r14a.rn.test.tsx`, `r14aPalette.test.ts`, `shellBackground` réécrit, contrats historiques mis à jour ; mutations listées dans la PR. | 30 septembre 2026 |
+| **Refonte R14c (tutoriel) : plantage de la page 5 corrigé, un bloc centré par page, logo AthleX (app seule, aucune migration).** — mergée le 30/09/2026 (#444).<br>- `OnboardingTutorialScreen` : `onViewableItemsChanged` stable (ref, état lu par refs) et `viewabilityConfig` constant ; la fonction changeait à l'arrivée sur la page 5 (état du badge) et FlatList levait « Changing onViewableItemsChanged on the fly is not supported ». Badge « First Step » toujours décerné une seule fois.<br>- Chaque page = un bloc (illustration dans son cercle, titre, texte, points, bouton « C'est parti ! » / « Suivant » / « Découvrir l'app ») centré verticalement dans un `ScrollView` (marges symétriques 104 sous « Passer ») : défile en entier sur petit écran. Page 1 : `assets/athex-logo.png`. Textes, ordre des pages et comportement inchangés.<br>- Tests : `r14cTutorial.rn.test.tsx` (12), instantané R11 du tutoriel mis à jour (boutons dans chaque page) ; centre du bloc mesuré en web à 390 × 844 et 390 × 667 (écart ≤ 25 px) ; 9 mutations tuées. | 30 septembre 2026 |
+| **Refonte R13 : annuaire, programmes et partenaires au nouveau design (app seule, aucune migration, apparence seule).** — mergée le 30/09/2026 (#428).<br>- `BoxDirectoryScreen` (recherche en `AxTextField`, sports en `AxChip`, boxs en `AxCard`, nom en `titleM`, ville et infos en `bodySmall` `textMuted`, sports en `AxTag`), `BoxDirectoryMapScreen` (en-tête flottant et fiche basse `AxCard` featured ; fond de carte et marqueurs inchangés ; toujours sans `AxScreenHeader`, écran plein écran), fiche box (identité en `AxCard` featured, sports / services en `AxTag`, horaires en `AxCard`), Programmes, programmes des boxs, partenaires et fiche partenaire (offre en `AxCard` featured, code en `AxButton` accent unique) ; `AxTextField` gagne l'option rétrocompatible `trailing` (bouton d'effacement). Requêtes, navigation et liens inchangés ; ordre des textes comparé à un relevé de master (`r13.rn.test.tsx`, `r13StructureBefore.json`). | 30 septembre 2026 |
+| **Refonte R9b : écrans secondaires de Ma Box au nouveau design (app seule, aucune migration, apparence seule).** — mergée le 30/09/2026 (#431).<br>- Actualités, Membres (fenêtre extraite telle quelle de `WhiteboardScreen` vers `WhiteboardMembersModal`), Séance perso (formulaire), Classement de la box, Messages et Infos de la box : `AxCard` par ligne ou section, `AxTextField`, `AxChip`, `AxButton`, typographies `axTypography` (overline / titleM / caption / label / numberM), `theme.ax`, AA dans les deux thèmes ; médailles Lucide `Medal` au lieu de 🥇🥈🥉, 👈 et 💬 retirés. `AxTextField` : options `minInputHeight` / `maxInputHeight` (rétrocompatibles). Requêtes, callbacks, navigation et pièces jointes inchangés.<br>- Écarts maquette / code suivis côté code : pas de recherche ni de rôle dans Membres, pas de « Lire › », pas de bouton « Annuler » dans le formulaire (absents du code).<br>- Tests : `r9b.rn.test.tsx` (40, dont instantané avant / après sur 10 variantes), isolement R1 élargi à `WhiteboardMembersModal`, `npx jest` 1976, `npm run test:rn` 525, `tsc` vert ; 26 mutations tuées. | 30 septembre 2026 |
+| **Refonte R7 : historique ELO par paliers (app seule, aucune migration, lecture seule).** — mergée le 30/09/2026 (#427).<br>- `EloHistoryScreen` au nouveau design (`AxCard`, `AxChip`, `theme.ax`, Oswald) ; carte ELO avec palier actuel, « encore N pts avant <palier> » (rien pour Pro), barre et bornes ; graphique avec bandes de palier, seuils pointillés, points colorés, repères « Passage <palier> · <date> » et « Meilleur · <valeur> » ; carte « Paliers » (six paliers, « Toi »). Logique pure dans `src/utils/eloTiers.ts` (seuils de `eloLevels`), couleurs `levelInk` (AA dans les deux thèmes). Filtres, liste et navigation inchangés ; médailles emoji du rang remplacées par l'icône Lucide `Medal`. Badge `level_inter` hors lot.<br>- Tests : `r7.rn.test.tsx` (41, ordre des textes comparé à un relevé de master `r7StructureBefore.json`), isolement R1 étendu (`axComponents.rn.test.tsx`), `npx jest` 1976, `npm run test:rn` 526, `tsc` vert ; 31 mutations tuées. | 30 septembre 2026 |
+| **Design : étiquette du type de séance en couleur (app seule, aucune migration, apparence seule ; mergée le 07/10/2026 (#496)).** `wodTypeColor()` (`src/theme/wodTypeColor.ts`) donne la couleur du type sur le texte et le filet de l'étiquette : For Time jaune, AMRAP bleu, EMOM violet, Tabata vert, Musculation menthe, autre ou inconnu atténué. Elle s'applique à Ma Box, au détail du WOD et au détail d'un programme (Figma 638:501). `HUES.yellow.light` passe à `#9A5D06` (≈ 4,87:1 sur `ax.background`, contre 4,496:1 pour `#A16207`). Contraste ≥ 4,5:1 vérifié par test sur la carte et sur le fond, dans les deux thèmes. | 7 octobre 2026 |
+| Manager : couleurs des types de séance alignées sur l'app (For Time, Tabata, Force) (AthleX-Manager #423) | 7 octobre 2026 |
+
+### Entraînement : générateur, minuteur et caméra
+
+| Capacité | Fermé le |
+| --- | --- |
+| **Caméra avant couchée et zoomée sur iPhone 17 Pro Max (minuteur vidéo, bascule selfie).** — mergée le 02/09/2026 (#230). Constaté par Nab en vidéo sur le 17 Pro Max (iOS 26.6.1), absent sur le 16 Pro (26.6) : même OS, comportement différent, donc montage du capteur et non version d'iOS. Cause lue dans le module natif : deux tables en dur (orientation de l'appareil → angle, avec les valeurs paysage inversées pour la face avant) qui encodaient le montage des iPhones ≤ 16 ; le nouveau capteur avant du 17 livre une autre orientation native, l'image prend 90° de trop et `resizeAspectFill` la zoome pour remplir le portrait. Le même angle était posé sur la sortie vidéo : le fichier enregistré en selfie était couché aussi. Correctif : les tables sont supprimées, l'angle est **demandé à iOS** (`AVCaptureDevice.RotationCoordinator`, preview et capture séparées, coordinator recréé à chaque changement de caméra, gel pendant l'enregistrement conservé) ; la géométrie du writer (1080×1920 / 1920×1080) se déduit de l'angle réellement appliqué, plus de `UIDeviceOrientation` seul. Un contrôle mécanique échoue si une table réapparaît dans le fichier Swift. **Non constaté sur appareil** : c'est natif, il faut un nouveau build — le correctif part dans **1.0.52 (49)** ; **1.0.51 (47) et (48) : non soumis, obsolètes** (le 48 embarquait le correctif mais sous le runtime 1.0.51, que les appareils déjà installés partagent : un changement natif impose une nouvelle version, donc un nouveau runtime OTA, `runtimeVersion.policy = appVersion`). Un journal de diagnostic derrière un flag affiche nom du device, angle preview et angle capture pour comparer les deux téléphones, et une liste de 16 cas à cliquer (2 téléphones × avant/arrière × portrait/paysage) est dans la PR. **Constaté par Nab (revue 1.0.52, C4) : les 16 cas passent.** Suite : `orientationDebugLog` repassé à `false`, et la géométrie du writer suit désormais l'angle **relu** sur `conn.videoRotationAngle` après affectation (un angle non supporté n'est pas appliqué en silence) plutôt que l'angle demandé ; le log affiche les deux (`captureAngle` demandé, `appliedAngle` relu). Le chemin iOS < 17 (cible 15.1) est gardé sous sa forme standard, non vérifié : aucun appareil sous iOS 17 dans le parc. | 2 septembre 2026 |
+| **WOD GEN retiré de l'app par un interrupteur, pas supprimé.** — mergée le 02/09/2026 (#230). La carte « WOD GEN — 3 séances adaptées à ton profil » des Outils de l'accueil (route `WODGenPro`) était le seul point d'accès ; `FEATURES.wodGen = false` (`src/lib/features.ts`) la masque. L'écran, la route, l'écran de suggestions et les services restent dans le code, inchangés. Le contrôle prouve les deux sens : la carte absente à `false`, présente à `true` à sa place historique ; et qu'aucun autre fichier (Explorer, recherche, deep link, notifications) ne mène à la route. Le premier générateur (« Générateur WOD — For Time · AMRAP · Tabata ») reste. | 2 septembre 2026 |
+| **Générateur de WOD v1 — PR 1/3 (`athlex-app`, migration `20261211`).** — mergée le 15/09/2026 (#284). Le générateur est refait de zéro en moteur déterministe (`packages/wod-engine`, TypeScript pur, aucune IA ni réseau à l'exécution) ; on garde seulement le RNG à graine et la signature anti-répétition. Le serveur porte `movement_catalog` (95 mouvements actifs tirés du CSV validé + 14 mouvements historiques de l'app en `active = false`, lecture `authenticated` seulement) et `generated_wods.wod_json` (le WOD structuré, rounds et signature compris ; l'anti-répétition lit les 10 dernières signatures de l'athlète). Deux disciplines (Functional, Hybrid), deux entrées (express, après-classe), 15 + 10 squelettes, charges par catégorie, gilet lesté en paramètre, `s` et `cm` acceptés par `movementParser` sans créditer de badge ni de charge. Tests §9 : conformité sur 587 combinaisons × 200 graines. **Migration appliquée en prod : oui** (15/09/2026, `pg_dump` `20260915T125815Z` déposé avant dans le bucket privé `db-dumps` ; 109 lignes importées). Aucun écran ne change : la PR 2 (écran) attend la relecture de `packages/wod-engine/samples.md`, la PR 3 (Manager) suit. | 15 septembre 2026 |
+| **Générateur de WOD v1 — PR 2/3 (`athlex-app`, migration `20261212`).** — mergée le 15/09/2026 (#285). L'écran « Générateur de WOD » (`WodGenerator`) et la page résultat (`WodResult`) remplacent l'ancien générateur, supprimé et non masqué (`WODGeneratorScreen`, `WODGenProScreen`, `WODSuggestionsScreen`, `engineCrossFit`, `engineHyrox`, `ranker`, `adapter`, flag `wodGenV2`). Pas de ligne Catégorie : la catégorie du profil (`rx+ → rxplus`, `gender` null ⇒ Men) ne sert qu'à l'estimation, le WOD affiche toutes les catégories ; le texte n'est rendu que par « Copier ». Exclusions persistées dans `user_generation_settings.last_params`. Enregistrer / Favori / Saisir mon score (catégorie demandée) conservent `generated_wods` (+ `wod_json`), `generated_wod_scores` et le crédit de badges. Le serveur porte la banque de squelettes (`wod_skeletons`, 25 lignes) et la table §5.4 (`wod_volume_caps`, 19 lignes), lecture `authenticated` seulement, écriture `service_role` ; `src/services/wodEngineData.ts` les charge avec le catalogue et retombe indépendamment sur les snapshots embarqués (hors ligne). **Migration appliquée en prod : oui** (15/09/2026, même dump `20260915T125815Z` ; 25 squelettes, 19 plafonds). La PR 3 (Manager) suit. | 15 septembre 2026 |
+| **Générateur de WOD v1 — page résultat `WodResult` (`athlex-app`, sans migration).** — mergée le 15/09/2026 (#287). Après les tests réels du moteur, la page résultat est remise au niveau de l'app : en tête la carte WOD du Whiteboard (badge `GÉNÉRÉ`, titre en capitales, minuteur rond), ligne « Affiché pour : Inter · d'après ton profil — modifier », mouvements en liste aérée repliée par défaut (chevron → charges et substitutions de toutes les catégories), durée en ligne compacte + tableau dépliable, texte secondaire au contraste des tuiles Outils, barre d'actions fixe au-dessus de la tab bar. Deux actions nouvelles : **Minuteur** (le minuteur vidéo existant, préconfiguré depuis le format du WOD — EMOM 15 → 1'/15, AMRAP 12 → 12', For time → chrono + cap ; `WodTypeBadge` et `TimerLaunchModal` sont sortis du Whiteboard en composants partagés) et **Ajouter au Whiteboard** (WOD perso `box_wods` avec `box_id` null, `created_by` l'athlète, date du jour, rendu texte en `description`, lien structuré dans `generated_wods.wod_json.box_wod_id` ; un score déjà saisi est rattaché, pas dupliqué). Les cartes perso du Whiteboard ouvrent désormais `WODDetail` et un WOD sans box accepte un score (`wod_scores.box_id` null, policy `member_own_scores`) : badges, historique et compteurs comme un WOD de box, sans ELO ni classement. `profiles.level` n'était modifiable nulle part : sélecteur « Niveau » (Scaled → Pro) ajouté dans Profil → Modifier, cible du lien « modifier » ; la synchro par l'ELO reste. Copier passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest/lint verts. | 15 septembre 2026 |
+| **Générateur de WOD v1 — PR 3 (`AthleX-Manager` + migration `20261213` ici).** — mergée le 15/09/2026 (AthleX-Manager #336). Le Manager lit `movement_catalog` à la place de son tableau statique `lib/movements.ts` (snapshot embarqué en repli, les 14 mouvements `active = false` restent proposés aux coachs, seul le générateur les ignore) ; l'admin Mouvements gagne un onglet Catalogue (édition, réactivation, création) et une page sœur `/admin/volume-caps` (19 plafonds éditables, squelettes en lecture seule), écriture par routes serveur `service_role` gardées par le rôle admin. `box_wods.wod_json jsonb` (migration `20261213`, **appliquée en prod : oui**, 15/09/2026, `pg_dump` `20260915T230607Z` déposé avant dans `db-dumps`, 886 WODs intacts, écriture par le Manager déployé vérifiée sur AthleX Fitness) reçoit le WOD structuré à chaque création / modification depuis l'éditeur, derrière un garde `42703` / `PGRST204` à retirer dans un lot ultérieur ; `description` reste la source de vérité côté athlète. | 15 septembre 2026 |
+| **Lot C5 — Split par exercice** — mergée le 20/09/2026 (#325). (aucune migration, PR indépendante de C2+C3). Le chrono principal repart de zéro au changement d'exercice ; les séries d'un même exercice conservent leur chrono, repos compris. Le total reste visible en petit, y compris avec caméra. Chaque split final donne le temps de l'exercice et le total cumulé. Le total comprend tous les blocs et pauses de la séance ; le redémarrage efface les chronos et le journal. | 20 septembre 2026 |
+| **Lot C4 — Adapter à mes PR** — mergée le 20/09/2026 (#324). (aucune migration, PR indépendante de C2+C3). Option activée par défaut dans les options avancées Functional/Hybrid et mémorisée dans les réglages du profil. Activée, elle conserve les substitutions gym et le plafond de 50 % du record par série ; désactivée, le mode challenge suit la catégorie seule. Le choix accompagne aussi le brouillon et le re-tirage. Les écritures de réglages sont ordonnées pour préserver exclusions et matériel. | 20 septembre 2026 |
+| **Lot C1 — recherche des exclusions** — mergée le 20/09/2026 (#323). (aucune migration, PR indépendante de C2+C3). Le champ des options avancées interroge les libellés français du matériel et les noms affichés des mouvements, sans casse ni accents : « corde » retrouve « Corde à sauter », « elastique » retrouve « Élastique ». La sélection conserve les identifiants du catalogue. Le test cherche un mot de chaque entrée de la table FR et couvre les filtres Musculation, les exclusions déjà choisies et le matériel disponible. | 20 septembre 2026 |
+| **Lot C2+C3 — durée et variété du générateur** — mergée le 21/09/2026 (#322). ([PR #322](https://github.com/nbstyle69/athlex-app/pull/322), diffusion en attente). Le choix de durée disparaît dans les trois disciplines : le moteur la tire dans la plage du squelette ou de sa variante, 45 minutes en séance Musculation, 15–20 après la classe. La durée estimée reste au résultat, sans comparaison à une durée demandée. Les formats sont proposés selon l'intention ; Surprends-moi choisit une famille servable à parts égales puis son sous-format, conservés pendant la composition. La banque ajoute les schémas classiques, les ladders finies et ouvertes et les départs EMOM/E2MOM/E3MOM ; elle rétablit les squelettes Hybrid morts, avec les restrictions de programmation conservées. Sur 2 000 tirages par discipline après R1–R5, aucun échec ; minimum des familles affichées 10,45 % Functional et 7,30 % Hybrid, Tabata 9,75 %, Death by 5,65 % (protocole et variantes dans la PR). R1–R5 : les EMOM/E2MOM/E3MOM terminent des cycles complets ; les autres budgets athlète utilisent 8/10/12/15/16/18/20/25/30 dans leur plage (Musculation séance : 45). La densité gym utilise des départs compatibles de 60 ou 90 s, avec 40 s de travail maximum ; les plages calculées des stations lourdes Force portent les 3–5 reps dès le tirage, y compris à durée explicite. Les slots `range`/`draw` sont calculés et arrondis avant durée/volume ; `scheme`/`fixed` gardent les prescriptions exactes, y compris en box. Caps à la minute, sled ≤50 m en enchaînement ; les cibles de stations utilisent aussi la cadence de la bande de charge. Le chipper Functional long autorise 40–100 cal par erg pour rester faisable après classe avec ce plafond sled, sans changer les cadences. Hybrid propose `emom_hybrid` (12–20 min, erg/course/charge) et `chipper_hybrid` (18–30 min, course 800–1000 m aux deux extrémités, 4–5 stations intermédiaires), pour Interval, Engine, Aerobic et Run. Core reste For time. Migration `20261229`, **appliquée en prod : oui** (21/09/2026 à 11:11 UTC, dump `db-dumps/2026-09-21/athlex-prod-public-20260921T111043Z.dump` avant, d'après l'en-tête du fichier), avant le merge et l'OTA 1.0.55. L'ancien lecteur garde les définitions v3 ; le nouveau lit `definition.c2c3`. Les trois contrôles indépendants de #313 restent au backlog. C1, C4, C5 et C6 restent séparés. | 21 septembre 2026 |
+| **Lot C6 — Cartes de contexte** — mergée le 21/09/2026 (#326). (PR #326 mergée). `SessionContextCard` rend les deux encarts avec le même verre, un padding de 16 à l'intérieur, l'étiquette en capitales et le corps. Le bouton est optionnel : « Reprendre la séance » reste présent pour « Dernière séance générée » ; « Classe du jour » reste sans bouton, conformément à l'arbitrage de Nabil. Montage réel testé en clair/sombre sur les variantes iOS/Android ; navigateur validé à 320, 375 et 1000 px, sans débordement des cartes. Aucune migration ; PR indépendante de C2+C3. | 21 septembre 2026 |
+| **R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).** — mergée le 29/09/2026 (#426).<br>- `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps, micro activé / coupé ; enregistrés dans `bwod_timer_display_opts_v2` (`src/lib/timerVideoOpts.ts`). Défauts inchangés (1080p, 30 fps, micro).<br>- `realtime-recorder` : `getSupportedQualities`, `prepareQuality` (caméra, chauffe, essai à blanc de 1,5 s au-delà de 1080p, redescente si moins de 90 % des images), `getLastRecordingStats` ; iOS préréglages et 2K = 4K réduite, Android taille Camera2 / encodeur / cadence GL ; micro coupé = ni permission ni capture ni piste son.<br>- Tests : `r6cOptionsVideo.rn.test.tsx` (16), `VideoQualityTest.kt` (6, JVM), `npx jest` 1976, `npm run test:rn` 473, `tsc` vert ; 37 mutations tuées (27 JS, 10 Kotlin). Swift compilé par le build EAS de test. | 29 septembre 2026 |
+| **R6c (C) : décompte incrusté dans la vidéo au même rendu qu'à l'écran (app et module natif, aucune migration).** — mergée le 29/09/2026 (#425).<br>- Dans la vidéo : « PRÉPARE-TOI » + chiffre blanc dans un anneau au-dessus de 3, « PRÊT ? » + chiffre et halo d'accent à 3-2-1, bande d'accent inclinée « GO ! » à 0 ; Oswald Medium embarquée dans `realtime-recorder` (iOS et Android) ; textes traduits et couleurs contrastées calculés en JS (`src/lib/timerCountdownOverlay.ts`), dessin natif (`drawCountdown`, `drawGoBand`). Synchro de l'incrustation déplacée après `displayOpts` dans `TimerRunScreen`.<br>- Tests : `r6c.rn.test.tsx` (11), `npx jest` 1976, `npm run test:rn` 468, `tsc` vert ; Kotlin compilé ; 14 mutations tuées, 1 équivalente. Swift compilé par le build EAS de test. | 29 septembre 2026 |
+| **Décompte incrusté centré dans la vidéo (module natif, aucune migration).** — mergée le 30/09/2026 (#447). Retour de Nab sur le build 1.0.58.<br>- Cause, identique iOS et Android : l'anneau seul était centré (le libellé au-dessus remontait tout le groupe), et le chiffre, le libellé et « GO ! » étaient centrés sur leur boîte de ligne (ascendante / descendante de la police) et non sur leurs glyphes ; l'espacement des lettres du libellé le décalait sur le côté.<br>- `CountdownLayout` (Kotlin, testé sur JVM ; même géométrie en Swift) : groupe « libellé + anneau » centré, bloc du libellé de hauteur fixe (« PRÉPARE-TOI » → « PRÊT ? » ne déplace pas l'anneau) ; chaque texte centré sur son encre (`getTextBounds` sur Android, `usesDeviceMetrics` sur iOS) ; bande « GO ! » centrée, texte centré dans la bande. Portrait et paysage, caméra avant et arrière (l'incrustation n'est jamais miroir). Apparence inchangée sinon.<br>- Tests : `CountdownLayoutTest.kt` (5, JVM), `decompteVideoCentre.test.ts` (9 : mêmes nombres des deux côtés, chemins de dessin), 9 mutations tuées ; Kotlin compilé, Swift par un build simulateur EAS. Protocole manuel : [`audits/protocole-decompte-video-centre.md`](./audits/protocole-decompte-video-centre.md). | 30 septembre 2026 |
+| **R6c (B) : jeux de bips AthleX / Classique et bips mélangés dans la vidéo (app et module natif, aucune migration).** — mergée le 30/09/2026 (#438).<br>- `src/lib/timerBeeps.ts` : synthèse WAV sortie de `TimerRunScreen`, jeu « Classique » identique à l'octet près (empreintes), jeu « AthleX » par défaut (tic 1046 Hz ~100 ms, GO montant ~400 ms, fin en trois notes descendantes) ; choix par puces dans « Design du minuteur » (`beepSet`), mêmes instants de déclenchement (5-4-3-2-1 Android, 3-2-1 iOS).<br>- « Bips dans la vidéo » (section caméra de `TimerScreen`, `videoBeeps`, défaut activé), indépendant des sons du téléphone : `playBeep` appelle `markBeep`, le module mélange le WAV à −6 dBFS dans la piste son (tampons micro, ou piste synthétique silence + bips si micro coupé ; aucune piste si les deux sont coupés). Calage du bip doublé micro activé : iOS `outputLatency + inputLatency`, Android 80 ms envoyés par le JS (`ANDROID_BEEP_MIC_LATENCY_MS`).<br>- Tests : `r6cBips.rn.test.tsx` (19), `BeepMixerTest.kt` (9, JVM), `VideoQualityTest.kt` complété (7) ; mutations JS et Kotlin tuées ; Kotlin compilé en local, Swift par un build simulateur EAS. | 30 septembre 2026 |
+| **Bips « sonar » pour le jeu AthleX (app seule, aucune migration, aucun changement natif).** — mergée le 01/10/2026 (#449). Demande de Nab (1er octobre).<br>- `src/lib/timerBeeps.ts` : pings sinusoïdaux (`decayMs` : attaque de 2 ms puis décroissance exponentielle ; `resonance` : partiel désaccordé de +0,6 %, battement lent), crête normalisée ≤ 0,85 (aucune saturation). Tic vers 1 100 Hz (350 ms), GO vers 1 500 Hz (800 ms), fin en trois pings descendants (1 500, 1 250, 1 050 Hz). Mêmes instants de déclenchement ; même WAV au haut-parleur et dans la vidéo. « Classique » inchangé à l'octet près (empreintes).<br>- Tests : `r6cBips.rn.test.tsx` (fréquences, durées, attaque, décroissance, résonance, descente, crête), 8 mutations tuées. Protocole manuel : [`audits/protocole-bips-sonar.md`](./audits/protocole-bips-sonar.md). | 1er octobre 2026 |
+| **Bips dans la vidéo sans doublon (app et module natif, aucune migration).** — mergée le 01/10/2026 (#448). Retour de Nab sur le build 1.0.58 : double bip à la relecture avec le micro activé. Règle décidée par Claude (conception) et Nab :<br>- `mixBeepInVideo` (`src/lib/timerBeeps.ts`), décidé à chaque bip dans `playBeep` : un bip n'est mélangé dans la piste que si « Bips dans la vidéo » est activé ET que le micro ne le capte pas déjà — micro coupé, ou téléphone muet (sons coupés, volume des bips à zéro, sons pas encore chargés). Micro et sons activés : seul le bip du haut-parleur, capté par le micro. Couper les sons pendant l'enregistrement est suivi (le module reçoit toujours les fichiers).<br>- Calage de latence retiré (iOS `outputLatency + inputLatency`, Android 80 ms `beepLatencyMs`) : il servait à superposer le bip mélangé au bip capté ; un bip mélangé tombe désormais à l'instant de l'événement.<br>- Texte d'aide de « Bips dans la vidéo » (FR / EN) : la règle en une phrase.<br>- Tests : `r6cBips.rn.test.tsx` (table de vérité, défaut sans doublon, micro coupé, sons coupés, volume à zéro, plus de calage), 7 mutations tuées ; Kotlin compilé et tests JVM du module verts ; Swift par un build simulateur EAS. Protocole manuel : [`audits/protocole-bips-video-sans-doublon.md`](./audits/protocole-bips-video-sans-doublon.md). | 1er octobre 2026 |
+| **Minuteur sans caméra : session audio reposée à chaque lancement (retour D1 du build 1.0.60, app seule, aucune migration ; à vérifier sur iPhone au prochain build).** — mergée le 03/10/2026 (#459). Sur iPhone, pas de bip sans caméra. Le mode audio n'était posé qu'à l'ouverture de l'écran ; avec caméra, `handleStartRecording` le repose avant l'enregistrement, sans caméra rien ne le reposait avant les bips si iOS avait changé la session entre-temps. `appliquerModeAudio()` (même configuration qu'avant, lecture en mode silencieux comprise) est maintenant appelée à l'ouverture et attendue au début de chaque lancement sans caméra, avant le premier bip ; un échec est signalé à Sentry et n'empêche pas le départ. Parcours caméra inchangé. Tests `retours1060Audio.rn.test.tsx` (premier et deuxième lancement, sans décompte, échec), 6 mutations tuées. | 3 octobre 2026 |
+| **Caméra : démarrage sérialisé, exception rattrapée, 1080p fixe (module natif iOS + app, aucune migration, module Android intact).** — mergée le 03/10/2026 (#455). Enquête sur les deux plantages du build 1.0.59 (iPhone 16 Pro, iOS 26.6.1, réglage 2K) et sur le paysage (aperçu couché, vidéo étirée, cercle du décompte en ovale), décidée par Claude (conception) et Nab le 1er octobre.<br>- Cause du plantage, lue dans les deux rapports `.ips` : `setupSession` postait la création de l'aperçu sur le fil principal (`AVCaptureVideoPreviewLayer(session:)` enveloppe un `beginConfiguration` / `commitConfiguration`) puis appelait `startRunning` sur la file de capture sans attendre ; quand le fil principal gagnait, `startRunning` levait `startRunning may not be called between calls to beginConfiguration and commitConfiguration`, exception ObjC que Swift ne rattrape pas → `abort`. Course présente depuis 1.0.57, multipliée en 1.0.58/1.0.59 par les relances de session de `prepareQuality` (essai à blanc 2K/4K, redescente) lancées depuis un fil principal oisif.<br>- Cause du paysage : le writer était créé par un minuteur à l'aveugle de 0,5 s après la relance ; au-delà (preset 4K), les angles du `RotationCoordinator` n'étaient pas encore appliqués et `isLandscape` venait de la session précédente → tampon paysage dans un writer portrait (rapport hauteur/largeur 3,1 mesuré sur la capture de Nab).<br>- Correctif iOS (`RealtimeRecorderModule.swift`) : une seule file (`com.athlex.recorder.capture`) sérialise toute configuration ; l'aperçu et le coordinateur sont créés en `main.sync`, l'angle de capture et la géométrie appliqués **avant** `startRunning` ; `startRecording` attend la complétion « session prête » émise sur cette file (plus de 0,5 s ni 0,8 s) et relit `isLandscape` à ce moment ; `stopRunning`, la configuration, l'aperçu et `startRunning` passent par `RTRCatchException` (ObjC, `RTRExceptionCatcher.m`) : une exception devient une promesse rejetée `ERR_CAPTURE_SESSION` avec le motif, l'app n'est plus jamais tuée. Capture et fichier en 1080p fixe (6 Mb/s) comme en 1.0.57.<br>- App : choix de qualité, essai à blanc, contrôle de chauffe et redescente retirés (section « Qualité » de l'écran Minuteur, bandeaux, textes FR/EN) ; une ancienne `videoQuality` enregistrée est ignorée puis retirée à la première écriture ; 25/30 i/s, micro, bips dans la vidéo et décompte incrusté conservés. Bouton « Démarrage… » (grisé) entre Démarrer et la réponse du module ; promesse rejetée → alerte « Démarrage de l'enregistrement échoué » avec le motif, on reste sur l'écran, nouvel essai possible.<br>- Android : module inchangé (il attendait déjà le rappel « prêt » avant d'écrire) ; `prepareQuality` et `getSupportedQualities` y restent, plus appelés. Pas de build Android pour cette PR.<br>- Tests : `r6cOptionsVideo.rn.test.tsx` réécrit (défauts sans qualité, ancienne qualité ignorée, aucune puce ni texte de qualité, options transmises sans `quality`, « Démarrage… » jusqu'à la réponse du module, promesse rejetée → alerte, retour à Démarrer, nouvel essai), contrat R5a mis à jour ; `tsc` vert. Swift par le build EAS 1.0.60. Protocole manuel obligatoire avant merge : [`audits/protocole-camera-1080p-demarrage.md`](./audits/protocole-camera-1080p-demarrage.md). | 3 octobre 2026 |
+| **Temps final du minuteur dans la zone sûre, sans défilement (retour D2 du build 1.0.60, app seule, apparence ; vérification visuelle par Nab).** — mergée le 03/10/2026 (#461). Fermer sortait de l'écran (avec caméra sur iPhone, et dans tous les paysages) ou passait sous la barre d'accueil. Décision de Nab : l'écran ne défile pas. Recommencer et Fermer deviennent deux actions rondes en verre de 56 px (`rotate-ccw` neutre, `x` couleur arrêt / danger), côte à côte en bas avec leur libellé court en portrait, empilées à droite en icône seule en paysage, libellés d'accessibilité complets. Marges de la zone sûre en haut (caméra), en bas et sur les côtés ; le grand chiffre prend la hauteur restante et descend jusqu'à 44 px au plus (`FINAL_DIGITS_MIN`) ; logo, QR et espacements réduits sous 760 pt de haut et en paysage ; badge du format centré. Seule la liste des temps intermédiaires (Splits), qui défilait déjà, garde sa ScrollView. Tests `retours1060TempsFinal.rn.test.tsx`, 17 mutations tuées ; captures et mesures avant / après sur iPhone SE, iPhone 15 et 390 px dans `athlex-captures/correctifs-1.0.60/pr2-temps-final`. | 3 octobre 2026 |
+| **Minuteur : la musique de l'utilisateur remonte après chaque bip (retour D7 du build 1.0.60, Android, app seule, aucune migration ; mergée le 04/10/2026 (#469), à vérifier à l'oreille par Nab sur Android et iPhone au prochain build).** Sur Android, la musique (Spotify…) baissait au premier bip du décompte et ne remontait plus. expo-av demande le focus audio (`GAIN_TRANSIENT_MAY_DUCK`, mode `DuckOthers`) à chaque lecture et ne le rend que quand plus aucun son n'a `shouldPlay` à vrai ; un bip fini le garde à vrai, donc le focus restait pris jusqu'à la sortie de l'écran (déchargement des sons). Chaque bip est maintenant arrêté (`stopAsync`) dès sa fin (`didJustFinish`) sur Android : le focus est rendu et la musique remonte juste après le bip, avec et sans caméra (le module natif Android n'utilise que `AudioRecord`, qui ne prend pas le focus). iOS inchangé : `MixWithOthers` sans `DuckOthers`, côté expo-av comme côté module natif (`.mixWithOthers`), aucune baisse à rétablir. Vérifié sur l'émulateur par `dumpsys audio` avec une musique de test (focus pris puis rendu à chaque bip, plus de « ducked players » hors bips). Tests `retours1060Musique.rn.test.tsx` (5 tests, 5 mutations tuées) ; empreintes r5a/r6b/r6c mises à jour, mock Android de r5b complété. | 4 octobre 2026 |
+| **Minuteur en paysage : chiffres du chrono entiers (retour R3b du build 1.0.62, iPhone ; app seule, apparence, aucune migration ; mergée le 05/10/2026 (#482), vérifiée sur l'émulateur Android, à vérifier sur iPhone).** En paysage, le bas des chiffres était coupé : le texte était mesuré dans sa boîte (ex. 262 dp) alors que sa ligne native fait 1,482 em (412 dp à 278 dp de police), et le style Barre avec caméra l'enfermait dans une boîte « hauteur d'encre » ; sur Android, la ligne trop courte donnait aussi « 00:… ». Les mesures du chrono viennent maintenant du fichier Oswald Bold embarqué (hhea 1193 / −289, OS/2 typo identiques, chiffres −15 à 822, chasses), plus de Chrome : le texte a exactement une ligne native de haut (lineHeight = height), largeur fixe, `includeFontPadding: false` ; taille bornée par l'encre dans la boîte mesurée et par la ligne native dans 96 % de la hauteur sûre. Avec et sans caméra, deux thèmes, Barre / Digits / Cercle ; portrait et temps final inchangés. Vérifié sur l'émulateur (Medium Phone API 36.1, build de développement local, banc sans compte ni réseau) : 20 captures avant / après, encre mesurée 549 px pour 550 attendus. Tests `retoursPaysageChrono.rn.test.tsx` (32, dont 9 R3b, mesures lues dans le .ttf par `policeTtf.ts`), 9 mutations tuées ; captures dans `athlex-captures/retours-1.0.62/R3b`. | 5 octobre 2026 |
+| **Minuteur en paysage conforme à la maquette (retour R3 du build 1.0.61, app seule, apparence, aucune migration ; mergée le 05/10/2026 (#479), à vérifier sur téléphone).** En paysage, le chrono était environ trois fois trop petit (226 px fixes réduits par `adjustsFontSizeToFit` sur l'appareil, 137 px avec caméra) et « Appuie pour démarrer » tenait sur trois lignes. Maquette suivie : « Minuteur · Paysage A » (spec Minuteur 98:500, option A 102:1694, « Plein écran » par défaut ; reprise sur le prototype en 173:4838 / 173:4858). La taille du chrono part de la boîte mesurée (`onLayout`) entre le bandeau et la rangée du bas : l'encre des chiffres occupe 90 % de la hauteur sans dépasser la largeur (`chronoFontSize`, métriques d'Oswald Bold relevées dans Chrome), dans les deux thèmes, avec et sans caméra (styles Barre, Digits et Cercle). Oswald Bold chargé pour ce chrono. Bandeau : type, « BLOC 1/1 · CAP 18:00 » (s'il y a un cap ou plusieurs blocs), petit total masqué quand il répète le grand chrono ; rangée du bas : barre de progression, consigne sur une ligne, bouton Lecture / Arrêt de 56 px ; marges de la zone sûre (îlot, bords, barre d'accueil). Temps final (D2) : seuls Fermer et Réglages bougent, hors de l'îlot et à la place qu'ils ont sur le chrono (relecture de #479). Portrait inchangé (captures identiques à l'octet, logique de `TimerRunScreen` figée par r5a). Non repris : l'option B (colonne, Pause et « Maintenir pour terminer » changent le comportement) et le réglage « Disposition en paysage ». Tests `retoursPaysageChrono.rn.test.tsx` (23, 20 mutations tuées) ; captures avant / après dans `athlex-captures/retours-1.0.61/R3`. | 5 octobre 2026 |
+| **« Partager ma perf » en plein écran et image partagée refaite d'après la maquette (refonte Split & Partage, PR 2 ; app seule, apparence, aucune migration ; mergée le 06/10/2026 (#488), vérifiée sur l'émulateur Android, à vérifier sur build).** La petite fenêtre devient un écran plein (Figma 580:801 / 580:915) dont la carte est le fond : logo et ATHLEX, étiquette de type (AxTag, FORCE = STRENGTH en anglais), titre sur 2 lignes au plus, date (format inchangé), score géant sur une ligne (170 pour 390 de large, réduit pour tenir en largeur puis en hauteur), unité à côté de RX / SCALED (`splitScoreForDisplay`, qui découpe `formatScoreValue` sans en changer le contenu), encart Classement masqué sans rang et médaille pour les rangs 1 à 3 seulement, athlète, liseré accent et halo ; croix en haut à droite, barre d'actions collée en bas avec la zone sûre (« Partager ma performance », même `handleShare`, et « Fermer »), sans défilement, le contenu finissant au moins 20 au-dessus de la barre. L'image 1080 × 1920 (580:856 / 580:948) a la même composition sans boutons ; capture ViewShot et partage inchangés. Plus de couleurs de type ni d'emoji. Tests `splitScoreForDisplay.test.ts` (4) et `sharePerf.rn.test.tsx` (13), 25 mutations tuées ; captures avant / après, images et mesures uiautomator dans `athlex-captures/split-partage`. | 6 octobre 2026 |
+| **Minuteur Split « Tap pour lancer » refait d'après la maquette (refonte Split & Partage, PR 1 ; app seule, apparence, aucune migration ; mergée le 06/10/2026 (#485), vérifiée sur l'émulateur Android, à vérifier sur build).** L'écran entre deux rounds Splits devient un plein écran aux jetons du thème (Figma 580:772 sombre / 580:892 clair) : surtitre « ROUND n / total » et pastilles des rounds (fait / suivant / à venir), cible à trois anneaux et disque Play accent, « TAP POUR LANCER » en Oswald 44, indice en pastille, et en bas le round qui vient de se terminer avec sa durée (`formatTime(workTime)`, le round Splits s'arrêtant seul à 0 ; validé par Nab le 05/10). Tout l'écran reste touchable (`splitsNextRound`, inchangé), textes par `t()` (fr / en). En paysage, cible à gauche et textes à droite. Tests `splitsTapOverlay.rn.test.tsx` (3), 6 mutations tuées ; captures avant / après et mesures uiautomator dans `athlex-captures/split-partage`. | 6 octobre 2026 |
+
+### Ma Box, profil et réservation
+
+| Capacité | Fermé le |
+| --- | --- |
+| **Historique unifié « Mes entraînements » (`WodHistory`), mergée le 06/09/2026 (#251, #264).** Recon : l'écran ne lisait que `generated_wods` + `generated_wod_scores` ; les scores saisis sur les WOD de box (`wod_scores`) et les WOD marqués « réalisés » par le bouton du bloc (`wod_completions`) n'y étaient pas. Désormais trois lectures (toutes `member_id` / `user_id` = soi), fusionnées côté client (`src/lib/wodHistoryEntries.ts`) en une seule liste chronologique : une ligne de box ouvre `WODDetail`, porte le score ou la mention « Réalisé, sans score » ; un score sur un WOD déjà marqué réalisé remplace la ligne « réalisé » (le détail supprime d'ailleurs la completion à la saisie du score). Les filtres Favoris / Benchmark restent propres aux WOD générés. Limite assumée : les policies serveur (`box_members_see_scores`, `box_member_see_completions`) ne rendent lisibles que les lignes des box dont on est encore membre actif. **Séances du minuteur : rien n'est persisté** (`TimerRunScreen` ne garde que les options d'affichage en AsyncStorage, aucune table) ; les inclure demande une table + RLS, chantier à part, non fait ici. Test `wodHistoryUnified.test.ts` : un WOD réalisé sans score apparaît ; mutation inverse (sans `wod_completions`) il disparaît. | 6 septembre 2026 |
+| **Onglets de piste de « Ma Box » lisibles et stables** — mergée le 24/09/2026 (#346). (diffusion au prochain build de test). Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste choisie montrait de contenu (« Tout » presque illisible), et onglet choisi plus large que les autres. Cause : le `ScrollView` de la barre gardait le `flexShrink: 1` de son style de base et la colonne à hauteur fixe de l'écran l'écrasait ; la graisse 800 de l'onglet choisi l'élargissait. Correctif dans `WhiteboardTrackTabs` : barre non compressible, largeur réservée au libellé en gras. Taille de texte du téléphone respectée, sans plafond. Même correctif (bande non compressible, rien d'autre) sur les filtres de niveau du classement et la rangée des mouvements du formulaire de WOD du back-office, et sur le classement la même largeur réservée au libellé en gras : la pastille de niveau choisie ne décale plus ses voisines. À vérifier sur la 1.0.58. | 24 septembre 2026 |
+| **Ma Box : recherche et rôles des membres, lien Lire des actualités, Annuler de la séance perso (app seule, aucune migration ; ajouts validés par Nab le 29/09).** — mergée le 30/09/2026 (#436).<br>- Membres : `AxTextField` « Rechercher un membre » en haut de la liste, filtre local sur pseudo et nom (casse et accents ignorés, aucune requête), « Aucun membre trouvé », croix d'effacement (option `trailing` d'`AxTextField`) ; `AxTag` Gérant (`boxes.owner_id`, accent), Co-gérant (`role = 'owner'`, accent), Coach (muted) — `box_members.role` et `full_name` ajoutés à la requête existante de `WhiteboardScreen`.<br>- Actualités : lien « Lire › » (labelSmall accentText, rôle link) qui appelle le même `openArticle` que la carte.<br>- Séance perso : `AxButton` outline « Annuler » à côté de l'action ; retour direct sans saisie, sinon « Abandonner la saisie ? » (Abandonner / Continuer). Tests : `r9b.rn.test.tsx` (blocs « Ma Box (29/09) »), chacun prouvé par mutation. | 30 septembre 2026 |
+| **Liste « Membres » de Ma Box sans colonne privée** — mergée le 30/09/2026 (#439). (diffusion au prochain build de test). Le build 1.0.58 (iOS 58 / Android 73, `build/1.0.58`) a été arrêté par `verify:ipa` (28/29) et `verify:aab` (30/31) : depuis #436, `WhiteboardScreen` lisait `profiles.full_name` dans la jointure `profiles:member_id(…)`, colonne révoquée pour `authenticated` depuis `20261105` — la requête entière tombait en 42501 et la liste des membres restait vide. Aucun des deux binaires n'a été soumis. Correctif : la liste lit le pseudo, comme les autres écrans ; la recherche porte sur le pseudo seul (le nom civil ne se lit qu'en RPC, par soi-même ou le staff). `profileColumnGrants.test.ts` ne connaissait que `profiles(` et trois colonnes : il passe en liste **blanche** des colonnes accordées à `authenticated`, relevée en prod le 30/09/2026 en lecture seule (non accordées : `email`, `full_name`, `gender`, `onboarding_completed_at`, `personal_records`), et reconnaît `profiles(…)`, `profiles:fk(…)`, `profiles!fk(…)` et `from('profiles')` ; la réintroduction de `full_name` est rattrapée. | 30 septembre 2026 |
+| **Annonces de la box dans l'app (app seule, aucune migration ni Edge Function ; vérification visuelle par Nab au prochain build).** — mergée le 04/10/2026 (#471). Écran « ANNONCES » (`AnnoncesScreen`, pile de Ma Box ; Figma 505:2955) : `box_notifications` de la box active, colonnes `id, title, body, target, created_at`, 50 au plus, de la plus récente à la plus ancienne ; la RLS existante (`notif_member_read`, `box_notifs_member_read`) ne rend que les annonces à toute la box ou au membre lui-même. Plus récente en carte vedette ; étiquette « Pour toi » si `target` est le membre, « Toute la box » sinon ; date et heure, titre, message en entier. État vide (mégaphone, « AUCUNE ANNONCE »), message d'erreur générique, tirer pour actualiser. Date « 04 oct. 2026 · 18:02 », en anglais même structure « 04 Oct 2026 · 18:02 » (heure sur 24 h comme Actualités et le minuteur). Ma Box : bouton « Annonces » (EN « Notices », titre « NOTICES ») à côté d'« Actualités », pastille des annonces plus récentes que la dernière ouverture de l'écran (`lastSeenAnnonces_<userId>_<boxId>` sur le téléphone, même mécanique que les Actualités). Toucher une notification `box_notification` ouvre l'écran si sa `box_id` est la box active, sinon l'app s'ouvre simplement (`notificationRouter`, box active tenue à jour par `AuthContext`, changement de box compris). Tests `annonces.rn.test.tsx`, `annoncesBoxActive.rn.test.tsx` (vrai `AuthProvider`), `notificationRouter.test.ts`, 21 mutations tuées. | 4 octobre 2026 |
+| **Profil public : « Demander en ami » centré (retour D3 du build 1.0.60, app seule, apparence seule).** — mergée le 04/10/2026 (#462). Le bouton (et « Accepter ») se calait à gauche de la carte du profil : `AxButton` pose `alignSelf: 'flex-start'` quand il n'est pas en pleine largeur, ce qui l'emporte sur le centrage de la carte. Une enveloppe locale `alignSelf: 'center'` le centre ; l'alignement par défaut du bouton partagé n'est pas changé. Tests dans `r12.rn.test.tsx`, 5 mutations tuées. | 4 octobre 2026 |
+| **Scores des membres visibles sur les blocs non classés (app seule, aucune migration ; mergée le 05/10/2026 (#484)).** Sur WOD du jour, un bloc daté non classé (`leaderboard_enabled = false`, cas des blocs hors `wod` importés par PDF ou programmés) n'affichait que le score de l'athlète. Il affiche maintenant la liste « Scores » des membres : mêmes lignes que le classement (avatar, nom, likes, score, RX/Scaled), même tri, sans rang ni ELO. Les blocs classés sont inchangés et `leaderboardAvailable` garde son sens ; `scoreListMode` (programSchedule) sépare la liste du rang. Tests : 4 cas unitaires et 4 rendus de l'écran, 10 mutations tuées ; captures web sombre et clair comparées à la maquette Figma 566:1593 / 566:1678. | 5 octobre 2026 |
 
 ---
 
 ## En cours
 
-**Programmation : une seule pastille « Hybrid » (comportement, app seule, aucune migration ; PR non mergée).** Le
-Marketplace du gérant affichait deux pastilles « Hybrid » (valeurs enregistrées 'hyrox' et 'hybrid'). Une seule
-pastille désormais, qui retient les programmes des deux valeurs (`matchesDiscipline`) ; aucune valeur en base ne
-change. Test `programmationHybrid.rn.test.tsx` (une seule pastille, programmes 'hyrox' et 'hybrid' retenus,
-« Functional » inchangé), qui échoue sans le regroupement ou avec l'ancienne pastille 'hyrox'.
-
-**Chantier anglais, PR 7 : erreurs brutes et corrections (app seule, aucune migration ; PR non mergée).** Les
-dernières alertes qui affichaient un `error.message` brut (28 appels dans 16 écrans, plus `joinBox` et `leaveBox`
-d'AuthContext) passent par `errorMessage()` ; une garde (`i18nErreursTextes.test.ts`) refuse désormais tout
-`Alert.alert` avec un `.message` brut hors fichiers exclus (AdminScreen). Aucun code connu ne manquait à
-`refusals.ts`. Corrections validées par Nab : type de séance « Musculation » (éditeur de WOD, éditeur de programme,
-et formulaire de WOD perso qui partage la clé), vrais pluriels du back-office (« 1 inscrit », « 12 participants »…),
-types de cours « Musculation », « Mobilité », « Enfants », « Ados » (libellé seul : la valeur enregistrée comme titre
-du cours ne change pas, `src/lib/classTypes.ts`, et les cours existants s'affichent sous leur libellé traduit dans
-les horaires, la réservation et « Mes réservations »), « BLOC », « En continu ». Anglais : limite de réservation
-« session / sessions », clé inutilisée `bo.notifications.sentMsg` supprimée, « Program » au lieu de « Programme »,
-prix de la programmation « €29/month » (français inchangé, montant par `locale.ts`). Captures 390 px FR / EN dans
-`athlex-captures/i18n-erreurs`.
-
-**Classement général : nom du podium entier (apparence seule, app seule ; PR non mergée).** Les cases du podium avaient une hauteur fixe (56 / 76 / 44 px) plus petite que leur contenu (médaille, nom, ELO, marges : 62 px mesurés sur le web) : le nom était écrasé à 6 px sur la 2e marche et à 0 sur la 3e, coupé en bas de sa case, en français comme en anglais. La case suit désormais son contenu, l'écart entre marches (12 et 32 px) devient une marge haute : podium plus haut de 18 px, ordre, couleurs et textes inchangés ; nom sur une ligne, « … » si trop long. Test `podiumClassement.rn.test.tsx` (positions calculées depuis les styles rendus et la ligne native d'Inter, clair / sombre, noms courts / longs), qui échoue avec les hauteurs fixes d'origine, sans `numberOfLines` ou sans écart de marche. Mesure réelle à 390 px avant / après dans `athlex-captures/podium`.
-
-**Chantier anglais, PR 6 : Gérant (app seule, aucune migration ; PR non mergée).** Bandeau d'abonnement du tableau
-de bord, horaires (types de cours traduits à l'écran, valeur enregistrée inchangée), compétition inter-box (WODs
-programmés, onglets poules et suisse), programmation, éditeur de programme, membres, éditeur de WOD et ouverture d'un
-lien externe passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de
-20 états pris sur master, `i18nGerant.rn.test.tsx`, alertes comprises), aucun texte français en anglais. 40 clés ;
-messages bruts par `errorMessage()` dans les 7 fichiers du groupe ; vrais pluriels anglais pour 4 clés du back-office
-qui gardaient « (s) ». « Heavy » pour l'intention Functional du générateur (le français garde « Force ») ; le type
-« Force » de l'éditeur de WOD désigne la séance de Musculation (`wod_type: 'strength'`) : non renommé, point remonté à
-Nab. Corrections validées : « En continu », « 1 match », « 1 WOD », « 1 jour d'affilée », « 1 rep », « Taux de
-victoire ». AdminScreen exclu explicitement de la garde (`scripts/i18n/fichiers-exclus.json`, outil interne réservé à
-Nab). Les 11 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` (144 → 155). Captures 390 px FR / EN dans
-`athlex-captures/i18n-gerant` : aucun libellé anglais tronqué ni hors écran.
-
-**WOD de tournoi : compte à rebours unique (app seule, aucune migration ; PR non mergée).** `startCountdown` (TournamentWODScreen) remplaçait l'intervalle lancé au montage sans l'arrêter : il tournait sans fin, même écran quitté. Il arrête désormais le précédent avant d'en lancer un ; le démontage arrête le dernier. Aucun changement d'affichage. Test `tournamentWodCountdown.rn.test.tsx` (minuteurs simulés : un intervalle après relance, zéro après démontage), échoue si l'on retire l'un ou l'autre arrêt ; le contournement qui arrêtait ces intervalles à la main est retiré de `i18nCompetition.rn.test.tsx` et de `r8a.rn.test.tsx`, qui se terminent seuls.
-
-**Chantier anglais, PR 5 : Profil & Accueil (app seule, aucune migration ; PR non mergée).** Profil (Compte, PR,
-séries réalisées, Stats, Badges), Amis, profil public, utilisateurs bloqués, historique ELO, Nouveautés, Accueil
-(sélecteur de box, badge débloqué, semaine), Notifications, connexion, inscription, mot de passe oublié et code,
-rejoindre une box, tutoriel, tours guidés gérant et coach, mise à jour requise, champ date et onglets gérant / coach
-passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de 67 états pris
-sur master, `i18nProfil.rn.test.tsx`, alertes et partage compris), aucun texte français en anglais. 113 clés ;
-erreurs rendues par AuthContext (`joinBox`, `leaveBox`, `deleteAccount`) traduites, messages bruts par
-`errorMessage()` ; dates de l'historique ELO par `src/i18n/locale.ts` ; initiales des jours et récapitulatif de la
-semaine de l'Accueil en vrais pluriels anglais. Corrections validées par Nab : « 1 membre », « Top : », « Rejoints »,
-« {{cat}} leaderboard », récapitulatif AMRAP « 1 round / 4 rounds » ; catégories de badges « Leaderboard ». Les 25
-fichiers rejoignent `scripts/i18n/fichiers-traduits.json` (119 → 144) ; chaînes techniques (erreurs de build,
-journaux, nom de route) en `i18n-ignore` avec raison. LegalScreen (PR à part) et AdminScreen (reste en français)
-hors périmètre. Captures 390 px FR / EN dans `athlex-captures/i18n-profil` : aucun libellé anglais tronqué ni hors
-écran.
-
-**Chantier anglais, PR 4 : Compétition (app seule, aucune migration ; PR non mergée).** Mini-tournois (liste,
-création, détail, saisie et contestation de score, WOD du Jour RX / Scaled), Classement (individuel, équipes, box),
-Classement de la box, détail d'une compétition inter-box (onglets, BYE), saisie d'un score inter-box, tableau et WOD
-d'un tournoi passent par `t()` en français et en anglais : texte français inchangé au caractère près (instantané de
-37 états pris sur master, `i18nCompetition.rn.test.tsx`, alertes comprises), aucun texte français en anglais.
-88 clés ; « Classement » = « Leaderboard » ; messages d'erreur bruts par `errorMessage()`. Le libellé des tours d'un
-score AMRAP est désormais fourni par chaque écran (`t('score.amrapRounds')`) : plus de repli français dans
-`tournamentUtils.ts` (TournamentScreen et BOTournamentScreen passent aussi le libellé). Les 9 fichiers rejoignent
-`scripts/i18n/fichiers-traduits.json` ; « BYE » et « VS » deviennent termes techniques ; les prescriptions Scaled de
-`wodScaling.ts` restent du contenu d'entraînement (`i18n-ignore`, traduites avec le moteur). Explorer :
-`explorer.detail.sports_one` passe à « sport » (validé par Nab). Captures 390 px FR / EN dans
-`athlex-captures/i18n-competition` : aucun libellé anglais tronqué ni hors écran.
-
-**Notification au gérant d'une demande de changement de formule** (fonction `deliver-manager-notifications`,
-**déployée le 10/10/2026 à 12:33 UTC** par `scripts/deploy-edge.mjs` depuis master `6d819d0`, PR #498 ; code
-déployé avant identique octet pour octet à master avant le merge, copie gardée hors dépôt
-(`athlex-retour-arriere-deliver-manager-notifications/avant-498`) ; source en prod identique à master après ; sondes
-sans secret, faux secret, secret vide, GET et OPTIONS : 401 ; pg_cron chaque minute, 12 exécutions réussies sur
-12 minutes, réponses 200, aucune erreur d'exécution ; file vide, aucune ligne en attente ; aucune donnée écrite ni
-envoi de test ; aucune migration). Le type `plan_change_request` (migration 20270147, en prod) a
-désormais son texte : FR « Demande de changement de formule » / « {pseudo} demande à passer à {formule}. », EN
-« Plan change request » / « {pseudo} asked to switch to {formule}. ». Rien d'autre ne change : mêmes destinataires,
-même réservation avant envoi, même délai de 24 h, même purge. Les types de `regles.ts` sont contrôlés contre la
-contrainte de la base (test de parité). À déployer avant la PR B du Manager, la seule qui crée des demandes. Tests
-Jest : textes FR / EN et parité, 11 mutations tuées.
-
-**Chantier anglais, PR 3 : Explorer (app seule, aucune migration ; PR non mergée).** Annuaire des box (liste,
-recherche, filtres de sport, carte et sa fiche, variante web), détail d'une box, Partenaires et détail d'un
-partenaire (alerte du code promo comprise), Programmes et Programmes des box passent par `t()` en français et en
-anglais : texte français inchangé au caractère près (instantané de 20 états pris sur master,
-`i18nExplorer.rn.test.tsx`), aucun texte français en anglais. 60 clés ; sports, services et catégories de
-partenaire, valeurs enregistrées, traduits au rendu par `src/screens/explorer/explorerLabels.ts` (une valeur
-inconnue s'affiche telle quelle ; crossfit → Functional, hyrox → Hybrid). Pluriels anglais par l'outil du socle
-(« 1 member », « 12 listed boxes », « 1 day/week »), testés à 1 et à 12 ; en français, singuliers corrigés
-(validés par Nab) : « 1 membre », « 1 jour/semaine », et « Carte indisponible sur le web » sur la variante web. Les 9 fichiers rejoignent `scripts/i18n/fichiers-traduits.json` ;
-« Instagram » devient terme technique. Captures 390 px FR / EN dans `athlex-captures/i18n-explorer` : aucun
-libellé anglais tronqué ni hors écran.
-
-**Design : étiquette du type de séance en couleur (app seule, aucune migration, apparence seule ; PR #496 non mergée).**
-`wodTypeColor()` (`src/theme/wodTypeColor.ts`) donne la couleur du type sur le texte et le filet de l'étiquette : For Time
-jaune, AMRAP bleu, EMOM violet, Tabata vert, Musculation menthe, autre ou inconnu atténué. Elle s'applique à Ma Box, au
-détail du WOD et au détail d'un programme (Figma 638:501). `HUES.yellow.light` passe à `#9A5D06` (≈ 4,87:1 sur
-`ax.background`, contre 4,496:1 pour `#A16207`). Contraste ≥ 4,5:1 vérifié par test sur la carte et sur le fond, dans
-les deux thèmes.
-
-**Chantier anglais, PR 0c : déclarer les fichiers déjà traduits (outillage, aucun code ni migration ; PR #494
-mergée le 07/10/2026).** Les 47 fichiers que l'inventaire du 07/10 trouve sans texte affiché hors `t()` (garde stricte et scanner
-français à 0) entrent dans `scripts/i18n/fichiers-traduits.json` (43 → 90 entrées) : composants `ax/*` et `glass/*`,
-Réservation, Entraînement, onboarding, plusieurs écrans de Compétition et du Manager in-app. La garde les protège
-désormais d'une régression. « Scaled » rejoint les termes techniques (`scripts/i18n/termes-techniques.json`).
-
-**Chantier anglais, PR 2 : Ma Box + Réservation (app seule, aucune migration ; PR non mergée).** Détail du WOD
-(score, saisie, classement, commentaires), WOD perso, Actualités, Messages (dont GIF), Infos de la box, Membres,
-Signaler / Bloquer (`ReportMenu`, motifs de `moderation.ts` en clés), sélecteurs de semaine du Whiteboard et de la
-Réservation, et les placeholders d'Infos de la box côté gérant passent par `t()` en français et en anglais : texte
-français inchangé au caractère près (instantané de 39 états pris sur master, `i18nMaBox.rn.test.tsx`, alertes
-comprises), aucun texte français en anglais. 113 clés, pluriels par l'outil du socle (« 1 athlete »,
-« Leaderboard · 1 score », « 1 like »), messages d'erreur bruts de ces écrans par `errorMessage()`. Les 11 fichiers
-rejoignent `scripts/i18n/fichiers-traduits.json` ; « Scaled » devient terme technique. Captures 390 px FR / EN dans
-`athlex-captures/i18n-ma-box` : aucun libellé anglais tronqué ni hors écran.
-
-**Sécurité, stockage `tournament-banners` : écriture réservée au staff de la box du tournoi et aux admins** (migration
-`20270149`, **appliquée en prod le 07/10/2026 à 09:02 UTC** ; dump
-`db-dumps/2026-10-07/athlex-prod-public-storage-20261007T090131Z.dump` (sha256 `634ecc6e…7fda`, aller-retour vérifié) ;
-objets inchangés ; audit des droits 42/42 avec S6 et S7 ; PR #493 mergée le 07/10/2026 (`0004fc0`) ; même méthode que
-`20270148`). Constat du 07/10/2026 en lecture
-seule : « Authenticated users can upload / update tournament banners » ne demandaient que `bucket_id =
-'tournament-banners'` — tout compte connecté déposait ou remplaçait la bannière de n'importe quelle box (stockage
-public, 6 objets `<box_id>/<horodatage>.<ext>`, 0 `banner_url` renseignée ; aucune policy DELETE). Dépôt et
-modification (USING et WITH CHECK) passent au rôle `authenticated` avec `public.is_box_admin` du premier dossier du
-chemin (gérant, co-gérant, coach actif, admins — le prédicat de `tournaments_box_admin_manage`), dossier uuid vérifié
-avant conversion ; toujours aucune suppression. Lecture publique, stockage public, policies de `tournaments` et
-`is_box_admin` inchangés ; aucun changement de code (le Manager dépose déjà sous `<boxId>/`). Test
-`supabase/tests/tournament_banners_staff.sql` (Q0 à Q6), contrôle S7 de l'audit des droits, retour arrière
-`supabase/retours/20270149000000_tournament_banners_staff.sql`.
-
-**Sécurité, stockage `partner-logos` : écriture réservée aux admins** (migration `20270148`, **appliquée en prod le
-06/10/2026 à 22:01 UTC** ; dump `db-dumps/2026-10-06/athlex-prod-public-storage-20261006T220052Z.dump` (sha256
-`f87e3d92…84d0`, aller-retour vérifié) ; objets et partenaires inchangés ; audit des droits 41/41 avec S6 ; PR non
-mergée, test de Nab avant merge ; point 2 d'« Avant l'App Store »). Constat du 06/10/2026 en lecture seule : les policies
-`admin_upload/update/delete_partner_logo` ne demandaient que `auth.uid() IS NOT NULL` — tout compte connecté
-déposait, remplaçait ou supprimait un logo de partenaire (stockage public, 0 objet, table `partners` vide). Dépôt,
-modification et suppression passent au rôle `authenticated` avec `profiles.role` `super_admin` ou `admin` (même
-prédicat que `admin_manage_partners` et le stockage `assets`) ; la modification juge aussi la nouvelle ligne.
-Lecture publique, stockage public, `admin_manage_partners` et `prevent_role_escalation` inchangés. Test
-`supabase/tests/partner_logos_admin.sql` (P0 à P6, dont la lecture du rôle sous RLS), contrôle S6 de l'audit des
-droits, retour arrière `supabase/retours/20270148000000_partner_logos_admin.sql`. Appliquée **avant** le merge, pour
-que le `grants-prod.yml` du merge (S6) soit vert d'emblée, contrairement à 20270136 et 20270137.
-
-**Chantier anglais, PR 1a : minuteur, générateur, Musculation, partage (app seule, aucune migration ; PR non mergée).**
-Le minuteur (réglages, lancement, en cours en portrait et paysage, Split, design, vidéo), le générateur (Functional,
-Hybrid, Musculation et leurs options), la carte Séance de Musculation et « Partager ma perf » (écran et image) passent
-par `t()` en français et en anglais, texte français inchangé ; dates par `formatDate`, « Strength » en anglais ; les
-valeurs envoyées au moteur, à la base et aux préférences ne changent pas (mêmes paramètres dans les deux langues).
-
-**Chantier anglais, PR 0b : garde stricte (outillage et tests, aucune migration ; PR non mergée).** Dans un fichier déclaré
-traduit (`scripts/i18n/fichiers-traduits.json`), la garde refuse désormais tout texte affiché hors `t()`, quelle que
-soit sa langue, sauf les textes sans lettre, les termes techniques de `scripts/i18n/termes-techniques.json` et les lignes
-« `// i18n-ignore : <raison>` » (raison obligatoire) ; les onze textes qu’elle a trouvés dans les 29 fichiers
-déjà déclarés (« pts », « D1 · », « TB: », « BM », « SC », « Cap », « R1 · », « E2MOM ») passent par `t()`, texte inchangé.
-
-**Chantier anglais, PR 1b : Résultat du WOD, programmes, calculateur 1RM (app seule, aucune migration ; PR non
-mergée).** « Ton WOD », le Détail d'un programme, le calculateur 1RM (zones barres et gymnastique), le matériel du
-générateur et les affichages des blocs de force et cardio passent par `t()` en français et en anglais (texte français
-inchangé) ; les clés de records `gymnastics_<Libellé>` et le texte enregistré des WOD ne bougent pas, l'analyse des
-blocs donne le même résultat dans les deux langues ; textes du moteur (PR 8) et contenus de box restent tels quels.
-
-**« Partager ma perf » en plein écran et image partagée refaite d'après la maquette (refonte Split & Partage, PR 2 ;
-app seule, apparence, aucune migration ; PR non mergée, vérifiée sur l'émulateur Android, à vérifier sur build).** La
-petite fenêtre devient un écran plein (Figma 580:801 / 580:915) dont la carte est le fond : logo et ATHLEX, étiquette de
-type (AxTag, FORCE = STRENGTH en anglais), titre sur 2 lignes au plus, date (format inchangé), score géant sur une ligne
-(170 pour 390 de large, réduit pour tenir en largeur puis en hauteur), unité à côté de RX / SCALED
-(`splitScoreForDisplay`, qui découpe `formatScoreValue` sans en changer le contenu), encart Classement masqué sans rang
-et médaille pour les rangs 1 à 3 seulement, athlète, liseré accent et halo ; croix en haut à droite, barre d'actions
-collée en bas avec la zone sûre (« Partager ma performance », même `handleShare`, et « Fermer »), sans défilement, le
-contenu finissant au moins 20 au-dessus de la barre. L'image 1080 × 1920 (580:856 / 580:948) a la même composition sans
-boutons ; capture ViewShot et partage inchangés. Plus de couleurs de type ni d'emoji. Tests `splitScoreForDisplay.test.ts`
-(4) et `sharePerf.rn.test.tsx` (13), 25 mutations tuées ; captures avant / après, images et mesures uiautomator dans
-`athlex-captures/split-partage`.
-
-**« Mon abonnement », PR A : changement de formule, la base** (migration `20270147`, **appliquée en prod le
-06/10/2026 à 15:00 UTC** ; dump `db-dumps/2026-10-06/athlex-prod-public-internal-20261006T145926Z.dump` ; données de
-box_members, boxes et de la file des notifications identiques avant/après ; audit des droits 40/40 ; PR non mergée). Une seule règle pour l'app et le site /compte : un membre payant en ligne verra son changement
-programmé à la prochaine échéance (échéancier Stripe, sans prorata, écrit par le webhook à la bascule — PR B) ; un
-membre payant au comptoir envoie une demande que le gérant accepte (formule appliquée tout de suite) ou refuse dans
-Abonnés du Manager. Refusé en impayé, en pause, résiliation programmée, box archivée ou en archivage ; possible pendant
-un engagement, sans le changer.
-- `box_members` : `scheduled_plan_id`, `scheduled_change_at`, `stripe_schedule_id`, gardées comme `plan_id` (aucun
-  client ne les écrit ni ne les lit) ; `get_my_membership_billing()` rend les deux premières à leur membre.
-- `box_stripe_portal` : configuration du portail Stripe d'une box, clé serveur seule (une colonne de `boxes` aurait
-  été lisible par tout compte connecté).
-- `box_plan_change_requests` (une seule demande en attente par membre et par box ; le membre lit les siennes, le
-  gérant et les co-gérants celles de leur box ; aucune écriture client) et trois fonctions réservées à la clé
-  serveur : `request_plan_change`, `cancel_plan_change_request`, `decide_plan_change_request` (gérant ou co-gérant,
-  jamais le coach ; une demande décidée ne bouge plus ; à l'acceptation, un montant noté suit le prix de la
-  nouvelle formule, un montant vide le reste). Codes `PLAN_CHANGE_…`.
-- Le gérant est notifié de chaque demande (`plan_change_request` dans la file des notifications) ; le texte est
-  ajouté à `deliver-manager-notifications` (voir « En cours »).
-- Tests `changement_formule.sql` (C0 à C9, mutations intégrées, retour arrière), contrôle T15 de l'audit des droits ;
-  retour arrière `supabase/retours/20270147000000_changement_formule.sql`.
-
-**Chantier anglais, PR 0 : socle i18n (app seule, aucune migration ; PR #487 non mergée).** Dates et nombres selon la
-langue de l'app et la région du téléphone (`src/i18n/locale.ts`, plus de `'fr-FR'` en dur hors minuteur et carte de
-partage, laissés à la PR 1a), `errorMessage()` qui traduit les refus de la base et des fonctions Edge, app et push en
-anglais pour un téléphone ni français ni anglais (le choix du Profil l'emporte, le jeton est réenregistré au changement),
-« Strength » pour « Musculation » en anglais, polyfill des pluriels pour Hermes, et garde (`scripts/i18n/`, test
-`i18nGarde`) contre le français hors `t()` dans les fichiers déclarés traduits.
-
-**Minuteur Split « Tap pour lancer » refait d'après la maquette (refonte Split & Partage, PR 1 ; app seule, apparence,
-aucune migration ; PR non mergée, vérifiée sur l'émulateur Android, à vérifier sur build).** L'écran entre deux rounds
-Splits devient un plein écran aux jetons du thème (Figma 580:772 sombre / 580:892 clair) : surtitre « ROUND n / total » et
-pastilles des rounds (fait / suivant / à venir), cible à trois anneaux et disque Play accent, « TAP POUR LANCER » en
-Oswald 44, indice en pastille, et en bas le round qui vient de se terminer avec sa durée (`formatTime(workTime)`, le
-round Splits s'arrêtant seul à 0 ; validé par Nab le 05/10). Tout l'écran reste touchable (`splitsNextRound`, inchangé),
-textes par `t()` (fr / en). En paysage, cible à gauche et textes à droite. Tests `splitsTapOverlay.rn.test.tsx` (3),
-6 mutations tuées ; captures avant / après et mesures uiautomator dans `athlex-captures/split-partage`.
-
-**Scores des membres visibles sur les blocs non classés (app seule, aucune migration ; PR #484 non mergée).** Sur
-WOD du jour, un bloc daté non classé (`leaderboard_enabled = false`, cas des blocs hors `wod` importés par PDF ou
-programmés) n'affichait que le score de l'athlète. Il affiche maintenant la liste « Scores » des membres : mêmes lignes
-que le classement (avatar, nom, likes, score, RX/Scaled), même tri, sans rang ni ELO. Les blocs classés sont inchangés et
-`leaderboardAvailable` garde son sens ; `scoreListMode` (programSchedule) sépare la liste du rang. Tests : 4 cas unitaires
-et 4 rendus de l'écran, 10 mutations tuées ; captures web sombre et clair comparées à la maquette Figma 566:1593 / 566:1678.
-
-**Minuteur en paysage : chiffres du chrono entiers (retour R3b du build 1.0.62, iPhone ; app seule, apparence, aucune
-migration ; PR non mergée, vérifiée sur l'émulateur Android, à vérifier sur iPhone).** En paysage, le bas des chiffres
-était coupé : le texte était mesuré dans sa boîte (ex. 262 dp) alors que sa ligne native fait 1,482 em (412 dp à 278 dp
-de police), et le style Barre avec caméra l'enfermait dans une boîte « hauteur d'encre » ; sur Android, la ligne trop
-courte donnait aussi « 00:… ». Les mesures du chrono viennent maintenant du fichier Oswald Bold embarqué (hhea 1193 /
-−289, OS/2 typo identiques, chiffres −15 à 822, chasses), plus de Chrome : le texte a exactement une ligne native de
-haut (lineHeight = height), largeur fixe, `includeFontPadding: false` ; taille bornée par l'encre dans la boîte mesurée
-et par la ligne native dans 96 % de la hauteur sûre. Avec et sans caméra, deux thèmes, Barre / Digits / Cercle ;
-portrait et temps final inchangés. Vérifié sur l'émulateur (Medium Phone API 36.1, build de développement local, banc
-sans compte ni réseau) : 20 captures avant / après, encre mesurée 549 px pour 550 attendus. Tests
-`retoursPaysageChrono.rn.test.tsx` (32, dont 9 R3b, mesures lues dans le .ttf par `policeTtf.ts`), 9 mutations
-tuées ; captures dans `athlex-captures/retours-1.0.62/R3b`.
-
-**R1 (retour 1.0.61) : 1RM exact du libellé pour les blocs de musculation (app seule ; PR non mergée, à vérifier
-par Nab).** Un bloc `%1RM` (texte des WOD, grille pré-remplie) prend d'abord le record de son libellé de la page Records
-(`weightlifting_<Libellé>` et anciennes clés, rapprochement casse/tirets/espaces/pluriel comme la gymnastique) : Bench
-Press et Hip Thrust ont enfin leur kg, Strict Press n'utilise plus le max de Push Press. Sans record exact, repli sur la
-famille du générateur (Squat Clean → clean). Générateur inchangé (`parsePersonalRecords`, `resolveLoad`). Charges
-toujours arrondies à 2,5 kg (91 % de 100 → ≈ 90 kg). Tests `oneRepMaxExactLabel.test.ts`, `oneRepMaxHook.rn.test.tsx`.
-
-**Crédit R2b : « N% Mouvement » ne crédite plus N reps (app seule, aucune migration ; PR non mergée, à vérifier par
-Nab).** Une ligne de WOD qui commence par un nombre suivi de « % » (`40% Ring Muscle-ups`, `40 % RMU`, `35%du max
-Toes-to-Bar`) n'est plus une quantité de reps : `parseMovementLine` rend `null`, la ligne garde sa place dans le tour
-(cycles d'EMOM) sans rien créditer ; AMRAP en reps et Max Reps avec une telle ligne ne créditent rien (répartition du
-score inconnue). Serveur non concerné (le crédit tournois lit `movement_lines`, structuré). Prod, lecture seule : 34
-`box_wods` en %, 4 `movement_logs` faux sur 2 WOD pour 1 athlète (30 `ring_muscle_up`, 76 `bar_muscle_up`), non
-retirés, décision à Nab. Tests dans `movementParser.test.ts`, prouvés par 8 mutations ; rapport dans
-`athlex-captures/retours-1.0.61/R2b`.
-
-**Minuteur en paysage conforme à la maquette (retour R3 du build 1.0.61, app seule, apparence, aucune migration ; PR non
-mergée, à vérifier sur téléphone).** En paysage, le chrono était environ trois fois trop petit (226 px fixes réduits par
-`adjustsFontSizeToFit` sur l'appareil, 137 px avec caméra) et « Appuie pour démarrer » tenait sur trois lignes. Maquette
-suivie : « Minuteur · Paysage A » (spec Minuteur 98:500, option A 102:1694, « Plein écran » par défaut ; reprise sur le
-prototype en 173:4838 / 173:4858). La taille du chrono part de la boîte mesurée (`onLayout`) entre le bandeau et la rangée
-du bas : l'encre des chiffres occupe 90 % de la hauteur sans dépasser la largeur (`chronoFontSize`, métriques d'Oswald
-Bold relevées dans Chrome), dans les deux thèmes, avec et sans caméra (styles Barre, Digits et Cercle). Oswald Bold
-chargé pour ce chrono. Bandeau : type, « BLOC 1/1 · CAP 18:00 » (s'il y a un cap ou plusieurs blocs), petit total masqué
-quand il répète le grand chrono ; rangée du bas : barre de progression, consigne sur une ligne, bouton Lecture / Arrêt de
-56 px ; marges de la zone sûre (îlot, bords, barre d'accueil). Temps final (D2) : seuls Fermer et Réglages bougent,
-hors de l'îlot et à la place qu'ils ont sur le chrono (relecture de #479). Portrait inchangé (captures identiques à
-l'octet, logique de `TimerRunScreen` figée par r5a). Non repris : l'option B (colonne, Pause et « Maintenir
-pour terminer » changent le comportement) et le réglage « Disposition en paysage ». Tests
-`retoursPaysageChrono.rn.test.tsx` (23, 20 mutations tuées) ; captures avant / après dans
-`athlex-captures/retours-1.0.61/R3`.
-
-**Gymnastique G4 : fenêtre « Nouveau record ? » (app seule ; PR non mergée, à vérifier par Nab).** Spec Figma
-501:812 / 501:899. Après une validation réussie (WOD du Whiteboard et séance générée), les séries sont relues du
-serveur ; pour chacun des 11 mouvements de gymnastique dont une série sans charge dépasse un record existant, une ligne
-« <mouvement> · N reps · avant R » (meilleure série du mouvement). Sans record, série égale ou en dessous, mouvement
-chargé ou gymnastique lestée : rien. « Enregistrer N reps comme record » (« Enregistrer ces records » à plusieurs
-lignes) appelle `confirm_gym_record(id de la série du serveur, libellé de la page Records)` ligne par ligne ; une erreur
-(`RECORD_NON_PROUVE`, `RECORD_NON_AMELIORE`, `MOUVEMENT_NON_GYMNIQUE`, réseau) reste sur sa ligne, un nouvel appui ne
-renvoie que les lignes non enregistrées ; après un succès, records relus, et la fenêtre se ferme quand tout est
-enregistré. « Pas maintenant » ferme sans rien écrire. Le partage (Whiteboard) et « Score enregistré » (séance générée)
-suivent la fermeture. Séance générée au poids du corps seule : n'est plus arrêtée par « Aucune série chargée » (reste
-de G3), seule une séance sans série valide l'est. `GymRecordSheet` (feuille en bas, voile, zone sûre, liste
-défilable), i18n FR/EN. Tests `gymRecordSheet.rn.test.tsx`, `gymRecordResult.rn.test.tsx` ; captures banc web local
-390 px sombre/clair FR/EN dans `athlex-captures/gymnastique-G4`.
-
-**Gymnastique G3 : grille en reps seules, « Ajouter une série », totaux, séance validée (app seule ; PR non mergée, à
-vérifier par Nab).** Spec Figma 501:514 / 501:648 (A) et 501:604 / 501:738 (C), base G2 en prod (20270145). Passent
-en reps seules : une ligne « % du max », une ligne d'un des 11 mouvements de gymnastique sans charge en kg, un
-exercice au poids du corps en reps d'une séance générée ; toute autre ligne garde reps × kg, charge exigée même sans
-charge prescrite (« Push Press — 2 × 5 »), gymnastique lestée comprise. Reps seules : pas de champ kg, « Ajouter une série » (série vide, `is_added`, sans reps prévues, retirable par la
-corbeille ; une série prescrite ne se retire pas), « Total <mouvement> », séparateur, « Reps totales (score) ·
-calculées » ; la pastille « En cours · n / N » compte les séries ajoutées. Ligne chargée (kg, %1RM résolu ou non, charge
-notée), ligne en secondes ou en mètres et grille d'avant G2 : champ kg comme avant. Envoi : séries sans charge au
-brouillon et à la validation (`load_required` faux), `is_added` ; `logStrengthSets` inchangé. Séance sans aucune série
-chargée : même crédit de compteurs qu'une séance chargée (score envoyé, série de jours), une seule fois, sans rep de
-badge (ni `logMovementReps`, ni `movement_logs`) ni ligne de score (Whiteboard et séance générée). Écran C : séries en reps,
-« ajoutée », totaux, « Reps totales », pastille « Validée le … · Score N reps » (séance sans charge), « Modifier mes
-séries » et son texte ; séance mixte : tonnage et charge max gardés, reps totales en plus. Fenêtre de saisie : zone sûre
-en bas. i18n FR/EN, dont « S × P % du max » (EN « S × P% of max »). Tests `gymRepsGrid.rn.test.tsx` et blocs G3 de
-`strengthSession.test.ts`, `muscuSession.test.ts` ; captures banc web local 390 px sombre/clair FR/EN dans
-`athlex-captures/gymnastique-G3`.
-
-**Gymnastique G2 : validation sans charge, reps totales, séries ajoutées, record confirmé (migration 20270145 ;
-**appliquée en prod : oui**, le 04/10/2026 à 17:48 UTC, dump `db-dumps/2026-10-04/athlex-prod-public-internal-20261004T170427Z.dump` (sha256 `23c056b6…56a9`, aller-retour vérifié) ; données inchangées avant/après (séances, séries, records, scores, movement_logs), définitions aux empreintes du rejeu, test réel G1 à G9 sur données fictives annulé sans trace, audit grants-prod 39/39 ; PR non mergée).** `validate_strength_session` garde et valide
-les séries sans charge quand aucune charge n'était prescrite (une séance de gymnastique seule se valide ; une série à
-charge prescrite, ou marquée `load_required` par l'app pour une ligne en kg ou en %1RM même non résolu, reste exigée
-avec sa charge) ; `strength_sessions.total_reps` (reps des séries sans charge, calculées
-par le serveur seul, refusées en écriture directe) ; `statut_coherent` : validée = charge max ou reps totales ; aucune
-ligne `wod_scores` sans série chargée, séance chargée ou mixte inchangée (score en charge) ; jamais de `movement_logs`.
-`strength_set_logs.is_added` (série ajoutée, sans reps prévues), renvoyé en dernière colonne par
-`list_athlete_strength_sets` (pour GM2). `confirm_gym_record(p_set_log_id, p_label)` : record de gymnastique prouvé par
-une série sans charge d'une séance validée de l'appelant, valeur = reps de la série, jamais abaissé, clé
-`gymnastics_<Libellé>` + `_date` + `_src` ; erreurs `RECORD_NON_PROUVE`, `RECORD_NON_AMELIORE`,
-`MOUVEMENT_NON_GYMNIQUE` ; authenticated seul. Rapprochement des noms en SQL (`internal.gym_pr_label`, miroir de
-`gymPrLabel`). App : `is_added: false` et `load_required` (`StrengthSetDraft.loadRequired`, posé par `buildStrengthGrid`) envoyés dans
-`p_sets`, aucun changement d'écran. Test
-`gymnastique_validation_sans_charge.sql` (G1 à G10 et retour arrière exact aux empreintes de prod, 32 mutations tuées, plus 5 côté app) ;
-retour arrière `supabase/retours/20270145000000_gymnastique_validation_sans_charge.sql`.
-
-**Gymnastique G1 : % du max → reps (app seule, aucune migration ; mergée, PR #472 ; à vérifier sur téléphone au prochain build).** Spec Figma
-501:513, arbitrage G0 du 04/10. Sur un mouvement de gymnastique (les 11 libellés de `GYM_PR_MOVEMENTS`, rapprochés
-sans casse, tirets, espaces ni pluriel, plus les abréviations sans ambiguïté T2B/TTB, C2B/CTB, RMU, BMU, Strict HSPU,
-Wall Facing HSPU ; ni « HSPU » ni « MU » seuls, ni « Strict Pull-Ups »), un % est un % du record (max unbroken) :
-reps = max(1, arrondi(record × P / 100)), rien sans record. Grille (WOD strength seulement) : nouvelles formes
-« Mvt — S × P % du max » et « Mvt — S × P % » (reps pré-remplies depuis le record, vides sans record), ligne
-« P % de ton max (R reps) → N reps » sous le mouvement, ou « P % de ton max · aucun record enregistré » et le lien
-« Renseigner mon record › » (ferme la saisie en gardant le brouillon, ouvre Profil → PR, Gymnastique dépliée ; écran
-Profil ajouté à la pile Ma Box). « Mvt — S × R @ P % » : R gagne, rien de calculé. Texte des WOD (tous types : cartes
-Ma Box, détail, programme) : « (≈ N reps) » après le % quand la ligne porte exactement un mouvement reconnu, un seul %,
-aucune charge, aucun mouvement à 1RM, et pas de reps écrites ; sinon rien. Aucun effet sur score, crédits ni badges ;
-le champ kg reste affiché (G3). Tests `gymPercentReps.test.ts` (18 tests, 11 mutations tuées) ; captures banc web
-local 390 px sombre/clair FR/EN dans `athlex-captures/gymnastique-G1`. Relecture (bis) : records relus à chaque retour
-sur le détail du WOD (`useMyRecords().reload` au focus) ; un record arrivé recalcule les reps prévues des lignes
-« % du max » et ne remplit que les reps encore vides (`applyGymRecordsToGrid`) ; une grille saisie n'est plus remise
-à la prescription après l'enregistrement du brouillon (défaut existant, rendu visible par le rechargement) ;
-`logStrengthSets` envoie `prescribed_reps` NULL au lieu de 0, comme le brouillon et la validation. Tests
-`gymRecordFocus.rn.test.tsx`, `strengthSession.test.ts` (CHECK `prescribed_reps` simulé), 5 mutations tuées.
-Contrat de format partagé avec le Manager : `src/__tests__/fixtures/strength-line-contract.json` (5 cas, identique
-octet pour octet à AthleX-Manager `lib/__fixtures__/strength-line-contract.json`, sha256 `52b03e77…7025`), vérifié
-par `strengthLineContract.test.ts` (lecture et écriture).
-
-**Profil → Notifications : bouton de test sans fenêtre ni jeton, écran traduit (retour du build 1.0.60, app seule, aucune
-migration ; PR non mergée, à vérifier par Nab au prochain build).** Le bouton « Tester les notifications » ouvrait une
-fenêtre de développement « Token enregistré » avec le début du jeton push. Il enregistre toujours le jeton
-(`registerForPushNotifications` + `savePushToken`), puis programme une notification locale dans 3 s (aucune requête
-serveur) et affiche le résultat sous le bouton : message succès, ou message alerte et lien « Ouvrir les réglages »
-(`Linking.openSettings`) si la permission est refusée. Plus aucune `Alert`, aucun jeton, aucun emoji. Tout l'écran
-passe par i18n (`notifSettings`, FR/EN), textes français inchangés. Tests `notificationSettingsTest.rn.test.tsx`
-(7 tests, 16 mutations tuées) ; captures avant/après sur banc web local (390 px, sombre/clair, FR/EN), message à 16 px
-au-dessus de la barre d'onglets.
-
-**Minuteur : la musique de l'utilisateur remonte après chaque bip (retour D7 du build 1.0.60, Android, app seule, aucune
-migration ; PR non mergée, à vérifier à l'oreille par Nab sur Android et iPhone au prochain build).** Sur Android, la
-musique (Spotify…) baissait au premier bip du décompte et ne remontait plus. expo-av demande le focus audio
-(`GAIN_TRANSIENT_MAY_DUCK`, mode `DuckOthers`) à chaque lecture et ne le rend que quand plus aucun son n'a `shouldPlay` à
-vrai ; un bip fini le garde à vrai, donc le focus restait pris jusqu'à la sortie de l'écran (déchargement des sons).
-Chaque bip est maintenant arrêté (`stopAsync`) dès sa fin (`didJustFinish`) sur Android : le focus est rendu et la
-musique remonte juste après le bip, avec et sans caméra (le module natif Android n'utilise que `AudioRecord`, qui ne
-prend pas le focus). iOS inchangé : `MixWithOthers` sans `DuckOthers`, côté expo-av comme côté module natif
-(`.mixWithOthers`), aucune baisse à rétablir. Vérifié sur l'émulateur par `dumpsys audio` avec une musique de test
-(focus pris puis rendu à chaque bip, plus de « ducked players » hors bips). Tests `retours1060Musique.rn.test.tsx`
-(5 tests, 5 mutations tuées) ; empreintes r5a/r6b/r6c mises à jour, mock Android de r5b complété.
-
-**Notifications push au gérant (D4a), PR C : tâches pg_cron** (migration `20270144`, **appliquée en prod le 04/10/2026 à
-10:19 UTC**, en dernier, après la migration `20270143` et le déploiement de `deliver-manager-notifications` ; tâches 15
-et 16 actives, les 13 autres inchangées ; exécutions de 10:20 à 10:23 réussies, réponses 200, file vide).
-- `deliver-manager-notifications-minute` (chaque minute) : `net.http_post` vers la fonction, sans clé d'API ni
-  `Authorization`, `x-cron-secret` lu dans le Vault (`cron_secret`) ; sans ce secret (base de rejeu), créée inactive.
-- `box-manager-notifications-purge` (03:23 UTC) : supprime les lignes de la file de plus de 30 jours.
-- Tests `notifications_gerant_cron.sql` (C0 à C3 : forme des tâches, Vault avec et sans secret, rejouable sans
-  doublon, autres tâches intactes, purge à 30 jours, retour arrière), 12 mutations tuées.
-
-**Notifications push au gérant (D4a), PR B : fonction `deliver-manager-notifications`** (**déployée le 04/10/2026 à
-10:19 UTC** par `scripts/deploy-edge.mjs`, après la migration `20270143` ; source déployée identique à la branche,
-copie gardée hors dépôt (`athlex-retour-arriere-deliver-manager-notifications/deploye-d4a`) ; sondes sans secret, faux
-secret, secret vide, GET et OPTIONS : 401 ; démarrage sans erreur ; appelée chaque minute par pg_cron depuis 10:20 UTC,
-réponses 200 ; conception dans `docs/NOTIFS_GERANT.md`, PR A).
-- Appelée seulement par pg_cron avec `x-cron-secret` (401 sinon, `verify_jwt = false` versionné), clé par
-  `_shared/cle-secrete.ts`. Lit au plus 50 lignes non envoyées, non réservées, moins de 5 tentatives, des dernières
-  24 h ; réserve chaque ligne avant d'envoyer (mise à jour conditionnelle, une seule exécution l'envoie).
-- Destinataires par leur compte : `boxes.owner_id` et co-gérants actifs (`box_members.role = 'owner'`) ; ni coach,
-  ni membre, ni administrateur de la plateforme ; l'auteur du geste exclu ; interrupteur général coupé respecté.
-  Texte dans la langue de chaque jeton, pseudo du membre (jamais l'e-mail), heure du cours à Paris.
-- Appareils acceptés = tickets « ok » d'Expo (comme `send-box-notification`) écrits avec `sent_at` ; échec → ligne
-  libérée avec un code sans donnée personnelle, nouvelle tentative la minute suivante ; résultat non écrit après
-  l'envoi → la ligne n'est jamais reprise (pas de double envoi). Données `{ type, box_id }` : au toucher, l'app
-  s'ouvre simplement (`notificationRouter` ignore ces types).
-- Règles dans `regles.ts`, 33 tests Jest, 28 mutations tuées.
-
-**Notifications push au gérant (D4a), PR A : file d'attente et déclencheurs** (migration `20270143`, **appliquée en
-prod le 04/10/2026 à 10:16 UTC** ; dump `db-dumps/2026-10-04/athlex-prod-public-internal-20261004T101510Z.dump` ; test
-réel en transaction annulée sur AthleX Fitness, sans trace ; audit des droits 39/39 ; conception dans
-[`NOTIFS_GERANT.md`](./NOTIFS_GERANT.md) ; fonction d'envoi (PR B) déployée et tâches pg_cron (PR C) appliquées le même
-jour).
-- Table `box_manager_notifications` : une ligne par événement, clé unique `(type, event_ref)` ; RLS active sans
-  règle, aucun droit pour `anon` et `authenticated`, la clé serveur lit et n'écrit que les colonnes d'envoi ;
-  contrôle T14 de l'audit des droits.
-- Cinq déclencheurs AFTER sur la transition seulement, une fonction `internal.filer_notification_gerant()` : nouvel
-  abonnement Stripe actif (nouvel `stripe_subscription_id` — ni renouvellement, ni retour d'impayé, ni comptoir),
-  `past_due_since` NULL → date, alerte « réservation sans formule », invitation passée à `accepted`. Box archivée :
-  rien. Une erreur de mise en file ne bloque jamais l'écriture d'origine.
-- Précontrôle du 04/10/2026 (lecture seule) : déclencheurs existants non redéfinis (md5 dans la note), table absente,
-  `is_box_owner_admin` identique au dépôt. Tests `notifications_gerant_file.sql` (F0 à F9, mutations, retour arrière).
-
-**Notifications du gérant (D4b), PR 1 : base et fonction** (migration `20270142`, **appliquée en prod le 03/10/2026 à
-16:17 UTC** ; dump `db-dumps/2026-10-03/athlex-prod-public-internal-20261003T160601Z.dump` ; audit 38/38 ; fonction
-`send-box-notification` **déployée le 03/10/2026 à 16:19 UTC** ; maquettes validées par Nab, page « 🧪 Spec · Notifications du
-gérant », node 475:753 ; PR 2a apparence et PR 2b comportement à suivre).
-- `box_notifications.delivered_count integer NULL` : appareils acceptés par Expo pour cette notification (0 compris),
-  NULL pour les lignes antérieures ou pas encore envoyées. Garde `internal.garder_resultat_notification()` : un client
-  (`authenticated`, `anon`) ne pose ni ne change ce nombre (42501 `NOTIF_RESULTAT_RESERVE`) ; contrôle T13 de l'audit
-  des droits.
-- `box_notifs_owner` passe de `is_box_owner(box_id)` (md5 de prod f1c07d7a…) à `is_box_owner_admin(box_id)` : le
-  co-gérant crée et lit les notifications de sa box comme le gérant ; coach et membre restent sans écriture ; lecture
-  des membres inchangée.
-- `send-box-notification` : gérant ou co-gérant de la box (même règle que `is_box_owner_admin`), 403 sinon ; `sent` =
-  tickets « ok » d'Expo (avant : messages des lots envoyés) ; résultat écrit dans `delivered_count` avec la clé
-  serveur, 0 compris (sans membre, sans jeton, préférences coupées). Une notification ne part qu'une fois : 409
-  `Already sent` si elle a déjà un résultat ; sinon réservation conditionnelle (`delivered_count` NULL → 0, `WHERE
-  delivered_count IS NULL`) après tous les refus et avant Expo, 409 si un envoi simultané l'a prise ; nombre définitif
-  écrit après l'envoi (une erreur après la réservation laisse 0). Règles dans `regles.ts`, testées par Jest.
-- Précontrôle du 03/10/2026 (lecture seule) : fonction déployée identique à `d9b3382` (copie de retour arrière dans
-  `C:\Users\NBS\athlex-retour-arriere-send-box-notification\avant-d4b-pr1`) ; 3 lignes dans la table ; en prod,
-  3 gérants sur 4 n'ont pas de ligne `box_members`, d'où le passage par `boxes.owner_id`.
-- Appliquée dans l'ordre migration, puis fonction ; test réel en transaction annulée sur AthleX Fitness (co-gérant
-  fictif accepté, résultat refusé au client, coach refusé, réservation conditionnelle par la clé serveur), sans trace.
-
-**Notifications du gérant (D4b), PR 2a : apparence de l'écran (app seule, apparence seule ; vérification visuelle
-par Nab).** `BONotificationsScreen` à l'apparence de sa maquette « Notifications (envoi) » (Figma 56:1868 sombre,
-56:2536 clair) avec les composants `ax` : en-tête ‹ / cloche menthe / titre Oswald, carte « NOUVELLE NOTIFICATION »,
-destinataires en `AxChip`, champs `AxTextField`, bouton menthe `AxButton`, historique en carte (coche verte, date,
-cible en menthe). Mêmes libellés, mêmes destinataires, même envoi (logique identique, contenu vérifié sur l'écran
-d'avant). Tests `boNotificationsApparence.rn.test.tsx`, 11 mutations tuées. Destinataire, résultat de l'envoi et
-historique enrichi : PR 2b.
-
-**Notifications du gérant (D4b), PR 2b : destinataire, résultat de l'envoi, historique (app seule, aucune migration ;
-vérification visuelle par Nab).** Destinataire en deux pastilles, « Tous les membres (N) » par défaut et « Un membre »
-qui ouvre la feuille « CHOISIR UN MEMBRE » (Figma 479:1161, 479:1366 ; `ChoisirMembreFeuille`) : membres actifs de A à Z
-sans tenir compte des accents ni de la casse, groupés sous leur lettre, index A–Z qui fait défiler à la lettre, recherche
-qui filtre dès la première lettre avec compteur et croix ; la feuille se réduit au-dessus du clavier. Membre choisi en
-carte avec « Changer ». Résultat de l'envoi dans la carte au lieu des fenêtres « Envoyé » : encadré vert « Envoyée à N
-appareil(s) » si `sent` > 0, sinon encadré d'alerte « non reçue » (texte membre ou tous) ; erreur d'envoi (409 compris)
-inchangée. Historique : coche verte et « N appareils », cloche barrée « non reçue » à 0, rien si `delivered_count` est
-NULL ; pseudo du membre au lieu de « Individuel », « Membre retiré » s'il n'est plus là. Raccourci « Envoyer une
-notification » dans la fiche d'un membre actif (482:3303), qui ouvre l'écran avec ce membre présélectionné. Tri et
-filtre dans `src/lib/membresAZ.ts`. Tests `membresAZ.test.ts`, `boNotificationsDestinataire.rn.test.tsx`,
-`boMembersNotifier.rn.test.tsx`, 25 mutations tuées.
-
-**Annonces de la box dans l'app (app seule, aucune migration ni Edge Function ; vérification visuelle par Nab au
-prochain build).** Écran « ANNONCES » (`AnnoncesScreen`, pile de Ma Box ; Figma 505:2955) : `box_notifications` de la
-box active, colonnes `id, title, body, target, created_at`, 50 au plus, de la plus récente à la plus ancienne ; la RLS
-existante (`notif_member_read`, `box_notifs_member_read`) ne rend que les annonces à toute la box ou au membre lui-même.
-Plus récente en carte vedette ; étiquette « Pour toi » si `target` est le membre, « Toute la box » sinon ; date et
-heure, titre, message en entier. État vide (mégaphone, « AUCUNE ANNONCE »), message d'erreur générique, tirer pour
-actualiser. Date « 04 oct. 2026 · 18:02 », en anglais même structure « 04 Oct 2026 · 18:02 » (heure sur 24 h comme
-Actualités et le minuteur). Ma Box : bouton « Annonces » (EN « Notices », titre « NOTICES ») à côté d'« Actualités »,
-pastille des annonces plus récentes que la dernière ouverture de l'écran (`lastSeenAnnonces_<userId>_<boxId>` sur le
-téléphone, même mécanique que les Actualités).
-Toucher une notification `box_notification` ouvre l'écran si sa `box_id` est la box active, sinon l'app s'ouvre
-simplement (`notificationRouter`, box active tenue à jour par `AuthContext`, changement de box compris). Tests
-`annonces.rn.test.tsx`, `annoncesBoxActive.rn.test.tsx` (vrai `AuthProvider`), `notificationRouter.test.ts`, 21 mutations
-tuées.
-
-**Minuteur sans caméra : session audio reposée à chaque lancement (retour D1 du build 1.0.60, app seule, aucune
-migration ; à vérifier sur iPhone au prochain build).** Sur iPhone, pas de bip sans caméra. Le mode audio n'était posé
-qu'à l'ouverture de l'écran ; avec caméra, `handleStartRecording` le repose avant l'enregistrement, sans caméra rien ne le
-reposait avant les bips si iOS avait changé la session entre-temps. `appliquerModeAudio()` (même configuration
-qu'avant, lecture en mode silencieux comprise) est maintenant appelée à l'ouverture et attendue au début de chaque
-lancement sans caméra, avant le premier bip ; un échec est signalé à Sentry et n'empêche pas le départ. Parcours caméra
-inchangé. Tests `retours1060Audio.rn.test.tsx` (premier et deuxième lancement, sans décompte, échec), 6 mutations
-tuées.
-
-**Caméra : démarrage sérialisé, exception rattrapée, 1080p fixe (module natif iOS + app, aucune migration, module Android
-intact).** Enquête sur les deux plantages du build 1.0.59 (iPhone 16 Pro, iOS 26.6.1, réglage 2K) et sur le paysage
-(aperçu couché, vidéo étirée, cercle du décompte en ovale), décidée par Claude (conception) et Nab le 1er octobre.
-- Cause du plantage, lue dans les deux rapports `.ips` : `setupSession` postait la création de l'aperçu sur le fil principal
-  (`AVCaptureVideoPreviewLayer(session:)` enveloppe un `beginConfiguration` / `commitConfiguration`) puis appelait
-  `startRunning` sur la file de capture sans attendre ; quand le fil principal gagnait, `startRunning` levait
-  `startRunning may not be called between calls to beginConfiguration and commitConfiguration`, exception ObjC que Swift
-  ne rattrape pas → `abort`. Course présente depuis 1.0.57, multipliée en 1.0.58/1.0.59 par les relances de session de
-  `prepareQuality` (essai à blanc 2K/4K, redescente) lancées depuis un fil principal oisif.
-- Cause du paysage : le writer était créé par un minuteur à l'aveugle de 0,5 s après la relance ; au-delà (preset 4K),
-  les angles du `RotationCoordinator` n'étaient pas encore appliqués et `isLandscape` venait de la session précédente →
-  tampon paysage dans un writer portrait (rapport hauteur/largeur 3,1 mesuré sur la capture de Nab).
-- Correctif iOS (`RealtimeRecorderModule.swift`) : une seule file (`com.athlex.recorder.capture`) sérialise toute
-  configuration ; l'aperçu et le coordinateur sont créés en `main.sync`, l'angle de capture et la géométrie appliqués
-  **avant** `startRunning` ; `startRecording` attend la complétion « session prête » émise sur cette file (plus de 0,5 s
-  ni 0,8 s) et relit `isLandscape` à ce moment ; `stopRunning`, la configuration, l'aperçu et `startRunning` passent par
-  `RTRCatchException` (ObjC, `RTRExceptionCatcher.m`) : une exception devient une promesse rejetée `ERR_CAPTURE_SESSION`
-  avec le motif, l'app n'est plus jamais tuée. Capture et fichier en 1080p fixe (6 Mb/s) comme en 1.0.57.
-- App : choix de qualité, essai à blanc, contrôle de chauffe et redescente retirés (section « Qualité » de l'écran
-  Minuteur, bandeaux, textes FR/EN) ; une ancienne `videoQuality` enregistrée est ignorée puis retirée à la première
-  écriture ; 25/30 i/s, micro, bips dans la vidéo et décompte incrusté conservés. Bouton « Démarrage… » (grisé) entre
-  Démarrer et la réponse du module ; promesse rejetée → alerte « Démarrage de l'enregistrement échoué » avec le motif,
-  on reste sur l'écran, nouvel essai possible.
-- Android : module inchangé (il attendait déjà le rappel « prêt » avant d'écrire) ; `prepareQuality` et
-  `getSupportedQualities` y restent, plus appelés. Pas de build Android pour cette PR.
-- Tests : `r6cOptionsVideo.rn.test.tsx` réécrit (défauts sans qualité, ancienne qualité ignorée, aucune puce ni texte de
-  qualité, options transmises sans `quality`, « Démarrage… » jusqu'à la réponse du module, promesse rejetée → alerte,
-  retour à Démarrer, nouvel essai), contrat R5a mis à jour ; `tsc` vert. Swift par le build EAS 1.0.60. Protocole manuel
-  obligatoire avant merge : [`audits/protocole-camera-1080p-demarrage.md`](./audits/protocole-camera-1080p-demarrage.md).
-
-**Tests : instantanés indépendants de l'heure et du fuseau horaire (tests seuls, aucun écran modifié).** Demande de Nab (1er octobre).
-- Suite RN (`npm run test:rn`) en UTC quel que soit le poste (`jest.rn.globalSetup.js`) ; `NOW` des tests R4b, R7, R9a, R9b, R10, R12
-  écrit en UTC (`…T10:00:00Z`) ; horloge figée (`src/__tests__/fixedClock.ts`) dans `homeR3b`, `trainingScreen`, `classReminders`,
-  `notificationLocalPrefs`. Prouvé : `test:rn` vert en Europe/Paris et en UTC à deux heures simulées chacun (dont 23:59 → minuit).
-- Défaut d'affichage relevé, non corrigé : les commentaires d'un score (`WODDetailScreen`) affichent un temps négatif (« -60min »)
-  quand `created_at` est plus récent que l'horloge du téléphone (téléphone en retard sur le serveur).
-
-**Bips « sonar » pour le jeu AthleX (app seule, aucune migration, aucun changement natif).** Demande de Nab (1er octobre).
-- `src/lib/timerBeeps.ts` : pings sinusoïdaux (`decayMs` : attaque de 2 ms puis décroissance exponentielle ; `resonance` :
-  partiel désaccordé de +0,6 %, battement lent), crête normalisée ≤ 0,85 (aucune saturation). Tic vers 1 100 Hz (350 ms),
-  GO vers 1 500 Hz (800 ms), fin en trois pings descendants (1 500, 1 250, 1 050 Hz). Mêmes instants de déclenchement ;
-  même WAV au haut-parleur et dans la vidéo. « Classique » inchangé à l'octet près (empreintes).
-- Tests : `r6cBips.rn.test.tsx` (fréquences, durées, attaque, décroissance, résonance, descente, crête), 8 mutations tuées.
-  Protocole manuel : [`audits/protocole-bips-sonar.md`](./audits/protocole-bips-sonar.md).
-
-**Bips dans la vidéo sans doublon (app et module natif, aucune migration).** Retour de Nab sur le build 1.0.58 : double
-bip à la relecture avec le micro activé. Règle décidée par Claude (conception) et Nab :
-- `mixBeepInVideo` (`src/lib/timerBeeps.ts`), décidé à chaque bip dans `playBeep` : un bip n'est mélangé dans la piste que
-  si « Bips dans la vidéo » est activé ET que le micro ne le capte pas déjà — micro coupé, ou téléphone muet (sons coupés,
-  volume des bips à zéro, sons pas encore chargés). Micro et sons activés : seul le bip du haut-parleur, capté par le micro.
-  Couper les sons pendant l'enregistrement est suivi (le module reçoit toujours les fichiers).
-- Calage de latence retiré (iOS `outputLatency + inputLatency`, Android 80 ms `beepLatencyMs`) : il servait à superposer
-  le bip mélangé au bip capté ; un bip mélangé tombe désormais à l'instant de l'événement.
-- Texte d'aide de « Bips dans la vidéo » (FR / EN) : la règle en une phrase.
-- Tests : `r6cBips.rn.test.tsx` (table de vérité, défaut sans doublon, micro coupé, sons coupés, volume à zéro, plus de
-  calage), 7 mutations tuées ; Kotlin compilé et tests JVM du module verts ; Swift par un build simulateur EAS.
-  Protocole manuel : [`audits/protocole-bips-video-sans-doublon.md`](./audits/protocole-bips-video-sans-doublon.md).
-
-**Décompte incrusté centré dans la vidéo (module natif, aucune migration).** Retour de Nab sur le build 1.0.58.
-- Cause, identique iOS et Android : l'anneau seul était centré (le libellé au-dessus remontait tout le groupe), et le chiffre,
-  le libellé et « GO ! » étaient centrés sur leur boîte de ligne (ascendante / descendante de la police) et non sur leurs
-  glyphes ; l'espacement des lettres du libellé le décalait sur le côté.
-- `CountdownLayout` (Kotlin, testé sur JVM ; même géométrie en Swift) : groupe « libellé + anneau » centré, bloc du libellé
-  de hauteur fixe (« PRÉPARE-TOI » → « PRÊT ? » ne déplace pas l'anneau) ; chaque texte centré sur son encre
-  (`getTextBounds` sur Android, `usesDeviceMetrics` sur iOS) ; bande « GO ! » centrée, texte centré dans la bande.
-  Portrait et paysage, caméra avant et arrière (l'incrustation n'est jamais miroir). Apparence inchangée sinon.
-- Tests : `CountdownLayoutTest.kt` (5, JVM), `decompteVideoCentre.test.ts` (9 : mêmes nombres des deux côtés, chemins de
-  dessin), 9 mutations tuées ; Kotlin compilé, Swift par un build simulateur EAS.
-  Protocole manuel : [`audits/protocole-decompte-video-centre.md`](./audits/protocole-decompte-video-centre.md).
-
-**Correctif musculation : même mouvement dans deux blocs (app seule, aucune migration).** Retours de Nab sur le
-build 1.0.58 (séances du 30/09 « Front Squat » ×2 et « Complexe » ×2).
-- Cause, prouvée en prod (lecture seule) et sur la base rejouée : chaque bloc numérotait ses séries à partir de 1,
-  la clé (athlète, source, mouvement, série) se dédoublait — brouillon refusé en `21000` (~45 fois le 30/09),
-  validation en `SERIES_EN_DOUBLE`. Le refus était affiché « Hors connexion », et la séance écrite avant l'échec
-  des séries passait au tour suivant pour une version « plus récente d'un autre appareil » : la saisie était
-  remplacée par une grille vide.
-- Numéro de stockage continu par mouvement sur toute la séance (`numberSetsByMovement` : 1, 2 puis 3, 4), affichage
-  du rang dans le bloc (« Série 1, 2 » dans chaque bloc, `setRanks`, grille et « Mes charges ») ; plafond client de
-  50 séries par mouvement (CHECK `set_index ≤ 50`, commenté) ; une grille encore numérotée par bloc (copie locale
-  de la 1.0.58 comprise) est renumérotée avant écriture (brouillon, validation, ancien journal `logStrengthSets`) ;
-  séances générées : `performedToDrafts` numéroté pareil, `draftsToPerformed` par bloc et rang.
-- Un refus de la base n'est jamais classé « hors connexion » (`isNetworkError` : seule une coupure rend `code ''`) :
-  brouillon `refused` avec son code, « Enregistrement refusé par le serveur… » (FR / EN), copie locale gardée, pas
-  de boucle de nouvel essai ; même tri dans la validation des deux écrans. La copie locale reprend l'`updated_at`
-  de la séance dès qu'elle est écrite : plus d'écrasement par sa propre écriture.
-- Tests : faux clients fidèles à Postgres (`21000` sur doublon, `SERIES_EN_DOUBLE`, CHECK 1..50, codes d'erreur,
-  coupure en `code ''`) ; scénarios sur les deux séances réelles (brouillon, rechargement, validation, modification,
-  copie 1.0.58, refus, coupure) et un exercice présent deux fois dans une séance générée ; 6 mutations tuées
-  (numérotation par bloc ×2, sans reprise d'`updated_at`, tout « hors connexion », n° stocké affiché ×2).
-  Protocole manuel : [`audits/protocole-muscu-meme-mouvement-deux-blocs.md`](./audits/protocole-muscu-meme-mouvement-deux-blocs.md).
-  Les deux brouillons de test du 30/09 restent en l'état (décision de Nab : ressaisie sur une nouvelle séance).
-
-**Refonte R11 : entrée, tutoriel, états vides et fenêtres au nouveau design (apparence seule, aucune migration).**
-- Entrée (Connexion, Créer un compte, Mot de passe oublié / Email envoyé, Rejoindre une box, Rejoins ta box, Mentions
-  légales) : champs `AxTextField`, une seule action `AxButton` accent, liens `labelSmall` `accentText`, tokens ax ;
-  symboles ♂ / ♀ et emojis remplacés par des icônes Lucide. Tutoriel : titre `titleXL`, texte `body`, points de
-  progression, « Suivant » accent, « Passer » en texte ; cinq slides, défilement et callbacks inchangés.
-- États vides : `src/components/EmptyState.tsx` (icône Lucide, `titleM`, `bodySmall` `textMuted`, action `AxButton`) dans
-  Réservation, Mes réservations, Historique, Tournois / Mini-tournois, Amis, Messages sans box ; conditions inchangées.
-- Fenêtres : `src/components/ConfirmDialog.tsx` (`useConfirmDialog`, `AxCard` centrée sur `axVeil`, destructive = stop,
-  principale = accent, Annuler / Non = outline) à la place d'`Alert.alert` pour annuler la réservation, quitter la liste
-  d'attente, trop tard, abonnement impayé, créneau complet, limites journalière / hebdomadaire, quitter le tournoi,
-  exclure un participant (app et BO), score enregistré ; mêmes titres, textes, boutons et actions.
-- `AxTextField` / `AxButton` : options rétrocompatibles (`autoComplete`, `textContentType`, `returnKeyType`,
-  `onSubmitEditing`, `autoCorrect`, `autoFocus`, `trailing`, `accessibilityLabel`).
-- Tests : `r11.rn.test.tsx` (instantané avant / après `r11StructureBefore.json`, navigation, callbacks, conditions,
-  couleurs et typographies dans les deux thèmes, 390 px, aucun emoji, 92 tests) ; isolement R1 élargi aux fichiers du
-  lot ; `npx jest` 1976, `npm run test:rn` 659, `tsc` vert ; 28 mutations tuées.
-
-**R6c (B) : jeux de bips AthleX / Classique et bips mélangés dans la vidéo (app et module natif, aucune migration).**
-- `src/lib/timerBeeps.ts` : synthèse WAV sortie de `TimerRunScreen`, jeu « Classique » identique à l'octet près (empreintes),
-  jeu « AthleX » par défaut (tic 1046 Hz ~100 ms, GO montant ~400 ms, fin en trois notes descendantes) ; choix par puces
-  dans « Design du minuteur » (`beepSet`), mêmes instants de déclenchement (5-4-3-2-1 Android, 3-2-1 iOS).
-- « Bips dans la vidéo » (section caméra de `TimerScreen`, `videoBeeps`, défaut activé), indépendant des sons du téléphone :
-  `playBeep` appelle `markBeep`, le module mélange le WAV à −6 dBFS dans la piste son (tampons micro, ou piste synthétique
-  silence + bips si micro coupé ; aucune piste si les deux sont coupés). Calage du bip doublé micro activé : iOS
-  `outputLatency + inputLatency`, Android 80 ms envoyés par le JS (`ANDROID_BEEP_MIC_LATENCY_MS`).
-- Tests : `r6cBips.rn.test.tsx` (19), `BeepMixerTest.kt` (9, JVM), `VideoQualityTest.kt` complété (7) ; mutations JS et
-  Kotlin tuées ; Kotlin compilé en local, Swift par un build simulateur EAS.
-
-**Refonte R9a : Ma Box et détail du WOD au nouveau design, page Ma Box entièrement défilante (app seule, aucune migration).**
-- `WhiteboardScreen` : tout l'écran (en-tête, Membres / Messages / Actualités / Classement de la box, onglets de piste,
-  jours, « Entrer mon score » / « Classement », séances) dans un seul `ScrollView` avec « tirer pour actualiser » (même
-  action) ; sans box, l'écran perso défile aussi et garde son actualisation. `AxButton`, `AxCounterBadge`, `AxChip`
-  (onglets, `WhiteboardTrackTabs`), `AxDayItem` (`WeekDayPicker` variante `ax`), `AxCard` / `AxTag` / `AxIconButton`
-  pour les séances ; états musculation et « Reprendre ma saisie » inchangés ; 📋 remplacé par l'icône Lucide.
-- `WODDetailScreen` : carte du WOD `AxCard` featured, « Notes coach » en overline accentText, « Mon score » en `AxCard`
-  (score `numberM`, « Partager » / « Modifier » outline, « Ma note »), « Entrer mon score » `AxButton` accent, classement
-  en liste d'`AxCard` (médailles Lucide `Medal`), commentaires en `AxCard` + `AxTextField` ; fenêtre de saisie : `AxChip`
-  (type, niveau), `AxTextField`, `AxButton` accent « Valider le score ». Saisie, brouillon et validation musculation inchangés.
-- Options rétrocompatibles : `AxChip.accessibilityRole`, `AxTextField.autoFocus` / `inputRef`, `AxCounterBadge.readableInk`
-  (encre lisible sur le rouge en thème sombre).
-- Tests : `r9a.rn.test.tsx` (54, instantané avant / après sur 9 variantes `r9aStructureBefore.json`), isolement R1
-  élargi aux fichiers du lot, `npx jest` 1976, `npm run test:rn` 664, `tsc` vert ; 25 mutations tuées.
-
-**Ma Box : recherche et rôles des membres, lien Lire des actualités, Annuler de la séance perso (app seule, aucune migration ; ajouts validés par Nab le 29/09).**
-- Membres : `AxTextField` « Rechercher un membre » en haut de la liste, filtre local sur pseudo et nom (casse et accents ignorés,
-  aucune requête), « Aucun membre trouvé », croix d'effacement (option `trailing` d'`AxTextField`) ; `AxTag`
-  Gérant (`boxes.owner_id`, accent), Co-gérant (`role = 'owner'`, accent), Coach (muted) — `box_members.role` et `full_name`
-  ajoutés à la requête existante de `WhiteboardScreen`.
-- Actualités : lien « Lire › » (labelSmall accentText, rôle link) qui appelle le même `openArticle` que la carte.
-- Séance perso : `AxButton` outline « Annuler » à côté de l'action ; retour direct sans saisie, sinon « Abandonner la saisie ? »
-  (Abandonner / Continuer). Tests : `r9b.rn.test.tsx` (blocs « Ma Box (29/09) »), chacun prouvé par mutation.
-
-**Refonte R8a : tournois au nouveau design (apparence seule, aucune migration).**
-- `CompetitionScreen`, `TournamentScreen` (infos, classement, WODs, participants, validation staff, divisions),
-  `TournamentBracketView`, `TournamentDivisionsView`, `TournamentWODScreen` (détail, soumission, envoyé) en
-  composants `src/components/ax` et jetons `theme.ax` / `axTypography` / `axSpacing` / `axRadius` ; en-tête de tournoi en
-  `AxCard` featured (statut `AxStatusDot`, niveau et format `AxTag`), onglets `AxChip`, promus / relégués en `AxTag`
-  success / danger, scores en `numberM`, une seule `AxButton` accent par écran, « Quitter » et « Rejeter » en `stop` ;
-  icônes Lucide, plus aucun emoji (libellés FR / EN des clés `tournament.*`, `tourWod.*`, `divisions.*`,
-  `competition.*` nettoyés). `AxTag` gagne les tons `success` / `warning` et l'option `wrap` (rétrocompatibles).
-- Données, requêtes, navigation, callbacks, états et règles inchangés ; « Comment ça marche » garde les 4 étapes du code.
-- Tests : `r8a.rn.test.tsx` (144, 27 états sur une base Supabase simulée : ordre des textes identique à la capture
-  d'avant dans les deux thèmes, aucun emoji, une action accent, adoption ax, navigation, écritures, couleurs et
-  typographies, espace bas, textes longs à 390 px) ; isolement R1 élargi aux 5 écrans ; `npx jest`, `npm run test:rn`,
-  `tsc` verts ; 22 mutations tuées.
-
-**Refonte R10 : réservation au nouveau design (app seule, aucune migration, apparence seule).**
-- `ReservationScreen` : semaine en `AxDayItem` (nouveau `ReservationWeekPicker`, options rétrocompatibles `today` /
-  `disabled` d'`AxDayItem`), créneaux en `AxCard` (vedette si réservé, filet warning si en attente), heure en `numberM`
-  Oswald, discipline en `AxTag` (option `numberOfLines`), coach / places en caption, « Réservé » / « Attente #n » /
-  « Complet » en `AxStatusDot`, « Réserver » accent, « File d'attente » contour, « Se désinscrire » / « Quitter la file d'attente »
-  en stop, bandeau « Abonnement suspendu » en ton warning avec « Mettre à jour mon paiement » accent (Stripe seulement).
-  `MyReservationsScreen` : onglets en `AxChip`, cartes `AxCard`, statut `AxStatusDot`, « Annuler » en stop ; `AxScreenHeader`
-  et `useTabBarScrollSpace` gardés, emoji du coach remplacé par l'icône Lucide `User`.
-- Règles inchangées (limites hebdo / jour, file d'attente, fenêtres 15 / 20 min, 14 jours, refus, rappels) : logique figée
-  par empreinte relevée sur master ; ordre des textes comparé à un relevé de master (10 états).
-- Tests : `r10.rn.test.tsx` (35), `npx jest` 1976, `npm run test:rn` 606, `tsc` vert ; 36 mutations tuées.
-
-**Refonte R8b : mini-tournois, inter-box et compétition physique au nouveau design (app seule, aucune migration, apparence seule).**
-- `DailyTournamentsScreen`, `DailyTournamentDetailScreen`, `InterCompetitionListScreen`, `InterCompetitionDetailScreen`,
-  `InterScoreSubmitScreen`, `InterTeamScreen`, `PhysicalCompetitionScreen` : cartes `AxCard`, statuts `AxStatusDot`,
-  formats / niveaux `AxTag`, métadonnées en `caption`, formulaires `AxTextField` / `AxChip` / `AxSwitch` (CAP), actions
-  `AxButton` (une seule accent par écran et par fenêtre) ; podiums et états vides en icônes Lucide (plus d'emoji).
-  Requêtes, payloads, validations, navigation et ordre des blocs inchangés.
-- Tests : `r8b.rn.test.tsx` (37 instantanés avant / après pris sur master + emoji, accent, couleurs et typographies dans
-  les deux thèmes, navigation et callbacks, textes longs), isolement R1 élargi aux 7 écrans du lot ; `npx jest` 1976,
-  `npm run test:rn` 672, `tsc` vert ; 19 mutations tuées.
-
-**Refonte R12 : profil et écrans sociaux au nouveau design (app seule, aucune migration, apparence seule).**
-- `ProfileScreen` : en-tête (photo ou initiale, pseudo `titleXL`, box `bodySmall`, ELO `numberM`, palier `levelInk` AA),
-  onglets Compte / PR / Stats / Badges en `AxChip`, sections en `AxCard`, thème en `AxSwitch`, « Supprimer mon compte »
-  en `AxButton` stop, PR et stats en `numberM`, badges en grille de cartes, icônes Lucide à la place des emoji.
-- Amis, Profil public, Utilisateurs bloqués, Notifications, Nouveautés : lignes et blocs en `AxCard`, onglets / périodes /
-  heures en `AxChip`, interrupteurs en `AxSwitch`, couleurs de niveau et de type rendues lisibles (`readableInk`).
-- Thème, langue, code de box, abonnement, déconnexion, suppression (deux confirmations), requêtes et navigation inchangés.
-- Tests : `r12.rn.test.tsx` (51, dont ordre des blocs sur 22 états figés sur master), isolement R1 élargi au seul
-  `ProfileScreen` ; `npx jest` 1976, `npm run test:rn` 536, `tsc` vert ; 28 mutations tuées.
-
-**Temps final du minuteur dans la zone sûre, sans défilement (retour D2 du build 1.0.60, app seule, apparence ;
-vérification visuelle par Nab).** Fermer sortait de l'écran (avec caméra sur iPhone, et dans tous les paysages) ou passait
-sous la barre d'accueil. Décision de Nab : l'écran ne défile pas. Recommencer et Fermer deviennent deux actions rondes en
-verre de 56 px (`rotate-ccw` neutre, `x` couleur arrêt / danger), côte à côte en bas avec leur libellé court en
-portrait, empilées à droite en icône seule en paysage, libellés d'accessibilité complets. Marges de la zone sûre en
-haut (caméra), en bas et sur les côtés ; le grand chiffre prend la hauteur restante et descend jusqu'à 44 px au plus
-(`FINAL_DIGITS_MIN`) ; logo, QR et espacements réduits sous 760 pt de haut et en paysage ; badge du format centré.
-Seule la liste des temps intermédiaires (Splits), qui défilait déjà, garde sa ScrollView. Tests
-`retours1060TempsFinal.rn.test.tsx`, 17 mutations tuées ; captures et mesures avant / après sur iPhone SE, iPhone 15
-et 390 px dans `athlex-captures/correctifs-1.0.60/pr2-temps-final`.
-
-**Retours iPhone (build 1.0.58) : minuteur, caméra, en-têtes, boutons, profil et outils (app seule, aucune migration, écrans seuls).**
-- Minuteur : compte à rebours en six pastilles `AxChip equal` sur une ligne à 390 px ; décompte PRÉPARE-TOI / PRÊT ? /
-  GO ! centré plein écran (avec et sans caméra, portrait et paysage), chiffre centré dans son cercle, halo circulaire
-  sans ombre de texte ; à 3-2-1 même cercle, même taille et même position du chiffre (seuls couleurs et halo changent) ; temps final sans vidéo avec `assets/athex-logo.png` (120 px), croix et Réglages à la place du
-  chrono, couleur du thème de chrono ; paysage sans vidéo : chiffres centrés, place du bouton réservée des deux côtés.
-- Caméra : rangée REC 40 px sous la zone sûre, point rouge clignotant à droite pendant l'enregistrement (`RecBlinkDot`,
-  fixe si « réduire les animations »), date et heure sous « Arrêter le chrono ». Module natif, sons et enregistrement
-  inchangés.
-- « Suivre le thème de l'app » : des options enregistrées sans ce champ (réglages vidéo écrits avant) le désactivaient
-  (`?? false`) ; il suit désormais le thème par défaut quand aucun thème de chrono n'est choisi.
-- `AxScreenHeader` : titre dans une boîte bornée entre Retour et l'action de droite (plus de chevauchement, titre court
-  entier) ; titres d'écran courts (WOD du jour, Programme, Tournoi, Mini-tournoi, Compétition, WOD du tournoi, Mon
-  équipe, Box, Partenaire, Article), nom long en tête du contenu (`AxContentTitle`, retour à la ligne).
-- Ton WOD : « Au Whiteboard » / « Ajouté » et « Mon score » / « Modifier » sur une ligne, même hauteur (`AxButton`
-  bordé : bordure comprise dans la hauteur), libellés
-  complets en accessibilité ; Profil : onglets centrés ; Entraînement : tuiles Outils centrées.
-- Tests : `retoursIphoneTimer.rn.test.tsx` (20) + cas ajoutés à R6c, R4a, R9a, R12, Entraînement ; instantanés R4b / R8a /
-  R8b / R9a / R9b / R13 et contrats R3c / R5a / R6b / R6c mis à jour pour les titres courts ; `npx jest` 1987,
-  `npm run test:rn` 1331, `tsc` vert ; 20 mutations tuées.
-
-**Refonte R14c : finitions des écrans athlète — logo, boutons, types traduits, membres, champs (app seule, aucune migration).**
-- Connexion, Créer un compte et écran de démarrage : `assets/athex-logo.png` (120 px, centré) à la place de
-  `assets/logo.png` ; titre texte « AthleX » retiré (le logo le contient), slogan conservé.
-- Libellés de boutons athlète en écriture normale en FR et en EN (clés i18n et libellés en dur, plus de `toUpperCase`) ;
-  titres et surtitres inchangés.
-- `wodTypeLabel` (`src/utils/wodTypeLabel.ts`) + clés `wodTypes` : Musculation / Personnalisé / For Time / AMRAP / EMOM /
-  Tabata (EN : Strength / Custom / For Time…), utilisé par Ma Box, détail WOD, historique et programme.
-- Membres : rôle sous le nom, à côté du palier ; le nom occupe toute la largeur. Profil › Compte : « Rejoindre une box »
-  en `AxButton` outline ; code de box en `AxTextField`.
-- `AxTextField` : option rétrocompatible `inputStyle` ; plus de contour navigateur en web, focus porté par la seule
-  bordure `accentText` du champ.
-- Tests : `r14c.rn.test.tsx` (39) ; instantanés R4b / R9a / R11 et contrats R5a / R9b / minuteur mis à jour pour les
-  nouveaux libellés ; `npx jest` 1987, `npm run test:rn` 1292, `tsc` vert ; 16 mutations tuées.
-
-**Refonte R14a : fond uni et palette du nouveau design sur tous les écrans (app seule, aucune migration, apparence seule).**
-- `GlassBackground` (même API) rend un fond uni `theme.ax.background` (#101214 / #F3F5F4) : plus de dégradé, de taches
-  SVG ni d'animation ; `GlassCard` / `GlassButton` / `GlassIconBox` / fond de barre d'onglets en surfaces opaques `ax` ;
-  palette historique (`palette.ts`) dérivée des jetons `ax` ; plus aucune couleur émeraude dans `src/` hors chrono plein
-  écran ; teintes de domaine et palier elite ajustés AA ; `StatusBar` claire en sombre, foncée en clair.
-- `AxScreenHeader` mesure le seul contenu de Retour / action droite (« MINUTEUR » entier à 390 px) ; titres Oswald en
-  capitales avec interligne `axAccentSafeLineHeight` (accents de « RÉSERVATION », « COMPÉTITIONS » non rognés) ;
-  `AxChip` `minHeight` 40 non comprimable et rangées horizontales de pastilles `flexShrink: 0`.
-- Tests : `r14a.rn.test.tsx`, `r14aPalette.test.ts`, `shellBackground` réécrit, contrats historiques mis à jour ;
-  mutations listées dans la PR.
-
-**Refonte R14c (tutoriel) : plantage de la page 5 corrigé, un bloc centré par page, logo AthleX (app seule, aucune migration).**
-- `OnboardingTutorialScreen` : `onViewableItemsChanged` stable (ref, état lu par refs) et `viewabilityConfig` constant ;
-  la fonction changeait à l'arrivée sur la page 5 (état du badge) et FlatList levait « Changing onViewableItemsChanged on
-  the fly is not supported ». Badge « First Step » toujours décerné une seule fois.
-- Chaque page = un bloc (illustration dans son cercle, titre, texte, points, bouton « C'est parti ! » / « Suivant » /
-  « Découvrir l'app ») centré verticalement dans un `ScrollView` (marges symétriques 104 sous « Passer ») : défile en
-  entier sur petit écran. Page 1 : `assets/athex-logo.png`. Textes, ordre des pages et comportement inchangés.
-- Tests : `r14cTutorial.rn.test.tsx` (12), instantané R11 du tutoriel mis à jour (boutons dans chaque page) ; centre du
-  bloc mesuré en web à 390 × 844 et 390 × 667 (écart ≤ 25 px) ; 9 mutations tuées.
-
-**Seed de démo : `ON CONFLICT` du lot 4 aligné sur la contrainte de `movement_rep_counts` (script seul, aucune migration).**
-- `scripts/demo-seed/sql/40_lot4_social.sql` : `on conflict (athlete_id, movement_key, unit)`, clé unique posée par
-  `20261204_movement_stats_unit.sql` (l'ancienne clé faisait échouer le lot 4 en `42P10`). Autres `ON CONFLICT` du script
-  vérifiés contre le catalogue (badges, amitiés, streaks, journal, correspondances) : conformes.
-- Rejeu complet sur pile jetable reconstruite (30/09/2026) : lots 0 à 4 OK, contrôles A, B, D et E tous OK. Écarts restants,
-  hors migrations, listés dans la PR : C8 / C9 / C12 selon le jour et l'heure d'exécution, et `rollback` refusé par la
-  garde `MATCH_TERMINE` (`20270124`).
-
-**Refonte R13 : annuaire, programmes et partenaires au nouveau design (app seule, aucune migration, apparence seule).**
-- `BoxDirectoryScreen` (recherche en `AxTextField`, sports en `AxChip`, boxs en `AxCard`, nom en `titleM`, ville et infos
-  en `bodySmall` `textMuted`, sports en `AxTag`), `BoxDirectoryMapScreen` (en-tête flottant et fiche basse `AxCard`
-  featured ; fond de carte et marqueurs inchangés ; toujours sans `AxScreenHeader`, écran plein écran), fiche box (identité
-  en `AxCard` featured, sports / services en `AxTag`, horaires en `AxCard`), Programmes, programmes des boxs, partenaires
-  et fiche partenaire (offre en `AxCard` featured, code en `AxButton` accent unique) ; `AxTextField` gagne l'option
-  rétrocompatible `trailing` (bouton d'effacement). Requêtes, navigation et liens inchangés ; ordre des textes comparé à un
-  relevé de master (`r13.rn.test.tsx`, `r13StructureBefore.json`).
-
-**Refonte R9b : écrans secondaires de Ma Box au nouveau design (app seule, aucune migration, apparence seule).**
-- Actualités, Membres (fenêtre extraite telle quelle de `WhiteboardScreen` vers `WhiteboardMembersModal`), Séance perso
-  (formulaire), Classement de la box, Messages et Infos de la box : `AxCard` par ligne ou section, `AxTextField`, `AxChip`,
-  `AxButton`, typographies `axTypography` (overline / titleM / caption / label / numberM), `theme.ax`, AA dans les deux
-  thèmes ; médailles Lucide `Medal` au lieu de 🥇🥈🥉, 👈 et 💬 retirés. `AxTextField` : options `minInputHeight` /
-  `maxInputHeight` (rétrocompatibles). Requêtes, callbacks, navigation et pièces jointes inchangés.
-- Écarts maquette / code suivis côté code : pas de recherche ni de rôle dans Membres, pas de « Lire › », pas de bouton
-  « Annuler » dans le formulaire (absents du code).
-- Tests : `r9b.rn.test.tsx` (40, dont instantané avant / après sur 10 variantes), isolement R1 élargi à
-  `WhiteboardMembersModal`, `npx jest` 1976, `npm run test:rn` 525, `tsc` vert ; 26 mutations tuées.
-
-**Refonte R7 : historique ELO par paliers (app seule, aucune migration, lecture seule).**
-- `EloHistoryScreen` au nouveau design (`AxCard`, `AxChip`, `theme.ax`, Oswald) ; carte ELO avec palier actuel, « encore N pts
-  avant <palier> » (rien pour Pro), barre et bornes ; graphique avec bandes de palier, seuils pointillés, points colorés,
-  repères « Passage <palier> · <date> » et « Meilleur · <valeur> » ; carte « Paliers » (six paliers, « Toi »). Logique pure
-  dans `src/utils/eloTiers.ts` (seuils de `eloLevels`), couleurs `levelInk` (AA dans les deux thèmes). Filtres, liste et
-  navigation inchangés ; médailles emoji du rang remplacées par l'icône Lucide `Medal`. Badge `level_inter` hors lot.
-- Tests : `r7.rn.test.tsx` (41, ordre des textes comparé à un relevé de master `r7StructureBefore.json`), isolement R1
-  étendu (`axComponents.rn.test.tsx`), `npx jest` 1976, `npm run test:rn` 526, `tsc` vert ; 31 mutations tuées.
-
-**R6c (A) : qualité, images par seconde et micro du mode caméra (app et module natif, aucune migration).**
-- `TimerScreen`, sous « Enregistrer avec caméra » : qualité 720p / 1080p / 2K / 4K (union des deux caméras), 25 / 30 fps,
-  micro activé / coupé ; enregistrés dans `bwod_timer_display_opts_v2` (`src/lib/timerVideoOpts.ts`). Défauts inchangés
-  (1080p, 30 fps, micro).
-- `realtime-recorder` : `getSupportedQualities`, `prepareQuality` (caméra, chauffe, essai à blanc de 1,5 s au-delà de
-  1080p, redescente si moins de 90 % des images), `getLastRecordingStats` ; iOS préréglages et 2K = 4K réduite, Android
-  taille Camera2 / encodeur / cadence GL ; micro coupé = ni permission ni capture ni piste son.
-- Tests : `r6cOptionsVideo.rn.test.tsx` (16), `VideoQualityTest.kt` (6, JVM), `npx jest` 1976, `npm run test:rn` 473,
-  `tsc` vert ; 37 mutations tuées (27 JS, 10 Kotlin). Swift compilé par le build EAS de test.
-
-**R6c (C) : décompte incrusté dans la vidéo au même rendu qu'à l'écran (app et module natif, aucune migration).**
-- Dans la vidéo : « PRÉPARE-TOI » + chiffre blanc dans un anneau au-dessus de 3, « PRÊT ? » + chiffre et halo d'accent à
-  3-2-1, bande d'accent inclinée « GO ! » à 0 ; Oswald Medium embarquée dans `realtime-recorder` (iOS et Android) ;
-  textes traduits et couleurs contrastées calculés en JS (`src/lib/timerCountdownOverlay.ts`), dessin natif
-  (`drawCountdown`, `drawGoBand`). Synchro de l'incrustation déplacée après `displayOpts` dans `TimerRunScreen`.
-- Tests : `r6c.rn.test.tsx` (11), `npx jest` 1976, `npm run test:rn` 468, `tsc` vert ; Kotlin compilé ; 14 mutations
-  tuées, 1 équivalente. Swift compilé par le build EAS de test.
-
-**Refonte R6b : feuille YouTube réduite, partage en action principale et nouveau décompte en mode caméra (app seule, aucune migration).**
-- Feuille « Partager sur YouTube » : titre sans emoji, « Publie ta vidéo depuis YouTube Studio », `AxButton` accent
-  « Ouvrir YouTube Studio » (même lien) et outline « Fermer » ; retirés : champ du lien, « Copier le prompt d'analyse »,
-  état `ytLink`, imports `TextInput` / `Clipboard` / `KeyboardAvoidingView` / `Copy`, styles associés. Textes par clés
-  `timer.youtube.*` et `timer.camera.*` (FR / EN).
-- Temps final avec vidéo : « Partager sur YouTube » seule action accent ; icône Lucide `Check` à la place des ✓.
-- Décompte caméra : `CountdownView` et `GoFlash` de R5b sur voile `axVeil.countdown` (AA même sur image blanche) ;
-  vibrations 40 ms / 200 ms coupées avec les sons ; démarrage au même tic que GO. Module `realtime-recorder`,
-  `updateOverlayState` et décompte incrusté (chiffre blanc seul, sans libellé ni GO) inchangés.
-- Tests : `r6b.rn.test.tsx` (15), `npx jest` 1976, `npm run test:rn` 457, `tsc` vert ; 35 mutations tuées.
-
-**Refonte R6a : écrans du mode caméra au nouveau design (app seule, aucune migration, apparence seule).**
-- `TimerRunScreen` en mode caméra : pastille REC en `AxTag` danger à point rouge, retourner / fermer en `AxIconButton` sur
-  voile, « Démarrer » / « Lancer le chrono » en `AxButton` accent, « Arrêter le chrono » / « Arrêter la vidéo » en stop ;
-  chiffres Oswald, date et heure en caption, voiles `axVeil` (encre claire AA même sur une image blanche) ; temps final
-  avec vidéo (`AxTag`, overline, « Lire la vidéo », « Sauvegarder la carte », « Fermer » en outline, YouTube inchangé).
-  `VideoPlaybackScreen` : contrôles en `AxIconButton`, temps en caption, barre à l'accent, lecteur non touché.
-- Module `realtime-recorder`, `updateOverlayState` et incrustations, enregistrement, horodatage, partage, callbacks,
-  texte du décompte caméra et contenu de la feuille YouTube inchangés (empreintes et mocks dans `r6a.rn.test.tsx`).
-- Tests : `r6a.rn.test.tsx` (17), `npx jest` 1976, `npm run test:rn` 442, `tsc` vert ; 40 mutations tuées.
-
-**Refonte R5b : thèmes AthleX liés au thème de l'app, noms traduits et nouveau décompte (app seule, aucune migration serveur).**
-- `TIMER_THEMES` : `athlex` et `athlex2` en tête, ordre AthleX, AthleX 2, Noir, Blanc, Citron vert, Orange, Bleu, Violet, Cyan,
-  Jaune, Rose, Rouge ; identifiants existants inchangés ; noms par clés `timer.themes.*` (FR / EN), champ `emoji` retiré.
-- Réglage « Suivre le thème de l'app » (`followAppTheme`, même clé AsyncStorage `bwod_timer_display_opts_v2`) : activé sans
-  préférence enregistrée (sombre → AthleX, clair → AthleX 2, change en direct) ; désactivé pour une préférence d'avant R5b
-  et dès qu'on touche une vignette ou une couleur de chiffres.
-- Décompte : « PRÉPARE-TOI » (+ nom du WOD, anneau) au-dessus de 3, « PRÊT ? » en accent avec halo à 3-2-1, bande « GO ! »
-  inclinée et éclair de 200 ms par-dessus le chrono lancé ; vibration 40 ms à 3-2-1 et 200 ms à GO, coupée avec les sons.
-  Bips, calculs, démarrage au même tic et écran caméra (décompte distinct, inchangé) non touchés.
-- Tests : `r5b.rn.test.tsx` (23), `npx jest` 1976, `npm run test:rn` 425, `tsc` vert ; 30 mutations tuées.
-
-**Refonte R5a : minuteur au nouveau design (app seule, aucune migration, apparence seule).**
-- `TimerScreen` (sélecteur « TYPE DE MINUTEUR » en `AxCard` + feuille des 7 types avec leur description, icônes Lucide ; réglages − / + en `AxIconButton`, options en `AxSwitch`, `DÉMARRER` seule action
-  accent), `TimerLaunchModal` (6 types en `AxChip` sur plusieurs lignes, plus de défilement horizontal ; « Avec caméra »
-  en `AxButton` accent, « Sans caméra » en contour — validés par Nab) et `TimerRunScreen` hors caméra (format en `AxTag`,
-  chiffres Oswald, bloc suivant en `AxCard`, feuille « Design du minuteur » en `AxChip` / `AxSwitch`, temps final) ;
-  logique du chrono (phases, tics, bips, enregistrement), `launch()` et `TIMER_THEMES` figés par empreinte dans
-  `r5a.rn.test.tsx` ; thèmes, noms et décompte réservés à R5b ; ordre des textes comparé à un relevé de master.
-
-**Refonte R4b : historique, calculateur 1RM et programmes au nouveau design (app seule, aucune migration, apparence seule).**
-- `WodHistoryScreen` (compteurs en `AxCard`, filtres `AxChip`, entrées `AxCard`), `OneRMCalculatorScreen` (Barres /
-  Gymnastique en `AxChip`, `AxTextField`, `AxSwitch` kg / lbs, zones dans une `AxCard` à filets `border`, couleurs de
-  zone rapprochées de l'encre du thème par `readableInk` jusqu'à l'AA) et `ProgramDetailScreen` (jours en overline,
-  séances en `AxCard`, « Notes coach » en `AxCard`, `AxButton` accent unique) ; la séance de programme reste dans
-  `WODDetailScreen` (grille et boutons déjà en ax depuis R4a) ; formules 1RM, `gymZones.ts`, services programme /
-  musculation, filtres, favoris, mémorisation et date de début inchangés ; emoji des filtres retirés ; ordre des textes
-  comparé à un relevé de master ; tests `r4b.rn.test.tsx` + suites existantes verts.
-
-**Refonte R4a : générateur et résultats au nouveau design (app seule, aucune migration, apparence seule).**
-- `WodGeneratorScreen` (Functional / Hybrid / Musculation), `WodResultScreen` (WOD et séance de musculation),
-  `MuscuSessionCard`, `StrengthSetGrid` et `SessionContextCard` en composants ax (`AxChip`, `AxSwitch`, `AxTextField`
-  compact, `AxButton` accent unique « Générer mon WOD » / « Saisir mon score », `AxCard featured`, `AxTag`) ; emoji des
-  disciplines remplacés par des icônes Lucide ; champs, options, libellés, ordre des blocs, génération, brouillon,
-  validation musculation, Whiteboard, favoris et re-tirer inchangés (ordre des textes comparé à un relevé de master) ;
-  écarts maquette / code listés dans la PR ; tests `wodR4a.rn.test.tsx` + suites existantes verts.
-
-**Refonte R3c : en-tête « ‹ Retour » uniforme sur les écrans secondaires (app seule, aucune migration, apparence de l'en-tête seule).**
-- Nouveau `AxScreenHeader` (rangée 44, marges 20, chevron 16 + « Retour » label textMuted, titre titleM une ligne
-  centré, emplacement droit de même largeur) sur 37 écrans secondaires de l'athlète ; titres, actions de droite et
-  retours propres conservés ; chevron de retour retiré de l'écran racine Réservation ; écrans racine, plein écran, fenêtres, gérant / coach / connexion inchangés.
-
-**Refonte R3b : Accueil au nouveau design (app seule, aucune migration, apparence seule).**
-- `HomeScreen` et ses blocs (`HomeNewsCard`, `HomeExplorerBlock`) en composants ax et `theme.ax` /
-  `axTypography` / `axRadius` / `axSpacing` : en-tête titleXL, carte ELO numberL accentText, palier en
-  couleur `LevelColors` tenue AA (`levelInk`), Amis / Profil en `AxButton` outline, titres de section titleM.
-  Blocs, ordre, libellés, données et navigation inchangés ; plus de couleur en dur ni d'emoji littéral.
-
-**Refonte R3a : Accueil — actu de la box, outils retirés, accès au classement (app seule, aucune migration).**
-- Carte ax « Actu de ta box » sous Amis / Profil : dernier article `box_articles` de la box active de
-  moins de 14 jours, avec likes et commentaires en une requête (`fetchHomeNews`), « Nouveau » sous 48 h,
-  ouvre `Articles` (onglet Ma Box) ; masquée sans box ou sans article récent, aucune requête sans box.
-- Section « Outils » retirée de l'Accueil (`homeTools.ts` et clés `home.tools` supprimés, outils dans
-  Entraînement) ; tutoriel sans étape d'outil. Rang de la carte ELO → `Leaderboard` ; carte ax
-  « Classement » en tête de l'onglet Tournois (ouvert par défaut) de Compétitions ; `Leaderboard` et `PublicProfile` dans la pile.
-
-**Refonte R2b : barre d'onglets flottante en verre (app seule, aucune migration, apparence seule).**
-- Barre de l'athlète `AxTabBar` : flottante, centrée (écran − 40, 64 de haut, rayon 24) à inset bas + 12,
-  `AxGlass` `theme.ax.background` à 0.80 (flou iOS, 0.96 sur Android), bordure `theme.ax.border` ;
-  onglet actif en `accentText` avec point, inactifs en `textMuted` ; masquée clavier ouvert. Onglets,
-  libellés, icônes, ordre et comportement inchangés ; barres gérant et coach inchangées.
-- Espace bas commun `useTabBarScrollSpace()` (64 + 12 + inset + 16) sur tous les écrans des piles de
-  l'athlète ; éléments fixés en bas (carte de la carte des box, commentaire d'article) posés au-dessus.
-- Correctif (apparence seule) : les 5 onglets ont la même largeur (`flex: 1`, padding horizontal de la barre 6),
-  « Accueil » centré au pixel sur l'écran ; libellés Inter SemiBold 9,5 sans espacement, une ligne, réduits
-  jusqu'à 0,85 (`adjustsFontSizeToFit`) au lieu d'être coupés. Tests : largeurs égales, centre à 390 / 430 px,
-  libellés FR / EN mesurés avec les avances réelles d'Inter (390, 430, 320 px), 5 mutations tuées.
-
-**Refonte R2a : onglet Entraînement à la place d'Explorer (app seule, aucune migration).**
-- 2e onglet « Entraînement » (icône Dumbbell) : écran ax `TrainingScreen` (génération en un tap par
-  `generateForUser` avec les réglages mémorisés, lien vers le générateur complet, tuiles Minuteur / 1RM /
-  Historique / Favoris, « Dernière séance » depuis le brouillon ou `generated_wods`). Pile Entraînement :
-  écrans WOD et minuteur, aussi conservés dans Accueil.
-- Explorer supprimé : ses sept routes passent dans la pile Accueil, bloc ax « Explorer » sous « Cette
-  semaine » (Trouver une box, Programmes, Partenaires). Barre d'onglets inchangée (verre flottant : R2b).
-
-**Saisie des charges en musculation, PR 2 « Whiteboard » (app seule, aucune migration).**
-- Séance de musculation du Whiteboard : la grille se recharge depuis le serveur (`strength_sessions` et
-  `strength_set_logs`, migration `20270138` déjà en prod), sinon depuis la prescription ; brouillon
-  enregistré 0,8 s après la dernière frappe et bouton « Enregistrer et continuer plus tard » ; état
-  « En cours · n / N séries » et « Enregistré il y a … ».
-- Hors connexion : copie locale renvoyée au retour du réseau, jamais au-dessus d'une version serveur
-  plus récente ni d'une séance validée.
-- Plus de champ POIDS : « Charge max (score) · calculée » depuis les séries valides. « Valider la
-  séance » appelle `validate_strength_session` (séries, charge max, score et 1RM, calculés avec
-  `estimateOneRepMax`, en une transaction) ; compteurs, streak, crédit et notifications seulement si
-  `premiere_validation`. Séance validée : charges enregistrées et « Modifier mes charges ».
-- Saisie décimale iOS : virgule et point acceptés (102,5 → 102.5).
-- Séances générées (`MuscuSessionCard`) : PR 3, après le merge de celle-ci (elle réutilise son service).
-
-**Saisie des charges en musculation, PR 3 « Séances générées » (app seule, aucune migration).**
-- Carte Séance du générateur (`MuscuSessionCard`, `WodResultScreen`) : brouillon côté serveur
-  (`strength_sessions` / `strength_set_logs`, source `generated`, clé = WOD enregistré dans
-  `generated_wods`) 0,8 s après la dernière frappe, bouton « Enregistrer et continuer plus tard »
-  (`AxButton` contour) et « En cours · n / N séries » ; copie locale hors connexion, jamais au-dessus
-  d'une version serveur plus récente ; reprise sur un autre appareil depuis le générateur.
-- Validation par `validate_strength_session` ; le score reste le tonnage (`generated_wod_scores`) ;
-  compteur, rappel et crédit `movement_logs` seulement si `premiere_validation`. « Modifier mon
-  score » repasse par la RPC et ne remplace que le tonnage.
-
-**Saisie des charges en musculation, PR 4 « Ma Box et mes charges » (app seule, aucune migration).**
-- Carte d'un WOD de musculation dans Ma Box (`WhiteboardScreen`) : « En cours · n / N séries »
-  (`AxStatusDot` warning) et lien « Reprendre ma saisie » quand un brouillon existe, « Validée » (ton
-  actif) quand la séance est validée, rien sinon. États de toute la semaine lus en une lecture groupée
-  (`fetchStrengthSummaries`, une requête par table pour la semaine, jamais une par carte).
-- Séance validée (`WODDetailScreen`) : bloc « Mes charges » (`AxCard`) série par série, écart à la
-  prescription (« 6 au lieu de 7 », en `accentText`), tonnage et charge max, puis « Modifier mes charges »
-  qui rouvre la saisie pré-remplie et repasse par `validate_strength_session` sans recomptage.
-
-**Écran Membres du gérant (`BOMembersScreen`) : règle du co-gérant (app seule, aucune migration).** Un co-gérant ne voit plus d'action sur la ligne d'un autre co-gérant ni du gérant principal (`boxes.owner_id` de la box active, sans nouvelle lecture) et lit « Seul le gérant principal de la box peut nommer ou retirer un co-gérant. » ; le choix du rôle ne propose jamais co-gérant ; tout refus (42501, `MEMBRE_ROLE_COGERANT_RESERVE`, aucune ligne modifiée, RPC à `false`) affiche un message traduit et la liste est relue depuis la base.
-
-**Refonte visuelle mobile, lot R1 « Composants » (aucun écran modifié).**
-- Bibliothèque `src/components/ax/` : verre (`AxGlass`, flou 24 sur iOS, opacités 0.80 / 0.85 portées
-  à 0.96 sur Android), boutons (accent, contour, clair, pointillé, arrêt), bouton carré, pastille,
-  étiquette, badge compteur, cartes (standard, vedette, verre), champ, interrupteur, case à cocher, jour,
-  pastille d'état, en-tête de page. Couleurs, typographie, rayons et espacements tirés des jetons R0.
-- Catalogue `src/screens/dev/AxCatalogScreen.tsx`, enregistré dans la navigation seulement en
-  développement (`__DEV__`). Aucun écran existant ni ancien composant ne l'importe (vérifié par test).
-- La barre d'onglets flottante vient au lot R2 ; les écrans adopteront les composants aux lots R2 à R11.
-
-**Refonte visuelle mobile, lot R0 « Fondations » (aucun écran modifié).**
-- Jetons du nouveau design posés dans `src/theme/axTokens.ts` (source Figma, collections « AthleX —
-  Couleurs » et « AthleX — Dimensions ») : couleurs sombre et clair, rayons, espacements, flou du verre,
-  13 styles typographiques. Couleurs exposées dans `theme.ax` ; aucune valeur existante du thème ne change.
-- Police Oswald (`Oswald_500Medium`) chargée au démarrage, pas encore utilisée.
-- Contraste AA vérifié par test dans les deux modes. Les écrans passeront au nouveau design dans les lots
-  suivants (R1 : fond translucide du verre et repli Android).
-
-**Intégration au vert sur master** (tests et CI seulement, sans migration ni code de production).
-- `integration.yml` joue désormais toutes les suites. Chacune est en `continue-on-error`, et une étape
-  finale (`scripts/bilan-suites.mjs`) publie le résumé par suite et fait échouer le job s'il y a eu un échec
-  ou si aucune suite n'a tourné. Avant, la première suite rouge masquait toutes les suivantes.
-- `auto-programming` est ajoutée aux choix du paramètre `suite`.
-- Suites remises au vert :
-  - `programs-par-box` écrit une `start_date` qui est le lundi de la semaine courante (la contrainte
-    exige un lundi) ;
-  - `abonnement-programmation` et `espace-coach` suivent la règle de #383 : le coach reçoit le refus
-    « gérant ou co-gérant », et c'est le gérant qui souscrit.
-- Sous Windows :
-  - `group-messages` accepte les fins de ligne `\r\n` de psql ;
-  - `auto-programming` force `PGCLIENTENCODING=UTF8` ;
-  - le test Jest `giphyGifPicker` appelle `git grep` sans shell.
-- Reste hors de la CI : `scripts/test-box-archivage.mjs` (#311), jamais branchée.
-
-**Impayés : blocage des réservations après le délai avant suspension** (décision produit du 25/09).
-- Migration `20270121` (**appliquée en prod le 25/09/2026**, dump
-  `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T142741Z.dump`) : un membre `past_due` au-delà du délai de sa box
-  (`boxes.dunning_grace_days`, 0 à 90 jours, réglé dans le Manager, défaut 7 — la formule est celle du
-  drapeau « suspended » de `get_box_dunning`) ne peut plus créer de réservation ni s'inscrire en liste
-  d'attente (même table, statut `waiting`) ; refus `MEMBERSHIP_PAST_DUE`, que l'app affiche déjà. Le
-  staff qui inscrit le membre passe (auth.uid() ≠ member_id) ; les réservations déjà prises restent ;
-  le retour à `active` rétablit tout ; `consume_credit_on_reservation` ne tient plus un suspendu pour
-  abonné valide (il bascule sur ses crédits). Écrans app à adapter listés dans la PR (lot app séparé).
-
-**Lot sécurité : l'argent relève du gérant, pas du coach** (relevé du 26/09/2026).
-- Migration `20270131` (**appliquée en prod le 26/09/2026 à 10:33 UTC**, dump
-  `db-dumps/2026-09-26/athlex-prod-public-internal-20260926T103329Z.dump` ; audit 29/29) : demandes de résiliation lues et traitées par
-  `is_box_owner_admin` seulement (plus par le coach) ; abonnements Marketplace : lecture côté abonné par le
-  staff de la box abonnée (coach compris, couleurs de `/wods`), côté éditeur (qui achète) par
-  `is_box_owner_admin` de l'éditrice ; écriture et `subscribe_free_programming` par `is_box_owner_admin` ;
-  `get_box_dunning` lève 42501 pour un non-gérant au lieu d'une liste vide (le Manager adaptera
-  `UnpaidPanel`). Le coach écrit toujours le contenu des offres (`box_programming_wods_write` inchangée).
-
-**Arrêt des abonnements par le gérant** (chantier en plusieurs lots ; diagnostic côté Manager).
-- S1, journal des arrêts (migration `20270120`, **appliquée en prod le 24/09/2026 à 21:28 UTC**,
-  dump `db-dumps/2026-09-24/athlex-prod-public-internal-20260924T212721Z.dump` ; audit relancé
-  aussitôt : **29/29**) : table
-  `box_member_subscription_actions` en ajout seul — un trigger (fonction dans `internal`) refuse
-  réécriture, suppression et TRUNCATE, sauf `notified_at` renseigné une seule fois ; sans clé étrangère,
-  pour que l'historique survive à la suppression d'un membre ou d'une box sans la bloquer, l'intégrité
-  étant vérifiée à l'insertion ; une souscription Stripe ne s'arrête qu'une fois ; lecture par le gérant
-  de la box, écriture par la clé serveur seulement. `notified_at` reste le fait « e-mail parti » ; le
-  push `membership_stopped` (S5) part à côté, sans marqueur dans le journal (voir plus bas).
-- S4, moyen de paiement (migration `20270122`, **appliquée en prod le 25/09/2026 à 15:06 UTC**, dump
-  `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T150516Z.dump`) : `get_box_billing` renvoie aussi
-  `payment_method_type` (card, sepa_debit… ou NULL), pour que la boîte d'arrêt du Manager (PR
-  AthleX-Manager #385) affiche « carte » ou « prélèvement SEPA ». Corps repris de la prod ; garde,
-  droits et commentaire inchangés.
-- S4, programme désactivé (migration `20270123`, **appliquée en prod le 25/09/2026 à 15:40 UTC**,
-  dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T153958Z.dump`) : l'acheteur actif
-  (`program_members.status = 'active'`) lit encore un programme désactivé, jusqu'à ce que le webhook
-  passe sa ligne à `cancelled` en fin de période. Règle `buyer_read_purchased_programs` sur
-  `programs`, adossée à `program_in_my_active_membership` (SECURITY DEFINER) : une règle qui lirait
-  `program_members` directement ferait boucler PostgreSQL, ses règles relisant `programs`.
-  `read_active_programs` et les règles de `program_members` inchangées.
-- S5, la base et `send-push` (migration `20270128`, **appliquée en prod le 25/09/2026 à 21:11 UTC**,
-  dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T211012Z.dump` ; audit 29/29) :
-  `get_my_membership_billing` renvoie aussi `past_due_since`, `dunning_grace_days`, `suspended` (la
-  règle qui bloque les réservations), `has_stripe_subscription`, et le dernier arrêt décidé par un
-  gérant (`stopped_at`, `stop_mode`) ; `push_tokens.language` (`fr` / `en`, NULL pour les versions
-  d'app d'avant) ; `list_programming_catalog` ne liste plus les offres d'une box archivée ou en
-  archivage programmé, sauf celles où la box est déjà abonnée. `send-push` : type `membership_stopped`
-  (réglage « annonces de la box ») et version anglaise facultative (`en`) choisie jeton par jeton, le
-  français pour un jeton sans langue ; **déployée le 25/09/2026 à 21:14 UTC** (code en prod identique au
-  commit ; retour arrière : les sources déployées avant, identiques à master, hors dépôt dans
-  `C:\Users\NBS\athlex-retour-arriere-send-push\avant-375`, à redéployer AVANT de jouer le retour
-  arrière de la migration). Côté app (bandeau, état de l'abonnement, langue du jeton) : PR
-  séparée. L'envoi à l'arrêt est fait côté Manager (AthleX-Manager #396, **mergée le 26/09/2026 à
-  10:07 UTC**) : `lib/members/membershipPush.ts` appelle `send-push` par le chemin serveur
-  (`x-cron-secret`), FR et EN ; `lib/members/stopMembership.ts` l'appelle après le journal et l'e-mail,
-  pour S2 (route `stop-subscription`), le bannissement (route `ban`, seulement s'il y a un abonnement
-  Stripe), S4 (`membership-plans/delete`) et l'archivage (`lib/boxArchiveSchedule.ts`) ; la route
-  d'une demande de résiliation acceptée l'appelle aussi. Un échec d'envoi ne bloque jamais l'arrêt.
-  `notified_at` reste le fait « e-mail parti ».
-- S5, `membership_stopped` réservé au serveur (`send-push`, sans migration, **déployée le 25/09/2026 à 22:29
-  UTC** ; retour arrière : sources déployées avant, identiques à master, dans
-  `C:\Users\NBS\athlex-retour-arriere-send-push\avant-377`) : accepté par
-  le seul chemin serveur (`x-cron-secret`) ; demandé par un utilisateur connecté, même gérant ou
-  co-membre, par `data.type`, `category` ou `pref_key`, l'appel est refusé en 403 `SERVER_ONLY_TYPE`.
-  Les autres types ne changent pas.
-- `send-push`, `box_notification` et `elo_change` réservés au serveur aussi (sans migration, **déployée le
-  25/09/2026 à 23:24 UTC** ; retour arrière : sources déployées avant, identiques à master, dans
-  `C:\Users\NBS\athlex-retour-arriere-send-push\avant-380`) : même refus (`SERVER_ONLY_TYPE`, par `data.type`, `category` ou `pref_key`). Aucun code ne
-  les envoyait en tant qu'utilisateur (les annonces passent par `send-box-notification`, `elo_change`
-  n'a aucun émetteur). Restent ouverts, en attendant que leur envoi passe côté serveur :
-  `tournament_closed`, `inter_competition_closed`, `inter_bracket_result` (backlog).
-- `send-push`, catégorie « annonces de la box » (`box_announcements`) réservée au serveur (sans migration,
-  **déployée le 26/09/2026 à 09:07 UTC** ; retour arrière : sources déployées avant, identiques à master,
-  dans `C:\Users\NBS\athlex-retour-arriere-send-push\avant-381`) : un utilisateur connecté qui la demande, par `category` ou `pref_key`, avec ou sans
-  type, est refusé en 403 `SERVER_ONLY_CATEGORY` (la règle porte sur la catégorie résolue). Aucun envoi
-  de l'app ne l'utilise (l'app ne passe jamais `category` ni `pref_key`) ; le prototype
-  `_cles_edge_proto.mjs` passe à `group_messages`.
-- `send-push`, « Nouveau WOD » (`new_wod`) réservé au staff (sans migration, **déployée le 26/09/2026 à
-  09:59 UTC** ; retour arrière : sources déployées avant, identiques à master, dans
-  `C:\Users\NBS\athlex-retour-arriere-send-push\avant-382`) : un
-  utilisateur connecté ne l'envoie (par type, `category` ou `pref_key`) que s'il gère (propriétaire, rôle
-  `owner` ou `coach` actif) une box qui contient tous les destinataires ; sinon 403 `STAFF_ONLY_CATEGORY`.
-  Le chemin serveur passe. `tournament_updates` et `elo_updates` restent au backlog (lot tournois).
-- Facturation de `box_members` réservée au serveur (migration `20270132`, **appliquée en prod le 26/09/2026
-  à 11:33 UTC**, après le Manager #397 qui fait passer `assignPlan` et le débannissement côté serveur ;
-  dump `db-dumps/2026-09-26/athlex-prod-public-internal-20260926T113223Z.dump` ; audit 29/29) : un rôle client n'écrit plus les 18 colonnes de facturation (`MEMBRE_FACTURATION_RESERVEE`) ;
-  il ne bannit plus un membre qui a un abonnement Stripe en cours (`MEMBRE_ABONNEMENT_EN_COURS`, le
-  Manager bannit par sa route, qui arrête l'abonnement) ; `reactivate_box_member` refuse un membre dont
-  l'abonnement Stripe court encore (`REACTIVATION_ABONNEMENT_EN_COURS`). Ni `status` (hors ce cas) ni
-  `role` ne sont gardés. Refus à traduire dans l'app (`BOMembersScreen`).
-- Rôle co-gérant réservé au gérant principal (écart A du lot sécurité Manager ; migration `20270139`,
-  **appliquée en prod le 29/09/2026 à 08:05 UTC**, dump
-  `db-dumps/2026-09-29/athlex-prod-public-internal-20260929T080359Z.dump` ; audit 37/37) : seul `boxes.owner_id` donne ou retire le rôle `owner` d'une ligne de
-  `box_members` (insertion, changement de rôle, de statut, de personne ou de box, suppression de la ligne
-  d'un autre), refus 42501 `MEMBRE_ROLE_COGERANT_RESERVE`. Un co-gérant gère toujours membres et coachs,
-  renonce à son propre rôle et quitte la box ; clé serveur et fonctions SECURITY DEFINER non concernées.
-  Parcours du Manager « nommer un co-gérant » (rétrogradation puis promotion par le gérant principal)
-  inchangé. Contrôle T12 de l'audit des droits. Refus à traduire côté Manager (`/members`).
-- Réservation sans formule refusée (chantier « argent », lot 1 de « Rejoindre une box en payant » ;
-  migration `20270133000000_reservation_sans_formule_bloquee.sql`, **appliquée en prod le 27/09/2026 à
-  10:18 UTC** ; dump
-  `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T101714Z.dump` ; audit 30/30) : jusqu'ici, un membre sans abonnement valable ni
-  aucun crédit réservait gratuitement et sans limite. Il est désormais refusé (`NO_ACTIVE_PLAN`), pour
-  une réservation comme pour la liste d'attente, quand il s'inscrit lui-même. Le contrôle d'impayé
-  (`MEMBERSHIP_PAST_DUE`) reste prioritaire, et `consume_credit_on_reservation` n'est pas modifiée
-  (`NO_CREDITS_LEFT` inchangé). Restent acceptés : le staff de la box, l'essai, la clé serveur,
-  l'inscription par le staff et la promotion depuis la liste d'attente. Quand le staff inscrit un membre
-  sans formule, la base ouvre une alerte dans `box_member_alerts`, une seule ouverte par membre et par
-  box. Seul le gérant ou co-gérant la lit et la résout (`resoudre_alerte_membre`) ; aucun rôle client
-  n'écrit la table (contrôle T10 de l'audit des droits). Affichage Manager et message traduit dans l'app :
-  lots suivants. En prod le 27/09, 25 membres actifs non staff étaient dans ce cas (aucune réservation à
-  venir).
-  **Préfixe en double** : deux migrations portent `20270133` —
-  `20270133000000_bracket_wods_prevus.sql` (appliquée le 26/09/2026) et
-  `20270133000000_reservation_sans_formule_bloquee.sql` (appliquée le 27/09/2026). Le rejeu les passe
-  dans l'ordre du nom complet : `bracket_wods_prevus` d'abord, `reservation_sans_formule_bloquee`
-  ensuite. Elles ne touchent pas les mêmes objets ; les fichiers ne sont pas renommés (déjà appliqués).
-  Toujours citer le nom complet.
-- Saisie des charges en musculation, base (migration `20270138`, **appliquée en prod le 29/09/2026 à
-  05:36 UTC** ; dump `db-dumps/2026-09-29/athlex-prod-public-internal-storage-20260929T053550Z.dump` ;
-  audit 35/35) : séances de musculation gardées côté serveur. PR 1 du chantier ; les écrans suivent (PR 2 à 4).
-  - `strength_sessions` : une séance par athlète et par source (WOD du Whiteboard ou de programme, séance
-    générée), en brouillon ou validée, avec les séries prévues, la charge max et la date de première
-    validation. L'athlète écrit ses brouillons ; lui seul les voit (le staff ne lit que les séances validées).
-  - Séries rattachées à leur séance par (athlète, source) ; pas encore de clé étrangère : l'app actuelle et les
-    builds installés écrivent leurs séries sans séance, et ce chemin reste permis. Aucune écriture directe dans
-    une séance validée ; une série commencée sans reps est gardée en brouillon.
-  - `validate_strength_session` écrit en une transaction les séries valides, la séance, le score (Whiteboard :
-    charge max des séries) et les 1RM calculés par l'app, chacun prouvé par une série ; un 1RM ne baisse que
-    s'il venait de cette séance. Elle rend `premiere_validation` : compteurs et crédits ne partiront qu'une
-    fois. Rien dans `movement_logs`.
-  - Reprise : les 5 séances existantes deviennent validées, sans toucher séries, scores ni records.
-- Sécurité, stockage `message-attachments` privé (migration `20270137`, **appliquée en prod le 28/09/2026
-  à 22:07 UTC** ; dump `db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T220703Z.dump` ;
-  audit 35/35 ; anon et authenticated sans jeton voient 0 objet).
-  Constat du 28/09/2026 : stockage public, `public_read_attachments` ouverte à tous (anon lisait les 2
-  images), dépôt permis n'importe où à tout compte connecté.
-  - Une pièce jointe se lit, connecté seulement, par son auteur, ou par quiconque peut lire un message du
-    groupe dont le premier dossier porte l'identifiant (la RLS de `group_messages` décide : membre du groupe
-    ou propriétaire de la box ; un co-gérant non membre ne lit pas). Un ancien fichier au chemin plat se lit
-    par qui lit le message de groupe qui le cite (URL publique ou chemin). Celui que seule l'ancienne table
-    `messages` cite reste à son auteur et à la clé serveur.
-  - Dépôt : dans un groupe dont on est membre, nom de fichier préfixé par son uid. Suppression : aucune
-    règle client, comme avant. `delete_user_account` inchangée.
-  - Contrôles S4 et S5 ajoutés à l'audit des droits. Remplace, pour `message-attachments`, la partie jamais
-    appliquée de `migrations_archive/20260820_lot1c_c_buckets_prives.sql`.
-  - App (PR séparée) : un dépôt enregistre le chemin du fichier et plus l'URL publique. Les builds antérieurs
-    au 04/08/2026 (avant 1.0.51) n'affichent plus les images et ne déposent plus.
-  - Incident d'ordre, le même que pour `20270136` : #399 a été mergée à 22:06 UTC, avant l'application
-    (22:07). Le run de `grants-prod.yml` déclenché par ce merge (22:06, S4 et S5 déjà présents, prod pas
-    encore migrée) est rouge ; relancé à la main sur master à 22:08 UTC : **35/35, vert**. L'état
-    « appliquée » est reporté sur master par une PR de correction.
-- Sécurité, stockage `documents` privé et documents de box fermés aux clients (migration `20270136`,
-  **appliquée en prod le 28/09/2026 à 21:15 UTC** ; dump
-  `db-dumps/2026-09-28/athlex-prod-public-internal-storage-20260928T211427Z.dump` ; audit 33/33 ; anon et
-  authenticated sans jeton voient 0 objet). Constat du 28/09/2026 : le stockage était public et la policy
-  `public_read_documents` (rôle public, sans condition) laissait n'importe qui, sans compte, lister et lire
-  les 2 PDF d'une box.
-  - Le stockage passe en privé ; ses 3 policies client (lecture, dépôt, suppression) sont supprimées.
-  - `box_documents` : les 4 policies sont supprimées, anon et authenticated n'ont plus aucun droit ; seule
-    la clé serveur lit. La table, ses 2 lignes et les 2 fichiers restent.
-  - `delete_user_account` inchangée : elle efface toujours les fichiers `documents` d'un compte supprimé.
-  - Contrôles S1 à S3 ajoutés à l'audit des droits (CI de rejeu, `test-grants`, `grants-prod.yml`) ; le rôle
-    `athlex_audit_ro` lit pour cela `id` et `public` de `storage.buckets`.
-  - Remplace, pour `documents`, la partie jamais appliquée de
-    `migrations_archive/20260820_lot1c_c_buckets_prives.sql`. `message-attachments`, visé par le même
-    fichier et lui aussi public : lot séparé, avant l'App Store.
-  - Écran Documents retiré de l'app : PR app séparée, prochain build.
-  - Incident d'ordre : #394 a été mergée à 21:08 UTC, avant l'application (21:15). Le run de
-    `grants-prod.yml` déclenché par ce merge (21:08, contrôles S1 à S3 déjà présents, prod pas encore
-    migrée) est rouge ; relancé à la main sur master à 21:47 UTC : **33/33, vert**. L'état « appliquée »,
-    poussé sur la branche après le merge, est reporté sur master par une PR de correction. Rappel :
-    application d'abord, merge ensuite.
-- Réservation : la box est celle du créneau, et seul un membre de la box réserve (migration `20270134`,
-  **appliquée en prod le 27/09/2026 à 15:56 UTC** ; dump
-  `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T155556Z.dump` ; audit 30/30).
-  - Une réservation dont la box déclarée n'est pas celle du créneau est refusée
-    (`RESERVATION_BOX_MISMATCH`), quel que soit l'auteur, clé serveur comprise. Le contrôle passe avant
-    tous les autres déclencheurs.
-  - Un membre ne réserve plus lui-même que dans une box dont il est membre actif et qui n'est pas
-    archivée, ou dont il fait partie du staff. Un non-membre, un membre inactif ou banni est refusé.
-  - Inchangés : l'inscription par le staff, l'essai, la promotion depuis la liste d'attente, l'impayé,
-    l'absence de formule et l'alerte au gérant.
-  - En prod le 27/09, aucune réservation existante n'était dans l'un de ces cas.
-- Prochaine échéance d'un adhérent migré et jour de prélèvement (lot 3 de « Rejoindre une box en
-  payant », partie base ; migration `20270135`, **appliquée en prod le 27/09/2026 à 18:53 UTC** ; dump
-  `db-dumps/2026-09-27/athlex-prod-public-internal-20260927T185220Z.dump` ; audit 30/30 ; PR app #393,
-  mergée après l'application). Calcul et Stripe : **faits côté Manager** (AthleX-Manager #407, **mergée
-  le 27/09/2026 à 20:58 UTC**) — jour de prélèvement (1 à 10) au paiement et au webhook Stripe Connect,
-  prochaine échéance saisie à l'invitation, unitaire ou par CSV (`billing_day`, `next_due_date`).
-  - Une invitation, unitaire ou importée, porte une prochaine échéance facultative (`next_due_date`).
-    Elle doit être au format AAAA-MM-JJ, tomber strictement après aujourd'hui (heure de Paris) et au
-    plus douze mois après. Refus `DUE_DATE_INVALID`, `DUE_DATE_PAST` ou `DUE_DATE_TOO_FAR` ; à
-    l'import, verdict `refusee` par ligne. Sans échéance, rien ne change.
-  - Le lien de paiement et la page d'invitation renvoient l'échéance.
-  - Jour de prélèvement `box_members.billing_day`, du 1er au 10, écrit par le serveur seulement
-    (19e colonne de la garde de facturation) ; recopié depuis un paiement antérieur au compte
-    (`pending_entitlements.billing_day`).
-- État de la formule d'un membre pour l'app (lot 4 de « Rejoindre une box en payant », partie base ;
-  migration `20270141`, **appliquée en prod le 01/10/2026 à 00:57 UTC** ; dump
-  `db-dumps/2026-10-01/athlex-prod-public-internal-20261001T005645Z.dump` ; audit 37/37). `my_box_plan_status(box)` rend, pour l'appelant
-  membre actif de la box (aucune ligne sinon) : `is_staff` et `has_plan` — les règles mêmes du refus
-  `NO_ACTIVE_PLAN` (`internal.est_staff_box`, `internal.membre_a_formule`), sans recopie —,
-  `suspended`, `credits_left` (carnets utilisables) et `pays_online` (la box vend au moins une formule
-  par Stripe ; sinon l'app masquera « Activer mon abonnement »). Rien pour PUBLIC ni anon. Parité avec
-  le refus vérifiée par des réservations réelles annulées. En prod le 01/10/2026 : 27 membres actifs
-  non staff sans formule (3 box) ; deux box sur trois ne vendent aucune formule en ligne.
-- Formule à activer dans l'app (lot 4 de « Rejoindre une box en payant », partie app, sans migration ;
-  **à diffuser au prochain build**). L'app lit `my_box_plan_status` (`getMyPlanStatus`), relu quand
-  l'écran reprend le focus et quand l'app revient au premier plan (retour du site) ; appel échoué ou
-  aucune ligne : rien ne s'affiche.
-  - Bandeau « Formule à activer » (nouveau composant `AxNotice`) dans Ma Box (sous les raccourcis) et
-    Réservation (en tête), ligne « Formule à activer » dans Profil › Compte › Mes boxs ; affichés quand
-    la base refuserait la réservation (ni staff ni formule). Suspendu : seul le bandeau « abonnement
-    suspendu » existant.
-  - « Activer mon abonnement » ouvre `athlexapp.eu/box/<slug>` dans le navigateur (aucun achat dans
-    l'app) ; masqué partout quand la box ne vend aucune formule en ligne (`pays_online` faux), seul
-    « Tu paies au comptoir ? Rapproche-toi de ta box. » reste.
-  - Écran « Bienvenue chez ta box » après avoir rejoint une box par son code, quand la formule est à
-    activer ; « Je paie au comptoir » mène à Ma Box.
-  - Fenêtre de refus `NO_ACTIVE_PLAN` : textes inchangés, icône carte, « Activer mon abonnement » et
-    « Fermer ». L'écran P1 « Délai de régularisation » est reporté au lot P1.
-
-**Profil public : « Demander en ami » centré (retour D3 du build 1.0.60, app seule, apparence seule).** Le bouton
-(et « Accepter ») se calait à gauche de la carte du profil : `AxButton` pose `alignSelf: 'flex-start'` quand il n'est
-pas en pleine largeur, ce qui l'emporte sur le centrage de la carte. Une enveloppe locale `alignSelf: 'center'` le
-centre ; l'alignement par défaut du bouton partagé n'est pas changé. Tests dans `r12.rn.test.tsx`, 5 mutations tuées.
-
-**Archivage d'une box et abonnements** (trois PR : la base ici, puis deux lots Manager ; relevé et plan
-dans `athlex-captures/archivage-abonnements/releve-et-plan.md`).
-- PR 1, la base (migration `20270127`, **appliquée en prod le 25/09/2026 à 20:05 UTC**, dump
-  `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T200404Z.dump`) : état « archivage programmé »
-  (`boxes.archive_scheduled_at`, `archive_scheduled_by`) ; règle unique `box_accepts_entries` (fausse si
-  archivée ou programmée), refus en clair `BOX_ARCHIVEE` / `BOX_ARCHIVAGE_PROGRAMME` dans les fonctions
-  d'entrée (rejoindre, invitations, essais, droits en attente, programmes, comptoir) et sur les écritures
-  directes du client (membres, offres, invitations) ; une box programmée sort de l'annuaire (règle
-  restrictive, ses membres et son staff la voient encore) ; archivage automatique quand plus rien ne paie
-  (tâche `box_archive_sweep`, toutes les heures, journal `box_auto_archive_log`) ; annulation
-  (`unschedule_box_archive`) et alerte des 2 jours (`box_archive_overdue`) pour le super-admin. Aligne le
-  dépôt sur `box_subscriptions.billing_source`, présent en prod sans migration.
-- `boxes.archive_notified_at` (migration `20270129`, **appliquée en prod le 25/09/2026 à 22:36 UTC**, dump
-  `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T223607Z.dump` ; audit 29/29) : date d'envoi de l'e-mail
-  d'archivage, que le Manager renseignera à l'envoi (sa PR 3, clé serveur, **après** la programmation).
-  Un déclencheur la remet à vide dès que la box n'est plus ni archivée ni en archivage programmé (quel
-  que soit le chemin : `unschedule_box_archive`, réactivation par le Manager, écriture directe) et
-  refuse qu'un rôle client la modifie (`BOX_ARCHIVE_NOTIFIED_AT`). Relevé en passant : `archive_scheduled_at`
-  n'avait aucune garde (corrigé par `20270130`, ci-dessous).
-- Garde sur l'état d'archivage (migration `20270130`, **appliquée en prod le 25/09/2026 à 23:14 UTC**, dump
-  `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T231414Z.dump` ; audit 29/29) : un rôle client
-  (`authenticated`, `anon`), gérant et co-gérant compris, ne peut plus ni poser, ni effacer, ni modifier
-  `archive_scheduled_at`, `archive_scheduled_by`, `archived_at` et `archived_by`, quelle que soit la règle
-  RLS d'écriture (42501 `BOX_ARCHIVAGE_RESERVE`). Avant, un gérant pouvait effacer lui-même l'archivage
-  programmé de sa box depuis le navigateur. Le rôle se lit dans `current_user` (garde SECURITY INVOKER),
-  pour que `unschedule_box_archive` appelée par un super-admin avec son jeton passe. Restent autorisés :
-  la clé serveur (routes super-admin du Manager), `unschedule_box_archive`, l'archivage automatique.
-  Remplace la garde de #378 (`internal.garder_archivage_box`, `trg_boxes_garde_archivage`).
-- Contrôles de l'archivage (sans migration) : `scripts/test-box-archivage.mjs`, jamais branché
-  jusqu'ici, devient la suite `box-archivage` d'`integration.yml` (21 assertions : masquage,
-  réactivation, et le gérant connecté refusé en `BOX_ARCHIVAGE_RESERVE` sur `archive_scheduled_at`
-  et `archived_at`, avec mutation inverse déclencheur désactivé). Contrôle T11 de l'audit des
-  droits (CI, rejeu, prod nocturne) : `trg_boxes_garde_archivage` présent, actif, BEFORE UPDATE
-  sur les quatre colonnes, fonction non exécutable par un client.
-- App (sans migration, s'appuie sur `20270125`, `20270127` et `20270128`, **à diffuser au prochain build**,
-  lancé par Nab ; aucun build EAS dans ce lot) : inscription à un tournoi décidée par la base
-  (`can_join_tournament`, donc aussi pendant le tournoi quand l'option le permet), pastille et indice
-  « inscriptions ouvertes pendant le tournoi », refus traduits par leur code (FR/EN), « Se désinscrire »
-  réservé aux tournois ouverts ; tournois archivés hors des listes (accueil, compétition, back-office,
-  admin), gardés dans l'historique ELO, état « Archivé » sur le détail ; refus traduits pour rejoindre une
-  box fermée (un seul texte) et pour l'offre gratuite, catalogue lu par `list_programming_catalog` ;
-  « Box introuvable » traduit avec retour dans l'annuaire ; S5 : bandeau « Abonnement suspendu » sur les
-  réservations (lien vers la page de paiement si abonnement Stripe), état de l'abonnement dans le profil,
-  notification `membership_stopped` qui ouvre le profil ; la langue du téléphone (`fr`, sinon `en`) est
-  enregistrée avec le jeton de notification, et revue au retour au premier plan.
-- App, refus du bannissement et de la réactivation traduits (sans migration, **à diffuser au prochain build**) :
-  `BOMembersScreen` traduit par leur code `MEMBRE_ABONNEMENT_EN_COURS` et `REACTIVATION_ABONNEMENT_EN_COURS`
-  (migration `20270132`), et affiche le texte générique pour tout autre refus, jamais le message brut.
-- App, réservation sans formule refusée et traduite (sans migration, s'appuie sur
-  `20270133000000_reservation_sans_formule_bloquee.sql`, **à diffuser
-  au prochain build**) : `ReservationScreen` affiche « Tu n'as pas de formule active dans cette box.
-  Rapproche-toi de ta box pour activer ton abonnement. » (EN : « You don't have an active plan at this box.
-  Contact your box to activate your membership. ») pour le refus `NO_ACTIVE_PLAN`, que ce soit une réservation
-  ou une inscription en liste d'attente, au lieu du message brut. L'impayé passe par le même mapping
-  (`reservationRefusal`), avec un texte inchangé.
-- App, type de score traduit dans la saisie du score (sans migration, **à diffuser au prochain build**) :
-  WODDetail affichait le type brut (« WEIGHT », « TIME »…) ; il affiche « Charge », « Temps », « Reps »,
-  « Tours » (EN : Load, Time, Reps, Rounds) et « Type de score », clés `wod.scoreType.*`. Premier lot du
-  chantier « Saisie des charges en musculation ».
-- App, pièces jointes enregistrées par leur chemin (sans migration, **à diffuser au prochain build** ; la base
-  est fermée par `20270137`, PR séparée) : un dépôt enregistre `<groupe>/<uid>_…` dans
-  `group_messages.attachment_url` au lieu de l'URL publique (`src/lib/messageAttachments.ts`). L'affichage
-  reste sur `resolveStorageUrls`, qui signe aussi les anciennes URL publiques ; les GIF externes sont
-  inchangés. Un build antérieur au 04/08/2026 ne sait pas afficher un chemin nu.
-- App, refus de box traduits à la réservation (sans migration, s'appuie sur `20270134`, **à diffuser au
-  prochain build**) : un compte qui n'est plus membre actif de la box (refus RLS 42501) lit « Tu ne fais
-  plus partie de cette box. Rejoins-la à nouveau ou contacte-la. », une box déclarée qui n'est pas celle du
-  créneau (`RESERVATION_BOX_MISMATCH`) « Ce cours n'appartient pas à ta box. Actualise l'écran et
-  réessaie. » (FR/EN), au lieu du message brut.
-- App, écran Documents retiré (sans migration, **à diffuser au prochain build** ; la base est fermée par
-  `20270136`, PR séparée) : plus d'écran Documents ni de route `Documents`, plus de boutons « Import WOD »
-  sur Ma Box (celui du haut et celui de la ligne Actualités, qui prend toute la largeur) ; clés de traduction
-  retirées. Les builds déjà installés gardent l'écran jusqu'à la mise à jour : une fois `20270136` appliquée,
-  il affiche une liste vide et un dépôt est refusé (message d'erreur). `expo-document-picker` reste (import de WOD du
-  back-office). Déclaration App Privacy / Data Safety : la ligne « Documents (PDF) » tombe au prochain envoi.
-- App, nettoyage : écran `WODScreen` (WODs fictifs écrits en dur) et pile `WODNavigator` supprimés (sans
-  migration, sans effet visible : la pile n'était montée nulle part). Route `WODList`, type `WODStackParamList`
-  et clés de traduction `wod.title`, `wod.subtitle`, `wod.generate`, `wod.all` retirées (FR/EN, `wod.scoreType` gardé) ; `WodGenerator`, `WodResult`, `WodHistory`, `TimerRun`,
-  `VideoPlayback` restent déclarés dans les piles utilisées. Test `wodScreenRetire`.
-
-**Logique sportive des tournois** (chantier en dix PR, état des lieux et plan dans
-[`audits/TOURNOIS_LOGIQUE_SPORTIVE.md`](./audits/TOURNOIS_LOGIQUE_SPORTIVE.md)).
-- WOD de tableau préparés à l'avance (migration `20270133000000_bracket_wods_prevus.sql`, appliquée en
-  prod le 26/09/2026 ; même préfixe que la réservation sans formule, voir plus haut) :
-  `tournament_wods.bracket_board` (`winner` = distance à la finale des gagnants, `loser` = tour des
-  perdants depuis 1, `grand_final`, `grand_final_reset`, `third_place`), contrainte et un seul WOD par
-  étape ; un déclencheur pose à la création de chaque match (hors exemption, sans WOD donné) le WOD
-  prévu pour son étape, calculée par la base seule (tirage, tour suivant, finales, grande finale créée à
-  la main) ; la petite finale sans WOD prévu reçoit celui de la finale, le match décisif sans WOD prévu
-  reste sans WOD ; `tournament_bracket_stages(tournoi)` rend les étapes à proposer et leurs libellés FR
-  et EN. Aucun match existant modifié. Manager branché (AthleX-Manager #403).
-- App, WOD par étape (sans migration, **à diffuser au prochain build**) : `TournamentBracketView` affiche
-  le WOD posé sur les matchs (`wod_id`), aussi dans le tableau des perdants, la grande finale, le match
-  décisif et la petite finale ; l'ancien calcul par étape ne sert qu'aux anciens matchs des gagnants
-  sans WOD, compté sur les participants du tour 1 comme le Manager. `TournamentScreen` dit l'étape d'un
-  WOD avec son tableau (`bracket_board`) : libellés de `tournament_bracket_stages`, recopiés dans les
-  traductions parce que la fonction est réservée au gérant, et tenus égaux à ceux de la migration par
-  `bracketWods.test.ts`. Élimination simple : libellés inchangés.
-- App, classement de la compétition classique (sans migration, à livrer après la migration `20270116`) :
-  l'app lit le classement calculé par la base (`tournament_classique_standings`,
-  `tournament_classique_wod_ranks`) et n'écrit plus `tournament_participants.score` ; plus de bouton
-  « Recalculer le classement » ; un For Time illisible n'est plus premier, il est ignoré ; un score
-  rejeté sort du classement dès le rejet.
-- App, ligue (sans migration, à livrer après la migration `20270119`) : l'onglet « Général » d'une ligue
-  se limite à la saison en cours ; nouvel onglet « Saisons précédentes » (FR/EN), affiché dès qu'une
-  saison est terminée, où l'athlète choisit la saison et voit son général final.
-- PR 1, ELO de match idempotent (migration `20270106`, **appliquée en prod le 24/09/2026 à 12:19 UTC**) : réécrire un match terminé
-  sans changer de vainqueur ne réapplique plus l'ELO ni les compteurs ; changer de vainqueur, de
-  perdant ou remettre le match à jouer défait exactement l'effet enregistré avant d'appliquer le nouveau.
-- PR 2, fin de saison idempotente (migration `20270107`, **appliquée en prod le 24/09/2026 à 12:20 UTC**) : un second appel à
-  `end_season_and_advance` ne saute plus de saison ; saison attendue facultative (`p_saison_attendue`).
-- PR 3, divisions figées au moment du WOD (migration `20270108`, **appliquée en prod le 24/09/2026 à 12:20 UTC**) : la division est
-  enregistrée avec le score (`tournament_scores.division_id`, posée par le serveur, réservée au staff) ;
-  les points se classent dans cette division, sur la saison en cours seulement.
-- Recalcul des points quand la division d'un score change (migration `20270140`, **appliquée en prod le 29/09/2026 à 15:41 UTC**,
-  dump `db-dumps/2026-09-29/athlex-prod-public-internal-20260929T154044Z.dump` ; audit 37/37) :
-  `trg_recalc_division_points_on_scores` réagit aussi à `division_id` (correction du Manager #413) ;
-  le tournoi entier, donc l'ancienne et la nouvelle division, est recalculé. Fonction inchangée.
-- PR 4, suppression d'un tournoi (migration `20270109`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : l'ELO qu'il a apporté
-  (matchs, WOD de ligue, clôture classique) est retiré exactement, compteurs compris, et ses
-  historiques effacés ; supprimer un match seul rend aussi son effet. **Remplacée par la migration
-  `20270124`** ci-dessous.
-- Résultats validés conservés et archivage (migration `20270124`, **appliquée en prod le 25/09/2026 à 17:02 UTC**,
-  dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T170104Z.dump`) : un tournoi qui a
-  un résultat validé (clôturé, match terminé ou forfait, score validé, saison close, historique ELO) ne
-  se supprime plus, on l'archive (`archived_at`, `archive_tournament` / `unarchive_tournament`, droits
-  `is_box_admin`) ; un match terminé ne se supprime plus, il se corrige (remise à jouer, choix du
-  vainqueur, forfait : ELO recalculé, inchangé). Les déclencheurs de la PR 4 qui retiraient l'ELO à la
-  suppression sont retirés. Masquer les tournois archivés : lots app et Manager.
-- PR 10, démarrage à la date et inscriptions pendant le tournoi (migration `20270125`, **appliquée en prod le
-  25/09/2026 à 17:55 UTC**, dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T175423Z.dump`) :
-  un tournoi « open » démarre à sa date de début à 00:00 heure de Paris, ou au premier WOD ouvert s'il
-  vient avant (cron `tournament_activation_sweep`), jamais s'il est archivé. Option
-  `registrations_open_during_tournament` (fausse par défaut) : classique, inscription permise (WOD
-  fermés le restent) ; tableau, jusqu'au tirage ; ligue, dans la division la plus basse tant qu'elle a
-  de la place, sans débordement. Règle unique `internal.motif_refus_inscription`, refus en clair ;
-  aucune inscription sur un tournoi archivé, staff compris. App et Manager : lots séparés.
-- Garde du format et du statut (migration `20270126`, **appliquée en prod le 25/09/2026 à 18:39 UTC**,
-  dump `db-dumps/2026-09-25/athlex-prod-public-internal-20260925T183843Z.dump`) : le format d'un tournoi ne change
-  jamais ; le statut n'avance que vers l'avant (`open` → `active`, jamais de retour, rien après `completed`) ;
-  « completed » seulement par la clôture dédiée `finalize_tournament_elo`, qui se signale par un réglage
-  local à la transaction (`athlex.cloture_tournoi`, à l'identifiant du tournoi). Déclencheur dans `internal`.
-- PR 5, double élimination complète (migration `20270110`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : un athlète n'est
-  éliminé qu'à sa deuxième défaite, personne n'est omis entre les deux tableaux, exemption si
-  l'effectif est impair ; les deux tableaux avancent au même numéro de tour (le tableau des perdants
-  commence au tour 2). Prouvée de 3 à 9 athlètes.
-- PR 6, grande finale avec reset (migration `20270111`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : le serveur crée la
-  grande finale quand les deux tableaux sont joués, puis le match décisif si le vainqueur du tableau
-  des perdants la gagne ; le classement suit la dernière finale, et la clôture refuse tant que le
-  match décisif est dû. Une finale créée à la main par le Manager est tolérée. L'app affiche les deux
-  matchs (« Grande finale — match décisif », FR/EN).
-- PR 7, comparaison en tableau (migration `20270112`, **appliquée en prod le 24/09/2026 à 12:21 UTC**) : la règle est au serveur
-  (`tournament_score_cle`, l'ordre de la compétition classique) et une RPC décide les matchs d'un tour
-  (`decide_bracket_round`) : un terminé bat un CAP, entre CAP le plus de reps, puis le tie-break.
-  Le Manager la branchera à la place de sa comparaison dans le navigateur.
-- PR 8, forfait (migration `20270113`, **appliquée en prod le 24/09/2026 à 12:22 UTC**) : statut `forfeit` sur un match de tableau ;
-  l'absent perd, l'adversaire passe, aucun ELO ne bouge (un match terminé passé en forfait rend le
-  sien). L'app affiche « Forfait » (FR/EN).
-- PR 9, petite finale (migration `20270114`, **appliquée en prod le 24/09/2026 à 12:22 UTC**) : option `third_place_match` du
-  tournoi ; en élimination simple, la petite finale naît avec la finale entre les perdants des
-  demi-finales, porte l'ELO de match, et départage les 3e et 4e. L'app l'affiche (« Petite finale
-  (3e place) », FR/EN).
-- PR 10, divisions (migration `20270115`, **appliquée en prod le 24/09/2026 à 12:22 UTC**) : affectation par ELO du haut vers le bas
-  dans la limite de `max_members`, débordement vers la division suivante, la dernière prend le reste ;
-  placement du gérant marqué `manual` et jamais déplacé. Recalcul complet tant que la ligue n'a aucun
-  score validé, ensuite les seuls nouveaux inscrits, depuis la division de leur ELO.
-- Barème de la compétition classique (migration `20270116`, **appliquée en prod le 24/09/2026 à 18:40 UTC**) : décision du 24/09,
-  la référence est le barème de l'app (table CF Games 100, 97, 95, 93, 91…) ; sur un WOD, le tie-break
-  départage d'abord, puis rang partagé et mêmes points. La base seule le calcule
-  (`tournament_classique_wod_ranks`, `tournament_classique_standings`), la clôture ELO `simple` le suit.
-- Points de division (migration `20270117`, **appliquée en prod le 24/09/2026 à 18:40 UTC**) : même règle d'égalité (tie-break, puis
-  rang partagé et mêmes points) ; barème des divisions inchangé (100, 97, 94…) ; score lu comme partout
-  (« 8:00 » vaut 480 s), score illisible ignoré.
-- Barème des divisions (migration `20270118`, **appliquée en prod le 24/09/2026 à 20:20 UTC**) : décision du 24/09, la table de la
-  compétition classique (`tournament_cf_points` : 100, 97, 95, 93…) à la place du barème linéaire ;
-  règle d'égalité inchangée.
-- Ligue, général par saison (migration `20270119`, **appliquée en prod le 24/09/2026 à 20:21 UTC**) : `tournament_ligue_standings`
-  (tournoi, saison — la saison en cours par défaut) additionne les points de WOD de cette seule saison ;
-  sert à l'onglet « Général » d'une ligue et aux « Saisons précédentes ».
-
-**Liste « Membres » de Ma Box sans colonne privée** (diffusion au prochain build de test).
-Le build 1.0.58 (iOS 58 / Android 73, `build/1.0.58`) a été arrêté par `verify:ipa` (28/29) et
-`verify:aab` (30/31) : depuis #436, `WhiteboardScreen` lisait `profiles.full_name` dans la
-jointure `profiles:member_id(…)`, colonne révoquée pour `authenticated` depuis `20261105` — la
-requête entière tombait en 42501 et la liste des membres restait vide. Aucun des deux binaires
-n'a été soumis. Correctif : la liste lit le pseudo, comme les autres écrans ; la recherche porte
-sur le pseudo seul (le nom civil ne se lit qu'en RPC, par soi-même ou le staff).
-`profileColumnGrants.test.ts` ne connaissait que `profiles(` et trois colonnes : il passe en
-liste **blanche** des colonnes accordées à `authenticated`, relevée en prod le 30/09/2026 en
-lecture seule (non accordées : `email`, `full_name`, `gender`, `onboarding_completed_at`,
-`personal_records`), et reconnaît `profiles(…)`, `profiles:fk(…)`, `profiles!fk(…)` et
-`from('profiles')` ; la réintroduction de `full_name` est rattrapée.
-
-**Onglets de piste de « Ma Box » lisibles et stables** (diffusion au prochain build de test).
-Constaté sur la 1.0.57 (iPhone) : texte des onglets rogné en bas, d'autant plus que la piste
-choisie montrait de contenu (« Tout » presque illisible), et onglet choisi plus large que les
-autres. Cause : le `ScrollView` de la barre gardait le `flexShrink: 1` de son style de base et la
-colonne à hauteur fixe de l'écran l'écrasait ; la graisse 800 de l'onglet choisi l'élargissait.
-Correctif dans `WhiteboardTrackTabs` : barre non compressible, largeur réservée au libellé en
-gras. Taille de texte du téléphone respectée, sans plafond. Même correctif (bande non
-compressible, rien d'autre) sur les filtres de niveau du classement et la rangée des mouvements
-du formulaire de WOD du back-office, et sur le classement la même largeur réservée au libellé
-en gras : la pastille de niveau choisie ne décale plus ses voisines. À vérifier sur la 1.0.58.
-
-**Migration des clés d'API Supabase** (`anon` / `service_role` → `sb_publishable_` / `sb_secret_`).
-La clé `service_role` a été exposée dans l'historique public d'AthleX-Manager ; elle reste un JWT
-valide tant que l'ancien secret JWT n'est pas révoqué, et la désactivation des anciennes clés
-ne suffit pas à la neutraliser. Trois PR, chacune déployable avant comme après la création des
-nouvelles clés : **A** — les trois garde-fous de livraison (`ota-`, `ipa-`, `aab-verify-bundle`)
-acceptent `sb_publishable_` ou le JWT `anon`, et refusent toujours une clé secrète
-(`sb_secret_`, JWT `service_role`) ; **B** — Edge Functions : clé secrète lue par
-`_shared/cle-secrete.ts` (`SUPABASE_SECRET_KEYS.default`, sinon `SUPABASE_SERVICE_ROLE_KEY`),
-`verify_jwt = false` versionné pour les huit, chacune authentifiant son appelant
-(`x-cron-secret` ou `auth.getUser`) ; prouvé sur la pile locale avec les deux clés
-(`scripts/_cles_edge_proto.mjs`) ; **déployée en prod le 23/09/2026** (17:19–17:21 UTC, en deux temps),
-les huit fonctions utilisent désormais la clé `sb_secret_` `default`. Ce déploiement a aussi mis en
-prod deux corrections d'août mergées mais jamais déployées : le filtre des préférences de
-notification de `send-box-notification` (`cedf24b` / `e4aa095`, une annonce de box respecte
-`notifications_enabled` et `box_announcements`) et la journalisation des erreurs dans `incidents`
-de `session-followup-cron` (`6dc97ac`, une ligne fautive ne coupe plus les relances de toutes les
-box) — **déployées le 23/09/2026**. Retour arrière : les sources déployées avant la #341,
-hors dépôt, dans `C:\Users\NBS\athlex-retour-arriere-cles\fonctions-avant-341` ; **C** — migration
-`20270104` (**appliquée en prod le 23/09/2026 à 18:54 UTC**, tâches 8 et 11 constatées à 200
-après application) : les cinq tâches `pg_cron` qui appellent
-une fonction edge n'envoient plus le JWT `anon`, et lisent `x-cron-secret` dans le Vault
-(`cron_secret`) au lieu de l'avoir en clair. Les clés `default` `sb_publishable_` et `sb_secret_`
-existent sur le projet depuis le 05/03/2026. Restent les opérations de Nab dans les tableaux de bord,
-le build 1.0.57, la désactivation des anciennes clés et la révocation de l'ancien secret JWT.
-
-**Lot C2+C3 — durée et variété du générateur** ([PR #322](https://github.com/nbstyle69/athlex-app/pull/322), diffusion en attente).
-Le choix de durée disparaît dans les trois disciplines : le moteur la tire dans la plage du
-squelette ou de sa variante, 45 minutes en séance Musculation, 15–20 après la classe.
-La durée estimée reste au résultat, sans comparaison à une durée demandée. Les formats sont
-proposés selon l'intention ; Surprends-moi choisit une famille servable à parts égales puis
-son sous-format, conservés pendant la composition. La banque ajoute les schémas classiques,
-les ladders finies et ouvertes et les départs EMOM/E2MOM/E3MOM ; elle rétablit les squelettes
-Hybrid morts, avec les restrictions de programmation conservées. Sur 2 000 tirages par
-discipline après R1–R5, aucun échec ; minimum des familles affichées 10,45 % Functional et 7,30 % Hybrid,
-Tabata 9,75 %, Death by 5,65 % (protocole et variantes dans la PR).
-R1–R5 : les EMOM/E2MOM/E3MOM terminent des cycles complets ; les autres budgets athlète
-utilisent 8/10/12/15/16/18/20/25/30 dans leur plage (Musculation séance : 45).
-La densité gym utilise des départs compatibles de 60 ou 90 s, avec 40 s de travail maximum ; les plages calculées
-des stations lourdes Force portent les 3–5 reps dès le tirage, y compris à durée explicite.
-Les slots `range`/`draw` sont calculés et arrondis avant durée/volume ; `scheme`/`fixed`
-gardent les prescriptions exactes, y compris en box. Caps à la minute, sled ≤50 m en
-enchaînement ; les cibles de stations utilisent aussi la cadence de la bande de charge.
-Le chipper Functional long autorise 40–100 cal par erg pour rester faisable après classe
-avec ce plafond sled, sans changer les cadences. Hybrid propose `emom_hybrid` (12–20 min,
-erg/course/charge) et `chipper_hybrid` (18–30 min, course 800–1000 m aux deux extrémités,
-4–5 stations intermédiaires), pour Interval, Engine, Aerobic et Run. Core reste For time.
-Migration `20261229`, **appliquée en prod : oui** (21/09/2026 à 11:11 UTC, dump
-`db-dumps/2026-09-21/athlex-prod-public-20260921T111043Z.dump` avant, d'après l'en-tête du fichier),
-avant le merge et l'OTA 1.0.55. L'ancien lecteur garde les définitions v3 ; le nouveau lit `definition.c2c3`.
-Les trois contrôles indépendants de #313 restent au backlog. C1, C4, C5 et C6 restent séparés.
-
-**Lot C6 — Cartes de contexte** (PR #326 mergée).
-`SessionContextCard` rend les deux encarts avec le même verre, un padding de
-16 à l'intérieur, l'étiquette en capitales et le corps. Le bouton est optionnel :
-« Reprendre la séance » reste présent pour « Dernière séance générée » ;
-« Classe du jour » reste sans bouton, conformément à l'arbitrage de Nabil.
-Montage réel testé en clair/sombre sur les variantes iOS/Android ; navigateur
-validé à 320, 375 et 1000 px, sans débordement des cartes.
-Aucune migration ; PR indépendante de C2+C3.
-
-**Lot C5 — Split par exercice** (aucune migration, PR indépendante de C2+C3).
-Le chrono principal repart de zéro au changement d'exercice ; les séries d'un
-même exercice conservent leur chrono, repos compris. Le total reste visible en
-petit, y compris avec caméra. Chaque split final donne le temps de l'exercice et
-le total cumulé. Le total comprend tous les blocs et pauses de la séance ; le
-redémarrage efface les chronos et le journal.
-
-**Lot C4 — Adapter à mes PR** (aucune migration, PR indépendante de C2+C3).
-Option activée par défaut dans les options avancées Functional/Hybrid et mémorisée
-dans les réglages du profil. Activée, elle conserve les substitutions gym et le
-plafond de 50 % du record par série ; désactivée, le mode challenge suit la
-catégorie seule. Le choix accompagne aussi le brouillon et le re-tirage. Les
-écritures de réglages sont ordonnées pour préserver exclusions et matériel.
-
-**Lot C1 — recherche des exclusions** (aucune migration, PR indépendante de C2+C3).
-Le champ des options avancées interroge les libellés français du matériel et les noms
-affichés des mouvements, sans casse ni accents : « corde » retrouve « Corde à sauter »,
-« elastique » retrouve « Élastique ». La sélection conserve les identifiants du catalogue.
-Le test cherche un mot de chaque entrée de la table FR et couvre les filtres Musculation,
-les exclusions déjà choisies et le matériel disponible.
-
-**Générateur de WOD v1 — PR 1/3 (`athlex-app`, migration `20261211`).** Le générateur est
-refait de zéro en moteur déterministe (`packages/wod-engine`, TypeScript pur, aucune IA ni
-réseau à l'exécution) ; on garde seulement le RNG à graine et la signature anti-répétition.
-Le serveur porte `movement_catalog` (95 mouvements actifs tirés du CSV validé + 14 mouvements
-historiques de l'app en `active = false`, lecture `authenticated` seulement) et
-`generated_wods.wod_json` (le WOD structuré, rounds et signature compris ; l'anti-répétition
-lit les 10 dernières signatures de l'athlète). Deux disciplines (Functional, Hybrid), deux
-entrées (express, après-classe), 15 + 10 squelettes, charges par catégorie, gilet lesté en
-paramètre, `s` et `cm` acceptés par `movementParser` sans créditer de badge ni de charge.
-Tests §9 : conformité sur 587 combinaisons × 200 graines. **Migration appliquée en prod : oui**
-(15/09/2026, `pg_dump` `20260915T125815Z` déposé avant dans le bucket privé `db-dumps` ;
-109 lignes importées). Aucun écran ne change : la PR 2 (écran) attend la relecture de
-`packages/wod-engine/samples.md`, la PR 3 (Manager) suit.
-
-**Générateur de WOD v1 — PR 2/3 (`athlex-app`, migration `20261212`).** L'écran
-« Générateur de WOD » (`WodGenerator`) et la page résultat (`WodResult`) remplacent l'ancien
-générateur, supprimé et non masqué (`WODGeneratorScreen`, `WODGenProScreen`,
-`WODSuggestionsScreen`, `engineCrossFit`, `engineHyrox`, `ranker`, `adapter`, flag
-`wodGenV2`). Pas de ligne Catégorie : la catégorie du profil (`rx+ → rxplus`, `gender` null ⇒
-Men) ne sert qu'à l'estimation, le WOD affiche toutes les catégories ; le texte n'est rendu
-que par « Copier ». Exclusions persistées dans `user_generation_settings.last_params`.
-Enregistrer / Favori / Saisir mon score (catégorie demandée) conservent `generated_wods`
-(+ `wod_json`), `generated_wod_scores` et le crédit de badges. Le serveur porte la banque de
-squelettes (`wod_skeletons`, 25 lignes) et la table §5.4 (`wod_volume_caps`, 19 lignes),
-lecture `authenticated` seulement, écriture `service_role` ; `src/services/wodEngineData.ts`
-les charge avec le catalogue et retombe indépendamment sur les snapshots embarqués
-(hors ligne). **Migration appliquée en prod : oui** (15/09/2026, même dump `20260915T125815Z` ;
-25 squelettes, 19 plafonds). La PR 3 (Manager) suit.
-
-**Générateur de WOD v1 — page résultat `WodResult` (`athlex-app`, sans migration).** Après
-les tests réels du moteur, la page résultat est remise au niveau de l'app : en tête la carte WOD
-du Whiteboard (badge `GÉNÉRÉ`, titre en capitales, minuteur rond), ligne « Affiché pour : Inter ·
-d'après ton profil — modifier », mouvements en liste aérée repliée par défaut (chevron → charges
-et substitutions de toutes les catégories), durée en ligne compacte + tableau dépliable,
-texte secondaire au contraste des tuiles Outils, barre d'actions fixe au-dessus de la tab bar.
-Deux actions nouvelles : **Minuteur** (le minuteur vidéo existant, préconfiguré depuis le
-format du WOD — EMOM 15 → 1'/15, AMRAP 12 → 12', For time → chrono + cap ; `WodTypeBadge` et
-`TimerLaunchModal` sont sortis du Whiteboard en composants partagés) et **Ajouter au
-Whiteboard** (WOD perso `box_wods` avec `box_id` null, `created_by` l'athlète, date du jour,
-rendu texte en `description`, lien structuré dans `generated_wods.wod_json.box_wod_id` ; un
-score déjà saisi est rattaché, pas dupliqué). Les cartes perso du Whiteboard ouvrent désormais
-`WODDetail` et un WOD sans box accepte un score (`wod_scores.box_id` null, policy
-`member_own_scores`) : badges, historique et compteurs comme un WOD de box, sans ELO ni
-classement. `profiles.level` n'était modifiable nulle part : sélecteur « Niveau » (Scaled → Pro)
-ajouté dans Profil → Modifier, cible du lien « modifier » ; la synchro par l'ELO reste. Copier
-passe dans le menu ⋯. Vérifié en clair et sombre sous RLS réelle ; tsc/jest/lint verts.
-
-**`movement_totals` refermée (migration `20261218`).** La vue recréée par `20261204` (un total par
-unité) était repartie avec `GRANT ALL TO anon / authenticated` et sans `security_invoker`, annulant le
-lot 5e : le volume de répétitions de tous les athlètes se lisait à la clé anon avec les droits du
-propriétaire. `security_invoker = true` (chaque lecteur ne voit que ses `movement_logs`), `anon`
-révoqué, `authenticated` en SELECT seul. `test-grants` 31/31 (T1 / T2 / T8 rouges avant, mutation
-inverse vérifiée). **Appliquée en prod : oui** (dump horodaté dans la description de la PR).
-
-**Écran Musculation — PR M2 (`athlex-app`, aucune migration).** Troisième discipline du
-générateur (haltère, bleu `#3B82F6`) : Séance / Après ma classe, objectif Prise de muscle · Force ·
-Tonification (Force grisée en Tronc, Après ma classe et Sans matériel), cibles ordonnées d'après le
-genre du profil (Full body en tête sans genre, lien « modifier »), durées filtrées par
-`availableDurations` (jamais de `budget_short` proposé), matériel Sans matériel · Box · Salle
-persisté dans `user_generation_settings.last_params.muscu_equipment`, exclusions réutilisées, niveau
-déduit de `profiles.level` (`muscuLevelFor` : Scaled → Débutant, Inter / RX → Intermédiaire, RX+ et
-au-delà → Avancé), ligne 1RM (`personal_records`, clés `weightlifting_<Label>`) ou renvoi au
-calculateur. Service `generateForUser` sur une union discriminée `ScreenParams` → `generateMuscu`
-(1RM, poids du corps `personal_records._bodyweight_kg` — champ de profil temporaire, éditable dans
-Profil → Modifier —, classe du jour). Page résultat : `MuscuSessionCard` (une ligne par exercice,
-séries × reps, charge kg ou « RPE 7 (≈ 52 % du 1RM) », repos, note dépliable), durée estimée sans
-plafond, minuteur libre (compte à rebours de la durée estimée, **pas de mode Split**), repos +
-« Série suivante », saisie reps / kg réalisés → tonnage = Σ charge × reps en `score_type = 'weight'`,
-badges crédités depuis les reps réalisées via `logMovementReps` (verrou `strengthJournalSeparation`,
-jamais `strength_set_logs`). Quatre retouches moteur sans régénération des samples : bonus ≤ 1 tronc
-hors cible Tronc et sans Mountain Climber / Vacuum / Russian Twist en Prise de muscle / Force
-(isolation d'un muscle secondaire d'abord) ; piste box au niveau intermédiaire pour M5 ;
-`weekly_cap` → isolation d'un autre muscle au lieu de raccourcir ; finishers « Marche » retirés
-(respiratoires sur rameur / vélo seulement). Samples inchangés. **Appliquée en prod : sans objet**
-(aucune migration).
-
-**Repli Musculation avant M1 en prod — PR M2b (`athlex-app`, aucune migration).** Tant que la
-migration `20261214` n'est pas appliquée, `movement_catalog` en prod n'a pas les colonnes muscu :
-`loadEngineData()` acceptait ce catalogue (Functional / Hybrid valide) et l'écran Musculation
-tournait sur un catalogue sans aucun exercice muscu. `withSnapshotMuscu()` greffe alors la part
-Musculation du snapshot embarqué sur le catalogue distant (métadonnées muscu sur les mouvements
-partagés, exercices muscu seuls ajoutés), source tracée `supabase+snapshot_muscu` ; les squelettes
-suivaient déjà cette logique dans `bankFromRows`. Devient sans effet une fois M1 appliquée.
-**Appliquée en prod : sans objet** (aucune migration).
-
-**Archivage réversible d'une box — PR archivage ([`athlex-app` #311](https://github.com/nbstyle69/athlex-app/pull/311), migration `20261224`).**
-`boxes.archived_at` / `archived_by` : une box archivée sort des annuaires, des recherches
-et des listes, ses membres perdent l'accès, et le cron ne la génère plus — sans qu'aucune
-ligne ne soit supprimée, `archived_at = NULL` la réveillant telle quelle. Le masquage passe
-par une policy **RESTRICTIVE** et non par un filtre ajouté aux policies existantes : `boxes`
-en porte sept, toutes PERMISSIVE, dont deux `USING (true)` ; les permissives se combinent par
-OU, donc un filtre ajouté à l'une d'elles n'aurait rien refusé et il aurait fallu réécrire
-les sept. Une restrictive se combine par ET : une ligne suffit, les sept ne bougent pas, et
-le masquage couvre l'app mobile — annuaire, fiche de box, sélecteur de box du classement, qui
-n'avait aucun filtre — **sans livrer de nouvelle version**. `FOR ALL` et pas `FOR SELECT` :
-une restriction en lecture ne borne pas les policies d'écriture, et une box archivée ne doit
-pas rester modifiable par son gérant. `service_role` contourne la RLS, donc le back-office
-continue de la voir, ce qui est nécessaire pour la rouvrir. Les deux fonctions SECURITY
-DEFINER qui listent des box (`get_my_admin_boxes()`, `get_user_box_ids()`) échappent à toute
-policy et filtrent donc dans leur corps. `listEnabledBoxes` de `generate-box-week` tourne
-aussi en service role : elle ajoute `archived_at is null`, avec repli si la colonne manque.
-Contrôle `scripts/test-box-archivage.mjs` : 18 assertions sous de vraies identités (gérant,
-membre, anonyme, service role), dont la **mutation inverse** — policy retirée, le membre
-revoit la box archivée ; migration rejouée, il ne la voit plus — et la réactivation, qui rend
-tout à l'identique. Les écrans sont côté Manager ([#341](https://github.com/nbstyle69/AthleX-Manager/pull/341)) :
-archiver, réactiver, filtre « Archivées », et suppression définitive d'une box vide dont le
-décompte porte sur les 35 tables en cascade. **Appliquée en prod : oui** (17/09/2026 20:44 UTC, dump `athlex-prod-public-20260917T204118Z.dump` dans `db-dumps/2026-09-17` ; après application : colonnes et index en place, policy RESTRICTIVE active sur `anon, authenticated`, les deux fonctions filtrées, **aucune box archivée** — 4 box, `archived_at` nul partout, et le gérant d'AthleX Fitness voit toujours sa box).
-
-**Pilotage de la programmation automatique — PR J2 ([`AthleX-Manager` #338](https://github.com/nbstyle69/AthleX-Manager/pull/338), aucune migration ici).**
-Les trois écrans qui manquaient à J1, côté Manager : ni le moteur, ni la fonction edge, ni le cron
-ne sont touchés. `/admin/boxes` porte l'interrupteur par box (pistes Functional / Hybrid et
-Musculation) et le réglage de révélation de `20261221`, via `PATCH /api/admin/boxes/[id]/auto-programming` —
-rôle `admin` / `super_admin` revérifié, écriture en service role, refus du trigger
-`boxes_auto_programming_guard` rendu tel quel plutôt que contourné. Le Whiteboard d'une box flaguée
-gagne un bandeau (« générée le samedi 8h · visible par les athlètes *selon le réglage* ») avec
-**Générer maintenant** (corps `{ box_id }`, désactivé quand chaque piste active a déjà sa semaine
-suivante) et **Régénérer la semaine** (confirmation disant que les jours scorés ou édités sont
-conservés, puis un appel par piste, agrégé) ; les deux passent par
-`POST /api/box/[id]/auto-programming/run`, garde owner/coach explicite et `CRON_SECRET` côté
-serveur, jamais depuis le client. Badges `AUTO` / `AUTO · modifiée` (`box_wods.source`,
-`edited_at`) dans le Manager seul — le trigger marquant toute main humaine, un simple déplacement
-de jour suffit à afficher « modifiée », ce qui est la promesse voulue : ce jour sera conservé.
-`/admin/auto-programming` journalise en lecture seule les runs des 8 dernières semaines
-(`cardinality(wod_ids)` pour le nombre de lignes). Écart E12 fermé : familles `machine` et `cable`
-ajoutées à `CATALOG_FAMILIES` et à la validation de la route — les 55 exercices de musculation du
-catalogue étaient inéditables — et colonnes muscu affichées en lecture seule.
-`createServiceClient` n'a plus de repli sur la clé anon : un client « service » portant la clé anon
-faisait passer une variable d'environnement absente pour un refus RLS. Le Manager garde le repli
-`42703` de `20261221`, désormais appliquée en prod (17/09/2026) : la route enregistre interrupteur
-et pistes, et le réglage de révélation est pris en compte. Le repli reste en place pour une base
-antérieure à la migration ; le défaut montré (dimanche 18:00) est le comportement en vigueur. `CRON_SECRET`
-est présente dans les variables Vercel de production du Manager (constaté le 29/09/2026 par
-`vercel env ls production`, créée vers le 17/09) : les deux boutons peuvent appeler la fonction ; sans
-elle, ils rendraient un 500 explicite. Tests : 749 jest verts, `tsc` et `check:elo-writes` verts.
-**Validation navigateur et captures non faites** : la pile jetable exige `psql`, absent de la
-machine de développement. **Appliquée en prod : sans objet** (aucune migration dans ce lot).
-
-**Programmation automatique AthleX Fitness — PR J1 (`athlex-app`, migrations `20261216` + `20261217`).**
-Une box `auto_programming` reçoit chaque semaine ISO suivante, par piste (`auto_programming_tracks`
-⊆ {`functional`, `musculation`}), ses séances posées dans `box_wods` (`source = 'auto'`, `audience = 'all'`,
-`publish_at` dimanche 18:00 Paris). Piste Functional / Hybrid (clé interne `functional`, seed figé sur l’ancienne clé) : `generateSession` (`packages/wod-engine/src/session.ts`)
-assemble six séances lundi → samedi autour de 60 min depuis six squelettes de séance
-(`S1_snatch` … `S6_long`, exportés dans `wod_skeletons` en `discipline = 'session'`) : Block A haltéro /
-force (%1RM, tempo), Block C tiré par `generateBlocC` avec le pattern lourd du jour interdit
-(jamais relâché), squelette du jour précédent évité, plafonds Gym hebdo (150 tractions / 80 HSPU)
-avec remplacement tracé `weekly_gym_cap`. Piste Musculation : `generateMuscuWeek` réutilise
-`generateMuscu` (M1) sur cinq jours, objectif par cycle de six semaines ISO (Prise de muscle →
-Tonification → Force, Tronc jamais en Force), bloc B par squelette (≠ A, pattern ≠ lourd de A, unique dans la
-semaine), 26 finishers anti-répétition semaine + 4 semaines, progressions propres aux 7 skills S3, compteurs
-P1–P3 et M1–M10 à zéro, ≤ 16 séries hebdo par muscle, `leaderboard_enabled = false`. Orchestration
-pure dans `programming.ts` (`runWeekGeneration`) : seed = `box + piste + année + semaine +
-regen_counter`, idempotence sur `box_auto_programming_runs` (`box_id, track, iso_year, iso_week`),
-régénération qui garde les jours édités (`box_wods.edited_at`, trigger) ou scorés. Edge Function
-`generate-box-week` (bundle ESM commité, `CRON_SECRET` fail-closed, catalogue et banque lus en
-base avec snapshot en repli), **cron désactivé par défaut** (`docs/RUNBOOK_CRONS.md`). Flags de box
-réservés admin / backend par trigger (message « Accès refusé : programmation automatique réservée à
-un administrateur »), journal en lecture propriétaire seule. Tests §8 : `session.test.ts`,
-`programming.test.ts`, `edge-bundle.test.ts`, suite serveur `scripts/test-auto-programming.mjs`
-(27 contrôles, mutation inverse). **Migrations `20261216` + `20261217` appliquées en prod : oui** (16/09/2026 19:41 UTC, dump `20260916T194119Z` dans `db-dumps` ; `boxes.auto_programming` à `false` partout, `box_auto_programming_runs` vide, 887 `box_wods` toutes `manual`). **Premier appel prod (16/09/2026 20:26 UTC, AthleX Fitness, semaine 39) : piste musculation `done` (5 cartes), piste functional en `TypeError`** : le seed `20261217` datait d'avant les progressions A / B des skills S3 (a265d33), la prod lisait des options skill sans `progression`. Correctif : migration `20261219` (UPDATE des 6 squelettes `session` = snapshot, version 2, **appliquée en prod : oui**, 16/09/2026 22:41 UTC), `withSkillProgression` (repli sur le snapshot, erreur nommant le skill sinon), test `seed-sync.test.ts` qui rejoue les seeds SQL et les compare au snapshot pour séance, musculation, metcon et plafonds. **Révélation par box** (migration `20261221`, **appliquée en prod : oui**, 17/09/2026, fonction redéployée dans la foulée) : `boxes.auto_programming_reveal_mode` (`weekly` / `daily`), `_dow` (0 = dimanche) et `_time` (heure locale Paris) remplacent le dimanche 18:00 codé en dur ; `weekly` pose toutes les cartes au jour `dow` précédant le lundi ciblé (le lundi même si `dow = 1`), `daily` pose chaque carte le jour de sa séance ; défauts identiques au comportement J1, repli `42703` si les colonnes manquent. **Trois pistes** (migration `20261222`, **appliquée en prod : oui**, 17/09/2026 15:08 UTC, dump `20260917T150804Z` dans `db-dumps/2026-09-17` ; contraintes à `{functional, hybrid, musculation}`, 13 squelettes de séance avec leur piste, groupe renommé « Functional », aucune box modifiée). Banque Hybrid partagée élargie au passage, ce qui profite aussi au générateur athlète : `engine_negative_split` (30, 35 et 40 minutes, consigne d'accélération sur la seconde moitié) et durées de `engine_continuous` portées à 35 et 40. Sans cela le jeudi de la piste n'avait qu'une combinaison possible, et aucune durée n'existait entre 30 et 45 minutes : J1 avait livré deux pistes dont une nommée « Functional / Hybrid » ; Functional et Hybrid sont deux disciplines distinctes du générateur athlète, elles le deviennent dans la programmation de box, activables séparément (`{functional, hybrid, musculation}`). La piste Hybrid a ses sept squelettes de semaine (`H1_intervals` … `H6_simulation`, plus `H6_simulation_full` une semaine sur huit, seule séance à 75') ; son bloc de travail est tiré dans les dix squelettes `discipline = 'hybrid'` déjà en base, restreints par jour ; ses blocs A (stations `Every X'`, intervalles de course en rotation sur quatre semaines, enchaînement chronométré) vivent dans les squelettes. Règles testées sur 52 semaines : aucun haltéro technique ni gymnique avancé, bandes légère et moyenne sauf le sled du vendredi, ≥ 12 km de course ou d'erg par semaine, jeudi facile, plafond de 60 sauts, un mouvement fonctionnel par semaine, classement sur le seul bloc `wod`. Aucune box n'est migrée : AthleX Fitness garde `{functional, musculation}`. Ni Manager ni écran :
-J2 / J3 attendent la relecture de `packages/wod-engine/samples-programmation.md`. **Pistes en onglets sur le Whiteboard** (migration `20261223`, **appliquée en prod : oui**, 17/09/2026 17:38 UTC, dump `20260917T173726Z` dans `db-dumps/2026-09-17` ; `UPDATE 52`, les 890 lignes `manual` inchangées, même empreinte md5 avant et après, fonction redéployée en version 5) : les trois programmations coexistent, visibles de tous, et l'athlète bascule par onglets **Functional · Hybrid · Musculation · Box · Tout**, posés sous les raccourcis et au-dessus du sélecteur de jours — la piste est un filtre global de la partie basse de l'écran, choisie avant le jour. `box_wods.track` (nullable, CHECK `{functional, hybrid, musculation}`, index partiel `(box_id, scheduled_date, track)` sur les seules lignes auto) porte la piste ; `null` n'est pas un défaut en attente mais la valeur des WODs saisis par un coach, qui forment l'onglet « Box ». `generate-box-week` l'écrit sur chaque ligne posée, avec repli `42703` / `PGRST204` à l'insertion — le repli est sur l'écriture, une lecture `select('*')` ne pouvant pas lever `42703`. Rétroactif par `auto_run_id` → `box_auto_programming_runs.track`, garde `source = 'auto'` : aucune ligne `manual` touchée. Onglets restreints aux pistes qui ont du contenu sur la semaine (requête à deux colonnes sur les sept jours, le chargement des cartes reste au jour) ; aucune piste → pas de barre et écran d'avant. Défaut Functional, choix mémorisé par box (`@athlex:whiteboardTrack:<box_id>`), repli Functional puis « Tout » si l'onglet mémorisé est vide. Puce identique à celle du générateur de WOD, teinte d'accent prise dans `HUES` et non dans les constantes d'écran : `#F97316` tombe à 2,1:1 sur carte claire, les deux thèmes sont mesurés au ratio WCAG. Nettoyage préalable : les 42 cartes auto de la semaine 38 sur AthleX Fitness (générées avec les trois pistes avant les onglets, aucune éditée ni scorée) supprimées le 17/09/2026 par les conditions de la régénération, runs repassées en `skipped` pour que la semaine reste regénérable ; semaines 39 et 40 intactes. Lot 2 (Manager) à suivre. **Déploiement de la fonction : `node scripts/deploy-edge.mjs generate-box-week`, jamais `supabase functions deploy` en direct** — la CLI collecte les sources depuis l'entrée, suit `@deno-types` et l'`import type` vers `packages/wod-engine/src/index.ts`, puis ouvre les spécificateurs de ce fichier sans ajouter `.ts` ; `src/bank` étant un répertoire, elle échoue en `EISDIR` avant même de téléverser le bundle. Le script déploie depuis une copie privée de ces deux lignes type-only, effacées à l'exécution : la fonction déployée est identique au dépôt, qui garde son type-check. `--check` refuse un import de **valeur** hors du dossier de la fonction (vraie dépendance, que le script ne peut pas retirer sans la casser) ; `src/__tests__/deployEdge.test.ts` le rejoue sur la source et sur deux mutations. Procédure dans `docs/RUNBOOK_CRONS.md`.
-**Lot A — corrections du générateur après tests réels** (migrations `20261225`, `20261226`, `20261227`, **appliquées en prod le 18/09/2026** entre 20:26:48 et 20:26:49 UTC, dump `db-dumps/2026-09-18/athlex-prod-public-20260918T202555Z.dump` avant, d'après l'en-tête de chaque fichier). A3 : la corde à sauter ne sortait jamais en Functional (0 sur 3 000 tirages) — cause : le plafond générique de volume, 100 reps en RX, le même pour un thruster et un double under ; correctif `FAMILY_CAP_FACTOR` (jump_rope × 4), plafond de classe qui REMPLACE le générique au lieu de s'y minimiser (les wall balls passent à 150 comme la table le disait), trois squelettes de plus ouverts à la corde, poids 10 (le haut de l'échelle 0–10 des poids de tirage, bornée par contrainte — 13 avait été retenu avant de le savoir), plafond de classe 200 reps ; 4,8 % d'apparition, arbitrage volume contre fréquence assumé. A1 : 55 exercices sans matériel (dos, biceps, trapèzes, avant-bras, coiffe étaient à zéro), colonne `priority_bodyweight` pour un ordre propre au mode, trois rangs de priorité en concurrence (puis dans tous les modes : `bench_press` sortait dans 100 % des séances Push), pénalité de répétition. A2 : anti-répétition hebdomadaire sur la piste box, relâchement tracé qui nomme l'exercice, sur les deux chemins de tirage. Tests réels G1–G5 : le format demandé était relâché en silence (budget de palier 200 quand il est explicite, relâchement affiché, table de faisabilité générée depuis la banque qui grise les combinaisons infaisables et retire EMOM / Chipper de Hybrid), titre qui dit sa troncature, « Durée » et non « Cap » sur les formats bornés, cadence par bande de charge (+5,9 % de travail estimé en Functional). Six squelettes jamais tirés et trois contrôles qui recopient le moteur : issue #313.
-**Suite du lot A — relecture de l'échantillon et tests réels** (migration `20261228`, **appliquée en prod le 18/09/2026 à 20:26:49 UTC** avec les trois du lot A, même dump, d'après l'en-tête du fichier). S1 : une séance Push ne contient aucun tirage, une séance Pull aucune poussée — filtre sur le geste (`push_h`/`push_v` contre `pull_h`/`pull_v`) et non sur le muscle ; « Écartés à l'élastique » devient « Pull-apart à l'élastique » (tirage) ; conséquence assumée : les quatre isolations d'arrière d'épaule du catalogue (`face_pull`, `rear_delt_fly`, `bent_over_lateral_raise`, `rear_delt_machine`), toutes en `pull_h`, ne sortent plus en Push — sauf exception nominative (`REAR_DELT_PUSH_IDS`) : admises en rôle isolation uniquement, jamais en principal ni en secondaire, l'accessoire d'équilibre de fin de séance Push. S2 : les 55 ajouts sans matériel sont des replis en Box et en Salle (priorité 4 ou 5, `priority_bodyweight` inchangée) ; la priorité ne jouait que sur le slot principal, ils entraient par les slots accessoires au poids de tirage — désormais un poids du corps de priorité 4–5 ne sort en Box / Salle qu'après toute l'échelle de relâchement. S3 : M5 se compte mollets compris et la place unique est réservée quand un muscle de la cible n'a rien de chargé (mollets en box) — sur la piste box, 52 semaines sans un jour à deux poids du corps hors tronc. S4 : libellé « charge élastique ». E1 : en Force, un mouvement en bande lourde fait 3 à 5 reps par station sur EMOM, intervalles et stations, quelle que soit la cadence (7 front squats lourds dans la minute ne sortent plus) ; les formats relâchés (rounds for time, death by) ne sont pas des stations et gardent leur logique. E2 : le relâchement de durée est annoncé comme celui du format (« Demandé 20 min, généré 24 min »). Mémoire des tirages Musculation : lot B.
-**Lot B (1/3) — écran du générateur** (aucune migration). Mémoire des tirages Musculation branchée pour de bon : le moteur acceptait `recent_exercise_ids` (pénalité ×4 en « Sans matériel ») mais l'écran ne les renseignait jamais — désormais les trois derniers tirages sont retenus sous `@athlex:muscuRecent:<user_id>` (purgée à la déconnexion), relus à chaque génération, re-tirage compris. B1 : titre sur deux lignes centrées, la discipline toujours nommée (Functional compris). B2 : encart « Classe du jour » en padding 16, hauteur libre, corps de texte des cartes résultat. B3 : matériel exclu affiché en français (`utils/wod/equipmentLabels.ts`, valeur interne inchangée, table confrontée au catalogue par test), champ de recherche sous `KeyboardAvoidingView`. Suivent : navigation et minuteur (B4–B6), Whiteboard et PR (B7–B11).
-**Lot B (2/3) — navigation et minuteur** (aucune migration). B4 : chaque onglet garde sa pile — cause : les cinq `Tab.Screen` portaient un `tabPress` qui naviguait vers leur racine à chaque appui ; retiré, la barre conserve nativement les piles, et un **double appui** sur l'onglet actif ramène à sa racine (`navigation/tabPress.ts`, fonction pure testée). B5 : mode **Split** du minuteur (`SeqBlock.type = 'split'`) — chrono global, « Série terminée » enregistre un split et lance le repos `rest_s` de l'exercice courant, exercice suivant quand ses séries sont faites, liste des splits en fin de séance ; défaut d'une séance Musculation, un metcon se splitte par round (« Round terminé »). B6 : brouillon local `@athlex:wodDraft:<user_id>` écrit dès la génération, tenu à jour avec les charges saisies et le score, remplacé au tirage suivant, effacé à l'enregistrement, purgé à la déconnexion ; « Reprendre la séance » sur l'écran du générateur rouvre la page résultat avec la même séance et son état.
-**Lot B (3/3) — Whiteboard et PR** (aucune migration ; moteur : `gym_records`). B7 : « Ajouter au Whiteboard » demande une date (libre, passé et futur, jour même par défaut) et pose **une ligne `box_wods` par exercice** (Musculation : `block_name = strength`, `sort_order`, `wod_json` restreint à l'exercice, description rendue) ou par bloc (Functional / Hybrid) — chaque ligne se valide et se score depuis le Whiteboard. B8 : section **Gymnastique** du calculateur 1RM, même table que les barres, records en reps du profil, paliers de 10 % en 10 % jusqu'à 150 %, zones volume facile / volume de travail / série limite / record / au-delà. B9 : le bloc « Gymnastique — ce que je maîtrise » n'était consommé par aucun générateur (`gym_declaration` de `user_generation_settings` n'avait que le composant pour lecteur) — supprimé avec `wodPersonalization.ts` et `athleteLevels.ts`, colonne conservée. B10 : les records gym du profil pilotent le générateur (`GenerateParams.gym_records`, id catalogue → reps) — record absent ou à 0 ⇒ variante accessible par la chaîne de substitution du catalogue (Ring MU → Bar MU → Chest-to-Bar → Pull-ups → élastique) ; jamais plus de **50 % du record dans une même série ou un même round** (`GYM_RECORD_FRACTION` : record 30 → 15 par round, 12 → 6), le total du WOD n'étant borné que par les plafonds de volume existants — un plafond par WOD à 60 % avait été mesuré trop serré (aucune traction stricte sous 50 de record) ; avec le plafond par série, un record de 30 donne des tractions strictes dans 65 tirages sur 400. Sans record gym, rien ne change (signatures identiques). B11 : records en temps saisis en `mm:ss`, stockés en minutes décimales comme avant. **Durée = indicateur, pas obligation** : tolérance du moteur de ±10 % à **±20 %** sur les trois disciplines (`TOLERANCE`, `SESSION_TOLERANCE`, `MUSCU_TOLERANCE` ; 15 min → 12 à 18, 30 min → 24 à 36), table de faisabilité regénérée : 85 → 87 combinaisons servies sur 112 (regagnées : chipper descendant 15 min Mixed, intervalles de course Hybrid 10 min Run) ; le For time en Force à 8 min reste infaisable, un 21-15-9 en bande lourde dépassant 9,6 min. « Demandé X min, généré Y min » ne s'affiche qu'au-delà de la fourchette, l'estimation réelle reste sur la page résultat.
-**`generate-box-week` accepte `tracks`** (PR séparée, empilée sur le lot A) : tableau parmi `functional | hybrid | musculation`, intersecté avec les pistes actives de la box, valable aussi en régénération ; absent = toutes les pistes actives, inchangé ; une ligne de journal par piste traitée. Prérequis du lot 2 Manager (un appel par piste cochée). Redéploiement par `node scripts/deploy-edge.mjs generate-box-week` après merge.
-
-**Générateur Musculation V1 — PR M1 (`athlex-app`, migrations `20261214` + `20261215`).**
-Troisième discipline du moteur (`packages/wod-engine/src/muscu.ts`, `generateMuscu`, RNG à
-graine, aucun réseau) : 13 cibles × 3 objectifs (hypertrophie / force / endurance) = 39
-squelettes `strength_session` embarqués et exportés dans `wod_skeletons`
-(`discipline = 'musculation'`, repli hors ligne comme le metcon). Le catalogue reçoit les 178
-exercices du CSV Musculation v1 (173 + 5 variantes faciles sans matériel : Incline / Wall
-Push-Ups, Bird Dog, Reverse Lunge sans charge, Squat Hold ; Glute Bridge ouvert à l'hypertrophie) en colonnes sur `movement_catalog` (familles `machine` /
-`cable`, muscles, `level_min`, `load_mode`, `rm_reference` / `rm_factor`, cadences, plages par
-objectif, poids `none` / `box` / `gym`) : 18 exercices déjà présents (13 annoncés + 5 alignés
-par nom, écart signalé) gardent leur ligne, 160 sont créés avec poids metcon à 0, les 14
-legacy inactifs le restent. Charges : 1RM du calculateur (`profiles.personal_records`, passés
-en paramètre) × facteur × % de l'objectif arrondi à 2,5 kg, sinon RPE 7 / 8 ; lest des tractions /
-dips en Force = 10 % de `bodyweight_kg` arrondi à 2,5 kg, sinon « lesté léger » ; Après ma classe
-exclut les muscles du WOD du jour et interdit Force ; débutant sans unilatéral ni lesté, 4
-exercices max ; jamais deux exercices consécutifs sur le même muscle ; règles M1–M10 de relecture : `priority` (1-5) et `movement_group` au catalogue, exercice principal par priorité, un seul exercice par geste, ≤ 2 lourds en Force (3e compound rétrogradé 70-75 % × 6-8), Pull / Dos avec tirage vertical + horizontal, ≤ 1 poids du corps hors tronc en box / salle, tractions remplacées en Tonification, remplissage sans repos ni 5 × 20, Tronc sans Force ni compound jambes (15 · 20 · 30'), libellés Prise de muscle / Force / Tonification et « RPE 7 (≈ 52 % du 1RM) », Hip Thrust obligatoire en Fessiers + ischios ; compteurs M1–M10 à zéro en conformité ; durée ±10 % (trop long :
-slots optionnels → séries → squelette ; trop court : reps → une série de plus (≤ 5) → exercice
-optionnel sur un muscle secondaire de la cible → tempo 3-1-1 compté dans la durée → repos → 5e
-exercice optionnel en débutant, `budget_short` tracé sur 0,17 % des tirages, tous débutant 60') ; signature `musculation|<squelette>|<exercices>` sur les 10
-dernières. Grammaire `strength` étendue (`s`, `m`, `/ jambe`, `/ bras`, `/ côté`) rétro-compatible.
-Tests §7 : 1 152 combinaisons × 200 graines (230 400 séances) sans échec, 1RM connu / inconnu, fixture
-Back Squat + Thrusters. **Migrations `20261214` + `20261215` appliquées en prod : oui** (16/09/2026
-19:41 UTC, après « 1.0.54 installé », dump `20260916T194119Z` dans `db-dumps` : `movement_catalog`
-269 lignes dont 179 `discipline_muscu`, `wod_skeletons` 15 / 10 / 39 / 6, générateur Functional,
-Hybrid et Musculation vérifié par Nab dans l'app 1.0.54). **Écart révélé par `seed-sync.test.ts` le 16/09/2026 : le seed `20261215` (c2f88b1) est antérieur aux règles M1–M10 (91b3854 : `groups`, `pair`, listes `ids`) et à M2, la prod lisait donc 39 squelettes musculation jamais testés** ; migration `20261220` (UPDATE des 39 squelettes = snapshot, `MUSCU_BANK_VERSION` 2, **appliquée en prod : oui**, 16/09/2026 22:41 UTC). Aucun écran : M2 attend la relecture de
-`packages/wod-engine/samples-musculation.md`. Dépendances tranchées pour M2 : badges
-Musculation crédités depuis les séries réalisées saisies par l'athlète (`logMovementReps`,
-reps × séries par mouvement, verrou `strengthJournalSeparation`, jamais depuis
-`strength_set_logs`) ; mode Split du minuteur vidéo (`SeqBlock.type = 'split'`, chrono global,
-« Série terminée » → split + compte à rebours `rest_s`, exercice suivant quand ses séries sont
-faites, liste des splits en fin de séance, réutilisable pour splitter un metcon par round ;
-`wod_json` porte déjà `sets` et `rest_s`) ; `bodyweight_kg`, genre et niveau en champs de profil.
-
-**Générateur de WOD v1 — PR 3 (`AthleX-Manager` + migration `20261213` ici).** Le Manager lit
-`movement_catalog` à la place de son tableau statique `lib/movements.ts` (snapshot embarqué en
-repli, les 14 mouvements `active = false` restent proposés aux coachs, seul le générateur les
-ignore) ; l'admin Mouvements gagne un onglet Catalogue (édition, réactivation, création) et une
-page sœur `/admin/volume-caps` (19 plafonds éditables, squelettes en lecture seule), écriture
-par routes serveur `service_role` gardées par le rôle admin. `box_wods.wod_json jsonb`
-(migration `20261213`, **appliquée en prod : oui**, 15/09/2026, `pg_dump` `20260915T230607Z`
-déposé avant dans `db-dumps`, 886 WODs intacts, écriture par le Manager déployé vérifiée sur
-AthleX Fitness) reçoit le WOD structuré à chaque création / modification depuis l'éditeur,
-derrière un garde `42703` / `PGRST204` à retirer dans un lot ultérieur ; `description` reste
-la source de vérité côté athlète.
-
-**Désabonnement d'une programmation Marketplace (`athlex-app`, migration `20261210`).**
-Aucun désabonnement n'existait. RPC `unsubscribe_programming(p_subscription_id,
-p_remove_future)` SECURITY DEFINER, gardée par `is_box_owner_admin` de la box abonnée :
-gratuit → statut `canceled` immédiat (ignoré par `materialize_box_programming`), `color`
-conservée pour un réabonnement (`subscribe_free_programming` réactive la même ligne) ;
-payant → demande mémorisée (`cancel_requested_at`, `remove_future_on_cancel`), conclue par
-le backend au webhook Stripe de fin de période. Les cartes reçues futures ne partent qu'à
-partir du lundi suivant (Paris) et seulement si demandé ; le passé et la semaine en cours
-restent toujours (scores, ELO). Suite `desabonnement-programmation` (31 assertions, JWT
-réels, garde validée par mutation inverse). **Migration appliquée en prod** (10/09/2026, dump avant).
-Le Manager (#329) suit : lien « Se désabonner », confirmation, `cancel_at_period_end`.
-
-**Marketplace ↔ Whiteboard — PR 1/2 (`athlex-app`, migration `20261209`).** Constat de
-recon : l'offre publiée « ATHX BLOC 2 Building » (RAW) comptait 0 WOD, le contenu était
-dans une semaine type privée, et le cron du dimanche visait toujours la semaine 2 — le
-Whiteboard de NBS2 restait vide. Le serveur porte maintenant : une visibilité explicite
-`box_wods.audience` (`all` / `groups` / `none`, défaut `all` pour ne pas imposer de build
-store au back-office mobile ; triggers de cohérence avec `wod_group_access` ; la branche
-programme de `wod_access_allowed` est conservée) ; un ancrage d'abonnement déterministe
-(lundi suivant au gratuit, recalé par la pose manuelle) ; une pose automatique gardée à
-18 h Paris et journalisée (`box_programming_runs`, `empty_week` quand l'offre est vide) ;
-les cartes reçues d'une autre box verrouillées en contenu mais déplaçables et supprimables ;
-le remplissage d'une offre depuis le Whiteboard ou une semaine type (`sync_wod_to_offer`,
-`copy_week_to_offer`, provenance `origin_box_wod_id`, propagation des retouches maison sans
-toucher aux snapshots des abonnés) ; `publish_programming` refuse une offre sans objectif,
-sans public ou avec une semaine vide. Suite `marketplace-whiteboard` (71 assertions, JWT
-réels). **Migration appliquée en prod** (constaté le 29/09/2026 en lecture seule, date
-d'application inconnue : le fichier n'a pas d'en-tête « Appliquée en prod ») : présents en base
-`box_wods.audience`, `box_programming_subscriptions.color`, `box_programming_wods.origin_box_wod_id`,
-la table `box_programming_runs` et sa policy `box_programming_runs_select`, les quatre déclencheurs
-`trg_box_wods_audience_*`, les fonctions `box_wods_audience_from_group_access`,
-`box_wods_audience_from_program_access`, `box_wods_audience_relative_session`, `assert_offer_editor`,
-`sync_wod_to_offer`, `unsync_wod_from_offer`, et les index `idx_box_wods_audience`,
-`uniq_programming_wods_origin`, `idx_box_programming_runs_box`. Elle recalait l'ancrage NBS2 au
-14 septembre, voulu. Le choix explicite d'audience côté back-office
-mobile ira dans le prochain build store. PR 2 (`AthleX-Manager`) suit.
-
-**Séances de programme athlète relatives (semaine × jour) — lot a/c.** Une séance de
-programme payant (« Prog Muscu — 13 semaines · 5j/sem ») n'a plus de date : elle a une
-position (`program_week`, `program_day`) sur `box_wods`, exclusive de `scheduled_date` par
-contrainte de base. Le Whiteboard de la box lit toujours par date : une séance de programme
-n'y entre jamais, et un WOD de box n'est jamais requalifié en séance de programme (13 tests
-`programSchedule`). L'athlète abonné la reçoit le jour où elle tombe pour lui, à partir de
-SA date de début, en plus des blocs de la box. **Migration `20261207` non appliquée en
-prod** (dump logique à faire avant) ; la page « Séances » du Manager et l'import PDF qui
-écrivent ce format arrivent dans deux PR séparées côté `AthleX-Manager`. **Rien n'est
-constaté à l'écran** : la ligne ne monte qu'après validation de Nab sur la preview et une
-séance réelle vue dans l'app.
-
-**Offre Essai (tunnel d'acquisition de prospects).** Le socle serveur est en production
-depuis le 24 août, et il y est constaté sur la vraie base : le type d'offre « Essai » est
-accepté à 0 €, refusé à 30 € ; une réservation sans adhérent et sans prospect est refusée ;
-la table des prospects est fermée à la clé publique, en lecture comme en écriture.
-
-**Les écrans sont écrits et livrés côté web** (le 4e type d'offre « Essai », le bouton et le
-calendrier public sur la page de la box, les prospects sans compte dans Prospects, la
-mention « Essai » en liste de présence, l'e-mail de confirmation, et l'essai qui ne compte
-plus comme un adhérent actif dans les statistiques).
-
-**Le chemin heureux est constaté en production le 30 août**, au clic et sur la vraie base :
-offre Essai créée sur Crossfit NBS2, réservation anonyme sur le cours du dimanche 10:00, le
-créneau passe de 15 à 14 places restantes, la réservation est écrite en `confirmed` (jamais
-en liste d'attente), le même e-mail sur le même cours est refusé par son message nommé, le
-prospect apparaît dans Prospects et en liste de présence, et le pointage « présent » le fait
-passer à « venu ». Cette ligne monte donc dans « En production ».
-
-**Le récapitulatif hebdomadaire est corrigé et appliqué à la production le 30 août**, avec
-la mesure qui distingue : sur Crossfit NBS2, la seule présence pointée de la semaine est un
-essai, et le récapitulatif affiche désormais 0 présence d'adhérent et 2 essais réservés —
-avant l'application, cette même semaine aurait affiché 1 présence d'adhérent qui n'existe
-pas. Le pipeline de relance historique refuse explicitement les essais au lieu de tenir par
-accident de schéma.
-
-**Ce qui bloque :** rien.
-
-**Ce qui n'est pas constaté, et je ne le compte pas :** le refus d'un cours complet en
-production (le provoquer demanderait de remplir un vrai cours ou d'en créer un factice sur
-le planning), les plafonds anti-abus par IP et par e-mail sur la vraie base, et la réception
-effective de l'e-mail de confirmation — seule la phrase affichée à l'écran est constatée.
-
-**Une limite nommée plutôt que supposée :** le plafond par adresse e-mail est tenu par la
-base (donc prouvable). Le plafond par adresse Internet du visiteur sera tenu par le site
-web : la base n'a pas accès à cette information, et une limite supposée n'est pas une
-limite.
-
-**Phase 1 design, deuxième passe mobile (Notifications, détail tournoi, minuteur).** Les
-défauts sont mesurés, pas supposés : blanc sur la surface du bouton d'appel à l'action à
-1,23:1 en clair, l'accent employé en texte sur une carte blanche à 2,56:1, la couleur de la
-carte prise pour encre sur un aplat d'accent, l'heure de rappel réduite à 2,06:1 par une
-opacité posée sur tout le conteneur, et deux teintes de domaine pensées pour le sombre
-posées sur une carte claire (2,17:1 et 2,23:1). Deux cas sont ajoutés au contrôle mécanique
-et échouent sur l'état d'avant. **Ce n'est pas constaté à l'écran** : la lisibilité se
-prouve à l'œil, sur un vrai appareil, dans les deux thèmes — la ligne ne montera qu'après
-ce constat, et après un binaire qui porte le correctif.
-
-**Coque de verre étendue aux écrans denses (21 écrans).** Les 18 écrans de back-office,
-les préférences de notification, le détail de programme et la carte des box posaient leur
-fond à plat — blanc pur en mode clair — pendant que l'accueil, Ma Box et le Compte
-montaient le dégradé argenté. Une mesure a contredit une justification déjà écrite dans le
-code : le contrôle interdisait le verre sur Notifications au motif que l'encre atténuée n'y
-tient pas 4,5:1, ce qui est vrai **à même le dégradé** et faux **sur une carte** posée
-dessus (4,89 à 5,25:1 en clair). Le même contrôle, réécrit sur la règle réelle, a trouvé un
-défaut **déjà en production** sur l'accueil et Ma Box : sur le troisième arrêt émeraude,
-l'encre atténuée sur carte tombait à 3,03:1 — l'arrêt est assombri, elle remonte à 4,85:1.
-Deux appels à l'action du Compte écrivaient la couleur du fond sur la surface translucide
-du bouton (1,23:1). **Ce n'est pas constaté à l'écran** : la coque et l'encre se prouvent à
-l'œil, dans les deux thèmes, et la ligne ne montera qu'après ce constat.
-
-**Phase 1 design, troisième passe : les deux écrans que la charte n'avait pas atteints
-(détail tournoi, minuteur).** Le détail tournoi montait déjà la coque, mais son en-tête
-était un dégradé bleu-noir écrit en dur, orphelin de la charte, et ses trois pastilles
-(inscrit, complet, prix) prenaient leurs teintes au thème **clair** alors que l'en-tête est
-sombre dans les deux thèmes : 3,12:1, 3,55:1 et 3,48:1 mesurés sur son arrêt le plus clair.
-Les arrêts viennent maintenant de la famille du dégradé de la coque, et l'encre des
-pastilles du thème sombre (6,76:1, 6,19:1, 12,22:1). L'en-tête **reste** un panneau sombre :
-son encre blanche y est mesurée haut (titre 17,14:1, métadonnées 7,82:1, glyphes 5,15:1), ce
-qu'une carte translucide posée sous le blob du coin haut-gauche ne garantit pas.
-L'écran de réglage du minuteur, lui, était resté hors de toutes les passes : blanc en dur
-sur l'aplat d'accent (2,56:1), blanc sur l'appel à l'action translucide (1,23:1), libellé et
-poignée de modale en blanc translucide sur fond clair (1,05:1 et 1,00:1), et l'accent
-employé onze fois comme encre ou glyphe (2,46:1 sur carte). Le minuteur **en course** n'est
-pas touché : son fond est choisi par l'athlète. Neuf contrôles mécaniques ajoutés, qui échouent tous sur
-l'état d'avant. **Ce n'est pas constaté à l'écran** : la ligne ne montera qu'après le
-constat dans les deux thèmes.
-
-**Build de soumission 1.0.51 (47) et vérification de l'artefact réel.** Le binaire iOS de
-soumission est produit par EAS depuis `master` et **téléversé** sur App Store Connect ; son
-traitement par Apple n'est pas constaté (voir résiduels). Ce qui est constaté, c'est
-l'artefact lui-même, pas ce que la machine locale sait bundler : l'IPA publié par EAS est
-téléchargé, ouvert, et son JS embarqué lu — 17 assertions vraies sur 17
-(`npm run verify:ipa`). Le contrôle est **discriminant**, et c'est ce qui le rend
-utilisable : rejoué sur l'IPA du build 43, il tombe à 10/17 et nomme exactement les cinq
-défauts de la fenêtre d'avant-OTA — la RPC `get_my_profile` absente du bundle et les trois
-colonnes révoquées encore demandées dans des listes de colonnes. Le bytecode Hermes ne
-contient plus de source : les assertions portent sur sa table de chaînes (nom de RPC,
-messages d'erreur de la branche, listes de colonnes littérales), et le nombre de listes
-lisibles est compté avant de conclure à une absence. La clé Supabase embarquée est décodée
-sans être affichée : rôle `anon`, même référence de projet que l'URL embarquée.
-
-**Caméra avant couchée et zoomée sur iPhone 17 Pro Max (minuteur vidéo, bascule selfie).**
-Constaté par Nab en vidéo sur le 17 Pro Max (iOS 26.6.1), absent sur le 16 Pro (26.6) : même
-OS, comportement différent, donc montage du capteur et non version d'iOS. Cause lue dans le
-module natif : deux tables en dur (orientation de l'appareil → angle, avec les valeurs
-paysage inversées pour la face avant) qui encodaient le montage des iPhones ≤ 16 ; le
-nouveau capteur avant du 17 livre une autre orientation native, l'image prend 90° de trop
-et `resizeAspectFill` la zoome pour remplir le portrait. Le même angle était posé sur la
-sortie vidéo : le fichier enregistré en selfie était couché aussi. Correctif : les tables
-sont supprimées, l'angle est **demandé à iOS** (`AVCaptureDevice.RotationCoordinator`,
-preview et capture séparées, coordinator recréé à chaque changement de caméra, gel pendant
-l'enregistrement conservé) ; la géométrie du writer (1080×1920 / 1920×1080) se déduit de
-l'angle réellement appliqué, plus de `UIDeviceOrientation` seul. Un contrôle mécanique
-échoue si une table réapparaît dans le fichier Swift. **Non constaté sur appareil** : c'est
-natif, il faut un nouveau build — le correctif part dans **1.0.52 (49)** ; **1.0.51 (47) et
-(48) : non soumis, obsolètes** (le 48 embarquait le correctif mais sous le runtime 1.0.51,
-que les appareils déjà installés partagent : un changement natif impose une nouvelle
-version, donc un nouveau runtime OTA, `runtimeVersion.policy = appVersion`). Un journal de
-diagnostic derrière un flag affiche nom du device, angle preview et angle capture pour
-comparer les deux téléphones, et une liste de 16 cas à cliquer (2 téléphones ×
-avant/arrière × portrait/paysage) est dans la PR. **Constaté par Nab (revue 1.0.52, C4) :
-les 16 cas passent.** Suite : `orientationDebugLog` repassé à `false`, et la géométrie du
-writer suit désormais l'angle **relu** sur `conn.videoRotationAngle` après affectation (un
-angle non supporté n'est pas appliqué en silence) plutôt que l'angle demandé ; le log
-affiche les deux (`captureAngle` demandé, `appliedAngle` relu). Le chemin
-iOS < 17 (cible 15.1) est gardé sous sa forme standard, non vérifié : aucun appareil sous
-iOS 17 dans le parc.
-
-**WOD GEN retiré de l'app par un interrupteur, pas supprimé.** La carte « WOD GEN — 3
-séances adaptées à ton profil » des Outils de l'accueil (route `WODGenPro`) était le seul
-point d'accès ; `FEATURES.wodGen = false` (`src/lib/features.ts`) la masque. L'écran, la
-route, l'écran de suggestions et les services restent dans le code, inchangés. Le contrôle
-prouve les deux sens : la carte absente à `false`, présente à `true` à sa place historique ;
-et qu'aucun autre fichier (Explorer, recherche, deep link, notifications) ne mène à la route.
-Le premier générateur (« Générateur WOD — For Time · AMRAP · Tabata ») reste.
-
-**Onglet gérant « Dashboard » → « Suivi », à merger après la soumission Apple.** Le premier
-des 6 onglets de la barre gérant était tronqué ; libellé seulement, via i18n
-(`tabs.boTracking` : « Suivi » / « Tracking »), route `BODashboard` et écran `Dashboard`
-inchangés. Les cinq autres libellés restent en dur comme avant. Test `boTabTrackingLabel.test.ts`
-(mutation inverse : `tabBarLabel: 'Dashboard'` rétabli est rouge).
-
-
-
-**Bloc « Abonnement AthleX » du profil gérant (#241), à merger après la soumission Apple.**
-Chemin : barre gérant → onglet **Profil** → onglet interne **Compte** (4e) → carte après
-« Mes amis », avant « Mes entraînements ». Il n'apparaissait que sous
-`isOwnerAdmin && currentBox`, et la lecture de `owner_subscriptions` exigeait aussi une box
-courante : un gérant sans box courante ne le voyait pas. Désormais visible pour tout gérant
-(`boxRole === 'owner'` ou `role === 'box_owner'`) ; avec abonnement (box ou Multi actif) :
-formule + statut + « Gérer » ; sans : « Aucun abonnement actif » + « S'abonner ». Les deux
-états ouvrent `BOSubscription`. Test `profileAthlexSubscriptionBlock.test.ts` (position,
-condition, deux états ; mutation inverse : le `&& currentBox` rétabli est rouge). Non fait :
-un compte `admin`/`super_admin` voit `AdminScreen` à la place du Profil (`navigation/index.tsx`),
-donc jamais ce bloc — dit, non changé.
-
-**Historique unifié « Mes entraînements » (`WodHistory`), à merger après la soumission
-Apple.** Recon : l'écran ne lisait que `generated_wods` + `generated_wod_scores` ; les scores
-saisis sur les WOD de box (`wod_scores`) et les WOD marqués « réalisés » par le bouton du
-bloc (`wod_completions`) n'y étaient pas. Désormais trois lectures (toutes `member_id` /
-`user_id` = soi), fusionnées côté client (`src/lib/wodHistoryEntries.ts`) en une seule liste
-chronologique : une ligne de box ouvre `WODDetail`, porte le score ou la mention « Réalisé,
-sans score » ; un score sur un WOD déjà marqué réalisé remplace la ligne « réalisé » (le
-détail supprime d'ailleurs la completion à la saisie du score). Les filtres Favoris /
-Benchmark restent propres aux WOD générés. Limite assumée : les policies serveur
-(`box_members_see_scores`, `box_member_see_completions`) ne rendent lisibles que les lignes
-des box dont on est encore membre actif. **Séances du minuteur : rien n'est persisté**
-(`TimerRunScreen` ne garde que les options d'affichage en AsyncStorage, aucune table) ;
-les inclure demande une table + RLS, chantier à part, non fait ici. Test
-`wodHistoryUnified.test.ts` : un WOD réalisé sans score apparaît ; mutation inverse (sans
-`wod_completions`) il disparaît.
-
 **Analyse de PDF de plus de 100 pages.** Cause établie le 24 août : le prestataire d'IA
 refuse au-delà de 100 pages, et le message affiché dit « service indisponible » alors que le
 service a répondu. Le correctif (compter les pages avant l'envoi, dire la vraie cause) est
 écrit nulle part encore — chantier séparé, non planifié dans la fournée.
-
-**Importateur PDF de programmation par profil de source (TheHub).** Le socle base est posé
-par la migration `20261203_box_wods_source_pdf.sql` : trois colonnes nullables sur
-`box_wods` (`source_pdf_url`, `source_page`, `source_profile`) et un bucket privé
-`wod-sources` (PDF rangé par box, lecture et écriture réservées au staff de la box par
-`is_box_staff`). Aucun écran ne les lit encore ; l'app n'est pas concernée. Le cœur
-d'analyse (profil « K+ Perf » puis profil générique par IA), la preview et l'insertion en
-lot arrivent dans une PR TheHub séparée, à merger après celle-ci.
-
-**Cardio dans « Créer un WOD » — étape 1, compteurs par unité.** Recon : le crédit de badges
-est calculé entièrement côté app (`parseMovementLine` → `logMovementReps` → RPC
-`increment_movement_stats`), sans trigger ni edge function, et les trois tables de compteurs
-(`movement_logs`, `user_movement_stats`, `movement_rep_counts`) portaient un seul entier par
-mouvement : un « 20 cal Row » s'ajoutait aux reps, un « 500m Run » valait 1. La migration
-`20261204_movement_stats_unit.sql` ajoute `unit` (`reps` par défaut, `m`, `cal`) aux trois
-tables, étend PK / UNIQUE avec l'unité, regroupe la vue `movement_totals` par unité et
-ajoute une surcharge `increment_movement_stats(…, p_unit)` — l'ancienne signature reste en
-wrapper vers `reps`, l'app en place ne change pas de comportement. Les badges
-`mv_row/bike/ski_*` existants sont requalifiés en calories (clés et libellés conservés) ;
-`20261204_badges_cardio_paliers.sql` ajoute les paliers en mètres (`mv_row_m_*`,
-`mv_bike_m_*`, `mv_ski_m_*`), les compléments en calories et le nouveau préfixe `mv_run_*`
-(42 195 m = « Marathon »). Compteurs cardio à zéro en prod : aucune donnée à migrer. Suite :
-PR app (parseurs avec unité et choix ♂/♀, bloc `~` cardio, badges par unité, méta-badges sur
-`reps` seulement), puis PR TheHub (catalogue `unit`, bloc Cardio, charge libre des lignes force).
-
-**Cardio — étape 2, l'app lit et crédite par unité.** `parseMovementLine` porte désormais
-l'unité : `20 cal Row` → 20 cal, `500 m Run` / `400m Course` → des mètres (plus « 1 rep »),
-une ligne sans unité reste des reps à l'identique. Les splits `20/15 cal Row`, `21/15 Pull-ups`
-et `(43/30 kg)` choisissent la valeur ♀ quand le profil est féminin (`user.gender` passé par
-tous les écrans qui créditent ; le back-office, qui ne lit pas le genre d'un autre athlète,
-crédite en ♂). Nouveau bloc cardio `src/utils/cardioBlock.ts` (`Row ~ 2 × 500 m ~ 250 W ~
-repos 2:00`, cible watts OU allure, RPE), crédité `séries × qté` sans multiplication par les
-rounds, affiché réécrit dans le détail de WOD / programme. `logMovementReps` écrit `unit` dans
-`movement_logs`, appelle la surcharge `increment_movement_stats(…, p_unit)` et cumule les
-badges par `(mouvement, unité)` : `mv_row/bike/ski` = calories, `mv_row_m/bike_m/ski_m/run`
-= mètres, une rep de Row ne donne rien ; `mv_polyvalent_*` et `mv_total_*` ne lisent que
-`reps`. Lignes force : segment libre `charge <texte>` (`RPE 8`, `RM du jour`) sérialisé,
-relu, affiché, et jamais pris pour un mouvement metcon. Dépend de la migration étape 1
-(colonne `unit`, surcharge RPC) — à merger après elle. Suite : PR TheHub.
-
-**Cardio — étape 2 bis, défaut d'unité et genre côté owner.** Une ligne sans unité sur un
-mouvement cardio prend l'unité par défaut du catalogue (`MOVEMENT_CATALOG.unit`, résolu via
-la clé `normalizeMovement` : `20 Row` / `20 rameur` → 20 cal, `800 Run` / `400 Course` →
-800 / 400 m, `500m Ski` = `500 m Ski`) ; tout autre mouvement reste en reps. Même règle et
-mêmes cas de test côté TheHub (#322). La validation d'un score au back-office
-(`BOTournamentScreen`) lit le genre de l'athlète via `get_athlete_private_profile` et crédite
-la valeur ♀ ou ♂ du split ; genre absent → ♂ avec mention explicite dans l'alerte.
-
-**Catalogue haltéro élargi + libellés Assault Bike.** Douze mouvements ajoutés au
-`MOVEMENT_CATALOG` en `unit: 'reps'` (Snatch Balance, Snatch High Pull, Clean Pull, Tall
-Clean, Power Jerk, Split Jerk, Back Rack Split Jerk, Strict Press, DB Strict Press, Bench
-Press, Zercher Squat, Wall Walk), avec clés canoniques et alias dans `normalizeMovement`
-(`bench`, `shoulder press`, `WW`, `jerk`, `snatch pull`…). Les variantes d'une famille
-existante créditent les compteurs et badges de la famille (`mv_clean`, `mv_press`,
-`mv_squat`, `mv_wallwalk`) ; cinq nouvelles clés (`bench_press`, `snatch_balance`,
-`snatch_high_pull`, `clean_pull`, `db_strict_press`) reçoivent les paliers du schéma
-existant (100/500/1000/5000 barre, 100/500/1000 DB), aucun palier nouveau. Migration
-`20261205_badges_haltero_catalogue.sql` : renomme les badges mètres du bike en « Assault
-Bike 25K / Centurion / Légende » (mise à jour sur place, pas de nouveau seed) et ajoute
-les 19 badges ci-dessus. Miroir catalogue + synonymes d'import PDF côté TheHub.
-
-**Strict Press, clé propre.** `strict press` / `shoulder press` / `military press` ne créditent
-plus la famille `press` (Push Press / Push Jerk / S2OH) mais une clé `strict_press` avec ses
-badges `mv_strict_press_100/500/1000/5000` (schéma barre, migration
-`20261206_badges_strict_press.sql`). Wall Walk reste sa propre clé (`mv_wallwalk`) ; Tall
-Clean → Clean, Jerks → famille `press` (où vit `push jerk`), Zercher → Squat, validés.
-
----
 
 ## À venir, dans l'ordre
 
