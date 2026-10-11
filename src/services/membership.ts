@@ -106,7 +106,8 @@ export function planActivationUrl(s: MyPlanStatus | null | undefined, slug: stri
 /** Ce que rend `GET /api/membership/overview` (AthleX-Manager, lib/membership/overview.ts). */
 export interface MembershipOverview {
   box: { id: string; name: string | null };
-  plan: { id: string; name: string } | null;
+  /** `description` : texte de la box, affiché tel quel (non traduit). */
+  plan: { id: string; name: string; description?: string | null } | null;
   price_cents: number | null;
   status: string | null;
   mode: 'online' | 'counter';
@@ -116,7 +117,7 @@ export interface MembershipOverview {
   payment_method: string | null;
   scheduled_change: { plan: { id: string; name: string }; at: string | null } | null;
   pending_request: { plan: { id: string; name: string }; at: string } | null;
-  available_plans: { id: string; name: string; price_cents: number }[];
+  available_plans: { id: string; name: string; price_cents: number; description?: string | null }[];
   block_reason: 'past_due' | 'paused' | 'cancel_scheduled' | 'box_closed' | null;
   unpaid_invoice_url: string | null;
 }

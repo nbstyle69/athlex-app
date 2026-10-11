@@ -59,7 +59,7 @@ export default function ChangeMembershipPlanScreen({ navigation, route }: Props)
     recap = { title: t('membership.choose.nextBillingTitle'), body: t('membership.choose.nextBillingBody', { plan: plan.name, price: monthlyPrice(plan.price_cents) }) };
   }
 
-  const option = (id: string, name: string, cents: number | null, current: boolean) => {
+  const option = (id: string, name: string, cents: number | null, current: boolean, description?: string | null) => {
     const on = selected === id;
     return (
       <AxCard
@@ -74,6 +74,10 @@ export default function ChangeMembershipPlanScreen({ navigation, route }: Props)
         </View>
         <View style={styles.optionText}>
           <Text style={[axTypography.label, { color: c.text }]}>{name}</Text>
+          {/* Texte de la box : affiché tel quel, rien s'il est absent ou vide. */}
+          {!!description?.trim() && (
+            <Text testID={`plan-option-${id}-description`} style={[axTypography.caption, { color: c.textMuted }]}>{description}</Text>
+          )}
           {current && <AxTag tone="muted" label={t('membership.choose.currentTag')} testID="plan-option-current" />}
         </View>
         {cents != null && (
@@ -93,10 +97,10 @@ export default function ChangeMembershipPlanScreen({ navigation, route }: Props)
             {t('membership.choose.subtitle', { box: o.box.name })}
           </Text>
         )}
-        {o.plan && option(o.plan.id, o.plan.name, o.price_cents, true)}
+        {o.plan && option(o.plan.id, o.plan.name, o.price_cents, true, o.plan.description)}
         {o.available_plans.length === 0 ? (
           <Text testID="change-plan-empty" style={[axTypography.bodySmall, base.centered, { color: c.textMuted }]}>{t('membership.noOtherPlan')}</Text>
-        ) : o.available_plans.map(p => option(p.id, p.name, p.price_cents, false))}
+        ) : o.available_plans.map(p => option(p.id, p.name, p.price_cents, false, p.description))}
         {recap && (
           <View testID="change-plan-recap" style={[styles.recap, { backgroundColor: c.background, borderColor: c.border }]}>
             <View style={base.encartHead}>

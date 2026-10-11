@@ -515,6 +515,46 @@ describe('Changer de formule', () => {
     expect(mockGoBack).toHaveBeenCalledTimes(1);
   });
 
+  const WITH_DESC: MembershipOverview = {
+    ...BASE,
+    plan: { id: 'p-ill', name: 'Mensuel illimité', description: 'Accès à tous les cours, sans limite.' },
+    available_plans: [
+      { id: 'p-3', name: '3 séances / semaine', price_cents: 3500, description: 'Trois cours par semaine au choix.' },
+      { id: 'p-pre', name: 'Premium', price_cents: 6950, description: null },
+    ],
+  };
+  const optionTexts = (root: ReactTestInstance, id: string) =>
+    host(root, `plan-option-${id}`).findAll(isHostText).map(hostText);
+
+  it.each([['en ligne', 'online'], ['comptoir', 'counter']] as const)('description (%s) : sous le nom, au-dessus de l’étiquette, Texte/Mini secondaire', async (_n, mode) => {
+    const root = await mount(changeScreen({ ...WITH_DESC, mode }), darkTheme);
+    expect(optionTexts(root, 'p-ill')).toEqual(['Mensuel illimité', 'Accès à tous les cours, sans limite.', 'Formule actuelle', '49 € / mois']);
+    expect(optionTexts(root, 'p-3')).toEqual(['3 séances / semaine', 'Trois cours par semaine au choix.', '35 € / mois']);
+    const d = flat(host(root, 'plan-option-p-3-description'));
+    expect(d).toMatchObject({ fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 16, color: darkTheme.ax.textMuted });
+  });
+
+  it('sans description (null, absente, vide, espaces) : rien, aucun espace réservé', async () => {
+    const o: MembershipOverview = {
+      ...BASE,
+      plan: { id: 'p-ill', name: 'Mensuel illimité', description: '   ' },
+      available_plans: [
+        { id: 'p-3', name: '3 séances / semaine', price_cents: 3500, description: '' },
+        { id: 'p-pre', name: 'Premium', price_cents: 6950, description: null },
+        { id: 'p-x', name: 'Sans champ', price_cents: 1000 },
+      ],
+    };
+    const root = await mount(changeScreen(o));
+    for (const id of ['p-ill', 'p-3', 'p-pre', 'p-x']) expect(has(root, `plan-option-${id}-description`)).toBe(false);
+    expect(optionTexts(root, 'p-3')).toEqual(['3 séances / semaine', '35 € / mois']);
+  });
+
+  it('description non traduite : affichée telle quelle en anglais', async () => {
+    await i18n.changeLanguage('en');
+    const root = await mount(changeScreen(WITH_DESC));
+    expect(optionTexts(root, 'p-3')).toEqual(['3 séances / semaine', 'Trois cours par semaine au choix.', '€35 / month']);
+  });
+
   it('aucune formule à proposer : phrase, pas de bouton', async () => {
     const root = await mount(changeScreen({ ...BASE, available_plans: [] }));
     expect(texts(root)).toContain('Ta box ne propose aucune autre formule pour le moment.');
