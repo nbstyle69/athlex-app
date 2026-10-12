@@ -670,7 +670,7 @@ describe('Lot 4 : Profil, formule à activer', () => {
   it('box active en « Formule à activer » : « Gérer mon abonnement » et sa phrase masqués ; présents avec une formule ou suspendu', async () => {
     const hasManage = (root: ReactTestInstance) => [
       root.findAll((x) => isHostText(x) && hostText(x) === 'Gérer mon abonnement').length > 0,
-      root.findAll((x) => isHostText(x) && hostText(x).startsWith('Ouvre le site web pour gérer ta formule')).length > 0,
+      root.findAll((x) => isHostText(x) && hostText(x) === 'Ta formule, tes échéances et tes changements de formule.').length > 0,
     ];
     mockState.auth = { ...mockState.auth, currentBox: BOX2, boxRole: 'member' };
     mockState.plans = { b2: SANS_FORMULE };

@@ -1150,7 +1150,7 @@
       "noBox": "You are not linked to any box.",
       "joinBox": "Join a box",
       "manageSubscription": "Manage my subscription",
-      "manageSubscriptionSub": "Opens the website to manage your plan, payment and cancellation.",
+      "manageSubscriptionSub": "Your plan, payment dates and plan changes.",
       "joinBoxSub": "Enter the invite code (6 characters)",
       "noProgram": "No program joined.",
       "joinProgram": "Join a program",
@@ -3190,5 +3190,98 @@
   },
   "dateField": {
     "invalid": "Invalid date (format YYYY-MM-DD)"
+  },
+  "membership": {
+    "title": "My membership",
+    "currentPlan": "Current plan",
+    "noPlan": "No plan",
+    "status": {
+      "active": "Active",
+      "pastDue": "Unpaid",
+      "paused": "Paused",
+      "cancelScheduled": "Cancellation scheduled",
+      "boxClosed": "Box closed"
+    },
+    "pricePerMonth": "€{{amount}} / month",
+    "nextBilling": "Next payment",
+    "dueSince": "Due since {{date}}",
+    "payment": {
+      "label": "Payment",
+      "card": "Card •••• {{last4}}",
+      "sepa": "SEPA direct debit •••• {{last4}}",
+      "counter": "At the front desk"
+    },
+    "unpaid": {
+      "title": "Payment overdue",
+      "body": "Your last payment failed. Update your payment method to keep access to bookings.",
+      "cta": "Update my payment"
+    },
+    "blocked": {
+      "past_due": "You can't change plans until the payment is settled.",
+      "paused": "Your membership is paused: you can change plans once it resumes.",
+      "cancel_scheduled": "Your membership ends at the end of the current period: your plan can no longer change.",
+      "box_closed": "Your box is closing: your plan can no longer change."
+    },
+    "scheduled": {
+      "title": "Change scheduled",
+      "bodyPrice": "{{plan}} at {{price}} from {{date}}.",
+      "body": "{{plan}} from {{date}}."
+    },
+    "pending": {
+      "title": "Request sent to your box",
+      "body": "{{plan}} · sent on {{date}}. Your box will confirm the change."
+    },
+    "change": "Change plan",
+    "requestChange": "Request a plan change",
+    "changeHint": "The change takes effect on your next payment date.",
+    "counterHint": "You pay at the front desk: your box approves the change and collects it.",
+    "noOtherPlan": "Your box doesn't offer any other plan right now.",
+    "cancelChange": "Cancel this change",
+    "cancelRequest": "Cancel my request",
+    "cancelChangeTitle": "Cancel this change?",
+    "cancelChangeMsg": "You keep your current plan.",
+    "cancelRequestTitle": "Cancel your request?",
+    "cancelRequestMsg": "Your box will no longer receive this request.",
+    "keep": "Keep",
+    "billingTitle": "Payment and cancellation",
+    "manageOnSite": "Manage my payment on the website",
+    "manageOnSiteHint": "Card, direct debit and cancellation are managed on athlexapp.eu.",
+    "retry": "Try again",
+    "choose": {
+      "title": "Change plan",
+      "subtitle": "Plans offered by {{box}}",
+      "currentTag": "Current plan",
+      "fromDate": "From {{date}}",
+      "onlineBody": "You keep {{current}} until {{until}}. Your new plan, {{plan}} at {{price}}, will be charged from {{date}}.",
+      "nextBillingTitle": "On your next payment date",
+      "nextBillingBody": "Your new plan, {{plan}} at {{price}}, applies from your next payment date.",
+      "counterTitle": "Request to your box",
+      "counterBody": "Your box receives your request. The change applies as soon as it accepts it.",
+      "confirm": "Confirm the change",
+      "send": "Send my request"
+    },
+    "errors": {
+      "auth": "Your session has expired. Sign in again to manage your membership.",
+      "none": "You don't have an active membership.",
+      "network": "Can't connect. Check your network and try again.",
+      "server": "Something went wrong. Try again in a moment.",
+      "refused": "Action refused by your box.",
+      "PLAN_CHANGE_NOT_MEMBER": "You're not an active member of this box.",
+      "PLAN_CHANGE_BOX_CLOSED": "This box is closing: your plan can no longer change.",
+      "PLAN_CHANGE_NOT_COUNTER": "Your membership is paid online: change plans from this screen.",
+      "PLAN_CHANGE_PAST_DUE": "Settle your unpaid balance first to change plans.",
+      "PLAN_CHANGE_PAUSED": "Your membership is paused: resume it to change plans.",
+      "PLAN_CHANGE_CANCEL_SCHEDULED": "Your membership ends soon: you can no longer change plans.",
+      "PLAN_CHANGE_INVALID_PLAN": "Your box doesn't offer this plan.",
+      "PLAN_CHANGE_SAME_PLAN": "This is already your plan.",
+      "PLAN_CHANGE_PENDING_EXISTS": "A change request is already pending.",
+      "PLAN_CHANGE_FORBIDDEN": "Only the box owner and co-owners decide.",
+      "PLAN_CHANGE_NOT_FOUND": "Request not found.",
+      "PLAN_CHANGE_FOREIGN_SCHEDULE": "Your box has already scheduled a change to your membership: get in touch with them.",
+      "PLAN_CHANGE_NOTHING_TO_CANCEL": "No plan change is pending.",
+      "PLAN_CHANGE_PAYMENTS_DISABLED": "This box hasn't enabled online payments yet.",
+      "BOX_ARCHIVEE": "This box is archived: your plan can no longer change.",
+      "BOX_ARCHIVAGE_PROGRAMME": "This box is closing soon: your plan can no longer change."
+    }
   }
 }

@@ -1150,7 +1150,7 @@
       "noBox": "Tu n'es rattaché à aucune box.",
       "joinBox": "Rejoindre une box",
       "manageSubscription": "Gérer mon abonnement",
-      "manageSubscriptionSub": "Ouvre le site web pour gérer ta formule, ton paiement et ta résiliation.",
+      "manageSubscriptionSub": "Ta formule, tes échéances et tes changements de formule.",
       "joinBoxSub": "Entre le code d'invitation (6 caractères)",
       "noProgram": "Aucun programme rejoint.",
       "joinProgram": "Rejoindre un programme",
@@ -3190,5 +3190,98 @@
   },
   "dateField": {
     "invalid": "Date invalide (format AAAA-MM-JJ)"
+  },
+  "membership": {
+    "title": "Mon abonnement",
+    "currentPlan": "Formule en cours",
+    "noPlan": "Sans formule",
+    "status": {
+      "active": "Actif",
+      "pastDue": "Impayé",
+      "paused": "En pause",
+      "cancelScheduled": "Résiliation programmée",
+      "boxClosed": "Box fermée"
+    },
+    "pricePerMonth": "{{amount}} € / mois",
+    "nextBilling": "Prochaine échéance",
+    "dueSince": "Échue le {{date}}",
+    "payment": {
+      "label": "Paiement",
+      "card": "Carte •••• {{last4}}",
+      "sepa": "Prélèvement SEPA •••• {{last4}}",
+      "counter": "Au comptoir"
+    },
+    "unpaid": {
+      "title": "Paiement en retard",
+      "body": "Ton dernier prélèvement a échoué. Mets ton moyen de paiement à jour pour garder l'accès aux réservations.",
+      "cta": "Mettre à jour mon paiement"
+    },
+    "blocked": {
+      "past_due": "Le changement de formule est indisponible tant que le paiement n'est pas régularisé.",
+      "paused": "Ton abonnement est en pause : tu pourras changer de formule quand il reprendra.",
+      "cancel_scheduled": "Ton abonnement s'arrête à la fin de la période en cours : ta formule ne peut plus changer.",
+      "box_closed": "Ta box ferme : ta formule ne peut plus changer."
+    },
+    "scheduled": {
+      "title": "Changement programmé",
+      "bodyPrice": "{{plan}} à {{price}} à partir du {{date}}.",
+      "body": "{{plan}} à partir du {{date}}."
+    },
+    "pending": {
+      "title": "Demande envoyée à ta box",
+      "body": "{{plan}} · envoyée le {{date}}. Ta box te confirmera le changement."
+    },
+    "change": "Changer de formule",
+    "requestChange": "Demander un changement de formule",
+    "changeHint": "Le changement prend effet à ta prochaine échéance.",
+    "counterHint": "Tu paies au comptoir : ta box valide le changement et l'encaisse.",
+    "noOtherPlan": "Ta box ne propose aucune autre formule pour le moment.",
+    "cancelChange": "Annuler ce changement",
+    "cancelRequest": "Annuler ma demande",
+    "cancelChangeTitle": "Annuler ce changement ?",
+    "cancelChangeMsg": "Tu gardes ta formule actuelle.",
+    "cancelRequestTitle": "Annuler ta demande ?",
+    "cancelRequestMsg": "Ta box ne recevra plus cette demande.",
+    "keep": "Garder",
+    "billingTitle": "Paiement et résiliation",
+    "manageOnSite": "Gérer mon paiement sur le site",
+    "manageOnSiteHint": "Carte bancaire, prélèvement et résiliation se gèrent sur athlexapp.eu.",
+    "retry": "Réessayer",
+    "choose": {
+      "title": "Changer de formule",
+      "subtitle": "Formules proposées par {{box}}",
+      "currentTag": "Formule actuelle",
+      "fromDate": "À partir du {{date}}",
+      "onlineBody": "Tu gardes {{current}} jusqu'au {{until}}. Ta nouvelle formule, {{plan}} à {{price}}, sera prélevée à partir du {{date}}.",
+      "nextBillingTitle": "À ta prochaine échéance",
+      "nextBillingBody": "Ta nouvelle formule, {{plan}} à {{price}}, s'applique à ta prochaine échéance.",
+      "counterTitle": "Demande à ta box",
+      "counterBody": "Ta box reçoit ta demande. Le changement s'applique dès qu'elle l'accepte.",
+      "confirm": "Confirmer le changement",
+      "send": "Envoyer ma demande"
+    },
+    "errors": {
+      "auth": "Ta session a expiré. Reconnecte-toi pour gérer ton abonnement.",
+      "none": "Tu n'as pas d'adhésion active.",
+      "network": "Connexion impossible. Vérifie ton réseau et réessaie.",
+      "server": "Une erreur est survenue. Réessaie dans un instant.",
+      "refused": "Action refusée par ta box.",
+      "PLAN_CHANGE_NOT_MEMBER": "Tu n'es pas membre actif de cette box.",
+      "PLAN_CHANGE_BOX_CLOSED": "Cette box ferme : ta formule ne peut plus changer.",
+      "PLAN_CHANGE_NOT_COUNTER": "Ton abonnement est payé en ligne : change de formule depuis cet écran.",
+      "PLAN_CHANGE_PAST_DUE": "Règle d'abord ton impayé pour changer de formule.",
+      "PLAN_CHANGE_PAUSED": "Ton abonnement est en pause : reprends-le pour changer de formule.",
+      "PLAN_CHANGE_CANCEL_SCHEDULED": "Ton abonnement s'arrête bientôt : tu ne peux plus changer de formule.",
+      "PLAN_CHANGE_INVALID_PLAN": "Cette formule n'est pas proposée par ta box.",
+      "PLAN_CHANGE_SAME_PLAN": "C'est déjà ta formule.",
+      "PLAN_CHANGE_PENDING_EXISTS": "Une demande de changement est déjà en attente.",
+      "PLAN_CHANGE_FORBIDDEN": "Seuls le gérant et les co-gérants de la box décident.",
+      "PLAN_CHANGE_NOT_FOUND": "Demande introuvable.",
+      "PLAN_CHANGE_FOREIGN_SCHEDULE": "Ton abonnement a déjà une modification programmée par ta box : rapproche-toi d'elle.",
+      "PLAN_CHANGE_NOTHING_TO_CANCEL": "Aucun changement de formule n'est en attente.",
+      "PLAN_CHANGE_PAYMENTS_DISABLED": "Cette box n'a pas encore activé les paiements en ligne.",
+      "BOX_ARCHIVEE": "Cette box est archivée : ta formule ne peut plus changer.",
+      "BOX_ARCHIVAGE_PROGRAMME": "Cette box ferme bientôt : ta formule ne peut plus changer."
+    }
   }
 }
