@@ -1,12 +1,13 @@
 /**
  * Lecture des mesures natives d'une police TrueType (tables head, hhea, OS/2, cmap, hmtx,
  * loca, glyf) : ce que iOS et Android utilisent pour placer le texte. Sert de vérité
- * indépendante du code dans les tests du chrono (R3b).
+ * indépendante du code dans les tests du chrono (R3b) et du score de « Partager ma perf ».
  */
 import fs from 'fs';
 import path from 'path';
 
 export const FICHIER_OSWALD_BOLD = path.join(process.cwd(), 'node_modules', '@expo-google-fonts', 'oswald', '700Bold', 'Oswald_700Bold.ttf');
+export const FICHIER_OSWALD_MEDIUM = path.join(process.cwd(), 'node_modules', '@expo-google-fonts', 'oswald', '500Medium', 'Oswald_500Medium.ttf');
 
 export type Police = {
   unitsPerEm: number;
