@@ -15,7 +15,8 @@
  * Restent hors d'ici, parce que ce sont des clés et non du texte affiché :
  * libellés des plafonds (`bank/index.ts`), `TRACK_SEED_KEY`, raisons de refus
  * d'un tirage, étiquettes de relâchement, rôles de slot, et les noms du
- * catalogue (comparés par `nameKey`). Aucune dépendance : le module part tel
+ * catalogue (comparés par `nameKey`), et les noms des groupes créés dans la box
+ * (`TRACK_GROUP_NAME`, contenu de box jamais traduit). Aucune dépendance : le module part tel
  * quel dans le bundle de la fonction edge.
  */
 
@@ -161,7 +162,8 @@ export const fr = {
     entete: (cible: string, objectif: string, min: number, materiel: string) => `Musculation · ${cible} · ${objectif} · ${prime(min)} · ${materiel}`,
     dureeEstimee: (min: number) => `Durée estimée ${prime(min)}`,
     stimulus: (note: string) => `Stimulus : ${note}`,
-    musclesEvites: (muscles: string) => `Après ma classe : muscles évités ${muscles}`,
+    /** le texte enregistré garde les ids de muscles (ils ne se traduisent qu'à l'affichage) */
+    musclesEvites: (muscles: string[]) => `Après ma classe : muscles évités ${muscles.join(', ')}`,
   },
 
   /** Séances de box Functional / Hybrid (`session.ts`). */
@@ -218,8 +220,6 @@ export const fr = {
   /** Programmation automatique (`programming.ts`). */
   programmation: {
     piste: { functional: 'Functional', hybrid: 'Hybrid', musculation: 'Musculation' },
-    /** groupes créés dans la box : contenu de box, écrit une fois */
-    groupe: { functional: 'Functional', hybrid: 'Hybrid', musculation: 'Musculation' },
   },
 
   /** Textes de la banque de squelettes (`bank/**`), rangés par id de squelette ou d'option. */

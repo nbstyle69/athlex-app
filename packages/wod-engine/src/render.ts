@@ -1,8 +1,11 @@
 import type { Category, GeneratedBlock, GeneratedMovement, GeneratedWod, SkeletonFormat, WodType } from './types';
 import { FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES } from './types';
 import { fr } from './i18n/fr';
+import { banqueVers, textes } from './i18n';
+import type { Langue, Textes } from './i18n';
+import { estimateBlock } from './estimate';
 
-const T = fr.rendu;
+type R = Textes['rendu'];
 
 /**
  * Rendu texte compatible avec la grammaire lue par `movementParser` côté app :
@@ -24,11 +27,11 @@ function fmtNum(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, '');
 }
 
-function mmss(s: number): string {
+function mmss(s: number, d: Textes['duree'] = fr.duree): string {
   const total = Math.round(s);
   const m = Math.floor(total / 60);
   const sec = total % 60;
-  return sec ? `${m}:${sec.toString().padStart(2, '0')}` : fr.duree.minutes(m);
+  return sec ? `${m}:${sec.toString().padStart(2, '0')}` : d.minutes(m);
 }
 
 /** `43/30 kg` (Functional H/F) ou `100/75 kg` (Hybrid Men/Women). */
@@ -79,7 +82,7 @@ function loadsByCategoryLine(m: GeneratedMovement, wod: Pick<GeneratedWod, 'disc
   return parts.length ? `${parts.join(' · ')} ${m.load_unit}` : null;
 }
 
-function substitutionLine(m: GeneratedMovement): string | null {
+function substitutionLine(m: GeneratedMovement, T: R): string | null {
   const parts: string[] = [];
   const seen = new Map<string, string[]>();
   for (const [c, name] of Object.entries(m.substitutions_by_category)) {
@@ -103,8 +106,9 @@ function schemeText(b: GeneratedBlock): string {
   return `${(b.scheme ?? []).join('-')}${suffix}`;
 }
 
-function header(wod: GeneratedWod, b: GeneratedBlock): string[] {
-  const cap = b.timecap != null ? T.cap(mmss(b.timecap)) : '';
+function header(wod: GeneratedWod, b: GeneratedBlock, T: R, d: Textes['duree']): string[] {
+  const mmss_ = (s: number) => mmss(s, d);
+  const cap = b.timecap != null ? T.cap(mmss_(b.timecap)) : '';
   const rounds = b.rounds ?? 0;
   switch (b.format) {
     case 'amrap': return [T.amrap(wod.budget_min)];
@@ -114,24 +118,24 @@ function header(wod: GeneratedWod, b: GeneratedBlock): string[] {
     case 'ladder': return b.ladder
       ? [T.ladderOuverte(b.ladder.start, b.ladder.start + b.ladder.step, b.ladder.start + 2 * b.ladder.step, wod.budget_min), T.ladderOuverteConsigne(b.ladder.step)]
       : [T.ladderFinie(schemeText(b), cap), T.ladderFinieConsigne];
-    case 'emom': return [T.emom(wod.budget_min, b.rest?.every_s && b.rest.every_s !== 60 ? T.emomEvery(mmss(b.rest.every_s)) : '', b.movements.length)];
+    case 'emom': return [T.emom(wod.budget_min, b.rest?.every_s && b.rest.every_s !== 60 ? T.emomEvery(mmss_(b.rest.every_s)) : '', b.movements.length)];
     case 'death_by': return [T.deathBy(wod.budget_min)];
     case 'tabata': return [T.tabata(b.rest?.transition_s ? T.tabataTransition(b.rest.transition_s) : '')];
     case 'interval': {
-      if (b.rest?.every_s) return [T.intervalEvery(rounds, mmss(b.rest.every_s))];
-      return [T.intervalRepos(rounds, mmss(b.rest?.rest_s ?? 60))];
+      if (b.rest?.every_s) return [T.intervalEvery(rounds, mmss_(b.rest.every_s))];
+      return [T.intervalRepos(rounds, mmss_(b.rest?.rest_s ?? 60))];
     }
     case 'stations': return [T.stations(rounds, b.movements.length, b.rest?.work_s ?? 60, b.rest?.rest_s ?? 0)];
     case 'continuous': return [T.continu(wod.budget_min)];
   }
 }
 
-function bodyLines(wod: GeneratedWod, b: GeneratedBlock): string[] {
+function bodyLines(wod: GeneratedWod, b: GeneratedBlock, T: R): string[] {
   const out: string[] = [];
   const push = (m: GeneratedMovement, line: string) => {
     out.push(line);
     const loads = loadsByCategoryLine(m, wod);
-    const subs = substitutionLine(m);
+    const subs = substitutionLine(m, T);
     if (loads) out.push(loads);
     if (subs) out.push(subs);
   };
@@ -151,7 +155,9 @@ function bodyLines(wod: GeneratedWod, b: GeneratedBlock): string[] {
   return out;
 }
 
-function footer(wod: GeneratedWod, b: GeneratedBlock): string[] {
+function footer(wod: GeneratedWod, b: GeneratedBlock, langue: Langue): string[] {
+  const { rendu: T, duree } = textes(langue);
+  const mmss_ = (s: number) => mmss(s, duree);
   const out: string[] = [];
   if (wod.vest) {
     const men = wod.vest.load_kg_by_category.men ?? 9;
@@ -159,15 +165,16 @@ function footer(wod: GeneratedWod, b: GeneratedBlock): string[] {
     out.push(wod.vest.mode === 'required' ? T.gilet(men, women) : T.giletOptionnel(men, women));
   }
   const ref = wod.discipline === 'functional' ? 'rx' : 'men';
-  const target = wod.estimate.by_category[ref]?.target;
+  // le texte enregistré reprend la cible stockée ; une autre langue la recalcule (fonction pure du bloc)
+  const target = langue === 'fr' ? wod.estimate.by_category[ref]?.target : estimateBlock(b, ref, wod.budget_min, langue).target;
   const scored = b.format === 'for_time' || b.format === 'rounds_for_time' || b.format === 'chipper';
-  out.push(T.stimulus(fmtNum(wod.stimulus.rpe), wod.stimulus.note,
-    target ? T.stimulusCible(CATEGORY_LABEL[ref], target, scored && b.timecap != null ? T.stimulusCap(mmss(b.timecap)) : '') : ''));
+  out.push(T.stimulus(fmtNum(wod.stimulus.rpe), banqueVers(langue)(wod.stimulus.note),
+    target ? T.stimulusCible(CATEGORY_LABEL[ref], target, scored && b.timecap != null ? T.stimulusCap(mmss_(b.timecap)) : '') : ''));
   return out;
 }
 
 /** Le titre garde trois mouvements et DIT quand il en reste : « … / BIKE ERG +1 », jamais une troncature muette (G2). */
-function titleOf(wod: GeneratedWod, b: GeneratedBlock): string {
+function titleOf(wod: GeneratedWod, b: GeneratedBlock, T: R): string {
   const all = [...new Set(b.movements.filter((m) => m.round === undefined || m.round === 1).map((m) => m.name))];
   const names = all.slice(0, 3);
   if (all.length > 3) names[2] = `${names[2]} +${all.length - 3}`;
@@ -178,19 +185,23 @@ function titleOf(wod: GeneratedWod, b: GeneratedBlock): string {
   return `${label[b.format]} · ${names.join(' / ')}`;
 }
 
-/** Remplit les colonnes éditeur (titre, description, wod_type…) à partir des blocs. */
-export function render(wod: GeneratedWod): GeneratedWod {
+/**
+ * Remplit les colonnes éditeur (titre, description, wod_type…) à partir des blocs.
+ * `langue` ne change que le texte (défaut `fr`, le texte enregistré).
+ */
+export function render(wod: GeneratedWod, langue: Langue = 'fr'): GeneratedWod {
   const b = wod.blocks[0];
-  const lines = [...header(wod, b), ...bodyLines(wod, b), ...footer(wod, b)];
+  const t = textes(langue);
+  const lines = [...header(wod, b, t.rendu, t.duree), ...bodyLines(wod, b, t.rendu), ...footer(wod, b, langue)];
   return {
     ...wod,
-    title: titleOf(wod, b),
+    title: titleOf(wod, b, t.rendu),
     description: lines.join('\n'),
     wod_type: b.format === 'ladder' && !b.ladder ? 'for-time' : WOD_TYPE[b.format],
     block_name: 'wod',
     time_cap_seconds: b.timecap ?? wod.budget_min * 60,
     rounds: b.rounds,
-    notes: T.notes(wod.stimulus.note, wod.score_type),
+    notes: t.rendu.notes(banqueVers(langue)(wod.stimulus.note), wod.score_type),
     video_url: null,
     leaderboard_enabled: true,
     emom_interval_minutes: b.format === 'emom' || b.format === 'death_by' ? (b.rest?.every_s ?? 60) / 60 : null,
@@ -200,6 +211,6 @@ export function render(wod: GeneratedWod): GeneratedWod {
 }
 
 /** Lignes de mouvement seules (pour le parseur / les tests de crédit). */
-export function movementLines(wod: GeneratedWod): string[] {
-  return bodyLines(wod, wod.blocks[0]);
+export function movementLines(wod: GeneratedWod, langue: Langue = 'fr'): string[] {
+  return bodyLines(wod, wod.blocks[0], textes(langue).rendu);
 }

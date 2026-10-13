@@ -6,8 +6,11 @@ import { RNG } from './rng';
 import { nameKey, resolveMovement } from './catalog';
 import { MUSCU_SKELETONS, MUSCU_TARGETS, TARGET_MUSCLES } from './bank/muscu';
 import { fr } from './i18n/fr';
+import { textes } from './i18n';
+import type { Langue, Textes } from './i18n';
 
 const T = fr.musculation;
+type M = Textes['musculation'];
 
 /**
  * Générateur Musculation V1 (brief M1). Déterministe (graine), sans réseau :
@@ -801,16 +804,18 @@ function fitBudget(ctx: Ctx, input: Line[], target: MuscuTarget): Line[] {
 
 // ─── Assemblage ──────────────────────────────────────────────────────────────
 
-const { jambe, bras, cote } = T.cote;
-const SIDE_LABEL: Partial<Record<Muscle, string>> = {
-  quadriceps: jambe, ischios: jambe, fessiers: jambe, mollets: jambe,
-  biceps: bras, triceps: bras, epaules: bras, epaules_post: bras, epaules_ant: bras, dos: bras, pecs: bras, avant_bras: bras, coiffe: bras,
+type Side = keyof M['cote'];
+const SIDE: Partial<Record<Muscle, Side>> = {
+  quadriceps: 'jambe', ischios: 'jambe', fessiers: 'jambe', mollets: 'jambe',
+  biceps: 'bras', triceps: 'bras', epaules: 'bras', epaules_post: 'bras', epaules_ant: 'bras', dos: 'bras', pecs: 'bras', avant_bras: 'bras', coiffe: 'bras',
 };
+const sideOf = (m: Pick<MuscuExercise, 'muscle_primary'>): Side => SIDE[m.muscle_primary] ?? 'cote';
+/** Côté en français, tel que l'écrit le texte enregistré (`/ jambe`, relu par `parseStrengthLine`). */
 export function sideLabel(m: Pick<MuscuExercise, 'muscle_primary'>): 'jambe' | 'bras' | 'côté' {
-  return (SIDE_LABEL[m.muscle_primary] ?? cote) as 'jambe' | 'bras' | 'côté';
+  return T.cote[sideOf(m)] as 'jambe' | 'bras' | 'côté';
 }
 
-function notesFor(ctx: Ctx, l: Line, load: MuscuLoad): string {
+function notesFor(ctx: Ctx, l: Line, load: MuscuLoad, T: M): string {
   const parts: string[] = [];
   if (ctx.params.objective === 'force' && l.objective !== 'force') parts.push(T.note.schemaHypertrophie);
   if (load.mode === 'rpe' && load.rm_reference && ctx.params.level === 'debutant') parts.push(T.note.chargePropre);
@@ -820,7 +825,7 @@ function notesFor(ctx: Ctx, l: Line, load: MuscuLoad): string {
   return parts.join(' · ');
 }
 
-function toExercise(ctx: Ctx, l: Line): MuscuExercise {
+function toExercise(ctx: Ctx, l: Line, T: M): MuscuExercise {
   const load = loadFor(ctx, l);
   return {
     id: l.m.id,
@@ -835,7 +840,7 @@ function toExercise(ctx: Ctx, l: Line): MuscuExercise {
     per_side: l.m.muscu.unilateral,
     load,
     rest_s: l.rest,
-    notes: notesFor(ctx, l, load),
+    notes: notesFor(ctx, l, load, T),
     badge_key: l.m.badge_key,
     optional: l.optional,
   };
@@ -916,7 +921,10 @@ export function generateMuscu(
   catalog: Catalog,
   bank: SkeletonBank,
   seed: number,
+  /** ne change que le texte de la sortie (défaut `fr`, le texte enregistré) : jamais un tirage */
+  langue: Langue = 'fr',
 ): MuscuWod {
+  const T = textes(langue).musculation;
   const params: MuscuParams = {
     ...request,
     budget_min: request.budget_min ?? (request.entry === 'express' ? 45 : new RNG(seed).pick([15, 16, 18, 20])),
@@ -934,7 +942,7 @@ export function generateMuscu(
   const ac = params.entry === 'after_class' && params.after_class ? afterClassMuscles(catalog, params.after_class) : null;
   const recent = new Set(params.recent_signatures ?? []);
   if (!targetAvailable(catalog, params.target, params.equipment, params.level)) {
-    throw new InvalidMuscuParams('target_unavailable', T.refus.cibleIndisponible(TARGET_LABEL[params.target], EQUIPMENT_LABEL[params.equipment].toLowerCase()));
+    throw new InvalidMuscuParams('target_unavailable', T.refus.cibleIndisponible(T.cible[params.target], T.materiel[params.equipment].toLowerCase()));
   }
 
   let best: { lines: Line[]; relax: Set<string>; attempts: number } | null = null;
@@ -969,10 +977,10 @@ export function generateMuscu(
     params, catalog, scheme: SCHEMES[params.objective], rng: new RNG(seed), exclude: new Set(), excludedMuscles: new Set(ac?.excluded ?? []),
     relax: best.relax, pool: [],
   };
-  const exercises = best.lines.map((l) => toExercise(ctxOut, l));
+  const exercises = best.lines.map((l) => toExercise(ctxOut, l, T));
   const seconds = total(best.lines);
   const sig = muscuSignature(sk.id, exercises);
-  const stimulus = stimulusFor(params, exercises);
+  const stimulus = stimulusFor(params, exercises, T);
   const wod: MuscuWod = {
     source: 'generator',
     generator: {
@@ -992,7 +1000,7 @@ export function generateMuscu(
     score_type: 'tonnage',
     after_class: ac ? { excluded_muscles: ac.excluded, suggested_target: ac.suggested_target } : null,
     signature: sig,
-    title: T.titre(TARGET_LABEL[params.target], OBJECTIVE_LABEL[params.objective]),
+    title: T.titre(T.cible[params.target], T.objectif[params.objective]),
     description: '',
     wod_type: 'strength',
     block_name: 'wod',
@@ -1005,13 +1013,14 @@ export function generateMuscu(
     tabata_work_seconds: null,
     tabata_rest_seconds: null,
   };
-  wod.description = renderMuscu(wod);
+  wod.description = renderMuscu(wod, langue);
   return wod;
 }
 
-function stimulusFor(params: MuscuParams, exercises: MuscuExercise[]): { rpe: number; note: string } {
+function stimulusFor(params: MuscuParams, exercises: MuscuExercise[], T: M): { rpe: number; note: string } {
   const scheme = SCHEMES[params.objective];
-  const parts = [scheme.rir.charAt(0).toUpperCase() + scheme.rir.slice(1)];
+  const rir = T.rir[params.objective];
+  const parts = [rir.charAt(0).toUpperCase() + rir.slice(1)];
   if (params.objective === 'force') {
     const main = exercises.find((e) => e.role === 'main_compound');
     if (main) parts.push(T.monteeEnCharge(main.name));
@@ -1030,7 +1039,8 @@ function fmtRest(s: number): string {
   return m > 0 ? `${m}:${String(r).padStart(2, '0')}` : `${r}s`;
 }
 
-export function loadText(e: MuscuExercise): string {
+export function loadText(e: MuscuExercise, langue: Langue = 'fr'): string {
+  const T = textes(langue).musculation;
   const l = e.load;
   switch (l.mode) {
     case '1rm': return T.charge.kgPourcent(l.kg, l.percent);
@@ -1042,10 +1052,11 @@ export function loadText(e: MuscuExercise): string {
 }
 
 /** `Bench Press — 4 × 8 @ 65 kg — charge 72 % 1RM — repos 1:30` (lisible par `parseStrengthLine`). */
-export function exerciseLine(e: MuscuExercise): string {
+export function exerciseLine(e: MuscuExercise, langue: Langue = 'fr'): string {
+  const T = textes(langue).musculation;
   let out = `${e.name} — ${e.sets} × ${e.reps}`;
   if (e.reps_unit !== 'reps') out += ` ${e.reps_unit}`;
-  if (e.per_side) out += ` / ${sideLabel(e)}`;
+  if (e.per_side) out += ` / ${T.cote[sideOf(e)]}`;
   const l = e.load;
   if (l.mode === '1rm' && l.kg) {
     out += T.ligne.kg(l.kg, l.percent);
@@ -1064,19 +1075,20 @@ export function exerciseLine(e: MuscuExercise): string {
   return out;
 }
 
-export function renderMuscu(wod: MuscuWod): string {
+export function renderMuscu(wod: MuscuWod, langue: Langue = 'fr'): string {
+  const T = textes(langue).musculation;
   const lines: string[] = [];
-  lines.push(T.entete(TARGET_LABEL[wod.target], OBJECTIVE_LABEL[wod.objective], wod.budget_min, EQUIPMENT_LABEL[wod.equipment]));
+  lines.push(T.entete(T.cible[wod.target], T.objectif[wod.objective], wod.budget_min, T.materiel[wod.equipment]));
   lines.push('');
   for (const e of wod.blocks[0].exercises) {
-    lines.push(exerciseLine(e));
+    lines.push(exerciseLine(e, langue));
     if (e.notes) lines.push(`  ${e.notes}`);
   }
   lines.push('');
   lines.push(T.dureeEstimee(wod.estimate.minutes));
   lines.push(T.stimulus(wod.stimulus.note));
   if (wod.after_class?.excluded_muscles.length) {
-    lines.push(T.musclesEvites(wod.after_class.excluded_muscles.join(', ')));
+    lines.push(T.musclesEvites(wod.after_class.excluded_muscles));
   }
   return lines.join('\n');
 }

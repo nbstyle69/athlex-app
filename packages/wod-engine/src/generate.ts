@@ -13,7 +13,8 @@ import { estimateAll, estimateBlock, referenceCategory, roundSeconds, fixedWorkS
 import { VOLUME_CAP_FACTOR, genericCapFor } from './bank';
 import { signature } from './signature';
 import { render } from './render';
-import { fr } from './i18n/fr';
+import { banqueVers, textes } from './i18n';
+import type { Langue } from './i18n';
 
 export const ENGINE_VERSION = '1.1.0';
 export const MAX_ATTEMPTS = 200;
@@ -1078,7 +1079,7 @@ function capPass(ctx: Ctx, d: Draft): boolean {
   return changed;
 }
 
-function finalize(ctx: Ctx, d: Draft, tierRelaxations: string[], attempts: number, seed: number): GeneratedWod {
+function finalize(ctx: Ctx, d: Draft, tierRelaxations: string[], attempts: number, seed: number, langue: Langue): GeneratedWod {
   const block = blockOf(ctx, d);
   const ac = ctx.afterClass;
   const relaxations = ac?.intentionExempt && d.picked.some((p) => p.m.pattern.some((x) => ac.patterns.has(x)) || ac.families.has(p.m.family))
@@ -1114,16 +1115,16 @@ function finalize(ctx: Ctx, d: Draft, tierRelaxations: string[], attempts: numbe
     budget_min: ctx.params.budget_min,
     vest,
     blocks: [block],
-    stimulus: { ...d.sk.stimulus },
+    stimulus: { ...d.sk.stimulus, note: banqueVers(langue)(d.sk.stimulus.note) },
     score_type: d.sk.score_type,
     after_class: ctx.afterClass
       ? { excluded_patterns: [...ctx.afterClass.patterns].sort(), excluded_families: [...ctx.afterClass.families].sort() }
       : null,
   };
-  const estimate = estimateAll({ ...partial, ...emptyEditor() });
+  const estimate = estimateAll({ ...partial, ...emptyEditor() }, langue);
   const wod: GeneratedWod = { ...emptyEditor(), ...partial, estimate, signature: '' };
   wod.signature = signature(wod);
-  return render(wod);
+  return render(wod, langue);
 }
 
 function pickCats(ctx: Ctx): Partial<Record<Category, number>> {
@@ -1142,7 +1143,8 @@ function emptyEditor(): EditorColumns {
 
 // ─── API publique ────────────────────────────────────────────────────────────
 
-export function generateBlocC(params: GenerateRequest, catalog: Catalog, bank: SkeletonBank, seed: number): GeneratedWod {
+/** `langue` ne change que le texte de la sortie (défaut `fr`, le texte enregistré) : jamais un tirage. */
+export function generateBlocC(params: GenerateRequest, catalog: Catalog, bank: SkeletonBank, seed: number, langue: Langue = 'fr'): GeneratedWod {
   const rng = new RNG(seed);
   const ref = params.profile_category ?? referenceCategory({ discipline: params.discipline });
   const refOk = categoriesFor(params.discipline).includes(ref);
@@ -1172,7 +1174,7 @@ export function generateBlocC(params: GenerateRequest, catalog: Catalog, bank: S
   const athlete = params.budget_min === undefined;
   const pool = athlete ? candidatePool(ctx, params, bank, rng) : null;
   const tiers = athlete ? [] : candidateTiers(normalized, bank);
-  if (!pool && !tiers.length) throw new NoValidWod(fr.generation.aucunSquelette, { no_skeleton: 1 });
+  if (!pool && !tiers.length) throw new NoValidWod(textes(langue).generation.aucunSquelette, { no_skeleton: 1 });
   const recent = new Set(params.recent_signatures ?? []);
   const reasons: Record<string, number> = {};
   let tier = 0;
@@ -1198,7 +1200,7 @@ export function generateBlocC(params: GenerateRequest, catalog: Catalog, bank: S
     ctx.durationRange = athlete ? range! : undefined;
     try {
       const d = buildDraft(ctx, sk, variant);
-      const wod = finalize(ctx, d, athlete ? [] : tiers[tier].relaxations, attempt, seed);
+      const wod = finalize(ctx, d, athlete ? [] : tiers[tier].relaxations, attempt, seed, langue);
       if (recent.has(wod.signature)) throw new Reject('recent_signature');
       return wod;
     } catch (e) {
@@ -1206,5 +1208,5 @@ export function generateBlocC(params: GenerateRequest, catalog: Catalog, bank: S
       throw e;
     }
   }
-  throw new NoValidWod(fr.generation.aucunWod(maxAttempts), reasons);
+  throw new NoValidWod(textes(langue).generation.aucunWod(maxAttempts), reasons);
 }

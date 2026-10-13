@@ -17,7 +17,7 @@ import {
 } from '../../src';
 import type {
   GenerateRequest, GeneratedWod, MuscuWod, GeneratedWeek, GeneratedMuscuWeek, MuscuEquipment, MuscuLevel, FormatChoice,
-  Intention, Vest, Category, ProgrammingDb, ProgrammingBox, RunRow, BoxWodInsert, ExistingAutoRow, Track, RevealConfig,
+  Intention, Vest, Category, ProgrammingDb, ProgrammingBox, RunRow, BoxWodInsert, ExistingAutoRow, Track, RevealConfig, Langue,
 } from '../../src';
 
 export interface Sortie {
@@ -35,7 +35,8 @@ export interface Chemin {
   lisible: number;
   /** résumé lisible de l'entrée k (paramètres et graine) */
   entree(k: number): string;
-  produire(k: number): Sortie | Promise<Sortie>;
+  /** sortie de l'entrée k ; `langue` ne change que le texte (défaut `fr`, l'instantané de M0) */
+  produire(k: number, langue?: Langue): Sortie | Promise<Sortie>;
 }
 
 // ── Journal des tirages ─────────────────────────────────────────────────────
@@ -70,31 +71,31 @@ export async function avecJournal(f: () => Sortie | Promise<Sortie>): Promise<{ 
 const lignes = (prefixe: string, texte: string | null | undefined): string[] =>
   texte == null ? [`${prefixe} ∅`] : texte.split('\n').map((l) => `${prefixe} ${l}`);
 
-function texteMetcon(w: GeneratedWod, p = ''): string[] {
+function texteMetcon(w: GeneratedWod, p = '', langue: Langue = 'fr'): string[] {
   const out = [
     ...lignes(`${p}titre :`, w.title),
     ...lignes(`${p}description :`, w.description),
     ...lignes(`${p}notes :`, w.notes),
     ...lignes(`${p}stimulus :`, w.stimulus.note),
-    ...movementLines(w).map((l) => `${p}ligne : ${l}`),
+    ...movementLines(w, langue).map((l) => `${p}ligne : ${l}`),
   ];
   for (const [cat, e] of Object.entries(w.estimate.by_category)) out.push(`${p}cible ${cat} : ${e?.target ?? '∅'}`);
   return out;
 }
 
-function texteMuscu(w: MuscuWod, p = ''): string[] {
+function texteMuscu(w: MuscuWod, p = '', langue: Langue = 'fr'): string[] {
   return [
     ...lignes(`${p}titre :`, w.title),
-    ...lignes(`${p}description :`, renderMuscu(w)),
+    ...lignes(`${p}description :`, renderMuscu(w, langue)),
     ...lignes(`${p}notes :`, w.notes),
     ...lignes(`${p}stimulus :`, w.stimulus.note),
     ...w.blocks[0].exercises.flatMap((e) => [
-      `${p}exercice : ${exerciseLine(e)}`, `${p}charge : ${loadText(e)}`, `${p}note : ${e.notes}`,
+      `${p}exercice : ${exerciseLine(e, langue)}`, `${p}charge : ${loadText(e, langue)}`, `${p}note : ${e.notes}`,
     ]),
   ];
 }
 
-function texteSemaine(w: GeneratedWeek): string[] {
+function texteSemaine(w: GeneratedWeek, langue: Langue): string[] {
   return w.sessions.flatMap((s) => [
     `== jour ${s.day} · ${s.label}`,
     ...s.blocks.flatMap((b) => [
@@ -102,12 +103,12 @@ function texteSemaine(w: GeneratedWeek): string[] {
       ...lignes('titre :', b.title), ...lignes('description :', b.description), ...lignes('notes :', b.notes),
     ]),
     // le bloc C est déjà dans `blocks` (titre, description, notes) : seules ses lignes et cibles s'ajoutent
-    ...(s.bloc_c ? texteMetcon(s.bloc_c, 'C ').filter((l) => /^C (ligne|cible|stimulus) /.test(l)) : []),
+    ...(s.bloc_c ? texteMetcon(s.bloc_c, 'C ', langue).filter((l) => /^C (ligne|cible|stimulus) /.test(l)) : []),
   ]);
 }
 
-function texteSemaineMuscu(w: GeneratedMuscuWeek): string[] {
-  return [...w.days.flatMap((d) => [`== jour ${d.day} · ${d.target}`, ...texteMuscu(d.wod)])];
+function texteSemaineMuscu(w: GeneratedMuscuWeek, langue: Langue): string[] {
+  return [...w.days.flatMap((d) => [`== jour ${d.day} · ${d.target}`, ...texteMuscu(d.wod, '', langue)])];
 }
 
 function erreur(e: unknown): Sortie {
@@ -214,12 +215,12 @@ function requeteMuscu(k: number, entry: 'express' | 'after_class'): MuscuReq {
   return p;
 }
 
-function metcon(p: GenerateRequest, seed: number): Sortie {
-  try { const w = generateBlocC(p, C, B, seed); return { texte: texteMetcon(w), sortie: w }; } catch (e) { return erreur(e); }
+function metcon(p: GenerateRequest, seed: number, langue: Langue = 'fr'): Sortie {
+  try { const w = generateBlocC(p, C, B, seed, langue); return { texte: texteMetcon(w, '', langue), sortie: w }; } catch (e) { return erreur(e); }
 }
 
-function muscu(p: MuscuReq, seed: number): Sortie {
-  try { const w = generateMuscu(p, C, B, seed); return { texte: texteMuscu(w), sortie: w }; } catch (e) { return erreur(e); }
+function muscu(p: MuscuReq, seed: number, langue: Langue = 'fr'): Sortie {
+  try { const w = generateMuscu(p, C, B, seed, langue); return { texte: texteMuscu(w, '', langue), sortie: w }; } catch (e) { return erreur(e); }
 }
 
 const graine = (k: number) => 1000 + k * 7919;
@@ -227,25 +228,25 @@ const graineSemaine = (k: number, t: Track) => { const s = semaineDe(k); return 
 const semaineDe = (k: number) => ({ iso_year: 2026 + (k % 3), iso_week: (k % 52) + 1 });
 
 /** Une entrée sur quatre reçoit le journal de la semaine précédente, comme `recentSignatures`. */
-function semaine(track: 'functional' | 'hybrid', k: number): Sortie {
+function semaine(track: 'functional' | 'hybrid', k: number, langue: Langue = 'fr'): Sortie {
   const { iso_year, iso_week } = semaineDe(k);
   const tirer = (w: number, recent: string[]) => generateWeek({
     iso_year, iso_week: w, track, recent_signatures: recent, exclude: k % 9 === 4 ? ['rower'] : undefined,
-  }, C, B, weekSeed(`box-${k}`, track, iso_year, w, 0));
+  }, C, B, weekSeed(`box-${k}`, track, iso_year, w, 0), langue);
   try {
     const recent = k % 4 === 1 && iso_week > 1 ? tirer(iso_week - 1, []).signatures : [];
     const w = tirer(iso_week, recent);
-    return { texte: texteSemaine(w), sortie: w };
+    return { texte: texteSemaine(w, langue), sortie: w };
   } catch (e) { return erreur(e); }
 }
 
-function semaineMuscu(k: number): Sortie {
+function semaineMuscu(k: number, langue: Langue = 'fr'): Sortie {
   const { iso_year, iso_week } = semaineDe(k);
   try {
     const w = generateMuscuWeek({
       iso_year, iso_week, equipment: k % 5 === 2 ? 'gym' : undefined, level: k % 7 === 3 ? 'avance' : undefined,
-    }, C, B, weekSeed(`box-${k}`, 'musculation', iso_year, iso_week, 0));
-    return { texte: texteSemaineMuscu(w), sortie: w };
+    }, C, B, weekSeed(`box-${k}`, 'musculation', iso_year, iso_week, 0), langue);
+    return { texte: texteSemaineMuscu(w, langue), sortie: w };
   } catch (e) { return erreur(e); }
 }
 
@@ -284,16 +285,16 @@ class Base implements ProgrammingDb {
 
 const REVEALS: (RevealConfig | undefined)[] = [undefined, { mode: 'daily', dow: 0, time: '06:00' }, { mode: 'weekly', dow: 5, time: '20:30' }];
 
-async function programmation(k: number): Promise<Sortie> {
+async function programmation(k: number, langue: Langue = 'fr'): Promise<Sortie> {
   const db = new Base();
   const tracks: Track[] = [['functional', 'hybrid', 'musculation'], ['functional'], ['hybrid', 'musculation']][k % 3] as Track[];
   db.boxes = [{ id: `box-${k}`, owner_id: k % 2 ? `owner-${k}` : null, tracks, reveal: REVEALS[k % REVEALS.length] }];
   const target = semaineDe(k);
   // semaine précédente d'abord : l'anti-répétition lit son journal
-  if (target.iso_week > 1) await runWeekGeneration(db, C, B, { now: new Date(0), target: { ...target, iso_week: target.iso_week - 1 } });
+  if (target.iso_week > 1) await runWeekGeneration(db, C, B, { now: new Date(0), target: { ...target, iso_week: target.iso_week - 1 }, langue });
   const avant = db.wods.length;
-  const outcomes = await runWeekGeneration(db, C, B, { now: new Date(0), target });
-  if (k % 4 === 0) outcomes.push(...await runWeekGeneration(db, C, B, { now: new Date(0), target, regen: { box_id: `box-${k}`, track: tracks[0] } }));
+  const outcomes = await runWeekGeneration(db, C, B, { now: new Date(0), target, langue });
+  if (k % 4 === 0) outcomes.push(...await runWeekGeneration(db, C, B, { now: new Date(0), target, regen: { box_id: `box-${k}`, track: tracks[0] }, langue }));
   const rows = db.wods.slice(avant);
   return {
     texte: [
@@ -314,41 +315,41 @@ export const CHEMINS: Chemin[] = [
   {
     nom: 'wod-express', n: 600, lisible: 50,
     entree: (k) => `${JSON.stringify(requeteExpress(k))} graine ${graine(k)}`,
-    produire: (k) => metcon(requeteExpress(k), graine(k)),
+    produire: (k, langue) => metcon(requeteExpress(k), graine(k), langue),
   },
   {
     nom: 'apres-ma-classe', n: 500, lisible: 50,
     entree: (k) => `${JSON.stringify(requeteApresClasse(k))} graine ${graine(k)}`,
-    produire: (k) => metcon(requeteApresClasse(k), graine(k)),
+    produire: (k, langue) => metcon(requeteApresClasse(k), graine(k), langue),
   },
   {
     nom: 'musculation', n: 600, lisible: 50,
     entree: (k) => `${JSON.stringify(requeteMuscu(k, 'express'))} graine ${graine(k)}`,
-    produire: (k) => muscu(requeteMuscu(k, 'express'), graine(k)),
+    produire: (k, langue) => muscu(requeteMuscu(k, 'express'), graine(k), langue),
   },
   {
     nom: 'musculation-apres-ma-classe', n: 500, lisible: 50,
     entree: (k) => `${JSON.stringify(requeteMuscu(k, 'after_class'))} graine ${graine(k)}`,
-    produire: (k) => muscu(requeteMuscu(k, 'after_class'), graine(k)),
+    produire: (k, langue) => muscu(requeteMuscu(k, 'after_class'), graine(k), langue),
   },
   {
     nom: 'seance-functional', n: 500, lisible: 15,
     entree: (k) => `box-${k} functional ${JSON.stringify(semaineDe(k))} graine ${graineSemaine(k, 'functional')}`,
-    produire: (k) => semaine('functional', k),
+    produire: (k, langue) => semaine('functional', k, langue),
   },
   {
     nom: 'seance-hybrid', n: 500, lisible: 15,
     entree: (k) => `box-${k} hybrid ${JSON.stringify(semaineDe(k))} graine ${graineSemaine(k, 'hybrid')}`,
-    produire: (k) => semaine('hybrid', k),
+    produire: (k, langue) => semaine('hybrid', k, langue),
   },
   {
     nom: 'semaine-musculation', n: 500, lisible: 15,
     entree: (k) => `box-${k} musculation ${JSON.stringify(semaineDe(k))} graine ${graineSemaine(k, 'musculation')}`,
-    produire: (k) => semaineMuscu(k),
+    produire: (k, langue) => semaineMuscu(k, langue),
   },
   {
     nom: 'programmation', n: 500, lisible: 8,
     entree: (k) => `box-${k} ${JSON.stringify(semaineDe(k))} pistes ${k % 3} révélation ${k % REVEALS.length}${k % 4 === 0 ? ' + régénération' : ''}`,
-    produire: (k) => programmation(k),
+    produire: (k, langue) => programmation(k, langue),
   },
 ];

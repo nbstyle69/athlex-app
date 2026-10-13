@@ -13,13 +13,15 @@ import type {
 import { generateMuscuWeek, generateWeek, hashSeed, isoWeek, isoWeekMonday, DAY_LABEL, SESSION_ENGINE_VERSION } from './session';
 import { renderMuscu } from './muscu';
 import { fr } from './i18n/fr';
+import type { Langue } from './i18n';
 
 /** Trois pistes indépendantes, activables séparément par box. */
 export type Track = 'functional' | 'hybrid' | 'musculation';
 export const TRACKS: readonly Track[] = ['functional', 'hybrid', 'musculation'];
 export const TRACK_LABEL: Record<Track, string> = fr.programmation.piste;
 /** Groupes créés dans la box (si absents) pour un futur ciblage par piste (J3). */
-export const TRACK_GROUP_NAME: Record<Track, string> = fr.programmation.groupe;
+// i18n : contenu de box, créé une fois dans la box et jamais traduit (vocabulaire, point 16).
+export const TRACK_GROUP_NAME: Record<Track, string> = { functional: 'Functional', hybrid: 'Hybrid', musculation: 'Musculation' };
 /**
  * Clé de piste entrant dans le seed. `functional` vaut `crossfit` par héritage : la piste
  * portait ce nom interne, et les graines des samples déjà relus en dépendent — ne pas toucher.
@@ -244,14 +246,14 @@ export function functionalWeekRows(week: GeneratedWeek, ctx: WeekContext): BoxWo
   return rows;
 }
 
-export function muscuWeekRows(week: GeneratedMuscuWeek, ctx: WeekContext): BoxWodInsert[] {
+export function muscuWeekRows(week: GeneratedMuscuWeek, ctx: WeekContext, langue: Langue = 'fr'): BoxWodInsert[] {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
   const publishAt = (date: string) => publishAtFor(date, ctx.iso_year, ctx.iso_week, ctx.reveal);
   return week.days.map((d) => ({
     box_id: ctx.box_id,
     created_by: ctx.created_by,
     title: d.wod.title,
-    description: renderMuscu(d.wod),
+    description: renderMuscu(d.wod, langue),
     wod_type: 'strength' as const,
     scheduled_date: dates[d.day - 1],
     time_cap_seconds: null,
@@ -301,6 +303,11 @@ export interface RunOptions {
    * régénération. Le journal garde une ligne par piste traitée.
    */
   tracks?: Track[];
+  /**
+   * Langue du texte des lignes (défaut `fr`). La fonction edge n'en passe jamais : le
+   * Whiteboard enregistre le français, chaque athlète le lit dans sa langue (M5).
+   */
+  langue?: Langue;
 }
 
 /**
@@ -347,13 +354,13 @@ export async function runWeekGeneration(
         if (track === 'functional' || track === 'hybrid') {
           const week = generateWeek({
             iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent, track,
-          }, catalog, bank, seed);
+          }, catalog, bank, seed, opts.langue);
           rows = functionalWeekRows(week, ctx);
           signatures = week.signatures;
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];
         } else {
-          const week = generateMuscuWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed);
-          rows = muscuWeekRows(week, ctx);
+          const week = generateMuscuWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed, opts.langue);
+          rows = muscuWeekRows(week, ctx, opts.langue);
           signatures = week.days.map((d) => d.wod.signature);
           relaxations = week.relaxations;
         }

@@ -54,3 +54,5 @@ export type {
 export { FEASIBILITY } from './bank/feasibility';
 export type { FeasibilityRow } from './bank/feasibility';
 export { formatsOfferedFor, feasibleFormats, combinationFeasible, FORMAT_CHOICE_COVERS } from './feasibility';
+export { textes, banqueVers, correspondancesBanque, LANGUES, fr, en } from './i18n';
+export type { Langue, Textes } from './i18n';

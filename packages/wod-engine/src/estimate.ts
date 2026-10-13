@@ -2,9 +2,8 @@ import type {
   Category, CategoryEstimate, DurationEstimate, GeneratedBlock, GeneratedMovement, GeneratedWod, SkeletonFormat,
 } from './types';
 import { categoriesFor } from './catalog';
-import { fr } from './i18n/fr';
-
-const T = fr.estimation;
+import { textes } from './i18n';
+import type { Langue } from './i18n';
 
 /** Transition entre deux mouvements (brief §7). */
 export const TRANSITION_S = 8;
@@ -115,7 +114,8 @@ function fmtTime(s: number): string {
 }
 
 /** Estimation complète d'un bloc pour une catégorie. */
-export function estimateBlock(block: GeneratedBlock, category: Category, budgetMin: number): CategoryEstimate {
+export function estimateBlock(block: GeneratedBlock, category: Category, budgetMin: number, langue: Langue = 'fr'): CategoryEstimate {
+  const T = textes(langue).estimation;
   const f = block.format;
   const budgetS = budgetMin * 60;
   switch (f) {
@@ -184,9 +184,9 @@ export function referenceCategory(wod: Pick<GeneratedWod, 'discipline'>): Catego
   return wod.discipline === 'functional' ? 'rx' : 'men';
 }
 
-export function estimateDuration(wod: GeneratedWod, category: Category): DurationEstimate {
+export function estimateDuration(wod: GeneratedWod, category: Category, langue: Langue = 'fr'): DurationEstimate {
   const block = wod.blocks[0];
-  const est = estimateBlock(block, category, wod.budget_min);
+  const est = estimateBlock(block, category, wod.budget_min, langue);
   const ref = estimateBlock(block, referenceCategory(wod), wod.budget_min);
   return {
     by_category: { [category]: est },
@@ -196,10 +196,10 @@ export function estimateDuration(wod: GeneratedWod, category: Category): Duratio
 }
 
 /** Estimation pour toutes les catégories de la discipline. */
-export function estimateAll(wod: Omit<GeneratedWod, 'estimate' | 'signature'>): DurationEstimate {
+export function estimateAll(wod: Omit<GeneratedWod, 'estimate' | 'signature'>, langue: Langue = 'fr'): DurationEstimate {
   const block = wod.blocks[0];
   const by: DurationEstimate['by_category'] = {};
-  for (const c of categoriesFor(wod.discipline)) by[c] = estimateBlock(block, c, wod.budget_min);
+  for (const c of categoriesFor(wod.discipline)) by[c] = estimateBlock(block, c, wod.budget_min, langue);
   const ref = estimateBlock(block, referenceCategory(wod), wod.budget_min);
   return {
     by_category: by,
