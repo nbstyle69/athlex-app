@@ -29625,7 +29625,7 @@ function finalize(ctx, d, tierRelaxations, attempts, seed, langue) {
     after_class: ctx.afterClass ? { excluded_patterns: [...ctx.afterClass.patterns].sort(), excluded_families: [...ctx.afterClass.families].sort() } : null
   };
   const estimate = estimateAll({ ...partial, ...emptyEditor() }, langue);
-  const wod = { ...emptyEditor(), ...partial, estimate, signature: "" };
+  const wod = { ...emptyEditor(), ...partial, estimate, signature: "", v: 2 };
   wod.signature = signature(wod);
   return render(wod, langue);
 }
@@ -30295,17 +30295,30 @@ var sideOf = (m) => SIDE[m.muscle_primary] ?? "cote";
 function sideLabel(m) {
   return T4.cote[sideOf(m)];
 }
-function notesFor(ctx, l, load, T5) {
+function noteClesFor(ctx, l, load) {
   const parts = [];
-  if (ctx.params.objective === "force" && l.objective !== "force") parts.push(T5.note.schemaHypertrophie);
-  if (load.mode === "rpe" && load.rm_reference && ctx.params.level === "debutant") parts.push(T5.note.chargePropre);
-  if (l.demoted) parts.push(T5.note.troisiemeCompound);
-  if (load.mode === "bodyweight" && ctx.params.level === "debutant" && /pull_up|chin_up/.test(l.m.id) && !/banded/.test(l.m.id)) parts.push(T5.note.debutantBanded);
-  if (l.tempo) parts.push(T5.note.tempo(l.tempo));
-  return parts.join(" \xB7 ");
+  if (ctx.params.objective === "force" && l.objective !== "force") parts.push("schemaHypertrophie");
+  if (load.mode === "rpe" && load.rm_reference && ctx.params.level === "debutant") parts.push("chargePropre");
+  if (l.demoted) parts.push("troisiemeCompound");
+  if (load.mode === "bodyweight" && ctx.params.level === "debutant" && /pull_up|chin_up/.test(l.m.id) && !/banded/.test(l.m.id)) parts.push("debutantBanded");
+  if (l.tempo) parts.push("tempo");
+  return parts;
 }
-function toExercise(ctx, l, T5) {
+function noteExercice(r, langue = "fr") {
+  const N = textes(langue).musculation.note;
+  return r.notes.map((k) => k === "tempo" ? N.tempo(r.tempo ?? "") : N[k]).join(" \xB7 ");
+}
+function noteStimulus(objective, r, langue = "fr") {
+  const T5 = textes(langue).musculation;
+  const rir = T5.rir[objective];
+  const parts = [rir.charAt(0).toUpperCase() + rir.slice(1)];
+  if (r.montee) parts.push(T5.monteeEnCharge(r.montee));
+  if (r.renseigne1rm) parts.push(T5.renseigne1rm);
+  return parts.join(". ");
+}
+function toExercise(ctx, l, langue) {
   const load = loadFor(ctx, l);
+  const rendu2 = { notes: noteClesFor(ctx, l, load), tempo: l.tempo ?? null };
   return {
     id: l.m.id,
     name: l.m.name,
@@ -30319,9 +30332,10 @@ function toExercise(ctx, l, T5) {
     per_side: l.m.muscu.unilateral,
     load,
     rest_s: l.rest,
-    notes: notesFor(ctx, l, load, T5),
+    notes: noteExercice(rendu2, langue),
     badge_key: l.m.badge_key,
-    optional: l.optional
+    optional: l.optional,
+    rendu: rendu2
   };
 }
 function muscuSignature(skeletonId, exercises) {
@@ -30446,10 +30460,11 @@ function generateMuscu(request, catalog, bank, seed, langue = "fr") {
     relax: best.relax,
     pool: []
   };
-  const exercises = best.lines.map((l) => toExercise(ctxOut, l, T5));
+  const exercises = best.lines.map((l) => toExercise(ctxOut, l, langue));
   const seconds = total(best.lines);
   const sig = muscuSignature(sk.id, exercises);
-  const stimulus = stimulusFor(params, exercises, T5);
+  const stimulusCles = stimulusClesFor(params, exercises);
+  const stimulus = { rpe: SCHEMES[params.objective].rpe, note: noteStimulus(params.objective, stimulusCles, langue) };
   const wod = {
     source: "generator",
     generator: {
@@ -30474,6 +30489,8 @@ function generateMuscu(request, catalog, bank, seed, langue = "fr") {
     score_type: "tonnage",
     after_class: ac ? { excluded_muscles: ac.excluded, suggested_target: ac.suggested_target } : null,
     signature: sig,
+    v: 2,
+    rendu: { stimulus: stimulusCles },
     title: T5.titre(T5.cible[params.target], T5.objectif[params.objective]),
     description: "",
     wod_type: "strength",
@@ -30490,18 +30507,12 @@ function generateMuscu(request, catalog, bank, seed, langue = "fr") {
   wod.description = renderMuscu(wod, langue);
   return wod;
 }
-function stimulusFor(params, exercises, T5) {
-  const scheme = SCHEMES[params.objective];
-  const rir = T5.rir[params.objective];
-  const parts = [rir.charAt(0).toUpperCase() + rir.slice(1)];
-  if (params.objective === "force") {
-    const main2 = exercises.find((e) => e.role === "main_compound");
-    if (main2) parts.push(T5.monteeEnCharge(main2.name));
-  }
-  if (!params.box_wod && exercises.some((e) => e.load.mode === "rpe" && e.load.rm_reference)) {
-    parts.push(T5.renseigne1rm);
-  }
-  return { rpe: scheme.rpe, note: parts.join(". ") };
+function stimulusClesFor(params, exercises) {
+  const main2 = params.objective === "force" ? exercises.find((e) => e.role === "main_compound") : void 0;
+  return {
+    montee: main2 ? main2.name : null,
+    renseigne1rm: !params.box_wod && exercises.some((e) => e.load.mode === "rpe" && !!e.load.rm_reference)
+  };
 }
 function fmtRest(s) {
   const m = Math.floor(s / 60);
@@ -30564,11 +30575,157 @@ function renderMuscu(wod, langue = "fr") {
   return lines.join("\n");
 }
 
+// packages/wod-engine/src/rendu-seance.ts
+var SKILL_STEP_S = 180;
+function fmtRest2(s) {
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return m > 0 ? `${m}:${String(r).padStart(2, "0")}` : `${r}s`;
+}
+function fmtEvery(s, d = fr.duree) {
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return r ? d.minutesSecondes(m, String(r).padStart(2, "0")) : d.minutes(m);
+}
+function stepLine(name, st, tempo, langue = "fr") {
+  const T5 = textes(langue).seance;
+  const tb = banqueVers(langue);
+  let out = `${name} \u2014 ${st.sets} \xD7 ${st.reps}`;
+  if (st.percent !== null) out += T5.serie.pourcent(st.percent);
+  out += T5.serie.repos(fmtRest2(st.rest_s));
+  if (tempo && !st.note?.startsWith("mont\xE9e")) out += T5.serie.tempo(tempo);
+  if (st.note) out += T5.serie.charge(tb(st.note));
+  return out;
+}
+var NL = "\n";
+function contexte(langue, noms = {}) {
+  return { t: textes(langue), tb: banqueVers(langue), nom: (id) => noms[id] ?? id };
+}
+function ligneDePoste(p, { t, tb, nom }) {
+  const name = p.name ? tb(p.name) : nom(p.id);
+  const qty = p.unit === "reps" ? `${p.qty}` : `${p.qty} ${p.unit}`;
+  const parts = [];
+  if (p.box) parts.push(t.seance.stationBox(p.box[0], p.box[1]));
+  else if (p.charge) parts.push(`@ ${p.charge[0]}/${p.charge[1]} ${p.charge[2]}`);
+  if (p.extra) parts.push(`@ ${p.extra[0]}/${p.extra[1]} ${p.extra[2]}`);
+  return `${qty} ${name}${parts.length ? ` ${parts.join(" ")}` : ""}`;
+}
+function lignePro(pro, { t, tb, nom }) {
+  const parts = pro.map((p) => `${p.name ? tb(p.name) : nom(p.id)} ${p.men}/${p.women} ${p.unit}`);
+  return parts.length ? t.seance.pro(parts.join(" \xB7 ")) : null;
+}
+function lignesForce(c, langue, x) {
+  const { t, tb, nom } = x;
+  const T5 = t.seance;
+  const name = nom(c.movement);
+  const lines = [];
+  if (c.kind === "weightlifting") {
+    lines.push(T5.halteroComplexe(name, c.variante, c.complex.map(nom).join(" + ")));
+    lines.push(T5.halteroConsigne);
+    for (const st of c.steps) lines.push(stepLine(name, st, void 0, langue));
+  } else if (c.kind === "strength") {
+    lines.push(T5.force(name));
+    for (const st of c.steps) lines.push(stepLine(name, st, c.tempo, langue));
+    if (c.tempo) lines.push(T5.forceTempo(c.tempo));
+  } else if (c.kind === "skill") {
+    const sk = c.skill;
+    lines.push(T5.skill(name));
+    lines.push(T5.etapeA(tb(sk.progression.a), fmtEvery(SKILL_STEP_S, t.duree)));
+    lines.push(T5.etapeB(tb(sk.progression.b), fmtEvery(SKILL_STEP_S, t.duree)));
+    lines.push(T5.etapeC(fmtEvery(sk.every_s, t.duree), sk.rounds));
+    lines.push(`${sk.reps} ${name}`);
+    const subs = Object.entries(sk.substitutions).map(([cat, s]) => t.rendu.substitution(fr.categories[cat] ?? cat, tb(s)));
+    if (subs.length) lines.push(`\u2192 ${subs.join(" \xB7 ")}`);
+  }
+  return lines;
+}
+function lignesHybrid(c, x) {
+  const { t, tb } = x;
+  const T5 = t.seance;
+  const lines = [];
+  if (c.kind === "station") {
+    const n = c.postes.length;
+    lines.push(n > 1 ? T5.stationRotation(fmtEvery(c.every_s, t.duree), c.rounds) : T5.stationEvery(fmtEvery(c.every_s, t.duree), c.rounds));
+    c.postes.forEach((p, i) => lines.push(`${n === 2 ? i === 0 ? T5.impair : T5.pair : n > 2 ? T5.poste(i + 1) : ""}${ligneDePoste(p, x)}`));
+    const pro = lignePro(c.pro, x);
+    if (pro) lines.push(pro);
+    if (c.lourd) lines.push(T5.chargeLourde);
+  } else if (c.kind === "run") {
+    lines.push(T5.intervallesCourse(tb(c.variante.label), fmtRest2(c.variante.rest_s)));
+    lines.push(T5.allureCible(tb(c.variante.target)));
+    lines.push(T5.autresVariantes(c.autres.map(tb).join(" \xB7 ")));
+  } else if (c.kind === "compromised") {
+    lines.push(T5.compromiseRounds(c.rounds));
+    c.tours.forEach((tour, i) => {
+      lines.push(T5.compromiseStation(i + 1, c.work_s, ligneDePoste(tour.poste, x)));
+      lines.push(T5.compromiseCourse(tour.run_m, tb(c.target)));
+    });
+    const pro = lignePro(c.pro, x);
+    if (pro) lines.push(pro);
+    lines.push(T5.compromiseTotal(c.total_m));
+  } else if (c.kind === "race") {
+    lines.push(T5.enchainement(c.rounds));
+    c.postes.forEach((p, i) => lines.push(T5.enchainementLigne(i + 1, c.run_m, ligneDePoste(p, x))));
+    const pro = lignePro(c.pro, x);
+    if (pro) lines.push(pro);
+    lines.push(T5.enchainementScore(tb(c.score)));
+  }
+  return lines;
+}
+var HYBRID_A = /* @__PURE__ */ new Set(["station", "run", "race"]);
+function rendreBlocSeance(p, langue = "fr") {
+  const x = contexte(langue, "noms" in p ? p.noms : {});
+  const { t, tb, nom } = x;
+  const T5 = t.seance;
+  const warm = (lignes) => [...lignes.map(tb), ""];
+  switch (p.bloc) {
+    case "a": {
+      const c = p.contenu;
+      const lines = HYBRID_A.has(c.kind) ? lignesHybrid(c, x) : lignesForce(c, langue, x);
+      return {
+        title: c.kind === "race" ? tb(p.label) : `${T5.type[c.kind]} \xB7 ${nom(c.movement)}`,
+        description: [...warm(p.echauffement), ...lines].join("\n"),
+        notes: c.kind === "weightlifting" ? T5.notePourcentages : p.timed ? T5.noteChronometree : null
+      };
+    }
+    case "work": {
+      const c = p.contenu;
+      return {
+        title: c.kind === "race" ? tb(p.label) : `${tb(p.label)} \xB7 ${nom(c.movement)}`,
+        description: [...p.echauffement ? warm(p.echauffement) : [], ...lignesHybrid(c, x)].join(NL),
+        notes: p.timed ? T5.noteChronometree : null
+      };
+    }
+    case "b": {
+      const name = p.name ? tb(p.name) : nom(p.movement);
+      return {
+        title: T5.titreBuilding(name),
+        description: [T5.building(name, p.tempo ?? "").trim(), ...p.steps.map((st) => stepLine(name, st, p.tempo, langue))].join("\n"),
+        notes: null
+      };
+    }
+    case "finisher": {
+      const lines = [T5.finisher(p.rounds)];
+      for (const m of p.movements) {
+        const name = m.name ? tb(m.name) : nom(m.id);
+        lines.push(m.unit === "s" ? `${m.qty} s ${name}` : m.unit === "m" ? `${m.qty} m ${name}` : `${m.qty} ${name}`);
+      }
+      return { title: T5.titreFinisher, description: lines.join("\n"), notes: null };
+    }
+    case "cooldown":
+      return { title: T5.titreRetourAuCalme, description: p.lignes.map(tb).join(NL), notes: null };
+  }
+}
+function descriptionBlocC(description, echauffement, langue = "fr") {
+  if (!echauffement) return description;
+  const tb = banqueVers(langue);
+  return [...echauffement.map(tb), "", description].join("\n");
+}
+
 // packages/wod-engine/src/session.ts
 var SESSION_ENGINE_VERSION = "1.0.0";
 var SESSION_TOLERANCE = 0.2;
 var TRANSITION_MIN = 1;
-var SKILL_STEP_S = 180;
 var B_RETRY_MAX = 12;
 var FINISHER_SIGNATURE_PREFIX = "finisher:";
 function finisherSignature(id) {
@@ -30597,7 +30754,6 @@ var MUSCU_WEEK_DAYS = [
 var MUSCU_OBJECTIVE_CYCLE = ["hypertrophie", "endurance", "force"];
 var DAY_LABEL = fr.jours;
 var rendu = (langue) => ({ t: textes(langue), tb: banqueVers(langue) });
-var RENDU_FR = rendu("fr");
 function hashSeed(...parts) {
   let h = 2166136261;
   const s = parts.join("|");
@@ -30624,31 +30780,6 @@ function isoWeekMonday(iso_year, iso_week) {
 function muscuObjectiveForWeek(iso_week) {
   return MUSCU_OBJECTIVE_CYCLE[Math.floor((iso_week - 1) / 2) % MUSCU_OBJECTIVE_CYCLE.length];
 }
-function fmtRest2(s) {
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return m > 0 ? `${m}:${String(r).padStart(2, "0")}` : `${r}s`;
-}
-function fmtEvery(s, d = fr.duree) {
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return r ? d.minutesSecondes(m, String(r).padStart(2, "0")) : d.minutes(m);
-}
-function nameOf(catalog, id) {
-  return movementById(catalog, id)?.name ?? id;
-}
-function stepLine(name, st, tempo, langue = "fr") {
-  const { t, tb } = rendu(langue);
-  const T5 = t.seance;
-  let out = `${name} \u2014 ${st.sets} \xD7 ${st.reps}`;
-  if (st.percent !== null) out += T5.serie.pourcent(st.percent);
-  out += T5.serie.repos(fmtRest2(st.rest_s));
-  if (tempo && !st.note?.startsWith("mont\xE9e")) out += T5.serie.tempo(tempo);
-  if (st.note) out += T5.serie.charge(tb(st.note));
-  return out;
-}
-var NL = "\n";
-var CAT_LABEL = fr.categories;
 function withSkillProgression(opt) {
   if (!opt.skill || opt.skill.progression) return opt;
   const snapshot = SESSION_SKELETONS.flatMap((s) => s.block_a ?? []).find((o) => o.id === opt.id)?.skill?.progression;
@@ -30656,48 +30787,6 @@ function withSkillProgression(opt) {
     throw new Error(`Skill \xAB ${opt.id} \xBB (${opt.movement}) sans progression A/B : absente de la banque charg\xE9e et du snapshot embarqu\xE9`);
   }
   return { ...opt, skill: { ...opt.skill, progression: snapshot } };
-}
-function blockALines(catalog, opt, weeks, { t, tb }, langue) {
-  const T5 = t.seance;
-  const name = nameOf(catalog, opt.movement);
-  const lines = [];
-  if (opt.kind === "weightlifting") {
-    const complex = (opt.complex ?? []).map((id) => nameOf(catalog, id));
-    lines.push(T5.halteroComplexe(name, weeks === "even" ? "A" : "B", complex.join(" + ")));
-    lines.push(T5.halteroConsigne);
-    for (const st of opt.steps ?? []) lines.push(stepLine(name, st, void 0, langue));
-  } else if (opt.kind === "strength") {
-    lines.push(T5.force(name));
-    for (const st of opt.steps ?? []) lines.push(stepLine(name, st, opt.tempo, langue));
-    if (opt.tempo) lines.push(T5.forceTempo(opt.tempo));
-  } else if (opt.skill) {
-    const sk = opt.skill;
-    lines.push(T5.skill(name));
-    lines.push(T5.etapeA(tb(sk.progression.a), fmtEvery(SKILL_STEP_S, t.duree)));
-    lines.push(T5.etapeB(tb(sk.progression.b), fmtEvery(SKILL_STEP_S, t.duree)));
-    lines.push(T5.etapeC(fmtEvery(sk.every_s, t.duree), sk.rounds));
-    lines.push(`${sk.reps} ${name}`);
-    const subs = Object.entries(sk.substitutions).map(([c, s]) => t.rendu.substitution(CAT_LABEL[c] ?? c, tb(s)));
-    if (subs.length) lines.push(`\u2192 ${subs.join(" \xB7 ")}`);
-  }
-  return lines;
-}
-function nameOfB(catalog, opt, tb = RENDU_FR.tb) {
-  return opt.name ? tb(opt.name) : nameOf(catalog, opt.movement);
-}
-function blockBLines(catalog, opt, { t, tb }, langue) {
-  const name = nameOfB(catalog, opt, tb);
-  const lines = [t.seance.building(name, opt.tempo ?? "").trim()];
-  for (const st of opt.steps) lines.push(stepLine(name, st, opt.tempo, langue));
-  return lines;
-}
-function finisherLines(catalog, opt, { t, tb }) {
-  const lines = [t.seance.finisher(opt.rounds)];
-  for (const m of opt.movements) {
-    const name = m.name ? tb(m.name) : nameOf(catalog, m.id);
-    lines.push(m.unit === "s" ? `${m.qty} s ${name}` : m.unit === "m" ? `${m.qty} m ${name}` : `${m.qty} ${name}`);
-  }
-  return lines;
 }
 function blocCRepsRx(wod) {
   const b = wod.blocks[0];
@@ -30839,34 +30928,6 @@ function loadOf(catalog, id, band) {
   if (!men?.length || !women?.length) return null;
   return { men: men[0], women: women[0], unit: m.load_unit ?? "kg" };
 }
-function loadPair(catalog, it, T5) {
-  const own = loadOf(catalog, it.id, it.band);
-  const extra = it.load_from ? loadOf(catalog, it.load_from, it.band) : null;
-  const parts = [];
-  if (own && own.unit === "cm") parts.push(T5.stationBox(own.men, own.women));
-  else if (own) parts.push(`@ ${own.men}/${own.women} ${own.unit}`);
-  if (extra) parts.push(`@ ${extra.men}/${extra.women} ${extra.unit}`);
-  return parts.length ? ` ${parts.join(" ")}` : "";
-}
-function stationLine(catalog, it, { t, tb }) {
-  const name = it.name ? tb(it.name) : nameOf(catalog, it.id);
-  const qty = it.unit === "reps" ? `${it.qty}` : `${it.qty} ${it.unit}`;
-  return `${qty} ${name}${loadPair(catalog, it, t.seance)}`;
-}
-function proLine(catalog, items, { t, tb }) {
-  const parts = [];
-  for (const it of items) {
-    if (!it.band) continue;
-    const m = movementById(catalog, it.id);
-    if (!m?.loads) continue;
-    if ((m.load_unit ?? "kg") === "cm") continue;
-    const men = loadsFor(m, "men_pro", it.band);
-    const women = loadsFor(m, "women_pro", it.band);
-    if (!men?.length || !women?.length) continue;
-    parts.push(`${it.name ? tb(it.name) : nameOf(catalog, it.id)} ${men[0]}/${women[0]} ${m.load_unit ?? "kg"}`);
-  }
-  return parts.length ? t.seance.pro(parts.join(" \xB7 ")) : null;
-}
 function drawRace(opt, rng) {
   const shuffle = (xs) => {
     const pool = [...xs];
@@ -30901,52 +30962,105 @@ function totalRunOf(opt) {
   if (!c) return 0;
   return Array.from({ length: c.rounds }, (_, i) => runOfRound(opt, i)).reduce((a, b) => a + b, 0);
 }
-function hybridALines(catalog, opt, iso_week, r) {
-  const { t, tb } = r;
-  const T5 = t.seance;
-  const lines = [];
-  if (opt.kind === "station" && opt.station) {
-    const { every_s, rounds: rounds2, items } = opt.station;
-    lines.push(items.length > 1 ? T5.stationRotation(fmtEvery(every_s, t.duree), rounds2) : T5.stationEvery(fmtEvery(every_s, t.duree), rounds2));
-    for (const [i, it] of items.entries()) {
-      const tag = items.length === 2 ? i === 0 ? T5.impair : T5.pair : items.length > 2 ? T5.poste(i + 1) : "";
-      lines.push(`${tag}${stationLine(catalog, it, r)}`);
-    }
-    const pro = proLine(catalog, items, r);
-    if (pro) lines.push(pro);
-    if (items.some((it) => it.band === "heavy")) {
-      lines.push(T5.chargeLourde);
-    }
-  } else if (opt.kind === "run" && opt.run) {
-    const v = opt.run.variants[iso_week % opt.run.variants.length];
-    lines.push(T5.intervallesCourse(tb(v.label), fmtRest2(v.rest_s)));
-    lines.push(T5.allureCible(tb(v.target)));
-    lines.push(T5.autresVariantes(opt.run.variants.filter((x) => x !== v).map((x) => tb(x.label)).join(" \xB7 ")));
-  } else if (opt.kind === "compromised" && opt.compromised) {
-    const { rounds: rounds2, work_s, run_m_min, run_m_max, stations, target } = opt.compromised;
-    lines.push(T5.compromiseRounds(rounds2));
-    for (let i = 0; i < rounds2; i++) {
-      const st = stations[i % stations.length];
-      const run = runOfRound(opt, i);
-      lines.push(T5.compromiseStation(i + 1, work_s, stationLine(catalog, st, r)));
-      lines.push(T5.compromiseCourse(run, tb(target)));
-    }
-    const used = Array.from({ length: rounds2 }, (_, i) => stations[i % stations.length]);
-    const pro = proLine(catalog, used, r);
-    if (pro) lines.push(pro);
-    lines.push(T5.compromiseTotal(totalRunOf(opt)));
-  } else if (opt.kind === "race" && opt.race) {
-    const { rounds: rounds2, run_m, stations, score } = opt.race;
-    lines.push(T5.enchainement(rounds2));
-    for (let i = 0; i < rounds2; i++) {
-      const st = stations[i % stations.length];
-      lines.push(T5.enchainementLigne(i + 1, run_m, stationLine(catalog, st, r)));
-    }
-    const pro = proLine(catalog, Array.from({ length: rounds2 }, (_, i) => stations[i % stations.length]), r);
-    if (pro) lines.push(pro);
-    lines.push(T5.enchainementScore(tb(score)));
+function nameOf(catalog, id) {
+  return movementById(catalog, id)?.name ?? id;
+}
+function nomsDe(catalog, ids) {
+  const out = {};
+  for (const id of ids) out[id] = nameOf(catalog, id);
+  return out;
+}
+function posteDe(catalog, it) {
+  const own = loadOf(catalog, it.id, it.band);
+  const extra = it.load_from ? loadOf(catalog, it.load_from, it.band) : null;
+  return {
+    id: it.id,
+    qty: it.qty,
+    unit: it.unit,
+    ...it.name ? { name: it.name } : {},
+    ...own && own.unit === "cm" ? { box: [own.men, own.women] } : own ? { charge: [own.men, own.women, own.unit] } : {},
+    ...extra ? { extra: [extra.men, extra.women, extra.unit] } : {}
+  };
+}
+function proDe(catalog, items) {
+  const out = [];
+  for (const it of items) {
+    if (!it.band) continue;
+    const m = movementById(catalog, it.id);
+    if (!m?.loads) continue;
+    if ((m.load_unit ?? "kg") === "cm") continue;
+    const men = loadsFor(m, "men_pro", it.band);
+    const women = loadsFor(m, "women_pro", it.band);
+    if (!men?.length || !women?.length) continue;
+    out.push({ id: it.id, ...it.name ? { name: it.name } : {}, men: men[0], women: women[0], unit: m.load_unit ?? "kg" });
   }
-  return lines;
+  return out;
+}
+function contenuDe(catalog, opt, weeks, iso_week) {
+  const movement = opt.movement;
+  const parRound = (rounds2, stations) => Array.from({ length: rounds2 }, (_, i) => stations[i % stations.length]);
+  switch (opt.kind) {
+    case "weightlifting":
+      return { kind: "weightlifting", movement, complex: opt.complex ?? [], variante: weeks === "even" ? "A" : "B", steps: opt.steps ?? [] };
+    case "strength":
+      return { kind: "strength", movement, steps: opt.steps ?? [], tempo: opt.tempo ?? null };
+    case "skill": {
+      if (!opt.skill) throw new Error(`Skill \xAB ${opt.id} \xBB sans contenu`);
+      const { reps, rounds: rounds2, every_s, progression, substitutions } = opt.skill;
+      return { kind: "skill", movement, skill: { reps, rounds: rounds2, every_s, progression: { a: progression.a, b: progression.b }, substitutions: { ...substitutions } } };
+    }
+    case "station": {
+      if (!opt.station) throw new Error(`Station \xAB ${opt.id} \xBB sans postes`);
+      const { every_s, rounds: rounds2, items } = opt.station;
+      return {
+        kind: "station",
+        movement,
+        every_s,
+        rounds: rounds2,
+        postes: items.map((it) => posteDe(catalog, it)),
+        pro: proDe(catalog, items),
+        lourd: items.some((it) => it.band === "heavy")
+      };
+    }
+    case "run": {
+      if (!opt.run) throw new Error(`Course \xAB ${opt.id} \xBB sans variantes`);
+      const v = opt.run.variants[iso_week % opt.run.variants.length];
+      return {
+        kind: "run",
+        movement,
+        variante: { label: v.label, target: v.target, rest_s: v.rest_s },
+        autres: opt.run.variants.filter((x) => x !== v).map((x) => x.label)
+      };
+    }
+    case "compromised": {
+      if (!opt.compromised) throw new Error(`Course compromise \xAB ${opt.id} \xBB sans postes`);
+      const { rounds: rounds2, work_s, stations, target } = opt.compromised;
+      const used = parRound(rounds2, stations);
+      return {
+        kind: "compromised",
+        movement,
+        rounds: rounds2,
+        work_s,
+        target,
+        tours: used.map((st, i) => ({ poste: posteDe(catalog, st), run_m: runOfRound(opt, i) })),
+        pro: proDe(catalog, used),
+        total_m: totalRunOf(opt)
+      };
+    }
+    case "race": {
+      if (!opt.race) throw new Error(`Encha\xEEnement \xAB ${opt.id} \xBB sans postes`);
+      const { rounds: rounds2, run_m, stations, score } = opt.race;
+      const used = parRound(rounds2, stations);
+      return { kind: "race", movement, rounds: rounds2, run_m, postes: used.map((st) => posteDe(catalog, st)), pro: proDe(catalog, used), score };
+    }
+  }
+}
+function idsDe(c) {
+  const ids = [c.movement];
+  if (c.kind === "weightlifting") ids.push(...c.complex);
+  if (c.kind === "station" || c.kind === "race") ids.push(...c.postes.map((p) => p.id), ...c.pro.map((p) => p.id));
+  if (c.kind === "compromised") ids.push(...c.tours.map((t) => t.poste.id), ...c.pro.map((p) => p.id));
+  return ids;
 }
 function heavyPatternOf(m) {
   if (!m) return null;
@@ -30972,7 +31086,7 @@ function editor(title, description, wod_type, block_name, sort_order, minutes, w
     tabata_rest_seconds: null
   };
 }
-function structured(kind, option_id, extra) {
+function structured(kind, option_id, extra, rendu2) {
   return {
     source: "generator",
     discipline: "session",
@@ -30985,12 +31099,13 @@ function structured(kind, option_id, extra) {
     skill: null,
     finisher: null,
     gym_reps_rx: {},
-    ...extra
+    ...extra,
+    v: 2,
+    rendu: rendu2
   };
 }
 function generateSession(params, catalog, bank, seed, langue = "fr") {
   const r = rendu(langue);
-  const T5 = r.t.seance;
   const track = params.track ?? "functional";
   const sk = skeletonForDay(bank, params.day, track, params.iso_week);
   const rng = new RNG(seed);
@@ -31125,19 +31240,25 @@ function generateSession(params, catalog, bank, seed, langue = "fr") {
   if (blocC) for (const r2 of blocC.generator.relaxations) relax.add(`c:${r2}`);
   const blocks = [];
   const gym = {};
-  const warm = [...sk.warmup.lines.map(r.tb), ""];
   let sort = 0;
   if (optA) {
     const isHybridA = optA.kind === "station" || optA.kind === "run" || optA.kind === "race";
-    const lines = isHybridA ? hybridALines(catalog, optA, params.iso_week, r) : blockALines(catalog, optA, weeks, r, langue);
     const aReps = {};
     if (optA.skill) aReps[optA.movement] = optA.skill.reps * optA.skill.rounds;
     addReps(gym, gymReps(catalog, aReps));
-    const KIND_LABEL = T5.type;
-    const title = optA.kind === "race" ? r.tb(sk.label) : `${KIND_LABEL[optA.kind]} \xB7 ${nameOf(catalog, optA.movement)}`;
+    const contenu = contenuDe(catalog, optA, weeks, params.iso_week);
+    const pA = {
+      bloc: "a",
+      label: sk.label,
+      echauffement: sk.warmup.lines,
+      timed: !!optA.timed,
+      contenu,
+      noms: nomsDe(catalog, idsDe(contenu))
+    };
+    const tA = rendreBlocSeance(pA, langue);
     const a = editor(
-      title,
-      [...warm, ...lines].join("\n"),
+      tA.title,
+      tA.description,
       optA.kind === "skill" || isHybridA ? "custom" : "strength",
       optA.timed ? "wod" : optA.kind === "skill" ? "skill" : "strength",
       sort++,
@@ -31149,8 +31270,8 @@ function generateSession(params, catalog, bank, seed, langue = "fr") {
         complex: optA.complex ?? null,
         skill: optA.skill ?? null,
         gym_reps_rx: gymReps(catalog, aReps)
-      }),
-      optA.kind === "weightlifting" ? T5.notePourcentages : optA.timed ? T5.noteChronometree : null
+      }, pA),
+      tA.notes
     );
     if (optA.timed) a.leaderboard_enabled = true;
     blocks.push(a);
@@ -31159,28 +31280,46 @@ function generateSession(params, catalog, bank, seed, langue = "fr") {
     const bReps = {};
     for (const st of optB.steps) bReps[optB.movement] = (bReps[optB.movement] ?? 0) + st.sets * st.reps;
     addReps(gym, gymReps(catalog, bReps));
+    const pB = {
+      bloc: "b",
+      movement: optB.movement,
+      ...optB.name ? { name: optB.name } : {},
+      tempo: optB.tempo ?? null,
+      steps: optB.steps,
+      noms: nomsDe(catalog, [optB.movement])
+    };
+    const tB = rendreBlocSeance(pB, langue);
     blocks.push(editor(
-      T5.titreBuilding(nameOfB(catalog, optB, r.tb)),
-      blockBLines(catalog, optB, r, langue).join("\n"),
+      tB.title,
+      tB.description,
       "strength",
       "building",
       sort++,
       optB.minutes,
-      structured("building", optB.id, { movement: optB.movement, steps: optB.steps, gym_reps_rx: gymReps(catalog, bReps) }),
-      null
+      structured("building", optB.id, { movement: optB.movement, steps: optB.steps, gym_reps_rx: gymReps(catalog, bReps) }, pB),
+      tB.notes
     ));
   }
   if (optW) {
-    const wLines = hybridALines(catalog, optW, params.iso_week, r);
+    const contenu = contenuDe(catalog, optW, weeks, params.iso_week);
+    const pW = {
+      bloc: "work",
+      label: sk.label,
+      echauffement: optA ? null : sk.warmup.lines,
+      timed: !!optW.timed,
+      contenu,
+      noms: nomsDe(catalog, idsDe(contenu))
+    };
+    const tW = rendreBlocSeance(pW, langue);
     const w = editor(
-      optW.kind === "race" ? r.tb(sk.label) : `${r.tb(sk.label)} \xB7 ${nameOf(catalog, optW.movement)}`,
-      [...optA ? [] : warm, ...wLines].join(NL),
+      tW.title,
+      tW.description,
       "custom",
       "wod",
       sort++,
       optW.minutes + (optA ? 0 : sk.warmup.minutes),
-      structured(optW.kind, optW.id, { movement: optW.movement, gym_reps_rx: {} }),
-      optW.timed ? T5.noteChronometree : null
+      structured(optW.kind, optW.id, { movement: optW.movement, gym_reps_rx: {} }, pW),
+      tW.notes
     );
     w.leaderboard_enabled = true;
     blocks.push(w);
@@ -31188,7 +31327,8 @@ function generateSession(params, catalog, bank, seed, langue = "fr") {
   if (blocC) {
     const cReps = blocCRepsRx(blocC);
     addReps(gym, gymReps(catalog, cReps));
-    const cDescription = optA ? blocC.description : [...warm, blocC.description].join("\n");
+    const echauffement = optA ? null : sk.warmup.lines;
+    const cDescription = descriptionBlocC(blocC.description, echauffement, langue);
     blocks.push({
       title: blocC.title,
       description: cDescription,
@@ -31196,7 +31336,7 @@ function generateSession(params, catalog, bank, seed, langue = "fr") {
       block_name: "wod",
       sort_order: sort++,
       minutes: choice.c + (optA ? 0 : sk.warmup.minutes),
-      wod_json: blocC,
+      wod_json: { ...blocC, rendu: { bloc: "c", echauffement } },
       time_cap_seconds: blocC.time_cap_seconds,
       rounds: blocC.rounds,
       notes: blocC.notes,
@@ -31211,27 +31351,36 @@ function generateSession(params, catalog, bank, seed, langue = "fr") {
     const fReps = {};
     for (const m of optF.movements) if (m.unit === "reps") fReps[m.id] = (fReps[m.id] ?? 0) + m.qty * optF.rounds;
     addReps(gym, gymReps(catalog, fReps));
+    const pF = {
+      bloc: "finisher",
+      rounds: optF.rounds,
+      movements: optF.movements.map((m) => ({ id: m.id, qty: m.qty, unit: m.unit, ...m.name ? { name: m.name } : {} })),
+      noms: nomsDe(catalog, optF.movements.map((m) => m.id))
+    };
+    const tF = rendreBlocSeance(pF, langue);
     blocks.push(editor(
-      T5.titreFinisher,
-      finisherLines(catalog, optF, r).join("\n"),
+      tF.title,
+      tF.description,
       "custom",
       "finisher",
       sort++,
       optF.minutes,
-      structured("finisher", optF.id, { finisher: optF, gym_reps_rx: gymReps(catalog, fReps) }),
-      null
+      structured("finisher", optF.id, { finisher: optF, gym_reps_rx: gymReps(catalog, fReps) }, pF),
+      tF.notes
     ));
   }
   if (cool) {
+    const pCool = { bloc: "cooldown", lignes: [...cool.lines] };
+    const tCool = rendreBlocSeance(pCool, langue);
     blocks.push(editor(
-      T5.titreRetourAuCalme,
-      cool.lines.map(r.tb).join(NL),
+      tCool.title,
+      tCool.description,
       "custom",
       "cooldown",
       sort++,
       cool.minutes,
-      structured("cooldown", `cooldown_${cool.minutes}`, {}),
-      null
+      structured("cooldown", `cooldown_${cool.minutes}`, {}, pCool),
+      tCool.notes
     ));
   }
   const rpe = Math.max(optA?.rpe ?? 0, optW?.rpe ?? 0, blocC?.stimulus.rpe ?? 0);
@@ -31783,6 +31932,29 @@ function feasibleFormats(discipline, intention) {
 function combinationFeasible(discipline, intention, format) {
   return feasibleFormats(discipline, intention).has(format);
 }
+
+// packages/wod-engine/src/rendu-wod-json.ts
+var WOD_JSON_VERSION = 2;
+function renderFromWodJson(wodJson, langue = "fr") {
+  if (!wodJson || typeof wodJson !== "object") return null;
+  const j = wodJson;
+  if (j.v !== WOD_JSON_VERSION || j.source !== "generator") return null;
+  if (j.discipline === "session") return j.rendu ? rendreBlocSeance(j.rendu, langue) : null;
+  if (j.discipline === "musculation") {
+    const w = wodJson;
+    const note = w.rendu ? noteStimulus(w.objective, w.rendu.stimulus, langue) : w.stimulus.note;
+    const exercises = w.blocks[0].exercises.map((e) => e.rendu ? { ...e, notes: noteExercice(e.rendu, langue) } : e);
+    const copie = { ...w, stimulus: { ...w.stimulus, note }, blocks: [{ ...w.blocks[0], exercises }] };
+    const T5 = textes(langue).musculation;
+    return { title: T5.titre(T5.cible[w.target], T5.objectif[w.objective]), description: renderMuscu(copie, langue), notes: note };
+  }
+  if (j.discipline === "functional" || j.discipline === "hybrid") {
+    const w = wodJson;
+    const r = render(w, langue);
+    return { title: r.title, description: descriptionBlocC(r.description, w.rendu?.echauffement ?? null, langue), notes: r.notes };
+  }
+  return null;
+}
 export {
   AFTER_CLASS_DURATIONS,
   BAND_CADENCE_FACTOR,
@@ -31902,6 +32074,7 @@ export {
   WEEKLY_HSPU_IDS,
   WEEKLY_PULL_IDS,
   WEIGHTED_IDS,
+  WOD_JSON_VERSION,
   afterClassFilter,
   afterClassMuscles,
   availableDurations,
@@ -31916,6 +32089,7 @@ export {
   combinationFeasible,
   correspondancesBanque,
   deathByMinute,
+  descriptionBlocC,
   en,
   engineShare,
   estimateAll,
@@ -31964,6 +32138,8 @@ export {
   muscuWeekRows,
   nameKey,
   nextIsoWeek,
+  noteExercice,
+  noteStimulus,
   parisInstant,
   parisOffsetMinutes,
   percentForReps,
@@ -31973,7 +32149,9 @@ export {
   publishAtFor,
   rackAllowed,
   render,
+  renderFromWodJson,
   renderMuscu,
+  rendreBlocSeance,
   resolveMovement,
   revealAt,
   revealFromRow,

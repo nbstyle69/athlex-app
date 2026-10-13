@@ -56,3 +56,7 @@ export type { FeasibilityRow } from './bank/feasibility';
 export { formatsOfferedFor, feasibleFormats, combinationFeasible, FORMAT_CHOICE_COVERS } from './feasibility';
 export { textes, banqueVers, correspondancesBanque, LANGUES, fr, en } from './i18n';
 export type { Langue, Textes } from './i18n';
+export { renderFromWodJson, WOD_JSON_VERSION } from './rendu-wod-json';
+export { rendreBlocSeance, descriptionBlocC } from './rendu-seance';
+export type { RenduBlocSeance, RenduBlocC, ContenuBloc, PosteRendu, ProRendu, TexteBloc } from './rendu-seance';
+export { noteExercice, noteStimulus } from './muscu';

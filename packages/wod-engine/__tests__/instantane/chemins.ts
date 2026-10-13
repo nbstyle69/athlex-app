@@ -27,6 +27,31 @@ export interface Sortie {
   sortie: unknown;
 }
 
+/** Un objet que le moteur fait enregistrer : son `wod_json` et ses trois colonnes de texte. */
+export interface Stocke { json: unknown; title: string; description: string; notes: string | null }
+
+type AvecTexte = { title: string; description: string; notes: string | null };
+const stocke = (json: unknown, t: AvecTexte): Stocke => ({ json, title: t.title, description: t.description, notes: t.notes });
+
+/**
+ * Objets enregistrés d'une sortie (M3) : le WOD ou la séance Musculation lui-même, chaque
+ * bloc d'une séance, chaque jour d'une semaine Musculation, chaque ligne `box_wods` écrite
+ * par la programmation. Une entrée en erreur n'en a aucun.
+ */
+export function stockes(nom: string, sortie: unknown): Stocke[] {
+  if (!sortie || typeof sortie !== 'object' || 'erreur' in sortie) return [];
+  switch (nom) {
+    case 'seance-functional': case 'seance-hybrid':
+      return (sortie as GeneratedWeek).sessions.flatMap((s) => s.blocks.map((b) => stocke(b.wod_json, b)));
+    case 'semaine-musculation':
+      return (sortie as GeneratedMuscuWeek).days.map((d) => stocke(d.wod, d.wod));
+    case 'programmation':
+      return (sortie as { rows: BoxWodInsert[] }).rows.map((r) => stocke(r.wod_json, r));
+    default:
+      return [stocke(sortie, sortie as AvecTexte)];
+  }
+}
+
 export interface Chemin {
   nom: string;
   /** nombre d'entrées rejouées */
