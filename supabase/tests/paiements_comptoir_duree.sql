@@ -26,6 +26,12 @@
 --   42 sans box, invitation encaissée à consommer (création de l'adhésion)
 --   43 A, inactif avec une fin d'accès lointaine, invitation encaissée à
 --      consommer (mise à jour, la fin la plus tardive l'emporte)
+--   Formule absente ou à 0 € (aucune période, aucune fin, rien au journal) :
+--   50 A, a0, invité avec compte, sans fin ; 51 A, sans formule, invité avec
+--   compte, fin dans 20 jours (inchangée) ; 44 sans box, invitation a0
+--   encaissée à consommer ; 45 A, sans formule, fin dans 50 jours, invitation
+--   sans formule encaissée à consommer (fin inchangée).
+--   Invitations sans compte : 05 (a0) et 06 (sans formule).
 -- Contrôles :
 --   S  structure : colonnes, défauts, contraintes, déclencheurs, une seule
 --      version de chaque fonction redéfinie, SECURITY DEFINER et search_path,
@@ -41,11 +47,13 @@
 --      coach), anon, durée invalide, verrou FOR UPDATE ;
 --   I  mark_box_invitation_paid : sans compte (fin sur l'invitation), avec
 --      compte (fin sur le membre, prolongation), renouvellement désactivé sans
---      effet, déjà encaissée, appel à un argument ;
+--      effet, déjà encaissée, appel à un argument ; formule à 0 € ou absente,
+--      avec et sans compte : ni période, ni fin, ni journal, membre activé ;
 --   K  consommation : la fin de l'invitation est recopiée (insertion, et mise
---      à jour sans raccourcir) ;
+--      à jour sans raccourcir) ; une invitation à 0 € ou sans formule ne pose
+--      aucune fin ;
 --   C  create_box_invitation déjà encaissée : période et journal ; non
---      encaissée et mode Stripe : rien ;
+--      encaissée, mode Stripe, formule à 0 € ou absente : rien ;
 --   L  verrous : période du journal non modifiable (même service_role et
 --      superutilisateur), période complète ou absente ; cash_access_until et
 --      allow_counter_renewal non écrits par authenticated, écrits par le
@@ -67,10 +75,10 @@ SET LOCAL search_path = "$user", public, extensions;
 
 INSERT INTO auth.users (id)
 SELECT ('00000000-0000-4000-a9c1-0000000000' || s)::uuid
-  FROM unnest(ARRAY['e0','e2','e3','e4','e5','10','11','12','13','14','15','20','21','30','40','41','42','43']) s;
+  FROM unnest(ARRAY['e0','e2','e3','e4','e5','10','11','12','13','14','15','20','21','30','40','41','42','43','44','45','50','51']) s;
 INSERT INTO public.profiles (id, email, username)
 SELECT ('00000000-0000-4000-a9c1-0000000000' || s)::uuid, 'pcd-' || s || '@test.invalid', 'pcd_' || s
-  FROM unnest(ARRAY['e0','e2','e3','e4','e5','10','11','12','13','14','15','20','21','30','40','41','42','43']) s;
+  FROM unnest(ARRAY['e0','e2','e3','e4','e5','10','11','12','13','14','15','20','21','30','40','41','42','43','44','45','50','51']) s;
 INSERT INTO public.boxes (id, name, invite_code, owner_id, stripe_account_id, stripe_onboarding_complete) VALUES
   ('00000000-0000-4000-b9c1-000000000001', 'Box comptoir A', 'PCDA', '00000000-0000-4000-a9c1-0000000000e0', 'acct_pcd_a', true),
   ('00000000-0000-4000-b9c1-000000000002', 'Box comptoir B', 'PCDB', '00000000-0000-4000-a9c1-0000000000e3', NULL, false),
@@ -109,7 +117,10 @@ SELECT ('00000000-0000-4000-b9c1-00000000000' || b)::uuid, ('00000000-0000-4000-
     ('3', '30', 'member', 'active',   'c1', 'active',       NULL,      2),
     ('1', '40', 'member', 'inactive', 'a1', 'pending_cash', NULL,      NULL),
     ('1', '41', 'member', 'inactive', 'a1', 'pending_cash', NULL,      20),
-    ('1', '43', 'member', 'inactive', 'a1', 'pending_cash', NULL,      200)
+    ('1', '43', 'member', 'inactive', 'a1', 'pending_cash', NULL,      200),
+    ('1', '50', 'member', 'inactive', 'a0', 'pending_cash', NULL,      NULL),
+    ('1', '51', 'member', 'inactive', NULL, 'pending_cash', NULL,      20),
+    ('1', '45', 'member', 'inactive', NULL, 'pending_cash', NULL,      50)
   ) v(b, m, r, st, p, ss, sub, fin);
 -- Journal d'avant 20270151 (sans période) : une adhésion pour 14, un programme pour 15.
 INSERT INTO public.programs (id, title, box_id, owner_id, price_cents, type, invite_code)
@@ -131,19 +142,27 @@ INSERT INTO public.box_cash_payments (id, box_id, member_id, plan_id, plan_name,
 INSERT INTO public.box_invitations (id, box_id, email, plan_id, payment_mode, cash_collected, token_hash, status,
                                     expires_at, accepted_by, cash_access_until)
 SELECT ('00000000-0000-4000-d9c1-0000000000' || i)::uuid, '00000000-0000-4000-b9c1-000000000001', 'pcd-inv-' || i || '@test.invalid',
-       '00000000-0000-4000-c9c1-0000000000a1', 'box', enc, encode(sha256(('pcd-tok-' || i)::bytea), 'hex'), st,
+       CASE WHEN pl IS NULL THEN NULL ELSE ('00000000-0000-4000-c9c1-0000000000' || pl)::uuid END,
+       'box', enc, encode(sha256(('pcd-tok-' || i)::bytea), 'hex'), st,
        now() + interval '7 days', CASE WHEN acc IS NULL THEN NULL ELSE ('00000000-0000-4000-a9c1-0000000000' || acc)::uuid END,
        CASE WHEN fin IS NULL THEN NULL ELSE (now() AT TIME ZONE 'Europe/Paris')::date + fin END
   FROM (VALUES
-    ('01', false, 'pending',  NULL, NULL::int),
-    ('40', false, 'accepted', '40', NULL),
-    ('41', false, 'accepted', '41', NULL),
-    ('04', true,  'pending',  NULL, NULL),
-    ('42', true,  'pending',  NULL, 30),
-    ('43', true,  'pending',  NULL, 30)
-  ) v(i, enc, st, acc, fin);
+    ('01', false, 'pending',  NULL, NULL::int, 'a1'),
+    ('40', false, 'accepted', '40', NULL,      'a1'),
+    ('41', false, 'accepted', '41', NULL,      'a1'),
+    ('04', true,  'pending',  NULL, NULL,      'a1'),
+    ('42', true,  'pending',  NULL, 30,        'a1'),
+    ('43', true,  'pending',  NULL, 30,        'a1'),
+    ('05', false, 'pending',  NULL, NULL,      'a0'),
+    ('06', false, 'pending',  NULL, NULL,      NULL),
+    ('50', false, 'accepted', '50', NULL,      'a0'),
+    ('51', false, 'accepted', '51', NULL,      NULL),
+    ('44', true,  'pending',  NULL, NULL,      'a0'),
+    ('45', true,  'pending',  NULL, NULL,      NULL)
+  ) v(i, enc, st, acc, fin, pl);
 UPDATE public.box_invitations SET email = 'pcd-' || right(id::text, 2) || '@test.invalid'
- WHERE id IN ('00000000-0000-4000-d9c1-000000000042', '00000000-0000-4000-d9c1-000000000043');
+ WHERE id IN ('00000000-0000-4000-d9c1-000000000042', '00000000-0000-4000-d9c1-000000000043',
+              '00000000-0000-4000-d9c1-000000000044', '00000000-0000-4000-d9c1-000000000045');
 
 CREATE FUNCTION pg_temp.u(s text) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$ SELECT ('00000000-0000-4000-a9c1-0000000000' || s)::uuid $$;
 CREATE FUNCTION pg_temp.b(n int) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$ SELECT ('00000000-0000-4000-b9c1-00000000000' || n)::uuid $$;
@@ -227,6 +246,11 @@ CREATE FUNCTION pg_temp.payer(i text, mois int, m text DEFAULT NULL) RETURNS tex
                    || '':'' || coalesce((SELECT c.period_months || '':'' || coalesce(right(c.member_id::text, 2), ''-'') || '':'' || c.amount_cents FROM public.box_cash_payments c WHERE c.invitation_id = i.id), ''-'')
               FROM public.box_invitations i WHERE i.id = %L', pg_temp.u(m), pg_temp.inv(i)));
 $$;
+-- Paiement de l'invitation `i` par G, puis « statut:fin » du membre `m`.
+CREATE FUNCTION pg_temp.payer_statut(i text, m text) RETURNS text LANGUAGE sql AS $$
+  SELECT pg_temp.lecture(pg_temp.jouer('e0', format('SELECT public.mark_box_invitation_paid(%L)::text', pg_temp.inv(i)),
+    format('SELECT status || '':'' || coalesce(cash_access_until::text, ''-'') FROM public.box_members WHERE box_id = %L AND member_id = %L', pg_temp.b(1), pg_temp.u(m))));
+$$;
 -- Consommation de l'invitation `i` par le compte `m`. Rend « statut:fin du membre ».
 CREATE FUNCTION pg_temp.consommer(i text, m text) RETURNS text LANGUAGE sql AS $$
   SELECT pg_temp.lecture(pg_temp.jouer('admin',
@@ -235,10 +259,10 @@ CREATE FUNCTION pg_temp.consommer(i text, m text) RETURNS text LANGUAGE sql AS $
 $$;
 -- Création par G d'une invitation encaissée (`mois` NULL : paramètre omis).
 -- Rend « fin invitation:mois au journal:montant » .
-CREATE FUNCTION pg_temp.creer(email text, mode text, encaissee boolean, mois int) RETURNS text LANGUAGE sql AS $$
+CREATE FUNCTION pg_temp.creer(email text, mode text, encaissee boolean, mois int, formule text DEFAULT 'a1') RETURNS text LANGUAGE sql AS $$
   SELECT pg_temp.lecture(pg_temp.jouer('e0',
     format('SELECT public.create_box_invitation(p_box_id => %L, p_email => %L, p_plan_id => %L, p_payment_mode => %L, p_cash_collected => %L%s)->>''ok''',
-           pg_temp.b(1), email, '00000000-0000-4000-c9c1-0000000000a1', mode, encaissee, CASE WHEN mois IS NULL THEN '' ELSE ', p_cash_months => ' || mois END),
+           pg_temp.b(1), email, CASE WHEN formule IS NULL THEN NULL ELSE '00000000-0000-4000-c9c1-0000000000' || formule END, mode, encaissee, CASE WHEN mois IS NULL THEN '' ELSE ', p_cash_months => ' || mois END),
     format('SELECT coalesce(i.cash_access_until::text, ''-'') || '':'' || coalesce((SELECT c.period_months || '':'' || c.amount_cents || '':'' || c.access_from || '':'' || c.access_until FROM public.box_cash_payments c WHERE c.invitation_id = i.id), ''-'')
               FROM public.box_invitations i WHERE i.email = %L', email)));
 $$;
@@ -290,12 +314,12 @@ BEGIN
   SELECT string_agg(a.fn || ' ' || md5(pg_temp.def(a.fn)), ', ') INTO v
   FROM (VALUES
     ('public.record_member_cash_payment(uuid,integer)', '7789384fc790ab1d7b42c70df8e96424'),
-    ('public.mark_box_invitation_paid(uuid,integer)', '95159a1d9d56adc913b19041b24dcab8'),
+    ('public.mark_box_invitation_paid(uuid,integer)', 'd4d61e9755478b4c23db84f54a43bf3b'),
     ('public._log_box_cash_payment(uuid,uuid,uuid,uuid,text,integer,date,date,uuid,integer,text)', 'd2e9ef2e96701fbf9d2e1e62e6c72672'),
     ('public.reject_cash_payment_rewrite()', 'ae7c75d48949a602b6e6994bbd2aade6'),
     ('internal.garder_facturation_membre()', '483768906753de48dd9b48454f877f23'),
     ('public._consume_box_invitation(text,uuid)', '5d1e2581644640a3bb2f86c14e85a2dd'),
-    ('public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)', '625332c055b08199421cf0eb37cb90b0'),
+    ('public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)', '8b090621d461d499b05afe334d9a8f8f'),
     ('internal.periode_comptoir(date,integer)', '946784e27c0e4c50feec61c0bc456dbb'),
     ('internal.box_vend_en_ligne(uuid)', 'f5d67d93a900664e3297742237f91d6f'),
     ('internal.garder_reglage_comptoir_box()', '36b6becbd14b979fc34b841bc271d4c2')
@@ -391,6 +415,26 @@ BEGIN
     RAISE EXCEPTION 'I : déjà encaissée (%)', v;
   END IF;
   IF pg_temp.code(pg_temp.payer('01', 2)) <> 'INVALID_DURATION' THEN RAISE EXCEPTION 'I : durée invalide acceptée'; END IF;
+  -- Formule à 0 € ou absente : ni période, ni fin, ni journal ; le membre est activé.
+  FOR v_cas IN SELECT * FROM (VALUES
+    ('formule à 0 €, sans compte',      '05', NULL, '-:-:-'),
+    ('sans formule, sans compte',       '06', NULL, '-:-:-'),
+    ('formule à 0 €, avec compte',      '50', '50', '-:-:-'),
+    ('sans formule, avec compte et fin', '51', '51', '-:' || (t + 20) || ':-')
+  ) x(cas, i, m, attendu) LOOP
+    v := pg_temp.payer(v_cas.i, 3, v_cas.m);
+    IF pg_temp.lecture(v) IS DISTINCT FROM v_cas.attendu THEN RAISE EXCEPTION 'I : % → % (attendu %)', v_cas.cas, pg_temp.lecture(v), v_cas.attendu; END IF;
+    IF (split_part(v, '|', 1)::jsonb ->> 'ok') <> 'true' OR (split_part(v, '|', 1)::jsonb -> 'access_from') <> 'null'::jsonb
+       OR (split_part(v, '|', 1)::jsonb -> 'access_until') <> 'null'::jsonb OR (split_part(v, '|', 1)::jsonb -> 'payment_id') <> 'null'::jsonb THEN
+      RAISE EXCEPTION 'I : % → retour %', v_cas.cas, split_part(v, '|', 1);
+    END IF;
+  END LOOP;
+  IF pg_temp.payer_statut('50', '50') IS DISTINCT FROM 'active:-' OR pg_temp.payer_statut('51', '51') IS DISTINCT FROM 'active:' || (t + 20) THEN
+    RAISE EXCEPTION 'I : membre gratuit non activé ou fin modifiée (%, %)', pg_temp.payer_statut('50', '50'), pg_temp.payer_statut('51', '51');
+  END IF;
+  v := pg_temp.lecture(pg_temp.jouer('e0', format('SELECT public.mark_box_invitation_paid(%L)::text', pg_temp.inv('05')),
+         format('SELECT cash_collected::text FROM public.box_invitations WHERE id = %L', pg_temp.inv('05'))));
+  IF v IS DISTINCT FROM 'true' THEN RAISE EXCEPTION 'I : invitation gratuite non notée encaissée (%)', v; END IF;
   IF pg_temp.code(pg_temp.jouer('e3', format('SELECT public.mark_box_invitation_paid(%L)::text', pg_temp.inv('01')))) <> 'FORBIDDEN' THEN
     RAISE EXCEPTION 'I : gérant d''une autre box';
   END IF;
@@ -400,6 +444,10 @@ BEGIN
   IF v IS DISTINCT FROM 'active:' || (t + 30) THEN RAISE EXCEPTION 'K : création de l''adhésion (%)', v; END IF;
   v := pg_temp.consommer('43', '43');
   IF v IS DISTINCT FROM 'active:' || (t + 200) THEN RAISE EXCEPTION 'K : mise à jour, fin raccourcie (%)', v; END IF;
+  v := pg_temp.consommer('44', '44');
+  IF v IS DISTINCT FROM 'active:-' THEN RAISE EXCEPTION 'K : invitation à 0 €, une fin est posée (%)', v; END IF;
+  v := pg_temp.consommer('45', '45');
+  IF v IS DISTINCT FROM 'active:' || (t + 50) THEN RAISE EXCEPTION 'K : invitation sans formule, fin modifiée (%)', v; END IF;
 
   -- ── C : création d'une invitation déjà encaissée ───────────────────────────
   v := pg_temp.creer('pcd-c1@test.invalid', 'box', true, 3);
@@ -411,6 +459,10 @@ BEGIN
   v := pg_temp.creer('pcd-c4@test.invalid', 'stripe', true, 1);
   IF v IS DISTINCT FROM '-:-' THEN RAISE EXCEPTION 'C : mode Stripe (%)', v; END IF;
   IF pg_temp.code(pg_temp.creer('pcd-c5@test.invalid', 'box', true, 6)) <> 'INVALID_DURATION' THEN RAISE EXCEPTION 'C : durée invalide acceptée'; END IF;
+  v := pg_temp.creer('pcd-c6@test.invalid', 'box', true, 3, 'a0');
+  IF v IS DISTINCT FROM '-:-' THEN RAISE EXCEPTION 'C : encaissée à 0 € (%)', v; END IF;
+  v := pg_temp.creer('pcd-c7@test.invalid', 'box', true, 3, NULL);
+  IF v IS DISTINCT FROM '-:-' THEN RAISE EXCEPTION 'C : encaissée sans formule (%)', v; END IF;
 
   -- ── L : verrous ────────────────────────────────────────────────────────────
   -- La clé serveur n'a pas l'UPDATE du journal ; le verrou, lui, tient pour
@@ -562,10 +614,10 @@ BEGIN
 
   -- I : fin sur l'invitation, fin sur le membre, base de la prolongation.
   d := pg_temp.def(k);
-  PERFORM pg_temp.muter(k, 'WHEN r.accepted_by IS NULL THEN v_until ELSE', 'WHEN r.accepted_by IS NULL THEN NULL ELSE');
+  PERFORM pg_temp.muter(k, 'WHEN v_payante AND r.accepted_by IS NULL THEN v_until ELSE', 'WHEN v_payante AND r.accepted_by IS NULL THEN NULL ELSE');
   IF pg_temp.lecture(pg_temp.payer('01', 1)) = pg_temp.fin(t, 1) || ':-:1:-:5000' THEN RAISE EXCEPTION 'M : I fin sur l''invitation ne prouve rien'; END IF;
   EXECUTE d;
-  PERFORM pg_temp.muter(k, E'      cash_access_until   = v_until\n', E'      cash_access_until   = cash_access_until\n');
+  PERFORM pg_temp.muter(k, 'CASE WHEN v_payante THEN v_until ELSE cash_access_until END', 'cash_access_until');
   IF pg_temp.lecture(pg_temp.payer('40', 3, '40')) = '-:' || pg_temp.fin(t, 3) || ':3:40:15000' THEN RAISE EXCEPTION 'M : I fin sur le membre ne prouve rien'; END IF;
   EXECUTE d;
   PERFORM pg_temp.muter(k, 'FROM internal.periode_comptoir(v_fin, p_months)', 'FROM internal.periode_comptoir(NULL, p_months)');
@@ -573,6 +625,20 @@ BEGIN
   EXECUTE d;
   PERFORM pg_temp.muter(k, 'IF r.cash_collected THEN', 'IF false THEN');
   IF split_part(pg_temp.payer('04', 1), '|', 2) = '-:-:-' THEN RAISE EXCEPTION 'M : I déjà encaissée ne prouve rien'; END IF;
+  EXECUTE d;
+  -- Formule à 0 € : la condition de prix retirée, une fin apparaît.
+  PERFORM pg_temp.muter(k, 'mp.id = r.plan_id AND mp.price_cents > 0', 'mp.id = r.plan_id');
+  IF pg_temp.lecture(pg_temp.payer('05', 3)) = '-:-:-' THEN RAISE EXCEPTION 'M : I 0 €, sans compte, ne prouve rien'; END IF;
+  IF pg_temp.lecture(pg_temp.payer('50', 3, '50')) = '-:-:-' THEN RAISE EXCEPTION 'M : I 0 €, avec compte, ne prouve rien'; END IF;
+  EXECUTE d;
+  -- Sans formule : toute invitation tenue pour payante, une fin apparaît.
+  PERFORM pg_temp.muter(k, 'v_payante := EXISTS (SELECT 1 FROM public.membership_plans mp WHERE mp.id = r.plan_id AND mp.price_cents > 0);', 'v_payante := true;');
+  IF pg_temp.lecture(pg_temp.payer('06', 3)) = '-:-:-' THEN RAISE EXCEPTION 'M : I sans formule, sans compte, ne prouve rien'; END IF;
+  IF pg_temp.lecture(pg_temp.payer('51', 3, '51')) = '-:' || (t + 20) || ':-' THEN RAISE EXCEPTION 'M : I sans formule, avec compte, ne prouve rien'; END IF;
+  EXECUTE d;
+  -- La fin du membre est laissée telle quelle sans période.
+  PERFORM pg_temp.muter(k, 'cash_access_until   = CASE WHEN v_payante THEN v_until ELSE cash_access_until END', 'cash_access_until   = v_until');
+  IF pg_temp.payer_statut('51', '51') = 'active:' || (t + 20) THEN RAISE EXCEPTION 'M : I fin du membre inchangée ne prouve rien'; END IF;
   EXECUTE d;
 
   -- K : recopie à la consommation (insertion, puis mise à jour sans raccourcir).
@@ -582,15 +648,26 @@ BEGIN
   EXECUTE d;
   PERFORM pg_temp.muter('public._consume_box_invitation(text,uuid)', 'THEN greatest(cash_access_until, r.cash_access_until)', 'THEN r.cash_access_until');
   IF pg_temp.consommer('43', '43') = 'active:' || (t + 200) THEN RAISE EXCEPTION 'M : K fin la plus tardive ne prouve rien'; END IF;
+  IF pg_temp.consommer('45', '45') = 'active:' || (t + 50) THEN RAISE EXCEPTION 'M : K sans formule, fin inchangée, ne prouve rien'; END IF;
+  EXECUTE d;
+  PERFORM pg_temp.muter('public._consume_box_invitation(text,uuid)', 'AND r.cash_collected THEN r.cash_access_until END', 'AND r.cash_collected THEN coalesce(r.cash_access_until, current_date) END');
+  IF pg_temp.consommer('44', '44') = 'active:-' THEN RAISE EXCEPTION 'M : K 0 €, aucune fin, ne prouve rien'; END IF;
   EXECUTE d;
 
   -- C : la création déjà encaissée journalise et pose la période.
   d := pg_temp.def('public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)');
-  PERFORM pg_temp.muter('public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)', E'  IF v_cash THEN\n    PERFORM', E'  IF false THEN\n    PERFORM');
+  PERFORM pg_temp.muter('public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)', E'  IF v_payante THEN\n    PERFORM', E'  IF false THEN\n    PERFORM');
   IF pg_temp.creer('pcd-m1@test.invalid', 'box', true, 3) = pg_temp.fin(t, 3) || ':3:15000:' || t || ':' || pg_temp.fin(t, 3) THEN RAISE EXCEPTION 'M : C journal ne prouve rien'; END IF;
   EXECUTE d;
   PERFORM pg_temp.muter('public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)', E'    v_due_date,\n    v_until\n', E'    v_due_date,\n    NULL\n');
   IF pg_temp.creer('pcd-m2@test.invalid', 'box', true, 3) = pg_temp.fin(t, 3) || ':3:15000:' || t || ':' || pg_temp.fin(t, 3) THEN RAISE EXCEPTION 'M : C fin sur l''invitation ne prouve rien'; END IF;
+  EXECUTE d;
+  PERFORM pg_temp.muter('public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)', 'mp.id = p_plan_id AND mp.price_cents > 0', 'mp.id = p_plan_id');
+  IF pg_temp.creer('pcd-m3@test.invalid', 'box', true, 3, 'a0') = '-:-' THEN RAISE EXCEPTION 'M : C 0 € ne prouve rien'; END IF;
+  EXECUTE d;
+  PERFORM pg_temp.muter('public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)',
+                        'v_payante := v_cash AND EXISTS (SELECT 1 FROM public.membership_plans mp WHERE mp.id = p_plan_id AND mp.price_cents > 0);', 'v_payante := v_cash;');
+  IF pg_temp.creer('pcd-m4@test.invalid', 'box', true, 3, NULL) = '-:-' THEN RAISE EXCEPTION 'M : C sans formule ne prouve rien'; END IF;
   EXECUTE d;
 
   -- L : chaque colonne du verrou, la contrainte de période, les deux gardes.
@@ -659,12 +736,12 @@ BEGIN
         'internal.periode_comptoir(date,integer)', 'internal.box_vend_en_ligne(uuid)']) f)
      IS DISTINCT FROM (SELECT string_agg(h, ',' ORDER BY f) FROM (VALUES
         ('public.record_member_cash_payment(uuid,integer)', '7789384fc790ab1d7b42c70df8e96424'),
-        ('public.mark_box_invitation_paid(uuid,integer)', '95159a1d9d56adc913b19041b24dcab8'),
+        ('public.mark_box_invitation_paid(uuid,integer)', 'd4d61e9755478b4c23db84f54a43bf3b'),
         ('public._log_box_cash_payment(uuid,uuid,uuid,uuid,text,integer,date,date,uuid,integer,text)', 'd2e9ef2e96701fbf9d2e1e62e6c72672'),
         ('public.reject_cash_payment_rewrite()', 'ae7c75d48949a602b6e6994bbd2aade6'),
         ('internal.garder_facturation_membre()', '483768906753de48dd9b48454f877f23'),
         ('public._consume_box_invitation(text,uuid)', '5d1e2581644640a3bb2f86c14e85a2dd'),
-        ('public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)', '625332c055b08199421cf0eb37cb90b0'),
+        ('public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)', '8b090621d461d499b05afe334d9a8f8f'),
         ('internal.periode_comptoir(date,integer)', '946784e27c0e4c50feec61c0bc456dbb'),
         ('internal.box_vend_en_ligne(uuid)', 'f5d67d93a900664e3297742237f91d6f')) x(f, h))
      OR (SELECT md5(pg_get_triggerdef(oid)) FROM pg_trigger WHERE tgname = 'trg_box_members_garde_facturation') <> '3aec5ba9a7b7ba60ea9ec4423fbcf71e'

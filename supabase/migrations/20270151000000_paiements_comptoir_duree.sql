@@ -79,6 +79,9 @@
 --    désormais la période sur l'invitation et journalise l'encaissement, comme
 --    mark_box_invitation_paid. create_box_invitations_bulk n'est pas touchée :
 --    elle crée toujours cash_collected = false.
+--    Pour 6 et 7 : invitation sans formule ou à formule à 0 € = aucune
+--    période, aucune date de fin, rien au journal (spec P1) ; l'encaissement
+--    est noté (cash_collected) et le membre activé comme avant.
 -- 8. public._consume_box_invitation : pour une invitation encaissée au
 --    comptoir, la fin d'accès de l'invitation est recopiée sur le membre (la
 --    plus tardive des deux en mise à jour). Rien d'autre ne change.
@@ -508,6 +511,7 @@ DECLARE
   v_fin    date;
   v_from   date;
   v_until  date;
+  v_payante boolean;
 BEGIN
   SELECT * INTO r FROM public.box_invitations WHERE id = p_invitation_id FOR UPDATE;
 
@@ -526,18 +530,24 @@ BEGIN
     RETURN jsonb_build_object('ok', true, 'already_collected', true);
   END IF;
 
+  -- Formule absente ou à 0 € : aucune période, aucune date de fin (spec P1),
+  -- et rien au journal (_log_box_cash_payment ne journalise pas un zéro).
+  v_payante := EXISTS (SELECT 1 FROM public.membership_plans mp WHERE mp.id = r.plan_id AND mp.price_cents > 0);
+
   -- Premier paiement : toujours permis, même renouvellement au comptoir
   -- désactivé. La période part de la fin d'accès du membre s'il a un compte.
-  IF r.accepted_by IS NOT NULL THEN
-    SELECT cash_access_until INTO v_fin FROM public.box_members
-     WHERE box_id = r.box_id AND member_id = r.accepted_by FOR UPDATE;
+  IF v_payante THEN
+    IF r.accepted_by IS NOT NULL THEN
+      SELECT cash_access_until INTO v_fin FROM public.box_members
+       WHERE box_id = r.box_id AND member_id = r.accepted_by FOR UPDATE;
+    END IF;
+    SELECT p.access_from, p.access_until INTO v_from, v_until
+      FROM internal.periode_comptoir(v_fin, p_months) p;
   END IF;
-  SELECT p.access_from, p.access_until INTO v_from, v_until
-    FROM internal.periode_comptoir(v_fin, p_months) p;
 
   UPDATE public.box_invitations SET
     cash_collected    = true,
-    cash_access_until = CASE WHEN r.accepted_by IS NULL THEN v_until ELSE cash_access_until END
+    cash_access_until = CASE WHEN v_payante AND r.accepted_by IS NULL THEN v_until ELSE cash_access_until END
   WHERE id = r.id;
 
   v_logged := public._log_box_cash_payment(
@@ -551,7 +561,7 @@ BEGIN
       status              = CASE WHEN status = 'banned' THEN status ELSE 'active' END,
       subscription_status = CASE WHEN status = 'banned' THEN subscription_status ELSE 'active' END,
       payment_method_type = 'cash',
-      cash_access_until   = v_until
+      cash_access_until   = CASE WHEN v_payante THEN v_until ELSE cash_access_until END
     WHERE box_id = r.box_id AND member_id = r.accepted_by;
   END IF;
 
@@ -588,6 +598,7 @@ DECLARE
   v_due_date date;
   v_today   date := (now() AT TIME ZONE 'Europe/Paris')::date;
   v_cash    boolean := coalesce(p_payment_mode, 'box') = 'box' AND coalesce(p_cash_collected, false);
+  v_payante boolean;
   v_from    date;
   v_until   date;
 BEGIN
@@ -654,8 +665,9 @@ BEGIN
 
   -- Déjà encaissée à la création (20270151) : même période et même journal
   -- que mark_box_invitation_paid, la fin d'accès attend le compte sur
-  -- l'invitation.
-  IF v_cash THEN
+  -- l'invitation. Formule absente ou à 0 € : ni période ni journal (spec P1).
+  v_payante := v_cash AND EXISTS (SELECT 1 FROM public.membership_plans mp WHERE mp.id = p_plan_id AND mp.price_cents > 0);
+  IF v_payante THEN
     SELECT p.access_from, p.access_until INTO v_from, v_until
       FROM internal.periode_comptoir(NULL, p_cash_months) p;
   END IF;
@@ -678,7 +690,7 @@ BEGIN
   )
   RETURNING id INTO v_id;
 
-  IF v_cash THEN
+  IF v_payante THEN
     PERFORM public._log_box_cash_payment(
       p_box_id, NULL, v_id, p_plan_id, 'invitation', p_cash_months, v_from, v_until
     );
