@@ -17,6 +17,7 @@ const mockScore = {
   submitted_at: '2026-10-01T00:00:00Z',
   tw: { title: 'WOD 1', type: 'AMRAP', movements: ['12 min AMRAP', '10 Thrusters', '10 Sandbag cleans'] },
 };
+const SCORE_INITIAL = { ...mockScore, tw: { ...mockScore.tw } };
 
 jest.mock('@react-navigation/native', () => ({ useNavigation: () => ({ goBack: jest.fn(), navigate: jest.fn() }) }));
 jest.mock('../context/AuthContext', () => {
@@ -68,8 +69,12 @@ const press = async (r: TestRenderer.ReactTestRenderer, text: string, exact = fa
 };
 
 beforeAll(async () => { await i18n.changeLanguage('fr'); });
+beforeEach(() => {
+  mockWrites.length = 0;
+  Object.assign(mockScore, SCORE_INITIAL, { tw: { ...SCORE_INITIAL.tw } });
+});
 
-it('valider un AMRAP « 12 min AMRAP / 10 Thrusters / 10 Sandbag cleans » à 40 reps : seul thruster est écrit', async () => {
+async function valider() {
   const alerts = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   let r!: TestRenderer.ReactTestRenderer;
   await act(async () => { r = TestRenderer.create(<BOTournamentScreen />); });
@@ -79,8 +84,20 @@ it('valider un AMRAP « 12 min AMRAP / 10 Thrusters / 10 Sandbag cleans » à 40
 
   const confirm = alerts.mock.calls[0][2]!.find(b => b.text === i18n.t('bo.tournament.validate'))!;
   await act(async () => { await confirm.onPress!(); });
-
-  const reps = mockWrites.filter(w => w.table === 'movement_rep_counts');
-  expect(reps.map(w => [w.op, w.row.movement_key, w.row.total_reps])).toEqual([['insert', 'thruster', 20]]);
+  alerts.mockRestore();
   expect(mockWrites.some(w => w.table === 'tournament_scores' && w.row.status === 'validated')).toBe(true);
+  return mockWrites.filter(w => w.table === 'movement_rep_counts')
+    .map(w => [w.op, w.row.movement_key, w.row.unit, w.row.total_reps]);
+}
+
+it('valider un AMRAP « 12 min AMRAP / 10 Thrusters / 10 Sandbag cleans » à 40 reps : seul thruster est écrit', async () => {
+  expect(await valider()).toEqual([['insert', 'thruster', 'reps', 20]]);
+});
+
+it('une distance n’est jamais créditée en points : « 200m Row » reste en mètres', async () => {
+  // Score saisi en points (2 tours de 14 = 28) ; le crédit du back-office, inchangé,
+  // répartit le total sur les quantités écrites (200 m + 12) : 28 m de rameur, en mètres.
+  mockScore.score_value = '28';
+  mockScore.tw.movements = ['12 min AMRAP', '200m Row', '12 Burpees'];
+  expect(await valider()).toEqual([['insert', 'row', 'm', 28]]);
 });

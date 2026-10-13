@@ -59,14 +59,29 @@ export function isFormatHeaderLine(line: string): boolean {
 }
 
 const DURATION_LINE = /^\d+(?:\s*\/\s*\d+)?\s*(?:s|sec|secs|sec\.|")\s+\S/i;
-const DISTANCE_LINE = /^\d+(?:[.,]\d+)?(?:\s*\/\s*\d+(?:[.,]\d+)?)?\s*(?:m|km|mi|miles?|yds?|yards?|meters?|metres?|mètres?)\b/i;
+const DISTANCE_LINE = /^(\d+(?:[.,]\d+)?)(?:\s*\/\s*\d+(?:[.,]\d+)?)?\s*(m|km|mi|miles?|yds?|yards?|meters?|metres?|mètres?)\b/i;
+const METERS_PER_UNIT: Record<string, number> = {
+  km: 1000, mi: 1609.344, mile: 1609.344, miles: 1609.344, yd: 0.9144, yds: 0.9144, yard: 0.9144, yards: 0.9144,
+};
+const SHUTTLE_RUN = /\bshuttle[\s-]*runs?\b/i;
+
+/**
+ * Points d'une distance au score : 1 par tranche COMPLÈTE de 100 m ; un shuttle
+ * run compte 1 par aller de 7,62 m. Calcul en centimètres entiers (30 m / 7,62 m
+ * sans erreur d'arrondi flottant).
+ */
+function distancePoints(meters: number, line: string): number {
+  return Math.floor(Math.round(meters * 100) / (SHUTTLE_RUN.test(line) ? 762 : 10000));
+}
 
 /**
  * Reps d'un tour d'AMRAP / Max Reps, pour convertir « tours + reps » en total.
  * Toutes les lignes de reps comptent, même un mouvement hors catalogue :
- * l'athlète a fait ces reps. En-têtes et pourcentages ne comptent pas. Une
- * ligne en distance ou en durée rend le tour hétérogène : 0, la conversion est
- * désactivée et l'athlète saisit un total.
+ * l'athlète a fait ces reps ; les calories comptent comme des reps, une
+ * distance en points (`distancePoints`), un shuttle run écrit en nombre vaut un
+ * point par aller. En-têtes et pourcentages ne comptent pas. Une ligne en durée
+ * rend le tour hétérogène : 0, la conversion est désactivée et l'athlète
+ * saisit un total.
  */
 export function repsPerRoundFromMovements(movements: string[] | null | undefined): number {
   if (!Array.isArray(movements)) return 0;
@@ -74,11 +89,15 @@ export function repsPerRoundFromMovements(movements: string[] | null | undefined
   for (const raw of movements) {
     const line = (raw ?? '').trim();
     if (!line || isFormatHeaderLine(line) || isPercentLine(line)) continue;
-    if (DURATION_LINE.test(line) || DISTANCE_LINE.test(line)) return 0;
+    if (DURATION_LINE.test(line)) return 0;
+    const d = line.match(DISTANCE_LINE);
+    if (d) {
+      sum += distancePoints(parseFloat(d[1].replace(',', '.')) * (METERS_PER_UNIT[d[2].toLowerCase()] ?? 1), line);
+      continue;
+    }
     const entry = parseMovementLine(line);
     if (!entry) continue;
-    if (entry.unit === 'm') return 0;
-    sum += entry.reps;
+    sum += entry.unit === 'm' ? distancePoints(entry.reps, line) : entry.reps;
   }
   return sum;
 }

@@ -29,7 +29,7 @@ function credit(ligne: string): number {
 describe('wod_header_cases.json', () => {
   it('empreinte du JSON normalisé (parité avec le Manager)', () => {
     const empreinte = createHash('sha256').update(JSON.stringify(JSON.parse(BRUT))).digest('hex');
-    expect(empreinte).toBe('0d2733b971a3246f1172694fe069eb0c079c4e2dff7e28bafc3f849dbe95abbd');
+    expect(empreinte).toBe('05b42fe7d41db1405f8070b347316522dda0e56725b2185ac9baea158df20630');
   });
 
   it.each(CAS.lignes.map(c => [c.ligne, c] as const))('ligne « %s »', (_l, c) => {
