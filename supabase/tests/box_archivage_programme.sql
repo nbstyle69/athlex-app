@@ -245,7 +245,7 @@ BEGIN
 
   -- E7 : vente au comptoir.
   FOREACH k IN ARRAY ARRAY['2', '3', '1'] LOOP
-    v := pg_temp.faire('admin', format('SELECT public._log_box_cash_payment(%L, ''00000000-0000-4000-a9b0-00000000000a'', NULL, %L, ''renewal'')::text',
+    v := pg_temp.faire('admin', format('SELECT public._log_box_cash_payment(%L, ''00000000-0000-4000-a9b0-00000000000a'', NULL, %L, ''renewal'', 1, current_date, current_date)::text',
                                     pg_temp.b('0' || k), '00000000-0000-4000-c9b0-0000000000' || '2' || k));
     IF (k = '2' AND v NOT LIKE 'BOX_ARCHIVAGE_PROGRAMME: Cette box est en cours d''archivage%')
        OR (k = '3' AND v NOT LIKE 'BOX_ARCHIVEE%') OR (k = '1' AND v LIKE 'BOX_%') THEN

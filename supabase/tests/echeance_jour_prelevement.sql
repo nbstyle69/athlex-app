@@ -321,7 +321,10 @@ BEGIN
   END IF;
 END $t$;
 
--- R : retour arrière, puis empreintes de prod.
+-- R : retour arrière (d'abord celui de 20270151, qui redéfinit
+-- create_box_invitation et la garde après 20270135 : ordre inverse des
+-- migrations), puis empreintes de prod.
+\i supabase/retours/20270151000000_paiements_comptoir_duree.sql
 \i supabase/retours/20270135000000_echeance_jour_prelevement.sql
 SET LOCAL search_path = "$user", public, extensions;
 DO $t$
