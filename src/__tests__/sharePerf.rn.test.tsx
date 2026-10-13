@@ -1,8 +1,10 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import i18n from '../i18n';
-import ShareScoreCard from '../components/ShareScoreCard';
+import ShareScoreCard, { SCORE_LINE_EM } from '../components/ShareScoreCard';
+import { OSWALD_MEDIUM } from '../theme/oswaldMetrics';
+import { FICHIER_OSWALD_MEDIUM, lirePolice } from './policeTtf';
 import SharePerfScreen from '../components/SharePerfScreen';
 
 jest.mock('../context/ThemeContext', () => ({ useTheme: () => ({ theme: { ax: jest.requireActual('../theme/palette').darkTheme.ax } }) }));
@@ -48,6 +50,11 @@ const texts = (r: TestRenderer.ReactTestInstance) => r.findAll((x) => x.type ===
 const EMOJI = /\p{Extended_Pictographic}/u;
 
 describe('ShareScoreCard : les six types de la maquette', () => {
+  // Tailles et formule « / 0.87 » d'Android (styles de master) ; iOS : voir « Score géant sur iOS ».
+  const os = Platform.OS;
+  beforeAll(() => { Platform.OS = 'android'; });
+  afterAll(() => { Platform.OS = os; });
+
   it.each(CASES)('$nom', async (c) => {
     const r = await render(<ShareScoreCard {...BASE} {...c.p} width={390} height={844} />);
     expect(textOf(all(r, 'share-score')[0])).toBe(c.value);
@@ -187,5 +194,135 @@ describe('« Partager ma perf » en plein écran', () => {
     expect([card.props.width, card.props.height]).toEqual([1080, 1920]);
     expect(shot.findAll((x) => /^share-(close|submit|dismiss)$/.test(x.props.testID ?? ''))).toHaveLength(0);
     for (const s of texts(r)) expect(s).not.toMatch(EMOJI);
+  });
+});
+
+describe('Score géant sur iOS : ligne native entière, encre placée comme sur Android', () => {
+  // Preuves tirées du fichier de police embarqué, pas des constantes du code.
+  const P = lirePolice(FICHIER_OSWALD_MEDIUM);
+  const em = (x: number) => x / P.unitsPerEm;
+  const A = em(P.hhea.ascender), D = em(-P.hhea.descender), LIGNE = A + D + em(P.hhea.lineGap);
+  const encre = (v: string) => ({
+    haut: Math.max(...[...v].map((c) => em(P.glyphe(c).yMax))), bas: Math.min(...[...v].map((c) => em(P.glyphe(c).yMin))),
+  });
+  const chasse = (v: string, fs: number, u: number) => [...v].reduce((s, c) => s + em(P.glyphe(c).chasse), 0) * fs - (v.length - 1) * u;
+
+  type Score = [string, number, string, boolean?];
+  const SCORES: Score[] = [
+    ['90 KG', 90, 'weight'], ['170 KG', 170, 'weight'], ['142.5 KG', 142.5, 'weight'], ['1000 KG', 1000, 'weight'],
+    ['04:27', 267, 'time'], ['59:59', 3599, 'time'], ['100:00', 6000, 'time'], ['CAP + 12 REPS', 12, 'time', true],
+    ['1250 REPS', 1250, 'reps'], ['12 RNDS', 12, 'rounds'], ['7 (custom)', 7, 'custom'],
+  ];
+  // Écrans (barre d'actions de SharePerfScreen : 122 + zone sûre 16 + 20) et image partagée (valeurs par défaut).
+  type Taille = { nom: string; w: number; h: number; ecran: boolean };
+  const TAILLES: Taille[] = [
+    { nom: '390 × 844', w: 390, h: 844, ecran: true }, { nom: '375 × 667', w: 375, h: 667, ecran: true },
+    { nom: '430 × 932', w: 430, h: 932, ecran: true }, { nom: 'image 1080 × 1920', w: 1080, h: 1920, ecran: false },
+  ];
+  /** Hauteur du contenu hors espace sous l'en-tête et hors boîte du score, maquette 390 (émulateur, 90 KG : 601,5 − 68 − 0,87 × 170). */
+  const RESTE = 385.6;
+
+  const os = Platform.OS;
+  afterAll(() => { Platform.OS = os; });
+
+  /** Carte sur une plateforme, réduite en hauteur par son propre onLayout (contenu modélisé) jusqu'à tenir. */
+  async function carte(plateforme: 'ios' | 'android', t: Taille, s: Score) {
+    Platform.OS = plateforme;
+    const u = t.w / 390;
+    const r = await render(<ShareScoreCard {...BASE} wodTitle="Musculation" wodType="strength" score={s[1]} scoreType={s[2]}
+      capped={s[3] ?? false} rx rank={2} date="2026-10-12" width={t.w} height={t.h}
+      {...(t.ecran ? { topInset: 32, bottomReserve: 158 } : {})} />);
+    const top = t.ecran ? 32 : 40 * u;
+    const limite = t.h - (t.ecran ? 158 : 52 * u);
+    const mesure = () => {
+      const boite = all(r, 'share-score-box')[0].props.style ?? {};
+      const st = all(r, 'share-score')[0].props.style;
+      const ecart = r.findAll((n) => typeof n.type === 'string' && n.props.style?.gap === 10 * u)[0].props.style.marginTop;
+      const hauteurScore = (boite.marginTop ?? 0) + (st.marginTop ?? 0) + st.lineHeight + (st.marginBottom ?? 0) + (boite.marginBottom ?? 0);
+      return { boite, st, hauteur: RESTE * u + ecart + hauteurScore };
+    };
+    for (let i = 0; i < 6; i++) {
+      const content = all(r, 'share-card-content')[0];
+      await act(async () => { content.props.onLayout({ nativeEvent: { layout: { x: 24 * u, y: top, width: 342 * u, height: mesure().hauteur } } }); });
+    }
+    const { st, boite, hauteur } = mesure();
+    const valeur = textOf(all(r, 'share-score')[0]);
+    const largeur = 346 * u;
+    // Taille rendue : adjustsFontSizeToFit ne réduit que si la chasse dépasse (iOS : à 96 pt au plus, sans réduire
+    // la ligne ; Android : par pas de 1 tant que le texte passe à la ligne, sans réduire la ligne non plus).
+    let fs = st.fontSize;
+    if (chasse(valeur, fs, u) > largeur) {
+      if (plateforme === 'ios') fs = Math.min(96, fs);
+      else while (chasse(valeur, fs, u) > largeur) fs -= 1;
+    }
+    const L = st.lineHeight;
+    // Ligne de base dans le cadre du Text (code RN 0.81) — iOS : ligne native centrée si lineHeight ≥ ligne native,
+    // sinon le bas est gardé et le haut coupé ; Android : demi-interligne de part et d'autre (CustomLineHeightSpan).
+    const base = plateforme === 'ios'
+      ? (L >= LIGNE * fs ? (L - LIGNE * fs) / 2 + A * fs : L - D * fs)
+      : L / 2 + ((A - D) / 2) * fs;
+    const e = encre(valeur);
+    const debutTexte = 16 * u + (boite.marginTop ?? 0) + (st.marginTop ?? 0); // haut du cadre du Text, depuis le bas de la date
+    const finScore = debutTexte + L + (st.marginBottom ?? 0) + (boite.marginBottom ?? 0); // haut de la ligne unité / RX
+    return {
+      u, fs, L, valeur, largeur, st, bas: top + hauteur, limite,
+      encreHautCadre: base - e.haut * fs, encreBasCadre: base - e.bas * fs,
+      dateVersEncre: debutTexte + base - e.haut * fs, encreVersUnite: finScore - (debutTexte + base - e.bas * fs),
+    };
+  }
+
+  it("les mesures d'Oswald Medium du code sont celles du fichier .ttf", () => {
+    expect(OSWALD_MEDIUM.unitsPerEm).toBe(P.unitsPerEm);
+    expect([OSWALD_MEDIUM.ascender, OSWALD_MEDIUM.descender, OSWALD_MEDIUM.lineGap]).toEqual([P.hhea.ascender, P.hhea.descender, P.hhea.lineGap]);
+    expect([P.typo.ascender, P.typo.descender, P.typo.lineGap, P.typo.utilisees]).toEqual([P.hhea.ascender, P.hhea.descender, P.hhea.lineGap, true]);
+    expect(OSWALD_MEDIUM.digitTop).toBe(Math.max(...[...'0123456789'].map((c) => P.glyphe(c).yMax)));
+    expect(OSWALD_MEDIUM.digitBottom).toBe(Math.min(...[...'0123456789'].map((c) => P.glyphe(c).yMin)));
+    for (const [c, v] of Object.entries(OSWALD_MEDIUM.advances)) expect([c, v]).toEqual([c, P.glyphe(c).chasse]);
+    for (const c of Object.keys(OSWALD_MEDIUM.advances)) expect(OSWALD_MEDIUM.fallbackAdvance).toBeGreaterThan(P.glyphe(c).chasse);
+    expect(SCORE_LINE_EM).toBeCloseTo(LIGNE, 10);
+  });
+
+  describe.each(TAILLES)('$nom', (t) => {
+    it.each(SCORES)('%s', async (...s) => {
+      const i = await carte('ios', t, s as Score);
+      const a = await carte('android', t, s as Score);
+      // a. Rien de coupé : l'encre tient dans le cadre du Text, qui n'a pas de marge propre.
+      expect(i.encreHautCadre).toBeGreaterThanOrEqual(0);
+      expect(i.encreBasCadre).toBeLessThanOrEqual(i.L);
+      expect([i.st.marginTop, i.st.marginBottom]).toEqual([undefined, undefined]);
+      // b. Le haut des chiffres reste sous le bas de la ligne de la date.
+      expect(i.dateVersEncre).toBeGreaterThan(0);
+      // c. La chasse tient dans la largeur à la taille demandée : adjustsFontSizeToFit ne réduit rien.
+      expect(chasse(i.valeur, i.st.fontSize, i.u)).toBeLessThanOrEqual(i.largeur);
+      expect(i.fs).toBe(i.st.fontSize);
+      // d. Le contenu finit au-dessus de la réserve basse, sur les deux plateformes.
+      expect(i.bas).toBeLessThanOrEqual(i.limite);
+      expect(a.bas).toBeLessThanOrEqual(a.limite);
+      // e. Mêmes écarts visibles qu'Android, à 1 px près.
+      expect(Math.abs(i.dateVersEncre - a.dateVersEncre)).toBeLessThanOrEqual(1);
+      expect(Math.abs(i.encreVersUnite - a.encreVersUnite)).toBeLessThanOrEqual(1);
+    });
+  });
+
+  it.each(TAILLES)('Android, $nom : styles du score identiques à master', async (t) => {
+    Platform.OS = 'android';
+    const u = t.w / 390;
+    const S = 170 * u;
+    for (const s of SCORES) {
+      const r = await render(<ShareScoreCard {...BASE} wodTitle="Musculation" wodType="strength" score={s[1]} scoreType={s[2]}
+        capped={s[3] ?? false} rx rank={2} date="2026-10-12" width={t.w} height={t.h} />);
+      expect(all(r, 'share-score')[0].props.style).toEqual({
+        fontFamily: 'Oswald_500Medium', fontSize: S, lineHeight: S, marginTop: -0.1 * S, marginBottom: -0.03 * S,
+        letterSpacing: -u, color: jest.requireActual('../theme/palette').darkTheme.ax.accentText, includeFontPadding: false,
+      });
+      expect(all(r, 'share-score-box')[0].props.style).toBeUndefined();
+      expect(all(r, 'share-score')[0].props).toMatchObject({ numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.2 });
+    }
+  });
+
+  it('iOS : adjustsFontSizeToFit et minimumFontScale restent en place', async () => {
+    Platform.OS = 'ios';
+    const r = await render(<ShareScoreCard {...BASE} {...CASES[0].p} width={390} height={844} />);
+    expect(all(r, 'share-score')[0].props).toMatchObject({ numberOfLines: 1, adjustsFontSizeToFit: true, minimumFontScale: 0.2 });
   });
 });
