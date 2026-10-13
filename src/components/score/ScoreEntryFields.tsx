@@ -15,7 +15,7 @@ interface Props {
   kind: ScoreKind;
   /** WOD movements (used to auto-derive reps-per-round for the recap). */
   movements?: string[] | null;
-  /** Owner-set reps-per-round; falls back to the sum derived from movements. */
+  /** Owner-set reps-per-round (0 = total only); null/undefined falls back to the sum derived from movements. */
   repsPerRound?: number | null;
   /** Canonical value to prefill (seconds for time, total reps for reps, raw for free). */
   initialCanonical?: string | null;
@@ -45,9 +45,8 @@ export default function ScoreEntryFields({
   const { t } = useTranslation();
   const S = createStyles(theme);
 
-  const perRound = (repsPerRound ?? 0) > 0
-    ? (repsPerRound as number)
-    : repsPerRoundFromMovements(movements);
+  // 0 renseigné = score saisi en total ; seul un champ vide se calcule depuis les lignes.
+  const perRound = repsPerRound != null ? repsPerRound : repsPerRoundFromMovements(movements);
   const canUseRounds = kind === 'reps' && perRound > 0;
 
   // ── reps state ──
