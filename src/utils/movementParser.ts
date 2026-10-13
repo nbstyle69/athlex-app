@@ -110,6 +110,7 @@ export function repsPerRoundFromMovements(movements: string[] | null | undefined
  *   "20/15 cal Row"         → reps 20 (♂) ou 15 (♀ via `options.gender`)
  *   "500 m Run (RPE 7)"     → { name: "Run", reps: 500, unit: "m" }
  *   "400m Course"           → { name: "Course", reps: 400, unit: "m" }
+ *   "1.5 km Row"            → { name: "Row", reps: 1500, unit: "m" }
  *   "20 Row" / "800 Run"    → unité par défaut du catalogue (cal / m)
  *   "30 s Plank Hold"       → null  (tenue en secondes : aucun crédit)
  *   "12 Box Jumps (60/50 cm)" → { name: "Box Jumps", reps: 12 }  (hauteur, pas de weight_kg)
@@ -140,6 +141,16 @@ export function parseMovementLine(line: string, options?: ParseOptions): Movemen
     const name = cardioMatch[4].replace(/\s*\([^)]*\)/g, '').replace(/\s*@.*$/, '').trim();
     if (isNaN(reps) || reps <= 0 || !name) return null;
     return { name, reps, unit: normalizeUnit(cardioMatch[3]) };
+  }
+
+  // "1 km Run", "1.5 km Row" : des mètres, comme "1000m Run".
+  const kmMatch = trimmed.match(/^(\d+(?:[.,]\d+)?)(?:\s*\/\s*(\d+(?:[.,]\d+)?))?\s*km\b\.?\s+(.+)$/i);
+  if (kmMatch) {
+    const km = gender === 'female' && kmMatch[2] != null ? kmMatch[2] : kmMatch[1];
+    const reps = Math.round(parseFloat(km.replace(',', '.')) * 1000);
+    const name = kmMatch[3].replace(/\s*\([^)]*\)/g, '').replace(/\s*@.*$/, '').trim();
+    if (!(reps > 0) || !name) return null;
+    return { name, reps, unit: 'm' };
   }
 
   // Standard: "12 Thrusters (43 kg)", "15 Cal Assault Bike", "21/15 Pull-ups",
@@ -198,6 +209,12 @@ export function computeCompletedMovements(
   options?: ParseOptions,
 ): MovementEntry[] {
   const cardio = parseCardioBlocks(movements);
+  // AMRAP en reps : le score se répartit au prorata des lignes. Une distance
+  // rend le tour hétérogène (score en points, lignes en mètres) : on ne sait
+  // pas ce que le score prouve, rien — comme la garde AMRAP du serveur.
+  const hasDistance = cardio.some(c => c.unit === 'm')
+    || movements.some(l => parseMovementLine(l, options)?.unit === 'm');
+  if (wodType === 'AMRAP' && scoreType === 'reps' && hasDistance) return [];
   const metcon = computeMetconMovements(movements, wodType, scoreValue, scoreType, options);
   return [...metcon, ...cardio];
 }

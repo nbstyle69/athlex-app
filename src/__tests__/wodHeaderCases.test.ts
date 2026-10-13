@@ -14,7 +14,10 @@ import {
 import { normalizeMovement, isKnownMovementKey } from '../utils/tournamentUtils';
 
 interface CasLigne { ligne: string; header: boolean; reps_score: number; reps_credit: number }
-interface CasWod { nom: string; lignes: string[]; reps_par_tour: number }
+interface CasWod {
+  nom: string; lignes: string[]; reps_par_tour: number;
+  credit?: { type: string; score: number; type_score: string; attendu: [string, string, number][] };
+}
 
 const RACINE = path.resolve(__dirname, '..', '..');
 const BRUT = fs.readFileSync(path.join(RACINE, 'supabase/seed/wod_header_cases.json'), 'utf8');
@@ -29,7 +32,7 @@ function credit(ligne: string): number {
 describe('wod_header_cases.json', () => {
   it('empreinte du JSON normalisé (parité avec le Manager)', () => {
     const empreinte = createHash('sha256').update(JSON.stringify(JSON.parse(BRUT))).digest('hex');
-    expect(empreinte).toBe('05b42fe7d41db1405f8070b347316522dda0e56725b2185ac9baea158df20630');
+    expect(empreinte).toBe('70459c2d7ce9dec07489f4eadaa20d8b4baddb7ce8e7a281d0d806a1acd02a56');
   });
 
   it.each(CAS.lignes.map(c => [c.ligne, c] as const))('ligne « %s »', (_l, c) => {
@@ -42,6 +45,20 @@ describe('wod_header_cases.json', () => {
 
   it.each(CAS.wods.map(w => [w.nom, w] as const))('WOD « %s »', (_n, w) => {
     expect(repsPerRoundFromMovements(w.lignes)).toBe(w.reps_par_tour);
+  });
+
+  it.each(CAS.wods.filter(w => w.credit).map(w => [w.nom, w] as const))('crédit du WOD « %s »', (_n, w) => {
+    const c = w.credit!;
+    const credites = computeCompletedMovements(w.lignes, c.type, c.score, c.type_score)
+      .map(m => [normalizeMovement(m.name).key, m.unit ?? 'reps', m.reps] as [string, string, number])
+      .filter(([cle, , q]) => q > 0 && isKnownMovementKey(cle));
+    expect(credites).toEqual(c.attendu);
+  });
+
+  it('le fichier couvre un AMRAP avec distance sans crédit et un For Time avec distance crédité (contre-exemple)', () => {
+    const avecCredit = CAS.wods.filter(w => w.credit);
+    expect(avecCredit.some(w => w.credit!.type === 'AMRAP' && w.credit!.attendu.length === 0)).toBe(true);
+    expect(avecCredit.some(w => w.credit!.type === 'For Time' && w.credit!.attendu.some(([, u]) => u === 'm'))).toBe(true);
   });
 
   it('un en-tête ne passe jamais par le parseur de mouvements', () => {

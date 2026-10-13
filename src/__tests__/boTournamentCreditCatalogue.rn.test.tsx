@@ -94,10 +94,15 @@ it('valider un AMRAP « 12 min AMRAP / 10 Thrusters / 10 Sandbag cleans » à 40
   expect(await valider()).toEqual([['insert', 'thruster', 'reps', 20]]);
 });
 
-it('une distance n’est jamais créditée en points : « 200m Row » reste en mètres', async () => {
-  // Score saisi en points (2 tours de 14 = 28) ; le crédit du back-office, inchangé,
-  // répartit le total sur les quantités écrites (200 m + 12) : 28 m de rameur, en mètres.
+it('AMRAP avec une distance : aucune écriture, pour aucune ligne (garde AMRAP du serveur)', async () => {
+  // Score en points (2 tours de 14 = 28), lignes en mètres et en reps : on ne sait pas ce que le score prouve.
   mockScore.score_value = '28';
   mockScore.tw.movements = ['12 min AMRAP', '200m Row', '12 Burpees'];
-  expect(await valider()).toEqual([['insert', 'row', 'm', 28]]);
+  expect(await valider()).toEqual([]);
+});
+
+it('For Time avec une distance : mètres × tours, jamais des points (« 1 km » = 1000 m)', async () => {
+  mockScore.score_value = '900';
+  mockScore.tw = { ...mockScore.tw, type: 'For Time', movements: ['3 rounds for time', '1 km Run', '10 Burpees'] };
+  expect(await valider()).toEqual([['insert', 'run', 'm', 3000], ['insert', 'burpee', 'reps', 30]]);
 });
