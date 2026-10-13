@@ -31,6 +31,8 @@ export const PREF_BY_TYPE: Record<string, string> = {
   box_notification: 'box_announcements',
   // Abonnement arrêté par le gérant (envoyé par le Manager)
   membership_stopped: 'box_announcements',
+  // Fin d'accès payé au comptoir (envoyé par deliver-access-notices)
+  membership_access_ending: 'box_announcements',
 };
 
 // Les clés de préférence sont aussi acceptées comme catégorie : les versions

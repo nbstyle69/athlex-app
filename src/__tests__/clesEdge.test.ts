@@ -20,9 +20,9 @@ const FONCTIONS = fs.readdirSync(DOSSIER, { withFileTypes: true })
   .sort();
 
 describe('clé secrète des fonctions edge', () => {
-  it('les neuf fonctions sont bien lues (contre-exemple)', () => {
+  it('les dix fonctions sont bien lues (contre-exemple)', () => {
     expect(FONCTIONS).toEqual([
-      'analyze-tournament-score', 'deliver-manager-notifications', 'generate-box-week', 'parse-wod-pdf', 'send-box-notification',
+      'analyze-tournament-score', 'deliver-access-notices', 'deliver-manager-notifications', 'generate-box-week', 'parse-wod-pdf', 'send-box-notification',
       'send-push', 'session-followup-cron', 'tournament-notifications-cron', 'weekly-owner-digest',
     ]);
   });
@@ -71,6 +71,9 @@ describe('verify_jwt versionné', () => {
       expect(lire(`supabase/functions/${fn}/index.ts`))
         .toMatch(/if \(!cronSecret \|\| provided !== cronSecret\) return json\(\{ error: 'unauthorized' \}, 401\);/);
     }
+    // deliver-access-notices : la même règle, dans regles.ts (autorise), testée par Jest.
+    expect(lire('supabase/functions/deliver-access-notices/index.ts'))
+      .toMatch(/if \(!autorise\(Deno\.env\.get\('CRON_SECRET'\), req\.headers\.get\('x-cron-secret'\)\)\) \{\n\s+return json\(\{ error: 'unauthorized' \}, 401\);/);
     // … ou jeton d'utilisateur vérifié par auth.getUser, refus si absent ou invalide.
     for (const fn of ['analyze-tournament-score', 'parse-wod-pdf', 'send-box-notification', 'send-push']) {
       const src = lire(`supabase/functions/${fn}/index.ts`);
