@@ -136,7 +136,7 @@ const GARDES_DECLENCHEUR = [
  * décompte le dirait au lieu de le taire.
  */
 export const ASSERTIONS_GRANTS_TABLES = 9 + TABLES_ECRITURE_SERVEUR.size + GARDES_DECLENCHEUR.length
-  + TABLES_FERMEES.length + 2; // T1..T9, T10 par table, T11..T13 et T16 par garde, T14 par table fermée, T15, T17
+  + TABLES_FERMEES.length + 3; // T1..T9, T10 par table, T11..T13 et T16 par garde, T14 par table fermée, T15, T17, T18
 
 const PRIV_LISTE = privs => privs.map(p => `'${p}'`).join(', ');
 
@@ -386,6 +386,7 @@ export function controlerGrantsTables(query, assert) {
   for (const t of TABLES_FERMEES) controlerTableFermee(query, assert, t);
   controlerChangementFormule(query, assert);
   controlerComptoirDuree(query, assert);
+  controlerFileAvisMembre(query, assert);
 }
 
 /**
@@ -642,6 +643,76 @@ function controlerComptoirDuree(query, assert) {
     ecarts.join(' ; ') + '\n'
       + '       → sans cette fermeture, un compte connecté journalise un encaissement, se donne '
       + 'une fin d\'accès ou réécrit la période payée. Rejoue 20270151.',
+  );
+}
+
+/**
+ * T18 : la file des messages de fin d'accès au comptoir (20270152), sur le
+ * modèle de T14 (box_manager_notifications) :
+ *   - `box_member_access_notices` : RLS active sans aucune règle, aucun droit
+ *     pour `anon` ni `authenticated` ; `service_role` lit et n'écrit que les
+ *     colonnes d'envoi (ni INSERT, ni DELETE, ni UPDATE d'une autre colonne) ;
+ *   - les quatre fonctions internes qui la remplissent ou coupent l'accès
+ *     existent et ne sont exécutables ni par un client ni par `service_role`.
+ * Lu par oid et par nom de schéma, sans résoudre de nom dans `internal`.
+ */
+const FILE_AVIS_MEMBRE = {
+  table: 'box_member_access_notices',
+  envoi: ['email_sent', 'error', 'push_count', 'reserved_at', 'sent_at'],
+  fonctions: ['internal.adhesions_comptoir_datees', 'internal.expirer_acces_comptoir',
+    'internal.filer_avis_fin_acces', 'internal.purger_avis_fin_acces'],
+};
+
+function controlerFileAvisMembre(query, assert) {
+  const fa = FILE_AVIS_MEMBRE;
+  const [[rls, regles, client, serveurTable, serveurColonnes]] = query(`
+    select coalesce((select relrowsecurity::text from pg_class where oid = to_regclass('public.${fa.table}')), 'absente'),
+           (select count(*) from pg_policies where schemaname = 'public' and tablename = '${fa.table}')::text,
+           coalesce((select string_agg(distinct r || ':' || p, ',')
+                     from unnest(array['anon', 'authenticated']) r,
+                          unnest(array['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']) p
+                     where to_regclass('public.${fa.table}') is not null
+                       and (has_table_privilege(r, 'public.${fa.table}', p)
+                            or (p in ('SELECT', 'INSERT', 'UPDATE', 'REFERENCES')
+                                and has_any_column_privilege(r, 'public.${fa.table}', p)))), ''),
+           coalesce((select string_agg(p, ',' order by p)
+                     from unnest(array['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER']) p
+                     where to_regclass('public.${fa.table}') is not null
+                       and has_table_privilege('service_role', 'public.${fa.table}', p)), ''),
+           coalesce((select string_agg(a.attname, ',' order by a.attname)
+                     from pg_attribute a
+                     where a.attrelid = to_regclass('public.${fa.table}') and a.attnum > 0 and not a.attisdropped
+                       and (has_column_privilege('service_role', a.attrelid, a.attnum, 'UPDATE')
+                            or has_column_privilege('service_role', a.attrelid, a.attnum, 'INSERT'))), '')
+  `);
+
+  const fonctions = query(`
+    select f, coalesce((select string_agg(distinct r, ',')
+                          from pg_proc p join pg_namespace n on n.oid = p.pronamespace,
+                               unnest(array['anon', 'authenticated', 'service_role']) r
+                         where n.nspname || '.' || p.proname = f and has_function_privilege(r, p.oid, 'EXECUTE')), '')
+                      || ':' || (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                                  where n.nspname || '.' || p.proname = f)::text
+    from unnest(array[${fa.fonctions.map(f => `'${f}'`).join(', ')}]) f
+  `).filter(([, etat]) => etat !== ':1').map(([f, etat]) => `${f} (${etat})`);
+
+  const ecarts = [
+    ...(rls === 'true' ? [] : [`${fa.table} : ${rls === 'absente' ? 'absente' : 'RLS désactivée'}`]),
+    ...(regles === '0' ? [] : [`${regles} règle(s) RLS (aucune attendue)`]),
+    ...(client === '' ? [] : [`droits client : ${client} → REVOKE ALL ON public.${fa.table} FROM anon, authenticated`]),
+    ...(serveurTable === 'SELECT' ? [] : [`droits de table de service_role : ${serveurTable || 'aucun'} (attendu : SELECT)`]),
+    ...(serveurColonnes === fa.envoi.join(',') ? []
+      : [`écritures de service_role : ${serveurColonnes || 'aucune'} (attendu : ${fa.envoi.join(',')})`]),
+    ...(fonctions.length ? [`fonctions (rôles qui l'exécutent:versions) : ${fonctions.join(', ')}`] : []),
+  ];
+
+  assert(
+    'T18 — la file des messages de fin d\'accès est fermée aux clients, la clé serveur n\'y note '
+      + 'que l\'envoi (box_member_access_notices, quatre fonctions internes)',
+    ecarts.length === 0,
+    ecarts.join(' ; ') + '\n'
+      + '       → sans cette fermeture, un membre lit qui va perdre son accès, ou un client met en file '
+      + 'un message signé AthleX, ou coupe l\'accès d\'un membre. Rejoue 20270152.',
   );
 }
 

@@ -378,9 +378,10 @@ BEGIN
   REVOKE EXECUTE ON FUNCTION internal.filer_notification_gerant() FROM authenticated;
 END $t$;
 
--- F9 : d'abord les retours arrière de 20270151 puis de 20270147, qui s'appuie sur
+-- F9 : d'abord les retours arrière de 20270152, 20270151 puis 20270147, qui s'appuie sur
 -- cette file (ordre inverse des migrations), puis celui de l'en-tête de la migration,
 -- tel quel (sans BEGIN/COMMIT : on est déjà dans la transaction du test).
+\i supabase/retours/20270152000000_comptoir_fin_acces.sql
 \i supabase/retours/20270151000000_paiements_comptoir_duree.sql
 \i supabase/retours/20270147000000_changement_formule.sql
 DROP TRIGGER trg_notif_gerant_abonnement_creation ON public.box_members;
