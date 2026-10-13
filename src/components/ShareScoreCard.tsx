@@ -1,5 +1,5 @@
 import React, { forwardRef, useState } from 'react';
-import { View, Text, Image, type LayoutChangeEvent } from 'react-native';
+import { View, Text, Image, Platform, type LayoutChangeEvent } from 'react-native';
 import Svg, { Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
 import { Medal } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import { splitScoreForDisplay } from '../utils/scoreFormat';
 import { formatDate } from '../i18n/locale';
 import { useTheme } from '../context/ThemeContext';
 import { axFonts } from '../theme/axTokens';
+import { OSWALD_MEDIUM } from '../theme/oswaldMetrics';
 import { AxTag } from './ax';
 import UserAvatar from './UserAvatar';
 
@@ -25,6 +26,41 @@ const HEADER_GAP_MIN = 24;
 const SCORE_PULL_TOP = 0.1;
 const SCORE_PULL_BOTTOM = 0.03;
 const SCORE_BOX = 1 - SCORE_PULL_TOP - SCORE_PULL_BOTTOM;
+/** Largeur du score : le contenu (342) plus son retrait à gauche (4), maquette 390. */
+const SCORE_W = 346;
+
+const em = (x: number) => x / OSWALD_MEDIUM.unitsPerEm;
+/** Ligne native d'Oswald Medium, en em (1,482). */
+export const SCORE_LINE_EM = em(OSWALD_MEDIUM.ascender - OSWALD_MEDIUM.descender + OSWALD_MEDIUM.lineGap);
+
+/**
+ * Score sur iOS (modèle R3b du chrono). Avec une ligne plus courte que la ligne native, iOS garde le bas
+ * de la ligne et coupe le haut des chiffres ; il ne réduit pas non plus la ligne quand adjustsFontSizeToFit
+ * réduit la police, et plafonne cette réduction à 96 pt. Le Text prend donc une ligne native entière, à
+ * une taille qui tient déjà en largeur (chasse lue dans la police) ; son conteneur est rapproché de la date
+ * et de l'unité par des marges calculées sur l'encre des chiffres, pour retrouver la place qu'elle a sur
+ * Android : ligne de `size` centrée (demi-interligne), remontée de SCORE_PULL_TOP, boîte de SCORE_BOX.
+ * La boîte vaut donc SCORE_BOX × size sur les deux plateformes : la réduction en hauteur (fit) est la même.
+ */
+export function scoreIos(value: string, size: number, u: number) {
+  const { ascender, descender, digitTop, digitBottom, advances, fallbackAdvance } = OSWALD_MEDIUM;
+  const chasse = em([...value].reduce((s, c) => s + (advances[c] ?? fallbackAdvance), 0));
+  // 1 de marge : la police reste sous la largeur, adjustsFontSizeToFit ne se déclenche pas.
+  const fontSize = Math.min(size, Math.floor(((SCORE_W * u - 1 + (value.length - 1) * u) / chasse) * 100) / 100);
+  const lineHeight = Math.ceil(fontSize * SCORE_LINE_EM);
+  // iOS centre la ligne native dans lineHeight ; encre des chiffres dans le cadre du Text.
+  const baseline = (lineHeight - fontSize * SCORE_LINE_EM) / 2 + em(ascender) * fontSize;
+  const inkTop = baseline - em(digitTop) * fontSize;
+  const inkBottom = baseline - em(digitBottom) * fontSize;
+  // Place de l'encre sur Android, depuis le haut du conteneur du score.
+  const androidBaseline = size * (0.5 - SCORE_PULL_TOP) + em(ascender + descender) / 2 * fontSize;
+  const androidInkTop = androidBaseline - em(digitTop) * fontSize;
+  const androidInkBottom = androidBaseline - em(digitBottom) * fontSize;
+  return {
+    box: { marginTop: androidInkTop - inkTop, marginBottom: size * SCORE_BOX - androidInkBottom - (lineHeight - inkBottom) },
+    text: { fontSize, lineHeight },
+  };
+}
 
 interface ShareScoreCardProps {
   wodTitle: string;
@@ -63,6 +99,7 @@ const ShareScoreCard = forwardRef<View, ShareScoreCardProps>(
     const headerCut = Math.min(cut, (HEADER_GAP - HEADER_GAP_MIN) * u);
     const scoreSize = Math.max(SCORE_MIN * u, SCORE_SIZE * u - (cut - headerCut) / SCORE_BOX);
     const { value, unit } = splitScoreForDisplay(score, scoreType, capped);
+    const ios = Platform.OS === 'ios' ? scoreIos(value, scoreSize, u) : null;
     const typeLabel = t(`sharePerf.types.${wodType ?? 'custom'}`, { defaultValue: 'WOD' });
     const formattedDate = formatDate(date, {
       weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
@@ -115,12 +152,15 @@ const ShareScoreCard = forwardRef<View, ShareScoreCardProps>(
           </View>
 
           <View style={{ marginTop: 16 * u, marginLeft: -4 * u }}>
-            <Text testID="share-score" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.2}
-              style={{ fontFamily: axFonts.oswaldMedium, fontSize: scoreSize, lineHeight: scoreSize,
-                marginTop: -SCORE_PULL_TOP * scoreSize, marginBottom: -SCORE_PULL_BOTTOM * scoreSize,
-                letterSpacing: -u, color: c.accentText, includeFontPadding: false }}>
-              {value}
-            </Text>
+            <View testID="share-score-box" style={ios?.box}>
+              <Text testID="share-score" numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.2}
+                style={ios ? { fontFamily: axFonts.oswaldMedium, ...ios.text, letterSpacing: -u, color: c.accentText }
+                  : { fontFamily: axFonts.oswaldMedium, fontSize: scoreSize, lineHeight: scoreSize,
+                    marginTop: -SCORE_PULL_TOP * scoreSize, marginBottom: -SCORE_PULL_BOTTOM * scoreSize,
+                    letterSpacing: -u, color: c.accentText, includeFontPadding: false }}>
+                {value}
+              </Text>
+            </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 * u, marginLeft: 4 * u }}>
               {unit ? (
                 <Text testID="share-unit" style={[oswald(40, 44, -1), { color: c.text, textTransform: 'uppercase' }]}>{unit}</Text>
