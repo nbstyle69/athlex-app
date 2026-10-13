@@ -2,7 +2,32 @@
 -- Paiements au comptoir (P1), PR 2 sur 6 : fin d'accès et file des messages
 -- (base)
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : OUI, le 13/10/2026 à 20:46 UTC, avec PGCLIENTENCODING=UTF8,
+-- en une transaction (psql -1), sur GO de Nab. Dump des schémas public et
+-- internal avec droits db-dumps/2026-10-13/athlex-prod-public-internal-20261013T204546Z.dump,
+-- sha256 277761e5ea794f2be1e5e85a219b69d79ecc1bb95191f29e6e8765585d753724
+-- vérifié après aller-retour, 138 TABLE DATA, 469 ACL, 348 POLICY ;
+-- précontrôles (trois passages identiques, search_path de la prod) :
+-- get_my_membership_billing à b4ca5500…, une version ; 20270151 en place (dix
+-- définitions et deux déclencheurs aux empreintes de son en-tête) ; table,
+-- cinq fonctions et tâche absentes ; effet de la première passe mesuré avant :
+-- 0 membre à couper, 0 message J−7/J−1 ; box_members (186), class_reservations
+-- (1183) et member_class_credits (1) relevés ; 15 tâches pg_cron relevées
+-- (commandes comprises). Vérifications : les cinq définitions aux empreintes
+-- du test (2104eb38…, ab6b46e8…, 6733b1b3…, 062d67dd…, e1ea48e6…), une version
+-- de chaque ; get_my_membership_billing à authenticated et service_role
+-- seulement, fonctions internal fermées à anon, authenticated et service_role ;
+-- table : RLS sans règle, rien pour les clients, service_role en SELECT et
+-- UPDATE des cinq colonnes d'envoi ; commentaires présents ; tâche
+-- comptoir-fin-acces à « 41 * * * * », active, commande attendue (4c532b48…),
+-- les 15 autres inchangées ; file vide, les trois tables à la même empreinte.
+-- Test réel sur AthleX Fitness en transaction annulée (membre fictif à formule
+-- payante, réservation à venir) : coupé ('expired', status 'active'),
+-- réservation supprimée, 'fin' en file, second appel sans effet, 'j7' une seule
+-- fois, 'j1', get_my_membership_billing sous son identité (fin d'accès,
+-- box_sells_online vrai) ; aucune trace. Audit des droits en prod 45/45 (T18)
+-- lancé depuis la branche. Première passe de la tâche le 13/10/2026 à
+-- 21:41:00 UTC : succeeded en 0,2 s, aucun membre coupé, file vide.
 --
 -- Spec validée par Nab le 13/10/2026 (Figma « AthleX Manager — Back-office »,
 -- page « 🧪 Spec · Paiements au comptoir (P1) », §4 et §6). Part des
