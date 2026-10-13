@@ -1,6 +1,6 @@
 import type {
   AfterClassContext, Catalog, CatalogMovement, Muscle, MuscuEquipment, MuscuExercise, MuscuFields, MuscuLevel, MuscuLoad,
-  MuscuObjective, MuscuParams, MuscuSkeleton, MuscuSlot, MuscuSlotRole, MuscuTarget, MuscuUnit, MuscuWod, Pattern, SkeletonBank,
+  MuscuObjective, MuscuParams, MuscuSkeleton, MuscuSlot, MuscuSlotRole, MuscuTarget, MuscuUnit, MuscuWod, MuscuNoteCle, Pattern, SkeletonBank,
 } from './types';
 import { RNG } from './rng';
 import { nameKey, resolveMovement } from './catalog';
@@ -815,18 +815,36 @@ export function sideLabel(m: Pick<MuscuExercise, 'muscle_primary'>): 'jambe' | '
   return T.cote[sideOf(m)] as 'jambe' | 'bras' | 'côté';
 }
 
-function notesFor(ctx: Ctx, l: Line, load: MuscuLoad, T: M): string {
-  const parts: string[] = [];
-  if (ctx.params.objective === 'force' && l.objective !== 'force') parts.push(T.note.schemaHypertrophie);
-  if (load.mode === 'rpe' && load.rm_reference && ctx.params.level === 'debutant') parts.push(T.note.chargePropre);
-  if (l.demoted) parts.push(T.note.troisiemeCompound);
-  if (load.mode === 'bodyweight' && ctx.params.level === 'debutant' && /pull_up|chin_up/.test(l.m.id) && !/banded/.test(l.m.id)) parts.push(T.note.debutantBanded);
-  if (l.tempo) parts.push(T.note.tempo(l.tempo));
-  return parts.join(' · ');
+/** Parties de la note d'un exercice, dans l'ordre (le texte se réécrit dans toutes les langues). */
+function noteClesFor(ctx: Ctx, l: Line, load: MuscuLoad): MuscuNoteCle[] {
+  const parts: MuscuNoteCle[] = [];
+  if (ctx.params.objective === 'force' && l.objective !== 'force') parts.push('schemaHypertrophie');
+  if (load.mode === 'rpe' && load.rm_reference && ctx.params.level === 'debutant') parts.push('chargePropre');
+  if (l.demoted) parts.push('troisiemeCompound');
+  if (load.mode === 'bodyweight' && ctx.params.level === 'debutant' && /pull_up|chin_up/.test(l.m.id) && !/banded/.test(l.m.id)) parts.push('debutantBanded');
+  if (l.tempo) parts.push('tempo');
+  return parts;
 }
 
-function toExercise(ctx: Ctx, l: Line, T: M): MuscuExercise {
+/** Note d'un exercice à partir de ses parties (`MuscuExercise.rendu`). */
+export function noteExercice(r: { notes: readonly MuscuNoteCle[]; tempo: string | null }, langue: Langue = 'fr'): string {
+  const N = textes(langue).musculation.note;
+  return r.notes.map((k) => (k === 'tempo' ? N.tempo(r.tempo ?? '') : N[k])).join(' · ');
+}
+
+/** Note du stimulus à partir de l'objectif et de ses parties (`MuscuWod.rendu`). */
+export function noteStimulus(objective: MuscuObjective, r: { montee: string | null; renseigne1rm: boolean }, langue: Langue = 'fr'): string {
+  const T = textes(langue).musculation;
+  const rir = T.rir[objective];
+  const parts = [rir.charAt(0).toUpperCase() + rir.slice(1)];
+  if (r.montee) parts.push(T.monteeEnCharge(r.montee));
+  if (r.renseigne1rm) parts.push(T.renseigne1rm);
+  return parts.join('. ');
+}
+
+function toExercise(ctx: Ctx, l: Line, langue: Langue): MuscuExercise {
   const load = loadFor(ctx, l);
+  const rendu = { notes: noteClesFor(ctx, l, load), tempo: l.tempo ?? null };
   return {
     id: l.m.id,
     name: l.m.name,
@@ -840,9 +858,10 @@ function toExercise(ctx: Ctx, l: Line, T: M): MuscuExercise {
     per_side: l.m.muscu.unilateral,
     load,
     rest_s: l.rest,
-    notes: notesFor(ctx, l, load, T),
+    notes: noteExercice(rendu, langue),
     badge_key: l.m.badge_key,
     optional: l.optional,
+    rendu,
   };
 }
 
@@ -977,10 +996,11 @@ export function generateMuscu(
     params, catalog, scheme: SCHEMES[params.objective], rng: new RNG(seed), exclude: new Set(), excludedMuscles: new Set(ac?.excluded ?? []),
     relax: best.relax, pool: [],
   };
-  const exercises = best.lines.map((l) => toExercise(ctxOut, l, T));
+  const exercises = best.lines.map((l) => toExercise(ctxOut, l, langue));
   const seconds = total(best.lines);
   const sig = muscuSignature(sk.id, exercises);
-  const stimulus = stimulusFor(params, exercises, T);
+  const stimulusCles = stimulusClesFor(params, exercises);
+  const stimulus = { rpe: SCHEMES[params.objective].rpe, note: noteStimulus(params.objective, stimulusCles, langue) };
   const wod: MuscuWod = {
     source: 'generator',
     generator: {
@@ -1000,6 +1020,8 @@ export function generateMuscu(
     score_type: 'tonnage',
     after_class: ac ? { excluded_muscles: ac.excluded, suggested_target: ac.suggested_target } : null,
     signature: sig,
+    v: 2,
+    rendu: { stimulus: stimulusCles },
     title: T.titre(T.cible[params.target], T.objectif[params.objective]),
     description: '',
     wod_type: 'strength',
@@ -1017,18 +1039,13 @@ export function generateMuscu(
   return wod;
 }
 
-function stimulusFor(params: MuscuParams, exercises: MuscuExercise[], T: M): { rpe: number; note: string } {
-  const scheme = SCHEMES[params.objective];
-  const rir = T.rir[params.objective];
-  const parts = [rir.charAt(0).toUpperCase() + rir.slice(1)];
-  if (params.objective === 'force') {
-    const main = exercises.find((e) => e.role === 'main_compound');
-    if (main) parts.push(T.monteeEnCharge(main.name));
-  }
-  if (!params.box_wod && exercises.some((e) => e.load.mode === 'rpe' && e.load.rm_reference)) {
-    parts.push(T.renseigne1rm);
-  }
-  return { rpe: scheme.rpe, note: parts.join('. ') };
+/** Parties du stimulus : exercice de la montée en charge (Force), rappel des 1RM. */
+function stimulusClesFor(params: MuscuParams, exercises: MuscuExercise[]): { montee: string | null; renseigne1rm: boolean } {
+  const main = params.objective === 'force' ? exercises.find((e) => e.role === 'main_compound') : undefined;
+  return {
+    montee: main ? main.name : null,
+    renseigne1rm: !params.box_wod && exercises.some((e) => e.load.mode === 'rpe' && !!e.load.rm_reference),
+  };
 }
 
 // ─── Rendu texte (grammaire `strength` : nom d'abord, segments « — ») ────────

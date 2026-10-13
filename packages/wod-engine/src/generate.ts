@@ -1122,7 +1122,7 @@ function finalize(ctx: Ctx, d: Draft, tierRelaxations: string[], attempts: numbe
       : null,
   };
   const estimate = estimateAll({ ...partial, ...emptyEditor() }, langue);
-  const wod: GeneratedWod = { ...emptyEditor(), ...partial, estimate, signature: '' };
+  const wod: GeneratedWod = { ...emptyEditor(), ...partial, estimate, signature: '', v: 2 };
   wod.signature = signature(wod);
   return render(wod, langue);
 }

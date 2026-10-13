@@ -14,6 +14,8 @@ import { TARGET_MUSCLES } from './bank/muscu';
 import { fr } from './i18n/fr';
 import { banqueVers, textes } from './i18n';
 import type { Langue, Textes } from './i18n';
+import { descriptionBlocC, rendreBlocSeance } from './rendu-seance';
+import type { ContenuBloc, PosteRendu, ProRendu, RenduBlocSeance } from './rendu-seance';
 import { SESSION_SKELETONS } from './bank/session';
 import {
   HYBRID_FORBIDDEN_IDS, HYBRID_JUMP_IDS, HYBRID_WEEKLY_JUMP_CAP, HYBRID_WEEKLY_RUN_M, HYBRID_HARD_RPE,
@@ -25,8 +27,7 @@ export const SESSION_ENGINE_VERSION = '1.0.0';
 export const SESSION_TOLERANCE = 0.20;
 /** minute de transition entre deux blocs */
 export const TRANSITION_MIN = 1;
-/** durée des étapes A et B d'un skill (secondes) */
-export const SKILL_STEP_S = 180;
+export { SKILL_STEP_S, stepLine } from './rendu-seance';
 export const B_RETRY_MAX = 12;
 /** préfixe des finishers dans le journal `signatures` (anti-répétition 4 semaines) */
 export const FINISHER_SIGNATURE_PREFIX = 'finisher:';
@@ -68,7 +69,6 @@ export const DAY_LABEL: Record<SessionDay, string> = fr.jours;
  */
 interface Rendu { t: Textes; tb: (texte: string) => string }
 const rendu = (langue: Langue): Rendu => ({ t: textes(langue), tb: banqueVers(langue) });
-const RENDU_FR = rendu('fr');
 
 // ─── Graine ──────────────────────────────────────────────────────────────────
 
@@ -105,42 +105,6 @@ export function muscuObjectiveForWeek(iso_week: number): MuscuObjective {
   return MUSCU_OBJECTIVE_CYCLE[Math.floor((iso_week - 1) / 2) % MUSCU_OBJECTIVE_CYCLE.length];
 }
 
-// ─── Rendu (grammaire `strength`) ────────────────────────────────────────────
-
-function fmtRest(s: number): string {
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return m > 0 ? `${m}:${String(r).padStart(2, '0')}` : `${r}s`;
-}
-
-function fmtEvery(s: number, d: Textes['duree'] = fr.duree): string {
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return r ? d.minutesSecondes(m, String(r).padStart(2, '0')) : d.minutes(m);
-}
-
-function nameOf(catalog: Catalog, id: string): string {
-  return movementById(catalog, id)?.name ?? id;
-}
-
-/** `Back Squat — 5 × 5 @ 75 %1RM — repos 2:30 — tempo 3-1-X-1 — charge …` */
-export function stepLine(name: string, st: StrengthStep, tempo?: string | null, langue: Langue = 'fr'): string {
-  const { t, tb } = rendu(langue);
-  const T = t.seance;
-  let out = `${name} — ${st.sets} × ${st.reps}`;
-  if (st.percent !== null) out += T.serie.pourcent(st.percent);
-  out += T.serie.repos(fmtRest(st.rest_s));
-  // la note lue est celle de la banque (français) : c'est elle qui décide du tempo
-  if (tempo && !st.note?.startsWith('montée')) out += T.serie.tempo(tempo);
-  if (st.note) out += T.serie.charge(tb(st.note));
-  return out;
-}
-
-/** saut de ligne des descriptions de blocs */
-const NL = '\n';
-
-const CAT_LABEL: Record<string, string> = fr.categories;
-
 /**
  * Un skill lu depuis `wod_skeletons` peut venir d'un seed antérieur aux progressions
  * (prod du 16/09/2026, seed 20261217) : on complète alors depuis le snapshot embarqué,
@@ -153,52 +117,6 @@ export function withSkillProgression(opt: SessionBlockAOption): SessionBlockAOpt
     throw new Error(`Skill « ${opt.id} » (${opt.movement}) sans progression A/B : absente de la banque chargée et du snapshot embarqué`);
   }
   return { ...opt, skill: { ...opt.skill, progression: snapshot } };
-}
-
-function blockALines(catalog: Catalog, opt: SessionBlockAOption, weeks: 'even' | 'odd', { t, tb }: Rendu, langue: Langue): string[] {
-  const T = t.seance;
-  const name = nameOf(catalog, opt.movement);
-  const lines: string[] = [];
-  if (opt.kind === 'weightlifting') {
-    const complex = (opt.complex ?? []).map((id) => nameOf(catalog, id));
-    lines.push(T.halteroComplexe(name, weeks === 'even' ? 'A' : 'B', complex.join(' + ')));
-    lines.push(T.halteroConsigne);
-    for (const st of opt.steps ?? []) lines.push(stepLine(name, st, undefined, langue));
-  } else if (opt.kind === 'strength') {
-    lines.push(T.force(name));
-    for (const st of opt.steps ?? []) lines.push(stepLine(name, st, opt.tempo, langue));
-    if (opt.tempo) lines.push(T.forceTempo(opt.tempo));
-  } else if (opt.skill) {
-    const sk = opt.skill;
-    lines.push(T.skill(name));
-    lines.push(T.etapeA(tb(sk.progression.a), fmtEvery(SKILL_STEP_S, t.duree)));
-    lines.push(T.etapeB(tb(sk.progression.b), fmtEvery(SKILL_STEP_S, t.duree)));
-    lines.push(T.etapeC(fmtEvery(sk.every_s, t.duree), sk.rounds));
-    lines.push(`${sk.reps} ${name}`);
-    const subs = Object.entries(sk.substitutions).map(([c, s]) => t.rendu.substitution(CAT_LABEL[c] ?? c, tb(s)));
-    if (subs.length) lines.push(`→ ${subs.join(' · ')}`);
-  }
-  return lines;
-}
-
-function nameOfB(catalog: Catalog, opt: SessionBlockBOption, tb: Rendu['tb'] = RENDU_FR.tb): string {
-  return opt.name ? tb(opt.name) : nameOf(catalog, opt.movement);
-}
-
-function blockBLines(catalog: Catalog, opt: SessionBlockBOption, { t, tb }: Rendu, langue: Langue): string[] {
-  const name = nameOfB(catalog, opt, tb);
-  const lines = [t.seance.building(name, opt.tempo ?? '').trim()];
-  for (const st of opt.steps) lines.push(stepLine(name, st, opt.tempo, langue));
-  return lines;
-}
-
-function finisherLines(catalog: Catalog, opt: SessionFinisherOption, { t, tb }: Rendu): string[] {
-  const lines = [t.seance.finisher(opt.rounds)];
-  for (const m of opt.movements) {
-    const name = m.name ? tb(m.name) : nameOf(catalog, m.id);
-    lines.push(m.unit === 's' ? `${m.qty} s ${name}` : m.unit === 'm' ? `${m.qty} m ${name}` : `${m.qty} ${name}`);
-  }
-  return lines;
 }
 
 // ─── Volume gym ──────────────────────────────────────────────────────────────
@@ -365,43 +283,6 @@ function loadOf(catalog: Catalog, id: string, band?: Band): { men: number; women
 }
 
 /**
- * Suffixe de charge d'un poste. Une hauteur de box (`cm`) n'est pas une charge : elle est
- * rendue entre parenthèses, et la charge vient alors du mouvement désigné par `load_from`.
- */
-function loadPair(catalog: Catalog, it: SessionStationItem, T: Textes['seance']): string {
-  const own = loadOf(catalog, it.id, it.band);
-  const extra = it.load_from ? loadOf(catalog, it.load_from, it.band) : null;
-  const parts: string[] = [];
-  if (own && own.unit === 'cm') parts.push(T.stationBox(own.men, own.women));
-  else if (own) parts.push(`@ ${own.men}/${own.women} ${own.unit}`);
-  if (extra) parts.push(`@ ${extra.men}/${extra.women} ${extra.unit}`);
-  return parts.length ? ` ${parts.join(' ')}` : '';
-}
-
-/** « 25 m Sled Push @ 125/100 kg », « 60 s Row », « 10 Box Step-ups (box 60/50 cm) @ 24/16 kg ». */
-function stationLine(catalog: Catalog, it: SessionStationItem, { t, tb }: Rendu): string {
-  const name = it.name ? tb(it.name) : nameOf(catalog, it.id);
-  const qty = it.unit === 'reps' ? `${it.qty}` : `${it.qty} ${it.unit}`;
-  return `${qty} ${name}${loadPair(catalog, it, t.seance)}`;
-}
-
-/** Ligne Pro d'un poste chargé, quand le catalogue connaît les charges Pro. */
-function proLine(catalog: Catalog, items: readonly SessionStationItem[], { t, tb }: Rendu): string | null {
-  const parts: string[] = [];
-  for (const it of items) {
-    if (!it.band) continue;
-    const m = movementById(catalog, it.id);
-    if (!m?.loads) continue;
-    if ((m.load_unit ?? 'kg') === 'cm') continue;
-    const men = loadsFor(m, 'men_pro', it.band);
-    const women = loadsFor(m, 'women_pro', it.band);
-    if (!men?.length || !women?.length) continue;
-    parts.push(`${it.name ? tb(it.name) : nameOf(catalog, it.id)} ${men[0]}/${women[0]} ${m.load_unit ?? 'kg'}`);
-  }
-  return parts.length ? t.seance.pro(parts.join(' · ')) : null;
-}
-
-/**
  * Enchaînement chronométré non figé : ordre des postes et nombre de tours tirés à la graine.
  * Un `race.ordered` (test de bloc) est rendu tel quel, pour rester comparable d'une fois sur l'autre.
  */
@@ -446,54 +327,100 @@ function totalRunOf(opt: SessionBlockAOption): number {
   return Array.from({ length: c.rounds }, (_, i) => runOfRound(opt, i)).reduce((a, b) => a + b, 0);
 }
 
-/** Bloc A des séances Hybrid : station `Every X'`, intervalles de course, ou enchaînement chronométré. */
-function hybridALines(catalog: Catalog, opt: SessionBlockAOption, iso_week: number, r: Rendu): string[] {
-  const { t, tb } = r;
-  const T = t.seance;
-  const lines: string[] = [];
-  if (opt.kind === 'station' && opt.station) {
-    const { every_s, rounds, items } = opt.station;
-    lines.push(items.length > 1 ? T.stationRotation(fmtEvery(every_s, t.duree), rounds) : T.stationEvery(fmtEvery(every_s, t.duree), rounds));
-    for (const [i, it] of items.entries()) {
-      // deux postes s'alternent (impair / pair), au-delà ils tournent et se numérotent
-      const tag = items.length === 2 ? (i === 0 ? T.impair : T.pair) : items.length > 2 ? T.poste(i + 1) : '';
-      lines.push(`${tag}${stationLine(catalog, it, r)}`);
-    }
-    const pro = proLine(catalog, items, r);
-    if (pro) lines.push(pro);
-    if (items.some((it) => it.band === 'heavy')) {
-      lines.push(T.chargeLourde);
-    }
-  } else if (opt.kind === 'run' && opt.run) {
-    const v = opt.run.variants[iso_week % opt.run.variants.length];
-    lines.push(T.intervallesCourse(tb(v.label), fmtRest(v.rest_s)));
-    lines.push(T.allureCible(tb(v.target)));
-    lines.push(T.autresVariantes(opt.run.variants.filter((x) => x !== v).map((x) => tb(x.label)).join(' · ')));
-  } else if (opt.kind === 'compromised' && opt.compromised) {
-    const { rounds, work_s, run_m_min, run_m_max, stations, target } = opt.compromised;
-    lines.push(T.compromiseRounds(rounds));
-    for (let i = 0; i < rounds; i++) {
-      const st = stations[i % stations.length];
-      const run = runOfRound(opt, i);
-      lines.push(T.compromiseStation(i + 1, work_s, stationLine(catalog, st, r)));
-      lines.push(T.compromiseCourse(run, tb(target)));
-    }
-    const used = Array.from({ length: rounds }, (_, i) => stations[i % stations.length]);
-    const pro = proLine(catalog, used, r);
-    if (pro) lines.push(pro);
-    lines.push(T.compromiseTotal(totalRunOf(opt)));
-  } else if (opt.kind === 'race' && opt.race) {
-    const { rounds, run_m, stations, score } = opt.race;
-    lines.push(T.enchainement(rounds));
-    for (let i = 0; i < rounds; i++) {
-      const st = stations[i % stations.length];
-      lines.push(T.enchainementLigne(i + 1, run_m, stationLine(catalog, st, r)));
-    }
-    const pro = proLine(catalog, Array.from({ length: rounds }, (_, i) => stations[i % stations.length]), r);
-    if (pro) lines.push(pro);
-    lines.push(T.enchainementScore(tb(score)));
+// ─── Charge utile de rendu (wod_json v2) ─────────────────────────────────────
+
+function nameOf(catalog: Catalog, id: string): string {
+  return movementById(catalog, id)?.name ?? id;
+}
+
+/** Noms du catalogue des mouvements cités par un bloc : le réaffichage n'a pas besoin du catalogue. */
+function nomsDe(catalog: Catalog, ids: Iterable<string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const id of ids) out[id] = nameOf(catalog, id);
+  return out;
+}
+
+/** Poste avec ses charges du catalogue. Une hauteur de box (`cm`) n'est pas une charge : la charge vient alors de `load_from`. */
+function posteDe(catalog: Catalog, it: SessionStationItem): PosteRendu {
+  const own = loadOf(catalog, it.id, it.band);
+  const extra = it.load_from ? loadOf(catalog, it.load_from, it.band) : null;
+  return {
+    id: it.id, qty: it.qty, unit: it.unit, ...(it.name ? { name: it.name } : {}),
+    ...(own && own.unit === 'cm' ? { box: [own.men, own.women] as [number, number] } : own ? { charge: [own.men, own.women, own.unit] as [number, number, string] } : {}),
+    ...(extra ? { extra: [extra.men, extra.women, extra.unit] as [number, number, string] } : {}),
+  };
+}
+
+/** Charges Pro des postes chargés, quand le catalogue les connaît. */
+function proDe(catalog: Catalog, items: readonly SessionStationItem[]): ProRendu[] {
+  const out: ProRendu[] = [];
+  for (const it of items) {
+    if (!it.band) continue;
+    const m = movementById(catalog, it.id);
+    if (!m?.loads) continue;
+    if ((m.load_unit ?? 'kg') === 'cm') continue;
+    const men = loadsFor(m, 'men_pro', it.band);
+    const women = loadsFor(m, 'women_pro', it.band);
+    if (!men?.length || !women?.length) continue;
+    out.push({ id: it.id, ...(it.name ? { name: it.name } : {}), men: men[0], women: women[0], unit: m.load_unit ?? 'kg' });
   }
-  return lines;
+  return out;
+}
+
+/** Contenu d'un bloc A ou de travail, tel que tiré (ordre des postes, tours, courses, variante de la semaine). */
+function contenuDe(catalog: Catalog, opt: SessionBlockAOption, weeks: 'even' | 'odd', iso_week: number): ContenuBloc {
+  const movement = opt.movement;
+  const parRound = (rounds: number, stations: readonly SessionStationItem[]) => Array.from({ length: rounds }, (_, i) => stations[i % stations.length]);
+  switch (opt.kind) {
+    case 'weightlifting': return { kind: 'weightlifting', movement, complex: opt.complex ?? [], variante: weeks === 'even' ? 'A' : 'B', steps: opt.steps ?? [] };
+    case 'strength': return { kind: 'strength', movement, steps: opt.steps ?? [], tempo: opt.tempo ?? null };
+    case 'skill': {
+      if (!opt.skill) throw new Error(`Skill « ${opt.id} » sans contenu`);
+      const { reps, rounds, every_s, progression, substitutions } = opt.skill;
+      return { kind: 'skill', movement, skill: { reps, rounds, every_s, progression: { a: progression.a, b: progression.b }, substitutions: { ...substitutions } } };
+    }
+    case 'station': {
+      if (!opt.station) throw new Error(`Station « ${opt.id} » sans postes`);
+      const { every_s, rounds, items } = opt.station;
+      return {
+        kind: 'station', movement, every_s, rounds, postes: items.map((it) => posteDe(catalog, it)), pro: proDe(catalog, items),
+        lourd: items.some((it) => it.band === 'heavy'),
+      };
+    }
+    case 'run': {
+      if (!opt.run) throw new Error(`Course « ${opt.id} » sans variantes`);
+      const v = opt.run.variants[iso_week % opt.run.variants.length];
+      return {
+        kind: 'run', movement, variante: { label: v.label, target: v.target, rest_s: v.rest_s },
+        autres: opt.run.variants.filter((x) => x !== v).map((x) => x.label),
+      };
+    }
+    case 'compromised': {
+      if (!opt.compromised) throw new Error(`Course compromise « ${opt.id} » sans postes`);
+      const { rounds, work_s, stations, target } = opt.compromised;
+      const used = parRound(rounds, stations);
+      return {
+        kind: 'compromised', movement, rounds, work_s, target,
+        tours: used.map((st, i) => ({ poste: posteDe(catalog, st), run_m: runOfRound(opt, i) })),
+        pro: proDe(catalog, used), total_m: totalRunOf(opt),
+      };
+    }
+    case 'race': {
+      if (!opt.race) throw new Error(`Enchaînement « ${opt.id} » sans postes`);
+      const { rounds, run_m, stations, score } = opt.race;
+      const used = parRound(rounds, stations);
+      return { kind: 'race', movement, rounds, run_m, postes: used.map((st) => posteDe(catalog, st)), pro: proDe(catalog, used), score };
+    }
+  }
+}
+
+/** Ids cités par un contenu (titre, complexe, postes, charges Pro). */
+function idsDe(c: ContenuBloc): string[] {
+  const ids = [c.movement];
+  if (c.kind === 'weightlifting') ids.push(...c.complex);
+  if (c.kind === 'station' || c.kind === 'race') ids.push(...c.postes.map((p) => p.id), ...c.pro.map((p) => p.id));
+  if (c.kind === 'compromised') ids.push(...c.tours.map((t) => t.poste.id), ...c.pro.map((p) => p.id));
+  return ids;
 }
 
 function heavyPatternOf(m: CatalogMovement | undefined): Pattern | null {
@@ -510,10 +437,10 @@ function editor(title: string, description: string, wod_type: SessionBlock['wod_
   };
 }
 
-function structured(kind: SessionStructuredBlock['kind'], option_id: string, extra: Partial<SessionStructuredBlock>): SessionStructuredBlock {
+function structured(kind: SessionStructuredBlock['kind'], option_id: string, extra: Partial<SessionStructuredBlock>, rendu: RenduBlocSeance): SessionStructuredBlock {
   return {
     source: 'generator', discipline: 'session', kind, option_id, movement: null, heavy_pattern: null, steps: null, complex: null,
-    skill: null, finisher: null, gym_reps_rx: {}, ...extra,
+    skill: null, finisher: null, gym_reps_rx: {}, ...extra, v: 2, rendu,
   };
 }
 
@@ -525,7 +452,6 @@ function structured(kind: SessionStructuredBlock['kind'], option_id: string, ext
 /** `langue` ne change que le texte de la séance (défaut `fr`, le texte enregistré) : jamais un tirage. */
 export function generateSession(params: SessionParams, catalog: Catalog, bank: SkeletonBank, seed: number, langue: Langue = 'fr'): GeneratedSession {
   const r = rendu(langue);
-  const T = r.t.seance;
   const track: SessionTrack = params.track ?? 'functional';
   const sk = skeletonForDay(bank, params.day, track, params.iso_week);
   const rng = new RNG(seed);
@@ -679,29 +605,29 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
   // Assemblage des lignes box_wods
   const blocks: SessionBlock[] = [];
   const gym: Record<string, number> = {};
-  const warm = [...sk.warmup.lines.map(r.tb), ''];
   let sort = 0;
   if (optA) {
     const isHybridA = optA.kind === 'station' || optA.kind === 'run' || optA.kind === 'race';
-    const lines = isHybridA ? hybridALines(catalog, optA, params.iso_week, r) : blockALines(catalog, optA, weeks, r, langue);
     const aReps: Record<string, number> = {};
     if (optA.skill) aReps[optA.movement] = optA.skill.reps * optA.skill.rounds;
     addReps(gym, gymReps(catalog, aReps));
-    const KIND_LABEL: Record<SessionBlockAOption['kind'], string> = T.type;
-    const title = optA.kind === 'race' ? r.tb(sk.label) : `${KIND_LABEL[optA.kind]} · ${nameOf(catalog, optA.movement)}`;
+    const contenu = contenuDe(catalog, optA, weeks, params.iso_week);
+    const pA: RenduBlocSeance = {
+      bloc: 'a', label: sk.label, echauffement: sk.warmup.lines, timed: !!optA.timed, contenu, noms: nomsDe(catalog, idsDe(contenu)),
+    };
+    const tA = rendreBlocSeance(pA, langue);
     // Une séance chronométrée (H6) n'a pas de bloc C : c'est son bloc A qui porte le classement.
     const a = editor(
-      title,
-      [...warm, ...lines].join('\n'),
+      tA.title,
+      tA.description,
       optA.kind === 'skill' || isHybridA ? 'custom' : 'strength',
       optA.timed ? 'wod' : optA.kind === 'skill' ? 'skill' : 'strength',
       sort++, sk.warmup.minutes + optA.minutes,
       structured(optA.kind, optA.id, {
         movement: optA.movement, heavy_pattern: heavy, steps: optA.steps ?? null, complex: optA.complex ?? null,
         skill: optA.skill ?? null, gym_reps_rx: gymReps(catalog, aReps),
-      }),
-      optA.kind === 'weightlifting' ? T.notePourcentages
-        : optA.timed ? T.noteChronometree : null,
+      }, pA),
+      tA.notes,
     );
     if (optA.timed) a.leaderboard_enabled = true;
     blocks.push(a);
@@ -710,22 +636,28 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     const bReps: Record<string, number> = {};
     for (const st of optB.steps) bReps[optB.movement] = (bReps[optB.movement] ?? 0) + st.sets * st.reps;
     addReps(gym, gymReps(catalog, bReps));
+    const pB: RenduBlocSeance = {
+      bloc: 'b', movement: optB.movement, ...(optB.name ? { name: optB.name } : {}), tempo: optB.tempo ?? null, steps: optB.steps,
+      noms: nomsDe(catalog, [optB.movement]),
+    };
+    const tB = rendreBlocSeance(pB, langue);
     blocks.push(editor(
-      T.titreBuilding(nameOfB(catalog, optB, r.tb)),
-      blockBLines(catalog, optB, r, langue).join('\n'),
-      'strength', 'building', sort++, optB.minutes,
-      structured('building', optB.id, { movement: optB.movement, steps: optB.steps, gym_reps_rx: gymReps(catalog, bReps) }),
-      null,
+      tB.title, tB.description, 'strength', 'building', sort++, optB.minutes,
+      structured('building', optB.id, { movement: optB.movement, steps: optB.steps, gym_reps_rx: gymReps(catalog, bReps) }, pB),
+      tB.notes,
     ));
   }
   if (optW) {
-    const wLines = hybridALines(catalog, optW, params.iso_week, r);
+    const contenu = contenuDe(catalog, optW, weeks, params.iso_week);
+    const pW: RenduBlocSeance = {
+      bloc: 'work', label: sk.label, echauffement: optA ? null : sk.warmup.lines, timed: !!optW.timed, contenu,
+      noms: nomsDe(catalog, idsDe(contenu)),
+    };
+    const tW = rendreBlocSeance(pW, langue);
     const w = editor(
-      optW.kind === 'race' ? r.tb(sk.label) : `${r.tb(sk.label)} · ${nameOf(catalog, optW.movement)}`,
-      [...(optA ? [] : warm), ...wLines].join(NL),
-      'custom', 'wod', sort++, optW.minutes + (optA ? 0 : sk.warmup.minutes),
-      structured(optW.kind, optW.id, { movement: optW.movement, gym_reps_rx: {} }),
-      optW.timed ? T.noteChronometree : null,
+      tW.title, tW.description, 'custom', 'wod', sort++, optW.minutes + (optA ? 0 : sk.warmup.minutes),
+      structured(optW.kind, optW.id, { movement: optW.movement, gym_reps_rx: {} }, pW),
+      tW.notes,
     );
     w.leaderboard_enabled = true;
     blocks.push(w);
@@ -733,7 +665,8 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
   if (blocC) {
     const cReps = blocCRepsRx(blocC);
     addReps(gym, gymReps(catalog, cReps));
-    const cDescription = optA ? blocC.description : [...warm, blocC.description].join('\n');
+    const echauffement = optA ? null : sk.warmup.lines;
+    const cDescription = descriptionBlocC(blocC.description, echauffement, langue);
     blocks.push({
       title: blocC.title,
       description: cDescription,
@@ -741,7 +674,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
       block_name: 'wod',
       sort_order: sort++,
       minutes: choice.c + (optA ? 0 : sk.warmup.minutes),
-      wod_json: blocC,
+      wod_json: { ...blocC, rendu: { bloc: 'c', echauffement } },
       time_cap_seconds: blocC.time_cap_seconds,
       rounds: blocC.rounds,
       notes: blocC.notes,
@@ -756,17 +689,25 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     const fReps: Record<string, number> = {};
     for (const m of optF.movements) if (m.unit === 'reps') fReps[m.id] = (fReps[m.id] ?? 0) + m.qty * optF.rounds;
     addReps(gym, gymReps(catalog, fReps));
+    const pF: RenduBlocSeance = {
+      bloc: 'finisher', rounds: optF.rounds,
+      movements: optF.movements.map((m) => ({ id: m.id, qty: m.qty, unit: m.unit, ...(m.name ? { name: m.name } : {}) })),
+      noms: nomsDe(catalog, optF.movements.map((m) => m.id)),
+    };
+    const tF = rendreBlocSeance(pF, langue);
     blocks.push(editor(
-      T.titreFinisher, finisherLines(catalog, optF, r).join('\n'), 'custom', 'finisher', sort++, optF.minutes,
-      structured('finisher', optF.id, { finisher: optF, gym_reps_rx: gymReps(catalog, fReps) }),
-      null,
+      tF.title, tF.description, 'custom', 'finisher', sort++, optF.minutes,
+      structured('finisher', optF.id, { finisher: optF, gym_reps_rx: gymReps(catalog, fReps) }, pF),
+      tF.notes,
     ));
   }
 
   if (cool) {
+    const pCool: RenduBlocSeance = { bloc: 'cooldown', lignes: [...cool.lines] };
+    const tCool = rendreBlocSeance(pCool, langue);
     blocks.push(editor(
-      T.titreRetourAuCalme, cool.lines.map(r.tb).join(NL), 'custom', 'cooldown', sort++, cool.minutes,
-      structured('cooldown', `cooldown_${cool.minutes}`, {}), null,
+      tCool.title, tCool.description, 'custom', 'cooldown', sort++, cool.minutes,
+      structured('cooldown', `cooldown_${cool.minutes}`, {}, pCool), tCool.notes,
     ));
   }
 

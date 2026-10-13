@@ -1,3 +1,5 @@
+import type { RenduBlocC, RenduBlocSeance } from './rendu-seance';
+
 /**
  * wod-engine — types publics.
  * TypeScript pur : aucune dépendance React / Expo / Supabase.
@@ -474,6 +476,10 @@ export interface SessionStructuredBlock {
   finisher: SessionFinisherOption | null;
   /** reps RX comptées pour les plafonds gym de la semaine, par id */
   gym_reps_rx: Record<string, number>;
+  /** version du wod_json (2 : réaffichable par `renderFromWodJson`) ; absente sur les lignes plus anciennes */
+  v?: 2;
+  /** tout ce que le texte du bloc contient, calculé à partir des valeurs tirées (M3) */
+  rendu?: RenduBlocSeance;
 }
 
 export interface GeneratedSession {
@@ -692,6 +698,10 @@ export interface GeneratedWod extends EditorColumns {
   score_type: ScoreType;
   after_class: { excluded_patterns: Pattern[]; excluded_families: Family[] } | null;
   signature: string;
+  /** version du wod_json (2 : réaffichable par `renderFromWodJson`) ; absente sur les lignes plus anciennes */
+  v?: 2;
+  /** bloc C d'une séance de box : échauffement qui le précède (M3) */
+  rendu?: RenduBlocC;
 }
 
 // ─── Musculation (squelettes, paramètres, sortie) ────────────────────────────
@@ -800,7 +810,11 @@ export interface MuscuExercise {
   badge_key: string | null;
   /** Exercice ajouté par le rattrapage de budget (slot `optional` ou bonus sur un muscle secondaire). */
   optional: boolean;
+  /** parties de `notes`, dans l'ordre, et tempo (M3) : la note se réécrit dans toutes les langues */
+  rendu?: { notes: MuscuNoteCle[]; tempo: string | null };
 }
+
+export type MuscuNoteCle = 'schemaHypertrophie' | 'chargePropre' | 'troisiemeCompound' | 'debutantBanded' | 'tempo';
 
 export interface StrengthSessionBlock {
   kind: 'strength_session';
@@ -823,6 +837,10 @@ export interface MuscuWod extends EditorColumns {
   score_type: 'tonnage';
   after_class: { excluded_muscles: Muscle[]; suggested_target: MuscuTarget | null } | null;
   signature: string;
+  /** version du wod_json (2 : réaffichable par `renderFromWodJson`) ; absente sur les lignes plus anciennes */
+  v?: 2;
+  /** parties du stimulus (M3) : exercice de la montée en charge, rappel des 1RM */
+  rendu?: { stimulus: { montee: string | null; renseigne1rm: boolean } };
 }
 
 export class NoValidWod extends Error {
