@@ -275,12 +275,12 @@ BEGIN
     ('public.decide_plan_change_request(uuid,uuid,boolean)', 'a9870f673308612fa98420b29cd84de6'),
     ('internal.refus_changement_formule(uuid,uuid,uuid)', '8cc12cb3197cc5cf71c284357a1fba2f'),
     ('public.get_my_membership_billing()', 'b4ca55006146fc83bc3da8eff1260234'),
-    ('internal.garder_facturation_membre()', 'b50e8f8843dbe51848862942b3f3602f'),
+    ('internal.garder_facturation_membre()', '483768906753de48dd9b48454f877f23'), -- redéfinie par 20270151
     ('internal.filer_notification_gerant()', 'df14724f0a600ea18fb1056e7148b940')
   ) a(fn, attendu)
   WHERE md5(pg_temp.def(a.fn)) IS DISTINCT FROM a.attendu;
   IF v IS NOT NULL THEN RAISE EXCEPTION 'C0 : définitions différentes du fichier : %', v; END IF;
-  IF (SELECT md5(pg_get_triggerdef(oid)) FROM pg_trigger WHERE tgname = 'trg_box_members_garde_facturation') IS DISTINCT FROM '05e9de13a14666cd9b5d99040e8da0c3' THEN
+  IF (SELECT md5(pg_get_triggerdef(oid)) FROM pg_trigger WHERE tgname = 'trg_box_members_garde_facturation') IS DISTINCT FROM '3aec5ba9a7b7ba60ea9ec4423fbcf71e' THEN
     RAISE EXCEPTION 'C0 : déclencheur de la garde (%)', (SELECT pg_get_triggerdef(oid) FROM pg_trigger WHERE tgname = 'trg_box_members_garde_facturation');
   END IF;
   IF (SELECT pg_get_triggerdef(oid) FROM pg_trigger WHERE tgname = 'trg_notif_gerant_changement_formule') IS DISTINCT FROM
@@ -628,7 +628,7 @@ BEGIN
   CREATE TRIGGER trg_box_members_garde_facturation BEFORE INSERT OR UPDATE OF plan_id, status ON public.box_members FOR EACH ROW EXECUTE FUNCTION internal.garder_facturation_membre();
   IF pg_temp.faire('e0', v, true) <> '1' THEN RAISE EXCEPTION 'M : déclencheur sans la colonne, encore refusé : C8 ne prouve rien'; END IF;
   DROP TRIGGER trg_box_members_garde_facturation ON public.box_members;
-  CREATE TRIGGER trg_box_members_garde_facturation BEFORE INSERT OR UPDATE OF plan_id, subscription_status, stripe_subscription_id, stripe_checkout_session_id, subscription_current_period_end, subscription_cancel_at_period_end, amount_cents, platform_fee_cents, commitment_end_date, subscription_paused, pause_started_at, pause_resumes_at, payment_method_type, past_due_since, dunning_attempts, last_payment_error, dunning_reminders_sent, dunning_last_reminder_at, billing_day, scheduled_plan_id, scheduled_change_at, stripe_schedule_id, status ON public.box_members FOR EACH ROW EXECUTE FUNCTION internal.garder_facturation_membre();
+  CREATE TRIGGER trg_box_members_garde_facturation BEFORE INSERT OR UPDATE OF plan_id, subscription_status, stripe_subscription_id, stripe_checkout_session_id, subscription_current_period_end, subscription_cancel_at_period_end, amount_cents, platform_fee_cents, commitment_end_date, subscription_paused, pause_started_at, pause_resumes_at, payment_method_type, past_due_since, dunning_attempts, last_payment_error, dunning_reminders_sent, dunning_last_reminder_at, billing_day, scheduled_plan_id, scheduled_change_at, stripe_schedule_id, cash_access_until, status ON public.box_members FOR EACH ROW EXECUTE FUNCTION internal.garder_facturation_membre();
   GRANT SELECT (scheduled_plan_id) ON public.box_members TO authenticated;
   IF pg_temp.faire('11', format('SELECT right(scheduled_plan_id::text, 2) FROM public.box_members WHERE member_id = %L', pg_temp.u('11'))) <> 'a2' THEN
     RAISE EXCEPTION 'M : lecture accordée, encore refusée : C8 ne prouve rien';
@@ -651,13 +651,16 @@ BEGIN
         'public.cancel_plan_change_request(uuid,uuid)', 'public.decide_plan_change_request(uuid,uuid,boolean)',
         'internal.refus_changement_formule(uuid,uuid,uuid)', 'internal.garder_facturation_membre()',
         'internal.filer_notification_gerant()']) f)
-     IS DISTINCT FROM '0208fa64ff58d791616d4082d2d70cf3,a9870f673308612fa98420b29cd84de6,8cc12cb3197cc5cf71c284357a1fba2f,b50e8f8843dbe51848862942b3f3602f,df14724f0a600ea18fb1056e7148b940'
-     OR (SELECT md5(pg_get_triggerdef(oid)) FROM pg_trigger WHERE tgname = 'trg_box_members_garde_facturation') <> '05e9de13a14666cd9b5d99040e8da0c3' THEN
+     IS DISTINCT FROM '0208fa64ff58d791616d4082d2d70cf3,a9870f673308612fa98420b29cd84de6,8cc12cb3197cc5cf71c284357a1fba2f,483768906753de48dd9b48454f877f23,df14724f0a600ea18fb1056e7148b940'
+     OR (SELECT md5(pg_get_triggerdef(oid)) FROM pg_trigger WHERE tgname = 'trg_box_members_garde_facturation') <> '3aec5ba9a7b7ba60ea9ec4423fbcf71e' THEN
     RAISE EXCEPTION 'M : une définition mutée n''est pas revenue';
   END IF;
 END $t$;
 
 -- ── R : retour arrière ────────────────────────────────────────────────────────
+-- D'abord celui de 20270151, qui redéfinit la garde après 20270147 (ordre
+-- inverse des migrations).
+\i supabase/retours/20270151000000_paiements_comptoir_duree.sql
 \i supabase/retours/20270147000000_changement_formule.sql
 DO $t$
 DECLARE v text;

@@ -115,6 +115,17 @@ const GARDES_DECLENCHEUR = [
     risque: 'un gérant ou un co-gérant invente ou réécrit le nombre d\'appareils '
       + 'atteints par sa notification. Rejoue 20270142.',
   },
+  {
+    id: 'T16',
+    table: 'boxes',
+    declencheur: 'trg_boxes_garde_renouvellement_comptoir',
+    evenements: ['INSERT', 'UPDATE'],
+    colonnes: ['allow_counter_renewal'],
+    corps: ['BOX_REGLAGE_RESERVE', 'NEW.allow_counter_renewal IS DISTINCT FROM OLD.allow_counter_renewal'],
+    libelle: 'le réglage de renouvellement au comptoir de `boxes` n\'est écrit que par le serveur',
+    risque: 'un gérant autorise lui-même le renouvellement au comptoir depuis le '
+      + 'navigateur et garde ses membres hors du paiement en ligne. Rejoue 20270151.',
+  },
 ];
 
 /**
@@ -125,7 +136,7 @@ const GARDES_DECLENCHEUR = [
  * décompte le dirait au lieu de le taire.
  */
 export const ASSERTIONS_GRANTS_TABLES = 9 + TABLES_ECRITURE_SERVEUR.size + GARDES_DECLENCHEUR.length
-  + TABLES_FERMEES.length + 1; // T1..T9, T10 par table, T11..T13 par garde, T14 par table fermée, T15
+  + TABLES_FERMEES.length + 2; // T1..T9, T10 par table, T11..T13 et T16 par garde, T14 par table fermée, T15, T17
 
 const PRIV_LISTE = privs => privs.map(p => `'${p}'`).join(', ');
 
@@ -374,6 +385,7 @@ export function controlerGrantsTables(query, assert) {
   for (const garde of GARDES_DECLENCHEUR) controlerGardeDeclencheur(query, assert, garde);
   for (const t of TABLES_FERMEES) controlerTableFermee(query, assert, t);
   controlerChangementFormule(query, assert);
+  controlerComptoirDuree(query, assert);
 }
 
 /**
@@ -571,6 +583,65 @@ function controlerChangementFormule(query, assert) {
     ecarts.join(' ; ') + '\n'
       + '       → sans cette fermeture, un membre se donne une autre formule, lit ou réécrit la '
       + 'demande d\'un autre, ou lit la configuration Stripe d\'une box. Rejoue 20270147.',
+  );
+}
+
+/**
+ * T17 : la durée des encaissements au comptoir (20270151) ne s'écrit que par le
+ * serveur.
+ *   - `internal.periode_comptoir` et `internal.box_vend_en_ligne` existent et
+ *     ne sont exécutables ni par un client ni par `service_role` ;
+ *   - `public._log_box_cash_payment` (chaque version) non plus : le journal ne
+ *     s'écrit qu'à travers les RPC qui contrôlent le gérant ;
+ *   - `box_members.cash_access_until` n'est lue par aucun client et la garde de
+ *     facturation la couvre (liste UPDATE OF et corps) ;
+ *   - le verrou du journal couvre la période (period_months, access_from,
+ *     access_until).
+ * Lu par oid et par nom de schéma, sans résoudre de nom dans `internal`.
+ */
+function controlerComptoirDuree(query, assert) {
+  const fermees = query(`
+    select f, coalesce((select string_agg(distinct r, ',')
+                          from pg_proc p join pg_namespace n on n.oid = p.pronamespace,
+                               unnest(array['anon', 'authenticated', 'service_role']) r
+                         where n.nspname || '.' || p.proname = f and has_function_privilege(r, p.oid, 'EXECUTE')), '')
+                      || ':' || (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                                  where n.nspname || '.' || p.proname = f)::text
+    from unnest(array['internal.periode_comptoir', 'internal.box_vend_en_ligne', 'public._log_box_cash_payment']) f
+  `).filter(([, etat]) => !/^:[1-9]/.test(etat)).map(([f, etat]) => `${f} (${etat})`);
+
+  const [[colonne, verrou]] = query(`
+    select coalesce((select (has_column_privilege('anon', a.attrelid, a.attnum, 'SELECT')
+                             or has_column_privilege('authenticated', a.attrelid, a.attnum, 'SELECT'))::text
+                             || ':' || coalesce((select (a.attnum = any (t.tgattr::int2[])
+                                                         and strpos(p.prosrc, 'NEW.cash_access_until') > 0
+                                                         and strpos(p.prosrc, 'OLD.cash_access_until') > 0)::text
+                                                   from pg_trigger t join pg_proc p on p.oid = t.tgfoid
+                                                  where t.tgrelid = a.attrelid
+                                                    and t.tgname = 'trg_box_members_garde_facturation'), 'sans garde')
+                       from pg_attribute a
+                      where a.attrelid = 'public.box_members'::regclass and a.attname = 'cash_access_until'
+                        and not a.attisdropped), 'absente'),
+           coalesce((select (strpos(p.prosrc, 'NEW.period_months') > 0 and strpos(p.prosrc, 'NEW.access_from') > 0
+                             and strpos(p.prosrc, 'NEW.access_until') > 0)::text
+                       from pg_trigger t join pg_proc p on p.oid = t.tgfoid
+                      where t.tgrelid = 'public.box_cash_payments'::regclass
+                        and t.tgname = 'box_cash_payments_append_only'), 'sans verrou')
+  `);
+
+  const ecarts = [
+    ...(fermees.length ? [`fonctions (rôles qui l'exécutent:versions) : ${fermees.join(', ')}`] : []),
+    ...(colonne === 'false:true' ? [] : [`box_members.cash_access_until (lue par un client:couverte par la garde) : ${colonne}`]),
+    ...(verrou === 'true' ? [] : [`box_cash_payments_append_only ne verrouille plus la période (${verrou})`]),
+  ];
+
+  assert(
+    'T17 — la durée des encaissements au comptoir ne s\'écrit que par le serveur (calcul de période, '
+      + 'vente en ligne, journal, fin d\'accès des membres, période verrouillée)',
+    ecarts.length === 0,
+    ecarts.join(' ; ') + '\n'
+      + '       → sans cette fermeture, un compte connecté journalise un encaissement, se donne '
+      + 'une fin d\'accès ou réécrit la période payée. Rejoue 20270151.',
   );
 }
 

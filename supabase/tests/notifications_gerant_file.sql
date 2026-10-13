@@ -157,7 +157,7 @@ BEGIN
   -- update_box_member_count : md5 du rejeu (la prod porte des CR, 82f49d09…).
   SELECT string_agg(a.fn || ' ' || coalesce(md5(pg_get_functiondef(a.fn::regprocedure)), 'absente'), ', ') INTO v
   FROM (VALUES
-    ('internal.garder_facturation_membre()', 'b50e8f8843dbe51848862942b3f3602f'), -- 20270147
+    ('internal.garder_facturation_membre()', '483768906753de48dd9b48454f877f23'), -- 20270151
     ('internal.garder_role_cogerant()', 'a3f6d592e30b88f0099e3e3e0f27e08f'),
     ('internal.refuser_entree_directe_box()', '73b868ed7881131d0e746a9b95645c0d'),
     ('public.update_box_member_count()', '163d943ff7816e332f965e1b4d477420'),
@@ -378,9 +378,10 @@ BEGIN
   REVOKE EXECUTE ON FUNCTION internal.filer_notification_gerant() FROM authenticated;
 END $t$;
 
--- F9 : d'abord le retour arrière de 20270147, qui s'appuie sur cette file (ordre
--- inverse des migrations), puis celui de l'en-tête de la migration, tel quel (sans BEGIN/COMMIT :
--- on est déjà dans la transaction du test).
+-- F9 : d'abord les retours arrière de 20270151 puis de 20270147, qui s'appuie sur
+-- cette file (ordre inverse des migrations), puis celui de l'en-tête de la migration,
+-- tel quel (sans BEGIN/COMMIT : on est déjà dans la transaction du test).
+\i supabase/retours/20270151000000_paiements_comptoir_duree.sql
 \i supabase/retours/20270147000000_changement_formule.sql
 DROP TRIGGER trg_notif_gerant_abonnement_creation ON public.box_members;
 DROP TRIGGER trg_notif_gerant_abonnement_nouveau ON public.box_members;
