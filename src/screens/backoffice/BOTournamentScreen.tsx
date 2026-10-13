@@ -24,7 +24,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import {
   TournamentScore,
   parseScoreToNumber, formatScoreDisplay,
-  normalizeMovement, formatDateTime,
+  normalizeMovement, isKnownMovementKey, formatDateTime,
 } from '../../utils/tournamentUtils';
 import { chargerClassement, classementGeneral, LigneClassement, RangWod } from '../../utils/classementTournoi';
 import { computeCompletedMovements, AthleteGender } from '../../utils/movementParser';
@@ -231,6 +231,8 @@ export default function BOTournamentScreen() {
           const reps = entry.reps;
           if (!reps || reps <= 0) continue;
           const { key, label } = normalizeMovement(entry.name);
+          // Hors catalogue (« min AMRAP », « rounds »…) : aucune écriture, comme gamification.
+          if (!isKnownMovementKey(key)) continue;
           const unit = entry.unit ?? 'reps';
 
           const { data: existing } = await supabase.from('movement_rep_counts')

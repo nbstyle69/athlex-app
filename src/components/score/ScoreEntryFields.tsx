@@ -3,9 +3,10 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-nativ
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import {
-  repsPerRoundFromMovements, roundsRepsToTotal, amrapTotalToRoundsReps,
+  roundsRepsToTotal, amrapTotalToRoundsReps,
   maskTimeInput, timeStringToSeconds, secondsToTimeString,
 } from '../../utils/tournamentUtils';
+import { repsPerRoundFromMovements } from '../../utils/movementParser';
 
 export type ScoreKind = 'for-time' | 'reps' | 'free';
 

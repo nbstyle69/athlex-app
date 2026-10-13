@@ -35,6 +35,54 @@ export function isPercentLine(line: string): boolean {
   return /^\d+(?:[.,]\d+)?(?:\s*\/\s*\d+(?:[.,]\d+)?)?\s*%/.test(line.trim());
 }
 
+/** `5 rounds`, `5 rds`, `3 tours`, `5 RFT`, suivis ou non d'un texte. */
+const ROUNDS_HEADER = /^(\d+)\s*(?:rounds?|rds?|tours?|rft)\b/i;
+
+/**
+ * En-têtes de format : jamais une ligne de mouvement, aucune rep ni au score ni
+ * au crédit. Cas attendus partagés avec le Manager :
+ * `supabase/seed/wod_header_cases.json`.
+ */
+const HEADER_PATTERNS: readonly RegExp[] = [
+  ROUNDS_HEADER,
+  /^\d+\s*(?:min(?:utes?)?|mn|['’′])(?!\w)/i,                   // 12 min AMRAP, 12' AMRAP
+  /^\d+\s*(?:amrap|emom|for\s*time|tabata|chipper|ladder)\b/i,  // 12 AMRAP, 20 EMOM
+  /^\d+(?:\s*[-–]\s*\d+)+/,                                     // 21-15-9
+  /:$/,                                                         // 5 Rounds For Time :
+  /^(?:amrap|emom|e\d+mom|for\s*time|tabata|pyramide|ladder|chipper|death\s*by|every|en continu|min\s+\d|time\s*cap|cap\b|rest|repos|⚡|──)/i,
+  /⟨.*⟩/,                                                       // libellés de format d'équipe
+];
+
+export function isFormatHeaderLine(line: string): boolean {
+  const s = (line ?? '').trim();
+  return HEADER_PATTERNS.some(re => re.test(s));
+}
+
+const DURATION_LINE = /^\d+(?:\s*\/\s*\d+)?\s*(?:s|sec|secs|sec\.|")\s+\S/i;
+const DISTANCE_LINE = /^\d+(?:[.,]\d+)?(?:\s*\/\s*\d+(?:[.,]\d+)?)?\s*(?:m|km|mi|miles?|yds?|yards?|meters?|metres?|mètres?)\b/i;
+
+/**
+ * Reps d'un tour d'AMRAP / Max Reps, pour convertir « tours + reps » en total.
+ * Toutes les lignes de reps comptent, même un mouvement hors catalogue :
+ * l'athlète a fait ces reps. En-têtes et pourcentages ne comptent pas. Une
+ * ligne en distance ou en durée rend le tour hétérogène : 0, la conversion est
+ * désactivée et l'athlète saisit un total.
+ */
+export function repsPerRoundFromMovements(movements: string[] | null | undefined): number {
+  if (!Array.isArray(movements)) return 0;
+  let sum = 0;
+  for (const raw of movements) {
+    const line = (raw ?? '').trim();
+    if (!line || isFormatHeaderLine(line) || isPercentLine(line)) continue;
+    if (DURATION_LINE.test(line) || DISTANCE_LINE.test(line)) return 0;
+    const entry = parseMovementLine(line);
+    if (!entry) continue;
+    if (entry.unit === 'm') return 0;
+    sum += entry.reps;
+  }
+  return sum;
+}
+
 /**
  * Parse a formatted movement line from generated WODs.
  * Examples:
@@ -57,20 +105,12 @@ export function parseMovementLine(line: string, options?: ParseOptions): Movemen
   const trimmed = line.trim();
   const gender = options?.gender;
 
-  // Skip headers & labels
-  if (!trimmed) return null;
-  if (/^\d+\s+rounds?\s+/i.test(trimmed)) return null;
-  if (/^(amrap|emom|for time|tabata|pyramide|ladder|chipper|──|min\s+\d)/i.test(trimmed)) return null;
-  if (/^\d+[-–]\d+/.test(trimmed)) return null; // rep scheme like "21-15-9 :"
-  if (trimmed.endsWith(':')) return null;
-  if (trimmed.startsWith('⚡') || trimmed.startsWith('──')) return null;
-  if (/⟨.*⟩/.test(trimmed)) return null; // team format labels
-  if (isPercentLine(trimmed)) return null;
+  if (!trimmed || isFormatHeaderLine(trimmed) || isPercentLine(trimmed)) return null;
 
   // Durées : "30 s Plank Hold", "45/30 s Hollow Hold" — une tenue ne crédite
   // aucun compteur (pas de badge en secondes) et ne doit surtout pas être lue
   // comme « 30 reps de "s Plank Hold" ».
-  if (/^\d+(?:\s*\/\s*\d+)?\s*(?:s|sec|secs|sec\.|")\s+\S/i.test(trimmed)) return null;
+  if (DURATION_LINE.test(trimmed)) return null;
 
   // Cardio: "20 cal Row", "20/15 cal Row", "500 m Run (RPE 7)", "400m Course".
   // Sans espace ("400m") l'ancien parseur comptait 1 rep : la distance vaut
@@ -250,7 +290,7 @@ function computeFromEntries(
 
 function extractHeaderRounds(movements: string[]): number {
   for (const line of movements) {
-    const match = line.match(/^(\d+)\s+rounds?\s+/i);
+    const match = line.trim().match(ROUNDS_HEADER);
     if (match) return parseInt(match[1], 10);
   }
   return 1;
