@@ -2,7 +2,31 @@
 -- Paiements au comptoir (P1), PR 1 sur 6 : durée des encaissements et date de
 -- fin d'accès (base)
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : OUI, le 13/10/2026 à 14:54 UTC, avec PGCLIENTENCODING=UTF8,
+-- en une transaction (psql -1), sur GO de Nab. Dump des schémas public et
+-- internal avec droits db-dumps/2026-10-13/athlex-prod-public-internal-20261013T145343Z.dump,
+-- sha256 3b5121610863fafbd9c640e8e162c0ed46e46ea87a4f1359206c45c01581313a
+-- vérifié après aller-retour, 138 TABLE DATA, 466 ACL, 348 POLICY ;
+-- précontrôles (trois passages identiques, search_path de la prod) : les sept
+-- définitions aux empreintes ci-dessous et le déclencheur 05e9de13…, sans
+-- retour chariot, une version de chacune, colonnes et fonctions ajoutées
+-- absentes, _log_box_cash_payment exécutable par authenticated et
+-- service_role ; vérifications : les dix définitions et les deux déclencheurs
+-- aux empreintes du test (7789384f…, d4d61e97…, d2e9ef2e…, ae7c75d4…,
+-- 48376890…, 5d1e2581…, 8b090621…, 946784e2…, f5d67d93…, 36b6becb… ;
+-- déclencheurs 3aec5ba9…, a9af6e39…), une version de chaque, droits
+-- (_log_box_cash_payment et les trois fonctions internal fermées à anon,
+-- authenticated et service_role ; les trois RPC à authenticated et
+-- service_role) et commentaires conformes, colonnes ajoutées vides,
+-- allow_counter_renewal faux sur les 5 box ; box_members (186), boxes (5),
+-- box_invitations (5) et box_cash_payments (2) à la même empreinte avant/après
+-- sur leurs colonnes existantes ; test réel sur AthleX Fitness en transaction
+-- annulée (co-gérant et membre fictifs : 3 mois = 3 × prix, fin = aujourd'hui
+-- + 3 mois − 1 jour, COUNTER_RENEWAL_DISABLED au second encaissement,
+-- invitation à 0 € sans fin ni journal, cash_access_until et
+-- allow_counter_renewal refusés à authenticated), aucune trace (comptages et
+-- empreintes identiques) ; audit des droits en prod 44/44 (T16, T17) lancé
+-- depuis la branche.
 --
 -- Spec validée par Nab le 13/10/2026 (Figma « AthleX Manager — Back-office »,
 -- page « 🧪 Spec · Paiements au comptoir (P1) », §1 à §4). Un encaissement au
