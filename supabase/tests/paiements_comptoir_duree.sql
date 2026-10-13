@@ -755,6 +755,8 @@ BEGIN
 END $t$;
 
 -- ── R : retour arrière ────────────────────────────────────────────────────────
+-- D'abord celui de 20270152, qui lit cash_access_until (ordre inverse des migrations).
+\i supabase/retours/20270152000000_comptoir_fin_acces.sql
 \i supabase/retours/20270151000000_paiements_comptoir_duree.sql
 SET LOCAL search_path = "$user", public, extensions;
 DO $t$

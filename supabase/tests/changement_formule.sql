@@ -274,7 +274,7 @@ BEGIN
     ('public.cancel_plan_change_request(uuid,uuid)', '0208fa64ff58d791616d4082d2d70cf3'),
     ('public.decide_plan_change_request(uuid,uuid,boolean)', 'a9870f673308612fa98420b29cd84de6'),
     ('internal.refus_changement_formule(uuid,uuid,uuid)', '8cc12cb3197cc5cf71c284357a1fba2f'),
-    ('public.get_my_membership_billing()', 'b4ca55006146fc83bc3da8eff1260234'),
+    ('public.get_my_membership_billing()', 'e1ea48e62a72b96753ba00fd93bdde69'), -- redéfinie par 20270152
     ('internal.garder_facturation_membre()', '483768906753de48dd9b48454f877f23'), -- redéfinie par 20270151
     ('internal.filer_notification_gerant()', 'df14724f0a600ea18fb1056e7148b940')
   ) a(fn, attendu)
@@ -658,8 +658,9 @@ BEGIN
 END $t$;
 
 -- ── R : retour arrière ────────────────────────────────────────────────────────
--- D'abord celui de 20270151, qui redéfinit la garde après 20270147 (ordre
--- inverse des migrations).
+-- D'abord ceux de 20270152 (get_my_membership_billing) et de 20270151 (la
+-- garde), qui redéfinissent après 20270147 (ordre inverse des migrations).
+\i supabase/retours/20270152000000_comptoir_fin_acces.sql
 \i supabase/retours/20270151000000_paiements_comptoir_duree.sql
 \i supabase/retours/20270147000000_changement_formule.sql
 DO $t$
