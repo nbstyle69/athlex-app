@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 /**
  * Engine long en négative split : même trame que `engine_continuous`, segments plus
@@ -31,6 +32,6 @@ export const engine_negative_split: Skeleton = {
   allow_variant_up: false,
   stimulus: {
     rpe: 6,
-    note: 'Zone 3, respiration nasale tenable. Seconde moitié un cran plus vite que la première, sans jamais passer en zone 4.',
+    note: fr.banque.stimulus.engine_negative_split,
   },
 };

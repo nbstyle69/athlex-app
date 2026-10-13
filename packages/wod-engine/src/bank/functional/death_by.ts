@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const death_by: Skeleton = {
   id: 'death_by',
@@ -16,5 +17,5 @@ export const death_by: Skeleton = {
   score_type: 'reps_total',
   cap_factor: 1.0,
   allow_variant_up: false,
-  stimulus: { rpe: 9, note: "S'arrête quand la minute n'est plus tenue." },
+  stimulus: { rpe: 9, note: fr.banque.stimulus.death_by },
 };

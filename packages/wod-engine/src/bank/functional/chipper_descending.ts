@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 const slots: Skeleton['slots'] = [
   { pick: { family: ['erg'], unit: 'cal' }, qty: 'scheme' },
@@ -28,5 +29,5 @@ export const chipper_descending: Skeleton = {
   score_type: 'time',
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 7.5, note: 'Gestion, pas de sprint avant le dernier tiers.' },
+  stimulus: { rpe: 7.5, note: fr.banque.stimulus.chipper_descending },
 };

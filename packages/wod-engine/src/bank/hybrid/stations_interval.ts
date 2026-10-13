@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 const POOL = ['ski_erg', 'row', 'bike_erg', 'wall_ball', 'burpee_broad_jump', 'sandbag_lunge', 'sled_push', 'db_farmer_carry', 'kb_swing_russian'];
 
@@ -24,5 +25,5 @@ export const stations_interval: Skeleton = {
   score_type: 'reps_total',
   cap_factor: 1.0,
   allow_variant_up: false,
-  stimulus: { rpe: 8.5, note: 'Alternance jambes / épaules / mono, 90 s de travail max effort.' },
+  stimulus: { rpe: 8.5, note: fr.banque.stimulus.stations_interval },
 };

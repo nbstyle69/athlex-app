@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const engine_continuous: Skeleton = {
   id: 'engine_continuous',
@@ -19,5 +20,5 @@ export const engine_continuous: Skeleton = {
   score_type: 'distance',
   cap_factor: 1.0,
   allow_variant_up: false,
-  stimulus: { rpe: 6, note: 'Zone 3, conversation difficile mais possible. Rotation sans repos jusqu\'au budget.' },
+  stimulus: { rpe: 6, note: fr.banque.stimulus.engine_continuous },
 };

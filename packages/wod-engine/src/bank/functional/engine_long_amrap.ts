@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const engine_long_amrap: Skeleton = {
   id: 'engine_long_amrap',
@@ -18,5 +19,5 @@ export const engine_long_amrap: Skeleton = {
   score_type: 'rounds_reps',
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 6.5, note: 'Zone 3, respiration contrôlée du début à la fin.' },
+  stimulus: { rpe: 6.5, note: fr.banque.stimulus.engine_long_amrap },
 };

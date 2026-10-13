@@ -11,6 +11,7 @@ import { generateBlocC } from './generate';
 import { deathByMinute, ladderProgress, roundSeconds, referenceCategory } from './estimate';
 import { generateMuscu, renderMuscu, sessionSeconds, SCHEMES } from './muscu';
 import { TARGET_MUSCLES } from './bank/muscu';
+import { fr } from './i18n/fr';
 import { SESSION_SKELETONS } from './bank/session';
 import {
   HYBRID_FORBIDDEN_IDS, HYBRID_JUMP_IDS, HYBRID_WEEKLY_JUMP_CAP, HYBRID_WEEKLY_RUN_M, HYBRID_HARD_RPE,
@@ -57,7 +58,9 @@ export const MUSCU_WEEK_DAYS: ReadonlyArray<{ day: SessionDay; target: MuscuTarg
 /** objectif par bloc de deux semaines, en boucle (semaines 1-2 hypertrophie, 3-4 endurance, 5-6 force) */
 export const MUSCU_OBJECTIVE_CYCLE: readonly MuscuObjective[] = ['hypertrophie', 'endurance', 'force'];
 
-export const DAY_LABEL: Record<SessionDay, string> = { 1: 'Lundi', 2: 'Mardi', 3: 'Mercredi', 4: 'Jeudi', 5: 'Vendredi', 6: 'Samedi' };
+export const DAY_LABEL: Record<SessionDay, string> = fr.jours;
+
+const T = fr.seance;
 
 // ─── Graine ──────────────────────────────────────────────────────────────────
 
@@ -105,7 +108,7 @@ function fmtRest(s: number): string {
 function fmtEvery(s: number): string {
   const m = Math.floor(s / 60);
   const r = s % 60;
-  return r ? `${m}'${String(r).padStart(2, '0')}` : `${m}'`;
+  return r ? fr.duree.minutesSecondes(m, String(r).padStart(2, '0')) : fr.duree.minutes(m);
 }
 
 function nameOf(catalog: Catalog, id: string): string {
@@ -115,17 +118,17 @@ function nameOf(catalog: Catalog, id: string): string {
 /** `Back Squat — 5 × 5 @ 75 %1RM — repos 2:30 — tempo 3-1-X-1 — charge …` */
 export function stepLine(name: string, st: StrengthStep, tempo?: string | null): string {
   let out = `${name} — ${st.sets} × ${st.reps}`;
-  if (st.percent !== null) out += ` @ ${st.percent} %1RM`;
-  out += ` — repos ${fmtRest(st.rest_s)}`;
-  if (tempo && !st.note?.startsWith('montée')) out += ` — tempo ${tempo}`;
-  if (st.note) out += ` — charge ${st.note}`;
+  if (st.percent !== null) out += T.serie.pourcent(st.percent);
+  out += T.serie.repos(fmtRest(st.rest_s));
+  if (tempo && !st.note?.startsWith('montée')) out += T.serie.tempo(tempo);
+  if (st.note) out += T.serie.charge(st.note);
   return out;
 }
 
 /** saut de ligne des descriptions de blocs */
 const NL = '\n';
 
-const CAT_LABEL: Record<string, string> = { scaled: 'Scaled', inter: 'Inter', rx: 'RX', rxplus: 'RX+', elite: 'Elite', pro: 'Pro' };
+const CAT_LABEL: Record<string, string> = fr.categories;
 
 /**
  * Un skill lu depuis `wod_skeletons` peut venir d'un seed antérieur aux progressions
@@ -146,21 +149,21 @@ function blockALines(catalog: Catalog, opt: SessionBlockAOption, weeks: 'even' |
   const lines: string[] = [];
   if (opt.kind === 'weightlifting') {
     const complex = (opt.complex ?? []).map((id) => nameOf(catalog, id));
-    lines.push(`Haltéro — complexe ${name} (${weeks === 'even' ? 'A' : 'B'}) : ${complex.join(' + ')}`);
-    lines.push('Un complexe = une répétition, sans lâcher la barre. Sans 1RM connu : monter jusqu\'à une charge propre.');
+    lines.push(T.halteroComplexe(name, weeks === 'even' ? 'A' : 'B', complex.join(' + ')));
+    lines.push(T.halteroConsigne);
     for (const st of opt.steps ?? []) lines.push(stepLine(name, st));
   } else if (opt.kind === 'strength') {
-    lines.push(`Force — ${name}`);
+    lines.push(T.force(name));
     for (const st of opt.steps ?? []) lines.push(stepLine(name, st, opt.tempo));
-    if (opt.tempo) lines.push(`Tempo ${opt.tempo} sur les séries de travail. Sans 1RM connu : dernière série RPE 8.`);
+    if (opt.tempo) lines.push(T.forceTempo(opt.tempo));
   } else if (opt.skill) {
     const sk = opt.skill;
-    lines.push(`Skill — ${name} : progression en 3 étapes`);
-    lines.push(`Étape A : ${sk.progression.a} — ${fmtEvery(SKILL_STEP_S)}`);
-    lines.push(`Étape B : ${sk.progression.b} — ${fmtEvery(SKILL_STEP_S)}`);
-    lines.push(`Étape C : Every ${fmtEvery(sk.every_s)} × ${sk.rounds}`);
+    lines.push(T.skill(name));
+    lines.push(T.etapeA(sk.progression.a, fmtEvery(SKILL_STEP_S)));
+    lines.push(T.etapeB(sk.progression.b, fmtEvery(SKILL_STEP_S)));
+    lines.push(T.etapeC(fmtEvery(sk.every_s), sk.rounds));
     lines.push(`${sk.reps} ${name}`);
-    const subs = Object.entries(sk.substitutions).map(([c, s]) => `${CAT_LABEL[c] ?? c} : ${s}`);
+    const subs = Object.entries(sk.substitutions).map(([c, s]) => fr.rendu.substitution(CAT_LABEL[c] ?? c, s));
     if (subs.length) lines.push(`→ ${subs.join(' · ')}`);
   }
   return lines;
@@ -172,13 +175,13 @@ function nameOfB(catalog: Catalog, opt: SessionBlockBOption): string {
 
 function blockBLines(catalog: Catalog, opt: SessionBlockBOption): string[] {
   const name = nameOfB(catalog, opt);
-  const lines = [`Building — ${name} tempo ${opt.tempo ?? ''}`.trim()];
+  const lines = [T.building(name, opt.tempo ?? '').trim()];
   for (const st of opt.steps) lines.push(stepLine(name, st, opt.tempo));
   return lines;
 }
 
 function finisherLines(catalog: Catalog, opt: SessionFinisherOption): string[] {
-  const lines = [`Finisher — ${opt.rounds} rounds, rythme continu :`];
+  const lines = [T.finisher(opt.rounds)];
   for (const m of opt.movements) {
     const name = m.name ?? nameOf(catalog, m.id);
     lines.push(m.unit === 's' ? `${m.qty} s ${name}` : m.unit === 'm' ? `${m.qty} m ${name}` : `${m.qty} ${name}`);
@@ -357,7 +360,7 @@ function loadPair(catalog: Catalog, it: SessionStationItem): string {
   const own = loadOf(catalog, it.id, it.band);
   const extra = it.load_from ? loadOf(catalog, it.load_from, it.band) : null;
   const parts: string[] = [];
-  if (own && own.unit === 'cm') parts.push(`(box ${own.men}/${own.women} cm)`);
+  if (own && own.unit === 'cm') parts.push(T.stationBox(own.men, own.women));
   else if (own) parts.push(`@ ${own.men}/${own.women} ${own.unit}`);
   if (extra) parts.push(`@ ${extra.men}/${extra.women} ${extra.unit}`);
   return parts.length ? ` ${parts.join(' ')}` : '';
@@ -383,7 +386,7 @@ function proLine(catalog: Catalog, items: readonly SessionStationItem[]): string
     if (!men?.length || !women?.length) continue;
     parts.push(`${it.name ?? nameOf(catalog, it.id)} ${men[0]}/${women[0]} ${m.load_unit ?? 'kg'}`);
   }
-  return parts.length ? `Women Pro / Men Pro : ${parts.join(' · ')}` : null;
+  return parts.length ? T.pro(parts.join(' · ')) : null;
 }
 
 /**
@@ -436,47 +439,45 @@ function hybridALines(catalog: Catalog, opt: SessionBlockAOption, iso_week: numb
   const lines: string[] = [];
   if (opt.kind === 'station' && opt.station) {
     const { every_s, rounds, items } = opt.station;
-    lines.push(items.length > 1
-      ? `Every ${fmtEvery(every_s)} × ${rounds}, en rotation :`
-      : `Every ${fmtEvery(every_s)} × ${rounds} :`);
+    lines.push(items.length > 1 ? T.stationRotation(fmtEvery(every_s), rounds) : T.stationEvery(fmtEvery(every_s), rounds));
     for (const [i, it] of items.entries()) {
       // deux postes s'alternent (impair / pair), au-delà ils tournent et se numérotent
-      const tag = items.length === 2 ? `${i === 0 ? 'Impair' : 'Pair'} · ` : items.length > 2 ? `Poste ${i + 1} · ` : '';
+      const tag = items.length === 2 ? (i === 0 ? T.impair : T.pair) : items.length > 2 ? T.poste(i + 1) : '';
       lines.push(`${tag}${stationLine(catalog, it)}`);
     }
     const pro = proLine(catalog, items);
     if (pro) lines.push(pro);
     if (items.some((it) => it.band === 'heavy')) {
-      lines.push('Seule charge lourde de la semaine. Poussée continue, jamais en saccades.');
+      lines.push(T.chargeLourde);
     }
   } else if (opt.kind === 'run' && opt.run) {
     const v = opt.run.variants[iso_week % opt.run.variants.length];
-    lines.push(`Intervalles course — ${v.label}, repos ${fmtRest(v.rest_s)}`);
-    lines.push(`Allure cible : ${v.target}. L'écart entre le premier et le dernier intervalle reste sous 5 s.`);
-    lines.push(`Autres variantes du cycle : ${opt.run.variants.filter((x) => x !== v).map((x) => x.label).join(' · ')}`);
+    lines.push(T.intervallesCourse(v.label, fmtRest(v.rest_s)));
+    lines.push(T.allureCible(v.target));
+    lines.push(T.autresVariantes(opt.run.variants.filter((x) => x !== v).map((x) => x.label).join(' · ')));
   } else if (opt.kind === 'compromised' && opt.compromised) {
     const { rounds, work_s, run_m_min, run_m_max, stations, target } = opt.compromised;
-    lines.push(`${rounds} rounds :`);
+    lines.push(T.compromiseRounds(rounds));
     for (let i = 0; i < rounds; i++) {
       const st = stations[i % stations.length];
       const run = runOfRound(opt, i);
-      lines.push(`${i + 1}. ${work_s} s de station — ${stationLine(catalog, st)}`);
-      lines.push(`   puis ${run} m Run à allure cible (${target})`);
+      lines.push(T.compromiseStation(i + 1, work_s, stationLine(catalog, st)));
+      lines.push(T.compromiseCourse(run, target));
     }
     const used = Array.from({ length: rounds }, (_, i) => stations[i % stations.length]);
     const pro = proLine(catalog, used);
     if (pro) lines.push(pro);
-    lines.push(`Total de course : ${totalRunOf(opt)} m. Tenir l'allure avec les jambes chargées, ne pas sprinter la station.`);
+    lines.push(T.compromiseTotal(totalRunOf(opt)));
   } else if (opt.kind === 'race' && opt.race) {
     const { rounds, run_m, stations, score } = opt.race;
-    lines.push(`Enchaînement chronométré — ${rounds} tours, dans l'ordre :`);
+    lines.push(T.enchainement(rounds));
     for (let i = 0; i < rounds; i++) {
       const st = stations[i % stations.length];
-      lines.push(`${i + 1}. ${run_m} m Run puis ${stationLine(catalog, st)}`);
+      lines.push(T.enchainementLigne(i + 1, run_m, stationLine(catalog, st)));
     }
     const pro = proLine(catalog, Array.from({ length: rounds }, (_, i) => stations[i % stations.length]));
     if (pro) lines.push(pro);
-    lines.push(`Score : ${score}. Note le temps de chaque segment.`);
+    lines.push(T.enchainementScore(score));
   }
   return lines;
 }
@@ -669,10 +670,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     const aReps: Record<string, number> = {};
     if (optA.skill) aReps[optA.movement] = optA.skill.reps * optA.skill.rounds;
     addReps(gym, gymReps(catalog, aReps));
-    const KIND_LABEL: Record<SessionBlockAOption['kind'], string> = {
-      weightlifting: 'Haltéro', strength: 'Force', skill: 'Skill',
-      station: 'Force sur station', run: 'Course', race: 'Simulation', compromised: 'Course compromise',
-    };
+    const KIND_LABEL: Record<SessionBlockAOption['kind'], string> = T.type;
     const title = optA.kind === 'race' ? sk.label : `${KIND_LABEL[optA.kind]} · ${nameOf(catalog, optA.movement)}`;
     // Une séance chronométrée (H6) n'a pas de bloc C : c'est son bloc A qui porte le classement.
     const a = editor(
@@ -685,8 +683,8 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
         movement: optA.movement, heavy_pattern: heavy, steps: optA.steps ?? null, complex: optA.complex ?? null,
         skill: optA.skill ?? null, gym_reps_rx: gymReps(catalog, aReps),
       }),
-      optA.kind === 'weightlifting' ? 'Pourcentages du 1RM du mouvement complet ; sans 1RM, charge propre.'
-        : optA.timed ? 'Séance chronométrée de bout en bout : compare avec ta dernière simulation.' : null,
+      optA.kind === 'weightlifting' ? T.notePourcentages
+        : optA.timed ? T.noteChronometree : null,
     );
     if (optA.timed) a.leaderboard_enabled = true;
     blocks.push(a);
@@ -696,7 +694,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     for (const st of optB.steps) bReps[optB.movement] = (bReps[optB.movement] ?? 0) + st.sets * st.reps;
     addReps(gym, gymReps(catalog, bReps));
     blocks.push(editor(
-      `Building · ${nameOfB(catalog, optB)}`,
+      T.titreBuilding(nameOfB(catalog, optB)),
       blockBLines(catalog, optB).join('\n'),
       'strength', 'building', sort++, optB.minutes,
       structured('building', optB.id, { movement: optB.movement, steps: optB.steps, gym_reps_rx: gymReps(catalog, bReps) }),
@@ -710,7 +708,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
       [...(optA ? [] : warm), ...wLines].join(NL),
       'custom', 'wod', sort++, optW.minutes + (optA ? 0 : sk.warmup.minutes),
       structured(optW.kind, optW.id, { movement: optW.movement, gym_reps_rx: {} }),
-      optW.timed ? 'Séance chronométrée de bout en bout : compare avec ta dernière simulation.' : null,
+      optW.timed ? T.noteChronometree : null,
     );
     w.leaderboard_enabled = true;
     blocks.push(w);
@@ -742,7 +740,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
     for (const m of optF.movements) if (m.unit === 'reps') fReps[m.id] = (fReps[m.id] ?? 0) + m.qty * optF.rounds;
     addReps(gym, gymReps(catalog, fReps));
     blocks.push(editor(
-      'Finisher', finisherLines(catalog, optF).join('\n'), 'custom', 'finisher', sort++, optF.minutes,
+      T.titreFinisher, finisherLines(catalog, optF).join('\n'), 'custom', 'finisher', sort++, optF.minutes,
       structured('finisher', optF.id, { finisher: optF, gym_reps_rx: gymReps(catalog, fReps) }),
       null,
     ));
@@ -750,7 +748,7 @@ export function generateSession(params: SessionParams, catalog: Catalog, bank: S
 
   if (cool) {
     blocks.push(editor(
-      'Retour au calme', cool.lines.join(NL), 'custom', 'cooldown', sort++, cool.minutes,
+      T.titreRetourAuCalme, cool.lines.join(NL), 'custom', 'cooldown', sort++, cool.minutes,
       structured('cooldown', `cooldown_${cool.minutes}`, {}), null,
     ));
   }

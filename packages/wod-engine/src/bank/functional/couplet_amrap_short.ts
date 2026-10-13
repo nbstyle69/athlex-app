@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const couplet_amrap_short: Skeleton = {
   id: 'couplet_amrap_short',
@@ -16,5 +17,5 @@ export const couplet_amrap_short: Skeleton = {
   score_type: 'rounds_reps',
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: 'Allure constante, pas de set cassé avant la mi-temps.' },
+  stimulus: { rpe: 8, note: fr.banque.stimulus.couplet_amrap_short },
 };

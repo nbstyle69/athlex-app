@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const core_carry_finisher: Skeleton = {
   id: 'core_carry_finisher',
@@ -17,5 +18,5 @@ export const core_carry_finisher: Skeleton = {
   score_type: 'time',
   cap_factor: 1.25,
   allow_variant_up: false,
-  stimulus: { rpe: 6, note: "Posture et gainage, jamais à l'échec." },
+  stimulus: { rpe: 6, note: fr.banque.stimulus.core_carry_finisher },
 };

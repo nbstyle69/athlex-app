@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const compromised_run: Skeleton = {
   id: 'compromised_run',
@@ -16,5 +17,5 @@ export const compromised_run: Skeleton = {
   score_type: 'time',
   cap_factor: 1.25,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: 'Courir vite sur des jambes fatiguées : allure 5 km + 15 s/km.' },
+  stimulus: { rpe: 8, note: fr.banque.stimulus.compromised_run },
 };

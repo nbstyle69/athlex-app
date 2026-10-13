@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 const slots: Skeleton['slots'] = [
   { pick: { family: ['barbell', 'dumbbell'], pattern_any: ['squat', 'push_v', 'hinge'] }, qty: 'scheme' },
@@ -28,5 +29,5 @@ export const ladder_finite: Skeleton = {
   score_type: 'time',
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 8, note: 'Rythme progressif, garder des séries propres sur le sommet.' },
+  stimulus: { rpe: 8, note: fr.banque.stimulus.ladder_finite },
 };

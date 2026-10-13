@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const chipper_hybrid: Skeleton = {
   id: 'chipper_hybrid',
@@ -22,5 +23,5 @@ export const chipper_hybrid: Skeleton = {
   score_type: 'time',
   cap_factor: 1.3,
   allow_variant_up: false,
-  stimulus: { rpe: 7, note: 'Course en ouverture et fermeture, stations enchaînées à allure régulière.' },
+  stimulus: { rpe: 7, note: fr.banque.stimulus.chipper_hybrid },
 };

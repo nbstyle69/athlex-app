@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const half_sim: Skeleton = {
   id: 'half_sim',
@@ -38,5 +39,5 @@ export const half_sim: Skeleton = {
   score_type: 'time',
   cap_factor: 1.2,
   allow_variant_up: false,
-  stimulus: { rpe: 9, note: 'Demi-course, gérer comme un jour de compétition.' },
+  stimulus: { rpe: 9, note: fr.banque.stimulus.half_sim },
 };

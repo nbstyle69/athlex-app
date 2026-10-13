@@ -12,13 +12,14 @@ import type {
 } from './types';
 import { generateMuscuWeek, generateWeek, hashSeed, isoWeek, isoWeekMonday, DAY_LABEL, SESSION_ENGINE_VERSION } from './session';
 import { renderMuscu } from './muscu';
+import { fr } from './i18n/fr';
 
 /** Trois pistes indépendantes, activables séparément par box. */
 export type Track = 'functional' | 'hybrid' | 'musculation';
 export const TRACKS: readonly Track[] = ['functional', 'hybrid', 'musculation'];
-export const TRACK_LABEL: Record<Track, string> = { functional: 'Functional', hybrid: 'Hybrid', musculation: 'Musculation' };
+export const TRACK_LABEL: Record<Track, string> = fr.programmation.piste;
 /** Groupes créés dans la box (si absents) pour un futur ciblage par piste (J3). */
-export const TRACK_GROUP_NAME: Record<Track, string> = { functional: 'Functional', hybrid: 'Hybrid', musculation: 'Musculation' };
+export const TRACK_GROUP_NAME: Record<Track, string> = fr.programmation.groupe;
 /**
  * Clé de piste entrant dans le seed. `functional` vaut `crossfit` par héritage : la piste
  * portait ce nom interne, et les graines des samples déjà relus en dépendent — ne pas toucher.

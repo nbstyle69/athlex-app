@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 const slots: Skeleton['slots'] = [
   { pick: { family: ['barbell', 'dumbbell', 'kettlebell'], pattern_any: ['squat', 'hinge', 'push_v'] }, qty: 'scheme' },
@@ -28,5 +29,5 @@ export const triplet_for_time_classics: Skeleton = {
   score_type: 'time',
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 8.5, note: 'Transitions courtes et séries fractionnées avant l’échec.' },
+  stimulus: { rpe: 8.5, note: fr.banque.stimulus.triplet_for_time_classics },
 };

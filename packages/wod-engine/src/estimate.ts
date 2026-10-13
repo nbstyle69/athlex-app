@@ -2,6 +2,9 @@ import type {
   Category, CategoryEstimate, DurationEstimate, GeneratedBlock, GeneratedMovement, GeneratedWod, SkeletonFormat,
 } from './types';
 import { categoriesFor } from './catalog';
+import { fr } from './i18n/fr';
+
+const T = fr.estimation;
 
 /** Transition entre deux mouvements (brief §7). */
 export const TRANSITION_S = 8;
@@ -119,31 +122,31 @@ export function estimateBlock(block: GeneratedBlock, category: Category, budgetM
     case 'amrap': {
       const rs = roundSeconds(block, category);
       const rounds = budgetS / rs;
-      return { minutes: budgetMin, target: `≈ ${Math.floor(rounds)} rounds` };
+      return { minutes: budgetMin, target: T.rounds(Math.floor(rounds)) };
     }
     case 'ladder': {
       if (!block.ladder) {
         const s = fixedWorkSeconds(block, category);
-        return { minutes: s / 60, target: `≈ ${fmtTime(s)}` };
+        return { minutes: s / 60, target: T.temps(fmtTime(s)) };
       }
       const { step, partial } = ladderProgress(block, category, budgetS);
       const next = block.ladder ? step + block.ladder.step : step;
       const pct = Math.round(partial * 100);
-      return { minutes: budgetMin, target: step ? (pct >= 5 ? `palier ${step} + ${pct} % du palier ${next}` : `palier ${step}`) : 'palier 1 partiel' };
+      return { minutes: budgetMin, target: step ? (pct >= 5 ? T.palierPartiel(step, pct, next) : T.palier(step)) : T.premierPalier };
     }
     case 'death_by': {
       const minute = deathByMinute(block, category, budgetMin);
-      return { minutes: budgetMin, target: minute >= budgetMin ? `minute ${budgetMin} complétée` : `minute ${minute}` };
+      return { minutes: budgetMin, target: minute >= budgetMin ? T.minuteComplete(budgetMin) : T.minute(minute) };
     }
     case 'emom': {
       const every = block.rest?.every_s ?? 60;
       const n = block.movements.length;
       const cycles = Math.floor(budgetS / every / n);
       const perStation = block.movements.map((m) => Math.round(movementSeconds(m, category)));
-      return { minutes: budgetMin, target: `${cycles} passages, travail ${Math.min(...perStation)}-${Math.max(...perStation)} s / ${every} s` };
+      return { minutes: budgetMin, target: T.emom(cycles, Math.min(...perStation), Math.max(...perStation), every) };
     }
     case 'tabata': {
-      return { minutes: budgetMin, target: 'reps min sur 8 × 20 s par bloc' };
+      return { minutes: budgetMin, target: T.tabata };
     }
     case 'stations': {
       const rounds = block.rounds ?? 1;
@@ -151,27 +154,27 @@ export function estimateBlock(block: GeneratedBlock, category: Category, budgetM
       const rest = block.rest?.rest_s ?? 0;
       const n = block.movements.length;
       const minutes = (rounds * n * (work + rest)) / 60;
-      return { minutes, target: `${rounds} tours × ${n} stations, ${work} s on / ${rest} s off` };
+      return { minutes, target: T.stations(rounds, n, work, rest) };
     }
     case 'continuous': {
       const cycle = roundSeconds(block, category);
       const dist = block.movements.filter((m) => m.unit === 'm').reduce((s, m) => s + m.qty, 0);
-      return { minutes: budgetMin, target: `≈ ${Math.round((budgetS / cycle) * dist)} m` };
+      return { minutes: budgetMin, target: T.distance(Math.round((budgetS / cycle) * dist)) };
     }
     case 'interval': {
       const rounds = block.rounds ?? 1;
       const workPer = roundSeconds(block, category);
       if (block.rest?.every_s) {
         const total = block.rest.every_s * rounds;
-        return { minutes: total / 60, target: `travail ≈ ${fmtTime(workPer)} par intervalle` };
+        return { minutes: total / 60, target: T.parIntervalle(fmtTime(workPer)) };
       }
       const rest = block.rest?.rest_s ?? 0;
       const total = rounds * workPer + rest * (rounds - 1);
-      return { minutes: total / 60, target: `≈ ${fmtTime(workPer)} par répétition` };
+      return { minutes: total / 60, target: T.parRepetition(fmtTime(workPer)) };
     }
     default: {
       const s = fixedWorkSeconds(block, category);
-      return { minutes: s / 60, target: `≈ ${fmtTime(s)}` };
+      return { minutes: s / 60, target: T.temps(fmtTime(s)) };
     }
   }
 }

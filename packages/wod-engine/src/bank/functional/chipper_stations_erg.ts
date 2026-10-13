@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const chipper_stations_erg: Skeleton = {
   id: 'chipper_stations_erg',
@@ -19,5 +20,5 @@ export const chipper_stations_erg: Skeleton = {
   score_type: 'time',
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 7, note: 'Stations enchaînées, ergs à 85 %.' },
+  stimulus: { rpe: 7, note: fr.banque.stimulus.chipper_stations_erg },
 };

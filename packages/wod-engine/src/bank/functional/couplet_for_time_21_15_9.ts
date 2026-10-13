@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 const slots: Skeleton['slots'] = [
   { pick: { family: ['barbell', 'dumbbell'], pattern_any: ['squat', 'hinge', 'push_v'] }, qty: 'scheme' },
@@ -27,5 +28,5 @@ export const couplet_for_time_21_15_9: Skeleton = {
   score_type: 'time',
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 9, note: 'Sprint, sets courts dès le round 1.' },
+  stimulus: { rpe: 9, note: fr.banque.stimulus.couplet_for_time_21_15_9 },
 };

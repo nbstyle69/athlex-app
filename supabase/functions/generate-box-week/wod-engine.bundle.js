@@ -25695,6 +25695,392 @@ var CATALOG_SNAPSHOT = {
   ]
 };
 
+// packages/wod-engine/src/i18n/fr.ts
+var prime = (m) => `${m}'`;
+var fr = {
+  /** Catégories de scaling (termes techniques, identiques dans toutes les langues). */
+  categories: {
+    scaled: "Scaled",
+    inter: "Inter",
+    rx: "RX",
+    rxplus: "RX+",
+    elite: "Elite",
+    pro: "Pro",
+    women: "Women",
+    men: "Men",
+    women_pro: "Women Pro",
+    men_pro: "Men Pro"
+  },
+  /** Durées : `12'` (minutes), `1'30` (minutes et secondes, séances). */
+  duree: {
+    minutes: prime,
+    minutesSecondes: (m, ss) => `${m}'${ss}`
+  },
+  /** WOD metcon (`render.ts`). */
+  rendu: {
+    cap: (t) => ` (cap ${t})`,
+    amrap: (min) => `AMRAP ${min}`,
+    forTime: (cap) => `For time${cap}`,
+    forTimeSchema: (schema, cap) => `For time \xB7 ${schema}${cap}`,
+    roundsForTime: (rounds, cap) => `${rounds} rounds for time${cap}`,
+    chipper: (cap) => `Chipper \xB7 for time${cap}`,
+    ladderOuverte: (a, b, c, min) => `Ladder ${a}-${b}-${c}\u2026 \xB7 AMRAP ${min}`,
+    ladderOuverteConsigne: (pas) => `Monter les paliers (+${pas} \xE0 chaque palier) jusqu'au temps, score = reps totales`,
+    ladderFinie: (schema, cap) => `Ladder ${schema} \xB7 for time${cap}`,
+    ladderFinieConsigne: "Effectuer une fois tous les paliers indiqu\xE9s",
+    emom: (min, every, stations) => `EMOM ${min}${every} \xB7 ${stations} stations en alternance`,
+    emomEvery: (t) => ` \xB7 every ${t}`,
+    deathBy: (min) => `EMOM ${min} \xB7 Death by : +1 rep par minute jusqu'\xE0 l'\xE9chec`,
+    tabata: (transition) => `Tabata \xD7 2 blocs \xB7 8 \xD7 20 s / 10 s${transition}`,
+    tabataTransition: (s) => `, transition ${s} s`,
+    intervalEvery: (rounds, t) => `${rounds} rounds \xB7 every ${t}`,
+    intervalRepos: (rounds, t) => `${rounds} rounds \xB7 repos ${t} entre les r\xE9p\xE9titions`,
+    stations: (rounds, n, work, rest) => `${rounds} rounds \xD7 ${n} stations \xB7 ${work} s on / ${rest} s off`,
+    continu: (min) => `En continu ${prime(min)} \xB7 rotation sans repos, score = distance totale`,
+    ligneTabata: (i, nom, tenue) => `Tabata ${i} \xB7 ${nom} (${tenue ? "tenue 20 s" : "max reps"})`,
+    ligneStationTenue: (i, nom) => `Station ${i} \xB7 ${nom} (tenue)`,
+    ligneStation: (i, nom, unite, cible) => `Station ${i} \xB7 ${nom} (max ${unite}, cible ${cible})`,
+    ligneRound: (round, ligne) => `R${round} \xB7 ${ligne}`,
+    lignePalier: (ligne) => `${ligne} (entre chaque palier)`,
+    ligneParMinute: (nom) => `${nom} \xB7 min 1 : 1 rep, +1 rep par minute`,
+    ligneAvantSerie: (ligne) => `${ligne} (avant chaque s\xE9rie)`,
+    ligneMinute: (i, ligne) => `Min ${i} \xB7 ${ligne}`,
+    /** `Scaled/Inter : Pull-ups` (substitutions et variantes par catégorie) */
+    substitution: (categories, nom) => `${categories} : ${nom}`,
+    gilet: (h, f) => `Gilet lest\xE9 ${h}/${f} kg`,
+    giletOptionnel: (h, f) => `Gilet lest\xE9 optionnel ${h}/${f} kg`,
+    stimulus: (rpe, note, cible) => `Stimulus : RPE ${rpe} \u2014 ${note}${cible}`,
+    stimulusCible: (cat, cible, cap) => ` Cible ${cat} : ${cible}${cap}.`,
+    stimulusCap: (t) => `, cap ${t}`,
+    notes: (note, score) => `${note} Score : ${score}.`,
+    titreEmom: (min) => `EMOM ${min}`,
+    titre: {
+      for_time: "For time",
+      rounds_for_time: (rounds) => `${rounds} rounds`,
+      chipper: "Chipper",
+      ladder: "Ladder",
+      death_by: "Death by",
+      tabata: "Tabata",
+      interval: "Intervalles",
+      stations: "Stations",
+      continuous: "Continu"
+    }
+  },
+  /** Cibles de score par catégorie (`estimate.ts`), enregistrées dans `wod_json.estimate`. */
+  estimation: {
+    rounds: (n) => `\u2248 ${n} rounds`,
+    temps: (t) => `\u2248 ${t}`,
+    palierPartiel: (palier, pct, suivant) => `palier ${palier} + ${pct} % du palier ${suivant}`,
+    palier: (palier) => `palier ${palier}`,
+    premierPalier: "palier 1 partiel",
+    minuteComplete: (min) => `minute ${min} compl\xE9t\xE9e`,
+    minute: (min) => `minute ${min}`,
+    emom: (cycles, min, max, every) => `${cycles} passages, travail ${min}-${max} s / ${every} s`,
+    tabata: "reps min sur 8 \xD7 20 s par bloc",
+    stations: (rounds, n, work, rest) => `${rounds} tours \xD7 ${n} stations, ${work} s on / ${rest} s off`,
+    distance: (m) => `\u2248 ${m} m`,
+    parIntervalle: (t) => `travail \u2248 ${t} par intervalle`,
+    parRepetition: (t) => `\u2248 ${t} par r\xE9p\xE9tition`
+  },
+  /** Messages de `generate.ts` (`NoValidWod`). */
+  generation: {
+    aucunSquelette: "Aucun squelette compatible",
+    aucunWod: (tirages) => `Aucun WOD valide apr\xE8s ${tirages} tirages`
+  },
+  /** Musculation (`muscu.ts`). */
+  musculation: {
+    cible: {
+      fessiers: "Fessiers",
+      fessiers_ischios: "Fessiers & ischios",
+      bas: "Bas du corps",
+      full_body: "Full body",
+      tronc: "Tronc",
+      haut: "Haut du corps",
+      dos: "Dos",
+      epaules: "\xC9paules",
+      bras: "Bras",
+      pecs: "Pectoraux",
+      push: "Push",
+      pull: "Pull",
+      jambes: "Jambes"
+    },
+    objectif: { hypertrophie: "Prise de muscle", force: "Force", endurance: "Tonification" },
+    materiel: { none: "Sans mat\xE9riel", box: "Box", gym: "Salle" },
+    niveau: { debutant: "D\xE9butant", inter: "Interm\xE9diaire", avance: "Avanc\xE9" },
+    rir: {
+      hypertrophie: "derni\xE8re s\xE9rie \xE0 1-2 reps de l'\xE9chec",
+      force: "RIR 2, derni\xE8re s\xE9rie RPE 9",
+      endurance: "rythme continu, aucune s\xE9rie \xE0 l'\xE9chec"
+    },
+    /** côté d'un exercice unilatéral, relu par `parseStrengthLine` (`/ jambe`) */
+    cote: { jambe: "jambe", bras: "bras", cote: "c\xF4t\xE9" },
+    note: {
+      schemaHypertrophie: "sch\xE9ma hypertrophie",
+      chargePropre: "monter jusqu'\xE0 une charge propre",
+      troisiemeCompound: "3e compound : 70-75 % \xD7 6-8",
+      debutantBanded: "D\xE9butant : banded",
+      tempo: (t) => `tempo ${t}`
+    },
+    refus: {
+      forceApresClasse: "Apr\xE8s ma classe : la Force n'est pas propos\xE9e (hypertrophie ou endurance)",
+      forceSansMateriel: "Sans mat\xE9riel : la Force est indisponible",
+      forceTronc: "Tronc : la Force n'est pas propos\xE9e (Prise de muscle ou Tonification)",
+      cibleIndisponible: (cible, materiel) => `${cible} : aucun exercice ${materiel} pour ce niveau`
+    },
+    monteeEnCharge: (nom) => `Mont\xE9e en charge sur ${nom} : 5 @ 50 % \xB7 3 @ 65 % \xB7 2 @ 75 % avant les s\xE9ries de travail`,
+    renseigne1rm: "Renseigne tes 1RM dans le calculateur pour avoir des charges en kg",
+    charge: {
+      kgPourcent: (kg, pct) => `${kg} kg (${pct} %)`,
+      pourcent1rm: (pct) => `${pct} % 1RM`,
+      leste: (kg, rpe) => `lest\xE9 ${kg} kg, RPE ${rpe}`,
+      lesteLeger: (rpe) => `lest\xE9 l\xE9ger, RPE ${rpe}`,
+      elastique: "\xE9lastique",
+      poidsDuCorps: "poids du corps",
+      rpePourcent: (rpe, pct) => `RPE ${rpe} (\u2248 ${pct} % du 1RM)`,
+      rpe: (rpe) => `RPE ${rpe}`
+    },
+    /** segments de la ligne d'exercice, relus par `parseStrengthLine` */
+    ligne: {
+      kg: (kg, pct) => ` @ ${kg} kg \u2014 charge ${pct} % 1RM`,
+      pourcent: (rpe, pct) => ` \u2014 RPE ${rpe} (\u2248 ${pct} % du 1RM)`,
+      leste: (kg, rpe) => ` \u2014 lest\xE9 ${kg} kg (10 % du poids de corps), RPE ${rpe}`,
+      lesteLeger: (rpe) => ` \u2014 lest\xE9 l\xE9ger, RPE ${rpe}`,
+      rpePourcent: (rpe, pct) => ` \u2014 charge RPE ${rpe} (\u2248 ${pct} % du 1RM)`,
+      rpe: (rpe) => ` \u2014 charge RPE ${rpe}`,
+      elastique: " \u2014 charge \xE9lastique",
+      poidsDuCorps: " \u2014 charge poids du corps",
+      repos: (t) => ` \u2014 repos ${t}`
+    },
+    titre: (cible, objectif) => `${cible} \xB7 ${objectif}`,
+    entete: (cible, objectif, min, materiel) => `Musculation \xB7 ${cible} \xB7 ${objectif} \xB7 ${prime(min)} \xB7 ${materiel}`,
+    dureeEstimee: (min) => `Dur\xE9e estim\xE9e ${prime(min)}`,
+    stimulus: (note) => `Stimulus : ${note}`,
+    musclesEvites: (muscles) => `Apr\xE8s ma classe : muscles \xE9vit\xE9s ${muscles}`
+  },
+  /** Séances de box Functional / Hybrid (`session.ts`). */
+  seance: {
+    /** segments de `stepLine`, relus par `parseStrengthLine` */
+    serie: {
+      pourcent: (pct) => ` @ ${pct} %1RM`,
+      repos: (t) => ` \u2014 repos ${t}`,
+      tempo: (t) => ` \u2014 tempo ${t}`,
+      charge: (note) => ` \u2014 charge ${note}`
+    },
+    halteroComplexe: (nom, variante, complexe) => `Halt\xE9ro \u2014 complexe ${nom} (${variante}) : ${complexe}`,
+    halteroConsigne: "Un complexe = une r\xE9p\xE9tition, sans l\xE2cher la barre. Sans 1RM connu : monter jusqu'\xE0 une charge propre.",
+    force: (nom) => `Force \u2014 ${nom}`,
+    forceTempo: (t) => `Tempo ${t} sur les s\xE9ries de travail. Sans 1RM connu : derni\xE8re s\xE9rie RPE 8.`,
+    skill: (nom) => `Skill \u2014 ${nom} : progression en 3 \xE9tapes`,
+    etapeA: (texte, duree) => `\xC9tape A : ${texte} \u2014 ${duree}`,
+    etapeB: (texte, duree) => `\xC9tape B : ${texte} \u2014 ${duree}`,
+    etapeC: (every, rounds) => `\xC9tape C : Every ${every} \xD7 ${rounds}`,
+    building: (nom, tempo) => `Building \u2014 ${nom} tempo ${tempo}`,
+    finisher: (rounds) => `Finisher \u2014 ${rounds} rounds, rythme continu :`,
+    stationBox: (h, f) => `(box ${h}/${f} cm)`,
+    pro: (lignes) => `Women Pro / Men Pro : ${lignes}`,
+    stationEvery: (every, rounds) => `Every ${every} \xD7 ${rounds} :`,
+    stationRotation: (every, rounds) => `Every ${every} \xD7 ${rounds}, en rotation :`,
+    impair: "Impair \xB7 ",
+    pair: "Pair \xB7 ",
+    poste: (i) => `Poste ${i} \xB7 `,
+    chargeLourde: "Seule charge lourde de la semaine. Pouss\xE9e continue, jamais en saccades.",
+    intervallesCourse: (label, repos) => `Intervalles course \u2014 ${label}, repos ${repos}`,
+    allureCible: (cible) => `Allure cible : ${cible}. L'\xE9cart entre le premier et le dernier intervalle reste sous 5 s.`,
+    autresVariantes: (labels) => `Autres variantes du cycle : ${labels}`,
+    compromiseRounds: (rounds) => `${rounds} rounds :`,
+    compromiseStation: (i, work, ligne) => `${i}. ${work} s de station \u2014 ${ligne}`,
+    compromiseCourse: (m, cible) => `   puis ${m} m Run \xE0 allure cible (${cible})`,
+    compromiseTotal: (m) => `Total de course : ${m} m. Tenir l'allure avec les jambes charg\xE9es, ne pas sprinter la station.`,
+    enchainement: (tours) => `Encha\xEEnement chronom\xE9tr\xE9 \u2014 ${tours} tours, dans l'ordre :`,
+    enchainementLigne: (i, m, ligne) => `${i}. ${m} m Run puis ${ligne}`,
+    enchainementScore: (score) => `Score : ${score}. Note le temps de chaque segment.`,
+    type: {
+      weightlifting: "Halt\xE9ro",
+      strength: "Force",
+      skill: "Skill",
+      station: "Force sur station",
+      run: "Course",
+      race: "Simulation",
+      compromised: "Course compromise"
+    },
+    titreBuilding: (nom) => `Building \xB7 ${nom}`,
+    titreFinisher: "Finisher",
+    titreRetourAuCalme: "Retour au calme",
+    notePourcentages: "Pourcentages du 1RM du mouvement complet ; sans 1RM, charge propre.",
+    noteChronometree: "S\xE9ance chronom\xE9tr\xE9e de bout en bout : compare avec ta derni\xE8re simulation."
+  },
+  /** Jours de la semaine de séance (journal des relâchements de la programmation). */
+  jours: { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi", 6: "Samedi" },
+  /** Programmation automatique (`programming.ts`). */
+  programmation: {
+    piste: { functional: "Functional", hybrid: "Hybrid", musculation: "Musculation" },
+    /** groupes créés dans la box : contenu de box, écrit une fois */
+    groupe: { functional: "Functional", hybrid: "Hybrid", musculation: "Musculation" }
+  },
+  /** Textes de la banque de squelettes (`bank/**`), rangés par id de squelette ou d'option. */
+  banque: {
+    /** `stimulus.note` des squelettes metcon, par id */
+    stimulus: {
+      chipper_descending: "Gestion, pas de sprint avant le dernier tiers.",
+      chipper_stations_erg: "Stations encha\xEEn\xE9es, ergs \xE0 85 %.",
+      couplet_amrap_short: "Allure constante, pas de set cass\xE9 avant la mi-temps.",
+      couplet_for_time_21_15_9: "Sprint, sets courts d\xE8s le round 1.",
+      death_by: "S'arr\xEAte quand la minute n'est plus tenue.",
+      emom_alternating: "Garder au moins un tiers de chaque intervalle pour r\xE9cup\xE9rer.",
+      engine_long_amrap: "Zone 3, respiration contr\xF4l\xE9e du d\xE9but \xE0 la fin.",
+      gym_density: "Technique, aucun \xE9chec musculaire.",
+      heavy_couplet: "Charge lourde, sets non cass\xE9s, le mono sert de r\xE9cup\xE9ration active.",
+      interval_work_rest: "Chaque intervalle est un sprint, repos complet.",
+      ladder_ascending: "Les premiers paliers se font sans poser la barre.",
+      ladder_finite: "Rythme progressif, garder des s\xE9ries propres sur le sommet.",
+      stations_rotation: "Max effort sur chaque station, repos incomplet voulu.",
+      tabata_pair: "Score = somme des reps min de chaque bloc.",
+      triplet_amrap_mid: "Tenable 20 min, transitions rapides.",
+      triplet_for_time_classics: "Transitions courtes et s\xE9ries fractionn\xE9es avant l\u2019\xE9chec.",
+      triplet_rounds_for_time: "Rounds r\xE9guliers, la barre ne se pose pas avant la fin du set.",
+      amrap_distances: "Allure constante, chaque round dans les 15 s du pr\xE9c\xE9dent.",
+      chipper_hybrid: "Course en ouverture et fermeture, stations encha\xEEn\xE9es \xE0 allure r\xE9guli\xE8re.",
+      compromised_run: "Courir vite sur des jambes fatigu\xE9es : allure 5 km + 15 s/km.",
+      core_carry_finisher: "Posture et gainage, jamais \xE0 l'\xE9chec.",
+      emom_hybrid: "Erg, course et charge en alternance ; garder un tiers de chaque d\xE9part pour r\xE9cup\xE9rer.",
+      engine_continuous: "Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget.",
+      engine_negative_split: "Zone 3, respiration nasale tenable. Seconde moiti\xE9 un cran plus vite que la premi\xE8re, sans jamais passer en zone 4.",
+      erg_pyramid: "Pyramide \xE0 allure r\xE9guli\xE8re, la station courte relance sans casser le rythme.",
+      half_sim: "Demi-course, g\xE9rer comme un jour de comp\xE9tition.",
+      run_intervals: "Allure 5 km ou plus vite, r\xE9gularit\xE9 entre r\xE9p\xE9titions.",
+      run_into_station: "Allure course \xE0 90 % du 5 km, stations sans pause.",
+      sled_repeats: "Lourd et court, repos r\xE9el entre les tours.",
+      stations_interval: "Alternance jambes / \xE9paules / mono, 90 s de travail max effort."
+    },
+    /** séances : libellé du jour et échauffement, par id de squelette de séance */
+    seance: {
+      S1_snatch: { label: "Halt\xE9ro \xB7 Snatch", echauffement: "\xC9chauffement (10') \u2014 mobilit\xE9 \xE9paules et hanches, barre \xE0 vide : Snatch Deadlift, Muscle Snatch, Overhead Squat, Snatch Balance en s\xE9rie de 5." },
+      S2_squat: { label: "Force \xB7 Squat", echauffement: "\xC9chauffement (10') \u2014 v\xE9lo ou rameur facile, mobilit\xE9 chevilles et hanches, Air Squats, Goblet Squats l\xE9gers, activation fessiers." },
+      S3_gym: { label: "Gym \xB7 Skill", echauffement: "\xC9chauffement (10') \u2014 mobilit\xE9 \xE9paules et poignets, Scap Pull-Ups, Kip Swings, Hollow / Arch, marche en HS contre le mur." },
+      S4_cj: { label: "Halt\xE9ro \xB7 Clean & Jerk", echauffement: "\xC9chauffement (10') \u2014 mobilit\xE9 poignets et hanches, barre \xE0 vide : Clean Deadlift, Muscle Clean, Front Squat, Push Press, Push Jerk en s\xE9rie de 5." },
+      S5_hinge: { label: "Force \xB7 Hinge", echauffement: "\xC9chauffement (10') \u2014 rameur facile, mobilit\xE9 ischios et hanches, Good Mornings barre \xE0 vide, Glute Bridges, Kettlebell Swings l\xE9gers." },
+      S6_long: { label: "Long \xB7 Engine", echauffement: "\xC9chauffement long (18') \u2014 3 tours faciles : 2' d'erg au choix, Inchworms, Spiderman Lunges, Scap Pull-Ups, Air Squats ; puis les mouvements du metcon \xE0 vide." },
+      H1_intervals: { label: "Intervalles", echauffement: "\xC9chauffement (10') \u2014 800 m course progressive, 10 leg swings / jambe, 10 air squats, 10 pompes, 2 \xD7 20 s skipping." },
+      H2_strength_stations: { label: "Force & stations", echauffement: "\xC9chauffement (10') \u2014 500 m rameur facile, 10 hip hinges \xE0 la barre \xE0 vide, 10 fentes / jambe, 10 pompes, 20 m d'ours." },
+      H3_run: { label: "Course", echauffement: "\xC9chauffement (12') \u2014 1 km progressif, gammes (talons-fesses, mont\xE9es de genoux, pas chass\xE9s) 2 \xD7 20 m, 3 \xD7 30 m d'acc\xE9l\xE9rations." },
+      H4_engine: { label: "Engine", echauffement: "\xC9chauffement (8') \u2014 400 m course facile, 10 air squats, 10 pompes, 5 inchworms." },
+      H5_compromised: { label: "Course compromise", echauffement: "\xC9chauffement (10') \u2014 600 m course, 10 hip hinges, 10 fentes / jambe, 20 m de sled \xE0 vide, 10 wall balls l\xE9g\xE8res." },
+      H6_simulation: { label: "Simulation", echauffement: "\xC9chauffement (12') \u2014 1 km progressif, gammes, puis 20 m de chaque station \xE0 vide." },
+      H6_simulation_full: { label: "Simulation \xB7 test de bloc", echauffement: "\xC9chauffement (12') \u2014 1 km progressif, gammes, puis 20 m de chaque station \xE0 vide. Pr\xE9pare ton mat\xE9riel : la s\xE9ance s'encha\xEEne sans arr\xEAt." }
+    },
+    /** notes des séries de force (`montée` est relue par `stepLine` : ne pas la changer) */
+    serie: {
+      montee: "mont\xE9e",
+      e3mom6070: "E3MOM \xB7 60-70 %",
+      e3mom7075: "E3MOM \xB7 70-75 %",
+      pct8085: "80-85 %",
+      strict: "strict, qualit\xE9 avant quantit\xE9",
+      buildingTempo: "building tempo"
+    },
+    /** noms affichés des blocs B qui ne reprennent pas le nom du catalogue, par id d'option */
+    building: { b_snatch_balance: "Snatch Balance" },
+    /** progressions A / B et substitutions par catégorie des skills S3, par id d'option */
+    skill: {
+      skill_c2b: {
+        a: "Kip Swings amples + Scap Pull-Ups (3 \xD7 8), fermeture des hanches vers la barre",
+        b: "Chest-to-Bar assist\xE9s \xE9lastique ou Jumping C2B avec pause poitrine \xE0 la barre (3 \xD7 5)",
+        substitutions: { scaled: "Banded Pull-Ups", inter: "Pull-ups", rxplus: "Chest-to-Bar", elite: "Bar Muscle-ups", pro: "Bar Muscle-ups" }
+      },
+      skill_hspu: {
+        a: "Handstand Hold face au mur (3 \xD7 30 s), gainage et coudes verrouill\xE9s",
+        b: "Descentes n\xE9gatives 5 s en Handstand Push-Up ou Pike Push-Ups pieds sur box (3 \xD7 5)",
+        substitutions: { scaled: "Pike Push-Ups", inter: "Half Wall Walks", rxplus: "Strict Handstand Push-Ups", elite: "Strict Handstand Push-Ups", pro: "Strict Handstand Push-Ups" }
+      },
+      skill_bmu: {
+        a: "Kip Swings avec hanches hautes + Chest-to-Bar explosifs (3 \xD7 5), trajet vers la barre",
+        b: "Bar Muscle-Ups \xE9lastique ou saut\xE9s depuis une box basse, transition et dip (3 \xD7 3)",
+        substitutions: { scaled: "Banded Pull-Ups", inter: "Chest-to-Bar", rxplus: "Bar Muscle-ups", elite: "Ring Muscle-ups", pro: "Ring Muscle-ups" }
+      },
+      skill_rmu: {
+        a: "False grip Hang + Ring Rows en false grip (3 \xD7 8), anneaux vers le sternum",
+        b: "Transitions pieds au sol sur anneaux bas puis Ring Dips profonds (3 \xD7 4)",
+        substitutions: { scaled: "Ring Rows false grip", inter: "Chest-to-Bar", rxplus: "Bar Muscle-ups", elite: "Ring Muscle-ups", pro: "Ring Muscle-ups" }
+      },
+      skill_rope: {
+        a: "Verrouillage de pieds au sol (J-hook / S-wrap) et Rope Pulls assis \u2192 debout (3 \xD7 5)",
+        b: "Mont\xE9es basses en 3 accroches avec pause \xE0 chaque verrouillage (3 \xD7 2)",
+        substitutions: { scaled: "Rope Pulls From Floor", inter: "Rope Climbs", rxplus: "Rope Climbs", elite: "Legless Rope Climbs", pro: "Legless Rope Climbs" }
+      },
+      skill_wall_walk: {
+        a: "Plank Hold pieds au mur + Bear Crawl (3 \xD7 20 s), bassin rentr\xE9",
+        b: "Half Wall Walks avec pause 3 s en haut (3 \xD7 3)",
+        substitutions: { scaled: "Half Wall Walks", inter: "Wall Walks", rxplus: "Wall Walks", elite: "Wall Walks + 5 Shoulder Taps", pro: "Wall Walks + 5 Shoulder Taps" }
+      },
+      skill_hs_walk: {
+        a: "Handstand Hold dos au mur (3 \xD7 30 s) puis Shoulder Taps (3 \xD7 10), doigts qui agrippent le sol",
+        b: "D\xE9collages du mur : Handstand Walk 2-3 pas puis retour (3 \xD7 4 tentatives)",
+        substitutions: { scaled: "Handstand Shoulder Taps", inter: "Half Wall Walks", rxplus: "Handstand Walk", elite: "Handstand Walk", pro: "Handstand Walk" }
+      }
+    },
+    /** noms affichés des mouvements de finisher qui ne reprennent pas le nom du catalogue, par id de finisher puis de mouvement */
+    finisher: {
+      core_dead_bug_side_plank: { dead_bug: "Dead Bug (par c\xF4t\xE9)", side_plank: "Side Plank (par c\xF4t\xE9)" },
+      core_t2b_l_sit: { l_sit: "L-Sit sur parallettes" },
+      carry_sandbag_bear_hug: { sandbag_carry: "Sandbag Bear Hug Carry" },
+      carry_suitcase_plank: { suitcase_carry: "Suitcase Carry (par c\xF4t\xE9)", side_plank: "Side Plank (par c\xF4t\xE9)" },
+      carry_overhead_kb: { kb_overhead_carry: "KB Overhead Carry (par bras)" },
+      carry_front_rack_db: { db_front_rack_carry: "DB Front Rack Carry" },
+      shoulders_face_pull_raise: { face_pull: "Face Pull \xE9lastique", lateral_raise: "Lateral Raise l\xE9ger" },
+      shoulders_band_pull_apart_y: { band_pull_apart: "Band Pull-Aparts", db_y_raise: "DB Y-Raise" },
+      shoulders_cuban_press_hold: { cuban_press: "Cuban Press l\xE9ger" },
+      glutes_bridge_clam: { banded_clamshell: "Banded Clamshells (par c\xF4t\xE9)" },
+      glutes_hip_thrust_monster: { monster_walk: "Monster Walk \xE9lastique" },
+      glutes_kickback_swing: { glute_kickback: "Glute Kickback \xE9lastique (par c\xF4t\xE9)" },
+      glutes_single_leg_bridge_step_up: { single_leg_glute_bridge: "Single-Leg Glute Bridge (par c\xF4t\xE9)" },
+      calves_raise_jump: { bodyweight_calf_raise: "Calf Raises sur marche" },
+      calves_single_leg_hold: { single_leg_calf_raise: "Single-Leg Calf Raise (par c\xF4t\xE9)", calf_raise_hold: "Calf Raise Hold en haut" },
+      breathing_row_nasal: { row: "Row respiration nasale", box_breathing: "Box Breathing 4-4-4-4" },
+      breathing_bike_exhale: { bike_erg: "Bike Erg facile", slow_exhale: "Respiration 4 s inspir / 8 s expir" },
+      h_core_deadbug_side: { plank_hold: "Side Plank (par c\xF4t\xE9)" },
+      h_core_pallof: { plank_hold: "Pallof Press tenu (par c\xF4t\xE9)" },
+      h_post_rdl_bridge: { bodyweight_single_leg_rdl: "Single-Leg RDL poids du corps (par jambe)" },
+      h_breath_row: { row: "Row en respiration nasale" },
+      h_breath_ski: { ski_erg: "SkiErg facile, respiration nasale" },
+      h_breath_bike: { bike_erg: "Bike Erg facile, respiration nasale" },
+      h_shoulders_carry: { suitcase_carry: "Overhead Carry (par c\xF4t\xE9)" },
+      h_breath_row_long: { row: "Row facile, respiration nasale" }
+    },
+    /** noms affichés des postes Hybrid qui ne reprennent pas le nom du catalogue */
+    poste: {
+      stepUpsLestes: "Box Step-ups lest\xE9s (2 \xD7 DB)",
+      rowTenable: "Row \u2014 allure tenable, ni sprint ni promenade",
+      skiTenable: "SkiErg \u2014 allure tenable",
+      bikeTenable: "Bike Erg \u2014 allure tenable"
+    },
+    /** retours au calme Hybrid, dans l'ordre de la banque */
+    retourAuCalme: [
+      [
+        "Retour au calme (8') \u2014 600 m de footing tr\xE8s lent ou 5' de v\xE9lo facile, respiration nasale.",
+        "\xC9tirements : ischios debout 45 s / jambe \xB7 fl\xE9chisseurs de hanche en fente 45 s / c\xF4t\xE9 \xB7 mollets au mur 45 s / jambe."
+      ],
+      [
+        "Retour au calme (8') \u2014 5' de rameur tr\xE8s facile, \xE9paules rel\xE2ch\xE9es.",
+        "\xC9tirements : cha\xEEne post\xE9rieure assis 45 s \xB7 pigeon 45 s / c\xF4t\xE9 \xB7 ouverture thoracique au mur 45 s / bras."
+      ],
+      [
+        "Retour au calme (6') \u2014 400 m de marche rapide puis respiration 4-6 allong\xE9, 2'.",
+        "\xC9tirements : quadriceps debout 45 s / jambe \xB7 adducteurs en grenouille 45 s \xB7 psoas en fente basse 45 s / c\xF4t\xE9."
+      ]
+    ],
+    /** course du mercredi Hybrid (variantes en rotation), course compromise et simulations */
+    course: {
+      variantes: [
+        { label: "8 \xD7 400 m", cible: "allure 5 km" },
+        { label: "5 \xD7 800 m", cible: "allure 10 km \u2212 10 s/km" },
+        { label: "3 \xD7 1 600 m", cible: "allure 10 km" },
+        { label: "12 \xD7 200 m shuttle", cible: "allure rapide et r\xE9guli\xE8re" }
+      ],
+      compromiseCible: "allure 5 km + 15 s/km",
+      scoreSimulation: "temps total"
+    }
+  }
+};
+
 // packages/wod-engine/src/bank/functional/couplet_for_time_21_15_9.ts
 var slots = [
   { pick: { family: ["barbell", "dumbbell"], pattern_any: ["squat", "hinge", "push_v"] }, qty: "scheme" },
@@ -25722,7 +26108,7 @@ var couplet_for_time_21_15_9 = {
   score_type: "time",
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 9, note: "Sprint, sets courts d\xE8s le round 1." }
+  stimulus: { rpe: 9, note: fr.banque.stimulus.couplet_for_time_21_15_9 }
 };
 
 // packages/wod-engine/src/bank/functional/couplet_amrap_short.ts
@@ -25742,7 +26128,7 @@ var couplet_amrap_short = {
   score_type: "rounds_reps",
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: "Allure constante, pas de set cass\xE9 avant la mi-temps." }
+  stimulus: { rpe: 8, note: fr.banque.stimulus.couplet_amrap_short }
 };
 
 // packages/wod-engine/src/bank/functional/triplet_amrap_mid.ts
@@ -25763,7 +26149,7 @@ var triplet_amrap_mid = {
   score_type: "rounds_reps",
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 7.5, note: "Tenable 20 min, transitions rapides." }
+  stimulus: { rpe: 7.5, note: fr.banque.stimulus.triplet_amrap_mid }
 };
 
 // packages/wod-engine/src/bank/functional/triplet_rounds_for_time.ts
@@ -25785,7 +26171,7 @@ var triplet_rounds_for_time = {
   score_type: "time",
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 8, note: "Rounds r\xE9guliers, la barre ne se pose pas avant la fin du set." }
+  stimulus: { rpe: 8, note: fr.banque.stimulus.triplet_rounds_for_time }
 };
 
 // packages/wod-engine/src/bank/functional/triplet_for_time_classics.ts
@@ -25816,7 +26202,7 @@ var triplet_for_time_classics = {
   score_type: "time",
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 8.5, note: "Transitions courtes et s\xE9ries fractionn\xE9es avant l\u2019\xE9chec." }
+  stimulus: { rpe: 8.5, note: fr.banque.stimulus.triplet_for_time_classics }
 };
 
 // packages/wod-engine/src/bank/functional/chipper_descending.ts
@@ -25847,7 +26233,7 @@ var chipper_descending = {
   score_type: "time",
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 7.5, note: "Gestion, pas de sprint avant le dernier tiers." }
+  stimulus: { rpe: 7.5, note: fr.banque.stimulus.chipper_descending }
 };
 
 // packages/wod-engine/src/bank/functional/chipper_stations_erg.ts
@@ -25870,7 +26256,7 @@ var chipper_stations_erg = {
   score_type: "time",
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 7, note: "Stations encha\xEEn\xE9es, ergs \xE0 85 %." }
+  stimulus: { rpe: 7, note: fr.banque.stimulus.chipper_stations_erg }
 };
 
 // packages/wod-engine/src/bank/functional/emom_alternating.ts
@@ -25912,7 +26298,7 @@ var emom_alternating = {
   score_type: "reps_total",
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 7, note: "Garder au moins un tiers de chaque intervalle pour r\xE9cup\xE9rer." }
+  stimulus: { rpe: 7, note: fr.banque.stimulus.emom_alternating }
 };
 
 // packages/wod-engine/src/bank/functional/interval_work_rest.ts
@@ -25935,7 +26321,7 @@ var interval_work_rest = {
   score_type: "time",
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 9, note: "Chaque intervalle est un sprint, repos complet." }
+  stimulus: { rpe: 9, note: fr.banque.stimulus.interval_work_rest }
 };
 
 // packages/wod-engine/src/bank/functional/ladder_ascending.ts
@@ -25957,7 +26343,7 @@ var ladder_ascending = {
   score_type: "time",
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 8, note: "Les premiers paliers se font sans poser la barre." }
+  stimulus: { rpe: 8, note: fr.banque.stimulus.ladder_ascending }
 };
 
 // packages/wod-engine/src/bank/functional/ladder_finite.ts
@@ -25988,7 +26374,7 @@ var ladder_finite = {
   score_type: "time",
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 8, note: "Rythme progressif, garder des s\xE9ries propres sur le sommet." }
+  stimulus: { rpe: 8, note: fr.banque.stimulus.ladder_finite }
 };
 
 // packages/wod-engine/src/bank/functional/death_by.ts
@@ -26008,7 +26394,7 @@ var death_by = {
   score_type: "reps_total",
   cap_factor: 1,
   allow_variant_up: false,
-  stimulus: { rpe: 9, note: "S'arr\xEAte quand la minute n'est plus tenue." }
+  stimulus: { rpe: 9, note: fr.banque.stimulus.death_by }
 };
 
 // packages/wod-engine/src/bank/functional/tabata_pair.ts
@@ -26029,7 +26415,7 @@ var tabata_pair = {
   score_type: "reps_total",
   cap_factor: 1,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: "Score = somme des reps min de chaque bloc." }
+  stimulus: { rpe: 8, note: fr.banque.stimulus.tabata_pair }
 };
 
 // packages/wod-engine/src/bank/functional/heavy_couplet.ts
@@ -26049,7 +26435,7 @@ var heavy_couplet = {
   score_type: "time",
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: "Charge lourde, sets non cass\xE9s, le mono sert de r\xE9cup\xE9ration active." }
+  stimulus: { rpe: 8, note: fr.banque.stimulus.heavy_couplet }
 };
 
 // packages/wod-engine/src/bank/functional/engine_long_amrap.ts
@@ -26071,7 +26457,7 @@ var engine_long_amrap = {
   score_type: "rounds_reps",
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 6.5, note: "Zone 3, respiration contr\xF4l\xE9e du d\xE9but \xE0 la fin." }
+  stimulus: { rpe: 6.5, note: fr.banque.stimulus.engine_long_amrap }
 };
 
 // packages/wod-engine/src/bank/functional/gym_density.ts
@@ -26092,7 +26478,7 @@ var gym_density = {
   score_type: "reps_total",
   cap_factor: 1,
   allow_variant_up: true,
-  stimulus: { rpe: 6.5, note: "Technique, aucun \xE9chec musculaire." }
+  stimulus: { rpe: 6.5, note: fr.banque.stimulus.gym_density }
 };
 
 // packages/wod-engine/src/bank/functional/stations_rotation.ts
@@ -26118,7 +26504,7 @@ var stations_rotation = {
   score_type: "reps_total",
   cap_factor: 1,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: "Max effort sur chaque station, repos incomplet voulu." }
+  stimulus: { rpe: 8, note: fr.banque.stimulus.stations_rotation }
 };
 
 // packages/wod-engine/src/bank/hybrid/run_into_station.ts
@@ -26148,7 +26534,7 @@ var run_into_station = {
   score_type: "time",
   cap_factor: 1.25,
   allow_variant_up: false,
-  stimulus: { rpe: 8.5, note: "Allure course \xE0 90 % du 5 km, stations sans pause." }
+  stimulus: { rpe: 8.5, note: fr.banque.stimulus.run_into_station }
 };
 
 // packages/wod-engine/src/bank/hybrid/stations_interval.ts
@@ -26175,7 +26561,7 @@ var stations_interval = {
   score_type: "reps_total",
   cap_factor: 1,
   allow_variant_up: false,
-  stimulus: { rpe: 8.5, note: "Alternance jambes / \xE9paules / mono, 90 s de travail max effort." }
+  stimulus: { rpe: 8.5, note: fr.banque.stimulus.stations_interval }
 };
 
 // packages/wod-engine/src/bank/hybrid/amrap_distances.ts
@@ -26197,7 +26583,7 @@ var amrap_distances = {
   score_type: "rounds_reps",
   cap_factor: 1,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: "Allure constante, chaque round dans les 15 s du pr\xE9c\xE9dent." }
+  stimulus: { rpe: 8, note: fr.banque.stimulus.amrap_distances }
 };
 
 // packages/wod-engine/src/bank/hybrid/erg_pyramid.ts
@@ -26218,7 +26604,7 @@ var erg_pyramid = {
   score_type: "time",
   cap_factor: 1.25,
   allow_variant_up: false,
-  stimulus: { rpe: 7, note: "Pyramide \xE0 allure r\xE9guli\xE8re, la station courte relance sans casser le rythme." }
+  stimulus: { rpe: 7, note: fr.banque.stimulus.erg_pyramid }
 };
 
 // packages/wod-engine/src/bank/hybrid/sled_repeats.ts
@@ -26259,7 +26645,7 @@ var sled_repeats = {
   score_type: "time",
   cap_factor: 1.25,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: "Lourd et court, repos r\xE9el entre les tours." }
+  stimulus: { rpe: 8, note: fr.banque.stimulus.sled_repeats }
 };
 
 // packages/wod-engine/src/bank/hybrid/compromised_run.ts
@@ -26279,7 +26665,7 @@ var compromised_run = {
   score_type: "time",
   cap_factor: 1.25,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: "Courir vite sur des jambes fatigu\xE9es : allure 5 km + 15 s/km." }
+  stimulus: { rpe: 8, note: fr.banque.stimulus.compromised_run }
 };
 
 // packages/wod-engine/src/bank/hybrid/half_sim.ts
@@ -26325,7 +26711,7 @@ var half_sim = {
   score_type: "time",
   cap_factor: 1.2,
   allow_variant_up: false,
-  stimulus: { rpe: 9, note: "Demi-course, g\xE9rer comme un jour de comp\xE9tition." }
+  stimulus: { rpe: 9, note: fr.banque.stimulus.half_sim }
 };
 
 // packages/wod-engine/src/bank/hybrid/engine_continuous.ts
@@ -26348,7 +26734,7 @@ var engine_continuous = {
   score_type: "distance",
   cap_factor: 1,
   allow_variant_up: false,
-  stimulus: { rpe: 6, note: "Zone 3, conversation difficile mais possible. Rotation sans repos jusqu'au budget." }
+  stimulus: { rpe: 6, note: fr.banque.stimulus.engine_continuous }
 };
 
 // packages/wod-engine/src/bank/hybrid/core_carry_finisher.ts
@@ -26369,7 +26755,7 @@ var core_carry_finisher = {
   score_type: "time",
   cap_factor: 1.25,
   allow_variant_up: false,
-  stimulus: { rpe: 6, note: "Posture et gainage, jamais \xE0 l'\xE9chec." }
+  stimulus: { rpe: 6, note: fr.banque.stimulus.core_carry_finisher }
 };
 
 // packages/wod-engine/src/bank/hybrid/run_intervals.ts
@@ -26390,7 +26776,7 @@ var run_intervals = {
   score_type: "time",
   cap_factor: 1,
   allow_variant_up: false,
-  stimulus: { rpe: 8.5, note: "Allure 5 km ou plus vite, r\xE9gularit\xE9 entre r\xE9p\xE9titions." }
+  stimulus: { rpe: 8.5, note: fr.banque.stimulus.run_intervals }
 };
 
 // packages/wod-engine/src/bank/hybrid/engine_negative_split.ts
@@ -26415,7 +26801,7 @@ var engine_negative_split = {
   allow_variant_up: false,
   stimulus: {
     rpe: 6,
-    note: "Zone 3, respiration nasale tenable. Seconde moiti\xE9 un cran plus vite que la premi\xE8re, sans jamais passer en zone 4."
+    note: fr.banque.stimulus.engine_negative_split
   }
 };
 
@@ -26445,7 +26831,7 @@ var emom_hybrid = {
   score_type: "reps_total",
   cap_factor: 1,
   allow_variant_up: false,
-  stimulus: { rpe: 7, note: "Erg, course et charge en alternance ; garder un tiers de chaque d\xE9part pour r\xE9cup\xE9rer." }
+  stimulus: { rpe: 7, note: fr.banque.stimulus.emom_hybrid }
 };
 
 // packages/wod-engine/src/bank/hybrid/chipper_hybrid.ts
@@ -26471,7 +26857,7 @@ var chipper_hybrid = {
   score_type: "time",
   cap_factor: 1.3,
   allow_variant_up: false,
-  stimulus: { rpe: 7, note: "Course en ouverture et fermeture, stations encha\xEEn\xE9es \xE0 allure r\xE9guli\xE8re." }
+  stimulus: { rpe: 7, note: fr.banque.stimulus.chipper_hybrid }
 };
 
 // packages/wod-engine/src/bank/muscu.ts
@@ -26602,20 +26988,21 @@ var TARGET_MUSCLES = {
 };
 
 // packages/wod-engine/src/bank/session.ts
+var T2 = fr.banque;
 var SESSION_BANK_VERSION = 3;
 var WL_STEPS = [
-  { sets: 2, reps: 2, percent: 30, rest_s: 60, note: "mont\xE9e" },
-  { sets: 2, reps: 2, percent: 50, rest_s: 60, note: "mont\xE9e" },
-  { sets: 4, reps: 1, percent: 65, rest_s: 180, note: "E3MOM \xB7 60-70 %" },
-  { sets: 4, reps: 1, percent: 72, rest_s: 180, note: "E3MOM \xB7 70-75 %" }
+  { sets: 2, reps: 2, percent: 30, rest_s: 60, note: T2.serie.montee },
+  { sets: 2, reps: 2, percent: 50, rest_s: 60, note: T2.serie.montee },
+  { sets: 4, reps: 1, percent: 65, rest_s: 180, note: T2.serie.e3mom6070 },
+  { sets: 4, reps: 1, percent: 72, rest_s: 180, note: T2.serie.e3mom7075 }
 ];
 var STRENGTH_RAMP = [
-  { sets: 1, reps: 5, percent: 40, rest_s: 90, note: "mont\xE9e" },
-  { sets: 1, reps: 5, percent: 50, rest_s: 90, note: "mont\xE9e" },
-  { sets: 1, reps: 3, percent: 60, rest_s: 120, note: "mont\xE9e" }
+  { sets: 1, reps: 5, percent: 40, rest_s: 90, note: T2.serie.montee },
+  { sets: 1, reps: 5, percent: 50, rest_s: 90, note: T2.serie.montee },
+  { sets: 1, reps: 3, percent: 60, rest_s: 120, note: T2.serie.montee }
 ];
 var FIVE_BY_FIVE = [...STRENGTH_RAMP, { sets: 5, reps: 5, percent: 75, rest_s: 150 }];
-var FIVE_BY_THREE = [...STRENGTH_RAMP, { sets: 5, reps: 3, percent: 82, rest_s: 180, note: "80-85 %" }];
+var FIVE_BY_THREE = [...STRENGTH_RAMP, { sets: 5, reps: 3, percent: 82, rest_s: 180, note: T2.serie.pct8085 }];
 var building = (id, movement, pattern, tempo, percent = 55, name) => ({
   id,
   movement,
@@ -26623,10 +27010,10 @@ var building = (id, movement, pattern, tempo, percent = 55, name) => ({
   tempo,
   minutes: 8,
   ...name ? { name } : {},
-  steps: [{ sets: 3, reps: 5, percent, rest_s: 90, note: percent === null ? "strict, qualit\xE9 avant quantit\xE9" : "building tempo" }]
+  steps: [{ sets: 3, reps: 5, percent, rest_s: 90, note: percent === null ? T2.serie.strict : T2.serie.buildingTempo }]
 });
 var B_OHS = building("b_ohs_tempo", "overhead_squat", "squat", "3-1-1-1");
-var B_SNATCH_BALANCE = building("b_snatch_balance", "snatch_balance", "squat", "2-0-X-1", 50, "Snatch Balance");
+var B_SNATCH_BALANCE = building("b_snatch_balance", "snatch_balance", "squat", "2-0-X-1", 50, T2.building.b_snatch_balance);
 var B_STRICT_PULL_UP = building("b_strict_pull_up", "strict_pull_up", "pull_v", "2-1-2-1", null);
 var B_PUSH_PRESS = building("b_push_press_tempo", "push_press", "push_v", "2-0-1-2");
 var B_STRICT_PRESS = building("b_strict_press_tempo", "strict_press", "push_v", "3-0-1-1");
@@ -26694,8 +27081,8 @@ var S3_A = [
       reps: 5,
       rounds: 4,
       every_s: 90,
-      progression: { a: "Kip Swings amples + Scap Pull-Ups (3 \xD7 8), fermeture des hanches vers la barre", b: "Chest-to-Bar assist\xE9s \xE9lastique ou Jumping C2B avec pause poitrine \xE0 la barre (3 \xD7 5)" },
-      substitutions: { scaled: "Banded Pull-Ups", inter: "Pull-ups", rxplus: "Chest-to-Bar", elite: "Bar Muscle-ups", pro: "Bar Muscle-ups" }
+      progression: { a: T2.skill.skill_c2b.a, b: T2.skill.skill_c2b.b },
+      substitutions: T2.skill.skill_c2b.substitutions
     }
   },
   {
@@ -26707,8 +27094,8 @@ var S3_A = [
       reps: 6,
       rounds: 4,
       every_s: 90,
-      progression: { a: "Handstand Hold face au mur (3 \xD7 30 s), gainage et coudes verrouill\xE9s", b: "Descentes n\xE9gatives 5 s en Handstand Push-Up ou Pike Push-Ups pieds sur box (3 \xD7 5)" },
-      substitutions: { scaled: "Pike Push-Ups", inter: "Half Wall Walks", rxplus: "Strict Handstand Push-Ups", elite: "Strict Handstand Push-Ups", pro: "Strict Handstand Push-Ups" }
+      progression: { a: T2.skill.skill_hspu.a, b: T2.skill.skill_hspu.b },
+      substitutions: T2.skill.skill_hspu.substitutions
     }
   },
   {
@@ -26720,8 +27107,8 @@ var S3_A = [
       reps: 3,
       rounds: 4,
       every_s: 90,
-      progression: { a: "Kip Swings avec hanches hautes + Chest-to-Bar explosifs (3 \xD7 5), trajet vers la barre", b: "Bar Muscle-Ups \xE9lastique ou saut\xE9s depuis une box basse, transition et dip (3 \xD7 3)" },
-      substitutions: { scaled: "Banded Pull-Ups", inter: "Chest-to-Bar", rxplus: "Bar Muscle-ups", elite: "Ring Muscle-ups", pro: "Ring Muscle-ups" }
+      progression: { a: T2.skill.skill_bmu.a, b: T2.skill.skill_bmu.b },
+      substitutions: T2.skill.skill_bmu.substitutions
     }
   },
   {
@@ -26733,8 +27120,8 @@ var S3_A = [
       reps: 3,
       rounds: 4,
       every_s: 90,
-      progression: { a: "False grip Hang + Ring Rows en false grip (3 \xD7 8), anneaux vers le sternum", b: "Transitions pieds au sol sur anneaux bas puis Ring Dips profonds (3 \xD7 4)" },
-      substitutions: { scaled: "Ring Rows false grip", inter: "Chest-to-Bar", rxplus: "Bar Muscle-ups", elite: "Ring Muscle-ups", pro: "Ring Muscle-ups" }
+      progression: { a: T2.skill.skill_rmu.a, b: T2.skill.skill_rmu.b },
+      substitutions: T2.skill.skill_rmu.substitutions
     }
   },
   {
@@ -26746,8 +27133,8 @@ var S3_A = [
       reps: 2,
       rounds: 4,
       every_s: 90,
-      progression: { a: "Verrouillage de pieds au sol (J-hook / S-wrap) et Rope Pulls assis \u2192 debout (3 \xD7 5)", b: "Mont\xE9es basses en 3 accroches avec pause \xE0 chaque verrouillage (3 \xD7 2)" },
-      substitutions: { scaled: "Rope Pulls From Floor", inter: "Rope Climbs", rxplus: "Rope Climbs", elite: "Legless Rope Climbs", pro: "Legless Rope Climbs" }
+      progression: { a: T2.skill.skill_rope.a, b: T2.skill.skill_rope.b },
+      substitutions: T2.skill.skill_rope.substitutions
     }
   },
   {
@@ -26759,8 +27146,8 @@ var S3_A = [
       reps: 4,
       rounds: 4,
       every_s: 90,
-      progression: { a: "Plank Hold pieds au mur + Bear Crawl (3 \xD7 20 s), bassin rentr\xE9", b: "Half Wall Walks avec pause 3 s en haut (3 \xD7 3)" },
-      substitutions: { scaled: "Half Wall Walks", inter: "Wall Walks", rxplus: "Wall Walks", elite: "Wall Walks + 5 Shoulder Taps", pro: "Wall Walks + 5 Shoulder Taps" }
+      progression: { a: T2.skill.skill_wall_walk.a, b: T2.skill.skill_wall_walk.b },
+      substitutions: T2.skill.skill_wall_walk.substitutions
     }
   },
   {
@@ -26772,8 +27159,8 @@ var S3_A = [
       reps: 10,
       rounds: 4,
       every_s: 90,
-      progression: { a: "Handstand Hold dos au mur (3 \xD7 30 s) puis Shoulder Taps (3 \xD7 10), doigts qui agrippent le sol", b: "D\xE9collages du mur : Handstand Walk 2-3 pas puis retour (3 \xD7 4 tentatives)" },
-      substitutions: { scaled: "Handstand Shoulder Taps", inter: "Half Wall Walks", rxplus: "Handstand Walk", elite: "Handstand Walk", pro: "Handstand Walk" }
+      progression: { a: T2.skill.skill_hs_walk.a, b: T2.skill.skill_hs_walk.b },
+      substitutions: T2.skill.skill_hs_walk.substitutions
     }
   }
 ];
@@ -26784,33 +27171,33 @@ var FINISHERS = [
   fin("core_hollow_plank", "core", [mv("hollow_rock", 15), mv("plank_hold", 30, "s")]),
   fin("core_sit_up_superman", "core", [mv("sit_up", 20), mv("superman", 20, "s")]),
   fin("core_ghd_hollow", "core", [mv("ghd_sit_up", 12), mv("hollow_hold", 30, "s")]),
-  fin("core_dead_bug_side_plank", "core", [mv("dead_bug", 10, "reps", "Dead Bug (par c\xF4t\xE9)"), mv("side_plank", 20, "s", "Side Plank (par c\xF4t\xE9)")]),
-  fin("core_t2b_l_sit", "core", [mv("toes_to_bar", 8), mv("l_sit", 15, "s", "L-Sit sur parallettes")]),
+  fin("core_dead_bug_side_plank", "core", [mv("dead_bug", 10, "reps", T2.finisher.core_dead_bug_side_plank.dead_bug), mv("side_plank", 20, "s", T2.finisher.core_dead_bug_side_plank.side_plank)]),
+  fin("core_t2b_l_sit", "core", [mv("toes_to_bar", 8), mv("l_sit", 15, "s", T2.finisher.core_t2b_l_sit.l_sit)]),
   fin("core_knee_raise_russian", "core", [mv("hanging_knee_raise", 12), mv("russian_twist", 20)]),
   fin("core_bear_crawl_hollow", "core", [mv("bear_crawl", 15, "m"), mv("hollow_hold", 20, "s")]),
   fin("core_ab_wheel_plank", "core", [mv("ab_wheel", 8), mv("plank_hold", 40, "s")]),
   // Carries
   fin("carry_farmer_lunge", "carry", [mv("db_farmer_carry", 50, "m"), mv("walking_lunge", 20)]),
-  fin("carry_sandbag_bear_hug", "carry", [mv("sandbag_carry", 50, "m", "Sandbag Bear Hug Carry"), mv("air_squat", 10)]),
-  fin("carry_suitcase_plank", "carry", [mv("suitcase_carry", 40, "m", "Suitcase Carry (par c\xF4t\xE9)"), mv("side_plank", 20, "s", "Side Plank (par c\xF4t\xE9)")]),
-  fin("carry_overhead_kb", "carry", [mv("kb_overhead_carry", 30, "m", "KB Overhead Carry (par bras)"), mv("hollow_rock", 10)]),
-  fin("carry_front_rack_db", "carry", [mv("db_front_rack_carry", 50, "m", "DB Front Rack Carry"), mv("sit_up", 15)]),
+  fin("carry_sandbag_bear_hug", "carry", [mv("sandbag_carry", 50, "m", T2.finisher.carry_sandbag_bear_hug.sandbag_carry), mv("air_squat", 10)]),
+  fin("carry_suitcase_plank", "carry", [mv("suitcase_carry", 40, "m", T2.finisher.carry_suitcase_plank.suitcase_carry), mv("side_plank", 20, "s", T2.finisher.carry_suitcase_plank.side_plank)]),
+  fin("carry_overhead_kb", "carry", [mv("kb_overhead_carry", 30, "m", T2.finisher.carry_overhead_kb.kb_overhead_carry), mv("hollow_rock", 10)]),
+  fin("carry_front_rack_db", "carry", [mv("db_front_rack_carry", 50, "m", T2.finisher.carry_front_rack_db.db_front_rack_carry), mv("sit_up", 15)]),
   // Épaules
-  fin("shoulders_face_pull_raise", "shoulders", [mv("face_pull", 15, "reps", "Face Pull \xE9lastique"), mv("lateral_raise", 12, "reps", "Lateral Raise l\xE9ger")]),
-  fin("shoulders_band_pull_apart_y", "shoulders", [mv("band_pull_apart", 20, "reps", "Band Pull-Aparts"), mv("db_y_raise", 10, "reps", "DB Y-Raise")]),
+  fin("shoulders_face_pull_raise", "shoulders", [mv("face_pull", 15, "reps", T2.finisher.shoulders_face_pull_raise.face_pull), mv("lateral_raise", 12, "reps", T2.finisher.shoulders_face_pull_raise.lateral_raise)]),
+  fin("shoulders_band_pull_apart_y", "shoulders", [mv("band_pull_apart", 20, "reps", T2.finisher.shoulders_band_pull_apart_y.band_pull_apart), mv("db_y_raise", 10, "reps", T2.finisher.shoulders_band_pull_apart_y.db_y_raise)]),
   fin("shoulders_ring_row_pushup", "shoulders", [mv("ring_row", 12), mv("push_up", 12)]),
-  fin("shoulders_cuban_press_hold", "shoulders", [mv("cuban_press", 10, "reps", "Cuban Press l\xE9ger"), mv("handstand_shoulder_tap", 10)]),
+  fin("shoulders_cuban_press_hold", "shoulders", [mv("cuban_press", 10, "reps", T2.finisher.shoulders_cuban_press_hold.cuban_press), mv("handstand_shoulder_tap", 10)]),
   // Fessiers
-  fin("glutes_bridge_clam", "glutes", [mv("glute_bridge", 15), mv("banded_clamshell", 15, "reps", "Banded Clamshells (par c\xF4t\xE9)")]),
-  fin("glutes_hip_thrust_monster", "glutes", [mv("db_hip_thrust", 12), mv("monster_walk", 20, "m", "Monster Walk \xE9lastique")]),
-  fin("glutes_kickback_swing", "glutes", [mv("glute_kickback", 12, "reps", "Glute Kickback \xE9lastique (par c\xF4t\xE9)"), mv("kb_swing_russian", 15)]),
-  fin("glutes_single_leg_bridge_step_up", "glutes", [mv("single_leg_glute_bridge", 10, "reps", "Single-Leg Glute Bridge (par c\xF4t\xE9)"), mv("box_step_up", 16)]),
+  fin("glutes_bridge_clam", "glutes", [mv("glute_bridge", 15), mv("banded_clamshell", 15, "reps", T2.finisher.glutes_bridge_clam.banded_clamshell)]),
+  fin("glutes_hip_thrust_monster", "glutes", [mv("db_hip_thrust", 12), mv("monster_walk", 20, "m", T2.finisher.glutes_hip_thrust_monster.monster_walk)]),
+  fin("glutes_kickback_swing", "glutes", [mv("glute_kickback", 12, "reps", T2.finisher.glutes_kickback_swing.glute_kickback), mv("kb_swing_russian", 15)]),
+  fin("glutes_single_leg_bridge_step_up", "glutes", [mv("single_leg_glute_bridge", 10, "reps", T2.finisher.glutes_single_leg_bridge_step_up.single_leg_glute_bridge), mv("box_step_up", 16)]),
   // Mollets
-  fin("calves_raise_jump", "calves", [mv("bodyweight_calf_raise", 20, "reps", "Calf Raises sur marche"), mv("double_under", 40)]),
-  fin("calves_single_leg_hold", "calves", [mv("single_leg_calf_raise", 12, "reps", "Single-Leg Calf Raise (par c\xF4t\xE9)"), mv("calf_raise_hold", 20, "s", "Calf Raise Hold en haut")]),
+  fin("calves_raise_jump", "calves", [mv("bodyweight_calf_raise", 20, "reps", T2.finisher.calves_raise_jump.bodyweight_calf_raise), mv("double_under", 40)]),
+  fin("calves_single_leg_hold", "calves", [mv("single_leg_calf_raise", 12, "reps", T2.finisher.calves_single_leg_hold.single_leg_calf_raise), mv("calf_raise_hold", 20, "s", T2.finisher.calves_single_leg_hold.calf_raise_hold)]),
   // Respiratoire
-  fin("breathing_row_nasal", "breathing", [mv("row", 250, "m", "Row respiration nasale"), mv("box_breathing", 60, "s", "Box Breathing 4-4-4-4")], 2),
-  fin("breathing_bike_exhale", "breathing", [mv("bike_erg", 300, "m", "Bike Erg facile"), mv("slow_exhale", 60, "s", "Respiration 4 s inspir / 8 s expir")], 2)
+  fin("breathing_row_nasal", "breathing", [mv("row", 250, "m", T2.finisher.breathing_row_nasal.row), mv("box_breathing", 60, "s", T2.finisher.breathing_row_nasal.box_breathing)], 2),
+  fin("breathing_bike_exhale", "breathing", [mv("bike_erg", 300, "m", T2.finisher.breathing_bike_exhale.bike_erg), mv("slow_exhale", 60, "s", T2.finisher.breathing_bike_exhale.slow_exhale)], 2)
 ];
 var S1_snatch = {
   id: "S1_snatch",
@@ -26818,9 +27205,9 @@ var S1_snatch = {
   format: "session",
   track: "functional",
   day: 1,
-  label: "Halt\xE9ro \xB7 Snatch",
+  label: T2.seance.S1_snatch.label,
   budget_min: 60,
-  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 mobilit\xE9 \xE9paules et hanches, barre \xE0 vide : Snatch Deadlift, Muscle Snatch, Overhead Squat, Snatch Balance en s\xE9rie de 5."] },
+  warmup: { minutes: 10, lines: [T2.seance.S1_snatch.echauffement] },
   block_a: S1_A,
   block_b: [B_OHS, B_SNATCH_BALANCE, B_STRICT_PULL_UP],
   block_c: { intentions: ["mixed", "gym"], durations: [12, 15, 20], pattern_not: "heavy_pattern" },
@@ -26832,9 +27219,9 @@ var S2_squat = {
   format: "session",
   track: "functional",
   day: 2,
-  label: "Force \xB7 Squat",
+  label: T2.seance.S2_squat.label,
   budget_min: 60,
-  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 v\xE9lo ou rameur facile, mobilit\xE9 chevilles et hanches, Air Squats, Goblet Squats l\xE9gers, activation fessiers."] },
+  warmup: { minutes: 10, lines: [T2.seance.S2_squat.echauffement] },
   block_a: S2_A,
   block_b: [B_PUSH_PRESS, B_STRICT_PRESS, B_RING_DIP, B_STRICT_PULL_UP],
   block_c: { intentions: ["cardio"], durations: [15, 20], pattern_not: "heavy_pattern" },
@@ -26846,9 +27233,9 @@ var S3_gym = {
   format: "session",
   track: "functional",
   day: 3,
-  label: "Gym \xB7 Skill",
+  label: T2.seance.S3_gym.label,
   budget_min: 60,
-  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 mobilit\xE9 \xE9paules et poignets, Scap Pull-Ups, Kip Swings, Hollow / Arch, marche en HS contre le mur."] },
+  warmup: { minutes: 10, lines: [T2.seance.S3_gym.echauffement] },
   block_a: S3_A,
   block_b: [B_RING_DIP, B_STRICT_HSPU, B_STRICT_PULL_UP],
   block_c: { intentions: ["gym", "mixed"], durations: [12, 15], formats: ["for_time", "amrap", "emom"], pattern_not: [] },
@@ -26860,9 +27247,9 @@ var S4_cj = {
   format: "session",
   track: "functional",
   day: 4,
-  label: "Halt\xE9ro \xB7 Clean & Jerk",
+  label: T2.seance.S4_cj.label,
   budget_min: 60,
-  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 mobilit\xE9 poignets et hanches, barre \xE0 vide : Clean Deadlift, Muscle Clean, Front Squat, Push Press, Push Jerk en s\xE9rie de 5."] },
+  warmup: { minutes: 10, lines: [T2.seance.S4_cj.echauffement] },
   block_a: S4_A,
   block_b: [B_FRONT_SQUAT, B_PUSH_PRESS, B_STRICT_PULL_UP],
   block_c: { intentions: ["mixed"], durations: [15, 20], pattern_not: "heavy_pattern" },
@@ -26874,9 +27261,9 @@ var S5_hinge = {
   format: "session",
   track: "functional",
   day: 5,
-  label: "Force \xB7 Hinge",
+  label: T2.seance.S5_hinge.label,
   budget_min: 60,
-  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 rameur facile, mobilit\xE9 ischios et hanches, Good Mornings barre \xE0 vide, Glute Bridges, Kettlebell Swings l\xE9gers."] },
+  warmup: { minutes: 10, lines: [T2.seance.S5_hinge.echauffement] },
   block_a: S5_A,
   block_b: [B_FRONT_RACK_LUNGE, B_STRICT_PRESS, B_GHD],
   block_c: { intentions: ["mixed", "cardio"], durations: [20, 30], formats: ["chipper", "stations"], pattern_not: "heavy_pattern" },
@@ -26888,9 +27275,9 @@ var S6_long = {
   format: "session",
   track: "functional",
   day: 6,
-  label: "Long \xB7 Engine",
+  label: T2.seance.S6_long.label,
   budget_min: 60,
-  warmup: { minutes: 18, lines: ["\xC9chauffement long (18') \u2014 3 tours faciles : 2' d'erg au choix, Inchworms, Spiderman Lunges, Scap Pull-Ups, Air Squats ; puis les mouvements du metcon \xE0 vide."] },
+  warmup: { minutes: 18, lines: [T2.seance.S6_long.echauffement] },
   block_a: null,
   block_b: null,
   block_c: { intentions: ["cardio", "mixed"], durations: [25, 30], pattern_not: [] },
@@ -26899,6 +27286,7 @@ var S6_long = {
 var SESSION_SKELETONS = [S1_snatch, S2_squat, S3_gym, S4_cj, S5_hinge, S6_long];
 
 // packages/wod-engine/src/bank/session-hybrid.ts
+var T3 = fr.banque;
 var HYBRID_FORBIDDEN_IDS = [
   // haltéro technique
   "power_snatch",
@@ -26968,23 +27356,23 @@ var CORE_FINISHERS = [
   fin2("h_core_plank_hollow", "core", 5, 3, [mv2("plank_hold", 40, "s"), mv2("hollow_rock", 15)]),
   fin2("h_core_sit_up_superman", "core", 5, 3, [mv2("sit_up", 20), mv2("superman", 30, "s")]),
   // gainage anti-rotation
-  fin2("h_core_deadbug_side", "core", 5, 3, [mv2("dead_bug", 10), mv2("plank_hold", 30, "s", "Side Plank (par c\xF4t\xE9)")]),
-  fin2("h_core_pallof", "core", 5, 3, [mv2("plank_hold", 30, "s", "Pallof Press tenu (par c\xF4t\xE9)"), mv2("hollow_rock", 15)]),
+  fin2("h_core_deadbug_side", "core", 5, 3, [mv2("dead_bug", 10), mv2("plank_hold", 30, "s", T3.finisher.h_core_deadbug_side.plank_hold)]),
+  fin2("h_core_pallof", "core", 5, 3, [mv2("plank_hold", 30, "s", T3.finisher.h_core_pallof.plank_hold), mv2("hollow_rock", 15)]),
   // carries
   fin2("h_carry_suitcase", "carry", 5, 3, [mv2("suitcase_carry", 40, "m"), mv2("dead_bug", 10)]),
   fin2("h_carry_farmer_plank", "carry", 5, 3, [mv2("db_farmer_carry", 40, "m"), mv2("plank_hold", 30, "s")]),
   fin2("h_carry_sandbag", "carry", 5, 3, [mv2("sandbag_carry", 40, "m"), mv2("sit_up", 20)]),
   // chaîne postérieure
   fin2("h_post_hip_bridge", "glutes", 5, 3, [mv2("glute_bridge", 20), mv2("superman", 30, "s")]),
-  fin2("h_post_rdl_bridge", "glutes", 5, 3, [mv2("bodyweight_single_leg_rdl", 10, "reps", "Single-Leg RDL poids du corps (par jambe)"), mv2("glute_bridge", 20)]),
+  fin2("h_post_rdl_bridge", "glutes", 5, 3, [mv2("bodyweight_single_leg_rdl", 10, "reps", T3.finisher.h_post_rdl_bridge.bodyweight_single_leg_rdl), mv2("glute_bridge", 20)]),
   // mollets
   fin2("h_calves_raise", "calves", 5, 3, [mv2("bodyweight_calf_raise", 25), mv2("plank_hold", 30, "s")]),
   // respiratoire sur erg
-  fin2("h_breath_row", "breathing", 5, 3, [mv2("row", 15, "cal", "Row en respiration nasale"), mv2("plank_hold", 30, "s")]),
-  fin2("h_breath_ski", "breathing", 5, 3, [mv2("ski_erg", 15, "cal", "SkiErg facile, respiration nasale"), mv2("dead_bug", 10)]),
-  fin2("h_breath_bike", "breathing", 5, 3, [mv2("bike_erg", 15, "cal", "Bike Erg facile, respiration nasale"), mv2("superman", 30, "s")]),
+  fin2("h_breath_row", "breathing", 5, 3, [mv2("row", 15, "cal", T3.finisher.h_breath_row.row), mv2("plank_hold", 30, "s")]),
+  fin2("h_breath_ski", "breathing", 5, 3, [mv2("ski_erg", 15, "cal", T3.finisher.h_breath_ski.ski_erg), mv2("dead_bug", 10)]),
+  fin2("h_breath_bike", "breathing", 5, 3, [mv2("bike_erg", 15, "cal", T3.finisher.h_breath_bike.bike_erg), mv2("superman", 30, "s")]),
   // épaules et haut du dos
-  fin2("h_shoulders_carry", "shoulders", 5, 3, [mv2("suitcase_carry", 40, "m", "Overhead Carry (par c\xF4t\xE9)"), mv2("push_up", 10)]),
+  fin2("h_shoulders_carry", "shoulders", 5, 3, [mv2("suitcase_carry", 40, "m", T3.finisher.h_shoulders_carry.suitcase_carry), mv2("push_up", 10)]),
   fin2("h_shoulders_pushup", "shoulders", 5, 3, [mv2("push_up", 15), mv2("plank_hold", 30, "s")]),
   // mollets, second choix
   fin2("h_calves_carry", "calves", 5, 3, [mv2("bodyweight_calf_raise", 25), mv2("db_farmer_carry", 40, "m")]),
@@ -26992,21 +27380,12 @@ var CORE_FINISHERS = [
   fin2("h_core_hollow_superman", "core", 5, 3, [mv2("hollow_rock", 20), mv2("superman", 40, "s")]),
   fin2("h_core_situp_plank", "core", 5, 3, [mv2("sit_up", 25), mv2("plank_hold", 40, "s")]),
   fin2("h_post_bridge_deadbug", "glutes", 5, 3, [mv2("glute_bridge", 25), mv2("dead_bug", 12)]),
-  fin2("h_breath_row_long", "breathing", 5, 2, [mv2("row", 25, "cal", "Row facile, respiration nasale"), mv2("superman", 40, "s")])
+  fin2("h_breath_row_long", "breathing", 5, 2, [mv2("row", 25, "cal", T3.finisher.h_breath_row_long.row), mv2("superman", 40, "s")])
 ];
 var COOLDOWNS = [
-  { minutes: 8, lines: [
-    "Retour au calme (8') \u2014 600 m de footing tr\xE8s lent ou 5' de v\xE9lo facile, respiration nasale.",
-    "\xC9tirements : ischios debout 45 s / jambe \xB7 fl\xE9chisseurs de hanche en fente 45 s / c\xF4t\xE9 \xB7 mollets au mur 45 s / jambe."
-  ] },
-  { minutes: 8, lines: [
-    "Retour au calme (8') \u2014 5' de rameur tr\xE8s facile, \xE9paules rel\xE2ch\xE9es.",
-    "\xC9tirements : cha\xEEne post\xE9rieure assis 45 s \xB7 pigeon 45 s / c\xF4t\xE9 \xB7 ouverture thoracique au mur 45 s / bras."
-  ] },
-  { minutes: 6, lines: [
-    "Retour au calme (6') \u2014 400 m de marche rapide puis respiration 4-6 allong\xE9, 2'.",
-    "\xC9tirements : quadriceps debout 45 s / jambe \xB7 adducteurs en grenouille 45 s \xB7 psoas en fente basse 45 s / c\xF4t\xE9."
-  ] }
+  { minutes: 8, lines: [...T3.retourAuCalme[0]] },
+  { minutes: 8, lines: [...T3.retourAuCalme[1]] },
+  { minutes: 6, lines: [...T3.retourAuCalme[2]] }
 ];
 var H1_A = [
   station("h1_goblet_squat", "kb_goblet_squat", 18, 120, 8, [
@@ -27015,7 +27394,7 @@ var H1_A = [
   ], 7.5),
   station("h1_swing_step", "kb_swing_russian", 18, 120, 8, [
     item("kb_swing_russian", 15, "reps", { band: "medium" }),
-    item("box_step_up", 10, "reps", { band: "medium", load_from: "db_farmer_carry", name: "Box Step-ups lest\xE9s (2 \xD7 DB)" })
+    item("box_step_up", 10, "reps", { band: "medium", load_from: "db_farmer_carry", name: T3.poste.stepUpsLestes })
   ], 7.5),
   station("h1_carry_pushup", "suitcase_carry", 18, 120, 8, [
     item("suitcase_carry", 40, "m"),
@@ -27028,9 +27407,9 @@ var H1_intervals = {
   format: "session",
   track: "hybrid",
   day: 1,
-  label: "Intervalles",
+  label: T3.seance.H1_intervals.label,
   budget_min: 60,
-  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 800 m course progressive, 10 leg swings / jambe, 10 air squats, 10 pompes, 2 \xD7 20 s skipping."] },
+  warmup: { minutes: 10, lines: [T3.seance.H1_intervals.echauffement] },
   block_a: H1_A,
   block_b: null,
   // `run_intervals` est exclu : le mercredi EST la séance d'intervalles de course, dans son
@@ -27068,9 +27447,9 @@ var H2_WORK = [
       every_s: 90,
       rounds: 12,
       items: [
-        item("row", 60, "s", { work_s: 60, name: "Row \u2014 allure tenable, ni sprint ni promenade" }),
+        item("row", 60, "s", { work_s: 60, name: T3.poste.rowTenable }),
         item("sandbag_lunge", 60, "s", { band: "medium", work_s: 60 }),
-        item("ski_erg", 60, "s", { work_s: 60, name: "SkiErg \u2014 allure tenable" }),
+        item("ski_erg", 60, "s", { work_s: 60, name: T3.poste.skiTenable }),
         item("sandbag_carry", 60, "s", { band: "medium", work_s: 60 })
       ]
     }
@@ -27085,9 +27464,9 @@ var H2_WORK = [
       every_s: 90,
       rounds: 12,
       items: [
-        item("bike_erg", 60, "s", { work_s: 60, name: "Bike Erg \u2014 allure tenable" }),
+        item("bike_erg", 60, "s", { work_s: 60, name: T3.poste.bikeTenable }),
         item("wall_ball", 60, "s", { band: "medium", work_s: 60 }),
-        item("ski_erg", 60, "s", { work_s: 60, name: "SkiErg \u2014 allure tenable" }),
+        item("ski_erg", 60, "s", { work_s: 60, name: T3.poste.skiTenable }),
         item("db_farmer_carry", 60, "s", { band: "medium", work_s: 60 })
       ]
     }
@@ -27099,10 +27478,10 @@ var H2_strength_stations = {
   format: "session",
   track: "hybrid",
   day: 2,
-  label: "Force & stations",
+  label: T3.seance.H2_strength_stations.label,
   budget_min: 60,
   max_rpe: HYBRID_TUESDAY_RPE,
-  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 500 m rameur facile, 10 hip hinges \xE0 la barre \xE0 vide, 10 fentes / jambe, 10 pompes, 20 m d'ours."] },
+  warmup: { minutes: 10, lines: [T3.seance.H2_strength_stations.echauffement] },
   block_a: H2_A,
   block_b: null,
   block_work: H2_WORK,
@@ -27118,10 +27497,10 @@ var H3_A = [{
   timed: true,
   run: {
     variants: [
-      { label: "8 \xD7 400 m", target: "allure 5 km", rest_s: 60, meters: 3200 },
-      { label: "5 \xD7 800 m", target: "allure 10 km \u2212 10 s/km", rest_s: 90, meters: 4e3 },
-      { label: "3 \xD7 1 600 m", target: "allure 10 km", rest_s: 120, meters: 4800 },
-      { label: "12 \xD7 200 m shuttle", target: "allure rapide et r\xE9guli\xE8re", rest_s: 45, meters: 2400 }
+      { label: T3.course.variantes[0].label, target: T3.course.variantes[0].cible, rest_s: 60, meters: 3200 },
+      { label: T3.course.variantes[1].label, target: T3.course.variantes[1].cible, rest_s: 90, meters: 4e3 },
+      { label: T3.course.variantes[2].label, target: T3.course.variantes[2].cible, rest_s: 120, meters: 4800 },
+      { label: T3.course.variantes[3].label, target: T3.course.variantes[3].cible, rest_s: 45, meters: 2400 }
     ]
   }
 }];
@@ -27131,9 +27510,9 @@ var H3_run = {
   format: "session",
   track: "hybrid",
   day: 3,
-  label: "Course",
+  label: T3.seance.H3_run.label,
   budget_min: 60,
-  warmup: { minutes: 12, lines: ["\xC9chauffement (12') \u2014 1 km progressif, gammes (talons-fesses, mont\xE9es de genoux, pas chass\xE9s) 2 \xD7 20 m, 3 \xD7 30 m d'acc\xE9l\xE9rations."] },
+  warmup: { minutes: 12, lines: [T3.seance.H3_run.echauffement] },
   block_a: H3_A,
   block_b: null,
   /*
@@ -27152,10 +27531,10 @@ var H4_engine = {
   format: "session",
   track: "hybrid",
   day: 4,
-  label: "Engine",
+  label: T3.seance.H4_engine.label,
   budget_min: 60,
   max_rpe: HYBRID_EASY_RPE,
-  warmup: { minutes: 8, lines: ["\xC9chauffement (8') \u2014 400 m course facile, 10 air squats, 10 pompes, 5 inchworms."] },
+  warmup: { minutes: 8, lines: [T3.seance.H4_engine.echauffement] },
   block_a: null,
   block_b: null,
   block_c: { intentions: ["aerobic"], durations: [35, 40], pattern_not: [], skeletons: ["engine_continuous", "engine_negative_split"] },
@@ -27188,11 +27567,11 @@ var H5_WORK = [{
     work_s: 90,
     run_m_min: 600,
     run_m_max: 1e3,
-    target: "allure 5 km + 15 s/km",
+    target: T3.course.compromiseCible,
     // aucun poste en commun avec la simulation du samedi : les deux jours se suivent,
     // et un mouvement qui revient le lendemain est la répétition la plus visible
     stations: [
-      item("box_step_up", 20, "reps", { band: "medium", load_from: "db_farmer_carry", name: "Box Step-ups lest\xE9s (2 \xD7 DB)", work_s: 90 }),
+      item("box_step_up", 20, "reps", { band: "medium", load_from: "db_farmer_carry", name: T3.poste.stepUpsLestes, work_s: 90 }),
       item("box_jump", 15, "reps", { band: "medium", work_s: 90 }),
       item("burpee", 20, "reps", { work_s: 90 }),
       item("sandbag_carry", 40, "m", { band: "medium", work_s: 90 }),
@@ -27207,10 +27586,10 @@ var H5_compromised = {
   format: "session",
   track: "hybrid",
   day: 5,
-  label: "Course compromise",
+  label: T3.seance.H5_compromised.label,
   budget_min: 60,
   max_rpe: HYBRID_FRIDAY_RPE,
-  warmup: { minutes: 10, lines: ["\xC9chauffement (10') \u2014 600 m course, 10 hip hinges, 10 fentes / jambe, 20 m de sled \xE0 vide, 10 wall balls l\xE9g\xE8res."] },
+  warmup: { minutes: 10, lines: [T3.seance.H5_compromised.echauffement] },
   block_a: H5_A,
   block_b: null,
   block_work: H5_WORK,
@@ -27232,9 +27611,9 @@ var H6_simulation = {
   format: "session",
   track: "hybrid",
   day: 6,
-  label: "Simulation",
+  label: T3.seance.H6_simulation.label,
   budget_min: 60,
-  warmup: { minutes: 12, lines: ["\xC9chauffement (12') \u2014 1 km progressif, gammes, puis 20 m de chaque station \xE0 vide."] },
+  warmup: { minutes: 12, lines: [T3.seance.H6_simulation.echauffement] },
   block_a: null,
   block_b: null,
   block_work: [{
@@ -27244,7 +27623,7 @@ var H6_simulation = {
     minutes: 38,
     timed: true,
     rpe: 9,
-    race: { rounds: 7, rounds_min: 6, rounds_max: 8, run_m: 500, stations: HALF_SIM_STATIONS, score: "temps total" }
+    race: { rounds: 7, rounds_min: 6, rounds_max: 8, run_m: 500, stations: HALF_SIM_STATIONS, score: T3.course.scoreSimulation }
   }],
   block_c: null,
   finisher: null,
@@ -27256,10 +27635,10 @@ var H6_simulation_full = {
   format: "session",
   track: "hybrid",
   day: 6,
-  label: "Simulation \xB7 test de bloc",
+  label: T3.seance.H6_simulation_full.label,
   budget_min: 75,
   weeks_modulo: { modulo: 8, equals: 0 },
-  warmup: { minutes: 12, lines: ["\xC9chauffement (12') \u2014 1 km progressif, gammes, puis 20 m de chaque station \xE0 vide. Pr\xE9pare ton mat\xE9riel : la s\xE9ance s'encha\xEEne sans arr\xEAt."] },
+  warmup: { minutes: 12, lines: [T3.seance.H6_simulation_full.echauffement] },
   block_a: null,
   block_b: null,
   block_work: [{
@@ -27272,7 +27651,7 @@ var H6_simulation_full = {
     race: {
       rounds: 8,
       run_m: 1e3,
-      score: "temps total",
+      score: T3.course.scoreSimulation,
       ordered: true,
       stations: [
         item("ski_erg", 1e3, "m"),
@@ -27493,6 +27872,7 @@ function roundCalculatedQuantity(q, unit, family, mode = "nearest") {
 }
 
 // packages/wod-engine/src/estimate.ts
+var T4 = fr.estimation;
 var TRANSITION_S = 8;
 var TIME_BOUNDED = /* @__PURE__ */ new Set([
   "amrap",
@@ -27581,31 +27961,31 @@ function estimateBlock(block, category, budgetMin) {
     case "amrap": {
       const rs = roundSeconds(block, category);
       const rounds = budgetS / rs;
-      return { minutes: budgetMin, target: `\u2248 ${Math.floor(rounds)} rounds` };
+      return { minutes: budgetMin, target: T4.rounds(Math.floor(rounds)) };
     }
     case "ladder": {
       if (!block.ladder) {
         const s = fixedWorkSeconds(block, category);
-        return { minutes: s / 60, target: `\u2248 ${fmtTime(s)}` };
+        return { minutes: s / 60, target: T4.temps(fmtTime(s)) };
       }
       const { step: step2, partial } = ladderProgress(block, category, budgetS);
       const next = block.ladder ? step2 + block.ladder.step : step2;
       const pct = Math.round(partial * 100);
-      return { minutes: budgetMin, target: step2 ? pct >= 5 ? `palier ${step2} + ${pct} % du palier ${next}` : `palier ${step2}` : "palier 1 partiel" };
+      return { minutes: budgetMin, target: step2 ? pct >= 5 ? T4.palierPartiel(step2, pct, next) : T4.palier(step2) : T4.premierPalier };
     }
     case "death_by": {
       const minute = deathByMinute(block, category, budgetMin);
-      return { minutes: budgetMin, target: minute >= budgetMin ? `minute ${budgetMin} compl\xE9t\xE9e` : `minute ${minute}` };
+      return { minutes: budgetMin, target: minute >= budgetMin ? T4.minuteComplete(budgetMin) : T4.minute(minute) };
     }
     case "emom": {
       const every = block.rest?.every_s ?? 60;
       const n = block.movements.length;
       const cycles = Math.floor(budgetS / every / n);
       const perStation = block.movements.map((m) => Math.round(movementSeconds(m, category)));
-      return { minutes: budgetMin, target: `${cycles} passages, travail ${Math.min(...perStation)}-${Math.max(...perStation)} s / ${every} s` };
+      return { minutes: budgetMin, target: T4.emom(cycles, Math.min(...perStation), Math.max(...perStation), every) };
     }
     case "tabata": {
-      return { minutes: budgetMin, target: "reps min sur 8 \xD7 20 s par bloc" };
+      return { minutes: budgetMin, target: T4.tabata };
     }
     case "stations": {
       const rounds = block.rounds ?? 1;
@@ -27613,27 +27993,27 @@ function estimateBlock(block, category, budgetMin) {
       const rest = block.rest?.rest_s ?? 0;
       const n = block.movements.length;
       const minutes = rounds * n * (work + rest) / 60;
-      return { minutes, target: `${rounds} tours \xD7 ${n} stations, ${work} s on / ${rest} s off` };
+      return { minutes, target: T4.stations(rounds, n, work, rest) };
     }
     case "continuous": {
       const cycle = roundSeconds(block, category);
       const dist = block.movements.filter((m) => m.unit === "m").reduce((s, m) => s + m.qty, 0);
-      return { minutes: budgetMin, target: `\u2248 ${Math.round(budgetS / cycle * dist)} m` };
+      return { minutes: budgetMin, target: T4.distance(Math.round(budgetS / cycle * dist)) };
     }
     case "interval": {
       const rounds = block.rounds ?? 1;
       const workPer = roundSeconds(block, category);
       if (block.rest?.every_s) {
         const total3 = block.rest.every_s * rounds;
-        return { minutes: total3 / 60, target: `travail \u2248 ${fmtTime(workPer)} par intervalle` };
+        return { minutes: total3 / 60, target: T4.parIntervalle(fmtTime(workPer)) };
       }
       const rest = block.rest?.rest_s ?? 0;
       const total2 = rounds * workPer + rest * (rounds - 1);
-      return { minutes: total2 / 60, target: `\u2248 ${fmtTime(workPer)} par r\xE9p\xE9tition` };
+      return { minutes: total2 / 60, target: T4.parRepetition(fmtTime(workPer)) };
     }
     default: {
       const s = fixedWorkSeconds(block, category);
-      return { minutes: s / 60, target: `\u2248 ${fmtTime(s)}` };
+      return { minutes: s / 60, target: T4.temps(fmtTime(s)) };
     }
   }
 }
@@ -27670,18 +28050,8 @@ function signature(wod) {
 }
 
 // packages/wod-engine/src/render.ts
-var CATEGORY_LABEL = {
-  scaled: "Scaled",
-  inter: "Inter",
-  rx: "RX",
-  rxplus: "RX+",
-  elite: "Elite",
-  pro: "Pro",
-  women: "Women",
-  men: "Men",
-  women_pro: "Women Pro",
-  men_pro: "Men Pro"
-};
+var T5 = fr.rendu;
+var CATEGORY_LABEL = fr.categories;
 var WOD_TYPE = {
   amrap: "amrap",
   for_time: "for-time",
@@ -27702,7 +28072,7 @@ function mmss(s) {
   const total2 = Math.round(s);
   const m = Math.floor(total2 / 60);
   const sec2 = total2 % 60;
-  return sec2 ? `${m}:${sec2.toString().padStart(2, "0")}` : `${m}'`;
+  return sec2 ? `${m}:${sec2.toString().padStart(2, "0")}` : fr.duree.minutes(m);
 }
 function loadText(m, discipline) {
   if (!m.load_unit) return null;
@@ -27740,7 +28110,7 @@ function loadsByCategoryLine(m, wod) {
     const pro = [m.loads_by_category.men_pro?.[0], m.loads_by_category.women_pro?.[0]];
     const std = [m.loads_by_category.men?.[0], m.loads_by_category.women?.[0]];
     if (JSON.stringify(pro) === JSON.stringify(std) || pro.some((v) => v == null)) return null;
-    parts.push(`Pro ${pro.map(fmtNum).join("/")}`);
+    parts.push(`${CATEGORY_LABEL.pro} ${pro.map(fmtNum).join("/")}`);
   }
   return parts.length ? `${parts.join(" \xB7 ")} ${m.load_unit}` : null;
 }
@@ -27751,13 +28121,13 @@ function substitutionLine(m) {
     if (!name || name === m.name) continue;
     seen.set(name, [...seen.get(name) ?? [], CATEGORY_LABEL[c]]);
   }
-  for (const [name, cats] of seen) parts.push(`${cats.join("/")} : ${name}`);
+  for (const [name, cats] of seen) parts.push(T5.substitution(cats.join("/"), name));
   const vars = /* @__PURE__ */ new Map();
   for (const [c, name] of Object.entries(m.variant_by_category)) {
     if (!name) continue;
     vars.set(name, [...vars.get(name) ?? [], CATEGORY_LABEL[c]]);
   }
-  for (const [name, cats] of vars) parts.push(`${cats.join("/")} : ${name}`);
+  for (const [name, cats] of vars) parts.push(T5.substitution(cats.join("/"), name));
   return parts.length ? parts.join(" \xB7 ") : null;
 }
 function schemeText(b) {
@@ -27766,33 +28136,33 @@ function schemeText(b) {
   return `${(b.scheme ?? []).join("-")}${suffix}`;
 }
 function header(wod, b) {
-  const cap = b.timecap != null ? ` (cap ${mmss(b.timecap)})` : "";
+  const cap = b.timecap != null ? T5.cap(mmss(b.timecap)) : "";
   const rounds = b.rounds ?? 0;
   switch (b.format) {
     case "amrap":
-      return [`AMRAP ${wod.budget_min}`];
+      return [T5.amrap(wod.budget_min)];
     case "for_time":
-      return [b.scheme ? `For time \xB7 ${schemeText(b)}${cap}` : `For time${cap}`];
+      return [b.scheme ? T5.forTimeSchema(schemeText(b), cap) : T5.forTime(cap)];
     case "rounds_for_time":
-      return [`${rounds} rounds for time${cap}`];
+      return [T5.roundsForTime(rounds, cap)];
     case "chipper":
-      return [`Chipper \xB7 for time${cap}`];
+      return [T5.chipper(cap)];
     case "ladder":
-      return b.ladder ? [`Ladder ${b.ladder.start}-${b.ladder.start + b.ladder.step}-${b.ladder.start + 2 * b.ladder.step}\u2026 \xB7 AMRAP ${wod.budget_min}`, `Monter les paliers (+${b.ladder.step} \xE0 chaque palier) jusqu'au temps, score = reps totales`] : [`Ladder ${schemeText(b)} \xB7 for time${cap}`, "Effectuer une fois tous les paliers indiqu\xE9s"];
+      return b.ladder ? [T5.ladderOuverte(b.ladder.start, b.ladder.start + b.ladder.step, b.ladder.start + 2 * b.ladder.step, wod.budget_min), T5.ladderOuverteConsigne(b.ladder.step)] : [T5.ladderFinie(schemeText(b), cap), T5.ladderFinieConsigne];
     case "emom":
-      return [`EMOM ${wod.budget_min}${b.rest?.every_s && b.rest.every_s !== 60 ? ` \xB7 every ${mmss(b.rest.every_s)}` : ""} \xB7 ${b.movements.length} stations en alternance`];
+      return [T5.emom(wod.budget_min, b.rest?.every_s && b.rest.every_s !== 60 ? T5.emomEvery(mmss(b.rest.every_s)) : "", b.movements.length)];
     case "death_by":
-      return [`EMOM ${wod.budget_min} \xB7 Death by : +1 rep par minute jusqu'\xE0 l'\xE9chec`];
+      return [T5.deathBy(wod.budget_min)];
     case "tabata":
-      return [`Tabata \xD7 2 blocs \xB7 8 \xD7 20 s / 10 s${b.rest?.transition_s ? `, transition ${b.rest.transition_s} s` : ""}`];
+      return [T5.tabata(b.rest?.transition_s ? T5.tabataTransition(b.rest.transition_s) : "")];
     case "interval": {
-      if (b.rest?.every_s) return [`${rounds} rounds \xB7 every ${mmss(b.rest.every_s)}`];
-      return [`${rounds} rounds \xB7 repos ${mmss(b.rest?.rest_s ?? 60)} entre les r\xE9p\xE9titions`];
+      if (b.rest?.every_s) return [T5.intervalEvery(rounds, mmss(b.rest.every_s))];
+      return [T5.intervalRepos(rounds, mmss(b.rest?.rest_s ?? 60))];
     }
     case "stations":
-      return [`${rounds} rounds \xD7 ${b.movements.length} stations \xB7 ${b.rest?.work_s ?? 60} s on / ${b.rest?.rest_s ?? 0} s off`];
+      return [T5.stations(rounds, b.movements.length, b.rest?.work_s ?? 60, b.rest?.rest_s ?? 0)];
     case "continuous":
-      return [`En continu ${wod.budget_min}' \xB7 rotation sans repos, score = distance totale`];
+      return [T5.continu(wod.budget_min)];
   }
 }
 function bodyLines(wod, b) {
@@ -27807,14 +28177,14 @@ function bodyLines(wod, b) {
   b.movements.forEach((m, i) => {
     const load = loadText(m, wod.discipline);
     const withLoad = (s) => load ? `${s} (${load})` : s;
-    if (b.format === "tabata") push(m, `Tabata ${i + 1} \xB7 ${withLoad(m.name)} (${m.unit === "s" ? "tenue 20 s" : "max reps"})`);
-    else if (b.format === "stations") push(m, `Station ${i + 1} \xB7 ${withLoad(m.name)} (${m.unit === "s" ? "tenue" : `max ${m.unit}, cible ${qtyText(m)}`})`);
-    else if (m.round !== void 0) push(m, `R${m.round} \xB7 ${movementLine(m, wod)}`);
+    if (b.format === "tabata") push(m, T5.ligneTabata(i + 1, withLoad(m.name), m.unit === "s"));
+    else if (b.format === "stations") push(m, m.unit === "s" ? T5.ligneStationTenue(i + 1, withLoad(m.name)) : T5.ligneStation(i + 1, withLoad(m.name), m.unit, qtyText(m)));
+    else if (m.round !== void 0) push(m, T5.ligneRound(m.round, movementLine(m, wod)));
     else if (m.scheme) push(m, withLoad(m.name));
-    else if (b.format === "for_time" && b.scheme) push(m, `${movementLine(m, wod)} (entre chaque palier)`);
-    else if (m.per_minute) push(m, `${withLoad(m.name)} \xB7 min 1 : 1 rep, +1 rep par minute`);
-    else if (b.format === "death_by") push(m, `${movementLine(m, wod)} (avant chaque s\xE9rie)`);
-    else if (b.format === "emom") push(m, `Min ${i + 1} \xB7 ${movementLine(m, wod)}`);
+    else if (b.format === "for_time" && b.scheme) push(m, T5.lignePalier(movementLine(m, wod)));
+    else if (m.per_minute) push(m, T5.ligneParMinute(withLoad(m.name)));
+    else if (b.format === "death_by") push(m, T5.ligneAvantSerie(movementLine(m, wod)));
+    else if (b.format === "emom") push(m, T5.ligneMinute(i + 1, movementLine(m, wod)));
     else push(m, movementLine(m, wod));
   });
   return out;
@@ -27824,12 +28194,16 @@ function footer(wod, b) {
   if (wod.vest) {
     const men = wod.vest.load_kg_by_category.men ?? 9;
     const women = wod.vest.load_kg_by_category.women ?? 6;
-    out.push(wod.vest.mode === "required" ? `Gilet lest\xE9 ${men}/${women} kg` : `Gilet lest\xE9 optionnel ${men}/${women} kg`);
+    out.push(wod.vest.mode === "required" ? T5.gilet(men, women) : T5.giletOptionnel(men, women));
   }
   const ref = wod.discipline === "functional" ? "rx" : "men";
   const target = wod.estimate.by_category[ref]?.target;
   const scored = b.format === "for_time" || b.format === "rounds_for_time" || b.format === "chipper";
-  out.push(`Stimulus : RPE ${fmtNum(wod.stimulus.rpe)} \u2014 ${wod.stimulus.note}${target ? ` Cible ${CATEGORY_LABEL[ref]} : ${target}${scored && b.timecap != null ? `, cap ${mmss(b.timecap)}` : ""}.` : ""}`);
+  out.push(T5.stimulus(
+    fmtNum(wod.stimulus.rpe),
+    wod.stimulus.note,
+    target ? T5.stimulusCible(CATEGORY_LABEL[ref], target, scored && b.timecap != null ? T5.stimulusCap(mmss(b.timecap)) : "") : ""
+  ));
   return out;
 }
 function titleOf(wod, b) {
@@ -27837,17 +28211,11 @@ function titleOf(wod, b) {
   const names = all.slice(0, 3);
   if (all.length > 3) names[2] = `${names[2]} +${all.length - 3}`;
   const label = {
-    amrap: `AMRAP ${wod.budget_min}`,
-    for_time: b.scheme ? b.scheme.join("-") : "For time",
-    rounds_for_time: `${b.rounds} rounds`,
-    chipper: "Chipper",
-    ladder: "Ladder",
-    emom: `EMOM ${wod.budget_min}`,
-    death_by: "Death by",
-    tabata: "Tabata",
-    interval: "Intervalles",
-    stations: "Stations",
-    continuous: "Continu"
+    ...T5.titre,
+    amrap: T5.amrap(wod.budget_min),
+    for_time: b.scheme ? b.scheme.join("-") : T5.titre.for_time,
+    rounds_for_time: T5.titre.rounds_for_time(b.rounds),
+    emom: T5.titreEmom(wod.budget_min)
   };
   return `${label[b.format]} \xB7 ${names.join(" / ")}`;
 }
@@ -27862,7 +28230,7 @@ function render(wod) {
     block_name: "wod",
     time_cap_seconds: b.timecap ?? wod.budget_min * 60,
     rounds: b.rounds,
-    notes: `${wod.stimulus.note} Score : ${wod.score_type}.`,
+    notes: T5.notes(wod.stimulus.note, wod.score_type),
     video_url: null,
     leaderboard_enabled: true,
     emom_interval_minutes: b.format === "emom" || b.format === "death_by" ? (b.rest?.every_s ?? 60) / 60 : null,
@@ -28876,7 +29244,7 @@ function generateBlocC(params, catalog, bank, seed) {
   const athlete = params.budget_min === void 0;
   const pool = athlete ? candidatePool(ctx, params, bank, rng) : null;
   const tiers = athlete ? [] : candidateTiers(normalized, bank);
-  if (!pool && !tiers.length) throw new NoValidWod("Aucun squelette compatible", { no_skeleton: 1 });
+  if (!pool && !tiers.length) throw new NoValidWod(fr.generation.aucunSquelette, { no_skeleton: 1 });
   const recent = new Set(params.recent_signatures ?? []);
   const reasons = {};
   let tier = 0;
@@ -28914,7 +29282,7 @@ function generateBlocC(params, catalog, bank, seed) {
       throw e;
     }
   }
-  throw new NoValidWod(`Aucun WOD valide apr\xE8s ${maxAttempts} tirages`, reasons);
+  throw new NoValidWod(fr.generation.aucunWod(maxAttempts), reasons);
 }
 
 // packages/wod-engine/src/profile.ts
@@ -28940,6 +29308,7 @@ function profileCategory(discipline, level, gender) {
 }
 
 // packages/wod-engine/src/muscu.ts
+var T6 = fr.musculation;
 var MUSCU_ENGINE_VERSION = "1.0.0";
 var MUSCU_MAX_ATTEMPTS = 40;
 var MUSCU_TOLERANCE = 0.2;
@@ -28975,9 +29344,9 @@ var SCHEMES = {
   // voir `lineFor` : un gainage n'a pas besoin de deux minutes, et c'est ce
   // qu'un coach ferait. Validé par Nab le 18/09/2026 — une carte Tronc en
   // Prise de muscle affiche donc 60 s partout, ce n'est pas une anomalie.
-  hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rpe: 8, rir: "derni\xE8re s\xE9rie \xE0 1-2 reps de l'\xE9chec" },
-  force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rpe: 8, rir: "RIR 2, derni\xE8re s\xE9rie RPE 9" },
-  endurance: { sets: { main: 3, other: 3 }, sets_min: 2, sets_max: 5, rest: { main: 40, other: 40 }, rpe: 7, rir: "rythme continu, aucune s\xE9rie \xE0 l'\xE9chec" }
+  hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rpe: 8, rir: fr.musculation.rir.hypertrophie },
+  force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rpe: 8, rir: fr.musculation.rir.force },
+  endurance: { sets: { main: 3, other: 3 }, sets_min: 2, sets_max: 5, rest: { main: 40, other: 40 }, rpe: 7, rir: fr.musculation.rir.endurance }
 };
 var PCT_ANCHORS = [[3, 88], [4, 85], [5, 82], [6, 79], [8, 72], [10, 68], [12, 65], [15, 60], [18, 55], [20, 52]];
 function percentForReps(reps) {
@@ -28989,24 +29358,10 @@ function percentForReps(reps) {
   }
   return PCT_ANCHORS[PCT_ANCHORS.length - 1][1];
 }
-var TARGET_LABEL = {
-  fessiers: "Fessiers",
-  fessiers_ischios: "Fessiers & ischios",
-  bas: "Bas du corps",
-  full_body: "Full body",
-  tronc: "Tronc",
-  haut: "Haut du corps",
-  dos: "Dos",
-  epaules: "\xC9paules",
-  bras: "Bras",
-  pecs: "Pectoraux",
-  push: "Push",
-  pull: "Pull",
-  jambes: "Jambes"
-};
-var OBJECTIVE_LABEL = { hypertrophie: "Prise de muscle", force: "Force", endurance: "Tonification" };
-var EQUIPMENT_LABEL = { none: "Sans mat\xE9riel", box: "Box", gym: "Salle" };
-var LEVEL_LABEL = { debutant: "D\xE9butant", inter: "Interm\xE9diaire", avance: "Avanc\xE9" };
+var TARGET_LABEL = T6.cible;
+var OBJECTIVE_LABEL = T6.objectif;
+var EQUIPMENT_LABEL = T6.materiel;
+var LEVEL_LABEL = T6.niveau;
 var LEVEL_RANK = { debutant: 0, inter: 1, avance: 2 };
 function muscuLevelFor(level) {
   const lv = (level ?? "").toLowerCase().replace(/\s+/g, "");
@@ -29491,31 +29846,32 @@ function fitBudget(ctx, input, target) {
   }
   return lines;
 }
+var { jambe, bras, cote } = T6.cote;
 var SIDE_LABEL = {
-  quadriceps: "jambe",
-  ischios: "jambe",
-  fessiers: "jambe",
-  mollets: "jambe",
-  biceps: "bras",
-  triceps: "bras",
-  epaules: "bras",
-  epaules_post: "bras",
-  epaules_ant: "bras",
-  dos: "bras",
-  pecs: "bras",
-  avant_bras: "bras",
-  coiffe: "bras"
+  quadriceps: jambe,
+  ischios: jambe,
+  fessiers: jambe,
+  mollets: jambe,
+  biceps: bras,
+  triceps: bras,
+  epaules: bras,
+  epaules_post: bras,
+  epaules_ant: bras,
+  dos: bras,
+  pecs: bras,
+  avant_bras: bras,
+  coiffe: bras
 };
 function sideLabel(m) {
-  return SIDE_LABEL[m.muscle_primary] ?? "c\xF4t\xE9";
+  return SIDE_LABEL[m.muscle_primary] ?? cote;
 }
 function notesFor(ctx, l, load) {
   const parts = [];
-  if (ctx.params.objective === "force" && l.objective !== "force") parts.push("sch\xE9ma hypertrophie");
-  if (load.mode === "rpe" && load.rm_reference && ctx.params.level === "debutant") parts.push("monter jusqu'\xE0 une charge propre");
-  if (l.demoted) parts.push("3e compound : 70-75 % \xD7 6-8");
-  if (load.mode === "bodyweight" && ctx.params.level === "debutant" && /pull_up|chin_up/.test(l.m.id) && !/banded/.test(l.m.id)) parts.push("D\xE9butant : banded");
-  if (l.tempo) parts.push(`tempo ${l.tempo}`);
+  if (ctx.params.objective === "force" && l.objective !== "force") parts.push(T6.note.schemaHypertrophie);
+  if (load.mode === "rpe" && load.rm_reference && ctx.params.level === "debutant") parts.push(T6.note.chargePropre);
+  if (l.demoted) parts.push(T6.note.troisiemeCompound);
+  if (load.mode === "bodyweight" && ctx.params.level === "debutant" && /pull_up|chin_up/.test(l.m.id) && !/banded/.test(l.m.id)) parts.push(T6.note.debutantBanded);
+  if (l.tempo) parts.push(T6.note.tempo(l.tempo));
   return parts.join(" \xB7 ");
 }
 function toExercise(ctx, l) {
@@ -29596,19 +29952,19 @@ function generateMuscu(request, catalog, bank, seed) {
     budget_min: request.budget_min ?? (request.entry === "express" ? 45 : new RNG(seed).pick([15, 16, 18, 20]))
   };
   if (params.objective === "force" && params.entry === "after_class") {
-    throw new InvalidMuscuParams("force_after_class", "Apr\xE8s ma classe : la Force n'est pas propos\xE9e (hypertrophie ou endurance)");
+    throw new InvalidMuscuParams("force_after_class", T6.refus.forceApresClasse);
   }
   if (params.objective === "force" && params.equipment === "none") {
-    throw new InvalidMuscuParams("force_without_equipment", "Sans mat\xE9riel : la Force est indisponible");
+    throw new InvalidMuscuParams("force_without_equipment", T6.refus.forceSansMateriel);
   }
   if (params.target === "tronc" && params.objective === "force") {
-    throw new InvalidMuscuParams("force_tronc", "Tronc : la Force n'est pas propos\xE9e (Prise de muscle ou Tonification)");
+    throw new InvalidMuscuParams("force_tronc", T6.refus.forceTronc);
   }
   const sk = findSkeleton(bank, params.target, params.objective);
   const ac = params.entry === "after_class" && params.after_class ? afterClassMuscles(catalog, params.after_class) : null;
   const recent = new Set(params.recent_signatures ?? []);
   if (!targetAvailable(catalog, params.target, params.equipment, params.level)) {
-    throw new InvalidMuscuParams("target_unavailable", `${TARGET_LABEL[params.target]} : aucun exercice ${EQUIPMENT_LABEL[params.equipment].toLowerCase()} pour ce niveau`);
+    throw new InvalidMuscuParams("target_unavailable", T6.refus.cibleIndisponible(TARGET_LABEL[params.target], EQUIPMENT_LABEL[params.equipment].toLowerCase()));
   }
   let best = null;
   for (let attempt = 0; attempt < MUSCU_MAX_ATTEMPTS; attempt++) {
@@ -29687,7 +30043,7 @@ function generateMuscu(request, catalog, bank, seed) {
     score_type: "tonnage",
     after_class: ac ? { excluded_muscles: ac.excluded, suggested_target: ac.suggested_target } : null,
     signature: sig,
-    title: `${TARGET_LABEL[params.target]} \xB7 ${OBJECTIVE_LABEL[params.objective]}`,
+    title: T6.titre(TARGET_LABEL[params.target], OBJECTIVE_LABEL[params.objective]),
     description: "",
     wod_type: "strength",
     block_name: "wod",
@@ -29708,10 +30064,10 @@ function stimulusFor(params, exercises) {
   const parts = [scheme.rir.charAt(0).toUpperCase() + scheme.rir.slice(1)];
   if (params.objective === "force") {
     const main2 = exercises.find((e) => e.role === "main_compound");
-    if (main2) parts.push(`Mont\xE9e en charge sur ${main2.name} : 5 @ 50 % \xB7 3 @ 65 % \xB7 2 @ 75 % avant les s\xE9ries de travail`);
+    if (main2) parts.push(T6.monteeEnCharge(main2.name));
   }
   if (!params.box_wod && exercises.some((e) => e.load.mode === "rpe" && e.load.rm_reference)) {
-    parts.push("Renseigne tes 1RM dans le calculateur pour avoir des charges en kg");
+    parts.push(T6.renseigne1rm);
   }
   return { rpe: scheme.rpe, note: parts.join(". ") };
 }
@@ -29724,15 +30080,15 @@ function loadText2(e) {
   const l = e.load;
   switch (l.mode) {
     case "1rm":
-      return `${l.kg} kg (${l.percent} %)`;
+      return T6.charge.kgPourcent(l.kg, l.percent);
     case "percent":
-      return `${l.percent} % 1RM`;
+      return T6.charge.pourcent1rm(l.percent);
     case "weighted":
-      return l.kg ? `lest\xE9 ${l.kg} kg, RPE ${l.rpe}` : `lest\xE9 l\xE9ger, RPE ${l.rpe}`;
+      return l.kg ? T6.charge.leste(l.kg, l.rpe) : T6.charge.lesteLeger(l.rpe);
     case "bodyweight":
-      return l.band ? "\xE9lastique" : e.reps_unit === "reps" ? "poids du corps" : "\u2014";
+      return l.band ? T6.charge.elastique : e.reps_unit === "reps" ? T6.charge.poidsDuCorps : "\u2014";
     default:
-      return l.percent ? `RPE ${l.rpe} (\u2248 ${l.percent} % du 1RM)` : `RPE ${l.rpe}`;
+      return l.percent ? T6.charge.rpePourcent(l.rpe, l.percent) : T6.charge.rpe(l.rpe);
   }
 }
 function exerciseLine(e) {
@@ -29741,34 +30097,34 @@ function exerciseLine(e) {
   if (e.per_side) out += ` / ${sideLabel(e)}`;
   const l = e.load;
   if (l.mode === "1rm" && l.kg) {
-    out += ` @ ${l.kg} kg \u2014 charge ${l.percent} % 1RM`;
+    out += T6.ligne.kg(l.kg, l.percent);
   } else if (l.mode === "percent") {
-    out += ` \u2014 RPE ${l.rpe} (\u2248 ${l.percent} % du 1RM)`;
+    out += T6.ligne.pourcent(l.rpe, l.percent);
   } else if (l.mode === "weighted") {
-    out += l.kg ? ` \u2014 lest\xE9 ${l.kg} kg (10 % du poids de corps), RPE ${l.rpe}` : ` \u2014 lest\xE9 l\xE9ger, RPE ${l.rpe}`;
+    out += l.kg ? T6.ligne.leste(l.kg, l.rpe) : T6.ligne.lesteLeger(l.rpe);
   } else if (l.mode === "rpe") {
-    out += l.percent ? ` \u2014 charge RPE ${l.rpe} (\u2248 ${l.percent} % du 1RM)` : ` \u2014 charge RPE ${l.rpe}`;
+    out += l.percent ? T6.ligne.rpePourcent(l.rpe, l.percent) : T6.ligne.rpe(l.rpe);
   } else if (l.band) {
-    out += " \u2014 charge \xE9lastique";
+    out += T6.ligne.elastique;
   } else if (e.reps_unit === "reps") {
-    out += " \u2014 charge poids du corps";
+    out += T6.ligne.poidsDuCorps;
   }
-  if (e.rest_s > 0) out += ` \u2014 repos ${fmtRest(e.rest_s)}`;
+  if (e.rest_s > 0) out += T6.ligne.repos(fmtRest(e.rest_s));
   return out;
 }
 function renderMuscu(wod) {
   const lines = [];
-  lines.push(`Musculation \xB7 ${TARGET_LABEL[wod.target]} \xB7 ${OBJECTIVE_LABEL[wod.objective]} \xB7 ${wod.budget_min}' \xB7 ${EQUIPMENT_LABEL[wod.equipment]}`);
+  lines.push(T6.entete(TARGET_LABEL[wod.target], OBJECTIVE_LABEL[wod.objective], wod.budget_min, EQUIPMENT_LABEL[wod.equipment]));
   lines.push("");
   for (const e of wod.blocks[0].exercises) {
     lines.push(exerciseLine(e));
     if (e.notes) lines.push(`  ${e.notes}`);
   }
   lines.push("");
-  lines.push(`Dur\xE9e estim\xE9e ${wod.estimate.minutes}'`);
-  lines.push(`Stimulus : ${wod.stimulus.note}`);
+  lines.push(T6.dureeEstimee(wod.estimate.minutes));
+  lines.push(T6.stimulus(wod.stimulus.note));
   if (wod.after_class?.excluded_muscles.length) {
-    lines.push(`Apr\xE8s ma classe : muscles \xE9vit\xE9s ${wod.after_class.excluded_muscles.join(", ")}`);
+    lines.push(T6.musclesEvites(wod.after_class.excluded_muscles.join(", ")));
   }
   return lines.join("\n");
 }
@@ -29804,7 +30160,8 @@ var MUSCU_WEEK_DAYS = [
   { day: 6, target: "tronc", budget_min: 20 }
 ];
 var MUSCU_OBJECTIVE_CYCLE = ["hypertrophie", "endurance", "force"];
-var DAY_LABEL = { 1: "Lundi", 2: "Mardi", 3: "Mercredi", 4: "Jeudi", 5: "Vendredi", 6: "Samedi" };
+var DAY_LABEL = fr.jours;
+var T7 = fr.seance;
 function hashSeed(...parts) {
   let h = 2166136261;
   const s = parts.join("|");
@@ -29839,21 +30196,21 @@ function fmtRest2(s) {
 function fmtEvery(s) {
   const m = Math.floor(s / 60);
   const r = s % 60;
-  return r ? `${m}'${String(r).padStart(2, "0")}` : `${m}'`;
+  return r ? fr.duree.minutesSecondes(m, String(r).padStart(2, "0")) : fr.duree.minutes(m);
 }
 function nameOf(catalog, id) {
   return movementById(catalog, id)?.name ?? id;
 }
 function stepLine(name, st, tempo) {
   let out = `${name} \u2014 ${st.sets} \xD7 ${st.reps}`;
-  if (st.percent !== null) out += ` @ ${st.percent} %1RM`;
-  out += ` \u2014 repos ${fmtRest2(st.rest_s)}`;
-  if (tempo && !st.note?.startsWith("mont\xE9e")) out += ` \u2014 tempo ${tempo}`;
-  if (st.note) out += ` \u2014 charge ${st.note}`;
+  if (st.percent !== null) out += T7.serie.pourcent(st.percent);
+  out += T7.serie.repos(fmtRest2(st.rest_s));
+  if (tempo && !st.note?.startsWith("mont\xE9e")) out += T7.serie.tempo(tempo);
+  if (st.note) out += T7.serie.charge(st.note);
   return out;
 }
 var NL = "\n";
-var CAT_LABEL = { scaled: "Scaled", inter: "Inter", rx: "RX", rxplus: "RX+", elite: "Elite", pro: "Pro" };
+var CAT_LABEL = fr.categories;
 function withSkillProgression(opt) {
   if (!opt.skill || opt.skill.progression) return opt;
   const snapshot = SESSION_SKELETONS.flatMap((s) => s.block_a ?? []).find((o) => o.id === opt.id)?.skill?.progression;
@@ -29867,21 +30224,21 @@ function blockALines(catalog, opt, weeks) {
   const lines = [];
   if (opt.kind === "weightlifting") {
     const complex = (opt.complex ?? []).map((id) => nameOf(catalog, id));
-    lines.push(`Halt\xE9ro \u2014 complexe ${name} (${weeks === "even" ? "A" : "B"}) : ${complex.join(" + ")}`);
-    lines.push("Un complexe = une r\xE9p\xE9tition, sans l\xE2cher la barre. Sans 1RM connu : monter jusqu'\xE0 une charge propre.");
+    lines.push(T7.halteroComplexe(name, weeks === "even" ? "A" : "B", complex.join(" + ")));
+    lines.push(T7.halteroConsigne);
     for (const st of opt.steps ?? []) lines.push(stepLine(name, st));
   } else if (opt.kind === "strength") {
-    lines.push(`Force \u2014 ${name}`);
+    lines.push(T7.force(name));
     for (const st of opt.steps ?? []) lines.push(stepLine(name, st, opt.tempo));
-    if (opt.tempo) lines.push(`Tempo ${opt.tempo} sur les s\xE9ries de travail. Sans 1RM connu : derni\xE8re s\xE9rie RPE 8.`);
+    if (opt.tempo) lines.push(T7.forceTempo(opt.tempo));
   } else if (opt.skill) {
     const sk = opt.skill;
-    lines.push(`Skill \u2014 ${name} : progression en 3 \xE9tapes`);
-    lines.push(`\xC9tape A : ${sk.progression.a} \u2014 ${fmtEvery(SKILL_STEP_S)}`);
-    lines.push(`\xC9tape B : ${sk.progression.b} \u2014 ${fmtEvery(SKILL_STEP_S)}`);
-    lines.push(`\xC9tape C : Every ${fmtEvery(sk.every_s)} \xD7 ${sk.rounds}`);
+    lines.push(T7.skill(name));
+    lines.push(T7.etapeA(sk.progression.a, fmtEvery(SKILL_STEP_S)));
+    lines.push(T7.etapeB(sk.progression.b, fmtEvery(SKILL_STEP_S)));
+    lines.push(T7.etapeC(fmtEvery(sk.every_s), sk.rounds));
     lines.push(`${sk.reps} ${name}`);
-    const subs = Object.entries(sk.substitutions).map(([c, s]) => `${CAT_LABEL[c] ?? c} : ${s}`);
+    const subs = Object.entries(sk.substitutions).map(([c, s]) => fr.rendu.substitution(CAT_LABEL[c] ?? c, s));
     if (subs.length) lines.push(`\u2192 ${subs.join(" \xB7 ")}`);
   }
   return lines;
@@ -29891,12 +30248,12 @@ function nameOfB(catalog, opt) {
 }
 function blockBLines(catalog, opt) {
   const name = nameOfB(catalog, opt);
-  const lines = [`Building \u2014 ${name} tempo ${opt.tempo ?? ""}`.trim()];
+  const lines = [T7.building(name, opt.tempo ?? "").trim()];
   for (const st of opt.steps) lines.push(stepLine(name, st, opt.tempo));
   return lines;
 }
 function finisherLines(catalog, opt) {
-  const lines = [`Finisher \u2014 ${opt.rounds} rounds, rythme continu :`];
+  const lines = [T7.finisher(opt.rounds)];
   for (const m of opt.movements) {
     const name = m.name ?? nameOf(catalog, m.id);
     lines.push(m.unit === "s" ? `${m.qty} s ${name}` : m.unit === "m" ? `${m.qty} m ${name}` : `${m.qty} ${name}`);
@@ -30047,7 +30404,7 @@ function loadPair(catalog, it) {
   const own = loadOf(catalog, it.id, it.band);
   const extra = it.load_from ? loadOf(catalog, it.load_from, it.band) : null;
   const parts = [];
-  if (own && own.unit === "cm") parts.push(`(box ${own.men}/${own.women} cm)`);
+  if (own && own.unit === "cm") parts.push(T7.stationBox(own.men, own.women));
   else if (own) parts.push(`@ ${own.men}/${own.women} ${own.unit}`);
   if (extra) parts.push(`@ ${extra.men}/${extra.women} ${extra.unit}`);
   return parts.length ? ` ${parts.join(" ")}` : "";
@@ -30069,7 +30426,7 @@ function proLine(catalog, items) {
     if (!men?.length || !women?.length) continue;
     parts.push(`${it.name ?? nameOf(catalog, it.id)} ${men[0]}/${women[0]} ${m.load_unit ?? "kg"}`);
   }
-  return parts.length ? `Women Pro / Men Pro : ${parts.join(" \xB7 ")}` : null;
+  return parts.length ? T7.pro(parts.join(" \xB7 ")) : null;
 }
 function drawRace(opt, rng) {
   const shuffle = (xs) => {
@@ -30109,44 +30466,44 @@ function hybridALines(catalog, opt, iso_week) {
   const lines = [];
   if (opt.kind === "station" && opt.station) {
     const { every_s, rounds, items } = opt.station;
-    lines.push(items.length > 1 ? `Every ${fmtEvery(every_s)} \xD7 ${rounds}, en rotation :` : `Every ${fmtEvery(every_s)} \xD7 ${rounds} :`);
+    lines.push(items.length > 1 ? T7.stationRotation(fmtEvery(every_s), rounds) : T7.stationEvery(fmtEvery(every_s), rounds));
     for (const [i, it] of items.entries()) {
-      const tag = items.length === 2 ? `${i === 0 ? "Impair" : "Pair"} \xB7 ` : items.length > 2 ? `Poste ${i + 1} \xB7 ` : "";
+      const tag = items.length === 2 ? i === 0 ? T7.impair : T7.pair : items.length > 2 ? T7.poste(i + 1) : "";
       lines.push(`${tag}${stationLine(catalog, it)}`);
     }
     const pro = proLine(catalog, items);
     if (pro) lines.push(pro);
     if (items.some((it) => it.band === "heavy")) {
-      lines.push("Seule charge lourde de la semaine. Pouss\xE9e continue, jamais en saccades.");
+      lines.push(T7.chargeLourde);
     }
   } else if (opt.kind === "run" && opt.run) {
     const v = opt.run.variants[iso_week % opt.run.variants.length];
-    lines.push(`Intervalles course \u2014 ${v.label}, repos ${fmtRest2(v.rest_s)}`);
-    lines.push(`Allure cible : ${v.target}. L'\xE9cart entre le premier et le dernier intervalle reste sous 5 s.`);
-    lines.push(`Autres variantes du cycle : ${opt.run.variants.filter((x) => x !== v).map((x) => x.label).join(" \xB7 ")}`);
+    lines.push(T7.intervallesCourse(v.label, fmtRest2(v.rest_s)));
+    lines.push(T7.allureCible(v.target));
+    lines.push(T7.autresVariantes(opt.run.variants.filter((x) => x !== v).map((x) => x.label).join(" \xB7 ")));
   } else if (opt.kind === "compromised" && opt.compromised) {
     const { rounds, work_s, run_m_min, run_m_max, stations, target } = opt.compromised;
-    lines.push(`${rounds} rounds :`);
+    lines.push(T7.compromiseRounds(rounds));
     for (let i = 0; i < rounds; i++) {
       const st = stations[i % stations.length];
       const run = runOfRound(opt, i);
-      lines.push(`${i + 1}. ${work_s} s de station \u2014 ${stationLine(catalog, st)}`);
-      lines.push(`   puis ${run} m Run \xE0 allure cible (${target})`);
+      lines.push(T7.compromiseStation(i + 1, work_s, stationLine(catalog, st)));
+      lines.push(T7.compromiseCourse(run, target));
     }
     const used = Array.from({ length: rounds }, (_, i) => stations[i % stations.length]);
     const pro = proLine(catalog, used);
     if (pro) lines.push(pro);
-    lines.push(`Total de course : ${totalRunOf(opt)} m. Tenir l'allure avec les jambes charg\xE9es, ne pas sprinter la station.`);
+    lines.push(T7.compromiseTotal(totalRunOf(opt)));
   } else if (opt.kind === "race" && opt.race) {
     const { rounds, run_m, stations, score } = opt.race;
-    lines.push(`Encha\xEEnement chronom\xE9tr\xE9 \u2014 ${rounds} tours, dans l'ordre :`);
+    lines.push(T7.enchainement(rounds));
     for (let i = 0; i < rounds; i++) {
       const st = stations[i % stations.length];
-      lines.push(`${i + 1}. ${run_m} m Run puis ${stationLine(catalog, st)}`);
+      lines.push(T7.enchainementLigne(i + 1, run_m, stationLine(catalog, st)));
     }
     const pro = proLine(catalog, Array.from({ length: rounds }, (_, i) => stations[i % stations.length]));
     if (pro) lines.push(pro);
-    lines.push(`Score : ${score}. Note le temps de chaque segment.`);
+    lines.push(T7.enchainementScore(score));
   }
   return lines;
 }
@@ -30333,15 +30690,7 @@ function generateSession(params, catalog, bank, seed) {
     const aReps = {};
     if (optA.skill) aReps[optA.movement] = optA.skill.reps * optA.skill.rounds;
     addReps(gym, gymReps(catalog, aReps));
-    const KIND_LABEL = {
-      weightlifting: "Halt\xE9ro",
-      strength: "Force",
-      skill: "Skill",
-      station: "Force sur station",
-      run: "Course",
-      race: "Simulation",
-      compromised: "Course compromise"
-    };
+    const KIND_LABEL = T7.type;
     const title = optA.kind === "race" ? sk.label : `${KIND_LABEL[optA.kind]} \xB7 ${nameOf(catalog, optA.movement)}`;
     const a = editor(
       title,
@@ -30358,7 +30707,7 @@ function generateSession(params, catalog, bank, seed) {
         skill: optA.skill ?? null,
         gym_reps_rx: gymReps(catalog, aReps)
       }),
-      optA.kind === "weightlifting" ? "Pourcentages du 1RM du mouvement complet ; sans 1RM, charge propre." : optA.timed ? "S\xE9ance chronom\xE9tr\xE9e de bout en bout : compare avec ta derni\xE8re simulation." : null
+      optA.kind === "weightlifting" ? T7.notePourcentages : optA.timed ? T7.noteChronometree : null
     );
     if (optA.timed) a.leaderboard_enabled = true;
     blocks.push(a);
@@ -30368,7 +30717,7 @@ function generateSession(params, catalog, bank, seed) {
     for (const st of optB.steps) bReps[optB.movement] = (bReps[optB.movement] ?? 0) + st.sets * st.reps;
     addReps(gym, gymReps(catalog, bReps));
     blocks.push(editor(
-      `Building \xB7 ${nameOfB(catalog, optB)}`,
+      T7.titreBuilding(nameOfB(catalog, optB)),
       blockBLines(catalog, optB).join("\n"),
       "strength",
       "building",
@@ -30388,7 +30737,7 @@ function generateSession(params, catalog, bank, seed) {
       sort++,
       optW.minutes + (optA ? 0 : sk.warmup.minutes),
       structured(optW.kind, optW.id, { movement: optW.movement, gym_reps_rx: {} }),
-      optW.timed ? "S\xE9ance chronom\xE9tr\xE9e de bout en bout : compare avec ta derni\xE8re simulation." : null
+      optW.timed ? T7.noteChronometree : null
     );
     w.leaderboard_enabled = true;
     blocks.push(w);
@@ -30420,7 +30769,7 @@ function generateSession(params, catalog, bank, seed) {
     for (const m of optF.movements) if (m.unit === "reps") fReps[m.id] = (fReps[m.id] ?? 0) + m.qty * optF.rounds;
     addReps(gym, gymReps(catalog, fReps));
     blocks.push(editor(
-      "Finisher",
+      T7.titreFinisher,
       finisherLines(catalog, optF).join("\n"),
       "custom",
       "finisher",
@@ -30432,7 +30781,7 @@ function generateSession(params, catalog, bank, seed) {
   }
   if (cool) {
     blocks.push(editor(
-      "Retour au calme",
+      T7.titreRetourAuCalme,
       cool.lines.join(NL),
       "custom",
       "cooldown",
@@ -30705,8 +31054,8 @@ function generateMuscuWeek(params, catalog, bank, seed) {
 
 // packages/wod-engine/src/programming.ts
 var TRACKS = ["functional", "hybrid", "musculation"];
-var TRACK_LABEL = { functional: "Functional", hybrid: "Hybrid", musculation: "Musculation" };
-var TRACK_GROUP_NAME = { functional: "Functional", hybrid: "Hybrid", musculation: "Musculation" };
+var TRACK_LABEL = fr.programmation.piste;
+var TRACK_GROUP_NAME = fr.programmation.groupe;
 var TRACK_SEED_KEY = { functional: "crossfit", hybrid: "hybrid", musculation: "musculation" };
 var PROGRAMMING_VERSION = SESSION_ENGINE_VERSION;
 var REVEAL_HOUR_PARIS = 18;

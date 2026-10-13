@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const run_intervals: Skeleton = {
   id: 'run_intervals',
@@ -17,5 +18,5 @@ export const run_intervals: Skeleton = {
   score_type: 'time',
   cap_factor: 1.0,
   allow_variant_up: false,
-  stimulus: { rpe: 8.5, note: 'Allure 5 km ou plus vite, régularité entre répétitions.' },
+  stimulus: { rpe: 8.5, note: fr.banque.stimulus.run_intervals },
 };

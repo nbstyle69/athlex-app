@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const gym_density: Skeleton = {
   id: 'gym_density',
@@ -17,5 +18,5 @@ export const gym_density: Skeleton = {
   score_type: 'reps_total',
   cap_factor: 1.0,
   allow_variant_up: true,
-  stimulus: { rpe: 6.5, note: 'Technique, aucun échec musculaire.' },
+  stimulus: { rpe: 6.5, note: fr.banque.stimulus.gym_density },
 };

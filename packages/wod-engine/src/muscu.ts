@@ -5,6 +5,9 @@ import type {
 import { RNG } from './rng';
 import { nameKey, resolveMovement } from './catalog';
 import { MUSCU_SKELETONS, MUSCU_TARGETS, TARGET_MUSCLES } from './bank/muscu';
+import { fr } from './i18n/fr';
+
+const T = fr.musculation;
 
 /**
  * Générateur Musculation V1 (brief M1). Déterministe (graine), sans réseau :
@@ -83,9 +86,9 @@ export const SCHEMES: Record<MuscuObjective, Scheme> = {
   // voir `lineFor` : un gainage n'a pas besoin de deux minutes, et c'est ce
   // qu'un coach ferait. Validé par Nab le 18/09/2026 — une carte Tronc en
   // Prise de muscle affiche donc 60 s partout, ce n'est pas une anomalie.
-  hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rpe: 8, rir: 'dernière série à 1-2 reps de l\'échec' },
-  force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rpe: 8, rir: 'RIR 2, dernière série RPE 9' },
-  endurance: { sets: { main: 3, other: 3 }, sets_min: 2, sets_max: 5, rest: { main: 40, other: 40 }, rpe: 7, rir: 'rythme continu, aucune série à l\'échec' },
+  hypertrophie: { sets: { main: 4, other: 3 }, sets_min: 3, sets_max: 5, rest: { main: 90, other: 75 }, rpe: 8, rir: fr.musculation.rir.hypertrophie },
+  force: { sets: { main: 5, other: 4 }, sets_min: 3, sets_max: 5, rest: { main: 150, other: 120 }, rpe: 8, rir: fr.musculation.rir.force },
+  endurance: { sets: { main: 3, other: 3 }, sets_min: 2, sets_max: 5, rest: { main: 40, other: 40 }, rpe: 7, rir: fr.musculation.rir.endurance },
 };
 
 /** % du 1RM par nombre de reps (brief : hypertrophie 60-80, force 80-90, endurance 50-60). */
@@ -100,13 +103,10 @@ export function percentForReps(reps: number): number {
   return PCT_ANCHORS[PCT_ANCHORS.length - 1][1];
 }
 
-export const TARGET_LABEL: Record<MuscuTarget, string> = {
-  fessiers: 'Fessiers', fessiers_ischios: 'Fessiers & ischios', bas: 'Bas du corps', full_body: 'Full body', tronc: 'Tronc',
-  haut: 'Haut du corps', dos: 'Dos', epaules: 'Épaules', bras: 'Bras', pecs: 'Pectoraux', push: 'Push', pull: 'Pull', jambes: 'Jambes',
-};
-export const OBJECTIVE_LABEL: Record<MuscuObjective, string> = { hypertrophie: 'Prise de muscle', force: 'Force', endurance: 'Tonification' };
-export const EQUIPMENT_LABEL: Record<MuscuEquipment, string> = { none: 'Sans matériel', box: 'Box', gym: 'Salle' };
-export const LEVEL_LABEL: Record<MuscuLevel, string> = { debutant: 'Débutant', inter: 'Intermédiaire', avance: 'Avancé' };
+export const TARGET_LABEL: Record<MuscuTarget, string> = T.cible;
+export const OBJECTIVE_LABEL: Record<MuscuObjective, string> = T.objectif;
+export const EQUIPMENT_LABEL: Record<MuscuEquipment, string> = T.materiel;
+export const LEVEL_LABEL: Record<MuscuLevel, string> = T.niveau;
 const LEVEL_RANK: Record<MuscuLevel, number> = { debutant: 0, inter: 1, avance: 2 };
 
 /** Niveau Musculation depuis `profiles.level` (Scaled → débutant, Inter / RX → intermédiaire, RX+ et au-delà → avancé). */
@@ -801,21 +801,22 @@ function fitBudget(ctx: Ctx, input: Line[], target: MuscuTarget): Line[] {
 
 // ─── Assemblage ──────────────────────────────────────────────────────────────
 
+const { jambe, bras, cote } = T.cote;
 const SIDE_LABEL: Partial<Record<Muscle, string>> = {
-  quadriceps: 'jambe', ischios: 'jambe', fessiers: 'jambe', mollets: 'jambe',
-  biceps: 'bras', triceps: 'bras', epaules: 'bras', epaules_post: 'bras', epaules_ant: 'bras', dos: 'bras', pecs: 'bras', avant_bras: 'bras', coiffe: 'bras',
+  quadriceps: jambe, ischios: jambe, fessiers: jambe, mollets: jambe,
+  biceps: bras, triceps: bras, epaules: bras, epaules_post: bras, epaules_ant: bras, dos: bras, pecs: bras, avant_bras: bras, coiffe: bras,
 };
 export function sideLabel(m: Pick<MuscuExercise, 'muscle_primary'>): 'jambe' | 'bras' | 'côté' {
-  return (SIDE_LABEL[m.muscle_primary] as 'jambe' | 'bras' | undefined) ?? 'côté';
+  return (SIDE_LABEL[m.muscle_primary] ?? cote) as 'jambe' | 'bras' | 'côté';
 }
 
 function notesFor(ctx: Ctx, l: Line, load: MuscuLoad): string {
   const parts: string[] = [];
-  if (ctx.params.objective === 'force' && l.objective !== 'force') parts.push('schéma hypertrophie');
-  if (load.mode === 'rpe' && load.rm_reference && ctx.params.level === 'debutant') parts.push('monter jusqu\'à une charge propre');
-  if (l.demoted) parts.push('3e compound : 70-75 % × 6-8');
-  if (load.mode === 'bodyweight' && ctx.params.level === 'debutant' && /pull_up|chin_up/.test(l.m.id) && !/banded/.test(l.m.id)) parts.push('Débutant : banded');
-  if (l.tempo) parts.push(`tempo ${l.tempo}`);
+  if (ctx.params.objective === 'force' && l.objective !== 'force') parts.push(T.note.schemaHypertrophie);
+  if (load.mode === 'rpe' && load.rm_reference && ctx.params.level === 'debutant') parts.push(T.note.chargePropre);
+  if (l.demoted) parts.push(T.note.troisiemeCompound);
+  if (load.mode === 'bodyweight' && ctx.params.level === 'debutant' && /pull_up|chin_up/.test(l.m.id) && !/banded/.test(l.m.id)) parts.push(T.note.debutantBanded);
+  if (l.tempo) parts.push(T.note.tempo(l.tempo));
   return parts.join(' · ');
 }
 
@@ -921,19 +922,19 @@ export function generateMuscu(
     budget_min: request.budget_min ?? (request.entry === 'express' ? 45 : new RNG(seed).pick([15, 16, 18, 20])),
   };
   if (params.objective === 'force' && params.entry === 'after_class') {
-    throw new InvalidMuscuParams('force_after_class', 'Après ma classe : la Force n\'est pas proposée (hypertrophie ou endurance)');
+    throw new InvalidMuscuParams('force_after_class', T.refus.forceApresClasse);
   }
   if (params.objective === 'force' && params.equipment === 'none') {
-    throw new InvalidMuscuParams('force_without_equipment', 'Sans matériel : la Force est indisponible');
+    throw new InvalidMuscuParams('force_without_equipment', T.refus.forceSansMateriel);
   }
   if (params.target === 'tronc' && params.objective === 'force') {
-    throw new InvalidMuscuParams('force_tronc', 'Tronc : la Force n\'est pas proposée (Prise de muscle ou Tonification)');
+    throw new InvalidMuscuParams('force_tronc', T.refus.forceTronc);
   }
   const sk = findSkeleton(bank, params.target, params.objective);
   const ac = params.entry === 'after_class' && params.after_class ? afterClassMuscles(catalog, params.after_class) : null;
   const recent = new Set(params.recent_signatures ?? []);
   if (!targetAvailable(catalog, params.target, params.equipment, params.level)) {
-    throw new InvalidMuscuParams('target_unavailable', `${TARGET_LABEL[params.target]} : aucun exercice ${EQUIPMENT_LABEL[params.equipment].toLowerCase()} pour ce niveau`);
+    throw new InvalidMuscuParams('target_unavailable', T.refus.cibleIndisponible(TARGET_LABEL[params.target], EQUIPMENT_LABEL[params.equipment].toLowerCase()));
   }
 
   let best: { lines: Line[]; relax: Set<string>; attempts: number } | null = null;
@@ -991,7 +992,7 @@ export function generateMuscu(
     score_type: 'tonnage',
     after_class: ac ? { excluded_muscles: ac.excluded, suggested_target: ac.suggested_target } : null,
     signature: sig,
-    title: `${TARGET_LABEL[params.target]} · ${OBJECTIVE_LABEL[params.objective]}`,
+    title: T.titre(TARGET_LABEL[params.target], OBJECTIVE_LABEL[params.objective]),
     description: '',
     wod_type: 'strength',
     block_name: 'wod',
@@ -1013,10 +1014,10 @@ function stimulusFor(params: MuscuParams, exercises: MuscuExercise[]): { rpe: nu
   const parts = [scheme.rir.charAt(0).toUpperCase() + scheme.rir.slice(1)];
   if (params.objective === 'force') {
     const main = exercises.find((e) => e.role === 'main_compound');
-    if (main) parts.push(`Montée en charge sur ${main.name} : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail`);
+    if (main) parts.push(T.monteeEnCharge(main.name));
   }
   if (!params.box_wod && exercises.some((e) => e.load.mode === 'rpe' && e.load.rm_reference)) {
-    parts.push('Renseigne tes 1RM dans le calculateur pour avoir des charges en kg');
+    parts.push(T.renseigne1rm);
   }
   return { rpe: scheme.rpe, note: parts.join('. ') };
 }
@@ -1032,11 +1033,11 @@ function fmtRest(s: number): string {
 export function loadText(e: MuscuExercise): string {
   const l = e.load;
   switch (l.mode) {
-    case '1rm': return `${l.kg} kg (${l.percent} %)`;
-    case 'percent': return `${l.percent} % 1RM`;
-    case 'weighted': return l.kg ? `lesté ${l.kg} kg, RPE ${l.rpe}` : `lesté léger, RPE ${l.rpe}`;
-    case 'bodyweight': return l.band ? 'élastique' : e.reps_unit === 'reps' ? 'poids du corps' : '—';
-    default: return l.percent ? `RPE ${l.rpe} (≈ ${l.percent} % du 1RM)` : `RPE ${l.rpe}`;
+    case '1rm': return T.charge.kgPourcent(l.kg, l.percent);
+    case 'percent': return T.charge.pourcent1rm(l.percent);
+    case 'weighted': return l.kg ? T.charge.leste(l.kg, l.rpe) : T.charge.lesteLeger(l.rpe);
+    case 'bodyweight': return l.band ? T.charge.elastique : e.reps_unit === 'reps' ? T.charge.poidsDuCorps : '—';
+    default: return l.percent ? T.charge.rpePourcent(l.rpe, l.percent) : T.charge.rpe(l.rpe);
   }
 }
 
@@ -1047,35 +1048,35 @@ export function exerciseLine(e: MuscuExercise): string {
   if (e.per_side) out += ` / ${sideLabel(e)}`;
   const l = e.load;
   if (l.mode === '1rm' && l.kg) {
-    out += ` @ ${l.kg} kg — charge ${l.percent} % 1RM`;
+    out += T.ligne.kg(l.kg, l.percent);
   } else if (l.mode === 'percent') {
-    out += ` — RPE ${l.rpe} (≈ ${l.percent} % du 1RM)`;
+    out += T.ligne.pourcent(l.rpe, l.percent);
   } else if (l.mode === 'weighted') {
-    out += l.kg ? ` — lesté ${l.kg} kg (10 % du poids de corps), RPE ${l.rpe}` : ` — lesté léger, RPE ${l.rpe}`;
+    out += l.kg ? T.ligne.leste(l.kg, l.rpe) : T.ligne.lesteLeger(l.rpe);
   } else if (l.mode === 'rpe') {
-    out += l.percent ? ` — charge RPE ${l.rpe} (≈ ${l.percent} % du 1RM)` : ` — charge RPE ${l.rpe}`;
+    out += l.percent ? T.ligne.rpePourcent(l.rpe, l.percent) : T.ligne.rpe(l.rpe);
   } else if (l.band) {
-    out += ' — charge élastique';
+    out += T.ligne.elastique;
   } else if (e.reps_unit === 'reps') {
-    out += ' — charge poids du corps';
+    out += T.ligne.poidsDuCorps;
   }
-  if (e.rest_s > 0) out += ` — repos ${fmtRest(e.rest_s)}`;
+  if (e.rest_s > 0) out += T.ligne.repos(fmtRest(e.rest_s));
   return out;
 }
 
 export function renderMuscu(wod: MuscuWod): string {
   const lines: string[] = [];
-  lines.push(`Musculation · ${TARGET_LABEL[wod.target]} · ${OBJECTIVE_LABEL[wod.objective]} · ${wod.budget_min}' · ${EQUIPMENT_LABEL[wod.equipment]}`);
+  lines.push(T.entete(TARGET_LABEL[wod.target], OBJECTIVE_LABEL[wod.objective], wod.budget_min, EQUIPMENT_LABEL[wod.equipment]));
   lines.push('');
   for (const e of wod.blocks[0].exercises) {
     lines.push(exerciseLine(e));
     if (e.notes) lines.push(`  ${e.notes}`);
   }
   lines.push('');
-  lines.push(`Durée estimée ${wod.estimate.minutes}'`);
-  lines.push(`Stimulus : ${wod.stimulus.note}`);
+  lines.push(T.dureeEstimee(wod.estimate.minutes));
+  lines.push(T.stimulus(wod.stimulus.note));
   if (wod.after_class?.excluded_muscles.length) {
-    lines.push(`Après ma classe : muscles évités ${wod.after_class.excluded_muscles.join(', ')}`);
+    lines.push(T.musclesEvites(wod.after_class.excluded_muscles.join(', ')));
   }
   return lines.join('\n');
 }

@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 const slots: Skeleton['slots'] = [
   { pick: { family: ['erg'], unit: 'cal' }, qty: 'range' },
@@ -26,5 +27,5 @@ export const emom_hybrid: Skeleton = {
   score_type: 'reps_total',
   cap_factor: 1,
   allow_variant_up: false,
-  stimulus: { rpe: 7, note: 'Erg, course et charge en alternance ; garder un tiers de chaque départ pour récupérer.' },
+  stimulus: { rpe: 7, note: fr.banque.stimulus.emom_hybrid },
 };
