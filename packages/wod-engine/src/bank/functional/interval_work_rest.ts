@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const interval_work_rest: Skeleton = {
   id: 'interval_work_rest',
@@ -19,5 +20,5 @@ export const interval_work_rest: Skeleton = {
   score_type: 'time',
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 9, note: 'Chaque intervalle est un sprint, repos complet.' },
+  stimulus: { rpe: 9, note: fr.banque.stimulus.interval_work_rest },
 };

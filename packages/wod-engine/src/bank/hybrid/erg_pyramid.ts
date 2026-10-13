@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const erg_pyramid: Skeleton = {
   id: 'erg_pyramid',
@@ -17,5 +18,5 @@ export const erg_pyramid: Skeleton = {
   score_type: 'time',
   cap_factor: 1.25,
   allow_variant_up: false,
-  stimulus: { rpe: 7, note: 'Pyramide à allure régulière, la station courte relance sans casser le rythme.' },
+  stimulus: { rpe: 7, note: fr.banque.stimulus.erg_pyramid },
 };

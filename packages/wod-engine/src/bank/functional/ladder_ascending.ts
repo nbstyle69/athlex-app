@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const ladder_ascending: Skeleton = {
   id: 'ladder_ascending',
@@ -18,5 +19,5 @@ export const ladder_ascending: Skeleton = {
   score_type: 'time',
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 8, note: 'Les premiers paliers se font sans poser la barre.' },
+  stimulus: { rpe: 8, note: fr.banque.stimulus.ladder_ascending },
 };

@@ -13,6 +13,7 @@ import { estimateAll, estimateBlock, referenceCategory, roundSeconds, fixedWorkS
 import { VOLUME_CAP_FACTOR, genericCapFor } from './bank';
 import { signature } from './signature';
 import { render } from './render';
+import { fr } from './i18n/fr';
 
 export const ENGINE_VERSION = '1.1.0';
 export const MAX_ATTEMPTS = 200;
@@ -1171,7 +1172,7 @@ export function generateBlocC(params: GenerateRequest, catalog: Catalog, bank: S
   const athlete = params.budget_min === undefined;
   const pool = athlete ? candidatePool(ctx, params, bank, rng) : null;
   const tiers = athlete ? [] : candidateTiers(normalized, bank);
-  if (!pool && !tiers.length) throw new NoValidWod('Aucun squelette compatible', { no_skeleton: 1 });
+  if (!pool && !tiers.length) throw new NoValidWod(fr.generation.aucunSquelette, { no_skeleton: 1 });
   const recent = new Set(params.recent_signatures ?? []);
   const reasons: Record<string, number> = {};
   let tier = 0;
@@ -1205,5 +1206,5 @@ export function generateBlocC(params: GenerateRequest, catalog: Catalog, bank: S
       throw e;
     }
   }
-  throw new NoValidWod(`Aucun WOD valide après ${maxAttempts} tirages`, reasons);
+  throw new NoValidWod(fr.generation.aucunWod(maxAttempts), reasons);
 }

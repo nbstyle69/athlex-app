@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const stations_rotation: Skeleton = {
   id: 'stations_rotation',
@@ -22,5 +23,5 @@ export const stations_rotation: Skeleton = {
   score_type: 'reps_total',
   cap_factor: 1.0,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: 'Max effort sur chaque station, repos incomplet voulu.' },
+  stimulus: { rpe: 8, note: fr.banque.stimulus.stations_rotation },
 };

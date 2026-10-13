@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const triplet_rounds_for_time: Skeleton = {
   id: 'triplet_rounds_for_time',
@@ -18,5 +19,5 @@ export const triplet_rounds_for_time: Skeleton = {
   score_type: 'time',
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 8, note: 'Rounds réguliers, la barre ne se pose pas avant la fin du set.' },
+  stimulus: { rpe: 8, note: fr.banque.stimulus.triplet_rounds_for_time },
 };

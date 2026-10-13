@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const heavy_couplet: Skeleton = {
   id: 'heavy_couplet',
@@ -16,5 +17,5 @@ export const heavy_couplet: Skeleton = {
   score_type: 'time',
   cap_factor: 1.4,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: 'Charge lourde, sets non cassés, le mono sert de récupération active.' },
+  stimulus: { rpe: 8, note: fr.banque.stimulus.heavy_couplet },
 };

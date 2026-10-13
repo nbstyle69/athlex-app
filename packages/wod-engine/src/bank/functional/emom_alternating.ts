@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 const pair: Skeleton['slots'] = [
   { pick: { family: ['barbell', 'dumbbell', 'kettlebell'] }, qty: 'range' },
@@ -39,5 +40,5 @@ export const emom_alternating: Skeleton = {
   score_type: 'reps_total',
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 7, note: 'Garder au moins un tiers de chaque intervalle pour récupérer.' },
+  stimulus: { rpe: 7, note: fr.banque.stimulus.emom_alternating },
 };

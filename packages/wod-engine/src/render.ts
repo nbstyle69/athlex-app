@@ -1,5 +1,8 @@
 import type { Category, GeneratedBlock, GeneratedMovement, GeneratedWod, SkeletonFormat, WodType } from './types';
 import { FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES } from './types';
+import { fr } from './i18n/fr';
+
+const T = fr.rendu;
 
 /**
  * Rendu texte compatible avec la grammaire lue par `movementParser` côté app :
@@ -10,10 +13,7 @@ import { FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES } from './types';
  * ne sont volontairement pas créditées : leur quantité réalisée dépend du score.
  */
 
-export const CATEGORY_LABEL: Record<Category, string> = {
-  scaled: 'Scaled', inter: 'Inter', rx: 'RX', rxplus: 'RX+', elite: 'Elite', pro: 'Pro',
-  women: 'Women', men: 'Men', women_pro: 'Women Pro', men_pro: 'Men Pro',
-};
+export const CATEGORY_LABEL: Record<Category, string> = fr.categories;
 
 const WOD_TYPE: Record<SkeletonFormat, WodType> = {
   amrap: 'amrap', for_time: 'for-time', rounds_for_time: 'for-time', chipper: 'for-time', interval: 'for-time',
@@ -28,7 +28,7 @@ function mmss(s: number): string {
   const total = Math.round(s);
   const m = Math.floor(total / 60);
   const sec = total % 60;
-  return sec ? `${m}:${sec.toString().padStart(2, '0')}` : `${m}'`;
+  return sec ? `${m}:${sec.toString().padStart(2, '0')}` : fr.duree.minutes(m);
 }
 
 /** `43/30 kg` (Functional H/F) ou `100/75 kg` (Hybrid Men/Women). */
@@ -74,7 +74,7 @@ function loadsByCategoryLine(m: GeneratedMovement, wod: Pick<GeneratedWod, 'disc
     const pro = [m.loads_by_category.men_pro?.[0], m.loads_by_category.women_pro?.[0]];
     const std = [m.loads_by_category.men?.[0], m.loads_by_category.women?.[0]];
     if (JSON.stringify(pro) === JSON.stringify(std) || pro.some((v) => v == null)) return null;
-    parts.push(`Pro ${(pro as number[]).map(fmtNum).join('/')}`);
+    parts.push(`${CATEGORY_LABEL.pro} ${(pro as number[]).map(fmtNum).join('/')}`);
   }
   return parts.length ? `${parts.join(' · ')} ${m.load_unit}` : null;
 }
@@ -86,13 +86,13 @@ function substitutionLine(m: GeneratedMovement): string | null {
     if (!name || name === m.name) continue;
     seen.set(name, [...(seen.get(name) ?? []), CATEGORY_LABEL[c as Category]]);
   }
-  for (const [name, cats] of seen) parts.push(`${cats.join('/')} : ${name}`);
+  for (const [name, cats] of seen) parts.push(T.substitution(cats.join('/'), name));
   const vars = new Map<string, string[]>();
   for (const [c, name] of Object.entries(m.variant_by_category)) {
     if (!name) continue;
     vars.set(name, [...(vars.get(name) ?? []), CATEGORY_LABEL[c as Category]]);
   }
-  for (const [name, cats] of vars) parts.push(`${cats.join('/')} : ${name}`);
+  for (const [name, cats] of vars) parts.push(T.substitution(cats.join('/'), name));
   return parts.length ? parts.join(' · ') : null;
 }
 
@@ -104,25 +104,25 @@ function schemeText(b: GeneratedBlock): string {
 }
 
 function header(wod: GeneratedWod, b: GeneratedBlock): string[] {
-  const cap = b.timecap != null ? ` (cap ${mmss(b.timecap)})` : '';
+  const cap = b.timecap != null ? T.cap(mmss(b.timecap)) : '';
   const rounds = b.rounds ?? 0;
   switch (b.format) {
-    case 'amrap': return [`AMRAP ${wod.budget_min}`];
-    case 'for_time': return [b.scheme ? `For time · ${schemeText(b)}${cap}` : `For time${cap}`];
-    case 'rounds_for_time': return [`${rounds} rounds for time${cap}`];
-    case 'chipper': return [`Chipper · for time${cap}`];
+    case 'amrap': return [T.amrap(wod.budget_min)];
+    case 'for_time': return [b.scheme ? T.forTimeSchema(schemeText(b), cap) : T.forTime(cap)];
+    case 'rounds_for_time': return [T.roundsForTime(rounds, cap)];
+    case 'chipper': return [T.chipper(cap)];
     case 'ladder': return b.ladder
-      ? [`Ladder ${b.ladder.start}-${b.ladder.start + b.ladder.step}-${b.ladder.start + 2 * b.ladder.step}… · AMRAP ${wod.budget_min}`, `Monter les paliers (+${b.ladder.step} à chaque palier) jusqu'au temps, score = reps totales`]
-      : [`Ladder ${schemeText(b)} · for time${cap}`, 'Effectuer une fois tous les paliers indiqués'];
-    case 'emom': return [`EMOM ${wod.budget_min}${b.rest?.every_s && b.rest.every_s !== 60 ? ` · every ${mmss(b.rest.every_s)}` : ''} · ${b.movements.length} stations en alternance`];
-    case 'death_by': return [`EMOM ${wod.budget_min} · Death by : +1 rep par minute jusqu'à l'échec`];
-    case 'tabata': return [`Tabata × 2 blocs · 8 × 20 s / 10 s${b.rest?.transition_s ? `, transition ${b.rest.transition_s} s` : ''}`];
+      ? [T.ladderOuverte(b.ladder.start, b.ladder.start + b.ladder.step, b.ladder.start + 2 * b.ladder.step, wod.budget_min), T.ladderOuverteConsigne(b.ladder.step)]
+      : [T.ladderFinie(schemeText(b), cap), T.ladderFinieConsigne];
+    case 'emom': return [T.emom(wod.budget_min, b.rest?.every_s && b.rest.every_s !== 60 ? T.emomEvery(mmss(b.rest.every_s)) : '', b.movements.length)];
+    case 'death_by': return [T.deathBy(wod.budget_min)];
+    case 'tabata': return [T.tabata(b.rest?.transition_s ? T.tabataTransition(b.rest.transition_s) : '')];
     case 'interval': {
-      if (b.rest?.every_s) return [`${rounds} rounds · every ${mmss(b.rest.every_s)}`];
-      return [`${rounds} rounds · repos ${mmss(b.rest?.rest_s ?? 60)} entre les répétitions`];
+      if (b.rest?.every_s) return [T.intervalEvery(rounds, mmss(b.rest.every_s))];
+      return [T.intervalRepos(rounds, mmss(b.rest?.rest_s ?? 60))];
     }
-    case 'stations': return [`${rounds} rounds × ${b.movements.length} stations · ${b.rest?.work_s ?? 60} s on / ${b.rest?.rest_s ?? 0} s off`];
-    case 'continuous': return [`En continu ${wod.budget_min}' · rotation sans repos, score = distance totale`];
+    case 'stations': return [T.stations(rounds, b.movements.length, b.rest?.work_s ?? 60, b.rest?.rest_s ?? 0)];
+    case 'continuous': return [T.continu(wod.budget_min)];
   }
 }
 
@@ -138,14 +138,14 @@ function bodyLines(wod: GeneratedWod, b: GeneratedBlock): string[] {
   b.movements.forEach((m, i) => {
     const load = loadText(m, wod.discipline);
     const withLoad = (s: string) => (load ? `${s} (${load})` : s);
-    if (b.format === 'tabata') push(m, `Tabata ${i + 1} · ${withLoad(m.name)} (${m.unit === 's' ? 'tenue 20 s' : 'max reps'})`);
-    else if (b.format === 'stations') push(m, `Station ${i + 1} · ${withLoad(m.name)} (${m.unit === 's' ? 'tenue' : `max ${m.unit}, cible ${qtyText(m)}`})`);
-    else if (m.round !== undefined) push(m, `R${m.round} · ${movementLine(m, wod)}`);
+    if (b.format === 'tabata') push(m, T.ligneTabata(i + 1, withLoad(m.name), m.unit === 's'));
+    else if (b.format === 'stations') push(m, m.unit === 's' ? T.ligneStationTenue(i + 1, withLoad(m.name)) : T.ligneStation(i + 1, withLoad(m.name), m.unit, qtyText(m)));
+    else if (m.round !== undefined) push(m, T.ligneRound(m.round, movementLine(m, wod)));
     else if (m.scheme) push(m, withLoad(m.name));
-    else if (b.format === 'for_time' && b.scheme) push(m, `${movementLine(m, wod)} (entre chaque palier)`);
-    else if (m.per_minute) push(m, `${withLoad(m.name)} · min 1 : 1 rep, +1 rep par minute`);
-    else if (b.format === 'death_by') push(m, `${movementLine(m, wod)} (avant chaque série)`);
-    else if (b.format === 'emom') push(m, `Min ${i + 1} · ${movementLine(m, wod)}`);
+    else if (b.format === 'for_time' && b.scheme) push(m, T.lignePalier(movementLine(m, wod)));
+    else if (m.per_minute) push(m, T.ligneParMinute(withLoad(m.name)));
+    else if (b.format === 'death_by') push(m, T.ligneAvantSerie(movementLine(m, wod)));
+    else if (b.format === 'emom') push(m, T.ligneMinute(i + 1, movementLine(m, wod)));
     else push(m, movementLine(m, wod));
   });
   return out;
@@ -156,12 +156,13 @@ function footer(wod: GeneratedWod, b: GeneratedBlock): string[] {
   if (wod.vest) {
     const men = wod.vest.load_kg_by_category.men ?? 9;
     const women = wod.vest.load_kg_by_category.women ?? 6;
-    out.push(wod.vest.mode === 'required' ? `Gilet lesté ${men}/${women} kg` : `Gilet lesté optionnel ${men}/${women} kg`);
+    out.push(wod.vest.mode === 'required' ? T.gilet(men, women) : T.giletOptionnel(men, women));
   }
   const ref = wod.discipline === 'functional' ? 'rx' : 'men';
   const target = wod.estimate.by_category[ref]?.target;
   const scored = b.format === 'for_time' || b.format === 'rounds_for_time' || b.format === 'chipper';
-  out.push(`Stimulus : RPE ${fmtNum(wod.stimulus.rpe)} — ${wod.stimulus.note}${target ? ` Cible ${CATEGORY_LABEL[ref]} : ${target}${scored && b.timecap != null ? `, cap ${mmss(b.timecap)}` : ''}.` : ''}`);
+  out.push(T.stimulus(fmtNum(wod.stimulus.rpe), wod.stimulus.note,
+    target ? T.stimulusCible(CATEGORY_LABEL[ref], target, scored && b.timecap != null ? T.stimulusCap(mmss(b.timecap)) : '') : ''));
   return out;
 }
 
@@ -171,9 +172,8 @@ function titleOf(wod: GeneratedWod, b: GeneratedBlock): string {
   const names = all.slice(0, 3);
   if (all.length > 3) names[2] = `${names[2]} +${all.length - 3}`;
   const label: Record<SkeletonFormat, string> = {
-    amrap: `AMRAP ${wod.budget_min}`, for_time: b.scheme ? b.scheme.join('-') : 'For time',
-    rounds_for_time: `${b.rounds} rounds`, chipper: 'Chipper', ladder: 'Ladder', emom: `EMOM ${wod.budget_min}`,
-    death_by: 'Death by', tabata: 'Tabata', interval: 'Intervalles', stations: 'Stations', continuous: 'Continu',
+    ...T.titre, amrap: T.amrap(wod.budget_min), for_time: b.scheme ? b.scheme.join('-') : T.titre.for_time,
+    rounds_for_time: T.titre.rounds_for_time(b.rounds), emom: T.titreEmom(wod.budget_min),
   };
   return `${label[b.format]} · ${names.join(' / ')}`;
 }
@@ -190,7 +190,7 @@ export function render(wod: GeneratedWod): GeneratedWod {
     block_name: 'wod',
     time_cap_seconds: b.timecap ?? wod.budget_min * 60,
     rounds: b.rounds,
-    notes: `${wod.stimulus.note} Score : ${wod.score_type}.`,
+    notes: T.notes(wod.stimulus.note, wod.score_type),
     video_url: null,
     leaderboard_enabled: true,
     emom_interval_minutes: b.format === 'emom' || b.format === 'death_by' ? (b.rest?.every_s ?? 60) / 60 : null,

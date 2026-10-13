@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 /** Stations Hybrid (ergs en mètres). */
 export const HYBRID_STATIONS = [
@@ -21,5 +22,5 @@ export const run_into_station: Skeleton = {
   score_type: 'time',
   cap_factor: 1.25,
   allow_variant_up: false,
-  stimulus: { rpe: 8.5, note: 'Allure course à 90 % du 5 km, stations sans pause.' },
+  stimulus: { rpe: 8.5, note: fr.banque.stimulus.run_into_station },
 };

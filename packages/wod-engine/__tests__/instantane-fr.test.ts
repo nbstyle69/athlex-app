@@ -89,20 +89,34 @@ describe('instantané du texte français du moteur (M0)', () => {
     }
   });
 
+  // Deux contrôles par chemin sur les mêmes mesures : le texte et la sortie d'un côté,
+  // la séquence des tirages (nombre et ordre des appels au RNG) de l'autre (M1).
   for (const c of CHEMINS) {
-    it(`${c.nom} : ${c.n} entrées identiques à l’instantané (texte, sortie, tirages)`, async () => {
-      const empreintes: string[] = [];
-      const ecarts: string[] = [];
-      const attendues = fixture.chemins[c.nom]?.empreintes ?? [];
+    const mesures: Mesure[] = [];
+    const attendues = () => fixture.chemins[c.nom]?.empreintes ?? [];
+    const ecarts = (garde: (a: string[], b: string[]) => boolean) => {
+      const out: string[] = [];
+      mesures.forEach((m, k) => {
+        const a = (attendues()[k] ?? '- - - -').split(' ');
+        if (garde(a, m.empreinte.split(' ')) && out.length < 10) out.push(ecart(c.nom, k, attendues()[k] ?? '- - - -', m));
+      });
+      return out;
+    };
+
+    it(`${c.nom} : ${c.n} entrées identiques à l’instantané (texte, sortie)`, async () => {
       for (let k = 0; k < c.n; k++) {
         const m = await mesurer(c.nom, k);
-        empreintes.push(m.empreinte);
+        mesures.push(m);
         if (k < c.lisible) nouveauLisible.push(enTete(c.nom, k), ...m.texte, '');
-        if (!ECRIRE && m.empreinte !== attendues[k] && ecarts.length < 10) ecarts.push(ecart(c.nom, k, attendues[k] ?? '- - - -', m));
       }
-      nouveau.chemins[c.nom] = { n: c.n, empreintes };
-      expect(ecarts).toEqual([]);
+      nouveau.chemins[c.nom] = { n: c.n, empreintes: mesures.map((m) => m.empreinte) };
+      if (!ECRIRE) expect(ecarts((a, b) => a[0] !== b[0] || a[1] !== b[1])).toEqual([]);
     }, 300_000);
+
+    it(`${c.nom} : séquence des tirages identique (nombre et ordre des appels au RNG)`, () => {
+      expect(mesures).toHaveLength(c.n);
+      if (!ECRIRE) expect(ecarts((a, b) => a[2] !== b[2] || a[3] !== b[3])).toEqual([]);
+    });
   }
 
   afterAll(() => {

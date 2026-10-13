@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const sled_repeats: Skeleton = {
   id: 'sled_repeats',
@@ -37,5 +38,5 @@ export const sled_repeats: Skeleton = {
   score_type: 'time',
   cap_factor: 1.25,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: 'Lourd et court, repos réel entre les tours.' },
+  stimulus: { rpe: 8, note: fr.banque.stimulus.sled_repeats },
 };

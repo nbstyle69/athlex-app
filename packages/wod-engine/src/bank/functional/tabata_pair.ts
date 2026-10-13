@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const tabata_pair: Skeleton = {
   id: 'tabata_pair',
@@ -17,5 +18,5 @@ export const tabata_pair: Skeleton = {
   score_type: 'reps_total',
   cap_factor: 1.0,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: 'Score = somme des reps min de chaque bloc.' },
+  stimulus: { rpe: 8, note: fr.banque.stimulus.tabata_pair },
 };

@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const amrap_distances: Skeleton = {
   id: 'amrap_distances',
@@ -18,5 +19,5 @@ export const amrap_distances: Skeleton = {
   score_type: 'rounds_reps',
   cap_factor: 1.0,
   allow_variant_up: false,
-  stimulus: { rpe: 8, note: 'Allure constante, chaque round dans les 15 s du précédent.' },
+  stimulus: { rpe: 8, note: fr.banque.stimulus.amrap_distances },
 };

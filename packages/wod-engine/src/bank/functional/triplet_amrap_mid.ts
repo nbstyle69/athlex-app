@@ -1,4 +1,5 @@
 import type { Skeleton } from '../../types';
+import { fr } from '../../i18n/fr';
 
 export const triplet_amrap_mid: Skeleton = {
   id: 'triplet_amrap_mid',
@@ -17,5 +18,5 @@ export const triplet_amrap_mid: Skeleton = {
   score_type: 'rounds_reps',
   cap_factor: 1.4,
   allow_variant_up: true,
-  stimulus: { rpe: 7.5, note: 'Tenable 20 min, transitions rapides.' },
+  stimulus: { rpe: 7.5, note: fr.banque.stimulus.triplet_amrap_mid },
 };
