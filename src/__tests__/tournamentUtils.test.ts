@@ -2,7 +2,6 @@ import {
   normalizeMovement,
   formatDate,
   isRepsScoredType,
-  repsPerRoundFromMovements,
   amrapTotalToRoundsReps,
   roundsRepsToTotal,
   formatAmrapScore,
@@ -13,6 +12,7 @@ import {
   parseScoreToNumber,
   formatScoreDisplay,
 } from '../utils/tournamentUtils';
+import { repsPerRoundFromMovements } from '../utils/movementParser';
 
 // Libellé des tours en français (fourni par l'écran dans l'app : t('score.amrapRounds')).
 const frRounds = (n: number) => `${n} tour${n > 1 ? 's' : ''}`;

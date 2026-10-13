@@ -21,8 +21,9 @@ import GlassBackground from '../../components/glass/GlassBackground';
 import { useTranslation } from 'react-i18next';
 import { errorMessage } from '../../utils/refusals';
 import {
-  isRepsScoredType, isTimeScoredType, repsPerRoundFromMovements, formatScoreDisplay,
+  isRepsScoredType, isTimeScoredType, formatScoreDisplay,
 } from '../../utils/tournamentUtils';
+import { repsPerRoundFromMovements } from '../../utils/movementParser';
 import ScoreEntryFields, { ScoreKind } from '../../components/score/ScoreEntryFields';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 

@@ -35,6 +35,73 @@ export function isPercentLine(line: string): boolean {
   return /^\d+(?:[.,]\d+)?(?:\s*\/\s*\d+(?:[.,]\d+)?)?\s*%/.test(line.trim());
 }
 
+/** `5 rounds`, `5 rds`, `3 tours`, `5 RFT`, suivis ou non d'un texte. */
+const ROUNDS_HEADER = /^(\d+)\s*(?:rounds?|rds?|tours?|rft)\b/i;
+
+/**
+ * En-têtes de format : jamais une ligne de mouvement, aucune rep ni au score ni
+ * au crédit. Cas attendus partagés avec le Manager :
+ * `supabase/seed/wod_header_cases.json`.
+ */
+const HEADER_PATTERNS: readonly RegExp[] = [
+  ROUNDS_HEADER,
+  /^\d+\s*(?:min(?:utes?)?|mn|['’′])(?!\w)/i,                   // 12 min AMRAP, 12' AMRAP
+  /^\d+\s*(?:amrap|emom|for\s*time|tabata|chipper|ladder)\b/i,  // 12 AMRAP, 20 EMOM
+  /^\d+(?:\s*[-–]\s*\d+)+/,                                     // 21-15-9
+  /:$/,                                                         // 5 Rounds For Time :
+  /^(?:amrap|emom|e\d+mom|for\s*time|tabata|pyramide|ladder|chipper|death\s*by|every|en continu|min\s+\d|time\s*cap|cap\b|rest|repos|⚡|──)/i,
+  /⟨.*⟩/,                                                       // libellés de format d'équipe
+];
+
+export function isFormatHeaderLine(line: string): boolean {
+  const s = (line ?? '').trim();
+  return HEADER_PATTERNS.some(re => re.test(s));
+}
+
+const DURATION_LINE = /^\d+(?:\s*\/\s*\d+)?\s*(?:s|sec|secs|sec\.|")\s+\S/i;
+const DISTANCE_LINE = /^(\d+(?:[.,]\d+)?)(?:\s*\/\s*\d+(?:[.,]\d+)?)?\s*(m|km|mi|miles?|yds?|yards?|meters?|metres?|mètres?)\b/i;
+const METERS_PER_UNIT: Record<string, number> = {
+  km: 1000, mi: 1609.344, mile: 1609.344, miles: 1609.344, yd: 0.9144, yds: 0.9144, yard: 0.9144, yards: 0.9144,
+};
+const SHUTTLE_RUN = /\bshuttle[\s-]*runs?\b/i;
+
+/**
+ * Points d'une distance au score : 1 par tranche COMPLÈTE de 100 m ; un shuttle
+ * run compte 1 par aller de 7,62 m. Calcul en centimètres entiers (30 m / 7,62 m
+ * sans erreur d'arrondi flottant).
+ */
+function distancePoints(meters: number, line: string): number {
+  return Math.floor(Math.round(meters * 100) / (SHUTTLE_RUN.test(line) ? 762 : 10000));
+}
+
+/**
+ * Reps d'un tour d'AMRAP / Max Reps, pour convertir « tours + reps » en total.
+ * Toutes les lignes de reps comptent, même un mouvement hors catalogue :
+ * l'athlète a fait ces reps ; les calories comptent comme des reps, une
+ * distance en points (`distancePoints`), un shuttle run écrit en nombre vaut un
+ * point par aller. En-têtes et pourcentages ne comptent pas. Une ligne en durée
+ * rend le tour hétérogène : 0, la conversion est désactivée et l'athlète
+ * saisit un total.
+ */
+export function repsPerRoundFromMovements(movements: string[] | null | undefined): number {
+  if (!Array.isArray(movements)) return 0;
+  let sum = 0;
+  for (const raw of movements) {
+    const line = (raw ?? '').trim();
+    if (!line || isFormatHeaderLine(line) || isPercentLine(line)) continue;
+    if (DURATION_LINE.test(line)) return 0;
+    const d = line.match(DISTANCE_LINE);
+    if (d) {
+      sum += distancePoints(parseFloat(d[1].replace(',', '.')) * (METERS_PER_UNIT[d[2].toLowerCase()] ?? 1), line);
+      continue;
+    }
+    const entry = parseMovementLine(line);
+    if (!entry) continue;
+    sum += entry.unit === 'm' ? distancePoints(entry.reps, line) : entry.reps;
+  }
+  return sum;
+}
+
 /**
  * Parse a formatted movement line from generated WODs.
  * Examples:
@@ -43,6 +110,7 @@ export function isPercentLine(line: string): boolean {
  *   "20/15 cal Row"         → reps 20 (♂) ou 15 (♀ via `options.gender`)
  *   "500 m Run (RPE 7)"     → { name: "Run", reps: 500, unit: "m" }
  *   "400m Course"           → { name: "Course", reps: 400, unit: "m" }
+ *   "1.5 km Row"            → { name: "Row", reps: 1500, unit: "m" }
  *   "20 Row" / "800 Run"    → unité par défaut du catalogue (cal / m)
  *   "30 s Plank Hold"       → null  (tenue en secondes : aucun crédit)
  *   "12 Box Jumps (60/50 cm)" → { name: "Box Jumps", reps: 12 }  (hauteur, pas de weight_kg)
@@ -57,20 +125,12 @@ export function parseMovementLine(line: string, options?: ParseOptions): Movemen
   const trimmed = line.trim();
   const gender = options?.gender;
 
-  // Skip headers & labels
-  if (!trimmed) return null;
-  if (/^\d+\s+rounds?\s+/i.test(trimmed)) return null;
-  if (/^(amrap|emom|for time|tabata|pyramide|ladder|chipper|──|min\s+\d)/i.test(trimmed)) return null;
-  if (/^\d+[-–]\d+/.test(trimmed)) return null; // rep scheme like "21-15-9 :"
-  if (trimmed.endsWith(':')) return null;
-  if (trimmed.startsWith('⚡') || trimmed.startsWith('──')) return null;
-  if (/⟨.*⟩/.test(trimmed)) return null; // team format labels
-  if (isPercentLine(trimmed)) return null;
+  if (!trimmed || isFormatHeaderLine(trimmed) || isPercentLine(trimmed)) return null;
 
   // Durées : "30 s Plank Hold", "45/30 s Hollow Hold" — une tenue ne crédite
   // aucun compteur (pas de badge en secondes) et ne doit surtout pas être lue
   // comme « 30 reps de "s Plank Hold" ».
-  if (/^\d+(?:\s*\/\s*\d+)?\s*(?:s|sec|secs|sec\.|")\s+\S/i.test(trimmed)) return null;
+  if (DURATION_LINE.test(trimmed)) return null;
 
   // Cardio: "20 cal Row", "20/15 cal Row", "500 m Run (RPE 7)", "400m Course".
   // Sans espace ("400m") l'ancien parseur comptait 1 rep : la distance vaut
@@ -81,6 +141,16 @@ export function parseMovementLine(line: string, options?: ParseOptions): Movemen
     const name = cardioMatch[4].replace(/\s*\([^)]*\)/g, '').replace(/\s*@.*$/, '').trim();
     if (isNaN(reps) || reps <= 0 || !name) return null;
     return { name, reps, unit: normalizeUnit(cardioMatch[3]) };
+  }
+
+  // "1 km Run", "1.5 km Row" : des mètres, comme "1000m Run".
+  const kmMatch = trimmed.match(/^(\d+(?:[.,]\d+)?)(?:\s*\/\s*(\d+(?:[.,]\d+)?))?\s*km\b\.?\s+(.+)$/i);
+  if (kmMatch) {
+    const km = gender === 'female' && kmMatch[2] != null ? kmMatch[2] : kmMatch[1];
+    const reps = Math.round(parseFloat(km.replace(',', '.')) * 1000);
+    const name = kmMatch[3].replace(/\s*\([^)]*\)/g, '').replace(/\s*@.*$/, '').trim();
+    if (!(reps > 0) || !name) return null;
+    return { name, reps, unit: 'm' };
   }
 
   // Standard: "12 Thrusters (43 kg)", "15 Cal Assault Bike", "21/15 Pull-ups",
@@ -139,6 +209,12 @@ export function computeCompletedMovements(
   options?: ParseOptions,
 ): MovementEntry[] {
   const cardio = parseCardioBlocks(movements);
+  // AMRAP en reps : le score se répartit au prorata des lignes. Une distance
+  // rend le tour hétérogène (score en points, lignes en mètres) : on ne sait
+  // pas ce que le score prouve, rien — comme la garde AMRAP du serveur.
+  const hasDistance = cardio.some(c => c.unit === 'm')
+    || movements.some(l => parseMovementLine(l, options)?.unit === 'm');
+  if (wodType === 'AMRAP' && scoreType === 'reps' && hasDistance) return [];
   const metcon = computeMetconMovements(movements, wodType, scoreValue, scoreType, options);
   return [...metcon, ...cardio];
 }
@@ -250,7 +326,7 @@ function computeFromEntries(
 
 function extractHeaderRounds(movements: string[]): number {
   for (const line of movements) {
-    const match = line.match(/^(\d+)\s+rounds?\s+/i);
+    const match = line.trim().match(ROUNDS_HEADER);
     if (match) return parseInt(match[1], 10);
   }
   return 1;

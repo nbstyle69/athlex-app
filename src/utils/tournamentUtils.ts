@@ -146,24 +146,12 @@ export interface TournamentWOD {
 // ── AMRAP / Max Reps score helpers ────────────────────────────────────────
 // Score for these WODs is normalized to a TOTAL rep count so ranking stays
 // coherent whether the athlete entered "rounds + reps" or a raw total.
-// reps_per_round converts between the two representations. Mirrors
-// TheHub/lib/movements.ts.
+// reps_per_round converts between the two representations; derived from the
+// movements by `repsPerRoundFromMovements` (movementParser.ts).
 
 export function isRepsScoredType(type: string | null | undefined): boolean {
   const t = (type ?? '').toLowerCase();
   return t === 'amrap' || t === 'max reps';
-}
-
-// Leading rep count of one movement line ("10 Thruster (43/30 kg)" -> 10).
-function repsFromMovementLine(line: string): number | null {
-  const s = (line ?? '').trim().replace(/\((?:[^)]*)\)/g, '').replace(/@.*$/, '').trim();
-  const m = s.match(/^(\d+)\s*(?:reps?|x)?\s*[—\-:]?\s*(.+)$/i);
-  return m ? parseInt(m[1], 10) : null;
-}
-
-export function repsPerRoundFromMovements(movements: string[] | null | undefined): number {
-  if (!Array.isArray(movements)) return 0;
-  return movements.reduce((acc, line) => acc + (repsFromMovementLine(line) ?? 0), 0);
 }
 
 export function amrapTotalToRoundsReps(
