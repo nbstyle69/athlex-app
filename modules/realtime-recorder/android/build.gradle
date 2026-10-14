@@ -18,6 +18,8 @@ android {
   defaultConfig {
     minSdkVersion safeExtGet("minSdkVersion", 24)
     targetSdkVersion safeExtGet("targetSdkVersion", 36)
+    // Debug harness only (androidTest: never in the app build) — CountdownRenderTest.
+    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
   }
 
   buildFeatures {
@@ -59,6 +61,10 @@ dependencies {
 
   // JVM unit tests of the pure rules (VideoQuality…): ./gradlew :realtime-recorder:testDebugUnitTest
   testImplementation "junit:junit:4.13.2"
+  // Countdown drawn by OverlayRenderer on an off-screen bitmap, on a device or emulator:
+  // ./gradlew :realtime-recorder:connectedDebugAndroidTest
+  androidTestImplementation "androidx.test:runner:1.6.2"
+  androidTestImplementation "androidx.test.ext:junit:1.2.1"
 }
 
 def getKotlinVersion() {

@@ -189,7 +189,7 @@ class OverlayRenderer(private val context: Context) {
 
     // ─── 3. Countdown (center) — same look as the on-screen CountdownView ───
     if (state.countdownValue > 0) {
-      drawCountdown(canvas, width, height, refDim, isLandscape, state)
+      drawCountdown(canvas, width, height, state)
     }
 
     // ════════════════════════════════════════════
@@ -261,46 +261,70 @@ class OverlayRenderer(private val context: Context) {
   // MARK: - Countdown
 
   /**
-   * Label above a circle of diameter `d`: « PRÉPARE-TOI » + white digit in a
-   * 35 % ring above 3, « PRÊT ? » + accent digit on a 12 % accent halo at 3-2-1.
-   * The label + ring group is centered in the frame, each text by its ink.
+   * #547 PR 3 — same look as the on-screen CountdownView (#549) at rest, fixed:
+   * label above a thin ring (white 35 % above 3, accent 35 % at 3-2-1), digit
+   * (white, then accent) inscribed in the inner ring and centered on it by its
+   * glyph: baseline − capHeight / 2 on the ring center ([CountdownLayout]).
    */
-  private fun drawCountdown(canvas: Canvas, width: Float, height: Float, refDim: Float, isLandscape: Boolean, state: OverlayState) {
+  private fun drawCountdown(canvas: Canvas, width: Float, height: Float, state: OverlayState) {
     val accent = parseColor(state.accentColor, Color.WHITE)
     val tense = state.countdownTense
-    val layout = CountdownLayout.countdown(width, height, isLandscape, hasLabel = state.countdownLabel.isNotEmpty())
-    val d = layout.ringDiameter
-    val cx = layout.centerX
-    val cy = layout.ringCenterY
+    val m = digitMetrics(CountdownLayout.maxValue(state.countdownMax, state.countdownValue))
+    val c = CountdownLayout.countdown(width, height, hasLabel = state.countdownLabel.isNotEmpty(), m = m)
 
     if (state.countdownLabel.isNotEmpty()) {
       configurePaint(
-        CountdownLayout.labelSize(d), if (tense) accent else Color.argb(204, 255, 255, 255),
-        shadow = true, letterSpacing = 0.33f
+        c.labelSize, if (tense) accent else Color.argb(204, 255, 255, 255),
+        shadow = true, letterSpacing = c.labelTracking / c.labelSize
       )
-      drawInkCentered(canvas, state.countdownLabel, cx, layout.labelCenterY)
+      // Ink centered horizontally, its bottom LABEL_GAP above the ring.
+      val ink = inkOf(state.countdownLabel)
+      canvas.drawText(
+        state.countdownLabel,
+        CountdownLayout.originXFor(c.centerX, ink.left.toFloat(), ink.right.toFloat()),
+        c.labelInkBottomY - ink.bottom, textPaint
+      )
     }
 
     shapePaint.reset()
     shapePaint.isAntiAlias = true
-    if (tense) {
-      shapePaint.style = Paint.Style.FILL
-      shapePaint.color = withAlpha(accent, 0.12f)
-      canvas.drawCircle(cx, cy, d / 2f, shapePaint)
-    } else {
-      val w = d * 0.01f
-      shapePaint.style = Paint.Style.STROKE
-      shapePaint.strokeWidth = w
-      shapePaint.color = Color.argb(89, 255, 255, 255)
-      canvas.drawCircle(cx, cy, d / 2f - w / 2f, shapePaint)
-    }
+    shapePaint.style = Paint.Style.STROKE
+    shapePaint.strokeWidth = c.ringBorder
+    shapePaint.color = if (tense) withAlpha(accent, 0.35f) else Color.argb(89, 255, 255, 255)
+    canvas.drawCircle(c.centerX, c.ringCenterY, c.ringDiameter / 2f - c.ringBorder / 2f, shapePaint)
 
-    configurePaint(
-      CountdownLayout.digitSize(d, tense), if (tense) accent else Color.WHITE,
-      shadow = !tense, oswaldMedium = true,
-      glowColor = if (tense) withAlpha(accent, 0.5f) else null, glowRadius = d * 0.11f
-    )
-    drawInkCentered(canvas, "${state.countdownValue}", cx, cy)
+    configurePaint(c.digitSize, if (tense) accent else Color.WHITE, shadow = !tense, oswaldMedium = true)
+    // Centered by its advance (like textAlign center on screen). textAlign stays LEFT: the shared
+    // paint keeps it across reset(), and the « ATHLEX » wordmark drawn next would be shifted.
+    val digit = "${state.countdownValue}"
+    canvas.drawText(digit, c.centerX - textPaint.measureText(digit) / 2f, c.digitBaselineY, textPaint)
+  }
+
+  private var metricsMax = -1
+  private var metrics = CountdownLayout.DigitMetrics(0f, 0f, 0f)
+
+  /**
+   * Measures of the Oswald Medium actually drawn, read at 1000 px (em = px / 1000):
+   * advances by measureText, heights by the glyph outlines (getTextPath), exact —
+   * getTextBounds rounds the rasterized bounds outward (« H » : 813 for 810).
+   */
+  internal fun digitMetrics(max: Int): CountdownLayout.DigitMetrics {
+    if (max == metricsMax) return metrics
+    configurePaint(1000f, Color.WHITE, oswaldMedium = true)
+    var widest = 0f
+    for (v in 1..max) widest = maxOf(widest, textPaint.measureText("$v"))
+    val digits = outlineBounds("0123456789")
+    val cap = outlineBounds("H")
+    metrics = CountdownLayout.DigitMetrics(widest / 1000f, digits.height() / 1000f, -cap.top / 1000f)
+    metricsMax = max
+    return metrics
+  }
+
+  /** Outline bounds of `text` with the current paint, relative to (x = 0, baseline = 0). */
+  private fun outlineBounds(text: String): RectF {
+    val path = Path()
+    textPaint.getTextPath(text, 0, text.length, 0f, 0f, path)
+    return RectF().also { path.computeBounds(it, true) }
   }
 
   /** Accent band tilted by -4° through the center of the frame, « GO ! » ink-centered in `goInk`. */

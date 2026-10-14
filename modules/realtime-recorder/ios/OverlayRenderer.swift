@@ -12,7 +12,8 @@ struct OverlayState {
   var isRecording: Bool = false
   var countdownValue: Int = 0         // >0 means countdown is visible
   var countdownLabel: String = ""     // « PRÉPARE-TOI » / « PRÊT ? », already translated
-  var countdownTense: Bool = false    // 3-2-1: label, digit and halo in accent
+  var countdownTense: Bool = false    // 3-2-1: label, digit and ring in accent
+  var countdownMax: Int = 0           // duration of the countdown (largest value): sizes the digit, #547 PR 3
   var goLabel: String = ""            // « GO ! » band, empty = hidden
   var accentColor: String = "#FFFFFF" // accent, contrast already ensured by JS
   var goInk: String = "#101214"       // text ink on the accent band
@@ -227,7 +228,7 @@ final class OverlayRenderer {
 
     // ─── 3. Countdown (center) — same look as the on-screen CountdownView (R5b/R6b) ───
     if state.countdownValue > 0 {
-      drawCountdown(context: context, size: size, refDim: refDim, isLandscape: isLandscape, state: state)
+      drawCountdown(context: context, size: size, state: state)
     }
 
     // ════════════════════════════════════════════
@@ -291,41 +292,87 @@ final class OverlayRenderer {
 
   // MARK: - Countdown
 
-  /// Label above a circle of diameter `d`: « PRÉPARE-TOI » + white digit in a
-  /// 35 % ring above 3, « PRÊT ? » + accent digit on a 12 % accent halo at 3-2-1.
-  /// The label + ring group is centered in the frame, each text by its ink.
-  private func drawCountdown(context: CGContext, size: CGSize, refDim: CGFloat, isLandscape: Bool, state: OverlayState) {
+  /// #547 PR 3 — same look as the on-screen CountdownView (#549) at rest, fixed:
+  /// label above a thin ring (white 35 % above 3, accent 35 % at 3-2-1), digit
+  /// (white, then accent) inscribed in the inner ring and centered on it by its
+  /// glyph: baseline − capHeight / 2 on the ring center (CountdownLayout).
+  /// Drawn with CoreText at an explicit baseline: `boundingRect(… .usesDeviceMetrics)`
+  /// returns the glyph box from the baseline, while `draw(with: … .usesLineFragmentOrigin)`
+  /// places the top of the line, which put the digit about 0.385 em too low.
+  private func drawCountdown(context: CGContext, size: CGSize, state: OverlayState) {
     let accent = UIColor(hex: state.accentColor) ?? .white
     let tense = state.countdownTense
-    let layout = CountdownLayout.countdown(size: size, isLandscape: isLandscape, hasLabel: !state.countdownLabel.isEmpty)
-    let d = layout.ringDiameter
-    let circle = CGRect(x: layout.centerX - d / 2, y: layout.ringCenterY - d / 2, width: d, height: d)
+    let m = digitMetrics(upTo: CountdownLayout.maxValue(state.countdownMax, state.countdownValue))
+    let c = CountdownLayout.countdown(size: size, hasLabel: !state.countdownLabel.isEmpty, metrics: m)
 
     if !state.countdownLabel.isEmpty {
-      let labelSize = CountdownLayout.labelSize(d)
-      drawInkCentered(context: context, text: state.countdownLabel,
-                      center: CGPoint(x: layout.centerX, y: layout.labelCenterY),
-                      fontSize: labelSize, color: tense ? accent : UIColor.white.withAlphaComponent(0.8),
-                      weight: .medium, shadow: true, tracking: labelSize * 0.33)
+      let font = UIFont.systemFont(ofSize: c.labelSize, weight: .medium)
+      let line = ctLine(state.countdownLabel, font: font,
+                        color: tense ? accent : UIColor.white.withAlphaComponent(0.8), kern: c.labelTracking)
+      // Ink centered horizontally, its bottom labelGap above the ring (glyph bounds: y up, from the baseline).
+      let ink = CTLineGetBoundsWithOptions(line, .useGlyphPathBounds)
+      drawLine(line, context: context, x: c.centerX - ink.midX, baseline: c.labelInkBottomY + ink.minY, shadow: true)
     }
 
+    let r = c.ringDiameter / 2 - c.ringBorder / 2
     context.saveGState()
-    if tense {
-      context.setFillColor(accent.withAlphaComponent(0.12).cgColor)
-      context.fillEllipse(in: circle)
-    } else {
-      let w = d * 0.01
-      context.setStrokeColor(UIColor.white.withAlphaComponent(0.35).cgColor)
-      context.setLineWidth(w)
-      context.strokeEllipse(in: circle.insetBy(dx: w / 2, dy: w / 2))
-    }
+    context.setStrokeColor((tense ? accent : UIColor.white).withAlphaComponent(0.35).cgColor)
+    context.setLineWidth(c.ringBorder)
+    context.strokeEllipse(in: CGRect(x: c.centerX - r, y: c.ringCenterY - r, width: 2 * r, height: 2 * r))
     context.restoreGState()
 
-    drawInkCentered(context: context, text: "\(state.countdownValue)",
-                    center: CGPoint(x: circle.midX, y: circle.midY),
-                    fontSize: CountdownLayout.digitSize(d, tense: tense), color: tense ? accent : .white,
-                    shadow: !tense, oswaldMedium: true,
-                    glow: tense ? accent.withAlphaComponent(0.5) : nil, glowRadius: d * 0.11)
+    let font = (oswaldMediumFont ?? UIFont.systemFont(ofSize: 40, weight: .medium)).withSize(c.digitSize)
+    let line = ctLine("\(state.countdownValue)", font: font, color: tense ? accent : .white)
+    let width = CGFloat(CTLineGetTypographicBounds(line, nil, nil, nil))
+    drawLine(line, context: context, x: c.centerX - width / 2, baseline: c.digitBaselineY, shadow: !tense)
+  }
+
+  private var metricsUpTo = -1
+  private var metrics = CountdownLayout.DigitMetrics(widestAdvanceEm: 0, inkHeightEm: 0, capHeightEm: 0)
+
+  /// Measures of the Oswald Medium actually drawn, read at 1000 pt (em = pt / 1000):
+  /// advances from CoreText, digits' ink from their glyph outlines, capitals from UIFont.capHeight.
+  private func digitMetrics(upTo maxValue: Int) -> CountdownLayout.DigitMetrics {
+    if maxValue == metricsUpTo { return metrics }
+    let font = (oswaldMediumFont ?? UIFont.systemFont(ofSize: 40, weight: .medium)).withSize(1000)
+    var widest: CGFloat = 0
+    for v in 1...max(1, maxValue) {
+      widest = max(widest, CGFloat(CTLineGetTypographicBounds(ctLine("\(v)", font: font), nil, nil, nil)))
+    }
+    let ink = CTLineGetBoundsWithOptions(ctLine("0123456789", font: font), .useGlyphPathBounds)
+    if metricsUpTo < 0 {
+      // OSWALD_MEDIUM: ascender 1193, descender -289, capHeight 810 (unitsPerEm 1000).
+      print("[OverlayRenderer] \(font.fontName) @1000: ascender \(font.ascender) descender \(font.descender) capHeight \(font.capHeight) leading \(font.leading)")
+    }
+    metrics = CountdownLayout.DigitMetrics(widestAdvanceEm: widest / 1000, inkHeightEm: ink.height / 1000,
+                                           capHeightEm: font.capHeight / 1000)
+    metricsUpTo = maxValue
+    return metrics
+  }
+
+  /// One CoreText line: the font, its color (CGColor, read by CoreText) and an optional letter spacing.
+  private func ctLine(_ text: String, font: UIFont, color: UIColor = .white, kern: CGFloat = 0) -> CTLine {
+    var attrs: [NSAttributedString.Key: Any] = [
+      .font: font,
+      NSAttributedString.Key(kCTForegroundColorAttributeName as String): color.cgColor,
+    ]
+    if kern != 0 { attrs[.kern] = kern }
+    return CTLineCreateWithAttributedString(NSAttributedString(string: text, attributes: attrs) as CFAttributedString)
+  }
+
+  /// Draws `line` with its baseline at `baseline` (top-left, y-down context), its origin at `x`.
+  private func drawLine(_ line: CTLine, context: CGContext, x: CGFloat, baseline: CGFloat, shadow: Bool) {
+    context.saveGState()
+    if shadow {
+      // Shadow offsets are in device space (y up): (1, -1) is down-right, like NSShadow (1, 1).
+      context.setShadow(offset: CGSize(width: 1, height: -1), blur: 4, color: UIColor.black.withAlphaComponent(0.7).cgColor)
+    }
+    context.textMatrix = .identity
+    context.translateBy(x: x, y: baseline)
+    context.scaleBy(x: 1, y: -1)
+    context.textPosition = .zero
+    CTLineDraw(line, context)
+    context.restoreGState()
   }
 
   /// Accent band tilted by -4° through the center of the frame, « GO ! » ink-centered in `goInk`.
@@ -467,25 +514,75 @@ final class OverlayRenderer {
 
 /// Geometry of the countdown burned into the video, centered in the frame
 /// (portrait or landscape, front or back camera: the overlay is drawn on the
-/// already-oriented buffer and never mirrored). Same rules and numbers as
-/// `CountdownLayout.kt`, which is JVM-tested.
+/// already-oriented buffer and never mirrored). #547 PR 3: same look as the
+/// on-screen CountdownView (#549) at rest, fixed. The frame stands for a screen
+/// whose short side is `refShortDp`: dp values scale by `shortSide / refShortDp`.
+/// Same rules and numbers as `CountdownLayout.kt` (JVM-tested); the values copied
+/// from TimerRunScreen.tsx are checked by the jest test decompteVideoParite.test.ts.
 enum CountdownLayout {
-  static func ringDiameter(_ refDim: CGFloat, isLandscape: Bool) -> CGFloat { refDim * (isLandscape ? 0.5 : 0.55) }
-  static func labelSize(_ ringDiameter: CGFloat) -> CGFloat { ringDiameter * 0.07 }
-  static func digitSize(_ ringDiameter: CGFloat, tense: Bool) -> CGFloat { ringDiameter * (tense ? 0.7 : 0.55) }
-  static func gap(_ ringDiameter: CGFloat) -> CGFloat { ringDiameter * 0.04 }
+  /// TimerRunScreen.tsx: CD_RING_RATIO, CD_RING_BORDER, CD_INK_MARGIN.
+  static let ringRatio: CGFloat = 0.36
+  static let ringBorderDp: CGFloat = 2
+  static let inkMarginDp: CGFloat = 6
+  /// CountdownView label: axTypography.overline (12, letter spacing 4), gap axSpacing.sm (8).
+  static let labelSizeDp: CGFloat = 12
+  static let labelTrackingDp: CGFloat = 4
+  static let labelGapDp: CGFloat = 8
+  /// Short side, in dp, of the screen the video frame stands for.
+  static let refShortDp: CGFloat = 390
+
   static func goSize(_ refDim: CGFloat) -> CGFloat { refDim * 0.16 }
 
-  /// Label above the ring, the pair centered in `size`. The label block is one
-  /// font size tall whatever the label: « PRÉPARE-TOI » → « PRÊT ? » never moves the ring.
-  static func countdown(size: CGSize, isLandscape: Bool, hasLabel: Bool)
-    -> (centerX: CGFloat, labelCenterY: CGFloat, ringCenterY: CGFloat, ringDiameter: CGFloat) {
-    let d = ringDiameter(min(size.width, size.height), isLandscape: isLandscape)
-    let labelH = hasLabel ? labelSize(d) : 0
-    let labelBlock = hasLabel ? labelH + gap(d) : 0
-    let top = (size.height - (labelBlock + d)) / 2
-    return (size.width / 2, top + labelH / 2, top + labelBlock + d / 2, d)
+  /// Font measures the digit is sized and placed with, in em (read in the font actually drawn).
+  struct DigitMetrics {
+    /// Advance of the widest value of the countdown (1 to max).
+    let widestAdvanceEm: CGFloat
+    /// Height of the digits' ink (lowest to highest point of their outlines).
+    let inkHeightEm: CGFloat
+    /// Height of the capitals (the glyph's middle is baseline − capHeight / 2).
+    let capHeightEm: CGFloat
   }
+
+  struct Countdown {
+    let centerX: CGFloat
+    let ringCenterY: CGFloat
+    let ringDiameter: CGFloat
+    let ringBorder: CGFloat
+    /// Radius the digit's ink rectangle must stay within (inner ring minus the margin).
+    let inkRadius: CGFloat
+    let digitSize: CGFloat
+    /// Baseline putting the glyph's middle (baseline − capHeight / 2) on the ring center.
+    let digitBaselineY: CGFloat
+    let labelSize: CGFloat
+    let labelTracking: CGFloat
+    /// Bottom of the label's ink: labelGap above the ring.
+    let labelInkBottomY: CGFloat
+  }
+
+  /// Label above the ring, the pair centered in `size` (top-left origin, y down). The label
+  /// block is one label size tall whatever the label: « PRÉPARE-TOI » → « PRÊT ? » never moves the ring.
+  static func countdown(size: CGSize, hasLabel: Bool, metrics m: DigitMetrics) -> Countdown {
+    let short = min(size.width, size.height)
+    let dp = short / refShortDp
+    let d = short * ringRatio
+    let border = ringBorderDp * dp
+    let inkRadius = (d - 2 * border) / 2 - inkMarginDp * dp
+    let diagonalEm = (m.widestAdvanceEm * m.widestAdvanceEm + m.inkHeightEm * m.inkHeightEm).squareRoot()
+    let digitSize = ((2 * inkRadius) / diagonalEm).rounded(.down)
+    let labelSize = labelSizeDp * dp
+    let gap = labelGapDp * dp
+    let labelBlock = hasLabel ? labelSize + gap : 0
+    let top = (size.height - (labelBlock + d)) / 2
+    let ringTop = top + labelBlock
+    let cy = ringTop + d / 2
+    return Countdown(
+      centerX: size.width / 2, ringCenterY: cy, ringDiameter: d, ringBorder: border, inkRadius: inkRadius,
+      digitSize: digitSize, digitBaselineY: cy + m.capHeightEm * digitSize / 2,
+      labelSize: labelSize, labelTracking: labelTrackingDp * dp, labelInkBottomY: ringTop - gap)
+  }
+
+  /// Largest value the countdown shows: the duration sent by JS, or the value itself.
+  static func maxValue(_ countdownMax: Int, _ value: Int) -> Int { max(countdownMax, value, 1) }
 }
 
 private extension UIColor {
