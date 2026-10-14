@@ -1,6 +1,6 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- #556 : extend_all_class_schedules() fermée aux clients, la logique des
--- plannings dans internal, la tâche cron réparée (20270155).
+-- plannings dans internal, la tâche cron réparée (20270156).
 --
 -- Rejoué par `scripts/db-replay.sh`, donc par la CI sur chaque PR.
 -- Tout se joue dans UNE transaction annulée.
@@ -22,7 +22,7 @@
 --       en prod.
 --   P5  les deux fonctions d'internal : anon, authenticated et service_role
 --       → 42501 (en plus du contrôle catalogue I1 à I3).
---   R   retour arrière (supabase/retours/20270155…) : les deux définitions
+--   R   retour arrière (supabase/retours/20270156…) : les deux définitions
 --       retrouvent leur md5 de prod, CR compris, extend_all redevient
 --       exécutable par authenticated (pas par anon), internal est nettoyé —
 --       puis tout est annulé.
@@ -89,7 +89,7 @@ BEGIN
     v := pg_temp.appel(r, g, 'SELECT public.extend_all_class_schedules()');
     IF v NOT LIKE '42501:%' THEN
       RAISE EXCEPTION 'P1 : % appelle extend_all_class_schedules (%), 42501 attendu', r, v
-        USING HINT = 'Un client génère les créneaux de toutes les box. Rejoue 20270155.';
+        USING HINT = 'Un client génère les créneaux de toutes les box. Rejoue 20270156.';
     END IF;
   END LOOP;
 
@@ -158,7 +158,7 @@ BEGIN
 END $$;
 
 -- ── R : le retour arrière rétablit la prod du 14/10/2026 ─────────────────────
-\i supabase/retours/20270155000000_plannings_cron_internal.sql
+\i supabase/retours/20270156000000_plannings_cron_internal.sql
 
 DO $$
 DECLARE v text;
@@ -175,7 +175,7 @@ BEGIN
      OR has_function_privilege('anon', 'public.extend_all_class_schedules()', 'EXECUTE')
      OR to_regprocedure('internal.etendre_plannings_boxes()') IS NOT NULL
      OR to_regprocedure('internal.generer_plannings_box(uuid,integer)') IS NOT NULL THEN
-    RAISE EXCEPTION 'R : droits ou schéma internal différents de l''état d''avant 20270155';
+    RAISE EXCEPTION 'R : droits ou schéma internal différents de l''état d''avant 20270156';
   END IF;
   RAISE NOTICE 'plannings_cron_internal : R OK';
 END $$;

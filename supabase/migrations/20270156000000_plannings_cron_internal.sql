@@ -32,7 +32,7 @@
 --      exécutable par PUBLIC, anon ni authenticated. La tâche cron appelle
 --      toujours la même chose : rien à y changer.
 --
--- Retour arrière : supabase/retours/20270155000000_plannings_cron_internal.sql
+-- Retour arrière : supabase/retours/20270156000000_plannings_cron_internal.sql
 -- Contrôles : supabase/tests/plannings_cron_internal.sql, audit T19b (22 → 21),
 -- schema_internal_ferme.sql (I1 à I3).
 -- ═════════════════════════════════════════════════════════════════════════════
