@@ -1,21 +1,15 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { Animated, Easing, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useReduceMotion } from './useReduceMotion';
 
 export const REC_DOT = { size: 12, color: '#EF4444', minOpacity: 0.25, halfPeriodMs: 900 } as const;
 
 /** Point rouge d'enregistrement : clignotement doux, immobile quand « réduire les animations » est activé. */
 export function RecBlinkDot({ testID = 'timer-rec-blink' }: { testID?: string }) {
   const { t } = useTranslation();
-  const [reduceMotion, setReduceMotion] = useState<boolean | null>(null);
+  const reduceMotion = useReduceMotion();
   const opacity = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    let alive = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((v) => { if (alive) setReduceMotion(v); }).catch(() => { if (alive) setReduceMotion(false); });
-    const sub = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
-    return () => { alive = false; sub.remove(); };
-  }, []);
 
   useEffect(() => {
     if (reduceMotion !== false) {

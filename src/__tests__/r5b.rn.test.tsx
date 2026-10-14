@@ -279,7 +279,7 @@ describe('R5b : décompte', () => {
   beforeEach(() => { vib = jest.spyOn(Vibration, 'vibrate').mockImplementation(() => {}); });
   afterEach(() => vib.mockRestore());
 
-  it('« PRÉPARE-TOI » au-dessus de 3 (nom du WOD, anneau, couleur des chiffres), « PRÊT ? » à 3-2-1 (accent, halo), « GO ! » à 0', async () => {
+  it('« PRÉPARE-TOI » au-dessus de 3 (nom du WOD, anneau, couleur des chiffres), « PRÊT ? » à 3-2-1 (accent, sans halo plein depuis #547), « GO ! » à 0', async () => {
     const r = await run(runParams({ countdown: 5 }), lightTheme);
     await startStop(r);
     expect(labelText(r)).toBe('PRÉPARE-TOI');
@@ -293,7 +293,7 @@ describe('R5b : décompte', () => {
     await tick(1);
     expect(hostText(val())).toBe('3');
     expect(labelText(r)).toBe('PRÊT ?');
-    expect(byID(r, 'timer-countdown-glow')).not.toHaveLength(0);
+    expect(byID(r, 'timer-countdown-glow')).toHaveLength(0);
     expect(byID(r, 'timer-countdown-ring')).not.toHaveLength(0);
     expect(StyleSheet.flatten(val().props.style).color).toBe(ensureContrast('#101214', '#9AE6D2'));
     await tick(2);
@@ -305,7 +305,7 @@ describe('R5b : décompte', () => {
     await tick(1);
     expect(r.findAll((n) => n.props.testID === 'timer-go')).toHaveLength(0);
   });
-  it('thème Noir : chiffre de préparation en couleur des chiffres, « PRÊT ? » en accent ; anneau fin conservé à 3-2-1, halo sans bordure', async () => {
+  it('thème Noir : chiffre de préparation en couleur des chiffres, « PRÊT ? » en accent ; anneau fin conservé à 3-2-1, sans halo plein (#547)', async () => {
     await AsyncStorage.setItem('bwod_timer_display_opts_v2', JSON.stringify({ ...PRE_R5B, themeId: 'noir', digitColor: '#39FF14' }));
     const r = await run(runParams({ countdown: 4 }));
     await startStop(r);
@@ -316,7 +316,7 @@ describe('R5b : décompte', () => {
     await tick(1);
     expect(StyleSheet.flatten(val().props.style).color).toBe('#FFFFFF');
     expect(border('timer-countdown-ring')).toBe(2);
-    expect(border('timer-countdown-glow') ?? 0).toBe(0);
+    expect(byID(r, 'timer-countdown-glow')).toHaveLength(0);
   });
   it('libellés EN : GET READY, READY?, GO!', async () => {
     await inLanguage('en', async () => {

@@ -277,7 +277,7 @@ describe('R6b : temps final avec vidéo', () => {
 });
 
 describe('R6b : décompte à l’écran en mode caméra', () => {
-  it('10 s : « PRÉPARE-TOI » + nom du WOD + anneau au-dessus de 3, « PRÊT ? » + halo à 3-2-1, « GO ! » à 0 sur le chrono lancé', async () => {
+  it('10 s : « PRÉPARE-TOI » + nom du WOD + anneau au-dessus de 3, « PRÊT ? » à 3-2-1 (sans halo plein depuis #547), « GO ! » à 0 sur le chrono lancé', async () => {
     const root = await camera(PORTRAIT, darkTheme, 10);
     await toCountdown(root);
     expect(cdLabel(root)).toBe('PRÉPARE-TOI');
@@ -290,7 +290,7 @@ describe('R6b : décompte à l’écran en mode caméra', () => {
     expect([cdLabel(root), hostText(cdValue(root))]).toEqual(['PRÉPARE-TOI', '4']);
     await tick(1000);
     expect([cdLabel(root), hostText(cdValue(root))]).toEqual(['PRÊT ?', '3']);
-    expect(hosts(root, 'timer-countdown-glow')).toHaveLength(1);
+    expect(hosts(root, 'timer-countdown-glow')).toHaveLength(0);
     expect(hosts(root, 'timer-countdown-ring')).toHaveLength(1);
     expect(flat(hosts(root, 'timer-countdown-title')[0]).opacity).toBe(0);
     expect(root.findAll((n) => n.props.testID === 'timer-go')).toHaveLength(0);
