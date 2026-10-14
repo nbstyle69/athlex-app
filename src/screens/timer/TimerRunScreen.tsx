@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ActivityIndicator, ScrollView, Modal,
-  Linking, Alert, useWindowDimensions, Image, Platform, Vibration, AppState, Animated, Pressable, type LayoutChangeEvent,
+  Linking, Alert, useWindowDimensions, Image, PixelRatio, Platform, Vibration, AppState, Animated, Easing, Pressable, type LayoutChangeEvent,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -33,13 +33,14 @@ import { useTheme } from '../../context/ThemeContext';
 import { appTimerThemeId, ensureContrast, inkOn, inkOnSecondary, TIMER_THEMES } from '../../theme/timerInk';
 import { AxButton, AxCard, AxChip, AxGlass, AxIconButton, AxSwitch, AxTag, withAlpha } from '../../components/ax';
 import { axColors, axFonts, axRadius, axSpacing, axTypography, axVeil } from '../../theme/axTokens';
-import { oswaldMediumCentered } from '../../theme/oswaldMetrics';
+import { OSWALD_MEDIUM, oswaldMediumCentered } from '../../theme/oswaldMetrics';
 import { CD_TENSE_FROM, countdownOverlay } from '../../lib/timerCountdownOverlay';
 import { incrementCounter } from '../../services/gamification';
 import * as Notifications from 'expo-notifications';
 import { spacing, borderRadius, typography } from '../../theme/designTokens';
 import { captureError } from '../../lib/sentry';
 import { RecBlinkDot } from '../../components/timer/RecBlinkDot';
+import { useReduceMotion } from '../../components/timer/useReduceMotion';
 import { hapticLight, hapticMedium, hapticHeavy } from '../../lib/haptics';
 import { formatDate, formatTime as formatClockTime } from '../../i18n/locale';
 import { errorMessage } from '../../utils/refusals';
@@ -105,18 +106,65 @@ function resolveDisplayOpts(opts: TimerDisplayOpts, mode: 'light' | 'dark' | und
 const VIBRATE_TICK_MS = 40;
 const VIBRATE_GO_MS = 200;
 
-/** Décompte : « PRÉPARE-TOI » au-dessus de 3, « PRÊT ? » à 3-2-1. */
-function CountdownView({ value, title, digitColor, accent, bg, size }: {
-  value: number; title?: string; digitColor: string; accent: string; bg: string; size: number;
+// ─── Décompte (#547) : anneau fin et fixe, chiffre qui grossit et s'efface à chaque seconde ─────
+/** Diamètre de l'anneau : part du côté court de l'écran (plafonné en paysage par la zone libre). */
+export const CD_RING_RATIO = 0.36;
+const CD_RING_BORDER = 2;
+/** Marge entre l'encre du chiffre au repos et l'intérieur de l'anneau. */
+export const CD_INK_MARGIN = 6;
+/** Animation d'une seconde : entrée jusqu'à l'anneau, puis zoom et fondu jusqu'à la pointe. */
+export const CD_ANIM = { startScale: 0.55, fadeInMs: 80, enterMs: 350, exitMs: 600, peakInkRatio: 0.65 } as const;
+const CD_INK_EM = (OSWALD_MEDIUM.digitTop - OSWALD_MEDIUM.digitBottom) / OSWALD_MEDIUM.unitsPerEm;
+/** Chasse, en em, de la valeur la plus large du décompte (1 à max) : sans crénage, qui ne fait que resserrer. */
+function cdWidestEm(max: number): number {
+  let w = 0;
+  for (let v = 1; v <= Math.max(1, max); v++) {
+    w = Math.max(w, [...String(v)].reduce((s, c) => s + (OSWALD_MEDIUM.advances[c] ?? OSWALD_MEDIUM.fallbackAdvance), 0));
+  }
+  return w / OSWALD_MEDIUM.unitsPerEm;
+}
+/** Taille du chiffre au repos : l'encre (chasse × hauteur des chiffres) inscrite dans l'anneau intérieur moins CD_INK_MARGIN. */
+export function cdDigitSize(ring: number, max: number): number {
+  const rayon = (ring - 2 * CD_RING_BORDER) / 2 - CD_INK_MARGIN;
+  return Math.max(0, Math.floor((2 * rayon) / Math.hypot(cdWidestEm(max), CD_INK_EM)));
+}
+/** Échelle de pointe : l'encre du chiffre atteint CD_ANIM.peakInkRatio du côté court de l'écran. */
+export const cdPeakScale = (digitSize: number, cote: number) => (CD_ANIM.peakInkRatio * cote) / (digitSize * CD_INK_EM);
+
+/** Décompte : « PRÉPARE-TOI » au-dessus de 3, « PRÊT ? » à 3-2-1. `max` : durée du décompte ; `cote` : côté court de l'écran. */
+function CountdownView({ value, max, title, digitColor, accent, bg, size, cote }: {
+  value: number; max: number; title?: string; digitColor: string; accent: string; bg: string; size: number; cote: number;
 }) {
   const { t } = useTranslation();
+  const reduceMotion = useReduceMotion();
   const tense = value <= CD_TENSE_FROM;
   const accentInk = ensureContrast(accent, bg);
   const digitInk = ensureContrast(digitColor, bg);
   const ink = tense ? accentInk : digitInk;
-  const digitSize = Math.round(size * (String(value).length > 1 ? 0.45 : 0.55));
-  const glowSize = Math.round(size * 0.72);
-  // Mêmes cercle, taille et position du chiffre sur tout le décompte : 3-2-1 ne change que les couleurs et le halo.
+  const digitSize = cdDigitSize(size, max);
+  const centre = oswaldMediumCentered(digitSize);
+  const peak = cdPeakScale(digitSize, cote);
+  const scale = useRef(new Animated.Value(1)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+  // Relancée à chaque nouvelle valeur (jamais de minuterie à part : elle suit le vrai décompte).
+  useEffect(() => {
+    if (reduceMotion !== false) { scale.setValue(1); opacity.setValue(1); return; }
+    scale.setValue(CD_ANIM.startScale); opacity.setValue(0);
+    const anim = Animated.parallel([
+      Animated.sequence([
+        Animated.timing(scale, { toValue: 1, duration: CD_ANIM.enterMs, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        Animated.timing(scale, { toValue: peak, duration: CD_ANIM.exitMs, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      ]),
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: CD_ANIM.fadeInMs, easing: Easing.linear, useNativeDriver: true }),
+        Animated.delay(CD_ANIM.enterMs - CD_ANIM.fadeInMs),
+        Animated.timing(opacity, { toValue: 0, duration: CD_ANIM.exitMs, easing: Easing.in(Easing.quad), useNativeDriver: true }),
+      ]),
+    ]);
+    anim.start();
+    return () => anim.stop();
+  }, [value, reduceMotion, peak, scale, opacity]);
+  // Mêmes anneau, taille et position du chiffre au repos sur tout le décompte : 3-2-1 ne change que les couleurs.
   return (
     <View testID="timer-countdown" style={{ alignItems: 'center', gap: axSpacing.sm }}>
       <Text testID="timer-countdown-label"
@@ -128,19 +176,18 @@ function CountdownView({ value, title, digitColor, accent, bg, size }: {
           style={[axTypography.label, { color: inkOnSecondary(bg), maxWidth: size * 1.4, opacity: tense ? 0 : 1 }]}>{title}</Text>
       )}
       <View testID="timer-countdown-ring"
-        style={{ width: size, height: size, borderRadius: size / 2, justifyContent: 'center', alignItems: 'center',
-          borderWidth: 2, borderColor: withAlpha(tense ? accentInk : digitInk, 0.35),
-          backgroundColor: tense ? withAlpha(accentInk, 0.12) : 'transparent' }}>
-        {/* Halo circulaire : une ombre de texte est rognée en rectangle sur iOS. */}
-        {tense && (
-          <View testID="timer-countdown-glow" pointerEvents="none"
-            style={{ position: 'absolute', width: glowSize, height: glowSize,
-              borderRadius: glowSize / 2, backgroundColor: withAlpha(accentInk, 0.14) }} />
-        )}
-        <Text testID="timer-countdown-value" numberOfLines={1}
-          style={[styles.countdownDigits, oswaldMediumCentered(digitSize), { width: size, color: ink }]}>
-          {value}
-        </Text>
+        style={{ width: size, height: size, borderRadius: size / 2,
+          borderWidth: CD_RING_BORDER, borderColor: withAlpha(tense ? accentInk : digitInk, 0.35) }}>
+        {/* Couche du zoom : remplit l'intérieur de l'anneau (même centre), sans découpe ni toucher. */}
+        <Animated.View testID="timer-countdown-zoom" pointerEvents="none"
+          style={[StyleSheet.absoluteFill, styles.cdZoom, reduceMotion === false && { opacity, transform: [{ scale }] }]}>
+          {/* Hauteur imposée = sa ligne (police agrandie comprise) : plus haute que l'intérieur de l'anneau,
+              une ligne non imposée y serait mesurée et rognée, et le chiffre descendrait (mesuré : 7 dp). */}
+          <Text testID="timer-countdown-value" numberOfLines={1}
+            style={[styles.countdownDigits, centre, { height: centre.lineHeight * PixelRatio.getFontScale(), width: size, color: ink }]}>
+            {value}
+          </Text>
+        </Animated.View>
       </View>
     </View>
   );
@@ -284,6 +331,11 @@ const chronoStyle = (fs: number) => {
 };
 /** Boîte mesurée du chrono ; `ligne` : hauteur sûre de l'écran (fenêtre moins zones sûres). */
 type Boite = { w: number; h: number; ligne?: number };
+/** Paysage avec pastilles : marge visible entre le groupe du décompte et le bandeau ou les pastilles (#547). */
+export const CD_ZONE_MARGE = axSpacing.md;
+/** Hauteur du libellé du décompte (et du titre) au-dessus du cercle, écarts de CountdownView compris. */
+const cdEnTete = (titre: boolean) => (axTypography.overline.lineHeight ?? 0) + axSpacing.sm
+  + (titre ? (axTypography.label.lineHeight ?? 0) + axSpacing.sm : 0);
 /** Paysage sans caméra : diamètre du bouton Lecture / Arrêt, qui fixe la hauteur de la rangée du bas. */
 export const LANDSCAPE_PLAY = 56;
 /** Paysage avec caméra : marge verticale de la couche au-dessus de l’aperçu. */
@@ -1944,7 +1996,7 @@ export default function TimerRunScreen() {
     const maxBSize = forLandscape ? 38 : 34;
     const bSize = Math.min(maxBSize, Math.floor((maxW - gapVal * (count - 1)) / count));
     return (
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      <View testID="timer-round-bubbles" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
         gap: gapVal, paddingHorizontal: 16,
         paddingVertical: forLandscape ? 4 : 8 }}>
         {winStart > 1 && <Text style={{ color: onBg2, fontSize: 13 }}>…</Text>}
@@ -2042,6 +2094,13 @@ export default function TimerRunScreen() {
   // La ligne native du chrono tient dans la hauteur sûre de l'écran (fenêtre moins zones sûres).
   const chronoBoite: Boite = { ...(boiteChrono ?? { w: winW - insets.left - insets.right - 32, h: winH * 0.5 }), ligne: winH - insets.top - insets.bottom };
   const chronoTaille = chronoFontSize(mainTime, chronoBoite.w, chronoBoite.h, chronoBoite.ligne);
+  // Paysage sans caméra avec la rangée de pastilles (#547) : le décompte se centre dans la zone libre
+  // entre le bandeau et les pastilles (la boîte du chrono, mesurée) ; le cercle prend la hauteur qui
+  // reste sous le libellé (et le titre), avec CD_ZONE_MARGE au-dessus et au-dessous.
+  const cdCote = Math.min(winW, winH);
+  const cdAnneau = Math.round(cdCote * CD_RING_RATIO);
+  const cdDansZone = isLandscape && !withCamera && hasRounds && !seqPausing && curTotalRounds > 0;
+  const cdZoneTaille = Math.round(Math.max(0, Math.min(cdAnneau, chronoBoite.h - 2 * CD_ZONE_MARGE - cdEnTete(!!videoTitle))));
   // Bandeau du haut en paysage : bloc et time cap (« BLOC 1/1 · CAP 18:00 »), seulement s'il
   // y a un cap ou plusieurs blocs (un EMOM seul n'affiche pas « BLOC 1/1 »).
   const capPaysage = timerType === 'for-time' ? maxTime : curBlk?.type === 'for-time' ? blockDurationSec(curBlk) : 0;
@@ -2258,7 +2317,8 @@ export default function TimerRunScreen() {
                   </View>
 
                   {/* CHRONO : toute la place entre le bandeau et la rangée du bas, mesurée */}
-                  <View testID="timer-main-landscape" style={{ flex: 1 }}>
+                  {/* Pendant le décompte, au-dessus des pastilles : le grand chiffre transparent passe dessus (sans toucher). */}
+                  <View testID="timer-main-landscape" style={[{ flex: 1 }, phase === 'countdown' && cdDansZone && { zIndex: 1 }]}>
                     <View testID="timer-chrono-box" style={{ flex: 1 }} onLayout={mesurerChrono}>
                       {phase !== 'countdown' && (
                         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]}>
@@ -2268,6 +2328,12 @@ export default function TimerRunScreen() {
                         </View>
                       )}
                     </View>
+                    {phase === 'countdown' && cdDansZone && (
+                      <View testID="timer-cd-overlay" style={[StyleSheet.absoluteFill, styles.cdOverlay]} pointerEvents="none">
+                        <CountdownView value={countdownVal} max={countdown} title={videoTitle} digitColor={accentColor}
+                          accent={timerAccent} bg={currentBg} size={cdZoneTaille} cote={cdCote} />
+                      </View>
+                    )}
                     {hasRounds && (timerType === 'tabata' || (timerType === 'libre' && curBlk?.type === 'tabata'))
                       && (curBlk?.restSec ?? restTime) > 0 && phase === 'running' && (
                       <Text style={{ color: onBg2, fontSize: 11, fontWeight: '700', letterSpacing: 1, textAlign: 'center' }}>
@@ -2625,9 +2691,8 @@ export default function TimerRunScreen() {
         {/* Overlay décompte — top-level pour éviter z-index/elevation Android */}
         {phase === 'countdown' && countdownVal > 0 && (
           <View testID="timer-cam-cd" style={[StyleSheet.absoluteFill, styles.camCdOverlay]} pointerEvents="none">
-            <CountdownView value={countdownVal} title={videoTitle} digitColor={axVeil.ink}
-              accent={timerAccent} bg={axVeil.countdownFloor}
-              size={Math.round(isLandscape ? Math.min(winH * 0.5, SW * 0.42) : SW * 0.55)} />
+            <CountdownView value={countdownVal} max={countdown} title={videoTitle} digitColor={axVeil.ink}
+              accent={timerAccent} bg={axVeil.countdownFloor} size={cdAnneau} cote={cdCote} />
           </View>
         )}
         {showGo && <GoFlash accent={timerAccent} bg={axVeil.countdownFloor} onDone={hideGo} />}
@@ -2663,11 +2728,12 @@ export default function TimerRunScreen() {
     <View style={[styles.containerDark, { backgroundColor: phaseBg }]}>
       <StatusBar hidden />
       {renderContent()}
-      {/* Décompte centré dans l'écran, au-dessus de la mise en page (en-tête et bouton restent en place). */}
-      {phase === 'countdown' && (
+      {/* Décompte centré dans l'écran, au-dessus de la mise en page (en-tête et bouton restent en place) ;
+          en paysage avec pastilles, il est dans la zone libre (cdDansZone). */}
+      {phase === 'countdown' && !cdDansZone && (
         <View testID="timer-cd-overlay" style={[StyleSheet.absoluteFill, styles.cdOverlay]} pointerEvents="none">
-          <CountdownView value={countdownVal} title={videoTitle} digitColor={accentColor}
-            accent={timerAccent} bg={currentBg} size={Math.round(isLandscape ? winH * 0.42 : SW * 0.62)} />
+          <CountdownView value={countdownVal} max={countdown} title={videoTitle} digitColor={accentColor}
+            accent={timerAccent} bg={currentBg} size={cdAnneau} cote={cdCote} />
         </View>
       )}
       {showGo && <GoFlash accent={timerAccent} bg={currentBg} onDone={hideGo} />}
@@ -2707,6 +2773,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', backgroundColor: axVeil.countdown,
   },
   cdOverlay: { justifyContent: 'center', alignItems: 'center' },
+  cdZoom: { justifyContent: 'center', alignItems: 'center' },
   camBottomStack: { position: 'absolute', left: 0, right: 0, alignItems: 'center', gap: CAM_STACK_GAP },
   camPrimaryWrap: { width: '100%', maxWidth: 320, paddingHorizontal: axSpacing.xl },
   camPrimaryWrapLandscape: { width: 280 },

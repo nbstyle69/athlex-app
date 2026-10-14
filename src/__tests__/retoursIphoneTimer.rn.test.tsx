@@ -5,7 +5,7 @@ import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { X } from 'lucide-react-native';
 import { lightTheme, darkTheme } from '../theme/palette';
 import type { HomeStackParamList } from '../navigation';
-import TimerRunScreen, { CAM_INFO_GAP, CAM_REC_GAP } from '../screens/timer/TimerRunScreen';
+import TimerRunScreen, { CAM_INFO_GAP, CAM_REC_GAP, CD_ANIM } from '../screens/timer/TimerRunScreen';
 import { RecBlinkDot, REC_DOT } from '../components/timer/RecBlinkDot';
 import { AxSwitch } from '../components/ax';
 import { saveVideoOpts } from '../lib/timerVideoOpts';
@@ -144,7 +144,6 @@ describe('Retours iPhone (2) : décompte centré, chiffre au centre du cercle, h
     expect(ring.width).toBe(ring.height);
     expect(ring.borderRadius).toBe((ring.width as number) / 2);
     expect(st).toMatchObject({ width: ring.width, textAlign: 'center', letterSpacing: 0, includeFontPadding: false });
-    expect(st.lineHeight).toBeLessThan(ring.height as number);
     expect(v.props.adjustsFontSizeToFit).toBeFalsy();
   });
   it('3-2-1 : même cercle, même taille et même position du chiffre que le reste du décompte', async () => {
@@ -164,14 +163,13 @@ describe('Retours iPhone (2) : décompte centré, chiffre au centre du cercle, h
     expect(hostText(one(r, 'timer-countdown-value'))).toBe('3');
     expect(geo()).toEqual(calm);
   });
-  it('« PRÊT ? » : halo circulaire, aucune ombre de texte (rognée en rectangle sur iOS)', async () => {
+  it('« PRÊT ? » : anneau circulaire, sans halo plein ni fond (#547), aucune ombre de texte (rognée en rectangle sur iOS)', async () => {
     const r = await run(params({ countdown: 3 }));
     await press(r, 'timer-start-stop');
     const halo = flat(one(r, 'timer-countdown-ring'));
-    const glow = flat(one(r, 'timer-countdown-glow'));
     expect(halo.borderRadius).toBe((halo.width as number) / 2);
-    expect(glow.borderRadius).toBe((glow.width as number) / 2);
-    expect(glow.width).toBe(glow.height);
+    expect(host(r, 'timer-countdown-glow')).toHaveLength(0);
+    expect(halo.backgroundColor ?? 'transparent').toBe('transparent');
     const st = flat(one(r, 'timer-countdown-value'));
     expect(st.textShadowRadius ?? 0).toBe(0);
     expect(st.textShadowColor).toBeUndefined();
@@ -345,21 +343,58 @@ function ligne(fs: number, L: number, { os, d }: Plateforme) {
   const asc = Math.round((A * f) / em), desc = Math.round((D * f) / em);
   return { hauteur: Lp / d, base: (asc + Math.ceil((Lp - asc - desc) / 2)) / d, demiCap: (MEDIUM.capHeight * f) / em / 2 / d };
 }
+const hoteParent = (n: ReactTestInstance) => { let p = n.parent; while (p && typeof p.type !== 'string') p = p.parent; return p; };
+/** Échelle et opacité courantes d'un nœud (transform scale, absente : 1). */
+/** Valeur courante (nombre ou Animated.Value, lue par son toJSON). */
+const valeur = (v: unknown) => (v === undefined ? undefined : Number(JSON.stringify(v)));
+const echelle = (n: ReactTestInstance) => ((flat(n).transform as { scale?: unknown }[] | undefined) ?? []).reduce((s: number, t) => s * (valeur(t.scale) ?? 1), 1);
+const opacite = (n: ReactTestInstance) => valeur(flat(n).opacity) ?? 1;
+/** Avance par pas de 10 ms jusqu'à l'apparition de la valeur (au plus 12 s). */
+async function apparition(r: ReactTestInstance, chiffre: string) {
+  for (let ms = 0; hostText(one(r, 'timer-countdown-value')) !== chiffre; ms += 10) {
+    if (ms > 12000) throw new Error('valeur jamais affichée : ' + chiffre);
+    await act(async () => { jest.advanceTimersByTime(10); });
+  }
+}
+/**
+ * Animations du décompte observables dans jest : chaque Animated.timing est relevé (pour vérifier
+ * useNativeDriver: true), puis joué par le pilote JS, que les minuteries simulées font avancer.
+ */
+const TIMING = Animated.timing;
+function animationsObservables() {
+  // Animations permises, explicitement (le mock par défaut peut avoir été effacé par restoreAllMocks).
+  jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+  const releves: Animated.TimingAnimationConfig[] = [];
+  jest.spyOn(Animated, 'timing').mockImplementation((v, c) => { releves.push(c); return TIMING(v, { ...c, useNativeDriver: false }); });
+  return releves;
+}
 /** Milieu du glyphe (ligne de base − capHeight / 2) moins le milieu du cercle, en dp. */
 function ecartAuCentre(r: ReactTestInstance, p: Plateforme) {
   const ring = one(r, 'timer-countdown-ring');
   const v = one(r, 'timer-countdown-value');
   const a = flat(ring), st = flat(v);
   // Conditions du modèle : chiffre enfant direct du cercle, centré par lui, sans marge, rembourrage ni hauteur imposée.
-  let parent = v.parent;
-  while (parent && typeof parent.type !== 'string') parent = parent.parent;
+  let parent = hoteParent(v);
+  // #547 PR 2 : le chiffre est dans la couche du zoom, qui remplit l'intérieur de l'anneau et le centre ;
+  // à l'instant mesuré, son échelle vaut 1.
+  if (parent?.props.testID === 'timer-countdown-zoom') {
+    const z = flat(parent);
+    expect(z).toMatchObject({ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' });
+    expect(echelle(parent)).toBeCloseTo(1, 6);
+    // Animée (pas l'état fixe de « Réduire les animations ») : la couche porte bien une échelle.
+    expect((flat(parent).transform as unknown[] | undefined)?.length).toBe(1);
+    parent = hoteParent(parent);
+  } else expect(a).toMatchObject({ justifyContent: 'center', alignItems: 'center' });
   expect(parent === ring).toBe(true);
-  expect(a).toMatchObject({ justifyContent: 'center', alignItems: 'center' });
   for (const k of ['padding', 'paddingTop', 'paddingBottom', 'paddingVertical'] as const) expect(a[k] ?? 0).toBe(0);
-  for (const k of ['margin', 'marginTop', 'marginBottom', 'marginVertical', 'top', 'bottom', 'height'] as const) expect(st[k] ?? 0).toBe(0);
+  for (const k of ['margin', 'marginTop', 'marginBottom', 'marginVertical', 'top', 'bottom'] as const) expect(st[k] ?? 0).toBe(0);
+  // Cadre du texte : sa hauteur imposée, égale à la ligne (pas plus courte : la ligne serait rognée, le chiffre descendrait).
+  expect(st.height).toBe(st.lineHeight);
   const S = a.height as number, B = (a.borderWidth as number) ?? 0;
   const l = ligne(st.fontSize as number, st.lineHeight as number, p);
-  const haut = B + (S - 2 * B - l.hauteur) / 2;
+  // Cadre de hauteur H centré dans l'anneau ; Android y centre sa ligne en px entiers (textAlignVertical: center).
+  const H = st.height as number;
+  const haut = B + (S - 2 * B - H) / 2 + (p.os === 'android' ? (H - l.hauteur) / 2 : 0);
   const ty = ((st.transform as { translateY?: number }[] | undefined) ?? []).reduce((s, t) => s + (t.translateY ?? 0), 0);
   return haut + l.base - l.demiCap + ty - S / 2;
 }
@@ -400,17 +435,20 @@ describe('#547 : chiffre du décompte centré dans le cercle par son glyphe, mê
     ['minuteur, portrait', false, PORTRAIT], ['minuteur, paysage', false, LANDSCAPE],
     ['enregistrement, portrait', true, PORTRAIT], ['enregistrement, paysage', true, LANDSCAPE],
   ] as const;
-  it.each(cas)('%s : 10 puis 3, milieu du glyphe au milieu du cercle à un demi-pixel près, sur iOS et Android, à chaque densité', async (_, camera, w) => {
+  it.each(cas)('%s : 10 puis 3, à 0,35 s, milieu du glyphe au milieu du cercle à un demi-pixel près, sur iOS et Android, à chaque densité', async (_, camera, w) => {
     const ecarts: Record<string, number[]> = {};
     for (const p of plateformes) {
       jest.replaceProperty(Platform, 'OS', p.os);
       jest.spyOn(PixelRatio, 'get').mockReturnValue(p.d);
+      animationsObservables();
       const r = await run(params({ countdown: 10, withCamera: camera }), darkTheme, w);
       if (camera) { await camPress(r); await camPress(r); } else await press(r, 'timer-start-stop');
       const cle = `${p.os} ×${p.d}`;
       ecarts[cle] = [];
-      for (const [chiffre, attente] of [['10', 0], ['3', 7]] as const) {
-        await tick(attente);
+      // Mesuré 0,35 s après l'apparition de chaque valeur (fin de l'entrée : échelle 1).
+      for (const chiffre of ['10', '3']) {
+        await apparition(r, chiffre);
+        await tick(CD_ANIM.enterMs / 1000);
         expect(hostText(one(r, 'timer-countdown-value'))).toBe(chiffre);
         const st = flat(one(r, 'timer-countdown-value'));
         // Ligne au moins aussi haute que la ligne native : rien n'est coupé, le modèle centré s'applique.
@@ -423,5 +461,162 @@ describe('#547 : chiffre du décompte centré dans le cercle par son glyphe, mê
     // Écart en pixels physiques : au plus un demi-pixel partout, donc iOS et Android au pixel près.
     const px = Object.fromEntries(plateformes.map((p) => [`${p.os} ×${p.d}`, ecarts[`${p.os} ×${p.d}`].map((e) => Math.abs(e * p.d) <= 0.5)]));
     expect(px).toEqual(Object.fromEntries(Object.keys(px).map((k) => [k, [true, true]])));
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// #547, PR 2 (retour du build 1.0.64, décision de Nab) : en paysage avec rounds, le cercle chevauchait
+// les pastilles. Le décompte change d'apparence : anneau fin et fixe (36 % du côté court, plafonné en
+// paysage par la zone libre entre le bandeau et les pastilles), chiffre au repos inscrit dans l'anneau,
+// qui grossit puis s'efface à chaque seconde (Animated, pilote natif), immobile si « Réduire les animations ».
+// Mesure du placement : la mise en page (bandeau, zone flex, pastilles, rangée du bas) est recalculée depuis
+// les styles rendus, la zone mesurée est simulée (onLayout), puis le groupe « libellé, titre, anneau » est
+// placé dans son conteneur réel (zone ou écran entier).
+// ═════════════════════════════════════════════════════════════════════════════
+/** Insets en paysage : iPhone à îlot (bords et barre d'accueil), Android à navigation par gestes. */
+const INSETS_PAYSAGE = { ios: { top: 0, bottom: 21, left: 59, right: 59 }, android: { top: 0, bottom: 24, left: 0, right: 0 } } as const;
+const MARGE_VISIBLE = 8;
+/** Enfants hôtes directs (le plus proche ancêtre hôte est `n`). */
+const enfantsHote = (n: ReactTestInstance) => n.findAll((x) => typeof x.type === 'string' && x !== n && hoteParent(x) === n);
+const ancetre = (n: ReactTestInstance, id: string) => { for (let p = n.parent; p; p = p.parent) if (p.props.testID === id) return true; return false; };
+const estBulle = (x: ReactTestInstance) => typeof flat(x).width === 'number' && flat(x).width === flat(x).height && flat(x).borderRadius !== undefined;
+/** Mise en page en paysage sans caméra, en dp depuis le haut de l'écran. */
+function paysage(r: ReactTestInstance, H: number) {
+  const land = flat(one(r, 'timer-landscape'));
+  const enTeteBas = (land.paddingTop as number) + Math.max(...enfantsHote(one(r, 'timer-controls')).map((x) => (flat(x).height as number) ?? 0));
+  const rangee = one(r, 'timer-round-bubbles'), rs = flat(rangee);
+  const bulles = enfantsHote(rangee).filter(estBulle);
+  const hRangee = (flat(bulles[0]).height as number) + 2 * ((rs.paddingVertical as number) ?? 0);
+  const pastillesHaut = H - (land.paddingBottom as number) - (flat(one(r, 'timer-bottom-row')).height as number) - hRangee;
+  return { enTeteBas, pastillesHaut, rangee, bulles, land };
+}
+/** Groupe du décompte (libellé, titre, anneau) centré dans son conteneur réel. */
+function groupe(r: ReactTestInstance, conteneur: { haut: number; bas: number }) {
+  const g = one(r, 'timer-countdown');
+  const enfants = enfantsHote(g);
+  const h = (x: ReactTestInstance) => (flat(x).height as number) ?? (flat(x).lineHeight as number);
+  const total = enfants.reduce((s, x) => s + h(x), 0) + ((flat(g).gap as number) ?? 0) * (enfants.length - 1);
+  const haut = conteneur.haut + (conteneur.bas - conteneur.haut - total) / 2;
+  const d = flat(one(r, 'timer-countdown-ring')).height as number;
+  return { haut, anneauHaut: haut + total - d, anneauBas: haut + total, d };
+}
+async function mesurerZone(r: ReactTestInstance, w: number, h: number) {
+  const box = r.findAll((n) => n.props.testID === 'timer-chrono-box' && typeof n.props.onLayout === 'function')[0];
+  await act(async () => { box.props.onLayout({ nativeEvent: { layout: { x: 0, y: 0, width: w, height: h } } }); });
+}
+async function emomPaysage(os: 'ios' | 'android', ecran: typeof LANDSCAPE, rounds: number) {
+  jest.replaceProperty(Platform, 'OS', os);
+  mockInsets = INSETS_PAYSAGE[os];
+  const r = await run(params({ timerType: 'emom', rounds, interval: 60, countdown: 10 }), darkTheme, ecran);
+  await press(r, 'timer-start-stop');
+  const p = paysage(r, ecran.height);
+  await mesurerZone(r, ecran.width - 32, p.pastillesHaut - p.enTeteBas);
+  return { r, p };
+}
+/** Vérité du fichier : chasse d'une valeur (somme des chasses, sans crénage, qui ne fait que resserrer) et hauteur des chiffres, en em. */
+const chasseEm = (v: string) => [...v].reduce((s, c) => s + MEDIUM.glyphe(c).chasse, 0) / MEDIUM.unitsPerEm;
+const HAUTEUR_CHIFFRES_EM = (() => { const g = [...'0123456789'].map((c) => MEDIUM.glyphe(c)); return (Math.max(...g.map((x) => x.yMax)) - Math.min(...g.map((x) => x.yMin))) / MEDIUM.unitsPerEm; })();
+const ECRAN_360 = { width: 800, height: 360, scale: 3, fontScale: 1 };
+
+describe('#547 PR 2 : en paysage avec pastilles, l’anneau tient entre le bandeau et les pastilles', () => {
+  const ecrans = [['844 × 390', LANDSCAPE], ['800 × 360', ECRAN_360]] as const;
+  for (const os of ['ios', 'android'] as const) for (const [nomEcran, ecran] of ecrans) for (const rounds of [10, 20, 30]) {
+    it(`${os}, ${nomEcran}, EMOM ${rounds} : libellé et anneau entre le bas du bandeau et le haut des pastilles, marges visibles, rangée dans la largeur`, async () => {
+      const { r, p } = await emomPaysage(os, ecran, rounds);
+      const overlay = one(r, 'timer-cd-overlay');
+      const conteneur = ancetre(overlay, 'timer-main-landscape') ? { haut: p.enTeteBas, bas: p.pastillesHaut } : { haut: 0, bas: ecran.height };
+      const g = groupe(r, conteneur);
+      expect({ sousLeBandeau: g.haut >= p.enTeteBas + MARGE_VISIBLE, auDessusDesPastilles: g.anneauBas <= p.pastillesHaut - MARGE_VISIBLE })
+        .toEqual({ sousLeBandeau: true, auDessusDesPastilles: true });
+      // 36 % du côté court, sauf si la zone libre impose moins.
+      expect(g.d).toBeLessThanOrEqual(Math.round(ecran.height * 0.36));
+      // Rangée : 10 pastilles au plus, plus « … », dans la largeur laissée par les côtés (« … » compté 13 dp).
+      const rs = flat(p.rangee);
+      const points = p.rangee.findAll((x) => String(x.type) === 'Text' && hostText(x) === '…').length;
+      const nb = p.bulles.length + points;
+      const largeur = p.bulles.length * (flat(p.bulles[0]).width as number) + points * 13 + (nb - 1) * (rs.gap as number) + 2 * (rs.paddingHorizontal as number);
+      expect(p.bulles.length).toBe(10);
+      expect(largeur).toBeLessThanOrEqual(ecran.width - (p.land.paddingLeft as number) - (p.land.paddingRight as number));
+    });
+  }
+});
+
+describe('#547 PR 2 : anneau, chiffre au repos et animation du décompte', () => {
+  it.each([
+    ['minuteur, portrait', false, PORTRAIT], ['enregistrement, portrait', true, PORTRAIT],
+    ['minuteur, paysage sans rounds', false, LANDSCAPE], ['enregistrement, paysage', true, LANDSCAPE],
+  ] as const)('%s : anneau de 36 % du côté court de l’écran, libellé au-dessus avec un écart', async (_, camera, w) => {
+    const r = await run(params({ countdown: 10, withCamera: camera }), darkTheme, w);
+    if (camera) { await camPress(r); await camPress(r); } else await press(r, 'timer-start-stop');
+    const a = flat(one(r, 'timer-countdown-ring'));
+    expect([a.width, a.height]).toEqual([Math.round(Math.min(w.width, w.height) * 0.36), Math.round(Math.min(w.width, w.height) * 0.36)]);
+    const g = one(r, 'timer-countdown');
+    const enfants = enfantsHote(g);
+    expect(enfants[0].props.testID).toBe('timer-countdown-label');
+    expect(enfants[enfants.length - 1].props.testID).toBe('timer-countdown-ring');
+    expect(flat(g).gap as number).toBeGreaterThanOrEqual(4);
+  });
+
+  it.each([10, 15, 30, 9])('décompte de %i s : encre au repos de chaque valeur dans l’anneau intérieur moins 6 dp, la plus large au contact', async (duree) => {
+    const r = await run(params({ countdown: duree }), darkTheme, PORTRAIT);
+    await press(r, 'timer-start-stop');
+    const a = flat(one(r, 'timer-countdown-ring'));
+    const rayon = ((a.width as number) - 2 * (a.borderWidth as number)) / 2 - 6;
+    const fs = flat(one(r, 'timer-countdown-value')).fontSize as number;
+    const coins = Array.from({ length: duree }, (_, i) => String(i + 1)).map((v) => Math.hypot((chasseEm(v) * fs) / 2, (HAUTEUR_CHIFFRES_EM * fs) / 2));
+    expect(Math.max(...coins)).toBeLessThanOrEqual(rayon);
+    expect(Math.max(...coins)).toBeGreaterThan(rayon - 1.5);
+  });
+
+  it('animation relancée à chaque valeur : 0,55 et invisible à l’apparition, échelle 1 et opaque à 0,35 s, pointe à 65 % du côté court et opacité nulle en fin de seconde ; pilote natif', async () => {
+    const releves = animationsObservables();
+    const r = await run(params({ countdown: 10 }), darkTheme, PORTRAIT);
+    await press(r, 'timer-start-stop');
+    const z = () => one(r, 'timer-countdown-zoom');
+    const fs = flat(one(r, 'timer-countdown-value')).fontSize as number;
+    const pointe = (0.65 * Math.min(PORTRAIT.width, PORTRAIT.height)) / (fs * HAUTEUR_CHIFFRES_EM);
+    for (const chiffre of ['10', '9', '3']) {
+      await apparition(r, chiffre);
+      expect([chiffre, echelle(z()), opacite(z())]).toEqual([chiffre, 0.55, 0]);
+      await tick(0.08);
+      expect(opacite(z())).toBeCloseTo(1, 3);
+      await tick(0.27);
+      expect(echelle(z())).toBeCloseTo(1, 3);
+      expect(opacite(z())).toBeCloseTo(1, 3);
+      await tick(0.6);
+      expect(echelle(z())).toBeCloseTo(pointe, 3);
+      expect(echelle(z()) * fs * HAUTEUR_CHIFFRES_EM).toBeLessThanOrEqual(0.65 * PORTRAIT.width + 0.01);
+      expect(opacite(z())).toBeCloseTo(0, 6);
+      await tick(0.04);
+      expect(opacite(z())).toBeCloseTo(0, 6);
+    }
+    expect(releves.length).toBeGreaterThanOrEqual(12);
+    expect(releves.every((c) => c.useNativeDriver === true)).toBe(true);
+  });
+
+  it('couche du zoom sans toucher, centrée sur l’anneau (remplit son intérieur), sans découpe par l’anneau', async () => {
+    const r = await run(params({ countdown: 10 }), darkTheme, PORTRAIT);
+    await press(r, 'timer-start-stop');
+    const z = one(r, 'timer-countdown-zoom');
+    expect(z.props.pointerEvents).toBe('none');
+    expect(hoteParent(z) === one(r, 'timer-countdown-ring')).toBe(true);
+    expect(flat(z)).toMatchObject({ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' });
+    for (const k of ['margin', 'marginTop', 'marginLeft', 'padding', 'width', 'height'] as const) expect(flat(z)[k]).toBeUndefined();
+    expect(flat(one(r, 'timer-countdown-ring')).overflow).not.toBe('hidden');
+    expect(one(r, 'timer-cd-overlay').props.pointerEvents).toBe('none');
+  });
+
+  it('« Réduire les animations » : chiffre fixe dans l’anneau, sans échelle ni fondu, qui change simplement de valeur', async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    const timing = jest.spyOn(Animated, 'timing');
+    const r = await run(params({ countdown: 10 }), darkTheme, PORTRAIT);
+    await press(r, 'timer-start-stop');
+    for (const chiffre of ['10', '9']) {
+      await apparition(r, chiffre);
+      await tick(0.5);
+      const z = flat(one(r, 'timer-countdown-zoom'));
+      expect([chiffre, z.transform, z.opacity]).toEqual([chiffre, undefined, undefined]);
+    }
+    expect(timing).not.toHaveBeenCalled();
   });
 });
