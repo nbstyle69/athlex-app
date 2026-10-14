@@ -3,7 +3,16 @@
 -- plus exécutables par les rôles clients, et la prochaine ne le sera pas non
 -- plus par défaut (rôle postgres).
 --
--- Appliquée en prod : non
+-- Appliquée en prod : OUI, le 14/10/2026 à 21:06 UTC, avec PGCLIENTENCODING=UTF8,
+-- seule et en une transaction (dump des schémas public et internal avec droits
+-- db-dumps/2026-10-14/athlex-prod-public-internal-20261014T210510Z.dump,
+-- sha256 b337aafbb8171e1ceaa91349ed26f827b1317bfe89c1718dd5131547ce4b3157
+-- vérifié après aller-retour, 139 TABLE DATA, 479 ACL, 348 POLICY ; md5 des
+-- helpers identiques au précontrôle ; sur les 735 droits EXECUTE de public et
+-- internal pour anon, authenticated et service_role, seuls changent
+-- _upsert_program_member et _daily_official_template pour authenticated, et
+-- les défauts de postgres dans public perdent authenticated ;
+-- _upsert_program_member reste exécutable par service_role.)
 --
 -- Constat en prod, lecture seule (session en default_transaction_read_only),
 -- le 14/10/2026 — md5 de pg_get_functiondef calculés par la base :
@@ -57,7 +66,9 @@ REVOKE EXECUTE ON FUNCTION public._daily_official_template(date)
 -- ci-dessus). Conséquence : toute nouvelle fonction appelée par l'app doit
 -- recevoir un GRANT EXECUTE … TO authenticated explicite, sinon elle sera
 -- inappelable (voir docs/REGLES_DE_VERIFICATION.md).
--- Le même réglage pour supabase_admin est seul dans 20270155000000, pour que
--- son éventuel refus en prod n'emporte pas ce fichier.
+-- Le même réglage pour supabase_admin, tenté seul le 14/10/2026 à 21:06 UTC
+-- depuis postgres, a été refusé en prod (« permission denied to change default
+-- privileges ») : il repartira dans une PR dédiée. Les fonctions que
+-- supabase_admin crée dans public naissent donc encore ouvertes.
 ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
   REVOKE EXECUTE ON FUNCTIONS FROM anon, authenticated;

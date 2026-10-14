@@ -1,6 +1,6 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Argent — K1 (#552) : les helpers « _* » de public sont fermés aux clients,
--- et les fonctions créées ensuite ne naissent plus ouvertes.
+-- et les fonctions que postgres crée ensuite ne naissent plus ouvertes.
 --
 -- Rejoué par `scripts/db-replay.sh`, donc par la CI sur chaque PR.
 -- Tout se joue dans UNE transaction annulée.
@@ -15,8 +15,9 @@
 --   H3  _daily_official_template : anon et authenticated → 42501.
 --   H4  une fonction créée par postgres dans public naît fermée à anon et
 --       authenticated (20270154), ouverte à service_role.
---   H5  idem pour une fonction créée par supabase_admin (20270155).
---   R   retour arrière (supabase/retours/2027015[45]…) : authenticated retrouve
+--   (supabase_admin : refusé en prod le 14/10/2026 depuis postgres, renvoyé à
+--   une PR dédiée — pas de H5 tant qu'aucune migration ne le ferme.)
+--   R   retour arrière (supabase/retours/20270154…) : authenticated retrouve
 --       l'EXECUTE et les défauts se rouvrent — puis tout est annulé.
 -- Le refus est attendu AVANT l'évaluation du corps : les arguments NULL
 -- suffisent, un 42501 ne peut pas venir d'une garde interne.
@@ -94,36 +95,29 @@ BEGIN
   RAISE NOTICE 'helpers_fermes_aux_clients : H1, H2, H3 OK';
 END $$;
 
--- ── H4 / H5 : ce qui naîtra demain ───────────────────────────────────────────
+-- ── H4 : ce qui naîtra demain ───────────────────────────────────────────
 SET LOCAL ROLE postgres;
 CREATE FUNCTION public.k1_sonde_postgres() RETURNS int LANGUAGE sql AS 'SELECT 1';
 RESET ROLE;
-SET LOCAL ROLE supabase_admin;
-CREATE FUNCTION public.k1_sonde_supabase_admin() RETURNS int LANGUAGE sql AS 'SELECT 1';
-RESET ROLE;
 
 DO $$
-DECLARE f text; r text; v text;
+DECLARE f text := 'k1_sonde_postgres'; r text; v text;
 BEGIN
-  FOREACH f IN ARRAY ARRAY['k1_sonde_postgres', 'k1_sonde_supabase_admin'] LOOP
-    FOREACH r IN ARRAY ARRAY['anon', 'authenticated'] LOOP
-      v := pg_temp.appel(r, format('SELECT public.%I()', f));
-      IF v <> '42501' THEN
-        RAISE EXCEPTION '% : une fonction neuve (%) naît exécutable par % (%)',
-          CASE f WHEN 'k1_sonde_postgres' THEN 'H4' ELSE 'H5' END, f, r, v
-          USING HINT = 'Privilèges par défaut de public rouverts : rejoue 20270154 / 20270155.';
-      END IF;
-    END LOOP;
-    -- Contre-exemple : la sonde est bien appelable par le serveur.
-    IF pg_temp.appel('service_role', format('SELECT public.%I()', f)) <> 'ok' THEN
-      RAISE EXCEPTION 'H4/H5 : service_role n''appelle pas %, la sonde ne mesure rien', f;
+  FOREACH r IN ARRAY ARRAY['anon', 'authenticated'] LOOP
+    v := pg_temp.appel(r, format('SELECT public.%I()', f));
+    IF v <> '42501' THEN
+      RAISE EXCEPTION 'H4 : une fonction neuve (%) naît exécutable par % (%)', f, r, v
+        USING HINT = 'Privilèges par défaut de postgres dans public rouverts : rejoue 20270154.';
     END IF;
   END LOOP;
-  RAISE NOTICE 'helpers_fermes_aux_clients : H4, H5 OK';
+  -- Contre-exemple : la sonde est bien appelable par le serveur.
+  IF pg_temp.appel('service_role', format('SELECT public.%I()', f)) <> 'ok' THEN
+    RAISE EXCEPTION 'H4 : service_role n''appelle pas %, la sonde ne mesure rien', f;
+  END IF;
+  RAISE NOTICE 'helpers_fermes_aux_clients : H4 OK';
 END $$;
 
 -- ── R : le retour arrière rouvre exactement ce qu'il doit ────────────────────
-\i supabase/retours/20270155000000_defauts_supabase_admin_fermes.sql
 \i supabase/retours/20270154000000_helpers_fermes_aux_clients.sql
 
 SET LOCAL ROLE postgres;
