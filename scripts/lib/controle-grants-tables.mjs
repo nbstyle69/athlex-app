@@ -772,7 +772,6 @@ const SECDEF_SANS_GARDE_CONNUES = [
   'check_weekly_limit(uuid,uuid,date)',
   'compute_tournament_elo(uuid)',
   'count_program_week_conflicts(text,uuid,integer,date)',
-  'extend_all_class_schedules()',
   'get_total_box_count()',
   'get_tournament_participants(uuid)',
   'get_tournament_validated_scores(uuid)',
