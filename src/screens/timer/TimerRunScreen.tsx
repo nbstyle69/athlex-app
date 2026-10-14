@@ -33,6 +33,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { appTimerThemeId, ensureContrast, inkOn, inkOnSecondary, TIMER_THEMES } from '../../theme/timerInk';
 import { AxButton, AxCard, AxChip, AxGlass, AxIconButton, AxSwitch, AxTag, withAlpha } from '../../components/ax';
 import { axColors, axFonts, axRadius, axSpacing, axTypography, axVeil } from '../../theme/axTokens';
+import { oswaldMediumCentered } from '../../theme/oswaldMetrics';
 import { CD_TENSE_FROM, countdownOverlay } from '../../lib/timerCountdownOverlay';
 import { incrementCounter } from '../../services/gamification';
 import * as Notifications from 'expo-notifications';
@@ -137,7 +138,7 @@ function CountdownView({ value, title, digitColor, accent, bg, size }: {
               borderRadius: glowSize / 2, backgroundColor: withAlpha(accentInk, 0.14) }} />
         )}
         <Text testID="timer-countdown-value" numberOfLines={1}
-          style={[styles.countdownDigits, { width: size, fontSize: digitSize, lineHeight: Math.round(digitSize * 1.2), color: ink }]}>
+          style={[styles.countdownDigits, oswaldMediumCentered(digitSize), { width: size, color: ink }]}>
           {value}
         </Text>
       </View>
@@ -2968,8 +2969,8 @@ const styles = StyleSheet.create({
   },
   roundBtn: { justifyContent: 'center', alignItems: 'center' },
   bigDigits: { fontFamily: axFonts.oswaldMedium, letterSpacing: -2, fontVariant: ['tabular-nums'] },
-  // Sans approche négative ni marge de police : le chiffre tombe au centre exact du cercle.
-  countdownDigits: { fontFamily: axFonts.oswaldMedium, fontVariant: ['tabular-nums'], letterSpacing: 0, textAlign: 'center', textAlignVertical: 'center', includeFontPadding: false },
+  // Sans approche négative ; ligne et centrage du glyphe : oswaldMediumCentered (#547).
+  countdownDigits: { fontFamily: axFonts.oswaldMedium, fontVariant: ['tabular-nums'], letterSpacing: 0, textAlign: 'center' },
   finalDigits: { fontFamily: axFonts.oswaldMedium, fontWeight: 'normal', letterSpacing: -2 },
   roundText: { fontFamily: axFonts.oswaldMedium, fontSize: 16, letterSpacing: 1.5 },
   totalText: { fontFamily: axFonts.oswaldMedium, fontSize: 14, letterSpacing: 0.5, fontVariant: ['tabular-nums'] },
