@@ -585,6 +585,13 @@ ce qu'on veut pouvoir dire, et c'est pour ça qu'on paie le smoke.
   du grant implicite de `PUBLIC`. Le protocole teste `anon` **et** `authenticated` d'une
   autre box, pas seulement le cas nominal — et `scripts/test-grants.mjs` le vérifie
   mécaniquement sur tout le schéma.
+- **Toute nouvelle fonction appelée par l'app reçoit un `GRANT EXECUTE … TO authenticated`
+  explicite, sinon elle sera inappelable** (depuis 20270154, #552, les privilèges par défaut
+  de `postgres` dans `public` ne l'ouvrent plus aux clients ; une fonction recréée par `DROP`
+  + `CREATE` perd aussi ses grants). Ceux de `supabase_admin` restent ouverts en prod (refus
+  du 14/10/2026), et le rejeu de la CI crée en `supabase_admin` : une fonction appelable en
+  CI peut donc être fermée en prod — le GRANT explicite est la seule voie fiable. Les helpers
+  internes, préfixés `_`, n'en reçoivent jamais (audit T19a).
 - **`SET search_path TO 'public', 'pg_temp'`** sur toute fonction `SECURITY DEFINER`.
 - **Les triggers d'immuabilité ne doivent pas bloquer les cascades.** Un trigger qui refuse
   tout `UPDATE`/`DELETE` casse la suppression de compte (les FK écrivent : `SET NULL`,
