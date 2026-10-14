@@ -136,7 +136,7 @@ const GARDES_DECLENCHEUR = [
  * décompte le dirait au lieu de le taire.
  */
 export const ASSERTIONS_GRANTS_TABLES = 9 + TABLES_ECRITURE_SERVEUR.size + GARDES_DECLENCHEUR.length
-  + TABLES_FERMEES.length + 3; // T1..T9, T10 par table, T11..T13 et T16 par garde, T14 par table fermée, T15, T17, T18
+  + TABLES_FERMEES.length + 3 + 2; // T1..T9, T10 par table, T11..T13 et T16 par garde, T14 par table fermée, T15, T17, T18, T19a, T19b
 
 const PRIV_LISTE = privs => privs.map(p => `'${p}'`).join(', ');
 
@@ -387,6 +387,8 @@ export function controlerGrantsTables(query, assert) {
   controlerChangementFormule(query, assert);
   controlerComptoirDuree(query, assert);
   controlerFileAvisMembre(query, assert);
+  controlerHelpersFermes(query, assert);
+  controlerSecdefSansGarde(query, assert);
 }
 
 /**
@@ -713,6 +715,107 @@ function controlerFileAvisMembre(query, assert) {
     ecarts.join(' ; ') + '\n'
       + '       → sans cette fermeture, un membre lit qui va perdre son accès, ou un client met en file '
       + 'un message signé AthleX, ou coupe l\'accès d\'un membre. Rejoue 20270152.',
+  );
+}
+
+/**
+ * T19a : les fonctions internes de public — nom préfixé `_` — ne sont
+ * exécutables ni par `anon` ni par `authenticated` (#552, 20270154). Leur
+ * appelante légitime est une fonction SECURITY DEFINER qui contrôle le compte ;
+ * ouvertes, elles posent un droit payant sans paiement (_upsert_program_member
+ * l'était). Toutes les fonctions `_*`, pas une liste : la règle vaut pour
+ * celles qui ne sont pas encore écrites. Aucune exception.
+ */
+function controlerHelpersFermes(query, assert) {
+  const lignes = query(`
+    select p.oid::regprocedure::text,
+           concat_ws(',', case when has_function_privilege('anon', p.oid, 'EXECUTE') then 'anon' end,
+                          case when has_function_privilege('authenticated', p.oid, 'EXECUTE') then 'authenticated' end)
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.proname like '\\_%'
+      and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')
+    order by 1
+  `);
+  const ouvertes = lignes.filter(([, roles]) => roles !== '');
+
+  assert(
+    `T19a — aucune fonction interne \`_*\` de public n'est exécutable par un client (${lignes.length} contrôlée(s))`,
+    lignes.length > 0 && ouvertes.length === 0,
+    lignes.length === 0
+      ? 'aucune fonction `_*` dans public : le contrôle ne mesure plus rien.'
+      : ouvertes.map(([f, roles]) => `${f} → ${roles}`).join(', ') + '\n'
+        + '       → un compte connecté appelle directement ce helper, sans la garde de la RPC '
+        + 'qui l\'enveloppe. REVOKE EXECUTE … FROM anon, authenticated (voir 20270154).',
+  );
+}
+
+/**
+ * T19b : instantané des fonctions SECURITY DEFINER ouvertes à un client et
+ * sans garde visible — DETTE CONNUE, relevée en prod le 14/10/2026 (#552),
+ * à traiter après l'App Store (carte Backlog). Ce n'est pas une liste blanche :
+ * aucune n'est jugée saine. L'audit exige l'égalité exacte, pour qu'une
+ * nouvelle fonction de ce type rougisse, et qu'une fonction ne sorte de la
+ * liste qu'une fois corrigée (fermée, ou garde ajoutée).
+ *
+ * « Garde visible » : le corps cite auth.uid() ou l'un des prédicats de
+ * GARDES_VISIBLES. Les fonctions de déclencheur sont exclues : elles ne
+ * s'appellent pas en RPC.
+ */
+const GARDES_VISIBLES = 'auth\\.uid\\s*\\(\\s*\\)|(is_box_(owner|admin|coach|staff|member|owner_admin|owner_member|admin_of_athlete)'
+  + '|manages_box|is_super_admin|is_support_admin|is_tournament_manager|is_inter_competition_manager|assert_offer_editor)\\s*\\(';
+
+const SECDEF_SANS_GARDE_CONNUES = [
+  'book_trial_slot(uuid,uuid,text,text,text,text)',
+  'box_accepts_entries(uuid)',
+  'can_join_inter_competition(uuid)',
+  'check_weekly_limit(uuid,uuid)',
+  'check_weekly_limit(uuid,uuid,date)',
+  'compute_tournament_elo(uuid)',
+  'count_program_week_conflicts(text,uuid,integer,date)',
+  'extend_all_class_schedules()',
+  'get_total_box_count()',
+  'get_tournament_participants(uuid)',
+  'get_tournament_validated_scores(uuid)',
+  'increment_movement_stats(uuid,text,integer,numeric)',
+  'is_blocked_pair(uuid,uuid)',
+  'list_program_week_conflicts(text,uuid,integer,date)',
+  'list_public_trial_slots(uuid,integer)',
+  'owner_box_count(uuid)',
+  'peek_box_invitation(text)',
+  'tournament_bracket_standings(uuid)',
+  'tournament_classique_standings(uuid)',
+  'tournament_classique_wod_ranks(uuid)',
+  'tournament_ligue_standings(uuid,integer)',
+  'tournament_wod_accepts_scores(uuid,uuid)',
+];
+
+function controlerSecdefSansGarde(query, assert) {
+  const trouvees = query(`
+    select p.oid::regprocedure::text
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+    where n.nspname = 'public' and p.prosecdef and p.prokind = 'f'
+      and p.prorettype <> 'trigger'::regtype
+      and p.prosrc !~* '${GARDES_VISIBLES}'
+      and (has_function_privilege('anon', p.oid, 'EXECUTE') or has_function_privilege('authenticated', p.oid, 'EXECUTE'))
+      and not exists (select 1 from pg_depend d where d.objid = p.oid and d.deptype = 'e')
+  `).map(([f]) => f);
+
+  const connues = new Set(SECDEF_SANS_GARDE_CONNUES);
+  const nouvelles = trouvees.filter(f => !connues.has(f)).sort();
+  const sorties = SECDEF_SANS_GARDE_CONNUES.filter(f => !trouvees.includes(f));
+
+  assert(
+    `T19b — les fonctions SECURITY DEFINER ouvertes aux clients sans garde visible sont exactement `
+      + `la dette connue (${SECDEF_SANS_GARDE_CONNUES.length})`,
+    nouvelles.length === 0 && sorties.length === 0,
+    [
+      ...(nouvelles.length ? [`nouvelle(s) : ${nouvelles.join(', ')}\n`
+        + '       → ajoute une garde (auth.uid() ou un prédicat de box) ou ferme l\'EXECUTE aux clients ; '
+        + 'n\'allonge pas la liste.'] : []),
+      ...(sorties.length ? [`sortie(s) de la dette : ${sorties.join(', ')}\n`
+        + '       → corrigée ? retire-la de SECDEF_SANS_GARDE_CONNUES dans la même PR. Disparue sans '
+        + 'correction (renommée, signature changée) ? elle réapparaît sous « nouvelle(s) ».'] : []),
+    ].join(' ; '),
   );
 }
 
