@@ -11,6 +11,8 @@ export interface OverlayState {
   countdownLabel: string;
   /** Décompte à 3-2-1 : libellé, chiffre et halo en couleur d'accent. */
   countdownTense: boolean;
+  /** Durée du décompte (sa plus grande valeur) : taille du chiffre incrusté (#547). */
+  countdownMax?: number;
   /** « GO ! » dans une bande d'accent ; vide = pas de bande. */
   goLabel: string;
   /** Accent déjà contrasté (#RRGGBB) et encre du texte posé sur l'accent. */

@@ -27,6 +27,7 @@ class RealtimeRecorderModule : Module() {
           (dict["countdownValue"] as? Double)?.let { engine.overlayState.countdownValue = it.toInt() }
           (dict["countdownLabel"] as? String)?.let { engine.overlayState.countdownLabel = it }
           (dict["countdownTense"] as? Boolean)?.let { engine.overlayState.countdownTense = it }
+          (dict["countdownMax"] as? Double)?.let { engine.overlayState.countdownMax = it.toInt() }
           (dict["goLabel"] as? String)?.let { engine.overlayState.goLabel = it }
           (dict["accentColor"] as? String)?.let { engine.overlayState.accentColor = it }
           (dict["goInk"] as? String)?.let { engine.overlayState.goInk = it }

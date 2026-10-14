@@ -227,8 +227,11 @@ describe('R6c : module natif', () => {
     }
     expect(swift).toContain('context.rotate(by: -4 * .pi / 180)');
     expect(kt).toContain('canvas.rotate(-4f)');
-    expect(swift).toContain('withAlphaComponent(0.12)');
-    expect(kt).toContain('withAlpha(accent, 0.12f)');
+    // #547 PR 3 : anneau fin (accent 35 % à 3-2-1, blanc 35 % au-dessus), plus de halo plein à 12 %.
+    expect(swift).toContain('(tense ? accent : UIColor.white).withAlphaComponent(0.35)');
+    expect(kt).toContain('if (tense) withAlpha(accent, 0.35f) else Color.argb(89, 255, 255, 255)');
+    expect(swift).not.toContain('withAlphaComponent(0.12)');
+    expect(kt).not.toContain('withAlpha(accent, 0.12f)');
   });
   it('Oswald Medium embarquée des deux côtés, identique à celle de l’écran', () => {
     const sha = (f: string) => crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT, f))).digest('hex');

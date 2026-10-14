@@ -722,6 +722,7 @@ public class RealtimeRecorderModule: Module {
       if let v = dict["countdownValue"] as? Int  { self.engine.overlayState.countdownValue = v }
       if let v = dict["countdownLabel"] as? String { self.engine.overlayState.countdownLabel = v }
       if let v = dict["countdownTense"] as? Bool { self.engine.overlayState.countdownTense = v }
+      if let v = dict["countdownMax"] as? Int   { self.engine.overlayState.countdownMax = v }
       if let v = dict["goLabel"] as? String      { self.engine.overlayState.goLabel = v }
       if let v = dict["accentColor"] as? String  { self.engine.overlayState.accentColor = v }
       if let v = dict["goInk"] as? String        { self.engine.overlayState.goInk = v }

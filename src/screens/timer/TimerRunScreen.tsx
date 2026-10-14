@@ -109,7 +109,9 @@ const VIBRATE_GO_MS = 200;
 // ─── Décompte (#547) : anneau fin et fixe, chiffre qui grossit et s'efface à chaque seconde ─────
 /** Diamètre de l'anneau : part du côté court de l'écran (plafonné en paysage par la zone libre). */
 export const CD_RING_RATIO = 0.36;
-const CD_RING_BORDER = 2;
+export const CD_RING_BORDER = 2;
+/** Approche du libellé « PRÉPARE-TOI » / « PRÊT ? » (recopiée par le décompte incrusté dans la vidéo). */
+export const CD_LABEL_TRACKING = 4;
 /** Marge entre l'encre du chiffre au repos et l'intérieur de l'anneau. */
 export const CD_INK_MARGIN = 6;
 /** Animation d'une seconde : entrée jusqu'à l'anneau, puis zoom et fondu jusqu'à la pointe. */
@@ -168,7 +170,7 @@ function CountdownView({ value, max, title, digitColor, accent, bg, size, cote }
   return (
     <View testID="timer-countdown" style={{ alignItems: 'center', gap: axSpacing.sm }}>
       <Text testID="timer-countdown-label"
-        style={[axTypography.overline, { color: tense ? accentInk : inkOnSecondary(bg), letterSpacing: 4 }]}>
+        style={[axTypography.overline, { color: tense ? accentInk : inkOnSecondary(bg), letterSpacing: CD_LABEL_TRACKING }]}>
         {tense ? t('timer.countdown.ready') : t('timer.countdown.prepare')}
       </Text>
       {!!title && (
@@ -843,6 +845,8 @@ export default function TimerRunScreen() {
           timestamp: clockStr,
           isRecording: true,
           ...countdownOverlay(phase === 'countdown' ? countdownVal : 0, showGo, displayOpts.themeId, t),
+          // Durée du décompte : le natif y taille le chiffre (la valeur la plus large tient dans l'anneau, #547).
+          countdownMax: countdown,
           showTimer: phase === 'running' || phase === 'stopped',
           boxLogoUrl: currentBox?.logo_url || '',
           competitionLogoUrl: competitionLogoUrl || '',
@@ -850,7 +854,7 @@ export default function TimerRunScreen() {
       } catch (e) { /* overlay update — silent to avoid flooding Sentry */ }
     }, 100); // 10Hz — timer & timestamp only change at 1Hz, no visual loss
     return () => clearInterval(id);
-  }, [withCamera, isRecordingActive, timerType, videoTitle, clockStr, phase, countdownVal, currentBox, competitionLogoUrl, showGo, displayOpts.themeId, t]);
+  }, [withCamera, isRecordingActive, timerType, videoTitle, clockStr, phase, countdownVal, countdown, currentBox, competitionLogoUrl, showGo, displayOpts.themeId, t]);
 
   const roundTimeLeftRef  = useRef(initRTL);
   const currentRoundRef   = useRef(1);

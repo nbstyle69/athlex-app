@@ -400,7 +400,11 @@ describe('R6b : chrono et natif intacts', () => {
     // Retours 1.0.60 (D1) : mode audio reposé à chaque lancement sans caméra (retours1060Audio.rn.test.tsx).
     // Retours 1.0.60 (D7) : bips arrêtés dès leur fin sur Android, focus audio rendu (retours1060Musique.rn.test.tsx).
     // i18n 1a : textes affichés passés par t() (libellés de type, phases, boutons caméra, alertes, date incrustée par formatDate) ; logique inchangée.
-    expect(sha(back)).toBe('2992b7642a33854fa373bfdeb5607148acfcfe40bf458c012352e4028fd0fdbc');
+    // #547 PR 3 : durée du décompte envoyée à l'incrustation (decompteVideoParite.test.ts), retirée avant l'empreinte.
+    const sans547 = back
+      .replace("          // Durée du décompte : le natif y taille le chiffre (la valeur la plus large tient dans l'anneau, #547).\n          countdownMax: countdown,\n", '')
+      .replace('countdownVal, countdown, currentBox', 'countdownVal, currentBox');
+    expect(sha(sans547)).toBe('2992b7642a33854fa373bfdeb5607148acfcfe40bf458c012352e4028fd0fdbc');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');
@@ -408,7 +412,7 @@ describe('R6b : chrono et natif intacts', () => {
     const all = Buffer.concat(files.map((f) => fs.readFileSync(path.join(root, f))));
     // R6c : décompte incrusté (Oswald Medium, libellés, halo, bande GO), vérifié dans r6c.rn.test.tsx.
     // R6c (A) : fps et micro dans le module (r6cOptionsVideo.rn.test.tsx) ; qualité retirée, 1080p fixe, démarrage sérialisé et exception rattrapée (recorderRotationCoordinator.test.ts).
-    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('e8d0dd5d83635452dffa88aff05dd4e9690c380f2ea133867b2888015636a1c8'); // R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt) ; bips sans doublon : calage de latence retiré
+    expect(crypto.createHash('sha256').update(all).digest('hex')).toBe('abcfb272da03d5a890b42a8af02fbe81e8d7a8a7ea8e4ac4c21e04ff7c865d40'); // #547 PR 3 : décompte incrusté fixe, apparence de #549 (CountdownLayoutTest.kt, CountdownRenderTest.kt, decompteVideoParite.test.ts, decompteVideoCentre.test.ts) ; R6c (B) : mélange des bips (BeepMixerTest.kt) ; décompte incrusté centré (CountdownLayoutTest.kt) ; bips sans doublon : calage de latence retiré
     const timer = read('screens/timer/TimerRunScreen.tsx');
     expect(sha(region(timer, 'const isRecording = withCamera && isRecordingActive;', '    stopVideoAndFinish;\n')))
       .toBe('f19d3562e9cb2dcab395d0bf0f8f99c86ec2e54b0339e1110915ac789d175fab'); // i18n 1a : libellés du bouton caméra par t()

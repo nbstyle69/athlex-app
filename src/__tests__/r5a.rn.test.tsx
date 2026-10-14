@@ -265,6 +265,12 @@ describe('R5a : capture', () => {
 const LOGIC_SHA = 'b462274c55f1321b17a785e022f2a506bf931a951d0f5547f45f1abd6ae78656';
 // Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
 const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
+/** #547 PR 3 : durée du décompte envoyée à l'incrustation (decompteVideoParite.test.ts) ; écart retiré avant l'empreinte. */
+const DECOMPTE_VIDEO_547: [string, string][] = [
+  ["          // Durée du décompte : le natif y taille le chiffre (la valeur la plus large tient dans l'anneau, #547).\n          countdownMax: countdown,\n", ''],
+  ['countdownVal, countdown, currentBox', 'countdownVal, currentBox'],
+];
+const sans547 = (s: string) => DECOMPTE_VIDEO_547.reduce((t, [a, b]) => t.replace(a, b), s);
 const THEMES_SHA = 'bcac5c7d5b679c14c380dd3c86d531450e0283e3f7881219d508aa7f02c53c78';
 const MODAL_SHA = '48d210edde52dc6c61eefc919547338ded563c6ac4e8405c748e9c748a47c566';
 const LAUNCH_SHA = 'e4567887b4ed3745b56790f362ad063d475f82f5d770b1ab62783ff38c5f7dc2';
@@ -469,7 +475,7 @@ const sha = (s: string) => crypto.createHash('sha256').update(s).digest('hex');
 describe('R5a : aucun calcul, bip ni thème touché', () => {
   it('logique de TimerRunScreen (phases, tics, bips, enregistrement) figée (R5b : suivi du thème de l’app, vibration et GO du décompte ; R6b : GO en mode caméra)', () => {
     const logic = srcRegion('screens/timer/TimerRunScreen.tsx', 'export default function TimerRunScreen()', '// Phase-aware accent color');
-    expect(sha(logic.replace(...IPHONE_FOLLOW_FIX))).toBe(LOGIC_SHA);
+    expect(sha(sans547(logic.replace(...IPHONE_FOLLOW_FIX)))).toBe(LOGIC_SHA);
   });
   it('TIMER_THEMES figé (état R5b)', () => {
     expect(sha(JSON.stringify(TIMER_THEMES))).toBe(THEMES_SHA);

@@ -461,7 +461,8 @@ describe('#547 : chiffre du décompte centré dans le cercle par son glyphe, mê
     // Écart en pixels physiques : au plus un demi-pixel partout, donc iOS et Android au pixel près.
     const px = Object.fromEntries(plateformes.map((p) => [`${p.os} ×${p.d}`, ecarts[`${p.os} ×${p.d}`].map((e) => Math.abs(e * p.d) <= 0.5)]));
     expect(px).toEqual(Object.fromEntries(Object.keys(px).map((k) => [k, [true, true]])));
-  });
+    // 6 rendus × 2 valeurs, par pas de 10 ms jusqu'à l'apparition : ~2 s en local, plus de 5 s sur la CI.
+  }, 30000);
 });
 
 // ═════════════════════════════════════════════════════════════════════════════
