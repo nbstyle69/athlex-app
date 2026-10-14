@@ -2,7 +2,16 @@
 -- #556 : extend_all_class_schedules() fermée aux clients, et la tâche cron des
 -- plannings réparée.
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : OUI, le 14/10/2026 à 22:11 UTC, avec PGCLIENTENCODING=UTF8,
+-- seule et en une transaction (dump des schémas public et internal avec droits
+-- db-dumps/2026-10-14/athlex-prod-public-internal-20261014T220955Z.dump,
+-- sha256 d13fac4118eeda1d4c94ed138a28a2829491e2eceab6717292718c6917575f70
+-- vérifié après aller-retour, 139 TABLE DATA, 479 ACL, 348 POLICY ; md5 des
+-- deux fonctions identiques au précontrôle ; sur les 391 droits EXECUTE de
+-- public et internal pour anon, authenticated et service_role, seul disparaît
+-- extend_all_class_schedules() pour authenticated ; les deux fonctions
+-- d'internal ne sont exécutables par aucun rôle client ; md5 des quatre
+-- fonctions égaux à ceux du rejeu ; audit grants-prod 47/47, T19b à 21.)
 --
 -- Constat en prod, lecture seule (session en default_transaction_read_only),
 -- le 14/10/2026 — md5 de pg_get_functiondef calculés par la base :
