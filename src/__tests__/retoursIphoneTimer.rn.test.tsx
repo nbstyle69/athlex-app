@@ -1,5 +1,5 @@
 import React from 'react';
-import { AccessibilityInfo, Animated, Dimensions, Modal, StyleSheet, Vibration } from 'react-native';
+import { AccessibilityInfo, Animated, Dimensions, Modal, PixelRatio, Platform, StyleSheet, Vibration } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { X } from 'lucide-react-native';
@@ -9,6 +9,8 @@ import TimerRunScreen, { CAM_INFO_GAP, CAM_REC_GAP } from '../screens/timer/Time
 import { RecBlinkDot, REC_DOT } from '../components/timer/RecBlinkDot';
 import { AxSwitch } from '../components/ax';
 import { saveVideoOpts } from '../lib/timerVideoOpts';
+import { OSWALD_MEDIUM, OSWALD_MEDIUM_CENTER_SHIFT_EM, OSWALD_MEDIUM_LINE_EM } from '../theme/oswaldMetrics';
+import { FICHIER_OSWALD_MEDIUM, lirePolice } from './policeTtf';
 
 let mockTheme = lightTheme;
 let mockParams: unknown;
@@ -317,5 +319,109 @@ describe('Retours iPhone (6) : « Suivre le thème de l’app » après un régl
     await act(async () => { renderer!.update(<TimerRunScreen />); });
     expect(bgs(r).has('#9AE6D2')).toBe(true);
     expect(bgs(r).has('#101214')).toBe(false);
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// #547 (retour du build 1.0.64) : le chiffre du décompte n'était pas centré dans le cercle.
+// La boîte de ligne était centrée, pas le glyphe ; avec une ligne plus courte que la ligne
+// native d'Oswald, iOS et Android ne posaient pas non plus la ligne de base au même endroit.
+// Vérité indépendante du code : le fichier Oswald Medium embarqué, la façon dont React Native
+// 0.81 place la ligne de base quand lineHeight est fixé (iOS : RCTApplyBaselineOffsetForRange,
+// en flottants ; Android : TextAttributeProps, CustomLineHeightSpan, getFontMetricsInt, en
+// pixels entiers), et pour Android les lignes natives relevées sur l'émulateur (onTextLayout).
+// ═════════════════════════════════════════════════════════════════════════════
+const MEDIUM = lirePolice(FICHIER_OSWALD_MEDIUM);
+type Plateforme = { os: 'ios' | 'android'; d: number };
+/** Cadre du texte (hauteur) et ligne de base depuis son haut, en dp, et demi-capitale, sur une plateforme. */
+function ligne(fs: number, L: number, { os, d }: Plateforme) {
+  const em = MEDIUM.unitsPerEm, A = MEDIUM.hhea.ascender, D = -MEDIUM.hhea.descender;
+  if (os === 'ios') {
+    const asc = (A * fs) / em, N = ((A + D + MEDIUM.hhea.lineGap) * fs) / em;
+    // Ligne native centrée dans lineHeight si elle y tient ; sinon iOS garde le bas de la ligne.
+    return { hauteur: L, base: L >= N ? (L - N) / 2 + asc : L - (D * fs) / em, demiCap: (MEDIUM.capHeight * fs) / em / 2 };
+  }
+  const f = Math.ceil(fs * d), Lp = Math.ceil(L * d);
+  const asc = Math.round((A * f) / em), desc = Math.round((D * f) / em);
+  return { hauteur: Lp / d, base: (asc + Math.ceil((Lp - asc - desc) / 2)) / d, demiCap: (MEDIUM.capHeight * f) / em / 2 / d };
+}
+/** Milieu du glyphe (ligne de base − capHeight / 2) moins le milieu du cercle, en dp. */
+function ecartAuCentre(r: ReactTestInstance, p: Plateforme) {
+  const ring = one(r, 'timer-countdown-ring');
+  const v = one(r, 'timer-countdown-value');
+  const a = flat(ring), st = flat(v);
+  // Conditions du modèle : chiffre enfant direct du cercle, centré par lui, sans marge, rembourrage ni hauteur imposée.
+  let parent = v.parent;
+  while (parent && typeof parent.type !== 'string') parent = parent.parent;
+  expect(parent === ring).toBe(true);
+  expect(a).toMatchObject({ justifyContent: 'center', alignItems: 'center' });
+  for (const k of ['padding', 'paddingTop', 'paddingBottom', 'paddingVertical'] as const) expect(a[k] ?? 0).toBe(0);
+  for (const k of ['margin', 'marginTop', 'marginBottom', 'marginVertical', 'top', 'bottom', 'height'] as const) expect(st[k] ?? 0).toBe(0);
+  const S = a.height as number, B = (a.borderWidth as number) ?? 0;
+  const l = ligne(st.fontSize as number, st.lineHeight as number, p);
+  const haut = B + (S - 2 * B - l.hauteur) / 2;
+  const ty = ((st.transform as { translateY?: number }[] | undefined) ?? []).reduce((s, t) => s + (t.translateY ?? 0), 0);
+  return haut + l.base - l.demiCap + ty - S / 2;
+}
+/** Lignes natives relevées sur l'émulateur Android (420 ppp) : taille, lineHeight, puis hauteur, ascendante, descendante. */
+const RELEVES_ANDROID: [number, number, number, number, number][] = [
+  [109, 131, 131.048, 115.048, 16.000], [133, 160, 160.000, 140.571, 19.429], [74, 89, 89.143, 78.476, 10.667],
+  [90, 108, 108.190, 95.238, 12.952], [97, 116, 116.190, 102.095, 14.095], [118, 142, 142.095, 124.571, 17.524],
+  [109, 162, 162.286, 130.667, 31.619], [133, 198, 198.095, 159.619, 38.476], [74, 110, 110.095, 88.762, 21.333],
+  [90, 134, 134.095, 108.190, 25.905], [97, 144, 144.000, 115.810, 28.190], [118, 175, 175.238, 140.952, 34.286],
+];
+
+describe('#547 : chiffre du décompte centré dans le cercle par son glyphe, même place sur iOS et Android', () => {
+  it('le décalage vient des mesures du fichier Oswald Medium embarqué (glyphe sous le milieu : remonté)', () => {
+    expect(OSWALD_MEDIUM.unitsPerEm).toBe(MEDIUM.unitsPerEm);
+    expect([OSWALD_MEDIUM.ascender, OSWALD_MEDIUM.descender, OSWALD_MEDIUM.lineGap]).toEqual([MEDIUM.hhea.ascender, MEDIUM.hhea.descender, MEDIUM.hhea.lineGap]);
+    // Android suit OS/2 typo (USE_TYPO_METRICS) : identiques à hhea, donc même ligne sur les deux plateformes.
+    expect(MEDIUM.typo).toEqual({ ascender: MEDIUM.hhea.ascender, descender: MEDIUM.hhea.descender, lineGap: MEDIUM.hhea.lineGap, utilisees: true });
+    expect(OSWALD_MEDIUM.capHeight).toBe(MEDIUM.capHeight);
+    const { ascender: A, descender: D, lineGap: G } = MEDIUM.hhea;
+    const attendu = ((A - D + G) / 2 - (A - MEDIUM.capHeight / 2)) / MEDIUM.unitsPerEm;
+    expect(attendu).toBeLessThan(0);
+    expect(OSWALD_MEDIUM_CENTER_SHIFT_EM).toBeCloseTo(attendu, 12);
+    expect(OSWALD_MEDIUM_LINE_EM).toBeCloseTo((A - D + G) / MEDIUM.unitsPerEm, 12);
+  });
+
+  it('le modèle Android de ce test redonne au millième les lignes natives relevées sur l’émulateur', () => {
+    for (const [fs, L, hauteur, ascendante, descendante] of RELEVES_ANDROID) {
+      const l = ligne(fs, L, { os: 'android', d: 420 / 160 });
+      expect([fs, L, +l.hauteur.toFixed(3), +l.base.toFixed(3), +(l.hauteur - l.base).toFixed(3)]).toEqual([fs, L, hauteur, ascendante, descendante]);
+    }
+  });
+
+  const plateformes: Plateforme[] = [
+    { os: 'ios', d: 2 }, { os: 'ios', d: 3 },
+    { os: 'android', d: 420 / 160 }, { os: 'android', d: 2.75 }, { os: 'android', d: 3 }, { os: 'android', d: 3.5 },
+  ];
+  const cas = [
+    ['minuteur, portrait', false, PORTRAIT], ['minuteur, paysage', false, LANDSCAPE],
+    ['enregistrement, portrait', true, PORTRAIT], ['enregistrement, paysage', true, LANDSCAPE],
+  ] as const;
+  it.each(cas)('%s : 10 puis 3, milieu du glyphe au milieu du cercle à un demi-pixel près, sur iOS et Android, à chaque densité', async (_, camera, w) => {
+    const ecarts: Record<string, number[]> = {};
+    for (const p of plateformes) {
+      jest.replaceProperty(Platform, 'OS', p.os);
+      jest.spyOn(PixelRatio, 'get').mockReturnValue(p.d);
+      const r = await run(params({ countdown: 10, withCamera: camera }), darkTheme, w);
+      if (camera) { await camPress(r); await camPress(r); } else await press(r, 'timer-start-stop');
+      const cle = `${p.os} ×${p.d}`;
+      ecarts[cle] = [];
+      for (const [chiffre, attente] of [['10', 0], ['3', 7]] as const) {
+        await tick(attente);
+        expect(hostText(one(r, 'timer-countdown-value'))).toBe(chiffre);
+        const st = flat(one(r, 'timer-countdown-value'));
+        // Ligne au moins aussi haute que la ligne native : rien n'est coupé, le modèle centré s'applique.
+        expect(st.lineHeight as number).toBeGreaterThanOrEqual((st.fontSize as number) * OSWALD_MEDIUM_LINE_EM);
+        ecarts[cle].push(ecartAuCentre(r, p));
+      }
+      await act(async () => renderer!.unmount()); renderer = null;
+      jest.restoreAllMocks();
+    }
+    // Écart en pixels physiques : au plus un demi-pixel partout, donc iOS et Android au pixel près.
+    const px = Object.fromEntries(plateformes.map((p) => [`${p.os} ×${p.d}`, ecarts[`${p.os} ×${p.d}`].map((e) => Math.abs(e * p.d) <= 0.5)]));
+    expect(px).toEqual(Object.fromEntries(Object.keys(px).map((k) => [k, [true, true]])));
   });
 });

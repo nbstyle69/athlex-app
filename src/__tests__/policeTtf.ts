@@ -14,6 +14,8 @@ export type Police = {
   hhea: { ascender: number; descender: number; lineGap: number };
   typo: { ascender: number; descender: number; lineGap: number; utilisees: boolean };
   win: { ascent: number; descent: number };
+  /** Hauteur des capitales (OS/2 sCapHeight, version 2 et plus). */
+  capHeight: number;
   /** Chasse et boîte verticale d'un caractère. */
   glyphe: (c: string) => { chasse: number; yMin: number; yMax: number };
 };
@@ -61,6 +63,7 @@ export function lirePolice(fichier: string): Police {
     typo: { ascender: b.readInt16BE(os2 + 68), descender: b.readInt16BE(os2 + 70), lineGap: b.readInt16BE(os2 + 72),
       utilisees: (b.readUInt16BE(os2 + 62) & (1 << 7)) !== 0 },
     win: { ascent: b.readUInt16BE(os2 + 74), descent: b.readUInt16BE(os2 + 76) },
+    capHeight: b.readUInt16BE(os2) >= 2 ? b.readInt16BE(os2 + 88) : NaN,
     glyphe: (c: string) => {
       const g = idGlyphe(c.codePointAt(0)!);
       const o = glyf + debutGlyphe(g);
