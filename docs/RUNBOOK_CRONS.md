@@ -21,6 +21,47 @@ pas ces jobs**. La liste ci-dessous est la référence pour les remonter.
 | `generate-box-week-cet` / `-cest` | sam. 07:00 / 06:00 UTC | edge `generate-box-week` |
 | `deliver-manager-notifications-minute` | chaque minute | edge `deliver-manager-notifications` (migration `20270144`, créée inactive sans `cron_secret` dans le Vault) |
 | `box-manager-notifications-purge` | 03:23 UTC | `DELETE` des lignes de `box_manager_notifications` de plus de 30 jours (migration `20270144`) |
+| `comptoir-fin-acces` | H+41 | SQL seulement : `internal.filer_avis_fin_acces()`, `internal.expirer_acces_comptoir()`, `internal.purger_avis_fin_acces()` (migration `20270152`) |
+| `deliver-access-notices` | H+46 | edge `deliver-access-notices` (migration `20270153`, créée inactive sans `cron_secret` dans le Vault) |
+
+## Paiements au comptoir : fin d'accès et messages
+
+Deux tâches, cinq minutes d'écart :
+
+- **`comptoir-fin-acces`** (H+41, migration `20270152`, SQL seulement) met en
+  file les messages J−7 et J−1 (`box_member_access_notices`), coupe l'accès des
+  membres au comptoir le lendemain de leur fin d'accès (`subscription_status`
+  passe à `expired`, réservations à venir supprimées, message « fin » en file),
+  puis purge les messages envoyés depuis plus de 90 jours.
+- **`deliver-access-notices`** (H+46, migration `20270153`) appelle la fonction
+  edge du même nom, qui envoie la file par push (Expo) et par e-mail (Resend).
+  - Elle n'envoie qu'entre 9:00 et 20:00, heure de Paris : en dehors, elle ne lit
+    rien et rend `{"hors_heures":true,…}`. Les messages de la nuit partent donc à
+    9:46.
+  - Avant tout envoi, elle réserve la ligne (`reserved_at`) puis relit
+    l'adhésion. Une ligne devenue fausse (réencaissement, passage en ligne,
+    départ) est marquée `obsolete` ; une ligne de plus de 48 h, `perime`.
+  - Une ligne réservée n'est jamais renvoyée, même après une erreur.
+
+Ordre de mise en place : migration `20270152`, puis déploiement de la fonction
+(`scripts/deploy-edge.mjs`), puis migration `20270153`. Sans la fonction, la
+tâche appellerait une adresse absente toutes les heures.
+
+Vérifier les deux :
+
+```sql
+SELECT j.jobname, r.status, r.start_time, left(r.return_message, 120)
+  FROM cron.job_run_details r JOIN cron.job j USING (jobid)
+ WHERE j.jobname IN ('comptoir-fin-acces', 'deliver-access-notices')
+ ORDER BY r.start_time DESC LIMIT 10;
+
+SELECT kind, count(*) FILTER (WHERE sent_at IS NULL) AS en_attente,
+       count(*) FILTER (WHERE error IS NOT NULL) AS avec_code
+  FROM public.box_member_access_notices GROUP BY kind;
+```
+
+Pour arrêter l'envoi sans toucher à la coupure :
+`SELECT cron.alter_job(job_id := (SELECT jobid FROM cron.job WHERE jobname = 'deliver-access-notices'), active := false);`
 
 ## `generate-box-week` (programmation automatique, J1)
 

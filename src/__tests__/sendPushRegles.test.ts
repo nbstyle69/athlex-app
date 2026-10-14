@@ -171,6 +171,11 @@ describe('send-push : catégorie', () => {
     expect(resolvePrefKey(undefined, undefined, ['membership_stopped'])).toBe('box_announcements');
   });
 
+  it('membership_access_ending (fin d\'accès au comptoir) est gouverné par les annonces de la box', () => {
+    expect(resolvePrefKey(undefined, undefined, ['membership_access_ending'])).toBe('box_announcements');
+    expect(resolvePrefKey('membership_access_ending', undefined, [])).toBe('box_announcements');
+  });
+
   it('un type inconnu est refusé', () => {
     expect(resolvePrefKey(undefined, undefined, ['famille_inventee'])).toBeNull();
     expect(resolvePrefKey('bogus', undefined, ['membership_stopped'])).toBeNull();
