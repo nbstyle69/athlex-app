@@ -2,7 +2,25 @@
 -- Paiements au comptoir (P1), PR 3 sur 6 : tâche pg_cron d'envoi des messages
 -- de fin d'accès
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : OUI, le 14/10/2026 à 10:11 UTC, avec PGCLIENTENCODING=UTF8,
+-- en une transaction (psql -1), sur GO de Nab, après le déploiement de
+-- deliver-access-notices (v1, 10:10 UTC, verify_jwt false) et de send-push
+-- (v25, 10:10 UTC, sources identiques à la PR ; v24 d'avant identique à master,
+-- gardée dans C:\Users\NBS\athlex-retour-arriere-send-push\avant-comptoir-p3).
+-- Sondes : deliver-access-notices sans secret et avec un secret faux → 401 ;
+-- send-push sans authentification → 401 avant comme après. Dump des schémas
+-- public et internal avec droits
+-- db-dumps/2026-10-14/athlex-prod-public-internal-20261014T101056Z.dump, sha256
+-- 5e2caa37410048c26b96aa84460ccccbdb9f388121461ecbc67606892f5422be vérifié
+-- après aller-retour, 139 TABLE DATA, 479 ACL, 348 POLICY. Précontrôles :
+-- CRON_SECRET et RESEND_API_KEY présents (noms), cron_secret dans le Vault
+-- (nom), file vide, tâche absente, 16 tâches relevées. Vérifications : tâche
+-- 18 deliver-access-notices à « 46 * * * * », active, md5 de commande
+-- 65bb761f… (celui du fichier), URL attendue, x-cron-secret lu une fois dans
+-- le Vault, aucune clé ; les 16 autres tâches inchangées. Première passe le
+-- 14/10/2026 à 10:46:00 UTC : succeeded, HTTP 200
+-- {"hors_heures":false,"lues":0,…}, journaux sans erreur, file vide. Audit des
+-- droits en prod 45/45 lancé depuis la branche.
 --
 -- À APPLIQUER APRÈS le déploiement de la fonction edge `deliver-access-notices`
 -- (même PR), sinon la tâche appelle une fonction absente toutes les heures.
