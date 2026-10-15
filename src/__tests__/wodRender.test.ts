@@ -248,8 +248,12 @@ describe('la langue ne touche jamais le tirage ni le texte enregistré', () => {
     const service = fs.readFileSync(path.join(__dirname, '..', 'services/wodGenerator.ts'), 'utf8');
     const data = fs.readFileSync(path.join(__dirname, '..', 'services/wodEngineData.ts'), 'utf8');
     for (const src of [service, data]) {
-      expect(src).not.toMatch(/displayLangue|i18n\.language|wodRender|\blangue\b/);
+      expect(src).not.toMatch(/['"]\.\.\/i18n['"]|\.language\b|displayLangue|wodRender|\blangue\b|'en'/);
     }
+    // le moteur est appelé sans 5e argument (la langue) : graine seulement
+    const appels = [...service.matchAll(/generate(?:BlocC|Muscu)\(([^)]*)\)/g)].map((m) => m[1]);
+    expect(appels.length).toBeGreaterThanOrEqual(2);
+    for (const a of appels) expect(a.split(',').map((x) => x.trim())).toHaveLength(4);
   });
 
   describe('écritures inchangées : texte et wod_json enregistrés en français, app en anglais', () => {
