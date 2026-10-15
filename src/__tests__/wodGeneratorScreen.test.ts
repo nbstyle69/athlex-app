@@ -106,7 +106,8 @@ describe('page résultat', () => {
     expect(result).not.toContain('theme.textMuted, marginTop');
     expect(result).toContain("t('wodResult.categoryDone')");
     expect(fr('wodResult.categoryDone')).toBe('Catégorie réalisée');
-    expect(result).toMatch(/Share\.share\(\{ message: `\$\{wod\.title\}\\n\$\{wod\.description\}` \}\)/);
+    // M4 (#528) : Copier / Partager reprennent le texte affiché, dans la langue affichée (services/wodRender.ts)
+    expect(result).toContain('Share.share({ message: shareText(wod, wod, langue).share })');
     expect(result).not.toContain('wod.description}</Text>');
   });
 });
