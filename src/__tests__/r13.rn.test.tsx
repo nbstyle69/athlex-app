@@ -6,7 +6,7 @@
 import React from 'react';
 import fs from 'fs';
 import path from 'path';
-import { Alert, Linking, Modal, StyleSheet } from 'react-native';
+import { Alert, Linking, Modal, Platform, StyleSheet } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { lightTheme, darkTheme } from '../theme/palette';
 import BEFORE from './r13StructureBefore.json';
@@ -331,13 +331,24 @@ describe('R13 : navigation et callbacks inchangés', () => {
     expect(mockNavigate).toHaveBeenLastCalledWith('BoxPrograms');
   });
 
-  it('programmes des boxs : en-tête de box et programme ouvrent la page publique ; sans slug, rien', async () => {
+  it('programmes des boxs (Android) : en-tête de box et programme ouvrent la page publique ; sans slug, rien', async () => {
+    const os = Platform.OS;
+    Platform.OS = 'android';
+    try {
+      const root = await mount(<BoxProgramsScreen />);
+      await press(byID(root, 'box-programs-section-b1'));
+      await press(byID(root, 'program-card-p1'));
+      await press(byID(root, 'box-programs-section-b2'));
+      await press(byID(root, 'program-card-p3'));
+      expect(openURL.mock.calls.map((c) => c[0])).toEqual([`${WEB_URL}/box/lumiere`, `${WEB_URL}/box/lumiere`]);
+    } finally { Platform.OS = os; }
+  });
+
+  it('programmes des boxs (iOS, #553 D5) : ni en-tête ni programme n’ouvrent de lien', async () => {
     const root = await mount(<BoxProgramsScreen />);
-    await press(byID(root, 'box-programs-section-b1'));
-    await press(byID(root, 'program-card-p1'));
-    await press(byID(root, 'box-programs-section-b2'));
-    await press(byID(root, 'program-card-p3'));
-    expect(openURL.mock.calls.map((c) => c[0])).toEqual([`${WEB_URL}/box/lumiere`, `${WEB_URL}/box/lumiere`]);
+    expect(byID(root, 'box-programs-section-b1').props.onPress).toBeUndefined();
+    expect(byID(root, 'program-card-p1').props.onPress).toBeUndefined();
+    expect(openURL).not.toHaveBeenCalled();
   });
 
   it('partenaires : carte → fiche partenaire', async () => {

@@ -3,7 +3,7 @@ import { AxCard, AxTag } from '../../components/ax';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, Pressable, SectionList,
-  Image, ActivityIndicator, Linking,
+  Image, ActivityIndicator, Linking, Platform,
 } from 'react-native';
 import { Building2, ExternalLink, Calendar } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -45,6 +45,8 @@ export default function BoxProgramsScreen() {
   const s = createStyles(c);
   const [programs, setPrograms] = useState<ProgramItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // D5 : sur iOS, aucun lien vers la page de la box (App Store 3.1.1) ; Android garde le lien.
+  const linkToSite = Platform.OS !== 'ios';
 
   useEffect(() => { load(); }, []);
 
@@ -123,31 +125,42 @@ export default function BoxProgramsScreen() {
               <Text style={s.emptyTxt}>{t('explorer.programs.empty')}</Text>
             </View>
           }
-          renderSectionHeader={({ section }) => (
-            <Pressable
-              style={s.sectionRow}
-              onPress={() => openBoxPage(section.box_slug)}
-              accessibilityRole="button"
-              accessibilityLabel={section.title}
-              testID={`box-programs-section-${section.data[0].box_id}`}
-            >
-              {section.box_logo ? (
-                <Image source={{ uri: section.box_logo }} style={s.sectionLogo} />
-              ) : (
-                <View style={[s.sectionLogo, s.sectionLogoFallback]}>
-                  <Text style={s.sectionInitial}>{section.title.charAt(0)}</Text>
+          renderSectionHeader={({ section }) => {
+            const content = (
+              <>
+                {section.box_logo ? (
+                  <Image source={{ uri: section.box_logo }} style={s.sectionLogo} />
+                ) : (
+                  <View style={[s.sectionLogo, s.sectionLogoFallback]}>
+                    <Text style={s.sectionInitial}>{section.title.charAt(0)}</Text>
+                  </View>
+                )}
+                <View style={s.sectionText}>
+                  <Text style={s.sectionName} numberOfLines={1}>{section.title}</Text>
+                  {section.box_city && <Text style={s.sectionCity} numberOfLines={1}>{section.box_city}</Text>}
+                  {!linkToSite && section.box_slug && <Text style={s.sectionCity} numberOfLines={1}>{t('explorer.programs.onBoxSite')}</Text>}
                 </View>
-              )}
-              <View style={s.sectionText}>
-                <Text style={s.sectionName} numberOfLines={1}>{section.title}</Text>
-                {section.box_city && <Text style={s.sectionCity} numberOfLines={1}>{section.box_city}</Text>}
-              </View>
-              {section.box_slug && <ExternalLink color={c.textMuted} size={16} />}
-            </Pressable>
-          )}
+                {linkToSite && section.box_slug && <ExternalLink color={c.textMuted} size={16} />}
+              </>
+            );
+            const testID = `box-programs-section-${section.data[0].box_id}`;
+            return linkToSite ? (
+              <Pressable
+                style={s.sectionRow}
+                onPress={() => openBoxPage(section.box_slug)}
+                accessibilityRole="button"
+                accessibilityLabel={section.title}
+                testID={testID}
+              >
+                {content}
+              </Pressable>
+            ) : (
+              <View style={s.sectionRow} testID={testID}>{content}</View>
+            );
+          }}
           renderItem={({ item }) => (
             <AxCard
-              onPress={() => openBoxPage(item.box_slug)}
+              onPress={linkToSite ? () => openBoxPage(item.box_slug) : undefined}
               accessibilityLabel={item.title}
               testID={`program-card-${item.id}`}
             >

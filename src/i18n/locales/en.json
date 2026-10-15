@@ -15,7 +15,8 @@
       "haveCode": "I have an invite code",
       "ownerCta": "I'm a manager · subscribe on athlexapp.eu",
       "noCode": "I don't have an invite code",
-      "signOut": "Sign out"
+      "signOut": "Sign out",
+      "ownerOutsideApp": "Are you a box owner? The owner space is created and managed outside the app."
     },
     "tutorial": {
       "skip": "Skip",
@@ -204,9 +205,9 @@
       "subtitle": "Subscribe to the full plan to regain access to your back office and keep managing your box.",
       "planName": "Full Plan",
       "perMonth": "/month",
-      "webTitle": "Subscribe via the web",
-      "webText": "To subscribe to the full plan, go to athlexapp.eu from a browser. Your subscription will be activated automatically in the app as soon as the payment is confirmed.",
-      "subscribe": "Subscribe — €79/month",
+      "webTitle": "Subscription outside the app",
+      "webText": "Your box subscription is taken out and managed outside the app. As soon as it is active, your back office unlocks here automatically.",
+      "subscribe": "Subscribe — {{price}}/month",
       "retention": "Your data (members, WODs, scores) is kept for 30 days.",
       "retentionExtra": "\nSubscribe now so you don't lose anything.",
       "logout": "Sign out",
@@ -242,10 +243,10 @@
       "nextRenewal": "Next renewal on {{date}}",
       "planName": "Full Plan",
       "perMonth": "/month",
-      "annual": "or €749/year (2 months free)",
-      "iosTitle": "Subscription management via the web",
-      "iosText": "To subscribe, change or cancel your AthleX Pro subscription, sign in at athlexapp.eu from a browser. Changes are automatically synced in the app.",
-      "subscribePrice": "Subscribe — €79/month",
+      "annual": "or {{price}}/year (2 months free)",
+      "iosTitle": "Subscription outside the app",
+      "iosText": "Your AthleX Pro subscription is taken out, changed and cancelled outside the app. Changes show up here automatically.",
+      "subscribePrice": "Subscribe — {{price}}/month",
       "subscribeNow": "Subscribe now",
       "managePlan": "Manage my subscription",
       "retention": "Your data is kept for 30 days. Subscribe to regain your full back office."
@@ -762,12 +763,11 @@
       "subscribeConfirmTitle": "Subscribe?",
       "subscribeConfirmMsg": "Receive “{{title}}” in {{box}}'s Whiteboard?",
       "subscribedOk": "Subscription active",
-      "paidTitle": "Paid offer",
-      "paidMsg": "This programming ({{price}}) is paid on the web via secure Stripe checkout. Open the payment page?",
-      "payOnWeb": "Pay on the web",
       "disciplineHaltero": "Weightlifting",
       "disciplineEndurance": "Endurance",
-      "priceEur": "€{{amount}}"
+      "priceEur": "€{{amount}}",
+      "seeOnSite": "See on the website",
+      "paidOutsideApp": "Paid offer: it is subscribed to outside the app."
     },
     "trialBanner": {
       "activeSub": "All features are unlocked",
@@ -905,7 +905,8 @@
     "confirmEmailSent": "A confirmation link has been sent to {{email}}.\n\nTap the link in the email to activate your account, then sign in.",
     "usernameChangedTitle": "Username changed",
     "usernameTakenNotice": "The username \"{{requested}}\" was already taken, so yours is now \"{{final}}\". You can change it later in your profile.",
-    "embeddedBundle": "embedded"
+    "embeddedBundle": "embedded",
+    "ownerOutsideApp": "The owner space is created and managed outside the app."
   },
   "forgot": {
     "title": "Forgot password",
@@ -3005,7 +3006,8 @@
       "empty": "No box offers a program yet",
       "weeks": "{{n}} wk",
       "daysPerWeek_one": "{{count}} day/week",
-      "daysPerWeek_other": "{{count}} days/week"
+      "daysPerWeek_other": "{{count}} days/week",
+      "onBoxSite": "Available on the box's website"
     },
     "programmation": {
       "subtitle": "Choose your type of training",
