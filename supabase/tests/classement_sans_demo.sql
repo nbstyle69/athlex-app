@@ -35,6 +35,12 @@
 BEGIN;
 SET LOCAL search_path = "$user", public, extensions;
 
+-- 20270160 a passé global_leaderboard à 8 colonnes (role) ; ce fichier rejoue
+-- 20270159 (CREATE OR REPLACE à 7 colonnes), que Postgres refuserait. On se
+-- remet d'abord dans l'état de 20270159 par le retour de 20270160 (annulé avec
+-- le reste). La version à 8 colonnes est contrôlée par classement_role.sql.
+\i supabase/retours/20270160000000_classement_role.sql
+
 CREATE FUNCTION pg_temp.u(n int) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$ SELECT ('00000000-0000-4000-a565-' || lpad(n::text, 12, '0'))::uuid $$;
 
 -- ── C0 : la migration rejouée par la CI (sans décor) ──────────────────────────
