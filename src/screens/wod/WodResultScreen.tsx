@@ -55,6 +55,10 @@ import type { StrengthSaveState } from '../../components/wod/StrengthSetGrid';
 import { muscuDisplayedFor } from './muscuOptions';
 import MuscuSessionCard, { initialPerformed } from './MuscuSessionCard';
 import { MODAL_DISMISS_MS, useConfirmDialog } from '../../components/ConfirmDialog';
+import {
+  afterClassMusclesEn, displayStimulusNote, exerciseName, displayTarget, displayWod, headerLineOf, shareText,
+} from '../../services/wodRender';
+import type { Langue } from '../../../packages/wod-engine/src';
 
 export type WodResultParams = {
   screen: ScreenParams;
@@ -129,7 +133,9 @@ function useTabBarHeight(): number {
 export default function WodResultScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<Route>();
-  const { t } = useTranslation();
+  const { t, i18n: i18nHook } = useTranslation();
+  /** Langue d'affichage du résultat : le texte enregistré reste en français, seul l'affichage change (M4). */
+  const langue: Langue = i18nHook.language === 'en' ? 'en' : 'fr';
   const insets = useSafeAreaInsets();
   const { gymRecordFor, reload: reloadRecords } = useMyRecords();
   /** Fenêtre « Nouveau record ? » (G4) après la validation d'une séance générée. */
@@ -351,13 +357,15 @@ export default function WodResultScreen() {
     saveWodDraft(user.id, { screen, result, performed, submittedScore });
   }, [user, savedId, screen, result, performed, submittedScore]);
 
-  const headerLine = useMemo(() => wod.description.split('\n')[0] ?? '', [wod.description]);
+  const shown = useMemo(() => displayWod(wod, { title: wod.title, description: wod.description, notes: wod.notes }, langue), [wod, langue]);
+  const headerLine = useMemo(() => headerLineOf(shown.description), [shown.description]);
+  const stimulusNote = useMemo(() => displayStimulusNote(wod, langue), [wod, langue]);
   const estimate = metcon ? metcon.estimate.by_category[category] : null;
   const displayedFor = muscu ? muscuDisplayedFor(user?.level ?? null) : displayedForText(category, !!user?.level);
   const timerBlock = useMemo(
     // B5 : une séance Musculation part en mode Split (séries, repos de chaque exercice)
-    () => (isMuscuWod(wod) ? buildMuscuSplitBlock(wod) : buildFullSeqBlockFromWOD(editorFieldsOf(wod))),
-    [wod],
+    () => (isMuscuWod(wod) ? buildMuscuSplitBlock(wod, (e) => exerciseName(e, langue)) : buildFullSeqBlockFromWOD(editorFieldsOf(wod))),
+    [wod, langue],
   );
 
   function resetFor(next: GenerateResult) {
@@ -420,14 +428,14 @@ export default function WodResultScreen() {
     setMenu(false);
     try {
       const { Clipboard: RNClipboard } = require('react-native');
-      RNClipboard?.setString?.(wod.description);
+      RNClipboard?.setString?.(shareText(wod, wod, langue).copy);
     } catch (_) { /* presse-papier indisponible : la feuille de partage suffit */ }
-    Share.share({ message: `${wod.title}\n${wod.description}` }).catch(() => {});
+    Share.share({ message: shareText(wod, wod, langue).share }).catch(() => {});
   }
 
   function onShare() {
     setMenu(false);
-    Share.share({ message: `${wod.title}\n${wod.description}` }).catch(() => {});
+    Share.share({ message: shareText(wod, wod, langue).share }).catch(() => {});
   }
 
   function onTimerLaunch(params: TimerRunParams) {
@@ -626,7 +634,7 @@ export default function WodResultScreen() {
               </Text>
             )}
           </View>
-          <Text style={S.wodTitle} testID="wodresult-title">{wod.title.toUpperCase()}</Text>
+          <Text style={S.wodTitle} testID="wodresult-title">{shown.title.toUpperCase()}</Text>
           <Text style={S.wodDesc}>{headerLine}</Text>
           <View style={S.wodCardFooter}>
             <TouchableOpacity
@@ -687,9 +695,9 @@ export default function WodResultScreen() {
                   <Text style={S.estTarget}>{t('wodResult.exercisesRestIncluded', { count: muscu.blocks[0].exercises.length })}</Text>
                 </View>
               </View>
-              <Text style={S.stimulus}>{t('wodResult.stimulus', { rpe: fmtNum(muscu.stimulus.rpe), note: muscu.stimulus.note })}</Text>
+              <Text style={S.stimulus}>{t('wodResult.stimulus', { rpe: fmtNum(muscu.stimulus.rpe), note: stimulusNote })}</Text>
               {muscu.after_class && muscu.after_class.excluded_muscles.length > 0 && (
-                <Text style={S.afterClass}>{t('wodResult.afterClassMuscles', { list: muscu.after_class.excluded_muscles.join(', ') })}</Text>
+                <Text style={S.afterClass}>{afterClassMusclesEn(muscu.after_class.excluded_muscles, langue) ?? t('wodResult.afterClassMuscles', { list: muscu.after_class.excluded_muscles.join(', ') })}</Text>
               )}
               </View>
             </AxCard>
@@ -746,7 +754,7 @@ export default function WodResultScreen() {
             </Text>
             <View style={{ flex: 1 }}>
               <Text style={S.estLabel}>{t('wodResult.estimatedFor', { category: CATEGORY_LABEL[category] })}</Text>
-              <Text style={S.estTarget}>{t('wodResult.target', { target: estimate?.target ?? '—' })}</Text>
+              <Text style={S.estTarget}>{t('wodResult.target', { target: displayTarget(metcon, category, langue) ?? '—' })}</Text>
             </View>
           </View>
           <TouchableOpacity style={S.estLink} onPress={() => setAllCategories((v) => !v)} activeOpacity={0.7} testID="wodresult-all-categories">
@@ -760,13 +768,13 @@ export default function WodResultScreen() {
                 return e ? (
                   <View key={c} style={S.catRow}>
                     <Text style={[S.catName, c === category && S.catCurrent]}>{CATEGORY_LABEL[c]}</Text>
-                    <Text style={S.catVal}>{minutesText(e.minutes)} · {e.target}</Text>
+                    <Text style={S.catVal}>{minutesText(e.minutes)} · {displayTarget(metcon, c, langue) ?? e.target}</Text>
                   </View>
                 ) : null;
               })}
             </View>
           )}
-          <Text style={S.stimulus}>{t('wodResult.stimulus', { rpe: fmtNum(wod.stimulus.rpe), note: wod.stimulus.note })}</Text>
+          <Text style={S.stimulus}>{t('wodResult.stimulus', { rpe: fmtNum(wod.stimulus.rpe), note: stimulusNote })}</Text>
           {metcon.after_class && (metcon.after_class.excluded_patterns.length > 0 || metcon.after_class.excluded_families.length > 0) && (
             <Text style={S.afterClass}>{t('wodResult.complementAvoids', { list: [...metcon.after_class.excluded_patterns, ...metcon.after_class.excluded_families].join(', ') })}</Text>
           )}
@@ -859,7 +867,7 @@ export default function WodResultScreen() {
 
       <TimerLaunchModal
         visible={timerOpen}
-        title={wod.title}
+        title={shown.title}
         initialBlock={timerBlock}
         onClose={() => setTimerOpen(false)}
         onLaunch={onTimerLaunch}
