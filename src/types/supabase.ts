@@ -8213,6 +8213,7 @@ export type Database = {
           elo: number
           id: string
           level: string
+          role: string
           total_matches: number
           username: string
           wins: number
