@@ -3203,7 +3203,8 @@
       "pastDue": "Impayé",
       "paused": "En pause",
       "cancelScheduled": "Résiliation programmée",
-      "boxClosed": "Box fermée"
+      "boxClosed": "Box fermée",
+      "accessEnded": "Accès terminé"
     },
     "pricePerMonth": "{{amount}} € / mois",
     "nextBilling": "Prochaine échéance",
@@ -3250,6 +3251,18 @@
     "manageOnSite": "Gérer mon paiement sur le site",
     "manageOnSiteHint": "Carte bancaire, prélèvement et résiliation se gèrent sur athlexapp.eu.",
     "retry": "Réessayer",
+    "counterAccess": {
+      "paidUntil": "Accès payé jusqu’au",
+      "endedOn": "Accès terminé le",
+      "goOnline": "Passer au paiement en ligne",
+      "goOnlineHint": "Rien à payer aujourd’hui : ton premier prélèvement aura lieu après la fin de ton accès.",
+      "endingTitle": "Ton accès se termine le {{date}}",
+      "endingBody": "Passe au paiement en ligne pour continuer à réserver, sans payer deux fois : rien n’est prélevé avant la fin de ton accès.",
+      "endedTitle": "Ton accès est terminé",
+      "endedBody": "Tu ne peux plus réserver. Active ton abonnement en ligne pour réserver à nouveau.",
+      "activateOnline": "Activer mon abonnement en ligne",
+      "noOnlineBody": "Ta box ne propose pas le paiement en ligne : rapproche-toi d’elle pour renouveler."
+    },
     "choose": {
       "title": "Changer de formule",
       "subtitle": "Formules proposées par {{box}}",

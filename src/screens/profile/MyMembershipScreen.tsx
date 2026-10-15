@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { LucideIcon } from 'lucide-react-native';
 import {
-  Calendar, CalendarClock, Lock, Map, MapPin, RefreshCw, Send, ShieldCheck,
+  Calendar, CalendarClock, ExternalLink, Lock, Map, MapPin, RefreshCw, Send, ShieldCheck,
 } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { AxButton, AxCard, AxScreenHeader, AxStatusDot } from '../../components/ax';
@@ -16,8 +16,8 @@ import { WEB_URL } from '../../lib/urls';
 import type { HomeStackParamList } from '../../navigation';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import {
-  cancelMembershipPlanChange, getMembershipOverview, monthlyPrice, paymentMethodLabel,
-  type MembershipErrorKind, type MembershipOverview,
+  cancelMembershipPlanChange, counterAccess, getMembershipOverview, getMyMemberships, monthlyPrice, paymentMethodLabel,
+  type CounterAccess, type MembershipErrorKind, type MembershipOverview, type MyMembership,
 } from '../../services/membership';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
 
@@ -27,10 +27,13 @@ type OverviewProps = NativeStackScreenProps<HomeStackParamList, 'MyMembership'>;
 export const longDate = (d: string | number) => formatDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
 /** « 31 oct. » */
 export const shortDate = (d: string | number) => formatDate(d, { day: 'numeric', month: 'short' });
+/** Jour civil « AAAA-MM-JJ » à midi local : la date affichée ne glisse pas d'un fuseau à l'autre. */
+const civilDay = (d: string) => { const [y, m, j] = d.split('-').map(Number); return new Date(y, m - 1, j, 12).getTime(); };
 /** Carte, prélèvement et résiliation : sur le site seulement (App Store 3.1.3(e)). */
 const openAccount = () => Linking.openURL(`${WEB_URL}/compte`);
 
-function statusOf(o: MembershipOverview): { key: string; tone: AxStatusTone } {
+function statusOf(o: MembershipOverview, access: CounterAccess | null): { key: string; tone: AxStatusTone } {
+  if (access?.key === 'ended') return { key: 'accessEnded', tone: 'danger' };
   switch (o.block_reason) {
     case 'past_due': return { key: 'pastDue', tone: 'danger' };
     case 'paused': return { key: 'paused', tone: 'warning' };
@@ -74,11 +77,11 @@ function InfoRow({ icon: Icon, label, value, testID }: { icon: LucideIcon; label
   );
 }
 
-function PlanCard({ o }: { o: MembershipOverview }) {
+function PlanCard({ o, access }: { o: MembershipOverview; access: CounterAccess | null }) {
   const { theme } = useTheme();
   const { t } = useTranslation();
   const c = theme.ax;
-  const status = statusOf(o);
+  const status = statusOf(o, access);
   const payment = o.mode === 'counter' ? t('membership.payment.counter') : paymentMethodLabel(o.payment_method);
   return (
     <AxCard variant="featured" style={styles.planCard} testID="membership-plan-card">
@@ -104,6 +107,14 @@ function PlanCard({ o }: { o: MembershipOverview }) {
             : longDate(o.next_billing_at)}
         />
       )}
+      {access && (
+        <InfoRow
+          testID="membership-access-until"
+          icon={CalendarClock}
+          label={t(access.key === 'ended' ? 'membership.counterAccess.endedOn' : 'membership.counterAccess.paidUntil')}
+          value={longDate(civilDay(access.until))}
+        />
+      )}
       {payment && (
         <InfoRow testID="membership-payment" icon={o.mode === 'counter' ? MapPin : ShieldCheck} label={t('membership.payment.label')} value={payment} />
       )}
@@ -117,6 +128,7 @@ export default function MyMembershipScreen({ navigation }: OverviewProps) {
   const c = theme.ax;
   const tabSpace = useTabBarScrollSpace();
   const [overview, setOverview] = useState<MembershipOverview | null>(null);
+  const [billing, setBilling] = useState<MyMembership[]>([]);
   const [error, setError] = useState<{ kind: MembershipErrorKind; message: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
@@ -125,7 +137,8 @@ export default function MyMembershipScreen({ navigation }: OverviewProps) {
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const r = await getMembershipOverview();
+    const [r, rows] = await Promise.all([getMembershipOverview(), getMyMemberships()]);
+    setBilling(rows);
     if (r.ok) setOverview(r.data);
     else { setOverview(null); setError({ kind: r.kind, message: r.message }); }
     setLoading(false);
@@ -179,7 +192,8 @@ export default function MyMembershipScreen({ navigation }: OverviewProps) {
     const scheduled = online ? o.scheduled_change : null;
     const pending = online ? null : o.pending_request;
     const scheduledPrice = scheduled ? priceOf(o, scheduled.plan.id) : null;
-    const canChange = !blocked && !scheduled && !pending;
+    const access = counterAccess(o, billing);
+    const canChange = !blocked && !scheduled && !pending && access?.key !== 'ended';
     body = (
       <>
         {!!o.box.name && <Text testID="membership-box" style={[axTypography.caption, styles.centered, { color: c.textMuted }]}>{o.box.name}</Text>}
@@ -190,7 +204,41 @@ export default function MyMembershipScreen({ navigation }: OverviewProps) {
           </Encart>
         )}
 
-        <PlanCard o={o} />
+        {(access?.key === 'endingSoon' || access?.key === 'ended') && (
+          <Encart
+            testID={access.key === 'ended' ? 'membership-access-ended' : 'membership-access-ending'}
+            gap={10}
+            icon={access.key === 'ended' ? Lock : CalendarClock}
+            tone={access.key === 'ended' ? c.danger : c.warning}
+            title={access.key === 'ended'
+              ? t('membership.counterAccess.endedTitle')
+              : t('membership.counterAccess.endingTitle', { date: shortDate(civilDay(access.until)) })}
+            body={!access.sellsOnline
+              ? t('membership.counterAccess.noOnlineBody')
+              : t(access.key === 'ended' ? 'membership.counterAccess.endedBody' : 'membership.counterAccess.endingBody')}
+          >
+            {access.sellsOnline && (
+              <AxButton
+                testID="membership-go-online"
+                icon={ExternalLink}
+                label={t(access.key === 'ended' ? 'membership.counterAccess.activateOnline' : 'membership.counterAccess.goOnline')}
+                onPress={openAccount}
+                fullWidth
+              />
+            )}
+          </Encart>
+        )}
+
+        <PlanCard o={o} access={access} />
+
+        {access?.key === 'current' && access.sellsOnline && (
+          <>
+            <AxButton testID="membership-go-online" icon={ExternalLink} label={t('membership.counterAccess.goOnline')} onPress={openAccount} fullWidth />
+            <Text testID="membership-go-online-hint" style={[axTypography.caption, styles.centered, { color: c.textMuted }]}>
+              {t('membership.counterAccess.goOnlineHint')}
+            </Text>
+          </>
+        )}
 
         {blocked && (
           <Text testID="membership-blocked" style={[axTypography.caption, { color: c.textMuted }]}>
@@ -235,6 +283,8 @@ export default function MyMembershipScreen({ navigation }: OverviewProps) {
           <>
             <AxButton
               testID="membership-change"
+              // Menthe réservée à l'action principale : en contour dès que l'accès au comptoir est daté.
+              variant={access ? 'outline' : 'accent'}
               icon={online ? RefreshCw : Send}
               label={t(online ? 'membership.change' : 'membership.requestChange')}
               onPress={() => navigation.navigate('ChangeMembershipPlan', { overview: o })}

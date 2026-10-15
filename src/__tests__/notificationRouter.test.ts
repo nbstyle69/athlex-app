@@ -122,6 +122,22 @@ describe('routeNotification', () => {
     });
   });
 
+  describe('fin d\'accès au comptoir → Mon abonnement', () => {
+    it.each(['j7', 'j1', 'fin'])('routes "membership_access_ending" (%s) to Home > MyMembership', (kind) => {
+      routeNotification({ type: 'membership_access_ending', kind, box_id: 'b1' });
+      expect(mockNavigate).toHaveBeenCalledWith({
+        name: 'Home',
+        params: { screen: 'MyMembership', params: undefined },
+      });
+      expect(mockDispatch).toHaveBeenCalledTimes(1);
+    });
+
+    it('sans box_id ni kind : même écran, aucun plantage', () => {
+      expect(() => routeNotification({ type: 'membership_access_ending' })).not.toThrow();
+      expect(mockDispatch).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe('annonce de la box → écran Annonces', () => {
     it('routes "box_notification" de la box active to Whiteboard > Annonces', () => {
       setNotificationActiveBox('b1');

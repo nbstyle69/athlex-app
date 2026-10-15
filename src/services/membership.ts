@@ -16,6 +16,11 @@ export interface MyMembership {
   has_stripe_subscription: boolean | null;
   stopped_at: string | null;
   stop_mode: string | null;
+  /** Statut de l'adhésion (`active` tant que le membre n'a pas quitté la box). */
+  status?: string | null;
+  /** Au comptoir : dernier jour d'accès payé (date de Paris, « AAAA-MM-JJ »). */
+  cash_access_until?: string | null;
+  box_sells_online?: boolean | null;
 }
 
 export type MembershipState =
@@ -138,6 +143,36 @@ export type MembershipErrorKind = 'auth' | 'none' | 'refused' | 'network' | 'ser
 export type MembershipResult<T> = { ok: true; data: T } | { ok: false; kind: MembershipErrorKind; message: string; code?: string };
 
 export const MEMBERSHIP_TIMEOUT_MS = 15000;
+
+/** Jour civil de Paris, « AAAA-MM-JJ ». */
+export function parisToday(now: Date = new Date()): string {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit' })
+      .formatToParts(now).map(x => [x.type, x.value]),
+  );
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
+/** Fin proche : 7 jours ou moins avant le dernier jour d'accès. */
+export const COUNTER_ENDING_DAYS = 7;
+
+export type CounterAccess = { key: 'current' | 'endingSoon' | 'ended'; until: string; sellsOnline: boolean };
+
+/**
+ * Accès payé au comptoir : d'après `get_my_membership_billing` (date de fin et
+ * vente en ligne). Null en ligne, à 0 € ou sans date de fin (comptes « Accès
+ * démo » compris) : l'écran reste tel quel.
+ */
+export function counterAccess(o: MembershipOverview, rows: MyMembership[], today = parisToday()): CounterAccess | null {
+  if (o.mode !== 'counter' || !o.price_cents || o.price_cents <= 0) return null;
+  const m = rows.find(r => r.box_id === o.box.id && (r.status ?? 'active') === 'active');
+  const until = m?.cash_access_until;
+  if (!m || !until) return null;
+  const sellsOnline = m.box_sells_online === true;
+  if (m.subscription_status === 'expired') return until < today ? { key: 'ended', until, sellsOnline } : null;
+  const days = Math.round((Date.parse(`${until}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / DAY_MS);
+  return { key: days <= COUNTER_ENDING_DAYS ? 'endingSoon' : 'current', until, sellsOnline };
+}
 
 /** Codes du site que l'app sait dire ; tout autre code devient le message générique. */
 const KNOWN_CODES = [
