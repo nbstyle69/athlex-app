@@ -1,7 +1,15 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Classement global sans les comptes de démo (#565)
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 15/10/2026 à 16:07 UTC, avec PGCLIENTENCODING=UTF8,
+-- en une transaction (psql -1, ON_ERROR_STOP), ce fichier seul, sur feu vert de
+-- Nab. Dump des schémas public et internal avec droits
+-- db-dumps/2026-10-15/athlex-prod-public-internal-20261015T160652Z.dump,
+-- sha256 1e7a026106e2ebe48658ee11bb3b9109658d21b90542427de0cb679cb7bdfc70
+-- vérifié après aller-retour, 140 TABLE DATA, 482 ACL, 348 POLICY ; recontrôle
+-- juste avant (147 / 3, aucun objet présent) ; résultat : 150 comptes inscrits,
+-- box_members, membership_plans et ELO identiques avant/après (empreintes),
+-- appel authentifié : 48 lignes, aucun compte de démo ; anon refusé.
 --
 -- Décisions de Nab (15/10/2026) : le classement global ELO n'affiche plus les
 -- comptes de démo (46 des 50 premières places), par un filtre de lecture. Rien
