@@ -313,7 +313,7 @@ BEGIN
   -- Définitions de la migration, épinglées (search_path de la prod).
   SELECT string_agg(a.fn || ' ' || md5(pg_temp.def(a.fn)), ', ') INTO v
   FROM (VALUES
-    ('public.record_member_cash_payment(uuid,integer)', '7789384fc790ab1d7b42c70df8e96424'),
+    ('public.record_member_cash_payment(uuid,integer)', '3b1060b271f96387dab3c5a6b6e737b2'),
     ('public.mark_box_invitation_paid(uuid,integer)', 'd4d61e9755478b4c23db84f54a43bf3b'),
     ('public._log_box_cash_payment(uuid,uuid,uuid,uuid,text,integer,date,date,uuid,integer,text)', 'd2e9ef2e96701fbf9d2e1e62e6c72672'),
     ('public.reject_cash_payment_rewrite()', 'ae7c75d48949a602b6e6994bbd2aade6'),
@@ -735,7 +735,7 @@ BEGIN
         'public.create_box_invitation(uuid,text,text,text,uuid,text,boolean,integer,text,integer)',
         'internal.periode_comptoir(date,integer)', 'internal.box_vend_en_ligne(uuid)']) f)
      IS DISTINCT FROM (SELECT string_agg(h, ',' ORDER BY f) FROM (VALUES
-        ('public.record_member_cash_payment(uuid,integer)', '7789384fc790ab1d7b42c70df8e96424'),
+        ('public.record_member_cash_payment(uuid,integer)', '3b1060b271f96387dab3c5a6b6e737b2'),
         ('public.mark_box_invitation_paid(uuid,integer)', 'd4d61e9755478b4c23db84f54a43bf3b'),
         ('public._log_box_cash_payment(uuid,uuid,uuid,uuid,text,integer,date,date,uuid,integer,text)', 'd2e9ef2e96701fbf9d2e1e62e6c72672'),
         ('public.reject_cash_payment_rewrite()', 'ae7c75d48949a602b6e6994bbd2aade6'),
