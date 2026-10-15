@@ -250,7 +250,7 @@ BEGIN
   -- Fonctions existantes touchées par la coupure, aux empreintes de prod.
   SELECT string_agg(a.fn, ', ') INTO v FROM (VALUES
     ('internal.garder_facturation_membre()', '483768906753de48dd9b48454f877f23'),
-    ('public.record_member_cash_payment(uuid,integer)', '7789384fc790ab1d7b42c70df8e96424'),
+    ('public.record_member_cash_payment(uuid,integer)', '3b1060b271f96387dab3c5a6b6e737b2'),
     ('internal.membre_a_formule(uuid,uuid)', '471b0e75ce212bda0e400c2ab546920f'),
     ('internal.bloquer_reservation_impaye()', '3910a8d07c3da0fddf35f0b05bd75952'),
     ('public.consume_credit_on_reservation()', 'f6bc083f4c67cc88faa558a4eb061d29'),
@@ -545,7 +545,7 @@ BEGIN
         ('internal.garder_facturation_membre()', '483768906753de48dd9b48454f877f23'),
         ('public.consume_credit_on_reservation()', 'f6bc083f4c67cc88faa558a4eb061d29'),
         ('public.get_my_membership_billing()', 'e1ea48e62a72b96753ba00fd93bdde69'),
-        ('public.record_member_cash_payment(uuid,integer)', '7789384fc790ab1d7b42c70df8e96424')) x(f, h))
+        ('public.record_member_cash_payment(uuid,integer)', '3b1060b271f96387dab3c5a6b6e737b2')) x(f, h))
      OR (SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'box_member_access_notices_une_fois') IS DISTINCT FROM 'UNIQUE (box_member_id, kind, access_until)'
      OR NOT (SELECT relrowsecurity FROM pg_class WHERE oid = 'public.box_member_access_notices'::regclass)
      OR has_table_privilege('service_role', 'public.box_member_access_notices', 'INSERT')
