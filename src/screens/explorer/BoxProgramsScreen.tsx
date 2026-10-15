@@ -3,7 +3,7 @@ import { AxCard, AxTag } from '../../components/ax';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, Pressable, SectionList,
-  Image, ActivityIndicator, Linking,
+  Image, ActivityIndicator, Linking, Platform,
 } from 'react-native';
 import { Building2, ExternalLink, Calendar } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -45,6 +45,8 @@ export default function BoxProgramsScreen() {
   const s = createStyles(c);
   const [programs, setPrograms] = useState<ProgramItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // D5 : sur iOS, aucun lien vers la page de la box (App Store 3.1.1) ; Android garde le lien.
+  const linkToSite = Platform.OS !== 'ios';
 
   useEffect(() => { load(); }, []);
 
@@ -123,48 +125,72 @@ export default function BoxProgramsScreen() {
               <Text style={s.emptyTxt}>{t('explorer.programs.empty')}</Text>
             </View>
           }
-          renderSectionHeader={({ section }) => (
-            <Pressable
-              style={s.sectionRow}
-              onPress={() => openBoxPage(section.box_slug)}
-              accessibilityRole="button"
-              accessibilityLabel={section.title}
-              testID={`box-programs-section-${section.data[0].box_id}`}
-            >
-              {section.box_logo ? (
-                <Image source={{ uri: section.box_logo }} style={s.sectionLogo} />
-              ) : (
-                <View style={[s.sectionLogo, s.sectionLogoFallback]}>
-                  <Text style={s.sectionInitial}>{section.title.charAt(0)}</Text>
+          renderSectionHeader={({ section }) => {
+            const content = (
+              <>
+                {section.box_logo ? (
+                  <Image source={{ uri: section.box_logo }} style={s.sectionLogo} />
+                ) : (
+                  <View style={[s.sectionLogo, s.sectionLogoFallback]}>
+                    <Text style={s.sectionInitial}>{section.title.charAt(0)}</Text>
+                  </View>
+                )}
+                <View style={s.sectionText}>
+                  <Text style={s.sectionName} numberOfLines={1}>{section.title}</Text>
+                  {section.box_city && <Text style={s.sectionCity} numberOfLines={1}>{section.box_city}</Text>}
+                  {!linkToSite && section.box_slug && <Text style={s.sectionCity} numberOfLines={1}>{t('explorer.programs.onBoxSite')}</Text>}
                 </View>
-              )}
-              <View style={s.sectionText}>
-                <Text style={s.sectionName} numberOfLines={1}>{section.title}</Text>
-                {section.box_city && <Text style={s.sectionCity} numberOfLines={1}>{section.box_city}</Text>}
+                {linkToSite && section.box_slug && <ExternalLink color={c.textMuted} size={16} />}
+              </>
+            );
+            const testID = `box-programs-section-${section.data[0].box_id}`;
+            return linkToSite ? (
+              <Pressable
+                style={s.sectionRow}
+                onPress={() => openBoxPage(section.box_slug)}
+                accessibilityRole="button"
+                accessibilityLabel={section.title}
+                testID={testID}
+              >
+                {content}
+              </Pressable>
+            ) : (
+              <View style={s.sectionRow} testID={testID}>{content}</View>
+            );
+          }}
+          renderItem={({ item }) => {
+            const card = (
+              <AxCard
+                onPress={linkToSite ? () => openBoxPage(item.box_slug) : undefined}
+                accessibilityLabel={item.title}
+                testID={`program-card-${item.id}`}
+              >
+                <View style={s.titleRow}>
+                  <Text style={s.cardName} numberOfLines={1}>{item.title}</Text>
+                  <AxTag
+                    tone={item.type === 'fixed' ? 'accent' : 'muted'}
+                    label={item.type === 'fixed' ? t('explorer.programs.weeks', { n: item.duration_weeks }) : t('bo.programs.ongoing')}
+                  />
+                </View>
+                {item.description && <Text style={s.cardDesc} numberOfLines={2}>{item.description}</Text>}
+                <View style={s.metaRow}>
+                  <Calendar color={c.textMuted} size={12} />
+                  <Text style={s.metaTxt}>{t('explorer.programs.daysPerWeek', { count: item.days_per_week })}</Text>
+                </View>
+              </AxCard>
+            );
+            // iOS : carte non appuyable, annoncée comme un bloc (titre et ville) plutôt que texte par texte.
+            return linkToSite ? card : (
+              <View
+                accessible
+                accessibilityRole="text"
+                accessibilityLabel={[item.title, item.box_city].filter(Boolean).join(', ')}
+                testID={`program-card-a11y-${item.id}`}
+              >
+                {card}
               </View>
-              {section.box_slug && <ExternalLink color={c.textMuted} size={16} />}
-            </Pressable>
-          )}
-          renderItem={({ item }) => (
-            <AxCard
-              onPress={() => openBoxPage(item.box_slug)}
-              accessibilityLabel={item.title}
-              testID={`program-card-${item.id}`}
-            >
-              <View style={s.titleRow}>
-                <Text style={s.cardName} numberOfLines={1}>{item.title}</Text>
-                <AxTag
-                  tone={item.type === 'fixed' ? 'accent' : 'muted'}
-                  label={item.type === 'fixed' ? t('explorer.programs.weeks', { n: item.duration_weeks }) : t('bo.programs.ongoing')}
-                />
-              </View>
-              {item.description && <Text style={s.cardDesc} numberOfLines={2}>{item.description}</Text>}
-              <View style={s.metaRow}>
-                <Calendar color={c.textMuted} size={12} />
-                <Text style={s.metaTxt}>{t('explorer.programs.daysPerWeek', { count: item.days_per_week })}</Text>
-              </View>
-            </AxCard>
-          )}
+            );
+          }}
           ItemSeparatorComponent={() => <View style={s.separator} />}
           SectionSeparatorComponent={() => <View style={s.sectionSeparator} />}
         />

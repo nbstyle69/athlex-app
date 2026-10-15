@@ -15,7 +15,8 @@
       "haveCode": "J'ai un code d'invitation",
       "ownerCta": "Je suis gérant · s'abonner sur athlexapp.eu",
       "noCode": "Je n'ai pas de code d'invitation",
-      "signOut": "Se déconnecter"
+      "signOut": "Se déconnecter",
+      "ownerOutsideApp": "Tu es gérant ? L'espace gérant se crée et se gère en dehors de l'application."
     },
     "tutorial": {
       "skip": "Passer",
@@ -204,9 +205,9 @@
       "subtitle": "Souscris au plan complet pour retrouver l'accès à ton back-office et continuer à gérer ta box.",
       "planName": "Plan Complet",
       "perMonth": "/mois",
-      "webTitle": "Souscription via le web",
-      "webText": "Pour souscrire au plan complet, rends-toi sur athlexapp.eu depuis un navigateur. Ton abonnement sera automatiquement activé dans l'app dès que le paiement sera confirmé.",
-      "subscribe": "Souscrire — 79€/mois",
+      "webTitle": "Abonnement hors de l'application",
+      "webText": "L'abonnement de ta box se souscrit et se gère en dehors de l'application. Dès qu'il est actif, ton back-office se débloque ici automatiquement.",
+      "subscribe": "Souscrire — {{price}}/mois",
       "retention": "Tes données (membres, WODs, scores) sont conservées 30 jours.",
       "retentionExtra": "\nSouscris maintenant pour ne rien perdre.",
       "logout": "Se déconnecter",
@@ -242,10 +243,10 @@
       "nextRenewal": "Prochain renouvellement le {{date}}",
       "planName": "Plan Complet",
       "perMonth": "/mois",
-      "annual": "ou 749€/an (2 mois offerts)",
-      "iosTitle": "Gestion de l'abonnement via le web",
-      "iosText": "Pour souscrire, modifier ou annuler ton abonnement AthleX Pro, connecte-toi sur athlexapp.eu depuis un navigateur. Les changements sont automatiquement synchronisés dans l'app.",
-      "subscribePrice": "Souscrire — 79€/mois",
+      "annual": "ou {{price}}/an (2 mois offerts)",
+      "iosTitle": "Abonnement hors de l'application",
+      "iosText": "Ton abonnement AthleX Pro se souscrit, se modifie et s'annule en dehors de l'application. Les changements apparaissent ici automatiquement.",
+      "subscribePrice": "Souscrire — {{price}}/mois",
       "subscribeNow": "Souscrire maintenant",
       "managePlan": "Gérer mon abonnement",
       "retention": "Tes données sont conservées 30 jours. Souscris pour retrouver ton back-office complet."
@@ -743,6 +744,7 @@
     "programming": {
       "title": "Marketplace",
       "subtitle": "Achète ou vends des programmations entre box. Ce que tu reçois arrive dans ton Whiteboard, révélé le dimanche 18h.",
+      "subtitleIos": "Les programmations proposées par les autres box. Ce que tu reçois arrive dans ton Whiteboard, révélé le dimanche 18h.",
       "searchPlaceholder": "Rechercher une programmation…",
       "free": "Gratuit",
       "allDisciplines": "Toutes",
@@ -762,12 +764,11 @@
       "subscribeConfirmTitle": "S'abonner ?",
       "subscribeConfirmMsg": "Recevoir « {{title}} » dans le Whiteboard de {{box}} ?",
       "subscribedOk": "Abonnement activé",
-      "paidTitle": "Offre payante",
-      "paidMsg": "Cette programmation ({{price}}) se règle sur le web via paiement sécurisé Stripe. Ouvrir la page de paiement ?",
-      "payOnWeb": "Payer sur le web",
       "disciplineHaltero": "Haltéro",
       "disciplineEndurance": "Endurance",
-      "priceEur": "{{amount}}€"
+      "priceEur": "{{amount}}€",
+      "seeOnSite": "Voir sur le site",
+      "paidOutsideApp": "Offre payante : elle se souscrit en dehors de l'application."
     },
     "trialBanner": {
       "activeSub": "Toutes les fonctionnalités sont débloquées",
@@ -905,7 +906,8 @@
     "confirmEmailSent": "Un lien de confirmation a été envoyé à {{email}}.\n\nClique sur le lien dans l'email pour activer ton compte, puis connecte-toi.",
     "usernameChangedTitle": "Pseudo modifié",
     "usernameTakenNotice": "Le pseudo « {{requested}} » était déjà pris, le tien est devenu « {{final}} ». Tu peux le changer plus tard dans ton profil.",
-    "embeddedBundle": "embarqué"
+    "embeddedBundle": "embarqué",
+    "ownerOutsideApp": "L'espace gérant se crée et se gère en dehors de l'application."
   },
   "forgot": {
     "title": "Mot de passe oublié",
@@ -3005,7 +3007,8 @@
       "empty": "Aucune box ne propose de programme pour le moment",
       "weeks": "{{n}} sem.",
       "daysPerWeek_one": "{{count}} jour/semaine",
-      "daysPerWeek_other": "{{count}} jours/semaine"
+      "daysPerWeek_other": "{{count}} jours/semaine",
+      "onBoxSite": "Disponible sur le site de la box"
     },
     "programmation": {
       "subtitle": "Choisis ton type d'entraînement",

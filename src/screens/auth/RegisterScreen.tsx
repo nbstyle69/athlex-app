@@ -200,18 +200,25 @@ export default function RegisterScreen({ navigation }: Props) {
               fullWidth
             />
 
-            <TouchableOpacity
-              style={S.ownerRow}
-              onPress={() => Linking.openURL(OWNER_ONBOARDING_URL)}
-              activeOpacity={0.7}
-              accessibilityRole="link"
-              accessibilityLabel={t('auth.ownerA11y')}
-            >
-              <Text style={S.ownerText}>
-                {t('auth.ownerPrompt')}{' '}
-                <Text style={S.ownerLink}>{t('auth.ownerLink')}</Text>
-              </Text>
-            </TouchableOpacity>
+            {/* iOS : aucun lien vers l'abonnement gérant (App Store 3.1.1), un texte neutre à la place. */}
+            {Platform.OS === 'ios' ? (
+              <View style={S.ownerRow} testID="register-owner-note">
+                <Text style={S.ownerText}>{t('auth.ownerPrompt')} {t('auth.ownerOutsideApp')}</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={S.ownerRow}
+                onPress={() => Linking.openURL(OWNER_ONBOARDING_URL)}
+                activeOpacity={0.7}
+                accessibilityRole="link"
+                accessibilityLabel={t('auth.ownerA11y')}
+              >
+                <Text style={S.ownerText}>
+                  {t('auth.ownerPrompt')}{' '}
+                  <Text style={S.ownerLink}>{t('auth.ownerLink')}</Text>
+                </Text>
+              </TouchableOpacity>
+            )}
           </AxCard>
         </ScrollView>
       </KeyboardAvoidingView>

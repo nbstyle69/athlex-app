@@ -23,7 +23,7 @@
       "Femme",
       "J'accepte les CGU et la Politique de Confidentialité",
       "Rejoindre la bataille",
-      "Vous gérez une box ? Créez votre compte sur athlexapp.eu"
+      "Vous gérez une box ? L'espace gérant se crée et se gère en dehors de l'application."
     ],
     "creer-un-compte-mail-a-confirmer": [
       "Retour",
@@ -38,7 +38,7 @@
       "Femme",
       "J'accepte les CGU et la Politique de Confidentialité",
       "Rejoindre la bataille",
-      "Vous gérez une box ? Créez votre compte sur athlexapp.eu",
+      "Vous gérez une box ? L'espace gérant se crée et se gère en dehors de l'application.",
       "── fenêtre ──",
       "📧 Confirme ton email",
       "Un lien de confirmation a été envoyé à nab@example.test.\n\nClique sur le lien dans l'email pour activer ton compte, puis connecte-toi.\n\nℹ️ Le pseudo « Nabil » était déjà pris, le tien est devenu « Nab ». Tu peux le changer plus tard dans ton profil.",
@@ -68,7 +68,7 @@
       "Rejoins ta box",
       "Bonjour Athlète-au-pseudo-particulièrement-long-pour-vérifier-les-débordements !\nPour accéder au contenu, tu dois rejoindre une box avec un code d'invitation ou créer la tienne.",
       "J'ai un code d'invitation",
-      "Je suis gérant · s'abonner sur athlexapp.eu",
+      "Tu es gérant ? L'espace gérant se crée et se gère en dehors de l'application.",
       "Je n'ai pas de code d'invitation",
       "Se déconnecter"
     ],

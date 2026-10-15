@@ -6,7 +6,7 @@
 import React from 'react';
 import fs from 'fs';
 import path from 'path';
-import { Alert, Linking, Modal, StyleSheet } from 'react-native';
+import { Alert, Linking, Modal, Platform, StyleSheet } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { lightTheme, darkTheme } from '../theme/palette';
 import BEFORE from './r13StructureBefore.json';
@@ -331,13 +331,48 @@ describe('R13 : navigation et callbacks inchangés', () => {
     expect(mockNavigate).toHaveBeenLastCalledWith('BoxPrograms');
   });
 
-  it('programmes des boxs : en-tête de box et programme ouvrent la page publique ; sans slug, rien', async () => {
+  it('programmes des boxs (Android) : en-tête de box et programme ouvrent la page publique ; sans slug, rien', async () => {
+    const os = Platform.OS;
+    Platform.OS = 'android';
+    try {
+      const root = await mount(<BoxProgramsScreen />);
+      await press(byID(root, 'box-programs-section-b1'));
+      await press(byID(root, 'program-card-p1'));
+      await press(byID(root, 'box-programs-section-b2'));
+      await press(byID(root, 'program-card-p3'));
+      expect(openURL.mock.calls.map((c) => c[0])).toEqual([`${WEB_URL}/box/lumiere`, `${WEB_URL}/box/lumiere`]);
+    } finally { Platform.OS = os; }
+  });
+
+  it('programmes des boxs (iOS, #553 D5) : ni en-tête ni programme n’ouvrent de lien', async () => {
     const root = await mount(<BoxProgramsScreen />);
-    await press(byID(root, 'box-programs-section-b1'));
-    await press(byID(root, 'program-card-p1'));
-    await press(byID(root, 'box-programs-section-b2'));
-    await press(byID(root, 'program-card-p3'));
-    expect(openURL.mock.calls.map((c) => c[0])).toEqual([`${WEB_URL}/box/lumiere`, `${WEB_URL}/box/lumiere`]);
+    expect(byID(root, 'box-programs-section-b1').props.onPress).toBeUndefined();
+    expect(byID(root, 'program-card-p1').props.onPress).toBeUndefined();
+    expect(openURL).not.toHaveBeenCalled();
+  });
+
+  // #553 : retirer le lien iOS ne doit pas retirer l'accessibilité de la carte.
+  it('programmes des boxs (iOS) : chaque carte est un bloc accessible « titre, ville », non appuyable', async () => {
+    const root = await mount(<BoxProgramsScreen />);
+    for (const p of PROGRAMS) {
+      const bloc = root.find((n) => n.props.testID === `program-card-a11y-${p.id}` && n.props.accessible === true);
+      expect(bloc.props.accessibilityRole).toBe('text');
+      expect(bloc.props.accessibilityLabel).toBe([p.title, p.boxes.city].filter(Boolean).join(', '));
+      expect(byID(root, `program-card-${p.id}`).props.onPress).toBeUndefined();
+    }
+  });
+
+  it('programmes des boxs (Android) : chaque carte est un bouton libellé par son titre', async () => {
+    const os = Platform.OS;
+    Platform.OS = 'android';
+    try {
+      const root = await mount(<BoxProgramsScreen />);
+      for (const p of PROGRAMS) {
+        const carte = root.find((n) => n.props.testID === `program-card-${p.id}` && n.props.accessibilityRole === 'button');
+        expect(carte.props.accessibilityLabel).toBe(p.title);
+        expect(root.findAll((n) => n.props.testID === `program-card-a11y-${p.id}`)).toHaveLength(0);
+      }
+    } finally { Platform.OS = os; }
   });
 
   it('partenaires : carte → fiche partenaire', async () => {
