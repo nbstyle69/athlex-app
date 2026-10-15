@@ -744,6 +744,7 @@
     "programming": {
       "title": "Marketplace",
       "subtitle": "Achète ou vends des programmations entre box. Ce que tu reçois arrive dans ton Whiteboard, révélé le dimanche 18h.",
+      "subtitleIos": "Les programmations proposées par les autres box. Ce que tu reçois arrive dans ton Whiteboard, révélé le dimanche 18h.",
       "searchPlaceholder": "Rechercher une programmation…",
       "free": "Gratuit",
       "allDisciplines": "Toutes",

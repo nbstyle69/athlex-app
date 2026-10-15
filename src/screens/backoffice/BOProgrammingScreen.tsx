@@ -167,7 +167,8 @@ export default function BOProgrammingScreen({ navigation }: any) {
           contentContainerStyle={{ paddingBottom: 140, paddingHorizontal: 16 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
         >
-          <Text style={S.subtitle}>{t('bo.programming.subtitle')}</Text>
+          {/* iOS : décrire sans inviter à acheter (App Store 3.1.1). */}
+          <Text style={S.subtitle}>{t(Platform.OS === 'ios' ? 'bo.programming.subtitleIos' : 'bo.programming.subtitle')}</Text>
 
           <View style={S.searchRow}>
             <Search size={15} color={theme.textMuted} style={{ marginLeft: 10 }} />

@@ -4,7 +4,7 @@
  *
  * 1. Écrans : les six écrans concernés sont montés avec le vrai react-native, sur iOS
  *    puis sur Android. Sur iOS, aucun texte rendu (fenêtres et alertes comprises) ne
- *    porte un prix, et un appui sur TOUT ce qui est appuyable (boutons des alertes
+ *    porte un prix ni n'invite à acheter, et un appui sur TOUT ce qui est appuyable (boutons des alertes
  *    compris) n'ouvre jamais /programming, /pricing ou /box/. Sur Android, les mêmes
  *    détecteurs trouvent bien prix et liens : le contrôle iOS n'est pas vide.
  * 2. Source : chaque ligne de src/ qui ouvre ou construit un lien d'achat, ou affiche
@@ -76,6 +76,8 @@ jest.mock('../lib/supabase', () => {
 // ── Détecteurs ───────────────────────────────────────────────────────────────
 /** Un prix affiché : « 29€ », « €29 », « 29 EUR », « $29 ». */
 const PRIX = /\d\s*€|€\s*\d|\d\s*EUR\b|\$\s*\d/;
+/** Une invitation à acheter (sous-titre de la Marketplace, 15/10) : on décrit, on n'invite pas. */
+const INCITATION = /(^|[^\p{L}])(ach[eè]te|acheter|achat|payer|buy|purchase)([^\p{L}]|$)/iu;
 /** Un lien d'achat : page Marketplace, grille AthleX Pro (et son onboarding), page d'une box. */
 const LIEN_ACHAT = /\/(programming|pricing|box)(\/|\?|$)/;
 
@@ -181,6 +183,7 @@ describe('iOS : aucun prix de contenu numérique, aucun lien d\'achat', () => {
         await i18n.changeLanguage(lang);
         const { textes: vus, liens: ouverts } = await explorer(nom, 'ios');
         expect(vus.filter((t) => PRIX.test(t))).toEqual([]);
+        expect(vus.filter((t) => INCITATION.test(t))).toEqual([]);
         expect(ouverts.filter((u) => LIEN_ACHAT.test(u))).toEqual([]);
       });
     }

@@ -744,6 +744,7 @@
     "programming": {
       "title": "Marketplace",
       "subtitle": "Buy or sell programming between boxes. What you get lands in your Whiteboard, revealed Sunday 6pm.",
+      "subtitleIos": "Programming offered by other boxes. What you get lands in your Whiteboard, revealed Sunday 6pm.",
       "searchPlaceholder": "Search programming…",
       "free": "Free",
       "allDisciplines": "All",

@@ -158,26 +158,39 @@ export default function BoxProgramsScreen() {
               <View style={s.sectionRow} testID={testID}>{content}</View>
             );
           }}
-          renderItem={({ item }) => (
-            <AxCard
-              onPress={linkToSite ? () => openBoxPage(item.box_slug) : undefined}
-              accessibilityLabel={item.title}
-              testID={`program-card-${item.id}`}
-            >
-              <View style={s.titleRow}>
-                <Text style={s.cardName} numberOfLines={1}>{item.title}</Text>
-                <AxTag
-                  tone={item.type === 'fixed' ? 'accent' : 'muted'}
-                  label={item.type === 'fixed' ? t('explorer.programs.weeks', { n: item.duration_weeks }) : t('bo.programs.ongoing')}
-                />
+          renderItem={({ item }) => {
+            const card = (
+              <AxCard
+                onPress={linkToSite ? () => openBoxPage(item.box_slug) : undefined}
+                accessibilityLabel={item.title}
+                testID={`program-card-${item.id}`}
+              >
+                <View style={s.titleRow}>
+                  <Text style={s.cardName} numberOfLines={1}>{item.title}</Text>
+                  <AxTag
+                    tone={item.type === 'fixed' ? 'accent' : 'muted'}
+                    label={item.type === 'fixed' ? t('explorer.programs.weeks', { n: item.duration_weeks }) : t('bo.programs.ongoing')}
+                  />
+                </View>
+                {item.description && <Text style={s.cardDesc} numberOfLines={2}>{item.description}</Text>}
+                <View style={s.metaRow}>
+                  <Calendar color={c.textMuted} size={12} />
+                  <Text style={s.metaTxt}>{t('explorer.programs.daysPerWeek', { count: item.days_per_week })}</Text>
+                </View>
+              </AxCard>
+            );
+            // iOS : carte non appuyable, annoncée comme un bloc (titre et ville) plutôt que texte par texte.
+            return linkToSite ? card : (
+              <View
+                accessible
+                accessibilityRole="text"
+                accessibilityLabel={[item.title, item.box_city].filter(Boolean).join(', ')}
+                testID={`program-card-a11y-${item.id}`}
+              >
+                {card}
               </View>
-              {item.description && <Text style={s.cardDesc} numberOfLines={2}>{item.description}</Text>}
-              <View style={s.metaRow}>
-                <Calendar color={c.textMuted} size={12} />
-                <Text style={s.metaTxt}>{t('explorer.programs.daysPerWeek', { count: item.days_per_week })}</Text>
-              </View>
-            </AxCard>
-          )}
+            );
+          }}
           ItemSeparatorComponent={() => <View style={s.separator} />}
           SectionSeparatorComponent={() => <View style={s.sectionSeparator} />}
         />

@@ -351,6 +351,30 @@ describe('R13 : navigation et callbacks inchangés', () => {
     expect(openURL).not.toHaveBeenCalled();
   });
 
+  // #553 : retirer le lien iOS ne doit pas retirer l'accessibilité de la carte.
+  it('programmes des boxs (iOS) : chaque carte est un bloc accessible « titre, ville », non appuyable', async () => {
+    const root = await mount(<BoxProgramsScreen />);
+    for (const p of PROGRAMS) {
+      const bloc = root.find((n) => n.props.testID === `program-card-a11y-${p.id}` && n.props.accessible === true);
+      expect(bloc.props.accessibilityRole).toBe('text');
+      expect(bloc.props.accessibilityLabel).toBe([p.title, p.boxes.city].filter(Boolean).join(', '));
+      expect(byID(root, `program-card-${p.id}`).props.onPress).toBeUndefined();
+    }
+  });
+
+  it('programmes des boxs (Android) : chaque carte est un bouton libellé par son titre', async () => {
+    const os = Platform.OS;
+    Platform.OS = 'android';
+    try {
+      const root = await mount(<BoxProgramsScreen />);
+      for (const p of PROGRAMS) {
+        const carte = root.find((n) => n.props.testID === `program-card-${p.id}` && n.props.accessibilityRole === 'button');
+        expect(carte.props.accessibilityLabel).toBe(p.title);
+        expect(root.findAll((n) => n.props.testID === `program-card-a11y-${p.id}`)).toHaveLength(0);
+      }
+    } finally { Platform.OS = os; }
+  });
+
   it('partenaires : carte → fiche partenaire', async () => {
     const root = await mount(<PartnersScreen />);
     await press(byID(root, 'partner-card-pa2'));
