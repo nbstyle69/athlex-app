@@ -61,11 +61,8 @@ export default function LeaderboardScreen() {
     ['leaderboard-athletes'],
     async () => {
       const data = await readRows(
-        supabase
-          .from('profiles')
-          .select('id, username, level, elo, wins, total_matches, avatar_url')
-          .order('elo', { ascending: false })
-          .limit(ATHLETE_PAGE_SIZE),
+        // Classement global sans les comptes de démo (#565).
+        supabase.rpc('global_leaderboard', { p_limit: ATHLETE_PAGE_SIZE, p_offset: 0 }),
         { screen: 'Leaderboard', action: 'loadAthletes' },
       );
       return (data ?? []).map((p: any, i: number) => ({ ...p, rank: i + 1, isMe: p.id === user?.id }));
@@ -88,11 +85,7 @@ export default function LeaderboardScreen() {
     const nextPage = athletePage + 1;
     const from = nextPage * ATHLETE_PAGE_SIZE;
     const data = await readRows(
-      supabase
-        .from('profiles')
-        .select('id, username, level, elo, wins, total_matches, avatar_url')
-        .order('elo', { ascending: false })
-        .range(from, from + ATHLETE_PAGE_SIZE - 1),
+      supabase.rpc('global_leaderboard', { p_limit: ATHLETE_PAGE_SIZE, p_offset: from }),
       { screen: 'Leaderboard', action: 'loadMoreAthletes' },
     );
     const newItems = (data ?? []).map((p: any, i: number) => ({ ...p, rank: from + i + 1, isMe: p.id === user?.id }));

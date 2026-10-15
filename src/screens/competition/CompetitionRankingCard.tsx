@@ -23,7 +23,9 @@ export default function CompetitionRankingCard({ rank, elo, level, onOpen }: Pro
           <View style={styles.text}>
             <Text style={[axTypography.overline, { color: c.textMuted }]}>{t('competition.ranking.overline')}</Text>
             <Text testID="competition-ranking-summary" style={[axTypography.label, { color: c.text }]}>
-              {t('competition.ranking.summary', { rank: rank ?? '—', elo, level: level.toUpperCase() })}
+              {rank !== null
+                ? t('competition.ranking.summary', { rank, elo, level: level.toUpperCase() })
+                : t('competition.ranking.summaryNoRank', { elo, level: level.toUpperCase() })}
             </Text>
           </View>
           <View style={styles.see}>
