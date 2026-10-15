@@ -1,7 +1,11 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Paiements au comptoir (P1), PR de données : formule « Accès démo »
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : OUI, le 15/10/2026 à 09:44 UTC, avec PGCLIENTENCODING=UTF8,
+-- en une transaction (psql -1), sur GO de Nab. Dump des schémas public et
+-- internal avec droits : db-dumps/2026-10-15/athlex-prod-public-internal-
+-- 20261015T092541Z.dump. Résultat : 146 démo et 1 reviewer sur « Accès démo »,
+-- 1 membre réel daté au 2026-11-14 ; files inchangées.
 --
 -- Décisions validées par Nab (15/10/2026) ; étude en lecture seule :
 -- athlex-captures/comptoir-p1/donnees-demo/etape1-etude.md.
