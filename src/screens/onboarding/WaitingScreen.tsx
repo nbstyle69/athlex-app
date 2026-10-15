@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
 import { Hash, Building2, LogOut, ArrowRight, Dumbbell } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
@@ -35,14 +35,19 @@ export default function WaitingScreen({ navigation }: any) {
             fullWidth
           />
 
-          <AxButton
-            testID="waiting-owner"
-            variant="outline"
-            label={t('onboarding.waiting.ownerCta')}
-            icon={Building2}
-            onPress={() => Linking.openURL(OWNER_ONBOARDING_URL)}
-            fullWidth
-          />
+          {/* iOS : aucun lien vers l'abonnement gérant (App Store 3.1.1), un texte neutre à la place. */}
+          {Platform.OS === 'ios' ? (
+            <Text testID="waiting-owner-note" style={S.ownerNote}>{t('onboarding.waiting.ownerOutsideApp')}</Text>
+          ) : (
+            <AxButton
+              testID="waiting-owner"
+              variant="outline"
+              label={t('onboarding.waiting.ownerCta')}
+              icon={Building2}
+              onPress={() => Linking.openURL(OWNER_ONBOARDING_URL)}
+              fullWidth
+            />
+          )}
 
           <TouchableOpacity
             testID="waiting-no-code"
@@ -78,6 +83,7 @@ function createStyles(c: AxColors) { return StyleSheet.create({
     gap: 6, paddingVertical: 14,
   },
   skipBtnText: { ...axTypography.labelSmall, color: c.accentText, flexShrink: 1, textAlign: 'center' },
+  ownerNote: { ...axTypography.bodySmall, color: c.textMuted, textAlign: 'center' },
   signOutBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     justifyContent: 'center', paddingBottom: 48,

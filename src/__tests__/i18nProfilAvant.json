@@ -2292,8 +2292,7 @@
     "J'accepte les CGU et la Politique de Confidentialité",
     "a11y: Créer un compte",
     "Rejoindre la bataille",
-    "a11y: Créer un compte gérant de box sur athlexapp.eu",
-    "Vous gérez une box ? Créez votre compte sur athlexapp.eu"
+    "Vous gérez une box ? L'espace gérant se crée et se gère en dehors de l'application."
   ],
   "creer-un-compte-mail-a-confirmer": [
     "Retour",
@@ -2316,8 +2315,7 @@
     "J'accepte les CGU et la Politique de Confidentialité",
     "a11y: Créer un compte",
     "Rejoindre la bataille",
-    "a11y: Créer un compte gérant de box sur athlexapp.eu",
-    "Vous gérez une box ? Créez votre compte sur athlexapp.eu",
+    "Vous gérez une box ? L'espace gérant se crée et se gère en dehors de l'application.",
     "── fenêtre ──",
     "CONFIRME TON EMAIL",
     "Un lien de confirmation a été envoyé à sam@example.test.\n\nClique sur le lien dans l'email pour activer ton compte, puis connecte-toi.",
@@ -2345,8 +2343,7 @@
     "J'accepte les CGU et la Politique de Confidentialité",
     "a11y: Créer un compte",
     "Rejoindre la bataille",
-    "a11y: Créer un compte gérant de box sur athlexapp.eu",
-    "Vous gérez une box ? Créez votre compte sur athlexapp.eu",
+    "Vous gérez une box ? L'espace gérant se crée et se gère en dehors de l'application.",
     "── fenêtre ──",
     "CONFIRME TON EMAIL",
     "Un lien de confirmation a été envoyé à sam@example.test.\n\nClique sur le lien dans l'email pour activer ton compte, puis connecte-toi.\n\nLe pseudo « Sam » était déjà pris, le tien est devenu « Sam2 ». Tu peux le changer plus tard dans ton profil.",
@@ -2374,8 +2371,7 @@
     "J'accepte les CGU et la Politique de Confidentialité",
     "a11y: Créer un compte",
     "Rejoindre la bataille",
-    "a11y: Créer un compte gérant de box sur athlexapp.eu",
-    "Vous gérez une box ? Créez votre compte sur athlexapp.eu",
+    "Vous gérez une box ? L'espace gérant se crée et se gère en dehors de l'application.",
     "ALERTE | Pseudo modifié | Le pseudo « Sam » était déjà pris, le tien est devenu « Sam2 ». Tu peux le changer plus tard dans ton profil."
   ],
   "creer-un-compte-cgu-cochees": [
@@ -2399,8 +2395,7 @@
     "J'accepte les CGU et la Politique de Confidentialité",
     "a11y: Créer un compte",
     "Rejoindre la bataille",
-    "a11y: Créer un compte gérant de box sur athlexapp.eu",
-    "Vous gérez une box ? Créez votre compte sur athlexapp.eu"
+    "Vous gérez une box ? L'espace gérant se crée et se gère en dehors de l'application."
   ],
   "mot-de-passe-oublie": [
     "Retour",

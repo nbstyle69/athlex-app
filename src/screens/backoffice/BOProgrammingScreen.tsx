@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, RefreshControl, Linking,
+  TextInput, ActivityIndicator, Alert, RefreshControl, Linking, Platform,
 } from 'react-native';
 import { ChevronLeft, Search, Check, Store, Globe } from 'lucide-react-native';
 import { useFocusEffect } from '@react-navigation/native';
@@ -130,25 +130,14 @@ export default function BOProgrammingScreen({ navigation }: any) {
   }
 
   function onSubscribe(item: CatalogueItem) {
-    const priceLabel = programmingPrice(item);
-    if (item.billing === 'free') {
-      Alert.alert(
-        t('bo.programming.subscribeConfirmTitle'),
-        t('bo.programming.subscribeConfirmMsg', { title: item.title, box: currentBox?.name ?? '' }),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('bo.programming.subscribe'), onPress: () => subscribeFree(item) },
-        ],
-      );
-      return;
-    }
-    // Paid offer — Stripe Connect checkout lives on the web (App Store compliant).
+    // Offre payante : l'achat se fait sur le site (D4). Ce bouton n'existe pas sur iOS (App Store 3.1.1).
+    if (item.billing !== 'free') { Linking.openURL(`${WEB_URL}/programming`); return; }
     Alert.alert(
-      t('bo.programming.paidTitle'),
-      t('bo.programming.paidMsg', { price: priceLabel }),
+      t('bo.programming.subscribeConfirmTitle'),
+      t('bo.programming.subscribeConfirmMsg', { title: item.title, box: currentBox?.name ?? '' }),
       [
         { text: t('common.cancel'), style: 'cancel' },
-        { text: t('bo.programming.payOnWeb'), onPress: () => Linking.openURL(`${WEB_URL}/programming`) },
+        { text: t('bo.programming.subscribe'), onPress: () => subscribeFree(item) },
       ],
     );
   }
@@ -178,7 +167,8 @@ export default function BOProgrammingScreen({ navigation }: any) {
           contentContainerStyle={{ paddingBottom: 140, paddingHorizontal: 16 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} />}
         >
-          <Text style={S.subtitle}>{t('bo.programming.subtitle')}</Text>
+          {/* iOS : décrire sans inviter à acheter (App Store 3.1.1). */}
+          <Text style={S.subtitle}>{t(Platform.OS === 'ios' ? 'bo.programming.subtitleIos' : 'bo.programming.subtitle')}</Text>
 
           <View style={S.searchRow}>
             <Search size={15} color={theme.textMuted} style={{ marginLeft: 10 }} />
@@ -227,6 +217,8 @@ export default function BOProgrammingScreen({ navigation }: any) {
           ) : (
             visible.map((p) => {
               const subscribed = subscribedIds.has(p.id);
+              // iOS : offre payante visible, sans prix ni bouton (App Store 3.1.1).
+              const paidOnIos = p.billing !== 'free' && Platform.OS === 'ios';
               const priceLabel = p.billing === 'free'
                 ? t('bo.programming.free')
                 : programmingPrice(p);
@@ -234,9 +226,11 @@ export default function BOProgrammingScreen({ navigation }: any) {
                 <View key={p.id} style={S.card}>
                   <View style={S.cardTop}>
                     <Text style={S.cardTitle}>{p.title}</Text>
-                    <View style={[S.priceBadge, p.billing === 'free' && S.priceBadgeFree]}>
-                      <Text style={[S.priceText, p.billing === 'free' && S.priceTextFree]}>{priceLabel}</Text>
-                    </View>
+                    {!paidOnIos && (
+                      <View style={[S.priceBadge, p.billing === 'free' && S.priceBadgeFree]}>
+                        <Text style={[S.priceText, p.billing === 'free' && S.priceTextFree]}>{priceLabel}</Text>
+                      </View>
+                    )}
                   </View>
                   <Text style={S.publisher}>{t('bo.programming.by', { name: p.publisher_name })}</Text>
                   {p.description ? <Text style={S.desc} numberOfLines={3}>{p.description}</Text> : null}
@@ -251,6 +245,8 @@ export default function BOProgrammingScreen({ navigation }: any) {
                       <Check color={theme.success} size={15} />
                       <Text style={S.subscribedText}>{t('bo.programming.subscribed')}</Text>
                     </View>
+                  ) : paidOnIos ? (
+                    <Text style={S.paidNote} testID={`programming-paid-note-${p.id}`}>{t('bo.programming.paidOutsideApp')}</Text>
                   ) : (
                     <TouchableOpacity
                       style={S.subscribeBtn}
@@ -260,7 +256,7 @@ export default function BOProgrammingScreen({ navigation }: any) {
                     >
                       {subscribing === p.id
                         ? <ActivityIndicator color="#fff" size="small" />
-                        : <Text style={S.subscribeBtnText}>{t('bo.programming.subscribe')}</Text>}
+                        : <Text style={S.subscribeBtnText}>{p.billing === 'free' ? t('bo.programming.subscribe') : t('bo.programming.seeOnSite')}</Text>}
                     </TouchableOpacity>
                   )}
                 </View>
@@ -321,6 +317,7 @@ function createStyles(t: AppTheme) {
     subscribeBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
     subscribedRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: `${t.success}12`, borderRadius: 10, paddingVertical: 11, marginTop: 14 },
     subscribedText: { color: t.success, fontWeight: '700', fontSize: 14 },
+    paidNote: { fontSize: 13, color: t.textMuted, textAlign: 'center', marginTop: 14, paddingVertical: 4 },
 
     footerNote: { flexDirection: 'row', alignItems: 'flex-start', gap: 6, marginTop: 20, paddingHorizontal: 4 },
     footerNoteText: { flex: 1, fontSize: 11, color: t.textMuted, lineHeight: 15 },

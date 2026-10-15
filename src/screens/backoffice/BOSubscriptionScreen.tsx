@@ -9,6 +9,7 @@ import { useTheme, AppTheme } from '../../context/ThemeContext';
 import { openExternalUrl, pollUntilTrue } from '../../lib/openCheckout';
 import { supabase } from '../../lib/supabase';
 import { PRICING_URL } from '../../lib/urls';
+import { ATHLEX_PRO_PRICE_EUR, athlexProPrice } from '../../lib/athlexProPrice';
 import GlassBackground from '../../components/glass/GlassBackground';
 import { dateLocale } from '../../i18n/locale';
 
@@ -119,12 +120,17 @@ export default function BOSubscriptionScreen({ navigation }: any) {
         <View style={S.planCard}>
           <View style={S.planHeader}>
             <Text style={S.planName}>{t('bo.subscription.planName')}</Text>
-            <View style={S.priceRow}>
-              <Text style={S.priceAmount}>79€</Text>
-              <Text style={S.pricePeriod}>{t('bo.subscription.perMonth')}</Text>
-            </View>
+            {/* Aucun prix sur iOS : l'abonnement se souscrit hors de l'app (App Store 3.1.1). */}
+            {Platform.OS !== 'ios' && (
+              <View style={S.priceRow}>
+                <Text style={S.priceAmount}>{athlexProPrice(ATHLEX_PRO_PRICE_EUR.monthly)}</Text>
+                <Text style={S.pricePeriod}>{t('bo.subscription.perMonth')}</Text>
+              </View>
+            )}
           </View>
-          <Text style={S.planAnnual}>{t('bo.subscription.annual')}</Text>
+          {Platform.OS !== 'ios' && (
+            <Text style={S.planAnnual}>{t('bo.subscription.annual', { price: athlexProPrice(ATHLEX_PRO_PRICE_EUR.annual) })}</Text>
+          )}
 
           <View style={S.featureList}>
             {FEATURES.map((f) => (
@@ -159,7 +165,7 @@ export default function BOSubscriptionScreen({ navigation }: any) {
                   <>
                     <CreditCard color="#fff" size={18} />
                     <Text style={S.primaryBtnText}>
-                      {isExpired ? t('bo.subscription.subscribePrice') : t('bo.subscription.subscribeNow')}
+                      {isExpired ? t('bo.subscription.subscribePrice', { price: athlexProPrice(ATHLEX_PRO_PRICE_EUR.monthly) }) : t('bo.subscription.subscribeNow')}
                     </Text>
                   </>
                 )}

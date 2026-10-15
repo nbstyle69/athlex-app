@@ -1,7 +1,7 @@
 import React, { useEffect as mockUseEffect } from 'react';
 import fs from 'fs';
 import path from 'path';
-import { Alert, Dimensions, Linking, Modal, StyleSheet } from 'react-native';
+import { Alert, Dimensions, Linking, Modal, Platform, StyleSheet } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import { lightTheme, darkTheme } from '../theme/palette';
 import i18n from '../i18n';
@@ -365,12 +365,23 @@ if (!process.env.R11_CAPTURE) {
       const root = await variant('rejoindre-une-box').run();
       await pressButton(root.findByProps({ testID: 'waiting-have-code' }));
       expect(mockNavigate).toHaveBeenLastCalledWith('JoinBox');
-      await pressButton(root.findByProps({ testID: 'waiting-owner' }));
-      expect(Linking.openURL).toHaveBeenCalled();
+      // iOS (#553, décision A) : texte neutre à la place du lien gérant.
+      expect(root.findAllByProps({ testID: 'waiting-owner' })).toHaveLength(0);
+      expect(root.findAllByProps({ testID: 'waiting-owner-note' }).length).toBeGreaterThan(0);
       await act(async () => { root.findByProps({ testID: 'waiting-no-code' }).props.onPress(); });
       expect(mockAuth.skipBox).toHaveBeenCalled();
       await act(async () => { root.findByProps({ testID: 'waiting-sign-out' }).props.onPress(); });
       expect(mockAuth.signOut).toHaveBeenCalled();
+    });
+
+    it('rejoindre une box (Android) : l’espace propriétaire ouvre le lien gérant', async () => {
+      const os = Platform.OS;
+      Platform.OS = 'android';
+      try {
+        const root = await variant('rejoindre-une-box').run();
+        await pressButton(root.findByProps({ testID: 'waiting-owner' }));
+        expect(Linking.openURL).toHaveBeenCalled();
+      } finally { Platform.OS = os; }
     });
 
     it('rejoins ta box : bouton inactif tant que le code n’a pas 6 caractères', async () => {
