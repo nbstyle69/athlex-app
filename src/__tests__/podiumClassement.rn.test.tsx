@@ -45,7 +45,9 @@ jest.mock('../lib/supabase', () => {
       Promise.resolve({ data: rows, error: null, count: rows.length }).then(res, rej);
     return b;
   };
-  return { supabase: { from: (t: string) => builder(t), channel: () => ({}), removeChannel: jest.fn() } };
+  // Classement global : RPC global_leaderboard (#565).
+  const rpc = (fn: string) => Promise.resolve({ data: fn === 'global_leaderboard' ? mockProfiles : null, error: null });
+  return { supabase: { from: (t: string) => builder(t), rpc, channel: () => ({}), removeChannel: jest.fn() } };
 });
 
 // Hauteur de ligne native d'Inter (police par défaut de l'app, App.tsx) : (ascendante − descendante + interligne) / em.

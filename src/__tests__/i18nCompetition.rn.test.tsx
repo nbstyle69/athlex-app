@@ -83,7 +83,10 @@ jest.mock('../lib/supabase', () => {
   return {
     supabase: {
       from: (t: string) => builder(t),
-      rpc: async () => ({ data: null, error: mockRpcError }),
+      // Classement global : RPC global_leaderboard (#565), mêmes lignes que l'ancienne lecture de profiles.
+      rpc: async (fn: string) => (fn === 'global_leaderboard'
+        ? { data: mockDb.profiles ?? [], error: null }
+        : { data: null, error: mockRpcError }),
       channel: () => channel,
       removeChannel: jest.fn(),
     },
