@@ -8205,6 +8205,19 @@ export type Database = {
           trials: number
         }[]
       }
+      global_elo_rank: { Args: { p_elo: number }; Returns: number }
+      global_leaderboard: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          avatar_url: string
+          elo: number
+          id: string
+          level: string
+          total_matches: number
+          username: string
+          wins: number
+        }[]
+      }
       increment_movement_stats:
         | {
             Args: {

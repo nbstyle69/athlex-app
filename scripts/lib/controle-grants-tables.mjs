@@ -775,6 +775,10 @@ const SECDEF_SANS_GARDE_CONNUES = [
   'get_total_box_count()',
   'get_tournament_participants(uuid)',
   'get_tournament_validated_scores(uuid)',
+  // #565 (20270159) : classement global sans les comptes de démo. Sans garde
+  // par construction : elles ne rendent que des colonnes lisibles par tous.
+  'global_elo_rank(integer)',
+  'global_leaderboard(integer,integer)',
   'increment_movement_stats(uuid,text,integer,numeric)',
   'is_blocked_pair(uuid,uuid)',
   'list_program_week_conflicts(text,uuid,integer,date)',
