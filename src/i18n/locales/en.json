@@ -3200,7 +3200,8 @@
       "pastDue": "Unpaid",
       "paused": "Paused",
       "cancelScheduled": "Cancellation scheduled",
-      "boxClosed": "Box closed"
+      "boxClosed": "Box closed",
+      "accessEnded": "Access ended"
     },
     "pricePerMonth": "€{{amount}} / month",
     "nextBilling": "Next payment",
@@ -3247,6 +3248,18 @@
     "manageOnSite": "Manage my payment on the website",
     "manageOnSiteHint": "Card, direct debit and cancellation are managed on athlexapp.eu.",
     "retry": "Try again",
+    "counterAccess": {
+      "paidUntil": "Access paid until",
+      "endedOn": "Access ended on",
+      "goOnline": "Switch to online payment",
+      "goOnlineHint": "Nothing to pay today: your first payment will be taken after your access ends.",
+      "endingTitle": "Your access ends on {{date}}",
+      "endingBody": "Switch to online payment to keep booking without paying twice: nothing is charged before your access ends.",
+      "endedTitle": "Your access has ended",
+      "endedBody": "You can no longer book. Activate your membership online to book again.",
+      "activateOnline": "Activate my membership online",
+      "noOnlineBody": "Your box doesn't offer online payment: contact your box to renew."
+    },
     "choose": {
       "title": "Change plan",
       "subtitle": "Plans offered by {{box}}",

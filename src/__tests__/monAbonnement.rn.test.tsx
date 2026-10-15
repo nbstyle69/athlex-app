@@ -8,8 +8,8 @@ import { lightTheme, darkTheme } from '../theme/palette';
 import i18n from '../i18n';
 import { WEB_URL } from '../lib/urls';
 import {
-  MEMBERSHIP_TIMEOUT_MS, cancelMembershipPlanChange, changeMembershipPlan, getMembershipOverview, monthlyPrice,
-  paymentMethodLabel, type MembershipOverview,
+  MEMBERSHIP_TIMEOUT_MS, cancelMembershipPlanChange, changeMembershipPlan, counterAccess, getMembershipOverview, monthlyPrice,
+  parisToday, paymentMethodLabel, type MembershipOverview, type MyMembership,
 } from '../services/membership';
 import MyMembershipScreen from '../screens/profile/MyMembershipScreen';
 import ChangeMembershipPlanScreen from '../screens/profile/ChangeMembershipPlanScreen';
@@ -29,7 +29,8 @@ jest.mock('@react-navigation/native', () => {
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 34, left: 0, right: 0 }) }));
 jest.mock('../navigation/tabBarLayout', () => ({ useTabBarScrollSpace: () => 122 }));
 jest.mock('../context/ThemeContext', () => ({ useTheme: () => ({ theme: mockTheme }) }));
-jest.mock('../lib/supabase', () => ({ supabase: { auth: { getSession: () => mockSession() } } }));
+const mockRpc = jest.fn();
+jest.mock('../lib/supabase', () => ({ supabase: { auth: { getSession: () => mockSession() }, rpc: (...a: unknown[]) => mockRpc(...a) } }));
 jest.mock('../lib/sentry', () => ({ captureError: jest.fn() }));
 jest.mock('expo-blur', () => ({ BlurView: 'BlurView' }));
 jest.mock('../components/glass/GlassBackground', () => () => null);
@@ -64,6 +65,7 @@ const COUNTER: MembershipOverview = { ...BASE, mode: 'counter', next_billing_at:
 let renderer: TestRenderer.ReactTestRenderer | null = null;
 beforeEach(async () => {
   mockSession.mockResolvedValue({ data: { session: { access_token: TOKEN } } });
+  mockRpc.mockResolvedValue({ data: [], error: null });
   await i18n.changeLanguage('fr');
 });
 afterEach(async () => {
@@ -444,6 +446,160 @@ describe('Mon abonnement : états', () => {
       'My membership', 'Current plan', 'Active', '€49 / month', 'Next payment', 'Card •••• 4242', 'Change plan',
       'Payment and cancellation', 'Manage my payment on the website',
     ]));
+  });
+});
+
+// ── Accès payé au comptoir (Paiements au comptoir, PR 6 ; maquettes 655:1558 à 655:2148) ──
+// Aujourd'hui = 13 oct. 2026 à Paris, comme dans la maquette. Seule la date est simulée.
+const NOW = new Date('2026-10-13T10:00:00Z');
+const REAL_TIMERS = ['nextTick', 'setImmediate', 'clearImmediate', 'setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'queueMicrotask', 'hrtime', 'performance'] as const;
+const ROW: MyMembership = {
+  box_id: 'b1', status: 'active', subscription_status: 'active', subscription_current_period_end: null,
+  subscription_cancel_at_period_end: false, past_due_since: null, dunning_grace_days: 7, suspended: false,
+  has_stripe_subscription: false, stopped_at: null, stop_mode: null, cash_access_until: '2026-11-12', box_sells_online: true,
+};
+async function showCounter(row: Partial<MyMembership> | null, o: MembershipOverview = COUNTER, theme = lightTheme) {
+  jest.useFakeTimers({ now: NOW, doNotFake: [...REAL_TIMERS] });
+  mockRpc.mockResolvedValue({ data: row ? [{ ...ROW, ...row }] : [], error: null });
+  return showOverview(o, theme);
+}
+/** Rang de chaque testID dans l'ordre d'affichage (-1 : absent). */
+const order = (root: ReactTestInstance, ...ids: string[]) => {
+  const all = root.findAll((n) => typeof n.type === 'string' && ids.includes(n.props.testID)).map((n) => n.props.testID);
+  const seen = all.filter((id, i) => all.indexOf(id) === i);
+  return ids.map((id) => seen.indexOf(id));
+};
+const COUNTER_HINT = "Tu paies au comptoir : ta box valide le changement et l'encaisse.";
+
+describe('Mon abonnement : accès payé au comptoir', () => {
+  it('lit get_my_membership_billing, une seule fois et rien d\'autre', async () => {
+    await showCounter({});
+    expect(mockRpc).toHaveBeenCalledTimes(1);
+    expect(mockRpc).toHaveBeenCalledWith('get_my_membership_billing');
+  });
+
+  it.each([['clair', lightTheme], ['sombre', darkTheme]])('en cours (%s) : « Accès payé jusqu’au », bouton menthe vers /compte, changement en contour', async (_n, theme) => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const root = await showCounter({}, COUNTER, theme);
+    expect(texts(root)).toEqual(expect.arrayContaining([
+      'Actif', 'Accès payé jusqu’au', '12 nov. 2026', 'Au comptoir', 'Passer au paiement en ligne',
+      'Rien à payer aujourd’hui : ton premier prélèvement aura lieu après la fin de ton accès.',
+      'Demander un changement de formule', COUNTER_HINT,
+    ]));
+    expect(has(root, 'membership-access-ending')).toBe(false);
+    expect(has(root, 'membership-access-ended')).toBe(false);
+    expect(has(root, 'membership-next-billing')).toBe(false);
+    expect(byId(root, 'membership-go-online').props.variant ?? 'accent').toBe('accent');
+    expect(byId(root, 'membership-change').props.variant).toBe('outline');
+    expect(flat(byId(root, 'membership-go-online-hint')).textAlign).toBe('center');
+    expect(order(root, 'membership-plan-card', 'membership-go-online', 'membership-go-online-hint', 'membership-change'))
+      .toEqual([0, 1, 2, 3]);
+    await press(root, 'membership-go-online');
+    expect(open).toHaveBeenCalledWith(`${WEB_URL}/compte`);
+  });
+
+  it.each([['clair', lightTheme], ['sombre', darkTheme]])('fin proche (%s) : encart ambre en tête, date courte, bouton dans l\'encart', async (_n, theme) => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const root = await showCounter({ cash_access_until: '2026-10-20' }, COUNTER, theme);
+    expect(texts(root)).toEqual(expect.arrayContaining([
+      'Ton accès se termine le 20 oct.',
+      'Passe au paiement en ligne pour continuer à réserver, sans payer deux fois : rien n’est prélevé avant la fin de ton accès.',
+      'Passer au paiement en ligne', 'Accès payé jusqu’au', '20 oct. 2026', 'Actif', COUNTER_HINT,
+    ]));
+    expect(flat(host(root, 'membership-access-ending')).borderColor).toBe(theme.ax.warning);
+    expect(order(root, 'membership-access-ending', 'membership-plan-card', 'membership-change')).toEqual([0, 1, 2]);
+    expect(host(root, 'membership-access-ending').findAll((n) => n.props.testID === 'membership-go-online').length).toBeGreaterThan(0);
+    expect(has(root, 'membership-go-online-hint')).toBe(false);
+    expect(byId(root, 'membership-change').props.variant).toBe('outline');
+    await press(root, 'membership-go-online');
+    expect(open).toHaveBeenCalledWith(`${WEB_URL}/compte`);
+  });
+
+  it.each([
+    ['2026-10-20', 'endingSoon'], ['2026-10-13', 'endingSoon'], ['2026-10-21', 'current'],
+  ] as const)('seuil des 7 jours : fin le %s → %s', (until, key) => {
+    expect(counterAccess(COUNTER, [{ ...ROW, cash_access_until: until }], '2026-10-13')?.key).toBe(key);
+  });
+
+  it.each([['clair', lightTheme], ['sombre', darkTheme]])('terminé (%s) : encart rouge, pastille « Accès terminé », plus de demande de changement', async (_n, theme) => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const root = await showCounter({ subscription_status: 'expired', cash_access_until: '2026-10-10' }, { ...COUNTER, status: 'expired' }, theme);
+    expect(texts(root)).toEqual(expect.arrayContaining([
+      'Ton accès est terminé', 'Tu ne peux plus réserver. Active ton abonnement en ligne pour réserver à nouveau.',
+      'Activer mon abonnement en ligne', 'Accès terminé', 'Accès terminé le', '10 oct. 2026', 'Au comptoir',
+    ]));
+    expect(flat(host(root, 'membership-access-ended')).borderColor).toBe(theme.ax.danger);
+    expect(byId(root, 'membership-status').props.tone).toBe('danger');
+    expect(order(root, 'membership-access-ended', 'membership-plan-card')).toEqual([0, 1]);
+    expect(has(root, 'membership-change')).toBe(false);
+    expect(texts(root)).not.toContain(COUNTER_HINT);
+    expect(texts(root)).not.toContain('Actif');
+    await press(root, 'membership-go-online');
+    expect(open).toHaveBeenCalledWith(`${WEB_URL}/compte`);
+  });
+
+  it('expirée mais date pas encore passée : aucun bloc', () => {
+    expect(counterAccess(COUNTER, [{ ...ROW, subscription_status: 'expired', cash_access_until: '2026-10-13' }], '2026-10-13')).toBeNull();
+  });
+
+  it.each([
+    ['formule à 0 €', { ...COUNTER, price_cents: 0 }, {}],
+    ['sans prix', { ...COUNTER, price_cents: null }, {}],
+    ['sans date de fin (Accès démo)', COUNTER, { cash_access_until: null }],
+    ['en ligne', BASE, {}],
+    ['adhésion d\'une autre box', COUNTER, { box_id: 'b2' }],
+    ['adhésion quittée', COUNTER, { status: 'left' }],
+  ] as const)('%s : l\'écran reste comme aujourd\'hui', async (_n, o, row) => {
+    const root = await showCounter(row, o as MembershipOverview);
+    for (const id of ['membership-access-until', 'membership-access-ending', 'membership-access-ended', 'membership-go-online', 'membership-go-online-hint']) {
+      expect(has(root, id)).toBe(false);
+    }
+    expect(byId(root, 'membership-change').props.variant ?? 'accent').toBe('accent');
+    expect(texts(root)).not.toContain('Accès payé jusqu’au');
+  });
+
+  it('lecture du billing en échec : l\'écran reste comme aujourd\'hui', async () => {
+    jest.useFakeTimers({ now: NOW, doNotFake: [...REAL_TIMERS] });
+    mockRpc.mockResolvedValue({ data: null, error: { message: 'x' } });
+    const root = await showOverview(COUNTER);
+    expect(has(root, 'membership-plan-card')).toBe(true);
+    expect(has(root, 'membership-access-until')).toBe(false);
+  });
+
+  it.each([
+    ['en cours', '2026-11-12', 'active'], ['fin proche', '2026-10-20', 'active'], ['terminé', '2026-10-10', 'expired'],
+  ] as const)('box sans vente en ligne, %s : texte qui renvoie au comptoir, aucun bouton vers le site', async (_n, until, st) => {
+    const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    const root = await showCounter({ box_sells_online: false, cash_access_until: until, subscription_status: st });
+    expect(has(root, 'membership-go-online')).toBe(false);
+    expect(has(root, 'membership-go-online-hint')).toBe(false);
+    expect(has(root, 'membership-access-until')).toBe(true);
+    const sentence = 'Ta box ne propose pas le paiement en ligne : rapproche-toi d’elle pour renouveler.';
+    if (until === '2026-11-12') expect(texts(root)).not.toContain(sentence);
+    else expect(texts(root)).toContain(sentence);
+    expect(open).not.toHaveBeenCalled();
+  });
+
+  it('date de Paris : 22 h 30 UTC le 13 oct. est déjà le 14 à Paris', () => {
+    expect(parisToday(new Date('2026-10-13T22:30:00Z'))).toBe('2026-10-14');
+    expect(parisToday(new Date('2026-10-13T21:59:00Z'))).toBe('2026-10-13');
+  });
+
+  it('en anglais : fin proche et terminé sans un mot de français', async () => {
+    await i18n.changeLanguage('en');
+    let root = await showCounter({ cash_access_until: '2026-10-20' });
+    expect(texts(root)).toEqual(expect.arrayContaining([
+      'Your access ends on 20 Oct', 'Switch to online payment', 'Access paid until', '20 Oct 2026',
+    ]));
+    await act(async () => renderer!.unmount());
+    renderer = null;
+    root = await showCounter({ subscription_status: 'expired', cash_access_until: '2026-10-10' });
+    expect(texts(root)).toEqual(expect.arrayContaining([
+      'Your access has ended', 'Activate my membership online', 'Access ended', 'Access ended on', '10 Oct 2026',
+    ]));
+    for (const k of ['paidUntil', 'endedOn', 'goOnline', 'goOnlineHint', 'endingTitle', 'endingBody', 'endedTitle', 'endedBody', 'activateOnline', 'noOnlineBody']) {
+      expect(i18n.t(`membership.counterAccess.${k}`)).not.toMatch(/[àâçéèêëîïôûù’]|\b(ton|ta|tu|le|la|de|du|accès|paiement)\b/i);
+    }
   });
 });
 

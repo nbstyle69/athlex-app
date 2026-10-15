@@ -53,6 +53,11 @@ export function routeNotification(data: Record<string, any> | undefined) {
       navigateToTab('Home', 'Profile');
       break;
 
+    // ── Fin d'accès payé au comptoir (J−7, veille, fin) → Mon abonnement ──
+    case 'membership_access_ending':
+      navigateToTab('Home', 'MyMembership');
+      break;
+
     // ── Annonce de la box → écran Annonces, seulement si c'est la box active
     //    (sinon l'app s'ouvre simplement) ──
     case 'box_notification':
