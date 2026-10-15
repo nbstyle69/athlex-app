@@ -1510,6 +1510,7 @@
     "ranking": {
       "overline": "Leaderboard",
       "summary": "#{{rank}} · ELO {{elo}} · {{level}}",
+      "summaryNoRank": "ELO {{elo}} · {{level}}",
       "see": "See",
       "open": "Open the leaderboard"
     }

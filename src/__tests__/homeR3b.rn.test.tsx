@@ -96,6 +96,22 @@ beforeEach(() => {
 });
 afterEach(async () => { if (r) await act(async () => r.unmount()); jest.useRealTimers(); });
 
+// #565 : rang mondial indisponible (RPC en échec) → aucun rang affiché, pas « #1 ».
+describe.each([
+  ['fr', 'Rang, ouvrir le classement'],
+  ['en', 'Rank, open the leaderboard'],
+])('rang indisponible (%s)', (lang, libelle) => {
+  afterAll(async () => { await i18n.changeLanguage('fr'); });
+
+  it('tiret à la place du rang, libellé d\'accessibilité sans rang', async () => {
+    await i18n.changeLanguage(lang);
+    await mount(lightTheme, homeData({ rank: null }));
+    const rang = host('home-stat-value')[0];
+    expect([rang.props.children].flat().join('')).toBe('—');
+    expect(pressable('home-rank').props.accessibilityLabel).toBe(libelle);
+  });
+});
+
 describe('ordre des blocs', () => {
   it('en-tête, ELO, Amis / Profil, Actu, Cette semaine, Explorer, Compétitions, Tournois, Résultats récents', async () => {
     await mount();

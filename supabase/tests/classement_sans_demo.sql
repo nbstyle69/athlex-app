@@ -20,6 +20,8 @@
 --       identiques, marqueur rempli, à ce qu'ils sont marqueur vide (master) ;
 --   C6  le marqueur est illisible par authenticated ;
 --   C7  aucune ligne de box_members ni de membership_plans n'a bougé ;
+--   C8  un membre connecté ne reçoit de la RPC que les colonnes et valeurs
+--       qu'il lit en direct sur profiles (la RPC contourne la RLS) ;
 --   R   retour arrière : fonctions et marqueur supprimés, catalogue identique
 --       à master (fonctions, vues, règles RLS, droits des tables de public).
 -- Mutations : jouées localement sur la migration et le retour arrière (liste
@@ -214,6 +216,38 @@ BEGIN
 END $t$;
 ROLLBACK TO SAVEPOINT retrait;
 
+-- ── C8 : un membre ne reçoit que ce qu'il lirait en direct sur profiles ───────
+-- La RPC contourne la RLS (SECURITY DEFINER) : chaque colonne qu'elle rend doit
+-- être lisible par authenticated, et chaque ligne identique à ce que le membre
+-- lit par une requête directe (pas de colonne privée renommée).
+DO $t$
+DECLARE
+  v_cols text;
+  v_privees text;
+  v_autres int;
+  v_ecarts int;
+BEGIN
+  SELECT string_agg(quote_ident(u.a), ', ' ORDER BY u.o),
+         string_agg(u.a, ', ' ORDER BY u.o) FILTER (WHERE NOT has_column_privilege('authenticated', 'public.profiles', u.a, 'SELECT'))
+    INTO v_cols, v_privees
+    FROM pg_proc p, unnest(p.proargnames, p.proargmodes) WITH ORDINALITY AS u(a, m, o)
+   WHERE p.oid = 'public.global_leaderboard(integer, integer)'::regprocedure AND u.m = 't';
+  IF v_privees IS NOT NULL THEN
+    RAISE EXCEPTION 'C8 : colonne(s) rendue(s) que authenticated ne lit pas sur profiles : %', v_privees;
+  END IF;
+  SET LOCAL ROLE authenticated;
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-a565-000000900302', true);
+  PERFORM set_config('request.jwt.claim.role', 'authenticated', true);
+  SELECT count(*) INTO v_autres FROM public.global_leaderboard(100, 0) g WHERE g.id <> '00000000-0000-4000-a565-000000900302';
+  EXECUTE format('SELECT count(*) FROM (SELECT * FROM public.global_leaderboard(100, 0) EXCEPT SELECT %s FROM public.profiles) x', v_cols)
+    INTO v_ecarts;
+  RESET ROLE;
+  IF v_autres = 0 THEN RAISE EXCEPTION 'C8 : contre-exemple — le membre ne reçoit aucun autre profil'; END IF;
+  IF v_ecarts <> 0 THEN
+    RAISE EXCEPTION 'C8 : % ligne(s) de la RPC différentes de ce que le membre lit en direct sur profiles', v_ecarts;
+  END IF;
+END $t$;
+
 -- ── C6 : marqueur illisible par authenticated ─────────────────────────────────
 DO $t$
 DECLARE refuse boolean := false;
@@ -277,4 +311,4 @@ BEGIN
 END $t$;
 
 ROLLBACK;
-\echo '    C0 à C7 et R OK'
+\echo '    C0 à C8 et R OK'
