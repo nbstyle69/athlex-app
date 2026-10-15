@@ -2,7 +2,23 @@
 -- Paiements au comptoir (P1), PR 5b-base : pas de double paiement comptoir +
 -- Stripe pour un invité Stripe (base)
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : OUI, le 15/10/2026 à 14:17 UTC, avec PGCLIENTENCODING=UTF8,
+-- en une transaction (psql -1, ON_ERROR_STOP), ce fichier seul, sur feu vert de
+-- Nab. Dump des schémas public et internal avec droits
+-- db-dumps/2026-10-15/athlex-prod-public-internal-20261015T132729Z.dump,
+-- sha256 382304c100c0917808989a52fb4bd93f5a5f2ec662efbed2403b9c006e159002
+-- vérifié après aller-retour, 140 TABLE DATA, 481 ACL, 348 POLICY ;
+-- recontrôle juste avant (cinq définitions aux empreintes ci-dessous et du
+-- précontrôle, droits et commentaires identiques) ; vérifications : les trois
+-- définitions aux empreintes du test (3b1060b2…, 60499b17…, 81eaf982…), la
+-- nouvelle à cf6e9c37…, exécutable par service_role seulement, une version de
+-- chaque, aucune fonction internal ouverte à anon ou authenticated,
+-- mark_box_invitation_paid inchangée (d4d61e97…), box_members (187),
+-- box_invitations (6) et box_cash_payments (3) à la même empreinte ; test réel
+-- sur AthleX Fitness en transaction annulée (co-gérant et membres fictifs :
+-- STRIPE_PAYMENT_PENDING, INVITATION_NOT_PAYABLE, révocation d'une invitation
+-- Stripe acceptée en attente puis lien et activation REVOKED), aucune trace ;
+-- audit des droits en prod 47/47 lancé depuis la branche.
 --
 -- Étude du 15/10/2026 (comptoir-p1/pr5b-base/etape1-compte-rendu.md) : un
 -- invité Stripe qui a créé son compte est en subscription_status =
