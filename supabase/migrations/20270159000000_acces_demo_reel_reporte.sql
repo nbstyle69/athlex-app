@@ -2,7 +2,11 @@
 -- Paiements au comptoir (P1), PR de données : le membre réel d'AthleX Fitness
 -- est reporté à la bascule Stripe live (correctif de 20270157)
 --
--- Appliquée en prod : non.
+-- Appliquée en prod : OUI, le 15/10/2026 à 15:27 UTC, avec PGCLIENTENCODING=UTF8,
+-- en une transaction (psql -1), sur GO de Nab. Dump des schémas public et
+-- internal avec droits : db-dumps/2026-10-15/athlex-prod-public-internal-
+-- 20261015T152718Z.dump. Résultat : 1 adhésion (7363331b) sans fin d'accès,
+-- revenue à son empreinte d'avant 20270157 ; reste inchangé.
 --
 -- Décision de Nab (15/10/2026). 20270157 (appliquée le 15/10/2026 à 09:44 UTC)
 -- a posé au membre réel au comptoir d'AthleX Fitness une fin d'accès au
