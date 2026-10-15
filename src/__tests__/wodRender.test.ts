@@ -26,6 +26,7 @@ import {
 } from '../services/wodRender';
 import { addToWhiteboard, saveGeneratedWod, whiteboardRows } from '../services/wodGenerator';
 import { CHEMINS, stockes } from '../../packages/wod-engine/__tests__/instantane/chemins';
+import { canon, sha } from '../../packages/wod-engine/__tests__/instantane/instantane';
 import {
   CATALOG_SNAPSHOT, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES, generateBlocC, generateMuscu, loadText, renderFromWodJson,
   sideLabel, BANK_V1,
@@ -60,11 +61,14 @@ const lignes = (t: { title: string; description: string; notes: string | null })
 
 type Objet = { chemin: string; k: number; json: unknown; saved: { title: string; description: string; notes: string | null } };
 const objets: Objet[] = [];
+/** Empreintes texte + sortie de chaque entrée, à comparer à l'instantané de M0 (`instantane-fr.json`). */
+const empreintes: Array<{ chemin: string; k: number; obtenue: string }> = [];
 beforeAll(async () => {
   for (const nom of CHEMINS_M4) {
     const c = CHEMINS.find((x) => x.nom === nom)!;
     for (let k = 0; k < N; k++) {
-      const { sortie } = await c.produire(k, 'fr');
+      const { sortie, texte } = await c.produire(k, 'fr');
+      empreintes.push({ chemin: nom, k, obtenue: `${sha(texte.join('\n'))} ${sha(canon(sortie))}` });
       for (const s of stockes(nom, sortie)) objets.push({ chemin: nom, k, json: s.json, saved: { title: s.title, description: s.description, notes: s.notes } });
     }
   }
@@ -80,6 +84,14 @@ describe('displayWod — 50 entrées par chemin', () => {
       const os = ofChemin();
       expect(new Set(os.map((o) => o.k)).size).toBeGreaterThanOrEqual(N - 5);
       for (const o of os) expect((o.json as { v?: number }).v ?? 2).toBe(2);
+    });
+
+    it(`${nom} : les entrées sont celles de l'instantané de M0 (texte et sortie identiques)`, () => {
+      const m0 = JSON.parse(fs.readFileSync(path.join(__dirname, '../../packages/wod-engine/__tests__/fixtures/instantane-fr.json'), 'utf8'));
+      const attendues: string[] = m0.chemins[nom].empreintes;
+      const es = empreintes.filter((e) => e.chemin === nom);
+      expect(es.length).toBe(N);
+      for (const e of es) expect(e.obtenue).toBe(attendues[e.k].split(' ').slice(0, 2).join(' '));
     });
 
     it(`${nom} : français = texte enregistré, octet pour octet`, () => {
@@ -240,7 +252,7 @@ describe('la langue ne touche jamais le tirage ni le texte enregistré', () => {
     }
   });
 
-  describe('écritures inchangées : texte et wod_json enregistrés en français, app en anglaise', () => {
+  describe('écritures inchangées : texte et wod_json enregistrés en français, app en anglais', () => {
     let inserts: Array<{ table: string; payload: any }>;
     let updates: Array<{ table: string; payload: any }>;
     beforeEach(async () => {

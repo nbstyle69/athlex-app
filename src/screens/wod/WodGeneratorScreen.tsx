@@ -44,6 +44,7 @@ import { loadWodDraft, saveWodDraft, WodDraft } from '../../services/wodDraft';
 import { ResumableMuscuSession, findResumableMuscuSession } from '../../services/muscuSession';
 import { captureError } from '../../lib/sentry';
 import { loadEngineData } from '../../services/wodEngineData';
+import { displayWod } from '../../services/wodRender';
 import { fetchMyPersonalRecords } from '../../services/myProfile';
 import {
   DayClass, ScreenParams, generateForUser, loadExcludes, loadMuscuEquipment, saveExcludes, saveMuscuEquipment, todayClass,
@@ -300,7 +301,7 @@ export default function WodGeneratorScreen() {
           <SessionContextCard
             testID="wodgen-draft"
             label={t('wodGen.lastGenerated')}
-            title={draft.result.wod.title}
+            title={displayWod(draft.result.wod, draft.result.wod).title}
             action={{
               label: t('wodGen.resumeSession'),
               testID: 'wodgen-draft-resume',
@@ -312,7 +313,7 @@ export default function WodGeneratorScreen() {
           <SessionContextCard
             testID="wodgen-server-draft"
             label={t('wodGen.lastGenerated')}
-            title={serverMuscu.result.wod.title}
+            title={displayWod(serverMuscu.result.wod, serverMuscu.result.wod).title}
             action={{
               label: t('wodGen.resumeSession'),
               testID: 'wodgen-server-draft-resume',

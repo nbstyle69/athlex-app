@@ -1,7 +1,8 @@
 import React, { useEffect as mockUseEffect } from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
-import { BANK_V1 as mockBank, CATALOG_SNAPSHOT as mockCatalog, generateBlocC, GenerateParams } from '../../packages/wod-engine/src';
+import { BANK_V1 as mockBank, CATALOG_SNAPSHOT as mockCatalog, generateBlocC, GenerateParams, renderFromWodJson } from '../../packages/wod-engine/src';
+import i18n from '../i18n';
 import { lightTheme, darkTheme } from '../theme/palette';
 import type { WodDraft } from '../services/wodDraft';
 import WodGeneratorScreen from '../screens/wod/WodGeneratorScreen';
@@ -91,3 +92,17 @@ for (const os of ['ios', 'android'] as const) {
     }, 20_000);
   }
 }
+
+// Moteur M4 (#528) : le titre de la dernière séance générée suit la langue de l'app, le texte enregistré reste français.
+it('reprise du brouillon : titre enregistré en français, rendu du moteur en anglais', async () => {
+  mockTheme = lightTheme;
+  for (const langue of ['fr', 'en'] as const) {
+    await i18n.changeLanguage(langue);
+    await act(async () => { renderer = TestRenderer.create(<WodGeneratorScreen />); });
+    const card = renderer.root.findAllByType(SessionContextCard).find((c) => c.props.testID === 'wodgen-draft')!;
+    const attendu = langue === 'fr' ? mockDraft.result.wod.title : renderFromWodJson(mockDraft.result.wod, 'en')!.title;
+    expect(card.props.title).toBe(attendu);
+    await act(async () => renderer.unmount());
+  }
+  await i18n.changeLanguage('fr');
+}, 20_000);
