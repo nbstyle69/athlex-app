@@ -222,3 +222,50 @@ describe('anglais : tout le texte de l’écran sans français', () => {
     }
   });
 });
+
+/**
+ * PR « Données » D2 (#530) : muscles, squelettes et options affichés par l'écran de résultat, en anglais,
+ * sur un jeu de WODs plus large (Après ma classe, chaque cible / matériel / objectif de la Musculation) :
+ * aucun accent ni texte que le scanner des écrans reconnaît comme français. Exceptions motivées : mots
+ * identiques en anglais que le scanner prend pour du français.
+ */
+describe('D2 : muscles, squelettes et options en anglais (écran de résultat)', () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { isFrench, strictAllowed } = require('../../scripts/i18n/scanner') as { isFrench: (s: string) => boolean; strictAllowed: (s: string) => boolean };
+  const MEMES_EN_ANGLAIS = [/\bminute \d+\b/, /\bminute can\b/, /^EMOM \d+ · Death by/];
+  const cas: Array<[string, unknown]> = [];
+  const jour = { day_movements: ['Back Squat — 5 × 5', 'Bench Press', 'Pull-ups', 'Thrusters'], box_wod_title: null };
+  for (const seed of [1, 9, 21]) for (const d of ['functional', 'hybrid'] as const) {
+    const p = { ...fParams, discipline: d, entry: 'after_class', format: 'surprise', after_class: jour } as GenerateParams;
+    cas.push([`${d} après ma classe #${seed}`, { screen: { entry: 'after_class', discipline: d, intention: 'mixed', exclude: [], format: 'surprise', vest: 'none' }, result: { wod: generateBlocC(p, mockCatalog, mockBank, seed), params: p, category: 'rx' } }]);
+  }
+  for (const target of ['push', 'pull', 'jambes', 'full_body', 'tronc', 'bras', 'fessiers'] as const) {
+    for (const [equipment, objective] of [['none', 'hypertrophie'], ['box', 'force'], ['gym', 'endurance']] as const) {
+      for (const entry of ['express', 'after_class'] as const) {
+        try {
+          const r = { entry, target, objective, budget_min: 45, equipment, level: 'inter', ...(entry === 'after_class' ? { after_class: jour } : {}) } as Parameters<typeof generateMuscu>[0];
+          cas.push([`musculation ${target}/${equipment}/${objective}/${entry}`, { screen: { entry, discipline: 'musculation', target, objective, equipment, exclude: [] }, result: { wod: generateMuscu(r, mockCatalog, mockBank, 3), params: fParams, category: 'rx' } }]);
+        } catch { /* combinaison refusée par le moteur (Force sans matériel, Force tronc) */ }
+      }
+    }
+  }
+
+  it(`${cas.length} WODs : aucun texte français à l'écran en anglais`, async () => {
+    expect(cas.length).toBeGreaterThanOrEqual(40);
+    const restes: string[] = [];
+    for (const [nom, params] of cas) {
+      (RESULTS as Record<string, unknown>).d2 = params;
+      const root = await mount('d2' as Sport, 'en');
+      for (const n of root.findAll((x) => typeof x.props.testID === 'string' && /^(wodresult-all-categories|wodresult-move-|muscu-ex-)/.test(x.props.testID) && typeof x.props.onPress === 'function')) {
+        await act(async () => { n.props.onPress(); });
+      }
+      for (const l of textes(root).flatMap((t) => t.split('\n'))) {
+        const francais = ACCENT.test(l) || (isFrench(l) && !strictAllowed(l) && !MEMES_EN_ANGLAIS.some((re) => re.test(l)));
+        if (francais && restes.length < 20) restes.push(`${nom} : « ${l} »`);
+      }
+      await act(async () => renderer.unmount());
+    }
+    delete (RESULTS as Record<string, unknown>).d2;
+    expect(restes).toEqual([]);
+  }, 120_000);
+});
