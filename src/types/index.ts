@@ -181,6 +181,8 @@ export interface BoxWOD {
    * donnée manquante. Absent tant que la migration n'est pas appliquée.
    */
   track?: 'functional' | 'hybrid' | 'musculation' | null;
+  /** WOD structuré (migration 20261213) : v2 du moteur → réaffichable dans la langue de l'app. */
+  wod_json?: unknown;
   created_at: string;
   scores?: WODScore[];
 }

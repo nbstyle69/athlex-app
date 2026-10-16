@@ -19,6 +19,7 @@ import { WODScore } from '../../types';
 import { formatCap, formatScoreValue } from '../../utils/scoreFormat';
 import { annotateGymRepsInText, annotateStrengthLoads } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
+import { annotateShown, displayRow } from '../../services/wodRender';
 import { useMyRecords } from '../../hooks/useMyOneRepMax';
 import {
   listProgramWods, listProgramRestDays, setProgramStartDate, ProgramWod, START_NOT_MONDAY,
@@ -75,6 +76,8 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
   const [erreur, setErreur] = useState<string | null>(null);
 
   const [selected, setSelected] = useState<ProgramWod | null>(null);
+  // Séance ouverte, dans la langue de l'app ; les annotations se calculent sur le texte enregistré.
+  const selectedShown = selected ? displayRow(selected) : null;
 
   const load = useCallback(async () => {
     setErreur(null);
@@ -271,13 +274,14 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
                 </View>
                 {dayWods.map(w => {
                   const score = scores[w.id];
+                  const shown = displayRow(w);
                   return (
                     <AxCard key={w.id} style={S.wodRow} onPress={() => setSelected(w)} testID={`program-wod-${w.id}`}>
                       <View style={S.wodLine}>
                         <View style={S.wodContent}>
                           <Text style={S.wodType}>{wodTypeLabel(w.wod_type).toUpperCase()}</Text>
-                          <Text style={S.wodTitle} numberOfLines={2}>{w.title}</Text>
-                          <Text style={S.wodDesc} numberOfLines={2}>{w.description}</Text>
+                          <Text style={S.wodTitle} numberOfLines={2}>{shown.title}</Text>
+                          <Text style={S.wodDesc} numberOfLines={2}>{shown.description}</Text>
                         </View>
                         {score ? (
                           <View style={S.doneChip} testID={`program-done-${w.id}`}>
@@ -338,7 +342,7 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
       <Modal visible={!!selected} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setSelected(null)}>
         <View style={S.modalContainer}>
           <View style={S.modalHeader}>
-            <Text style={S.modalTitle} numberOfLines={1}>{selected?.title}</Text>
+            <Text style={S.modalTitle} numberOfLines={1}>{selectedShown?.title}</Text>
             <TouchableOpacity onPress={() => setSelected(null)} hitSlop={12} accessibilityRole="button">
               <Text style={S.modalCancel}>{t('common.close')}</Text>
             </TouchableOpacity>
@@ -356,16 +360,16 @@ export default function ProgramDetailScreen({ navigation, route }: any) {
 
             <Text style={S.sectionLabel}>{t('programDetail.session')}</Text>
             <Text style={S.detailDesc}>
-              {annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(selected?.description ?? '', oneRepMaxFor), gymRecordFor))}
+              {annotateShown(selected?.description ?? '', selectedShown?.description ?? '', x => annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(x, oneRepMaxFor), gymRecordFor)))}
             </Text>
 
-            {!!selected?.notes && (
+            {!!selectedShown?.notes && (
               <AxCard style={S.notesCard} testID="program-notes">
                 <View style={S.noteHeader}>
                   <StickyNote color={c.accentText} size={14} />
                   <Text style={S.notesLabel}>{t('programDetail.coachNotes')}</Text>
                 </View>
-                <Text style={S.detailNotes}>{selected.notes}</Text>
+                <Text style={S.detailNotes}>{selectedShown.notes}</Text>
               </AxCard>
             )}
 

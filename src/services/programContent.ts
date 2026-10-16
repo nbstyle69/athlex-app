@@ -30,10 +30,12 @@ export type ProgramWod = {
   program_day: number | null;
   sort_order: number;
   is_published: boolean | null;
+  /** WOD structuré : v2 du moteur → réaffichable dans la langue de l'app (`displayRow`). */
+  wod_json?: unknown;
 };
 
 const COLONNES =
-  'id, title, description, wod_type, time_cap_seconds, notes, scheduled_date, program_week, program_day, sort_order, is_published';
+  'id, title, description, wod_type, time_cap_seconds, notes, scheduled_date, program_week, program_day, sort_order, is_published, wod_json';
 
 export type ProgramWodInput = {
   title: string;

@@ -28,6 +28,7 @@ import { formatScoreValue, normalizeScore, mapForTimeScore, formatCap } from '..
 import { computeCompletedMovements } from '../../utils/movementParser';
 import { annotateGymRepsInText, annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
+import { annotateShown, displayRow } from '../../services/wodRender';
 import {
   GymRecordCandidate, addStrengthSet, applyGymRecordsToGrid, buildStrengthGrid, gymRecordCandidates, isRepsOnly, logStrengthSets, removeStrengthSet,
   validStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
@@ -813,6 +814,9 @@ export default function WODDetailScreen() {
   const myRank = myScore ? scores.findIndex(s => s.id === myScore.id) + 1 : null;
   // Liste des scores : tout bloc daté qui en a. Rang et ELO : bloc classé seulement.
   const listMode = scoreListMode(wod, scores.length);
+  // Titre, description et notes dans la langue de l'app. Score, grille, badges, minuteur et
+  // écritures (sourceTitle, notifications) lisent toujours le texte enregistré : `wod`.
+  const shown = displayRow(wod);
   const ranked = listMode === 'ranked';
 
   return (
@@ -820,7 +824,7 @@ export default function WODDetailScreen() {
       <GlassBackground />
       <AxScreenHeader
         title={wod.scheduled_date ? i18n.t('screenTitles.wodOfDay') : i18n.t('screenTitles.wod')}
-        right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: i18n.t('wodDetail.shareMessage', { title: wod.title, url: `athlex://wod/${wodId}` }) })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
+        right={<AxIconButton icon={Share2} onPress={() => Share.share({ message: i18n.t('wodDetail.shareMessage', { title: shown.title, url: `athlex://wod/${wodId}` }) })} accessibilityLabel={i18n.t('common.share')} testID="header-share" />}
       />
 
       <ScrollView
@@ -830,7 +834,7 @@ export default function WODDetailScreen() {
       >
         {/* WOD info card */}
         <AxCard variant="featured" style={S.wodCard} testID="wod-card">
-          <AxContentTitle title={wod.title} testID="wod-detail-title" />
+          <AxContentTitle title={shown.title} testID="wod-detail-title" />
           <View style={S.wodMeta}>
             <AxTag label={wodTypeLabel(wod.wod_type ?? 'custom')} tone="accent" color={wodTypeColor(wod.wod_type ?? 'custom', theme.mode, c)} testID="wod-type-tag" />
             {wod.time_cap_seconds && (
@@ -848,12 +852,12 @@ export default function WODDetailScreen() {
           </Text>
 
           {wod.description && (
-            <Text style={S.wodDesc}>{annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(wod.description, oneRepMaxFor), gymRecordFor))}</Text>
+            <Text style={S.wodDesc}>{annotateShown(wod.description, shown.description, x => annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(x, oneRepMaxFor), gymRecordFor)))}</Text>
           )}
-          {wod.notes && (
+          {shown.notes && (
             <AxCard style={S.notesBox} testID="wod-coach-notes">
               <Text style={S.notesLabel}>{i18n.t('wodDetail.coachNotes')}</Text>
-              <Text style={S.notesText}>{wod.notes}</Text>
+              <Text style={S.notesText}>{shown.notes}</Text>
             </AxCard>
           )}
 
@@ -1065,7 +1069,7 @@ export default function WODDetailScreen() {
 
             {/* Zone sûre en bas : la grille s'allonge (séries ajoutées), les boutons restent au-dessus de la barre d'accueil. */}
             <ScrollView contentContainerStyle={[S.modalBody, { paddingBottom: 20 + insets.bottom }]} keyboardShouldPersistTaps="handled" testID="score-modal-scroll">
-              <Text style={S.modalWodName}>{wod.title}</Text>
+              <Text style={S.modalWodName}>{shown.title}</Text>
 
               {/* Score type */}
               {(() => {
@@ -1258,7 +1262,7 @@ export default function WODDetailScreen() {
       <SharePerfScreen
         visible={shareModal}
         card={myScore && wod ? {
-          wodTitle: wod.title,
+          wodTitle: shown.title,
           wodType: wod.wod_type ?? null,
           score: myScore.score_value,
           scoreType: myScore.score_type,

@@ -12,6 +12,9 @@ export interface GeneratedWodRow {
 
 export interface BoxWodRef {
   title: string;
+  description?: string | null;
+  notes?: string | null;
+  wod_json?: unknown;
   wod_type: string | null;
   scheduled_date?: string | null;
 }

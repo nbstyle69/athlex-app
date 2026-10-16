@@ -25,6 +25,7 @@ import { buildHistoryEntries, countScores, HistoryEntry, BoxScoreRow, Completion
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import EmptyState from '../../components/EmptyState';
 import { dateLocale } from '../../i18n/locale';
+import { displayRow } from '../../services/wodRender';
 
 type Nav = NativeStackNavigationProp<HomeStackParamList>;
 
@@ -43,6 +44,7 @@ interface SavedWOD {
   equipment: string[];
   is_favorite: boolean;
   is_benchmark: boolean;
+  wod_json?: unknown;
   created_at: string;
   scores?: WODScore[];
 }
@@ -64,6 +66,11 @@ const PAGE_SIZE = 30;
 
 function formatScore(score: WODScore): string {
   return formatScoreValue(score.score_value, score.score_type);
+}
+
+/** WOD généré, dans la langue de l'app : titre, mouvements et conseil du coach (`displayRow`). */
+function shownOf(w: SavedWOD) {
+  return displayRow({ wod_json: w.wod_json, title: w.wod_name, description: w.movements, notes: w.coach_tip });
 }
 
 function formatDate(iso: string): string {
@@ -109,7 +116,7 @@ export default function WodHistoryScreen() {
     const boxScoresQuery = filter === 'all'
       ? supabase
         .from('wod_scores')
-        .select('id, wod_id, score_value, score_type, rx, submitted_at, wod:box_wods(title, wod_type, scheduled_date)')
+        .select('id, wod_id, score_value, score_type, rx, submitted_at, wod:box_wods(title, description, notes, wod_json, wod_type, scheduled_date)')
         .eq('member_id', user.id)
         .order('submitted_at', { ascending: false })
         .limit(HISTORY_FETCH_LIMIT)
@@ -117,7 +124,7 @@ export default function WodHistoryScreen() {
     const completionsQuery = filter === 'all'
       ? supabase
         .from('wod_completions')
-        .select('id, wod_id, completed_at, wod:box_wods(title, wod_type, scheduled_date)')
+        .select('id, wod_id, completed_at, wod:box_wods(title, description, notes, wod_json, wod_type, scheduled_date)')
         .eq('member_id', user.id)
         .order('completed_at', { ascending: false })
         .limit(HISTORY_FETCH_LIMIT)
@@ -156,7 +163,7 @@ export default function WodHistoryScreen() {
   }
 
   async function deleteWod(wod: SavedWOD) {
-    Alert.alert(t('wodHistory.deleteConfirmTitle'), wod.wod_name, [
+    Alert.alert(t('wodHistory.deleteConfirmTitle'), shownOf(wod).title, [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('common.delete'), style: 'destructive',
@@ -185,7 +192,7 @@ export default function WodHistoryScreen() {
   })();
 
   function renderBoxEntry(entry: Extract<Entry, { kind: 'boxScore' | 'completion' }>) {
-    const title = entry.wod?.title ?? t('wodHistory.boxWodFallback');
+    const title = entry.wod ? displayRow(entry.wod).title : t('wodHistory.boxWodFallback');
     const wodType = entry.wod?.wod_type ?? null;
     return (
       <AxCard
@@ -226,6 +233,7 @@ export default function WodHistoryScreen() {
 
   function renderWod(item: SavedWOD) {
     const isExpanded = expandedId === item.id;
+    const shown = shownOf(item);
     const levelColor = levelInk(item.level, c);
     const bestScore = item.scores && item.scores.length > 0
       ? item.scores.sort((a, b) => item.wod_type === 'For Time' ? a.score_value - b.score_value : b.score_value - a.score_value)[0]
@@ -267,7 +275,7 @@ export default function WodHistoryScreen() {
         </View>
 
         {/* Title + date */}
-        <Text style={S.wodName}>{item.wod_name}</Text>
+        <Text style={S.wodName}>{shown.title}</Text>
         <Text style={S.wodDate}>{formatDate(item.created_at)} · {item.format}</Text>
 
         {/* Best score if any */}
@@ -282,7 +290,7 @@ export default function WodHistoryScreen() {
         {isExpanded && (
           <View style={S.expandedContent}>
             <View style={S.movBox}>
-              {item.movements.split('\n').map((line, i) => (
+              {shown.description.split('\n').map((line, i) => (
                 <Text key={i} style={line.startsWith('  ') ? S.movLine : S.movHeader}>{line}</Text>
               ))}
             </View>
@@ -292,10 +300,10 @@ export default function WodHistoryScreen() {
                 <Text style={S.scoringTxt}>{item.scoring}</Text>
               </View>
             )}
-            {item.coach_tip && (
+            {shown.notes && (
               <View style={S.coachBox}>
                 <Lightbulb color={c.accentText} size={14} />
-                <Text style={S.coachTxt}>{item.coach_tip}</Text>
+                <Text style={S.coachTxt}>{shown.notes}</Text>
               </View>
             )}
 

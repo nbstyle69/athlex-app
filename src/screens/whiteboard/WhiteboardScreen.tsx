@@ -40,6 +40,7 @@ import { needsPlan } from '../../services/membership';
 import { usePlanStatuses } from '../../hooks/usePlanStatuses';
 import { useMyRecords } from '../../hooks/useMyOneRepMax';
 import { annotateGymRepsInText } from '../../utils/strengthBlock';
+import { annotateShown, displayRow, type LigneEnregistree } from '../../services/wodRender';
 import PlanToActivateNotice from '../../components/PlanToActivateNotice';
 import { AxButton, AxCard, AxCounterBadge, AxIconButton, AxTag } from '../../components/ax';
 import { axAccentSafeLineHeight, axSpacing, axTypography } from '../../theme/axTokens';
@@ -69,7 +70,9 @@ export default function WhiteboardScreen() {
   const { t } = useTranslation();
   const navigation = useNavigation<Nav>();
   const { gymRecordFor } = useMyRecords();
-  const descOf = (text: string) => annotateGymRepsInText(text, gymRecordFor);
+  // Affichage dans la langue de l'app (`displayRow`) ; les annotations se calculent sur le texte enregistré.
+  const titleOf = (w: LigneEnregistree) => displayRow(w).title;
+  const descOf = (w: LigneEnregistree) => annotateShown(w.description ?? '', displayRow(w).description, x => annotateGymRepsInText(x, gymRecordFor));
   const S = createStyles(theme);
 
   const [dayWODs,       setDayWODs]       = useState<BoxWOD[]>([]);
@@ -91,7 +94,7 @@ export default function WhiteboardScreen() {
   const [storedTrack, setStoredTrack] = useState<string | null | undefined>(undefined);
 
   // Program WODs
-  interface ProgWodEntry { programTitle: string; weekNumber: number; dayLabel: string; wod: { id: string; title: string; description: string; wod_type: string; time_cap_seconds?: number } }
+  interface ProgWodEntry { programTitle: string; weekNumber: number; dayLabel: string; wod: { id: string; title: string; description: string; notes: string | null; wod_json: unknown; wod_type: string; time_cap_seconds?: number } }
   const [programWods, setProgramWods] = useState<ProgWodEntry[]>([]);
   // Un programme acheté sans date de début n'a pas de « jour courant » : on le
   // dit à l'athlète, jamais du vide silencieux. Et un jour marqué Repos par le
@@ -128,7 +131,7 @@ export default function WhiteboardScreen() {
   const timerModal = (
     <TimerLaunchModal
       visible={!!timerModalWod}
-      title={timerModalWod?.title ?? ''}
+      title={timerModalWod ? titleOf(timerModalWod) : ''}
       initialBlock={timerBlock}
       onClose={() => setTimerModalWod(null)}
       onLaunch={launchTimer}
@@ -407,6 +410,8 @@ export default function WhiteboardScreen() {
                 id: w.id,
                 title: w.title,
                 description: w.description ?? '',
+                notes: w.notes,
+                wod_json: w.wod_json,
                 wod_type: w.wod_type ?? 'custom',
                 time_cap_seconds: w.time_cap_seconds ?? undefined,
               },
@@ -577,8 +582,8 @@ export default function WhiteboardScreen() {
         {typeTag(wod)}
         {capOf(wod.time_cap_seconds)}
       </View>
-      <Text style={S.wodTitle}>{wod.title}</Text>
-      {wod.description ? <Text style={S.wodDesc} numberOfLines={lines}>{descOf(wod.description)}</Text> : null}
+      <Text style={S.wodTitle}>{titleOf(wod)}</Text>
+      {wod.description ? <Text style={S.wodDesc} numberOfLines={lines}>{descOf(wod)}</Text> : null}
       <View style={S.wodCardFooter}>
         <View style={S.wodCardAction}>
           <Text style={S.wodCardActionText}>{t('whiteboard.seeDetails')}</Text>
@@ -900,9 +905,9 @@ export default function WhiteboardScreen() {
                             </View>
                           </TouchableOpacity>
                         </View>
-                        <Text style={S.wodTitle}>{wod.title}</Text>
+                        <Text style={S.wodTitle}>{titleOf(wod)}</Text>
                         {wod.description && (
-                          <Text style={S.wodDesc} numberOfLines={2}>{descOf(wod.description)}</Text>
+                          <Text style={S.wodDesc} numberOfLines={2}>{descOf(wod)}</Text>
                         )}
                       </TouchableOpacity>
                       <View style={S.wodCardFooter}>
@@ -989,8 +994,8 @@ export default function WhiteboardScreen() {
                       {typeTag(entry.wod)}
                       {capOf(entry.wod.time_cap_seconds)}
                     </View>
-                    <Text style={S.wodTitle}>{entry.wod.title}</Text>
-                    {entry.wod.description ? <Text style={S.wodDesc} numberOfLines={3}>{descOf(entry.wod.description)}</Text> : null}
+                    <Text style={S.wodTitle}>{titleOf(entry.wod)}</Text>
+                    {entry.wod.description ? <Text style={S.wodDesc} numberOfLines={3}>{descOf(entry.wod)}</Text> : null}
                   </AxCard>
                 ))}
               </View>
