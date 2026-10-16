@@ -149,7 +149,7 @@ let FINISHER: Record<string, any>;
 /** Ligne Musculation unilatérale (« / jambe ») : en anglais, « / leg » ne se lit pas comme une ligne de force. */
 let UNI: Record<string, any>;
 
-const EN = (row: { wod_json: unknown }) => renderFromWodJson(row.wod_json, 'en')!;
+const EN = (row: { wod_json?: unknown }) => renderFromWodJson(row.wod_json, 'en')!;
 const lignesDe = (d: string) => d.split('\n').filter(Boolean);
 const badgesDe = (d: string) => JSON.stringify(computeCompletedMovements(lignesDe(d), 'AMRAP', 1, 'reps', { gender: 'male' }));
 const forceDe = (d: string) => JSON.stringify(d.split('\n').map(parseStrengthLine).filter(Boolean));
