@@ -18,6 +18,8 @@ import WODDetailScreen from '../screens/whiteboard/WODDetailScreen';
 import ProgramDetailScreen from '../screens/programs/ProgramDetailScreen';
 import WodHistoryScreen from '../screens/wod/WodHistoryScreen';
 import { whiteboardRows } from '../services/wodGenerator';
+import { computeCompletedMovements } from '../utils/movementParser';
+import { parseStrengthLine } from '../utils/strengthBlock';
 import { displayStimulusNote } from '../services/wodRender';
 import { CHEMINS } from '../../packages/wod-engine/__tests__/instantane/chemins';
 import {
@@ -142,17 +144,37 @@ const MANAGER = {
 };
 /** Bloc de force d'une séance de la programmation (lignes %1RM : ≈ kg). */
 let FORCE: Record<string, any>;
+/** Bloc « Finisher » d'une séance dont les noms de mouvements se lisent autrement en anglais (reps de badge). */
+let FINISHER: Record<string, any>;
+/** Ligne Musculation unilatérale (« / jambe ») : en anglais, « / leg » ne se lit pas comme une ligne de force. */
+let UNI: Record<string, any>;
 
 const EN = (row: { wod_json: unknown }) => renderFromWodJson(row.wod_json, 'en')!;
+const lignesDe = (d: string) => d.split('\n').filter(Boolean);
+const badgesDe = (d: string) => JSON.stringify(computeCompletedMovements(lignesDe(d), 'AMRAP', 1, 'reps', { gender: 'male' }));
+const forceDe = (d: string) => JSON.stringify(d.split('\n').map(parseStrengthLine).filter(Boolean));
 
 beforeAll(async () => {
   const seance = CHEMINS.find((c) => c.nom === 'seance-functional')!;
-  for (let k = 0; k < 50 && !FORCE; k++) {
+  const ligne = (id: string, b: { title: string; description: string; notes: string | null; wod_type: string; block_name: string; wod_json: unknown }) =>
+    ({ ...meta, id, title: b.title, description: b.description, notes: b.notes, wod_type: b.wod_type, block_name: b.block_name, sort_order: 2, wod_json: b.wod_json });
+  for (let k = 0; k < 50 && !(FORCE && FINISHER); k++) {
     const { sortie } = await seance.produire(k, 'fr');
-    const b = (sortie as GeneratedWeek).sessions?.flatMap((s) => s.blocks).find((x) => x.wod_type === 'strength' && /%1RM/.test(x.description));
-    if (b) FORCE = { ...meta, id: 'wF', title: b.title, description: b.description, notes: b.notes, wod_type: b.wod_type, block_name: b.block_name, sort_order: 2, wod_json: b.wod_json };
+    const blocs = (sortie as GeneratedWeek).sessions?.flatMap((s) => s.blocks) ?? [];
+    const f = blocs.find((x) => x.wod_type === 'strength' && /%1RM/.test(x.description));
+    if (f && !FORCE) FORCE = ligne('wF', f);
+    const g = blocs.find((x) => x.title === 'Finisher' && badgesDe(x.description) !== badgesDe(EN(x).description));
+    if (g && !FINISHER) FINISHER = { ...ligne('wN', g), wod_type: 'amrap' };
   }
   expect(FORCE).toBeDefined();
+  expect(FINISHER).toBeDefined();
+  const muscu = CHEMINS.find((c) => c.nom === 'musculation')!;
+  for (let k = 0; k < 60 && !UNI; k++) {
+    const w = (await muscu.produire(k, 'fr')).sortie as MuscuWod;
+    const i = w.blocks?.[0]?.exercises.findIndex((e) => e.per_side) ?? -1;
+    if (i >= 0) UNI = { ...whiteboardRows(w)[i], ...meta, id: 'wU', track: 'musculation' };
+  }
+  expect(UNI).toBeDefined();
 }, 120_000);
 
 let renderer: TestRenderer.ReactTestRenderer;
@@ -278,6 +300,11 @@ describe('détail de WOD', () => {
     expect(share.mock.calls[0][0].message).toContain(EN(BOX_METCON).title);
     await press(root, 'enter-score');
     expect(texts(root)).toContain(EN(BOX_METCON).title);
+    // Le titre d'un metcon n'a que des noms (identique en anglais) : titre et partage sur un bloc dont le titre change.
+    root = await remount(detail(FORCE), 'en');
+    expect(hostText(byID(root, 'wod-detail-title'))).toBe(EN(FORCE).title);
+    await press(root, 'header-share');
+    expect(share.mock.calls.at(-1)![0].message).toContain(EN(FORCE).title);
     share.mockRestore();
   });
 
@@ -293,6 +320,7 @@ describe('détail de WOD', () => {
     const fr = texts(root).find((x) => x.startsWith(FORCE.description.split('\n')[0]))!;
     expect(fr).toMatch(/\(≈ [\d.]+ kg\)/);
     prescriptions.push(strengthSets.loadStrengthGrid.mock.calls.at(-1)?.[1]);
+    strengthSets.loadStrengthGrid.mockClear();
     root = await remount(detail(FORCE), 'en');
     const enLignes = EN(FORCE).description.split('\n');
     const en = texts(root).find((x) => x.startsWith(enLignes[0]))!;
@@ -303,6 +331,19 @@ describe('détail de WOD', () => {
     expect(prescriptions[0]).toBeDefined();
     expect((prescriptions[0] as unknown[]).length).toBeGreaterThan(0);
     expect(prescriptions[1]).toEqual(prescriptions[0]);
+  });
+
+  it('séance Musculation posée par l’app : la grille vient du texte enregistré, même là où l’anglais se lit autrement', async () => {
+    const en = exerciseLine((UNI.wod_json as MuscuWod).blocks[0].exercises[0], 'en');
+    expect(forceDe(en)).not.toBe(forceDe(UNI.description)); // sinon le test ne prouverait rien
+    let root = await mount(detail(UNI)(), 'fr');
+    const fr = strengthSets.loadStrengthGrid.mock.calls.at(-1)?.[1] as unknown[];
+    expect(fr.length).toBeGreaterThan(0);
+    strengthSets.loadStrengthGrid.mockClear();
+    root = await remount(detail(UNI), 'en');
+    expect(texts(root)).toContain(en);
+    expect(strengthSets.loadStrengthGrid).toHaveBeenCalledTimes(1);
+    expect(strengthSets.loadStrengthGrid.mock.calls[0][1]).toEqual(fr);
   });
 
   /** Envoie un score et relève tout ce qui en découle : écritures, crédit de badges, max. */
@@ -341,6 +382,14 @@ describe('détail de WOD', () => {
     expect(trop.fr.max[0]).not.toBeNull();
     expect(trop.en.max).toEqual(trop.fr.max);
     expect(trop.en.wod_scores).toEqual([]);
+  });
+
+  it('règle 2 : reps de badge sur le texte enregistré, même quand l’anglais nomme autrement les mouvements', async () => {
+    expect(badgesDe(EN(FINISHER).description)).not.toBe(badgesDe(FINISHER.description)); // sinon le test ne prouverait rien
+    const fr = await envoyer(FINISHER, 'fr', '1');
+    const en = await envoyer(FINISHER, 'en', '1');
+    expect(fr.badges).toHaveLength(1);
+    expect(en).toEqual(fr);
   });
 
   it('règle 2 : séries de force journalisées sur le texte enregistré, source_title français en anglais', async () => {
@@ -393,13 +442,15 @@ describe('historique', () => {
     equipment: [], is_favorite: false, is_benchmark: false, created_at: '2026-09-28T08:00:00Z', scores: [], wod_json: METCON,
   };
   const ref = (r: Record<string, any>) => ({ title: r.title, description: r.description, notes: r.notes, wod_json: r.wod_json, wod_type: r.wod_type, scheduled_date: TODAY });
+  // Le titre d'une séance Musculation se traduit (celui d'un metcon n'a que des noms).
+  const GEN_MUSCU = { ...GEN, id: 'g2', sport: 'musculation', wod_name: MUSCU.title, wod_type: MUSCU.wod_type, format: 'Solo', movements: MUSCU.description, scoring: MUSCU.score_type, coach_tip: MUSCU.stimulus.note, created_at: '2026-09-28T07:00:00Z', wod_json: MUSCU };
 
   it('WOD générés et WOD de box : titres et mouvements dans la langue de l’app, Manager inchangé', async () => {
-    mockTables.generated_wods = [GEN];
-    mockTables.wod_scores = [{ id: 'b1', wod_id: 'wX0', score_value: 300, score_type: 'reps', rx: true, submitted_at: '2026-09-27T18:00:00Z', wod: ref(PERSO_MUSCU) }];
+    mockTables.generated_wods = [GEN, GEN_MUSCU];
+    mockTables.wod_scores = [{ id: 'b1', wod_id: 'wF', score_value: 300, score_type: 'reps', rx: true, submitted_at: '2026-09-27T18:00:00Z', wod: ref(FORCE) }];
     mockTables.wod_completions = [{ id: 'c1', wod_id: 'wG', completed_at: '2026-09-26T18:00:00Z', wod: ref(MANAGER) }];
     let root = await mount(<WodHistoryScreen />, 'fr');
-    expect(texts(root)).toEqual(expect.arrayContaining([METCON.title, PERSO_MUSCU.title, MANAGER.title]));
+    expect(texts(root)).toEqual(expect.arrayContaining([METCON.title, MUSCU.title, FORCE.title, MANAGER.title]));
     await press(root, 'history-generated-g1');
     expect(texts(root)).toEqual(expect.arrayContaining([...METCON.description.split('\n').filter(Boolean), METCON.stimulus.note]));
     const selects = mockCalls.filter((c) => c.method === 'select' && (c.table === 'wod_scores' || c.table === 'wod_completions')).map((c) => String(c.args[0]));
@@ -407,7 +458,10 @@ describe('historique', () => {
     for (const s of selects) expect(s).toContain('wod:box_wods(title, description, notes, wod_json,');
 
     root = await remount(() => <WodHistoryScreen />, 'en');
-    expect(texts(root)).toEqual(expect.arrayContaining([EN(GEN).title, PERSO_MUSCU.title, MANAGER.title]));
+    expect(texts(root)).toEqual(expect.arrayContaining([EN(GEN).title, EN(GEN_MUSCU).title, EN(FORCE).title, MANAGER.title]));
+    expect(EN(GEN_MUSCU).title).not.toBe(MUSCU.title);
+    expect(texts(root)).not.toContain(MUSCU.title);
+    expect(texts(root)).not.toContain(FORCE.title);
     await press(root, 'history-generated-g1');
     expect(texts(root)).toEqual(expect.arrayContaining([...EN(GEN).description.split('\n').filter(Boolean), displayStimulusNote(METCON, 'en')]));
     expect(texts(root)).not.toContain(METCON.stimulus.note);

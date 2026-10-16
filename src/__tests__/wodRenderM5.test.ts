@@ -178,6 +178,25 @@ describe('repli : le texte enregistré, tel quel, même en anglais', () => {
   });
 });
 
+describe('requêtes : wod_json est chargé avec le texte des séances de programme', () => {
+  it('listProgramWods et listProgramWodsByProgram lisent wod_json dans box_wods', async () => {
+    const selects: string[] = [];
+    const q: Record<string, unknown> = {};
+    for (const m of ['eq', 'in', 'order']) q[m] = () => q;
+    q.select = (s: string) => { selects.push(s); return q; };
+    q.then = (res: (v: unknown) => unknown) => Promise.resolve({ data: [{ wod_id: 'w1', program_id: 'p1' }], error: null }).then(res);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    (require('../lib/supabase').supabase.from as jest.Mock).mockImplementation(() => q);
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { listProgramWods, listProgramWodsByProgram } = require('../services/programContent');
+    await listProgramWods('p1');
+    await listProgramWodsByProgram(['p1']);
+    const boxWods = selects.filter((s) => s.includes('description'));
+    expect(boxWods).toHaveLength(2);
+    for (const s of boxWods) expect(s.split(',').map((x) => x.trim())).toEqual(expect.arrayContaining(['title', 'description', 'notes', 'wod_json']));
+  });
+});
+
 describe('annotateShown — annotations calculées sur le texte enregistré, reportées sur le texte affiché', () => {
   const kg = (txt: string) => annotateStrengthLoads(txt, () => 100);
   const tout = (txt: string) => annotateCardioLines(annotateGymRepsInText(kg(txt), () => 30));
