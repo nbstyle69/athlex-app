@@ -114,6 +114,59 @@ export async function refreshPushTokenLanguage() {
 }
 onLanguageSaved(refreshPushTokenLanguage);
 
+// ── Langue du compte, pour le serveur (#531) ─────────────────────────
+// notification_preferences.language : lue par langues_destinataires pour les
+// push et e-mails, même sans jeton. user_metadata.language : pour les modèles
+// d'e-mail Auth. Upsert de la seule langue (les préférences ne bougent pas).
+// Échec silencieux, sans donnée personnelle au journal : le démarrage suivant
+// compare de nouveau et réessaie.
+async function writeAccountLanguage(userId: string, db: boolean, metadata: boolean) {
+  const language = pushLanguage();
+  if (db) {
+    const { error } = await supabase
+      .from('notification_preferences')
+      .upsert({ user_id: userId, language }, { onConflict: 'user_id' });
+    if (error) captureError(error, { service: 'notifications', action: 'saveAccountLanguage' });
+  }
+  if (metadata) {
+    const { error } = await supabase.auth.updateUser({ data: { language } });
+    if (error) captureError(error, { service: 'notifications', action: 'saveAccountLanguageMetadata' });
+  }
+}
+
+// Au démarrage, une fois connecté : n'écrit que ce qui diffère.
+export async function syncAccountLanguage(userId: string) {
+  try {
+    const language = pushLanguage();
+    const { data, error } = await supabase
+      .from('notification_preferences')
+      .select('language')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) throw error;
+    const { data: { session } } = await supabase.auth.getSession();
+    await writeAccountLanguage(
+      userId,
+      data?.language !== language,
+      session?.user?.user_metadata?.language !== language,
+    );
+  } catch (e) {
+    captureError(e, { service: 'notifications', action: 'syncAccountLanguage' });
+  }
+}
+
+// Au choix de langue dans le Profil : écrit si un compte est connecté.
+async function saveAccountLanguage() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (user) await writeAccountLanguage(user.id, true, user.user_metadata?.language !== pushLanguage());
+  } catch (e) {
+    captureError(e, { service: 'notifications', action: 'saveAccountLanguage' });
+  }
+}
+onLanguageSaved(saveAccountLanguage);
+
 // ── Supprimer le token (logout) ──────────────────────────────────────
 export async function removePushToken(userId: string) {
   lastSaved = null;

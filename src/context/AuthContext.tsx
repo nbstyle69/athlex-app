@@ -6,7 +6,7 @@ import { BOX_COLUMNS, BOX_MEMBERSHIP_COLUMNS } from '../lib/boxColumns';
 import { readRows } from '../lib/db';
 import { User, Box, BoxMemberRole, BoxSubscription } from '../types';
 import { Session, isAuthRetryableFetchError } from '@supabase/supabase-js';
-import { registerForPushNotifications, savePushToken, refreshPushTokenLanguage, removePushToken, scheduleDailyReminder, scheduleScoreReminder, getNotificationPrefs, clearCachedPrefs, cancelAllLocalReminders } from '../services/notifications';
+import { registerForPushNotifications, savePushToken, refreshPushTokenLanguage, syncAccountLanguage, removePushToken, scheduleDailyReminder, scheduleScoreReminder, getNotificationPrefs, clearCachedPrefs, cancelAllLocalReminders } from '../services/notifications';
 import { awardLevelBadge } from '../services/gamification';
 import { setUserContext, clearUserContext, captureError } from '../lib/sentry';
 import { identifyUser, resetUser, forgetUser, trackLogin, trackSignUp, trackBoxJoin, trackDeleteAccount } from '../lib/analytics';
@@ -193,6 +193,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       registerForPushNotifications().then(token => {
         if (token) savePushToken(userId, token);
       }).catch(e => captureError(e, { action: 'registerPush' }));
+      // Langue du compte pour le serveur (#531) : silencieuse, jamais bloquante.
+      syncAccountLanguage(userId);
       // Rappels locaux : les préférences sont chargées d'abord (elles alimentent
       // le cache que les fonctions de programmation consultent), puis chaque
       // rappel est (re)posé. Chaque schedule* refuse de lui-même si sa clé est

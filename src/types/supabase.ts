@@ -4793,6 +4793,7 @@ export type Database = {
           elo_updates: boolean | null
           friend_requests: boolean | null
           group_messages: boolean | null
+          language: string | null
           new_wod: boolean | null
           notifications_enabled: boolean | null
           reminder_hour: number | null
@@ -4813,6 +4814,7 @@ export type Database = {
           elo_updates?: boolean | null
           friend_requests?: boolean | null
           group_messages?: boolean | null
+          language?: string | null
           new_wod?: boolean | null
           notifications_enabled?: boolean | null
           reminder_hour?: number | null
@@ -4833,6 +4835,7 @@ export type Database = {
           elo_updates?: boolean | null
           friend_requests?: boolean | null
           group_messages?: boolean | null
+          language?: string | null
           new_wod?: boolean | null
           notifications_enabled?: boolean | null
           reminder_hour?: number | null

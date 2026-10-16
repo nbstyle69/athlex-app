@@ -64,6 +64,16 @@ const TABLES_FERMEES = [
   },
 ];
 
+/**
+ * T20 : fonctions de public réservées à la clé serveur — EXECUTE à
+ * `service_role`, à personne d'autre (ni `anon`, ni `authenticated`, ni
+ * PUBLIC). Un GRANT à un client fait échouer l'audit.
+ */
+const FONCTIONS_SERVEUR = new Map([
+  ['langues_destinataires(uuid[])', 'langue de chaque compte pour les push et e-mails (20270161) : '
+    + 'un client lirait la langue de n\'importe quel compte'],
+]);
+
 /** Bits de `pg_trigger.tgtype`. */
 const TG = { ROW: 1, BEFORE: 2, INSERT: 4, DELETE: 8, UPDATE: 16 };
 
@@ -136,7 +146,7 @@ const GARDES_DECLENCHEUR = [
  * décompte le dirait au lieu de le taire.
  */
 export const ASSERTIONS_GRANTS_TABLES = 9 + TABLES_ECRITURE_SERVEUR.size + GARDES_DECLENCHEUR.length
-  + TABLES_FERMEES.length + 3 + 2; // T1..T9, T10 par table, T11..T13 et T16 par garde, T14 par table fermée, T15, T17, T18, T19a, T19b
+  + TABLES_FERMEES.length + 3 + 2 + FONCTIONS_SERVEUR.size; // T1..T9, T10 par table, T11..T13 et T16 par garde, T14 par table fermée, T15, T17, T18, T19a, T19b, T20 par fonction
 
 const PRIV_LISTE = privs => privs.map(p => `'${p}'`).join(', ');
 
@@ -389,6 +399,30 @@ export function controlerGrantsTables(query, assert) {
   controlerFileAvisMembre(query, assert);
   controlerHelpersFermes(query, assert);
   controlerSecdefSansGarde(query, assert);
+  controlerFonctionsServeur(query, assert);
+}
+
+function controlerFonctionsServeur(query, assert) {
+  for (const [signature, raison] of FONCTIONS_SERVEUR) {
+    const [[etat]] = query(`
+      select coalesce((select concat_ws(',',
+                         case when has_function_privilege('service_role', p.oid, 'EXECUTE') then 'service_role' end,
+                         case when has_function_privilege('anon', p.oid, 'EXECUTE') then 'anon' end,
+                         case when has_function_privilege('authenticated', p.oid, 'EXECUTE') then 'authenticated' end,
+                         case when exists (select 1 from aclexplode(p.proacl) a where a.grantee = 0) then 'PUBLIC' end)
+                       from pg_proc p where p.oid = to_regprocedure('public.${signature}')), 'absente')
+    `);
+
+    assert(
+      `T20 — \`${signature}\` n'est exécutable que par service_role`,
+      etat === 'service_role',
+      etat === 'absente'
+        ? 'fonction absente : la migration qui la crée n\'est pas appliquée, ou sa signature a changé.'
+        : `exécutable par : ${etat || 'personne'}\n`
+          + `       → ${raison}. REVOKE ALL ON FUNCTION public.${signature} FROM PUBLIC, anon, authenticated ; `
+          + `GRANT EXECUTE … TO service_role.`,
+    );
+  }
 }
 
 /**
