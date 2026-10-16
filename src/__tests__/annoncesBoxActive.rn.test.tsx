@@ -20,7 +20,7 @@ jest.mock('../lib/analytics', () => ({
 }));
 jest.mock('../services/gamification', () => ({ awardLevelBadge: jest.fn(async () => true) }));
 jest.mock('../services/notifications', () => ({
-  registerForPushNotifications: jest.fn(async () => null), savePushToken: jest.fn(), refreshPushTokenLanguage: jest.fn(async () => undefined),
+  registerForPushNotifications: jest.fn(async () => null), savePushToken: jest.fn(), refreshPushTokenLanguage: jest.fn(async () => undefined), syncAccountLanguage: jest.fn(async () => undefined),
   removePushToken: jest.fn(async () => undefined), scheduleDailyReminder: jest.fn(), scheduleScoreReminder: jest.fn(async () => undefined),
   getNotificationPrefs: jest.fn(async () => ({ daily_reminder: false })), clearCachedPrefs: jest.fn(async () => undefined),
   cancelAllLocalReminders: jest.fn(async () => undefined),
