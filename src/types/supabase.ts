@@ -1477,12 +1477,15 @@ export type Database = {
       }
       box_wods: {
         Row: {
+          audience: string
+          auto_run_id: string | null
           block: string | null
           block_name: string | null
           box_id: string | null
           created_at: string | null
           created_by: string | null
           description: string | null
+          edited_at: string | null
           emom_interval_minutes: number | null
           id: string
           is_published: boolean | null
@@ -1494,8 +1497,9 @@ export type Database = {
           rounds: number | null
           scheduled_date: string | null
           sort_order: number
-          source_pdf_url: string | null
+          source: string
           source_page: number | null
+          source_pdf_url: string | null
           source_profile: string | null
           source_programming_id: string | null
           source_programming_wod_id: string | null
@@ -1503,16 +1507,21 @@ export type Database = {
           tabata_work_seconds: number | null
           time_cap_seconds: number | null
           title: string
+          track: string | null
           video_url: string | null
+          wod_json: Json | null
           wod_type: string | null
         }
         Insert: {
+          audience?: string
+          auto_run_id?: string | null
           block?: string | null
           block_name?: string | null
           box_id?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          edited_at?: string | null
           emom_interval_minutes?: number | null
           id?: string
           is_published?: boolean | null
@@ -1524,8 +1533,9 @@ export type Database = {
           rounds?: number | null
           scheduled_date?: string | null
           sort_order?: number
-          source_pdf_url?: string | null
+          source?: string
           source_page?: number | null
+          source_pdf_url?: string | null
           source_profile?: string | null
           source_programming_id?: string | null
           source_programming_wod_id?: string | null
@@ -1533,16 +1543,21 @@ export type Database = {
           tabata_work_seconds?: number | null
           time_cap_seconds?: number | null
           title: string
+          track?: string | null
           video_url?: string | null
+          wod_json?: Json | null
           wod_type?: string | null
         }
         Update: {
+          audience?: string
+          auto_run_id?: string | null
           block?: string | null
           block_name?: string | null
           box_id?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          edited_at?: string | null
           emom_interval_minutes?: number | null
           id?: string
           is_published?: boolean | null
@@ -1554,8 +1569,9 @@ export type Database = {
           rounds?: number | null
           scheduled_date?: string | null
           sort_order?: number
-          source_pdf_url?: string | null
+          source?: string
           source_page?: number | null
+          source_pdf_url?: string | null
           source_profile?: string | null
           source_programming_id?: string | null
           source_programming_wod_id?: string | null
@@ -1563,10 +1579,19 @@ export type Database = {
           tabata_work_seconds?: number | null
           time_cap_seconds?: number | null
           title?: string
+          track?: string | null
           video_url?: string | null
+          wod_json?: Json | null
           wod_type?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "box_wods_auto_run_id_fkey"
+            columns: ["auto_run_id"]
+            isOneToOne: false
+            referencedRelation: "box_auto_programming_runs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "box_wods_box_id_fkey"
             columns: ["box_id"]

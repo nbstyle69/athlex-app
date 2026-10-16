@@ -14,7 +14,7 @@
  */
 import i18n from '../i18n';
 import {
-  WOD_JSON_VERSION, banqueVers, estimateAll, loadText, noteExercice, noteStimulus, renderFromWodJson,
+  WOD_JSON_VERSION, banqueVers, estimateAll, exerciseLine, loadText, noteExercice, noteStimulus, renderFromWodJson,
   sideLabel, textes,
 } from '../../packages/wod-engine/src';
 import type {
@@ -112,4 +112,68 @@ export function exerciseNote(e: MuscuExercise, langue: Langue = displayLangue())
  */
 export function exerciseName(e: Pick<MuscuExercise, 'name'>, _langue: Langue = displayLangue()): string {
   return e.name;
+}
+
+// ─── Lignes enregistrées (M5 : Whiteboard, détail de WOD, programme, historique) ─────
+
+/** Ligne `box_wods` (ou `generated_wods` ramenée à ces colonnes) : le texte enregistré et son `wod_json`. */
+export interface LigneEnregistree {
+  wod_json?: unknown;
+  title: string;
+  description?: string | null;
+  notes?: string | null;
+}
+
+/**
+ * Rendu d'une ligne, dans une langue. « Ajouter au Whiteboard » pose en Musculation une ligne par
+ * exercice (titre = nom, description = `exerciseLine`, note du stimulus sur la première seulement) :
+ * le moteur ne rend que la séance entière, cette forme est rendue ici.
+ */
+function rendreLigne(wodJson: unknown, saved: TexteBloc, langue: Langue): TexteBloc | null {
+  const w = wodJson as MuscuWod | GeneratedWod;
+  const exercices = w.discipline === 'musculation' ? (w as MuscuWod).blocks?.[0]?.exercises : undefined;
+  if (exercices?.length === 1) {
+    const e = exercices[0];
+    return { title: exerciseName(e, langue), description: exerciseLine(e, langue), notes: saved.notes != null ? displayStimulusNote(w, langue) : null };
+  }
+  const r = langue === 'fr' ? renderFromWodJson(wodJson, 'fr') : displayWod(wodJson, saved, langue);
+  // `saveGeneratedWod` (coach_tip) et « Ajouter au Whiteboard » (notes) enregistrent la note du stimulus,
+  // pas les notes du rendu (qui ajoutent « Score : … ») : même forme, dans la langue affichée.
+  const note = (w as GeneratedWod).stimulus?.note;
+  if (r && note != null && saved.notes === note) return { ...r, notes: displayStimulusNote(w as GeneratedWod, langue) };
+  return r;
+}
+
+/**
+ * Titre, description et notes d'une ligne enregistrée, dans la langue de l'app.
+ * Français : le texte enregistré. Anglais : le rendu du moteur (par `displayWod`), seulement si le
+ * rendu FRANÇAIS du même `wod_json` redonne le texte enregistré au caractère près — une ligne
+ * retouchée à la main (Manager, WOD perso) garde tout son texte, titre compris. Sinon, et pour
+ * tout ce qui n'est pas un v2 du moteur : le texte enregistré, tel quel.
+ */
+export function displayRow(row: LigneEnregistree, langue: Langue = displayLangue()): TexteBloc {
+  const saved: TexteBloc = { title: row.title, description: row.description ?? '', notes: row.notes ?? null };
+  if (langue === 'fr' || !isRenderable(row.wod_json)) return saved;
+  const fr = rendreLigne(row.wod_json, saved, 'fr');
+  if (!fr || fr.title !== saved.title || fr.description !== saved.description || fr.notes !== saved.notes) return saved;
+  return rendreLigne(row.wod_json, saved, langue) ?? saved;
+}
+
+/**
+ * Annotations d'affichage (≈ kg, ≈ reps, ligne cardio) sur le texte affiché. Elles sont calculées
+ * sur le texte ENREGISTRÉ, ligne par ligne ; un ajout en fin de ligne (≈ kg d'une ligne %1RM, seul
+ * cas que le texte du moteur produit) est reporté en fin de la ligne affichée correspondante. Autre
+ * annotation (insertion, ligne réécrite), nombre de lignes différent : la ligne affichée, sans
+ * annotation (en cas de doute, rien).
+ */
+export function annotateShown(saved: string, shown: string, annotate: (text: string) => string): string {
+  if (shown === saved) return annotate(saved);
+  const fr = saved.split('\n');
+  const en = shown.split('\n');
+  if (fr.length !== en.length) return shown;
+  return en.map((ligne, i) => {
+    const base = fr[i].trimEnd();
+    const annotee = annotate(fr[i]);
+    return annotee !== fr[i] && annotee.startsWith(base) ? ligne.trimEnd() + annotee.slice(base.length) : ligne;
+  }).join('\n');
 }
