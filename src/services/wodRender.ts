@@ -14,11 +14,11 @@
  */
 import i18n from '../i18n';
 import {
-  WOD_JSON_VERSION, banqueVers, estimateAll, exerciseLine, loadText, noteExercice, noteStimulus, renderFromWodJson,
+  WOD_JSON_VERSION, banqueVers, estimateAll, exerciseLine, loadText, noteExercice, noteStimulus, nomExercice, nomMouvement, renderFromWodJson,
   sideLabel, textes,
 } from '../../packages/wod-engine/src';
 import type {
-  Category, GeneratedWod, Langue, MuscuExercise, MuscuWod, Muscle, TexteBloc,
+  Category, GeneratedMovement, GeneratedWod, Langue, MuscuExercise, MuscuWod, Muscle, TexteBloc,
 } from '../../packages/wod-engine/src';
 
 /** Langue de l'affichage : celle de l'app (`i18n.language`), anglais sinon français. */
@@ -73,7 +73,7 @@ export function displayTarget(wod: GeneratedWod, category: Category, langue: Lan
 export function displayStimulusNote(wod: GeneratedWod | MuscuWod, langue: Langue = displayLangue()): string {
   if (langue === 'fr' || !isRenderable(wod)) return wod.stimulus.note;
   if (wod.discipline === 'musculation') {
-    return wod.rendu ? noteStimulus(wod.objective, wod.rendu.stimulus, langue) : wod.stimulus.note;
+    return wod.rendu ? noteStimulus(wod.objective, wod.rendu.stimulus, langue, wod.blocks?.[0]?.exercises) : wod.stimulus.note;
   }
   return banqueVers(langue)(wod.stimulus.note);
 }
@@ -106,12 +106,17 @@ export function exerciseNote(e: MuscuExercise, langue: Langue = displayLangue())
 }
 
 /**
- * Nom d'un exercice affiché (carte de séance, étapes du minuteur Split). Les noms viennent du
- * catalogue : la PR « Données » les traduira ici, en un seul point. D'ici là, le nom enregistré,
- * dans les deux langues (aucun mot français ajouté par M4).
+ * Nom d'un exercice affiché (carte de séance, étapes du minuteur Split, titre d'une ligne Whiteboard
+ * « une ligne par exercice »), par l'id du catalogue (PR « Données » D1) : le nom enregistré en
+ * français, l'entrée anglaise de l'id sinon (repli : le nom enregistré). Affichage seul.
  */
-export function exerciseName(e: Pick<MuscuExercise, 'name'>, _langue: Langue = displayLangue()): string {
-  return e.name;
+export function exerciseName(e: Pick<MuscuExercise, 'id' | 'name'>, langue: Langue = displayLangue()): string {
+  return nomExercice(e.id, e.name, langue);
+}
+
+/** Nom d'un mouvement tiré (liste des mouvements de l'écran résultat), mêmes règles. */
+export function movementName(m: Pick<GeneratedMovement, 'id' | 'name'>, langue: Langue = displayLangue()): string {
+  return nomMouvement(m.id, m.name, langue);
 }
 
 // ─── Lignes enregistrées (M5 : Whiteboard, détail de WOD, programme, historique) ─────

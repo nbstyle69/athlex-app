@@ -34,7 +34,7 @@ export function renderFromWodJson(wodJson: unknown, langue: Langue = 'fr'): Text
 
   if (j.discipline === 'musculation') {
     const w = wodJson as MuscuWod;
-    const note = w.rendu ? noteStimulus(w.objective, w.rendu.stimulus, langue) : w.stimulus.note;
+    const note = w.rendu ? noteStimulus(w.objective, w.rendu.stimulus, langue, w.blocks[0].exercises) : w.stimulus.note;
     const exercises = w.blocks[0].exercises.map((e) => (e.rendu ? { ...e, notes: noteExercice(e.rendu, langue) } : e));
     const copie: MuscuWod = { ...w, stimulus: { ...w.stimulus, note }, blocks: [{ ...w.blocks[0], exercises }] };
     const T = textes(langue).musculation;

@@ -10,7 +10,7 @@
  * banque y restent en français et se traduisent au rendu (`banqueVers`).
  */
 import { fr } from './i18n/fr';
-import { banqueVers, textes } from './i18n';
+import { banqueVers, nomMouvement, textes } from './i18n';
 import type { Langue, Textes } from './i18n';
 import type { StrengthStep } from './types';
 
@@ -98,8 +98,9 @@ const NL = '\n';
 
 interface Ctx { t: Textes; tb: (texte: string) => string; nom: (id: string) => string }
 
+/** `noms` : noms du catalogue (français) des mouvements du bloc, par id ; hors français, l'entrée de l'id. */
 function contexte(langue: Langue, noms: Record<string, string> = {}): Ctx {
-  return { t: textes(langue), tb: banqueVers(langue), nom: (id) => noms[id] ?? id };
+  return { t: textes(langue), tb: banqueVers(langue), nom: (id) => nomMouvement(id, noms[id] ?? id, langue) };
 }
 
 /** « 25 m Sled Push @ 125/100 kg », « 60 s Row », « 10 Box Step-ups (box 60/50 cm) @ 24/16 kg ». */

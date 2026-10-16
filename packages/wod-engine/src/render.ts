@@ -1,9 +1,11 @@
 import type { Category, GeneratedBlock, GeneratedMovement, GeneratedWod, SkeletonFormat, WodType } from './types';
 import { FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES } from './types';
 import { fr } from './i18n/fr';
-import { banqueVers, textes } from './i18n';
+import { banqueVers, nomMouvement, textes } from './i18n';
 import type { Langue, Textes } from './i18n';
 import { estimateBlock } from './estimate';
+import { movementById, substitutionFor } from './catalog';
+import { CATALOG_SNAPSHOT } from './catalog/snapshot';
 
 type R = Textes['rendu'];
 
@@ -50,9 +52,39 @@ function qtyText(m: GeneratedMovement): string {
   return `${m.qty} ${m.unit}`;
 }
 
-export function movementLine(m: GeneratedMovement, wod: Pick<GeneratedWod, 'discipline'>): string {
+/** Nom affiché d'un mouvement tiré : celui du catalogue en français, l'entrée de son id sinon. */
+function nomDe(m: GeneratedMovement, langue: Langue): string {
+  return nomMouvement(m.id, m.name, langue);
+}
+
+/**
+ * Substitut ou variante : le `wod_json` n'en garde que le nom (français). Son id se retrouve par le
+ * mouvement d'origine dans le catalogue embarqué, par la règle même du tirage ; le nom n'est traduit
+ * que s'il est bien celui de cet id (catalogue modifié depuis : nom enregistré, tel quel).
+ */
+function nomLie(nom: string, id: string | null | undefined, langue: Langue): string {
+  if (langue === 'fr' || !id || movementById(CATALOG_SNAPSHOT, id)?.name !== nom) return nom;
+  return nomMouvement(id, nom, langue);
+}
+
+/** Substitut affiché d'une catégorie (`null` sans substitut). */
+export function substitutionAffichee(m: GeneratedMovement, c: Category, langue: Langue = 'fr'): string | null {
+  const nom = m.substitutions_by_category[c];
+  if (!nom) return null;
+  const origine = langue === 'fr' ? undefined : movementById(CATALOG_SNAPSHOT, m.id);
+  return nomLie(nom, origine && substitutionFor(origine, c), langue);
+}
+
+/** Variante affichée d'une catégorie (`null` sans variante). */
+export function varianteAffichee(m: GeneratedMovement, c: Category, langue: Langue = 'fr'): string | null {
+  const nom = m.variant_by_category[c];
+  if (!nom) return null;
+  return nomLie(nom, langue === 'fr' ? null : movementById(CATALOG_SNAPSHOT, m.id)?.variant_up, langue);
+}
+
+export function movementLine(m: GeneratedMovement, wod: Pick<GeneratedWod, 'discipline'>, langue: Langue = 'fr'): string {
   const load = loadText(m, wod.discipline);
-  const base = `${qtyText(m)} ${m.name}`;
+  const base = `${qtyText(m)} ${nomDe(m, langue)}`;
   return load ? `${base} (${load})` : base;
 }
 
@@ -82,20 +114,23 @@ function loadsByCategoryLine(m: GeneratedMovement, wod: Pick<GeneratedWod, 'disc
   return parts.length ? `${parts.join(' · ')} ${m.load_unit}` : null;
 }
 
-function substitutionLine(m: GeneratedMovement, T: R): string | null {
+function substitutionLine(m: GeneratedMovement, T: R, langue: Langue): string | null {
   const parts: string[] = [];
-  const seen = new Map<string, string[]>();
+  // regroupés par nom enregistré (français), traduits à l'écriture de la ligne
+  const seen = new Map<string, { cats: string[]; nom: string }>();
   for (const [c, name] of Object.entries(m.substitutions_by_category)) {
     if (!name || name === m.name) continue;
-    seen.set(name, [...(seen.get(name) ?? []), CATEGORY_LABEL[c as Category]]);
+    const g = seen.get(name) ?? { cats: [], nom: substitutionAffichee(m, c as Category, langue) ?? name };
+    seen.set(name, { ...g, cats: [...g.cats, CATEGORY_LABEL[c as Category]] });
   }
-  for (const [name, cats] of seen) parts.push(T.substitution(cats.join('/'), name));
-  const vars = new Map<string, string[]>();
+  for (const { cats, nom } of seen.values()) parts.push(T.substitution(cats.join('/'), nom));
+  const vars = new Map<string, { cats: string[]; nom: string }>();
   for (const [c, name] of Object.entries(m.variant_by_category)) {
     if (!name) continue;
-    vars.set(name, [...(vars.get(name) ?? []), CATEGORY_LABEL[c as Category]]);
+    const g = vars.get(name) ?? { cats: [], nom: varianteAffichee(m, c as Category, langue) ?? name };
+    vars.set(name, { ...g, cats: [...g.cats, CATEGORY_LABEL[c as Category]] });
   }
-  for (const [name, cats] of vars) parts.push(T.substitution(cats.join('/'), name));
+  for (const { cats, nom } of vars.values()) parts.push(T.substitution(cats.join('/'), nom));
   return parts.length ? parts.join(' · ') : null;
 }
 
@@ -130,27 +165,29 @@ function header(wod: GeneratedWod, b: GeneratedBlock, T: R, d: Textes['duree']):
   }
 }
 
-function bodyLines(wod: GeneratedWod, b: GeneratedBlock, T: R): string[] {
+function bodyLines(wod: GeneratedWod, b: GeneratedBlock, T: R, langue: Langue): string[] {
   const out: string[] = [];
   const push = (m: GeneratedMovement, line: string) => {
     out.push(line);
     const loads = loadsByCategoryLine(m, wod);
-    const subs = substitutionLine(m, T);
+    const subs = substitutionLine(m, T, langue);
     if (loads) out.push(loads);
     if (subs) out.push(subs);
   };
   b.movements.forEach((m, i) => {
     const load = loadText(m, wod.discipline);
     const withLoad = (s: string) => (load ? `${s} (${load})` : s);
-    if (b.format === 'tabata') push(m, T.ligneTabata(i + 1, withLoad(m.name), m.unit === 's'));
-    else if (b.format === 'stations') push(m, m.unit === 's' ? T.ligneStationTenue(i + 1, withLoad(m.name)) : T.ligneStation(i + 1, withLoad(m.name), m.unit, qtyText(m)));
-    else if (m.round !== undefined) push(m, T.ligneRound(m.round, movementLine(m, wod)));
-    else if (m.scheme) push(m, withLoad(m.name));
-    else if (b.format === 'for_time' && b.scheme) push(m, T.lignePalier(movementLine(m, wod)));
-    else if (m.per_minute) push(m, T.ligneParMinute(withLoad(m.name)));
-    else if (b.format === 'death_by') push(m, T.ligneAvantSerie(movementLine(m, wod)));
-    else if (b.format === 'emom') push(m, T.ligneMinute(i + 1, movementLine(m, wod)));
-    else push(m, movementLine(m, wod));
+    const nom = nomDe(m, langue);
+    const ligne = () => movementLine(m, wod, langue);
+    if (b.format === 'tabata') push(m, T.ligneTabata(i + 1, withLoad(nom), m.unit === 's'));
+    else if (b.format === 'stations') push(m, m.unit === 's' ? T.ligneStationTenue(i + 1, withLoad(nom)) : T.ligneStation(i + 1, withLoad(nom), m.unit, qtyText(m)));
+    else if (m.round !== undefined) push(m, T.ligneRound(m.round, ligne()));
+    else if (m.scheme) push(m, withLoad(nom));
+    else if (b.format === 'for_time' && b.scheme) push(m, T.lignePalier(ligne()));
+    else if (m.per_minute) push(m, T.ligneParMinute(withLoad(nom)));
+    else if (b.format === 'death_by') push(m, T.ligneAvantSerie(ligne()));
+    else if (b.format === 'emom') push(m, T.ligneMinute(i + 1, ligne()));
+    else push(m, ligne());
   });
   return out;
 }
@@ -174,8 +211,8 @@ function footer(wod: GeneratedWod, b: GeneratedBlock, langue: Langue): string[] 
 }
 
 /** Le titre garde trois mouvements et DIT quand il en reste : « … / BIKE ERG +1 », jamais une troncature muette (G2). */
-function titleOf(wod: GeneratedWod, b: GeneratedBlock, T: R): string {
-  const all = [...new Set(b.movements.filter((m) => m.round === undefined || m.round === 1).map((m) => m.name))];
+function titleOf(wod: GeneratedWod, b: GeneratedBlock, T: R, langue: Langue): string {
+  const all = [...new Set(b.movements.filter((m) => m.round === undefined || m.round === 1).map((m) => nomDe(m, langue)))];
   const names = all.slice(0, 3);
   if (all.length > 3) names[2] = `${names[2]} +${all.length - 3}`;
   const label: Record<SkeletonFormat, string> = {
@@ -192,10 +229,10 @@ function titleOf(wod: GeneratedWod, b: GeneratedBlock, T: R): string {
 export function render(wod: GeneratedWod, langue: Langue = 'fr'): GeneratedWod {
   const b = wod.blocks[0];
   const t = textes(langue);
-  const lines = [...header(wod, b, t.rendu, t.duree), ...bodyLines(wod, b, t.rendu), ...footer(wod, b, langue)];
+  const lines = [...header(wod, b, t.rendu, t.duree), ...bodyLines(wod, b, t.rendu, langue), ...footer(wod, b, langue)];
   return {
     ...wod,
-    title: titleOf(wod, b, t.rendu),
+    title: titleOf(wod, b, t.rendu, langue),
     description: lines.join('\n'),
     wod_type: b.format === 'ladder' && !b.ladder ? 'for-time' : WOD_TYPE[b.format],
     block_name: 'wod',
@@ -212,5 +249,5 @@ export function render(wod: GeneratedWod, langue: Langue = 'fr'): GeneratedWod {
 
 /** Lignes de mouvement seules (pour le parseur / les tests de crédit). */
 export function movementLines(wod: GeneratedWod, langue: Langue = 'fr'): string[] {
-  return bodyLines(wod, wod.blocks[0], textes(langue).rendu);
+  return bodyLines(wod, wod.blocks[0], textes(langue).rendu, langue);
 }

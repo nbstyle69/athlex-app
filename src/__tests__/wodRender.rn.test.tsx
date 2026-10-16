@@ -6,12 +6,12 @@ import React, { useEffect as mockUseEffect } from 'react';
 import { Modal, Share, StyleSheet } from 'react-native';
 import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import {
-  BANK_V1 as mockBank, CATALOG_SNAPSHOT as mockCatalog, generateBlocC, generateMuscu, GenerateParams, renderFromWodJson,
+  BANK_V1 as mockBank, CATALOG_SNAPSHOT as mockCatalog, generateBlocC, generateMuscu, GenerateParams, mouvements, renderFromWodJson,
 } from '../../packages/wod-engine/src';
 import { lightTheme } from '../theme/palette';
 import WodResultScreen from '../screens/wod/WodResultScreen';
 import i18n from '../i18n';
-import { displayStimulusNote } from '../services/wodRender';
+import { displayStimulusNote, exerciseName } from '../services/wodRender';
 
 let mockRouteParams: Record<string, unknown> = {};
 let mockTimerProps: any = null;
@@ -180,27 +180,28 @@ describe('Musculation — carte de séance et minuteur Split', () => {
     const en = textes(root);
     const exos = mWod.blocks[0].exercises;
     expect(en.some((t) => t.includes('muscu') || /séries|repos/.test(t))).toBe(false);
-    for (const e of exos) expect(en.some((t) => t.startsWith(e.name))).toBe(true);
+    for (const e of exos) expect(en.some((t) => t.startsWith(exerciseName(e, 'en')))).toBe(true);
     const schemes = en.filter((t) => / × \d+/.test(t));
     expect(schemes.length).toBeGreaterThanOrEqual(exos.length);
     expect(schemes.some((t) => /charge|repos|poids du corps|jambe|bras/.test(t))).toBe(false);
     expect(fr.some((t) => / × \d+/.test(t))).toBe(true);
-    // aucun accent hors des noms d'exercice (catalogue : PR « Données »)
-    expect(en.filter((t) => ACCENT.test(t) && !exos.some((e) => t.startsWith(e.name)))).toEqual([]);
+    // aucun accent, noms d'exercice compris (traduits par id depuis la PR « Données » D1)
+    expect(en.filter((t) => ACCENT.test(t))).toEqual([]);
   });
 
   it('minuteur Split : une étape par exercice, dans l’ordre de la séance, quelle que soit la langue', async () => {
     for (const langue of ['fr', 'en'] as const) {
       await mount('musculation', langue);
       const noms = mockTimerProps.initialBlock.splitExercises.map((s: { name: string }) => s.name);
-      expect(noms).toEqual(mWod.blocks[0].exercises.map((e) => e.name));
+      expect(noms).toEqual(mWod.blocks[0].exercises.map((e) => exerciseName(e, langue)));
       await act(async () => renderer.unmount());
     }
   });
 });
 
 describe('anglais : tout le texte de l’écran sans français', () => {
-  const noms = [...new Set(mockCatalog.movements.map((m) => m.name))].sort((a, b) => b.length - a.length);
+  // noms sans entrée anglaise (repli) : aucun depuis la PR « Données » D1
+  const noms = [...new Set(mockCatalog.movements.filter((m) => !(m.id in mouvements)).map((m) => m.name))].sort((a, b) => b.length - a.length);
   const sansNoms = (t: string) => noms.reduce((x, n) => x.split(n).join(' '), t);
   it.each([...SPORTS, 'apresClasse', 'apresClasseHybrid'] as Sport[])('%s : aucun accent hors noms du catalogue', async (sport) => {
     const root = await mount(sport, 'en');

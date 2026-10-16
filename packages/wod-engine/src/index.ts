@@ -17,7 +17,7 @@ export {
 export type { SkeletonRef } from './generate';
 export { estimateDuration, estimateAll, estimateBlock, TIME_BOUNDED, BAND_CADENCE_FACTOR, ladderStep, deathByMinute, roundSeconds } from './estimate';
 export { signature } from './signature';
-export { render, movementLine, movementLines, CATEGORY_LABEL } from './render';
+export { render, movementLine, movementLines, CATEGORY_LABEL, substitutionAffichee, varianteAffichee } from './render';
 export { profileCategory } from './profile';
 export { MUSCU_SKELETONS, MUSCU_TARGETS, MUSCU_OBJECTIVES, MUSCU_BANK_VERSION, TARGET_MUSCLES } from './bank';
 export { muscuSkeletonToRow, isMuscuSkeletonRow, sessionSkeletonToRow, isSessionSkeletonRow } from './bank/rows';
@@ -54,7 +54,7 @@ export type {
 export { FEASIBILITY } from './bank/feasibility';
 export type { FeasibilityRow } from './bank/feasibility';
 export { formatsOfferedFor, feasibleFormats, combinationFeasible, FORMAT_CHOICE_COVERS } from './feasibility';
-export { textes, banqueVers, correspondancesBanque, LANGUES, fr, en } from './i18n';
+export { textes, banqueVers, correspondancesBanque, nomMouvement, nomExercice, LANGUES, fr, en, mouvements } from './i18n';
 export type { Langue, Textes } from './i18n';
 export { renderFromWodJson, WOD_JSON_VERSION } from './rendu-wod-json';
 export { rendreBlocSeance, descriptionBlocC } from './rendu-seance';

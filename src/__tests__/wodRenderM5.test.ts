@@ -18,7 +18,7 @@ import { whiteboardRows } from '../services/wodGenerator';
 import { annotateGymRepsInText, annotateStrengthLoads } from '../utils/strengthBlock';
 import { annotateCardioLines } from '../utils/cardioBlock';
 import { CHEMINS, stockes } from '../../packages/wod-engine/__tests__/instantane/chemins';
-import { CATALOG_SNAPSHOT, exerciseLine, renderFromWodJson } from '../../packages/wod-engine/src';
+import { CATALOG_SNAPSHOT, mouvements, exerciseLine, renderFromWodJson } from '../../packages/wod-engine/src';
 import type { GeneratedWod, MuscuWod } from '../../packages/wod-engine/src';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { isFrench, strictAllowed } = require('../../scripts/i18n/scanner') as {
@@ -33,7 +33,8 @@ jest.mock('../services/myProfile', () => ({ fetchMyPersonalRecords: () => Promis
 
 const N = 50;
 const ACCENT = /[àâäçéèêëîïôöùûüÿœæ«»]/i;
-const NOMS = [...new Set(CATALOG_SNAPSHOT.movements.map((m) => m.name))].sort((a, b) => b.length - a.length);
+// noms du catalogue sans entrée anglaise (repli) : aucun depuis la PR « Données » D1
+const NOMS = [...new Set(CATALOG_SNAPSHOT.movements.filter((m) => !(m.id in mouvements)).map((m) => m.name))].sort((a, b) => b.length - a.length);
 const sansNoms = (l: string) => NOMS.reduce((x, n) => x.split(n).join(' '), l);
 const MEMES_EN_ANGLAIS = [/^minute \d+$/];
 /** Lignes françaises restantes d'un texte affiché en anglais (méthode du moteur M2, reprise de M4). */
@@ -103,7 +104,7 @@ describe('displayRow — lignes enregistrées, 50 entrées par chemin', () => {
         const noteStimulus = l.row.notes != null && l.row.notes === w.stimulus?.note;
         const rendu = renderFromWodJson(l.row.wod_json, 'en')!;
         const attendu = ligneExercice
-          ? { title: exerciseName(w.blocks[0].exercises[0]), description: exerciseLine(w.blocks[0].exercises[0], 'en'), notes: l.row.notes == null ? null : displayStimulusNote(w, 'en') }
+          ? { title: exerciseName(w.blocks[0].exercises[0], 'en'), description: exerciseLine(w.blocks[0].exercises[0], 'en'), notes: l.row.notes == null ? null : displayStimulusNote(w, 'en') }
           : { ...rendu, notes: noteStimulus ? displayStimulusNote(w, 'en') : rendu.notes };
         expect(en).toEqual(attendu);
         if (!ligneExercice) expect({ ...en, notes: null }).toEqual({ ...displayWod(l.row.wod_json, texteDe(l.row), 'en'), notes: null });

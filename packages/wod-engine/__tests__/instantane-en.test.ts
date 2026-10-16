@@ -6,11 +6,12 @@
  *      des appels au RNG identiques en français et en anglais ;
  *   3. aucun texte français dans la sortie anglaise, avec la méthode des écrans : aucun accent,
  *      et aucune ligne restée identique au français que le scanner (`isFrench`) reconnaît comme
- *      française. Les noms du catalogue sont des données (traduits par la PR « Données ») et les
- *      noms de groupe de la box un contenu de box (jamais traduit) : ils sont mis de côté ;
+ *      française. Les noms du catalogue sont traduits par id depuis la PR « Données » D1 (#530) :
+ *      ils sont vérifiés comme le reste. Les noms de groupe de la box sont un contenu de box
+ *      (jamais traduit) : ils sont mis de côté ;
  *   4. ni « CrossFit », ni « Hyrox », ni « Musculation » dans la sortie anglaise.
  */
-import { CATALOG_SNAPSHOT } from '../src';
+import { CATALOG_SNAPSHOT, mouvements } from '../src';
 import { CHEMINS } from './instantane/chemins';
 import { decrireInstantane, mesurer, enTete, ECRIRE } from './instantane/instantane';
 import type { Mesure } from './instantane/instantane';
@@ -23,7 +24,8 @@ const anglais = decrireInstantane('en', 'instantané du texte anglais du moteur 
 
 const ACCENT = /[àâäçéèêëîïôöùûüÿœæ«»]/i;
 const MARQUES = /crossfit|hyrox|musculation/i;
-const NOMS = [...new Set(CATALOG_SNAPSHOT.movements.map((m) => m.name))].sort((a, b) => b.length - a.length);
+/** Noms du catalogue sans entrée anglaise (repli sur le nom français) : aucun depuis D1, `mouvements-en.test.ts` l'exige. */
+const NOMS = [...new Set(CATALOG_SNAPSHOT.movements.filter((m) => !(m.id in mouvements)).map((m) => m.name))].sort((a, b) => b.length - a.length);
 const sansNoms = (l: string) => NOMS.reduce((x, n) => x.split(n).join(' '), l);
 /** Identiques en anglais, mais reconnus par le scanner (« minute » est dans sa liste de mots français) : comme `SAME_IN_EN` des écrans. */
 const MEMES_EN_ANGLAIS = [/^minute \d+$/];
