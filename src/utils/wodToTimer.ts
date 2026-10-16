@@ -154,8 +154,12 @@ export function buildSplitBlock(exercises: SplitExercise[]): SeqBlock {
   };
 }
 
-export function buildMuscuSplitBlock(wod: { blocks: ReadonlyArray<{ exercises: ReadonlyArray<{ name: string; sets: number; rest_s: number }> }> }): SeqBlock {
-  return buildSplitBlock(wod.blocks[0].exercises.map((e) => ({ name: e.name, sets: e.sets, restSec: Math.max(0, Math.round(e.rest_s)) })));
+/** `label` : nom affiché de l'étape (M4 : issu du rendu de la langue affichée) ; par défaut le nom enregistré. */
+export function buildMuscuSplitBlock(
+  wod: { blocks: ReadonlyArray<{ exercises: ReadonlyArray<{ name: string; sets: number; rest_s: number }> }> },
+  label: (e: { name: string }) => string = (e) => e.name,
+): SeqBlock {
+  return buildSplitBlock(wod.blocks[0].exercises.map((e) => ({ name: label(e), sets: e.sets, restSec: Math.max(0, Math.round(e.rest_s)) })));
 }
 
 /** Un metcon splitté par round : autant de « séries » que de rounds connus, sans repos imposé. */

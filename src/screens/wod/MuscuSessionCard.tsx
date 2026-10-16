@@ -11,8 +11,8 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ChevronDown, ChevronUp, Check, Plus, Timer as TimerIcon, Trash2 } from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
-import { loadText, sideLabel } from '../../../packages/wod-engine/src';
-import type { MuscuExercise, MuscuWod } from '../../../packages/wod-engine/src';
+import type { Langue, MuscuExercise, MuscuWod } from '../../../packages/wod-engine/src';
+import { exerciseName, exerciseNote, loadLine, schemeLine } from '../../services/wodRender';
 import { PerformedExercise, PerformedSet, setTonnage, totalTonnage } from '../../services/wodGenerator';
 import { initialPerformed, muscuRepsOnly, performedToDrafts } from '../../services/muscuSession';
 import {
@@ -22,15 +22,13 @@ import { StrengthSaveState, StrengthSessionStatus, repsText } from '../../compon
 import { AxButton, AxCard, AxTextField } from '../../components/ax';
 import { axSpacing, axTypography } from '../../theme/axTokens';
 import i18n from '../../i18n';
+import { useTranslation } from 'react-i18next';
 
 export { initialPerformed };
 
 /** « 4 × 8 / jambe », « 3 × 30 s » */
-export function schemeText(e: MuscuExercise): string {
-  let out = `${e.sets} × ${e.reps}`;
-  if (e.reps_unit !== 'reps') out += ` ${e.reps_unit}`;
-  if (e.per_side) out += ` / ${sideLabel(e)}`;
-  return out;
+export function schemeText(e: MuscuExercise, langue: Langue = 'fr'): string {
+  return schemeLine(e, langue);
 }
 
 export function restText(rest_s: number): string {
@@ -76,6 +74,9 @@ interface Props {
 
 export default function MuscuSessionCard({ wod, accent, performed, onPerformedChange, draft }: Props) {
   const { theme } = useTheme();
+  const { i18n: i18nHook } = useTranslation();
+  /** Langue d'affichage : le moteur réécrit la ligne, le texte enregistré reste en français (M4). */
+  const langue: Langue = i18nHook.language === 'en' ? 'en' : 'fr';
   const S = useMemo(() => styles(theme), [theme]);
   const c = theme.ax;
   const exercises = wod.blocks[0].exercises;
@@ -173,10 +174,10 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
               <View style={[S.dot, { backgroundColor: done >= e.sets ? c.success : isCurrent ? accent : c.border }]} />
               <View style={{ flex: 1 }}>
                 <Text style={[S.name, isCurrent && { color: accent }]}>
-                  {e.name}
+                  {exerciseName(e, langue)}
                   {e.optional ? <Text style={S.optional}>{i18n.t('muscu.optional')}</Text> : null}
                 </Text>
-                <Text style={S.scheme}>{schemeText(e)} · {loadText(e)}</Text>
+                <Text style={S.scheme}>{schemeText(e, langue)} · {loadLine(e, langue)}</Text>
                 <Text style={S.meta}>
                   {[restText(e.rest_s), i18n.t('muscu.setsProgress', { done: Math.min(done, e.sets), total: e.sets })].filter(Boolean).join(' · ')}
                 </Text>
@@ -185,7 +186,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
             </TouchableOpacity>
             {isOpen && (
               <View style={S.detail}>
-                {e.notes ? <Text style={S.notes}>{e.notes}</Text> : null}
+                {exerciseNote(e, langue) ? <Text style={S.notes}>{exerciseNote(e, langue)}</Text> : null}
                 {p?.sets.map((s, si) => (
                   <View key={si} style={S.setRow} testID={`muscu-set-${i}-${si}`}>
                     <Text style={[S.setLabel, cursor?.exercise === i && cursor.set === si && { color: accent }]}>
@@ -260,7 +261,7 @@ export default function MuscuSessionCard({ wod, accent, performed, onPerformedCh
                       <Text style={S.addSetText}>{i18n.t('strengthSession.addSet')}</Text>
                     </TouchableOpacity>
                     <View style={S.totalRow} testID={`muscu-block-total-${i}`}>
-                      <Text style={S.totalLabel}>{i18n.t('strengthSession.blockTotal', { movement: e.name })}</Text>
+                      <Text style={S.totalLabel}>{i18n.t('strengthSession.blockTotal', { movement: exerciseName(e, langue) })}</Text>
                       <Text style={S.totalValue}>{repsText(repsOf(i))}</Text>
                     </View>
                   </>

@@ -42,7 +42,7 @@ describe('bloc Split', () => {
   });
 
   it("c'est le mode par défaut d'une séance Musculation sur la page résultat", () => {
-    expect(resultat).toContain('isMuscuWod(wod) ? buildMuscuSplitBlock(wod) : buildFullSeqBlockFromWOD(editorFieldsOf(wod))');
+    expect(resultat).toContain('isMuscuWod(wod) ? buildMuscuSplitBlock(wod, (e) => exerciseName(e, langue)) : buildFullSeqBlockFromWOD(editorFieldsOf(wod))');
   });
 });
 

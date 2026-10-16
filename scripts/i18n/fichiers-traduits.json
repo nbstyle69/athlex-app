@@ -148,6 +148,7 @@
   "src/services/programContent.ts",
   "src/services/strengthSets.ts",
   "src/services/wodGenerator.ts",
+  "src/services/wodRender.ts",
   "src/utils/bracketWods.ts",
   "src/utils/cardioBlock.ts",
   "src/utils/programmingPrice.ts",
