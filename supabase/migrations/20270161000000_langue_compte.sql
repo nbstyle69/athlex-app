@@ -1,9 +1,18 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Langue du compte enregistrée pour le serveur (#531, PR S1)
 --
--- Appliquée en prod : non.
--- À jouer en UNE transaction (pas de BEGIN/COMMIT dans ce fichier) :
+-- Appliquée en prod : OUI, le 16/10/2026 à 17:08 UTC, avec PGCLIENTENCODING=UTF8,
+-- sur feu vert de Nab. Pas de BEGIN/COMMIT dans ce fichier : il se joue en UNE
+-- transaction :
 --   PGCLIENTENCODING=UTF8 psql "$PROD_DB_URL" -X -1 -v ON_ERROR_STOP=1 -f <ce fichier>
+-- Dump des schémas public et internal avec droits
+-- db-dumps/2026-10-16/athlex-prod-public-internal-20261016T165921Z.dump,
+-- sha256 7231bc3bc17950015fc629e0753350e438ab6bbccbf807318e66facf07c23532
+-- vérifié après aller-retour, 141 TABLE DATA, 484 ACL, 348 POLICY. Empreintes
+-- identiques avant et après : notification_preferences (18 colonnes d'avant)
+-- ed56a578…, push_tokens 101945de… ; fonction md5 8196def1…, ACL
+-- {postgres=X/postgres,service_role=X/postgres} ; test réel annulé vert ;
+-- audit des droits 48/48 (T20 compris).
 --
 -- Pourquoi : 186 comptes sur 201 n'ont aucun jeton push, et 12 jetons sur 19
 -- n'ont pas de langue (prod, 16/10/2026). Les e-mails et les push au membre ne
