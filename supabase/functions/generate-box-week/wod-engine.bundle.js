@@ -28258,6 +28258,333 @@ var en = {
     }
   }
 };
+var mouvements = {
+  thruster: "Thruster",
+  power_snatch: "Power Snatch",
+  hang_power_snatch: "Hang Power Snatch",
+  squat_snatch: "Squat Snatch",
+  overhead_squat: "Overhead Squat",
+  power_clean: "Power Clean",
+  hang_power_clean: "Hang Power Clean",
+  squat_clean: "Squat Clean",
+  clean_and_jerk: "Clean & Jerk",
+  push_press: "Push Press",
+  push_jerk: "Push Jerk",
+  shoulder_to_overhead: "Shoulder To Overhead",
+  front_squat: "Front Squat",
+  back_squat: "Back Squat",
+  deadlift: "Deadlift",
+  sumo_deadlift_high_pull: "Sumo Deadlift High Pull",
+  bench_press: "Bench Press",
+  front_rack_lunge: "Front Rack Lunges",
+  bar_facing_burpee: "Bar Facing Burpees",
+  kb_swing_american: "KB Swing",
+  kb_swing_russian: "Russian KB Swings",
+  kb_goblet_squat: "Goblet Squat",
+  db_snatch: "Alt DB Snatch",
+  db_thruster: "DB Thruster",
+  db_clean_and_jerk: "DB Clean & Jerk",
+  db_box_step_over: "DB Box Step Over",
+  db_lunge: "DB Lunges",
+  devil_press: "Devils Press",
+  db_farmer_carry: "Farmer Carry",
+  wall_ball: "Wall Balls",
+  sandbag_lunge: "Sandbag Lunges",
+  sandbag_carry: "Sandbag Carry",
+  sandbag_clean: "Sandbag Cleans",
+  sandbag_over_shoulder: "Sandbag Over Shoulder",
+  sled_push: "Sled Push",
+  sled_pull: "Sled Pull",
+  row: "Row",
+  bike_erg: "Bike Erg",
+  echo_bike: "Air Bike",
+  ski_erg: "Ski Erg",
+  run: "Run",
+  shuttle_run: "Shuttle Run",
+  pull_up: "Pull-ups",
+  chest_to_bar: "Chest-to-Bar",
+  toes_to_bar: "Toes-to-Bar",
+  bar_muscle_up: "Bar Muscle-ups",
+  ring_muscle_up: "Ring Muscle-ups",
+  handstand_push_up: "Handstand Push-ups",
+  strict_handstand_push_up: "Strict Handstand Push-Ups",
+  wall_walk: "Wall Walk",
+  handstand_walk: "Handstand Walk",
+  ring_dip: "Ring Dips",
+  ring_row: "Ring Rows",
+  push_up: "Push-ups",
+  pistol: "Pistols",
+  rope_climb: "Rope Climbs",
+  ghd_sit_up: "GHD Sit-Ups",
+  sit_up: "Sit-ups",
+  hollow_rock: "Hollow Rocks",
+  plank_hold: "Plank Hold",
+  burpee: "Burpees",
+  burpee_box_jump_over: "Burpee Box Jump Over",
+  burpee_broad_jump: "Burpee Broad Jumps",
+  box_jump: "Box Jumps",
+  box_jump_over: "Box Jump-overs",
+  box_step_up: "Box Step-ups",
+  double_under: "Double-unders",
+  single_under: "Single Unders",
+  air_squat: "Air Squats",
+  walking_lunge: "Lunges",
+  cluster: "Cluster",
+  hang_clean_and_jerk: "Hang Clean & Jerk",
+  kb_snatch: "KB Snatch",
+  kb_clean: "KB Clean",
+  kb_front_squat: "KB Front Squat",
+  kb_clean_and_jerk: "KB Clean & Jerk",
+  kb_deadlift: "KB Deadlift",
+  box_jump_over_step_down: "Box Jump Over Step Down",
+  burpee_box_jump: "Burpee Box Jump",
+  burpee_over_the_bar: "Burpees Over the Bar",
+  pull_up_banded: "Banded Pull-Ups",
+  hanging_knee_raise: "Hanging Knee Raises",
+  legless_rope_climb: "Legless Rope Climbs",
+  ring_dip_banded: "Banded Ring Dips",
+  box_pistol: "Box Pistols",
+  pistol_to_box: "Pistols To Box",
+  half_wall_walk: "Half Wall Walks",
+  pike_push_up: "Pike Push-Ups",
+  knee_push_up: "Knee Push-Ups",
+  bear_crawl: "Bear Crawl",
+  inchworm: "Inchworms",
+  handstand_shoulder_tap: "Handstand Shoulder Taps",
+  box_step_over: "Box Step Over",
+  rope_pull_from_floor: "Rope Pulls From Floor",
+  box_dip: "Box Dips",
+  incline_bench_press: "Incline Bench Press",
+  db_bench_press: "DB Bench Press",
+  incline_db_press: "Incline DB Press",
+  machine_chest_press: "Machine Chest Press",
+  cable_fly: "Cable Fly",
+  pec_deck: "Pec Deck",
+  db_fly: "DB Fly",
+  dips: "Dips",
+  db_shoulder_press: "DB Shoulder Press",
+  arnold_press: "Arnold Press",
+  lateral_raise: "Lateral Raise",
+  cable_lateral_raise: "Cable Lateral Raise",
+  rear_delt_fly: "Rear Delt Fly",
+  face_pull: "Face Pull",
+  front_raise: "Front Raise",
+  landmine_press: "Landmine Press",
+  cable_triceps_pushdown: "Triceps Pushdown",
+  overhead_triceps_extension: "Overhead Triceps Extension",
+  skull_crusher: "Skull Crushers",
+  close_grip_bench: "Close Grip Bench Press",
+  bench_dip: "Bench Dips",
+  barbell_row: "Barbell Row",
+  pendlay_row: "Pendlay Row",
+  db_row: "DB Row",
+  lat_pulldown: "Lat Pulldown",
+  seated_cable_row: "Seated Cable Row",
+  chest_supported_row: "Chest Supported Row",
+  t_bar_row: "T-Bar Row",
+  machine_row: "Machine Row",
+  strict_pull_up: "Strict Pull-Ups",
+  chin_up: "Chin-Ups",
+  straight_arm_pulldown: "Straight Arm Pulldown",
+  rack_pull: "Rack Pull",
+  back_extension: "Back Extension",
+  barbell_curl: "Barbell Curl",
+  db_curl: "DB Curl",
+  hammer_curl: "Hammer Curl",
+  incline_db_curl: "Incline DB Curl",
+  cable_curl: "Cable Curl",
+  preacher_curl: "Preacher Curl",
+  leg_press: "Leg Press",
+  hack_squat: "Hack Squat",
+  bulgarian_split_squat: "Bulgarian Split Squat",
+  romanian_deadlift: "Romanian Deadlift",
+  db_rdl: "DB Romanian Deadlift",
+  leg_extension: "Leg Extension",
+  leg_curl: "Leg Curl",
+  hip_thrust: "Hip Thrust",
+  glute_bridge: "Glute Bridge",
+  good_morning: "Good Morning",
+  sumo_deadlift: "Sumo Deadlift",
+  standing_calf_raise: "Standing Calf Raise",
+  seated_calf_raise: "Seated Calf Raise",
+  nordic_curl: "Nordic Curl",
+  hanging_leg_raise: "Hanging Leg Raise",
+  cable_crunch: "Cable Crunch",
+  ab_wheel: "Ab Wheel Rollout",
+  pallof_press: "Pallof Press",
+  dead_bug: "Dead Bug",
+  side_plank: "Side Plank",
+  russian_twist: "Russian Twist",
+  suitcase_carry: "Suitcase Carry",
+  decline_bench_press: "Decline Bench Press",
+  decline_db_press: "Decline DB Press",
+  machine_incline_press: "Machine Incline Press",
+  db_pullover: "DB Pullover",
+  cable_pullover: "Cable Pullover",
+  incline_db_fly: "Incline DB Fly",
+  low_cable_fly: "Low To High Cable Fly",
+  wide_push_up: "Wide Push-Ups",
+  decline_push_up: "Decline Push-Ups",
+  machine_shoulder_press: "Machine Shoulder Press",
+  behind_neck_press: "Behind The Neck Press",
+  upright_row: "Upright Row",
+  bent_over_lateral_raise: "Bent Over Lateral Raise",
+  one_arm_incline_lateral_raise: "Incline One-Arm Lateral Raise",
+  rear_delt_machine: "Rear Delt Machine",
+  barbell_front_raise: "Barbell Front Raise",
+  cable_front_raise: "Cable Front Raise",
+  external_rotation: "External Rotation (L-Fly)",
+  internal_rotation: "Internal Rotation",
+  yates_row: "Yates Row",
+  supinated_barbell_row: "Supinated Barbell Row",
+  one_arm_machine_row: "One-Arm Machine Row",
+  one_arm_cable_row: "One-Arm Cable Row",
+  barbell_shrug: "Barbell Shrug",
+  db_shrug: "DB Shrug",
+  machine_shrug: "Machine Shrug",
+  cable_shrug: "Cable Shrug",
+  wide_grip_pull_up: "Wide Grip Pull-Ups",
+  neutral_grip_pull_up: "Neutral Grip Pull-Ups",
+  close_grip_pull_up: "Close Grip Pull-Ups",
+  machine_pullover: "Machine Pullover",
+  converging_pulldown: "Converging Machine Pulldown",
+  one_arm_pulldown: "One-Arm Lat Pulldown",
+  close_grip_pulldown: "Close Grip Lat Pulldown",
+  supinated_pulldown: "Supinated Lat Pulldown",
+  low_cable_skull_crusher: "Lying Cable Triceps Extension",
+  machine_dips: "Machine Dips",
+  close_grip_dips: "Close Grip Dips",
+  wall_triceps_extension: "Wall Triceps Extension",
+  cable_overhead_extension: "Cable Overhead Triceps Extension",
+  one_arm_overhead_extension: "One-Arm Overhead Triceps Extension",
+  machine_triceps_extension: "Machine Triceps Extension",
+  diamond_push_up: "Diamond Push-Ups",
+  tate_press: "Tate Press",
+  rope_pushdown: "Rope Triceps Pushdown",
+  one_arm_pushdown: "One-Arm Triceps Pushdown",
+  reverse_grip_pushdown: "Reverse Grip Pushdown",
+  db_kickback: "DB Kickback",
+  cable_kickback: "Cable Kickback",
+  preacher_barbell_curl: "Preacher Barbell Curl",
+  cross_body_hammer_curl: "Cross-Body Hammer Curl",
+  lying_cable_curl: "Lying Cable Curl",
+  spider_curl: "Spider Curl",
+  rope_hammer_curl: "Rope Hammer Curl",
+  machine_preacher_curl: "Machine Preacher Curl",
+  concentration_curl: "Concentration Curl",
+  reverse_curl: "Reverse Curl",
+  wrist_curl: "Wrist Curl",
+  wrist_extension: "Wrist Extension",
+  wrist_roller: "Wrist Roller",
+  abmat_crunch: "Ab Mat Crunch",
+  floor_crunch: "Crunch",
+  reverse_crunch: "Reverse Crunch",
+  machine_crunch: "Machine Crunch",
+  swiss_ball_crunch: "Swiss Ball Crunch",
+  oblique_crunch: "Oblique Crunch",
+  hanging_oblique_raise: "Hanging Oblique Knee Raise",
+  rotation_machine: "Torso Rotation Machine",
+  vacuum: "Stomach Vacuum",
+  crunch_with_rotation: "Crunch With Rotation",
+  dragon_flag: "Dragon Flag",
+  db_side_bend: "DB Side Bend",
+  standing_rotation: "Standing Broomstick Rotation",
+  oblique_bench_raise: "Oblique Raise On Roman Chair",
+  wall_sit: "Wall Sit",
+  single_leg_glute_bridge: "Single-Leg Glute Bridge",
+  bodyweight_single_leg_rdl: "Single-Leg RDL (bodyweight)",
+  bodyweight_calf_raise: "Calf Raise (bodyweight)",
+  superman: "Superman Hold",
+  hollow_hold: "Hollow Hold",
+  mountain_climber: "Mountain Climbers",
+  cable_pull_through: "Cable Pull-Through",
+  hip_abduction_machine: "Hip Abduction Machine",
+  cable_hip_abduction: "Cable Hip Abduction",
+  banded_hip_abduction: "Banded Hip Abduction",
+  glute_kickback: "Cable Glute Kickback",
+  db_sumo_squat: "DB Sumo Squat",
+  frog_pump: "Frog Pump",
+  db_hip_thrust: "DB Hip Thrust",
+  single_leg_hip_thrust: "Single-Leg Hip Thrust",
+  reverse_lunge: "DB Reverse Lunge",
+  step_up_high: "High Box Step-Up",
+  hip_thrust_machine: "Hip Thrust Machine",
+  incline_push_up: "Incline Push-Ups",
+  wall_push_up: "Wall Push-Ups",
+  bird_dog: "Bird Dog",
+  bodyweight_reverse_lunge: "Reverse Lunge",
+  squat_hold: "Squat Hold",
+  pike_push_up_elevated: "Elevated Pike Push-Ups",
+  hindu_push_up: "Hindu Push-Ups",
+  handstand_hold: "Handstand Hold",
+  prone_ytw: "Prone Y-T-W",
+  reverse_snow_angel: "Reverse Snow Angels",
+  diamond_push_up_decline: "Decline Diamond Push-Ups",
+  floor_triceps_extension: "Floor Triceps Extension",
+  close_push_up_box: "Close-Grip Box Push-Ups",
+  archer_push_up: "Archer Push-Ups",
+  decline_push_up_wall: "Feet-on-Wall Decline Push-Ups",
+  weighted_bag_push_up: "Weighted Backpack Push-Ups",
+  inverted_row_table: "Table Inverted Row",
+  superman_pull: "Superman Pull",
+  scapular_pull_up: "Scapular Pull-Ups",
+  band_pull_apart: "Band Pull-Apart",
+  chin_up_supine: "Supinated Pull-Ups",
+  band_biceps_curl: "Banded Biceps Curl",
+  towel_curl_isometric: "Isometric Towel Curl",
+  bar_hang_shrug: "Hanging Bar Shrug",
+  scapular_push_up: "Scapular Push-Ups",
+  dead_hang: "Dead Hang",
+  fingertip_push_up: "Fingertip Push-Ups",
+  bodyweight_wrist_curl: "Bodyweight Wrist Curl",
+  band_external_rotation: "Banded External Rotation",
+  band_face_pull: "Banded Face Pull",
+  prone_external_rotation: "Prone External Rotation",
+  band_lat_pulldown_kneeling: "Kneeling Banded Lat Pulldown",
+  band_single_arm_pulldown: "One-Arm Banded Pulldown",
+  band_bent_over_row: "Banded Bent-Over Row",
+  inverted_row_feet_elevated: "Feet-Elevated Inverted Row",
+  towel_row_post: "Towel Row Around a Post",
+  band_lat_pulldown: "Banded Lat Pulldown",
+  band_face_pull_high: "High Banded Face Pull",
+  band_curl_supine_grip: "Wide-Grip Supinated Banded Curl",
+  band_hammer_curl: "Banded Hammer Curl",
+  chair_step_up: "Chair Step-Up",
+  lateral_lunge: "Lateral Lunge",
+  bird_dog_hold: "Bird Dog Hold",
+  pallof_press_band: "Banded Pallof Press",
+  prone_ytw_hold: "Prone Y-T-W Hold",
+  band_row: "Banded Row",
+  scapular_pull_floor: "Floor Scapular Pull",
+  band_overhead_triceps_extension: "Banded Overhead Triceps Extension",
+  bulgarian_split_squat_chair: "Bulgarian Split Squat (chair)",
+  reverse_lunge_slow: "Slow Reverse Lunge",
+  jump_squat: "Jump Squat",
+  cossack_squat: "Cossack Squat",
+  shrimp_squat: "Shrimp Squat",
+  sissy_squat: "Sissy Squat",
+  jumping_lunge: "Jumping Lunges",
+  single_leg_calf_raise: "Single-Leg Calf Raise",
+  nordic_curl_assisted: "Assisted Nordic Curl",
+  weighted_dead_bug: "Weighted Dead Bug",
+  floor_toes_to_bar: "Lying Toes-to-Bar",
+  side_plank_rotation: "Side Plank with Rotation",
+  // inactifs au tirage des WODs, mais encore cités par la banque des séances (complexes, bloc B) et la Musculation
+  back_rack_split_jerk: "Back Rack Split Jerk",
+  clean_pull: "Clean Pull",
+  db_deadlift: "DB Deadlift",
+  db_push_press: "DB Push Press",
+  db_strict_press: "DB Strict Press",
+  power_jerk: "Power Jerk",
+  snatch_balance: "Snatch Balance",
+  snatch_high_pull: "Snatch High Pull",
+  split_jerk: "Split Jerk",
+  squat_clean_and_jerk: "Squat Clean & Jerk",
+  strict_press: "Strict Press",
+  tall_clean: "Tall Clean",
+  v_ups: "V-ups",
+  zercher_squat: "Zercher Squat"
+};
 
 // packages/wod-engine/src/i18n/index.ts
 var LANGUES = ["fr", "en"];
@@ -28265,6 +28592,13 @@ var DICTIONNAIRES = { fr, en };
 function textes(langue = "fr") {
   return DICTIONNAIRES[langue];
 }
+var NOMS = { en: mouvements };
+function nomMouvement(id, nomFr, langue = "fr") {
+  if (langue === "fr") return nomFr;
+  const noms = NOMS[langue];
+  return Object.prototype.hasOwnProperty.call(noms, id) ? noms[id] : nomFr;
+}
+var nomExercice = nomMouvement;
 function correspondancesBanque(langue) {
   const table = /* @__PURE__ */ new Map();
   const conflits = [];
@@ -28511,9 +28845,27 @@ function qtyText(m) {
   if (m.unit === "reps") return `${m.qty}`;
   return `${m.qty} ${m.unit}`;
 }
-function movementLine(m, wod) {
+function nomDe(m, langue) {
+  return nomMouvement(m.id, m.name, langue);
+}
+function nomLie(nom, id, langue) {
+  if (langue === "fr" || !id || movementById(CATALOG_SNAPSHOT, id)?.name !== nom) return nom;
+  return nomMouvement(id, nom, langue);
+}
+function substitutionAffichee(m, c, langue = "fr") {
+  const nom = m.substitutions_by_category[c];
+  if (!nom) return null;
+  const origine = langue === "fr" ? void 0 : movementById(CATALOG_SNAPSHOT, m.id);
+  return nomLie(nom, origine && substitutionFor(origine, c), langue);
+}
+function varianteAffichee(m, c, langue = "fr") {
+  const nom = m.variant_by_category[c];
+  if (!nom) return null;
+  return nomLie(nom, langue === "fr" ? null : movementById(CATALOG_SNAPSHOT, m.id)?.variant_up, langue);
+}
+function movementLine(m, wod, langue = "fr") {
   const load = loadText(m, wod.discipline);
-  const base = `${qtyText(m)} ${m.name}`;
+  const base = `${qtyText(m)} ${nomDe(m, langue)}`;
   return load ? `${base} (${load})` : base;
 }
 function loadsByCategoryLine(m, wod) {
@@ -28540,20 +28892,22 @@ function loadsByCategoryLine(m, wod) {
   }
   return parts.length ? `${parts.join(" \xB7 ")} ${m.load_unit}` : null;
 }
-function substitutionLine(m, T5) {
+function substitutionLine(m, T5, langue) {
   const parts = [];
   const seen = /* @__PURE__ */ new Map();
   for (const [c, name] of Object.entries(m.substitutions_by_category)) {
     if (!name || name === m.name) continue;
-    seen.set(name, [...seen.get(name) ?? [], CATEGORY_LABEL[c]]);
+    const g = seen.get(name) ?? { cats: [], nom: substitutionAffichee(m, c, langue) ?? name };
+    seen.set(name, { ...g, cats: [...g.cats, CATEGORY_LABEL[c]] });
   }
-  for (const [name, cats] of seen) parts.push(T5.substitution(cats.join("/"), name));
+  for (const { cats, nom } of seen.values()) parts.push(T5.substitution(cats.join("/"), nom));
   const vars = /* @__PURE__ */ new Map();
   for (const [c, name] of Object.entries(m.variant_by_category)) {
     if (!name) continue;
-    vars.set(name, [...vars.get(name) ?? [], CATEGORY_LABEL[c]]);
+    const g = vars.get(name) ?? { cats: [], nom: varianteAffichee(m, c, langue) ?? name };
+    vars.set(name, { ...g, cats: [...g.cats, CATEGORY_LABEL[c]] });
   }
-  for (const [name, cats] of vars) parts.push(T5.substitution(cats.join("/"), name));
+  for (const { cats, nom } of vars.values()) parts.push(T5.substitution(cats.join("/"), nom));
   return parts.length ? parts.join(" \xB7 ") : null;
 }
 function schemeText(b) {
@@ -28592,27 +28946,29 @@ function header(wod, b, T5, d) {
       return [T5.continu(wod.budget_min)];
   }
 }
-function bodyLines(wod, b, T5) {
+function bodyLines(wod, b, T5, langue) {
   const out = [];
   const push = (m, line) => {
     out.push(line);
     const loads = loadsByCategoryLine(m, wod);
-    const subs = substitutionLine(m, T5);
+    const subs = substitutionLine(m, T5, langue);
     if (loads) out.push(loads);
     if (subs) out.push(subs);
   };
   b.movements.forEach((m, i) => {
     const load = loadText(m, wod.discipline);
     const withLoad = (s) => load ? `${s} (${load})` : s;
-    if (b.format === "tabata") push(m, T5.ligneTabata(i + 1, withLoad(m.name), m.unit === "s"));
-    else if (b.format === "stations") push(m, m.unit === "s" ? T5.ligneStationTenue(i + 1, withLoad(m.name)) : T5.ligneStation(i + 1, withLoad(m.name), m.unit, qtyText(m)));
-    else if (m.round !== void 0) push(m, T5.ligneRound(m.round, movementLine(m, wod)));
-    else if (m.scheme) push(m, withLoad(m.name));
-    else if (b.format === "for_time" && b.scheme) push(m, T5.lignePalier(movementLine(m, wod)));
-    else if (m.per_minute) push(m, T5.ligneParMinute(withLoad(m.name)));
-    else if (b.format === "death_by") push(m, T5.ligneAvantSerie(movementLine(m, wod)));
-    else if (b.format === "emom") push(m, T5.ligneMinute(i + 1, movementLine(m, wod)));
-    else push(m, movementLine(m, wod));
+    const nom = nomDe(m, langue);
+    const ligne = () => movementLine(m, wod, langue);
+    if (b.format === "tabata") push(m, T5.ligneTabata(i + 1, withLoad(nom), m.unit === "s"));
+    else if (b.format === "stations") push(m, m.unit === "s" ? T5.ligneStationTenue(i + 1, withLoad(nom)) : T5.ligneStation(i + 1, withLoad(nom), m.unit, qtyText(m)));
+    else if (m.round !== void 0) push(m, T5.ligneRound(m.round, ligne()));
+    else if (m.scheme) push(m, withLoad(nom));
+    else if (b.format === "for_time" && b.scheme) push(m, T5.lignePalier(ligne()));
+    else if (m.per_minute) push(m, T5.ligneParMinute(withLoad(nom)));
+    else if (b.format === "death_by") push(m, T5.ligneAvantSerie(ligne()));
+    else if (b.format === "emom") push(m, T5.ligneMinute(i + 1, ligne()));
+    else push(m, ligne());
   });
   return out;
 }
@@ -28635,8 +28991,8 @@ function footer(wod, b, langue) {
   ));
   return out;
 }
-function titleOf(wod, b, T5) {
-  const all = [...new Set(b.movements.filter((m) => m.round === void 0 || m.round === 1).map((m) => m.name))];
+function titleOf(wod, b, T5, langue) {
+  const all = [...new Set(b.movements.filter((m) => m.round === void 0 || m.round === 1).map((m) => nomDe(m, langue)))];
   const names = all.slice(0, 3);
   if (all.length > 3) names[2] = `${names[2]} +${all.length - 3}`;
   const label = {
@@ -28651,10 +29007,10 @@ function titleOf(wod, b, T5) {
 function render(wod, langue = "fr") {
   const b = wod.blocks[0];
   const t = textes(langue);
-  const lines = [...header(wod, b, t.rendu, t.duree), ...bodyLines(wod, b, t.rendu), ...footer(wod, b, langue)];
+  const lines = [...header(wod, b, t.rendu, t.duree), ...bodyLines(wod, b, t.rendu, langue), ...footer(wod, b, langue)];
   return {
     ...wod,
-    title: titleOf(wod, b, t.rendu),
+    title: titleOf(wod, b, t.rendu, langue),
     description: lines.join("\n"),
     wod_type: b.format === "ladder" && !b.ladder ? "for-time" : WOD_TYPE[b.format],
     block_name: "wod",
@@ -28669,7 +29025,7 @@ function render(wod, langue = "fr") {
   };
 }
 function movementLines(wod, langue = "fr") {
-  return bodyLines(wod, wod.blocks[0], textes(langue).rendu);
+  return bodyLines(wod, wod.blocks[0], textes(langue).rendu, langue);
 }
 
 // packages/wod-engine/src/generate.ts
@@ -30308,11 +30664,14 @@ function noteExercice(r, langue = "fr") {
   const N = textes(langue).musculation.note;
   return r.notes.map((k) => k === "tempo" ? N.tempo(r.tempo ?? "") : N[k]).join(" \xB7 ");
 }
-function noteStimulus(objective, r, langue = "fr") {
+function noteStimulus(objective, r, langue = "fr", exercises = []) {
   const T5 = textes(langue).musculation;
   const rir = T5.rir[objective];
   const parts = [rir.charAt(0).toUpperCase() + rir.slice(1)];
-  if (r.montee) parts.push(T5.monteeEnCharge(r.montee));
+  if (r.montee) {
+    const main2 = exercises.find((e) => e.role === "main_compound" && e.name === r.montee);
+    parts.push(T5.monteeEnCharge(main2 ? nomExercice(main2.id, main2.name, langue) : r.montee));
+  }
   if (r.renseigne1rm) parts.push(T5.renseigne1rm);
   return parts.join(". ");
 }
@@ -30464,7 +30823,7 @@ function generateMuscu(request, catalog, bank, seed, langue = "fr") {
   const seconds = total(best.lines);
   const sig = muscuSignature(sk.id, exercises);
   const stimulusCles = stimulusClesFor(params, exercises);
-  const stimulus = { rpe: SCHEMES[params.objective].rpe, note: noteStimulus(params.objective, stimulusCles, langue) };
+  const stimulus = { rpe: SCHEMES[params.objective].rpe, note: noteStimulus(params.objective, stimulusCles, langue, exercises) };
   const wod = {
     source: "generator",
     generator: {
@@ -30537,7 +30896,7 @@ function loadText2(e, langue = "fr") {
 }
 function exerciseLine(e, langue = "fr") {
   const T5 = textes(langue).musculation;
-  let out = `${e.name} \u2014 ${e.sets} \xD7 ${e.reps}`;
+  let out = `${nomExercice(e.id, e.name, langue)} \u2014 ${e.sets} \xD7 ${e.reps}`;
   if (e.reps_unit !== "reps") out += ` ${e.reps_unit}`;
   if (e.per_side) out += ` / ${T5.cote[sideOf(e)]}`;
   const l = e.load;
@@ -30599,7 +30958,7 @@ function stepLine(name, st, tempo, langue = "fr") {
 }
 var NL = "\n";
 function contexte(langue, noms = {}) {
-  return { t: textes(langue), tb: banqueVers(langue), nom: (id) => noms[id] ?? id };
+  return { t: textes(langue), tb: banqueVers(langue), nom: (id) => nomMouvement(id, noms[id] ?? id, langue) };
 }
 function ligneDePoste(p, { t, tb, nom }) {
   const name = p.name ? tb(p.name) : nom(p.id);
@@ -31942,7 +32301,7 @@ function renderFromWodJson(wodJson, langue = "fr") {
   if (j.discipline === "session") return j.rendu ? rendreBlocSeance(j.rendu, langue) : null;
   if (j.discipline === "musculation") {
     const w = wodJson;
-    const note = w.rendu ? noteStimulus(w.objective, w.rendu.stimulus, langue) : w.stimulus.note;
+    const note = w.rendu ? noteStimulus(w.objective, w.rendu.stimulus, langue, w.blocks[0].exercises) : w.stimulus.note;
     const exercises = w.blocks[0].exercises.map((e) => e.rendu ? { ...e, notes: noteExercice(e.rendu, langue) } : e);
     const copie = { ...w, stimulus: { ...w.stimulus, note }, blocks: [{ ...w.blocks[0], exercises }] };
     const T5 = textes(langue).musculation;
@@ -32123,6 +32482,7 @@ export {
   ladderStep,
   loadText2 as loadText,
   loadsFor,
+  mouvements,
   movementById,
   movementCapFor,
   movementCapFromRow,
@@ -32138,6 +32498,8 @@ export {
   muscuWeekRows,
   nameKey,
   nextIsoWeek,
+  nomExercice,
+  nomMouvement,
   noteExercice,
   noteStimulus,
   parisInstant,
@@ -32164,10 +32526,12 @@ export {
   skeletonToRow,
   splitSignatures,
   stepLine,
+  substitutionAffichee,
   substitutionFor,
   targetAvailable,
   textes,
   trackOf,
+  varianteAffichee,
   weekDates,
   weekSeed,
   weeklyGymVolume,

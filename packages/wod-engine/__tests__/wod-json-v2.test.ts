@@ -1,9 +1,9 @@
 /**
  * wod_json v2 (étude i18n « Moteur », M3), sur les 4 200 entrées de l'instantané :
- *   1. ajout seulement : la sortie (wod_json, lignes box_wods) privée des clés ajoutées par
+ *   1. ajout seulement : la sortie française (wod_json, lignes box_wods) privée des clés ajoutées par
  *      M3 (`v`, `rendu`) est identique, au caractère près, à celle d'avant M3
- *      (`fixtures/instantane-sortie-v1.json`, relevée sur master 089db64), en français et en
- *      anglais : aucune clé ni valeur existante ne change ;
+ *      (`fixtures/instantane-sortie-v1.json`, relevée sur master 089db64) ; en anglais, dont le texte
+ *      suit les noms anglais depuis D1 (#530), la même sortie hors champs de texte ;
  *   2. aller-retour : chaque objet que le moteur fait enregistrer (WOD, séance Musculation,
  *      bloc de séance, jour de semaine Musculation, ligne box_wods de la programmation) porte
  *      `v: 2`, et `renderFromWodJson(wod_json, 'fr')` redonne son titre, sa description et ses
@@ -15,7 +15,7 @@ import { readFileSync } from 'fs';
 import path from 'path';
 import { renderFromWodJson, generateBlocC, CATALOG_SNAPSHOT, BANK_V1 } from '../src';
 import { CHEMINS, stockes } from './instantane/chemins';
-import { canon, enTete, sha } from './instantane/instantane';
+import { canon, enTete, sha, structure } from './instantane/instantane';
 
 const AVANT = JSON.parse(readFileSync(path.join(__dirname, 'fixtures', 'instantane-sortie-v1.json'), 'utf8')) as {
   langues: Record<'fr' | 'en', Record<string, string[]>>;
@@ -41,7 +41,9 @@ describe('wod_json v2 du moteur (M3)', () => {
         const fr = await c.produire(k, 'fr');
         const en = await c.produire(k, 'en');
         if (sha(canon(sansAjouts(fr.sortie))) !== AVANT.langues.fr[c.nom][k]) note(k, 'ajout seulement (fr) : une clé ou une valeur existante a changé');
-        if (sha(canon(sansAjouts(en.sortie))) !== AVANT.langues.en[c.nom][k]) note(k, 'ajout seulement (en) : une clé ou une valeur existante a changé');
+        // anglais : son texte change depuis la PR « Données » D1 (noms du catalogue), il est figé par instantane-en ;
+        // hors champs de texte, la sortie anglaise reste celle du français, donc aucune clé ni valeur existante ne change
+        if (sha(canon(structure(sansAjouts(en.sortie)))) !== sha(canon(structure(sansAjouts(fr.sortie))))) note(k, 'ajout seulement (en) : hors texte, la sortie diffère du français');
         const sf = stockes(c.nom, fr.sortie);
         const se = stockes(c.nom, en.sortie);
         if (sf.length !== se.length) { note(k, `objets fr ${sf.length} ≠ en ${se.length}`); continue; }

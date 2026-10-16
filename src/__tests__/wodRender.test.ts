@@ -28,7 +28,7 @@ import { addToWhiteboard, saveGeneratedWod, whiteboardRows } from '../services/w
 import { CHEMINS, stockes } from '../../packages/wod-engine/__tests__/instantane/chemins';
 import { canon, sha } from '../../packages/wod-engine/__tests__/instantane/instantane';
 import {
-  CATALOG_SNAPSHOT, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES, generateBlocC, generateMuscu, loadText, renderFromWodJson,
+  CATALOG_SNAPSHOT, mouvements, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES, generateBlocC, generateMuscu, loadText, renderFromWodJson,
   sideLabel, BANK_V1,
 } from '../../packages/wod-engine/src';
 import type { GeneratedWod, Langue, MuscuWod } from '../../packages/wod-engine/src';
@@ -41,7 +41,8 @@ const CHEMINS_M4 = ['wod-express', 'apres-ma-classe', 'musculation', 'musculatio
 const N = 50;
 
 const ACCENT = /[àâäçéèêëîïôöùûüÿœæ«»]/i;
-const NOMS = [...new Set(CATALOG_SNAPSHOT.movements.map((m) => m.name))].sort((a, b) => b.length - a.length);
+// noms du catalogue sans entrée anglaise (repli) : aucun depuis la PR « Données » D1
+const NOMS = [...new Set(CATALOG_SNAPSHOT.movements.filter((m) => !(m.id in mouvements)).map((m) => m.name))].sort((a, b) => b.length - a.length);
 const sansNoms = (l: string) => NOMS.reduce((x, n) => x.split(n).join(' '), l);
 /** Identiques en anglais, mais reconnus par le scanner (« minute » est dans sa liste de mots français). */
 const MEMES_EN_ANGLAIS = [/^minute \d+$/];

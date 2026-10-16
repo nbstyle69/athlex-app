@@ -6,7 +6,7 @@ import { RNG } from './rng';
 import { nameKey, resolveMovement } from './catalog';
 import { MUSCU_SKELETONS, MUSCU_TARGETS, TARGET_MUSCLES } from './bank/muscu';
 import { fr } from './i18n/fr';
-import { textes } from './i18n';
+import { nomExercice, textes } from './i18n';
 import type { Langue, Textes } from './i18n';
 
 const T = fr.musculation;
@@ -832,12 +832,22 @@ export function noteExercice(r: { notes: readonly MuscuNoteCle[]; tempo: string 
   return r.notes.map((k) => (k === 'tempo' ? N.tempo(r.tempo ?? '') : N[k])).join(' · ');
 }
 
-/** Note du stimulus à partir de l'objectif et de ses parties (`MuscuWod.rendu`). */
-export function noteStimulus(objective: MuscuObjective, r: { montee: string | null; renseigne1rm: boolean }, langue: Langue = 'fr'): string {
+/**
+ * Note du stimulus à partir de l'objectif et de ses parties (`MuscuWod.rendu`). `montee` est le nom
+ * enregistré de l'exercice principal : hors français, il se traduit par l'id de cet exercice, retrouvé
+ * dans `exercises` (sans eux, ou introuvable : le nom enregistré).
+ */
+export function noteStimulus(
+  objective: MuscuObjective, r: { montee: string | null; renseigne1rm: boolean }, langue: Langue = 'fr',
+  exercises: readonly Pick<MuscuExercise, 'id' | 'name' | 'role'>[] = [],
+): string {
   const T = textes(langue).musculation;
   const rir = T.rir[objective];
   const parts = [rir.charAt(0).toUpperCase() + rir.slice(1)];
-  if (r.montee) parts.push(T.monteeEnCharge(r.montee));
+  if (r.montee) {
+    const main = exercises.find((e) => e.role === 'main_compound' && e.name === r.montee);
+    parts.push(T.monteeEnCharge(main ? nomExercice(main.id, main.name, langue) : r.montee));
+  }
   if (r.renseigne1rm) parts.push(T.renseigne1rm);
   return parts.join('. ');
 }
@@ -1000,7 +1010,7 @@ export function generateMuscu(
   const seconds = total(best.lines);
   const sig = muscuSignature(sk.id, exercises);
   const stimulusCles = stimulusClesFor(params, exercises);
-  const stimulus = { rpe: SCHEMES[params.objective].rpe, note: noteStimulus(params.objective, stimulusCles, langue) };
+  const stimulus = { rpe: SCHEMES[params.objective].rpe, note: noteStimulus(params.objective, stimulusCles, langue, exercises) };
   const wod: MuscuWod = {
     source: 'generator',
     generator: {
@@ -1071,7 +1081,7 @@ export function loadText(e: MuscuExercise, langue: Langue = 'fr'): string {
 /** `Bench Press — 4 × 8 @ 65 kg — charge 72 % 1RM — repos 1:30` (lisible par `parseStrengthLine`). */
 export function exerciseLine(e: MuscuExercise, langue: Langue = 'fr'): string {
   const T = textes(langue).musculation;
-  let out = `${e.name} — ${e.sets} × ${e.reps}`;
+  let out = `${nomExercice(e.id, e.name, langue)} — ${e.sets} × ${e.reps}`;
   if (e.reps_unit !== 'reps') out += ` ${e.reps_unit}`;
   if (e.per_side) out += ` / ${T.cote[sideOf(e)]}`;
   const l = e.load;

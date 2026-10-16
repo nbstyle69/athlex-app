@@ -34,7 +34,7 @@ import { buildFullSeqBlockFromWOD, buildMuscuSplitBlock } from '../../utils/wodT
 import { clearWodDraft, saveWodDraft } from '../../services/wodDraft';
 import {
   CATEGORY_LABEL, FUNCTIONAL_CATEGORIES, HYBRID_CATEGORIES,
-  TIME_BOUNDED,
+  TIME_BOUNDED, substitutionAffichee, varianteAffichee,
 } from '../../../packages/wod-engine/src';
 import type { Category, GeneratedBlock, GeneratedMovement, GeneratedWod, MuscuWod } from '../../../packages/wod-engine/src';
 import type { SkeletonFormat } from '../../../packages/wod-engine/src';
@@ -56,7 +56,7 @@ import { muscuDisplayedFor } from './muscuOptions';
 import MuscuSessionCard, { initialPerformed } from './MuscuSessionCard';
 import { MODAL_DISMISS_MS, useConfirmDialog } from '../../components/ConfirmDialog';
 import {
-  afterClassMusclesEn, displayStimulusNote, exerciseName, displayTarget, displayWod, headerLineOf, shareText,
+  afterClassMusclesEn, displayStimulusNote, exerciseName, movementName, displayTarget, displayWod, headerLineOf, shareText,
 } from '../../services/wodRender';
 import type { Langue } from '../../../packages/wod-engine/src';
 
@@ -104,10 +104,10 @@ export function loadFor(m: GeneratedMovement, c: Category): string | null {
 }
 
 /** Ligne secondaire d'un mouvement pour une catégorie : charge · → substitution · (variante). */
-export function categoryLine(m: GeneratedMovement, c: Category, withLabel: boolean): string | null {
+export function categoryLine(m: GeneratedMovement, c: Category, withLabel: boolean, langue: Langue = 'fr'): string | null {
   const load = loadFor(m, c);
-  const sub = m.substitutions_by_category[c];
-  const variant = m.variant_by_category[c];
+  const sub = substitutionAffichee(m, c, langue);
+  const variant = varianteAffichee(m, c, langue);
   const parts = [load && (withLabel ? `${CATEGORY_LABEL[c]} ${load}` : load), sub && `→ ${sub}`, variant && `(${variant})`]
     .filter(Boolean);
   return parts.length ? parts.join(' · ') : null;
@@ -710,7 +710,7 @@ export default function WodResultScreen() {
           <View style={S.cardInner}>
           {metcon.blocks[0].movements.map((m, i) => {
             const open = openRows.has(i);
-            const line = categoryLine(m, category, true);
+            const line = categoryLine(m, category, true, langue);
             return (
               <View
                 key={`${m.id}-${i}`}
@@ -721,7 +721,7 @@ export default function WodResultScreen() {
                   <View style={{ flex: 1 }}>
                     <Text style={S.moveText}>
                       {m.round != null ? <Text style={S.moveRound}>{t('wodResult.roundShort', { round: m.round })}</Text> : null}
-                      <Text style={[S.moveQty, { color: accent }]}>{qtyText(m, metcon.blocks[0])}</Text> {m.name}
+                      <Text style={[S.moveQty, { color: accent }]}>{qtyText(m, metcon.blocks[0])}</Text> {movementName(m, langue)}
                     </Text>
                     <Text style={S.moveSub}>{line ?? t('wodResult.allCategories')}</Text>
                   </View>
@@ -734,7 +734,7 @@ export default function WodResultScreen() {
                     {categories.map((c) => (
                       <View key={c} style={S.catRow}>
                         <Text style={[S.catName, c === category && S.catCurrent]}>{CATEGORY_LABEL[c]}</Text>
-                        <Text style={S.catVal}>{categoryLine(m, c, false) ?? '—'}</Text>
+                        <Text style={S.catVal}>{categoryLine(m, c, false, langue) ?? '—'}</Text>
                       </View>
                     ))}
                   </View>

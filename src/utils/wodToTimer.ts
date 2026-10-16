@@ -155,9 +155,9 @@ export function buildSplitBlock(exercises: SplitExercise[]): SeqBlock {
 }
 
 /** `label` : nom affiché de l'étape (M4 : issu du rendu de la langue affichée) ; par défaut le nom enregistré. */
-export function buildMuscuSplitBlock(
-  wod: { blocks: ReadonlyArray<{ exercises: ReadonlyArray<{ name: string; sets: number; rest_s: number }> }> },
-  label: (e: { name: string }) => string = (e) => e.name,
+export function buildMuscuSplitBlock<E extends { name: string; sets: number; rest_s: number }>(
+  wod: { blocks: ReadonlyArray<{ exercises: ReadonlyArray<E> }> },
+  label: (e: E) => string = (e) => e.name,
 ): SeqBlock {
   return buildSplitBlock(wod.blocks[0].exercises.map((e) => ({ name: label(e), sets: e.sets, restSec: Math.max(0, Math.round(e.rest_s)) })));
 }
