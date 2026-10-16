@@ -38,7 +38,7 @@ import {
 } from '../../../packages/wod-engine/src';
 import type { Category, GeneratedBlock, GeneratedMovement, GeneratedWod, MuscuWod } from '../../../packages/wod-engine/src';
 import type { SkeletonFormat } from '../../../packages/wod-engine/src';
-import { FORMATS, INTENTIONS, familyLabel, patternLabel } from './wodGeneratorOptions';
+import { FORMATS, INTENTIONS } from './wodGeneratorOptions';
 import {
   GenerateResult, PerformedExercise, ScoreInputType, ScoreSubmission, ScreenParams, addToWhiteboard, editorFieldsOf,
   isMuscuWod, redraw, saveGeneratedWod, scoreInputTypeFor, setFavorite, submitGeneratedScore,
@@ -776,7 +776,7 @@ export default function WodResultScreen() {
           )}
           <Text style={S.stimulus}>{t('wodResult.stimulus', { rpe: fmtNum(wod.stimulus.rpe), note: stimulusNote })}</Text>
           {metcon.after_class && (metcon.after_class.excluded_patterns.length > 0 || metcon.after_class.excluded_families.length > 0) && (
-            <Text style={S.afterClass}>{t('wodResult.complementAvoids', { list: [...metcon.after_class.excluded_patterns.map(patternLabel), ...metcon.after_class.excluded_families.map(familyLabel)].join(', ') })}</Text>
+            <Text style={S.afterClass}>{t('wodResult.complementAvoids', { list: [...metcon.after_class.excluded_patterns, ...metcon.after_class.excluded_families].join(', ') })}</Text>
           )}
           </View>
         </AxCard>

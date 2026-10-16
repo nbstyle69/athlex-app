@@ -64,12 +64,15 @@ const acParams: GenerateParams = {
   after_class: { day_movements: ['Back Squat', 'Thrusters', 'Pull-ups'], box_wod_title: null },
 };
 const acWod = generateBlocC(acParams, mockCatalog, mockBank, 3);
+const acHParams: GenerateParams = { ...acParams, discipline: 'hybrid' };
+const acHWod = generateBlocC(acHParams, mockCatalog, mockBank, 3);
 const hWod = generateBlocC(hParams, mockCatalog, mockBank, 7);
 const mWod = generateMuscu({ entry: 'express', target: 'push', objective: 'hypertrophie', budget_min: 45, equipment: 'box', level: 'inter' }, mockCatalog, mockBank, 7);
 const RESULTS = {
   functional: { screen: { entry: 'express', discipline: 'functional', intention: 'mixed', exclude: [], format: 'amrap', vest: 'none' }, result: { wod: fWod, params: fParams, category: 'rx' } },
   hybrid: { screen: { entry: 'express', discipline: 'hybrid', intention: 'mixed', exclude: [], format: 'for_time', vest: 'none' }, result: { wod: hWod, params: hParams, category: 'rx' } },
   musculation: { screen: { entry: 'express', discipline: 'musculation', target: 'push', objective: 'hypertrophie', equipment: 'box', exclude: [] }, result: { wod: mWod, params: fParams, category: 'rx' } },
+  apresClasseHybrid: { screen: { entry: 'after_class', discipline: 'hybrid', intention: 'mixed', exclude: [], format: 'surprise', vest: 'none' }, result: { wod: acHWod, params: acHParams, category: 'rx' } },
   apresClasse: { screen: { entry: 'after_class', discipline: 'functional', intention: 'mixed', exclude: [], format: 'surprise', vest: 'none' }, result: { wod: acWod, params: acParams, category: 'rx' } },
 } as const;
 type Sport = keyof typeof RESULTS;
@@ -199,21 +202,21 @@ describe('Musculation — carte de séance et minuteur Split', () => {
 describe('anglais : tout le texte de l’écran sans français', () => {
   const noms = [...new Set(mockCatalog.movements.map((m) => m.name))].sort((a, b) => b.length - a.length);
   const sansNoms = (t: string) => noms.reduce((x, n) => x.split(n).join(' '), t);
-  it.each([...SPORTS, 'apresClasse'] as Sport[])('%s : aucun accent hors noms du catalogue', async (sport) => {
+  it.each([...SPORTS, 'apresClasse', 'apresClasseHybrid'] as Sport[])('%s : aucun accent hors noms du catalogue', async (sport) => {
     const root = await mount(sport, 'en');
     if (sport !== 'musculation') await press(root, 'wodresult-all-categories');
     expect(textes(root).filter((t) => ACCENT.test(sansNoms(t)))).toEqual([]);
   });
 
-  it('Après ma classe : patterns et matériel évités en mots, jamais en ids bruts', async () => {
-    const ac = acWod.after_class!;
-    expect(ac.excluded_patterns.length + ac.excluded_families.length).toBeGreaterThan(0);
+  // Hors M4 (décision de Nab) : « Complément : évite » garde les ids bruts de master, dans les deux langues,
+  // jusqu'à sa correction après l'App Store. Ce test fige l'état de master.
+  it.each(['apresClasse', 'apresClasseHybrid'] as Sport[])('%s : « Complément : évite » identique à master (ids bruts), en français et en anglais', async (sport) => {
+    const ac = wodOf(sport).after_class!;
+    const ids = [...ac.excluded_patterns, ...ac.excluded_families];
+    expect(ids.some((id: string) => /_/.test(id))).toBe(true); // un id brut se distingue de son libellé
     for (const langue of ['fr', 'en'] as const) {
-      const root = await mount('apresClasse', langue);
-      const ligne = textes(root).find((t) => t.startsWith(i18n.t('wodResult.complementAvoids', { list: '' }).replace(/\.$/, '').trim()))!;
-      expect(ligne).toBeDefined();
-      for (const p of ac.excluded_patterns) expect(ligne).toContain(i18n.t(`wodGen.pattern.${p}`));
-      expect(ligne).not.toMatch(/\b(push_v|push_h|pull_v|pull_h|jump_rope)\b/);
+      const root = await mount(sport, langue);
+      expect(textes(root)).toContain(i18n.t('wodResult.complementAvoids', { list: ids.join(', ') }));
       await act(async () => renderer.unmount());
     }
   });
