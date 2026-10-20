@@ -86,15 +86,23 @@ async function connecte(email: string): Promise<Db> {
   const deja = sessions.get(email);
   if (deja) return deja;
   if (!MOTIF_MEMBRE.test(email) && email !== EMAIL_COACH) stop(`connexion refusée hors comptes vitrine`);
-  const { data, error } = await admin().auth.admin.generateLink({ type: 'magiclink', email });
-  if (error || !data.properties?.hashed_token) stop(`lien de connexion impossible (${error?.message})`);
-  const c = createClient(URL_SB(), CLE_PUBLIQUE(), {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-  const { error: e2 } = await c.auth.verifyOtp({ token_hash: data.properties.hashed_token, type: 'magiclink' });
-  if (e2) stop(`connexion impossible (${e2.message})`);
-  sessions.set(email, c);
-  return c;
+  // Auth limite les vérifications de jeton (≈ 30 par 5 min et par IP) : sur
+  // cette limite, on attend et on reprend, au plus 15 fois (≈ 15 min).
+  for (let essai = 1; ; essai++) {
+    const { data, error } = await admin().auth.admin.generateLink({ type: 'magiclink', email });
+    let e = error?.message;
+    if (!e && data.properties?.hashed_token) {
+      const c = createClient(URL_SB(), CLE_PUBLIQUE(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { error: e2 } = await c.auth.verifyOtp({ token_hash: data.properties.hashed_token, type: 'magiclink' });
+      if (!e2) { sessions.set(email, c); return c; }
+      e = e2.message;
+    }
+    if (!/rate limit/i.test(e ?? '') || essai >= 15) stop(`connexion impossible (${e ?? 'jeton absent'})`);
+    console.log(`limite de débit d'Auth : attente de 60 s (reprise ${essai}/15)`);
+    await new Promise(r => setTimeout(r, 60_000));
+  }
 }
 
 async function ok<T>(p: PromiseLike<{ data: T; error: { message: string } | null }>, quoi: string): Promise<T> {
