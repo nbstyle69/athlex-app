@@ -24,6 +24,14 @@
 
 \set ON_ERROR_STOP on
 SET default_transaction_read_only = on;
+-- Réglages qui changent le texte d'une ligne (ligne::text, dates, flottants) :
+-- fixés ici, pour qu'une prise et une comparaison faites dans deux sessions
+-- différentes donnent le même md5. search_path = celui de la prod.
+SET TimeZone = 'UTC';
+SET DateStyle = 'ISO, MDY';
+SET IntervalStyle = 'postgres';
+SET extra_float_digits = 1;
+SET search_path = "$user", public, extensions;
 SELECT set_config('vitrine.box', :'box', false) AS box \gset vitrine_
 \ir proteges.sql
 \if :{?reference}

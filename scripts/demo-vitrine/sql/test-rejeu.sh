@@ -256,6 +256,22 @@ etape=$(chaine) || { ko "Ebm purge (échec en $etape)"; tail -5 "$TMP/log"; }
 val "UPDATE public.elo_history SET elo_after = elo_after + 1 WHERE member_id = '$REEL' AND wod_id = '$WR'" >/dev/null
 comparer "$TMP/m-md5.sql" && ok "Ebm mutation (md5 des lignes retiré) : la modification passe inaperçue, le cas Eb la détecte" || { ko "Ebm"; tail -3 "$TMP/log"; }
 
+# Ez : prise sous TimeZone = 'Europe/Paris', comparaison sous UTC → identique (réglages fixés dans le script).
+vitrine_jouee_tz() { # <fichier 20>
+  neuve; deux_wods; scorer $WR $REEL 120; historique $AF $WR
+  jouer "$1" -c "SET TimeZone = 'Europe/Paris'" -v box=$AF -v sortie="$REF" || { ko "Ez prise"; tail -3 "$TMP/log"; }
+  jouer 01-activer.sql -v box=$AF >/dev/null
+  scorer $WF $F1 200; scorer $WF $F2 150; elo $WF
+  chaine >/dev/null || ko "Ez purge"
+  jouer "$1" -c "SET TimeZone = 'UTC'" -v box=$AF -v reference="$REF"
+}
+if vitrine_jouee_tz 20-empreinte-elo.sql; then ok "Ez prise sous Europe/Paris, comparaison sous UTC : identique"
+else ko "Ez fuseaux différents : écart"; tail -3 "$TMP/log"; fi
+muter 20-empreinte-elo.sql "$TMP/m-tz.sql" "s/SET TimeZone = 'UTC';\n//"
+if vitrine_jouee_tz "$TMP/m-tz.sql"; then ko "Ezm mutation (TimeZone non fixé) : écart non vu"
+elif grep -q 'VITRINE_EMPREINTE: elo_history' "$TMP/log"; then ok "Ezm mutation (TimeZone non fixé) : la même ligne lue sous deux fuseaux change de md5, STOP à tort — le cas Ez la détecte"
+else ko "Ezm"; tail -3 "$TMP/log"; fi
+
 # Ec : ligne nouvelle d'un compte protégé sur un WOD scoré par un fictif, glissée sans score (le signalement ne la voit pas) → STOP à 80.
 vitrine_jouee
 historique $AF $WF
