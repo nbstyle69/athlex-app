@@ -185,6 +185,54 @@ if releve_seul; then ko "C6 liste d'attente : relevé passé"
 elif grep -q 'class_reservations.waiting=1' "$TMP/log"; then ok "C6 réel en liste d'attente sur un créneau d'un fictif : STOP"
 else ko "C6"; tail -3 "$TMP/log"; fi
 
+echo "== ELO des comptes réels protégés : 10-contact-elo et 20-empreinte-elo"
+REF="$(cygpath -m "$TMP")/empreinte-ref.sql"
+WF=00000000-0000-4000-e523-0000000000e1; WR=00000000-0000-4000-e523-0000000000e2
+F1=00000000-0000-4000-a523-000000000001; F2=00000000-0000-4000-a523-000000000002; REEL=00000000-0000-4000-a523-000000000901
+deux_wods() { val "INSERT INTO public.box_wods (id, box_id, title, wod_type, scheduled_date, is_published, leaderboard_enabled) VALUES ('$WF', '$AF', 'WOD des fictifs', 'amrap', current_date - 3, true, true), ('$WR', '$AF', 'WOD du reel', 'amrap', current_date - 2, true, true)" >/dev/null; }
+# scorer <wod> <membre> <valeur>
+scorer() { val "INSERT INTO public.wod_scores (wod_id, member_id, box_id, score_type, score_value, rx, scaled) VALUES ('$1', '$2', '$AF', 'reps', $3, true, false)" >/dev/null; }
+# elo <wod> : calcul comme l'app, connecté comme le compte réel (membre actif).
+elo() { val "SET request.jwt.claims = '{\"sub\":\"$REEL\",\"role\":\"authenticated\"}'; SELECT count(*) FROM public.compute_wod_elo('$1'); SELECT count(*) FROM public.compute_box_elo('$1');" >/dev/null; }
+
+neuve; deux_wods
+printf "SELECT set_config('vitrine.box', '%s', false) AS b \gset x_
+\i %s/proteges.sql
+SELECT cardinality(current_setting('vitrine.proteges')::uuid[]);
+" "$AF" "$(cygpath -m "$PWD")" > "$TMP/p0.sql"
+attendre "P0 protégés du décor : gérant, réel, motif voisin (+51)" "$($P -d vitrine_cas -A -t -f "$TMP/p0.sql" | tr -d '' | tail -1)" 3
+jouer 01-activer.sql -v box=$AF >/dev/null
+scorer $WF $F1 200; scorer $WF $F2 150; scorer $WF $REEL 180
+E5=$(val "$EMPREINTE")
+if jouer 10-contact-elo.sql -v box=$AF; then ko "E1 contact réel/fictif : signalement passé"
+elif grep -q "VITRINE_CONTACT: .*\[WOD $WF, [0-9-]*, 1 compte(s)\]" "$TMP/log"; then ok "E1 un réel score après des fictifs sur le même WOD : STOP (WOD, date, 1 compte)"
+else ko "E1"; tail -3 "$TMP/log"; fi
+grep -q "$REEL\|reel-901" "$TMP/log" && ko "E1 un identifiant de personne apparaît" || ok "E1 aucun identifiant de personne dans le signalement"
+attendre "E1 rien d'écrit" "$(val "$EMPREINTE")" "$E5"
+cp proteges.sql "$TMP/"; muter 10-contact-elo.sql "$TMP/m-contact.sql" "s/IF v_liste <> '' THEN/IF false THEN/"
+jouer "$TMP/m-contact.sql" -v box=$AF && ok "E1m mutation (signalement retiré) : le contact passe inaperçu, le cas E1 la détecte" || { ko "E1m"; tail -3 "$TMP/log"; }
+
+neuve; deux_wods
+jouer 20-empreinte-elo.sql -v box=$AF -v sortie="$REF" && ok "E2 empreinte prise avant le seed" || { ko "E2 prise"; tail -3 "$TMP/log"; }
+grep -q "$REEL" "$REF" && ! grep -q '@' "$REF" && ok "E2 fichier : uuid et md5 seulement" || ko "E2 contenu du fichier"
+jouer 01-activer.sql -v box=$AF >/dev/null
+scorer $WF $F1 200; scorer $WF $F2 150; elo $WF        # les fictifs entre eux
+scorer $WR $REEL 120                                    # le réel seul, jamais en contact
+jouer 10-contact-elo.sql -v box=$AF && ok "E2 aucun contact signalé" || { ko "E2 contact"; tail -3 "$TMP/log"; }
+etape=$(chaine) && ok "E2 purge complète" || { ko "E2 purge (échec en $etape)"; tail -5 "$TMP/log"; }
+jouer 20-empreinte-elo.sql -v box=$AF -v reference="$REF" && grep -q 'VITRINE_EMPREINTE identique' "$TMP/log" \
+  && ok "E2 réel jamais en contact : empreinte identique après la purge" || { ko "E2 comparaison"; tail -3 "$TMP/log"; }
+
+neuve; deux_wods
+jouer 20-empreinte-elo.sql -v box=$AF -v sortie="$REF" >/dev/null
+jouer 01-activer.sql -v box=$AF >/dev/null
+scorer $WF $F1 200; scorer $WF $F2 150; scorer $WF $REEL 180; elo $WF   # contact, signalement contourné
+etape=$(chaine) || { ko "E2m purge (échec en $etape)"; tail -5 "$TMP/log"; }
+if jouer 20-empreinte-elo.sql -v box=$AF -v reference="$REF"; then ko "E2m mutation (contact non signalé) : empreinte identique"
+elif grep -q 'VITRINE_EMPREINTE: écart sur.*elo_history' "$TMP/log" && grep -q 'profiles' "$TMP/log"; then
+  ok "E2m mutation (contact non signalé, ELO calculé) : écart détecté après la purge — $(grep -o 'écart sur.*' "$TMP/log" | head -1)"
+else ko "E2m"; tail -3 "$TMP/log"; fi
+
 $P -d postgres -c "DROP DATABASE IF EXISTS vitrine_cas WITH (FORCE)" -c "DROP DATABASE IF EXISTS vitrine_fix WITH (FORCE)" >/dev/null
 rm -rf "$TMP"
 [ $echoue -eq 0 ] && echo "TOUT OK" || { echo "DES ECHECS"; exit 1; }

@@ -169,6 +169,16 @@ export function scorePour(w: WodBox, m: Membre): ScoreWod | null {
   }
 }
 
+/**
+ * Règle de contact (étape 2d) : un fictif ne score jamais un WOD où un compte
+ * réel protégé a déjà un score. Sinon compute_wod_elo / compute_box_elo
+ * classeraient ce compte parmi les fictifs, et la purge ne le défait pas.
+ */
+export function wodsSansContact<W extends { id: string }>(wods: W[], avecScoreProtege: Set<string>): { gardes: W[]; sautes: number } {
+  const gardes = wods.filter(w => !avecScoreProtege.has(w.id));
+  return { gardes, sautes: wods.length - gardes.length };
+}
+
 // ── Musculation : séries et 1RM (validate_strength_session) ─────────────────
 
 export interface SerieMuscu {

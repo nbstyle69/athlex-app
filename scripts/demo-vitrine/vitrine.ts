@@ -32,11 +32,12 @@ import { randomBytes } from 'crypto';
 import { execFileSync } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { tmpdir } from 'os';
+import { tmpdir, homedir } from 'os';
+import { existsSync } from 'fs';
 import {
   BOX_ATHLEX, EMAIL_COACH, PSEUDO_COACH, MOTIF_MEMBRE, FORMULE_DEMO, MEMBRES, TOURNOIS, Membre, SpecTournoi, RefTournoi,
   FENETRE_RESERVATION_JOURS, adapterPseudo, scoreLe, scorePour, seriesPour, enRx, repartirInscrits, scoreTournoi,
-  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, lireCle, TOURNOI_ESSAI, CompteLu, WodBox,
+  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, lireCle, TOURNOI_ESSAI, wodsSansContact, CompteLu, WodBox,
 } from './logique';
 
 type Db = SupabaseClient<any, 'public', any>;
@@ -134,6 +135,12 @@ async function garderBox(): Promise<{ invite: string; formats: string[]; owner: 
 
 async function seed() {
   const { invite } = await garderBox();
+  // Empreinte de contrôle de l'ELO des comptes réels protégés, juste avant le
+  // premier seed (une par groupe : essai, vitrine), hors dépôt, lecture seule.
+  if (!existsSync(FICHIER_EMPREINTE())) {
+    dit(`prendre l'empreinte ELO des comptes réels protégés → ${FICHIER_EMPREINTE()}`);
+    if (APPLY) psql('20-empreinte-elo.sql', { box: BOX!, sortie: FICHIER_EMPREINTE() });
+  }
   const etat = await lireEtat();
   const cibles = [...membres.map(m => ({ email: m.email, pseudo: m.pseudo, prenom: m.prenom as string | null, genre: m.genre as string | null, niveau: m.niveau as string })),
     { email: EMAIL_COACH, pseudo: PSEUDO_COACH, prenom: null, genre: null, niveau: 'rx' }];
@@ -207,6 +214,7 @@ async function membresActifs(): Promise<{ m: Membre; id: string }[]> {
 
 async function refresh() {
   await garderBox();
+  signalerContact();
   const actifs = await membresActifs();
   const auj = jourParis(0), hier = jourParis(-1);
 
@@ -214,7 +222,10 @@ async function refresh() {
   const wods = await ok(admin().from('box_wods')
     .select('id, title, wod_type, description, time_cap_seconds, rounds, leaderboard_enabled, publish_at, audience')
     .eq('box_id', BOX!).eq('is_published', true).in('scheduled_date', [hier, auj]), 'WODs') as any[];
-  const visibles = wods.filter(w => (w.audience ?? 'all') === 'all' && (!w.publish_at || new Date(w.publish_at) <= new Date()));
+  const ouverts = wods.filter(w => (w.audience ?? 'all') === 'all' && (!w.publish_at || new Date(w.publish_at) <= new Date()));
+  // Règle de contact : un WOD déjà scoré par un compte réel protégé est sauté.
+  const { gardes: visibles, sautes } = wodsSansContact(ouverts, wodsAvecScoreProtege(ouverts.map(w => w.id)));
+  dit(`WODs sautés (déjà scorés par un compte réel protégé) : ${sautes}`);
   const deja = new Set(((await ok(admin().from('wod_scores').select('wod_id, member_id').in('wod_id', visibles.map(w => w.id)), 'scores')) as any[]).map(s => `${s.wod_id}|${s.member_id}`));
   const parType: Record<string, number> = {};
   let records = 0;
@@ -328,6 +339,9 @@ async function coach(): Promise<{ db: Db; id: string }> {
 
 async function tournaments() {
   const { formats } = await garderBox();
+  // Les scores de tournoi ne passent pas par compute_wod_elo / compute_box_elo :
+  // pas de précaution ici, seulement le signalement.
+  signalerContact();
   const ids = lireIds();
   ids[GROUPE] ??= {};
   const mesIds = ids[GROUPE]!;
@@ -499,6 +513,32 @@ async function jouerTour(t: SpecTournoi, id: string, dbCoach: Db, idDe: Map<numb
 
 // ── purge ────────────────────────────────────────────────────────────────────
 
+/** Dossier des empreintes, hors dépôt (VITRINE_DOSSIER, sinon ~/Desktop/athlex-captures/box-vitrine). */
+const DOSSIER = () => (process.env.VITRINE_DOSSIER ?? join(homedir(), 'Desktop', 'athlex-captures', 'box-vitrine')).split('\\').join('/');
+const FICHIER_EMPREINTE = () => `${DOSSIER()}/empreinte-elo-${GROUPE}.sql`;
+
+/**
+ * Règle de contact, en lecture seule (10-contact-elo.sql) : STOP avant toute
+ * écriture si un compte réel protégé a un score sur un WOD où un fictif a scoré.
+ */
+function signalerContact() {
+  try { psql('10-contact-elo.sql', { box: BOX! }); }
+  catch { stop('contact entre un compte réel protégé et des fictifs (voir VITRINE_CONTACT ci-dessus) : rien n’a été écrit. Décision de Nab.'); }
+}
+
+/** WODs, parmi `wodIds`, où un compte réel protégé (proteges.sql) a déjà un score. */
+function wodsAvecScoreProtege(wodIds: string[]): Set<string> {
+  if (wodIds.length === 0) return new Set();
+  const sortie = execFileSync('psql', [env('PROD_DB_URL'), '-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1',
+    '-c', 'SET default_transaction_read_only = on',
+    '-c', `SELECT set_config('vitrine.box', '${BOX}', false)`,
+    '-f', join(ICI, 'sql', 'proteges.sql'),
+    '-c', `SELECT coalesce(json_agg(DISTINCT wod_id), '[]') FROM public.wod_scores
+            WHERE wod_id = ANY ('{${wodIds.join(',')}}'::uuid[]) AND member_id = ANY (current_setting('vitrine.proteges')::uuid[])`],
+    { encoding: 'utf8', env: { ...process.env, PGCLIENTENCODING: 'UTF8' }, stdio: ['ignore', 'pipe', 'inherit'] });
+  return new Set(JSON.parse(sortie.trim().split('\n').pop() || '[]'));
+}
+
 function psql(fichier: string | null, vars: Record<string, string>, sql?: string): string {
   const args = ['-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1', ...Object.entries(vars).flatMap(([k, v]) => ['-v', `${k}=${v}`])];
   if (sql) args.push('-c', 'SET default_transaction_read_only = on', '-c', sql);
@@ -510,6 +550,8 @@ function psql(fichier: string | null, vars: Record<string, string>, sql?: string
 
 async function purge() {
   await garderBox();
+  signalerContact();
+  if (!existsSync(FICHIER_EMPREINTE())) stop(`empreinte ELO de référence absente (${FICHIER_EMPREINTE()}) : elle est prise avant le premier seed.`);
   const legacy = drapeau('--include-legacy-demo');
   const json = (sql: string) => JSON.parse(psql(null, {}, sql).trim().split('\n').pop() || '[]');
   // Lecture en postgres : internal.demo_accounts n'est lisible par aucun rôle client.
@@ -559,6 +601,9 @@ async function purge() {
   delete ids2[GROUPE];
   ecrireIds(ids2);
   console.log(`purge terminée : ${tournois.length} tournoi(s), ${comptes.length} compte(s), contrôle à 0.`);
+  // Contrôle de l'ELO des comptes réels protégés : rien n'est corrigé, Nab décide.
+  try { psql('20-empreinte-elo.sql', { box: BOX!, reference: FICHIER_EMPREINTE() }); }
+  catch { stop('empreinte ELO des comptes réels protégés différente de celle d’avant le seed (voir VITRINE_EMPREINTE) : rien n’est corrigé, décision de Nab.'); }
 }
 
 // ── cles ─────────────────────────────────────────────────────────────────────

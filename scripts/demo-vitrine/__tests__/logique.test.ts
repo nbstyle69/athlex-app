@@ -1,7 +1,7 @@
 import {
   MEMBRES, PSEUDO_COACH, EMAIL_COACH, MOTIF_MEMBRE, BOX_ATHLEX, TOURNOIS,
   adapterPseudo, scorePour, seriesPour, estimation1rm, repartirInscrits,
-  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, scoreTournoi, lireCle, WodBox, CompteLu,
+  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, scoreTournoi, lireCle, wodsSansContact, WodBox, CompteLu,
 } from '../logique';
 
 describe('pseudos', () => {
@@ -91,6 +91,16 @@ describe('scores du Whiteboard', () => {
     const d = scorePour(w, faible)!;
     expect(f.capped).toBe(false);
     expect(d.capped || d.score_value > f.score_value).toBe(true);
+  });
+});
+
+describe('règle de contact avec les comptes réels protégés', () => {
+  it('un WOD déjà scoré par un compte protégé est sauté, les autres gardés', () => {
+    const wods = [{ id: 'w1' }, { id: 'w2' }, { id: 'w3' }];
+    const r = wodsSansContact(wods, new Set(['w2']));
+    expect(r.gardes.map(w => w.id)).toEqual(['w1', 'w3']);
+    expect(r.sautes).toBe(1);
+    expect(wodsSansContact(wods, new Set()).sautes).toBe(0);
   });
 });
 

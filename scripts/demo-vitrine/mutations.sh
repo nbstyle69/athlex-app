@@ -49,6 +49,7 @@ muter "purge élargie : réel marqué démo pris" "s/ && email\.endsWith\(DOMAIN
 muter "clé : préfixe non vérifié"           "s/if \(!valeur\.startsWith\(prefixe\)\) return/if (false) return/"
 muter "clé : ordre des variables inversé"   "s/const nom = noms\.find\(n => env\[n\]\);/const nom = [...noms].reverse().find(n => env[n]);/"
 muter "clé : valeur dans le message"        "s/return \{ erreur: \`\\$\{nom\} ne commence pas par \\$\{prefixe\}\` \};/return { erreur: \`\\$\{nom\} = \\$\{valeur\} ne commence pas par \\$\{prefixe\}\` };/"
-muter "tournois hors box purgés"            "s/voulus\.has\(t\.id\) && t\.box_id === box/voulus.has(t.id)/"
+muter "contact : WOD d'un protégé gardé"    "s/const gardes = wods\.filter\(w => !avecScoreProtege\.has\(w\.id\)\);/const gardes = wods;/"
+muter "tournois hors box purgés"          "s/voulus\.has\(t\.id\) && t\.box_id === box/voulus.has(t.id)/"
 
 [ $survivantes -eq 0 ] && echo "TOUTES LES MUTATIONS TUÉES" || { echo "DES MUTATIONS SURVIVENT"; exit 1; }
