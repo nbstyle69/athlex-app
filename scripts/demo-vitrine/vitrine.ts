@@ -110,7 +110,7 @@ interface Etat { comptes: Map<string, { id: string; email: string; username: str
 async function lireEtat(): Promise<Etat> {
   const profils = await ok(admin().from('profiles').select('id, email, username').ilike('email', 'demo.vitrine+%@athlexapp.eu'), 'profils');
   const comptes = new Map((profils as any[]).filter(p => MOTIF_MEMBRE.test(p.email) || p.email === EMAIL_COACH).map(p => [p.email, p]));
-  const lignes = await ok(admin().from('box_members').select('member_id, role, status, subscription_status, plan:membership_plans(name)').eq('box_id', BOX!), 'adhésions');
+  const lignes = await ok(admin().from('box_members').select('member_id, role, status, subscription_status, plan:membership_plans!box_members_plan_id_fkey(name)').eq('box_id', BOX!), 'adhésions');
   const roles = new Map<string, any>();
   for (const l of lignes as any[]) roles.set(l.member_id, { role: l.role, status: l.status, formule: l.plan?.name ?? null, abo: l.subscription_status });
   return { comptes, roles };
