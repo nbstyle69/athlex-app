@@ -287,16 +287,17 @@ async function refresh() {
     const choix = reservantsPour(c.id, actifs.map(a => a.m).filter(m => !surCreneau.has(m.nn)), ceJour, quotaReservation(c.max_capacity, confirmes));
     let pris = confirmes;
     for (const m of choix) {
+      const id = actifs.find(a => a.m.nn === m.nn)!.id;
       if (APPLY) {
         const db = await connecte(m.email);
-        const id = actifs.find(a => a.m.nn === m.nn)!.id;
         const r = await ok(db.from('class_reservations').insert({ schedule_id: c.id, member_id: id, box_id: BOX, status: 'confirmed' }).select('status').single(), 'réservation') as any;
         if (r.status !== 'confirmed') { // créneau rempli entre-temps : on rend la place
           await ok(db.from('class_reservations').delete().eq('schedule_id', c.id).eq('member_id', id), 'annulation');
           break;
         }
-        resas.push({ schedule_id: c.id, member_id: id, status: 'confirmed' });
       }
+      // Aussi en dry-run : sinon le plan compterait plusieurs créneaux par membre et par jour.
+      resas.push({ schedule_id: c.id, member_id: id, status: 'confirmed' });
       pris++; posees++;
     }
     libresMin = Math.min(libresMin, c.max_capacity - pris);
