@@ -11,6 +11,7 @@ trap 'cp "$SAUVE" "$F"; rm -f "$SAUVE"' EXIT
 survivantes=0
 
 muter() { # <libellé> <expression perl>
+  [ -n "${FILTRE:-}" ] && ! [[ "$1" =~ $FILTRE ]] && return   # FILTRE=<regex> : sous-ensemble des mutations
   cp "$SAUVE" "$F"
   perl -0pi -e "$2" "$F"
   if cmp -s "$SAUVE" "$F"; then echo "INTROUVABLE $1"; survivantes=1; return; fi
@@ -34,11 +35,12 @@ muter "série sans charge exigée"            "s/load_required: !!\(pct \|\| kg\
 muter "1RM au-dessus de l'estimation"       "s/const kgRec = Math\.floor\(est \* 2\) \/ 2;/const kgRec = Math.floor(est * 2) \/ 2 + 0.5;/"
 muter "séries en double"                    "s/const i = \(index\.get\(movement\) \?\? 0\) \+ 1;/const i = 1;/"
 muter "plafond de 3 tournois levé"          "s/\(compte\.get\(m\.nn\) \?\? 0\) < 3/true/; s/\(compte\.get\(a\.nn\)! - compte\.get\(b\.nn\)!\)/0/"
-muter "T1 : deux tours joués"                "s/inscrits: 24, demarre: true, toursJoues: 1 \},
-  \{ ref: 'T2'/inscrits: 24, demarre: true, toursJoues: 2 },
-  { ref: 'T2'/"
+muter "T1 : deux tours joués"                "s/inscrits: 24, demarre: true, toursJoues: 1, inscriptionsOuvertes/inscrits: 24, demarre: true, toursJoues: 2, inscriptionsOuvertes/"
 muter "T5 démarré"                          "s/places: 32, inscrits: 12, demarre: false/places: 32, inscrits: 12, demarre: true/"
 muter "T4 joué jusqu'au bout"               "s/niveau: 'inter', places: 24, inscrits: 24, demarre: true, toursJoues: 1/niveau: 'inter', places: 24, inscrits: 24, demarre: true/"
+muter "T1 fermé aux inscriptions"          "s/toursJoues: 1, inscriptionsOuvertes: true \\}/toursJoues: 1 }/"
+muter "T2 ouvert aux inscriptions"          "s/petiteFinale: true, toursJoues: 1 \\}/petiteFinale: true, toursJoues: 1, inscriptionsOuvertes: true }/"
+muter "reviewer : arrêt"                    's/: `reviewer : \$\{n\} /: `STOP reviewer : \${n} /'
 muter "effectif T5 faux"                    "s/places: 32, inscrits: 12/places: 32, inscrits: 13/"
 muter "T6 complet"                          "s/places: 16, inscrits: 8/places: 16, inscrits: 16/"
 muter "genres non alternés"                 "s/choisis\.length % 2 === 0 \? f\.shift\(\) \?\? h\.shift\(\)/true ? f.shift() ?? h.shift()/"

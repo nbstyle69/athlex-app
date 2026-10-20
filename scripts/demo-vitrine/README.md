@@ -46,7 +46,7 @@ Pendant la revue Apple / Google, AthleX Fitness (`d3d0b0a0-0000-4000-a000-000000
 `compute_wod_elo` et `compute_box_elo` calculent par ajouts à l'ELO courant et ne font plus rien une fois l'historique du WOD écrit (étape 2c). La purge ne peut donc pas défaire l'effet des fictifs sur l'ELO d'un vrai compte qui a scoré le même WOD qu'eux. **On n'écrit jamais sur un vrai compte.** À la place :
 
 - **Comptes réels protégés** (`sql/proteges.sql`) : le gérant, les co-gérants, les coachs et les membres d'AthleX Fitness (tout statut), **hors** `internal.demo_accounts` et hors comptes vitrine.
-- **Effet accepté** : le reviewer et les comptes de démo historiques (tous dans `internal.demo_accounts`) ne sont pas protégés. Si l'un d'eux score un WOD que des fictifs ont scoré, son ELO de WOD et de box garde l'effet des fictifs après la purge. C'est accepté (décision de Nab).
+- **Effet accepté** (aussi dans les tournois de vitrine, voir la purge) : le reviewer et les comptes de démo historiques (tous dans `internal.demo_accounts`) ne sont pas protégés. Si l'un d'eux score un WOD que des fictifs ont scoré, son ELO de WOD et de box garde l'effet des fictifs après la purge. C'est accepté (décision de Nab).
 - **Précaution** : `refresh` ne fait jamais scorer un fictif sur un WOD où un compte protégé a déjà un score. Le WOD est sauté et compté (« WODs sautés »). Les scores de tournoi ne passent pas par ces fonctions : rien à sauter dans `tournaments play`.
 - **Signalement** : au début de `refresh`, `tournaments` et `purge`, `10-contact-elo.sql` arrête tout, avant toute écriture, si un compte protégé a un score sur un WOD où un fictif a scoré (cas d'un vrai score posé **après** les fictifs). Il donne « WOD, date, nombre de comptes », sans identifiant de personne.
 - **Empreinte de contrôle** (`20-empreinte-elo.sql`) : elle est prise par `seed` juste avant le premier compte, une fois par groupe (`essai`, `vitrine`), dans `VITRINE_DOSSIER` (défaut `~/Desktop/athlex-captures/box-vitrine`, hors dépôt). La contamination n'entre que par `compute_wod_elo` / `compute_box_elo` sur un WOD scoré par un fictif, ou par un tournoi de vitrine. On ne fige donc que ce qui existait à la prise :
@@ -60,7 +60,7 @@ Pendant la revue Apple / Google, AthleX Fitness (`d3d0b0a0-0000-4000-a000-000000
 ## Purge : ordre et règles
 
 0. **Signalement de contact** (`10-contact-elo.sql`) et présence de l'empreinte de référence. Sinon STOP.
-1. **Reviewer** : aucun résultat dans les tournois purgés. Sinon STOP, à remettre à la main.
+1. **Reviewer** : ses résultats éventuels dans les tournois de `vitrine.ids.json` (inscription à T1, T5 ou T6) sont comptés au rapport et **supprimés avec les tournois**. L'effet sur son ELO est accepté (décision du 21/10). Une ligne d'un **compte réel protégé** dans ces tournois arrête toujours la purge, au relevé `80`.
 2. **`80-releve-purge.sql`, en lecture seule, avant toute suppression.** Il lit au catalogue chaque clé étrangère (une colonne) vers `auth.users` et `public.profiles`, avec son `confdeltype`, et classe chaque ligne qui vise un compte à purger. Il vérifie aussi qu'aucun compte protégé n'a de ligne d'historique ELO au contact des fictifs :
 
    | Classe | Cas | Traitement |
@@ -110,7 +110,7 @@ B="--box d3d0b0a0-0000-4000-a000-000000000001"
   - le coach crée les tournois et en vérifie les formats permis ;
   - chaque fictif s'inscrit lui-même ;
   - `play` joue un tour par passage ;
-  - **décision B (21/10)** : aucun tournoi terminé, car l'app ne montre que les tournois ouverts ou en cours. T1 à T4 jouent **un seul tour** (spec `toursJoues`) et restent en cours ; T5 et T6 restent à venir. Pas de clôture ni de `finalize` pour la vitrine : la commande reste dans le script (elle a servi à l'essai E1) ;
+  - **décision B (21/10)** : aucun tournoi terminé, car l'app ne montre que les tournois ouverts ou en cours. T1 à T4 jouent **un seul tour** (spec `toursJoues`) et restent en cours ; T5 et T6 restent à venir. **T1 garde ses inscriptions ouvertes pendant le tournoi** (`registrations_open_during_tournament`, spec `inscriptionsOuvertes`) : le reviewer peut le rejoindre et scorer l'épreuve 1 ouverte. T2 à T4 se ferment aux inscriptions au démarrage. Pas de clôture ni de `finalize` pour la vitrine : la commande reste dans le script (elle a servi à l'essai E1) ;
   - `--essai` utilise le groupe `essai` (E1, tableau à 4).
 - **`purge [--essai] --apply --yes`** : voir plus haut.
 

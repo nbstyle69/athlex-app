@@ -1,7 +1,7 @@
 import {
   MEMBRES, PSEUDO_COACH, EMAIL_COACH, MOTIF_MEMBRE, BOX_ATHLEX, TOURNOIS,
   adapterPseudo, scorePour, seriesPour, estimation1rm, repartirInscrits,
-  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, scoreTournoi, lireCle, wodsSansContact, WodBox, CompteLu,
+  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, scoreTournoi, lireCle, wodsSansContact, bilanReviewer, WodBox, CompteLu,
 } from '../logique';
 
 describe('pseudos', () => {
@@ -94,6 +94,15 @@ describe('scores du Whiteboard', () => {
   });
 });
 
+describe('reviewer dans les tournois de vitrine', () => {
+  it('ses résultats sont comptés, jamais un arrêt', () => {
+    expect(bilanReviewer(0)).toBe('reviewer : aucun résultat dans les tournois de vitrine');
+    expect(bilanReviewer(3)).toContain('3 résultat(s)');
+    expect(bilanReviewer(3)).toContain('effet sur son ELO accepté');
+    expect(bilanReviewer(3)).not.toMatch(/STOP/);
+  });
+});
+
 describe('règle de contact avec les comptes réels protégés', () => {
   it('un WOD déjà scoré par un compte protégé est sauté, les autres gardés', () => {
     const wods = [{ id: 'w1' }, { id: 'w2' }, { id: 'w3' }];
@@ -171,6 +180,7 @@ describe('répartition des tournois', () => {
   it('état visé (décision B) : T1 à T4 en cours, un seul tour joué ; T5 et T6 à venir', () => {
     const etat = Object.fromEntries(TOURNOIS.map(t => [t.ref, `${t.demarre ? 'demarre' : 'a-venir'}:${t.toursJoues}`]));
     expect(etat).toEqual({ T1: 'demarre:1', T2: 'demarre:1', T3: 'demarre:1', T4: 'demarre:1', T5: 'a-venir:0', T6: 'a-venir:0' });
+    expect(TOURNOIS.filter(t => t.inscriptionsOuvertes).map(t => t.ref)).toEqual(['T1']);
     expect(TOURNOIS.map(t => [t.ref, t.places, t.inscrits])).toEqual([
       ['T1', 24, 24], ['T2', 16, 16], ['T3', 8, 8], ['T4', 24, 24], ['T5', 32, 12], ['T6', 16, 8]]);
   });

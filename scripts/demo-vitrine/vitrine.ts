@@ -37,7 +37,7 @@ import { existsSync } from 'fs';
 import {
   BOX_ATHLEX, EMAIL_COACH, PSEUDO_COACH, MOTIF_MEMBRE, FORMULE_DEMO, MEMBRES, TOURNOIS, Membre, SpecTournoi, RefTournoi,
   FENETRE_RESERVATION_JOURS, adapterPseudo, scoreLe, scorePour, seriesPour, enRx, repartirInscrits, scoreTournoi,
-  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, lireCle, TOURNOI_ESSAI, wodsSansContact, CompteLu, WodBox,
+  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, lireCle, TOURNOI_ESSAI, wodsSansContact, bilanReviewer, CompteLu, WodBox,
 } from './logique';
 
 type Db = SupabaseClient<any, 'public', any>;
@@ -364,7 +364,7 @@ async function tournaments() {
       const cree = await ok(db.from('tournaments').insert({
         name: t.nom, level: t.niveau, format: t.format, max_participants: t.places, gender_target: 'mix',
         box_id: BOX, status: 'open', start_date: t.demarre ? demain : null, end_date: null,
-        third_place_match: t.format === 'bracket' && !!t.petiteFinale, registrations_open_during_tournament: false,
+        third_place_match: t.format === 'bracket' && !!t.petiteFinale, registrations_open_during_tournament: !!t.inscriptionsOuvertes,
       }).select('id').single(), `création ${t.ref}`) as any;
       mesIds[t.ref] = cree.id;
       ecrireIds(ids);
@@ -574,13 +574,13 @@ async function purge() {
   dit(`purge (${GROUPE}) : ${tournois.length} tournoi(s), ${comptes.length} compte(s)${legacy ? ' (dont démo historiques)' : ''}`);
   if (legacy) stop('--include-legacy-demo reste bloquée tant que Nab n’a pas tranché le sort des 6 anciens tournois de ces comptes.');
 
-  // 1. Le reviewer n'a rien gagné ni perdu dans ces tournois (sinon : à remettre à la main).
+  // 1. Résultats du reviewer dans ces tournois : comptés, supprimés avec eux (effet ELO accepté).
   if (revs[0]) {
     const n = Number(psql(null, {}, `SELECT (SELECT count(*) FROM tournament_elo_history WHERE athlete_id='${revs[0]}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))
       + (SELECT count(*) FROM tournament_match_elo_history WHERE athlete_id='${revs[0]}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))
       + (SELECT count(*) FROM tournament_wod_elo_history WHERE athlete_id='${revs[0]}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))
       + (SELECT count(*) FROM tournament_scores WHERE athlete_id='${revs[0]}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))`).trim().split('\n').pop());
-    if (n !== 0) stop(`le reviewer a ${n} résultat(s) dans les tournois de vitrine : ELO, badges et crédits à remettre à la main avant la purge`);
+    console.log(bilanReviewer(n));
   }
   // 2. Relevé au catalogue, en lecture seule, AVANT toute suppression : clés sans
   //    action ou en restriction, lignes de vrais comptes, tournois non listés, liste

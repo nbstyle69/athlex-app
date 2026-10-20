@@ -286,6 +286,29 @@ vitrine_jouee; historique $AF $WF
 if etape=$(chaine "$TMP/m-contact80.sql") && comparer; then ok "Ecm mutation (contrôle de contact retiré de 80) : purge et empreinte passent, la contamination reste — le cas Ec la détecte"
 else ko "Ecm (échec en $etape)"; tail -3 "$TMP/log"; fi
 
+echo "== reviewer et compte protégé dans un tournoi de vitrine (80, 90, 99)"
+# elo_tournoi <compte> : une ligne d'ELO de clôture dans TV1 (tournoi de vitrine listé).
+elo_tournoi() { val "INSERT INTO public.tournament_elo_history (tournament_id, athlete_id, final_rank, participants_count, avg_opponent_elo, elo_before, elo_after, elo_change) VALUES ('00000000-0000-4000-d523-000000000001', '$1', 5, 5, 1000, 1000, 990, -10)" >/dev/null; }
+REV=00000000-0000-4000-a523-000000000905   # compte de internal.demo_accounts hors vitrine : le « reviewer » du décor
+
+neuve; jouer 01-activer.sql -v box=$AF >/dev/null
+val "INSERT INTO internal.demo_accounts (user_id) VALUES ('$REV')" >/dev/null; elo_tournoi $REV
+if etape=$(chaine); then ok "Er1 résultat du reviewer dans un tournoi de vitrine : pas de STOP, purge complète"
+else ko "Er1 (échec en $etape)"; tail -3 "$TMP/log"; fi
+attendre "Er1 sa ligne est partie avec le tournoi" "$(val "SELECT count(*) FROM public.tournament_elo_history WHERE athlete_id = '$REV'")" 0
+attendre "Er1 le compte reviewer reste" "$(val "SELECT count(*) FROM auth.users WHERE id = '$REV'")" 1
+
+neuve; jouer 01-activer.sql -v box=$AF >/dev/null; elo_tournoi $REEL
+E7=$(val "$EMPREINTE")
+if etape=$(chaine); then ko "Er2 ligne d'un compte protégé dans un tournoi de vitrine : purge passée"
+elif [ "$etape" = 80 ] && grep -q "tournament_elo_history=1 (ELO d'un compte protégé au contact des fictifs)" "$TMP/log"; then ok "Er2 ligne d'un compte protégé dans un tournoi de vitrine : STOP au relevé"
+else ko "Er2 (échec en $etape)"; tail -3 "$TMP/log"; fi
+attendre "Er2 rien d'écrit" "$(val "$EMPREINTE")" "$E7"
+muter 80-releve-purge.sql "$TMP/m-contact-tournoi.sql" "s/    UNION ALL SELECT 'tournament_elo_history', count\(\*\) FROM public\.tournament_elo_history h\n     WHERE h\.athlete_id IN \(SELECT id FROM pr\) AND h\.tournament_id IN \(SELECT id FROM tr\)\n//"
+neuve; jouer 01-activer.sql -v box=$AF >/dev/null; elo_tournoi $REEL
+if etape=$(chaine "$TMP/m-contact-tournoi.sql"); then ok "Er2m mutation (ELO de tournoi retiré du contrôle) : la ligne du compte protégé part sans STOP, le cas Er2 la détecte"
+else ko "Er2m (échec en $etape)"; tail -3 "$TMP/log"; fi
+
 echo "== 30-empreinte-box : box et lignes à ne pas toucher"
 REFB="$(cygpath -m "$TMP")/empreinte-box.sql"
 CRENEAU="INSERT INTO public.class_schedules (id, box_id, title, scheduled_date, start_time, end_time, max_capacity) VALUES ('00000000-0000-4000-e523-0000000000c2', '$AF', 'WOD', current_date + 3, '07:00', '08:00', 12)"

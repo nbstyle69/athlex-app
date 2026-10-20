@@ -273,10 +273,12 @@ export interface SpecTournoi {
    * cours). `undefined` : joué jusqu'au bout (essai).
    */
   toursJoues?: number;
+  /** Inscriptions possibles une fois le tournoi en cours (T1 seulement, décision du 21/10). */
+  inscriptionsOuvertes?: boolean;
 }
 
 export const TOURNOIS: SpecTournoi[] = [
-  { ref: 'T1', nom: 'Open d’automne', format: 'simple', niveau: 'rx', places: 24, inscrits: 24, demarre: true, toursJoues: 1 },
+  { ref: 'T1', nom: 'Open d’automne', format: 'simple', niveau: 'rx', places: 24, inscrits: 24, demarre: true, toursJoues: 1, inscriptionsOuvertes: true },
   { ref: 'T2', nom: 'Battle Kettlebell', format: 'bracket', niveau: 'rx', places: 16, inscrits: 16, demarre: true, petiteFinale: true, toursJoues: 1 },
   { ref: 'T3', nom: 'Duel de la Box', format: 'swiss', niveau: 'scaled', places: 8, inscrits: 8, demarre: true, toursJoues: 1 },
   { ref: 'T4', nom: 'Ligue Hybrid', format: 'league_div', niveau: 'inter', places: 24, inscrits: 24, demarre: true, toursJoues: 1 },
@@ -323,6 +325,17 @@ export function scoreTournoi(type: string, wodId: string, m: Membre): string {
   const perf = Math.max(0, Math.min(1, m.force + (tirage('tournoi', wodId, m.nn) - 0.5) * 0.3));
   if (type === 'For Time') return String(Math.round(900 - 420 * perf));
   return String(Math.round(80 + 160 * perf));
+}
+
+/**
+ * Résultats du reviewer dans les tournois de vitrine (décision du 21/10) : ils
+ * partent avec les tournois et l'effet sur son ELO est accepté. Jamais un arrêt :
+ * seul un compte réel protégé arrête la purge (80-releve-purge.sql).
+ */
+export function bilanReviewer(n: number): string {
+  return n === 0
+    ? 'reviewer : aucun résultat dans les tournois de vitrine'
+    : `reviewer : ${n} résultat(s) dans les tournois de vitrine, supprimé(s) avec eux (effet sur son ELO accepté)`;
 }
 
 /** Mini-tournoi de l'essai (étape 3) : tableau à 4, ids sous la clé `essai`. */
