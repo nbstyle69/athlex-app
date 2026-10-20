@@ -286,6 +286,48 @@ vitrine_jouee; historique $AF $WF
 if etape=$(chaine "$TMP/m-contact80.sql") && comparer; then ok "Ecm mutation (contrôle de contact retiré de 80) : purge et empreinte passent, la contamination reste — le cas Ec la détecte"
 else ko "Ecm (échec en $etape)"; tail -3 "$TMP/log"; fi
 
+echo "== 30-empreinte-box : box et lignes à ne pas toucher"
+REFB="$(cygpath -m "$TMP")/empreinte-box.sql"
+CRENEAU="INSERT INTO public.class_schedules (id, box_id, title, scheduled_date, start_time, end_time, max_capacity) VALUES ('00000000-0000-4000-e523-0000000000c2', '$AF', 'WOD', current_date + 3, '07:00', '08:00', 12)"
+# essai_box [fichier 30] : décor (créneau, score réel), prise, activité des fictifs, purge complète.
+essai_box() {
+  neuve; deux_wods; val "$CRENEAU" >/dev/null; scorer $WR $REEL 120
+  # Le décor contient déjà ce que l'essai créera (tournois de vitrine, WOD du
+  # coach, comptes rattachés) : on le retire avant la prise et on remet les
+  # comptes après, comme le seed (compteur de membres de la box compris).
+  jouer 90-purger-tournois.sql -v box=$AF -v ids="$IDS" >/dev/null
+  val "DELETE FROM public.box_wods WHERE id = '00000000-0000-4000-e523-0000000000f1'" >/dev/null
+  val "CREATE TABLE public.v523_bm AS SELECT * FROM public.box_members WHERE box_id = '$AF' AND member_id = ANY ('$COMPTES'::uuid[]); DELETE FROM public.box_members WHERE id IN (SELECT id FROM public.v523_bm)" >/dev/null
+  jouer "${1:-30-empreinte-box.sql}" -v box=$AF -v sortie="$REFB" || { ko "B prise"; tail -3 "$TMP/log"; }
+  cp "$TMP/log" "$TMP/logprise"
+  val "INSERT INTO public.box_members SELECT * FROM public.v523_bm; DROP TABLE public.v523_bm" >/dev/null
+  jouer 01-activer.sql -v box=$AF >/dev/null
+  scorer $WF $F1 200; scorer $WF $F2 150; elo $WF
+  val "INSERT INTO public.class_reservations (schedule_id, member_id, box_id, status) VALUES ('00000000-0000-4000-e523-0000000000c2', '$F1', '$AF', 'confirmed')" >/dev/null
+  chaine >/dev/null || { ko "B purge"; tail -3 "$TMP/log"; }
+}
+essai_box
+grep -o 'VITRINE_EMPREINTE_BOX prise.*' "$TMP/logprise" | sed 's/^/      /'
+grep -q "$REEL" "$REFB" && ! grep -q '@' "$REFB" && ok "B0 fichier : uuid et md5 seulement" || ko "B0 contenu du fichier"
+val "INSERT INTO public.class_schedules (box_id, title, scheduled_date, start_time, end_time, max_capacity) VALUES ('$AF', 'WOD cron', current_date + 30, '07:00', '08:00', 12)" >/dev/null   # comme extend-class-schedules
+if jouer 30-empreinte-box.sql -v box=$AF -v reference="$REFB"; then ok "B1 après la purge : identique (créneau créé entre-temps compté pour information)"
+else ko "B1 écart"; tail -4 "$TMP/log"; fi
+grep -q 'b.class_schedules : 1 ligne(s) figée(s), 0 modifiée(s) ou supprimée(s) ; 1 nouvelle(s)' "$TMP/log" && ok "B1 nouveau créneau : information, sans arrêt" || { ko "B1 information"; grep VITRINE_BOX "$TMP/log" | tail -3; }
+grep -q "b.boxes : lignes 1 → 1 identique" "$TMP/log" && ok "B1 ligne de la box identique (compteur de membres revenu)" || ko "B1 box"
+val "UPDATE public.wod_scores SET score_value = score_value + 1 WHERE member_id = '$REEL' AND wod_id = '$WR'" >/dev/null
+if jouer 30-empreinte-box.sql -v box=$AF -v reference="$REFB"; then ko "B2 score d'un compte A modifié : pas de STOP"
+elif grep -q 'VITRINE_EMPREINTE_BOX: a.wod_scores' "$TMP/log"; then ok "B2 score d'un compte à ne pas toucher modifié : STOP (a.wod_scores)"
+else ko "B2"; tail -3 "$TMP/log"; fi
+muter 30-empreinte-box.sql "$TMP/m-box-scores.sql" "s/    UNION ALL SELECT 'a\.wod_scores'.*?\n.*?\n//"
+essai_box "$TMP/m-box-scores.sql"
+val "UPDATE public.wod_scores SET score_value = score_value + 1 WHERE member_id = '$REEL' AND wod_id = '$WR'" >/dev/null
+jouer "$TMP/m-box-scores.sql" -v box=$AF -v reference="$REFB" && ok "B2m mutation (scores retirés de l'empreinte) : la modification passe inaperçue, B2 la détecte" || { ko "B2m"; tail -3 "$TMP/log"; }
+essai_box
+val "UPDATE public.class_schedules SET max_capacity = 13 WHERE id = '00000000-0000-4000-e523-0000000000c2'" >/dev/null
+if jouer 30-empreinte-box.sql -v box=$AF -v reference="$REFB"; then ko "B3 créneau figé modifié : pas de STOP"
+elif grep -q 'VITRINE_EMPREINTE_BOX: b.class_schedules : 1 ligne(s) figée(s) modifiée(s)' "$TMP/log"; then ok "B3 créneau existant modifié : STOP"
+else ko "B3"; tail -3 "$TMP/log"; fi
+
 $P -d postgres -c "DROP DATABASE IF EXISTS vitrine_cas WITH (FORCE)" -c "DROP DATABASE IF EXISTS vitrine_fix WITH (FORCE)" >/dev/null
 rm -rf "$TMP"
 [ $echoue -eq 0 ] && echo "TOUT OK" || { echo "DES ECHECS"; exit 1; }

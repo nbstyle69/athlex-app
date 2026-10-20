@@ -15,6 +15,7 @@ Pendant la revue Apple / Google, AthleX Fitness (`d3d0b0a0-0000-4000-a000-000000
 | `sql/proteges.sql` | Définition unique des **comptes réels protégés** (lecture seule), incluse par `10`, `20` et `vitrine.ts`. |
 | `sql/10-contact-elo.sql` | **Lecture seule**, au début de `refresh`, `tournaments` et `purge` : STOP si un compte protégé a un score sur un WOD scoré par des fictifs. |
 | `sql/20-empreinte-elo.sql` | **Lecture seule** : lignes d'historique ELO des comptes protégés figées avant le premier seed, contrôlées intactes après la purge ; ELO courant pour information. |
+| `sql/30-empreinte-box.sql` | **Lecture seule** : empreinte de la box et des lignes à ne pas toucher (reviewer, comptes de démo, comptes protégés, tournois existants : strict ; créneaux et WODs existants : figés ; nouveaux créneaux du cron : information). Colonnes exclues : `box_elo.updated_at`, `user_movement_stats.updated_at`. |
 | `sql/80-releve-purge.sql` | **Lecture seule**, avant toute suppression : relevé au catalogue des clés étrangères vers les comptes ; STOP sur les cas bloquants. |
 | `sql/90-purger-tournois.sql` | `postgres`, une transaction : désactive les **deux** gardes nommées le temps de supprimer les tournois listés. |
 | `sql/91-supprimer-lignes-fictifs.sql` | `postgres`, une transaction : supprime les lignes créées par les fictifs et citées par une clé en mise à NULL. |
@@ -134,7 +135,7 @@ PGCLIENTENCODING=UTF8 psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v box=<uuid> [-
 
 Fenêtre : **hors samedi 07:30 à 09:30 Paris**, à cause de la génération de la programmation. On vérifie avant qu'aucun cron ne touche la box pendant l'essai.
 
-1. Empreinte « avant » : md5 calculé par la base, en lecture seule.
+1. Empreintes « avant », md5 calculés par la base, en lecture seule, hors dépôt : `20-empreinte-elo.sql` (groupe `essai`) et `30-empreinte-box.sql`. Aucune écriture de l'essai vers 04:00 Paris (`extend-class-schedules-daily` crée alors des créneaux sur la box).
 2. `$S seed $B --n 4 --apply`, plus le coach → STOP : rôle coach.
 3. `01-activer.sql -v n_membres=4`.
 4. `$S refresh $B --n 4 --apply`.
