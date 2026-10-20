@@ -25,7 +25,7 @@ muter "repli chiffre absent"                "s/if \(!pris\.has\(nettoye\.toLower
 muter "chiffre déjà pris accepté"           "s/if \(!pris\.has\(essai\.toLowerCase\(\)\)\) return/return/"
 muter "For Time : plus de DNF"              "s/if \(perf < 0\.12\)/if (perf < 0)/"
 muter "For Time : au-delà du cap"           "s/capS \* \(0\.95 - 0\.4 \* perf\)/capS * (1.2 - 0.4 * perf)/"
-muter "AMRAP : au-delà de 1,5 rep par s""s/min \* \(6 \+ 12 \* perf\)/min * (6 + 120 * perf)/"
+muter "AMRAP : au-delà de 1,5 rep par s"    "s/min \* \(6 \+ 12 \* perf\)/min * (6 + 120 * perf)/"
 muter "EMOM : plus de rounds que de minutes" "s/min - Math\.floor\(\(1 - perf\) \* 3\)/min + 1/"
 muter "Tabata : au-delà de 280"             "s/60 \+ 140 \* perf/60 + 400 * perf/"
 muter "scaled en RX"                        "s/if \(m\.niveau === 'scaled'\) return false;/if (m.niveau === 'scaled') return true;/"
@@ -44,7 +44,11 @@ muter "purge sans la box"                   "s/if \(c\.box_id !== box\) continue
 muter "purge sans la formule"               "s/ && c\.formule === FORMULE_DEMO//"
 muter "purge : motif élargi"                "s/\(0\[1-9\]\|\[1-4\]\[0-9\]\|50\)/[0-9]+/"
 muter "purge : reviewer non exclu"          "s/if \(c\.id !== opts\.reviewerId\) ids\.add\(c\.id\);/ids.add(c.id);/"
-muter "purge : legacy par défaut"           "s/else if \(opts\.legacy && box === BOX_ATHLEX && c\.demo_account\)/else if (c.demo_account \&\& opts.reviewerId !== c.id)/"
+muter "purge : legacy par défaut"           "s/else if \(opts\.legacy && box === BOX_ATHLEX && c\.demo_account/else if (opts.reviewerId !== c.id \&\& box === BOX_ATHLEX \&\& c.demo_account/"
+muter "purge élargie : réel marqué démo pris" "s/ && email\.endsWith\(DOMAINE_DEMO_HISTORIQUE\)//"
+muter "clé : préfixe non vérifié"           "s/if \(!valeur\.startsWith\(prefixe\)\) return/if (false) return/"
+muter "clé : ordre des variables inversé"   "s/const nom = noms\.find\(n => env\[n\]\);/const nom = [...noms].reverse().find(n => env[n]);/"
+muter "clé : valeur dans le message"        "s/return \{ erreur: \`\\$\{nom\} ne commence pas par \\$\{prefixe\}\` \};/return { erreur: \`\\$\{nom\} = \\$\{valeur\} ne commence pas par \\$\{prefixe\}\` };/"
 muter "tournois hors box purgés"            "s/voulus\.has\(t\.id\) && t\.box_id === box/voulus.has(t.id)/"
 
 [ $survivantes -eq 0 ] && echo "TOUTES LES MUTATIONS TUÉES" || { echo "DES MUTATIONS SURVIVENT"; exit 1; }

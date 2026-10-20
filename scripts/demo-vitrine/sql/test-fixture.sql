@@ -6,7 +6,8 @@
 --     sa propre formule « Accès démo » ;
 --   box jetable sale K : un membre réel → refusée ;
 --   tournois d'AthleX Fitness : TV1 bracket terminé (matchs, ELO, clôture), TV2
---     ligue en cours (divisions, scores validés), TX bracket terminé NON listé ;
+--     ligue en cours (divisions, scores validés), TX bracket terminé NON listé,
+--     joué par deux comptes réels ;
 --   tournoi TK dans la box K.
 \set ON_ERROR_STOP on
 SET search_path = public, extensions;
@@ -63,7 +64,7 @@ INSERT INTO public.tournaments (id, name, level, status, format, box_id, max_par
 INSERT INTO public.tournament_participants (tournament_id, athlete_id)
 SELECT '00000000-0000-4000-d523-000000000001'::uuid, pg_temp.u(n) FROM generate_series(1, 4) n
 UNION ALL SELECT '00000000-0000-4000-d523-000000000002', pg_temp.u(n) FROM generate_series(5, 8) n
-UNION ALL SELECT '00000000-0000-4000-d523-000000000003', pg_temp.u(n) FROM unnest(ARRAY[9, 10]) n;
+UNION ALL SELECT '00000000-0000-4000-d523-000000000003', pg_temp.u(n) FROM unnest(ARRAY[901, 904]) n;
 INSERT INTO public.tournament_wods (id, tournament_id, title, type, status, bracket_board, bracket_stage) VALUES
   ('00000000-0000-4000-e523-000000000001', '00000000-0000-4000-d523-000000000001', 'Demi', 'For Time', 'closed', 'winner', 1),
   ('00000000-0000-4000-e523-000000000002', '00000000-0000-4000-d523-000000000001', 'Finale', 'For Time', 'closed', 'winner', 0),
@@ -76,11 +77,18 @@ INSERT INTO public.tournament_bracket_matches (tournament_id, round, match_numbe
   ('00000000-0000-4000-d523-000000000001', 1, 2, 'winner', pg_temp.u(3), pg_temp.u(4), pg_temp.u(3), pg_temp.u(4), 'completed', '00000000-0000-4000-e523-000000000001'),
   ('00000000-0000-4000-d523-000000000001', 2, 1, 'winner', pg_temp.u(1), pg_temp.u(3), pg_temp.u(1), pg_temp.u(3), 'completed', '00000000-0000-4000-e523-000000000002'),
   ('00000000-0000-4000-d523-000000000001', 2, 2, 'third_place', pg_temp.u(2), pg_temp.u(4), pg_temp.u(2), pg_temp.u(4), 'forfeit', '00000000-0000-4000-e523-000000000002'),
-  ('00000000-0000-4000-d523-000000000003', 1, 1, 'winner', pg_temp.u(9), pg_temp.u(10), pg_temp.u(9), pg_temp.u(10), 'completed', '00000000-0000-4000-e523-000000000003');
+  ('00000000-0000-4000-d523-000000000003', 1, 1, 'winner', pg_temp.u(901), pg_temp.u(904), pg_temp.u(901), pg_temp.u(904), 'completed', '00000000-0000-4000-e523-000000000003');
 INSERT INTO public.tournament_scores (tournament_id, tournament_wod_id, athlete_id, score_value, status)
 SELECT '00000000-0000-4000-d523-000000000001', '00000000-0000-4000-e523-000000000001', pg_temp.u(n), (300 + n)::text, 'validated' FROM generate_series(1, 4) n;
 INSERT INTO public.tournament_elo_history (tournament_id, athlete_id, final_rank, participants_count, avg_opponent_elo, elo_before, elo_after, elo_change)
 SELECT '00000000-0000-4000-d523-000000000001', pg_temp.u(n), n, 4, 1000, 1000, 1000, 0 FROM generate_series(1, 4) n;
+-- Clés en mise à NULL vers le coach (80-releve-purge.sql) : TV1 créé et validé
+-- par lui (classe « tournoi ») ; l'alerte de +07 qu'il a ouverte (« cascade » :
+-- elle part avec +07) ; un WOD qu'il a créé, qui ne cite que lui (« fictif »).
+UPDATE public.tournaments SET created_by = pg_temp.u(51) WHERE id = '00000000-0000-4000-d523-000000000001';
+UPDATE public.tournament_scores SET validated_by = pg_temp.u(51), validated_at = now() WHERE tournament_id = '00000000-0000-4000-d523-000000000001';
+INSERT INTO public.box_wods (id, box_id, created_by, title, wod_type, scheduled_date, is_published)
+VALUES ('00000000-0000-4000-e523-0000000000f1', 'd3d0b0a0-0000-4000-a000-000000000001', pg_temp.u(51), 'WOD du coach fictif', 'amrap', current_date, true);
 -- Ligue : divisions, membres, scores validés (points recalculés par déclencheur).
 INSERT INTO public.tournament_divisions (id, tournament_id, name, level, max_members) VALUES
   ('00000000-0000-4000-f523-000000000001', '00000000-0000-4000-d523-000000000002', 'D1', 1, 4);

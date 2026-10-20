@@ -245,7 +245,7 @@ export function seriesPour(description: string, m: Membre): { sets: SerieMuscu[]
 
 // ── Tournois ─────────────────────────────────────────────────────────────────
 
-export type RefTournoi = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6';
+export type RefTournoi = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6' | 'E1';
 export interface SpecTournoi {
   ref: RefTournoi;
   nom: string;
@@ -308,6 +308,24 @@ export function scoreTournoi(type: string, wodId: string, m: Membre): string {
   return String(Math.round(80 + 160 * perf));
 }
 
+/** Mini-tournoi de l'essai (étape 3) : tableau à 4, ids sous la clé `essai`. */
+export const TOURNOI_ESSAI: SpecTournoi = { ref: 'E1', nom: 'Essai vitrine', format: 'bracket', niveau: 'rx', places: 4, inscrits: 4, demarre: true };
+
+// ── Clés Supabase ────────────────────────────────────────────────────────────
+
+/**
+ * Première variable définie parmi `noms`, au préfixe exigé (nouvelles clés,
+ * #521 : les anciennes seront désactivées pendant la revue). Le message d'erreur
+ * nomme la variable, jamais sa valeur.
+ */
+export function lireCle(env: Record<string, string | undefined>, noms: string[], prefixe: string): { valeur: string; nom: string } | { erreur: string } {
+  const nom = noms.find(n => env[n]);
+  if (!nom) return { erreur: `variable manquante : ${noms.join(' ou ')}` };
+  const valeur = env[nom]!;
+  if (!valeur.startsWith(prefixe)) return { erreur: `${nom} ne commence pas par ${prefixe}` };
+  return { valeur, nom };
+}
+
 // ── Réservations ─────────────────────────────────────────────────────────────
 
 export const FENETRE_RESERVATION_JOURS = 14;
@@ -336,10 +354,14 @@ export interface CompteLu {
   demo_account: boolean;
 }
 
+export const DOMAINE_DEMO_HISTORIQUE = '@demo.athlexapp.eu';
+
 /**
  * Comptes à purger : motif d'adresse ET box ; formule « Accès démo » pour les
  * membres ; coach à l'adresse exacte. Avec `legacy`, en plus les comptes de
- * internal.demo_accounts rattachés à AthleX Fitness, reviewer exclu.
+ * internal.demo_accounts rattachés à AthleX Fitness ET dont l'adresse est en
+ * @demo.athlexapp.eu, reviewer exclu : un compte réel ne peut jamais être pris,
+ * même s'il figurait par erreur dans internal.demo_accounts.
  */
 export function comptesAPurger(lus: CompteLu[], box: string, opts: { legacy?: boolean; reviewerId?: string } = {}): string[] {
   const ids = new Set<string>();
@@ -348,7 +370,7 @@ export function comptesAPurger(lus: CompteLu[], box: string, opts: { legacy?: bo
     const email = c.email.toLowerCase();
     if (MOTIF_MEMBRE.test(email) && c.formule === FORMULE_DEMO && c.role === 'member') ids.add(c.id);
     else if (email === EMAIL_COACH) ids.add(c.id);
-    else if (opts.legacy && box === BOX_ATHLEX && c.demo_account) {
+    else if (opts.legacy && box === BOX_ATHLEX && c.demo_account && email.endsWith(DOMAINE_DEMO_HISTORIQUE)) {
       if (!opts.reviewerId) throw new Error('REVIEWER_INCONNU: la purge élargie exige l’identifiant du reviewer');
       if (c.id !== opts.reviewerId) ids.add(c.id);
     }
@@ -356,8 +378,8 @@ export function comptesAPurger(lus: CompteLu[], box: string, opts: { legacy?: bo
   return [...ids].sort();
 }
 
-/** Tournois à purger : ceux de vitrine.ids.json, et seulement s'ils sont dans la box. */
-export function tournoisAPurger(ids: Partial<Record<RefTournoi, string>>, lus: { id: string; box_id: string }[], box: string): string[] {
+/** Tournois à purger : ceux d'un groupe de vitrine.ids.json, et seulement s'ils sont dans la box. */
+export function tournoisAPurger(ids: Partial<Record<string, string>>, lus: { id: string; box_id: string }[], box: string): string[] {
   const voulus = new Set(Object.values(ids).filter((v): v is string => !!v));
   return lus.filter(t => voulus.has(t.id) && t.box_id === box).map(t => t.id).sort();
 }

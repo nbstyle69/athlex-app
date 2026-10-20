@@ -10,6 +10,8 @@
  *                                réservations sur 14 jours, ELO des WODs clos
  *   tournaments create|register|play|finalize
  *   purge [--yes] [--include-legacy-demo]
+ *   cles                         vérifie les préfixes des clés et, si un compte
+ *                                vitrine existe, generateLink + verifyOtp
  *
  * --dry-run par défaut : rien n'est écrit sans --apply (la purge exige en plus --yes).
  * --n <1..50> : nombre de membres (4 pour l'essai), --essai : mini-tournoi à 4.
@@ -19,18 +21,22 @@
  * serveur ne sert qu'à l'API admin d'Auth (création, lien de connexion,
  * suppression) et à des lectures. Les mots de passe sont tirés au hasard,
  * gardés en mémoire le temps de la création, jamais affichés ni écrits.
- * Variables : SUPABASE_URL (ou EXPO_PUBLIC_SUPABASE_URL), SUPABASE_SERVICE_ROLE_KEY,
- * EXPO_PUBLIC_SUPABASE_ANON_KEY ; PROD_DB_URL pour la purge (psql).
+ * Variables : SUPABASE_URL (ou EXPO_PUBLIC_SUPABASE_URL) ; clé secrète `sb_secret_…`
+ * dans SUPABASE_SECRET_KEY puis SUPABASE_SERVICE_ROLE_KEY ; clé publishable
+ * `sb_publishable_…` dans EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY puis
+ * EXPO_PUBLIC_SUPABASE_ANON_KEY (#521 : les anciennes clés seront désactivées) ;
+ * PROD_DB_URL pour psql. Aucune valeur n'est jamais affichée.
  */
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { randomBytes } from 'crypto';
 import { execFileSync } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { tmpdir } from 'os';
 import {
   BOX_ATHLEX, EMAIL_COACH, PSEUDO_COACH, MOTIF_MEMBRE, FORMULE_DEMO, MEMBRES, TOURNOIS, Membre, SpecTournoi, RefTournoi,
   FENETRE_RESERVATION_JOURS, adapterPseudo, scoreLe, scorePour, seriesPour, enRx, repartirInscrits, scoreTournoi,
-  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, CompteLu, WodBox,
+  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, lireCle, TOURNOI_ESSAI, CompteLu, WodBox,
 } from './logique';
 
 type Db = SupabaseClient<any, 'public', any>;
@@ -63,7 +69,13 @@ function env(...noms: string[]): string {
 }
 const URL_SB = () => env('SUPABASE_URL', 'EXPO_PUBLIC_SUPABASE_URL');
 let adminClient: Db | null = null;
-const admin = (): Db => (adminClient ??= createClient(URL_SB(), env('SUPABASE_SERVICE_ROLE_KEY', 'SUPABASE_SERVICE_ROLE_KEY_'), {
+function cle(noms: string[], prefixe: string): string {
+  const r = lireCle(process.env, noms, prefixe);
+  return 'erreur' in r ? stop(r.erreur) : r.valeur;
+}
+const CLE_SECRETE = () => cle(['SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY'], 'sb_secret_');
+const CLE_PUBLIQUE = () => cle(['EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'EXPO_PUBLIC_SUPABASE_ANON_KEY'], 'sb_publishable_');
+const admin = (): Db => (adminClient ??= createClient(URL_SB(), CLE_SECRETE(), {
   auth: { persistSession: false, autoRefreshToken: false },
 }));
 
@@ -75,7 +87,7 @@ async function connecte(email: string): Promise<Db> {
   if (!MOTIF_MEMBRE.test(email) && email !== EMAIL_COACH) stop(`connexion refusée hors comptes vitrine`);
   const { data, error } = await admin().auth.admin.generateLink({ type: 'magiclink', email });
   if (error || !data.properties?.hashed_token) stop(`lien de connexion impossible (${error?.message})`);
-  const c = createClient(URL_SB(), env('EXPO_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_ANON_KEY'), {
+  const c = createClient(URL_SB(), CLE_PUBLIQUE(), {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { error: e2 } = await c.auth.verifyOtp({ token_hash: data.properties.hashed_token, type: 'magiclink' });
@@ -283,13 +295,13 @@ async function refresh() {
 
 // ── Tournois ─────────────────────────────────────────────────────────────────
 
-type Ids = Record<string, Partial<Record<RefTournoi, string>>>;
+/** { "vitrine": { T1…T6 }, "essai": { E1 } } : identifiants techniques seulement. */
+type Ids = Partial<Record<'vitrine' | 'essai', Partial<Record<string, string>>>>;
+const GROUPE: 'vitrine' | 'essai' = ESSAI ? 'essai' : 'vitrine';
 const lireIds = (): Ids => { try { return JSON.parse(readFileSync(FICHIER_IDS, 'utf8')); } catch { return {}; } };
 function ecrireIds(ids: Ids) { writeFileSync(FICHIER_IDS, `${JSON.stringify(ids, null, 2)}\n`); }
 
-const SPECS: SpecTournoi[] = ESSAI
-  ? [{ ref: 'T2', nom: 'Essai bracket', format: 'bracket', niveau: 'rx', places: 4, inscrits: 4, demarre: true }]
-  : TOURNOIS;
+const SPECS: SpecTournoi[] = ESSAI ? [TOURNOI_ESSAI] : TOURNOIS;
 /** Tours joués au plus par `play` : T3 et T4 restent en cours après le premier. */
 const TOUR_MAX: Partial<Record<RefTournoi, number>> = ESSAI ? {} : { T3: 1, T4: 1 };
 
@@ -317,8 +329,8 @@ async function coach(): Promise<{ db: Db; id: string }> {
 async function tournaments() {
   const { formats } = await garderBox();
   const ids = lireIds();
-  ids[BOX!] ??= {};
-  const mesIds = ids[BOX!];
+  ids[GROUPE] ??= {};
+  const mesIds = ids[GROUPE]!;
   const inscrits = repartirInscrits(membres, SPECS);
   const actifs = await membresActifs();
   const idDe = new Map(actifs.map(a => [a.m.nn, a.id]));
@@ -385,7 +397,7 @@ async function tournaments() {
     // « Clôturer & ELO » dans le Manager. Les badges de tournoi sont posés par
     // l'app du gérant (upsert direct athlete_badges), pas par un appel qu'un
     // membre peut faire lui-même : on n'en fabrique pas (décision du 20/10).
-    for (const t of SPECS.filter(s => s.ref === 'T1' || s.ref === 'T2')) {
+    for (const t of SPECS.filter(s => s.ref === 'T1' || s.ref === 'T2' || s.ref === 'E1')) {
       const tt = tournoi(t.ref);
       if (!tt) continue;
       if (tt.status !== 'completed') { console.log(`STOP — ${t.ref} pas encore clôturé : Nab clique « Clôturer & ELO » dans le Manager.`); continue; }
@@ -491,7 +503,9 @@ function psql(fichier: string | null, vars: Record<string, string>, sql?: string
   const args = ['-X', '-q', '-A', '-t', '-v', 'ON_ERROR_STOP=1', ...Object.entries(vars).flatMap(([k, v]) => ['-v', `${k}=${v}`])];
   if (sql) args.push('-c', 'SET default_transaction_read_only = on', '-c', sql);
   if (fichier) args.push('-f', join(ICI, 'sql', fichier));
-  return execFileSync('psql', [env('PROD_DB_URL'), ...args], { encoding: 'utf8', env: { ...process.env, PGCLIENTENCODING: 'UTF8' }, stdio: ['ignore', 'pipe', 'inherit'] });
+  const sortie = execFileSync('psql', [env('PROD_DB_URL'), ...args], { encoding: 'utf8', env: { ...process.env, PGCLIENTENCODING: 'UTF8' }, stdio: ['ignore', 'pipe', 'inherit'] });
+  if (fichier) process.stdout.write(sortie);
+  return sortie;
 }
 
 async function purge() {
@@ -504,52 +518,68 @@ async function purge() {
            EXISTS (SELECT 1 FROM internal.demo_accounts d WHERE d.user_id = u.id) AS demo_account
       FROM auth.users u JOIN public.box_members bm ON bm.member_id = u.id AND bm.box_id = '${BOX}'
       LEFT JOIN public.membership_plans mp ON mp.id = bm.plan_id) x`) as CompteLu[];
-  let reviewerId: string | undefined;
-  if (legacy) {
-    const rev = json(`SELECT coalesce(json_agg(d.user_id), '[]') FROM internal.demo_accounts d JOIN auth.users u ON u.id = d.user_id
-      JOIN public.box_members bm ON bm.member_id = d.user_id AND bm.box_id = '${BOX_ATHLEX}'
+  // Reviewer : le seul compte de internal.demo_accounts hors @demo.athlexapp.eu (et hors vitrine).
+  const revs = json(`SELECT coalesce(json_agg(d.user_id), '[]') FROM internal.demo_accounts d JOIN auth.users u ON u.id = d.user_id
      WHERE lower(u.email) NOT LIKE '%@demo.athlexapp.eu' AND lower(u.email) NOT LIKE 'demo.vitrine+%'`) as string[];
-    if (rev.length !== 1) stop(`reviewer non identifié sans ambiguïté (${rev.length})`);
-    reviewerId = rev[0];
-  }
-  const comptes = comptesAPurger(lus, BOX!, { legacy, reviewerId });
-  const ids = lireIds()[BOX!] ?? {};
+  if (legacy && revs.length !== 1) stop(`reviewer non identifié sans ambiguïté (${revs.length})`);
+  const comptes = comptesAPurger(lus, BOX!, { legacy, reviewerId: revs[0] });
+  const ids = lireIds()[GROUPE] ?? {};
   const lusT = await ok(admin().from('tournaments').select('id, box_id').in('id', Object.values(ids).filter(Boolean) as string[]), 'tournois') as any[];
   const tournois = tournoisAPurger(ids, lusT, BOX!);
   const arr = (a: string[]) => `{${a.join(',')}}`;
-  dit(`purge : ${tournois.length} tournoi(s), ${comptes.length} compte(s)${legacy ? ' (dont démo historiques)' : ''}`);
+  dit(`purge (${GROUPE}) : ${tournois.length} tournoi(s), ${comptes.length} compte(s)${legacy ? ' (dont démo historiques)' : ''}`);
+  if (legacy) stop('--include-legacy-demo reste bloquée tant que Nab n’a pas tranché le sort des 6 anciens tournois de ces comptes.');
 
-  // Préalables, en lecture : le reviewer n'a rien gagné ni perdu dans ces tournois ;
-  // aucun compte purgé ne figure dans un match d'un autre tournoi (la mise à NULL
-  // relancerait l'ELO de match).
-  const rev = reviewerId ?? json(`SELECT coalesce(json_agg(d.user_id), '[]') FROM internal.demo_accounts d JOIN auth.users u ON u.id = d.user_id
-     WHERE lower(u.email) NOT LIKE '%@demo.athlexapp.eu' AND lower(u.email) NOT LIKE 'demo.vitrine+%'`)[0];
-  if (rev) {
-    const n = Number(psql(null, {}, `SELECT (SELECT count(*) FROM tournament_elo_history WHERE athlete_id='${rev}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))
-      + (SELECT count(*) FROM tournament_match_elo_history WHERE athlete_id='${rev}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))
-      + (SELECT count(*) FROM tournament_wod_elo_history WHERE athlete_id='${rev}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))
-      + (SELECT count(*) FROM tournament_scores WHERE athlete_id='${rev}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))`).trim().split('\n').pop());
+  // 1. Le reviewer n'a rien gagné ni perdu dans ces tournois (sinon : à remettre à la main).
+  if (revs[0]) {
+    const n = Number(psql(null, {}, `SELECT (SELECT count(*) FROM tournament_elo_history WHERE athlete_id='${revs[0]}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))
+      + (SELECT count(*) FROM tournament_match_elo_history WHERE athlete_id='${revs[0]}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))
+      + (SELECT count(*) FROM tournament_wod_elo_history WHERE athlete_id='${revs[0]}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))
+      + (SELECT count(*) FROM tournament_scores WHERE athlete_id='${revs[0]}' AND tournament_id = ANY('${arr(tournois)}'::uuid[]))`).trim().split('\n').pop());
     if (n !== 0) stop(`le reviewer a ${n} résultat(s) dans les tournois de vitrine : ELO, badges et crédits à remettre à la main avant la purge`);
   }
-  const hors = Number(psql(null, {}, `SELECT count(*) FROM tournament_bracket_matches WHERE NOT (tournament_id = ANY('${arr(tournois)}'::uuid[]))
-     AND (participant1_id = ANY('${arr(comptes)}'::uuid[]) OR participant2_id = ANY('${arr(comptes)}'::uuid[]))`).trim().split('\n').pop());
-  if (hors !== 0) stop(`${hors} match(s) d’autres tournois avec des comptes à purger : décision de Nab nécessaire`);
+  // 2. Relevé au catalogue, en lecture seule, AVANT toute suppression : clés sans
+  //    action ou en restriction, lignes de vrais comptes, tournois non listés, liste
+  //    d'attente → STOP ; clés en mise à NULL relevées dans un fichier hors dépôt
+  //    (identifiants techniques seulement).
+  const releve = join(tmpdir(), `athlex-vitrine-releve-${GROUPE}.sql`).split('\\').join('/');
+  const vars = { comptes: arr(comptes), tournois: arr(tournois), releve };
+  try { psql('80-releve-purge.sql', vars); } catch { stop('relevé avant purge en échec (voir VITRINE_BLOQUANT ci-dessus) : rien n’a été supprimé.'); }
 
-  if (!APPLY || !drapeau('--yes')) { console.log('[dry-run] rien n’est supprimé sans --apply --yes.'); return; }
-  if (tournois.length) process.stdout.write(psql('90-purger-tournois.sql', { box: BOX!, ids: arr(tournois) }));
+  if (!APPLY || !drapeau('--yes')) { console.log('[dry-run] relevé conforme ; rien n’est supprimé sans --apply --yes.'); return; }
+  // 3. Tournois, 4. lignes des fictifs en mise à NULL, 5. comptes (cascade), 6. contrôle à 0.
+  if (tournois.length) psql('90-purger-tournois.sql', { box: BOX!, ids: arr(tournois) });
+  psql('91-supprimer-lignes-fictifs.sql', { comptes: arr(comptes), releve });
   for (const id of comptes) {
     const { error } = await admin().auth.admin.deleteUser(id);
     if (error && !/not found/i.test(error.message)) throw new Error(`suppression d’un compte : ${error.message}`);
   }
-  process.stdout.write(psql('99-controle-purge.sql', { comptes: arr(comptes), tournois: arr(tournois) }));
+  psql('99-controle-purge.sql', vars);
   const ids2 = lireIds();
-  delete ids2[BOX!];
+  delete ids2[GROUPE];
   ecrireIds(ids2);
   console.log(`purge terminée : ${tournois.length} tournoi(s), ${comptes.length} compte(s), contrôle à 0.`);
 }
 
+// ── cles ─────────────────────────────────────────────────────────────────────
+
+/** Dry-run des clés : préfixes, lecture admin, et session d'un compte vitrine s'il en existe un. */
+async function cles() {
+  CLE_SECRETE(); CLE_PUBLIQUE();
+  console.log('préfixes conformes');
+  const { error } = await admin().auth.admin.listUsers({ page: 1, perPage: 1 });
+  if (error) stop(`lecture admin refusée (${error.message})`);
+  const comptes = (await ok(admin().from('profiles').select('email').ilike('email', 'demo.vitrine+%@athlexapp.eu').limit(1), 'comptes vitrine')) as any[];
+  const email = comptes.map(c => c.email).find(e => MOTIF_MEMBRE.test(e) || e === EMAIL_COACH);
+  // generateLink sur une adresse inconnue créerait le compte : on ne le tente que sur un compte existant.
+  if (!email) { console.log('aucun compte vitrine encore : generateLink + verifyOtp vérifiés sur le premier compte du seed'); return; }
+  const db = await connecte(email);
+  const { data } = await db.auth.getUser();
+  console.log(data.user ? 'generateLink + verifyOtp : session ouverte' : 'STOP — session non ouverte');
+}
+
 // ── main ─────────────────────────────────────────────────────────────────────
 
-const commandes: Record<string, () => Promise<void>> = { seed, refresh, tournaments, purge };
-if (!commandes[commande]) stop('commande : seed | refresh | tournaments <create|register|play|finalize> | purge');
+const commandes: Record<string, () => Promise<void>> = { seed, refresh, tournaments, purge, cles };
+if (!commandes[commande]) stop('commande : seed | refresh | tournaments <create|register|play|finalize> | purge | cles');
 commandes[commande]().catch(e => { console.error(`ERREUR — ${e.message}`); process.exit(1); });

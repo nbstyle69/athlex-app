@@ -115,24 +115,75 @@ rollback "R11 mutation : historique de clôture oublié" VITRINE_RESTE "$TMP/m-r
 neuve; rollback "R12 tournoi listé d'une autre box" VITRINE_BOX 90-purger-tournois.sql -v box=$AF -v ids='{00000000-0000-4000-d523-000000000001,00000000-0000-4000-d523-000000000004}'
 neuve; rollback "R13 session_replication_role ≠ origin" VITRINE_REPLICATION 90-purger-tournois.sql -v box=$AF -v ids="$IDS" -c "SET session_replication_role = replica"
 
-echo "== enchaînement de la purge + 99-controle-purge.sql"
+echo "== purge enchaînée : 80-releve-purge, 90, 91, suppression des comptes, 99-controle-purge"
 COMPTES="{$(val "SELECT string_agg(id::text, ',') FROM auth.users WHERE email ~ '^demo\.vitrine\+((0[1-9]|[1-4][0-9]|50)|coach)@athlexapp\.eu$'")}"
-neuve
-jouer 01-activer.sql -v box=$AF || { ko "C0 activation"; cat "$TMP/log"; }
-jouer 90-purger-tournois.sql -v box=$AF -v ids="$IDS" || { ko "C0 purge des tournois"; cat "$TMP/log"; }
-if jouer 99-controle-purge.sql -v comptes="$COMPTES" -v tournois="$IDS"; then ko "C1 contrôle avant suppression des comptes : devait échouer"; else
-  grep -q VITRINE_CONTROLE_PURGE "$TMP/log" && ok "C1 comptes encore là : contrôle en échec ($(grep -c VITRINE_RESTE "$TMP/log") colonnes non nulles)" || { ko "C1"; tail -3 "$TMP/log"; }; fi
-# Suppression des comptes (en prod : API admin d'Auth ; ici, la même cascade depuis auth.users).
-val "DELETE FROM auth.users WHERE id = ANY('$COMPTES'::uuid[]) AND id <> '00000000-0000-4000-a523-000000000033'" >/dev/null
-if jouer 99-controle-purge.sql -v comptes="$COMPTES" -v tournois="$IDS"; then ko "C2 mutation : un compte oublié, contrôle passé"; else
-  grep -q VITRINE_CONTROLE_PURGE "$TMP/log" && ok "C2 mutation : un compte oublié → contrôle en échec" || { ko "C2"; tail -3 "$TMP/log"; }; fi
-val "DELETE FROM auth.users WHERE id = '00000000-0000-4000-a523-000000000033'" >/dev/null
-jouer 99-controle-purge.sql -v comptes="$COMPTES" -v tournois="$IDS" && ok "C3 tout supprimé : contrôle à 0" || { ko "C3"; cat "$TMP/log"; }
-grep -o 'VITRINE_CONTROLE_PURGE.*' "$TMP/log"
-attendre "C3 comptes ciblés" "$(echo "$COMPTES" | tr ',' '\n' | wc -l | tr -d ' ')" 51
-attendre "C3 demo_accounts vidé par cascade" "$(val "SELECT count(*) FROM internal.demo_accounts")" 0
-attendre "C3 gérant, réel et +51 conservés" "$(val "SELECT count(*) FROM auth.users WHERE email IN ('reel-900@test.invalid','reel-901@test.invalid','demo.vitrine+51@athlexapp.eu')")" 3
-attendre "C3 tournois non listés conservés" "$(val "SELECT count(*) FROM tournaments WHERE name IN ('TX','TK')")" 2
+RELEVE="$(cygpath -m "$TMP")/releve.sql"
+supprimer_comptes() { $P -d vitrine_cas -c "DELETE FROM auth.users WHERE id = ANY('$COMPTES'::uuid[])" >"$TMP/del" 2>&1; }
+# chaine [fichier 80] [sans91] : enchaîne jusqu'au contrôle ; affiche l'étape en échec (journal dans $TMP/log).
+chaine() {
+  jouer "${1:-80-releve-purge.sql}" -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE" || { echo "80"; return 1; }
+  cp "$TMP/log" "$TMP/log80"
+  jouer 90-purger-tournois.sql -v box=$AF -v ids="$IDS" || { echo "90"; return 1; }
+  if [ "${2:-}" != "sans91" ]; then jouer 91-supprimer-lignes-fictifs.sql -v comptes="$COMPTES" -v releve="$RELEVE" || { echo "91"; return 1; }; fi
+  supprimer_comptes || { cp "$TMP/del" "$TMP/log"; echo "comptes"; return 1; }
+  jouer 99-controle-purge.sql -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE" || { echo "99"; return 1; }
+}
+releve_seul() { jouer 80-releve-purge.sql -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE"; }
+
+neuve; jouer 01-activer.sql -v box=$AF >/dev/null || ko "C0 activation"
+etape=$(chaine) && ok "C1 purge complète : contrôle à 0" || { ko "C1 (échec en $etape)"; tail -5 "$TMP/log"; }
+grep -o 'VITRINE_RELEVE .*' "$TMP/log80" | sed 's/^/      /'
+grep -o 'VITRINE_FICTIFS.*\|VITRINE_CONTROLE_PURGE.*' "$TMP/log"
+attendre "C1 relevé : WOD créé par le coach (mise à NULL, ligne du fictif)" "$(grep -c 'VITRINE_RELEVE box_wods.created_by fictif = 1' "$TMP/log80")" 1
+attendre "C1 relevé : alerte ouverte par le coach (part en cascade avec +07)" "$(grep -c 'VITRINE_RELEVE box_member_alerts.created_by cascade = 1' "$TMP/log80")" 1
+attendre "C1 relevé : tournoi créé et scores validés par le coach" "$(grep -c 'VITRINE_RELEVE tournaments.created_by tournoi = 1' "$TMP/log80")/$(grep -c 'VITRINE_RELEVE tournament_scores.validated_by tournoi = 4' "$TMP/log80")" "1/1"
+attendre "C1 WOD du coach supprimé (règle : ligne du fictif)" "$(val "SELECT count(*) FROM box_wods WHERE id='00000000-0000-4000-e523-0000000000f1'")" 0
+attendre "C1 demo_accounts vidé par cascade" "$(val "SELECT count(*) FROM internal.demo_accounts")" 0
+attendre "C1 gérant, réel et +51 conservés" "$(val "SELECT count(*) FROM auth.users WHERE email IN ('reel-900@test.invalid','reel-901@test.invalid','demo.vitrine+51@athlexapp.eu')")" 3
+attendre "C1 tournois non listés conservés, matchs et ELO des réels compris" "$(val "SELECT (SELECT count(*) FROM tournaments WHERE name IN ('TX','TK')) || '/' || (SELECT count(*) FROM tournament_match_elo_history WHERE tournament_id='00000000-0000-4000-d523-000000000003')")" "2/2"
+
+neuve; jouer 01-activer.sql -v box=$AF >/dev/null
+if etape=$(chaine 80-releve-purge.sql sans91); then ko "C2 mutation SET NULL : 91 omis, contrôle passé"
+elif [ "$etape" = 99 ] && grep -q 'VITRINE_RESTE_RELEVE box_wods.id = 00000000-0000-4000-e523-0000000000f1' "$TMP/log"; then
+  ok "C2 mutation SET NULL (91 omis) : WOD du fictif orphelin à NULL, contrôle en échec"
+else ko "C2 (échec en $etape)"; tail -3 "$TMP/log"; fi
+
+neuve; val "CREATE TABLE public.v523_sans_action (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), membre uuid REFERENCES public.profiles (id)); INSERT INTO public.v523_sans_action (membre) VALUES ('00000000-0000-4000-a523-000000000002')" >/dev/null
+E3=$(val "$EMPREINTE")
+if releve_seul; then ko "C3 NO ACTION : relevé passé"
+elif grep -q 'VITRINE_BLOQUANT: v523_sans_action.membre=1 (bloquant)' "$TMP/log"; then ok "C3 NO ACTION hors tournoi : STOP avant toute écriture (v523_sans_action.membre=1)"
+else ko "C3"; tail -3 "$TMP/log"; fi
+attendre "C3 rien d'écrit" "$(val "$EMPREINTE")" "$E3"
+muter 80-releve-purge.sql "$TMP/m-bloquant.sql" "s/IF r\.classe IN \('bloquant', 'reel', 'tournoi_autre'\)/IF r.classe IN ('reel', 'tournoi_autre')/"
+jouer 01-activer.sql -v box=$AF >/dev/null
+if etape=$(chaine "$TMP/m-bloquant.sql"); then ko "C3m mutation : purge passée malgré NO ACTION"
+elif [ "$etape" = comptes ] && grep -q 'v523_sans_action' "$TMP/log"; then
+  ok "C3m mutation (contrôle NO ACTION retiré) : la suppression des comptes casse en pleine purge, tournois déjà supprimés"
+else ko "C3m (échec en $etape)"; tail -3 "$TMP/log"; fi
+
+neuve; val "UPDATE public.box_member_alerts SET member_id = '00000000-0000-4000-a523-000000000901'" >/dev/null
+E4=$(val "$EMPREINTE")
+if releve_seul; then ko "C4 ligne d'un vrai compte : relevé passé"
+elif grep -q 'box_member_alerts.created_by=1 (reel)' "$TMP/log"; then ok "C4 ligne d'un vrai compte qui cite un fictif : STOP"
+else ko "C4"; tail -3 "$TMP/log"; fi
+attendre "C4 rien d'écrit" "$(val "$EMPREINTE")" "$E4"
+muter 80-releve-purge.sql "$TMP/m-reel.sql" "s/IF r\.classe IN \('bloquant', 'reel', 'tournoi_autre'\)/IF r.classe IN ('bloquant', 'tournoi_autre')/"
+jouer 01-activer.sql -v box=$AF >/dev/null
+if etape=$(chaine "$TMP/m-reel.sql"); then ko "C4m mutation : contrôle passé"
+elif [ "$etape" = 99 ] && grep -q 'VITRINE_RESTE_RELEVE box_member_alerts' "$TMP/log"; then
+  ok "C4m mutation (contrôle « réel » retiré) : l'alerte du vrai compte reste avec created_by à NULL, contrôle en échec"
+else ko "C4m (échec en $etape)"; tail -3 "$TMP/log"; fi
+
+neuve; val "UPDATE public.tournament_bracket_matches SET participant2_id = '00000000-0000-4000-a523-000000000009' WHERE tournament_id = '00000000-0000-4000-d523-000000000003'" >/dev/null
+if releve_seul; then ko "C5 fictif dans un tournoi non listé : relevé passé"
+elif grep -q 'tournament_bracket_matches.participant2_id=1 (tournoi_autre)' "$TMP/log"; then ok "C5 fictif dans un tournoi non listé : STOP"
+else ko "C5"; tail -3 "$TMP/log"; fi
+
+neuve; val "INSERT INTO public.class_schedules (id, box_id, title, scheduled_date, start_time, end_time, max_capacity) VALUES ('00000000-0000-4000-e523-0000000000c1', '$AF', 'WOD', current_date + 2, '18:00', '19:00', 1); INSERT INTO public.class_reservations (schedule_id, member_id, box_id, status) VALUES ('00000000-0000-4000-e523-0000000000c1', '00000000-0000-4000-a523-000000000001', '$AF', 'confirmed'), ('00000000-0000-4000-e523-0000000000c1', '00000000-0000-4000-a523-000000000901', '$AF', 'waiting')" >/dev/null
+attendre "C6 décor : un réel en liste d'attente derrière un fictif" "$(val "SELECT string_agg(status, ',' ORDER BY status) FROM class_reservations WHERE schedule_id='00000000-0000-4000-e523-0000000000c1'")" "confirmed,waiting"
+if releve_seul; then ko "C6 liste d'attente : relevé passé"
+elif grep -q 'class_reservations.waiting=1' "$TMP/log"; then ok "C6 réel en liste d'attente sur un créneau d'un fictif : STOP"
+else ko "C6"; tail -3 "$TMP/log"; fi
 
 $P -d postgres -c "DROP DATABASE IF EXISTS vitrine_cas WITH (FORCE)" -c "DROP DATABASE IF EXISTS vitrine_fix WITH (FORCE)" >/dev/null
 rm -rf "$TMP"

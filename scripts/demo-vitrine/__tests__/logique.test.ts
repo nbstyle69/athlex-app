@@ -1,7 +1,7 @@
 import {
   MEMBRES, PSEUDO_COACH, EMAIL_COACH, MOTIF_MEMBRE, BOX_ATHLEX, TOURNOIS,
   adapterPseudo, scorePour, seriesPour, estimation1rm, repartirInscrits,
-  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, scoreTournoi, WodBox, CompteLu,
+  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, scoreTournoi, lireCle, WodBox, CompteLu,
 } from '../logique';
 
 describe('pseudos', () => {
@@ -199,6 +199,26 @@ describe('réservations', () => {
   });
 });
 
+describe('clés Supabase', () => {
+  const SECRET = ['SUPABASE_SECRET_KEY', 'SUPABASE_SERVICE_ROLE_KEY'];
+  it('ordre des variables, préfixe exigé', () => {
+    expect(lireCle({ SUPABASE_SECRET_KEY: 'sb_secret_a', SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_b' }, SECRET, 'sb_secret_'))
+      .toEqual({ valeur: 'sb_secret_a', nom: 'SUPABASE_SECRET_KEY' });
+    expect(lireCle({ SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_b' }, SECRET, 'sb_secret_'))
+      .toEqual({ valeur: 'sb_secret_b', nom: 'SUPABASE_SERVICE_ROLE_KEY' });
+  });
+  it('ancienne clé refusée, sans jamais citer la valeur', () => {
+    const jwt = 'eyJhbGciOiJIUzI1NiJ9.ancienne-cle-service';
+    const r = lireCle({ SUPABASE_SERVICE_ROLE_KEY: jwt }, SECRET, 'sb_secret_') as { erreur: string };
+    expect(r.erreur).toContain('SUPABASE_SERVICE_ROLE_KEY');
+    expect(r.erreur).not.toContain(jwt);
+    expect(r.erreur).not.toContain('eyJ');
+    const pub = lireCle({ EXPO_PUBLIC_SUPABASE_ANON_KEY: 'sb_secret_x' }, ['EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'EXPO_PUBLIC_SUPABASE_ANON_KEY'], 'sb_publishable_') as { erreur: string };
+    expect(pub.erreur).toBe('EXPO_PUBLIC_SUPABASE_ANON_KEY ne commence pas par sb_publishable_');
+    expect(lireCle({}, SECRET, 'sb_secret_')).toEqual({ erreur: 'variable manquante : SUPABASE_SECRET_KEY ou SUPABASE_SERVICE_ROLE_KEY' });
+  });
+});
+
 describe('sélection de la purge', () => {
   const AUTRE = '00000000-0000-4000-b523-00000000000b';
   const REV = 'rev';
@@ -214,7 +234,7 @@ describe('sélection de la purge', () => {
     c('motif-suffixe', 'demo.vitrine+04@athlexapp.eu.fr'),
     c('reel', 'nab@example.com', { formule: 'Illimité' }),
     c('legacy', 'cad-1@demo.athlexapp.eu', { demo_account: true }),
-    c(REV, 'reviewer@example.com', { demo_account: true }),
+    c(REV, 'reviewer@demo.athlexapp.eu', { demo_account: true }), // même au domaine démo, le reviewer reste exclu
     c('legacy-autre-box', 'cad-2@demo.athlexapp.eu', { demo_account: true, box_id: AUTRE }),
   ];
   it('par défaut : motif + box (+ formule pour les membres), rien d’autre', () => {
@@ -222,6 +242,11 @@ describe('sélection de la purge', () => {
   });
   it('box jetable : seulement ses propres comptes vitrine', () => {
     expect(comptesAPurger(lus, AUTRE)).toEqual(['autre-box']);
+  });
+  it('--include-legacy-demo : un compte réel n’est jamais pris, même marqué démo', () => {
+    const avecReel = [...lus, c('reel-marque', 'membre.reel@example.com', { demo_account: true, formule: 'Illimité' })];
+    expect(comptesAPurger(avecReel, BOX_ATHLEX, { legacy: true, reviewerId: REV })).not.toContain('reel-marque');
+    expect(comptesAPurger(avecReel, BOX_ATHLEX, { legacy: true, reviewerId: REV })).not.toContain('reel');
   });
   it('--include-legacy-demo : comptes de démo d’AthleX Fitness, reviewer exclu', () => {
     expect(comptesAPurger(lus, BOX_ATHLEX, { legacy: true, reviewerId: REV })).toEqual(['coach', 'legacy', 'm01', 'm50']);
