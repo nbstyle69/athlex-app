@@ -34,6 +34,11 @@ muter "série sans charge exigée"            "s/load_required: !!\(pct \|\| kg\
 muter "1RM au-dessus de l'estimation"       "s/const kgRec = Math\.floor\(est \* 2\) \/ 2;/const kgRec = Math.floor(est * 2) \/ 2 + 0.5;/"
 muter "séries en double"                    "s/const i = \(index\.get\(movement\) \?\? 0\) \+ 1;/const i = 1;/"
 muter "plafond de 3 tournois levé"          "s/\(compte\.get\(m\.nn\) \?\? 0\) < 3/true/; s/\(compte\.get\(a\.nn\)! - compte\.get\(b\.nn\)!\)/0/"
+muter "T1 : deux tours joués"                "s/inscrits: 24, demarre: true, toursJoues: 1 \},
+  \{ ref: 'T2'/inscrits: 24, demarre: true, toursJoues: 2 },
+  { ref: 'T2'/"
+muter "T5 démarré"                          "s/places: 32, inscrits: 12, demarre: false/places: 32, inscrits: 12, demarre: true/"
+muter "T4 joué jusqu'au bout"               "s/niveau: 'inter', places: 24, inscrits: 24, demarre: true, toursJoues: 1/niveau: 'inter', places: 24, inscrits: 24, demarre: true/"
 muter "effectif T5 faux"                    "s/places: 32, inscrits: 12/places: 32, inscrits: 13/"
 muter "T6 complet"                          "s/places: 16, inscrits: 8/places: 16, inscrits: 16/"
 muter "genres non alternés"                 "s/choisis\.length % 2 === 0 \? f\.shift\(\) \?\? h\.shift\(\)/true ? f.shift() ?? h.shift()/"

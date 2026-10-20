@@ -168,6 +168,12 @@ describe('répartition des tournois', () => {
     }
     expect(new Set(TOURNOIS.map(t => t.niveau))).toEqual(new Set(['rx', 'scaled', 'inter']));
   });
+  it('état visé (décision B) : T1 à T4 en cours, un seul tour joué ; T5 et T6 à venir', () => {
+    const etat = Object.fromEntries(TOURNOIS.map(t => [t.ref, `${t.demarre ? 'demarre' : 'a-venir'}:${t.toursJoues}`]));
+    expect(etat).toEqual({ T1: 'demarre:1', T2: 'demarre:1', T3: 'demarre:1', T4: 'demarre:1', T5: 'a-venir:0', T6: 'a-venir:0' });
+    expect(TOURNOIS.map(t => [t.ref, t.places, t.inscrits])).toEqual([
+      ['T1', 24, 24], ['T2', 16, 16], ['T3', 8, 8], ['T4', 24, 24], ['T5', 32, 12], ['T6', 16, 8]]);
+  });
   it('T2 : tableau à 16 avec petite finale, T3 en double élimination', () => {
     expect(TOURNOIS.find(t => t.ref === 'T2')).toMatchObject({ format: 'bracket', places: 16, petiteFinale: true });
     expect(TOURNOIS.find(t => t.ref === 'T3')).toMatchObject({ format: 'swiss', places: 8 });

@@ -110,22 +110,27 @@ B="--box d3d0b0a0-0000-4000-a000-000000000001"
   - le coach crée les tournois et en vérifie les formats permis ;
   - chaque fictif s'inscrit lui-même ;
   - `play` joue un tour par passage ;
-  - la clôture de T1, T2 et E1 est faite par Nab ;
+  - **décision B (21/10)** : aucun tournoi terminé, car l'app ne montre que les tournois ouverts ou en cours. T1 à T4 jouent **un seul tour** (spec `toursJoues`) et restent en cours ; T5 et T6 restent à venir. Pas de clôture ni de `finalize` pour la vitrine : la commande reste dans le script (elle a servi à l'essai E1) ;
   - `--essai` utilise le groupe `essai` (E1, tableau à 4).
 - **`purge [--essai] --apply --yes`** : voir plus haut.
 
 ## Calendrier (étape 4, sur feu vert)
 
-| Moment | Script | Nab |
+| Moment (heure de Paris, lue par la base) | Script | Nab |
 |---|---|---|
-| J | `$S cles $B`, puis `$S seed $B --apply` → STOP | — |
+| J, hors 03:30–04:30 | `$S cles $B` ; empreintes « avant » `20` (groupe `vitrine`, prise par `seed`) et `30-empreinte-box.sql` ; `$S seed $B --apply` → STOP | — |
 | J | `01-activer.sql` → rapport, STOP | donne le rôle coach à CoachAthleX |
-| J | `$S refresh $B --apply`, `tournaments create`, puis `register` → rapport, STOP | ouvre `league_div` avant `create` |
-| J+1 après 00:15 | `$S tournaments play $B --apply` : T1 validé, tour 1 de T2, de T3 et journée 1 de T4 → STOP | clôture T1 (« Clôturer & ELO ») |
-| J+1… | `play` une fois par passage : tours 2 à 4 de T2 (finale et petite finale) → STOP | clôture T2 |
-| chaque jour | `$S refresh $B --apply` | — |
+| J, **avant 23:45** | `$S refresh $B --apply`, `tournaments create`, puis `register` (inscriptions closes au démarrage) → rapport, STOP | ouvre `league_div` avant `create` |
+| J+1 après 00:15 | `$S tournaments play $B --apply` **une seule fois** : épreuve 1 de T1, tour 1 de T2 et de T3, journée 1 de T4, validés par le coach ; le tour suivant est créé, en attente → STOP | — |
+| chaque jour | `$S refresh $B --apply` (scores du jour et de la veille, réservations) | — |
 | fin de l'étape 4 | `vitrine.ids.json` commité ; ligne dans `docs/ETAT_DU_PROJET.md` | **merge de la PR** |
 | après acceptation | `$S purge $B --apply --yes` (étape 5) | publie ensuite |
+
+**T1 à T4 restent en cours au moins 6 semaines** (relevé du 21/10, code et crons de prod) :
+- `end_date` NULL. C'est le seul déclencheur de clôture automatique (`BOTournamentScreen`, à l'ouverture par un gérant). Il est critique pour T4 (ligue sans précondition) et T1 (classique sans score en attente).
+- `closes_at` NULL : les WODs ouverts le restent.
+- Les WODs du tour suivant restent `pending` : aucun score possible, rien ne les ouvre seul.
+- Aucun cron ni trigger ne fait avancer un tour, ne décide un match, ne termine une saison ni ne clôt un tournoi. `play` ne rejoue jamais au-delà de `toursJoues`.
 
 ```bash
 PGCLIENTENCODING=UTF8 psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v box=<uuid> [-v n_membres=4] -f scripts/demo-vitrine/sql/01-activer.sql
@@ -139,11 +144,11 @@ Fenêtre : **hors samedi 07:30 à 09:30 Paris**, à cause de la génération de 
 2. `$S seed $B --n 4 --apply`, plus le coach → STOP : rôle coach.
 3. `01-activer.sql -v n_membres=4`.
 4. `$S refresh $B --n 4 --apply`.
-5. Mini-tournoi :
-   - `$S tournaments create|register $B --n 4 --essai --apply` ;
-   - après minuit : `play` (demi-finales), puis `play` (finale) ;
-   - clôture par Nab ;
-   - ses ids vont dans `vitrine.ids.json` sous `essai`.
+5. Mini-tournoi E1 (fait le 20–21/10) :
+   - `$S tournaments create|register $B --n 4 --essai --apply` avant minuit ;
+   - après 00:15 : `play` (demi-finales), puis `play` (finale) ;
+   - clôture par Nab, puis `finalize` (sans badges) ;
+   - ses ids sous `essai` dans `vitrine.ids.json`.
 6. Contrôles avant la purge (comptages agrégés) :
    - scores, réservations et ELO du mini-tournoi présents ;
    - 0 ligne de plus dans `box_manager_notifications` et `box_notifications` ;

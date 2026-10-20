@@ -314,15 +314,16 @@ const lireIds = (): Ids => { try { return JSON.parse(readFileSync(FICHIER_IDS, '
 function ecrireIds(ids: Ids) { writeFileSync(FICHIER_IDS, `${JSON.stringify(ids, null, 2)}\n`); }
 
 const SPECS: SpecTournoi[] = ESSAI ? [TOURNOI_ESSAI] : TOURNOIS;
-/** Tours joués au plus par `play` : T3 et T4 restent en cours après le premier. */
-const TOUR_MAX: Partial<Record<RefTournoi, number>> = ESSAI ? {} : { T3: 1, T4: 1 };
+/** Tours joués au plus par `play` (spec `toursJoues`) : T1 à T4 restent en cours après le premier. */
+const TOUR_MAX: Partial<Record<RefTournoi, number>> = Object.fromEntries(SPECS.filter(s => s.toursJoues !== undefined).map(s => [s.ref, s.toursJoues!]));
 
 /** WODs de chaque tournoi : une épreuve, une étape de tableau ou une journée. */
 function wodsDe(t: SpecTournoi, ouverture: string | null) {
   const base = { opens_at: ouverture, deadline_hours: 24, status: 'pending' };
   const ft = (titre: string, extra = {}) => ({ ...base, title: titre, type: 'For Time', duration_minutes: 15, time_cap_seconds: 900, description: '21-15-9\nThruster (43/30 kg)\nPull-Ups', ...extra });
   const am = (titre: string, extra = {}) => ({ ...base, title: titre, type: 'AMRAP', duration_minutes: 12, time_cap_seconds: 720, description: 'AMRAP 12\n10 Kettlebell Swings (24/16 kg)\n10 Burpees\n10 Box Jumps', ...extra });
-  if (t.format === 'simple') return [ft(`${t.nom} — épreuve 1`, { order_index: 1 })];
+  // Classique : deux épreuves ; seule la première est jouée, la seconde reste en attente (tournoi en cours).
+  if (t.format === 'simple') return [ft(`${t.nom} — épreuve 1`, { order_index: 1 }), am(`${t.nom} — épreuve 2`, { order_index: 2, opens_at: null })];
   if (t.format === 'league_div') return [am('Journée 1', { order_index: 1 }), am('Journée 2', { order_index: 2, opens_at: null })];
   const tours = Math.ceil(Math.log2(t.places));
   const out = [] as any[];
@@ -459,7 +460,7 @@ async function jouerEpreuve(t: SpecTournoi, id: string, dbCoach: Db, idDe: Map<n
   if (t.format === 'league_div' && APPLY) {
     for (const w of wods.slice(0, max)) await ok(dbCoach.rpc('compute_league_wod_elo', { p_tournament_wod_id: w.id }), 'compute_league_wod_elo');
   }
-  if (t.ref === 'T1') console.log(`STOP — ${t.ref} prêt à clôturer : Nab clique « Clôturer & ELO » dans le Manager.`);
+  dit(`${t.ref} : ${Math.min(max, wods.length)} épreuve(s) jouée(s), la suite reste en attente`);
 }
 
 /** Un tour de tableau par passage : tirage, scores, validation, décision, avancée. */
@@ -534,7 +535,7 @@ function wodsAvecScoreProtege(wodIds: string[]): Set<string> {
     '-c', 'SET default_transaction_read_only = on',
     '-c', `SELECT set_config('vitrine.box', '${BOX}', false)`,
     '-f', join(ICI, 'sql', 'proteges.sql'),
-    '-c', `SELECT coalesce(json_agg(DISTINCT wod_id), '[]') FROM public.wod_scores
+    '-c', `SELECT coalesce(json_agg(DISTINCT wod_id), '[]')::jsonb::text FROM public.wod_scores
             WHERE wod_id = ANY ('{${wodIds.join(',')}}'::uuid[]) AND member_id = ANY (current_setting('vitrine.proteges')::uuid[])`],
     { encoding: 'utf8', env: { ...process.env, PGCLIENTENCODING: 'UTF8' }, stdio: ['ignore', 'pipe', 'inherit'] });
   return new Set(JSON.parse(sortie.trim().split('\n').pop() || '[]'));
@@ -556,13 +557,13 @@ async function purge() {
   const legacy = drapeau('--include-legacy-demo');
   const json = (sql: string) => JSON.parse(psql(null, {}, sql).trim().split('\n').pop() || '[]');
   // Lecture en postgres : internal.demo_accounts n'est lisible par aucun rôle client.
-  const lus = json(`SELECT coalesce(json_agg(x), '[]') FROM (
+  const lus = json(`SELECT coalesce(json_agg(x), '[]')::jsonb::text FROM (
     SELECT u.id, lower(u.email) AS email, bm.box_id, bm.role, mp.name AS formule,
            EXISTS (SELECT 1 FROM internal.demo_accounts d WHERE d.user_id = u.id) AS demo_account
       FROM auth.users u JOIN public.box_members bm ON bm.member_id = u.id AND bm.box_id = '${BOX}'
       LEFT JOIN public.membership_plans mp ON mp.id = bm.plan_id) x`) as CompteLu[];
   // Reviewer : le seul compte de internal.demo_accounts hors @demo.athlexapp.eu (et hors vitrine).
-  const revs = json(`SELECT coalesce(json_agg(d.user_id), '[]') FROM internal.demo_accounts d JOIN auth.users u ON u.id = d.user_id
+  const revs = json(`SELECT coalesce(json_agg(d.user_id), '[]')::jsonb::text FROM internal.demo_accounts d JOIN auth.users u ON u.id = d.user_id
      WHERE lower(u.email) NOT LIKE '%@demo.athlexapp.eu' AND lower(u.email) NOT LIKE 'demo.vitrine+%'`) as string[];
   if (legacy && revs.length !== 1) stop(`reviewer non identifié sans ambiguïté (${revs.length})`);
   const comptes = comptesAPurger(lus, BOX!, { legacy, reviewerId: revs[0] });

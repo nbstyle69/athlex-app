@@ -266,15 +266,22 @@ export interface SpecTournoi {
   /** Démarre à J+1 00:00 Paris ; sinon start_date NULL, reste « à venir ». */
   demarre: boolean;
   petiteFinale?: boolean;
+  /**
+   * Tours (WOD de classique, tour de tableau, journée de ligue) joués par
+   * `play`, jamais plus : le tournoi reste « en cours », le suivant en attente
+   * (décision B du 21/10 : l'app ne montre que les tournois ouverts ou en
+   * cours). `undefined` : joué jusqu'au bout (essai).
+   */
+  toursJoues?: number;
 }
 
 export const TOURNOIS: SpecTournoi[] = [
-  { ref: 'T1', nom: 'Open d’automne', format: 'simple', niveau: 'rx', places: 24, inscrits: 24, demarre: true },
-  { ref: 'T2', nom: 'Battle Kettlebell', format: 'bracket', niveau: 'rx', places: 16, inscrits: 16, demarre: true, petiteFinale: true },
-  { ref: 'T3', nom: 'Duel de la Box', format: 'swiss', niveau: 'scaled', places: 8, inscrits: 8, demarre: true },
-  { ref: 'T4', nom: 'Ligue Hybrid', format: 'league_div', niveau: 'inter', places: 24, inscrits: 24, demarre: true },
-  { ref: 'T5', nom: 'Challenge Burpee', format: 'simple', niveau: 'scaled', places: 32, inscrits: 12, demarre: false },
-  { ref: 'T6', nom: 'Coupe d’hiver', format: 'bracket', niveau: 'rx', places: 16, inscrits: 8, demarre: false },
+  { ref: 'T1', nom: 'Open d’automne', format: 'simple', niveau: 'rx', places: 24, inscrits: 24, demarre: true, toursJoues: 1 },
+  { ref: 'T2', nom: 'Battle Kettlebell', format: 'bracket', niveau: 'rx', places: 16, inscrits: 16, demarre: true, petiteFinale: true, toursJoues: 1 },
+  { ref: 'T3', nom: 'Duel de la Box', format: 'swiss', niveau: 'scaled', places: 8, inscrits: 8, demarre: true, toursJoues: 1 },
+  { ref: 'T4', nom: 'Ligue Hybrid', format: 'league_div', niveau: 'inter', places: 24, inscrits: 24, demarre: true, toursJoues: 1 },
+  { ref: 'T5', nom: 'Challenge Burpee', format: 'simple', niveau: 'scaled', places: 32, inscrits: 12, demarre: false, toursJoues: 0 },
+  { ref: 'T6', nom: 'Coupe d’hiver', format: 'bracket', niveau: 'rx', places: 16, inscrits: 8, demarre: false, toursJoues: 0 },
 ];
 
 const ADEQUATION: Record<SpecTournoi['niveau'], Record<Niveau, number>> = {
