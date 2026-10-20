@@ -15,6 +15,7 @@ J=00000000-0000-4000-b523-00000000000a
 K=00000000-0000-4000-b523-00000000000b
 IDS='{00000000-0000-4000-d523-000000000001,00000000-0000-4000-d523-000000000002}'
 TMP=$(mktemp -d)
+cp proteges.sql "$TMP/"   # les copies mutées incluent proteges.sql par inclusion relative
 echoue=0
 
 $P -d postgres -c "DROP DATABASE IF EXISTS vitrine_fix WITH (FORCE)" -c "CREATE DATABASE vitrine_fix TEMPLATE rejeu" || exit 2
@@ -121,14 +122,14 @@ RELEVE="$(cygpath -m "$TMP")/releve.sql"
 supprimer_comptes() { $P -d vitrine_cas -c "DELETE FROM auth.users WHERE id = ANY('$COMPTES'::uuid[])" >"$TMP/del" 2>&1; }
 # chaine [fichier 80] [sans91] : enchaîne jusqu'au contrôle ; affiche l'étape en échec (journal dans $TMP/log).
 chaine() {
-  jouer "${1:-80-releve-purge.sql}" -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE" || { echo "80"; return 1; }
+  jouer "${1:-80-releve-purge.sql}" -v box=$AF -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE" || { echo "80"; return 1; }
   cp "$TMP/log" "$TMP/log80"
   jouer 90-purger-tournois.sql -v box=$AF -v ids="$IDS" || { echo "90"; return 1; }
   if [ "${2:-}" != "sans91" ]; then jouer 91-supprimer-lignes-fictifs.sql -v comptes="$COMPTES" -v releve="$RELEVE" || { echo "91"; return 1; }; fi
   supprimer_comptes || { cp "$TMP/del" "$TMP/log"; echo "comptes"; return 1; }
   jouer 99-controle-purge.sql -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE" || { echo "99"; return 1; }
 }
-releve_seul() { jouer 80-releve-purge.sql -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE"; }
+releve_seul() { jouer 80-releve-purge.sql -v box=$AF -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE"; }
 
 neuve; jouer 01-activer.sql -v box=$AF >/dev/null || ko "C0 activation"
 etape=$(chaine) && ok "C1 purge complète : contrôle à 0" || { ko "C1 (échec en $etape)"; tail -5 "$TMP/log"; }
@@ -185,23 +186,35 @@ if releve_seul; then ko "C6 liste d'attente : relevé passé"
 elif grep -q 'class_reservations.waiting=1' "$TMP/log"; then ok "C6 réel en liste d'attente sur un créneau d'un fictif : STOP"
 else ko "C6"; tail -3 "$TMP/log"; fi
 
-echo "== ELO des comptes réels protégés : 10-contact-elo et 20-empreinte-elo"
+echo "== ELO des comptes réels protégés : 10-contact-elo, 80 (contact), 20-empreinte-elo"
 REF="$(cygpath -m "$TMP")/empreinte-ref.sql"
-WF=00000000-0000-4000-e523-0000000000e1; WR=00000000-0000-4000-e523-0000000000e2
+WF=00000000-0000-4000-e523-0000000000e1; WR=00000000-0000-4000-e523-0000000000e2; WK=00000000-0000-4000-e523-0000000000e3
 F1=00000000-0000-4000-a523-000000000001; F2=00000000-0000-4000-a523-000000000002; REEL=00000000-0000-4000-a523-000000000901
 deux_wods() { val "INSERT INTO public.box_wods (id, box_id, title, wod_type, scheduled_date, is_published, leaderboard_enabled) VALUES ('$WF', '$AF', 'WOD des fictifs', 'amrap', current_date - 3, true, true), ('$WR', '$AF', 'WOD du reel', 'amrap', current_date - 2, true, true)" >/dev/null; }
 # scorer <wod> <membre> <valeur>
 scorer() { val "INSERT INTO public.wod_scores (wod_id, member_id, box_id, score_type, score_value, rx, scaled) VALUES ('$1', '$2', '$AF', 'reps', $3, true, false)" >/dev/null; }
 # elo <wod> : calcul comme l'app, connecté comme le compte réel (membre actif).
 elo() { val "SET request.jwt.claims = '{\"sub\":\"$REEL\",\"role\":\"authenticated\"}'; SELECT count(*) FROM public.compute_wod_elo('$1'); SELECT count(*) FROM public.compute_box_elo('$1');" >/dev/null; }
+# historique <box> <wod> : une ligne elo_history du compte réel, écrite telle quelle (décor).
+historique() { val "INSERT INTO public.elo_history (box_id, wod_id, member_id, elo_before, elo_after, elo_delta, rank) VALUES ('$1', '$2', '$REEL', 1000, 1012, 12, 1)" >/dev/null; }
+prise() { jouer "${1:-20-empreinte-elo.sql}" -v box=$AF -v sortie="$REF"; }
+comparer() { jouer "${1:-20-empreinte-elo.sql}" -v box=$AF -v reference="$REF"; }
+# vitrine_jouee : décor commun — une ligne figée du réel (WOD sans fictif), empreinte, activation, fictifs entre eux avec ELO.
+vitrine_jouee() {
+  neuve; deux_wods; scorer $WR $REEL 120; historique $AF $WR
+  prise "${1:-20-empreinte-elo.sql}" || { ko "décor : prise"; tail -3 "$TMP/log"; }
+  jouer 01-activer.sql -v box=$AF >/dev/null
+  scorer $WF $F1 200; scorer $WF $F2 150; elo $WF
+}
 
-neuve; deux_wods
-printf "SELECT set_config('vitrine.box', '%s', false) AS b \gset x_
-\i %s/proteges.sql
-SELECT cardinality(current_setting('vitrine.proteges')::uuid[]);
-" "$AF" "$(cygpath -m "$PWD")" > "$TMP/p0.sql"
-attendre "P0 protégés du décor : gérant, réel, motif voisin (+51)" "$($P -d vitrine_cas -A -t -f "$TMP/p0.sql" | tr -d '' | tail -1)" 3
-jouer 01-activer.sql -v box=$AF >/dev/null
+vitrine_jouee
+printf "SELECT set_config('vitrine.box', '%s', false) AS b \\\\gset x_\n\\\\i %s/proteges.sql\nSELECT cardinality(current_setting('vitrine.proteges')::uuid[]);\n" "$AF" "$(cygpath -m "$PWD")" > "$TMP/p0.sql"
+attendre "P0 protégés du décor : gérant, réel, motif voisin (+51)" "$($P -d vitrine_cas -A -t -f "$TMP/p0.sql" | tr -d '\r' | tail -1)" 3
+grep -q "$REEL" "$REF" && ! grep -q '@' "$REF" && ok "P0 fichier d'empreinte : uuid et md5 seulement" || ko "P0 contenu du fichier"
+grep -o 'VITRINE_EMPREINTE prise.*' "$TMP/log" | sed 's/^/      /'
+
+# E1 : contact par un score réel posé après les fictifs → le signalement arrête tout.
+neuve; deux_wods; jouer 01-activer.sql -v box=$AF >/dev/null
 scorer $WF $F1 200; scorer $WF $F2 150; scorer $WF $REEL 180
 E5=$(val "$EMPREINTE")
 if jouer 10-contact-elo.sql -v box=$AF; then ko "E1 contact réel/fictif : signalement passé"
@@ -209,29 +222,53 @@ elif grep -q "VITRINE_CONTACT: .*\[WOD $WF, [0-9-]*, 1 compte(s)\]" "$TMP/log"; 
 else ko "E1"; tail -3 "$TMP/log"; fi
 grep -q "$REEL\|reel-901" "$TMP/log" && ko "E1 un identifiant de personne apparaît" || ok "E1 aucun identifiant de personne dans le signalement"
 attendre "E1 rien d'écrit" "$(val "$EMPREINTE")" "$E5"
-cp proteges.sql "$TMP/"; muter 10-contact-elo.sql "$TMP/m-contact.sql" "s/IF v_liste <> '' THEN/IF false THEN/"
+muter 10-contact-elo.sql "$TMP/m-contact.sql" "s/IF v_liste <> '' THEN/IF false THEN/"
 jouer "$TMP/m-contact.sql" -v box=$AF && ok "E1m mutation (signalement retiré) : le contact passe inaperçu, le cas E1 la détecte" || { ko "E1m"; tail -3 "$TMP/log"; }
 
-neuve; deux_wods
-jouer 20-empreinte-elo.sql -v box=$AF -v sortie="$REF" && ok "E2 empreinte prise avant le seed" || { ko "E2 prise"; tail -3 "$TMP/log"; }
-grep -q "$REEL" "$REF" && ! grep -q '@' "$REF" && ok "E2 fichier : uuid et md5 seulement" || ko "E2 contenu du fichier"
-jouer 01-activer.sql -v box=$AF >/dev/null
-scorer $WF $F1 200; scorer $WF $F2 150; elo $WF        # les fictifs entre eux
-scorer $WR $REEL 120                                    # le réel seul, jamais en contact
+# E2 : jamais en contact → lignes figées intactes après la purge.
+vitrine_jouee
 jouer 10-contact-elo.sql -v box=$AF && ok "E2 aucun contact signalé" || { ko "E2 contact"; tail -3 "$TMP/log"; }
 etape=$(chaine) && ok "E2 purge complète" || { ko "E2 purge (échec en $etape)"; tail -5 "$TMP/log"; }
-jouer 20-empreinte-elo.sql -v box=$AF -v reference="$REF" && grep -q 'VITRINE_EMPREINTE identique' "$TMP/log" \
-  && ok "E2 réel jamais en contact : empreinte identique après la purge" || { ko "E2 comparaison"; tail -3 "$TMP/log"; }
+comparer && grep -q "VITRINE_EMPREINTE lignes figées intactes : 2" "$TMP/log" && ok "E2 réel jamais en contact : lignes figées intactes après la purge (2 : historique de WOD + match du tournoi non listé)" || { ko "E2 comparaison"; tail -3 "$TMP/log"; }
 
-neuve; deux_wods
-jouer 20-empreinte-elo.sql -v box=$AF -v sortie="$REF" >/dev/null
-jouer 01-activer.sql -v box=$AF >/dev/null
-scorer $WF $F1 200; scorer $WF $F2 150; scorer $WF $REEL 180; elo $WF   # contact, signalement contourné
-etape=$(chaine) || { ko "E2m purge (échec en $etape)"; tail -5 "$TMP/log"; }
-if jouer 20-empreinte-elo.sql -v box=$AF -v reference="$REF"; then ko "E2m mutation (contact non signalé) : empreinte identique"
-elif grep -q 'VITRINE_EMPREINTE: écart sur.*elo_history' "$TMP/log" && grep -q 'profiles' "$TMP/log"; then
-  ok "E2m mutation (contact non signalé, ELO calculé) : écart détecté après la purge — $(grep -o 'écart sur.*' "$TMP/log" | head -1)"
-else ko "E2m"; tail -3 "$TMP/log"; fi
+# Ea : ligne d'historique légitime nouvelle, dans une autre box, et ELO courant changé → pas de STOP.
+vitrine_jouee
+val "INSERT INTO public.box_wods (id, box_id, title, wod_type, scheduled_date, is_published, leaderboard_enabled) VALUES ('$WK', '$K', 'WOD autre box', 'amrap', current_date - 1, true, true); UPDATE public.profiles SET elo = elo + 12, total_matches = total_matches + 1 WHERE id = '$REEL'" >/dev/null
+historique $K $WK
+etape=$(chaine) || { ko "Ea purge (échec en $etape)"; tail -5 "$TMP/log"; }
+if comparer; then ok "Ea ligne nouvelle légitime (autre box) et ELO courant changé : pas de STOP"; grep -o 'VITRINE_ELO_COURANT.*' "$TMP/log" | sed 's/^/      /'
+else ko "Ea STOP à tort"; tail -3 "$TMP/log"; fi
+grep -q 'VITRINE_ELO_COURANT (information) : 2 compte(s) inchangé(s), 1 changé(s)' "$TMP/log" && ok "Ea ELO courant : affiché en nombre (2 inchangés, 1 changé), sans identifiant" || ko "Ea information ELO courant"
+muter 20-empreinte-elo.sql "$TMP/m-courant.sql" "s/RAISE NOTICE 'VITRINE_ELO_COURANT/RAISE EXCEPTION 'VITRINE_ELO_COURANT/"
+if comparer "$TMP/m-courant.sql"; then ko "Eam mutation (ELO courant bloquant) : pas d'arrêt"
+else ok "Eam mutation (ELO courant traité comme bloquant) : arrêt à tort, le cas Ea la détecte"; fi
+
+# Eb : ligne figée modifiée → STOP.
+vitrine_jouee
+etape=$(chaine) || { ko "Eb purge (échec en $etape)"; tail -5 "$TMP/log"; }
+val "UPDATE public.elo_history SET elo_after = elo_after + 1 WHERE member_id = '$REEL' AND wod_id = '$WR'" >/dev/null
+if comparer; then ko "Eb ligne figée modifiée : pas de STOP"
+elif grep -q 'VITRINE_EMPREINTE: elo_history : 1 ligne(s) figée(s) modifiée(s) ou supprimée(s) sur 1' "$TMP/log"; then ok "Eb ligne figée modifiée : STOP (elo_history : 1 sur 1)"
+else ko "Eb"; tail -3 "$TMP/log"; fi
+muter 20-empreinte-elo.sql "$TMP/m-md5.sql" "s/string_agg\(concat_ws\(',', t, id, m\)/string_agg(concat_ws(',', t, id)/"
+vitrine_jouee "$TMP/m-md5.sql"
+etape=$(chaine) || { ko "Ebm purge (échec en $etape)"; tail -5 "$TMP/log"; }
+val "UPDATE public.elo_history SET elo_after = elo_after + 1 WHERE member_id = '$REEL' AND wod_id = '$WR'" >/dev/null
+comparer "$TMP/m-md5.sql" && ok "Ebm mutation (md5 des lignes retiré) : la modification passe inaperçue, le cas Eb la détecte" || { ko "Ebm"; tail -3 "$TMP/log"; }
+
+# Ec : ligne nouvelle d'un compte protégé sur un WOD scoré par un fictif, glissée sans score (le signalement ne la voit pas) → STOP à 80.
+vitrine_jouee
+historique $AF $WF
+jouer 10-contact-elo.sql -v box=$AF && ok "Ec décor : le signalement (scores) ne la voit pas" || { ko "Ec décor"; tail -3 "$TMP/log"; }
+E6=$(val "$EMPREINTE")
+if etape=$(chaine); then ko "Ec ligne au contact : purge passée"
+elif [ "$etape" = 80 ] && grep -q "elo_history=1 (ELO d'un compte protégé au contact des fictifs)" "$TMP/log"; then ok "Ec ligne ELO d'un protégé sur un WOD des fictifs : STOP au relevé, avant toute suppression"
+else ko "Ec (échec en $etape)"; tail -3 "$TMP/log"; fi
+attendre "Ec rien d'écrit" "$(val "$EMPREINTE")" "$E6"
+muter 80-releve-purge.sql "$TMP/m-contact80.sql" "s/    IF r\.n > 0 THEN/    IF false THEN/"
+vitrine_jouee; historique $AF $WF
+if etape=$(chaine "$TMP/m-contact80.sql") && comparer; then ok "Ecm mutation (contrôle de contact retiré de 80) : purge et empreinte passent, la contamination reste — le cas Ec la détecte"
+else ko "Ecm (échec en $etape)"; tail -3 "$TMP/log"; fi
 
 $P -d postgres -c "DROP DATABASE IF EXISTS vitrine_cas WITH (FORCE)" -c "DROP DATABASE IF EXISTS vitrine_fix WITH (FORCE)" >/dev/null
 rm -rf "$TMP"

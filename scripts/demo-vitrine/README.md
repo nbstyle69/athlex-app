@@ -14,7 +14,7 @@ Pendant la revue Apple / Google, AthleX Fitness (`d3d0b0a0-0000-4000-a000-000000
 | `sql/01-activer.sql` | `postgres`, une transaction : `internal.demo_accounts`, plus « Accès démo » en abonnement actif pour les membres. |
 | `sql/proteges.sql` | Définition unique des **comptes réels protégés** (lecture seule), incluse par `10`, `20` et `vitrine.ts`. |
 | `sql/10-contact-elo.sql` | **Lecture seule**, au début de `refresh`, `tournaments` et `purge` : STOP si un compte protégé a un score sur un WOD scoré par des fictifs. |
-| `sql/20-empreinte-elo.sql` | **Lecture seule** : empreinte de l'ELO des comptes protégés, prise avant le premier seed, comparée après la purge. |
+| `sql/20-empreinte-elo.sql` | **Lecture seule** : lignes d'historique ELO des comptes protégés figées avant le premier seed, contrôlées intactes après la purge ; ELO courant pour information. |
 | `sql/80-releve-purge.sql` | **Lecture seule**, avant toute suppression : relevé au catalogue des clés étrangères vers les comptes ; STOP sur les cas bloquants. |
 | `sql/90-purger-tournois.sql` | `postgres`, une transaction : désactive les **deux** gardes nommées le temps de supprimer les tournois listés. |
 | `sql/91-supprimer-lignes-fictifs.sql` | `postgres`, une transaction : supprime les lignes créées par les fictifs et citées par une clé en mise à NULL. |
@@ -48,17 +48,19 @@ Pendant la revue Apple / Google, AthleX Fitness (`d3d0b0a0-0000-4000-a000-000000
 - **Effet accepté** : le reviewer et les comptes de démo historiques (tous dans `internal.demo_accounts`) ne sont pas protégés. Si l'un d'eux score un WOD que des fictifs ont scoré, son ELO de WOD et de box garde l'effet des fictifs après la purge. C'est accepté (décision de Nab).
 - **Précaution** : `refresh` ne fait jamais scorer un fictif sur un WOD où un compte protégé a déjà un score. Le WOD est sauté et compté (« WODs sautés »). Les scores de tournoi ne passent pas par ces fonctions : rien à sauter dans `tournaments play`.
 - **Signalement** : au début de `refresh`, `tournaments` et `purge`, `10-contact-elo.sql` arrête tout, avant toute écriture, si un compte protégé a un score sur un WOD où un fictif a scoré (cas d'un vrai score posé **après** les fictifs). Il donne « WOD, date, nombre de comptes », sans identifiant de personne.
-- **Empreinte de contrôle** : `20-empreinte-elo.sql` est pris par `seed` juste avant le premier compte, une fois par groupe (`essai`, `vitrine`), dans `VITRINE_DOSSIER` (défaut `~/Desktop/athlex-captures/box-vitrine`, hors dépôt).
-  - Contenu du fichier : les uuid des comptes protégés, figés à la prise, et un md5 plus un nombre de lignes par table. Tables : `profiles` (elo, compteurs), `box_elo`, `elo_history`, `box_elo_history`, et les trois historiques ELO de tournoi.
-  - Après la purge, l'empreinte doit être identique. Sinon : STOP avec les tables en écart. **Rien n'est corrigé automatiquement**, Nab décide au cas par cas.
-  - Un score légitime d'un compte protégé pendant la vitrine, sur un WOD sans fictif, peut aussi changer l'empreinte, si son ELO est calculé. Le rapport le dira table par table.
+- **Empreinte de contrôle** (`20-empreinte-elo.sql`) : elle est prise par `seed` juste avant le premier compte, une fois par groupe (`essai`, `vitrine`), dans `VITRINE_DOSSIER` (défaut `~/Desktop/athlex-captures/box-vitrine`, hors dépôt). La contamination n'entre que par `compute_wod_elo` / `compute_box_elo` sur un WOD scoré par un fictif, ou par un tournoi de vitrine. On ne fige donc que ce qui existait à la prise :
+  - **Lignes figées**. À la prise, l'empreinte relève l'id et le md5 (calculé par la base) de chaque ligne des comptes protégés dans `elo_history`, `box_elo_history`, `tournament_elo_history`, `tournament_match_elo_history` et `tournament_wod_elo_history`. Après la purge, chacune doit exister, inchangée. Une ligne modifiée ou supprimée → STOP, avec le nombre par table. **Rien n'est corrigé**, Nab décide.
+  - **Aucune ligne nouvelle au contact**. Avant toute suppression, `80-releve-purge.sql` compte les lignes de ces historiques qui appartiennent à un compte protégé et portent sur un WOD scoré par un fictif ou sur un tournoi de la liste. Attendu : 0, sinon STOP.
+  - **Lignes nouvelles ailleurs** (autres WODs, autres box, autres tournois) : permises, elles n'arrêtent rien. C'est l'activité réelle du gérant ou des membres pendant la vitrine.
+  - **ELO courant** (`profiles.elo` et compteurs, `box_elo` de la box), pour information seulement : « N inchangé(s), M changé(s) », sans identifiant et sans arrêt. Il bouge légitimement.
+  - Le fichier ne contient que des uuid techniques et des md5.
 - **Gamification côté client** (`incrementCounter`, `athlete_badges`, `movement_logs`, push « dépassé ») : non reproduite. Les badges de tournoi, posés par l'app du gérant à la clôture, ne sont pas fabriqués non plus.
 
 ## Purge : ordre et règles
 
 0. **Signalement de contact** (`10-contact-elo.sql`) et présence de l'empreinte de référence. Sinon STOP.
 1. **Reviewer** : aucun résultat dans les tournois purgés. Sinon STOP, à remettre à la main.
-2. **`80-releve-purge.sql`, en lecture seule, avant toute suppression.** Il lit au catalogue chaque clé étrangère (une colonne) vers `auth.users` et `public.profiles`, avec son `confdeltype`, et classe chaque ligne qui vise un compte à purger :
+2. **`80-releve-purge.sql`, en lecture seule, avant toute suppression.** Il lit au catalogue chaque clé étrangère (une colonne) vers `auth.users` et `public.profiles`, avec son `confdeltype`, et classe chaque ligne qui vise un compte à purger. Il vérifie aussi qu'aucun compte protégé n'a de ligne d'historique ELO au contact des fictifs :
 
    | Classe | Cas | Traitement |
    |---|---|---|
@@ -76,7 +78,7 @@ Pendant la revue Apple / Google, AthleX Fitness (`d3d0b0a0-0000-4000-a000-000000
 4. **`91-supprimer-lignes-fictifs.sql`** : les lignes `fictif`.
 5. **Comptes** : supprimés par l'API admin d'Auth. La cascade efface leurs données, `internal.demo_accounts` compris.
 6. **`99-controle-purge.sql`** : 0 ligne liée aux comptes et aux tournois. Aucune ligne relevée ne doit subsister : une ligne restante aurait sa colonne à NULL, orpheline. Aucun compte purgé ne doit rester dans `message_groups.members` ni `messages.read_by`.
-7. **`20-empreinte-elo.sql`** en comparaison, après `99` : ELO des comptes protégés identique à celui d'avant le seed. Sinon STOP, sans correction.
+7. **`20-empreinte-elo.sql`** en comparaison, après `99` : lignes d'historique ELO figées avant le seed toutes présentes et inchangées, sinon STOP sans correction ; ELO courant affiché pour information.
 
 **`--include-legacy-demo`** (désactivée par défaut) :
 - elle ne retient un compte historique que s'il figure dans `internal.demo_accounts` **et** que son adresse est en `@demo.athlexapp.eu`, reviewer exclu. Un compte réel ne peut jamais être pris ;

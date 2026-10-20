@@ -1,7 +1,7 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- Box vitrine (#523) — relevé avant purge, en LECTURE SEULE, joué avant toute
 -- suppression (avant 90-purger-tournois.sql).
---   psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v comptes='{…}' -v tournois='{…}' \
+--   psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v box=<uuid> -v comptes='{…}' -v tournois='{…}' \
 --        -v releve=<fichier hors dépôt> -f scripts/demo-vitrine/sql/80-releve-purge.sql
 --
 -- Lit au catalogue toutes les clés étrangères (une colonne) vers auth.users et
@@ -19,14 +19,18 @@
 --   fictif        `n`/`d` et la ligne ne cite que des comptes purgés : créée par
 --                 les fictifs eux-mêmes → supprimée par 91-supprimer-lignes-fictifs.
 -- Bloque aussi si une réservation « waiting » d'un autre compte attend sur un
--- créneau tenu par un compte purgé (la purge la promouvrait).
+-- créneau tenu par un compte purgé (la purge la promouvrait), et si un compte
+-- réel protégé (proteges.sql) a une ligne d'historique ELO sur un WOD scoré
+-- par un compte à purger ou dans un tournoi de la liste (contamination, 2c).
 -- Écrit dans le fichier `releve` (identifiants techniques seulement) une
 -- instruction set_config que 91 et 99 rejouent par \i.
 -- ═════════════════════════════════════════════════════════════════════════════
 
 \set ON_ERROR_STOP on
 SET default_transaction_read_only = on;
-SELECT set_config('vitrine.comptes', :'comptes', false) AS c, set_config('vitrine.tournois', :'tournois', false) AS t \gset vitrine_
+SELECT set_config('vitrine.comptes', :'comptes', false) AS c, set_config('vitrine.tournois', :'tournois', false) AS t,
+       set_config('vitrine.box', :'box', false) AS b \gset vitrine_
+\ir proteges.sql
 
 -- Une requête par clé étrangère n/d/a/r, construite au catalogue.
 WITH fk AS (
@@ -96,6 +100,30 @@ BEGIN
   IF v_attente > 0 THEN
     v_stop := v_stop || format(' class_reservations.waiting=%s (promotion à la purge)', v_attente);
   END IF;
+
+  -- Aucune ligne d'historique ELO d'un compte réel protégé au contact des
+  -- fictifs : sur un WOD qu'un compte à purger a scoré, ou dans un tournoi de
+  -- la liste. Contrôlé ici, avant que scores et tournois disparaissent.
+  FOR r IN
+    WITH wods AS (SELECT DISTINCT wod_id FROM public.wod_scores
+                   WHERE member_id = ANY (current_setting('vitrine.comptes')::uuid[])),
+         pr AS (SELECT unnest(current_setting('vitrine.proteges')::uuid[]) AS id),
+         tr AS (SELECT unnest(current_setting('vitrine.tournois')::uuid[]) AS id)
+    SELECT 'elo_history' AS t, count(*) AS n FROM public.elo_history h
+     WHERE h.member_id IN (SELECT id FROM pr) AND h.wod_id IN (SELECT wod_id FROM wods)
+    UNION ALL SELECT 'box_elo_history', count(*) FROM public.box_elo_history h
+     WHERE h.member_id IN (SELECT id FROM pr) AND h.wod_id IN (SELECT wod_id FROM wods)
+    UNION ALL SELECT 'tournament_elo_history', count(*) FROM public.tournament_elo_history h
+     WHERE h.athlete_id IN (SELECT id FROM pr) AND h.tournament_id IN (SELECT id FROM tr)
+    UNION ALL SELECT 'tournament_match_elo_history', count(*) FROM public.tournament_match_elo_history h
+     WHERE h.athlete_id IN (SELECT id FROM pr) AND h.tournament_id IN (SELECT id FROM tr)
+    UNION ALL SELECT 'tournament_wod_elo_history', count(*) FROM public.tournament_wod_elo_history h
+     WHERE h.athlete_id IN (SELECT id FROM pr) AND h.tournament_id IN (SELECT id FROM tr)
+  LOOP
+    IF r.n > 0 THEN
+      v_stop := v_stop || format(' %s=%s (ELO d''un compte protégé au contact des fictifs)', r.t, r.n);
+    END IF;
+  END LOOP;
 
   IF v_stop <> '' THEN
     RAISE EXCEPTION 'VITRINE_BLOQUANT:%', v_stop;

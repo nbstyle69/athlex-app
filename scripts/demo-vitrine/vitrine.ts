@@ -582,10 +582,11 @@ async function purge() {
   }
   // 2. Relevé au catalogue, en lecture seule, AVANT toute suppression : clés sans
   //    action ou en restriction, lignes de vrais comptes, tournois non listés, liste
-  //    d'attente → STOP ; clés en mise à NULL relevées dans un fichier hors dépôt
+  //    d'attente, ligne ELO d'un compte protégé au contact des fictifs → STOP ;
+  //    clés en mise à NULL relevées dans un fichier hors dépôt
   //    (identifiants techniques seulement).
   const releve = join(tmpdir(), `athlex-vitrine-releve-${GROUPE}.sql`).split('\\').join('/');
-  const vars = { comptes: arr(comptes), tournois: arr(tournois), releve };
+  const vars = { box: BOX!, comptes: arr(comptes), tournois: arr(tournois), releve };
   try { psql('80-releve-purge.sql', vars); } catch { stop('relevé avant purge en échec (voir VITRINE_BLOQUANT ci-dessus) : rien n’a été supprimé.'); }
 
   if (!APPLY || !drapeau('--yes')) { console.log('[dry-run] relevé conforme ; rien n’est supprimé sans --apply --yes.'); return; }
@@ -603,7 +604,7 @@ async function purge() {
   console.log(`purge terminée : ${tournois.length} tournoi(s), ${comptes.length} compte(s), contrôle à 0.`);
   // Contrôle de l'ELO des comptes réels protégés : rien n'est corrigé, Nab décide.
   try { psql('20-empreinte-elo.sql', { box: BOX!, reference: FICHIER_EMPREINTE() }); }
-  catch { stop('empreinte ELO des comptes réels protégés différente de celle d’avant le seed (voir VITRINE_EMPREINTE) : rien n’est corrigé, décision de Nab.'); }
+  catch { stop('ligne(s) d’historique ELO figée(s) avant le seed modifiée(s) ou supprimée(s) (voir VITRINE_EMPREINTE) : rien n’est corrigé, décision de Nab.'); }
 }
 
 // ── cles ─────────────────────────────────────────────────────────────────────
