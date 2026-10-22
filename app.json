@@ -4,7 +4,7 @@
     "slug": "TheHub",
     "version": "1.0.66",
     "orientation": "portrait",
-    "icon": "./assets/athex-logo.png",
+    "icon": "./assets/icon-ios.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/logo.png",
@@ -13,9 +13,9 @@
     },
     "scheme": "athlex",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "io.athlex.app",
-      "icon": "./assets/athex-logo.png",
+      "icon": "./assets/icon-ios.png",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -30,7 +30,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#0A0A0F",
-        "foregroundImage": "./assets/athex-logo.png",
+        "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
