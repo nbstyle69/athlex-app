@@ -285,13 +285,15 @@ async function refresh() {
   const creneaux = await ok(admin().from('class_schedules').select('id, scheduled_date, start_time, max_capacity')
     .eq('box_id', BOX!).gte('scheduled_date', auj).lte('scheduled_date', jourParis(FENETRE_RESERVATION_JOURS)).order('scheduled_date'), 'créneaux') as any[];
   const aVenir = creneaux.filter(c => instantParis(c.scheduled_date, String(c.start_time).slice(0, 5)).getTime() > Date.now() + 15 * 60000);
-  const resas = await ok(admin().from('class_reservations').select('schedule_id, member_id, status').in('schedule_id', aVenir.map(c => c.id)), 'réservations') as any[];
+  // Toutes les réservations des jours couverts, créneaux déjà passés compris :
+  // sinon un membre qui a eu un cours ce matin en réserverait un second ce soir.
+  const resas = await ok(admin().from('class_reservations').select('schedule_id, member_id, status').in('schedule_id', creneaux.map(c => c.id)), 'réservations') as any[];
   const idDe = new Map(actifs.map(a => [a.id, a.m.nn]));
   let posees = 0, libresMin = Infinity;
   for (const c of aVenir) {
     const confirmes = resas.filter(r => r.schedule_id === c.id && r.status === 'confirmed').length;
     const surCreneau = new Set(resas.filter(r => r.schedule_id === c.id).map(r => idDe.get(r.member_id)).filter(Boolean) as number[]);
-    const ceJour = new Set(resas.filter(r => aVenir.find(x => x.id === r.schedule_id)?.scheduled_date === c.scheduled_date).map(r => idDe.get(r.member_id)).filter(Boolean) as number[]);
+    const ceJour = new Set(resas.filter(r => creneaux.find(x => x.id === r.schedule_id)?.scheduled_date === c.scheduled_date).map(r => idDe.get(r.member_id)).filter(Boolean) as number[]);
     const choix = reservantsPour(c.id, actifs.map(a => a.m).filter(m => !surCreneau.has(m.nn)), ceJour, quotaReservation(c.max_capacity, confirmes));
     let pris = confirmes;
     for (const m of choix) {
