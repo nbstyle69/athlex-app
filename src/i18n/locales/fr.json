@@ -1222,7 +1222,6 @@
       "welcomeTitle": "Bienvenue !",
       "joinedProgram": "Tu as rejoint le programme « {{title}} ».",
       "permissionDenied": "Permission refusée",
-      "galleryPermission": "Autorise l'accès à ta galerie dans les réglages.",
       "cameraPermission": "Autorise l'accès à la caméra dans les réglages.",
       "leaveCurrentBoxMsg": "Tu vas quitter « {{name}} ». Tu devras utiliser un code d'invitation pour la rejoindre à nouveau.",
       "avatarUploadFailed": "Impossible d'uploader la photo de profil.",

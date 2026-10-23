@@ -429,12 +429,7 @@ export default function ProfileScreen() {
 
   async function handlePickPhoto() {
     setPickingPhoto(true);
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      setPickingPhoto(false);
-      Alert.alert(t('profile.alerts.permissionDenied'), t('profile.alerts.galleryPermission'));
-      return;
-    }
+    // Sélecteur système : aucune permission galerie à demander (#588).
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true, aspect: [1, 1], quality: 0.8,
