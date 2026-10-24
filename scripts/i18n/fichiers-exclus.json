@@ -1,3 +1,4 @@
 {
-  "src/screens/admin/AdminScreen.tsx": "Outil interne de super-admin, réservé à Nab : reste en français (décision de Nab, 10/10/2026)."
+  "src/screens/admin/AdminScreen.tsx": "Outil interne de super-admin, réservé à Nab : reste en français (décision de Nab, 10/10/2026).",
+  "src/screens/documents/LegalScreen.tsx": "Onglet CGU laissé en français en attendant le chantier juridique (#532) ; l'en-tête, les onglets et l'onglet Confidentialité passent par t() (#593)."
 }

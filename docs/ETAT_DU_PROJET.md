@@ -245,7 +245,8 @@ aucune régie) ; chiffrement en transit = oui (HTTPS partout) ; suppression dans
 | Événements d'usage (liste exhaustive dans `src/lib/analytics.ts`, identifiants techniques et catégories, jamais de contenu libre) | Mixpanel — **sans géolocalisation IP** | Usage Data → Product Interaction · Analytics · liée (`identify` + `people.set` username/role/level) | App activity → App interactions · Analytics | `src/lib/analytics.ts` |
 | Localisation | **Non demandée** : aucune permission iOS/Android, pas d'`expo-location` ; `showsUserLocation` inopérant ; la carte se centre sur la moyenne des box | — | Location → non collecté | `app.json`, `BoxDirectoryMapScreen.tsx`, `verify:aab` |
 | Recherche de GIF (termes saisis, IP) | GIPHY (`api.giphy.com`) — Tenor fermé | Usage Data → Search History · Fonctionnement · **non liée** (pas d'identifiant transmis) | App activity → In-app search history · App functionality | `MessagesScreen.tsx` |
-| Données saisies par le gérant sur des tiers (prospects, invitations) | Supabase | Contact Info → Email, Phone · Fonctionnement · liée | Personal info → Email, Phone · App functionality | `src/screens/backoffice/` |
+| Données saisies par le gérant sur des tiers (invitations par e-mail) | Supabase | Contact Info → Email Address · Fonctionnement · liée | Personal info → Email address · App functionality | `src/screens/backoffice/` |
+| Téléphone d'un prospect — **jamais demandé par l'app mobile** | Supabase `box_prospects.phone`, facultatif, saisi par la personne qui réserve un essai sur la page publique de la box (site, `book_trial_slot`) ; ni le gérant ni l'app ne le saisissent | Non collecté par l'app | **Plus déclaré** : la fiche Play ne déclare plus le téléphone (corrigé le 24/10/2026) | `supabase/migrations/20261126_essai_lot_base.sql` (`p_phone DEFAULT NULL`) ; aucun appel à `book_trial_slot` dans `src/` |
 | Côté serveur : analyse d'un score par IA (pseudo, valeur, notes), texte de PDF de programmation ; e-mails transactionnels | Anthropic ; Resend | Processeurs, déclarés avec les données ci-dessus | Processeurs (« partagé » ou exemption service provider selon DPA) | `supabase/functions/analyze-tournament-score`, `parse-wod-pdf`, `weekly-owner-digest`, `session-followup-cron` |
 
 **analyze-tournament-score désactivée (410), aucun envoi à Anthropic** (#594) — l'appelant reste
@@ -260,6 +261,8 @@ purgé ; 44 clés `ON DELETE SET NULL` anonymisent les références dans le cont
 `group_messages.sender_id` passe en `SET NULL` par migration (lot du 5 septembre). Reste hors de
 portée de l'app : événements Sentry déjà envoyés (rétention du plan, non vérifiée) et journaux
 Supabase/Resend.
+
+Écran légal de l'app (#593, app seule, aucune migration ; PR ouverte le 24/10/2026, **non mergée** : texte à relire par Nab) : l'onglet Confidentialité ne recopie plus la politique (son texte du 21 mars 2026 disait Mixpanel et Sentry « anonymisés », ce qui est faux) ; il renvoie vers https://athlexapp.eu/privacy (bouton « Lire la politique de confidentialité », navigateur du téléphone), tenue à jour par AthleX-Manager #448, et rappelle « Profil → Compte → Supprimer mon compte ». FR/EN par `t()` ; l'onglet CGU reste en français (#532). **Livraison par OTA, une fois master réaligné sur 1.0.67 (après l'acceptation d'Apple)** ; aucun build. Test `ecranLegalConfidentialite.rn.test.tsx` (6 mutations tuées) ; captures avant / après dans `athlex-captures/593-ecran-legal`.
 
 ### Site public et lisibilité
 

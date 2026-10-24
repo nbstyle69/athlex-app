@@ -68,7 +68,7 @@ export const R3C_SCREENS: R3cScreen[] = [
     right: ['icon={Trash2} onPress={remove}'],
   },
   { file: 'reservation/MyReservationsScreen.tsx', titles: ["title={t('myReservations.title')}"] },
-  { file: 'documents/LegalScreen.tsx', titles: ['title="Mentions légales"'], onBack: ['onBack={() => nav.goBack()}'] },
+  { file: 'documents/LegalScreen.tsx', titles: ["title={t('legal.title')}"], onBack: ['onBack={() => nav.goBack()}'] },
   { file: 'programs/ProgramDetailScreen.tsx', titles: ["title={t('screenTitles.program')}"], right: ['style={S.dateBtn}'] },
   { file: 'explorer/ProgrammationScreen.tsx', titles: ["title={t('home.explorer.programs')}"] },
   {

@@ -3299,5 +3299,16 @@
       "BOX_ARCHIVEE": "This box is archived: your plan can no longer change.",
       "BOX_ARCHIVAGE_PROGRAMME": "This box is closing soon: your plan can no longer change."
     }
+  },
+  "legal": {
+    "title": "Legal",
+    "tabTerms": "Terms",
+    "tabPrivacy": "Privacy",
+    "privacy": {
+      "title": "Privacy policy",
+      "intro": "The full policy (data collected, processors, retention periods, your rights, account deletion) is published on the AthleX website and kept up to date.",
+      "read": "Read the privacy policy",
+      "deleteAccount": "Delete your account: Profile → Account → Delete my account."
+    }
   }
 }
