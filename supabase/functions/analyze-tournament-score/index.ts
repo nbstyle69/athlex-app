@@ -1,5 +1,9 @@
 // Edge Function: analyze-tournament-score
 // ------------------------------------------------------------------
+// DÉSACTIVÉE (#594) : répond 410 { error: "FEATURE_DISABLED" } à tout
+// appelant authentifié (401 sinon), avant tout appel externe. Ce qui
+// suit décrit l'analyse gardée dans `analyserScore`, jamais appelée.
+//
 // Runs the Claude "score credibility" analysis server-side so the
 // Anthropic API key never ships in the mobile bundle.
 //
@@ -13,6 +17,7 @@
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.0';
 import { cleSecrete } from '../_shared/cle-secrete.ts';
+import { traiterAppel } from './regles.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -56,13 +61,14 @@ Rappelle en fin de réponse que la validation finale requiert la révision manue
 Réponds en français, sois concis et factuel.`;
 }
 
-serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: corsHeaders });
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-  const json = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-
+// DÉSACTIVÉE (#594) : jamais appelée. Elle envoie à Anthropic le pseudo, le
+// niveau et l'ELO de l'athlète, flux non déclaré (/privacy, App Privacy,
+// Sécurité des données). La rebrancher exige d'abord de le déclarer.
+// deno-lint-ignore no-unused-vars
+async function analyserScore(req: Request): Promise<Response> {
   try {
     const body = await req.json().catch(() => null);
     const scoreId = body?.score_id;
@@ -174,5 +180,26 @@ serve(async (req: Request) => {
   } catch (e: any) {
     console.error('analyze-tournament-score error', e);
     return json({ error: e?.message ?? 'Internal error' }, 500);
+  }
+}
+
+// Point d'entrée : authentifie l'appelant, puis 410 FEATURE_DISABLED
+// (regles.ts). Aucun appel externe hors la vérification du jeton.
+serve(async (req: Request) => {
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+  if (req.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: corsHeaders });
+
+  try {
+    const admin = createClient(Deno.env.get('SUPABASE_URL')!, cleSecrete());
+    const r = await traiterAppel(req.headers.get('Authorization'), {
+      async utilisateur(jwt) {
+        const { data, error } = await admin.auth.getUser(jwt);
+        return error || !data?.user ? null : data.user.id;
+      },
+    });
+    return json(r.body, r.status);
+  } catch (e: any) {
+    console.error('analyze-tournament-score error', e);
+    return json({ error: 'Internal error' }, 500);
   }
 });
