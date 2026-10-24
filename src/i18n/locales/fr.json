@@ -3299,5 +3299,16 @@
       "BOX_ARCHIVEE": "Cette box est archivée : ta formule ne peut plus changer.",
       "BOX_ARCHIVAGE_PROGRAMME": "Cette box ferme bientôt : ta formule ne peut plus changer."
     }
+  },
+  "legal": {
+    "title": "Mentions légales",
+    "tabTerms": "CGU",
+    "tabPrivacy": "Confidentialité",
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "intro": "La politique complète (données collectées, sous-traitants, durées de conservation, droits, suppression du compte) est publiée sur le site d'AthleX et tenue à jour.",
+      "read": "Lire la politique de confidentialité",
+      "deleteAccount": "Supprimer ton compte : Profil → Compte → Supprimer mon compte."
+    }
   }
 }
