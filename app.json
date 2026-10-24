@@ -2,7 +2,7 @@
   "expo": {
     "name": "AthleX",
     "slug": "TheHub",
-    "version": "1.0.66",
+    "version": "1.0.68",
     "orientation": "portrait",
     "icon": "./assets/icon-ios.png",
     "userInterfaceStyle": "light",
@@ -51,7 +51,7 @@
         "android.permission.READ_EXTERNAL_STORAGE"
       ],
       "package": "com.athlex.app",
-      "versionCode": 82,
+      "versionCode": 83,
       "intentFilters": [
         {
           "action": "VIEW",
