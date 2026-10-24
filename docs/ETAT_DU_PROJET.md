@@ -248,6 +248,11 @@ aucune régie) ; chiffrement en transit = oui (HTTPS partout) ; suppression dans
 | Données saisies par le gérant sur des tiers (prospects, invitations) | Supabase | Contact Info → Email, Phone · Fonctionnement · liée | Personal info → Email, Phone · App functionality | `src/screens/backoffice/` |
 | Côté serveur : analyse d'un score par IA (pseudo, valeur, notes), texte de PDF de programmation ; e-mails transactionnels | Anthropic ; Resend | Processeurs, déclarés avec les données ci-dessus | Processeurs (« partagé » ou exemption service provider selon DPA) | `supabase/functions/analyze-tournament-score`, `parse-wod-pdf`, `weekly-owner-digest`, `session-followup-cron` |
 
+**analyze-tournament-score désactivée (410), aucun envoi à Anthropic** (#594) — l'appelant reste
+authentifié (401 sinon), puis `410 { error: "FEATURE_DISABLED" }` avant tout appel externe ; règle
+pure dans `regles.ts`, analyse gardée dans `index.ts` sans être appelée
+(`src/__tests__/analyzeTournamentScoreRegles.test.ts`). Déploiement : **non**.
+
 Suppression de compte (`delete_user_account`, définition lue en prod) : compte Auth, profil et
 90 tables en `ON DELETE CASCADE` supprimés, Storage (`avatars`, `documents`, `message-attachments`)
 purgé ; 44 clés `ON DELETE SET NULL` anonymisent les références dans le contenu des autres (matchs,
