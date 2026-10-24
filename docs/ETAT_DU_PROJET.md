@@ -262,7 +262,7 @@ purgé ; 44 clés `ON DELETE SET NULL` anonymisent les références dans le cont
 portée de l'app : événements Sentry déjà envoyés (rétention du plan, non vérifiée) et journaux
 Supabase/Resend.
 
-Écran légal de l'app (#593, app seule, aucune migration ; PR ouverte le 24/10/2026, **non mergée** : texte à relire par Nab) : l'onglet Confidentialité ne recopie plus la politique (son texte du 21 mars 2026 disait Mixpanel et Sentry « anonymisés », ce qui est faux) ; il renvoie vers https://athlexapp.eu/privacy (bouton « Lire la politique de confidentialité », navigateur du téléphone), tenue à jour par AthleX-Manager #448, et rappelle « Profil → Compte → Supprimer mon compte ». FR/EN par `t()` ; l'onglet CGU reste en français (#532). **Livraison par OTA, une fois master réaligné sur 1.0.67 (après l'acceptation d'Apple)** ; aucun build. Test `ecranLegalConfidentialite.rn.test.tsx` (6 mutations tuées) ; captures avant / après dans `athlex-captures/593-ecran-legal`.
+Écran légal de l'app (#593, app seule, aucune migration ; mergée le 24/10/2026 (#596)) : l'onglet Confidentialité ne recopie plus la politique (son texte du 21 mars 2026 disait Mixpanel et Sentry « anonymisés », ce qui est faux) ; il renvoie vers https://athlexapp.eu/privacy (bouton « Lire la politique de confidentialité », navigateur du téléphone), tenue à jour par AthleX-Manager #448, et rappelle « Profil → Compte → Supprimer mon compte ». FR/EN par `t()` ; l'onglet CGU reste en français (#532). **Livraison OTA en attente de 1.0.67** (une fois master réaligné sur 1.0.67, après l'acceptation d'Apple) ; aucun build. Test `ecranLegalConfidentialite.rn.test.tsx` (6 mutations tuées) ; captures avant / après dans `athlex-captures/593-ecran-legal`.
 
 ### Site public et lisibilité
 
