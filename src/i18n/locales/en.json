@@ -1222,7 +1222,6 @@
       "welcomeTitle": "Welcome!",
       "joinedProgram": "You joined the program “{{title}}”.",
       "permissionDenied": "Permission denied",
-      "galleryPermission": "Allow access to your gallery in settings.",
       "cameraPermission": "Allow access to the camera in settings.",
       "leaveCurrentBoxMsg": "You are about to leave “{{name}}”. You will need an invite code to join again.",
       "avatarUploadFailed": "Could not upload the profile photo.",

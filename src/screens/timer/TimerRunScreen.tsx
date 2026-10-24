@@ -708,7 +708,8 @@ export default function TimerRunScreen() {
 
   const [camPermission, requestCamPermission] = useCameraPermissions();
   const [micPermission, requestMicPermission] = useMicrophonePermissions();
-  const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions();
+  // Android : écriture seule, le manifeste ne déclare aucune lecture de la galerie (#588).
+  const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions({ writeOnly: Platform.OS === 'android' });
 
   const [phase, setPhase] = useState<Phase>('ready');
   const [countdownVal, setCountdownVal] = useState(countdown);
