@@ -267,6 +267,7 @@ describe('R6c : logique du chrono', () => {
     // retours 1.0.60 (D1) : mode audio reposé à chaque lancement sans caméra (retours1060Audio.rn.test.tsx).
     // retours 1.0.60 (D7) : bips arrêtés dès leur fin sur Android, focus audio rendu (retours1060Musique.rn.test.tsx).
     // i18n 1a : textes affichés passés par t() dans la logique du chrono (libellés, alertes, date incrustée) ; logique inchangée.
-    expect(sha).toBe('b6af749d41a3ecd5200f9ee75488592a4da3768adcbad07711b068c5a4bcbba1');
+    // #588 : permission galerie en écriture seule sur Android.
+    expect(sha).toBe('eec785093f193ee769ab09bed240174acd033fb35ce606e18a8b321c959096db');
   });
 });
