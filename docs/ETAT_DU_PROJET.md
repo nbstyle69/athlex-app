@@ -247,12 +247,20 @@ aucune régie) ; chiffrement en transit = oui (HTTPS partout) ; suppression dans
 | Recherche de GIF (termes saisis, IP) | GIPHY (`api.giphy.com`) — Tenor fermé | Usage Data → Search History · Fonctionnement · **non liée** (pas d'identifiant transmis) | App activity → In-app search history · App functionality | `MessagesScreen.tsx` |
 | Données saisies par le gérant sur des tiers (invitations par e-mail) | Supabase | Contact Info → Email Address · Fonctionnement · liée | Personal info → Email address · App functionality | `src/screens/backoffice/` |
 | Téléphone d'un prospect — **jamais demandé par l'app mobile** | Supabase `box_prospects.phone`, facultatif, saisi par la personne qui réserve un essai sur la page publique de la box (site, `book_trial_slot`) ; ni le gérant ni l'app ne le saisissent | Non collecté par l'app | **Plus déclaré** : la fiche Play ne déclare plus le téléphone (corrigé le 24/10/2026) | `supabase/migrations/20261126_essai_lot_base.sql` (`p_phone DEFAULT NULL`) ; aucun appel à `book_trial_slot` dans `src/` |
-| Côté serveur : analyse d'un score par IA (pseudo, valeur, notes), texte de PDF de programmation ; e-mails transactionnels | Anthropic ; Resend | Processeurs, déclarés avec les données ci-dessus | Processeurs (« partagé » ou exemption service provider selon DPA) | `supabase/functions/analyze-tournament-score`, `parse-wod-pdf`, `weekly-owner-digest`, `session-followup-cron` |
+| Côté serveur : texte de PDF de programmation ; e-mails transactionnels (l'analyse d'un score par IA n'envoie plus rien : `analyze-tournament-score` désactivée, #594) | Anthropic ; Resend | Processeurs, déclarés avec les données ci-dessus | Processeurs (« partagé » ou exemption service provider selon DPA) | `supabase/functions/parse-wod-pdf`, `weekly-owner-digest`, `session-followup-cron` |
 
 **analyze-tournament-score désactivée (410), aucun envoi à Anthropic** (#594) — l'appelant reste
 authentifié (401 sinon), puis `410 { error: "FEATURE_DISABLED" }` avant tout appel externe ; règle
 pure dans `regles.ts`, analyse gardée dans `index.ts` sans être appelée
-(`src/__tests__/analyzeTournamentScoreRegles.test.ts`). Déploiement : **non**.
+(`src/__tests__/analyzeTournamentScoreRegles.test.ts`). Déploiement : **oui, le 24/10/2026 à 23:35:37
+(heure de Paris)**, cette seule fonction, par `scripts/deploy-edge.mjs` depuis `origin/master` (`c65c58c5`),
+`verify_jwt` inchangé. Avant : version en ligne identique à la copie de retour arrière (`avant-594`), sonde
+sans authentification en `400 score_id required`. Après : sonde sans `Authorization` en
+`401 Missing Authorization header` ; source en ligne (`index.ts`, `regles.ts`, `_shared/cle-secrete.ts`)
+retéléchargée, identique octet pour octet à `master` ; journaux de la fonction sans erreur ni sortie hors
+démarrage/arrêt, invocations = les seules sondes. Le 410 est prouvé par le test Jest (#595) et par la
+source en ligne identique à `master`, **sans sonde authentifiée en prod** (aucun jeton de compte membre
+généré ni déposé).
 
 Suppression de compte (`delete_user_account`, définition lue en prod) : compte Auth, profil et
 90 tables en `ON DELETE CASCADE` supprimés, Storage (`avatars`, `documents`, `message-attachments`)
