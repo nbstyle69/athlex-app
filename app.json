@@ -51,7 +51,7 @@
         "android.permission.READ_EXTERNAL_STORAGE"
       ],
       "package": "com.athlex.app",
-      "versionCode": 83,
+      "versionCode": 84,
       "intentFilters": [
         {
           "action": "VIEW",
