@@ -60,7 +60,7 @@ Pendant la revue Apple / Google, AthleX Fitness (`d3d0b0a0-0000-4000-a000-000000
 ## Purge : ordre et règles
 
 0. **Signalement de contact** (`10-contact-elo.sql`) et présence de l'empreinte de référence. Sinon STOP.
-1. **Reviewer** : ses résultats éventuels dans les tournois de `vitrine.ids.json` (inscription à T1, T5 ou T6) sont comptés au rapport et **supprimés avec les tournois**. L'effet sur son ELO est accepté (décision du 21/10). Une ligne d'un **compte réel protégé** dans ces tournois arrête toujours la purge, au relevé `80`.
+1. **Reviewer** : ses résultats éventuels dans les tournois de `vitrine.ids.json` (inscription à T1, T5 ou T6) sont comptés au rapport et **supprimés avec les tournois**. L'effet sur son ELO est accepté (décision du 21/10). Une ligne d'un **compte réel protégé** dans ces tournois arrête toujours la purge, au relevé `80` ; une **inscription** aussi, sauf pour les comptes listés par uuid dans la clé `acceptes` du groupe de `vitrine.ids.json` (décision explicite de Nab ; jamais un pseudo).
 2. **`80-releve-purge.sql`, en lecture seule, avant toute suppression.** Il lit au catalogue chaque clé étrangère (une colonne) vers `auth.users` et `public.profiles`, avec son `confdeltype`, et classe chaque ligne qui vise un compte à purger. Il vérifie aussi qu'aucun compte protégé n'a de ligne d'historique ELO au contact des fictifs :
 
    | Classe | Cas | Traitement |
