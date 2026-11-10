@@ -3,6 +3,19 @@ import Constants from 'expo-constants';
 import i18n from '../i18n';
 
 /**
+ * Version du binaire installé depuis le store.
+ *
+ * Sous OTA, `Constants.expoConfig.version` vient du manifeste de l'update
+ * (la `version` de master), pas du binaire : 1.0.66 sur un iPhone en 1.0.67.
+ * `Updates.runtimeVersion` est lu dans le binaire, et chaque build store fixe
+ * le runtime de sa plateforme à sa propre version (procédure #523). Nul en
+ * développement : repli sur la config.
+ */
+export function nativeVersion(): string | null {
+  return Updates.runtimeVersion ?? Constants.expoConfig?.version ?? null;
+}
+
+/**
  * Identité du code réellement exécuté, affichée sur l'écran de connexion.
  *
  * « L'écran s'affiche » ne prouve pas qu'un update a été reçu : un lancement
@@ -11,7 +24,7 @@ import i18n from '../i18n';
  * celui du résumé de publication.
  */
 export function versionLabel(): string {
-  return `v${Constants.expoConfig?.version ?? '?'}`;
+  return `v${nativeVersion() ?? '?'}`;
 }
 
 // `updateId` est nul quand c'est le bundle embarqué dans le build natif qui
