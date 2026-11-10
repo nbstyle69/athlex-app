@@ -262,7 +262,8 @@ describe('R5a : capture', () => {
  * et laisser remonter la musique (retours1060Musique.rn.test.tsx).
  */
 // i18n 1a : textes affichés passés par t() (libellés de type, phases, boutons caméra, alertes, date incrustée par formatDate) ; logique inchangée.
-const LOGIC_SHA = 'b462274c55f1321b17a785e022f2a506bf931a951d0f5547f45f1abd6ae78656';
+// #588 : permission galerie en écriture seule sur Android.
+const LOGIC_SHA = '042121d0ffd0551cf560337167c53929ec1e41003e86feec06aa608462faf56a';
 // Retours iPhone : seul écart de logique, l'objet stocké sans thème (options vidéo seules) suit le thème de l'app (r5b.rn.test.tsx).
 const IPHONE_FOLLOW_FIX = ["        // Un thème choisi avant le réglage est conservé ; un objet sans thème (écrit\n        // par les seules options vidéo) laisse le chrono suivre le thème de l'app.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? !theme });", "        // Préférence enregistrée avant le réglage : le thème choisi est conservé.\n        setDisplayOptsRaw({ ...migrated, followAppTheme: stored.followAppTheme ?? false });"] as const;
 /** #547 PR 3 : durée du décompte envoyée à l'incrustation (decompteVideoParite.test.ts) ; écart retiré avant l'empreinte. */

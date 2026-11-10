@@ -1222,7 +1222,6 @@
       "welcomeTitle": "Bienvenue !",
       "joinedProgram": "Tu as rejoint le programme « {{title}} ».",
       "permissionDenied": "Permission refusée",
-      "galleryPermission": "Autorise l'accès à ta galerie dans les réglages.",
       "cameraPermission": "Autorise l'accès à la caméra dans les réglages.",
       "leaveCurrentBoxMsg": "Tu vas quitter « {{name}} ». Tu devras utiliser un code d'invitation pour la rejoindre à nouveau.",
       "avatarUploadFailed": "Impossible d'uploader la photo de profil.",
@@ -3299,6 +3298,17 @@
       "PLAN_CHANGE_PAYMENTS_DISABLED": "Cette box n'a pas encore activé les paiements en ligne.",
       "BOX_ARCHIVEE": "Cette box est archivée : ta formule ne peut plus changer.",
       "BOX_ARCHIVAGE_PROGRAMME": "Cette box ferme bientôt : ta formule ne peut plus changer."
+    }
+  },
+  "legal": {
+    "title": "Mentions légales",
+    "tabTerms": "CGU",
+    "tabPrivacy": "Confidentialité",
+    "privacy": {
+      "title": "Politique de confidentialité",
+      "intro": "La politique complète (données collectées, sous-traitants, durées de conservation, droits, suppression du compte) est publiée sur le site d'AthleX et tenue à jour.",
+      "read": "Lire la politique de confidentialité",
+      "deleteAccount": "Supprimer ton compte : Profil → Compte → Supprimer mon compte."
     }
   }
 }

@@ -1,29 +1,30 @@
 /**
  * Un update EAS ne s'applique qu'aux builds du même runtime : publié sur un
- * runtime sans build, il est ignoré en silence par les appareils. Sort en échec
- * si aucun build terminé ne porte le runtime visé.
+ * runtime sans build, il est ignoré en silence par les appareils. Chaque
+ * plateforme a son runtime (app.json `ios.runtimeVersion`,
+ * `android.runtimeVersion`) ; sort en échec si l'une d'elles n'a aucun build
+ * terminé sur le sien.
  *
- * usage : node scripts/ota-runtime-guard.mjs <builds.json> <runtime>
+ * usage : node scripts/ota-runtime-guard.mjs <builds.json> [app.json]
  */
 import { readFileSync } from 'node:fs';
+import { lireRuntimesOta, plateformesSansBuild, runtimeDuBuild } from './lib/runtimes-ota.mjs';
 
-const [file, runtime] = process.argv.slice(2);
-if (!file || !runtime) {
-  console.error('usage : node scripts/ota-runtime-guard.mjs <builds.json> <runtime>');
+const [file, appJson = 'app.json'] = process.argv.slice(2);
+if (!file) {
+  console.error('usage : node scripts/ota-runtime-guard.mjs <builds.json> [app.json]');
   process.exit(2);
 }
 
 const builds = JSON.parse(readFileSync(file, 'utf8'));
-// `runtimeVersion` est absent de la sortie de `build:list` ; avec la policy
-// appVersion, `appVersion` le porte.
-const match = builds.filter(
-  (b) => b.status === 'FINISHED' && (b.runtimeVersion ?? b.appVersion) === runtime,
-);
+const runtimes = lireRuntimesOta(appJson);
+const manquantes = plateformesSansBuild(builds, runtimes);
 
-if (match.length === 0) {
-  const seen = [...new Set(builds.map((b) => b.runtimeVersion ?? b.appVersion))].join(', ');
-  console.error(`aucun build terminé sur le runtime ${runtime} (runtimes vus : ${seen || 'aucun'})`);
+if (manquantes.length > 0) {
+  const vus = [...new Set(builds.map((b) => `${String(b.platform).toLowerCase()}/${runtimeDuBuild(b)}`))].join(', ');
+  for (const p of manquantes) console.error(`aucun build ${p} terminé sur le runtime ${runtimes[p]}`);
+  console.error(`(builds vus : ${vus || 'aucun'})`);
   process.exit(1);
 }
 
-console.log(`${match.length} build(s) terminé(s) sur le runtime ${runtime} : ${match.map((b) => b.platform).join(', ')}`);
+for (const [p, r] of Object.entries(runtimes)) console.log(`${p} : build terminé sur le runtime ${r}`);

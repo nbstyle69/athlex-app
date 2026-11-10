@@ -15,3 +15,6 @@ export const EMAIL_CONFIRMED_URL = `${WEB_URL}/email-confirme`;
 // Atterrissage du lien « Reset password » (redirectTo). Sans lui GoTrue renvoie
 // vers le Site URL, qui n'a pas de formulaire. Doit aussi figurer dans Redirect URLs.
 export const UPDATE_PASSWORD_URL = `${WEB_URL}/update-password`;
+
+// Politique de confidentialité complète, tenue à jour sur le site ; l'écran légal y renvoie (#593).
+export const PRIVACY_URL = `${WEB_URL}/privacy`;

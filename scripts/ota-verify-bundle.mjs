@@ -11,19 +11,23 @@
  *
  * On ne fait pas confiance à ce qu'on a envoyé : on télécharge ce qui est servi.
  *
- * usage : node scripts/ota-verify-bundle.mjs <projectId> <runtimeVersion>
+ * Chaque plateforme est interrogée sur SON runtime (app.json
+ * `ios.runtimeVersion`, `android.runtimeVersion`).
+ *
+ * usage : node scripts/ota-verify-bundle.mjs <projectId> [app.json]
  */
 
 import { verifierCleSupabase } from './lib/cle-supabase-bundle.mjs';
+import { lireRuntimesOta, PLATFORMES as PLATFORMS } from './lib/runtimes-ota.mjs';
 
-const [projectId, runtimeVersion] = process.argv.slice(2);
+const [projectId, appJson = 'app.json'] = process.argv.slice(2);
 
-if (!projectId || !runtimeVersion) {
-  console.error('usage : node scripts/ota-verify-bundle.mjs <projectId> <runtimeVersion>');
+if (!projectId) {
+  console.error('usage : node scripts/ota-verify-bundle.mjs <projectId> [app.json]');
   process.exit(2);
 }
 
-const PLATFORMS = ['ios', 'android'];
+const runtimes = lireRuntimesOta(appJson);
 
 /**
  * Le manifeste EAS est un multipart/mixed : la partie `manifest` porte les
@@ -50,7 +54,7 @@ async function fetchLaunchBundle(platform) {
   const res = await fetch(`https://u.expo.dev/${projectId}`, {
     headers: {
       'expo-platform': platform,
-      'expo-runtime-version': runtimeVersion,
+      'expo-runtime-version': runtimes[platform],
       'expo-channel-name': 'production',
       'expo-protocol-version': '1',
       'expo-api-version': '1',
@@ -108,7 +112,7 @@ for (const platform of PLATFORMS) {
   const hasMixpanel = MIXPANEL_TAG_RE.test(bundle) && bundle.includes(MIXPANEL_EU_URL);
 
   console.log(
-    `${platform} : update ${updateId} — ${(bundle.length / 1024 / 1024).toFixed(1)} Mo — `
+    `${platform} (runtime ${runtimes[platform]}) : update ${updateId} — ${(bundle.length / 1024 / 1024).toFixed(1)} Mo — `
     + `URL Supabase ${hasUrl ? 'présente' : 'ABSENTE'}, clé publique ${hasKey ? 'conforme' : 'NON CONFORME'}, `
     + `clé GIPHY ${hasGiphy ? 'présente' : 'ABSENTE'}, DSN Sentry ${hasSentry ? 'présent' : 'ABSENT'}, `
     + `token Mixpanel + serveur EU ${hasMixpanel ? 'présents' : 'ABSENTS'}`,

@@ -2,9 +2,12 @@ import { AxScreenHeader } from '../../components/ax/AxScreenHeader';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Linking } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { AxButton } from '../../components/ax/AxButton';
+import { PRIVACY_URL } from '../../lib/urls';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import { axFonts, axRadius, axSpacing, axTypography, type AxColors } from '../../theme/axTokens';
 
@@ -15,24 +18,25 @@ export default function LegalScreen() {
   const nav = useNavigation();
   const { theme } = useTheme();
   const S = createStyles(theme.ax);
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('cgu');
 
   return (
     <View style={S.container}>
       <GlassBackground />
-      <AxScreenHeader title="Mentions légales" onBack={() => nav.goBack()} />
+      <AxScreenHeader title={t('legal.title')} onBack={() => nav.goBack()} />
 
       <View style={S.tabs}>
         <TouchableOpacity style={[S.tab, tab === 'cgu' && S.tabActive]} onPress={() => setTab('cgu')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'cgu' }}>
-          <Text style={[S.tabText, tab === 'cgu' && S.tabTextActive]}>CGU</Text>
+          <Text style={[S.tabText, tab === 'cgu' && S.tabTextActive]}>{t('legal.tabTerms')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[S.tab, tab === 'privacy' && S.tabActive]} onPress={() => setTab('privacy')} accessibilityRole="tab" accessibilityState={{ selected: tab === 'privacy' }}>
-          <Text style={[S.tabText, tab === 'privacy' && S.tabTextActive]}>Confidentialité</Text>
+          <Text style={[S.tabText, tab === 'privacy' && S.tabTextActive]}>{t('legal.tabPrivacy')}</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView style={S.scroll} contentContainerStyle={[S.content, { paddingBottom: tabSpace }]}>
-        {tab === 'cgu' ? <CGUContent theme={theme} S={S} /> : <PrivacyContent theme={theme} S={S} />}
+        {tab === 'cgu' ? <CGUContent theme={theme} S={S} /> : <PrivacyContent S={S} />}
       </ScrollView>
     </View>
   );
@@ -142,90 +146,16 @@ function CGUContent({ theme, S }: { theme: AppTheme; S: any }) {
   );
 }
 
-function PrivacyContent({ theme, S }: { theme: AppTheme; S: any }) {
+function PrivacyContent({ S }: { S: any }) {
+  const { t } = useTranslation();
   return (
     <>
-      <Text style={S.h1}>Politique de Confidentialité</Text>
-      <Text style={S.subtitle}>Dernière mise à jour : 21 mars 2026</Text>
-
-      <Text style={S.h2}>1. Introduction</Text>
-      <Text style={S.p}>
-        AthleX (« nous », « notre ») est une application mobile de compétition functional fitness & hybrid.
-        Cette politique décrit comment nous collectons, utilisons et protégeons vos données personnelles.
-      </Text>
-
-      <Text style={S.h2}>2. Données collectées</Text>
-      <Text style={S.li}>• Informations de compte : email, pseudo, mot de passe (chiffré), niveau</Text>
-      <Text style={S.li}>• Données de profil : photo, bio, personal records (PR)</Text>
-      <Text style={S.li}>• Données de performance : scores WOD, classement ELO, vidéos</Text>
-      <Text style={S.li}>• Données de compétition : participations, résultats</Text>
-      <Text style={S.li}>• Communications : messages dans les chats de box</Text>
-      <Text style={S.li}>• Données techniques : type d'appareil, OS, token push</Text>
-      <Text style={S.li}>• Données de gamification : badges obtenus, streaks, compteurs d'activité</Text>
-
-      <Text style={S.h2}>3. Utilisation des données</Text>
-      <Text style={S.li}>• Fournir et améliorer les fonctionnalités</Text>
-      <Text style={S.li}>• Gérer votre compte et profil athlète</Text>
-      <Text style={S.li}>• Calculer et afficher les classements ELO</Text>
-      <Text style={S.li}>• Permettre la participation aux compétitions</Text>
-      <Text style={S.li}>• Envoyer des notifications push (si autorisées)</Text>
-      <Text style={S.li}>• Attribuer des badges et suivre votre progression</Text>
-      <Text style={S.li}>• Analyser l'usage de l'application de manière anonyme</Text>
-
-      <Text style={S.h2}>4. Stockage et sécurité</Text>
-      <Text style={S.p}>
-        Vos données sont stockées via Supabase, hébergé sur des serveurs conformes aux standards de sécurité.
-        Les mots de passe sont chiffrés. Les communications utilisent le protocole HTTPS.
-      </Text>
-
-      <Text style={S.h2}>5. Caméra et galerie</Text>
-      <Text style={S.p}>
-        L'application peut accéder à votre caméra pour enregistrer vos performances et à votre galerie
-        pour sauvegarder les vidéos ou choisir une photo de profil. Ces accès nécessitent votre autorisation.
-      </Text>
-
-      <Text style={S.h2}>6. Notifications push</Text>
-      <Text style={S.p}>
-        Les notifications vous informent des résultats et rappels. Vous pouvez les désactiver dans les paramètres.
-      </Text>
-
-      <Text style={S.h2}>7. Partage des données</Text>
-      <Text style={S.p}>
-        Nous ne vendons jamais vos données. Sont visibles par les membres de votre box :
-        pseudo, niveau, scores, classement. Le gérant a accès aux données de ses membres.
-      </Text>
-      <Text style={S.p}>
-        Lorsque vous partagez un score via la fonctionnalité de partage, une image contenant votre pseudo,
-        score et nom de box est générée localement et partagée via le système natif de votre appareil.
-        Aucune donnée n'est envoyée à nos serveurs lors du partage.
-      </Text>
-
-      <Text style={S.h2}>8. Services tiers</Text>
-      <Text style={S.p}>Nous utilisons les services tiers suivants :</Text>
-      <Text style={S.li}>• Supabase : hébergement des données et authentification</Text>
-      <Text style={S.li}>• Mixpanel : statistiques d'usage anonymisées</Text>
-      <Text style={S.li}>• Sentry : détection et correction des erreurs techniques (données anonymisées)</Text>
-      <Text style={S.li}>• Expo : distribution des mises à jour de l'application</Text>
-
-      <Text style={S.h2}>9. Vos droits (RGPD)</Text>
-      <Text style={S.li}>• Accéder à vos données personnelles</Text>
-      <Text style={S.li}>• Rectifier vos informations via votre profil</Text>
-      <Text style={S.li}>• Supprimer votre compte et toutes vos données</Text>
-      <Text style={S.li}>• Exporter vos données sur demande</Text>
-      <Text style={S.li}>• Retirer votre consentement aux notifications</Text>
-
-      <Text style={S.h2}>10. Conservation</Text>
-      <Text style={S.p}>
-        Vos données sont conservées tant que votre compte est actif. En cas de suppression,
-        vos données sont effacées immédiatement.
-      </Text>
-
-      <Text style={S.h2}>11. Contact</Text>
-      <Text style={S.p}>
-        Pour toute question : contact@athlexapp.eu
-      </Text>
-
-      <Text style={S.footer}>© 2026 AthleX — NBS Innovation. Tous droits réservés.</Text>
+      <Text style={S.h1}>{t('legal.privacy.title')}</Text>
+      <Text style={S.p}>{t('legal.privacy.intro')}</Text>
+      <View style={S.cta}>
+        <AxButton testID="legal-privacy-open" label={t('legal.privacy.read')} onPress={() => Linking.openURL(PRIVACY_URL)} fullWidth />
+      </View>
+      <Text style={S.p}>{t('legal.privacy.deleteAccount')}</Text>
     </>
   );
 }
@@ -248,6 +178,7 @@ function createStyles(c: AxColors) {
     subtitle: { ...axTypography.caption, color: c.textMuted, marginBottom: axSpacing['2xl'] },
     h2: { ...axTypography.titleM, color: c.accentText, marginTop: axSpacing.xl, marginBottom: axSpacing.sm },
     p: { ...axTypography.bodySmall, color: c.textMuted, marginBottom: axSpacing.sm },
+    cta: { marginTop: axSpacing.md, marginBottom: axSpacing.xl },
     li: { ...axTypography.bodySmall, color: c.textMuted, marginBottom: axSpacing.xs, paddingLeft: axSpacing.sm },
     strong: { fontFamily: axFonts.interSemiBold, color: c.text },
     footer: { ...axTypography.caption, color: c.textMuted, marginTop: 32, textAlign: 'center' },

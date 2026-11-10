@@ -1,18 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Linking, Platform, ActivityIndicator } from 'react-native';
 import { TouchableOpacity } from 'react-native';
-import Constants from 'expo-constants';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../lib/supabase';
+import { nativeVersion } from '../lib/buildIdentity';
 import { axColors } from '../theme/axTokens';
 
 const C = axColors.dark;
 
-const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
-
-// iOS App Store & Android Play Store URLs — update with your real IDs
+// Fiche App Store (ascAppId d'eas.json) et Play Store.
 const STORE_URL = Platform.select({
-  ios: 'https://apps.apple.com/app/athlex/id6744381102',
+  ios: 'https://apps.apple.com/app/id6762889282',
   android: 'https://play.google.com/store/apps/details?id=com.athlex.app',
 }) ?? '';
 
@@ -37,6 +35,9 @@ export default function ForceUpdateGate({ children }: Props) {
   const { t } = useTranslation();
   const [checking, setChecking] = useState(true);
   const [blocked, setBlocked] = useState(false);
+  // Version du binaire installé, pas celle du manifeste OTA (sinon un binaire à
+  // jour resterait bloqué derrière la `version` de master).
+  const APP_VERSION = nativeVersion() ?? '0.0.0';
 
   useEffect(() => {
     (async () => {

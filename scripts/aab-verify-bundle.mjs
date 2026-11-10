@@ -174,6 +174,10 @@ check('URL OTA = projet EAS de app.json', updateUrl === expected.updates.url, up
 // Confidentialité : l'app n'a aucune permission de localisation (Data Safety).
 check('aucune permission de localisation', !permissions.some((p) => /LOCATION/.test(p)),
   permissions.filter((p) => /LOCATION/.test(p)).join(', ') || 'aucune');
+// Google Play : aucune lecture de la galerie (#588).
+const lectureGalerie = permissions.filter((p) => /READ_MEDIA_|READ_EXTERNAL_STORAGE/.test(p));
+check('aucune permission de lecture de la galerie', lectureGalerie.length === 0,
+  lectureGalerie.join(', ') || 'aucune');
 
 // 6. Clé Google Maps Android : présente (sinon carte grise) et jamais l'ancienne
 //    clé ouverte de juin. Les fins de clé (derniers caractères) sont passées par

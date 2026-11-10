@@ -404,7 +404,8 @@ describe('R6b : chrono et natif intacts', () => {
     const sans547 = back
       .replace("          // Durée du décompte : le natif y taille le chiffre (la valeur la plus large tient dans l'anneau, #547).\n          countdownMax: countdown,\n", '')
       .replace('countdownVal, countdown, currentBox', 'countdownVal, currentBox');
-    expect(sha(sans547)).toBe('2992b7642a33854fa373bfdeb5607148acfcfe40bf458c012352e4028fd0fdbc');
+    // #588 : permission galerie en écriture seule sur Android.
+    expect(sha(sans547)).toBe('bd737ff689e9ac04ea8abaaab2d24b1665419c3a30d65bb2f7df06fbf58208dc');
   });
   it('module realtime-recorder et incrustations identiques à master', () => {
     const root = path.join(SRC, '..');
