@@ -58,5 +58,6 @@ muter "clé : ordre des variables inversé"   "s/const nom = noms\.find\(n => en
 muter "clé : valeur dans le message"        "s/return \{ erreur: \`\\$\{nom\} ne commence pas par \\$\{prefixe\}\` \};/return { erreur: \`\\$\{nom\} = \\$\{valeur\} ne commence pas par \\$\{prefixe\}\` };/"
 muter "contact : WOD d'un protégé gardé"    "s/const gardes = wods\.filter\(w => !avecScoreProtege\.has\(w\.id\)\);/const gardes = wods;/"
 muter "tournois hors box purgés"          "s/voulus\.has\(t\.id\) && t\.box_id === box/voulus.has(t.id)/"
+muter "acceptés : pseudo admis"             "s/ && uuid\.test\(x\)//"
 
 [ $survivantes -eq 0 ] && echo "TOUTES LES MUTATIONS TUÉES" || { echo "DES MUTATIONS SURVIVENT"; exit 1; }

@@ -37,7 +37,7 @@ import { existsSync } from 'fs';
 import {
   BOX_ATHLEX, EMAIL_COACH, PSEUDO_COACH, MOTIF_MEMBRE, FORMULE_DEMO, MEMBRES, TOURNOIS, Membre, SpecTournoi, RefTournoi,
   FENETRE_RESERVATION_JOURS, adapterPseudo, scoreLe, scorePour, seriesPour, enRx, repartirInscrits, scoreTournoi,
-  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, lireCle, TOURNOI_ESSAI, wodsSansContact, bilanReviewer, CompteLu, WodBox,
+  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, lireAcceptes, lireCle, TOURNOI_ESSAI, wodsSansContact, bilanReviewer, CompteLu, WodBox,
 } from './logique';
 
 type Db = SupabaseClient<any, 'public', any>;
@@ -318,7 +318,7 @@ async function refresh() {
 // ── Tournois ─────────────────────────────────────────────────────────────────
 
 /** { "vitrine": { T1…T6 }, "essai": { E1 } } : identifiants techniques seulement. */
-type Ids = Partial<Record<'vitrine' | 'essai', Partial<Record<string, string>>>>;
+type Ids = Partial<Record<'vitrine' | 'essai', Partial<Record<string, string | string[]>>>>;
 const GROUPE: 'vitrine' | 'essai' = ESSAI ? 'essai' : 'vitrine';
 const lireIds = (): Ids => { try { return JSON.parse(readFileSync(FICHIER_IDS, 'utf8')); } catch { return {}; } };
 function ecrireIds(ids: Ids) { writeFileSync(FICHIER_IDS, `${JSON.stringify(ids, null, 2)}\n`); }
@@ -360,7 +360,7 @@ async function tournaments() {
   const inscrits = repartirInscrits(membres, SPECS);
   const actifs = await membresActifs();
   const idDe = new Map(actifs.map(a => [a.m.nn, a.id]));
-  const lus = await ok(admin().from('tournaments').select('id, status, format, box_id, max_participants').in('id', Object.values(mesIds).filter(Boolean) as string[]), 'tournois') as any[];
+  const lus = await ok(admin().from('tournaments').select('id, status, format, box_id, max_participants').in('id', Object.values(mesIds).filter((v): v is string => typeof v === 'string')), 'tournois') as any[];
   const tournoi = (ref: RefTournoi) => lus.find(x => x.id === mesIds[ref] && x.box_id === BOX);
 
   if (sous === 'create') {
@@ -598,7 +598,10 @@ async function purge() {
   //    clés en mise à NULL relevées dans un fichier hors dépôt
   //    (identifiants techniques seulement).
   const releve = join(tmpdir(), `athlex-vitrine-releve-${GROUPE}.sql`).split('\\').join('/');
-  const vars = { box: BOX!, comptes: arr(comptes), tournois: arr(tournois), releve };
+  // Inscriptions de comptes protégés acceptées explicitement (uuid de vitrine.ids.json).
+  let acceptes: string[] = [];
+  try { acceptes = lireAcceptes(ids.acceptes); } catch (e) { stop((e as Error).message); }
+  const vars = { box: BOX!, comptes: arr(comptes), tournois: arr(tournois), acceptes: arr(acceptes), releve };
   try { psql('80-releve-purge.sql', vars); } catch { stop('relevé avant purge en échec (voir VITRINE_BLOQUANT ci-dessus) : rien n’a été supprimé.'); }
 
   if (!APPLY || !drapeau('--yes')) { console.log('[dry-run] relevé conforme ; rien n’est supprimé sans --apply --yes.'); return; }

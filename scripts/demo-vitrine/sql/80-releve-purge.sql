@@ -2,7 +2,9 @@
 -- Box vitrine (#523) — relevé avant purge, en LECTURE SEULE, joué avant toute
 -- suppression (avant 90-purger-tournois.sql).
 --   psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v box=<uuid> -v comptes='{…}' -v tournois='{…}' \
---        -v releve=<fichier hors dépôt> -f scripts/demo-vitrine/sql/80-releve-purge.sql
+--        -v acceptes='{…}' -v releve=<fichier hors dépôt> -f scripts/demo-vitrine/sql/80-releve-purge.sql
+-- `acceptes` : comptes dont l'inscription à un tournoi de la liste est acceptée
+-- explicitement par Nab (vitrine.ids.json, clé `acceptes` ; '{}' si aucun).
 --
 -- Lit au catalogue toutes les clés étrangères (une colonne) vers auth.users et
 -- public.profiles, avec leur confdeltype, et classe chaque ligne qui vise un
@@ -21,7 +23,9 @@
 -- Bloque aussi si une réservation « waiting » d'un autre compte attend sur un
 -- créneau tenu par un compte purgé (la purge la promouvrait), et si un compte
 -- réel protégé (proteges.sql) a une ligne d'historique ELO sur un WOD scoré
--- par un compte à purger ou dans un tournoi de la liste (contamination, 2c).
+-- par un compte à purger ou dans un tournoi de la liste (contamination, 2c), et
+-- si un compte réel protégé NON accepté est inscrit à un tournoi de la liste
+-- (son inscription partirait avec le tournoi).
 -- Écrit dans le fichier `releve` (identifiants techniques seulement) une
 -- instruction set_config que 91 et 99 rejouent par \i.
 -- ═════════════════════════════════════════════════════════════════════════════
@@ -37,7 +41,7 @@ SET IntervalStyle = 'postgres';
 SET extra_float_digits = 1;
 SET search_path = "$user", public, extensions;
 SELECT set_config('vitrine.comptes', :'comptes', false) AS c, set_config('vitrine.tournois', :'tournois', false) AS t,
-       set_config('vitrine.box', :'box', false) AS b \gset vitrine_
+       set_config('vitrine.box', :'box', false) AS b, set_config('vitrine.acceptes', :'acceptes', false) AS a \gset vitrine_
 \ir proteges.sql
 
 -- Une requête par clé étrangère n/d/a/r, construite au catalogue.
@@ -132,6 +136,16 @@ BEGIN
       v_stop := v_stop || format(' %s=%s (ELO d''un compte protégé au contact des fictifs)', r.t, r.n);
     END IF;
   END LOOP;
+
+  -- Inscription d'un compte réel protégé à un tournoi de la liste (elle
+  -- partirait avec lui), hors comptes acceptés explicitement (`acceptes`).
+  SELECT count(*) INTO v_attente FROM public.tournament_participants p
+   WHERE p.athlete_id = ANY (current_setting('vitrine.proteges')::uuid[])
+     AND p.tournament_id = ANY (current_setting('vitrine.tournois')::uuid[])
+     AND NOT p.athlete_id = ANY (current_setting('vitrine.acceptes')::uuid[]);
+  IF v_attente > 0 THEN
+    v_stop := v_stop || format(' tournament_participants=%s (inscription d''un compte protégé non accepté)', v_attente);
+  END IF;
 
   IF v_stop <> '' THEN
     RAISE EXCEPTION 'VITRINE_BLOQUANT:%', v_stop;

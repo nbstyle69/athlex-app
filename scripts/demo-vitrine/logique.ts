@@ -408,8 +408,22 @@ export function comptesAPurger(lus: CompteLu[], box: string, opts: { legacy?: bo
   return [...ids].sort();
 }
 
+/**
+ * Comptes dont l'inscription à un tournoi de la purge est acceptée explicitement
+ * par Nab (clé `acceptes` d'un groupe de vitrine.ids.json) : des uuid, jamais
+ * un pseudo. Absent = aucun. Toute autre forme arrête la purge.
+ */
+export function lireAcceptes(v: unknown): string[] {
+  if (v === undefined) return [];
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+  if (!Array.isArray(v) || !v.every(x => typeof x === 'string' && uuid.test(x))) {
+    throw new Error('ACCEPTES_INVALIDES: la clé « acceptes » doit être une liste d’uuid');
+  }
+  return [...new Set(v as string[])].sort();
+}
+
 /** Tournois à purger : ceux d'un groupe de vitrine.ids.json, et seulement s'ils sont dans la box. */
-export function tournoisAPurger(ids: Partial<Record<string, string>>, lus: { id: string; box_id: string }[], box: string): string[] {
-  const voulus = new Set(Object.values(ids).filter((v): v is string => !!v));
+export function tournoisAPurger(ids: Partial<Record<string, string | string[]>>, lus: { id: string; box_id: string }[], box: string): string[] {
+  const voulus = new Set(Object.values(ids).filter((v): v is string => typeof v === 'string' && !!v));
   return lus.filter(t => voulus.has(t.id) && t.box_id === box).map(t => t.id).sort();
 }

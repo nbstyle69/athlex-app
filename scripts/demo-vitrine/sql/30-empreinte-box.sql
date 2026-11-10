@@ -3,6 +3,11 @@
 -- LECTURE SEULE, calculée par la base (md5). Essai (étape 3) et application.
 --   prise :       psql … -v box=<uuid> -v sortie=<fichier hors dépôt>    -f 30-empreinte-box.sql
 --   comparaison : psql … -v box=<uuid> -v reference=<même fichier>      -f 30-empreinte-box.sql
+--   prise « avant purge » : ajouter -v comptes='{…}' -v tournois='{…}' (ceux de
+--     la purge) : ces comptes sortent de A (et leurs WODs des lignes figées), ces
+--     tournois de la liste ; la prise
+--     porte donc sur la box hors lignes de la vitrine. La comparaison relit A et
+--     les tournois dans le fichier de référence.
 --
 -- (a) Lignes qui ne doivent pas bouger, STRICT (aucune ligne modifiée,
 --     supprimée ni ajoutée) : comptes A = membres de la box présents dans
@@ -17,7 +22,8 @@
 --     identique) ; les créneaux et WODs créés depuis (cron
 --     extend-class-schedules-daily, programmation) sont comptés pour
 --     information seulement.
--- Colonnes exclues : box_elo.updated_at, user_movement_stats.updated_at.
+-- Colonnes exclues : box_elo.updated_at, user_movement_stats.updated_at,
+-- boxes.member_count (suit le nombre de membres, fictifs compris).
 -- Le fichier ne contient que des uuid techniques et des md5.
 -- ═════════════════════════════════════════════════════════════════════════════
 
@@ -30,6 +36,14 @@ SET extra_float_digits = 1;
 SET search_path = "$user", public, extensions;
 SELECT set_config('vitrine.box', :'box', false) AS box \gset vitrine_
 \ir proteges.sql
+\if :{?comptes}
+\else
+  \set comptes '{}'
+\endif
+\if :{?tournois}
+\else
+  \set tournois '{}'
+\endif
 \if :{?reference}
   \i :reference
   SELECT set_config('vitrine.a', current_setting('vitrine.ref_a'), false) AS a,
@@ -39,9 +53,11 @@ SELECT set_config('vitrine.box', :'box', false) AS box \gset vitrine_
            SELECT array_agg(id ORDER BY id)::text FROM (
              SELECT d.user_id AS id FROM internal.demo_accounts d
                JOIN public.box_members bm ON bm.member_id = d.user_id AND bm.box_id = current_setting('vitrine.box')::uuid
-             UNION SELECT unnest(current_setting('vitrine.proteges')::uuid[])) x), '{}'), false) AS a,
+             UNION SELECT unnest(current_setting('vitrine.proteges')::uuid[])) x
+            WHERE NOT id = ANY (:'comptes'::uuid[])), '{}'), false) AS a,
          set_config('vitrine.t', coalesce((
-           SELECT array_agg(id ORDER BY id)::text FROM public.tournaments WHERE box_id = current_setting('vitrine.box')::uuid), '{}'), false) AS t \gset vitrine_
+           SELECT array_agg(id ORDER BY id)::text FROM public.tournaments WHERE box_id = current_setting('vitrine.box')::uuid
+            AND NOT id = ANY (:'tournois'::uuid[])), '{}'), false) AS t \gset vitrine_
 \endif
 
 -- (a) et (b) stricts : « table,lignes,md5 » ; (b) figées : « table,id,md5 ».
@@ -69,7 +85,7 @@ SELECT set_config('vitrine.strict', (
      WHERE x.id = ANY (current_setting('vitrine.t')::uuid[])
     UNION ALL SELECT 'a.tournament_bracket_matches', count(*), md5(string_agg(x::text, '|' ORDER BY x.id)) FROM public.tournament_bracket_matches x
      WHERE x.tournament_id = ANY (current_setting('vitrine.t')::uuid[])
-    UNION ALL SELECT 'b.boxes', count(*), md5(string_agg(x::text, '|')) FROM public.boxes x WHERE x.id = current_setting('vitrine.box')::uuid
+    UNION ALL SELECT 'b.boxes', count(*), md5(string_agg((to_jsonb(x) - 'member_count')::text, '|')) FROM public.boxes x WHERE x.id = current_setting('vitrine.box')::uuid
     UNION ALL SELECT 'b.membership_plans', count(*), md5(string_agg(x::text, '|' ORDER BY x.id)) FROM public.membership_plans x
      WHERE x.box_id = current_setting('vitrine.box')::uuid) s), false) AS strict \gset vitrine_
 
@@ -78,7 +94,8 @@ SELECT set_config('vitrine.figees', coalesce((
     SELECT 'b.class_schedules' AS t, x.id::text AS id, md5(x::text) AS m FROM public.class_schedules x
      WHERE x.box_id = current_setting('vitrine.box')::uuid
     UNION ALL SELECT 'b.box_wods', x.id::text, md5(x::text) FROM public.box_wods x
-     WHERE x.box_id = current_setting('vitrine.box')::uuid) f), ''), false) AS figees \gset vitrine_
+     WHERE x.box_id = current_setting('vitrine.box')::uuid
+       AND (x.created_by IS NULL OR NOT x.created_by = ANY (:'comptes'::uuid[]))) f), ''), false) AS figees \gset vitrine_
 
 \if :{?reference}
 DO $comparer$

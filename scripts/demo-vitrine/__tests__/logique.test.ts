@@ -1,7 +1,7 @@
 import {
   MEMBRES, PSEUDO_COACH, EMAIL_COACH, MOTIF_MEMBRE, BOX_ATHLEX, TOURNOIS,
   adapterPseudo, scorePour, seriesPour, estimation1rm, repartirInscrits,
-  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, scoreTournoi, lireCle, wodsSansContact, bilanReviewer, WodBox, CompteLu,
+  quotaReservation, reservantsPour, comptesAPurger, tournoisAPurger, lireAcceptes, scoreTournoi, lireCle, wodsSansContact, bilanReviewer, WodBox, CompteLu,
 } from '../logique';
 
 describe('pseudos', () => {
@@ -283,5 +283,13 @@ describe('sélection de la purge', () => {
     const lusT = [{ id: 't1', box_id: BOX_ATHLEX }, { id: 't2', box_id: AUTRE }, { id: 'tx', box_id: BOX_ATHLEX }];
     expect(tournoisAPurger({ T1: 't1', T2: 't2' }, lusT, BOX_ATHLEX)).toEqual(['t1']);
     expect(tournoisAPurger({}, lusT, BOX_ATHLEX)).toEqual([]);
+    expect(tournoisAPurger({ T1: 't1', acceptes: ['tx'] }, lusT, BOX_ATHLEX)).toEqual(['t1']);
+  });
+  it('comptes acceptés : uuid seulement, absent = aucun', () => {
+    const a = '28f63fb8-0000-4000-a000-000000000001', b = '3a60662c-0000-4000-a000-000000000002';
+    expect(lireAcceptes(undefined)).toEqual([]);
+    expect(lireAcceptes([b, a, a])).toEqual([a, b]);
+    expect(() => lireAcceptes(['testapple'])).toThrow(/ACCEPTES_INVALIDES/);
+    expect(() => lireAcceptes(a)).toThrow(/ACCEPTES_INVALIDES/);
   });
 });

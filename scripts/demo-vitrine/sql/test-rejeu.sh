@@ -14,6 +14,7 @@ AF=d3d0b0a0-0000-4000-a000-000000000001
 J=00000000-0000-4000-b523-00000000000a
 K=00000000-0000-4000-b523-00000000000b
 IDS='{00000000-0000-4000-d523-000000000001,00000000-0000-4000-d523-000000000002}'
+ACC='{}'   # comptes acceptés (clé « acceptes » de vitrine.ids.json)
 TMP=$(mktemp -d)
 cp proteges.sql "$TMP/"   # les copies mutées incluent proteges.sql par inclusion relative
 echoue=0
@@ -122,14 +123,14 @@ RELEVE="$(cygpath -m "$TMP")/releve.sql"
 supprimer_comptes() { $P -d vitrine_cas -c "DELETE FROM auth.users WHERE id = ANY('$COMPTES'::uuid[])" >"$TMP/del" 2>&1; }
 # chaine [fichier 80] [sans91] : enchaîne jusqu'au contrôle ; affiche l'étape en échec (journal dans $TMP/log).
 chaine() {
-  jouer "${1:-80-releve-purge.sql}" -v box=$AF -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE" || { echo "80"; return 1; }
+  jouer "${1:-80-releve-purge.sql}" -v box=$AF -v comptes="$COMPTES" -v tournois="$IDS" -v acceptes="$ACC" -v releve="$RELEVE" || { echo "80"; return 1; }
   cp "$TMP/log" "$TMP/log80"
   jouer 90-purger-tournois.sql -v box=$AF -v ids="$IDS" || { echo "90"; return 1; }
   if [ "${2:-}" != "sans91" ]; then jouer 91-supprimer-lignes-fictifs.sql -v comptes="$COMPTES" -v releve="$RELEVE" || { echo "91"; return 1; }; fi
   supprimer_comptes || { cp "$TMP/del" "$TMP/log"; echo "comptes"; return 1; }
   jouer 99-controle-purge.sql -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE" || { echo "99"; return 1; }
 }
-releve_seul() { jouer 80-releve-purge.sql -v box=$AF -v comptes="$COMPTES" -v tournois="$IDS" -v releve="$RELEVE"; }
+releve_seul() { jouer 80-releve-purge.sql -v box=$AF -v comptes="$COMPTES" -v tournois="$IDS" -v acceptes="$ACC" -v releve="$RELEVE"; }
 
 neuve; jouer 01-activer.sql -v box=$AF >/dev/null || ko "C0 activation"
 etape=$(chaine) && ok "C1 purge complète : contrôle à 0" || { ko "C1 (échec en $etape)"; tail -5 "$TMP/log"; }
@@ -309,6 +310,37 @@ neuve; jouer 01-activer.sql -v box=$AF >/dev/null; elo_tournoi $REEL
 if etape=$(chaine "$TMP/m-contact-tournoi.sql"); then ok "Er2m mutation (ELO de tournoi retiré du contrôle) : la ligne du compte protégé part sans STOP, le cas Er2 la détecte"
 else ko "Er2m (échec en $etape)"; tail -3 "$TMP/log"; fi
 
+echo "== inscription d'un compte protégé à un tournoi de vitrine (80)"
+# inscrire <compte> : inscription à TV1 (tournoi de vitrine listé), sans score ni ELO.
+inscrire() { val "INSERT INTO public.tournament_participants (tournament_id, athlete_id) VALUES ('00000000-0000-4000-d523-000000000001', '$1')" >/dev/null; }
+INSC="SELECT count(*) FROM public.tournament_participants WHERE athlete_id = '$REEL'"
+
+neuve; jouer 01-activer.sql -v box=$AF >/dev/null; inscrire $REEL
+E8=$(val "$EMPREINTE"); I8=$(val "$INSC")
+if etape=$(chaine); then ko "Ei1 inscription d'un compte protégé non accepté : purge passée"
+elif [ "$etape" = 80 ] && grep -q "tournament_participants=1 (inscription d'un compte protégé non accepté)" "$TMP/log"; then ok "Ei1 inscription d'un compte protégé non accepté : STOP au relevé, avant toute suppression"
+else ko "Ei1 (échec en $etape)"; tail -3 "$TMP/log"; fi
+attendre "Ei1 rien d'écrit" "$(val "$EMPREINTE")" "$E8"
+attendre "Ei1 inscriptions du compte intactes" "$(val "$INSC")" "$I8"
+muter 80-releve-purge.sql "$TMP/m-inscrit.sql" "s/  IF v_attente > 0 THEN(\n    v_stop := v_stop \|\| format\(' tournament_participants)/  IF false THEN\1/"
+neuve; jouer 01-activer.sql -v box=$AF >/dev/null; inscrire $REEL
+if etape=$(chaine "$TMP/m-inscrit.sql"); then ok "Ei1m mutation (contrôle des inscriptions retiré) : l'inscription du compte protégé part sans STOP, le cas Ei1 la détecte"
+else ko "Ei1m (échec en $etape)"; tail -3 "$TMP/log"; fi
+
+neuve; jouer 01-activer.sql -v box=$AF >/dev/null; inscrire $REEL
+ACC="{$REEL}"
+if etape=$(chaine); then ok "Ei2 compte protégé accepté explicitement : pas de STOP, purge complète"
+else ko "Ei2 (échec en $etape)"; tail -3 "$TMP/log"; fi
+attendre "Ei2 son inscription au tournoi de vitrine est partie" "$(val "SELECT count(*) FROM public.tournament_participants WHERE athlete_id = '$REEL' AND tournament_id = '00000000-0000-4000-d523-000000000001'")" 0
+attendre "Ei2 son inscription hors vitrine reste" "$(val "SELECT count(*) FROM public.tournament_participants WHERE athlete_id = '$REEL' AND tournament_id = '00000000-0000-4000-d523-000000000003'")" 1
+attendre "Ei2 le compte et son adhésion restent" "$(val "SELECT count(*) FROM auth.users u JOIN public.box_members bm ON bm.member_id = u.id AND bm.box_id = '$AF' WHERE u.id = '$REEL'")" 1
+muter 80-releve-purge.sql "$TMP/m-accepte.sql" "s/\n     AND NOT p\.athlete_id = ANY \(current_setting\('vitrine\.acceptes'\)::uuid\[\]\);/;/"
+neuve; jouer 01-activer.sql -v box=$AF >/dev/null; inscrire $REEL
+if etape=$(chaine "$TMP/m-accepte.sql"); then ko "Ei2m mutation (exception des comptes acceptés retirée) : purge passée"
+elif [ "$etape" = 80 ] && grep -q "tournament_participants=1" "$TMP/log"; then ok "Ei2m mutation (exception des comptes acceptés retirée) : STOP à tort, le cas Ei2 la détecte"
+else ko "Ei2m (échec en $etape)"; tail -3 "$TMP/log"; fi
+ACC='{}'
+
 echo "== 30-empreinte-box : box et lignes à ne pas toucher"
 REFB="$(cygpath -m "$TMP")/empreinte-box.sql"
 CRENEAU="INSERT INTO public.class_schedules (id, box_id, title, scheduled_date, start_time, end_time, max_capacity) VALUES ('00000000-0000-4000-e523-0000000000c2', '$AF', 'WOD', current_date + 3, '07:00', '08:00', 12)"
@@ -350,6 +382,25 @@ val "UPDATE public.class_schedules SET max_capacity = 13 WHERE id = '00000000-00
 if jouer 30-empreinte-box.sql -v box=$AF -v reference="$REFB"; then ko "B3 créneau figé modifié : pas de STOP"
 elif grep -q 'VITRINE_EMPREINTE_BOX: b.class_schedules : 1 ligne(s) figée(s) modifiée(s)' "$TMP/log"; then ok "B3 créneau existant modifié : STOP"
 else ko "B3"; tail -3 "$TMP/log"; fi
+
+# B4 : prise « avant purge », vitrine en place (comptes et tournois de la purge
+# écartés), inscription acceptée d'un compte protégé, purge, comparaison.
+avant_purge() {
+  neuve; deux_wods; val "$CRENEAU" >/dev/null; scorer $WR $REEL 120
+  jouer 01-activer.sql -v box=$AF >/dev/null
+  scorer $WF $F1 200; scorer $WF $F2 150; elo $WF; inscrire $REEL
+  val "INSERT INTO public.class_reservations (schedule_id, member_id, box_id, status) VALUES ('00000000-0000-4000-e523-0000000000c2', '$F1', '$AF', 'confirmed')" >/dev/null
+  jouer "${1:-30-empreinte-box.sql}" -v box=$AF -v comptes="$COMPTES" -v tournois="$IDS" -v sortie="$REFB" || { ko "B4 prise"; tail -3 "$TMP/log"; }
+  ACC="{$REEL}"; chaine >/dev/null || { ko "B4 purge"; tail -3 "$TMP/log"; }; ACC='{}'
+}
+avant_purge
+if jouer 30-empreinte-box.sql -v box=$AF -v reference="$REFB"; then ok "B4 prise avant purge (vitrine écartée) : identique après la purge"
+else ko "B4 écart"; tail -4 "$TMP/log"; fi
+muter 30-empreinte-box.sql "$TMP/m-box-avant.sql" "s/\n            WHERE NOT id = ANY \(:'comptes'::uuid\[\]\)//"
+avant_purge "$TMP/m-box-avant.sql"
+if jouer 30-empreinte-box.sql -v box=$AF -v reference="$REFB"; then ko "B4m mutation (comptes de la purge gardés dans A) : pas d'écart"
+elif grep -q 'VITRINE_EMPREINTE_BOX:' "$TMP/log"; then ok "B4m mutation (comptes de la purge gardés dans A) : écart à tort, le cas B4 la détecte"
+else ko "B4m"; tail -3 "$TMP/log"; fi
 
 $P -d postgres -c "DROP DATABASE IF EXISTS vitrine_cas WITH (FORCE)" -c "DROP DATABASE IF EXISTS vitrine_fix WITH (FORCE)" >/dev/null
 rm -rf "$TMP"
