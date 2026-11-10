@@ -598,3 +598,13 @@ ce qu'on veut pouvoir dire, et c'est pour ça qu'on paie le smoke.
   `CASCADE`). On verrouille la substance (montant, date, box), pas la ligne entière.
 - **Protocoles au vrai JWT**, dans `scripts/_*_proto.mjs` : propriétaire, gérant d'une autre
   box, athlète, anon — et nettoyage des fixtures en fin de course.
+- **Runtime OTA par plateforme, mis à jour à chaque build store (#523).** `app.json` porte
+  `ios.runtimeVersion` et `android.runtimeVersion` en clair (plus de politique `appVersion`) :
+  un update n'atteint que les binaires du même runtime, et iOS et Android ne sont pas
+  toujours à la même version. **À chaque nouveau build store, dans la même branche
+  `build/<version>`, passer le `runtimeVersion` de la plateforme construite à cette version**
+  (et `otaRuntimeParPlateforme.test.ts` avec), puis reporter la valeur sur `master` dès que ce
+  binaire est en vente. Tant que `master` garde l'ancien runtime, le nouveau binaire ne
+  reçoit rien ; s'il vise un runtime sans build terminé, le garde-fou de `ota.yml` refuse de
+  publier. Constat après merge : `eas update:list --branch production`, un groupe par
+  plateforme sur son runtime.
