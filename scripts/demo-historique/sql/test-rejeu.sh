@@ -49,7 +49,7 @@ chaine() {
   jouer $D/30-empreinte-box.sql $(C) -v tournois="{$(echo "$SUP,$ARC" | tr -d '{}' | sed 's/^,//; s/,$//')}" -v sortie="$W/e30.sql" || { echo "30"; return 1; }
   jouer $D/80-releve-purge.sql $(C) -v supprimer="$SUP" -v archiver="$ARC" -v releve="$REL" || { echo "80"; return 1; }
   cp "$TMP/log" "$TMP/log80"
-  jouer $D/90-tournois.sql -v box=$AF -v ids="$SUP" -v archiver="$ARC" || { echo "90"; return 1; }
+  jouer $D/90-tournois.sql -v box=$AF -v releve="$REL" -v ids="$SUP" -v archiver="$ARC" || { echo "90"; return 1; }
   jouer $D/91-supprimer-lignes-fictifs.sql -v releve="$REL" || { echo "91"; return 1; }
   jouer $D/92-supprimer-comptes.sql -v releve="$REL" || { echo "92"; return 1; }
   jouer $D/99-controle-purge.sql -v tournois="$SUP" -v archiver="$ARC" -v releve="$REL" || { echo "99"; return 1; }
@@ -160,16 +160,67 @@ releve_seul $D/80-releve-purge.sql && ok "S4m mutation (contact ELO retiré) : r
 
 echo "== 90, 92, empreintes"
 DECL="SELECT string_agg(tgname||':'||tgenabled::text, ',' ORDER BY tgname) FROM pg_trigger WHERE tgname IN ('trg_tournaments_resultats_conserves','trg_bracket_matches_termine_conserve')"
-neuve; muter 90-tournois.sql "$TMP/m-enable.sql" 's/ALTER TABLE public\.tournaments ENABLE TRIGGER trg_tournaments_resultats_conserves;\n//'
+neuve; releve_seul >/dev/null; muter 90-tournois.sql "$TMP/m-enable.sql" 's/ALTER TABLE public\.tournaments ENABLE TRIGGER trg_tournaments_resultats_conserves;\n//'
 E=$(val "$EMPREINTE")
-jouer "$TMP/m-enable.sql" -v box=$AF -v ids="$SUP" -v archiver='{}' && ko "T1m garde laissée désactivée : COMMIT" || { grep -q HISTO_DECLENCHEURS "$TMP/log" && ok "T1m mutation (garde laissée désactivée) : ROLLBACK" || ko "T1m motif"; }
+jouer "$TMP/m-enable.sql" -v box=$AF -v releve="$REL" -v ids="$SUP" -v archiver='{}' && ko "T1m garde laissée désactivée : COMMIT" || { grep -q HISTO_DECLENCHEURS "$TMP/log" && ok "T1m mutation (garde laissée désactivée) : ROLLBACK" || ko "T1m motif"; }
 attendre "T1m rien d'écrit, déclencheurs actifs" "$(val "$EMPREINTE")/$(val "$DECL")" "$E/trg_bracket_matches_termine_conserve:O,trg_tournaments_resultats_conserves:O"
-neuve; muter 90-tournois.sql "$TMP/m-archive.sql" "s/UPDATE public\.tournaments SET archived_at = now\(\)/UPDATE public.tournaments SET archived_at = NULL/"
-jouer "$TMP/m-archive.sql" -v box=$AF -v ids="{$TD1}" -v archiver="{$TD2}" && ko "T2m archivage oublié : COMMIT" || { grep -q HISTO_ARCHIVE "$TMP/log" && ok "T2m mutation (archivage oublié) : ROLLBACK" || ko "T2m motif"; }
+neuve; releve_seul >/dev/null; muter 90-tournois.sql "$TMP/m-archive.sql" "s/UPDATE public\.tournaments SET archived_at = now\(\)/UPDATE public.tournaments SET archived_at = NULL/"
+jouer "$TMP/m-archive.sql" -v box=$AF -v releve="$REL" -v ids="{$TD1}" -v archiver="{$TD2}" && ko "T2m archivage oublié : COMMIT" || { grep -q HISTO_ARCHIVE "$TMP/log" && ok "T2m mutation (archivage oublié) : ROLLBACK" || ko "T2m motif"; }
+# Tournoi de démo supprimé en entier : N1 (99 : 0 ligne liée). Mutation : une
+# table d'historique oubliée (ELO de clôture, en SET NULL) → 90 en ROLLBACK.
+neuve; releve_seul >/dev/null; muter 90-tournois.sql "$TMP/m-elo90.sql" 's/DELETE FROM public\.tournament_elo_history +WHERE tournament_id IN \(SELECT id FROM histo_tournois\);\n//'
+E=$(val "$EMPREINTE")
+jouer "$TMP/m-elo90.sql" -v box=$AF -v releve="$REL" -v ids="$SUP" -v archiver='{}' && ko "T5m historique d'ELO oublié : COMMIT" || { grep -q 'HISTO_RESTE: 4' "$TMP/log" && ok "T5m mutation (ELO de clôture oublié) : ROLLBACK (4 lignes) — N1 la tue" || { ko "T5m motif"; tail -2 "$TMP/log"; }; }
+attendre "T5m rien d'écrit" "$(val "$EMPREINTE")" "$E"
+# Tournoi avec un compte hors relevé (après le relevé) : 90 s'arrête.
+reel90() { # <nom> <sql> [script]
+  neuve; releve_seul >/dev/null; val "$2" >/dev/null; E=$(val "$EMPREINTE")
+  jouer "${3:-90-tournois.sql}" -v box=$AF -v releve="$REL" -v ids="$SUP" -v archiver='{}'
+}
+T4A="INSERT INTO tournament_participants (tournament_id, athlete_id) VALUES ('$TD2', '$REEL')"
+T4B="UPDATE tournament_match_elo_history SET opponent_id='$TESTAPPLE' WHERE tournament_id='$TD1' AND athlete_id='$(u 1)' AND match_id=(SELECT id FROM tournament_bracket_matches WHERE tournament_id='$TD1' AND round=2)"
+for c in "T4a réel inscrit à TD2|$T4A|TD2" "T4b testapple adversaire dans une ligne d'ELO de TD1|$T4B|TD1"; do
+  IFS='|' read -r nom sql t <<<"$c"
+  if reel90 "$nom" "$sql"; then ko "$nom : 90 passé"
+  elif grep -q 'HISTO_REEL: 1' "$TMP/log" && grep -q "($t) : 1 ligne" "$TMP/log"; then ok "$nom : 90 STOP (HISTO_REEL, tournoi $t nommé)"
+  else ko "$nom motif"; tail -3 "$TMP/log"; fi
+  attendre "$nom : rien d'écrit" "$(val "$EMPREINTE")" "$E"
+done
+muter 90-tournois.sql "$TMP/m-reel.sql" 's/IF v_reel > 0 THEN/IF false THEN/'
+reel90 "T4m" "$T4A" "$TMP/m-reel.sql" && ok "T4m mutation (garde HISTO_REEL retirée) : 90 passe et supprime l'inscription d'un réel — T4a la tue" || { ko "T4m non tuée"; tail -3 "$TMP/log"; }
 neuve; jouer 80-releve-purge.sql $(C) -v supprimer="$SUP" -v archiver='{}' -v releve="$REL" >/dev/null
 val "UPDATE auth.users SET email='x@exemple.invalid' WHERE id='$(u 3)'" >/dev/null; E=$(val "$EMPREINTE")
 jouer 92-supprimer-comptes.sql -v releve="$REL" && ko "T3 compte du relevé devenu hors domaine : supprimé" || { grep -q HISTO_COMPTE "$TMP/log" && ok "T3 92 revérifie chaque compte : ROLLBACK" || ko "T3 motif"; }
 attendre "T3 rien d'écrit" "$(val "$EMPREINTE")" "$E"
+# Auth : identités, sessions (AMR), jetons de rafraîchissement (liés ou non à
+# une session), facteurs MFA (défis), jetons à usage unique.
+AUTH="SELECT string_agg(t || '=' || n, ' ' ORDER BY t) FROM (
+  SELECT 'identities' t, count(*) n FROM auth.identities WHERE user_id = ANY (%s)
+  UNION ALL SELECT 'sessions', count(*) FROM auth.sessions WHERE user_id = ANY (%s)
+  UNION ALL SELECT 'amr', count(*) FROM auth.mfa_amr_claims c JOIN auth.sessions s ON s.id = c.session_id WHERE s.user_id = ANY (%s)
+  UNION ALL SELECT 'refresh', count(*) FROM auth.refresh_tokens WHERE user_id::uuid = ANY (%s)
+  UNION ALL SELECT 'mfa', count(*) FROM auth.mfa_factors WHERE user_id = ANY (%s)
+  UNION ALL SELECT 'defis', count(*) FROM auth.mfa_challenges c JOIN auth.mfa_factors f ON f.id = c.factor_id WHERE f.user_id = ANY (%s)
+  UNION ALL SELECT 'otp', count(*) FROM auth.one_time_tokens WHERE user_id = ANY (%s)) x"
+auth() { local l="'{$1}'::uuid[]"; printf "$AUTH" "$l" "$l" "$l" "$l" "$l" "$l" "$l"; }
+PURGES="$(u 1),$(u 2),$(u 3),$(u 4),$(u 5),$(u 6)"; RESTENT="$REEL,$REV,$TESTAPPLE"
+neuve; A_AVANT=$(val "$(auth "$RESTENT")")
+attendre "A0 décor Auth des comptes purgés" "$(val "$(auth "$PURGES")")" "amr=6 defis=3 identities=6 mfa=3 otp=2 refresh=8 sessions=6"
+etape=$(chaine) || { ko "A1 purge (échec en $etape)"; tail -3 "$TMP/log"; }
+attendre "A1 Auth des comptes purgés : tout a disparu (jetons sans session compris)" "$(val "$(auth "$PURGES")")" "amr=0 defis=0 identities=0 mfa=0 otp=0 refresh=0 sessions=0"
+attendre "A1 Auth des comptes qui restent : inchangée ($A_AVANT)" "$(val "$(auth "$RESTENT")")" "$A_AVANT"
+D=$(copie m-refresh); muter_dans $D 92-supprimer-comptes.sql "s/    DELETE FROM auth\.refresh_tokens WHERE user_id = ANY \(v_comptes::text\[\]\);
+//"
+neuve
+if etape=$(chaine $D); then ko "A1m mutation (jetons sans session oubliés) : purge passée"
+elif [ "$etape" = 92 ] && grep -q 'HISTO_RESTE_AUTH: 2' "$TMP/log"; then ok "A1m mutation (jetons sans session oubliés) : 92 en ROLLBACK (2 jetons orphelins) — A1 la tue"
+else ko "A1m (échec en $etape)"; tail -3 "$TMP/log"; fi
+D=$(copie m-autres); muter_dans $D 92-supprimer-comptes.sql "s/DELETE FROM auth\.refresh_tokens WHERE user_id = ANY \(v_comptes::text\[\]\);/DELETE FROM auth.refresh_tokens WHERE user_id = ANY (v_comptes::text[]) OR user_id = '$REEL';/"
+neuve
+if etape=$(chaine $D); then ko "A2m mutation (un jeton d'un compte qui reste supprimé) : purge passée"
+elif [ "$etape" = 92 ] && grep -q 'HISTO_AUTH_AUTRES' "$TMP/log"; then ok "A2m mutation (jetons d'un compte qui reste supprimés) : 92 en ROLLBACK — A1 la tue"
+else ko "A2m (échec en $etape)"; tail -3 "$TMP/log"; fi
+
 neuve; jouer 30-empreinte-box.sql $(C) -v tournois="$SUP" -v sortie="$W/e30.sql" >/dev/null
 val "UPDATE box_members SET status='inactive' WHERE member_id='$(u 904)'" >/dev/null
 jouer 30-empreinte-box.sql -v reference="$W/e30.sql" && ko "E1 ligne de NBS2 modifiée : identique" || { grep -q 'HISTO_EMPREINTE_BOX: autres box / box_members : 1' "$TMP/log" && ok "E1 ligne de NBS2 modifiée : STOP (autres box / box_members : 1)" || { ko "E1"; tail -2 "$TMP/log"; }; }

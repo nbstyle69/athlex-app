@@ -41,7 +41,7 @@
 -- derrière un compte purgé ; fichier de stockage d'un compte purgé ; tournoi
 -- listé hors de la box ou dans les deux listes.
 -- Écrit dans `releve` (identifiants techniques seulement) une instruction
--- set_config que 91, 99 et supprimer-comptes.ts rejouent : lignes mises à NULL
+-- set_config que 90, 91, 92 et 99 rejouent : lignes mises à NULL
 -- (par clé primaire), liste des comptes et des exclus figée à ce relevé.
 -- ═════════════════════════════════════════════════════════════════════════════
 

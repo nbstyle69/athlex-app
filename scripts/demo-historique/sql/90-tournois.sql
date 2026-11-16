@@ -3,8 +3,15 @@
 --
 -- Joué comme `postgres`, en une transaction, avec PGCLIENTENCODING=UTF8, après
 -- 80-releve-purge.sql conforme :
---   psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v box=<uuid> \
+--   psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v box=<uuid> -v releve=<fichier de 80> \
 --        -v ids='{…}' -v archiver='{…}' -f scripts/demo-historique/sql/90-tournois.sql
+--   Décision de Nab (16/11/2026) : les 6 tournois sont SUPPRIMÉS en entier
+--   (archiver='{}'), à condition qu'aucun compte hors relevé n'y figure.
+--   Garde HISTO_REEL, par tournoi listé (supprimé ou archivé) : 0 inscrit,
+--   score, match, membre de division, ligne d'ELO, saison ou notification d'un
+--   compte qui n'est pas parmi les comptes purgés du relevé (réel, reviewer,
+--   testapple). Sinon exception, ROLLBACK : on retire ce tournoi des listes.
+--   (validated_by et created_by ne comptent pas : coach qui valide, auteur.)
 --   ids      : tournois SUPPRIMÉS. Un tournoi au résultat validé n'y figure
 --              qu'avec l'accord explicite de Nab : leurs résultats sont alors
 --              supprimés malgré les deux gardes de conservation, désactivées par
@@ -26,6 +33,7 @@
 \set ON_ERROR_STOP on
 
 BEGIN;
+\i :releve
 SELECT set_config('histo.box', :'box', true), set_config('histo.ids', :'ids', true), set_config('histo.archiver', :'archiver', true);
 
 CREATE TEMP TABLE histo_tournois ON COMMIT DROP AS
@@ -41,8 +49,11 @@ SELECT h.id FROM public.tournament_elo_history h WHERE h.tournament_id IN (SELEC
 
 DO $avant$
 DECLARE
-  v_ids   uuid[] := current_setting('histo.ids')::uuid[];
-  v_autre int;
+  v_ids    uuid[] := current_setting('histo.ids')::uuid[];
+  v_comptes uuid[] := current_setting('histo.comptes')::uuid[];
+  v_autre  int;
+  v_reel   bigint := 0;
+  r        record;
 BEGIN
   IF current_user IN ('authenticated', 'anon') THEN
     RAISE EXCEPTION 'HISTO_ROLE: à jouer sous un rôle serveur (postgres)';
@@ -63,6 +74,29 @@ BEGIN
   END IF;
   IF v_ids && current_setting('histo.archiver')::uuid[] THEN
     RAISE EXCEPTION 'HISTO_LISTES: un tournoi est à la fois à supprimer et à archiver';
+  END IF;
+  -- Participants hors comptes purgés, par tournoi listé.
+  FOR r IN
+    SELECT t.id, t.name, count(*) FILTER (WHERE p.a IS NOT NULL AND NOT p.a = ANY (v_comptes)) AS n
+      FROM public.tournaments t
+      LEFT JOIN LATERAL (
+              SELECT athlete_id FROM public.tournament_participants WHERE tournament_id = t.id
+    UNION ALL SELECT athlete_id FROM public.tournament_scores WHERE tournament_id = t.id
+    UNION ALL SELECT unnest(ARRAY[participant1_id, participant2_id, winner_id, loser_id]) FROM public.tournament_bracket_matches WHERE tournament_id = t.id
+    UNION ALL SELECT m.athlete_id FROM public.tournament_division_members m JOIN public.tournament_divisions d ON d.id = m.division_id WHERE d.tournament_id = t.id
+    UNION ALL SELECT athlete_id FROM public.tournament_elo_history WHERE tournament_id = t.id
+    UNION ALL SELECT unnest(ARRAY[athlete_id, opponent_id]) FROM public.tournament_match_elo_history WHERE tournament_id = t.id
+    UNION ALL SELECT athlete_id FROM public.tournament_wod_elo_history WHERE tournament_id = t.id
+    UNION ALL SELECT athlete_id FROM public.tournament_season_history WHERE tournament_id = t.id
+    UNION ALL SELECT athlete_id FROM public.tournament_notifications_sent WHERE tournament_id = t.id) p(a) ON true
+     WHERE t.id = ANY (v_ids || current_setting('histo.archiver')::uuid[])
+     GROUP BY t.id, t.name ORDER BY t.name
+  LOOP
+    RAISE NOTICE 'HISTO_TOURNOI_REEL % (%) : % ligne(s) d''un compte hors relevé', r.id, r.name, r.n;
+    v_reel := v_reel + r.n;
+  END LOOP;
+  IF v_reel > 0 THEN
+    RAISE EXCEPTION 'HISTO_REEL: % ligne(s) d''un compte hors relevé dans les tournois listés : ROLLBACK', v_reel;
   END IF;
   RAISE NOTICE 'HISTO_PURGE_AVANT listes=% trouves=% matchs=% scores=% inscrits=%',
     cardinality(v_ids), (SELECT count(*) FROM histo_tournois),

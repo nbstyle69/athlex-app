@@ -15,7 +15,7 @@ Retire d'AthleX Fitness (`d3d0b0a0-0000-4000-a000-000000000001`) les comptes de 
 | `80-releve-purge.sql` | **Lecture seule.** Fermeture de la purge au catalogue (toutes les clés étrangères, jusqu'au point fixe), chiffrage par table, classement de chaque ligne touchée, STOP sur tout contact avec un compte réel. Écrit le relevé (hors dépôt) : comptes figés, lignes mises à NULL. |
 | `20-empreinte-elo.sql` | **Lecture seule.** Lignes d'historique ELO de tous les comptes qui restent, hors tournois supprimés : prise avant 90, comparaison après 99 (chaque ligne présente et inchangée). ELO courant : information. |
 | `30-empreinte-box.sql` | **Lecture seule.** Chaque ligne de `boxes` et de toute table à `box_id` (toutes les box), hors lignes qui citent un compte purgé et hors tournois listés : prise avant 90, comparaison après 99. Lignes nouvelles : information. |
-| `90-tournois.sql` | `postgres`, une transaction : supprime `ids` (deux gardes de conservation désactivées par leur nom, réactivées et vérifiées avant le COMMIT), archive `archiver`. |
+| `90-tournois.sql` | `postgres`, une transaction : garde `HISTO_REEL` (0 inscrit, score, match, ligne d'ELO… d'un compte hors relevé dans chaque tournoi listé, sinon ROLLBACK), supprime `ids` (deux gardes de conservation désactivées par leur nom, réactivées et vérifiées avant le COMMIT), archive `archiver`. |
 | `91-supprimer-lignes-fictifs.sql` | `postgres`, une transaction : supprime les lignes « fictif » du relevé (hors tables de box). |
 | `92-supprimer-comptes.sql` | `postgres`, une transaction : `DELETE FROM auth.users` des comptes du relevé, chacun revérifié (demo_accounts, domaine, pas exclu). |
 | `99-controle-purge.sql` | Lecture seule : 0 ligne liée aux comptes et aux tournois supprimés, lignes « fictif » parties, lignes « archive » restées à NULL, tournois archivés, exclus présents. |
@@ -37,7 +37,7 @@ Retire d'AthleX Fitness (`d3d0b0a0-0000-4000-a000-000000000001`) les comptes de 
 
 Arrêts nommés en plus : ELO de WOD d'un réel sur un WOD scoré par un compte de démo ; réaction / commentaire / like / réponse d'un compte de démo sur un contenu réel ; achat ou suivi de programme par un compte de démo ; offre Marketplace d'un compte de démo ; WOD d'un compte de démo scoré par un réel ou programmé ; compétition inter-box ou événement ; compte purgé dans `message_groups.members` / `messages.read_by` d'une ligne qui reste ; liste d'attente derrière un compte de démo ; fichier de stockage d'un compte de démo.
 
-**Tournois** : un tournoi au résultat validé (`internal.tournoi_resultat_valide`) est **archivé**, jamais supprimé, sauf accord explicite de Nab (il passe alors dans `ids`). Archiver ne garde que la coquille : les inscriptions, scores et ELO des comptes de démo partent avec eux, les matchs restent avec des participants à NULL.
+**Tournois** : décision de Nab du 16/11/2026, les 6 tournois de démo sont **supprimés en entier** (`archiver='{}'`), chacun à condition que le relevé et la garde `HISTO_REEL` de 90 n'y trouvent aucun compte hors relevé. Par défaut, un tournoi au résultat validé (`internal.tournoi_resultat_valide`) est **archivé**, jamais supprimé, sauf accord explicite de Nab (il passe alors dans `ids`). Archiver ne garde que la coquille : les inscriptions, scores et ELO des comptes de démo partent avec eux, les matchs restent avec des participants à NULL.
 
 ## Ordre (étape 2, sur « go », depuis le commit de la PR à CI verte)
 
@@ -49,7 +49,7 @@ C="-v box=d3d0b0a0-0000-4000-a000-000000000001 -v exclus={3a60662c-35b2-4865-aa3
 psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 $C -v tournois='{<supprimés>}' -v sortie=$H/e20.sql -f $D/20-empreinte-elo.sql
 psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 $C -v tournois='{<supprimés et archivés>}' -v sortie=$H/e30.sql -f $D/30-empreinte-box.sql
 psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 $C -v supprimer='{…}' -v archiver='{…}' -v releve=$H/releve.sql -f $D/80-releve-purge.sql
-psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v box=… -v ids='{…}' -v archiver='{…}' -f $D/90-tournois.sql
+psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v box=… -v releve=$H/releve.sql -v ids='{…}' -v archiver='{}' -f $D/90-tournois.sql
 psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v releve=$H/releve.sql -f $D/91-supprimer-lignes-fictifs.sql
 psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v releve=$H/releve.sql -f $D/92-supprimer-comptes.sql
 psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v tournois='{…}' -v archiver='{…}' -v releve=$H/releve.sql -f $D/99-controle-purge.sql
