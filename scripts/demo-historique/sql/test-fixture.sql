@@ -81,3 +81,25 @@ SELECT 'd3d0b0a0-0000-4000-a000-000000000001'::uuid, '00000000-0000-4000-e599-00
 UNION ALL SELECT 'd3d0b0a0-0000-4000-a000-000000000001', '00000000-0000-4000-e599-0000000000f2', pg_temp.u(901), 1000, 1012, 12, 1;
 -- Amitié entre deux comptes de démo (part en cascade, sans contact).
 INSERT INTO public.friendships (requester_id, addressee_id, status) VALUES (pg_temp.u(1), pg_temp.u(2), 'accepted');
+
+-- Tables d'Auth que le rejeu ne fournit pas (souches à l'image de GoTrue, clés
+-- comprises ; vérifiées contre le catalogue de prod). refresh_tokens.user_id est
+-- du texte SANS clé étrangère : seule la session l'emporte en cascade.
+CREATE TABLE IF NOT EXISTS auth.identities (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), provider_id text, user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE, provider text DEFAULT 'email', identity_data jsonb DEFAULT '{}');
+CREATE TABLE IF NOT EXISTS auth.sessions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE, created_at timestamptz DEFAULT now());
+CREATE TABLE IF NOT EXISTS auth.refresh_tokens (id bigserial PRIMARY KEY, token varchar(255), user_id varchar(255), revoked boolean DEFAULT false, session_id uuid REFERENCES auth.sessions (id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS auth.mfa_factors (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE, factor_type text DEFAULT 'totp', status text DEFAULT 'verified');
+CREATE TABLE IF NOT EXISTS auth.mfa_challenges (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), factor_id uuid NOT NULL REFERENCES auth.mfa_factors (id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS auth.mfa_amr_claims (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), session_id uuid NOT NULL REFERENCES auth.sessions (id) ON DELETE CASCADE, authentication_method text DEFAULT 'password');
+CREATE TABLE IF NOT EXISTS auth.one_time_tokens (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE, token_type text DEFAULT 'recovery_token');
+-- Pour les démos 1..6, le reviewer, testapple et le réel : identité, session
+-- (avec AMR et jeton lié), facteur MFA (avec défi), jeton à usage unique ; plus
+-- un jeton de rafraîchissement ancien SANS session (user_id seul).
+INSERT INTO auth.identities (provider_id, user_id) SELECT pg_temp.u(n)::text, pg_temp.u(n) FROM unnest(ARRAY[1, 2, 3, 4, 5, 6, 901, 905, 906]) n;
+INSERT INTO auth.sessions (user_id) SELECT pg_temp.u(n) FROM unnest(ARRAY[1, 2, 3, 4, 5, 6, 901, 905, 906]) n;
+INSERT INTO auth.mfa_amr_claims (session_id) SELECT id FROM auth.sessions;
+INSERT INTO auth.refresh_tokens (token, user_id, session_id) SELECT 't-' || user_id, user_id::text, id FROM auth.sessions;
+INSERT INTO auth.refresh_tokens (token, user_id, session_id) SELECT 'ancien-' || pg_temp.u(n), pg_temp.u(n)::text, NULL FROM unnest(ARRAY[1, 2, 901, 905]) n;
+INSERT INTO auth.mfa_factors (user_id) SELECT pg_temp.u(n) FROM unnest(ARRAY[1, 2, 3, 901, 905, 906]) n;
+INSERT INTO auth.mfa_challenges (factor_id) SELECT id FROM auth.mfa_factors;
+INSERT INTO auth.one_time_tokens (user_id) SELECT pg_temp.u(n) FROM unnest(ARRAY[1, 2, 901, 906]) n;
