@@ -302,6 +302,7 @@ Supabase/Resend.
 | Landing : nouveau titre du hero, « Une plateforme unique conçue pour tous. » (AthleX-Manager #420) | 5 octobre 2026 |
 | Landing : vrais écrans de l'app et du Manager dans la visite guidée, « Strength » en anglais (AthleX-Manager #421) | 6 octobre 2026 |
 | Landing : visite guidée agrandie sur les grands écrans, apparence seule (AthleX-Manager #422) | 6 octobre 2026 |
+| **Manager : tri par la base sur `/admin/users` + bloc « Nouveaux inscrits » au tableau de bord admin (AthleX-Manager #449, PR #450 ; sans migration ; appliquée en prod : sans objet ; mergée : oui, le 16/11/2026 (67d11c7)).** Les en-têtes de la liste des utilisateurs trient toute la base avant la pagination (l'ancien tri ne réordonnait que les 50 lignes de la page) ; le tri est dans l'URL (`?tri=date&sens=desc` ouvre les derniers inscrits). Le tableau de bord admin montre le nombre d'inscrits sur 7 jours et les 5 derniers, avec un lien vers cette liste. | 16 novembre 2026 |
 
 ### Version anglaise de l'app
 
@@ -433,8 +434,6 @@ Supabase/Resend.
 refuse au-delà de 100 pages, et le message affiché dit « service indisponible » alors que le
 service a répondu. Le correctif (compter les pages avant l'envoi, dire la vraie cause) est
 écrit nulle part encore — chantier séparé, non planifié dans la fournée.
-
-**Manager : tri par la base sur `/admin/users` + bloc « Nouveaux inscrits » au tableau de bord admin (AthleX-Manager #449, PR #450 ; sans migration ; appliquée en prod : sans objet ; mergée : non).** Les en-têtes de la liste des utilisateurs trient toute la base avant la pagination (l'ancien tri ne réordonnait que les 50 lignes de la page) ; le tri est dans l'URL (`?tri=date&sens=desc` ouvre les derniers inscrits). Le tableau de bord admin montre le nombre d'inscrits sur 7 jours et les 5 derniers, avec un lien vers cette liste.
 
 ## À venir, dans l'ordre
 
