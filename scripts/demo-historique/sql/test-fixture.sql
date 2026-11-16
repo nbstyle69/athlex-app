@@ -40,8 +40,8 @@ SELECT '00000000-0000-4000-b599-00000000000b', pg_temp.u(n), CASE n WHEN 903 THE
 
 -- Tournois.
 INSERT INTO public.tournaments (id, name, level, status, format, box_id, max_participants, third_place_match, created_by) VALUES
-  ('00000000-0000-4000-d599-000000000001', 'TD1', 'rx', 'completed', 'bracket', 'd3d0b0a0-0000-4000-a000-000000000001', 4, false, pg_temp.u(6)),
-  ('00000000-0000-4000-d599-000000000002', 'TD2', 'rx', 'active', 'league_div', 'd3d0b0a0-0000-4000-a000-000000000001', 8, false, pg_temp.u(6)),
+  ('00000000-0000-4000-d599-000000000001', 'TD1', 'rx', 'completed', 'bracket', 'd3d0b0a0-0000-4000-a000-000000000001', 4, false, pg_temp.u(900)),
+  ('00000000-0000-4000-d599-000000000002', 'TD2', 'rx', 'active', 'league_div', 'd3d0b0a0-0000-4000-a000-000000000001', 8, false, pg_temp.u(900)),
   ('00000000-0000-4000-d599-000000000003', 'TX',  'rx', 'completed', 'bracket', 'd3d0b0a0-0000-4000-a000-000000000001', 2, false, pg_temp.u(900));
 INSERT INTO public.tournament_participants (tournament_id, athlete_id)
 SELECT '00000000-0000-4000-d599-000000000001'::uuid, pg_temp.u(n) FROM generate_series(1, 4) n
@@ -103,3 +103,21 @@ INSERT INTO auth.refresh_tokens (token, user_id, session_id) SELECT 'ancien-' ||
 INSERT INTO auth.mfa_factors (user_id) SELECT pg_temp.u(n) FROM unnest(ARRAY[1, 2, 3, 901, 905, 906]) n;
 INSERT INTO auth.mfa_challenges (factor_id) SELECT id FROM auth.mfa_factors;
 INSERT INTO auth.one_time_tokens (user_id) SELECT pg_temp.u(n) FROM unnest(ARRAY[1, 2, 901, 906]) n;
+
+-- Décisions du 16/11 : le reviewer (accepté) figure dans les tournois de démo
+-- (inscription, division, score de TD2 ; ELO de match et de tournoi de TD1),
+-- il a un ami de démo et une ligne box_elo ; un groupe de messages de la box,
+-- créé par le gérant, ne contient que des comptes de démo.
+INSERT INTO public.tournament_participants (tournament_id, athlete_id) VALUES ('00000000-0000-4000-d599-000000000002', pg_temp.u(905));
+INSERT INTO public.tournament_division_members (division_id, athlete_id) VALUES ('00000000-0000-4000-f599-000000000001', pg_temp.u(905)) ON CONFLICT DO NOTHING;
+INSERT INTO public.tournament_scores (tournament_id, tournament_wod_id, athlete_id, score_value, status)
+VALUES ('00000000-0000-4000-d599-000000000002', '00000000-0000-4000-e599-000000000004', pg_temp.u(905), '150', 'validated');
+INSERT INTO public.tournament_elo_history (tournament_id, athlete_id, final_rank, participants_count, avg_opponent_elo, elo_before, elo_after, elo_change)
+VALUES ('00000000-0000-4000-d599-000000000001', pg_temp.u(905), 5, 5, 1000, 1000, 1000, 0);
+INSERT INTO public.tournament_match_elo_history (match_id, tournament_id, athlete_id, opponent_id, result, elo_before, elo_after, elo_delta)
+SELECT id, tournament_id, pg_temp.u(905), pg_temp.u(1), 'loss', 1000, 990, -10 FROM public.tournament_bracket_matches
+ WHERE tournament_id = '00000000-0000-4000-d599-000000000001' AND round = 2;
+INSERT INTO public.friendships (requester_id, addressee_id, status) VALUES (pg_temp.u(905), pg_temp.u(3), 'accepted');
+INSERT INTO public.box_elo (member_id, box_id, elo, matches, wins) VALUES (pg_temp.u(905), 'd3d0b0a0-0000-4000-a000-000000000001', 1012, 7, 4) ON CONFLICT DO NOTHING;
+INSERT INTO public.message_groups (id, box_id, name, created_by, members) VALUES
+  ('00000000-0000-4000-9599-000000000001', 'd3d0b0a0-0000-4000-a000-000000000001', 'Groupe démo', pg_temp.u(900), ARRAY[pg_temp.u(1), pg_temp.u(2)]);

@@ -107,6 +107,11 @@ BEGIN
       OR NOT EXISTS (SELECT 1 FROM auth.users u WHERE u.id = e.id);
   IF n <> 0 THEN RAISE NOTICE 'HISTO_RESTE exclus disparus (compte ou entrée demo_accounts) = %', n; END IF;
   v_total := v_total + n;
+  -- Groupes de messages listés au relevé : supprimés.
+  SELECT count(*) INTO n FROM public.message_groups
+   WHERE id = ANY (coalesce(nullif(current_setting('histo.groupes', true), ''), '{}')::uuid[]);
+  IF n <> 0 THEN RAISE NOTICE 'HISTO_RESTE groupes listés encore là = %', n; END IF;
+  v_total := v_total + n;
   IF v_total <> 0 THEN
     RAISE EXCEPTION 'HISTO_CONTROLE_PURGE: % ligne(s) restante(s) (voir HISTO_RESTE)', v_total;
   END IF;

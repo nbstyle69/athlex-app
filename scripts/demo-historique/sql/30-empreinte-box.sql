@@ -11,7 +11,8 @@
 -- Tables lues au catalogue : `boxes` et chaque table de public qui a une
 -- colonne box_id (une table ajoutée demain est couverte). Lignes écartées à la
 -- prise : celles qui citent un compte à purger (toute clé étrangère d'une
--- colonne vers auth.users ou profiles) et celles des tournois listés.
+-- colonne vers auth.users ou profiles), celles des tournois listés et les
+-- groupes de messages dont un membre est un compte à purger.
 -- Chaque ligne restante est figée (table, box, md5 de la ligne sans les
 -- colonnes updated_at et member_count) : à la comparaison, chacune doit être
 -- encore là, identique, sinon STOP. Les lignes nouvelles (activité réelle,
@@ -57,6 +58,11 @@ BEGIN
     v_where := coalesce(v_where, 'true');
     IF r.a_tournoi THEN
       v_where := v_where || ' AND (x.tournament_id IS NULL OR NOT x.tournament_id = ANY (current_setting(''histo.tournois'')::uuid[]))';
+    END IF;
+    -- Groupe de messages qui cite un compte à purger dans ses membres (groupe
+    -- listé, supprimé par 91 ; tout autre groupe arrête déjà le relevé 80).
+    IF r.t = 'public.message_groups'::regclass THEN
+      v_where := v_where || ' AND NOT x.members && current_setting(''histo.comptes'')::uuid[]';
     END IF;
     IF r.t = 'public.tournaments'::regclass THEN
       v_where := v_where || ' AND NOT x.id = ANY (current_setting(''histo.tournois'')::uuid[])';

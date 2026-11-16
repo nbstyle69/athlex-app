@@ -6,6 +6,13 @@
 --        -f scripts/demo-historique/sql/80-releve-purge.sql
 --   supprimer : tournois supprimés par 90 (accord explicite de Nab s'ils ont
 --               un résultat validé) ; archiver : tournois archivés par 90.
+--   groupes   : (facultatif) groupes de messages de la box SUPPRIMÉS par 91,
+--               chacun nommé par son id (décision de Nab). Garde HISTO_GROUPE :
+--               groupe de la box, tous ses membres parmi les comptes purgés,
+--               aucun message, aucune référence (formule, accès WOD, message de
+--               box, abonnement Marketplace) ; sinon STOP.
+--   L'auteur (created_by) d'un tournoi ou d'un groupe supprimé ne compte pas
+--   comme un contact (décision de Nab, même règle que le coach qui valide).
 --
 -- Fermeture de la purge, calculée au catalogue, sans rien écrire (en mémoire,
 -- dans un bloc PL/pgSQL : la lecture seule refuse même les tables temporaires).
@@ -49,6 +56,11 @@
 SET default_transaction_read_only = on;
 SET search_path = "$user", public, extensions;
 \ir comptes.sql
+\if :{?groupes}
+\else
+  \set groupes '{}'
+\endif
+SELECT set_config('histo.groupes', :'groupes', false) AS g \gset histo_
 SELECT set_config('histo.supprimer', :'supprimer', false) AS s, set_config('histo.archiver', :'archiver', false) AS a \gset histo_
 
 DO $releve$
@@ -57,6 +69,7 @@ DECLARE
   v_acc     uuid[] := current_setting('histo.acceptes')::uuid[];
   v_sup     uuid[] := current_setting('histo.supprimer')::uuid[];
   v_arc     uuid[] := current_setting('histo.archiver')::uuid[];
+  v_grp     uuid[] := current_setting('histo.groupes')::uuid[];
   sup       jsonb := '{}';   -- oid de table → ctid des lignes supprimées
   nul       jsonb := '{}';   -- oid de table → { colonne → ctid des lignes mises à NULL }
   ar        jsonb := '{}';   -- oid de table → { colonne → ctid des lignes bloquantes }
@@ -83,6 +96,23 @@ BEGIN
    WHERE NOT EXISTS (SELECT 1 FROM public.tournaments x WHERE x.id = t.id AND x.box_id = current_setting('histo.box')::uuid);
   IF n > 0 THEN RAISE EXCEPTION 'HISTO_TOURNOI_BOX: % tournoi(s) listé(s) absent(s) de la box', n; END IF;
 
+  -- Groupes listés : garde HISTO_GROUPE.
+  FOR r IN SELECT g.id,
+                  (SELECT count(*) FROM public.message_groups x WHERE x.id = g.id AND x.box_id = current_setting('histo.box')::uuid) AS dans_box,
+                  (SELECT count(*) FROM public.message_groups x, unnest(x.members) m WHERE x.id = g.id AND NOT m = ANY (v_comptes)) AS hors_demo,
+                  (SELECT count(*) FROM public.messages x WHERE x.group_id = g.id)
+                + (SELECT count(*) FROM public.group_messages x WHERE x.group_id = g.id) AS messages,
+                  (SELECT count(*) FROM public.box_messages x WHERE x.target_group_id = g.id)
+                + (SELECT count(*) FROM public.membership_plan_groups x WHERE x.group_id = g.id)
+                + (SELECT count(*) FROM public.wod_group_access x WHERE x.group_id = g.id)
+                + (SELECT count(*) FROM public.box_programming_subscriptions x WHERE g.id = ANY (x.default_group_ids)) AS refs
+             FROM unnest(v_grp) g(id) LOOP
+    RAISE NOTICE 'HISTO_GROUPE % : dans la box %, membres hors démo %, messages %, références %', r.id, r.dans_box, r.hors_demo, r.messages, r.refs;
+    IF r.dans_box <> 1 OR r.hors_demo > 0 OR r.messages > 0 OR r.refs > 0 THEN
+      v_stop := v_stop || format(' HISTO_GROUPE %s (box %s, membres hors démo %s, messages %s, références %s)', r.id, r.dans_box, r.hors_demo, r.messages, r.refs);
+    END IF;
+  END LOOP;
+
   -- Tournois listés : état et motif de conservation (internal.tournoi_resultat_valide).
   FOR r IN SELECT t.id, t.status, t.format, t.archived_at IS NOT NULL AS archive, internal.tournoi_resultat_valide(t.id, t.status) AS raison,
                   CASE WHEN t.id = ANY (v_sup) THEN 'supprimer' ELSE 'archiver' END AS sort,
@@ -96,6 +126,7 @@ BEGIN
   -- Graines : comptes, tournois à supprimer et leurs historiques sans clé (90).
   FOR r IN SELECT 'auth.users'::regclass AS t, format('id = ANY (%L::uuid[])', v_comptes) AS w
            UNION ALL SELECT 'public.tournaments', format('id = ANY (%L::uuid[])', v_sup)
+           UNION ALL SELECT 'public.message_groups', format('id = ANY (%L::uuid[]) AND box_id = %L', v_grp, current_setting('histo.box'))
            UNION ALL SELECT 'public.tournament_match_elo_history', format('tournament_id = ANY (%L::uuid[])', v_sup)
            UNION ALL SELECT 'public.tournament_wod_elo_history', format('tournament_id = ANY (%L::uuid[])', v_sup)
            UNION ALL SELECT 'public.tournament_elo_history', format('tournament_id = ANY (%L::uuid[])', v_sup) LOOP
@@ -160,7 +191,9 @@ BEGIN
       INTO v_reel, v_acce
       FROM pg_constraint x JOIN pg_attribute a ON a.attrelid = x.conrelid AND a.attnum = x.conkey[1]
      WHERE x.contype = 'f' AND cardinality(x.conkey) = 1 AND x.conrelid = r.k::oid
-       AND x.confrelid IN ('auth.users'::regclass, 'public.profiles'::regclass);
+       AND x.confrelid IN ('auth.users'::regclass, 'public.profiles'::regclass)
+       -- Auteur d'un tournoi ou d'un groupe supprimé : pas un contact.
+       AND NOT (x.conrelid IN ('public.tournaments'::regclass, 'public.message_groups'::regclass) AND a.attname = 'created_by');
     v_reel := coalesce(v_reel, 'false'); v_acce := coalesce(v_acce, 'false');
     IF r.k::oid = 'public.tournament_match_elo_history'::regclass::oid THEN   -- adversaire sans clé étrangère
       v_reel := v_reel || format(' OR (opponent_id IS NOT NULL AND NOT opponent_id = ANY (%L::uuid[]) AND NOT opponent_id = ANY (%L::uuid[]))', v_comptes, v_acc);
@@ -301,16 +334,17 @@ BEGIN
   IF v_stop <> '' THEN
     RAISE EXCEPTION 'HISTO_BLOQUANT:%', v_stop;
   END IF;
-  RAISE NOTICE 'HISTO_RELEVE conforme : % compte(s), % tournoi(s) à supprimer, % à archiver',
-    cardinality(v_comptes), cardinality(v_sup), cardinality(v_arc);
+  RAISE NOTICE 'HISTO_RELEVE conforme : % compte(s), % tournoi(s) à supprimer, % à archiver, % groupe(s) à supprimer',
+    cardinality(v_comptes), cardinality(v_sup), cardinality(v_arc), cardinality(v_grp);
 END $releve$;
 
 \pset tuples_only on
 \pset format unaligned
 \o :releve
-SELECT format('SELECT set_config(%L, %L, false) AS r, set_config(%L, %L, false) AS c, set_config(%L, %L, false) AS e \gset histo_',
+SELECT format('SELECT set_config(%L, %L, false) AS r, set_config(%L, %L, false) AS c, set_config(%L, %L, false) AS e, set_config(%L, %L, false) AS g, set_config(%L, %L, false) AS b \gset histo_',
               'histo.releve', current_setting('histo.releve_sortie'), 'histo.comptes', current_setting('histo.comptes'),
-              'histo.exclus', current_setting('histo.exclus'));
+              'histo.exclus', current_setting('histo.exclus'), 'histo.groupes', current_setting('histo.groupes'),
+              'histo.box', current_setting('histo.box'));
 \o
 \pset tuples_only off
 \pset format aligned

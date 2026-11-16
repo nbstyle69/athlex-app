@@ -3,14 +3,16 @@
 --
 -- Joué comme `postgres`, en une transaction, avec PGCLIENTENCODING=UTF8, après
 -- 80-releve-purge.sql conforme :
---   psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v box=<uuid> -v releve=<fichier de 80> \
+--   psql "$PROD_DB_URL" -X -v ON_ERROR_STOP=1 -v box=<uuid> -v releve=<fichier de 80> -v acceptes='{…}' \
 --        -v ids='{…}' -v archiver='{…}' -f scripts/demo-historique/sql/90-tournois.sql
 --   Décision de Nab (16/11/2026) : les 6 tournois sont SUPPRIMÉS en entier
 --   (archiver='{}'), à condition qu'aucun compte hors relevé n'y figure.
 --   Garde HISTO_REEL, par tournoi listé (supprimé ou archivé) : 0 inscrit,
 --   score, match, membre de division, ligne d'ELO, saison ou notification d'un
---   compte qui n'est pas parmi les comptes purgés du relevé (réel, reviewer,
---   testapple). Sinon exception, ROLLBACK : on retire ce tournoi des listes.
+--   compte qui n'est ni parmi les comptes purgés du relevé, ni dans
+--   `acceptes` (uuid acceptés explicitement par Nab : le reviewer, le 16/11 ;
+--   ses lignes de ces tournois partent avec eux). Sinon exception, ROLLBACK :
+--   on retire ce tournoi des listes.
 --   (validated_by et created_by ne comptent pas : coach qui valide, auteur.)
 --   ids      : tournois SUPPRIMÉS. Un tournoi au résultat validé n'y figure
 --              qu'avec l'accord explicite de Nab : leurs résultats sont alors
@@ -34,7 +36,7 @@
 
 BEGIN;
 \i :releve
-SELECT set_config('histo.box', :'box', true), set_config('histo.ids', :'ids', true), set_config('histo.archiver', :'archiver', true);
+SELECT set_config('histo.box', :'box', true), set_config('histo.ids', :'ids', true), set_config('histo.archiver', :'archiver', true), set_config('histo.acceptes_tournois', :'acceptes', true);
 
 CREATE TEMP TABLE histo_tournois ON COMMIT DROP AS
 SELECT t.id FROM public.tournaments t
@@ -50,7 +52,7 @@ SELECT h.id FROM public.tournament_elo_history h WHERE h.tournament_id IN (SELEC
 DO $avant$
 DECLARE
   v_ids    uuid[] := current_setting('histo.ids')::uuid[];
-  v_comptes uuid[] := current_setting('histo.comptes')::uuid[];
+  v_comptes uuid[] := current_setting('histo.comptes')::uuid[] || current_setting('histo.acceptes_tournois')::uuid[];
   v_autre  int;
   v_reel   bigint := 0;
   r        record;

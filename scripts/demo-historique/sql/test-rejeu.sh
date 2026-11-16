@@ -14,6 +14,7 @@ AF=d3d0b0a0-0000-4000-a000-000000000001
 u() { printf '00000000-0000-4000-a599-%012d' "$1"; }
 REV=$(u 905); TESTAPPLE=$(u 906); REEL=$(u 901); NBS2=00000000-0000-4000-b599-00000000000b
 TD1=00000000-0000-4000-d599-000000000001; TD2=00000000-0000-4000-d599-000000000002
+GRP="{00000000-0000-4000-9599-000000000001}"
 TMP=$(mktemp -d); W="$(cygpath -m "$TMP" 2>/dev/null || echo "$TMP")"
 # copie <nom> : dossier avec une copie des scripts (les mutations y sont faites ;
 # les scripts s'incluent entre eux par chemin relatif).
@@ -47,16 +48,16 @@ chaine() {
   local D="${1:-.}"
   jouer $D/20-empreinte-elo.sql $(C) -v tournois="$SUP" -v sortie="$W/e20.sql" || { echo "20"; return 1; }
   jouer $D/30-empreinte-box.sql $(C) -v tournois="{$(echo "$SUP,$ARC" | tr -d '{}' | sed 's/^,//; s/,$//')}" -v sortie="$W/e30.sql" || { echo "30"; return 1; }
-  jouer $D/80-releve-purge.sql $(C) -v supprimer="$SUP" -v archiver="$ARC" -v releve="$REL" || { echo "80"; return 1; }
+  jouer $D/80-releve-purge.sql $(C) -v supprimer="$SUP" -v archiver="$ARC" -v groupes="$GRP" -v releve="$REL" || { echo "80"; return 1; }
   cp "$TMP/log" "$TMP/log80"
-  jouer $D/90-tournois.sql -v box=$AF -v releve="$REL" -v ids="$SUP" -v archiver="$ARC" || { echo "90"; return 1; }
+  jouer $D/90-tournois.sql -v box=$AF -v releve="$REL" -v acceptes="{$REV}" -v ids="$SUP" -v archiver="$ARC" || { echo "90"; return 1; }
   jouer $D/91-supprimer-lignes-fictifs.sql -v releve="$REL" || { echo "91"; return 1; }
   jouer $D/92-supprimer-comptes.sql -v releve="$REL" || { echo "92"; return 1; }
   jouer $D/99-controle-purge.sql -v tournois="$SUP" -v archiver="$ARC" -v releve="$REL" || { echo "99"; return 1; }
   jouer $D/20-empreinte-elo.sql -v reference="$W/e20.sql" || { echo "20c"; return 1; }
   jouer $D/30-empreinte-box.sql -v reference="$W/e30.sql" || { echo "30c"; return 1; }
 }
-releve_seul() { jouer "${1:-80-releve-purge.sql}" $(C) -v supprimer="$SUP" -v archiver="$ARC" -v releve="$REL"; }
+releve_seul() { jouer "${1:-80-releve-purge.sql}" $(C) -v supprimer="$SUP" -v archiver="$ARC" -v groupes="$GRP" -v releve="$REL"; }
 reviewer_reste="SELECT (SELECT count(*) FROM auth.users WHERE id='$REV') || '/' || (SELECT count(*) FROM internal.demo_accounts WHERE user_id='$REV')"
 
 echo "== N : purge nominale"
@@ -81,7 +82,12 @@ neuve; SUP="{$TD1}"; ARC="{$TD2}"
 etape=$(chaine) && ok "N3 TD1 supprimé, TD2 archivé : purge complète" || { ko "N3 (échec en $etape)"; tail -5 "$TMP/log"; }
 attendre "N3 TD2 conservé et archivé" "$(val "SELECT count(*) FROM tournaments WHERE id='$TD2' AND archived_at IS NOT NULL")" 1
 neuve; SUP='{}'; ARC="{$TD1,$TD2}"
-etape=$(chaine) && ok "N4 deux tournois archivés : matchs de TD1 gardés, participants à NULL (classe archive)" || { ko "N4 (échec en $etape)"; tail -5 "$TMP/log"; }
+# Archiver un tournoi où figure le reviewer : les matchs gardés passent à NULL
+# et le profil du reviewer change (son ELO), sa ligne d'ELO de match aussi : les témoins
+# arrêtent la purge à la comparaison (c'est pourquoi la prod supprime).
+if etape=$(chaine); then ko "N4 deux tournois archivés avec le reviewer : purge passée, témoins non vus"
+elif [ "$etape" = 20c ] && grep -q 'témoin 00000000-0000-4000-a599-000000000905:profiles' "$TMP/log"; then ok "N4 deux tournois archivés avec le reviewer : matchs gardés à NULL, ELO du reviewer changé, STOP (témoin)"
+else ko "N4 (échec en $etape)"; tail -5 "$TMP/log"; fi
 grep -q 'HISTO_RELEVE tournament_bracket_matches.winner_id archive = 3' "$TMP/log80" && ok "N4 relevé : 3 matchs archivés" || ko "N4 relevé archive"
 attendre "N4 matchs de TD1 conservés" "$(val "SELECT count(*) FROM tournament_bracket_matches WHERE tournament_id='$TD1' AND participant1_id IS NULL")" 3
 SUP="{$TD1,$TD2}"; ARC='{}'
@@ -101,7 +107,7 @@ if etape=$(chaine $D); then
 else ko "K1m mutation non tuée (échec en $etape)"; tail -3 "$TMP/log"; fi
 neuve; contact "$TESTAPPLE"
 etape=$(chaine) && ok "K2 amitié démo ↔ testapple (accepté par uuid) : purge passée" || { ko "K2 (échec en $etape)"; tail -3 "$TMP/log"; }
-grep -q 'friendships.- accepte = 1' "$TMP/log80" && ok "K2 relevé : contact accepté affiché" || ko "K2 affichage"
+grep -q 'friendships.- accepte = 2' "$TMP/log80" && ok "K2 relevé : contacts acceptés affichés (testapple, reviewer)" || ko "K2 affichage"
 D=$(copie m-accepte); muter_dans $D 80-releve-purge.sql "s/WHEN %s THEN ''contact'' WHEN %s THEN ''accepte'' END/WHEN %s OR %s THEN ''contact'' END/"
 neuve; contact "$TESTAPPLE"
 if etape=$(chaine $D); then ko "K2m mutation (exception acceptes retirée) non tuée"
@@ -158,24 +164,63 @@ D=$(copie m-elo); muter_dans $D 80-releve-purge.sql "s/IF r\.n > 0 THEN v_stop :
 neuve; val "INSERT INTO elo_history (box_id, wod_id, member_id, elo_before, elo_after, elo_delta, rank) VALUES ('$AF', '00000000-0000-4000-e599-0000000000f1', '$REEL', 1000, 990, -10, 4)" >/dev/null
 releve_seul $D/80-releve-purge.sql && ok "S4m mutation (contact ELO retiré) : relevé passé — S4 la tue" || { ko "S4m non tuée"; tail -2 "$TMP/log"; }
 
+
+echo "== Décisions du 16/11 : auteur, reviewer accepté, groupe, témoins"
+G=00000000-0000-4000-9599-000000000001
+# Auteur d'un tournoi supprimé (le gérant, comme en prod) : pas un contact (N1).
+D=$(copie m-auteur); muter_dans $D 80-releve-purge.sql "s/AND NOT \(x\.conrelid IN \('public\.tournaments'::regclass, 'public\.message_groups'::regclass\) AND a\.attname = 'created_by'\)//"
+neuve
+if etape=$(chaine $D); then ko "A3m mutation (auteur compté comme contact) : purge passée"
+elif [ "$etape" = 80 ] && grep -q 'tournaments.-=2 (contact)' "$TMP/log"; then ok "A3m mutation (auteur compté comme contact) : 80 STOP (tournaments.-=2) — N1 la tue"
+else ko "A3m (échec en $etape)"; tail -3 "$TMP/log"; fi
+# Reviewer accepté par uuid dans 90 : N1 supprime TD1 et TD2 avec ses lignes.
+neuve; etape=$(chaine) || ko "R5 (échec en $etape)"
+attendre "R5 reviewer : lignes des tournois supprimés parties, compte, profil, adhésion, box_elo et demo_accounts là" \
+  "$(val "SELECT (SELECT count(*) FROM tournament_participants WHERE athlete_id='$REV') || '/' || (SELECT count(*) FROM tournament_match_elo_history WHERE athlete_id='$REV') || '/' || (SELECT count(*) FROM auth.users WHERE id='$REV') || (SELECT count(*) FROM profiles WHERE id='$REV') || (SELECT count(*) FROM box_members WHERE member_id='$REV') || (SELECT count(*) FROM box_elo WHERE member_id='$REV') || (SELECT count(*) FROM internal.demo_accounts WHERE user_id='$REV')")" "0/0/11111"
+attendre "R5 groupe de démo supprimé" "$(val "SELECT count(*) FROM message_groups WHERE id='$G'")" 0
+D=$(copie m-acc90); muter_dans $D 90-tournois.sql "s/ \|\| current_setting\('histo\.acceptes_tournois'\)::uuid\[\];/;/"
+neuve
+if etape=$(chaine $D); then ko "R5m mutation (reviewer non accepté dans 90) : purge passée"
+elif [ "$etape" = 90 ] && grep -q 'HISTO_REEL' "$TMP/log"; then ok "R5m mutation (reviewer non accepté dans 90) : 90 STOP — R5 la tue"
+else ko "R5m (échec en $etape)"; tail -3 "$TMP/log"; fi
+# Groupe listé : garde HISTO_GROUPE au relevé (80) et à la suppression (91).
+stop80 "G1 groupe listé avec un membre réel" "HISTO_GROUPE $G (box 1, membres hors démo 1" "UPDATE message_groups SET members = members || '$REEL'::uuid WHERE id='$G'"
+stop80 "G2 groupe listé avec un message" "messages 1" "INSERT INTO messages (box_id, sender_id, group_id, content) VALUES ('$AF', '$(u 1)', '$G', 'x')"
+stop80 "G3 groupe listé référencé (accès WOD)" "références 1" "INSERT INTO wod_group_access (wod_id, group_id) VALUES ('00000000-0000-4000-e599-0000000000f1', '$G')"
+D=$(copie m-groupe); muter_dans $D 80-releve-purge.sql "s/IF r\.dans_box <> 1 OR r\.hors_demo > 0 OR /IF r.dans_box <> 1 OR /"
+neuve; val "UPDATE message_groups SET members = members || '$REEL'::uuid WHERE id='$G'" >/dev/null
+releve_seul $D/80-releve-purge.sql && ok "G1m mutation (membres hors démo ignorés) : relevé passé — G1 la tue" || { ko "G1m non tuée"; tail -2 "$TMP/log"; }
+neuve; releve_seul >/dev/null; val "UPDATE message_groups SET members = members || '$REEL'::uuid WHERE id='$G'" >/dev/null; E=$(val "$EMPREINTE")
+jouer 91-supprimer-lignes-fictifs.sql -v releve="$REL" && ko "G4 membre réel ajouté après le relevé : 91 passé" || { grep -q 'HISTO_GROUPE' "$TMP/log" && ok "G4 membre réel ajouté après le relevé : 91 ROLLBACK" || { ko "G4 motif"; tail -2 "$TMP/log"; }; }
+attendre "G4 rien d'écrit, groupe là" "$(val "$EMPREINTE")/$(val "SELECT count(*) FROM message_groups WHERE id='$G'")" "$E/1"
+# Témoins (reviewer, testapple, gérant) : toute modification arrête 20.
+for c in "E3a profil du reviewer|UPDATE profiles SET elo = coalesce(elo, 0) + 1 WHERE id='$REV'" "E3b box_elo du reviewer|UPDATE box_elo SET elo = elo + 1 WHERE member_id='$REV'" "E3c adhésion de testapple|UPDATE box_members SET status='inactive' WHERE member_id='$TESTAPPLE'" "E3d compte du gérant|UPDATE auth.users SET email='g900@test.invalid' WHERE id='$(u 900)'"; do
+  IFS='|' read -r nom sql <<<"$c"
+  neuve; jouer 20-empreinte-elo.sql $(C) -v tournois="$SUP" -v sortie="$W/e20.sql" >/dev/null; val "$sql" >/dev/null
+  jouer 20-empreinte-elo.sql -v reference="$W/e20.sql" && ko "$nom modifié : identique" || { grep -q 'témoin' "$TMP/log" && ok "$nom modifié : STOP (témoin)" || { ko "$nom"; tail -2 "$TMP/log"; }; }
+done
+D=$(copie m-temoins); muter_dans $D 20-empreinte-elo.sql "s/v_ecart := v_ecart \|\| format\(' témoin/NULL; PERFORM format(' témoin/"
+neuve; jouer $D/20-empreinte-elo.sql $(C) -v tournois="$SUP" -v sortie="$W/e20.sql" >/dev/null; val "UPDATE box_elo SET elo = elo + 1 WHERE member_id='$REV'" >/dev/null
+jouer $D/20-empreinte-elo.sql -v reference="$W/e20.sql" && ok "E3m mutation (témoins ignorés) : comparaison passée — E3b la tue" || { ko "E3m non tuée"; tail -2 "$TMP/log"; }
+
 echo "== 90, 92, empreintes"
 DECL="SELECT string_agg(tgname||':'||tgenabled::text, ',' ORDER BY tgname) FROM pg_trigger WHERE tgname IN ('trg_tournaments_resultats_conserves','trg_bracket_matches_termine_conserve')"
 neuve; releve_seul >/dev/null; muter 90-tournois.sql "$TMP/m-enable.sql" 's/ALTER TABLE public\.tournaments ENABLE TRIGGER trg_tournaments_resultats_conserves;\n//'
 E=$(val "$EMPREINTE")
-jouer "$TMP/m-enable.sql" -v box=$AF -v releve="$REL" -v ids="$SUP" -v archiver='{}' && ko "T1m garde laissée désactivée : COMMIT" || { grep -q HISTO_DECLENCHEURS "$TMP/log" && ok "T1m mutation (garde laissée désactivée) : ROLLBACK" || ko "T1m motif"; }
+jouer "$TMP/m-enable.sql" -v box=$AF -v releve="$REL" -v acceptes="{$REV}" -v ids="$SUP" -v archiver='{}' && ko "T1m garde laissée désactivée : COMMIT" || { grep -q HISTO_DECLENCHEURS "$TMP/log" && ok "T1m mutation (garde laissée désactivée) : ROLLBACK" || ko "T1m motif"; }
 attendre "T1m rien d'écrit, déclencheurs actifs" "$(val "$EMPREINTE")/$(val "$DECL")" "$E/trg_bracket_matches_termine_conserve:O,trg_tournaments_resultats_conserves:O"
 neuve; releve_seul >/dev/null; muter 90-tournois.sql "$TMP/m-archive.sql" "s/UPDATE public\.tournaments SET archived_at = now\(\)/UPDATE public.tournaments SET archived_at = NULL/"
-jouer "$TMP/m-archive.sql" -v box=$AF -v releve="$REL" -v ids="{$TD1}" -v archiver="{$TD2}" && ko "T2m archivage oublié : COMMIT" || { grep -q HISTO_ARCHIVE "$TMP/log" && ok "T2m mutation (archivage oublié) : ROLLBACK" || ko "T2m motif"; }
+jouer "$TMP/m-archive.sql" -v box=$AF -v releve="$REL" -v acceptes="{$REV}" -v ids="{$TD1}" -v archiver="{$TD2}" && ko "T2m archivage oublié : COMMIT" || { grep -q HISTO_ARCHIVE "$TMP/log" && ok "T2m mutation (archivage oublié) : ROLLBACK" || ko "T2m motif"; }
 # Tournoi de démo supprimé en entier : N1 (99 : 0 ligne liée). Mutation : une
 # table d'historique oubliée (ELO de clôture, en SET NULL) → 90 en ROLLBACK.
 neuve; releve_seul >/dev/null; muter 90-tournois.sql "$TMP/m-elo90.sql" 's/DELETE FROM public\.tournament_elo_history +WHERE tournament_id IN \(SELECT id FROM histo_tournois\);\n//'
 E=$(val "$EMPREINTE")
-jouer "$TMP/m-elo90.sql" -v box=$AF -v releve="$REL" -v ids="$SUP" -v archiver='{}' && ko "T5m historique d'ELO oublié : COMMIT" || { grep -q 'HISTO_RESTE: 4' "$TMP/log" && ok "T5m mutation (ELO de clôture oublié) : ROLLBACK (4 lignes) — N1 la tue" || { ko "T5m motif"; tail -2 "$TMP/log"; }; }
+jouer "$TMP/m-elo90.sql" -v box=$AF -v releve="$REL" -v acceptes="{$REV}" -v ids="$SUP" -v archiver='{}' && ko "T5m historique d'ELO oublié : COMMIT" || { grep -q 'HISTO_RESTE: 5' "$TMP/log" && ok "T5m mutation (ELO de clôture oublié) : ROLLBACK (5 lignes) — N1 la tue" || { ko "T5m motif"; tail -2 "$TMP/log"; }; }
 attendre "T5m rien d'écrit" "$(val "$EMPREINTE")" "$E"
 # Tournoi avec un compte hors relevé (après le relevé) : 90 s'arrête.
 reel90() { # <nom> <sql> [script]
   neuve; releve_seul >/dev/null; val "$2" >/dev/null; E=$(val "$EMPREINTE")
-  jouer "${3:-90-tournois.sql}" -v box=$AF -v releve="$REL" -v ids="$SUP" -v archiver='{}'
+  jouer "${3:-90-tournois.sql}" -v box=$AF -v releve="$REL" -v acceptes="{$REV}" -v ids="$SUP" -v archiver='{}'
 }
 T4A="INSERT INTO tournament_participants (tournament_id, athlete_id) VALUES ('$TD2', '$REEL')"
 T4B="UPDATE tournament_match_elo_history SET opponent_id='$TESTAPPLE' WHERE tournament_id='$TD1' AND athlete_id='$(u 1)' AND match_id=(SELECT id FROM tournament_bracket_matches WHERE tournament_id='$TD1' AND round=2)"
@@ -188,7 +233,7 @@ for c in "T4a réel inscrit à TD2|$T4A|TD2" "T4b testapple adversaire dans une 
 done
 muter 90-tournois.sql "$TMP/m-reel.sql" 's/IF v_reel > 0 THEN/IF false THEN/'
 reel90 "T4m" "$T4A" "$TMP/m-reel.sql" && ok "T4m mutation (garde HISTO_REEL retirée) : 90 passe et supprime l'inscription d'un réel — T4a la tue" || { ko "T4m non tuée"; tail -3 "$TMP/log"; }
-neuve; jouer 80-releve-purge.sql $(C) -v supprimer="$SUP" -v archiver='{}' -v releve="$REL" >/dev/null
+neuve; jouer 80-releve-purge.sql $(C) -v supprimer="$SUP" -v archiver='{}' -v groupes="$GRP" -v releve="$REL" >/dev/null
 val "UPDATE auth.users SET email='x@exemple.invalid' WHERE id='$(u 3)'" >/dev/null; E=$(val "$EMPREINTE")
 jouer 92-supprimer-comptes.sql -v releve="$REL" && ko "T3 compte du relevé devenu hors domaine : supprimé" || { grep -q HISTO_COMPTE "$TMP/log" && ok "T3 92 revérifie chaque compte : ROLLBACK" || ko "T3 motif"; }
 attendre "T3 rien d'écrit" "$(val "$EMPREINTE")" "$E"

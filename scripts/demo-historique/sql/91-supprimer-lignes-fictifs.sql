@@ -55,4 +55,35 @@ BEGIN
   RAISE NOTICE 'HISTO_FICTIFS supprimees=%', v_total;
 END $fictifs$;
 
+-- Groupes de messages listés au relevé (`groupes`, décision de Nab), garde
+-- revérifiée : groupe de la box, membres tous parmi les comptes purgés, aucun
+-- message, aucune référence ; sinon exception, ROLLBACK.
+DO $groupes$
+DECLARE
+  v_grp     uuid[] := coalesce(nullif(current_setting('histo.groupes', true), ''), '{}')::uuid[];
+  v_comptes uuid[] := current_setting('histo.comptes')::uuid[];
+  r         record;
+  n         int;
+BEGIN
+  FOR r IN SELECT g.id, x.box_id,
+                  (SELECT count(*) FROM unnest(x.members) m WHERE NOT m = ANY (v_comptes)) AS hors_demo,
+                  (SELECT count(*) FROM public.messages y WHERE y.group_id = g.id)
+                + (SELECT count(*) FROM public.group_messages y WHERE y.group_id = g.id)
+                + (SELECT count(*) FROM public.box_messages y WHERE y.target_group_id = g.id)
+                + (SELECT count(*) FROM public.membership_plan_groups y WHERE y.group_id = g.id)
+                + (SELECT count(*) FROM public.wod_group_access y WHERE y.group_id = g.id)
+                + (SELECT count(*) FROM public.box_programming_subscriptions y WHERE g.id = ANY (y.default_group_ids)) AS refs
+             FROM unnest(v_grp) g(id) LEFT JOIN public.message_groups x ON x.id = g.id LOOP
+    CONTINUE WHEN r.box_id IS NULL;   -- déjà supprimé (rejeu)
+    IF r.hors_demo > 0 OR r.refs > 0 THEN
+      RAISE EXCEPTION 'HISTO_GROUPE: % : % membre(s) hors comptes purgés, % message(s) ou référence(s) : ROLLBACK', r.id, r.hors_demo, r.refs;
+    END IF;
+    DELETE FROM public.message_groups x WHERE x.id = r.id AND x.box_id = current_setting('histo.box')::uuid
+       AND x.members <@ v_comptes;
+    GET DIAGNOSTICS n = ROW_COUNT;
+    IF n <> 1 THEN RAISE EXCEPTION 'HISTO_GROUPE: % hors de la box ou introuvable : ROLLBACK', r.id; END IF;
+    RAISE NOTICE 'HISTO_GROUPE % supprimé', r.id;
+  END LOOP;
+END $groupes$;
+
 COMMIT;
