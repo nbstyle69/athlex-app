@@ -1496,6 +1496,7 @@ export type Database = {
           publish_at: string | null
           rounds: number | null
           scheduled_date: string | null
+          score_type: string | null
           sort_order: number
           source: string
           source_page: number | null
@@ -1505,6 +1506,7 @@ export type Database = {
           source_programming_wod_id: string | null
           tabata_rest_seconds: number | null
           tabata_work_seconds: number | null
+          text_mode: string
           time_cap_seconds: number | null
           title: string
           track: string | null
@@ -1532,6 +1534,7 @@ export type Database = {
           publish_at?: string | null
           rounds?: number | null
           scheduled_date?: string | null
+          score_type?: string | null
           sort_order?: number
           source?: string
           source_page?: number | null
@@ -1541,6 +1544,7 @@ export type Database = {
           source_programming_wod_id?: string | null
           tabata_rest_seconds?: number | null
           tabata_work_seconds?: number | null
+          text_mode?: string
           time_cap_seconds?: number | null
           title: string
           track?: string | null
@@ -1568,6 +1572,7 @@ export type Database = {
           publish_at?: string | null
           rounds?: number | null
           scheduled_date?: string | null
+          score_type?: string | null
           sort_order?: number
           source?: string
           source_page?: number | null
@@ -1577,6 +1582,7 @@ export type Database = {
           source_programming_wod_id?: string | null
           tabata_rest_seconds?: number | null
           tabata_work_seconds?: number | null
+          text_mode?: string
           time_cap_seconds?: number | null
           title?: string
           track?: string | null
