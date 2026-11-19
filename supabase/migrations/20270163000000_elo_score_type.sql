@@ -2,10 +2,21 @@
 -- ELO de box et ELO global : le sens du classement suit le type de score choisi
 -- par le créateur (AthleX-Manager #453, PR 1b : base)
 --
--- Appliquée en prod : NON. Pas de BEGIN/COMMIT dans ce fichier : il se joue en
--- UNE transaction :
+-- Appliquée en prod : OUI, le 19/11/2026 à 12:02 (heure de Paris lue par la
+-- base), sur feu vert de Nab. Pas de BEGIN/COMMIT dans ce fichier : il se joue
+-- en UNE transaction :
 --   PGCLIENTENCODING=UTF8 psql "$PROD_DB_URL" -X -1 -v ON_ERROR_STOP=1 -f <ce fichier>
--- À appliquer avant la PR Manager qui écrit box_wods.score_type.
+-- Dump des schémas public et internal avec droits
+-- db-dumps/2026-11-19/athlex-prod-public-internal-20261119T110112Z.dump,
+-- sha256 5678dc9a43ac71a61b5734e68f717081069a4909e202a969f813a0876507b435
+-- relu depuis le bucket, 141 TABLE DATA, 486 ACL, 348 POLICY. Précontrôle :
+-- md5 e6ee4fce… / f04fa5d4… (avant), inventaire identique à celui de la PR ;
+-- après : 98dd9d5c… / 45bf8589…, droits et propriétaire inchangés.
+-- profiles.elo, box_wods, wod_scores, box_elo, elo_history et box_elo_history
+-- identiques (md5) avant et après ; audit des droits 48/48 ; test réel annulé
+-- vert sur AthleX Fitness (sans type comme avant, AMRAP typé 'time' croissant,
+-- 'none' sans ELO), sans trace.
+-- Appliquée avant la PR Manager qui écrit box_wods.score_type.
 --
 -- Inventaire (rejeu et prod en lecture seule, 19/11/2026, md5 identiques) :
 -- parmi les fonctions qui lisent wod_scores ou box_wods.wod_type, seules
