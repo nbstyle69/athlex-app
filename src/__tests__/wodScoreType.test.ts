@@ -203,4 +203,43 @@ describe('crédit des mouvements (utils/wodCredit)', () => {
     expect(completionCredit({ ...ft, text_mode: 'free' }, 'male')).toEqual([]);
     expect(completionCredit(AMRAP, 'male')).toEqual([]);
   });
+
+  describe('texte libre + blocs Musculation / Cardio (#453 PR 3b)', () => {
+    const BOTH = 'Back Squat — 5 × 3 @ 100 kg\nRow ~ 2 × 500 m ~ repos 1:30\n\nFor time\n21 thrusters @43/29 + 21 pull-ups';
+    const free = { description: BOTH, wod_type: 'for-time', text_mode: 'free' as const, score_type: 'time' as const };
+    const row = { name: 'Row', reps: 1000, unit: 'm' };
+
+    it('temps fini : le metcon du reste puis la série cardio, chacun une fois', () => {
+      expect(movementCredit(free, 300, 'time', false, 'male')).toEqual([
+        { name: 'Thruster', reps: 21, weight_kg: 43 }, { name: 'Pull-ups', reps: 21 }, row,
+      ]);
+    });
+    it('capé, charge, reps : la série cardio seule (comme un bloc en lignes) ; faite : rien', () => {
+      expect(movementCredit(free, 80, 'time', true, 'male')).toEqual([row]);
+      expect(movementCredit({ ...free, wod_type: 'strength', score_type: 'weight' }, 100, 'weight', false, 'male')).toEqual([row]);
+      expect(movementCredit(free, 40, 'reps', false, 'male')).toEqual([row]);
+      expect(movementCredit(free, 1, 'done', false, 'male')).toEqual([]);
+    });
+    it('même crédit cardio qu’un WOD en lignes', () => {
+      const lines = { description: 'Row ~ 2 × 500 m ~ repos 1:30', wod_type: 'strength' };
+      expect(movementCredit({ ...free, description: lines.description }, 100, 'weight', false, 'male'))
+        .toEqual(movementCredit(lines, 100, 'weight', false, 'male'));
+    });
+    it('« réalisé » coché : la série cardio seule (le metcon reste non prouvé)', () => {
+      expect(completionCredit(free, 'male')).toEqual([row]);
+      expect(completionCredit({ ...free, wod_type: 'amrap' }, 'male')).toEqual([]);
+    });
+    it('série au milieu du texte : du texte, jamais créditée comme un bloc', () => {
+      const milieu = { ...free, description: 'For time\n21 thrusters @43/29\nRow ~ 2 × 500 m' };
+      expect(movementCredit(milieu, 300, 'time', false, 'male')).toEqual([{ name: 'Thruster', reps: 21, weight_kg: 43 }]);
+      expect(completionCredit(milieu, 'male')).toEqual([]);
+    });
+    it('aucune double lecture : les lignes de bloc ne sont ni reconnues ni « à corriger »', () => {
+      const r = readFreeText(BOTH);
+      expect(r.blocks).toEqual(['Back Squat — 5 × 3 @ 100 kg', 'Row ~ 2 × 500 m ~ repos 1:30']);
+      expect(r.rest).toBe('For time\n21 thrusters @43/29 + 21 pull-ups');
+      expect(r.toFix).toEqual([]);
+      expect(r.recognized.map(m => m.name)).toEqual(['Thruster', 'Pull-ups']);
+    });
+  });
 });
