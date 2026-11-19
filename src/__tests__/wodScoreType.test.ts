@@ -147,10 +147,47 @@ describe('crédit des mouvements (utils/wodCredit)', () => {
       .toEqual([{ name: 'Thruster', reps: 30, weight_kg: undefined }, { name: 'Pull-ups', reps: 12, weight_kg: undefined }]);
   });
 
-  it('reps fixé sur un For Time : réparti comme un AMRAP, jamais le travail entier', () => {
-    const ft = { description: '21 Thruster\n21 Pull-ups', wod_type: 'for-time', score_type: 'reps' as const };
-    expect(movementCredit(ft, 30, 'reps', false, 'male'))
-      .toEqual([{ name: 'Thruster', reps: 21, weight_kg: undefined }, { name: 'Pull-ups', reps: 9, weight_kg: undefined }]);
+  describe('For Time arrêté en cours : les X premières reps dans l’ordre du WOD', () => {
+    const reps = (l: { name: string; reps: number }[]) => l.map(m => [m.name, m.reps]);
+    const LADDER = { description: '21-15-9 For Time\n21 Thruster\n15 Pull-ups\n9 Burpees', wod_type: 'for-time', score_type: 'reps' as const };
+    const RFT = { description: '3 rounds for time\n10 Thruster\n5 Pull-ups', wod_type: 'for-time', score_type: 'reps' as const };
+
+    it('21-15-9 typé reps, X = 40 → 21 + 15 + 4', () => {
+      expect(reps(movementCredit(LADDER, 40, 'reps', false, 'male'))).toEqual([['Thruster', 21], ['Pull-ups', 15], ['Burpees', 4]]);
+    });
+    it('X = 60 → le WOD écrit (45), jamais plus', () => {
+      expect(reps(movementCredit(LADDER, 60, 'reps', false, 'male'))).toEqual([['Thruster', 21], ['Pull-ups', 15], ['Burpees', 9]]);
+    });
+    it('3 rounds for time : progression sur les tours répétés, plafonnée à 3 tours', () => {
+      expect(reps(movementCredit(RFT, 37, 'reps', false, 'male'))).toEqual([['Thruster', 27], ['Pull-ups', 10]]);
+      expect(reps(movementCredit(RFT, 100, 'reps', false, 'male'))).toEqual([['Thruster', 30], ['Pull-ups', 15]]);
+    });
+    it('typé temps, case CAP cochée : même règle ; temps fini : tout le WOD', () => {
+      const t = { ...LADDER, score_type: 'time' as const };
+      expect(reps(movementCredit(t, 40, 'time', true, 'male'))).toEqual([['Thruster', 21], ['Pull-ups', 15], ['Burpees', 4]]);
+      expect(reps(movementCredit(t, 40, 'time', false, 'male'))).toEqual([['Thruster', 21], ['Pull-ups', 15], ['Burpees', 9]]);
+    });
+    it('pourcentage ignoré, bloc cardio compté, ligne non atteinte jamais créditée', () => {
+      const ft = (description: string) => ({ description, wod_type: 'for-time', score_type: 'reps' as const });
+      expect(reps(movementCredit(ft('For Time\n40% Ring Muscle-ups\n10 Thruster'), 5, 'reps', false, 'male'))).toEqual([['Thruster', 5]]);
+      expect(reps(movementCredit(ft('For Time\nRow ~ 2 × 500 m\n10 Thruster'), 5, 'reps', false, 'male')).map(m => m[1])).toEqual([500]);
+      expect(reps(movementCredit(ft('For Time\n10 Thruster\n50 m Run'), 10, 'reps', false, 'male'))).toEqual([['Thruster', 10]]);
+      expect(reps(movementCredit(ft('For Time\n10 Thruster\n50 m Run\n5 Burpees'), 11, 'reps', false, 'male'))).toEqual([['Thruster', 10], ['Run', 50], ['Burpees', 1]]);
+    });
+    it('une distance coûte ses points (1 / 100 m) et se crédite au prorata', () => {
+      const row = { description: 'For Time\n500 m Row\n20 Thruster', wod_type: 'for-time', score_type: 'reps' as const };
+      expect(reps(movementCredit(row, 3, 'reps', false, 'male'))).toEqual([['Row', 300]]);
+      expect(reps(movementCredit(row, 9, 'reps', false, 'male'))).toEqual([['Row', 500], ['Thruster', 4]]);
+    });
+    it('vrai AMRAP, autre format typé reps, charge, WOD sans type : règle d’avant', () => {
+      const before = (d: string, f: string, v: number, t: string) => computeCompletedMovements(d.split('\n').filter(Boolean), f, v, t, { gender: 'male' });
+      expect(movementCredit({ ...AMRAP, score_type: 'reps' }, 37, 'reps', false, 'male')).toEqual(before(AMRAP.description, 'AMRAP', 37, 'reps'));
+      expect(movementCredit({ ...LADDER, wod_type: 'emom' }, 40, 'reps', false, 'male')).toEqual(before(LADDER.description, 'AMRAP', 40, 'reps'));
+      expect(movementCredit({ ...LADDER, score_type: 'weight' }, 60, 'weight', false, 'male')).toEqual(before(LADDER.description, 'For Time', 60, 'weight'));
+      const untyped = { description: LADDER.description, wod_type: 'for-time' };
+      expect(movementCredit(untyped, 40, 'time', true, 'male')).toEqual(before(LADDER.description, 'For Time', 40, 'time'));
+      expect(movementCredit(untyped, 40, 'reps', false, 'male')).toEqual(before(LADDER.description, 'For Time', 40, 'reps'));
+    });
   });
 
   it('texte libre : lu par freeTextWod (temps fini seulement)', () => {

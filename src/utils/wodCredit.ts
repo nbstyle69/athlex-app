@@ -5,7 +5,7 @@
  */
 import { BoxWOD, ScoreType } from '../types';
 import { MovementEntry } from '../services/gamification';
-import { computeCompletedMovements, repsPerRoundFromMovements } from './movementParser';
+import { computeCompletedMovements, computeForTimeProgress, repsPerRoundFromMovements } from './movementParser';
 import { creditFreeText } from './freeTextWod';
 import { decodeRoundsReps } from './wodScoreType';
 
@@ -26,7 +26,12 @@ export function movementCredit(
   if (scoreType === 'done' || !wod.description) return [];
   if (wod.text_mode === 'free') return creditFreeText(wod.description, { scoreType, capped }, gender);
   const lines = wod.description.split('\n').filter(Boolean);
-  // Un score en reps fixé par le créateur ne prouve que ce total : réparti comme un AMRAP.
+  // For Time typé arrêté en cours (score en reps fixé, ou temps au cap) : les X
+  // premières reps dans l'ordre du WOD, jamais plus que le WOD écrit.
+  if (wod.wod_type === 'for-time' && (wod.score_type === 'reps' || (wod.score_type === 'time' && capped))) {
+    return computeForTimeProgress(lines, value, { gender });
+  }
+  // Autre format avec un score en reps fixé : ce total réparti comme un AMRAP.
   const wodFormat = wod.score_type === 'reps' || scoreType === 'rounds_reps' ? 'AMRAP'
     : wod.wod_type === 'for-time' ? 'For Time' : wod.wod_type === 'amrap' ? 'AMRAP' : wod.wod_type === 'emom' ? 'EMOM' : wod.wod_type ?? 'For Time';
   if (scoreType === 'rounds_reps') {

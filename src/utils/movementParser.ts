@@ -324,6 +324,34 @@ function computeFromEntries(
   }
 }
 
+/**
+ * For Time arrêté en cours (« CAP + X reps », ou score en reps fixé par le
+ * créateur) : l'athlète a avancé dans l'ordre du WOD. Crédite les X premiers
+ * points dans l'ordre des lignes, tours d'en-tête compris, plafonné au WOD
+ * écrit. Une distance coûte ses points (`distancePoints`) et se crédite au
+ * prorata ; durées, pourcentages et en-têtes ne coûtent ni ne créditent rien.
+ */
+export function computeForTimeProgress(movements: string[], reps: number, options?: ParseOptions): MovementEntry[] {
+  const lines = movements
+    .map(l => {
+      const c = parseCardioLine(l);
+      const e = parseMovementLine(l, options) ?? (c ? cardioToMovementEntry(c) : null);
+      return e ? { e, cost: e.unit === 'm' ? distancePoints(e.reps, l) : e.reps } : null;
+    })
+    .filter(Boolean) as { e: MovementEntry; cost: number }[];
+  const credited = lines.map(() => 0);
+  let left = Math.max(0, Math.floor(reps));
+  for (let r = 0; r < extractHeaderRounds(movements); r++) {
+    lines.forEach(({ e, cost }, i) => {
+      if (left <= 0) return; // ligne non atteinte (même une distance de moins de 100 m, qui ne coûte rien)
+      const take = Math.min(left, cost);
+      credited[i] += take >= cost ? e.reps : Math.floor(e.reps * take / cost);
+      left -= take;
+    });
+  }
+  return lines.map(({ e }, i) => ({ ...e, reps: credited[i] })).filter(m => m.reps > 0);
+}
+
 function extractHeaderRounds(movements: string[]): number {
   for (const line of movements) {
     const match = line.trim().match(ROUNDS_HEADER);
