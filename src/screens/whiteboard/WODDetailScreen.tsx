@@ -29,6 +29,7 @@ import { movementCredit } from '../../utils/wodCredit';
 import { decodeRoundsReps, encodeRoundsReps, fixedScoreType, isTimeRanked, rankableScores, roundsRepsTooHigh } from '../../utils/wodScoreType';
 import { annotateGymRepsInText, annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
+import { readFreeText } from '../../utils/freeTextWod';
 import { annotateShown, displayRow } from '../../services/wodRender';
 import {
   GymRecordCandidate, addStrengthSet, applyGymRecordsToGrid, buildStrengthGrid, gymRecordCandidates, isRepsOnly, logStrengthSets, removeStrengthSet,
@@ -251,13 +252,13 @@ export default function WODDetailScreen() {
     return d;
   })() : false;
 
-  // Texte libre (#453) : rien n'y est lu (les blocs de force passent par le Manager, #454).
+  // Texte libre (#453 PR 3b) : ses lignes de bloc Musculation, où qu'elles soient, comme en lignes.
   const strengthEntries: StrengthEntry[] = useMemo(() => (
-    (wod?.text_mode === 'free' ? '' : wod?.description ?? '')
+    (wod?.description ?? '')
       .split('\n')
       .map(parseStrengthLine)
       .filter((e): e is StrengthEntry => e !== null)
-  ), [wod?.description, wod?.text_mode]);
+  ), [wod?.description]);
 
   const isStrengthSession = wod?.wod_type === 'strength' && strengthEntries.length > 0;
   const strengthValidated = strengthServer?.session?.status === 'validated';
@@ -887,10 +888,19 @@ export default function WODDetailScreen() {
               : i18n.t('wodDetail.programDay', { week: wod.program_week ?? '?', day: (i18n.t('wodDetail.dayNames', { returnObjects: true }) as string[])[(wod.program_day ?? 1) - 1] ?? '' })}
           </Text>
 
-          {wod.description && wod.text_mode === 'free' ? (
-            // Texte libre (#453) : tel quel, retours à la ligne gardés, jamais traduit ni annoté.
-            <Text style={S.wodDesc} testID="wod-free-text">{wod.description}</Text>
-          ) : wod.description && (
+          {wod.description && wod.text_mode === 'free' ? (() => {
+            // Texte libre (#453) : blocs Musculation / Cardio annotés comme en lignes, puis le
+            // reste tel quel, retours à la ligne gardés, jamais traduit ni annoté.
+            const { blocks, rest } = readFreeText(wod.description);
+            return (
+              <>
+                {blocks.length > 0 && (
+                  <Text style={S.wodDesc} testID="wod-free-blocks">{annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(blocks.join('\n'), oneRepMaxFor), gymRecordFor))}</Text>
+                )}
+                {!!rest && <Text style={S.wodDesc} testID="wod-free-text">{rest}</Text>}
+              </>
+            );
+          })() : wod.description && (
             <Text style={S.wodDesc}>{annotateShown(wod.description, shown.description, x => annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(x, oneRepMaxFor), gymRecordFor)))}</Text>
           )}
           {shown.notes && (

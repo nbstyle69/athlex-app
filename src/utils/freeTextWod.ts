@@ -9,12 +9,16 @@
  * - nom exact du catalogue requis, pluriel toléré (« thrusters » → Thruster) ;
  *   sinon le morceau est « à corriger » ;
  * - lignes de format, repos, time cap et objectif ignorées.
- * Les lignes de musculation / complexe ne sont pas lues ici (« Transformer en
- * bloc Musculation » côté Manager, #454).
+ * Blocs Musculation et Cardio (#453 PR 3b) : toute ligne reconnue par
+ * parseStrengthLine (charge, % 1RM, % du max de gymnastique) ou parseCardioLine,
+ * où qu'elle soit, est extraite (`blocks`) et traitée comme dans un WOD en
+ * lignes ; la lecture metcon ne porte que sur le reste (`rest`), jamais deux fois.
  */
 import { MovementEntry, MovementUnit } from '../services/gamification';
 import { AthleteGender, isFormatHeaderLine, parseMovementLine } from './movementParser';
 import { MOVEMENT_CATALOG } from './movementsCatalog';
+import { parseStrengthLine } from './strengthBlock';
+import { parseCardioLine } from './cardioBlock';
 
 export interface FreeTextMovement {
   /** Morceau de ligne lu, tel qu'écrit. */
@@ -27,6 +31,10 @@ export interface FreeTextMovement {
 }
 
 export interface FreeTextReading {
+  /** Lignes de bloc Musculation / Cardio extraites, dans l'ordre, sans espaces de bord. */
+  blocks: string[];
+  /** Le texte sans ces lignes, retours à la ligne gardés, sans lignes vides de bord. */
+  rest: string;
   recognized: FreeTextMovement[];
   /** Morceaux qui ressemblent à un mouvement mais ne se lisent pas (nom hors catalogue, quantité absente). */
   toFix: string[];
@@ -67,9 +75,19 @@ function readSegment(segment: string): FreeTextMovement | null {
   };
 }
 
+export function isBlockLine(line: string): boolean {
+  return parseStrengthLine(line) !== null || parseCardioLine(line) !== null;
+}
+
 export function readFreeText(text: string | null | undefined): FreeTextReading {
-  const out: FreeTextReading = { recognized: [], toFix: [], ignored: [] };
-  for (const raw of (text ?? '').split('\n')) {
+  const lines = (text ?? '').split('\n');
+  const kept = lines.filter(l => !isBlockLine(l));
+  const out: FreeTextReading = {
+    blocks: lines.filter(isBlockLine).map(l => l.trim()),
+    rest: kept.join('\n').replace(/^\s*\n/, '').trimEnd(),
+    recognized: [], toFix: [], ignored: [],
+  };
+  for (const raw of kept) {
     const line = raw.trim();
     if (!line) continue;
     if (isIgnoredFreeTextLine(line)) { out.ignored.push(line); continue; }

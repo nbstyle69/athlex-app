@@ -1,12 +1,13 @@
 /**
  * Reps de mouvements créditées pour les badges (Whiteboard). Règle d'avant pour
  * les lignes structurées ; texte libre (#453) : lu par freeTextWod, crédité
- * seulement quand le score prouve la séance terminée.
+ * seulement quand le score prouve la séance terminée ; ses séries cardio
+ * (bloc Cardio, #453 PR 3b) créditées comme dans un WOD en lignes.
  */
 import { BoxWOD, ScoreType } from '../types';
 import { MovementEntry } from '../services/gamification';
-import { computeCompletedMovements, computeForTimeProgress, repsPerRoundFromMovements } from './movementParser';
-import { creditFreeText } from './freeTextWod';
+import { computeCompletedMovements, computeForTimeProgress, parseCardioBlocks, repsPerRoundFromMovements } from './movementParser';
+import { creditFreeText, readFreeText } from './freeTextWod';
 import { decodeRoundsReps } from './wodScoreType';
 
 type Gender = 'male' | 'female' | null | undefined;
@@ -24,7 +25,10 @@ export function movementCredit(
   gender?: Gender,
 ): MovementEntry[] {
   if (scoreType === 'done' || !wod.description) return [];
-  if (wod.text_mode === 'free') return creditFreeText(wod.description, { scoreType, capped }, gender);
+  // Texte libre : le reste lu comme metcon, les séries cardio comme un bloc (la prescription).
+  if (wod.text_mode === 'free') {
+    return [...creditFreeText(wod.description, { scoreType, capped }, gender), ...parseCardioBlocks(readFreeText(wod.description).blocks)];
+  }
   const lines = wod.description.split('\n').filter(Boolean);
   // For Time typé arrêté en cours (score en reps fixé, ou temps au cap) : les X
   // premières reps dans l'ordre du WOD, jamais plus que le WOD écrit.
@@ -46,10 +50,12 @@ export function movementCredit(
 /**
  * « Réalisé » coché sur le Whiteboard, sans score : le travail prescrit d'un
  * For Time / EMOM / Tabata / Chipper ; rien pour un AMRAP (tours inconnus) ni
- * pour un texte libre (aucun score ne prouve la séance).
+ * pour le metcon d'un texte libre (aucun score ne prouve la séance), ses
+ * séries cardio comptées comme dans un WOD en lignes.
  */
 export function completionCredit(wod: Pick<BoxWOD, 'description' | 'wod_type' | 'text_mode'>, gender?: Gender): MovementEntry[] {
-  if (!wod.description || wod.wod_type === 'amrap' || wod.text_mode === 'free') return [];
+  if (!wod.description || wod.wod_type === 'amrap') return [];
+  if (wod.text_mode === 'free') return parseCardioBlocks(readFreeText(wod.description).blocks);
   const lines = wod.description.split('\n').filter(Boolean);
   const wodFormat = wod.wod_type === 'for-time' ? 'For Time'
     : wod.wod_type === 'emom' ? 'EMOM'
