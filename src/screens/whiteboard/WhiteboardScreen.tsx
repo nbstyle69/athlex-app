@@ -18,7 +18,7 @@ import { countUnreadMessages } from '../../lib/unreadMessages';
 import { captureError } from '../../lib/sentry';
 import { hapticSuccess } from '../../lib/haptics';
 import { recordActivity, logMovementReps } from '../../services/gamification';
-import { computeCompletedMovements } from '../../utils/movementParser';
+import { completionCredit } from '../../utils/wodCredit';
 import { formatCap } from '../../utils/scoreFormat';
 import { listProgramWodsByProgram, listProgramRestDaysByProgram } from '../../services/programContent';
 import { programSessionsOn, programWeekAt, isRestDay, isoDayOf } from '../../utils/programSchedule';
@@ -488,17 +488,10 @@ export default function WhiteboardScreen() {
         if (error && error.code !== '23505') throw error;
         // Count as activity for streak (only once per wod thanks to unique constraint)
         try { await recordActivity(user.id, currentBox.id); } catch (_) {}
-        // Credit movement/exercise badges for the prescribed work.
-        // No score here → AMRAP is skipped (unknown rounds = 0 rep, product decision);
-        // For Time / EMOM / Tabata / Chipper credit the prescribed reps.
+        // Credit movement/exercise badges for the prescribed work (rule in utils/wodCredit).
         const doneWod = dayWODs.find(w => w.id === wodId);
-        if (doneWod?.description && doneWod.wod_type !== 'amrap') {
-          const lines = doneWod.description.split('\n').filter(Boolean);
-          const wodFormat = doneWod.wod_type === 'for-time' ? 'For Time'
-            : doneWod.wod_type === 'emom' ? 'EMOM'
-            : doneWod.wod_type === 'tabata' ? 'Tabata'
-            : 'For Time';
-          const completed = computeCompletedMovements(lines, wodFormat, 0, 'reps', { gender: user.gender });
+        const completed = doneWod ? completionCredit(doneWod, user.gender) : [];
+        if (completed.length > 0) {
           logMovementReps(user.id, completed, 'whiteboard', wodId)
             .catch(e => captureError(e, { screen: 'Whiteboard', action: 'logMovementReps' }));
         }

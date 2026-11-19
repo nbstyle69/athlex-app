@@ -1325,7 +1325,8 @@
       "time": "Temps",
       "reps": "Reps",
       "weight": "Charge",
-      "rounds": "Tours"
+      "rounds": "Tours",
+      "rounds_reps": "Tours + reps"
     }
   },
   "wodHistory": {
@@ -2476,7 +2477,8 @@
     "registrationClosed": "Les inscriptions sont closes.",
     "notConnected": "Non connecté",
     "notInBox": "Pas dans une box",
-    "openLink": "Impossible d'ouvrir le lien."
+    "openLink": "Impossible d'ouvrir le lien.",
+    "scoreTypeMismatch": "Le type de score de cette séance a changé : rouvre-la pour saisir ton score."
   },
   "gymZones": {
     "zone": {
@@ -2870,7 +2872,15 @@
     "agoMinutes": "{{n}}min",
     "agoHours": "{{n}}h",
     "agoDays": "{{n}}j",
-    "firstComment": "Sois le premier à commenter !"
+    "firstComment": "Sois le premier à commenter !",
+    "doneScore": "Faite",
+    "fixedScoreHint": "Type de score fixé par le coach : plus de choix à faire.",
+    "roundsRepsHint": "Tours complets, puis les reps du tour en cours.",
+    "roundsRepsTooHigh": "Moins de 1000 reps dans le tour en cours.",
+    "roundsPlaceholder": "Ex: 7",
+    "repsPlaceholder": "Ex: 12",
+    "markDone": "Marquer comme faite",
+    "noScoreHint": "Pas de score pour cette séance : marque-la comme faite. Elle compte dans ton historique, sans classement."
   },
   "personalWod": {
     "requiredTitle": "Champs requis",

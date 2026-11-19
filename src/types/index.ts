@@ -3,7 +3,9 @@ export type AthleteLevel = 'scaled' | 'inter' | 'rx' | 'rx+' | 'elite' | 'pro';
 export type UserRole = 'super_admin' | 'box_owner' | 'member' | 'athlete' | 'admin';
 
 export type BoxWODType = 'for-time' | 'amrap' | 'emom' | 'tabata' | 'strength' | 'custom';
-export type ScoreType  = 'time' | 'reps' | 'weight' | 'rounds';
+export type ScoreType  = 'time' | 'reps' | 'weight' | 'rounds' | 'rounds_reps' | 'done';
+/** Type de score fixé par le créateur du WOD (box_wods.score_type, #453) ; NULL = l'athlète choisit. */
+export type WodScoreType = 'time' | 'rounds_reps' | 'reps' | 'weight' | 'none';
 export type BoxMemberRole = 'member' | 'coach';
 export type MemberStatus = 'active' | 'banned';
 export type MessageType = 'general' | 'group' | 'direct';
@@ -183,6 +185,10 @@ export interface BoxWOD {
   track?: 'functional' | 'hybrid' | 'musculation' | null;
   /** WOD structuré (migration 20261213) : v2 du moteur → réaffichable dans la langue de l'app. */
   wod_json?: unknown;
+  /** Type de score fixé par le créateur (#453) ; absent / null = l'athlète choisit, comme avant. */
+  score_type?: WodScoreType | null;
+  /** `free` = texte libre affiché tel quel (#453) ; `lines` (défaut) = lignes structurées. */
+  text_mode?: 'lines' | 'free';
   created_at: string;
   scores?: WODScore[];
 }

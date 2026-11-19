@@ -10,6 +10,11 @@
  * exactement comme le font les fonctions de classement côté serveur.
  */
 
+// Le singleton i18next (initialisé par src/i18n), sans ses modules natifs :
+// scoreFormat est aussi empaqueté pour node (scripts/generate-movement-stats-keys.mjs).
+import i18n from 'i18next';
+import { decodeRoundsReps } from './wodScoreType';
+
 export const DNF_BASE = 999999;
 
 export interface NormalizedScore {
@@ -54,6 +59,12 @@ export function formatScoreValue(value: number, type: string, capped?: boolean |
     const s = n.value % 60;
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   }
+  // #453 : tours + reps (« 7 + 12 ») ; séance sans score marquée faite.
+  if (type === 'rounds_reps') {
+    const { rounds, reps } = decodeRoundsReps(value);
+    return `${rounds} + ${reps}`;
+  }
+  if (type === 'done') return i18n.t('wodDetail.doneScore');
   const units: Record<string, string> = { reps: ' reps', weight: ' kg', rounds: ' rnds' };
   return `${value}${units[type] ?? ''}`;
 }
@@ -65,6 +76,7 @@ export function formatScoreValue(value: number, type: string, capped?: boolean |
  */
 export function splitScoreForDisplay(value: number, type: string, capped?: boolean | null): { value: string; unit: string } {
   const text = formatScoreValue(value, type, capped);
+  if (type === 'rounds_reps' || type === 'done') return { value: text, unit: '' };
   const cut = text.indexOf(' ');
   if (cut < 0) return { value: text, unit: '' };
   return { value: text.slice(0, cut), unit: text.slice(cut + 1).toUpperCase() };

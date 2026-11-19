@@ -1325,7 +1325,8 @@
       "time": "Time",
       "reps": "Reps",
       "weight": "Load",
-      "rounds": "Rounds"
+      "rounds": "Rounds",
+      "rounds_reps": "Rounds + reps"
     }
   },
   "wodHistory": {
@@ -2476,7 +2477,8 @@
     "registrationClosed": "Registration is closed.",
     "notConnected": "Not signed in",
     "notInBox": "Not in a box",
-    "openLink": "Could not open the link."
+    "openLink": "Could not open the link.",
+    "scoreTypeMismatch": "This session's score type has changed: reopen it to enter your score."
   },
   "gymZones": {
     "zone": {
@@ -2870,7 +2872,15 @@
     "agoMinutes": "{{n}}min",
     "agoHours": "{{n}}h",
     "agoDays": "{{n}}d",
-    "firstComment": "Be the first to comment!"
+    "firstComment": "Be the first to comment!",
+    "doneScore": "Done",
+    "fixedScoreHint": "Score type set by your coach: nothing to choose.",
+    "roundsRepsHint": "Full rounds, then the reps of the round in progress.",
+    "roundsRepsTooHigh": "Under 1000 reps in the round in progress.",
+    "roundsPlaceholder": "e.g. 7",
+    "repsPlaceholder": "e.g. 12",
+    "markDone": "Mark as done",
+    "noScoreHint": "No score for this session: mark it as done. It counts in your history, with no leaderboard."
   },
   "personalWod": {
     "requiredTitle": "Required fields",

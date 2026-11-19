@@ -23,9 +23,10 @@ import { spacing, borderRadius, typography, shadows } from '../../theme/designTo
 import { BoxWOD, WODScore, ScoreType } from '../../types';
 import { WhiteboardStackParamList } from '../../navigation';
 import { sendScoreNotification, sendScoreOvertakenNotification, cancelTodayScoreReminder } from '../../services/notifications';
-import { incrementCounter, logMovementReps } from '../../services/gamification';
+import { incrementCounter, logMovementReps, recordActivity } from '../../services/gamification';
 import { formatScoreValue, normalizeScore, mapForTimeScore, formatCap } from '../../utils/scoreFormat';
-import { computeCompletedMovements } from '../../utils/movementParser';
+import { movementCredit } from '../../utils/wodCredit';
+import { decodeRoundsReps, encodeRoundsReps, fixedScoreType, isTimeRanked, rankableScores, roundsRepsTooHigh } from '../../utils/wodScoreType';
 import { annotateGymRepsInText, annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../../utils/strengthBlock';
 import { annotateCardioLines } from '../../utils/cardioBlock';
 import { annotateShown, displayRow } from '../../services/wodRender';
@@ -86,6 +87,7 @@ function formatScore(score: WODScore): string {
   return formatScoreValue(score.score_value, score.score_type, score.capped);
 }
 
+
 // ── ELO Calculation (delegated to shared utility) ───────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -124,6 +126,9 @@ export default function WODDetailScreen() {
   const [noteInput,  setNoteInput]  = useState('');
   const [dnf,        setDnf]        = useState(false);
   const [capReps,    setCapReps]    = useState('');
+  // Tours + reps (#453) : deux champs, score_value = tours × 1000 + reps.
+  const [roundsInput, setRoundsInput] = useState('');
+  const [rrReps,      setRrReps]      = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Séries réellement réalisées sur les blocs musculation : une ligne par série
@@ -180,10 +185,10 @@ export default function WODDetailScreen() {
         { screen: 'WODDetail', action: 'load_scores' },
       );
 
-      const list = sortScoresRxFirst((scoreData ?? []) as WODScore[], w.wod_type === 'for-time');
+      const list = sortScoresRxFirst((scoreData ?? []) as WODScore[], isTimeRanked(w));
       setScores(list);
       setMyScore(list.find(sc => sc.member_id === user?.id) ?? null);
-      setScoreType(allowedScoreTypes(w.wod_type).default);
+      setScoreType(fixedScoreType(w) ?? allowedScoreTypes(w.wod_type).default);
 
       // Load reaction & comment counts for each score
       const scoreIds = list.map(s => s.id);
@@ -207,7 +212,7 @@ export default function WODDetailScreen() {
         .eq('wod_id', w.id);
 
       if (wodExpired && (eloHist ?? []).length === 0 && list.length >= 2 && leaderboardAvailable(w) && currentBox) {
-        await computeAndSaveElo(w.id, currentBox.id, list, w.wod_type === 'for-time');
+        await computeAndSaveElo(w.id, currentBox.id, list, isTimeRanked(w));
         const { data: freshHist } = await supabase
           .from('elo_history')
           .select('member_id, elo_delta')
@@ -246,12 +251,13 @@ export default function WODDetailScreen() {
     return d;
   })() : false;
 
+  // Texte libre (#453) : rien n'y est lu (les blocs de force passent par le Manager, #454).
   const strengthEntries: StrengthEntry[] = useMemo(() => (
-    (wod?.description ?? '')
+    (wod?.text_mode === 'free' ? '' : wod?.description ?? '')
       .split('\n')
       .map(parseStrengthLine)
       .filter((e): e is StrengthEntry => e !== null)
-  ), [wod?.description]);
+  ), [wod?.description, wod?.text_mode]);
 
   const isStrengthSession = wod?.wod_type === 'strength' && strengthEntries.length > 0;
   const strengthValidated = strengthServer?.session?.status === 'validated';
@@ -443,7 +449,15 @@ export default function WODDetailScreen() {
     setScoreInput('');
     setTimeMin('');
     setTimeSec('');
-    if (myScore.score_type === 'time') {
+    setRoundsInput('');
+    setRrReps('');
+    if (myScore.score_type === 'rounds_reps') {
+      const rr = decodeRoundsReps(myScore.score_value);
+      setRoundsInput(String(rr.rounds));
+      setRrReps(String(rr.reps));
+    } else if (myScore.score_type === 'done') {
+      // Rien à pré-remplir : la séance est marquée faite.
+    } else if (myScore.score_type === 'time') {
       const n = normalizeScore(Math.round(myScore.score_value), myScore.capped, true);
       if (n.capped) {
         setDnf(true);
@@ -490,13 +504,24 @@ export default function WODDetailScreen() {
       ({ score_value: value, capped } = mapForTimeScore({
         capped: false, minutes: parseInt(timeMin) || 0, seconds: parseInt(timeSec) || 0,
       }));
+    } else if (scoreType === 'rounds_reps') {
+      const encoded = encodeRoundsReps(roundsInput, rrReps);
+      if (encoded == null) { Alert.alert(i18n.t('wodResult.invalidScore')); return; }
+      value = encoded;
+    } else if (scoreType === 'done') {
+      value = 1;
     } else {
       value = parseFloat(scoreInput);
     }
     if (isNaN(value) || value <= 0) { Alert.alert(i18n.t('wodResult.invalidScore')); return; }
 
-    // Cap validation for AMRAP / EMOM / Tabata
-    const maxScore = computeMaxScore(wod.wod_type, wod.description, wod.time_cap_seconds, wod.rounds, scoreType);
+    // Cap validation for AMRAP / EMOM / Tabata — lignes structurées et combinaisons
+    // format / type d'avant seulement : un texte libre ne se lit pas, et un type
+    // fixé par le créateur hors de ces combinaisons (temps sur un AMRAP, tours +
+    // reps, « faite ») n'a pas de plafond calculable.
+    const maxScore = wod.text_mode === 'free' || !allowedScoreTypes(wod.wod_type).types.includes(scoreType)
+      ? null
+      : computeMaxScore(wod.wod_type, wod.description, wod.time_cap_seconds, wod.rounds, scoreType);
     if (maxScore && !capped && value > maxScore) {
       Alert.alert(i18n.t('wodDetail.tooHighTitle'), i18n.t('wodDetail.tooHighMsg', { max: maxScore, unit: scoreType === 'rounds' ? 'rounds' : 'reps' }));
       return;
@@ -517,7 +542,7 @@ export default function WODDetailScreen() {
 
     if (error) { setSubmitting(false); Alert.alert(i18n.t('common.error'), await errorMessage(error)); return; }
 
-    await creditScoreSubmission(value, scoreType);
+    await creditScoreSubmission(value, scoreType, { capped });
 
     // Les séries réellement réalisées sont journalisées, et ce sont ELLES qui
     // alimentent les 1RM — jamais les reps prescrites. Le journal d'abord :
@@ -550,7 +575,7 @@ export default function WODDetailScreen() {
    * Compteurs, streak et crédit de mouvements d'un score posé. Pour une séance de
    * musculation, n'est appelé qu'à la première validation.
    */
-  async function creditScoreSubmission(value: number, submittedType: ScoreType, opts: { badgeReps?: boolean } = {}) {
+  async function creditScoreSubmission(value: number, submittedType: ScoreType, opts: { badgeReps?: boolean; capped?: boolean } = {}) {
     if (!wod || !user) return;
     trackScoreSubmit(wod.id, submittedType);
 
@@ -567,15 +592,20 @@ export default function WODDetailScreen() {
       await supabase.from('wod_completions').delete().eq('wod_id', wod.id).eq('member_id', user.id);
     }
 
-    incrementCounter(user.id, 'total_scores_submitted', 1, currentBox?.id, { skipStreak: alreadyCounted })
-      .catch(e => captureError(e, { action: 'incrementScores' }));
     cancelTodayScoreReminder().catch(e => captureError(e, { action: 'cancelScoreReminder' }));
 
-    // Log movement reps for badges (parse description as movement lines)
+    // Séance « faite » (WOD sans score, #453) : elle compte dans l'historique et
+    // la série d'activité, jamais dans le compteur de scores ni dans les badges.
+    if (submittedType === 'done') {
+      if (!alreadyCounted) recordActivity(user.id, currentBox?.id).catch(e => captureError(e, { action: 'recordActivityDone' }));
+      return;
+    }
+
+    incrementCounter(user.id, 'total_scores_submitted', 1, currentBox?.id, { skipStreak: alreadyCounted })
+      .catch(e => captureError(e, { action: 'incrementScores' }));
+
     if (wod.description && opts.badgeReps !== false) {
-      const lines = wod.description.split('\n').filter(Boolean);
-      const wodFormat = wod.wod_type === 'for-time' ? 'For Time' : wod.wod_type === 'amrap' ? 'AMRAP' : wod.wod_type === 'emom' ? 'EMOM' : wod.wod_type ?? 'For Time';
-      const completed = computeCompletedMovements(lines, wodFormat, value, submittedType, { gender: user.gender });
+      const completed = movementCredit(wod, value, submittedType, !!opts.capped, user.gender);
       logMovementReps(user.id, completed, 'whiteboard', wod.id).catch(e => captureError(e, { action: 'logMovementReps' }));
     }
   }
@@ -592,7 +622,7 @@ export default function WODDetailScreen() {
       .select('*, profile:profiles(id, username, avatar_url, level, elo)')
       .eq('wod_id', wod.id);
 
-    const list = sortScoresRxFirst((updatedScores ?? []) as WODScore[], wod.wod_type === 'for-time');
+    const list = sortScoresRxFirst((updatedScores ?? []) as WODScore[], isTimeRanked(wod));
 
     // Detect overtaken users: users who were ranked above my new position before
     const myNewIdx = list.findIndex(s => s.member_id === user.id);
@@ -625,6 +655,8 @@ export default function WODDetailScreen() {
     setNoteInput('');
     setDnf(false);
     setCapReps('');
+    setRoundsInput('');
+    setRrReps('');
     // Record de gymnastique battu : la fenêtre « Nouveau record ? » d'abord, le
     // partage ensuite (une fenêtre iOS ne s'ouvre qu'une fois l'autre fermée).
     if (records.length > 0) setTimeout(() => setGymRecords(records), Platform.OS === 'ios' ? MODAL_DISMISS_MS : 0);
@@ -811,13 +843,17 @@ export default function WODDetailScreen() {
     );
   }
 
-  const myRank = myScore ? scores.findIndex(s => s.id === myScore.id) + 1 : null;
-  // Liste des scores : tout bloc daté qui en a. Rang et ELO : bloc classé seulement.
+  // Liste des scores : tout bloc daté qui en a. Rang et ELO : bloc classé seulement,
+  // sans aucune séance « faite » (#453).
   const listMode = scoreListMode(wod, scores.length);
+  const listed = listMode === 'ranked' ? rankableScores(scores) : scores;
+  const myRank = myScore ? listed.findIndex(s => s.id === myScore.id) + 1 || null : null;
+  const fixedType = fixedScoreType(wod);
   // Titre, description et notes dans la langue de l'app. Score, grille, badges, minuteur et
   // écritures (sourceTitle, notifications) lisent toujours le texte enregistré : `wod`.
   const shown = displayRow(wod);
   const ranked = listMode === 'ranked';
+  const markDone = fixedType === 'done';
 
   return (
     <View style={S.container}>
@@ -851,7 +887,10 @@ export default function WODDetailScreen() {
               : i18n.t('wodDetail.programDay', { week: wod.program_week ?? '?', day: (i18n.t('wodDetail.dayNames', { returnObjects: true }) as string[])[(wod.program_day ?? 1) - 1] ?? '' })}
           </Text>
 
-          {wod.description && (
+          {wod.description && wod.text_mode === 'free' ? (
+            // Texte libre (#453) : tel quel, retours à la ligne gardés, jamais traduit ni annoté.
+            <Text style={S.wodDesc} testID="wod-free-text">{wod.description}</Text>
+          ) : wod.description && (
             <Text style={S.wodDesc}>{annotateShown(wod.description, shown.description, x => annotateCardioLines(annotateGymRepsInText(annotateStrengthLoads(x, oneRepMaxFor), gymRecordFor)))}</Text>
           )}
           {shown.notes && (
@@ -968,8 +1007,8 @@ export default function WODDetailScreen() {
                 </View>
               )}
               <AxButton
-                icon={Plus}
-                label={i18n.t('whiteboard.enterScore')}
+                icon={markDone ? Check : Plus}
+                label={i18n.t(markDone ? 'wodDetail.markDone' : 'whiteboard.enterScore')}
                 onPress={() => { prefillStrengthLoads(); setModalOpen(true); }}
                 fullWidth
                 testID="enter-score"
@@ -985,13 +1024,13 @@ export default function WODDetailScreen() {
             onLayout={e => { leaderboardY.current = e.nativeEvent.layout.y; }}
           >
             <Text style={S.sectionTitle} testID="score-list-title">
-              {ranked ? i18n.t('wodDetail.rankingTitle', { count: scores.length }) : i18n.t('whiteboard.scoresTitle')}
+              {ranked ? i18n.t('wodDetail.rankingTitle', { count: listed.length }) : i18n.t('whiteboard.scoresTitle')}
             </Text>
             <View style={S.leaderboard}>
               {(() => {
                 const rankMap: Record<string, number> = {};
-                scores.forEach((sc, i) => { rankMap[sc.id] = i + 1; });
-                return scores.map((sc) => {
+                listed.forEach((sc, i) => { rankMap[sc.id] = i + 1; });
+                return listed.map((sc) => {
                 const globalRank = rankMap[sc.id] ?? 1;
                 const isMe = sc.member_id === user?.id;
                 const elo = (sc.profile as any)?.elo ?? 1000;
@@ -1061,7 +1100,7 @@ export default function WODDetailScreen() {
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           <View style={S.modalContainer}>
             <View style={S.modalHeader}>
-              <Text style={S.modalTitle}>{i18n.t('whiteboard.enterScore')}</Text>
+              <Text style={S.modalTitle}>{i18n.t(markDone ? 'wodDetail.markDone' : 'whiteboard.enterScore')}</Text>
               <TouchableOpacity onPress={closeScoreModal} accessibilityRole="button" hitSlop={8} testID="score-cancel">
                 <Text style={S.modalCloseText}>{i18n.t('common.cancel')}</Text>
               </TouchableOpacity>
@@ -1072,8 +1111,11 @@ export default function WODDetailScreen() {
               <Text style={S.modalWodName}>{shown.title}</Text>
 
               {/* Score type */}
-              {(() => {
-                const allowed = allowedScoreTypes(wod.wod_type);
+              {markDone ? (
+                <Text style={S.doneHint} testID="score-done-hint">{i18n.t('wodDetail.noScoreHint')}</Text>
+              ) : (() => {
+                // Type fixé par le créateur (#453) : une seule pastille, non modifiable.
+                const allowed = fixedType ? { types: [fixedType], default: fixedType } : allowedScoreTypes(wod.wod_type);
                 if (allowed.types.length === 1) {
                   return (
                     <>
@@ -1120,6 +1162,34 @@ export default function WODDetailScreen() {
 
               {isStrengthSession ? (
                 strengthDrafts.some(d => !isRepsOnly(d)) ? <StrengthMaxLoadRow maxLoadKg={computedMaxLoad(strengthDrafts)} /> : null
+              ) : markDone ? null : scoreType === 'rounds_reps' ? (
+                <>
+                  <View style={S.rrRow}>
+                    <View style={S.rrCol}>
+                      <Text style={S.modalLabel}>{i18n.t('wod.scoreType.rounds').toUpperCase()}</Text>
+                      <AxTextField
+                        placeholder={i18n.t('wodDetail.roundsPlaceholder')}
+                        value={roundsInput}
+                        onChangeText={t => setRoundsInput(t.replace(/\D/g, ''))}
+                        keyboardType="number-pad"
+                        autoFocus
+                        testID="score-rounds"
+                      />
+                    </View>
+                    <View style={S.rrCol}>
+                      <Text style={S.modalLabel}>{i18n.t('wodDetail.repsLabel')}</Text>
+                      <AxTextField
+                        placeholder={i18n.t('wodDetail.repsPlaceholder')}
+                        value={rrReps}
+                        onChangeText={t => setRrReps(t.replace(/\D/g, ''))}
+                        keyboardType="number-pad"
+                        error={roundsRepsTooHigh(rrReps) ? i18n.t('wodDetail.roundsRepsTooHigh') : undefined}
+                        testID="score-rounds-reps"
+                      />
+                    </View>
+                  </View>
+                  <Text style={S.fixedHint} testID="score-rounds-reps-hint">{i18n.t('wodDetail.roundsRepsHint')}</Text>
+                </>
               ) : scoreType === 'time' && dnf ? (
                 <>
                   <Text style={S.modalLabel}>{i18n.t('wodDetail.capRepsLabel')}</Text>
@@ -1179,6 +1249,9 @@ export default function WODDetailScreen() {
                       testID="score-value"
                     />
                   )}
+                  {fixedType === 'time' && (
+                    <Text style={S.fixedHint} testID="score-fixed-hint">{i18n.t('wodDetail.fixedScoreHint')}</Text>
+                  )}
                 </>
               )}
 
@@ -1200,11 +1273,15 @@ export default function WODDetailScreen() {
                 onRemoveSet={index => onStrengthGridEdit(prev => removeStrengthSet(prev, index))}
               />
 
-              <Text style={S.modalLabel}>{i18n.t('wodDetail.levelLabel')}</Text>
-              <View style={S.rxRow}>
-                <AxChip label="RX" selected={isRx} onPress={() => setIsRx(true)} testID="score-level-rx" />
-                <AxChip label="Scaled" selected={!isRx} onPress={() => setIsRx(false)} testID="score-level-scaled" />
-              </View>
+              {!markDone && (
+                <>
+                  <Text style={S.modalLabel}>{i18n.t('wodDetail.levelLabel')}</Text>
+                  <View style={S.rxRow}>
+                    <AxChip label="RX" selected={isRx} onPress={() => setIsRx(true)} testID="score-level-rx" />
+                    <AxChip label="Scaled" selected={!isRx} onPress={() => setIsRx(false)} testID="score-level-scaled" />
+                  </View>
+                </>
+              )}
 
               <Text style={S.modalLabel}>{i18n.t('wodDetail.notesLabel')}</Text>
               <AxTextField
@@ -1241,10 +1318,12 @@ export default function WODDetailScreen() {
               ) : (
                 <View style={{ marginTop: 8 }}>
                   <AxButton
-                    label={i18n.t('wodDetail.submitScore')}
+                    label={markDone ? i18n.t('wodDetail.markDone') : i18n.t('wodDetail.submitScore')}
                     variant="accent"
                     loading={submitting}
-                    disabled={!(dnf ? capReps.trim() : scoreType === 'time' ? (timeMin.trim() || timeSec.trim()) : scoreInput.trim())}
+                    disabled={markDone ? false
+                      : scoreType === 'rounds_reps' ? encodeRoundsReps(roundsInput, rrReps) == null
+                      : !(dnf ? capReps.trim() : scoreType === 'time' ? (timeMin.trim() || timeSec.trim()) : scoreInput.trim())}
                     onPress={submitScore}
                     fullWidth
                     testID="score-submit"
@@ -1571,6 +1650,11 @@ function createStyles(theme: AppTheme) {
   dnfCheckActive: { backgroundColor: c.accent, borderColor: c.accent },
   dnfLabel: { ...axTypography.label, color: c.text },
   rxRow: { flexDirection: 'row', gap: 10 },
+  // #453 : type fixé par le créateur (indications), tours + reps sur deux colonnes.
+  fixedHint: { ...axTypography.caption, color: c.textMuted },
+  doneHint: { ...axTypography.bodySmall, color: c.textMuted },
+  rrRow: { flexDirection: 'row', gap: 12 },
+  rrCol: { flex: 1, gap: 12 },
   submitBtn: {
     backgroundColor: theme.accent, borderRadius: 14,
     padding: 18, alignItems: 'center', marginTop: 8,
