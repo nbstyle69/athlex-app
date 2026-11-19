@@ -96,6 +96,7 @@ const CODE_KEYS: Record<string, string> = {
   FORBIDDEN: 'errors.forbidden',
   NOT_FOUND: 'errors.notFound',
   WOD_INTROUVABLE: 'errors.wodNotFound',
+  SCORE_TYPE_MISMATCH: 'errors.scoreTypeMismatch',
   BANNED: 'errors.banned',
   MEMBER_BANNED: 'errors.banned',
 };
