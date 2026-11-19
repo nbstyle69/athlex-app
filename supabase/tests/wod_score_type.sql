@@ -39,6 +39,11 @@
 
 BEGIN;
 
+-- Cette suite fige l'état de 20270162 : la redéfinition suivante de
+-- validate_strength_session (20270164, charge facultative) est d'abord
+-- défaite, dans la transaction annulée.
+\i supabase/retours/20270164000000_strength_optional_load.sql
+
 CREATE FUNCTION pg_temp.u(s text) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$ SELECT ('00000000-0000-4000-a453-0000000000' || s)::uuid $$;
 CREATE FUNCTION pg_temp.w(s text) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$ SELECT ('00000000-0000-4000-c453-0000000000' || s)::uuid $$;
 GRANT EXECUTE ON FUNCTION pg_temp.u(text), pg_temp.w(text) TO PUBLIC; -- appelées sous authenticated
