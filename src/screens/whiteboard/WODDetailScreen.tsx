@@ -252,13 +252,12 @@ export default function WODDetailScreen() {
     return d;
   })() : false;
 
-  // Texte libre (#453 PR 3b) : ses lignes de bloc Musculation, où qu'elles soient, comme en lignes.
+  // Texte libre (#453 PR 3b) : seules ses lignes de bloc en tête, lues comme en lignes.
   const strengthEntries: StrengthEntry[] = useMemo(() => (
-    (wod?.description ?? '')
-      .split('\n')
+    (wod?.text_mode === 'free' ? readFreeText(wod.description).blocks : (wod?.description ?? '').split('\n'))
       .map(parseStrengthLine)
       .filter((e): e is StrengthEntry => e !== null)
-  ), [wod?.description]);
+  ), [wod?.description, wod?.text_mode]);
 
   const isStrengthSession = wod?.wod_type === 'strength' && strengthEntries.length > 0;
   const strengthValidated = strengthServer?.session?.status === 'validated';

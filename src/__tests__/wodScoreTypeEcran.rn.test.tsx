@@ -297,6 +297,21 @@ describe('texte libre + blocs Musculation / Cardio (#453 PR 3b)', () => {
   const ROW = 'Row ~ 2 × 500 m ~ repos 1:30';
   const METCON = 'For time\n21 thrusters @43/29 + 21 pull-ups';
 
+  it('série au milieu du texte : du texte tel quel, ni grille ni crédit de bloc', async () => {
+    const desc = `${METCON}\n${SQUAT}\n${ROW}`;
+    const root = await mount({ ...WOD, wod_type: 'for-time', score_type: 'time', text_mode: 'free', description: desc });
+    expect(byId(root, 'wod-free-blocks')).toHaveLength(0);
+    expect(byId(root, 'wod-free-text').map(hostText)).toEqual([desc]);
+    await press(root, 'enter-score');
+    expect(byId(root, 'strength-kg-0')).toHaveLength(0);
+    await type(root, 'score-time-min', '11');
+    await press(root, 'score-submit');
+    expect(logStrengthSets).not.toHaveBeenCalled();
+    expect(logMovementReps).toHaveBeenLastCalledWith('me', [
+      { name: 'Thruster', reps: 21, weight_kg: 43 }, { name: 'Pull-ups', reps: 21 },
+    ], 'whiteboard', 'w1');
+  });
+
   it('sans bloc : inchangé (aucune ligne de bloc affichée à part)', async () => {
     const root = await mount({ ...WOD, wod_type: 'for-time', score_type: 'time', text_mode: 'free', description: RXP });
     expect(byId(root, 'wod-free-blocks')).toHaveLength(0);

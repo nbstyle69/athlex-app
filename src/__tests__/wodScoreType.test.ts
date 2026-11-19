@@ -229,6 +229,11 @@ describe('crédit des mouvements (utils/wodCredit)', () => {
       expect(completionCredit(free, 'male')).toEqual([row]);
       expect(completionCredit({ ...free, wod_type: 'amrap' }, 'male')).toEqual([]);
     });
+    it('série au milieu du texte : du texte, jamais créditée comme un bloc', () => {
+      const milieu = { ...free, description: 'For time\n21 thrusters @43/29\nRow ~ 2 × 500 m' };
+      expect(movementCredit(milieu, 300, 'time', false, 'male')).toEqual([{ name: 'Thruster', reps: 21, weight_kg: 43 }]);
+      expect(completionCredit(milieu, 'male')).toEqual([]);
+    });
     it('aucune double lecture : les lignes de bloc ne sont ni reconnues ni « à corriger »', () => {
       const r = readFreeText(BOTH);
       expect(r.blocks).toEqual(['Back Squat — 5 × 3 @ 100 kg', 'Row ~ 2 × 500 m ~ repos 1:30']);
