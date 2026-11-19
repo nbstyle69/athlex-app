@@ -1,9 +1,21 @@
 -- ═════════════════════════════════════════════════════════════════════════════
 -- WOD de box : type de score choisi par le créateur, texte libre (#453, PR 1 sur 4 : base)
 --
--- Appliquée en prod : non. Pas de BEGIN/COMMIT dans ce fichier : il se joue en
--- UNE transaction :
+-- Appliquée en prod : OUI, le 19/11/2026 à 11:06 (heure de Paris lue par la
+-- base), avec PGCLIENTENCODING=UTF8, sur feu vert de Nab. Pas de BEGIN/COMMIT
+-- dans ce fichier : il se joue en UNE transaction :
 --   PGCLIENTENCODING=UTF8 psql "$PROD_DB_URL" -X -1 -v ON_ERROR_STOP=1 -f <ce fichier>
+-- Dump des schémas public et internal avec droits
+-- db-dumps/2026-11-19/athlex-prod-public-internal-20261119T100346Z.dump,
+-- sha256 beaff5bac39a6670d44c1133499a3a87bce336126034b5c16eef7263d57c7d5f
+-- vérifié après aller-retour, 141 TABLE DATA, 485 ACL, 348 POLICY. Précontrôle
+-- juste avant : md5 fb726c46… / 14ac92fb… ; après : 3f1be61b… / c39b912c…,
+-- garde b6799504…, droits des deux fonctions inchangés. box_wods (1564 lignes,
+-- f5c8e333…) et wod_scores (119 lignes, f34ba0fb…) identiques avant et après ;
+-- audit des droits 48/48 ; test réel annulé vert (time passe, done refusé).
+-- Écart au catalogue accepté par Nab : demo_stg.nbs2_snapshot(uuid) (scripts
+-- de démo, ménage #522) compte les lignes de wod_scores d'une box, sans lire
+-- score_type ni score_value : non touchée.
 --
 -- Ordre du chantier : cette base → app en OTA → quelques jours → Manager. Tant
 -- que le Manager n'écrit pas box_wods.score_type, toutes les colonnes ajoutées
