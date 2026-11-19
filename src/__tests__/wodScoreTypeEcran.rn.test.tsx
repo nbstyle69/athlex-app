@@ -14,6 +14,7 @@ import TestRenderer, { act, ReactTestInstance } from 'react-test-renderer';
 import i18n from '../i18n';
 import WODDetailScreen from '../screens/whiteboard/WODDetailScreen';
 import { incrementCounter, logMovementReps, recordActivity } from '../services/gamification';
+import { logStrengthSets, submitStrengthValidation } from '../services/strengthSets';
 
 const mockTables: Record<string, unknown[]> = {};
 const mockUpserts: Record<string, unknown>[] = [];
@@ -80,6 +81,12 @@ jest.mock('../services/strengthSets', () => ({
   ...jest.requireActual('../services/strengthSets'),
   loadStrengthGrid: jest.fn(async (_k: unknown, prescription: unknown[]) => ({ drafts: prescription, origin: 'prescription', server: null, pending: null, offline: false })),
   fetchStrengthSession: jest.fn(async () => ({ session: null, sets: [] })),
+  logStrengthSets: jest.fn(async () => []),
+  submitStrengthValidation: jest.fn(async (_p: unknown, onFirst: (r: unknown) => Promise<void>) => {
+    const r = { premiereValidation: true, maxLoadKg: 100, totalReps: null, seriesValides: 5, records: [] };
+    await onFirst(r);
+    return r;
+  }),
 }));
 jest.mock('../services/moderation', () => ({ ...jest.requireActual('../services/moderation'), getBlockedUserIds: async () => [] }));
 jest.mock('../components/SharePerfScreen', () => () => null);
@@ -285,12 +292,72 @@ describe('texte libre', () => {
   });
 });
 
-describe('texte libre de musculation', () => {
-  it('aucune ligne lue : pas de grille de séries, le champ du type fixé', async () => {
-    const root = await mount({ ...WOD, wod_type: 'strength', score_type: 'weight', text_mode: 'free', description: 'Back Squat — 5 × 3 @ 80 %1RM — repos 2:00' });
+describe('texte libre + blocs Musculation / Cardio (#453 PR 3b)', () => {
+  const SQUAT = 'Back Squat — 5 × 3 @ 100 kg — repos 2:00';
+  const ROW = 'Row ~ 2 × 500 m ~ repos 1:30';
+  const METCON = 'For time\n21 thrusters @43/29 + 21 pull-ups';
+
+  it('série au milieu du texte : du texte tel quel, ni grille ni crédit de bloc', async () => {
+    const desc = `${METCON}\n${SQUAT}\n${ROW}`;
+    const root = await mount({ ...WOD, wod_type: 'for-time', score_type: 'time', text_mode: 'free', description: desc });
+    expect(byId(root, 'wod-free-blocks')).toHaveLength(0);
+    expect(byId(root, 'wod-free-text').map(hostText)).toEqual([desc]);
     await press(root, 'enter-score');
-    expect(byId(root, 'strength-validate')).toHaveLength(0);
-    expect(byId(root, 'score-value')).toHaveLength(1);
+    expect(byId(root, 'strength-kg-0')).toHaveLength(0);
+    await type(root, 'score-time-min', '11');
+    await press(root, 'score-submit');
+    expect(logStrengthSets).not.toHaveBeenCalled();
+    expect(logMovementReps).toHaveBeenLastCalledWith('me', [
+      { name: 'Thruster', reps: 21, weight_kg: 43 }, { name: 'Pull-ups', reps: 21 },
+    ], 'whiteboard', 'w1');
+  });
+
+  it('sans bloc : inchangé (aucune ligne de bloc affichée à part)', async () => {
+    const root = await mount({ ...WOD, wod_type: 'for-time', score_type: 'time', text_mode: 'free', description: RXP });
+    expect(byId(root, 'wod-free-blocks')).toHaveLength(0);
+    expect(byId(root, 'wod-free-text').map(hostText)).toEqual([RXP]);
+  });
+
+  it('Musculation : bloc affiché à part, reste tel quel ; grille ouverte, séries validées (validate_strength_session)', async () => {
+    const root = await mount({ ...WOD, wod_type: 'strength', score_type: 'weight', text_mode: 'free', description: `${SQUAT}\n\n${METCON}` });
+    expect(byId(root, 'wod-free-blocks').map(hostText)).toEqual([SQUAT]);
+    expect(byId(root, 'wod-free-text').map(hostText)).toEqual([METCON]);
+    await press(root, 'enter-score');
+    expect(byId(root, 'score-value')).toHaveLength(0);
+    expect(byId(root, 'strength-kg-4')).toHaveLength(1);
+    await press(root, 'strength-validate');
+    expect(submitStrengthValidation).toHaveBeenCalledTimes(1);
+    const drafts = (submitStrengthValidation as jest.Mock).mock.calls[0][0].drafts;
+    expect(drafts).toHaveLength(5);
+    expect(drafts[0]).toMatchObject({ name: 'Back Squat', reps: '3', loadKg: '100', prescribedLoadKg: 100 });
+    // Première validation : crédit d'une séance chargée, metcon non prouvé par une charge.
+    expect(logMovementReps).toHaveBeenLastCalledWith('me', [], 'whiteboard', 'w1');
+  });
+
+  it('Cardio : série créditée en plus du metcon du reste, une seule fois', async () => {
+    const root = await mount({ ...WOD, wod_type: 'for-time', score_type: 'time', text_mode: 'free', description: `${ROW}\n${METCON}` });
+    expect(byId(root, 'wod-free-blocks').map(hostText)).toEqual(['Row · 2 × 500 m · repos 1:30']);
+    await press(root, 'enter-score');
+    await type(root, 'score-time-min', '11');
+    await press(root, 'score-submit');
+    expect(logMovementReps).toHaveBeenLastCalledWith('me', [
+      { name: 'Thruster', reps: 21, weight_kg: 43 }, { name: 'Pull-ups', reps: 21 }, { name: 'Row', reps: 1000, unit: 'm' },
+    ], 'whiteboard', 'w1');
+  });
+
+  it('les deux : grille de séries dans la saisie, séries journalisées, cardio crédité', async () => {
+    const root = await mount({ ...WOD, wod_type: 'for-time', score_type: 'time', text_mode: 'free', description: `${SQUAT}\n${ROW}\n\n${METCON}` });
+    expect(byId(root, 'wod-free-blocks').map(hostText)).toEqual([`${SQUAT}\nRow · 2 × 500 m · repos 1:30`]);
+    expect(byId(root, 'wod-free-text').map(hostText)).toEqual([METCON]);
+    await press(root, 'enter-score');
+    expect(byId(root, 'strength-kg-4')).toHaveLength(1);
+    await type(root, 'score-time-min', '11');
+    await press(root, 'score-submit');
+    expect(logStrengthSets).toHaveBeenCalledTimes(1);
+    expect((logStrengthSets as jest.Mock).mock.calls[0][0].drafts).toHaveLength(5);
+    expect(logMovementReps).toHaveBeenLastCalledWith('me', [
+      { name: 'Thruster', reps: 21, weight_kg: 43 }, { name: 'Pull-ups', reps: 21 }, { name: 'Row', reps: 1000, unit: 'm' },
+    ], 'whiteboard', 'w1');
   });
 });
 
