@@ -566,7 +566,7 @@ export default function WodResultScreen() {
         ? await fetchStrengthSession(key).catch((e) => { captureError(e, { screen: 'WodResult', action: 'refreshStrength' }); return null; })
         : null;
       if (server) setStrengthServer(server);
-      const records = server ? gymRecordCandidates(server.sets, gymRecordFor) : [];
+      const records = server ? gymRecordCandidates(server.sets, gymRecordFor, performedToDrafts(m, performed)) : [];
       setSubmittedScore({ wodId: id, scoreType: 'weight', value: tonnage, category: 'rx', notes: scoreNotes });
       hapticSuccess();
       setScoreModal(false);

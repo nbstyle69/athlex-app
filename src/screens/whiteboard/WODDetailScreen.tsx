@@ -708,7 +708,8 @@ export default function WODDetailScreen() {
       const server = await fetchStrengthSession(strengthKey)
         .catch(e => { captureError(e, { screen: 'WODDetail', action: 'reloadStrengthSession' }); return null; });
       if (server) { applyServerSession(server); setStrengthDrafts(gridFromServer(strengthPrescription, server.sets)); }
-      const records = server ? gymRecordCandidates(server.sets, gymRecordFor) : [];
+      // La grille validée écarte les séries des lignes chargées faites à vide.
+      const records = server ? gymRecordCandidates(server.sets, gymRecordFor, strengthDrafts) : [];
 
       const beaten = result.records.filter(r => r.kg != null && (r.precedent == null || r.kg > r.precedent));
       if (beaten.length > 0) {

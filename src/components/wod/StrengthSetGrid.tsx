@@ -19,8 +19,9 @@ import { Plus, Trash2 } from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
 import {
-  StrengthCardSummary, StrengthSetDraft, blockRepsTotal, computedTotalReps, isRepsOnly, normalizeDecimalInput,
-  normalizeRepsInput, savedAgo, setRanks, strengthSetDeviation, strengthTonnage, validStrengthSets,
+  StrengthCardSummary, StrengthFieldError, StrengthSetDraft, blockRepsTotal, computedTotalReps, isRepsOnly,
+  normalizeDecimalInput, normalizeRepsInput, savedAgo, setRanks, strengthFieldErrors, strengthSetDeviation,
+  strengthTonnage, validStrengthSets,
 } from '../../services/strengthSets';
 import { AxCard, AxStatusDot, AxTextField } from '../ax';
 import { axSpacing, axTypography } from '../../theme/axTokens';
@@ -34,14 +35,38 @@ interface Props {
   gymRecordFor?: (name: string) => number | null;
   /** Lien « Renseigner mon record » quand le mouvement n'en a pas. */
   onSetGymRecord?: () => void;
-  /** « Ajouter une série » sous un mouvement en reps seules (bloc `entryIndex`). */
+  /** « Ajouter une série » sous chaque mouvement (bloc `entryIndex`). */
   onAddSet?: (entryIndex: number) => void;
-  /** Corbeille d'une série ajoutée (index dans `drafts`). */
+  /** Corbeille d'une série ajoutée en reps seules (index dans `drafts`). */
   onRemoveSet?: (index: number) => void;
 }
 
 /** « 9 reps », « 1 rep ». */
 export const repsText = (n: number) => i18n.t('strengthSession.repsCount', { count: n });
+
+const FIELD_ERROR_KEYS: Record<StrengthFieldError, string> = {
+  repsRange: 'strengthSession.fieldErrorRepsRange',
+  repsMissing: 'strengthSession.fieldErrorRepsMissing',
+  loadRange: 'strengthSession.fieldErrorLoadRange',
+};
+
+/** Texte à droite d'une ligne chargée (Figma 737:777) : prévu, ou « ajoutée ». */
+export function loadedRowNote(d: StrengthSetDraft): string {
+  if (d.isAdded) {
+    return i18n.t(d.loadKg.trim() === '' ? 'strengthSession.addedSetNoLoad' : 'strengthSession.addedSet');
+  }
+  const pct1Rm = d.prescribedPct1Rm ?? null;
+  if (d.prescribedLoadKg != null) {
+    return pct1Rm != null
+      ? i18n.t('strengthSession.plannedRepsLoadPct', { reps: d.prescribedReps, kg: d.prescribedLoadKg, pct: pct1Rm })
+      : i18n.t('strengthSession.plannedRepsLoad', { reps: d.prescribedReps, kg: d.prescribedLoadKg });
+  }
+  if (pct1Rm != null) return i18n.t('strengthSession.plannedRepsPct1Rm', { reps: d.prescribedReps, pct: pct1Rm });
+  const pct = d.prescribedPctOfMax ?? null;
+  return pct != null && d.prescribedReps < 1
+    ? i18n.t('strengthSession.plannedPctOfMax', { pct })
+    : i18n.t('strengthSession.plannedReps', { count: d.prescribedReps });
+}
 
 export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetGymRecord, onAddSet, onRemoveSet }: Props) {
   const { theme } = useTheme();
@@ -49,6 +74,8 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
   if (drafts.length === 0) return null;
   // « Série n » = rang dans le bloc ; le numéro de stockage continue d'un bloc à l'autre.
   const ranks = setRanks(drafts);
+  // Aide « sans charge » une seule fois, sous le dernier mouvement chargé.
+  const lastLoadedEntry = [...drafts].reverse().find(d => !isRepsOnly(d))?.entryIndex;
 
   return (
     <View>
@@ -67,6 +94,9 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
         const repsOnly = isRepsOnly(d);
         const lastOfBlock = i === drafts.length - 1 || drafts[i + 1].entryIndex !== d.entryIndex;
         const dev = strengthSetDeviation(d);
+        const errors = strengthFieldErrors(d);
+        const kgPlaceholder = d.prescribedLoadKg == null && d.prescribedPct1Rm != null
+          ? i18n.t('strengthSession.pct1RmPlaceholder') : i18n.t('strengthSession.kgPlaceholder');
         return (
           <View key={`${d.entryIndex}-${d.setIndex}`}>
             {first && <Text style={[S.movement, pct != null && S.movementWithPct]}>{d.name}</Text>}
@@ -89,12 +119,13 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
                 )}
               </View>
             )}
-            <View style={S.row}>
-              <Text style={S.setLabel}>{i18n.t('strengthSession.repsSetLine', { index: ranks[i] })}</Text>
-              <View style={repsOnly ? S.repsInput : S.input}>
+            <View style={repsOnly ? S.row : S.loadRow}>
+              <Text style={repsOnly ? S.setLabel : S.loadSetLabel}>{i18n.t('strengthSession.repsSetLine', { index: ranks[i] })}</Text>
+              <View style={repsOnly ? S.repsInput : S.loadRepsInput}>
                 <AxTextField
                   compact
-                  placeholder="reps"
+                  placeholder={i18n.t('strengthSession.repsPlaceholder')}
+                  inputStyle={repsOnly ? undefined : S.loadField}
                   value={d.reps}
                   onChangeText={txt => onChange(i, { reps: normalizeRepsInput(txt) })}
                   testID={`strength-reps-${i}`}
@@ -134,40 +165,56 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
               ) : (
                 <>
                   <Text style={S.times}>×</Text>
-                  <View style={S.input}>
+                  <View style={S.loadInput}>
                     <AxTextField
                       compact
-                      placeholder="kg"
+                      placeholder={kgPlaceholder}
+                      inputStyle={S.loadField}
                       value={d.loadKg}
                       onChangeText={txt => onChange(i, { loadKg: normalizeDecimalInput(txt) })}
                       testID={`strength-kg-${i}`}
                       keyboardType="decimal-pad"
                     />
                   </View>
-                  <Text style={[S.prescribed, deviates && S.prescribedDeviates]}>
-                    {d.prescribedLoadKg != null
-                      ? i18n.t('strengthSession.plannedRepsLoad', { reps: d.prescribedReps, kg: d.prescribedLoadKg })
-                      : pct != null && d.prescribedReps < 1
-                        ? i18n.t('strengthSession.plannedPctOfMax', { pct })
-                        : i18n.t('strengthSession.plannedReps', { count: d.prescribedReps })}
+                  <Text
+                    style={[S.prescribed, (deviates || d.isAdded) && S.prescribedDeviates]}
+                    testID={`strength-note-${i}`}
+                  >
+                    {loadedRowNote(d)}
                   </Text>
                 </>
               )}
             </View>
+            {(errors.reps || errors.load) && (
+              // Sous le champ concerné : mêmes colonnes que la ligne.
+              <View style={[S.errorRow, repsOnly ? S.errorRowReps : S.errorRowLoad]} testID={`strength-errors-${i}`}>
+                <Text style={[S.error, repsOnly ? S.errorUnderReps : S.errorUnderLoadReps]} testID={`strength-reps-error-${i}`}>
+                  {errors.reps ? i18n.t(FIELD_ERROR_KEYS[errors.reps]) : ''}
+                </Text>
+                {!repsOnly && errors.load && (
+                  <Text style={[S.error, S.errorUnderLoad]} testID={`strength-kg-error-${i}`}>
+                    {i18n.t(FIELD_ERROR_KEYS[errors.load])}
+                  </Text>
+                )}
+              </View>
+            )}
+            {lastOfBlock && onAddSet && (
+              <TouchableOpacity
+                style={S.addSet}
+                onPress={() => onAddSet(d.entryIndex)}
+                accessibilityRole="button"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                testID={`strength-add-set-${d.entryIndex}`}
+              >
+                <Plus size={14} color={theme.ax.accentText} />
+                <Text style={S.addSetText}>{i18n.t('strengthSession.addSet')}</Text>
+              </TouchableOpacity>
+            )}
+            {lastOfBlock && !repsOnly && d.entryIndex === lastLoadedEntry && (
+              <Text style={S.noLoadHint} testID="strength-no-load-hint">{i18n.t('strengthSession.noLoadHint')}</Text>
+            )}
             {lastOfBlock && repsOnly && (
               <>
-                {onAddSet && (
-                  <TouchableOpacity
-                    style={S.addSet}
-                    onPress={() => onAddSet(d.entryIndex)}
-                    accessibilityRole="button"
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    testID={`strength-add-set-${d.entryIndex}`}
-                  >
-                    <Plus size={14} color={theme.ax.accentText} />
-                    <Text style={S.addSetText}>{i18n.t('strengthSession.addSet')}</Text>
-                  </TouchableOpacity>
-                )}
                 <View style={S.totalRow} testID={`strength-block-total-${d.entryIndex}`}>
                   <Text style={S.totalLabel}>{i18n.t('strengthSession.blockTotal', { movement: d.name })}</Text>
                   <Text style={S.totalValue}>{repsText(blockRepsTotal(drafts, d.entryIndex))}</Text>
@@ -275,7 +322,8 @@ export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
   const ranks = setRanks(drafts);
   const sets = validStrengthSets(drafts);
   if (sets.length === 0) return null;
-  const loaded = sets.filter(d => !isRepsOnly(d));
+  // Tonnage et charge max : séries réellement chargées (une série faite sans charge n'y entre pas).
+  const loaded = sets.filter(d => d.loadKg.trim() !== '');
   const totalReps = computedTotalReps(sets);
   return (
     <AxCard testID="strength-my-loads">
@@ -330,7 +378,9 @@ export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
             {first && <Text style={[axTypography.label, { color: c.text }]}>{d.name}</Text>}
             <View style={axStyles.setLine}>
               <Text style={[axTypography.bodySmall, { color: c.text }]}>
-                {i18n.t('strengthSession.setLine', { index: rank, reps: d.reps, kg: d.loadKg })}
+                {d.loadKg.trim() === ''
+                  ? i18n.t('strengthSession.setLineNoLoad', { index: rank, count: Number(d.reps) })
+                  : i18n.t('strengthSession.setLine', { index: rank, reps: d.reps, kg: d.loadKg })}
               </Text>
               {gaps ? (
                 <Text style={[axTypography.labelSmall, { color: c.accentText }]} testID={`strength-my-loads-gap-${i}`}>{gaps}</Text>
@@ -423,6 +473,12 @@ const axStyles = StyleSheet.create({
   scoreStatus: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: axSpacing.sm },
 });
 
+const LOAD_GAP = 8;
+const LOAD_LABEL_W = 52;
+const LOAD_REPS_W = 60;
+const LOAD_TIMES_W = 8;
+const LOAD_KG_W = 64;
+
 function createStyles(theme: AppTheme) {
   const c = theme.ax;
   return StyleSheet.create({
@@ -451,9 +507,25 @@ function createStyles(theme: AppTheme) {
     scoreValue: { ...axTypography.label, color: c.text },
     row: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
     setLabel: { ...axTypography.caption, color: c.textMuted, width: 62 },
-    input: { flex: 1, minWidth: 52 },
-    times: { ...axTypography.caption, color: c.textMuted },
-    prescribed: { ...axTypography.caption, color: c.textMuted, width: 80, textAlign: 'right' },
-    prescribedDeviates: { ...axTypography.labelSmall, color: c.accentText },
+    // Figma 737:777 (lignes chargées) : libellé 52, reps 60, × 8, kg 64, 8 entre chaque, note étirée à droite.
+    loadRow: { flexDirection: 'row', alignItems: 'center', gap: LOAD_GAP, marginBottom: 12 },
+    loadSetLabel: { ...axTypography.caption, color: c.textMuted, width: LOAD_LABEL_W },
+    loadRepsInput: { width: LOAD_REPS_W },
+    times: { ...axTypography.caption, color: c.textMuted, width: LOAD_TIMES_W, textAlign: 'center' },
+    loadInput: { width: LOAD_KG_W },
+    // Champ de 40 (8 + 22 + 8 + bordures), texte 12 semi-gras à gauche. Marge intérieure 8 (maquette : 12) :
+    // à 12, « % 1RM » passait parfois à la ligne dans un champ de 64.
+    loadField: { ...axTypography.labelSmall, textAlign: 'left', minHeight: 22 },
+    prescribed: { ...axTypography.caption, color: c.textMuted, flex: 1, minWidth: 0, textAlign: 'right' },
+    prescribedDeviates: { color: c.accentText },
+    // Erreur de saisie sous le champ concerné (colonnes de la ligne).
+    errorRow: { flexDirection: 'row', marginTop: -4, marginBottom: 8 },
+    errorRowReps: { paddingLeft: 62 + 6 },
+    errorRowLoad: { paddingLeft: LOAD_LABEL_W + LOAD_GAP },
+    error: { ...axTypography.caption, color: c.danger },
+    errorUnderReps: { width: 74 },
+    errorUnderLoadReps: { width: LOAD_REPS_W + LOAD_GAP * 2 + LOAD_TIMES_W },
+    errorUnderLoad: { flex: 1 },
+    noLoadHint: { ...axTypography.caption, color: c.textMuted, marginBottom: axSpacing.sm },
   });
 }

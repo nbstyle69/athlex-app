@@ -128,13 +128,15 @@ import { supabase } from '../lib/supabase';
 import { incrementCounter, logMovementReps } from '../services/gamification';
 import { sendScoreNotification } from '../services/notifications';
 import { estimateOneRepMax } from '../services/strengthPR';
-import { parseStrengthLine, StrengthEntry } from '../utils/strengthBlock';
+import { annotateStrengthLoads, parseStrengthLine, StrengthEntry } from '../utils/strengthBlock';
+import { readFreeText } from '../utils/freeTextWod';
 import {
   StrengthSetDraft, buildStrengthGrid, computedMaxLoad, loadStrengthGrid, normalizeDecimalInput,
   parseDecimal, saveStrengthDraft, savedAgo, strengthProgress, strengthRecordsFor,
   submitStrengthValidation, validationErrorCode, SaveStrengthDraftParams, StrengthSourceKey,
   gridFromServer, isNetworkError, logStrengthSets, setRanks,
   addStrengthSet, removeStrengthSet, computedTotalReps, blockRepsTotal, validStrengthSets, isRepsOnly,
+  strengthFieldErrors, gymRecordCandidates, ServerSet,
 } from '../services/strengthSets';
 
 const KEY: StrengthSourceKey = { userId: 'u1', sourceType: 'whiteboard', sourceId: 'wod-1' };
@@ -579,9 +581,12 @@ describe('G3 : lignes en reps seules, séries ajoutées, totaux', () => {
     expect(computedTotalReps(plein)).toBe(21);
   });
 
-  it('pas d’ajout sous une ligne chargée', () => {
-    const d = saisie();
-    expect(addStrengthSet(d, 2)).toBe(d);
+  it('ajout sous une ligne chargée (nbstyle69/AthleX-Manager#453) : champ kg, ni reps ni charge prévues', () => {
+    const d = addStrengthSet(saisie(), 2);
+    expect(d).toHaveLength(8);
+    expect(d[7]).toMatchObject({ entryIndex: 2, setIndex: 3, name: 'Back Squat', reps: '', loadKg: '', isAdded: true,
+      prescribedReps: 0, prescribedLoadKg: null, loadRequired: true });
+    expect(isRepsOnly(d[7])).toBe(false);
   });
 
   it('retirer : seulement une série ajoutée ; une série prescrite ne se retire pas', () => {
@@ -642,24 +647,24 @@ describe('G3 : lignes en reps seules, séries ajoutées, totaux', () => {
 });
 
 describe('G3 : grille d’avant G2 (sans loadRequired)', () => {
-  it('garde son champ kg : une série sans charge n’y vaut rien', () => {
+  it('garde son champ kg ; une série sans charge y compte depuis 20270164', () => {
     const ancienne: StrengthSetDraft = {
       entryIndex: 0, setIndex: 1, name: 'Back Squat', reps: '5', loadKg: '', prescribedReps: 5, prescribedLoadKg: null,
     };
     expect(isRepsOnly(ancienne)).toBe(false);
-    expect(validStrengthSets([ancienne])).toEqual([]);
+    expect(validStrengthSets([ancienne])).toEqual([ancienne]);
   });
 });
 
 describe('G3 bis : reps seules réservées à la gymnastique', () => {
   const ligne = (l: string) => buildStrengthGrid([parseStrengthLine(l)!], () => null, () => null);
 
-  it('« Push Press — 2 × 5 » sans charge : reps × kg, charge exigée (l’athlète choisit sa charge)', () => {
+  it('« Push Press — 2 × 5 » sans charge : reps × kg (l’athlète choisit sa charge), charge facultative', () => {
     const d = ligne('Push Press — 2 × 5');
     expect(d.map(x => [isRepsOnly(x), x.loadRequired, x.prescribedReps, x.prescribedLoadKg])).toEqual([[false, true, 5, null], [false, true, 5, null]]);
     const vide = edit(d, 0, { loadKg: '' });
-    expect(validStrengthSets(vide)).toEqual([]);
-    expect(addStrengthSet(d, 0)).toBe(d);
+    expect(validStrengthSets(vide)).toHaveLength(2);
+    expect(addStrengthSet(d, 0)).toHaveLength(3);
   });
 
   it('« Ring Muscle-up — 3 × 5 » sans charge : reps seules', () => {
@@ -672,5 +677,98 @@ describe('G3 bis : reps seules réservées à la gymnastique', () => {
 
   it('un mouvement hors des 11 (« Strict Pull-Ups — 3 × 8 ») garde reps × kg', () => {
     expect(ligne('Strict Pull-Ups — 3 × 8').map(x => isRepsOnly(x))).toEqual([false, false, false]);
+  });
+});
+
+describe('Charge facultative (nbstyle69/AthleX-Manager#453, PR 4b)', () => {
+  const LIGNES = ['Deadlift — 2 × 2 @ 86 %1RM', 'Back Squat — 2 × 5 @ 75 %1RM', 'Pull-ups — 2 × 8 @ 10 kg'];
+  const rm = (n: string) => (n === 'Deadlift' ? 223 : null);
+  const grille = (lignes: string[]) => buildStrengthGrid(lignes.map(l => parseStrengthLine(l)!), rm);
+  const serie = (over: Partial<ServerSet>): ServerSet => ({
+    id: 's1', movement: 'Pull-ups', movement_label: null, set_index: 1, reps: 25, load_kg: null,
+    prescribed_reps: null, prescribed_load_kg: null, ...over,
+  });
+
+  it('%1RM : charge préremplie au même arrondi que l’annotation « ≈ kg » ; sans 1RM, champ vide et % retenu', () => {
+    const d = grille(LIGNES);
+    expect(d[0]).toMatchObject({ loadKg: '192.5', prescribedLoadKg: 192.5, prescribedPct1Rm: 86 });
+    expect(annotateStrengthLoads(LIGNES[0], rm)).toContain(`(≈ ${d[0].loadKg} kg)`);
+    expect(d[2]).toMatchObject({ loadKg: '', prescribedLoadKg: null, prescribedPct1Rm: 75, loadRequired: true });
+    expect(d[4]).toMatchObject({ loadKg: '10', prescribedLoadKg: 10 });
+    expect(d[4].prescribedPct1Rm).toBeUndefined();
+  });
+
+  it('texte libre (blocs en tête) : même grille que le WOD en lignes, ajout compris', () => {
+    const libre = readFreeText([...LIGNES, '', 'Puis 3 tours :', '10 burpees'].join('\n')).blocks
+      .map(parseStrengthLine).filter((e): e is StrengthEntry => e !== null);
+    const d = buildStrengthGrid(libre, rm);
+    expect(d).toEqual(grille(LIGNES));
+    expect(addStrengthSet(d, 0)).toEqual(addStrengthSet(grille(LIGNES), 0));
+  });
+
+  it('série avec reps sans charge acceptée même prescrite ; série vide et charge sans reps ignorées ; validation partielle', () => {
+    let d = grille(LIGNES);
+    d = edit(d, 0, { loadKg: '' });                 // Deadlift prescrit chargé, fait à vide
+    d = edit(d, 1, { reps: '', loadKg: '' });       // série vide
+    d = edit(d, 4, { reps: '', loadKg: '10' });     // charge sans reps
+    expect(validStrengthSets(d).map(x => `${x.name}#${x.setIndex}`)).toEqual(['Deadlift#1', 'Back Squat#1', 'Back Squat#2', 'Pull-ups#2']);
+    expect(strengthProgress(d)).toEqual({ done: 4, total: 6 });
+    expect(computedMaxLoad(d)).toBe(10);
+    expect(computedTotalReps(d)).toBe(12);
+  });
+
+  it('envoi : load_kg null, prescribed_load_kg gardé ; aucun score sans charge', async () => {
+    const d = edit(edit(grille(['Pull-ups — 2 × 8 @ 10 kg']), 0, { loadKg: '' }), 1, { loadKg: '' });
+    const r = await validate(d);
+    const p = mockDb.rpcCalls[0].p_sets as Row[];
+    expect(p.map(x => [x.movement, x.set_index, x.reps, x.load_kg, x.prescribed_load_kg])).toEqual([
+      ['Pull-ups', 1, 8, null, 10], ['Pull-ups', 2, 8, null, 10],
+    ]);
+    expect(r).toMatchObject({ maxLoadKg: null, totalReps: 16 });
+    expect(mockDb.wod_scores).toEqual([]);
+  });
+
+  it('série ajoutée sous un mouvement chargé : champ kg, sans % prévu ; relue du serveur, elle le garde', () => {
+    const d = addStrengthSet(grille(LIGNES), 0);
+    expect(d[2]).toMatchObject({ name: 'Deadlift', setIndex: 3, isAdded: true, loadRequired: true, prescribedLoadKg: null });
+    expect(d[2].prescribedPct1Rm).toBeUndefined();
+    const relue = gridFromServer(grille(LIGNES), [
+      serie({ id: 'a', movement: 'Deadlift', set_index: 3, reps: 2, load_kg: 160, is_added: true }),
+      serie({ id: 'b', movement: 'Deadlift', set_index: 4, reps: 2, load_kg: null, is_added: true }),
+    ]);
+    expect(relue.filter(x => x.isAdded).map(x => [x.setIndex, x.loadKg, isRepsOnly(x)])).toEqual([[3, '160', false], [4, '', false]]);
+  });
+
+  it('record de gymnastique : jamais proposé pour une série prescrite chargée faite à vide', () => {
+    const record = () => 20;
+    expect(gymRecordCandidates([serie({})], record)).toHaveLength(1);
+    // charge prévue en kg (« @ 10 kg »)
+    expect(gymRecordCandidates([serie({ prescribed_load_kg: 10 })], record)).toEqual([]);
+    // charge notée sans kg (« @ gilet ») : seule la grille le sait
+    expect(gymRecordCandidates([serie({})], record, [{ name: 'Pull-ups', setIndex: 1, loadRequired: true }])).toEqual([]);
+    expect(gymRecordCandidates([serie({})], record, [{ name: 'Pull-ups', setIndex: 1, loadRequired: false }])).toHaveLength(1);
+  });
+
+  it('les deux écrans de validation passent leur grille à gymRecordCandidates', () => {
+    const lire = (f: string) => fs.readFileSync(path.join(__dirname, '..', f), 'utf8');
+    expect(lire('screens/whiteboard/WODDetailScreen.tsx')).toContain('gymRecordCandidates(server.sets, gymRecordFor, strengthDrafts)');
+    expect(lire('screens/wod/WodResultScreen.tsx')).toContain('gymRecordCandidates(server.sets, gymRecordFor, performedToDrafts(m, performed))');
+  });
+
+  it('1RM : jamais tiré d’une série sans charge', () => {
+    const d = grille(['Back Squat — 1 × 3 @ 100 kg']);
+    expect(strengthRecordsFor(edit(d, 0, { loadKg: '' }))).toEqual([]);
+    expect(strengthRecordsFor(d).map(r => r.label)).toEqual(['Back Squat']);
+  });
+
+  it('erreurs de saisie, par champ ; série vide ou sans charge : aucune', () => {
+    expect(strengthFieldErrors({ reps: '', loadKg: '' })).toEqual({});
+    expect(strengthFieldErrors({ reps: '5', loadKg: '' })).toEqual({});
+    expect(strengthFieldErrors({ reps: '5', loadKg: '102.5' })).toEqual({});
+    expect(strengthFieldErrors({ reps: '0', loadKg: '' })).toEqual({ reps: 'repsRange' });
+    expect(strengthFieldErrors({ reps: '501', loadKg: '' })).toEqual({ reps: 'repsRange' });
+    expect(strengthFieldErrors({ reps: '', loadKg: '100' })).toEqual({ reps: 'repsMissing' });
+    expect(strengthFieldErrors({ reps: '5', loadKg: '0' })).toEqual({ load: 'loadRange' });
+    expect(strengthFieldErrors({ reps: '5', loadKg: '600' })).toEqual({ load: 'loadRange' });
   });
 });

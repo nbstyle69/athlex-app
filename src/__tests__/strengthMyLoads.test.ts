@@ -68,7 +68,8 @@ describe('cartes de Ma Box : états des séances de la semaine', () => {
   it('brouillon « n / N » (séries valides sur séries prévues), validée, sans séance : rien', async () => {
     const r = await fetchStrengthSummaries(U, 'whiteboard', ['w-draft', 'w-done', 'w-none', 'w-other']);
     expect(r).toEqual({
-      'w-draft': { status: 'draft', done: 3, total: 5 },
+      // Depuis 20270164, la série à charge prévue faite sans charge compte aussi.
+      'w-draft': { status: 'draft', done: 4, total: 5 },
       'w-done': { status: 'validated', done: 3, total: 3 },
     });
   });
