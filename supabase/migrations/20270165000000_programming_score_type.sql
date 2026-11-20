@@ -2,9 +2,24 @@
 -- WOD d'offre Marketplace : type de score et texte libre, recopiés à chaque
 -- copie de WOD (nbstyle69/AthleX-Manager#453, PR 1c : base)
 --
--- Appliquée en prod : NON (feu vert de Nab attendu). Pas de BEGIN/COMMIT dans
--- ce fichier : il se joue en UNE transaction :
+-- Appliquée en prod : OUI, le 20/11/2026 à 16:01 (heure de Paris lue par la
+-- base), avec PGCLIENTENCODING=UTF8, sur feu vert de Nab (commit 1799382, sha256
+-- du fichier f2435655…a0f1). Pas de BEGIN/COMMIT dans ce fichier : il se joue
+-- en UNE transaction :
 --   PGCLIENTENCODING=UTF8 psql "$PROD_DB_URL" -X -1 -v ON_ERROR_STOP=1 -f <ce fichier>
+-- Dump des schémas public et internal avec droits
+-- db-dumps/2026-11-20/athlex-prod-public-internal-20261120T150031Z.dump,
+-- sha256 611271d40641bad029066fdd1938321982b90d3a7129949b61658e3978257ad0
+-- vérifié après aller-retour, 141 TABLE DATA, 486 ACL, 348 POLICY. Précontrôle
+-- juste avant : les six fonctions et le déclencheur aux md5 de la garde
+-- « avant », colonnes absentes ; après : md5 de la garde « après », droits
+-- inchangés (authenticated + service_role, materialize_box_programming :
+-- service_role seul ; ni anon ni PUBLIC), colonnes et trois contraintes
+-- présentes. box_programming_wods (70 lignes, toutes NULL / 'lines', colonnes
+-- d'avant 4f12f7c2…), box_wods (1564, dba9a91c…) et wod_scores (119,
+-- 87182095…) identiques avant et après ; audit des droits grants-prod 48/48 ;
+-- test réel annulé sur AthleX Fitness (synchro typée en texte libre,
+-- propagation du seul type, semaine appliquée typée), aucune trace.
 --
 -- 1. box_programming_wods.score_type (NULL | time | rounds_reps | reps | weight
 --    | none) et text_mode (lines | free, défaut 'lines'), avec les mêmes
