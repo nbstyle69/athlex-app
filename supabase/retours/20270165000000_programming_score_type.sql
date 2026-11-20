@@ -11,6 +11,12 @@
 -- OR REPLACE, puis retire les deux colonnes de box_programming_wods. Perte
 -- assumée : le type et le mode des WODs d'offre écrits depuis 20270165. Les
 -- WODs déjà posés dans box_wods gardent les leurs (colonnes de 20270162).
+--
+-- Ordre des retours arrière : CE retour AVANT celui de 20270162. Le
+-- déclencheur trg_box_wods_propagate_to_offer écoute box_wods.score_type et
+-- text_mode ; tant qu'il est en place, le retour de 20270162 ne peut pas
+-- retirer ces colonnes (« cannot drop column … other objects depend on it »)
+-- et échoue sans rien écrire.
 -- ═════════════════════════════════════════════════════════════════════════════
 
 DO $garde$
