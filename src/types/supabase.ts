@@ -1279,9 +1279,11 @@ export type Database = {
           notes: string | null
           programming_id: string
           rounds: number | null
+          score_type: string | null
           sort_order: number
           tabata_rest_seconds: number | null
           tabata_work_seconds: number | null
+          text_mode: string
           time_cap_seconds: number | null
           title: string
           video_url: string | null
@@ -1299,9 +1301,11 @@ export type Database = {
           notes?: string | null
           programming_id: string
           rounds?: number | null
+          score_type?: string | null
           sort_order?: number
           tabata_rest_seconds?: number | null
           tabata_work_seconds?: number | null
+          text_mode?: string
           time_cap_seconds?: number | null
           title: string
           video_url?: string | null
@@ -1319,9 +1323,11 @@ export type Database = {
           notes?: string | null
           programming_id?: string
           rounds?: number | null
+          score_type?: string | null
           sort_order?: number
           tabata_rest_seconds?: number | null
           tabata_work_seconds?: number | null
+          text_mode?: string
           time_cap_seconds?: number | null
           title?: string
           video_url?: string | null
