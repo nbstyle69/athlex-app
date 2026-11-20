@@ -2,9 +2,23 @@
 -- Musculation : charge facultative sur les séries (nbstyle69/AthleX-Manager#453,
 -- PR 4a sur 4 : base)
 --
--- Appliquée en prod : NON.
--- Pas de BEGIN/COMMIT dans ce fichier : il se joue en UNE transaction :
+-- Appliquée en prod : OUI, le 20/11/2026 à 01:06 (heure de Paris lue par la
+-- base), avec PGCLIENTENCODING=UTF8, sur feu vert de Nab (commit 596c8f1, sha256
+-- du fichier 815a194c…ec91). Pas de BEGIN/COMMIT dans ce fichier : il se joue en
+-- UNE transaction :
 --   PGCLIENTENCODING=UTF8 psql "$PROD_DB_URL" -X -1 -v ON_ERROR_STOP=1 -f <ce fichier>
+-- Dump des schémas public et internal avec droits
+-- db-dumps/2026-11-20/athlex-prod-public-internal-20261120T000513Z.dump,
+-- sha256 b8c882f75c498974643b1c6545ccca1894e4251a0c1af8a4f2a17f9d7e49eace
+-- vérifié après aller-retour, 141 TABLE DATA, 486 ACL, 348 POLICY. Précontrôle
+-- juste avant : md5 c39b912c… / 6ebca7f3… ; après : 80c963e6… / 1230f660…,
+-- droits inchangés (authenticated + service_role / authenticated seul, ni anon
+-- ni PUBLIC). wod_scores (119, 87182095…), strength_sessions (27, 57295dfe…),
+-- strength_set_logs (175, 541f82e6…) et records de gymnastique de
+-- profiles.personal_records (44 clés, 6549472a…) identiques avant et après ;
+-- audit des droits grants-prod 48/48 ; test réel annulé sur AthleX Fitness
+-- (série sans charge acceptée malgré charge prévue, aucun score, record de
+-- gymnastique refusé sur série lestée faite à vide), aucune trace.
 --
 -- Constat en prod, lecture seule, le 20/11/2026 (md5 de pg_get_functiondef
 -- calculés par la base) :
