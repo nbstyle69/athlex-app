@@ -39,9 +39,12 @@
 
 BEGIN;
 
--- Cette suite fige l'état de 20270162 : la redéfinition suivante de
--- validate_strength_session (20270164, charge facultative) est d'abord
--- défaite, dans la transaction annulée.
+-- Cette suite fige l'état de 20270162 : les migrations suivantes qui en
+-- dépendent sont d'abord défaites, dans la transaction annulée, de la plus
+-- récente à la plus ancienne : 20270165 (le déclencheur de propagation vers
+-- les offres écoute box_wods.score_type et text_mode, que le retour R retire),
+-- puis 20270164 (redéfinition de validate_strength_session).
+\i supabase/retours/20270165000000_programming_score_type.sql
 \i supabase/retours/20270164000000_strength_optional_load.sql
 
 CREATE FUNCTION pg_temp.u(s text) RETURNS uuid LANGUAGE sql IMMUTABLE AS $$ SELECT ('00000000-0000-4000-a453-0000000000' || s)::uuid $$;
