@@ -167,11 +167,11 @@ describe('G3 : grille en reps seules', () => {
     expect(byID(root, 'strength-kg-6-box')).toBeTruthy();
   });
 
-  it('« Ajouter une série » sous chaque mouvement en reps seules, jamais sous une ligne chargée', async () => {
+  it('« Ajouter une série » sous chaque mouvement, ligne chargée comprise (nbstyle69/AthleX-Manager#453)', async () => {
     const root = await mountGrid();
     expect(byID(root, 'strength-add-set-0')).toBeTruthy();
     expect(byID(root, 'strength-add-set-1')).toBeTruthy();
-    expect(byID(root, 'strength-add-set-2')).toBeUndefined();
+    expect(byID(root, 'strength-add-set-2')).toBeTruthy();
   });
 
   it('ajouter, saisir, retirer : la série ajoutée porte « ajoutée » et sa corbeille ; totaux à jour', async () => {
@@ -407,8 +407,7 @@ describe('G3 bis : grille, reps seules réservées à la gymnastique', () => {
     expect([0, 1].map(i => !!byID(root, `strength-kg-${i}-box`))).toEqual([true, true]);
     expect([2, 3, 4].map(i => !!byID(root, `strength-kg-${i}-box`))).toEqual([false, false, false]);
     expect(!!byID(root, 'strength-kg-5-box')).toBe(true);
-    expect(byID(root, 'strength-add-set-0')).toBeUndefined();
-    expect(byID(root, 'strength-add-set-1')).toBeTruthy();
-    expect(byID(root, 'strength-add-set-2')).toBeUndefined();
+    // Depuis nbstyle69/AthleX-Manager#453 (PR 4b), « Ajouter une série » sous tous les mouvements.
+    expect([0, 1, 2].map(i => !!byID(root, `strength-add-set-${i}`))).toEqual([true, true, true]);
   });
 });

@@ -40,8 +40,8 @@ const U = 'user-1';
 const session = (source_id: string, status: string, planned_sets: number): Row => ({
   user_id: U, source_type: 'whiteboard', source_id, status, planned_sets,
 });
-const set = (source_id: string, reps: number | null, load_kg: number | null, prescribed_load_kg: number | null = 100): Row => ({
-  user_id: U, source_type: 'whiteboard', source_id, reps, load_kg, prescribed_load_kg,
+const set = (source_id: string, reps: number | null, load_kg: number | null, prescribed_load_kg: number | null = 100, prescribed_reps: number | null = 5): Row => ({
+  user_id: U, source_type: 'whiteboard', source_id, reps, load_kg, prescribed_load_kg, prescribed_reps,
 });
 const draft = (setIndex: number, reps: string, loadKg: string, prescribedReps = 7, prescribedLoadKg: number | null = 100): StrengthSetDraft => ({
   entryIndex: 0, setIndex, name: 'Back Squat', reps, loadKg, prescribedReps, prescribedLoadKg,
@@ -68,9 +68,16 @@ describe('cartes de Ma Box : états des séances de la semaine', () => {
   it('brouillon « n / N » (séries valides sur séries prévues), validée, sans séance : rien', async () => {
     const r = await fetchStrengthSummaries(U, 'whiteboard', ['w-draft', 'w-done', 'w-none', 'w-other']);
     expect(r).toEqual({
+      // La série à charge prévue, reps préremplies, sans charge (jamais touchée) ne compte pas.
       'w-draft': { status: 'draft', done: 3, total: 5 },
       'w-done': { status: 'validated', done: 3, total: 3 },
     });
+  });
+
+  it('série à charge prévue sans charge, reps changées par l’athlète : comptée (nbstyle69/AthleX-Manager#453)', async () => {
+    mockDb.strength_set_logs.push(set('w-draft', 4, null));
+    const r = await fetchStrengthSummaries(U, 'whiteboard', ['w-draft']);
+    expect(r['w-draft']).toEqual({ status: 'draft', done: 4, total: 5 });
   });
 
   it('une seule lecture groupée pour toute la semaine, quel que soit le nombre de cartes', async () => {

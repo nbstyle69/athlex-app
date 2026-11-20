@@ -49,16 +49,22 @@ export interface StrengthSetDraft {
    */
   prescribedPctOfMax?: number | null;
   /**
-   * La ligne prescrit une charge (kg, %1RM résolu ou non, ou charge notée) : une
-   * série sans charge n'y est pas une série valide, même quand la charge prévue
-   * est inconnue (%1RM sans 1RM). Faux pour une ligne « % du max », une ligne
-   * sans charge ou une série ajoutée. Envoyé en `load_required` (20270145).
+   * Charge prescrite en % du 1RM (« 5 × 3 @ 80 %1RM ») : sans 1RM connu, le
+   * champ kg reste vide et l'indique (`prescribedLoadKg` vaut alors null).
+   */
+  prescribedPct1Rm?: number | null;
+  /**
+   * La ligne prescrit une charge (kg, %1RM résolu ou non, ou charge notée) : elle
+   * a un champ kg. La charge reste facultative (20270164) : une série avec ses
+   * reps et sans charge compte, hors 1RM et hors records de gymnastique. Faux
+   * pour une ligne « % du max » ou une ligne sans charge. Envoyé en
+   * `load_required` (lu par le serveur avant 20270164, ignoré depuis).
    */
   loadRequired?: boolean;
   /**
    * Série ajoutée par l'athlète au-delà de la prescription (« Ajouter une
-   * série », lignes en reps seules) : retirable, sans reps prévues, envoyée en
-   * `is_added`. Une série prescrite ne se retire pas.
+   * série », tous les mouvements) : sans reps prévues, envoyée en `is_added`.
+   * Une série prescrite ne se retire pas.
    */
   isAdded?: boolean;
 }
@@ -195,6 +201,7 @@ export function buildStrengthGrid(
         prescribedLoadKg: kg,
         loadRequired,
         ...(e.pctOfMax != null ? { prescribedPctOfMax: e.pctOfMax } : {}),
+        ...(e.unit === '%1RM' && e.load != null && e.load > 0 ? { prescribedPct1Rm: e.load } : {}),
       });
     }
   });
@@ -495,12 +502,30 @@ const validLoad = (text: string): number | null => {
 };
 
 /**
- * Séries valides au sens de la validation serveur : reps 1..500 et charge
- * ]0 ; 500] ; sur une ligne en reps seules, les reps suffisent (sans charge).
+ * Séries valides au sens de la validation serveur (20270164) : reps 1..500, et
+ * charge ]0 ; 500] ou aucune charge, même prescrite. Une série vide (ou sans
+ * reps) n'en est pas une.
  */
 export function validStrengthSets(drafts: StrengthSetDraft[]): StrengthSetDraft[] {
   return drafts.filter(d => validReps(d.reps) != null
-    && (validLoad(d.loadKg) != null || (isRepsOnly(d) && (d.loadKg ?? '').trim() === '')));
+    && (validLoad(d.loadKg) != null || (d.loadKg ?? '').trim() === ''));
+}
+
+export type StrengthFieldError = 'repsRange' | 'repsMissing' | 'loadRange';
+
+/**
+ * Erreur de saisie d'une série, par champ, affichée sous lui : reps hors
+ * 1..500, charge saisie sans reps, charge hors ]0 ; 500]. Une série vide n'a
+ * pas d'erreur (elle est ignorée), une série sans charge non plus.
+ */
+export function strengthFieldErrors(d: Pick<StrengthSetDraft, 'reps' | 'loadKg'>): { reps?: StrengthFieldError; load?: StrengthFieldError } {
+  const reps = (d.reps ?? '').trim();
+  const load = (d.loadKg ?? '').trim();
+  return {
+    ...(reps !== '' && validReps(reps) == null ? { reps: 'repsRange' as const }
+      : reps === '' && load !== '' ? { reps: 'repsMissing' as const } : {}),
+    ...(load !== '' && validLoad(load) == null ? { load: 'loadRange' as const } : {}),
+  };
 }
 
 /** Reps des séries valides en reps seules (sans charge) ; `null` s'il n'y en a aucune. */
@@ -515,20 +540,21 @@ export function blockRepsTotal(drafts: StrengthSetDraft[], entryIndex: number): 
 }
 
 /**
- * Ajoute une série vide en fin de bloc (ligne en reps seules seulement) : sans
- * reps prévues, numérotée après la dernière série du mouvement dans la séance
- * (plafond 50, CHECK set_index). Grille inchangée sinon.
+ * Ajoute une série vide en fin de bloc, sur tout mouvement : sans reps ni charge
+ * prévues, avec un champ kg si le bloc en a un, numérotée après la dernière
+ * série du mouvement dans la séance (plafond 50, CHECK set_index). Grille
+ * inchangée sinon.
  */
 export function addStrengthSet(drafts: StrengthSetDraft[], entryIndex: number): StrengthSetDraft[] {
   const block = drafts.filter(d => d.entryIndex === entryIndex);
   const last = block[block.length - 1];
-  if (!last || !isRepsOnly(last)) return drafts;
+  if (!last) return drafts;
   const setIndex = Math.max(...drafts.filter(d => d.name === last.name).map(d => d.setIndex)) + 1;
   if (setIndex > MAX_SETS_PER_MOVEMENT) return drafts;
   const at = drafts.lastIndexOf(last) + 1;
   const added: StrengthSetDraft = {
     entryIndex, setIndex, name: last.name, reps: '', loadKg: '', prescribedReps: 0, prescribedLoadKg: null,
-    loadRequired: false, isAdded: true,
+    loadRequired: !isRepsOnly(last), isAdded: true,
     ...(last.prescribedPctOfMax != null ? { prescribedPctOfMax: last.prescribedPctOfMax } : {}),
   };
   return [...drafts.slice(0, at), added, ...drafts.slice(at)];
@@ -541,7 +567,29 @@ export function removeStrengthSet(drafts: StrengthSetDraft[], index: number): St
 
 /** « n / N séries » : séries valides sur séries de la grille. */
 export function strengthProgress(drafts: StrengthSetDraft[]): { done: number; total: number } {
-  return { done: validStrengthSets(drafts).length, total: drafts.length };
+  return { done: drafts.filter(isStrengthSetDone).length, total: drafts.length };
+}
+
+/**
+ * Série comptée « faite » dans « n / N » (décision de Nab, nbstyle69/AthleX-Manager#453) :
+ * valide, et chargée, ou en reps seules (règle d'avant), ou aux reps changées par
+ * l'athlète. Une série à charge prévue préremplie, jamais touchée et sans charge
+ * ne compte pas (elle reste valide : elle part à la validation, après confirmation).
+ */
+export function isStrengthSetDone(d: StrengthSetDraft): boolean {
+  const reps = validReps(d.reps);
+  if (reps == null) return false;
+  const load = (d.loadKg ?? '').trim();
+  if (load !== '') return validLoad(load) != null;
+  return isRepsOnly(d) || reps !== d.prescribedReps;
+}
+
+/**
+ * Séries prévues avec charge (ligne à champ kg, hors série ajoutée) qui partiront
+ * sans charge : leur nombre est confirmé par l'athlète avant la validation.
+ */
+export function unloadedPlannedSets(drafts: StrengthSetDraft[]): number {
+  return validStrengthSets(drafts).filter(d => !isRepsOnly(d) && !d.isAdded && (d.loadKg ?? '').trim() === '').length;
 }
 
 /** Charge max (score « weight » du Whiteboard) : la plus lourde des séries valides. */
@@ -597,16 +645,19 @@ export async function fetchStrengthSummaries(
       .select('source_id, status, planned_sets')
       .eq('user_id', userId).eq('source_type', sourceType).in('source_id', ids),
     db.from('strength_set_logs')
-      .select('source_id, reps, load_kg, prescribed_load_kg')
+      .select('source_id, reps, load_kg, prescribed_reps, prescribed_load_kg')
       .eq('user_id', userId).eq('source_type', sourceType).in('source_id', ids),
   ]);
   if (e1 || e2) throw e1 ?? e2;
   const out: Record<string, StrengthCardSummary> = {};
   for (const s of sessions ?? []) {
     const rows = (sets ?? []).filter(r => r.source_id === s.source_id);
+    // Même règle que isStrengthSetDone, d'après la ligne enregistrée : chargée, ou
+    // sans charge prévue, ou aux reps changées (une série à charge prévue en %1RM
+    // sans 1RM n'a pas de charge prévue enregistrée : elle compte, faute de mieux).
     const done = rows.filter(r => validReps(r.reps == null ? '' : String(r.reps)) != null
-      && (validLoad(r.load_kg == null ? '' : String(r.load_kg)) != null
-          || (r.load_kg == null && r.prescribed_load_kg == null))).length;
+      && (r.load_kg != null ? validLoad(String(r.load_kg)) != null
+        : r.prescribed_load_kg == null || r.reps !== r.prescribed_reps)).length;
     out[s.source_id] = {
       status: s.status === 'validated' ? 'validated' : 'draft',
       done,
@@ -686,7 +737,8 @@ export function gridFromServer(rawPrescription: StrengthSetDraft[], sets: Server
       loadKg: s.load_kg == null ? '' : fmtKg(s.load_kg),
       prescribedReps: s.prescribed_reps ?? 0,
       prescribedLoadKg: s.prescribed_load_kg == null ? null : Number(s.prescribed_load_kg),
-      ...(s.is_added ? { isAdded: true, loadRequired: false } : {}),
+      // Série ajoutée : champ kg comme son bloc (sans bloc retrouvé : comme sa charge).
+      ...(s.is_added ? { isAdded: true, loadRequired: same ? !isRepsOnly(same) : s.load_kg != null } : {}),
       ...(same?.loadRequired != null && !s.is_added ? { loadRequired: same.loadRequired } : {}),
       ...(same?.prescribedPctOfMax != null ? { prescribedPctOfMax: same.prescribedPctOfMax } : {}),
     };
@@ -1062,16 +1114,21 @@ export interface GymRecordCandidate {
  * relues du serveur (jamais la grille locale) : séries sans charge d'un des 11
  * mouvements (lignes en reps seules), meilleure série par mouvement, au-dessus
  * d'un record existant. Sans record : rien (le lien « Renseigner mon record »
- * suffit). Mouvement chargé, gymnastique lestée, gainage : jamais (leurs séries
- * validées portent une charge).
+ * suffit). Mouvement chargé, gymnastique lestée, gainage : jamais, même fait
+ * sans charge (20270164) : la série porte une charge prévue, ou sa ligne de la
+ * grille (`drafts`) a un champ kg (charge notée sans kg, « @ gilet »).
  */
 export function gymRecordCandidates(
   sets: ServerSet[],
   recordFor: (label: string) => number | null,
+  drafts: Pick<StrengthSetDraft, 'name' | 'setIndex' | 'loadRequired'>[] = [],
 ): GymRecordCandidate[] {
+  // Numéros tels qu'envoyés à la validation (withUniqueSetKeys), donc tels que relus.
+  const loaded = new Set(withUniqueSetKeys(drafts).filter(d => !isRepsOnly(d)).map(d => `${d.name}#${d.setIndex}`));
   const best = new Map<string, ServerSet>();
   for (const st of sets) {
-    if (st.load_kg != null || st.reps == null || st.reps < 1) continue;
+    if (st.load_kg != null || st.prescribed_load_kg != null || loaded.has(`${st.movement}#${st.set_index}`)
+      || st.reps == null || st.reps < 1) continue;
     const label = gymPrLabel(st.movement);
     if (!label) continue;
     const cur = best.get(label);
