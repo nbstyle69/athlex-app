@@ -164,9 +164,10 @@ BEGIN
   -- ── M3 : validation ─────────────────────────────────────────────────────
   v := pg_temp.valider('anon', '1', '[{"movement":"back squat","set_index":1,"reps":5,"load_kg":100}]');
   IF v NOT LIKE '42501:%' THEN RAISE EXCEPTION 'M3 : anon valide : %', v; END IF;
-  -- Depuis 20270145, une série sans charge compte si aucune charge n'était
-  -- prescrite (gymnastique) : ici la charge est prescrite, la série reste vide.
-  v := pg_temp.valider('01', '1', '[{"movement":"back squat","set_index":1,"reps":null,"load_kg":100},{"movement":"back squat","set_index":2,"reps":5,"load_kg":"","prescribed_load_kg":100}]');
+  -- Depuis 20270164 (nbstyle69/AthleX-Manager#453, PR 4a), une série avec ses
+  -- reps compte même sans sa charge prescrite : seule une série sans reps est
+  -- vide.
+  v := pg_temp.valider('01', '1', '[{"movement":"back squat","set_index":1,"reps":null,"load_kg":100},{"movement":"back squat","set_index":2,"reps":"","load_kg":"","prescribed_load_kg":100}]');
   IF v NOT LIKE '22023: SEANCE_VIDE%' THEN RAISE EXCEPTION 'M3 : séance vide : %', v; END IF;
   v := pg_temp.valider('01', '00000000-0000-4000-c9fc-00000000000f', '[{"movement":"back squat","set_index":1,"reps":5,"load_kg":100}]');
   IF v NOT LIKE 'P0002: WOD_INTROUVABLE%' THEN RAISE EXCEPTION 'M3 : WOD inconnu : %', v; END IF;

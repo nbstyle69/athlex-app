@@ -11,10 +11,9 @@
 --   G1  séance sans charge validée (plus de SEANCE_VIDE), séries gardées ;
 --   G2  total_reps calculé par le serveur seul (valeur reçue ignorée, écriture
 --       directe refusée par les policies) ;
---   G3  charge exigée : série à charge prescrite sans charge écartée, série sans
---       charge marquée load_required écartée (seule : SEANCE_VIDE ; dans une
---       séance mixte : ignorée), la même sans la clé acceptée ; charge max
---       présente dès qu'une série chargée existe, contrainte statut_coherent ;
+--   G3  série sans clé acceptée ; contrainte statut_coherent (la charge
+--       facultative même prescrite est contrôlée depuis 20270164 par
+--       charge_facultative_musculation.sql) ;
 --   G4  séance mixte : score en charge inchangé, reps totales en plus ;
 --   G5  aucune ligne wod_scores pour une séance sans charge (même revalidée) ;
 --   G6  is_added : posé depuis p_sets, sans reps prévues (CHECK), renvoyé par
@@ -169,13 +168,11 @@ BEGIN
                               WHERE source_id = '00000000-0000-4000-c9e1-000000000003'$q$);
   IF v NOT LIKE '42501:%' THEN RAISE EXCEPTION 'G2 : reps totales écrites en direct : %', v; END IF;
 
-  -- ── G3 : charge exigée dès qu'elle est prescrite ou qu'une série la porte ──
-  v := pg_temp.valider('01', '2', '[{"movement":"Back Squat","set_index":1,"reps":5,"load_kg":"","prescribed_load_kg":100}]');
-  IF v NOT LIKE '22023: SEANCE_VIDE%' THEN RAISE EXCEPTION 'G3 : charge prescrite non exigée : %', v; END IF;
-  -- Ligne en %1RM sans 1RM connu : pas de charge prévue, mais l'app dit load_required.
-  v := pg_temp.valider('01', '2', '[{"movement":"Back Squat","set_index":1,"reps":5,"load_required":true}]');
-  IF v NOT LIKE '22023: SEANCE_VIDE%' THEN RAISE EXCEPTION 'G3 : série load_required sans charge acceptée : %', v; END IF;
-  -- La même série sans la clé (ancien client, ou ligne sans charge) : acceptée.
+  -- ── G3 : série sans charge ─────────────────────────────────────────────────
+  -- Depuis 20270164 (nbstyle69/AthleX-Manager#453, PR 4a), la charge est
+  -- facultative même prescrite : les deux refus d'ici (charge prévue,
+  -- load_required) sont remplacés par charge_facultative_musculation.sql (C1).
+  -- Une série sans clé (ancien client, ou ligne sans charge) : acceptée.
   v := pg_temp.valider('01', '5', '[{"movement":"Back Squat","set_index":1,"reps":5}]');
   IF v NOT LIKE 'OK %' OR pg_temp.seance('01', '5') IS DISTINCT FROM 'validated|-|5' THEN
     RAISE EXCEPTION 'G3 : série sans clé refusée : % / %', v, pg_temp.seance('01', '5');
@@ -197,10 +194,12 @@ BEGIN
   ]$j$);
   IF v NOT LIKE 'OK %' THEN RAISE EXCEPTION 'G4 : séance mixte refusée : %', v; END IF;
   j := substr(v, 4)::jsonb;
-  IF (j->>'max_load_kg')::numeric IS DISTINCT FROM 100 OR (j->>'total_reps')::int IS DISTINCT FROM 10 OR (j->>'series_valides')::int IS DISTINCT FROM 3 THEN
+  -- Depuis 20270164, les Back Squat 3 et 4 faits sans charge comptent : 5 séries,
+  -- reps totales 10 + 5 + 5 ; charge max et score inchangés.
+  IF (j->>'max_load_kg')::numeric IS DISTINCT FROM 100 OR (j->>'total_reps')::int IS DISTINCT FROM 20 OR (j->>'series_valides')::int IS DISTINCT FROM 5 THEN
     RAISE EXCEPTION 'G4 : réponse %', j;
   END IF;
-  IF pg_temp.seance('01', '2') IS DISTINCT FROM 'validated|100.00|10' OR pg_temp.scores('2') IS DISTINCT FROM 'weight=100' THEN
+  IF pg_temp.seance('01', '2') IS DISTINCT FROM 'validated|100.00|20' OR pg_temp.scores('2') IS DISTINCT FROM 'weight=100' THEN
     RAISE EXCEPTION 'G4 : séance % / score %', pg_temp.seance('01', '2'), pg_temp.scores('2');
   END IF;
 
