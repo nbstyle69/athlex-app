@@ -567,7 +567,29 @@ export function removeStrengthSet(drafts: StrengthSetDraft[], index: number): St
 
 /** « n / N séries » : séries valides sur séries de la grille. */
 export function strengthProgress(drafts: StrengthSetDraft[]): { done: number; total: number } {
-  return { done: validStrengthSets(drafts).length, total: drafts.length };
+  return { done: drafts.filter(isStrengthSetDone).length, total: drafts.length };
+}
+
+/**
+ * Série comptée « faite » dans « n / N » (décision de Nab, nbstyle69/AthleX-Manager#453) :
+ * valide, et chargée, ou en reps seules (règle d'avant), ou aux reps changées par
+ * l'athlète. Une série à charge prévue préremplie, jamais touchée et sans charge
+ * ne compte pas (elle reste valide : elle part à la validation, après confirmation).
+ */
+export function isStrengthSetDone(d: StrengthSetDraft): boolean {
+  const reps = validReps(d.reps);
+  if (reps == null) return false;
+  const load = (d.loadKg ?? '').trim();
+  if (load !== '') return validLoad(load) != null;
+  return isRepsOnly(d) || reps !== d.prescribedReps;
+}
+
+/**
+ * Séries prévues avec charge (ligne à champ kg, hors série ajoutée) qui partiront
+ * sans charge : leur nombre est confirmé par l'athlète avant la validation.
+ */
+export function unloadedPlannedSets(drafts: StrengthSetDraft[]): number {
+  return validStrengthSets(drafts).filter(d => !isRepsOnly(d) && !d.isAdded && (d.loadKg ?? '').trim() === '').length;
 }
 
 /** Charge max (score « weight » du Whiteboard) : la plus lourde des séries valides. */
@@ -623,16 +645,19 @@ export async function fetchStrengthSummaries(
       .select('source_id, status, planned_sets')
       .eq('user_id', userId).eq('source_type', sourceType).in('source_id', ids),
     db.from('strength_set_logs')
-      .select('source_id, reps, load_kg, prescribed_load_kg')
+      .select('source_id, reps, load_kg, prescribed_reps, prescribed_load_kg')
       .eq('user_id', userId).eq('source_type', sourceType).in('source_id', ids),
   ]);
   if (e1 || e2) throw e1 ?? e2;
   const out: Record<string, StrengthCardSummary> = {};
   for (const s of sessions ?? []) {
     const rows = (sets ?? []).filter(r => r.source_id === s.source_id);
-    // Même règle que validStrengthSets : reps valides, charge valide ou absente.
+    // Même règle que isStrengthSetDone, d'après la ligne enregistrée : chargée, ou
+    // sans charge prévue, ou aux reps changées (une série à charge prévue en %1RM
+    // sans 1RM n'a pas de charge prévue enregistrée : elle compte, faute de mieux).
     const done = rows.filter(r => validReps(r.reps == null ? '' : String(r.reps)) != null
-      && (r.load_kg == null || validLoad(String(r.load_kg)) != null)).length;
+      && (r.load_kg != null ? validLoad(String(r.load_kg)) != null
+        : r.prescribed_load_kg == null || r.reps !== r.prescribed_reps)).length;
     out[s.source_id] = {
       status: s.status === 'validated' ? 'validated' : 'draft',
       done,

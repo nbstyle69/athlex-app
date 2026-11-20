@@ -35,7 +35,7 @@ import {
   GymRecordCandidate, addStrengthSet, applyGymRecordsToGrid, buildStrengthGrid, gymRecordCandidates, isRepsOnly, logStrengthSets, removeStrengthSet,
   validStrengthSets, StrengthSetDraft, ServerStrengthSession, StrengthSourceKey,
   loadStrengthGrid, saveStrengthDraft, gridFromServer, fetchStrengthSession, submitStrengthValidation,
-  strengthProgress, computedMaxLoad, validationErrorCode, isNetworkError,
+  strengthProgress, computedMaxLoad, validationErrorCode, isNetworkError, unloadedPlannedSets,
 } from '../../services/strengthSets';
 import i18n from '../../i18n';
 import { wodTypeLabel } from '../../utils/wodTypeLabel';
@@ -44,7 +44,7 @@ import GymRecordSheet from '../../components/wod/GymRecordSheet';
 import { MODAL_DISMISS_MS } from '../../components/ConfirmDialog';
 import StrengthSetGrid, {
   StrengthRepsScoreStatus,
-  StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSaveState, StrengthSessionStatus,
+  StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSaveState, StrengthSessionStatus, confirmUnloadedSets,
 } from '../../components/wod/StrengthSetGrid';
 import { AxButton, AxCard, AxChip, AxTag, AxTextField } from '../../components/ax';
 import { axSpacing, axTypography } from '../../theme/axTokens';
@@ -675,6 +675,8 @@ export default function WODDetailScreen() {
    */
   async function validateStrength() {
     if (!wod || !user || !strengthKey) return;
+    // Séries prévues avec charge laissées sans charge : confirmées avant tout envoi.
+    if (!(await confirmUnloadedSets(unloadedPlannedSets(strengthDrafts)))) return;
     setSubmitting(true);
     let first = false;
     try {

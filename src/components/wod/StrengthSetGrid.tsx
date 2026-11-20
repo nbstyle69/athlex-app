@@ -14,7 +14,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Plus, Trash2 } from 'lucide-react-native';
 
 import { useTheme, AppTheme } from '../../context/ThemeContext';
@@ -39,6 +39,24 @@ interface Props {
   onAddSet?: (entryIndex: number) => void;
   /** Corbeille d'une série ajoutée en reps seules (index dans `drafts`). */
   onRemoveSet?: (index: number) => void;
+}
+
+/**
+ * Confirmation avant la validation quand des séries prévues avec charge partent
+ * sans charge (`unloadedPlannedSets`) : « Annuler » ne fait rien partir,
+ * « Valider » valide. Sans telle série : aucune fenêtre, validation directe.
+ */
+export function confirmUnloadedSets(count: number): Promise<boolean> {
+  if (count < 1) return Promise.resolve(true);
+  return new Promise(resolve => Alert.alert(
+    i18n.t('strengthSession.confirmUnloadedTitle'),
+    i18n.t('strengthSession.confirmUnloadedMessage', { count }),
+    [
+      { text: i18n.t('strengthSession.confirmUnloadedCancel'), style: 'cancel', onPress: () => resolve(false) },
+      { text: i18n.t('strengthSession.confirmUnloadedValidate'), onPress: () => resolve(true) },
+    ],
+    { cancelable: true, onDismiss: () => resolve(false) },
+  ));
 }
 
 /** « 9 reps », « 1 rep ». */

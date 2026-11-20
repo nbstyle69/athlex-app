@@ -136,7 +136,7 @@ import {
   submitStrengthValidation, validationErrorCode, SaveStrengthDraftParams, StrengthSourceKey,
   gridFromServer, isNetworkError, logStrengthSets, setRanks,
   addStrengthSet, removeStrengthSet, computedTotalReps, blockRepsTotal, validStrengthSets, isRepsOnly,
-  strengthFieldErrors, gymRecordCandidates, ServerSet,
+  strengthFieldErrors, gymRecordCandidates, ServerSet, unloadedPlannedSets,
 } from '../services/strengthSets';
 
 const KEY: StrengthSourceKey = { userId: 'u1', sourceType: 'whiteboard', sourceId: 'wod-1' };
@@ -712,7 +712,10 @@ describe('Charge facultative (nbstyle69/AthleX-Manager#453, PR 4b)', () => {
     d = edit(d, 1, { reps: '', loadKg: '' });       // série vide
     d = edit(d, 4, { reps: '', loadKg: '10' });     // charge sans reps
     expect(validStrengthSets(d).map(x => `${x.name}#${x.setIndex}`)).toEqual(['Deadlift#1', 'Back Squat#1', 'Back Squat#2', 'Pull-ups#2']);
-    expect(strengthProgress(d)).toEqual({ done: 4, total: 6 });
+    // « n / N » (décision de Nab) : seule Pull-ups#2 (chargée) est faite ; Deadlift#1 et les
+    // Back Squat (charge prévue, reps préremplies, sans charge, jamais touchés) ne le sont pas.
+    expect(strengthProgress(d)).toEqual({ done: 1, total: 6 });
+    expect(strengthProgress(edit(d, 0, { reps: '1' }))).toEqual({ done: 2, total: 6 });
     expect(computedMaxLoad(d)).toBe(10);
     expect(computedTotalReps(d)).toBe(12);
   });
@@ -770,5 +773,33 @@ describe('Charge facultative (nbstyle69/AthleX-Manager#453, PR 4b)', () => {
     expect(strengthFieldErrors({ reps: '', loadKg: '100' })).toEqual({ reps: 'repsMissing' });
     expect(strengthFieldErrors({ reps: '5', loadKg: '0' })).toEqual({ load: 'loadRange' });
     expect(strengthFieldErrors({ reps: '5', loadKg: '600' })).toEqual({ load: 'loadRange' });
+  });
+});
+
+describe('Compteur « n / N » et séries à confirmer (décision de Nab, nbstyle69/AthleX-Manager#453)', () => {
+  // 3 séries chargées + 16 séries à charge prévue en %1RM sans 1RM connu (reps préremplies, kg vide).
+  const g19 = () => buildStrengthGrid(
+    ['Back Squat — 3 × 5 @ 100 kg', 'Front Squat — 16 × 3 @ 70 %1RM'].map(l => parseStrengthLine(l)!), () => null);
+
+  it('ouverture : 3 / 19 ; une série vide dont l’athlète change les reps compte (4 / 19)', () => {
+    const d = g19();
+    expect(validStrengthSets(d)).toHaveLength(19);
+    expect(strengthProgress(d)).toEqual({ done: 3, total: 19 });
+    expect(strengthProgress(edit(d, 3, { reps: '2' }))).toEqual({ done: 4, total: 19 });
+    expect(strengthProgress(edit(d, 3, { loadKg: '60' }))).toEqual({ done: 4, total: 19 });
+  });
+
+  it('lignes sans charge prévue (gymnastique) : règle d’avant, reps préremplies comptées', () => {
+    const d = buildStrengthGrid([parseStrengthLine('Ring Muscle-up — 3 × 5')!], () => null);
+    expect(strengthProgress(d)).toEqual({ done: 3, total: 3 });
+  });
+
+  it('séries à confirmer : prévues avec charge, valides, sans charge ; ni ajoutées, ni reps seules, ni vides', () => {
+    expect(unloadedPlannedSets(g19())).toBe(16);
+    let d = edit(g19(), 3, { reps: '', loadKg: '' });      // vide : ignorée, rien à confirmer
+    d = edit(d, 4, { loadKg: '60' });                       // chargée
+    expect(unloadedPlannedSets(d)).toBe(14);
+    expect(unloadedPlannedSets(edit(addStrengthSet(buildStrengthGrid([parseStrengthLine('Deadlift — 1 × 2 @ 100 kg')!], () => null), 0), 1, { reps: '2' }))).toBe(0);
+    expect(unloadedPlannedSets(buildStrengthGrid([parseStrengthLine('Ring Muscle-up — 3 × 5')!], () => null))).toBe(0);
   });
 });

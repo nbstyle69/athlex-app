@@ -46,12 +46,12 @@ import {
 } from '../../services/wodGenerator';
 import {
   GymRecordCandidate, ServerStrengthSession, StrengthSourceKey, fetchStrengthSession, gridFromServer, gymRecordCandidates,
-  isNetworkError, loadStrengthGrid, saveStrengthDraft, validStrengthSets, validationErrorCode,
+  isNetworkError, loadStrengthGrid, saveStrengthDraft, unloadedPlannedSets, validStrengthSets, validationErrorCode,
 } from '../../services/strengthSets';
 import GymRecordSheet from '../../components/wod/GymRecordSheet';
 import { useMyRecords } from '../../hooks/useMyOneRepMax';
 import { draftsToPerformed, performedToDrafts, validateMuscuSession } from '../../services/muscuSession';
-import type { StrengthSaveState } from '../../components/wod/StrengthSetGrid';
+import { confirmUnloadedSets, type StrengthSaveState } from '../../components/wod/StrengthSetGrid';
 import { muscuDisplayedFor } from './muscuOptions';
 import MuscuSessionCard, { initialPerformed } from './MuscuSessionCard';
 import { MODAL_DISMISS_MS, useConfirmDialog } from '../../components/ConfirmDialog';
@@ -545,6 +545,8 @@ export default function WodResultScreen() {
       Alert.alert(i18n.t('strengthSession.errorTitle'), i18n.t('strengthSession.errorEmpty'));
       return;
     }
+    // Séries prévues avec charge laissées sans charge : confirmées avant tout envoi.
+    if (!(await confirmUnloadedSets(unloadedPlannedSets(performedToDrafts(m, performed))))) return;
     const id = await onSave();
     if (!id) return;
     const key = strengthKeyFor(id);
