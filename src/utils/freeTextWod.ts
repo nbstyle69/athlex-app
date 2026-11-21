@@ -14,7 +14,8 @@
  * % 1RM, % du max de gymnastique) ou parseCardioLine est extraite (`blocks`)
  * et traitée comme dans un WOD en lignes. Dès la première ligne qui n'a pas ce
  * format (ligne vide comprise), tout le reste est du texte libre, même une
- * série plus loin ; la lecture metcon ne porte que sur ce reste (`rest`).
+ * série plus loin ; la lecture metcon ne porte que sur ce reste (`rest`), où
+ * une ligne au format d'une série (complexe compris, #454) est entière à corriger.
  */
 import { MovementEntry, MovementUnit } from '../services/gamification';
 import { AthleteGender, isFormatHeaderLine, parseMovementLine } from './movementParser';
@@ -94,6 +95,9 @@ export function readFreeText(text: string | null | undefined): FreeTextReading {
   for (const raw of kept) {
     const line = raw.trim();
     if (!line) continue;
+    // Série écrite après le texte (Musculation, Cardio, complexe #454) : non lue,
+    // entière à corriger, avant tout découpage sur « + » (comme l'aperçu du Manager).
+    if (isBlockLine(line)) { out.toFix.push(line); continue; }
     if (isIgnoredFreeTextLine(line)) { out.ignored.push(line); continue; }
     for (const part of line.split('+')) {
       const segment = part.trim();

@@ -19,7 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { captureError } from '../lib/sentry';
-import { StrengthEntry, resolveStrengthLoadKg } from '../utils/strengthBlock';
+import { StrengthEntry, complexMovementsText, oneRepMaxName, resolveStrengthLoadKg } from '../utils/strengthBlock';
 import { weightliftingPrLabel } from '../screens/profile/prStorage';
 import { gymPrLabel, gymRepsForPct } from '../screens/home/gymZones';
 import { bestOneRepMaxBySet, PerformedSet } from './strengthPR';
@@ -67,6 +67,12 @@ export interface StrengthSetDraft {
    * Une série prescrite ne se retire pas.
    */
   isAdded?: boolean;
+  /**
+   * Complexe (nbstyle69/AthleX-Manager#454) : `name` porte ses mouvements
+   * (« 1 Deadlift + 1 Power Clean »), qui ne désignent aucun 1RM ni record de
+   * gymnastique ; `ref` est le mouvement de référence d'un %1RM (`null` sinon).
+   */
+  complex?: { ref: string | null };
 }
 
 /**
@@ -171,7 +177,10 @@ export function buildStrengthGrid(
   const out: StrengthSetDraft[] = [];
   const perMovement = new Map<string, number>();
   entries.forEach((e, entryIndex) => {
-    const kg = resolveStrengthLoadKg(e, oneRepMaxFor(e.name));
+    // Complexe : charge sur le 1RM du mouvement de référence, séries au nom de
+    // ses mouvements (jamais un libellé de 1RM ni de record de gymnastique).
+    const name = e.complex ? complexMovementsText(e.complex) : e.name;
+    const kg = resolveStrengthLoadKg(e, oneRepMaxFor(oneRepMaxName(e)));
     // % du record : reps calculées, ou vides sans record (jamais inventées).
     const reps = e.pctOfMax != null ? gymRepsForPct(gymRecordFor(e.name), e.pctOfMax) ?? 0 : e.reps;
     // Reps seules : une ligne « % du max », ou un des 11 mouvements de gymnastique
@@ -179,22 +188,22 @@ export function buildStrengthGrid(
     // ligne garde reps × kg, charge exigée même sans charge prescrite
     // (« Push Press — 2 × 5 » : l'athlète choisit sa charge). Gymnastique lestée
     // (« Pull-ups — 4 × 8 @ 10 kg ») : reps × kg.
-    const repsOnly = e.pctOfMax != null || (gymPrLabel(e.name) != null
+    const repsOnly = e.pctOfMax != null || (gymPrLabel(name) != null
       && !(e.load != null && e.load > 0 && e.unit === 'kg') && !(e.loadNote ?? '').trim()
       && (e.repsUnit == null || e.repsUnit === 'reps'));
     const loadRequired = !repsOnly;
     const sets = Math.max(1, Math.min(MAX_SETS_PER_MOVEMENT, Math.round(e.sets)));
     for (let s = 1; s <= sets; s++) {
-      const setIndex = (perMovement.get(e.name) ?? 0) + 1;
+      const setIndex = (perMovement.get(name) ?? 0) + 1;
       // ponytail: au-delà de 50 séries d'un même mouvement dans la séance, les
       // suivantes ne sont pas proposées (CHECK set_index ≤ 50) ; une migration
       // relèvera le plafond si une vraie séance le dépasse un jour.
       if (setIndex > MAX_SETS_PER_MOVEMENT) break;
-      perMovement.set(e.name, setIndex);
+      perMovement.set(name, setIndex);
       out.push({
         entryIndex,
         setIndex,
-        name: e.name,
+        name,
         reps: e.pctOfMax != null && reps < 1 ? '' : String(reps),
         loadKg: kg == null ? '' : String(kg),
         prescribedReps: reps,
@@ -202,6 +211,7 @@ export function buildStrengthGrid(
         loadRequired,
         ...(e.pctOfMax != null ? { prescribedPctOfMax: e.pctOfMax } : {}),
         ...(e.unit === '%1RM' && e.load != null && e.load > 0 ? { prescribedPct1Rm: e.load } : {}),
+        ...(e.complex ? { complex: { ref: e.complex.refName } } : {}),
       });
     }
   });
@@ -556,6 +566,7 @@ export function addStrengthSet(drafts: StrengthSetDraft[], entryIndex: number): 
     entryIndex, setIndex, name: last.name, reps: '', loadKg: '', prescribedReps: 0, prescribedLoadKg: null,
     loadRequired: !isRepsOnly(last), isAdded: true,
     ...(last.prescribedPctOfMax != null ? { prescribedPctOfMax: last.prescribedPctOfMax } : {}),
+    ...(last.complex ? { complex: last.complex } : {}),
   };
   return [...drafts.slice(0, at), added, ...drafts.slice(at)];
 }
@@ -741,6 +752,7 @@ export function gridFromServer(rawPrescription: StrengthSetDraft[], sets: Server
       ...(s.is_added ? { isAdded: true, loadRequired: same ? !isRepsOnly(same) : s.load_kg != null } : {}),
       ...(same?.loadRequired != null && !s.is_added ? { loadRequired: same.loadRequired } : {}),
       ...(same?.prescribedPctOfMax != null ? { prescribedPctOfMax: same.prescribedPctOfMax } : {}),
+      ...(same?.complex ? { complex: same.complex } : {}),
     };
     out.splice(same ? out.lastIndexOf(same) + 1 : out.length, 0, row);
   }
