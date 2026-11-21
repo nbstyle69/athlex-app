@@ -78,9 +78,9 @@ Généré par `scripts/import-catalog.cjs`. Le nom app (colonne « Nom final »)
 | `hang_clean_and_jerk` | Hang Clean & Jerk | Hang Clean & Jerk | nouveau | `mv_cj` |
 | `kb_snatch` | KB Snatch | KB Snatch | nouveau | `mv_kb_snatch` |
 | `kb_clean` | KB Clean | KB Clean | identique | — |
-| `kb_front_squat` | KB Front Squat | KB Front Squat | nouveau | — |
+| `kb_front_squat` | KB Front Squat | KB Front Squat | nouveau | `mv_squat` |
 | `kb_clean_and_jerk` | KB Clean & Jerk | KB Clean & Jerk | nouveau | `mv_kb_cj` |
-| `kb_deadlift` | KB Deadlift | KB Deadlift | nouveau | — |
+| `kb_deadlift` | KB Deadlift | KB Deadlift | nouveau | `mv_deadlifts` |
 | `box_jump_over_step_down` | Box Jump Over Step Down | Box Jump Over Step Down | nouveau | — |
 | `burpee_box_jump` | Burpee Box Jump | Burpee Box Jump | nouveau | `mv_burpee_bj` |
 | `burpee_over_the_bar` | Burpee Over The Bar | Burpees Over the Bar | renommé → nom app | `mv_burpee` |
