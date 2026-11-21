@@ -305,8 +305,8 @@ describe('écran Whiteboard (lecture du source)', () => {
   });
 
   it('pas de champ POIDS pour une séance de musculation : charge max calculée', () => {
-    // G3 : la charge max ne s'affiche que si une ligne chargée existe.
-    expect(src).toMatch(/\{isStrengthSession \? \(\s*strengthDrafts\.some\(d => !isRepsOnly\(d\)\) \? <StrengthMaxLoadRow maxLoadKg=\{computedMaxLoad\(strengthDrafts\)\} \/> : null/);
+    // G3 : la charge max ne s'affiche que si une ligne chargée existe ; « (complexe) » pour une séance de complexes (#454).
+    expect(src).toMatch(/\{isStrengthSession \? \(\s*strengthDrafts\.some\(d => !isRepsOnly\(d\)\) \? <StrengthMaxLoadRow maxLoadKg=\{computedMaxLoad\(strengthDrafts\)\} complex=\{isComplexGrid\(strengthDrafts\)\} \/> : null/);
     expect(src).toMatch(/variant="accent"[\s\S]{0,120}strengthSession\.validate/);
     expect(src).toMatch(/variant="outline"\s*label=\{i18n\.t\('strengthSession\.saveLater'\)\}/);
     expect(src).toMatch(/variant="outline"\s*label=\{i18n\.t\(strengthDrafts\.some\(isRepsOnly\) \? 'strengthSession\.editSets' : 'strengthSession\.editLoads'\)\}/);

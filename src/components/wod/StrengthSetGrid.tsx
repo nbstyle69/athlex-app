@@ -68,6 +68,16 @@ const FIELD_ERROR_KEYS: Record<StrengthFieldError, string> = {
   loadRange: 'strengthSession.fieldErrorLoadRange',
 };
 
+/** Titre d'un bloc : le mouvement, ou « Complexe · 1 Deadlift + 1 Power Clean » (Figma 740:658). */
+export function strengthBlockTitle(d: Pick<StrengthSetDraft, 'name' | 'complex'>): string {
+  return d.complex ? i18n.t('strengthSession.complexTitle', { movements: d.name }) : d.name;
+}
+
+/** Grille faite de complexes seulement : textes sans 1RM (Figma 740:658). */
+export function isComplexGrid(drafts: Pick<StrengthSetDraft, 'complex'>[]): boolean {
+  return drafts.every(d => d.complex);
+}
+
 /** Texte à droite d'une ligne chargée (Figma 737:777) : prévu, ou « ajoutée ». */
 export function loadedRowNote(d: StrengthSetDraft): string {
   if (d.isAdded) {
@@ -79,7 +89,10 @@ export function loadedRowNote(d: StrengthSetDraft): string {
       ? i18n.t('strengthSession.plannedRepsLoadPct', { reps: d.prescribedReps, kg: d.prescribedLoadKg, pct: pct1Rm })
       : i18n.t('strengthSession.plannedRepsLoad', { reps: d.prescribedReps, kg: d.prescribedLoadKg });
   }
-  if (pct1Rm != null) return i18n.t('strengthSession.plannedRepsPct1Rm', { reps: d.prescribedReps, pct: pct1Rm });
+  if (pct1Rm != null) {
+    // Complexe sans 1RM de référence (Figma 740:741) : « prévu 1 · 75 % ».
+    return i18n.t(d.complex ? 'strengthSession.plannedRepsPctComplex' : 'strengthSession.plannedRepsPct1Rm', { reps: d.prescribedReps, pct: pct1Rm });
+  }
   const pct = d.prescribedPctOfMax ?? null;
   return pct != null && d.prescribedReps < 1
     ? i18n.t('strengthSession.plannedPctOfMax', { pct })
@@ -93,13 +106,14 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
   // « Série n » = rang dans le bloc ; le numéro de stockage continue d'un bloc à l'autre.
   const ranks = setRanks(drafts);
   // Aide « sans charge » une seule fois, sous le dernier mouvement chargé.
-  const lastLoadedEntry = [...drafts].reverse().find(d => !isRepsOnly(d))?.entryIndex;
+  const lastLoaded = [...drafts].reverse().find(d => !isRepsOnly(d));
+  const lastLoadedEntry = lastLoaded?.entryIndex;
 
   return (
     <View>
       <Text style={S.label}>{i18n.t('strengthSession.gridTitle')}</Text>
       <Text style={S.hint}>
-        {i18n.t('strengthSession.gridHint')}
+        {i18n.t(isComplexGrid(drafts) ? 'strengthSession.gridHintComplex' : 'strengthSession.gridHint')}
       </Text>
       {drafts.map((d, i) => {
         const first = i === 0 || drafts[i - 1].entryIndex !== d.entryIndex;
@@ -113,11 +127,18 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
         const lastOfBlock = i === drafts.length - 1 || drafts[i + 1].entryIndex !== d.entryIndex;
         const dev = strengthSetDeviation(d);
         const errors = strengthFieldErrors(d);
-        const kgPlaceholder = d.prescribedLoadKg == null && d.prescribedPct1Rm != null
+        const kgPlaceholder = d.prescribedLoadKg == null && d.prescribedPct1Rm != null && !d.complex
           ? i18n.t('strengthSession.pct1RmPlaceholder') : i18n.t('strengthSession.kgPlaceholder');
+        // Complexe en %1RM sans 1RM du mouvement de référence (Figma 740:741).
+        const complexNo1Rm = d.complex?.ref != null && d.prescribedPct1Rm != null && d.prescribedLoadKg == null;
         return (
           <View key={`${d.entryIndex}-${d.setIndex}`}>
-            {first && <Text style={[S.movement, pct != null && S.movementWithPct]}>{d.name}</Text>}
+            {first && complexNo1Rm && (
+              <Text style={S.complexWarning} testID={`strength-complex-no-1rm-${d.entryIndex}`}>
+                {i18n.t('strengthSession.complexNo1Rm', { movement: d.complex?.ref })}
+              </Text>
+            )}
+            {first && <Text style={[S.movement, pct != null && S.movementWithPct]}>{strengthBlockTitle(d)}</Text>}
             {first && pct != null && (
               <View style={S.pctBlock}>
                 <Text style={S.pctLine} testID={`strength-gym-pct-${d.entryIndex}`}>
@@ -229,7 +250,9 @@ export default function StrengthSetGrid({ drafts, onChange, gymRecordFor, onSetG
               </TouchableOpacity>
             )}
             {lastOfBlock && !repsOnly && d.entryIndex === lastLoadedEntry && (
-              <Text style={S.noLoadHint} testID="strength-no-load-hint">{i18n.t('strengthSession.noLoadHint')}</Text>
+              <Text style={S.noLoadHint} testID="strength-no-load-hint">
+                {i18n.t(lastLoaded?.complex ? 'strengthSession.complexNoLoadHint' : 'strengthSession.noLoadHint')}
+              </Text>
             )}
             {lastOfBlock && repsOnly && (
               <>
@@ -302,18 +325,22 @@ export function StrengthSessionStatus({ done, total, savedAt, saveState, now }: 
   );
 }
 
-/** Charge max (score) calculée depuis les séries valides, à la place du champ POIDS. */
-export function StrengthMaxLoadRow({ maxLoadKg }: { maxLoadKg: number | null }) {
+/**
+ * Charge max (score) calculée depuis les séries valides, à la place du champ
+ * POIDS ; « Charge max (complexe) » pour une séance de complexes (Figma 740:658).
+ */
+export function StrengthMaxLoadRow({ maxLoadKg, complex = false }: { maxLoadKg: number | null; complex?: boolean }) {
   const { theme } = useTheme();
+  const label = i18n.t(complex ? 'strengthSession.maxLoadLabelComplex' : 'strengthSession.maxLoadLabel');
   const value = maxLoadKg == null ? i18n.t('strengthSession.maxLoadEmpty') : `${fmtKg(maxLoadKg)} kg`;
   return (
     <View
       style={axStyles.maxLoad}
       accessible
-      accessibilityLabel={`${i18n.t('strengthSession.maxLoadLabel')} : ${value}`}
+      accessibilityLabel={`${label} : ${value}`}
       testID="strength-max-load"
     >
-      <Text style={[axTypography.overline, { color: theme.ax.textMuted }]}>{i18n.t('strengthSession.maxLoadLabel')}</Text>
+      <Text style={[axTypography.overline, { color: theme.ax.textMuted }]}>{label}</Text>
       <Text
         style={[maxLoadKg == null ? axTypography.bodySmall : axTypography.numberM, { color: theme.ax.text }]}
         testID="strength-max-load-value"
@@ -357,7 +384,7 @@ export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
           const pct = d.prescribedPctOfMax ?? null;
           return (
             <View key={`${d.entryIndex}-${d.setIndex}`} style={axStyles.repsBlock} testID={`strength-my-loads-set-${i}`}>
-              {first && <Text style={[axTypography.label, { color: c.text }]}>{d.name}</Text>}
+              {first && <Text style={[axTypography.label, { color: c.text }]}>{strengthBlockTitle(d)}</Text>}
               <View style={axStyles.repsLine}>
                 <Text style={[axStyles.repsLabel, { color: c.textMuted }]}>{i18n.t('strengthSession.repsSetLine', { index: rank })}</Text>
                 <Text style={[axStyles.repsValue, { color: c.text }]}>{repsText(Number(d.reps))}</Text>
@@ -393,7 +420,7 @@ export function StrengthMyLoadsCard({ drafts, maxLoadKg }: {
         ].filter(Boolean).join(' · ');
         return (
           <View key={`${d.entryIndex}-${d.setIndex}`} testID={`strength-my-loads-set-${i}`}>
-            {first && <Text style={[axTypography.label, { color: c.text }]}>{d.name}</Text>}
+            {first && <Text style={[axTypography.label, { color: c.text }]}>{strengthBlockTitle(d)}</Text>}
             <View style={axStyles.setLine}>
               <Text style={[axTypography.bodySmall, { color: c.text }]}>
                 {d.loadKg.trim() === ''
@@ -545,5 +572,8 @@ function createStyles(theme: AppTheme) {
     errorUnderLoadReps: { width: LOAD_REPS_W + LOAD_GAP * 2 + LOAD_TIMES_W },
     errorUnderLoad: { flex: 1 },
     noLoadHint: { ...axTypography.caption, color: c.textMuted, marginBottom: axSpacing.sm },
+    // Figma 740:824 : Libellé/Petit, couleur d'avertissement, au-dessus du titre du bloc.
+    // 4 + 8 (indication) au-dessus, 2 + 10 (titre) au-dessous : 12 de part et d’autre, comme la maquette.
+    complexWarning: { ...axTypography.labelSmall, color: c.warning, marginTop: 4, marginBottom: 2 },
   });
 }

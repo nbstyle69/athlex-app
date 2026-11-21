@@ -44,7 +44,7 @@ import GymRecordSheet from '../../components/wod/GymRecordSheet';
 import { MODAL_DISMISS_MS } from '../../components/ConfirmDialog';
 import StrengthSetGrid, {
   StrengthRepsScoreStatus,
-  StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSaveState, StrengthSessionStatus, confirmUnloadedSets,
+  StrengthMaxLoadRow, StrengthMyLoadsCard, StrengthSaveState, StrengthSessionStatus, confirmUnloadedSets, isComplexGrid,
 } from '../../components/wod/StrengthSetGrid';
 import { AxButton, AxCard, AxChip, AxTag, AxTextField } from '../../components/ax';
 import { axSpacing, axTypography } from '../../theme/axTokens';
@@ -1173,7 +1173,7 @@ export default function WODDetailScreen() {
               )}
 
               {isStrengthSession ? (
-                strengthDrafts.some(d => !isRepsOnly(d)) ? <StrengthMaxLoadRow maxLoadKg={computedMaxLoad(strengthDrafts)} /> : null
+                strengthDrafts.some(d => !isRepsOnly(d)) ? <StrengthMaxLoadRow maxLoadKg={computedMaxLoad(strengthDrafts)} complex={isComplexGrid(strengthDrafts)} /> : null
               ) : markDone ? null : scoreType === 'rounds_reps' ? (
                 <>
                   <View style={S.rrRow}>

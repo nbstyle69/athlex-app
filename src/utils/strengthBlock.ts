@@ -48,6 +48,19 @@ export interface StrengthEntry {
    * l'athlète (`gymRepsForPct`) ; `reps` vaut alors 0 (inconnues ici).
    */
   pctOfMax?: number;
+  /**
+   * Complexe (nbstyle69/AthleX-Manager#454) : « Complexe — 1 Deadlift + 1 Power
+   * Clean — 5 × 1 @ 75 %1RM Power Clean ». `name` vaut « Complexe », `sets` × `reps`
+   * sont les séries × répétitions du complexe entier. Un complexe n'a jamais de
+   * 1RM propre : un %1RM se calcule sur celui de `refName` (un des mouvements).
+   */
+  complex?: StrengthComplex;
+}
+
+export interface StrengthComplex {
+  movements: { reps: number; name: string }[];
+  /** Mouvement de référence d'une charge en %1RM ; `null` pour une charge en kg ou libre. */
+  refName: string | null;
 }
 
 const SEP = ' — ';
@@ -74,7 +87,39 @@ function parseRest(text: string): number | null {
   return null;
 }
 
+/** Nom d'un complexe dans le texte du WOD (français, relu par le parseur). */
+const COMPLEX_NAME = 'Complexe'; // i18n-ignore : texte du WOD enregistré, relu par parseStrengthLine
+
+/** Fin commune : charge libre, repos, tempo (ordre du contrat). */
+function serializeTails(e: StrengthEntry): string {
+  let out = '';
+  const loadNote = (e.loadNote ?? '').trim().replace(/\s+[—–-]\s+/g, ' ');
+  if (loadNote) out += `${SEP}charge ${loadNote}`;
+  if (e.restSec != null && e.restSec > 0) out += `${SEP}repos ${formatRest(e.restSec)}`;
+  const tempo = (e.tempo ?? '').trim();
+  if (tempo) out += `${SEP}tempo ${tempo}`;
+  return out;
+}
+
+function serializeComplex(e: StrengthEntry, c: StrengthComplex): string {
+  const moves = c.movements
+    .map(m => ({ reps: Math.max(1, Math.round(m.reps)), name: sanitizeName(m.name).replace(/\s*\+\s*/g, ' ') }))
+    .filter(m => m.name);
+  if (moves.length < 2) return '';
+  let out = `${COMPLEX_NAME}${SEP}${moves.map(m => `${m.reps} ${m.name}`).join(' + ')}`
+    + `${SEP}${Math.max(1, Math.round(e.sets))} × ${Math.max(1, Math.round(e.reps))}`;
+  if (e.load != null && e.load > 0) {
+    if (e.unit === 'kg') out += ` @ ${e.load} kg`;
+    else {
+      const ref = moves.find(m => m.name.toLowerCase() === (c.refName ?? '').trim().toLowerCase()) ?? moves[moves.length - 1];
+      out += ` @ ${e.load} %1RM ${ref.name}`;
+    }
+  }
+  return out + serializeTails(e);
+}
+
 export function serializeStrength(e: StrengthEntry): string {
+  if (e.complex) return serializeComplex(e, e.complex);
   const name = sanitizeName(e.name);
   if (!name) return '';
   const sets = Math.max(1, Math.round(e.sets));
@@ -85,12 +130,66 @@ export function serializeStrength(e: StrengthEntry): string {
   if (e.pctOfMax == null && e.repsUnit && e.repsUnit !== 'reps') out += ` ${e.repsUnit}`;
   if (e.pctOfMax == null && e.perSide) out += ` / ${e.perSide}`;
   if (e.pctOfMax == null && e.load != null && e.load > 0) out += ` @ ${e.load} ${e.unit}`;
-  const loadNote = (e.loadNote ?? '').trim().replace(/\s+[—–-]\s+/g, ' ');
-  if (loadNote) out += `${SEP}charge ${loadNote}`;
-  if (e.restSec != null && e.restSec > 0) out += `${SEP}repos ${formatRest(e.restSec)}`;
-  const tempo = (e.tempo ?? '').trim();
-  if (tempo) out += `${SEP}tempo ${tempo}`;
-  return out;
+  return out + serializeTails(e);
+}
+
+/** Repos, tempo et charge libre des segments de fin. */
+function parseTails(tails: string[]): { restSec: number | null; tempo: string | null; loadNote: string | null } {
+  let restSec: number | null = null;
+  let tempo: string | null = null;
+  let loadNote: string | null = null;
+  for (const tail of tails) {
+    const rest = tail.match(/^repos\s+(.+)$/i);
+    if (rest) { restSec = parseRest(rest[1]); continue; }
+    const tp = tail.match(/^tempo\s+(.+)$/i);
+    if (tp) { tempo = tp[1].trim(); continue; }
+    const ch = tail.match(/^charge\s+(.+)$/i);
+    if (ch) loadNote = ch[1].trim();
+  }
+  return { restSec, tempo, loadNote };
+}
+
+/**
+ * « Complexe — 1 Deadlift + 1 Power Clean — 5 × 1 @ 75 %1RM Power Clean ».
+ * Deux mouvements au moins, chacun avec ses reps ; charge en kg, en %1RM d'un
+ * des mouvements (sans mouvement nommé : le dernier, défaut du Manager), ou
+ * aucune. Toute autre forme : `null` (la ligne n'est pas un complexe).
+ */
+function parseComplexLine(parts: string[]): StrengthEntry | null {
+  if (parts.length < 3 || !/^complexe$/i.test(parts[0].trim())) return null;
+  const movements: StrengthComplex['movements'] = [];
+  for (const raw of parts[1].split('+')) {
+    const mv = raw.trim().match(/^(\d+)\s+(\D.*)$/);
+    if (!mv || parseInt(mv[1], 10) < 1) return null;
+    movements.push({ reps: parseInt(mv[1], 10), name: mv[2].trim() });
+  }
+  if (movements.length < 2) return null;
+  const sc = parts[2].match(/^(\d+)\s*[x×]\s*(\d+)(?:\s*@\s*(\d+(?:[.,]\d+)?)\s*(?:(kg)|%\s*1rm(?:\s+(.+))?))?$/i);
+  if (!sc) return null;
+  const sets = parseInt(sc[1], 10);
+  const reps = parseInt(sc[2], 10);
+  if (sets < 1 || reps < 1) return null;
+  const load = sc[3] != null ? parseFloat(sc[3].replace(',', '.')) : null;
+  const unit: StrengthLoadUnit = load != null && sc[4] == null ? '%1RM' : 'kg';
+  let refName: string | null = null;
+  if (unit === '%1RM') {
+    const wanted = (sc[5] ?? '').trim().toLowerCase();
+    const ref = wanted ? movements.find(m => m.name.toLowerCase() === wanted) : movements[movements.length - 1];
+    if (!ref) return null;                     // référence hors du complexe
+    refName = ref.name;
+  }
+  const { restSec, tempo, loadNote } = parseTails(parts.slice(3));
+  return {
+    name: parts[0].trim(),
+    sets,
+    reps,
+    load,
+    unit,
+    restSec,
+    tempo,
+    ...(loadNote ? { loadNote } : {}),
+    complex: { movements, refName },
+  };
 }
 
 export function parseStrengthLine(line: string): StrengthEntry | null {
@@ -100,6 +199,8 @@ export function parseStrengthLine(line: string): StrengthEntry | null {
   if (parts.length < 2) return null;
   const name = parts[0].trim();
   if (!name) return null;
+  const complex = parseComplexLine(parts);
+  if (complex) return complex;
 
   const m = parts[1].match(/^(\d+)\s*[x×]\s*(\d+)(?:\s*(s|m)\b)?(?:\s*\/\s*(jambe|bras|c[oô]t[eé]))?(?:\s*@\s*(\d+(?:[.,]\d+)?)\s*(kg|%\s*1rm|%))?$/i);
   // « 3 × 15 % du max » / « 3 × 15 % » : seulement pour un mouvement de
@@ -113,17 +214,7 @@ export function parseStrengthLine(line: string): StrengthEntry | null {
   const load = m?.[5] != null ? parseFloat(m[5].replace(',', '.')) : null;
   const unit: StrengthLoadUnit = m?.[6] != null && m[6].toLowerCase().startsWith('kg') ? 'kg' : '%1RM';
 
-  let restSec: number | null = null;
-  let tempo: string | null = null;
-  let loadNote: string | null = null;
-  for (const tail of parts.slice(2)) {
-    const rest = tail.match(/^repos\s+(.+)$/i);
-    if (rest) { restSec = parseRest(rest[1]); continue; }
-    const tp = tail.match(/^tempo\s+(.+)$/i);
-    if (tp) { tempo = tp[1].trim(); continue; }
-    const ch = tail.match(/^charge\s+(.+)$/i);
-    if (ch) loadNote = ch[1].trim();
-  }
+  const { restSec, tempo, loadNote } = parseTails(parts.slice(2));
 
   return {
     name,
@@ -153,6 +244,43 @@ export function splitStrengthLines(lines: string[]): { wod: string[]; strength: 
 }
 
 const LOAD_STEP = 2.5;
+
+/**
+ * Mouvement dont le 1RM sert au %1RM d'une ligne : le sien, ou pour un complexe
+ * celui du mouvement de référence (un complexe n'a jamais de 1RM propre).
+ */
+export function oneRepMaxName(e: StrengthEntry): string {
+  return e.complex?.refName ?? e.name;
+}
+
+/** « 1 Deadlift + 1 Hang Power Clean + 1 Power Clean » (noms non traduits). */
+export function complexMovementsText(c: StrengthComplex): string {
+  return c.movements.map(m => `${m.reps} ${m.name}`).join(' + ');
+}
+
+/**
+ * Détail du WOD (Figma 740:502), deux lignes traduites :
+ *   Complexe : 1 Deadlift + 1 Hang Power Clean + 1 Power Clean
+ *   5 × 1 @ 75 % de ton 1RM Power Clean (≈ 72.5 kg) — repos 2:00
+ * Sans 1RM de référence, le pourcentage reste nu (aucune charge inventée).
+ */
+export function formatComplexLines(e: StrengthEntry, c: StrengthComplex, oneRepMaxKg: number | null | undefined): string {
+  let scheme = `${e.sets} × ${e.reps}`;
+  if (e.load != null && e.load > 0) {
+    if (e.unit === 'kg') scheme += ` @ ${e.load} kg`;
+    else {
+      scheme += ` @ ${i18n.t('strengthSession.complexPctOf', { pct: e.load, movement: c.refName })}`;
+      const kg = resolveStrengthLoadKg(e, oneRepMaxKg);
+      if (kg != null) scheme += ` (≈ ${kg} kg)`;
+    }
+  }
+  const note = (e.loadNote ?? '').trim();
+  if (note) scheme += `${SEP}${i18n.t('strengthSession.complexLoadNote', { note })}`;
+  if (e.restSec != null && e.restSec > 0) scheme += `${SEP}${i18n.t('strengthSession.complexRest', { rest: formatRest(e.restSec) })}`;
+  const tempo = (e.tempo ?? '').trim();
+  if (tempo) scheme += `${SEP}${i18n.t('strengthSession.complexTempo', { tempo })}`;
+  return `${i18n.t('strengthSession.complexLine', { movements: complexMovementsText(c) })}\n${scheme}`;
+}
 
 /**
  * Charge réelle d'un bloc, en kg. Une prescription en `%1RM` a besoin du 1RM de
@@ -185,6 +313,7 @@ export function annotateStrengthLoads(
     .split('\n')
     .map(line => {
       const e = parseStrengthLine(line);
+      if (e?.complex) return formatComplexLines(e, e.complex, oneRepMaxFor(oneRepMaxName(e)));
       if (!e || e.unit !== '%1RM' || e.load == null) return line;
       const kg = resolveStrengthLoadKg(e, oneRepMaxFor(e.name));
       return kg == null ? line : `${line.trimEnd()} (≈ ${kg} kg)`;
@@ -205,6 +334,7 @@ export function formatStrengthPrescription(
   // Affichage traduit (« 3 × 15 % du max », « 3 × 15% of max ») ; le texte du WOD,
   // lui, reste écrit en français par serializeStrength (c'est ce que lit le parseur).
   if (e.pctOfMax != null) return i18n.t('strengthSession.pctOfMaxScheme', { sets: e.sets, pct: e.pctOfMax });
+  if (e.complex) return formatComplexLines(e, e.complex, oneRepMaxKg).replace('\n', ' · ');
   let out = `${e.sets} × ${e.reps}`;
   if (e.repsUnit && e.repsUnit !== 'reps') out += ` ${e.repsUnit}`;
   if (e.perSide) out += ` / ${sideLabel(e.perSide)}`;
