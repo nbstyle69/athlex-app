@@ -145,4 +145,17 @@ describe('crédit : aucune rep de badge pour un complexe', () => {
     expect(readFreeText(loin).blocks).toEqual([]);
     expect(readFreeText(loin).rest).toContain('Complexe — 1 Deadlift');
   });
+  it('texte libre : un complexe écrit après le texte n’est jamais lu comme metcon (temps fini : seulement le metcon)', () => {
+    const complexe = 'Complexe — 1 Deadlift + 1 Hang Power Clean + 1 Power Clean — 5 × 1 @ 75 %1RM Power Clean';
+    const texte = `For time
+21 Thrusters @43/29 + 21 pull-ups
+${complexe}`;
+    expect(readFreeText(texte).toFix).toEqual([complexe]);
+    for (const g of ['male', 'female'] as const) {
+      expect(movementCredit(wod(texte, 'free'), 300, 'time', false, g).map(m => [m.name, m.reps]))
+        .toEqual([['Thruster', 21], ['Pull-ups', 21]]);
+    }
+    // Avec « repos » : toujours une série à corriger, pas une ligne ignorée (même ordre que le Manager).
+    expect(readFreeText(`${texte} — repos 2:00`).toFix).toEqual([`${complexe} — repos 2:00`]);
+  });
 });
