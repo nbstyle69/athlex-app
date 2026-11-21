@@ -76,6 +76,9 @@ const MOVEMENT_MAP: Record<string, string> = {
   pullup: 'pull_up', pushup: 'push_up', situp: 'sit_up', boxjump: 'box_jump',
   wallball: 'wall_ball', wallwalk: 'wall_walk', doubleunder: 'double_under',
   singleunder: 'single_under', kbswing: 'kb_swing', toes2bar: 'toes_to_bar',
+  // Décision A de Nab (#453, PR 3c-0) : comptent pour les badges deadlift et squat,
+  // partout ; le pont serveur movement_stats_keys suit (migration 20270166).
+  'kb deadlift': 'deadlift', 'kb front squat': 'squat',
 };
 
 function singularize(word: string): string {

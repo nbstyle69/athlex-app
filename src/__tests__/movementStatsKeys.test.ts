@@ -26,6 +26,34 @@ const catalogue = CATALOG_SNAPSHOT.movements as ReadonlyArray<{
   id: string; name: string; unit_default?: string; badge_key?: string | null;
 }>;
 
+/**
+ * La table `movement_stats_keys` telle que la laissent TOUTES les migrations
+ * (pas seulement l'INSERT de `20270102`) : chaque fichier de
+ * `supabase/migrations/`, dans l'ordre des noms (celui du rejeu), est lu, et
+ * chacune de ses écritures dans la table est appliquée. Seul l'INSERT de
+ * couples littéraux est compris ; toute autre écriture (UPDATE, DELETE,
+ * TRUNCATE) fait échouer le test plutôt que d'être ignorée. Le rejeu SQL
+ * (`supabase/tests/movement_stats_keys_kb.sql`) compare, lui, la vraie table
+ * au même fichier.
+ */
+function etatApresMigrations(): Record<string, string> {
+  const dossier = path.join(RACINE, 'supabase', 'migrations');
+  const etat: Record<string, string> = {};
+  for (const nom of fs.readdirSync(dossier).filter(f => f.endsWith('.sql')).sort()) {
+    const sql = fs.readFileSync(path.join(dossier, nom), 'utf8');
+    for (const m of sql.matchAll(/\b(INSERT\s+INTO|UPDATE|DELETE\s+FROM|TRUNCATE(?:\s+TABLE)?)\s+(?:public\.)?movement_stats_keys\b/gi)) {
+      if (!/^INSERT/i.test(m[1])) {
+        throw new Error(`${nom} : « ${m[0]} » — écriture que ce test ne sait pas rejouer`);
+      }
+      const bloc = sql.slice(m.index!, sql.indexOf(';', m.index!));
+      const couples = [...bloc.matchAll(/\('([a-z0-9_]+)',\s*'([a-z0-9_]+)'\)/g)];
+      if (couples.length === 0) throw new Error(`${nom} : INSERT sans couple littéral lisible`);
+      for (const [, id, cle] of couples) etat[id] = cle;
+    }
+  }
+  return etat;
+}
+
 describe('movement_stats_keys ≡ normalizeMovement du client sur le catalogue', () => {
   it('le catalogue a bien été lu (contre-exemple)', () => {
     expect(catalogue.length).toBeGreaterThan(300);
@@ -60,14 +88,8 @@ describe('movement_stats_keys ≡ normalizeMovement du client sur le catalogue',
     expect(desaccords).toEqual([]);
   });
 
-  it('la migration insère exactement ces correspondances', () => {
-    const sql = lire('supabase/migrations/20270102000000_credit_tournois_serveur.sql');
-    const bloc = sql.slice(sql.indexOf('INSERT INTO public.movement_stats_keys'));
-    const dansSql = Object.fromEntries(
-      [...bloc.slice(0, bloc.indexOf('ON CONFLICT')).matchAll(/\('([a-z0-9_]+)', '([a-z0-9_]+)'\)/g)]
-        .map(([, id, cle]) => [id, cle]),
-    );
-    expect(dansSql).toEqual(FICHIER.correspondances);
+  it('les migrations, rejouées dans l\'ordre, aboutissent exactement à ces correspondances', () => {
+    expect(etatApresMigrations()).toEqual(FICHIER.correspondances);
   });
 
   it('le fichier est à jour vis-à-vis de son générateur', () => {
