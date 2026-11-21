@@ -2,7 +2,19 @@
 -- KB Deadlift et KB Front Squat comptent pour les badges deadlift et squat
 -- (nbstyle69/AthleX-Manager#453, PR 3c-0, décision A de Nab)
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 21/11/2026 à 22:15, heure de Paris lue par la
+-- base, avec PGCLIENTENCODING=UTF8 (commit c8a9b0e0, sha256 du fichier
+-- a9054e4f…57b5). Dump des schémas public et internal avec droits
+-- db-dumps/2026-11-21/athlex-prod-public-internal-20261121T211419Z.dump,
+-- sha256 a97b9d41803f30882c22dd86594c3f8a42b532c9740b74a75412bc485c4c6fb4,
+-- aller-retour vérifié ; 141 TABLE DATA, 486 ACL, 348 POLICY. Précontrôle :
+-- aucune clé pour les deux ids, badge_key NULL, deadlift → mv_deadlifts,
+-- front_squat → mv_squat ; 0 WOD de tournoi citant ces ids, 0 score validé,
+-- 0 ligne de registre liée. movement_stats_keys 72 → 74 lignes (md5
+-- ab3f0b5f… → 174ca541…, ceux du rejeu) ; badge_key du catalogue 9dc9d497… →
+-- 1c833288… (prévu en base), 323 autres lignes inchangées ; registre, cumuls
+-- et badges identiques ; audit des droits 48/48 avant et après ; test réel
+-- annulé sur AthleX Fitness (crédit deadlift 21 et squat 15), aucune trace.
 -- Pas de BEGIN/COMMIT dans ce fichier : il se joue en UNE transaction :
 --   PGCLIENTENCODING=UTF8 psql "$PROD_DB_URL" -X -1 -v ON_ERROR_STOP=1 -f <ce fichier>
 -- Retour arrière : supabase/retours/20270166000000_movement_stats_keys_kb.sql.
