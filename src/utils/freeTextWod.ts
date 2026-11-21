@@ -6,8 +6,11 @@
  *
  * - chaque ligne est découpée sur « + » ;
  * - « @43/29 » = charges ♂ / ♀ ; « 15/12 cal » = quantités ♂ / ♀ ;
- * - nom exact du catalogue requis, pluriel toléré (« thrusters » → Thruster) ;
- *   sinon le morceau est « à corriger » ;
+ * - nom de la liste du texte libre (catalogue + FREE_TEXT_EXTRA_MOVEMENTS),
+ *   casse, tirets et pluriel ignorés (« thrusters », « toes to bar ») ; ou
+ *   écriture de MOVEMENT_MAP qui désigne UN seul nom de cette liste (« T2B » →
+ *   Toes-to-Bar, « ski » → SkiErg) ; sinon le morceau est « à corriger » (aucune
+ *   devinette : « pow clean », ou « jerk » qui vaut cinq noms, restent à corriger) ;
  * - lignes de format, repos, time cap et objectif ignorées.
  * Blocs Musculation et Cardio (#453 PR 3b, aligné sur le Manager #456) : la
  * suite continue de lignes EN TÊTE reconnues par parseStrengthLine (charge,
@@ -19,7 +22,8 @@
  */
 import { MovementEntry, MovementUnit } from '../services/gamification';
 import { AthleteGender, isFormatHeaderLine, parseMovementLine } from './movementParser';
-import { MOVEMENT_CATALOG } from './movementsCatalog';
+import { CatalogMovement, MOVEMENT_CATALOG } from './movementsCatalog';
+import { cleanMovementName, mappedMovementKey, normalizeMovement } from './tournamentUtils';
 import { parseStrengthLine } from './strengthBlock';
 import { parseCardioLine } from './cardioBlock';
 
@@ -53,14 +57,43 @@ export function isIgnoredFreeTextLine(line: string): boolean {
   return isFormatHeaderLine(line) || REST.test(line) || TIME_CAP.test(line) || OBJECTIVE.test(line);
 }
 
-/** Nom exact du catalogue (casse ignorée), ou son pluriel en « s ». */
+/**
+ * Mouvements lus en texte libre en plus du catalogue (décision A, #453 PR 3c).
+ * Propres au texte libre : MOVEMENT_CATALOG, donc l'éditeur du back-office, ne
+ * change pas. Clé de badge via normalizeMovement (MOVEMENT_MAP).
+ */
+export const FREE_TEXT_EXTRA_MOVEMENTS: CatalogMovement[] = [
+  { name: 'Snatch', weighted: true },
+  { name: 'Clean', weighted: true },
+  { name: 'Shoulder to Overhead', weighted: true },
+  { name: 'DB Lunge', weighted: true },
+  { name: 'DB Overhead Lunge', weighted: true },
+  { name: 'KB Snatch', weighted: true },
+  { name: 'KB Deadlift', weighted: true },
+  { name: 'KB Front Squat', weighted: true },
+  { name: 'KB Lunge', weighted: true },
+  { name: 'KB Overhead Lunge', weighted: true },
+];
+
+/** La liste du texte libre : le catalogue, puis les mouvements propres au texte libre. */
+export const FREE_TEXT_MOVEMENTS: readonly CatalogMovement[] = [...MOVEMENT_CATALOG, ...FREE_TEXT_EXTRA_MOVEMENTS];
+
+/**
+ * Nom de la liste du texte libre pour une écriture, ou null.
+ * (a) même nom, casse, tirets et pluriel ignorés ;
+ * (b) sinon, écriture de MOVEMENT_MAP dont la clé ne désigne qu'un seul nom de
+ *     la liste. Plusieurs noms (« hang clean » → clean : Power Clean, Squat
+ *     Clean, Tall Clean, Clean) : à corriger.
+ */
 export function catalogName(raw: string): string | null {
-  const n = raw.trim().toLowerCase();
-  const hit = MOVEMENT_CATALOG.find(m => {
-    const c = m.name.toLowerCase();
-    return n === c || n === `${c}s`;
-  });
-  return hit?.name ?? null;
+  const n = cleanMovementName(raw);
+  if (!n) return null;
+  const same = FREE_TEXT_MOVEMENTS.find(m => cleanMovementName(m.name) === n);
+  if (same) return same.name;
+  const key = mappedMovementKey(raw);
+  if (!key) return null;
+  const hits = FREE_TEXT_MOVEMENTS.filter(m => normalizeMovement(m.name).key === key);
+  return hits.length === 1 ? hits[0].name : null;
 }
 
 function readSegment(segment: string): FreeTextMovement | null {

@@ -5,7 +5,13 @@
  */
 import contract from './fixtures/free-text-wod-contract.json';
 import i18n from '../i18n';
-import { creditFreeText, readFreeText, catalogName } from '../utils/freeTextWod';
+import fs from 'fs';
+import path from 'path';
+import {
+  creditFreeText, readFreeText, catalogName, FREE_TEXT_EXTRA_MOVEMENTS, FREE_TEXT_MOVEMENTS,
+} from '../utils/freeTextWod';
+import { MOVEMENT_CATALOG } from '../utils/movementsCatalog';
+import { cleanMovementName, normalizeMovement } from '../utils/tournamentUtils';
 import {
   decodeRoundsReps, encodeRoundsReps, fixedScoreType, isTimeRanked, rankableScores, roundsRepsTooHigh,
 } from '../utils/wodScoreType';
@@ -92,12 +98,86 @@ describe('texte libre : contrat partagé avec le Manager', () => {
     expect(readFreeText(c.text)).toEqual(c.expected);
   });
 
-  it('nom exact du catalogue, pluriel en « s » toléré, rien d’autre', () => {
+  it('nom de la liste, casse, tirets et pluriel ignorés', () => {
     expect(catalogName('thrusters')).toBe('Thruster');
     expect(catalogName('THRUSTER')).toBe('Thruster');
     expect(catalogName('thrusterss')).toBeNull();
-    expect(catalogName('pull-up')).toBeNull();
-    expect(catalogName('ski')).toBeNull();
+    expect(catalogName('pull-up')).toBe('Pull-ups');
+    expect(catalogName('toes to bar')).toBe('Toes-to-Bar');
+  });
+
+  it('écriture de MOVEMENT_MAP : affichée sous le nom de la liste qu’elle désigne', () => {
+    expect(catalogName('ski')).toBe('SkiErg');
+    expect(catalogName('T2B')).toBe('Toes-to-Bar');
+    expect(catalogName('toes2bar')).toBe('Toes-to-Bar');
+    expect(catalogName('C2B')).toBe('Chest-to-Bar');
+    expect(catalogName('HSPU')).toBe('Handstand Push-ups');
+    expect(catalogName('DU')).toBe('Double-unders');
+    expect(catalogName('BMU')).toBe('Bar Muscle-ups');
+    expect(catalogName('RMU')).toBe('Ring Muscle-ups');
+    expect(catalogName('OHS')).toBe('Overhead Squat');
+  });
+
+  it('écriture qui désigne plusieurs noms : le nom de même écriture, sinon à corriger', () => {
+    expect(catalogName('clean')).toBe('Clean');
+    expect(catalogName('snatch')).toBe('Snatch');
+    expect(catalogName('front squat')).toBe('Front Squat');
+    for (const w of ['hang clean', 'hang snatch', 'jerk', 'STOH', 'S2OH', 'kettlebell deadlift', 'overhead lunge', 'walking lunge', 'assault bike']) {
+      expect([w, catalogName(w)]).toEqual([w, null]);
+    }
+  });
+
+  it('aucune devinette', () => {
+    for (const w of ['pow clean', 'kb dl', 'pullups strict', 'muscle up', 'pull', '']) expect([w, catalogName(w)]).toEqual([w, null]);
+  });
+
+  it('deux noms de la liste ne se confondent jamais une fois nettoyés', () => {
+    const nets = FREE_TEXT_MOVEMENTS.map(m => cleanMovementName(m.name));
+    expect(new Set(nets).size).toBe(nets.length);
+  });
+});
+
+describe('texte libre : mouvements propres au texte libre (décision A)', () => {
+  it('chacun a sa clé de badge', () => {
+    expect(Object.fromEntries(FREE_TEXT_EXTRA_MOVEMENTS.map(m => [m.name, normalizeMovement(m.name).key]))).toEqual({
+      Snatch: 'snatch', Clean: 'clean', 'Shoulder to Overhead': 'press', 'DB Lunge': 'lunge', 'DB Overhead Lunge': 'lunge',
+      'KB Snatch': 'kb_snatch', 'KB Deadlift': 'deadlift', 'KB Front Squat': 'squat', 'KB Lunge': 'lunge', 'KB Overhead Lunge': 'lunge',
+    });
+  });
+
+  it('le catalogue de l’éditeur du back-office (BOWODsScreen) ne change pas', () => {
+    expect(MOVEMENT_CATALOG.map(m => m.name)).toEqual([
+      'Thruster', 'Power Clean', 'Power Snatch', 'Clean & Jerk', 'Deadlift', 'Front Squat', 'Back Squat', 'Overhead Squat',
+      'Push Press', 'Push Jerk', 'Sumo Deadlift High Pull', 'Squat Snatch', 'Squat Clean', 'Squat Clean & Jerk', 'Cluster',
+      'Alt DB Snatch', 'DB Thruster', 'Devils Press', 'DB Deadlift', 'DB Clean & Jerk', 'DB Push Press', 'KB Swing',
+      'Goblet Squat', 'KB Clean', 'Wall Balls', 'Snatch Balance', 'Snatch High Pull', 'Clean Pull', 'Tall Clean', 'Power Jerk',
+      'Split Jerk', 'Back Rack Split Jerk', 'Strict Press', 'DB Strict Press', 'Bench Press', 'Zercher Squat', 'Pull-ups',
+      'Toes-to-Bar', 'Chest-to-Bar', 'Bar Muscle-ups', 'Handstand Push-ups', 'Ring Dips', 'Ring Muscle-ups', 'Rope Climbs',
+      'Pistols', 'Handstand Walk', 'Wall Walk', 'Box Jump-overs', 'Box Jumps', 'Box Step-ups', 'Burpees Over the Bar',
+      'Burpees', 'Push-ups', 'Sit-ups', 'Air Squats', 'Row', 'Bike Erg', 'Echo Bike', 'SkiErg', 'Run', 'Double-unders',
+      'Lunges', 'V-ups', 'Hollow Rocks',
+    ]);
+    const ecran = fs.readFileSync(path.join(__dirname, '../screens/backoffice/BOWODsScreen.tsx'), 'utf8');
+    expect(ecran).toMatch(/\{MOVEMENT_CATALOG\.map\(/);
+    expect(ecran).not.toMatch(/FREE_TEXT_|freeTextWod/);
+  });
+});
+
+describe('MOVEMENT_MAP : écritures ajoutées (#453 PR 3c) et abréviations à chiffre', () => {
+  it.each([
+    ['kettlebell deadlift', 'deadlift'], ['KB lunges', 'lunge'], ['DB overhead lunge', 'lunge'], ['KB overhead lunge', 'lunge'],
+    ['overhead lunges', 'lunge'], ['STOH', 'press'], ['S2OH', 'press'], ['C2B', 'chest_to_bar'], ['DU', 'double_under'],
+    ['BMU', 'bar_muscle_up'], ['RMU', 'ring_muscle_up'],
+    // entrées existantes jusqu'ici inaccessibles : chiffre entre deux lettres, « ohs » lu comme un pluriel
+    ['21 T2B', 'toes_to_bar'], ['toes2bar', 'toes_to_bar'], ['K2E', 'knees_to_elbow'], ['10 OHS @40/30', 'overhead_squat'],
+  ])('%s → %s', (w, cle) => {
+    expect(normalizeMovement(w).key).toBe(cle);
+  });
+
+  it('un nombre hors d’un mot reste une quantité', () => {
+    expect(normalizeMovement('21 thrusters').key).toBe('thruster');
+    expect(normalizeMovement('15/12 cal row').key).toBe('row');
+    expect(normalizeMovement('3x10 back squat').key).toBe('squat');
   });
 });
 
@@ -106,13 +186,21 @@ describe('texte libre : crédit des badges', () => {
 
   it('temps fini : chaque mouvement reconnu, quantités et charges du genre', () => {
     expect(creditFreeText(rxp, { scoreType: 'time', capped: false }, 'male')).toEqual([
-      { name: 'Pull-ups', reps: 21 }, { name: 'Thruster', reps: 21, weight_kg: 43 },
-      { name: 'Chest-to-Bar', reps: 18 }, { name: 'Thruster', reps: 18, weight_kg: 43 },
-      { name: 'Bar Muscle-ups', reps: 15 }, { name: 'Thruster', reps: 15, weight_kg: 43 },
+      { name: 'Pull-ups', reps: 21 }, { name: 'SkiErg', reps: 15, unit: 'cal' }, { name: 'Thruster', reps: 21, weight_kg: 43 },
+      { name: 'Chest-to-Bar', reps: 18 }, { name: 'SkiErg', reps: 15, unit: 'cal' }, { name: 'Thruster', reps: 18, weight_kg: 43 },
+      { name: 'Bar Muscle-ups', reps: 15 }, { name: 'SkiErg', reps: 12, unit: 'cal' }, { name: 'Thruster', reps: 15, weight_kg: 43 },
     ]);
     expect(creditFreeText(contract.cases[1].text, { scoreType: 'time', capped: false }, 'female')).toEqual([
-      { name: 'Wall Balls', reps: 10, weight_kg: 6 }, { name: 'SkiErg', reps: 15, unit: 'cal' },
+      { name: 'Wall Balls', reps: 10, weight_kg: 6 }, { name: 'SkiErg', reps: 15, unit: 'cal' }, { name: 'Pull-ups', reps: 1 },
     ]);
+  });
+
+  it('For Time « 21 T2B + 21 KB deadlifts @24/16 » : temps fini → toes_to_bar et deadlift, 21 chacun ; au cap → rien', () => {
+    const wod = 'For time\n21 T2B + 21 KB deadlifts @24/16';
+    const credit = creditFreeText(wod, { scoreType: 'time', capped: false }, 'female');
+    expect(credit).toEqual([{ name: 'Toes-to-Bar', reps: 21 }, { name: 'KB Deadlift', reps: 21, weight_kg: 16 }]);
+    expect(credit.map(c => [normalizeMovement(c.name).key, c.reps])).toEqual([['toes_to_bar', 21], ['deadlift', 21]]);
+    expect(creditFreeText(wod, { scoreType: 'time', capped: true }, 'female')).toEqual([]);
   });
 
   it.each([

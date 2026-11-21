@@ -79,6 +79,11 @@ const MOVEMENT_MAP: Record<string, string> = {
   // Décision A de Nab (#453, PR 3c-0) : comptent pour les badges deadlift et squat,
   // partout ; le pont serveur movement_stats_keys suit (migration 20270166).
   'kb deadlift': 'deadlift', 'kb front squat': 'squat',
+  // Texte libre (#453, PR 3c) : écritures et abréviations courantes.
+  'kettlebell deadlift': 'deadlift',
+  'kb lunge': 'lunge', 'db overhead lunge': 'lunge', 'kb overhead lunge': 'lunge', 'overhead lunge': 'lunge',
+  stoh: 'press', s2oh: 'press',
+  c2b: 'chest_to_bar', du: 'double_under', bmu: 'bar_muscle_up', rmu: 'ring_muscle_up',
 };
 
 function singularize(word: string): string {
@@ -99,21 +104,40 @@ export function isKnownMovementKey(key: string): boolean {
   return MOVEMENT_KEYS.has(key);
 }
 
-export function normalizeMovement(raw: string): { key: string; label: string } {
-  const cleaned = raw.toLowerCase()
+/** Écriture nettoyée : casse, tirets, nombres, charges et pluriels ignorés. */
+export function cleanMovementName(raw: string): string {
+  return cleanWithoutPlural(raw).split(' ').map(singularize).join(' ');
+}
+
+function cleanWithoutPlural(raw: string): string {
+  return raw.toLowerCase()
     .replace(/&/g, ' and ')
     .replace(/\bfor time\b/g, '')
     .replace(/\d+[-x]\d+[-x]?\d*/g, '')
     .replace(/\d+\s*(kg|lb|rm|%)/g, '')
-    .replace(/\d+/g, '')
+    // Un chiffre entre deux lettres fait partie du nom (« t2b », « c2b », « s2oh ») ;
+    // ailleurs c'est une quantité.
+    .replace(/\d+/g, (d, i: number, str: string) => (/[a-z]/.test(str[i - 1] ?? '') && /[a-z]/.test(str[i + d.length] ?? '') ? d : ''))
     .replace(/[^\w\s-]/g, '')
     .replace(/-/g, ' ')
     .trim()
     .split(/\s+/)
-    .map(singularize)
-    .join(' ')
-    .trim();
-  const key = MOVEMENT_MAP[cleaned] ?? cleaned.replace(/\s+/g, '_');
+    .join(' ');
+}
+
+/** MOVEMENT_MAP sur l'écriture au singulier, puis telle qu'écrite (« ohs » n'est pas un pluriel). */
+function mapLookup(raw: string): string | undefined {
+  return MOVEMENT_MAP[cleanMovementName(raw)] ?? MOVEMENT_MAP[cleanWithoutPlural(raw)];
+}
+
+/** Clé de badge d'une écriture que MOVEMENT_MAP connaît, sinon null (pas de repli). */
+export function mappedMovementKey(raw: string): string | null {
+  return mapLookup(raw) ?? null;
+}
+
+export function normalizeMovement(raw: string): { key: string; label: string } {
+  const cleaned = cleanMovementName(raw);
+  const key = mapLookup(raw) ?? cleaned.replace(/\s+/g, '_');
   const label = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   return { key, label };
 }
