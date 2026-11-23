@@ -710,6 +710,9 @@ export default function WhiteboardScreen() {
     shownWODs.find(w => w.block_name === 'wod') ??
     shownWODs.find(w => (w as any).leaderboard_enabled === true) ??
     shownWODs.find(w => w.wod_type === 'for-time' || w.wod_type === 'amrap') ??
+    // journée sans bloc `wod` (Musculation de box, #620) : la première carte qui n'est ni
+    // un échauffement ni un retour au calme, sinon la première carte du jour
+    shownWODs.find(w => w.block_name !== 'warmup' && w.block_name !== 'cooldown') ??
     shownWODs[0];
 
   return (
