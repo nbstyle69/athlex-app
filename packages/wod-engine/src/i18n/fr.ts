@@ -159,6 +159,8 @@ export const fr = {
       repos: (t: string) => ` — repos ${t}`,
     },
     titre: (cible: string, objectif: string) => `${cible} · ${objectif}`,
+    /** carte d'une partie de la séance (programmation de box, #620) : ajoutée au titre */
+    partie: { principal: 'Bloc principal', accessoires: 'Accessoires' },
     entete: (cible: string, objectif: string, min: number, materiel: string) => `Musculation · ${cible} · ${objectif} · ${prime(min)} · ${materiel}`,
     dureeEstimee: (min: number) => `Durée estimée ${prime(min)}`,
     stimulus: (note: string) => `Stimulus : ${note}`,
@@ -210,6 +212,7 @@ export const fr = {
     titreBuilding: (nom: string) => `Building · ${nom}`,
     titreFinisher: 'Finisher',
     titreRetourAuCalme: 'Retour au calme',
+    titreEchauffement: 'Échauffement',
     notePourcentages: 'Pourcentages du 1RM du mouvement complet ; sans 1RM, charge propre.',
     noteChronometree: 'Séance chronométrée de bout en bout : compare avec ta dernière simulation.',
   },
@@ -390,6 +393,27 @@ export const fr = {
       ],
       compromiseCible: 'allure 5 km + 15 s/km',
       scoreSimulation: 'temps total',
+    },
+
+    /**
+     * Musculation de la programmation de box (#620) : échauffement et retour au calme de chaque
+     * cible de la semaine, choisis par la cible du jour, sans tirage. Textes de la spec validée par Nab.
+     */
+    musculation: {
+      echauffement: {
+        push: "Échauffement (10') — rameur ou vélo facile, mobilité épaules et thoracique, Push-Ups, Band Pull-Aparts, puis 2 séries légères du premier exercice.",
+        jambes: "Échauffement (10') — vélo ou rameur facile, mobilité chevilles et hanches, Air Squats, Lunges, puis 2 séries légères du premier exercice.",
+        pull: "Échauffement (10') — rameur facile, mobilité épaules, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, puis 2 séries légères du premier exercice.",
+        fessiers_ischios: "Échauffement (10') — vélo facile, mobilité hanches, Glute Bridges, Good Mornings à vide, puis 2 séries légères du premier exercice.",
+        tronc: "Échauffement (5') — rameur ou vélo facile, Dead Bugs, Bird Dogs, planche 20 s.",
+      },
+      retourAuCalme: {
+        push: "Retour au calme (5') — étirements : pectoraux au mur 45 s / bras · épaule en travers 45 s / bras · triceps au-dessus de la tête 30 s / bras, respiration lente.",
+        jambes: "Retour au calme (5') — étirements : quadriceps debout 45 s / jambe · adducteurs en grenouille 45 s · fessiers en pigeon 45 s / côté.",
+        pull: "Retour au calme (5') — étirements : dorsaux à la barre ou au mur 45 s · biceps au mur 30 s / bras · ouverture thoracique 45 s, respiration lente.",
+        fessiers_ischios: "Retour au calme (5') — étirements : ischios debout 45 s / jambe · pigeon 45 s / côté · fléchisseurs de hanche en fente 45 s / côté.",
+        tronc: "Retour au calme (5') — posture de l'enfant 1' · cobra 45 s · rotation thoracique allongé 45 s / côté, respiration 4-6.",
+      },
     },
   },
 };

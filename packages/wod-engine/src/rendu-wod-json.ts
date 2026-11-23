@@ -17,7 +17,7 @@
 import { render } from './render';
 import { noteExercice, noteStimulus, renderMuscu } from './muscu';
 import { descriptionBlocC, rendreBlocSeance } from './rendu-seance';
-import type { RenduBlocSeance, TexteBloc } from './rendu-seance';
+import type { TexteBloc } from './rendu-seance';
 import { textes } from './i18n';
 import type { Langue } from './i18n';
 import type { GeneratedWod, MuscuWod } from './types';
@@ -30,7 +30,7 @@ export function renderFromWodJson(wodJson: unknown, langue: Langue = 'fr'): Text
   const j = wodJson as { v?: unknown; source?: unknown; discipline?: unknown; rendu?: unknown };
   if (j.v !== WOD_JSON_VERSION || j.source !== 'generator') return null;
 
-  if (j.discipline === 'session') return j.rendu ? rendreBlocSeance(j.rendu as RenduBlocSeance, langue) : null;
+  if (j.discipline === 'session') return rendreBlocSeance(j.rendu, langue);
 
   if (j.discipline === 'musculation') {
     const w = wodJson as MuscuWod;
@@ -38,7 +38,12 @@ export function renderFromWodJson(wodJson: unknown, langue: Langue = 'fr'): Text
     const exercises = w.blocks[0].exercises.map((e) => (e.rendu ? { ...e, notes: noteExercice(e.rendu, langue) } : e));
     const copie: MuscuWod = { ...w, stimulus: { ...w.stimulus, note }, blocks: [{ ...w.blocks[0], exercises }] };
     const T = textes(langue).musculation;
-    return { title: T.titre(T.cible[w.target], T.objectif[w.objective]), description: renderMuscu(copie, langue), notes: note };
+    const titre = T.titre(T.cible[w.target], T.objectif[w.objective]);
+    // carte d'une partie de la séance (#620) : libellé de la partie au titre ; la note du stimulus
+    // reste sur la première carte de musculation, jamais sur les accessoires
+    const partie = w.rendu?.partie;
+    if (partie) return { title: `${titre} · ${T.partie[partie]}`, description: renderMuscu(copie, langue), notes: partie === 'accessoires' ? null : note };
+    return { title: titre, description: renderMuscu(copie, langue), notes: note };
   }
 
   if (j.discipline === 'functional' || j.discipline === 'hybrid') {

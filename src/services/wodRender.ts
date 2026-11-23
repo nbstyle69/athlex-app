@@ -137,7 +137,9 @@ export interface LigneEnregistree {
 function rendreLigne(wodJson: unknown, saved: TexteBloc, langue: Langue): TexteBloc | null {
   const w = wodJson as MuscuWod | GeneratedWod;
   const exercices = w.discipline === 'musculation' ? (w as MuscuWod).blocks?.[0]?.exercises : undefined;
-  if (exercices?.length === 1) {
+  // une carte « Bloc principal » ou « Accessoires » de la programmation de box (#620) peut n'avoir qu'un exercice :
+  // c'est une partie de séance, rendue par le moteur, pas une ligne « une ligne par exercice »
+  if (exercices?.length === 1 && !(w as MuscuWod).rendu?.partie) {
     const e = exercices[0];
     return { title: exerciseName(e, langue), description: exerciseLine(e, langue), notes: saved.notes != null ? displayStimulusNote(w, langue) : null };
   }

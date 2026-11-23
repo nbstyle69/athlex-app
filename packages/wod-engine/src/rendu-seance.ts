@@ -55,7 +55,9 @@ export type RenduBlocSeance =
   | { bloc: 'work'; label: string; echauffement: string[] | null; timed: boolean; contenu: ContenuBloc; noms: Record<string, string> }
   | { bloc: 'b'; movement: string; name?: string; tempo: string | null; steps: StrengthStep[]; noms: Record<string, string> }
   | { bloc: 'finisher'; rounds: number; movements: Array<{ id: string; qty: number; unit: string; name?: string }>; noms: Record<string, string> }
-  | { bloc: 'cooldown'; lignes: string[] };
+  | { bloc: 'cooldown'; lignes: string[] }
+  /** carte Échauffement de la Musculation de box (#620) : textes de la banque, choisis par la cible */
+  | { bloc: 'echauffement'; lignes: string[] };
 
 /** Bloc C d'une séance (`GeneratedWod`) : l'échauffement le précède quand la séance n'a pas de bloc A. */
 export interface RenduBlocC { bloc: 'c'; echauffement: string[] | null }
@@ -184,8 +186,16 @@ function lignesHybrid(c: ContenuBloc, x: Ctx): string[] {
 
 const HYBRID_A = new Set(['station', 'run', 'race']);
 
-/** Titre, description et notes d'un bloc de séance, dans la langue demandée (défaut `fr`, le texte enregistré). */
-export function rendreBlocSeance(p: RenduBlocSeance, langue: Langue = 'fr'): TexteBloc {
+/**
+ * Titre, description et notes d'un bloc de séance, dans la langue demandée (défaut `fr`, le texte enregistré).
+ * Variante inconnue (écrite par un moteur plus récent que celui qui lit) : `null`, l'affichage retombe
+ * sur le texte enregistré.
+ */
+export function rendreBlocSeance(p: RenduBlocSeance, langue?: Langue): TexteBloc;
+export function rendreBlocSeance(p: unknown, langue?: Langue): TexteBloc | null;
+export function rendreBlocSeance(q: unknown, langue: Langue = 'fr'): TexteBloc | null {
+  if (!q || typeof q !== 'object') return null;
+  const p = q as RenduBlocSeance;
   const x = contexte(langue, 'noms' in p ? p.noms : {});
   const { t, tb, nom } = x;
   const T = t.seance;
@@ -226,6 +236,10 @@ export function rendreBlocSeance(p: RenduBlocSeance, langue: Langue = 'fr'): Tex
     }
     case 'cooldown':
       return { title: T.titreRetourAuCalme, description: p.lignes.map(tb).join(NL), notes: null };
+    case 'echauffement':
+      return { title: T.titreEchauffement, description: p.lignes.map(tb).join(NL), notes: null };
+    default:
+      return null;
   }
 }
 

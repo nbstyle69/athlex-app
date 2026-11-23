@@ -160,6 +160,7 @@ export const en: Textes = {
       repos: (t: string) => ` — rest ${t}`,
     },
     titre: (cible: string, objectif: string) => `${cible} · ${objectif}`,
+    partie: { principal: 'Main block', accessoires: 'Accessories' },
     entete: (cible: string, objectif: string, m: number, materiel: string) => `Strength · ${cible} · ${objectif} · ${min(m)} · ${materiel}`,
     dureeEstimee: (m: number) => `Estimated duration ${min(m)}`,
     stimulus: (note: string) => `Stimulus: ${note}`,
@@ -208,6 +209,7 @@ export const en: Textes = {
     titreBuilding: (nom: string) => `Building · ${nom}`,
     titreFinisher: 'Finisher',
     titreRetourAuCalme: 'Cool-down',
+    titreEchauffement: 'Warm-up',
     notePourcentages: 'Percentages of the full-movement 1RM; without a 1RM, clean load.',
     noteChronometree: 'Timed from start to finish: compare with your last simulation.',
   },
@@ -376,6 +378,23 @@ export const en: Textes = {
       ],
       compromiseCible: '5 km pace + 15 s/km',
       scoreSimulation: 'total time',
+    },
+
+    musculation: {
+      echauffement: {
+        push: 'Warm-up (10 min) — easy rower or bike, shoulder and thoracic mobility, Push-Ups, Band Pull-Aparts, then 2 light sets of the first exercise.',
+        jambes: 'Warm-up (10 min) — easy bike or rower, ankle and hip mobility, Air Squats, Lunges, then 2 light sets of the first exercise.',
+        pull: 'Warm-up (10 min) — easy rower, shoulder mobility, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, then 2 light sets of the first exercise.',
+        fessiers_ischios: 'Warm-up (10 min) — easy bike, hip mobility, Glute Bridges, empty-bar Good Mornings, then 2 light sets of the first exercise.',
+        tronc: 'Warm-up (5 min) — easy rower or bike, Dead Bugs, Bird Dogs, 20 s plank.',
+      },
+      retourAuCalme: {
+        push: 'Cool-down (5 min) — stretching: chest against the wall 45 s / arm · cross-body shoulder 45 s / arm · overhead triceps 30 s / arm, slow breathing.',
+        jambes: 'Cool-down (5 min) — stretching: standing quads 45 s / leg · frog adductors 45 s · pigeon for the glutes 45 s / side.',
+        pull: 'Cool-down (5 min) — stretching: lats on the bar or against the wall 45 s · biceps against the wall 30 s / arm · thoracic opener 45 s, slow breathing.',
+        fessiers_ischios: 'Cool-down (5 min) — stretching: standing hamstrings 45 s / leg · pigeon 45 s / side · hip flexors in a lunge 45 s / side.',
+        tronc: "Cool-down (5 min) — child's pose 1 min · cobra 45 s · lying thoracic rotation 45 s / side, 4-6 breathing.",
+      },
     },
   },
 };
