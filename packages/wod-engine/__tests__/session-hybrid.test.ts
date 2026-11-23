@@ -231,7 +231,7 @@ describe('les trois pistes ensemble', () => {
     expect(mu.days).toHaveLength(5);
 
     // chaque piste écrit ses propres lignes : une piste ne doit pas écraser l'autre
-    const rows = [...functionalWeekRows(fn, ctx), ...functionalWeekRows(hy, ctx), ...muscuWeekRows(mu, ctx)];
+    const rows = [...functionalWeekRows(fn, ctx), ...functionalWeekRows(hy, ctx), ...muscuWeekRows(mu, ctx, CATALOG_SNAPSHOT)];
     const perDayPerTrack = new Map<string, number[]>();
     for (const r of rows) {
       const key = `${r.scheduled_date}|${r.block_name}`;

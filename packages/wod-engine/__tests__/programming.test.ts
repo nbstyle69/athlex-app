@@ -93,16 +93,19 @@ describe('semaine cible, seed, publish_at', () => {
     expect(rows.every((r) => r.audience === 'all' && r.publish_at === revealAt(2027, 11) && r.source === 'auto' && r.is_published && r.auto_run_id === 'run-x')).toBe(true);
     expect(rows.filter((r) => r.leaderboard_enabled).every((r) => r.block_name === 'wod')).toBe(true);
     expect(new Set(rows.map((r) => r.scheduled_date)).size).toBe(6);
-    const muscu = muscuWeekRows(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx);
-    expect(muscu).toHaveLength(5);
-    expect(muscu.every((r) => !r.leaderboard_enabled && r.wod_type === 'strength' && r.block_name === 'strength')).toBe(true);
+    const muscu = muscuWeekRows(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx, CATALOG_SNAPSHOT);
+    // #620 : 4 cartes du lundi au vendredi (hors mercredi), 3 le samedi Tronc
+    expect(muscu).toHaveLength(4 * 4 + 3);
+    expect(muscu.every((r) => !r.leaderboard_enabled)).toBe(true);
+    expect(muscu.every((r) => (r.block_name === 'strength') === (r.wod_type === 'strength'))).toBe(true);
+    expect(muscu.filter((r) => r.block_name !== 'strength').every((r) => r.wod_type === 'custom' && ['warmup', 'cooldown'].includes(r.block_name))).toBe(true);
   });
 
   it('chaque ligne porte sa piste (20261223) : les onglets du Whiteboard filtrent dessus', () => {
     const ctx = { box_id: BOX, created_by: OWNER, run_id: 'run-t', ...TARGET };
     const fonctionnel = functionalWeekRows(generateWeek({ ...TARGET, track: 'functional' }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx);
     const hybrid = functionalWeekRows(generateWeek({ ...TARGET, track: 'hybrid' }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx);
-    const muscu = muscuWeekRows(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx);
+    const muscu = muscuWeekRows(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx, CATALOG_SNAPSHOT);
     expect(fonctionnel.every((r) => r.track === 'functional')).toBe(true);
     expect(hybrid.every((r) => r.track === 'hybrid')).toBe(true);
     expect(muscu.every((r) => r.track === 'musculation')).toBe(true);
@@ -148,7 +151,7 @@ describe('révélation par box (20261221) — modes weekly / daily', () => {
     const byDate = new Map(rows.map((r) => [r.scheduled_date, r.publish_at]));
     expect([...byDate.keys()].sort()).toEqual(weekDates(2027, 11));
     for (const [date, at] of byDate) expect(at).toBe(`${date}T06:00:00.000Z`);
-    const muscu = muscuWeekRows(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctxFor(daily));
+    const muscu = muscuWeekRows(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctxFor(daily), CATALOG_SNAPSHOT);
     for (const r of muscu) expect(r.publish_at).toBe(`${r.scheduled_date}T06:00:00.000Z`);
     expect(new Set(muscu.map((r) => r.publish_at)).size).toBe(5);
   });
@@ -172,13 +175,13 @@ describe('révélation par box (20261221) — modes weekly / daily', () => {
     const db = fresh(['musculation']);
     db.boxes[0].reveal = { mode: 'daily', dow: 0, time: '06:45' };
     await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
-    expect(db.wods).toHaveLength(5);
+    expect(db.wods).toHaveLength(4 * 4 + 3); // #620 : cartes de la journée
     for (const w of db.wods) expect(w.publish_at).toBe(`${w.scheduled_date}T05:45:00.000Z`);
   });
 });
 
 describe('runWeekGeneration (base en mémoire)', () => {
-  it('première passe : une run done par piste, 6 jours Functional + 5 jours Muscu, groupes créés, relâchements journalisés', async () => {
+  it('première passe : une run done par piste, 6 jours Functional + 5 jours Muscu en cartes, groupes créés, relâchements journalisés', async () => {
     const db = fresh();
     const out = await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
     expect(out.map((o) => [o.track, o.status, o.regen_counter])).toEqual([['functional', 'done', 0], ['musculation', 'done', 0]]);
@@ -192,7 +195,11 @@ describe('runWeekGeneration (base en mémoire)', () => {
     }
     const cf = db.wods.filter((w) => w.auto_run_id === db.runs[0].id);
     expect(new Set(cf.map((w) => w.scheduled_date)).size).toBe(6);
-    expect(db.wods.filter((w) => w.auto_run_id === db.runs[1].id)).toHaveLength(5);
+    // #620 : 5 jours de Musculation, en 4 cartes (3 le samedi Tronc)
+    const mu = db.wods.filter((w) => w.auto_run_id === db.runs[1].id);
+    expect(new Set(mu.map((w) => w.scheduled_date)).size).toBe(5);
+    expect(mu).toHaveLength(4 * 4 + 3);
+    expect(db.runs[1].wod_ids.sort()).toEqual(mu.map((w) => w.id).sort());
     // un groupe par piste *activée* : la box de ce test n'a pas la piste Hybrid
     expect(db.groups.map((g) => g.name).sort()).toEqual(db.boxes[0].tracks.map((t) => TRACK_GROUP_NAME[t]).sort());
     expect(db.runs[0].wod_ids.sort()).toEqual(cf.map((w) => w.id).sort());

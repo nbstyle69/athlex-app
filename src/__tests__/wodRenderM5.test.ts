@@ -99,7 +99,7 @@ describe('displayRow — lignes enregistrées, 50 entrées par chemin', () => {
       for (const l of parForme[forme]) {
         const en = displayRow(l.row, 'en');
         const w = l.row.wod_json as MuscuWod;
-        const ligneExercice = w.discipline === 'musculation' && w.blocks[0].exercises.length === 1;
+        const ligneExercice = w.discipline === 'musculation' && w.blocks[0].exercises.length === 1 && !(w as MuscuWod).rendu?.partie; // carte partielle (#620) : rendue comme une carte
         // l'app enregistre la note du stimulus (coach_tip, notes) ; la programmation, les notes du rendu
         const noteStimulus = l.row.notes != null && l.row.notes === w.stimulus?.note;
         const rendu = renderFromWodJson(l.row.wod_json, 'en')!;

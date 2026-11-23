@@ -277,7 +277,7 @@ function semaineMuscu(k: number, langue: Langue = 'fr'): Sortie {
 
 // ── Programmation automatique (ce qu'écrit `generate-box-week`) ─────────────
 
-class Base implements ProgrammingDb {
+export class Base implements ProgrammingDb {
   boxes: ProgrammingBox[] = [];
   runs: RunRow[] = [];
   wods: (BoxWodInsert & { id: string })[] = [];
