@@ -11,7 +11,7 @@ import type {
   Catalog, GeneratedMuscuWeek, GeneratedWeek, SkeletonBank, WodType,
 } from './types';
 import { generateMuscuWeek, generateWeek, hashSeed, isoWeek, isoWeekMonday, DAY_LABEL, SESSION_ENGINE_VERSION } from './session';
-import { renderMuscu } from './muscu';
+import { cartesJourMuscu } from './cartes-muscu';
 import { fr } from './i18n/fr';
 import type { Langue } from './i18n';
 
@@ -246,20 +246,26 @@ export function functionalWeekRows(week: GeneratedWeek, ctx: WeekContext): BoxWo
   return rows;
 }
 
-export function muscuWeekRows(week: GeneratedMuscuWeek, ctx: WeekContext, langue: Langue = 'fr'): BoxWodInsert[] {
+/**
+ * Lignes d'une semaine Musculation : chaque journée en cartes (#620), dans l'ordre
+ * (`sort_order` 0..n) — Échauffement, Bloc principal, Accessoires, Retour au calme (Tronc :
+ * Échauffement, la séance entière, Retour au calme). La séance tirée est inchangée : les cartes
+ * la découpent sans tirage (`cartesJourMuscu`). `catalog` : durée estimée de chaque partie.
+ */
+export function muscuWeekRows(week: GeneratedMuscuWeek, ctx: WeekContext, catalog: Catalog, langue: Langue = 'fr'): BoxWodInsert[] {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
   const publishAt = (date: string) => publishAtFor(date, ctx.iso_year, ctx.iso_week, ctx.reveal);
-  return week.days.map((d) => ({
+  return week.days.flatMap((d) => cartesJourMuscu(d, catalog, langue).map((c, i): BoxWodInsert => ({
     box_id: ctx.box_id,
     created_by: ctx.created_by,
-    title: d.wod.title,
-    description: renderMuscu(d.wod, langue),
-    wod_type: 'strength' as const,
+    title: c.title,
+    description: c.description,
+    wod_type: c.wod_type,
     scheduled_date: dates[d.day - 1],
     time_cap_seconds: null,
     rounds: null,
-    notes: d.wod.notes,
-    block_name: 'strength',
+    notes: c.notes,
+    block_name: c.block_name,
     video_url: null,
     leaderboard_enabled: false,
     emom_interval_minutes: null,
@@ -268,12 +274,12 @@ export function muscuWeekRows(week: GeneratedMuscuWeek, ctx: WeekContext, langue
     is_published: true,
     publish_at: publishAt(dates[d.day - 1]),
     audience: 'all',
-    sort_order: 0,
-    wod_json: d.wod,
+    sort_order: i,
+    wod_json: c.wod_json,
     source: 'auto',
     auto_run_id: ctx.run_id,
     track: 'musculation',
-  }));
+  })));
 }
 
 export interface WeekOutcome {
@@ -360,7 +366,7 @@ export async function runWeekGeneration(
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];
         } else {
           const week = generateMuscuWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed, opts.langue);
-          rows = muscuWeekRows(week, ctx, opts.langue);
+          rows = muscuWeekRows(week, ctx, catalog, opts.langue);
           signatures = week.days.map((d) => d.wod.signature);
           relaxations = week.relaxations;
         }

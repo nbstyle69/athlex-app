@@ -59,7 +59,7 @@ describe('marques : jamais « CrossFit » ni « Hyrox » côté utilisateur', ()
       const week = generateWeek({ iso_year: YEAR, iso_week: wk }, CATALOG_SNAPSHOT, BANK_V1, hashSeed('box-test', 'crossfit', YEAR, wk, 0));
       for (const r of functionalWeekRows(week, ctx)) { expectClean(`functional W${wk} title`, r.title); expectClean(`functional W${wk} description`, r.description); }
       const mw = generateMuscuWeek({ iso_year: YEAR, iso_week: wk }, CATALOG_SNAPSHOT, BANK_V1, hashSeed('box-test', 'musculation', YEAR, wk, 0));
-      for (const r of muscuWeekRows(mw, ctx)) { expectClean(`musculation W${wk} title`, r.title); expectClean(`musculation W${wk} description`, r.description); }
+      for (const r of muscuWeekRows(mw, ctx, CATALOG_SNAPSHOT)) { expectClean(`musculation W${wk} title`, r.title); expectClean(`musculation W${wk} description`, r.description); }
     }
   });
 

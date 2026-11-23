@@ -32050,6 +32050,94 @@ function generateMuscuWeek(params, catalog, bank, seed, langue = "fr") {
   return { track: "musculation", iso_year: params.iso_year, iso_week: params.iso_week, seed, objective, days, sets_by_muscle, relaxations: [...relax].sort() };
 }
 
+// packages/wod-engine/src/rendu-wod-json.ts
+var WOD_JSON_VERSION = 2;
+function renderFromWodJson(wodJson, langue = "fr") {
+  if (!wodJson || typeof wodJson !== "object") return null;
+  const j = wodJson;
+  if (j.v !== WOD_JSON_VERSION || j.source !== "generator") return null;
+  if (j.discipline === "session") return rendreBlocSeance(j.rendu, langue);
+  if (j.discipline === "musculation") {
+    const w = wodJson;
+    const note = w.rendu ? noteStimulus(w.objective, w.rendu.stimulus, langue, w.blocks[0].exercises) : w.stimulus.note;
+    const exercises = w.blocks[0].exercises.map((e) => e.rendu ? { ...e, notes: noteExercice(e.rendu, langue) } : e);
+    const copie = { ...w, stimulus: { ...w.stimulus, note }, blocks: [{ ...w.blocks[0], exercises }] };
+    const T5 = textes(langue).musculation;
+    const titre = T5.titre(T5.cible[w.target], T5.objectif[w.objective]);
+    const partie = w.rendu?.partie;
+    if (partie) return { title: `${titre} \xB7 ${T5.partie[partie]}`, description: renderMuscu(copie, langue), notes: partie === "accessoires" ? null : note };
+    return { title: titre, description: renderMuscu(copie, langue), notes: note };
+  }
+  if (j.discipline === "functional" || j.discipline === "hybrid") {
+    const w = wodJson;
+    const r = render(w, langue);
+    return { title: r.title, description: descriptionBlocC(r.description, w.rendu?.echauffement ?? null, langue), notes: r.notes };
+  }
+  return null;
+}
+
+// packages/wod-engine/src/cartes-muscu.ts
+var ROLES_PRINCIPAL = ["main_compound", "secondary_compound"];
+function lignesSeanceMuscu(target, bloc) {
+  const table = fr.banque.musculation[bloc];
+  return Object.prototype.hasOwnProperty.call(table, target) ? [table[target]] : null;
+}
+function secondes(catalog, exercises) {
+  return sessionSeconds(exercises.flatMap((e) => {
+    const m = movementById(catalog, e.id);
+    return m?.muscu ? [{ sets: e.sets, reps: e.reps, rest: e.rest_s, ...e.rendu?.tempo ? { tempo: e.rendu.tempo } : {}, m: { muscu: m.muscu } }] : [];
+  }));
+}
+function partiesMuscu(wod, catalog) {
+  const exs = wod.blocks[0].exercises;
+  const principal = exs.filter((e) => ROLES_PRINCIPAL.includes(e.role));
+  const accessoires = exs.filter((e) => !ROLES_PRINCIPAL.includes(e.role));
+  if (wod.target === "tronc" || !wod.rendu || !principal.length || !accessoires.length) return [wod];
+  const partie = (p, exercises) => {
+    const seconds = secondes(catalog, exercises);
+    const w = {
+      ...wod,
+      blocks: [{ kind: "strength_session", exercises }],
+      estimate: { minutes: Math.round(seconds / 60), seconds },
+      rendu: { ...wod.rendu, partie: p }
+    };
+    const t = renderFromWodJson(w, "fr");
+    return { ...w, title: t.title, description: t.description, notes: t.notes };
+  };
+  return [partie("principal", principal), partie("accessoires", accessoires)];
+}
+function blocSeance(kind, target, rendu2) {
+  return {
+    source: "generator",
+    discipline: "session",
+    kind,
+    option_id: `muscu_${kind}_${target}`,
+    movement: null,
+    heavy_pattern: null,
+    steps: null,
+    complex: null,
+    skill: null,
+    finisher: null,
+    gym_reps_rx: {},
+    v: 2,
+    rendu: rendu2
+  };
+}
+function carteSeance(kind, target, langue) {
+  const lignes = lignesSeanceMuscu(target, kind === "warmup" ? "echauffement" : "retourAuCalme");
+  if (!lignes) return null;
+  const rendu2 = kind === "warmup" ? { bloc: "echauffement", lignes } : { bloc: "cooldown", lignes };
+  const t = rendreBlocSeance(rendu2, langue);
+  return { ...t, wod_type: "custom", block_name: kind, leaderboard_enabled: false, wod_json: blocSeance(kind, target, rendu2) };
+}
+function cartesJourMuscu(day, catalog, langue = "fr") {
+  const muscu = partiesMuscu(day.wod, catalog).map((w) => {
+    const t = renderFromWodJson(w, langue);
+    return { ...t, wod_type: "strength", block_name: "strength", leaderboard_enabled: false, wod_json: w };
+  });
+  return [carteSeance("warmup", day.target, langue), ...muscu, carteSeance("cooldown", day.target, langue)].filter((c) => c !== null);
+}
+
 // packages/wod-engine/src/programming.ts
 var TRACKS = ["functional", "hybrid", "musculation"];
 var TRACK_LABEL = fr.programmation.piste;
@@ -32140,20 +32228,20 @@ function functionalWeekRows(week, ctx) {
   }
   return rows2;
 }
-function muscuWeekRows(week, ctx, langue = "fr") {
+function muscuWeekRows(week, ctx, catalog, langue = "fr") {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);
   const publishAt = (date) => publishAtFor(date, ctx.iso_year, ctx.iso_week, ctx.reveal);
-  return week.days.map((d) => ({
+  return week.days.flatMap((d) => cartesJourMuscu(d, catalog, langue).map((c, i) => ({
     box_id: ctx.box_id,
     created_by: ctx.created_by,
-    title: d.wod.title,
-    description: renderMuscu(d.wod, langue),
-    wod_type: "strength",
+    title: c.title,
+    description: c.description,
+    wod_type: c.wod_type,
     scheduled_date: dates[d.day - 1],
     time_cap_seconds: null,
     rounds: null,
-    notes: d.wod.notes,
-    block_name: "strength",
+    notes: c.notes,
+    block_name: c.block_name,
     video_url: null,
     leaderboard_enabled: false,
     emom_interval_minutes: null,
@@ -32162,12 +32250,12 @@ function muscuWeekRows(week, ctx, langue = "fr") {
     is_published: true,
     publish_at: publishAt(dates[d.day - 1]),
     audience: "all",
-    sort_order: 0,
-    wod_json: d.wod,
+    sort_order: i,
+    wod_json: c.wod_json,
     source: "auto",
     auto_run_id: ctx.run_id,
     track: "musculation"
-  }));
+  })));
 }
 async function runWeekGeneration(db, catalog, bank, opts) {
   const target = opts.target ?? nextIsoWeek(opts.now);
@@ -32222,7 +32310,7 @@ async function runWeekGeneration(db, catalog, bank, opts) {
           relaxations = [...week.relaxations, ...week.sessions.flatMap((s) => s.generator.relaxations.map((r) => `${DAY_LABEL[s.day]}:${r}`))];
         } else {
           const week = generateMuscuWeek({ iso_year: target.iso_year, iso_week: target.iso_week, recent_signatures: recent }, catalog, bank, seed, opts.langue);
-          rows2 = muscuWeekRows(week, ctx, opts.langue);
+          rows2 = muscuWeekRows(week, ctx, catalog, opts.langue);
           signatures = week.days.map((d) => d.wod.signature);
           relaxations = week.relaxations;
         }
@@ -32337,94 +32425,6 @@ function feasibleFormats(discipline, intention) {
 }
 function combinationFeasible(discipline, intention, format) {
   return feasibleFormats(discipline, intention).has(format);
-}
-
-// packages/wod-engine/src/rendu-wod-json.ts
-var WOD_JSON_VERSION = 2;
-function renderFromWodJson(wodJson, langue = "fr") {
-  if (!wodJson || typeof wodJson !== "object") return null;
-  const j = wodJson;
-  if (j.v !== WOD_JSON_VERSION || j.source !== "generator") return null;
-  if (j.discipline === "session") return rendreBlocSeance(j.rendu, langue);
-  if (j.discipline === "musculation") {
-    const w = wodJson;
-    const note = w.rendu ? noteStimulus(w.objective, w.rendu.stimulus, langue, w.blocks[0].exercises) : w.stimulus.note;
-    const exercises = w.blocks[0].exercises.map((e) => e.rendu ? { ...e, notes: noteExercice(e.rendu, langue) } : e);
-    const copie = { ...w, stimulus: { ...w.stimulus, note }, blocks: [{ ...w.blocks[0], exercises }] };
-    const T5 = textes(langue).musculation;
-    const titre = T5.titre(T5.cible[w.target], T5.objectif[w.objective]);
-    const partie = w.rendu?.partie;
-    if (partie) return { title: `${titre} \xB7 ${T5.partie[partie]}`, description: renderMuscu(copie, langue), notes: partie === "accessoires" ? null : note };
-    return { title: titre, description: renderMuscu(copie, langue), notes: note };
-  }
-  if (j.discipline === "functional" || j.discipline === "hybrid") {
-    const w = wodJson;
-    const r = render(w, langue);
-    return { title: r.title, description: descriptionBlocC(r.description, w.rendu?.echauffement ?? null, langue), notes: r.notes };
-  }
-  return null;
-}
-
-// packages/wod-engine/src/cartes-muscu.ts
-var ROLES_PRINCIPAL = ["main_compound", "secondary_compound"];
-function lignesSeanceMuscu(target, bloc) {
-  const table = fr.banque.musculation[bloc];
-  return Object.prototype.hasOwnProperty.call(table, target) ? [table[target]] : null;
-}
-function secondes(catalog, exercises) {
-  return sessionSeconds(exercises.flatMap((e) => {
-    const m = movementById(catalog, e.id);
-    return m?.muscu ? [{ sets: e.sets, reps: e.reps, rest: e.rest_s, ...e.rendu?.tempo ? { tempo: e.rendu.tempo } : {}, m: { muscu: m.muscu } }] : [];
-  }));
-}
-function partiesMuscu(wod, catalog) {
-  const exs = wod.blocks[0].exercises;
-  const principal = exs.filter((e) => ROLES_PRINCIPAL.includes(e.role));
-  const accessoires = exs.filter((e) => !ROLES_PRINCIPAL.includes(e.role));
-  if (wod.target === "tronc" || !wod.rendu || !principal.length || !accessoires.length) return [wod];
-  const partie = (p, exercises) => {
-    const seconds = secondes(catalog, exercises);
-    const w = {
-      ...wod,
-      blocks: [{ kind: "strength_session", exercises }],
-      estimate: { minutes: Math.round(seconds / 60), seconds },
-      rendu: { ...wod.rendu, partie: p }
-    };
-    const t = renderFromWodJson(w, "fr");
-    return { ...w, title: t.title, description: t.description, notes: t.notes };
-  };
-  return [partie("principal", principal), partie("accessoires", accessoires)];
-}
-function blocSeance(kind, target, rendu2) {
-  return {
-    source: "generator",
-    discipline: "session",
-    kind,
-    option_id: `muscu_${kind}_${target}`,
-    movement: null,
-    heavy_pattern: null,
-    steps: null,
-    complex: null,
-    skill: null,
-    finisher: null,
-    gym_reps_rx: {},
-    v: 2,
-    rendu: rendu2
-  };
-}
-function carteSeance(kind, target, langue) {
-  const lignes = lignesSeanceMuscu(target, kind === "warmup" ? "echauffement" : "retourAuCalme");
-  if (!lignes) return null;
-  const rendu2 = kind === "warmup" ? { bloc: "echauffement", lignes } : { bloc: "cooldown", lignes };
-  const t = rendreBlocSeance(rendu2, langue);
-  return { ...t, wod_type: "custom", block_name: kind, leaderboard_enabled: false, wod_json: blocSeance(kind, target, rendu2) };
-}
-function cartesJourMuscu(day, catalog, langue = "fr") {
-  const muscu = partiesMuscu(day.wod, catalog).map((w) => {
-    const t = renderFromWodJson(w, langue);
-    return { ...t, wod_type: "strength", block_name: "strength", leaderboard_enabled: false, wod_json: w };
-  });
-  return [carteSeance("warmup", day.target, langue), ...muscu, carteSeance("cooldown", day.target, langue)].filter((c) => c !== null);
 }
 export {
   AFTER_CLASS_DURATIONS,
