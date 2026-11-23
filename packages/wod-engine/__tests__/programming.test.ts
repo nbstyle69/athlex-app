@@ -8,7 +8,7 @@ import {
   generateWeek, generateMuscuWeek, CATALOG_SNAPSHOT, BANK_V1, TRACK_GROUP_NAME, PROGRAMMING_VERSION,
   DEFAULT_REVEAL, revealFromRow, parisInstant, weeklyRevealDate, publishAtFor,
 } from '../src';
-import type { ProgrammingDb, ProgrammingBox, RunRow, BoxWodInsert, ExistingAutoRow, Track, RevealConfig } from '../src';
+import type { GeneratedMuscuWeek, ProgrammingDb, ProgrammingBox, RunRow, BoxWodInsert, ExistingAutoRow, Track, RevealConfig } from '../src';
 
 interface StoredWod extends BoxWodInsert { id: string; edited_at: string | null; scored: boolean }
 
@@ -59,6 +59,10 @@ const BOX = 'box-fitness-test';
 const OWNER = 'owner-test';
 const NOW = new Date('2027-03-14T17:00:00Z'); // dimanche 14/03/2027 → cible 2027-W11
 const TARGET = { iso_year: 2027, iso_week: 11 };
+/** Semaine Musculation de la box de test (graine de la run, sans régénération). */
+const semaineMuscu = () => generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, weekSeed(BOX, 'musculation', 2027, 11, 0));
+/** #635 : lignes d'une semaine Musculation — par jour, une carte par exercice, plus échauffement et retour au calme. */
+const cartesMuscu = (w: GeneratedMuscuWeek) => w.days.reduce((n, d) => n + d.wod.blocks[0].exercises.length + 2, 0);
 
 function fresh(tracks: Track[] = ['functional', 'musculation']): MemoryDb {
   const db = new MemoryDb();
@@ -94,8 +98,8 @@ describe('semaine cible, seed, publish_at', () => {
     expect(rows.filter((r) => r.leaderboard_enabled).every((r) => r.block_name === 'wod')).toBe(true);
     expect(new Set(rows.map((r) => r.scheduled_date)).size).toBe(6);
     const muscu = muscuWeekRows(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7), ctx, CATALOG_SNAPSHOT);
-    // #620 : 4 cartes du lundi au vendredi (hors mercredi), 3 le samedi Tronc
-    expect(muscu).toHaveLength(4 * 4 + 3);
+    // #635 : Échauffement · une carte par exercice · Retour au calme, chaque jour
+    expect(muscu).toHaveLength(cartesMuscu(generateMuscuWeek({ ...TARGET }, CATALOG_SNAPSHOT, BANK_V1, 7)));
     expect(muscu.every((r) => !r.leaderboard_enabled)).toBe(true);
     expect(muscu.every((r) => (r.block_name === 'strength') === (r.wod_type === 'strength'))).toBe(true);
     expect(muscu.filter((r) => r.block_name !== 'strength').every((r) => r.wod_type === 'custom' && ['warmup', 'cooldown'].includes(r.block_name))).toBe(true);
@@ -175,7 +179,7 @@ describe('révélation par box (20261221) — modes weekly / daily', () => {
     const db = fresh(['musculation']);
     db.boxes[0].reveal = { mode: 'daily', dow: 0, time: '06:45' };
     await runWeekGeneration(db, CATALOG_SNAPSHOT, BANK_V1, { now: NOW });
-    expect(db.wods).toHaveLength(4 * 4 + 3); // #620 : cartes de la journée
+    expect(db.wods).toHaveLength(cartesMuscu(semaineMuscu())); // #635 : cartes de la journée
     for (const w of db.wods) expect(w.publish_at).toBe(`${w.scheduled_date}T05:45:00.000Z`);
   });
 });
@@ -195,10 +199,10 @@ describe('runWeekGeneration (base en mémoire)', () => {
     }
     const cf = db.wods.filter((w) => w.auto_run_id === db.runs[0].id);
     expect(new Set(cf.map((w) => w.scheduled_date)).size).toBe(6);
-    // #620 : 5 jours de Musculation, en 4 cartes (3 le samedi Tronc)
+    // #635 : 5 jours de Musculation, en cartes (une par exercice, plus échauffement et retour au calme)
     const mu = db.wods.filter((w) => w.auto_run_id === db.runs[1].id);
     expect(new Set(mu.map((w) => w.scheduled_date)).size).toBe(5);
-    expect(mu).toHaveLength(4 * 4 + 3);
+    expect(mu).toHaveLength(cartesMuscu(semaineMuscu()));
     expect(db.runs[1].wod_ids.sort()).toEqual(mu.map((w) => w.id).sort());
     // un groupe par piste *activée* : la box de ce test n'a pas la piste Hybrid
     expect(db.groups.map((g) => g.name).sort()).toEqual(db.boxes[0].tracks.map((t) => TRACK_GROUP_NAME[t]).sort());

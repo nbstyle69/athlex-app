@@ -159,8 +159,8 @@ export const fr = {
       repos: (t: string) => ` — repos ${t}`,
     },
     titre: (cible: string, objectif: string) => `${cible} · ${objectif}`,
-    /** carte d'une partie de la séance (programmation de box, #620) : ajoutée au titre */
-    partie: { principal: 'Bloc principal', accessoires: 'Accessoires' },
+    /** carte d'une partie de la séance (programmation de box, #620) : ajoutée au titre ; carte d'un exercice (#635) : « <partie> · <exercice> » */
+    partie: { principal: 'Bloc principal', accessoires: 'Accessoires', tronc: 'Tronc' },
     entete: (cible: string, objectif: string, min: number, materiel: string) => `Musculation · ${cible} · ${objectif} · ${prime(min)} · ${materiel}`,
     dureeEstimee: (min: number) => `Durée estimée ${prime(min)}`,
     stimulus: (note: string) => `Stimulus : ${note}`,
