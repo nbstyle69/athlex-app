@@ -348,11 +348,11 @@
       }
     },
     {
-      "name": "Abréviations de MOVEMENT_MAP (#453 PR 3c) : T2B, C2B, HSPU, DU, BMU, OHS reconnues ; STOH vaut six noms de la liste (Push Press, Push Jerk, Power Jerk, Split Jerk, Back Rack Split Jerk, Shoulder to Overhead) : à corriger",
-      "text": "For time\n21 T2B + 21 C2B + 10 HSPU\n30 DU + 5 BMU + 10 OHS @40/30\n10 STOH @60/40",
+      "name": "Abréviations (#453 PR 3c) : T2B, C2B, HSPU, DU, BMU, OHS par MOVEMENT_MAP ; STOH et S2OH par la table explicite du texte libre → Shoulder to Overhead (leur clé press vaut six noms de la liste)",
+      "text": "For time\n21 T2B + 21 C2B + 10 HSPU\n30 DU + 5 BMU + 10 OHS @40/30\n10 STOH @60/40 + 10 S2OH @60/40",
       "expected": {
         "blocks": [],
-        "rest": "For time\n21 T2B + 21 C2B + 10 HSPU\n30 DU + 5 BMU + 10 OHS @40/30\n10 STOH @60/40",
+        "rest": "For time\n21 T2B + 21 C2B + 10 HSPU\n30 DU + 5 BMU + 10 OHS @40/30\n10 STOH @60/40 + 10 S2OH @60/40",
         "recognized": [
           {
             "segment": "21 T2B",
@@ -416,11 +416,35 @@
               "male": 40,
               "female": 30
             }
+          },
+          {
+            "segment": "10 STOH @60/40",
+            "name": "Shoulder to Overhead",
+            "unit": "reps",
+            "reps": {
+              "male": 10,
+              "female": 10
+            },
+            "loadKg": {
+              "male": 60,
+              "female": 40
+            }
+          },
+          {
+            "segment": "10 S2OH @60/40",
+            "name": "Shoulder to Overhead",
+            "unit": "reps",
+            "reps": {
+              "male": 10,
+              "female": 10
+            },
+            "loadKg": {
+              "male": 60,
+              "female": 40
+            }
           }
         ],
-        "toFix": [
-          "10 STOH @60/40"
-        ],
+        "toFix": [],
         "ignored": [
           "For time"
         ]

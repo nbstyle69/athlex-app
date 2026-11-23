@@ -287,7 +287,7 @@ describe('texte libre', () => {
     await type(root, 'score-time-min', '11');
     await press(root, 'score-submit');
     expect(logMovementReps).toHaveBeenLastCalledWith('me', [
-      { name: 'Pull-ups', reps: 21 }, { name: 'Thruster', reps: 21, weight_kg: 43 },
+      { name: 'Pull-ups', reps: 21 }, { name: 'SkiErg', reps: 15, unit: 'cal' }, { name: 'Thruster', reps: 21, weight_kg: 43 },
     ], 'whiteboard', 'w1');
   });
 });

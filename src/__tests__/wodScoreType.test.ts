@@ -8,7 +8,7 @@ import i18n from '../i18n';
 import fs from 'fs';
 import path from 'path';
 import {
-  creditFreeText, readFreeText, catalogName, FREE_TEXT_EXTRA_MOVEMENTS, FREE_TEXT_MOVEMENTS,
+  creditFreeText, readFreeText, catalogName, FREE_TEXT_ABBREVIATIONS, FREE_TEXT_EXTRA_MOVEMENTS, FREE_TEXT_MOVEMENTS,
 } from '../utils/freeTextWod';
 import { MOVEMENT_CATALOG } from '../utils/movementsCatalog';
 import { cleanMovementName, normalizeMovement } from '../utils/tournamentUtils';
@@ -122,13 +122,28 @@ describe('texte libre : contrat partagé avec le Manager', () => {
     expect(catalogName('clean')).toBe('Clean');
     expect(catalogName('snatch')).toBe('Snatch');
     expect(catalogName('front squat')).toBe('Front Squat');
-    for (const w of ['hang clean', 'hang snatch', 'jerk', 'STOH', 'S2OH', 'kettlebell deadlift', 'overhead lunge', 'walking lunge', 'assault bike']) {
+    for (const w of ['hang clean', 'hang power clean', 'hang snatch', 'jerk', 'kettlebell deadlift', 'overhead lunge', 'walking lunge', 'assault bike']) {
       expect([w, catalogName(w)]).toEqual([w, null]);
     }
   });
 
+  it('abréviations explicites : STOH et S2OH → Shoulder to Overhead', () => {
+    expect(catalogName('STOH')).toBe('Shoulder to Overhead');
+    expect(catalogName('10 s2oh')).toBe('Shoulder to Overhead');
+    expect(catalogName('stohs')).toBe('Shoulder to Overhead');
+  });
+
+  it('chaque abréviation explicite pointe vers un nom de la liste de même clé de badge', () => {
+    expect(Object.keys(FREE_TEXT_ABBREVIATIONS).sort()).toEqual(['s2oh', 'stoh']);
+    for (const [abr, nom] of Object.entries(FREE_TEXT_ABBREVIATIONS)) {
+      expect(FREE_TEXT_MOVEMENTS.map(m => m.name)).toContain(nom);
+      expect([abr, normalizeMovement(abr).key]).toEqual([abr, normalizeMovement(nom).key]);
+      expect(cleanMovementName(abr)).toBe(abr);
+    }
+  });
+
   it('aucune devinette', () => {
-    for (const w of ['pow clean', 'kb dl', 'pullups strict', 'muscle up', 'pull', '']) expect([w, catalogName(w)]).toEqual([w, null]);
+    for (const w of ['pow clean', 'kb dl', 'pullups strict', 'muscle up', 'k2e', 'pull', '']) expect([w, catalogName(w)]).toEqual([w, null]);
   });
 
   it('deux noms de la liste ne se confondent jamais une fois nettoyés', () => {
