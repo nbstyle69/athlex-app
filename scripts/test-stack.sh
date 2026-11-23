@@ -19,7 +19,7 @@
 # passage en 3.x est un chantier à part : on monte la version ici, une fois.
 set -euo pipefail
 
-SUPABASE_CLI_VERSION="${SUPABASE_CLI_VERSION:-2.122.1}"
+SUPABASE_CLI_VERSION="${SUPABASE_CLI_VERSION:-3.3.0}"
 sb() { npx --yes "supabase@${SUPABASE_CLI_VERSION}" "$@"; }
 
 # Sortie de la CLI réduite à ses lignes d'erreur. Celles qui parlent de clé,
