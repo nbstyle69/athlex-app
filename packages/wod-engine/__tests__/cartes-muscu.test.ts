@@ -112,6 +112,9 @@ describe('cartes de musculation partielles (rendu.partie)', () => {
       expect(d.wod.rendu?.partie).toBeUndefined();
       expect(renderFromWodJson(d.wod, 'fr')).toEqual({ title: d.wod.title, description: d.wod.description, notes: d.wod.notes });
       expect(renderMuscu(d.wod)).toBe(d.wod.description);
+      // séance entière : la note du stimulus reste dans la description (texte de #510)
+      expect(d.wod.description.split('\n')).toContain(`Stimulus : ${d.wod.stimulus.note}`);
+      expect(d.wod.title).not.toMatch(/Bloc principal|Accessoires/);
     }
   });
 
@@ -154,7 +157,15 @@ describe('cartes de musculation partielles (rendu.partie)', () => {
   });
 
   it('Tronc, groupe vide (dont semaine Force) → la séance entière seule, inchangée', () => {
-    for (const s of SEMAINES) expect(partiesMuscu(s.days.find((d) => d.target === 'tronc')!.wod, C)).toEqual([s.days.find((d) => d.target === 'tronc')!.wod]);
+    for (const s of SEMAINES) {
+      const tronc = s.days.find((d) => d.target === 'tronc')!.wod;
+      expect(partiesMuscu(tronc, C)).toEqual([tronc]);
+      // même avec un polyarticulaire, le Tronc reste une seule carte
+      const compound = s.days.flatMap((d) => d.wod.blocks[0].exercises).find((e) => ROLES_PRINCIPAL.includes(e.role))!;
+      expect(compound).toBeDefined();
+      const mixte: MuscuWod = { ...tronc, blocks: [{ kind: 'strength_session', exercises: [compound, ...tronc.blocks[0].exercises] }] };
+      expect(partiesMuscu(mixte, C)).toEqual([mixte]);
+    }
     for (const d of FORCE.days.filter((x) => x.target !== 'tronc')) {
       for (const garder of [(r: string) => ROLES_PRINCIPAL.includes(r as never), (r: string) => !ROLES_PRINCIPAL.includes(r as never)]) {
         const w: MuscuWod = { ...d.wod, blocks: [{ kind: 'strength_session', exercises: d.wod.blocks[0].exercises.filter((e) => garder(e.role)) }] };
