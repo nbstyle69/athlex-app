@@ -20,7 +20,7 @@ max_rows = 1000
 [studio]
 enabled = false
 
-[inbucket]
+[local_smtp]
 enabled = false
 
 [storage]
