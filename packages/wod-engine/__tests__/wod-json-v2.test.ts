@@ -40,7 +40,10 @@ describe('wod_json v2 du moteur (M3)', () => {
       for (let k = 0; k < c.n; k++) {
         const fr = await c.produire(k, 'fr');
         const en = await c.produire(k, 'en');
-        if (sha(canon(sansAjouts(fr.sortie))) !== AVANT.langues.fr[c.nom][k]) note(k, 'ajout seulement (fr) : une clé ou une valeur existante a changé');
+        // #620 : la programmation écrit la Musculation en cartes (structure voulue, après M3) ; le relevé d'avant M3
+        // ne vaut plus pour une entrée qui a cette piste. L'invariance du tirage y est prouvée par programmation-cartes.test.ts.
+        const cartesMuscu = c.nom === 'programmation' && (fr.sortie as { rows: Array<{ track: string }> }).rows.some((r) => r.track === 'musculation');
+        if (!cartesMuscu && sha(canon(sansAjouts(fr.sortie))) !== AVANT.langues.fr[c.nom][k]) note(k, 'ajout seulement (fr) : une clé ou une valeur existante a changé');
         // anglais : son texte change depuis la PR « Données » D1 (noms du catalogue), il est figé par instantane-en ;
         // hors champs de texte, la sortie anglaise reste celle du français, donc aucune clé ni valeur existante ne change
         if (sha(canon(structure(sansAjouts(en.sortie)))) !== sha(canon(structure(sansAjouts(fr.sortie))))) note(k, 'ajout seulement (en) : hors texte, la sortie diffère du français');
