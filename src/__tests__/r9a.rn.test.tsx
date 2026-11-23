@@ -457,6 +457,19 @@ describe('R9a : navigation et callbacks de Ma Box inchangés', () => {
     await press(root, 'wod-timer-wA');
     expect(mockTimerOpen).toContain(LONG);
   });
+  it('journée Musculation en cartes (#620) : « Entrer mon score » ouvre la première carte de musculation, pas l’échauffement', async () => {
+    const carte = (id: string, block_name: string, wod_type: string, sort_order: number) => ({
+      id, box_id: 'box-1', title: id, description: id, wod_type, block_name, scheduled_date: TODAY, time_cap_seconds: null,
+      video_url: null, notes: null, track: 'musculation', is_published: true, sort_order, leaderboard_enabled: false,
+    });
+    const jour = [carte('mW', 'warmup', 'custom', 0), carte('mP', 'strength', 'strength', 1), carte('mA', 'strength', 'strength', 2), carte('mC', 'cooldown', 'custom', 3)];
+    mockTables['box_wods|id, track, wod_type'] = jour.map(({ id, track, wod_type }) => ({ id, track, wod_type }));
+    mockTables['box_wods|*'] = jour;
+    mockTables['wod_scores|wod_id'] = [];
+    const root = await mount(<WhiteboardScreen />);
+    await press(root, 'whiteboard-enter-score');
+    expect(mockNavigate).toHaveBeenCalledWith('WODDetail', { wodId: 'mP' });
+  });
   it('onglets de piste : « Hybrid » ne montre que la séance hybrid, l’onglet actif est sélectionné', async () => {
     const root = await mount(<WhiteboardScreen />);
     await press(root, 'whiteboard-track-functional');

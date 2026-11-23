@@ -1113,7 +1113,8 @@ export function renderMuscu(wod: MuscuWod, langue: Langue = 'fr'): string {
   }
   lines.push('');
   lines.push(T.dureeEstimee(wod.estimate.minutes));
-  lines.push(T.stimulus(wod.stimulus.note));
+  // carte Accessoires (#620) : la note du stimulus est sur la carte du bloc principal
+  if (wod.rendu?.partie !== 'accessoires') lines.push(T.stimulus(wod.stimulus.note));
   if (wod.after_class?.excluded_muscles.length) {
     lines.push(T.musclesEvites(wod.after_class.excluded_muscles));
   }

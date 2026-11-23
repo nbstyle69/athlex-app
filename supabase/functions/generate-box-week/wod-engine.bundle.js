@@ -25852,6 +25852,8 @@ var fr = {
       repos: (t) => ` \u2014 repos ${t}`
     },
     titre: (cible, objectif) => `${cible} \xB7 ${objectif}`,
+    /** carte d'une partie de la séance (programmation de box, #620) : ajoutée au titre */
+    partie: { principal: "Bloc principal", accessoires: "Accessoires" },
     entete: (cible, objectif, min2, materiel) => `Musculation \xB7 ${cible} \xB7 ${objectif} \xB7 ${prime(min2)} \xB7 ${materiel}`,
     dureeEstimee: (min2) => `Dur\xE9e estim\xE9e ${prime(min2)}`,
     stimulus: (note) => `Stimulus : ${note}`,
@@ -25907,6 +25909,7 @@ var fr = {
     titreBuilding: (nom) => `Building \xB7 ${nom}`,
     titreFinisher: "Finisher",
     titreRetourAuCalme: "Retour au calme",
+    titreEchauffement: "\xC9chauffement",
     notePourcentages: "Pourcentages du 1RM du mouvement complet ; sans 1RM, charge propre.",
     noteChronometree: "S\xE9ance chronom\xE9tr\xE9e de bout en bout : compare avec ta derni\xE8re simulation."
   },
@@ -26076,6 +26079,26 @@ var fr = {
       ],
       compromiseCible: "allure 5 km + 15 s/km",
       scoreSimulation: "temps total"
+    },
+    /**
+     * Musculation de la programmation de box (#620) : échauffement et retour au calme de chaque
+     * cible de la semaine, choisis par la cible du jour, sans tirage. Textes de la spec validée par Nab.
+     */
+    musculation: {
+      echauffement: {
+        push: "\xC9chauffement (10') \u2014 rameur ou v\xE9lo facile, mobilit\xE9 \xE9paules et thoracique, Push-Ups, Band Pull-Aparts, puis 2 s\xE9ries l\xE9g\xE8res du premier exercice.",
+        jambes: "\xC9chauffement (10') \u2014 v\xE9lo ou rameur facile, mobilit\xE9 chevilles et hanches, Air Squats, Lunges, puis 2 s\xE9ries l\xE9g\xE8res du premier exercice.",
+        pull: "\xC9chauffement (10') \u2014 rameur facile, mobilit\xE9 \xE9paules, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, puis 2 s\xE9ries l\xE9g\xE8res du premier exercice.",
+        fessiers_ischios: "\xC9chauffement (10') \u2014 v\xE9lo facile, mobilit\xE9 hanches, Glute Bridges, Good Mornings \xE0 vide, puis 2 s\xE9ries l\xE9g\xE8res du premier exercice.",
+        tronc: "\xC9chauffement (5') \u2014 rameur ou v\xE9lo facile, Dead Bugs, Bird Dogs, planche 20 s."
+      },
+      retourAuCalme: {
+        push: "Retour au calme (5') \u2014 \xE9tirements : pectoraux au mur 45 s / bras \xB7 \xE9paule en travers 45 s / bras \xB7 triceps au-dessus de la t\xEAte 30 s / bras, respiration lente.",
+        jambes: "Retour au calme (5') \u2014 \xE9tirements : quadriceps debout 45 s / jambe \xB7 adducteurs en grenouille 45 s \xB7 fessiers en pigeon 45 s / c\xF4t\xE9.",
+        pull: "Retour au calme (5') \u2014 \xE9tirements : dorsaux \xE0 la barre ou au mur 45 s \xB7 biceps au mur 30 s / bras \xB7 ouverture thoracique 45 s, respiration lente.",
+        fessiers_ischios: "Retour au calme (5') \u2014 \xE9tirements : ischios debout 45 s / jambe \xB7 pigeon 45 s / c\xF4t\xE9 \xB7 fl\xE9chisseurs de hanche en fente 45 s / c\xF4t\xE9.",
+        tronc: "Retour au calme (5') \u2014 posture de l'enfant 1' \xB7 cobra 45 s \xB7 rotation thoracique allong\xE9 45 s / c\xF4t\xE9, respiration 4-6."
+      }
     }
   }
 };
@@ -28046,6 +28069,7 @@ var en = {
       repos: (t) => ` \u2014 rest ${t}`
     },
     titre: (cible, objectif) => `${cible} \xB7 ${objectif}`,
+    partie: { principal: "Main block", accessoires: "Accessories" },
     entete: (cible, objectif, m, materiel) => `Strength \xB7 ${cible} \xB7 ${objectif} \xB7 ${min(m)} \xB7 ${materiel}`,
     dureeEstimee: (m) => `Estimated duration ${min(m)}`,
     stimulus: (note) => `Stimulus: ${note}`,
@@ -28098,6 +28122,7 @@ var en = {
     titreBuilding: (nom) => `Building \xB7 ${nom}`,
     titreFinisher: "Finisher",
     titreRetourAuCalme: "Cool-down",
+    titreEchauffement: "Warm-up",
     notePourcentages: "Percentages of the full-movement 1RM; without a 1RM, clean load.",
     noteChronometree: "Timed from start to finish: compare with your last simulation."
   },
@@ -28255,6 +28280,22 @@ var en = {
       ],
       compromiseCible: "5 km pace + 15 s/km",
       scoreSimulation: "total time"
+    },
+    musculation: {
+      echauffement: {
+        push: "Warm-up (10 min) \u2014 easy rower or bike, shoulder and thoracic mobility, Push-Ups, Band Pull-Aparts, then 2 light sets of the first exercise.",
+        jambes: "Warm-up (10 min) \u2014 easy bike or rower, ankle and hip mobility, Air Squats, Lunges, then 2 light sets of the first exercise.",
+        pull: "Warm-up (10 min) \u2014 easy rower, shoulder mobility, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, then 2 light sets of the first exercise.",
+        fessiers_ischios: "Warm-up (10 min) \u2014 easy bike, hip mobility, Glute Bridges, empty-bar Good Mornings, then 2 light sets of the first exercise.",
+        tronc: "Warm-up (5 min) \u2014 easy rower or bike, Dead Bugs, Bird Dogs, 20 s plank."
+      },
+      retourAuCalme: {
+        push: "Cool-down (5 min) \u2014 stretching: chest against the wall 45 s / arm \xB7 cross-body shoulder 45 s / arm \xB7 overhead triceps 30 s / arm, slow breathing.",
+        jambes: "Cool-down (5 min) \u2014 stretching: standing quads 45 s / leg \xB7 frog adductors 45 s \xB7 pigeon for the glutes 45 s / side.",
+        pull: "Cool-down (5 min) \u2014 stretching: lats on the bar or against the wall 45 s \xB7 biceps against the wall 30 s / arm \xB7 thoracic opener 45 s, slow breathing.",
+        fessiers_ischios: "Cool-down (5 min) \u2014 stretching: standing hamstrings 45 s / leg \xB7 pigeon 45 s / side \xB7 hip flexors in a lunge 45 s / side.",
+        tronc: "Cool-down (5 min) \u2014 child's pose 1 min \xB7 cobra 45 s \xB7 lying thoracic rotation 45 s / side, 4-6 breathing."
+      }
     }
   }
 };
@@ -30927,7 +30968,7 @@ function renderMuscu(wod, langue = "fr") {
   }
   lines.push("");
   lines.push(T5.dureeEstimee(wod.estimate.minutes));
-  lines.push(T5.stimulus(wod.stimulus.note));
+  if (wod.rendu?.partie !== "accessoires") lines.push(T5.stimulus(wod.stimulus.note));
   if (wod.after_class?.excluded_muscles.length) {
     lines.push(T5.musclesEvites(wod.after_class.excluded_muscles));
   }
@@ -31032,7 +31073,9 @@ function lignesHybrid(c, x) {
   return lines;
 }
 var HYBRID_A = /* @__PURE__ */ new Set(["station", "run", "race"]);
-function rendreBlocSeance(p, langue = "fr") {
+function rendreBlocSeance(q, langue = "fr") {
+  if (!q || typeof q !== "object") return null;
+  const p = q;
   const x = contexte(langue, "noms" in p ? p.noms : {});
   const { t, tb, nom } = x;
   const T5 = t.seance;
@@ -31073,6 +31116,10 @@ function rendreBlocSeance(p, langue = "fr") {
     }
     case "cooldown":
       return { title: T5.titreRetourAuCalme, description: p.lignes.map(tb).join(NL), notes: null };
+    case "echauffement":
+      return { title: T5.titreEchauffement, description: p.lignes.map(tb).join(NL), notes: null };
+    default:
+      return null;
   }
 }
 function descriptionBlocC(description, echauffement, langue = "fr") {
@@ -32298,14 +32345,17 @@ function renderFromWodJson(wodJson, langue = "fr") {
   if (!wodJson || typeof wodJson !== "object") return null;
   const j = wodJson;
   if (j.v !== WOD_JSON_VERSION || j.source !== "generator") return null;
-  if (j.discipline === "session") return j.rendu ? rendreBlocSeance(j.rendu, langue) : null;
+  if (j.discipline === "session") return rendreBlocSeance(j.rendu, langue);
   if (j.discipline === "musculation") {
     const w = wodJson;
     const note = w.rendu ? noteStimulus(w.objective, w.rendu.stimulus, langue, w.blocks[0].exercises) : w.stimulus.note;
     const exercises = w.blocks[0].exercises.map((e) => e.rendu ? { ...e, notes: noteExercice(e.rendu, langue) } : e);
     const copie = { ...w, stimulus: { ...w.stimulus, note }, blocks: [{ ...w.blocks[0], exercises }] };
     const T5 = textes(langue).musculation;
-    return { title: T5.titre(T5.cible[w.target], T5.objectif[w.objective]), description: renderMuscu(copie, langue), notes: note };
+    const titre = T5.titre(T5.cible[w.target], T5.objectif[w.objective]);
+    const partie = w.rendu?.partie;
+    if (partie) return { title: `${titre} \xB7 ${T5.partie[partie]}`, description: renderMuscu(copie, langue), notes: partie === "accessoires" ? null : note };
+    return { title: titre, description: renderMuscu(copie, langue), notes: note };
   }
   if (j.discipline === "functional" || j.discipline === "hybrid") {
     const w = wodJson;
@@ -32313,6 +32363,68 @@ function renderFromWodJson(wodJson, langue = "fr") {
     return { title: r.title, description: descriptionBlocC(r.description, w.rendu?.echauffement ?? null, langue), notes: r.notes };
   }
   return null;
+}
+
+// packages/wod-engine/src/cartes-muscu.ts
+var ROLES_PRINCIPAL = ["main_compound", "secondary_compound"];
+function lignesSeanceMuscu(target, bloc) {
+  const table = fr.banque.musculation[bloc];
+  return Object.prototype.hasOwnProperty.call(table, target) ? [table[target]] : null;
+}
+function secondes(catalog, exercises) {
+  return sessionSeconds(exercises.flatMap((e) => {
+    const m = movementById(catalog, e.id);
+    return m?.muscu ? [{ sets: e.sets, reps: e.reps, rest: e.rest_s, ...e.rendu?.tempo ? { tempo: e.rendu.tempo } : {}, m: { muscu: m.muscu } }] : [];
+  }));
+}
+function partiesMuscu(wod, catalog) {
+  const exs = wod.blocks[0].exercises;
+  const principal = exs.filter((e) => ROLES_PRINCIPAL.includes(e.role));
+  const accessoires = exs.filter((e) => !ROLES_PRINCIPAL.includes(e.role));
+  if (wod.target === "tronc" || !wod.rendu || !principal.length || !accessoires.length) return [wod];
+  const partie = (p, exercises) => {
+    const seconds = secondes(catalog, exercises);
+    const w = {
+      ...wod,
+      blocks: [{ kind: "strength_session", exercises }],
+      estimate: { minutes: Math.round(seconds / 60), seconds },
+      rendu: { ...wod.rendu, partie: p }
+    };
+    const t = renderFromWodJson(w, "fr");
+    return { ...w, title: t.title, description: t.description, notes: t.notes };
+  };
+  return [partie("principal", principal), partie("accessoires", accessoires)];
+}
+function blocSeance(kind, target, rendu2) {
+  return {
+    source: "generator",
+    discipline: "session",
+    kind,
+    option_id: `muscu_${kind}_${target}`,
+    movement: null,
+    heavy_pattern: null,
+    steps: null,
+    complex: null,
+    skill: null,
+    finisher: null,
+    gym_reps_rx: {},
+    v: 2,
+    rendu: rendu2
+  };
+}
+function carteSeance(kind, target, langue) {
+  const lignes = lignesSeanceMuscu(target, kind === "warmup" ? "echauffement" : "retourAuCalme");
+  if (!lignes) return null;
+  const rendu2 = kind === "warmup" ? { bloc: "echauffement", lignes } : { bloc: "cooldown", lignes };
+  const t = rendreBlocSeance(rendu2, langue);
+  return { ...t, wod_type: "custom", block_name: kind, leaderboard_enabled: false, wod_json: blocSeance(kind, target, rendu2) };
+}
+function cartesJourMuscu(day, catalog, langue = "fr") {
+  const muscu = partiesMuscu(day.wod, catalog).map((w) => {
+    const t = renderFromWodJson(w, langue);
+    return { ...t, wod_type: "strength", block_name: "strength", leaderboard_enabled: false, wod_json: w };
+  });
+  return [carteSeance("warmup", day.target, langue), ...muscu, carteSeance("cooldown", day.target, langue)].filter((c) => c !== null);
 }
 export {
   AFTER_CLASS_DURATIONS,
@@ -32402,6 +32514,7 @@ export {
   REST_EXTRA_MAX,
   REVEAL_HOUR_PARIS,
   RNG,
+  ROLES_PRINCIPAL,
   RUN_MIN_M,
   S1_snatch,
   S2_squat,
@@ -32443,6 +32556,7 @@ export {
   blocCRepsRx,
   cadenceFor,
   carriesIntention,
+  cartesJourMuscu,
   catalogFromRows,
   categoriesFor,
   combinationFeasible,
@@ -32480,6 +32594,7 @@ export {
   isoWeekMonday,
   itemsOf,
   ladderStep,
+  lignesSeanceMuscu,
   loadText2 as loadText,
   loadsFor,
   mouvements,
@@ -32504,6 +32619,7 @@ export {
   noteStimulus,
   parisInstant,
   parisOffsetMinutes,
+  partiesMuscu,
   percentForReps,
   primaryPattern,
   priorityFor,

@@ -466,7 +466,7 @@ export interface SessionBlock extends Omit<EditorColumns, 'block_name'> {
 export interface SessionStructuredBlock {
   source: 'generator';
   discipline: 'session';
-  kind: 'weightlifting' | 'strength' | 'skill' | 'building' | 'finisher' | 'station' | 'run' | 'race' | 'compromised' | 'cooldown';
+  kind: 'weightlifting' | 'strength' | 'skill' | 'building' | 'finisher' | 'station' | 'run' | 'race' | 'compromised' | 'cooldown' | 'warmup';
   option_id: string;
   movement: string | null;
   heavy_pattern: Pattern | null;
@@ -839,9 +839,15 @@ export interface MuscuWod extends EditorColumns {
   signature: string;
   /** version du wod_json (2 : réaffichable par `renderFromWodJson`) ; absente sur les lignes plus anciennes */
   v?: 2;
-  /** parties du stimulus (M3) : exercice de la montée en charge, rappel des 1RM */
-  rendu?: { stimulus: { montee: string | null; renseigne1rm: boolean } };
+  /**
+   * parties du stimulus (M3) : exercice de la montée en charge, rappel des 1RM ;
+   * `partie` : carte d'une partie de la séance (programmation de box, #620), absente = séance entière
+   */
+  rendu?: { stimulus: { montee: string | null; renseigne1rm: boolean }; partie?: PartieMuscu };
 }
+
+/** Partie de la séance portée par une carte du Whiteboard (#620) : polyarticulaires ou accessoires. */
+export type PartieMuscu = 'principal' | 'accessoires';
 
 export class NoValidWod extends Error {
   readonly reasons: Record<string, number>;
