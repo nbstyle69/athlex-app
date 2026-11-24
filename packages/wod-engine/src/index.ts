@@ -60,5 +60,5 @@ export { renderFromWodJson, WOD_JSON_VERSION } from './rendu-wod-json';
 export { rendreBlocSeance, descriptionBlocC } from './rendu-seance';
 export type { RenduBlocSeance, RenduBlocC, ContenuBloc, PosteRendu, ProRendu, TexteBloc } from './rendu-seance';
 export { noteExercice, noteStimulus } from './muscu';
-export { cartesJourMuscu, partiesMuscu, lignesSeanceMuscu, ROLES_PRINCIPAL } from './cartes-muscu';
+export { cartesJourMuscu, partiesMuscu, partieExercice, lignesSeanceMuscu, ROLES_PRINCIPAL } from './cartes-muscu';
 export type { CarteMuscu, CibleSemaineMuscu } from './cartes-muscu';

@@ -13608,27 +13608,55 @@ titre : Warm-up
 description : Warm-up (10 min) — easy rower or bike, shoulder and thoracic mobility, Push-Ups, Band Pull-Aparts, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2025-12-29 · strength (1)
-titre : Push · Muscle gain · Main block
+titre : Main block · Incline DB Press
 description : Strength · Push · Muscle gain · 45 min · Box
 description : 
 description : Incline DB Press — 4 × 10 — load RPE 8 — rest 1:30
-description : Strict Press — 4 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
 description : 
-description : Estimated duration 16 min
+description : Estimated duration 9 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
 == musculation · 2025-12-29 · strength (2)
-titre : Push · Muscle gain · Accessories
+titre : Main block · Strict Press
+description : Strength · Push · Muscle gain · 45 min · Box
+description : 
+description : Strict Press — 4 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
+description : 
+description : Estimated duration 8 min
+notes : ∅
+== musculation · 2025-12-29 · strength (3)
+titre : Accessories · DB Fly
 description : Strength · Push · Muscle gain · 45 min · Box
 description : 
 description : DB Fly — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2025-12-29 · strength (4)
+titre : Accessories · Lateral Raise
+description : Strength · Push · Muscle gain · 45 min · Box
+description : 
 description : Lateral Raise — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2025-12-29 · strength (5)
+titre : Accessories · Skull Crushers
+description : Strength · Push · Muscle gain · 45 min · Box
+description : 
 description : Skull Crushers — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2025-12-29 · strength (6)
+titre : Accessories · Ab Wheel Rollout
+description : Strength · Push · Muscle gain · 45 min · Box
+description : 
 description : Ab Wheel Rollout — 3 × 10 — bodyweight — rest 1:00
 description : 
-description : Estimated duration 21 min
+description : Estimated duration 5 min
 notes : ∅
-== musculation · 2025-12-29 · cooldown (3)
+== musculation · 2025-12-29 · cooldown (7)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: chest against the wall 45 s / arm · cross-body shoulder 45 s / arm · overhead triceps 30 s / arm, slow breathing.
 notes : ∅
@@ -13637,27 +13665,55 @@ titre : Warm-up
 description : Warm-up (10 min) — easy bike or rower, ankle and hip mobility, Air Squats, Lunges, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2025-12-30 · strength (1)
-titre : Legs · Muscle gain · Main block
+titre : Main block · DB Lunges
 description : Strength · Legs · Muscle gain · 45 min · Box
 description : 
 description : DB Lunges — 4 × 10 / leg — load RPE 8 — rest 1:30
-description : Good Morning — 3 × 10 — load RPE 8 — rest 1:15
-description : Hip Thrust — 3 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
 description : 
-description : Estimated duration 21 min
+description : Estimated duration 9 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
 == musculation · 2025-12-30 · strength (2)
-titre : Legs · Muscle gain · Accessories
+titre : Main block · Good Morning
+description : Strength · Legs · Muscle gain · 45 min · Box
+description : 
+description : Good Morning — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2025-12-30 · strength (3)
+titre : Main block · Hip Thrust
+description : Strength · Legs · Muscle gain · 45 min · Box
+description : 
+description : Hip Thrust — 3 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2025-12-30 · strength (4)
+titre : Accessories · Goblet Squat
 description : Strength · Legs · Muscle gain · 45 min · Box
 description : 
 description : Goblet Squat — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2025-12-30 · strength (5)
+titre : Accessories · Single-Leg Calf Raise
+description : Strength · Legs · Muscle gain · 45 min · Box
+description : 
 description : Single-Leg Calf Raise — 3 × 16 / leg — bodyweight — rest 1:15
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2025-12-30 · strength (6)
+titre : Accessories · Suitcase Carry
+description : Strength · Legs · Muscle gain · 45 min · Box
+description : 
 description : Suitcase Carry — 3 × 40 m / side — load RPE 7 — rest 30s
 description : 
-description : Estimated duration 18 min
+description : Estimated duration 6 min
 notes : ∅
-== musculation · 2025-12-30 · cooldown (3)
+== musculation · 2025-12-30 · cooldown (7)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: standing quads 45 s / leg · frog adductors 45 s · pigeon for the glutes 45 s / side.
 notes : ∅
@@ -13666,27 +13722,55 @@ titre : Warm-up
 description : Warm-up (10 min) — easy rower, shoulder mobility, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2026-01-01 · strength (1)
-titre : Pull · Muscle gain · Main block
+titre : Main block · Neutral Grip Pull-Ups
 description : Strength · Pull · Muscle gain · 45 min · Box
 description : 
 description : Neutral Grip Pull-Ups — 4 × 10 — bodyweight — rest 1:30
-description : Pendlay Row — 4 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
 description : 
-description : Estimated duration 16 min
+description : Estimated duration 8 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
 == musculation · 2026-01-01 · strength (2)
-titre : Pull · Muscle gain · Accessories
+titre : Accessories · Bent Over Lateral Raise
 description : Strength · Pull · Muscle gain · 45 min · Box
 description : 
 description : Bent Over Lateral Raise — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-01-01 · strength (3)
+titre : Main block · Pendlay Row
+description : Strength · Pull · Muscle gain · 45 min · Box
+description : 
+description : Pendlay Row — 4 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
+description : 
+description : Estimated duration 8 min
+notes : ∅
+== musculation · 2026-01-01 · strength (4)
+titre : Accessories · Cross-Body Hammer Curl
+description : Strength · Pull · Muscle gain · 45 min · Box
+description : 
 description : Cross-Body Hammer Curl — 3 × 10 / arm — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2026-01-01 · strength (5)
+titre : Accessories · Barbell Shrug
+description : Strength · Pull · Muscle gain · 45 min · Box
+description : 
 description : Barbell Shrug — 3 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-01-01 · strength (6)
+titre : Accessories · Hanging Leg Raise
+description : Strength · Pull · Muscle gain · 45 min · Box
+description : 
 description : Hanging Leg Raise — 3 × 10 — bodyweight — rest 1:00
 description : 
-description : Estimated duration 22 min
+description : Estimated duration 5 min
 notes : ∅
-== musculation · 2026-01-01 · cooldown (3)
+== musculation · 2026-01-01 · cooldown (7)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: lats on the bar or against the wall 45 s · biceps against the wall 30 s / arm · thoracic opener 45 s, slow breathing.
 notes : ∅
@@ -13695,25 +13779,39 @@ titre : Warm-up
 description : Warm-up (10 min) — easy bike, hip mobility, Glute Bridges, empty-bar Good Mornings, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2026-01-02 · strength (1)
-titre : Glutes + hamstrings · Muscle gain · Main block
+titre : Main block · Good Morning
 description : Strength · Glutes + hamstrings · Muscle gain · 45 min · Box
 description : 
 description : Good Morning — 5 × 10 — load RPE 8 — rest 1:30
-description : DB Hip Thrust — 4 × 10 — load RPE 8 — rest 1:30
 description : 
-description : Estimated duration 20 min
+description : Estimated duration 11 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
 == musculation · 2026-01-02 · strength (2)
-titre : Glutes + hamstrings · Muscle gain · Accessories
+titre : Main block · DB Hip Thrust
+description : Strength · Glutes + hamstrings · Muscle gain · 45 min · Box
+description : 
+description : DB Hip Thrust — 4 × 10 — load RPE 8 — rest 1:30
+description : 
+description : Estimated duration 8 min
+notes : ∅
+== musculation · 2026-01-02 · strength (3)
+titre : Accessories · Bird Dog Hold
 description : Strength · Glutes + hamstrings · Muscle gain · 45 min · Box
 description : 
 description : Bird Dog Hold — 4 × 11 / side — bodyweight — rest 1:15
+description : 
+description : Estimated duration 9 min
+notes : ∅
+== musculation · 2026-01-02 · strength (4)
+titre : Accessories · DB Sumo Squat
+description : Strength · Glutes + hamstrings · Muscle gain · 45 min · Box
+description : 
 description : DB Sumo Squat — 4 × 10 — load RPE 8 — rest 1:15
 description : 
-description : Estimated duration 17 min
+description : Estimated duration 7 min
 notes : ∅
-== musculation · 2026-01-02 · cooldown (3)
+== musculation · 2026-01-02 · cooldown (5)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: standing hamstrings 45 s / leg · pigeon 45 s / side · hip flexors in a lunge 45 s / side.
 notes : ∅
@@ -13722,18 +13820,39 @@ titre : Warm-up
 description : Warm-up (5 min) — easy rower or bike, Dead Bugs, Bird Dogs, 20 s plank.
 notes : ∅
 == musculation · 2026-01-03 · strength (1)
-titre : Core · Muscle gain
+titre : Core · Reverse Crunch
 description : Strength · Core · Muscle gain · 20 min · Box
 description : 
 description : Reverse Crunch — 3 × 10 — bodyweight — rest 1:00
-description : Side Plank with Rotation — 3 × 11 / side — bodyweight — rest 1:00
-description : Back Extension — 3 × 10 — bodyweight — rest 1:00
-description : Hanging Leg Raise — 3 × 10 — bodyweight — rest 1:00
 description : 
-description : Estimated duration 20 min
+description : Estimated duration 4 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
-== musculation · 2026-01-03 · cooldown (2)
+== musculation · 2026-01-03 · strength (2)
+titre : Core · Side Plank with Rotation
+description : Strength · Core · Muscle gain · 20 min · Box
+description : 
+description : Side Plank with Rotation — 3 × 11 / side — bodyweight — rest 1:00
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2026-01-03 · strength (3)
+titre : Core · Back Extension
+description : Strength · Core · Muscle gain · 20 min · Box
+description : 
+description : Back Extension — 3 × 10 — bodyweight — rest 1:00
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-01-03 · strength (4)
+titre : Core · Hanging Leg Raise
+description : Strength · Core · Muscle gain · 20 min · Box
+description : 
+description : Hanging Leg Raise — 3 × 10 — bodyweight — rest 1:00
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-01-03 · cooldown (5)
 titre : Cool-down
 description : Cool-down (5 min) — child's pose 1 min · cobra 45 s · lying thoracic rotation 45 s / side, 4-6 breathing.
 notes : ∅
@@ -14242,27 +14361,55 @@ titre : Warm-up
 description : Warm-up (10 min) — easy rower or bike, shoulder and thoracic mobility, Push-Ups, Band Pull-Aparts, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2028-01-17 · strength (1)
-titre : Push · Toning · Main block
+titre : Main block · Bench Press
 description : Strength · Push · Toning · 45 min · Box
 description : 
 description : Bench Press — 4 × 18 — RPE 7 (≈ 55% of 1RM) — rest 40s
-description : DB Shoulder Press — 4 × 18 — load RPE 7 — rest 40s
 description : 
-description : Estimated duration 14 min
+description : Estimated duration 7 min
 description : Stimulus: Steady pace, no set to failure
 notes : Steady pace, no set to failure
 == musculation · 2028-01-17 · strength (2)
-titre : Push · Toning · Accessories
+titre : Main block · DB Shoulder Press
+description : Strength · Push · Toning · 45 min · Box
+description : 
+description : DB Shoulder Press — 4 × 18 — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2028-01-17 · strength (3)
+titre : Accessories · DB Fly
 description : Strength · Push · Toning · 45 min · Box
 description : 
 description : DB Fly — 4 × 18 — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2028-01-17 · strength (4)
+titre : Accessories · Wall Triceps Extension
+description : Strength · Push · Toning · 45 min · Box
+description : 
 description : Wall Triceps Extension — 4 × 18 — bodyweight — rest 40s
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2028-01-17 · strength (5)
+titre : Accessories · Lateral Raise
+description : Strength · Push · Toning · 45 min · Box
+description : 
 description : Lateral Raise — 4 × 18 — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2028-01-17 · strength (6)
+titre : Accessories · Back Extension
+description : Strength · Push · Toning · 45 min · Box
+description : 
 description : Back Extension — 3 × 18 — bodyweight — rest 30s
 description : 
-description : Estimated duration 23 min
+description : Estimated duration 5 min
 notes : ∅
-== musculation · 2028-01-17 · cooldown (3)
+== musculation · 2028-01-17 · cooldown (7)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: chest against the wall 45 s / arm · cross-body shoulder 45 s / arm · overhead triceps 30 s / arm, slow breathing.
 notes : ∅
@@ -14271,27 +14418,48 @@ titre : Warm-up
 description : Warm-up (10 min) — easy bike or rower, ankle and hip mobility, Air Squats, Lunges, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2028-01-18 · strength (1)
-titre : Legs · Toning · Main block
+titre : Main block · Bulgarian Split Squat
 description : Strength · Legs · Toning · 45 min · Box
 description : 
 description : Bulgarian Split Squat — 5 × 15 / leg — load RPE 7 — rest 40s
 description :   tempo 3-1-1
-description : DB Sumo Squat — 4 × 18 — load RPE 7 — rest 40s
 description : 
-description : Estimated duration 23 min
+description : Estimated duration 16 min
 description : Stimulus: Steady pace, no set to failure
 notes : Steady pace, no set to failure
 == musculation · 2028-01-18 · strength (2)
-titre : Legs · Toning · Accessories
+titre : Main block · DB Sumo Squat
+description : Strength · Legs · Toning · 45 min · Box
+description : 
+description : DB Sumo Squat — 4 × 18 — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2028-01-18 · strength (3)
+titre : Accessories · Calf Raise (bodyweight)
 description : Strength · Legs · Toning · 45 min · Box
 description : 
 description : Calf Raise (bodyweight) — 5 × 15 — bodyweight — rest 40s
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2028-01-18 · strength (4)
+titre : Accessories · Hip Thrust
+description : Strength · Legs · Toning · 45 min · Box
+description : 
 description : Hip Thrust — 3 × 18 — RPE 7 (≈ 55% of 1RM) — rest 40s
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2028-01-18 · strength (5)
+titre : Accessories · Plank Hold
+description : Strength · Legs · Toning · 45 min · Box
+description : 
 description : Plank Hold — 5 × 45 s — rest 30s
 description : 
-description : Estimated duration 18 min
+description : Estimated duration 6 min
 notes : ∅
-== musculation · 2028-01-18 · cooldown (3)
+== musculation · 2028-01-18 · cooldown (6)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: standing quads 45 s / leg · frog adductors 45 s · pigeon for the glutes 45 s / side.
 notes : ∅
@@ -14300,27 +14468,55 @@ titre : Warm-up
 description : Warm-up (10 min) — easy rower, shoulder mobility, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2028-01-20 · strength (1)
-titre : Pull · Toning · Main block
+titre : Main block · Banded Pull-Ups
 description : Strength · Pull · Toning · 45 min · Box
 description : 
 description : Banded Pull-Ups — 4 × 14 — band — rest 40s
-description : Barbell Row — 4 × 18 — RPE 7 (≈ 55% of 1RM) — rest 40s
 description : 
-description : Estimated duration 12 min
+description : Estimated duration 6 min
 description : Stimulus: Steady pace, no set to failure
 notes : Steady pace, no set to failure
 == musculation · 2028-01-20 · strength (2)
-titre : Pull · Toning · Accessories
+titre : Accessories · Rear Delt Fly
 description : Strength · Pull · Toning · 45 min · Box
 description : 
 description : Rear Delt Fly — 4 × 18 — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2028-01-20 · strength (3)
+titre : Main block · Barbell Row
+description : Strength · Pull · Toning · 45 min · Box
+description : 
+description : Barbell Row — 4 × 18 — RPE 7 (≈ 55% of 1RM) — rest 40s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2028-01-20 · strength (4)
+titre : Accessories · DB Curl
+description : Strength · Pull · Toning · 45 min · Box
+description : 
 description : DB Curl — 4 × 18 / arm — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 10 min
+notes : ∅
+== musculation · 2028-01-20 · strength (5)
+titre : Accessories · Suitcase Carry
+description : Strength · Pull · Toning · 45 min · Box
+description : 
 description : Suitcase Carry — 3 × 40 m / side — load RPE 7 — rest 30s
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2028-01-20 · strength (6)
+titre : Accessories · Barbell Shrug
+description : Strength · Pull · Toning · 45 min · Box
+description : 
 description : Barbell Shrug — 3 × 18 — RPE 7 (≈ 55% of 1RM) — rest 40s
 description : 
-description : Estimated duration 25 min
+description : Estimated duration 4 min
 notes : ∅
-== musculation · 2028-01-20 · cooldown (3)
+== musculation · 2028-01-20 · cooldown (7)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: lats on the bar or against the wall 45 s · biceps against the wall 30 s / arm · thoracic opener 45 s, slow breathing.
 notes : ∅
@@ -14329,28 +14525,42 @@ titre : Warm-up
 description : Warm-up (10 min) — easy bike, hip mobility, Glute Bridges, empty-bar Good Mornings, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2028-01-21 · strength (1)
-titre : Glutes + hamstrings · Toning · Main block
+titre : Main block · Romanian Deadlift
 description : Strength · Glutes + hamstrings · Toning · 45 min · Box
 description : 
 description : Romanian Deadlift — 5 × 15 — RPE 7 (≈ 60% of 1RM) — rest 40s
 description :   tempo 3-1-1
-description : DB Hip Thrust — 5 × 15 — load RPE 7 — rest 40s
-description :   tempo 3-1-1
 description : 
-description : Estimated duration 20 min
+description : Estimated duration 10 min
 description : Stimulus: Steady pace, no set to failure
 notes : Steady pace, no set to failure
 == musculation · 2028-01-21 · strength (2)
-titre : Glutes + hamstrings · Toning · Accessories
+titre : Main block · DB Hip Thrust
+description : Strength · Glutes + hamstrings · Toning · 45 min · Box
+description : 
+description : DB Hip Thrust — 5 × 15 — load RPE 7 — rest 40s
+description :   tempo 3-1-1
+description : 
+description : Estimated duration 10 min
+notes : ∅
+== musculation · 2028-01-21 · strength (3)
+titre : Accessories · Superman Hold
 description : Strength · Glutes + hamstrings · Toning · 45 min · Box
 description : 
 description : Superman Hold — 5 × 47 s — rest 40s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2028-01-21 · strength (4)
+titre : Accessories · Banded Hip Abduction
+description : Strength · Glutes + hamstrings · Toning · 45 min · Box
+description : 
 description : Banded Hip Abduction — 4 × 20 — band — rest 40s
 description :   tempo 3-1-1
 description : 
-description : Estimated duration 17 min
+description : Estimated duration 9 min
 notes : ∅
-== musculation · 2028-01-21 · cooldown (3)
+== musculation · 2028-01-21 · cooldown (5)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: standing hamstrings 45 s / leg · pigeon 45 s / side · hip flexors in a lunge 45 s / side.
 notes : ∅
@@ -14359,18 +14569,39 @@ titre : Warm-up
 description : Warm-up (5 min) — easy rower or bike, Dead Bugs, Bird Dogs, 20 s plank.
 notes : ∅
 == musculation · 2028-01-22 · strength (1)
-titre : Core · Toning
+titre : Core · Stomach Vacuum
 description : Strength · Core · Toning · 20 min · Box
 description : 
 description : Stomach Vacuum — 3 × 45 s — rest 30s
-description : Oblique Raise On Roman Chair — 3 × 18 / side — bodyweight — rest 30s
-description : Farmer Carry — 3 × 40 m — load RPE 7 — rest 30s
-description : Superman Hold — 3 × 45 s — rest 30s
 description : 
-description : Estimated duration 19 min
+description : Estimated duration 4 min
 description : Stimulus: Steady pace, no set to failure
 notes : Steady pace, no set to failure
-== musculation · 2028-01-22 · cooldown (2)
+== musculation · 2028-01-22 · strength (2)
+titre : Core · Oblique Raise On Roman Chair
+description : Strength · Core · Toning · 20 min · Box
+description : 
+description : Oblique Raise On Roman Chair — 3 × 18 / side — bodyweight — rest 30s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2028-01-22 · strength (3)
+titre : Core · Farmer Carry
+description : Strength · Core · Toning · 20 min · Box
+description : 
+description : Farmer Carry — 3 × 40 m — load RPE 7 — rest 30s
+description : 
+description : Estimated duration 4 min
+notes : ∅
+== musculation · 2028-01-22 · strength (4)
+titre : Core · Superman Hold
+description : Strength · Core · Toning · 20 min · Box
+description : 
+description : Superman Hold — 3 × 45 s — rest 30s
+description : 
+description : Estimated duration 4 min
+notes : ∅
+== musculation · 2028-01-22 · cooldown (5)
 titre : Cool-down
 description : Cool-down (5 min) — child's pose 1 min · cobra 45 s · lying thoracic rotation 45 s / side, 4-6 breathing.
 notes : ∅
@@ -14691,27 +14922,55 @@ titre : Warm-up
 description : Warm-up (10 min) — easy rower or bike, shoulder and thoracic mobility, Push-Ups, Band Pull-Aparts, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2026-01-19 · strength (1)
-titre : Push · Toning · Main block
+titre : Main block · Bench Press
 description : Strength · Push · Toning · 45 min · Box
 description : 
 description : Bench Press — 4 × 18 — RPE 7 (≈ 55% of 1RM) — rest 40s
-description : DB Shoulder Press — 4 × 18 — load RPE 7 — rest 40s
 description : 
-description : Estimated duration 14 min
+description : Estimated duration 7 min
 description : Stimulus: Steady pace, no set to failure
 notes : Steady pace, no set to failure
 == musculation · 2026-01-19 · strength (2)
-titre : Push · Toning · Accessories
+titre : Main block · DB Shoulder Press
+description : Strength · Push · Toning · 45 min · Box
+description : 
+description : DB Shoulder Press — 4 × 18 — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2026-01-19 · strength (3)
+titre : Accessories · DB Fly
 description : Strength · Push · Toning · 45 min · Box
 description : 
 description : DB Fly — 4 × 18 — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2026-01-19 · strength (4)
+titre : Accessories · Wall Triceps Extension
+description : Strength · Push · Toning · 45 min · Box
+description : 
 description : Wall Triceps Extension — 4 × 18 — bodyweight — rest 40s
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2026-01-19 · strength (5)
+titre : Accessories · Lateral Raise
+description : Strength · Push · Toning · 45 min · Box
+description : 
 description : Lateral Raise — 4 × 18 — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-01-19 · strength (6)
+titre : Accessories · Farmer Carry
+description : Strength · Push · Toning · 45 min · Box
+description : 
 description : Farmer Carry — 4 × 40 m — load RPE 7 — rest 30s
 description : 
-description : Estimated duration 23 min
+description : Estimated duration 5 min
 notes : ∅
-== musculation · 2026-01-19 · cooldown (3)
+== musculation · 2026-01-19 · cooldown (7)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: chest against the wall 45 s / arm · cross-body shoulder 45 s / arm · overhead triceps 30 s / arm, slow breathing.
 notes : ∅
@@ -14720,26 +14979,47 @@ titre : Warm-up
 description : Warm-up (10 min) — easy bike or rower, ankle and hip mobility, Air Squats, Lunges, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2026-01-20 · strength (1)
-titre : Legs · Toning · Main block
+titre : Main block · Back Squat
 description : Strength · Legs · Toning · 45 min · Box
 description : 
 description : Back Squat — 5 × 15 — RPE 7 (≈ 60% of 1RM) — rest 40s
-description : DB Reverse Lunge — 5 × 15 / leg — load RPE 7 — rest 40s
 description : 
-description : Estimated duration 18 min
+description : Estimated duration 9 min
 description : Stimulus: Steady pace, no set to failure
 notes : Steady pace, no set to failure
 == musculation · 2026-01-20 · strength (2)
-titre : Legs · Toning · Accessories
+titre : Main block · DB Reverse Lunge
+description : Strength · Legs · Toning · 45 min · Box
+description : 
+description : DB Reverse Lunge — 5 × 15 / leg — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 9 min
+notes : ∅
+== musculation · 2026-01-20 · strength (3)
+titre : Accessories · Calf Raise (bodyweight)
 description : Strength · Legs · Toning · 45 min · Box
 description : 
 description : Calf Raise (bodyweight) — 5 × 15 — bodyweight — rest 40s
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2026-01-20 · strength (4)
+titre : Accessories · DB Romanian Deadlift
+description : Strength · Legs · Toning · 45 min · Box
+description : 
 description : DB Romanian Deadlift — 4 × 18 — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 8 min
+notes : ∅
+== musculation · 2026-01-20 · strength (5)
+titre : Accessories · Farmer Carry
+description : Strength · Legs · Toning · 45 min · Box
+description : 
 description : Farmer Carry — 4 × 40 m — load RPE 7 — rest 30s
 description : 
-description : Estimated duration 19 min
+description : Estimated duration 5 min
 notes : ∅
-== musculation · 2026-01-20 · cooldown (3)
+== musculation · 2026-01-20 · cooldown (6)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: standing quads 45 s / leg · frog adductors 45 s · pigeon for the glutes 45 s / side.
 notes : ∅
@@ -14748,27 +15028,55 @@ titre : Warm-up
 description : Warm-up (10 min) — easy rower, shoulder mobility, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2026-01-22 · strength (1)
-titre : Pull · Toning · Main block
+titre : Main block · Banded Pull-Ups
 description : Strength · Pull · Toning · 45 min · Box
 description : 
 description : Banded Pull-Ups — 5 × 14 — band — rest 40s
-description : Barbell Row — 4 × 18 — RPE 7 (≈ 55% of 1RM) — rest 40s
 description : 
-description : Estimated duration 14 min
+description : Estimated duration 7 min
 description : Stimulus: Steady pace, no set to failure
 notes : Steady pace, no set to failure
 == musculation · 2026-01-22 · strength (2)
-titre : Pull · Toning · Accessories
+titre : Accessories · Rear Delt Fly
 description : Strength · Pull · Toning · 45 min · Box
 description : 
 description : Rear Delt Fly — 4 × 18 — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-01-22 · strength (3)
+titre : Main block · Barbell Row
+description : Strength · Pull · Toning · 45 min · Box
+description : 
+description : Barbell Row — 4 × 18 — RPE 7 (≈ 55% of 1RM) — rest 40s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2026-01-22 · strength (4)
+titre : Accessories · DB Curl
+description : Strength · Pull · Toning · 45 min · Box
+description : 
 description : DB Curl — 4 × 18 / arm — load RPE 7 — rest 40s
+description : 
+description : Estimated duration 10 min
+notes : ∅
+== musculation · 2026-01-22 · strength (5)
+titre : Accessories · Reverse Crunch
+description : Strength · Pull · Toning · 45 min · Box
+description : 
 description : Reverse Crunch — 2 × 18 — bodyweight — rest 30s
+description : 
+description : Estimated duration 2 min
+notes : ∅
+== musculation · 2026-01-22 · strength (6)
+titre : Accessories · Barbell Shrug
+description : Strength · Pull · Toning · 45 min · Box
+description : 
 description : Barbell Shrug — 4 × 18 — RPE 7 (≈ 55% of 1RM) — rest 40s
 description : 
-description : Estimated duration 23 min
+description : Estimated duration 5 min
 notes : ∅
-== musculation · 2026-01-22 · cooldown (3)
+== musculation · 2026-01-22 · cooldown (7)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: lats on the bar or against the wall 45 s · biceps against the wall 30 s / arm · thoracic opener 45 s, slow breathing.
 notes : ∅
@@ -14777,28 +15085,42 @@ titre : Warm-up
 description : Warm-up (10 min) — easy bike, hip mobility, Glute Bridges, empty-bar Good Mornings, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2026-01-23 · strength (1)
-titre : Glutes + hamstrings · Toning · Main block
+titre : Main block · Romanian Deadlift
 description : Strength · Glutes + hamstrings · Toning · 45 min · Box
 description : 
 description : Romanian Deadlift — 5 × 15 — RPE 7 (≈ 60% of 1RM) — rest 40s
 description :   tempo 3-1-1
-description : DB Hip Thrust — 5 × 15 — load RPE 7 — rest 40s
-description :   tempo 3-1-1
 description : 
-description : Estimated duration 20 min
+description : Estimated duration 10 min
 description : Stimulus: Steady pace, no set to failure
 notes : Steady pace, no set to failure
 == musculation · 2026-01-23 · strength (2)
-titre : Glutes + hamstrings · Toning · Accessories
+titre : Main block · DB Hip Thrust
+description : Strength · Glutes + hamstrings · Toning · 45 min · Box
+description : 
+description : DB Hip Thrust — 5 × 15 — load RPE 7 — rest 40s
+description :   tempo 3-1-1
+description : 
+description : Estimated duration 10 min
+notes : ∅
+== musculation · 2026-01-23 · strength (3)
+titre : Accessories · Superman Hold
 description : Strength · Glutes + hamstrings · Toning · 45 min · Box
 description : 
 description : Superman Hold — 5 × 47 s — rest 40s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2026-01-23 · strength (4)
+titre : Accessories · Banded Hip Abduction
+description : Strength · Glutes + hamstrings · Toning · 45 min · Box
+description : 
 description : Banded Hip Abduction — 4 × 20 — band — rest 40s
 description :   tempo 3-1-1
 description : 
-description : Estimated duration 17 min
+description : Estimated duration 9 min
 notes : ∅
-== musculation · 2026-01-23 · cooldown (3)
+== musculation · 2026-01-23 · cooldown (5)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: standing hamstrings 45 s / leg · pigeon 45 s / side · hip flexors in a lunge 45 s / side.
 notes : ∅
@@ -14807,18 +15129,39 @@ titre : Warm-up
 description : Warm-up (5 min) — easy rower or bike, Dead Bugs, Bird Dogs, 20 s plank.
 notes : ∅
 == musculation · 2026-01-24 · strength (1)
-titre : Core · Toning
+titre : Core · Stomach Vacuum
 description : Strength · Core · Toning · 20 min · Box
 description : 
 description : Stomach Vacuum — 3 × 45 s — rest 30s
-description : Oblique Raise On Roman Chair — 3 × 18 / side — bodyweight — rest 30s
-description : Farmer Carry — 3 × 40 m — load RPE 7 — rest 30s
-description : Back Extension — 3 × 18 — bodyweight — rest 30s
 description : 
-description : Estimated duration 19 min
+description : Estimated duration 4 min
 description : Stimulus: Steady pace, no set to failure
 notes : Steady pace, no set to failure
-== musculation · 2026-01-24 · cooldown (2)
+== musculation · 2026-01-24 · strength (2)
+titre : Core · Oblique Raise On Roman Chair
+description : Strength · Core · Toning · 20 min · Box
+description : 
+description : Oblique Raise On Roman Chair — 3 × 18 / side — bodyweight — rest 30s
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2026-01-24 · strength (3)
+titre : Core · Farmer Carry
+description : Strength · Core · Toning · 20 min · Box
+description : 
+description : Farmer Carry — 3 × 40 m — load RPE 7 — rest 30s
+description : 
+description : Estimated duration 4 min
+notes : ∅
+== musculation · 2026-01-24 · strength (4)
+titre : Core · Back Extension
+description : Strength · Core · Toning · 20 min · Box
+description : 
+description : Back Extension — 3 × 18 — bodyweight — rest 30s
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-01-24 · cooldown (5)
 titre : Cool-down
 description : Cool-down (5 min) — child's pose 1 min · cobra 45 s · lying thoracic rotation 45 s / side, 4-6 breathing.
 notes : ∅
@@ -15147,29 +15490,50 @@ titre : Warm-up
 description : Warm-up (10 min) — easy rower or bike, shoulder and thoracic mobility, Push-Ups, Band Pull-Aparts, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2028-02-07 · strength (1)
-titre : Push · Max Strength · Main block
+titre : Main block · Bench Press
 description : Strength · Push · Max Strength · 45 min · Box
 description : 
 description : Bench Press — 5 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:30
-description : Strict Press — 5 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:30
 description : 
-description : Estimated duration 29 min
+description : Estimated duration 14 min
 description : Stimulus: RIR 2, last set at RPE 9. Ramp-up on Bench Press: 5 @ 50% · 3 @ 65% · 2 @ 75% before the work sets
 notes : RIR 2, last set at RPE 9. Ramp-up on Bench Press: 5 @ 50% · 3 @ 65% · 2 @ 75% before the work sets
 == musculation · 2028-02-07 · strength (2)
-titre : Push · Max Strength · Accessories
+titre : Main block · Strict Press
+description : Strength · Push · Max Strength · 45 min · Box
+description : 
+description : Strict Press — 5 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:30
+description : 
+description : Estimated duration 14 min
+notes : ∅
+== musculation · 2028-02-07 · strength (3)
+titre : Accessories · DB Kickback
 description : Strength · Push · Max Strength · 45 min · Box
 description : 
 description : DB Kickback — 3 × 10 / arm — load RPE 8 — rest 1:15
 description :   hypertrophy scheme
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2028-02-07 · strength (4)
+titre : Accessories · Bent Over Lateral Raise
+description : Strength · Push · Max Strength · 45 min · Box
+description : 
 description : Bent Over Lateral Raise — 3 × 10 — load RPE 8 — rest 1:15
 description :   hypertrophy scheme
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2028-02-07 · strength (5)
+titre : Accessories · Lateral Raise
+description : Strength · Push · Max Strength · 45 min · Box
+description : 
 description : Lateral Raise — 3 × 10 — load RPE 8 — rest 1:15
 description :   hypertrophy scheme
 description : 
-description : Estimated duration 16 min
+description : Estimated duration 5 min
 notes : ∅
-== musculation · 2028-02-07 · cooldown (3)
+== musculation · 2028-02-07 · cooldown (6)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: chest against the wall 45 s / arm · cross-body shoulder 45 s / arm · overhead triceps 30 s / arm, slow breathing.
 notes : ∅
@@ -15178,29 +15542,50 @@ titre : Warm-up
 description : Warm-up (10 min) — easy bike or rower, ankle and hip mobility, Air Squats, Lunges, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2028-02-08 · strength (1)
-titre : Legs · Max Strength · Main block
+titre : Main block · Front Squat
 description : Strength · Legs · Max Strength · 45 min · Box
 description : 
 description : Front Squat — 5 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:30
-description : Hip Thrust — 5 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:30
-description : Box Step-ups — 3 × 18 / leg — load RPE 8 — rest 1:15
-description :   hypertrophy scheme
 description : 
-description : Estimated duration 37 min
+description : Estimated duration 15 min
 description : Stimulus: RIR 2, last set at RPE 9. Ramp-up on Front Squat: 5 @ 50% · 3 @ 65% · 2 @ 75% before the work sets
 notes : RIR 2, last set at RPE 9. Ramp-up on Front Squat: 5 @ 50% · 3 @ 65% · 2 @ 75% before the work sets
 == musculation · 2028-02-08 · strength (2)
-titre : Legs · Max Strength · Accessories
+titre : Main block · Hip Thrust
+description : Strength · Legs · Max Strength · 45 min · Box
+description : 
+description : Hip Thrust — 5 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:30
+description : 
+description : Estimated duration 15 min
+notes : ∅
+== musculation · 2028-02-08 · strength (3)
+titre : Main block · Box Step-ups
+description : Strength · Legs · Max Strength · 45 min · Box
+description : 
+description : Box Step-ups — 3 × 18 / leg — load RPE 8 — rest 1:15
+description :   hypertrophy scheme
+description : 
+description : Estimated duration 8 min
+notes : ∅
+== musculation · 2028-02-08 · strength (4)
+titre : Accessories · Romanian Deadlift
 description : Strength · Legs · Max Strength · 45 min · Box
 description : 
 description : Romanian Deadlift — 4 × 7 — RPE 8 (≈ 75% of 1RM) — rest 2:00
 description :   3rd compound: 70-75% × 6-8
+description : 
+description : Estimated duration 10 min
+notes : ∅
+== musculation · 2028-02-08 · strength (5)
+titre : Accessories · Single-Leg Calf Raise
+description : Strength · Legs · Max Strength · 45 min · Box
+description : 
 description : Single-Leg Calf Raise — 3 × 16 / leg — bodyweight — rest 45s
 description :   hypertrophy scheme
 description : 
-description : Estimated duration 16 min
+description : Estimated duration 6 min
 notes : ∅
-== musculation · 2028-02-08 · cooldown (3)
+== musculation · 2028-02-08 · cooldown (6)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: standing quads 45 s / leg · frog adductors 45 s · pigeon for the glutes 45 s / side.
 notes : ∅
@@ -15209,29 +15594,50 @@ titre : Warm-up
 description : Warm-up (10 min) — easy rower, shoulder mobility, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2028-02-10 · strength (1)
-titre : Pull · Max Strength · Main block
+titre : Main block · Wide Grip Pull-Ups
 description : Strength · Pull · Max Strength · 45 min · Box
 description : 
 description : Wide Grip Pull-Ups — 5 × 4 — light weight, RPE 8 — rest 2:30
-description : Barbell Row — 4 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:00
 description : 
-description : Estimated duration 23 min
+description : Estimated duration 14 min
 description : Stimulus: RIR 2, last set at RPE 9. Ramp-up on Wide Grip Pull-Ups: 5 @ 50% · 3 @ 65% · 2 @ 75% before the work sets
 notes : RIR 2, last set at RPE 9. Ramp-up on Wide Grip Pull-Ups: 5 @ 50% · 3 @ 65% · 2 @ 75% before the work sets
 == musculation · 2028-02-10 · strength (2)
-titre : Pull · Max Strength · Accessories
+titre : Accessories · DB Curl
 description : Strength · Pull · Max Strength · 45 min · Box
 description : 
 description : DB Curl — 3 × 10 / arm — load RPE 8 — rest 1:15
 description :   hypertrophy scheme
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2028-02-10 · strength (3)
+titre : Main block · Barbell Row
+description : Strength · Pull · Max Strength · 45 min · Box
+description : 
+description : Barbell Row — 4 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:00
+description : 
+description : Estimated duration 9 min
+notes : ∅
+== musculation · 2028-02-10 · strength (4)
+titre : Accessories · DB Shrug
+description : Strength · Pull · Max Strength · 45 min · Box
+description : 
 description : DB Shrug — 3 × 10 — load RPE 8 — rest 1:15
 description :   hypertrophy scheme
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2028-02-10 · strength (5)
+titre : Accessories · Rear Delt Fly
+description : Strength · Pull · Max Strength · 45 min · Box
+description : 
 description : Rear Delt Fly — 3 × 10 — load RPE 8 — rest 1:15
 description :   hypertrophy scheme
 description : 
-description : Estimated duration 17 min
+description : Estimated duration 5 min
 notes : ∅
-== musculation · 2028-02-10 · cooldown (3)
+== musculation · 2028-02-10 · cooldown (6)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: lats on the bar or against the wall 45 s · biceps against the wall 30 s / arm · thoracic opener 45 s, slow breathing.
 notes : ∅
@@ -15240,17 +15646,24 @@ titre : Warm-up
 description : Warm-up (10 min) — easy bike, hip mobility, Glute Bridges, empty-bar Good Mornings, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2028-02-11 · strength (1)
-titre : Glutes + hamstrings · Max Strength · Main block
+titre : Main block · Romanian Deadlift
 description : Strength · Glutes + hamstrings · Max Strength · 45 min · Box
 description : 
 description : Romanian Deadlift — 5 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:30
-description : Hip Thrust — 5 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:30
 description : 
-description : Estimated duration 29 min
+description : Estimated duration 14 min
 description : Stimulus: RIR 2, last set at RPE 9. Ramp-up on Romanian Deadlift: 5 @ 50% · 3 @ 65% · 2 @ 75% before the work sets
 notes : RIR 2, last set at RPE 9. Ramp-up on Romanian Deadlift: 5 @ 50% · 3 @ 65% · 2 @ 75% before the work sets
 == musculation · 2028-02-11 · strength (2)
-titre : Glutes + hamstrings · Max Strength · Accessories
+titre : Main block · Hip Thrust
+description : Strength · Glutes + hamstrings · Max Strength · 45 min · Box
+description : 
+description : Hip Thrust — 5 × 4 — RPE 8 (≈ 85% of 1RM) — rest 2:30
+description : 
+description : Estimated duration 15 min
+notes : ∅
+== musculation · 2028-02-11 · strength (3)
+titre : Accessories · Back Extension
 description : Strength · Glutes + hamstrings · Max Strength · 45 min · Box
 description : 
 description : Back Extension — 5 × 10 — bodyweight — rest 1:00
@@ -15258,7 +15671,7 @@ description :   hypertrophy scheme
 description : 
 description : Estimated duration 8 min
 notes : ∅
-== musculation · 2028-02-11 · cooldown (3)
+== musculation · 2028-02-11 · cooldown (4)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: standing hamstrings 45 s / leg · pigeon 45 s / side · hip flexors in a lunge 45 s / side.
 notes : ∅
@@ -15267,18 +15680,39 @@ titre : Warm-up
 description : Warm-up (5 min) — easy rower or bike, Dead Bugs, Bird Dogs, 20 s plank.
 notes : ∅
 == musculation · 2028-02-12 · strength (1)
-titre : Core · Muscle gain
+titre : Core · Ab Wheel Rollout
 description : Strength · Core · Muscle gain · 20 min · Box
 description : 
 description : Ab Wheel Rollout — 3 × 10 — bodyweight — rest 1:00
-description : Banded Pallof Press — 3 × 13 / side — bodyweight — rest 1:00
-description : Back Extension — 3 × 10 — bodyweight — rest 1:00
-description : Hanging Leg Raise — 3 × 10 — bodyweight — rest 1:00
 description : 
-description : Estimated duration 22 min
+description : Estimated duration 5 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
-== musculation · 2028-02-12 · cooldown (2)
+== musculation · 2028-02-12 · strength (2)
+titre : Core · Banded Pallof Press
+description : Strength · Core · Muscle gain · 20 min · Box
+description : 
+description : Banded Pallof Press — 3 × 13 / side — bodyweight — rest 1:00
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2028-02-12 · strength (3)
+titre : Core · Back Extension
+description : Strength · Core · Muscle gain · 20 min · Box
+description : 
+description : Back Extension — 3 × 10 — bodyweight — rest 1:00
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2028-02-12 · strength (4)
+titre : Core · Hanging Leg Raise
+description : Strength · Core · Muscle gain · 20 min · Box
+description : 
+description : Hanging Leg Raise — 3 × 10 — bodyweight — rest 1:00
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2028-02-12 · cooldown (5)
 titre : Cool-down
 description : Cool-down (5 min) — child's pose 1 min · cobra 45 s · lying thoracic rotation 45 s / side, 4-6 breathing.
 notes : ∅
@@ -15603,27 +16037,55 @@ titre : Warm-up
 description : Warm-up (10 min) — easy rower or bike, shoulder and thoracic mobility, Push-Ups, Band Pull-Aparts, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2026-02-09 · strength (1)
-titre : Push · Muscle gain · Main block
+titre : Main block · Incline DB Press
 description : Strength · Push · Muscle gain · 45 min · Box
 description : 
 description : Incline DB Press — 4 × 10 — load RPE 8 — rest 1:30
-description : Strict Press — 3 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
 description : 
-description : Estimated duration 15 min
+description : Estimated duration 9 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
 == musculation · 2026-02-09 · strength (2)
-titre : Push · Muscle gain · Accessories
+titre : Main block · Strict Press
+description : Strength · Push · Muscle gain · 45 min · Box
+description : 
+description : Strict Press — 3 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2026-02-09 · strength (3)
+titre : Accessories · DB Fly
 description : Strength · Push · Muscle gain · 45 min · Box
 description : 
 description : DB Fly — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2026-02-09 · strength (4)
+titre : Accessories · Lateral Raise
+description : Strength · Push · Muscle gain · 45 min · Box
+description : 
 description : Lateral Raise — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-02-09 · strength (5)
+titre : Accessories · One-Arm Overhead Triceps Extension
+description : Strength · Push · Muscle gain · 45 min · Box
+description : 
 description : One-Arm Overhead Triceps Extension — 3 × 10 / arm — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2026-02-09 · strength (6)
+titre : Accessories · Reverse Crunch
+description : Strength · Push · Muscle gain · 45 min · Box
+description : 
 description : Reverse Crunch — 3 × 10 — bodyweight — rest 1:00
 description : 
-description : Estimated duration 22 min
+description : Estimated duration 4 min
 notes : ∅
-== musculation · 2026-02-09 · cooldown (3)
+== musculation · 2026-02-09 · cooldown (7)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: chest against the wall 45 s / arm · cross-body shoulder 45 s / arm · overhead triceps 30 s / arm, slow breathing.
 notes : ∅
@@ -15632,27 +16094,55 @@ titre : Warm-up
 description : Warm-up (10 min) — easy bike or rower, ankle and hip mobility, Air Squats, Lunges, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2026-02-10 · strength (1)
-titre : Legs · Muscle gain · Main block
+titre : Main block · Goblet Squat
 description : Strength · Legs · Muscle gain · 45 min · Box
 description : 
 description : Goblet Squat — 4 × 10 — load RPE 8 — rest 1:30
-description : DB Romanian Deadlift — 3 × 10 — load RPE 8 — rest 1:15
-description : DB Lunges — 3 × 10 / leg — load RPE 8 — rest 1:15
 description : 
-description : Estimated duration 20 min
+description : Estimated duration 8 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
 == musculation · 2026-02-10 · strength (2)
-titre : Legs · Muscle gain · Accessories
+titre : Main block · DB Romanian Deadlift
+description : Strength · Legs · Muscle gain · 45 min · Box
+description : 
+description : DB Romanian Deadlift — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2026-02-10 · strength (3)
+titre : Main block · DB Lunges
+description : Strength · Legs · Muscle gain · 45 min · Box
+description : 
+description : DB Lunges — 3 × 10 / leg — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2026-02-10 · strength (4)
+titre : Accessories · Single-Leg Calf Raise
 description : Strength · Legs · Muscle gain · 45 min · Box
 description : 
 description : Single-Leg Calf Raise — 3 × 16 / leg — bodyweight — rest 1:15
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2026-02-10 · strength (5)
+titre : Accessories · DB Hip Thrust
+description : Strength · Legs · Muscle gain · 45 min · Box
+description : 
 description : DB Hip Thrust — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2026-02-10 · strength (6)
+titre : Accessories · Suitcase Carry
+description : Strength · Legs · Muscle gain · 45 min · Box
+description : 
 description : Suitcase Carry — 3 × 40 m / side — load RPE 7 — rest 30s
 description : 
-description : Estimated duration 18 min
+description : Estimated duration 6 min
 notes : ∅
-== musculation · 2026-02-10 · cooldown (3)
+== musculation · 2026-02-10 · cooldown (7)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: standing quads 45 s / leg · frog adductors 45 s · pigeon for the glutes 45 s / side.
 notes : ∅
@@ -15661,27 +16151,55 @@ titre : Warm-up
 description : Warm-up (10 min) — easy rower, shoulder mobility, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2026-02-12 · strength (1)
-titre : Pull · Muscle gain · Main block
+titre : Main block · Chin-Ups
 description : Strength · Pull · Muscle gain · 45 min · Box
 description : 
 description : Chin-Ups — 4 × 10 — bodyweight — rest 1:30
-description : Supinated Barbell Row — 4 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
 description : 
-description : Estimated duration 16 min
+description : Estimated duration 8 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
 == musculation · 2026-02-12 · strength (2)
-titre : Pull · Muscle gain · Accessories
+titre : Accessories · Bent Over Lateral Raise
 description : Strength · Pull · Muscle gain · 45 min · Box
 description : 
 description : Bent Over Lateral Raise — 4 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 7 min
+notes : ∅
+== musculation · 2026-02-12 · strength (3)
+titre : Main block · Supinated Barbell Row
+description : Strength · Pull · Muscle gain · 45 min · Box
+description : 
+description : Supinated Barbell Row — 4 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:15
+description : 
+description : Estimated duration 8 min
+notes : ∅
+== musculation · 2026-02-12 · strength (4)
+titre : Accessories · Spider Curl
+description : Strength · Pull · Muscle gain · 45 min · Box
+description : 
 description : Spider Curl — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2026-02-12 · strength (5)
+titre : Accessories · DB Shrug
+description : Strength · Pull · Muscle gain · 45 min · Box
+description : 
 description : DB Shrug — 3 × 10 — load RPE 8 — rest 1:15
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-02-12 · strength (6)
+titre : Accessories · Reverse Crunch
+description : Strength · Pull · Muscle gain · 45 min · Box
+description : 
 description : Reverse Crunch — 3 × 10 — bodyweight — rest 1:00
 description : 
-description : Estimated duration 21 min
+description : Estimated duration 4 min
 notes : ∅
-== musculation · 2026-02-12 · cooldown (3)
+== musculation · 2026-02-12 · cooldown (7)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: lats on the bar or against the wall 45 s · biceps against the wall 30 s / arm · thoracic opener 45 s, slow breathing.
 notes : ∅
@@ -15690,25 +16208,39 @@ titre : Warm-up
 description : Warm-up (10 min) — easy bike, hip mobility, Glute Bridges, empty-bar Good Mornings, then 2 light sets of the first exercise.
 notes : ∅
 == musculation · 2026-02-13 · strength (1)
-titre : Glutes + hamstrings · Muscle gain · Main block
+titre : Main block · Good Morning
 description : Strength · Glutes + hamstrings · Muscle gain · 45 min · Box
 description : 
 description : Good Morning — 5 × 10 — load RPE 8 — rest 1:30
-description : Hip Thrust — 4 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:30
 description : 
-description : Estimated duration 20 min
+description : Estimated duration 11 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
 == musculation · 2026-02-13 · strength (2)
-titre : Glutes + hamstrings · Muscle gain · Accessories
+titre : Main block · Hip Thrust
+description : Strength · Glutes + hamstrings · Muscle gain · 45 min · Box
+description : 
+description : Hip Thrust — 4 × 10 — RPE 8 (≈ 68% of 1RM) — rest 1:30
+description : 
+description : Estimated duration 9 min
+notes : ∅
+== musculation · 2026-02-13 · strength (3)
+titre : Accessories · Bird Dog Hold
 description : Strength · Glutes + hamstrings · Muscle gain · 45 min · Box
 description : 
 description : Bird Dog Hold — 4 × 11 / side — bodyweight — rest 1:15
+description : 
+description : Estimated duration 9 min
+notes : ∅
+== musculation · 2026-02-13 · strength (4)
+titre : Accessories · DB Sumo Squat
+description : Strength · Glutes + hamstrings · Muscle gain · 45 min · Box
+description : 
 description : DB Sumo Squat — 4 × 10 — load RPE 8 — rest 1:15
 description : 
-description : Estimated duration 17 min
+description : Estimated duration 7 min
 notes : ∅
-== musculation · 2026-02-13 · cooldown (3)
+== musculation · 2026-02-13 · cooldown (5)
 titre : Cool-down
 description : Cool-down (5 min) — stretching: standing hamstrings 45 s / leg · pigeon 45 s / side · hip flexors in a lunge 45 s / side.
 notes : ∅
@@ -15717,18 +16249,39 @@ titre : Warm-up
 description : Warm-up (5 min) — easy rower or bike, Dead Bugs, Bird Dogs, 20 s plank.
 notes : ∅
 == musculation · 2026-02-14 · strength (1)
-titre : Core · Muscle gain
+titre : Core · Reverse Crunch
 description : Strength · Core · Muscle gain · 20 min · Box
 description : 
 description : Reverse Crunch — 3 × 10 — bodyweight — rest 1:00
-description : Side Plank with Rotation — 3 × 11 / side — bodyweight — rest 1:00
-description : Back Extension — 3 × 10 — bodyweight — rest 1:00
-description : Hanging Leg Raise — 3 × 10 — bodyweight — rest 1:00
 description : 
-description : Estimated duration 20 min
+description : Estimated duration 4 min
 description : Stimulus: Last set 1-2 reps short of failure
 notes : Last set 1-2 reps short of failure
-== musculation · 2026-02-14 · cooldown (2)
+== musculation · 2026-02-14 · strength (2)
+titre : Core · Side Plank with Rotation
+description : Strength · Core · Muscle gain · 20 min · Box
+description : 
+description : Side Plank with Rotation — 3 × 11 / side — bodyweight — rest 1:00
+description : 
+description : Estimated duration 6 min
+notes : ∅
+== musculation · 2026-02-14 · strength (3)
+titre : Core · Back Extension
+description : Strength · Core · Muscle gain · 20 min · Box
+description : 
+description : Back Extension — 3 × 10 — bodyweight — rest 1:00
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-02-14 · strength (4)
+titre : Core · Hanging Leg Raise
+description : Strength · Core · Muscle gain · 20 min · Box
+description : 
+description : Hanging Leg Raise — 3 × 10 — bodyweight — rest 1:00
+description : 
+description : Estimated duration 5 min
+notes : ∅
+== musculation · 2026-02-14 · cooldown (5)
 titre : Cool-down
 description : Cool-down (5 min) — child's pose 1 min · cobra 45 s · lying thoracic rotation 45 s / side, 4-6 breathing.
 notes : ∅

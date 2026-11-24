@@ -1,10 +1,10 @@
 /**
- * Musculation de box en plusieurs cartes (#620), PR 2 « génération » : `muscuWeekRows` écrit chaque
- * journée en cartes. La séance tirée ne change pas : même graine, mêmes exercices, mêmes séries,
- * mêmes signatures de run, mêmes relaxations, et aucun appel au RNG de plus.
+ * Musculation de box en plusieurs cartes (#620, #635) : `muscuWeekRows` écrit chaque journée en
+ * Échauffement · une carte par exercice · Retour au calme. La séance tirée ne change pas : même graine,
+ * mêmes exercices, mêmes séries, mêmes signatures de run, mêmes relaxations, aucun appel au RNG de plus.
  */
 import {
-  runWeekGeneration, muscuWeekRows, generateMuscuWeek, weekSeed, weekDates, publishAtFor, ROLES_PRINCIPAL,
+  runWeekGeneration, weekSeed, weekDates, publishAtFor, partieExercice, generateMuscuWeek,
   MUSCU_WEEK_DAYS, MUSCU_WEEKLY_CAP_SETS, CATALOG_SNAPSHOT, BANK_V1,
 } from '../src';
 import type { BoxWodInsert, ExistingAutoRow, GeneratedMuscuWeek, MuscuWod, SessionStructuredBlock, Track } from '../src';
@@ -31,7 +31,7 @@ const semaineDirecte = (iso_week: number, box = BOX, recent: string[] = []): Gen
   generateMuscuWeek({ iso_year: 2027, iso_week, recent_signatures: recent }, C, B, weekSeed(box, 'musculation', 2027, iso_week, 0));
 
 /** La carte, moins ce qui en fait une carte : doit redonner la séance du jour. */
-const sansCarte = (w: MuscuWod) => ({ ...w, blocks: null, estimate: null, rendu: { ...w.rendu, partie: undefined }, title: null, description: null, notes: null });
+const sansCarte = (w: MuscuWod) => ({ ...w, blocks: null, estimate: null, rendu: { ...w.rendu, partie: undefined, premiere: undefined }, title: null, description: null, notes: null });
 const parDate = (rows: BoxWodInsert[]) => {
   const m = new Map<string, BoxWodInsert[]>();
   for (const r of rows) m.set(r.scheduled_date, [...(m.get(r.scheduled_date) ?? []), r]);
@@ -66,9 +66,9 @@ describe('le tirage ne change pas', () => {
       const cartes = rows.get(dates[d.day - 1])!;
       const muscu = cartes.filter((r) => r.block_name === 'strength').map((r) => r.wod_json as MuscuWod);
       const exs = d.wod.blocks[0].exercises;
-      // mêmes exercices, mêmes séries, mêmes charges : groupe principal puis accessoires, chacun dans l'ordre de la séance
-      const attendus = muscu.length === 1 ? exs : [...exs.filter((e) => ROLES_PRINCIPAL.includes(e.role)), ...exs.filter((e) => !ROLES_PRINCIPAL.includes(e.role))];
-      expect(muscu.flatMap((w) => w.blocks[0].exercises)).toEqual(attendus);
+      // mêmes exercices, mêmes séries, mêmes charges, dans l'ordre de la séance : un par carte
+      expect(muscu.map((w) => w.blocks[0].exercises)).toEqual(exs.map((e) => [e]));
+      expect(muscu.map((w) => w.rendu?.partie)).toEqual(exs.map((e) => partieExercice(d.target, e)));
       for (const w of muscu) {
         expect(sansCarte(w)).toEqual(sansCarte(d.wod));
         expect(w.signature).toBe(d.wod.signature);
@@ -91,7 +91,7 @@ describe('le tirage ne change pas', () => {
 });
 
 describe('cartes écrites', () => {
-  it.each([1, 3, 5])('semaine %i : 4 cartes (Push, Jambes, Pull, Fessiers & ischios), 3 le samedi Tronc, sort_order 0..n, mêmes colonnes de journée', async (iso_week) => {
+  it.each([1, 3, 5])('semaine %i : Échauffement · une carte par exercice · Retour au calme (Tronc compris), sort_order 0..n, mêmes colonnes de journée', async (iso_week) => {
     const db = base();
     await runWeekGeneration(db, C, B, { now: new Date(0), target: { iso_year: 2027, iso_week } });
     const run = db.runs[0];
@@ -99,8 +99,7 @@ describe('cartes écrites', () => {
     const week = semaineDirecte(iso_week);
     for (const [date, cartes] of parDate(db.wods)) {
       const d = week.days.find((x) => weekDates(2027, iso_week)[x.day - 1] === date)!;
-      expect(cartes.map((r) => r.block_name)).toEqual(d.target === 'tronc'
-        ? ['warmup', 'strength', 'cooldown'] : ['warmup', 'strength', 'strength', 'cooldown']);
+      expect(cartes.map((r) => r.block_name)).toEqual(['warmup', ...d.wod.blocks[0].exercises.map(() => 'strength'), 'cooldown']);
       expect(cartes.map((r) => r.sort_order)).toEqual(cartes.map((_, i) => i));
       for (const r of cartes) {
         expect(r).toMatchObject({
@@ -109,15 +108,14 @@ describe('cartes écrites', () => {
         });
       }
       const muscu = cartes.filter((r) => r.block_name === 'strength');
-      // une carte de musculation = une strength_session
+      // une carte d'exercice = une strength_session d'un exercice
       for (const r of muscu) {
         expect(r.wod_type).toBe('strength');
-        expect((r.wod_json as MuscuWod).blocks.map((b) => b.kind)).toEqual(['strength_session']);
+        expect((r.wod_json as MuscuWod).blocks.map((b) => [b.kind, b.exercises.length])).toEqual([['strength_session', 1]]);
       }
-      // note du stimulus sur la première carte de musculation seulement
+      // note du stimulus sur la première carte d'exercice seulement
       expect(muscu.map((r) => r.notes)).toEqual(muscu.map((_, i) => (i === 0 ? d.wod.notes : null)));
-      // Tronc : la carte est la séance entière, texte et JSON d'aujourd'hui
-      if (d.target === 'tronc') expect(muscu[0]).toMatchObject({ title: d.wod.title, description: d.wod.description, notes: d.wod.notes, wod_json: d.wod });
+      expect(muscu.map((r) => (r.wod_json as MuscuWod).rendu?.premiere)).toEqual(muscu.map((_, i) => i === 0));
       // échauffement et retour au calme : sans grille, sans score
       for (const r of cartes.filter((x) => x.block_name !== 'strength')) {
         expect(r.wod_type).toBe('custom');
@@ -130,31 +128,23 @@ describe('cartes écrites', () => {
     }
   });
 
-  it('groupe vide (semaine Force, tout polyarticulaire) : 3 cartes, une seule carte de musculation', () => {
-    const week = semaineDirecte(5);
-    expect(week.objective).toBe('force');
-    const lundi = week.days[0];
-    const wod: MuscuWod = { ...lundi.wod, blocks: [{ kind: 'strength_session', exercises: lundi.wod.blocks[0].exercises.filter((e) => ROLES_PRINCIPAL.includes(e.role)) }] };
-    const rows = muscuWeekRows({ ...week, days: [{ ...lundi, wod }] }, { box_id: BOX, created_by: null, run_id: 'r', iso_year: 2027, iso_week: 5 }, C);
-    expect(rows.map((r) => `${r.sort_order}:${r.block_name}`)).toEqual(['0:warmup', '1:strength', '2:cooldown']);
-    expect(rows[1].wod_json).toBe(wod);
-    expect(rows[1].notes).toBe(wod.notes);
-  });
-
-  it('régénération : une carte Accessoires scorée garde toute la journée (4 cartes), les autres jours sont remplacés', async () => {
+  it('régénération : une carte d\'exercice scorée garde toute la journée, les autres jours sont remplacés', async () => {
     const db = base();
     const target = { iso_year: 2027, iso_week: 11 };
     await runWeekGeneration(db, C, B, { now: new Date(0), target });
     const mardi = db.wods.filter((w) => w.scheduled_date === '2027-03-16');
-    expect(mardi).toHaveLength(4);
-    db.marques.set(mardi[2].id, { edited_at: null, scored: true });
+    const n = mardi.length;
+    expect(n).toBeGreaterThan(4);
+    db.marques.set(mardi[n - 2].id, { edited_at: null, scored: true });
     const avant = db.wods.map((w) => w.id);
     const [out] = await runWeekGeneration(db, C, B, { now: new Date(0), target, regen: { box_id: BOX, track: 'musculation' } });
-    expect(out).toMatchObject({ status: 'done', regen_counter: 1, kept_dates: ['2027-03-16'], deleted: avant.length - 4 });
+    expect(out).toMatchObject({ status: 'done', regen_counter: 1, kept_dates: ['2027-03-16'], deleted: avant.length - n });
     for (const w of mardi) expect(db.wods.find((x) => x.id === w.id)).toEqual(w);
     const autres = db.wods.filter((w) => w.scheduled_date !== '2027-03-16');
     expect(autres.every((w) => !avant.includes(w.id))).toBe(true);
-    expect(autres).toHaveLength(3 * 4 + 3);
+    const autresJours = parDate(autres);
+    expect(autresJours.size).toBe(4);
+    for (const c of autresJours.values()) expect(c.map((w) => w.block_name).join()).toMatch(/^warmup(,strength)+,cooldown$/);
     expect(db.runs[0].wod_ids.sort()).toEqual(db.wods.map((w) => w.id).sort());
   });
 });

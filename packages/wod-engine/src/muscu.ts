@@ -1102,6 +1102,20 @@ export function exerciseLine(e: MuscuExercise, langue: Langue = 'fr'): string {
   return out;
 }
 
+/** Carte d'un exercice de la programmation de box (#635) ; les cartes #620 (sans `premiere`) n'en sont pas. */
+export function estCarteExercice(wod: MuscuWod): boolean {
+  return !!wod.rendu?.partie && typeof wod.rendu.premiere === 'boolean' && wod.blocks[0].exercises.length === 1;
+}
+
+/**
+ * La carte porte-t-elle la note du stimulus ? Séance entière : oui. Carte #620 : pas les Accessoires.
+ * Carte d'un exercice (#635) : la première de la journée seulement.
+ */
+export function stimulusSurCarte(wod: MuscuWod): boolean {
+  if (!wod.rendu?.partie) return true;
+  return estCarteExercice(wod) ? wod.rendu.premiere === true : wod.rendu.partie !== 'accessoires';
+}
+
 export function renderMuscu(wod: MuscuWod, langue: Langue = 'fr'): string {
   const T = textes(langue).musculation;
   const lines: string[] = [];
@@ -1113,8 +1127,7 @@ export function renderMuscu(wod: MuscuWod, langue: Langue = 'fr'): string {
   }
   lines.push('');
   lines.push(T.dureeEstimee(wod.estimate.minutes));
-  // carte Accessoires (#620) : la note du stimulus est sur la carte du bloc principal
-  if (wod.rendu?.partie !== 'accessoires') lines.push(T.stimulus(wod.stimulus.note));
+  if (stimulusSurCarte(wod)) lines.push(T.stimulus(wod.stimulus.note));
   if (wod.after_class?.excluded_muscles.length) {
     lines.push(T.musclesEvites(wod.after_class.excluded_muscles));
   }

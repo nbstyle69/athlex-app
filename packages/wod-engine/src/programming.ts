@@ -247,10 +247,9 @@ export function functionalWeekRows(week: GeneratedWeek, ctx: WeekContext): BoxWo
 }
 
 /**
- * Lignes d'une semaine Musculation : chaque journée en cartes (#620), dans l'ordre
- * (`sort_order` 0..n) — Échauffement, Bloc principal, Accessoires, Retour au calme (Tronc :
- * Échauffement, la séance entière, Retour au calme). La séance tirée est inchangée : les cartes
- * la découpent sans tirage (`cartesJourMuscu`). `catalog` : durée estimée de chaque partie.
+ * Lignes d'une semaine Musculation : chaque journée en cartes (#620, #635), dans l'ordre
+ * (`sort_order` 0..n) — Échauffement, une carte par exercice, Retour au calme. La séance tirée est
+ * inchangée : les cartes la découpent sans tirage (`cartesJourMuscu`). `catalog` : durée estimée de chaque carte.
  */
 export function muscuWeekRows(week: GeneratedMuscuWeek, ctx: WeekContext, catalog: Catalog, langue: Langue = 'fr'): BoxWodInsert[] {
   const dates = weekDates(ctx.iso_year, ctx.iso_week);

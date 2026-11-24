@@ -25852,8 +25852,8 @@ var fr = {
       repos: (t) => ` \u2014 repos ${t}`
     },
     titre: (cible, objectif) => `${cible} \xB7 ${objectif}`,
-    /** carte d'une partie de la séance (programmation de box, #620) : ajoutée au titre */
-    partie: { principal: "Bloc principal", accessoires: "Accessoires" },
+    /** carte d'une partie de la séance (programmation de box, #620) : ajoutée au titre ; carte d'un exercice (#635) : « <partie> · <exercice> » */
+    partie: { principal: "Bloc principal", accessoires: "Accessoires", tronc: "Tronc" },
     entete: (cible, objectif, min2, materiel) => `Musculation \xB7 ${cible} \xB7 ${objectif} \xB7 ${prime(min2)} \xB7 ${materiel}`,
     dureeEstimee: (min2) => `Dur\xE9e estim\xE9e ${prime(min2)}`,
     stimulus: (note) => `Stimulus : ${note}`,
@@ -28069,7 +28069,7 @@ var en = {
       repos: (t) => ` \u2014 rest ${t}`
     },
     titre: (cible, objectif) => `${cible} \xB7 ${objectif}`,
-    partie: { principal: "Main block", accessoires: "Accessories" },
+    partie: { principal: "Main block", accessoires: "Accessories", tronc: "Core" },
     entete: (cible, objectif, m, materiel) => `Strength \xB7 ${cible} \xB7 ${objectif} \xB7 ${min(m)} \xB7 ${materiel}`,
     dureeEstimee: (m) => `Estimated duration ${min(m)}`,
     stimulus: (note) => `Stimulus: ${note}`,
@@ -30957,6 +30957,13 @@ function exerciseLine(e, langue = "fr") {
   if (e.rest_s > 0) out += T5.ligne.repos(fmtRest(e.rest_s));
   return out;
 }
+function estCarteExercice(wod) {
+  return !!wod.rendu?.partie && typeof wod.rendu.premiere === "boolean" && wod.blocks[0].exercises.length === 1;
+}
+function stimulusSurCarte(wod) {
+  if (!wod.rendu?.partie) return true;
+  return estCarteExercice(wod) ? wod.rendu.premiere === true : wod.rendu.partie !== "accessoires";
+}
 function renderMuscu(wod, langue = "fr") {
   const T5 = textes(langue).musculation;
   const lines = [];
@@ -30968,7 +30975,7 @@ function renderMuscu(wod, langue = "fr") {
   }
   lines.push("");
   lines.push(T5.dureeEstimee(wod.estimate.minutes));
-  if (wod.rendu?.partie !== "accessoires") lines.push(T5.stimulus(wod.stimulus.note));
+  if (stimulusSurCarte(wod)) lines.push(T5.stimulus(wod.stimulus.note));
   if (wod.after_class?.excluded_muscles.length) {
     lines.push(T5.musclesEvites(wod.after_class.excluded_muscles));
   }
@@ -32065,7 +32072,12 @@ function renderFromWodJson(wodJson, langue = "fr") {
     const T5 = textes(langue).musculation;
     const titre = T5.titre(T5.cible[w.target], T5.objectif[w.objective]);
     const partie = w.rendu?.partie;
-    if (partie) return { title: `${titre} \xB7 ${T5.partie[partie]}`, description: renderMuscu(copie, langue), notes: partie === "accessoires" ? null : note };
+    const notes = stimulusSurCarte(w) ? note : null;
+    if (partie && estCarteExercice(w)) {
+      const e = w.blocks[0].exercises[0];
+      return { title: `${T5.partie[partie]} \xB7 ${nomExercice(e.id, e.name, langue)}`, description: renderMuscu(copie, langue), notes };
+    }
+    if (partie) return { title: `${titre} \xB7 ${T5.partie[partie]}`, description: renderMuscu(copie, langue), notes };
     return { title: titre, description: renderMuscu(copie, langue), notes: note };
   }
   if (j.discipline === "functional" || j.discipline === "hybrid") {
@@ -32088,23 +32100,23 @@ function secondes(catalog, exercises) {
     return m?.muscu ? [{ sets: e.sets, reps: e.reps, rest: e.rest_s, ...e.rendu?.tempo ? { tempo: e.rendu.tempo } : {}, m: { muscu: m.muscu } }] : [];
   }));
 }
+function partieExercice(target, e) {
+  if (target === "tronc") return "tronc";
+  return ROLES_PRINCIPAL.includes(e.role) ? "principal" : "accessoires";
+}
 function partiesMuscu(wod, catalog) {
-  const exs = wod.blocks[0].exercises;
-  const principal = exs.filter((e) => ROLES_PRINCIPAL.includes(e.role));
-  const accessoires = exs.filter((e) => !ROLES_PRINCIPAL.includes(e.role));
-  if (wod.target === "tronc" || !wod.rendu || !principal.length || !accessoires.length) return [wod];
-  const partie = (p, exercises) => {
-    const seconds = secondes(catalog, exercises);
+  if (!wod.rendu) return [wod];
+  return wod.blocks[0].exercises.map((e, i) => {
+    const seconds = secondes(catalog, [e]);
     const w = {
       ...wod,
-      blocks: [{ kind: "strength_session", exercises }],
+      blocks: [{ kind: "strength_session", exercises: [e] }],
       estimate: { minutes: Math.round(seconds / 60), seconds },
-      rendu: { ...wod.rendu, partie: p }
+      rendu: { ...wod.rendu, partie: partieExercice(wod.target, e), premiere: i === 0 }
     };
     const t = renderFromWodJson(w, "fr");
     return { ...w, title: t.title, description: t.description, notes: t.notes };
-  };
-  return [partie("principal", principal), partie("accessoires", accessoires)];
+  });
 }
 function blocSeance(kind, target, rendu2) {
   return {
@@ -32619,6 +32631,7 @@ export {
   noteStimulus,
   parisInstant,
   parisOffsetMinutes,
+  partieExercice,
   partiesMuscu,
   percentForReps,
   primaryPattern,

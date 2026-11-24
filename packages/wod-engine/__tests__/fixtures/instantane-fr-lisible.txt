@@ -13608,27 +13608,55 @@ titre : Échauffement
 description : Échauffement (10') — rameur ou vélo facile, mobilité épaules et thoracique, Push-Ups, Band Pull-Aparts, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2025-12-29 · strength (1)
-titre : Push · Prise de muscle · Bloc principal
+titre : Bloc principal · Incline DB Press
 description : Musculation · Push · Prise de muscle · 45' · Box
 description : 
 description : Incline DB Press — 4 × 10 — charge RPE 8 — repos 1:30
-description : Strict Press — 4 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
 description : 
-description : Durée estimée 16'
+description : Durée estimée 9'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
 == musculation · 2025-12-29 · strength (2)
-titre : Push · Prise de muscle · Accessoires
+titre : Bloc principal · Strict Press
+description : Musculation · Push · Prise de muscle · 45' · Box
+description : 
+description : Strict Press — 4 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
+description : 
+description : Durée estimée 8'
+notes : ∅
+== musculation · 2025-12-29 · strength (3)
+titre : Accessoires · DB Fly
 description : Musculation · Push · Prise de muscle · 45' · Box
 description : 
 description : DB Fly — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2025-12-29 · strength (4)
+titre : Accessoires · Lateral Raise
+description : Musculation · Push · Prise de muscle · 45' · Box
+description : 
 description : Lateral Raise — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2025-12-29 · strength (5)
+titre : Accessoires · Skull Crushers
+description : Musculation · Push · Prise de muscle · 45' · Box
+description : 
 description : Skull Crushers — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2025-12-29 · strength (6)
+titre : Accessoires · Ab Wheel Rollout
+description : Musculation · Push · Prise de muscle · 45' · Box
+description : 
 description : Ab Wheel Rollout — 3 × 10 — charge poids du corps — repos 1:00
 description : 
-description : Durée estimée 21'
+description : Durée estimée 5'
 notes : ∅
-== musculation · 2025-12-29 · cooldown (3)
+== musculation · 2025-12-29 · cooldown (7)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : pectoraux au mur 45 s / bras · épaule en travers 45 s / bras · triceps au-dessus de la tête 30 s / bras, respiration lente.
 notes : ∅
@@ -13637,27 +13665,55 @@ titre : Échauffement
 description : Échauffement (10') — vélo ou rameur facile, mobilité chevilles et hanches, Air Squats, Lunges, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2025-12-30 · strength (1)
-titre : Jambes · Prise de muscle · Bloc principal
+titre : Bloc principal · DB Lunges
 description : Musculation · Jambes · Prise de muscle · 45' · Box
 description : 
 description : DB Lunges — 4 × 10 / jambe — charge RPE 8 — repos 1:30
-description : Good Morning — 3 × 10 — charge RPE 8 — repos 1:15
-description : Hip Thrust — 3 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
 description : 
-description : Durée estimée 21'
+description : Durée estimée 9'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
 == musculation · 2025-12-30 · strength (2)
-titre : Jambes · Prise de muscle · Accessoires
+titre : Bloc principal · Good Morning
+description : Musculation · Jambes · Prise de muscle · 45' · Box
+description : 
+description : Good Morning — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2025-12-30 · strength (3)
+titre : Bloc principal · Hip Thrust
+description : Musculation · Jambes · Prise de muscle · 45' · Box
+description : 
+description : Hip Thrust — 3 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2025-12-30 · strength (4)
+titre : Accessoires · Goblet Squat
 description : Musculation · Jambes · Prise de muscle · 45' · Box
 description : 
 description : Goblet Squat — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2025-12-30 · strength (5)
+titre : Accessoires · Mollets unilatéraux
+description : Musculation · Jambes · Prise de muscle · 45' · Box
+description : 
 description : Mollets unilatéraux — 3 × 16 / jambe — charge poids du corps — repos 1:15
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2025-12-30 · strength (6)
+titre : Accessoires · Suitcase Carry
+description : Musculation · Jambes · Prise de muscle · 45' · Box
+description : 
 description : Suitcase Carry — 3 × 40 m / côté — charge RPE 7 — repos 30s
 description : 
-description : Durée estimée 18'
+description : Durée estimée 6'
 notes : ∅
-== musculation · 2025-12-30 · cooldown (3)
+== musculation · 2025-12-30 · cooldown (7)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : quadriceps debout 45 s / jambe · adducteurs en grenouille 45 s · fessiers en pigeon 45 s / côté.
 notes : ∅
@@ -13666,27 +13722,55 @@ titre : Échauffement
 description : Échauffement (10') — rameur facile, mobilité épaules, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2026-01-01 · strength (1)
-titre : Pull · Prise de muscle · Bloc principal
+titre : Bloc principal · Neutral Grip Pull-Ups
 description : Musculation · Pull · Prise de muscle · 45' · Box
 description : 
 description : Neutral Grip Pull-Ups — 4 × 10 — charge poids du corps — repos 1:30
-description : Pendlay Row — 4 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
 description : 
-description : Durée estimée 16'
+description : Durée estimée 8'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
 == musculation · 2026-01-01 · strength (2)
-titre : Pull · Prise de muscle · Accessoires
+titre : Accessoires · Bent Over Lateral Raise
 description : Musculation · Pull · Prise de muscle · 45' · Box
 description : 
 description : Bent Over Lateral Raise — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-01-01 · strength (3)
+titre : Bloc principal · Pendlay Row
+description : Musculation · Pull · Prise de muscle · 45' · Box
+description : 
+description : Pendlay Row — 4 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
+description : 
+description : Durée estimée 8'
+notes : ∅
+== musculation · 2026-01-01 · strength (4)
+titre : Accessoires · Cross-Body Hammer Curl
+description : Musculation · Pull · Prise de muscle · 45' · Box
+description : 
 description : Cross-Body Hammer Curl — 3 × 10 / bras — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2026-01-01 · strength (5)
+titre : Accessoires · Barbell Shrug
+description : Musculation · Pull · Prise de muscle · 45' · Box
+description : 
 description : Barbell Shrug — 3 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-01-01 · strength (6)
+titre : Accessoires · Hanging Leg Raise
+description : Musculation · Pull · Prise de muscle · 45' · Box
+description : 
 description : Hanging Leg Raise — 3 × 10 — charge poids du corps — repos 1:00
 description : 
-description : Durée estimée 22'
+description : Durée estimée 5'
 notes : ∅
-== musculation · 2026-01-01 · cooldown (3)
+== musculation · 2026-01-01 · cooldown (7)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : dorsaux à la barre ou au mur 45 s · biceps au mur 30 s / bras · ouverture thoracique 45 s, respiration lente.
 notes : ∅
@@ -13695,25 +13779,39 @@ titre : Échauffement
 description : Échauffement (10') — vélo facile, mobilité hanches, Glute Bridges, Good Mornings à vide, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2026-01-02 · strength (1)
-titre : Fessiers & ischios · Prise de muscle · Bloc principal
+titre : Bloc principal · Good Morning
 description : Musculation · Fessiers & ischios · Prise de muscle · 45' · Box
 description : 
 description : Good Morning — 5 × 10 — charge RPE 8 — repos 1:30
-description : DB Hip Thrust — 4 × 10 — charge RPE 8 — repos 1:30
 description : 
-description : Durée estimée 20'
+description : Durée estimée 11'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
 == musculation · 2026-01-02 · strength (2)
-titre : Fessiers & ischios · Prise de muscle · Accessoires
+titre : Bloc principal · DB Hip Thrust
+description : Musculation · Fessiers & ischios · Prise de muscle · 45' · Box
+description : 
+description : DB Hip Thrust — 4 × 10 — charge RPE 8 — repos 1:30
+description : 
+description : Durée estimée 8'
+notes : ∅
+== musculation · 2026-01-02 · strength (3)
+titre : Accessoires · Bird Dog tenu
 description : Musculation · Fessiers & ischios · Prise de muscle · 45' · Box
 description : 
 description : Bird Dog tenu — 4 × 11 / côté — charge poids du corps — repos 1:15
+description : 
+description : Durée estimée 9'
+notes : ∅
+== musculation · 2026-01-02 · strength (4)
+titre : Accessoires · DB Sumo Squat
+description : Musculation · Fessiers & ischios · Prise de muscle · 45' · Box
+description : 
 description : DB Sumo Squat — 4 × 10 — charge RPE 8 — repos 1:15
 description : 
-description : Durée estimée 17'
+description : Durée estimée 7'
 notes : ∅
-== musculation · 2026-01-02 · cooldown (3)
+== musculation · 2026-01-02 · cooldown (5)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : ischios debout 45 s / jambe · pigeon 45 s / côté · fléchisseurs de hanche en fente 45 s / côté.
 notes : ∅
@@ -13722,18 +13820,39 @@ titre : Échauffement
 description : Échauffement (5') — rameur ou vélo facile, Dead Bugs, Bird Dogs, planche 20 s.
 notes : ∅
 == musculation · 2026-01-03 · strength (1)
-titre : Tronc · Prise de muscle
+titre : Tronc · Reverse Crunch
 description : Musculation · Tronc · Prise de muscle · 20' · Box
 description : 
 description : Reverse Crunch — 3 × 10 — charge poids du corps — repos 1:00
-description : Side Plank avec rotation — 3 × 11 / côté — charge poids du corps — repos 1:00
-description : Back Extension — 3 × 10 — charge poids du corps — repos 1:00
-description : Hanging Leg Raise — 3 × 10 — charge poids du corps — repos 1:00
 description : 
-description : Durée estimée 20'
+description : Durée estimée 4'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
-== musculation · 2026-01-03 · cooldown (2)
+== musculation · 2026-01-03 · strength (2)
+titre : Tronc · Side Plank avec rotation
+description : Musculation · Tronc · Prise de muscle · 20' · Box
+description : 
+description : Side Plank avec rotation — 3 × 11 / côté — charge poids du corps — repos 1:00
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2026-01-03 · strength (3)
+titre : Tronc · Back Extension
+description : Musculation · Tronc · Prise de muscle · 20' · Box
+description : 
+description : Back Extension — 3 × 10 — charge poids du corps — repos 1:00
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-01-03 · strength (4)
+titre : Tronc · Hanging Leg Raise
+description : Musculation · Tronc · Prise de muscle · 20' · Box
+description : 
+description : Hanging Leg Raise — 3 × 10 — charge poids du corps — repos 1:00
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-01-03 · cooldown (5)
 titre : Retour au calme
 description : Retour au calme (5') — posture de l'enfant 1' · cobra 45 s · rotation thoracique allongé 45 s / côté, respiration 4-6.
 notes : ∅
@@ -14242,27 +14361,55 @@ titre : Échauffement
 description : Échauffement (10') — rameur ou vélo facile, mobilité épaules et thoracique, Push-Ups, Band Pull-Aparts, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2028-01-17 · strength (1)
-titre : Push · Tonification · Bloc principal
+titre : Bloc principal · Bench Press
 description : Musculation · Push · Tonification · 45' · Box
 description : 
 description : Bench Press — 4 × 18 — RPE 7 (≈ 55 % du 1RM) — repos 40s
-description : DB Shoulder Press — 4 × 18 — charge RPE 7 — repos 40s
 description : 
-description : Durée estimée 14'
+description : Durée estimée 7'
 description : Stimulus : Rythme continu, aucune série à l'échec
 notes : Rythme continu, aucune série à l'échec
 == musculation · 2028-01-17 · strength (2)
-titre : Push · Tonification · Accessoires
+titre : Bloc principal · DB Shoulder Press
+description : Musculation · Push · Tonification · 45' · Box
+description : 
+description : DB Shoulder Press — 4 × 18 — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2028-01-17 · strength (3)
+titre : Accessoires · DB Fly
 description : Musculation · Push · Tonification · 45' · Box
 description : 
 description : DB Fly — 4 × 18 — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2028-01-17 · strength (4)
+titre : Accessoires · Wall Triceps Extension
+description : Musculation · Push · Tonification · 45' · Box
+description : 
 description : Wall Triceps Extension — 4 × 18 — charge poids du corps — repos 40s
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2028-01-17 · strength (5)
+titre : Accessoires · Lateral Raise
+description : Musculation · Push · Tonification · 45' · Box
+description : 
 description : Lateral Raise — 4 × 18 — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2028-01-17 · strength (6)
+titre : Accessoires · Back Extension
+description : Musculation · Push · Tonification · 45' · Box
+description : 
 description : Back Extension — 3 × 18 — charge poids du corps — repos 30s
 description : 
-description : Durée estimée 23'
+description : Durée estimée 5'
 notes : ∅
-== musculation · 2028-01-17 · cooldown (3)
+== musculation · 2028-01-17 · cooldown (7)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : pectoraux au mur 45 s / bras · épaule en travers 45 s / bras · triceps au-dessus de la tête 30 s / bras, respiration lente.
 notes : ∅
@@ -14271,27 +14418,48 @@ titre : Échauffement
 description : Échauffement (10') — vélo ou rameur facile, mobilité chevilles et hanches, Air Squats, Lunges, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2028-01-18 · strength (1)
-titre : Jambes · Tonification · Bloc principal
+titre : Bloc principal · Bulgarian Split Squat
 description : Musculation · Jambes · Tonification · 45' · Box
 description : 
 description : Bulgarian Split Squat — 5 × 15 / jambe — charge RPE 7 — repos 40s
 description :   tempo 3-1-1
-description : DB Sumo Squat — 4 × 18 — charge RPE 7 — repos 40s
 description : 
-description : Durée estimée 23'
+description : Durée estimée 16'
 description : Stimulus : Rythme continu, aucune série à l'échec
 notes : Rythme continu, aucune série à l'échec
 == musculation · 2028-01-18 · strength (2)
-titre : Jambes · Tonification · Accessoires
+titre : Bloc principal · DB Sumo Squat
+description : Musculation · Jambes · Tonification · 45' · Box
+description : 
+description : DB Sumo Squat — 4 × 18 — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2028-01-18 · strength (3)
+titre : Accessoires · Calf Raise (bodyweight)
 description : Musculation · Jambes · Tonification · 45' · Box
 description : 
 description : Calf Raise (bodyweight) — 5 × 15 — charge poids du corps — repos 40s
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2028-01-18 · strength (4)
+titre : Accessoires · Hip Thrust
+description : Musculation · Jambes · Tonification · 45' · Box
+description : 
 description : Hip Thrust — 3 × 18 — RPE 7 (≈ 55 % du 1RM) — repos 40s
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2028-01-18 · strength (5)
+titre : Accessoires · Plank Hold
+description : Musculation · Jambes · Tonification · 45' · Box
+description : 
 description : Plank Hold — 5 × 45 s — repos 30s
 description : 
-description : Durée estimée 18'
+description : Durée estimée 6'
 notes : ∅
-== musculation · 2028-01-18 · cooldown (3)
+== musculation · 2028-01-18 · cooldown (6)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : quadriceps debout 45 s / jambe · adducteurs en grenouille 45 s · fessiers en pigeon 45 s / côté.
 notes : ∅
@@ -14300,27 +14468,55 @@ titre : Échauffement
 description : Échauffement (10') — rameur facile, mobilité épaules, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2028-01-20 · strength (1)
-titre : Pull · Tonification · Bloc principal
+titre : Bloc principal · Banded Pull-Ups
 description : Musculation · Pull · Tonification · 45' · Box
 description : 
 description : Banded Pull-Ups — 4 × 14 — charge élastique — repos 40s
-description : Barbell Row — 4 × 18 — RPE 7 (≈ 55 % du 1RM) — repos 40s
 description : 
-description : Durée estimée 12'
+description : Durée estimée 6'
 description : Stimulus : Rythme continu, aucune série à l'échec
 notes : Rythme continu, aucune série à l'échec
 == musculation · 2028-01-20 · strength (2)
-titre : Pull · Tonification · Accessoires
+titre : Accessoires · Rear Delt Fly
 description : Musculation · Pull · Tonification · 45' · Box
 description : 
 description : Rear Delt Fly — 4 × 18 — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2028-01-20 · strength (3)
+titre : Bloc principal · Barbell Row
+description : Musculation · Pull · Tonification · 45' · Box
+description : 
+description : Barbell Row — 4 × 18 — RPE 7 (≈ 55 % du 1RM) — repos 40s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2028-01-20 · strength (4)
+titre : Accessoires · DB Curl
+description : Musculation · Pull · Tonification · 45' · Box
+description : 
 description : DB Curl — 4 × 18 / bras — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 10'
+notes : ∅
+== musculation · 2028-01-20 · strength (5)
+titre : Accessoires · Suitcase Carry
+description : Musculation · Pull · Tonification · 45' · Box
+description : 
 description : Suitcase Carry — 3 × 40 m / côté — charge RPE 7 — repos 30s
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2028-01-20 · strength (6)
+titre : Accessoires · Barbell Shrug
+description : Musculation · Pull · Tonification · 45' · Box
+description : 
 description : Barbell Shrug — 3 × 18 — RPE 7 (≈ 55 % du 1RM) — repos 40s
 description : 
-description : Durée estimée 25'
+description : Durée estimée 4'
 notes : ∅
-== musculation · 2028-01-20 · cooldown (3)
+== musculation · 2028-01-20 · cooldown (7)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : dorsaux à la barre ou au mur 45 s · biceps au mur 30 s / bras · ouverture thoracique 45 s, respiration lente.
 notes : ∅
@@ -14329,28 +14525,42 @@ titre : Échauffement
 description : Échauffement (10') — vélo facile, mobilité hanches, Glute Bridges, Good Mornings à vide, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2028-01-21 · strength (1)
-titre : Fessiers & ischios · Tonification · Bloc principal
+titre : Bloc principal · Romanian Deadlift
 description : Musculation · Fessiers & ischios · Tonification · 45' · Box
 description : 
 description : Romanian Deadlift — 5 × 15 — RPE 7 (≈ 60 % du 1RM) — repos 40s
 description :   tempo 3-1-1
-description : DB Hip Thrust — 5 × 15 — charge RPE 7 — repos 40s
-description :   tempo 3-1-1
 description : 
-description : Durée estimée 20'
+description : Durée estimée 10'
 description : Stimulus : Rythme continu, aucune série à l'échec
 notes : Rythme continu, aucune série à l'échec
 == musculation · 2028-01-21 · strength (2)
-titre : Fessiers & ischios · Tonification · Accessoires
+titre : Bloc principal · DB Hip Thrust
+description : Musculation · Fessiers & ischios · Tonification · 45' · Box
+description : 
+description : DB Hip Thrust — 5 × 15 — charge RPE 7 — repos 40s
+description :   tempo 3-1-1
+description : 
+description : Durée estimée 10'
+notes : ∅
+== musculation · 2028-01-21 · strength (3)
+titre : Accessoires · Superman Hold
 description : Musculation · Fessiers & ischios · Tonification · 45' · Box
 description : 
 description : Superman Hold — 5 × 47 s — repos 40s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2028-01-21 · strength (4)
+titre : Accessoires · Banded Hip Abduction
+description : Musculation · Fessiers & ischios · Tonification · 45' · Box
+description : 
 description : Banded Hip Abduction — 4 × 20 — charge élastique — repos 40s
 description :   tempo 3-1-1
 description : 
-description : Durée estimée 17'
+description : Durée estimée 9'
 notes : ∅
-== musculation · 2028-01-21 · cooldown (3)
+== musculation · 2028-01-21 · cooldown (5)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : ischios debout 45 s / jambe · pigeon 45 s / côté · fléchisseurs de hanche en fente 45 s / côté.
 notes : ∅
@@ -14359,18 +14569,39 @@ titre : Échauffement
 description : Échauffement (5') — rameur ou vélo facile, Dead Bugs, Bird Dogs, planche 20 s.
 notes : ∅
 == musculation · 2028-01-22 · strength (1)
-titre : Tronc · Tonification
+titre : Tronc · Stomach Vacuum
 description : Musculation · Tronc · Tonification · 20' · Box
 description : 
 description : Stomach Vacuum — 3 × 45 s — repos 30s
-description : Oblique Raise On Roman Chair — 3 × 18 / côté — charge poids du corps — repos 30s
-description : Farmer Carry — 3 × 40 m — charge RPE 7 — repos 30s
-description : Superman Hold — 3 × 45 s — repos 30s
 description : 
-description : Durée estimée 19'
+description : Durée estimée 4'
 description : Stimulus : Rythme continu, aucune série à l'échec
 notes : Rythme continu, aucune série à l'échec
-== musculation · 2028-01-22 · cooldown (2)
+== musculation · 2028-01-22 · strength (2)
+titre : Tronc · Oblique Raise On Roman Chair
+description : Musculation · Tronc · Tonification · 20' · Box
+description : 
+description : Oblique Raise On Roman Chair — 3 × 18 / côté — charge poids du corps — repos 30s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2028-01-22 · strength (3)
+titre : Tronc · Farmer Carry
+description : Musculation · Tronc · Tonification · 20' · Box
+description : 
+description : Farmer Carry — 3 × 40 m — charge RPE 7 — repos 30s
+description : 
+description : Durée estimée 4'
+notes : ∅
+== musculation · 2028-01-22 · strength (4)
+titre : Tronc · Superman Hold
+description : Musculation · Tronc · Tonification · 20' · Box
+description : 
+description : Superman Hold — 3 × 45 s — repos 30s
+description : 
+description : Durée estimée 4'
+notes : ∅
+== musculation · 2028-01-22 · cooldown (5)
 titre : Retour au calme
 description : Retour au calme (5') — posture de l'enfant 1' · cobra 45 s · rotation thoracique allongé 45 s / côté, respiration 4-6.
 notes : ∅
@@ -14691,27 +14922,55 @@ titre : Échauffement
 description : Échauffement (10') — rameur ou vélo facile, mobilité épaules et thoracique, Push-Ups, Band Pull-Aparts, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2026-01-19 · strength (1)
-titre : Push · Tonification · Bloc principal
+titre : Bloc principal · Bench Press
 description : Musculation · Push · Tonification · 45' · Box
 description : 
 description : Bench Press — 4 × 18 — RPE 7 (≈ 55 % du 1RM) — repos 40s
-description : DB Shoulder Press — 4 × 18 — charge RPE 7 — repos 40s
 description : 
-description : Durée estimée 14'
+description : Durée estimée 7'
 description : Stimulus : Rythme continu, aucune série à l'échec
 notes : Rythme continu, aucune série à l'échec
 == musculation · 2026-01-19 · strength (2)
-titre : Push · Tonification · Accessoires
+titre : Bloc principal · DB Shoulder Press
+description : Musculation · Push · Tonification · 45' · Box
+description : 
+description : DB Shoulder Press — 4 × 18 — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2026-01-19 · strength (3)
+titre : Accessoires · DB Fly
 description : Musculation · Push · Tonification · 45' · Box
 description : 
 description : DB Fly — 4 × 18 — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2026-01-19 · strength (4)
+titre : Accessoires · Wall Triceps Extension
+description : Musculation · Push · Tonification · 45' · Box
+description : 
 description : Wall Triceps Extension — 4 × 18 — charge poids du corps — repos 40s
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2026-01-19 · strength (5)
+titre : Accessoires · Lateral Raise
+description : Musculation · Push · Tonification · 45' · Box
+description : 
 description : Lateral Raise — 4 × 18 — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-01-19 · strength (6)
+titre : Accessoires · Farmer Carry
+description : Musculation · Push · Tonification · 45' · Box
+description : 
 description : Farmer Carry — 4 × 40 m — charge RPE 7 — repos 30s
 description : 
-description : Durée estimée 23'
+description : Durée estimée 5'
 notes : ∅
-== musculation · 2026-01-19 · cooldown (3)
+== musculation · 2026-01-19 · cooldown (7)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : pectoraux au mur 45 s / bras · épaule en travers 45 s / bras · triceps au-dessus de la tête 30 s / bras, respiration lente.
 notes : ∅
@@ -14720,26 +14979,47 @@ titre : Échauffement
 description : Échauffement (10') — vélo ou rameur facile, mobilité chevilles et hanches, Air Squats, Lunges, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2026-01-20 · strength (1)
-titre : Jambes · Tonification · Bloc principal
+titre : Bloc principal · Back Squat
 description : Musculation · Jambes · Tonification · 45' · Box
 description : 
 description : Back Squat — 5 × 15 — RPE 7 (≈ 60 % du 1RM) — repos 40s
-description : DB Reverse Lunge — 5 × 15 / jambe — charge RPE 7 — repos 40s
 description : 
-description : Durée estimée 18'
+description : Durée estimée 9'
 description : Stimulus : Rythme continu, aucune série à l'échec
 notes : Rythme continu, aucune série à l'échec
 == musculation · 2026-01-20 · strength (2)
-titre : Jambes · Tonification · Accessoires
+titre : Bloc principal · DB Reverse Lunge
+description : Musculation · Jambes · Tonification · 45' · Box
+description : 
+description : DB Reverse Lunge — 5 × 15 / jambe — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 9'
+notes : ∅
+== musculation · 2026-01-20 · strength (3)
+titre : Accessoires · Calf Raise (bodyweight)
 description : Musculation · Jambes · Tonification · 45' · Box
 description : 
 description : Calf Raise (bodyweight) — 5 × 15 — charge poids du corps — repos 40s
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2026-01-20 · strength (4)
+titre : Accessoires · DB Romanian Deadlift
+description : Musculation · Jambes · Tonification · 45' · Box
+description : 
 description : DB Romanian Deadlift — 4 × 18 — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 8'
+notes : ∅
+== musculation · 2026-01-20 · strength (5)
+titre : Accessoires · Farmer Carry
+description : Musculation · Jambes · Tonification · 45' · Box
+description : 
 description : Farmer Carry — 4 × 40 m — charge RPE 7 — repos 30s
 description : 
-description : Durée estimée 19'
+description : Durée estimée 5'
 notes : ∅
-== musculation · 2026-01-20 · cooldown (3)
+== musculation · 2026-01-20 · cooldown (6)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : quadriceps debout 45 s / jambe · adducteurs en grenouille 45 s · fessiers en pigeon 45 s / côté.
 notes : ∅
@@ -14748,27 +15028,55 @@ titre : Échauffement
 description : Échauffement (10') — rameur facile, mobilité épaules, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2026-01-22 · strength (1)
-titre : Pull · Tonification · Bloc principal
+titre : Bloc principal · Banded Pull-Ups
 description : Musculation · Pull · Tonification · 45' · Box
 description : 
 description : Banded Pull-Ups — 5 × 14 — charge élastique — repos 40s
-description : Barbell Row — 4 × 18 — RPE 7 (≈ 55 % du 1RM) — repos 40s
 description : 
-description : Durée estimée 14'
+description : Durée estimée 7'
 description : Stimulus : Rythme continu, aucune série à l'échec
 notes : Rythme continu, aucune série à l'échec
 == musculation · 2026-01-22 · strength (2)
-titre : Pull · Tonification · Accessoires
+titre : Accessoires · Rear Delt Fly
 description : Musculation · Pull · Tonification · 45' · Box
 description : 
 description : Rear Delt Fly — 4 × 18 — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-01-22 · strength (3)
+titre : Bloc principal · Barbell Row
+description : Musculation · Pull · Tonification · 45' · Box
+description : 
+description : Barbell Row — 4 × 18 — RPE 7 (≈ 55 % du 1RM) — repos 40s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2026-01-22 · strength (4)
+titre : Accessoires · DB Curl
+description : Musculation · Pull · Tonification · 45' · Box
+description : 
 description : DB Curl — 4 × 18 / bras — charge RPE 7 — repos 40s
+description : 
+description : Durée estimée 10'
+notes : ∅
+== musculation · 2026-01-22 · strength (5)
+titre : Accessoires · Reverse Crunch
+description : Musculation · Pull · Tonification · 45' · Box
+description : 
 description : Reverse Crunch — 2 × 18 — charge poids du corps — repos 30s
+description : 
+description : Durée estimée 2'
+notes : ∅
+== musculation · 2026-01-22 · strength (6)
+titre : Accessoires · Barbell Shrug
+description : Musculation · Pull · Tonification · 45' · Box
+description : 
 description : Barbell Shrug — 4 × 18 — RPE 7 (≈ 55 % du 1RM) — repos 40s
 description : 
-description : Durée estimée 23'
+description : Durée estimée 5'
 notes : ∅
-== musculation · 2026-01-22 · cooldown (3)
+== musculation · 2026-01-22 · cooldown (7)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : dorsaux à la barre ou au mur 45 s · biceps au mur 30 s / bras · ouverture thoracique 45 s, respiration lente.
 notes : ∅
@@ -14777,28 +15085,42 @@ titre : Échauffement
 description : Échauffement (10') — vélo facile, mobilité hanches, Glute Bridges, Good Mornings à vide, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2026-01-23 · strength (1)
-titre : Fessiers & ischios · Tonification · Bloc principal
+titre : Bloc principal · Romanian Deadlift
 description : Musculation · Fessiers & ischios · Tonification · 45' · Box
 description : 
 description : Romanian Deadlift — 5 × 15 — RPE 7 (≈ 60 % du 1RM) — repos 40s
 description :   tempo 3-1-1
-description : DB Hip Thrust — 5 × 15 — charge RPE 7 — repos 40s
-description :   tempo 3-1-1
 description : 
-description : Durée estimée 20'
+description : Durée estimée 10'
 description : Stimulus : Rythme continu, aucune série à l'échec
 notes : Rythme continu, aucune série à l'échec
 == musculation · 2026-01-23 · strength (2)
-titre : Fessiers & ischios · Tonification · Accessoires
+titre : Bloc principal · DB Hip Thrust
+description : Musculation · Fessiers & ischios · Tonification · 45' · Box
+description : 
+description : DB Hip Thrust — 5 × 15 — charge RPE 7 — repos 40s
+description :   tempo 3-1-1
+description : 
+description : Durée estimée 10'
+notes : ∅
+== musculation · 2026-01-23 · strength (3)
+titre : Accessoires · Superman Hold
 description : Musculation · Fessiers & ischios · Tonification · 45' · Box
 description : 
 description : Superman Hold — 5 × 47 s — repos 40s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2026-01-23 · strength (4)
+titre : Accessoires · Banded Hip Abduction
+description : Musculation · Fessiers & ischios · Tonification · 45' · Box
+description : 
 description : Banded Hip Abduction — 4 × 20 — charge élastique — repos 40s
 description :   tempo 3-1-1
 description : 
-description : Durée estimée 17'
+description : Durée estimée 9'
 notes : ∅
-== musculation · 2026-01-23 · cooldown (3)
+== musculation · 2026-01-23 · cooldown (5)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : ischios debout 45 s / jambe · pigeon 45 s / côté · fléchisseurs de hanche en fente 45 s / côté.
 notes : ∅
@@ -14807,18 +15129,39 @@ titre : Échauffement
 description : Échauffement (5') — rameur ou vélo facile, Dead Bugs, Bird Dogs, planche 20 s.
 notes : ∅
 == musculation · 2026-01-24 · strength (1)
-titre : Tronc · Tonification
+titre : Tronc · Stomach Vacuum
 description : Musculation · Tronc · Tonification · 20' · Box
 description : 
 description : Stomach Vacuum — 3 × 45 s — repos 30s
-description : Oblique Raise On Roman Chair — 3 × 18 / côté — charge poids du corps — repos 30s
-description : Farmer Carry — 3 × 40 m — charge RPE 7 — repos 30s
-description : Back Extension — 3 × 18 — charge poids du corps — repos 30s
 description : 
-description : Durée estimée 19'
+description : Durée estimée 4'
 description : Stimulus : Rythme continu, aucune série à l'échec
 notes : Rythme continu, aucune série à l'échec
-== musculation · 2026-01-24 · cooldown (2)
+== musculation · 2026-01-24 · strength (2)
+titre : Tronc · Oblique Raise On Roman Chair
+description : Musculation · Tronc · Tonification · 20' · Box
+description : 
+description : Oblique Raise On Roman Chair — 3 × 18 / côté — charge poids du corps — repos 30s
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2026-01-24 · strength (3)
+titre : Tronc · Farmer Carry
+description : Musculation · Tronc · Tonification · 20' · Box
+description : 
+description : Farmer Carry — 3 × 40 m — charge RPE 7 — repos 30s
+description : 
+description : Durée estimée 4'
+notes : ∅
+== musculation · 2026-01-24 · strength (4)
+titre : Tronc · Back Extension
+description : Musculation · Tronc · Tonification · 20' · Box
+description : 
+description : Back Extension — 3 × 18 — charge poids du corps — repos 30s
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-01-24 · cooldown (5)
 titre : Retour au calme
 description : Retour au calme (5') — posture de l'enfant 1' · cobra 45 s · rotation thoracique allongé 45 s / côté, respiration 4-6.
 notes : ∅
@@ -15147,29 +15490,50 @@ titre : Échauffement
 description : Échauffement (10') — rameur ou vélo facile, mobilité épaules et thoracique, Push-Ups, Band Pull-Aparts, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2028-02-07 · strength (1)
-titre : Push · Force · Bloc principal
+titre : Bloc principal · Bench Press
 description : Musculation · Push · Force · 45' · Box
 description : 
 description : Bench Press — 5 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:30
-description : Strict Press — 5 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:30
 description : 
-description : Durée estimée 29'
+description : Durée estimée 14'
 description : Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Bench Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 notes : RIR 2, dernière série RPE 9. Montée en charge sur Bench Press : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 == musculation · 2028-02-07 · strength (2)
-titre : Push · Force · Accessoires
+titre : Bloc principal · Strict Press
+description : Musculation · Push · Force · 45' · Box
+description : 
+description : Strict Press — 5 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:30
+description : 
+description : Durée estimée 14'
+notes : ∅
+== musculation · 2028-02-07 · strength (3)
+titre : Accessoires · DB Kickback
 description : Musculation · Push · Force · 45' · Box
 description : 
 description : DB Kickback — 3 × 10 / bras — charge RPE 8 — repos 1:15
 description :   schéma hypertrophie
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2028-02-07 · strength (4)
+titre : Accessoires · Bent Over Lateral Raise
+description : Musculation · Push · Force · 45' · Box
+description : 
 description : Bent Over Lateral Raise — 3 × 10 — charge RPE 8 — repos 1:15
 description :   schéma hypertrophie
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2028-02-07 · strength (5)
+titre : Accessoires · Lateral Raise
+description : Musculation · Push · Force · 45' · Box
+description : 
 description : Lateral Raise — 3 × 10 — charge RPE 8 — repos 1:15
 description :   schéma hypertrophie
 description : 
-description : Durée estimée 16'
+description : Durée estimée 5'
 notes : ∅
-== musculation · 2028-02-07 · cooldown (3)
+== musculation · 2028-02-07 · cooldown (6)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : pectoraux au mur 45 s / bras · épaule en travers 45 s / bras · triceps au-dessus de la tête 30 s / bras, respiration lente.
 notes : ∅
@@ -15178,29 +15542,50 @@ titre : Échauffement
 description : Échauffement (10') — vélo ou rameur facile, mobilité chevilles et hanches, Air Squats, Lunges, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2028-02-08 · strength (1)
-titre : Jambes · Force · Bloc principal
+titre : Bloc principal · Front Squat
 description : Musculation · Jambes · Force · 45' · Box
 description : 
 description : Front Squat — 5 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:30
-description : Hip Thrust — 5 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:30
-description : Box Step-ups — 3 × 18 / jambe — charge RPE 8 — repos 1:15
-description :   schéma hypertrophie
 description : 
-description : Durée estimée 37'
+description : Durée estimée 15'
 description : Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Front Squat : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 notes : RIR 2, dernière série RPE 9. Montée en charge sur Front Squat : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 == musculation · 2028-02-08 · strength (2)
-titre : Jambes · Force · Accessoires
+titre : Bloc principal · Hip Thrust
+description : Musculation · Jambes · Force · 45' · Box
+description : 
+description : Hip Thrust — 5 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:30
+description : 
+description : Durée estimée 15'
+notes : ∅
+== musculation · 2028-02-08 · strength (3)
+titre : Bloc principal · Box Step-ups
+description : Musculation · Jambes · Force · 45' · Box
+description : 
+description : Box Step-ups — 3 × 18 / jambe — charge RPE 8 — repos 1:15
+description :   schéma hypertrophie
+description : 
+description : Durée estimée 8'
+notes : ∅
+== musculation · 2028-02-08 · strength (4)
+titre : Accessoires · Romanian Deadlift
 description : Musculation · Jambes · Force · 45' · Box
 description : 
 description : Romanian Deadlift — 4 × 7 — RPE 8 (≈ 75 % du 1RM) — repos 2:00
 description :   3e compound : 70-75 % × 6-8
+description : 
+description : Durée estimée 10'
+notes : ∅
+== musculation · 2028-02-08 · strength (5)
+titre : Accessoires · Mollets unilatéraux
+description : Musculation · Jambes · Force · 45' · Box
+description : 
 description : Mollets unilatéraux — 3 × 16 / jambe — charge poids du corps — repos 45s
 description :   schéma hypertrophie
 description : 
-description : Durée estimée 16'
+description : Durée estimée 6'
 notes : ∅
-== musculation · 2028-02-08 · cooldown (3)
+== musculation · 2028-02-08 · cooldown (6)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : quadriceps debout 45 s / jambe · adducteurs en grenouille 45 s · fessiers en pigeon 45 s / côté.
 notes : ∅
@@ -15209,29 +15594,50 @@ titre : Échauffement
 description : Échauffement (10') — rameur facile, mobilité épaules, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2028-02-10 · strength (1)
-titre : Pull · Force · Bloc principal
+titre : Bloc principal · Wide Grip Pull-Ups
 description : Musculation · Pull · Force · 45' · Box
 description : 
 description : Wide Grip Pull-Ups — 5 × 4 — lesté léger, RPE 8 — repos 2:30
-description : Barbell Row — 4 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:00
 description : 
-description : Durée estimée 23'
+description : Durée estimée 14'
 description : Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Wide Grip Pull-Ups : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 notes : RIR 2, dernière série RPE 9. Montée en charge sur Wide Grip Pull-Ups : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 == musculation · 2028-02-10 · strength (2)
-titre : Pull · Force · Accessoires
+titre : Accessoires · DB Curl
 description : Musculation · Pull · Force · 45' · Box
 description : 
 description : DB Curl — 3 × 10 / bras — charge RPE 8 — repos 1:15
 description :   schéma hypertrophie
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2028-02-10 · strength (3)
+titre : Bloc principal · Barbell Row
+description : Musculation · Pull · Force · 45' · Box
+description : 
+description : Barbell Row — 4 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:00
+description : 
+description : Durée estimée 9'
+notes : ∅
+== musculation · 2028-02-10 · strength (4)
+titre : Accessoires · DB Shrug
+description : Musculation · Pull · Force · 45' · Box
+description : 
 description : DB Shrug — 3 × 10 — charge RPE 8 — repos 1:15
 description :   schéma hypertrophie
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2028-02-10 · strength (5)
+titre : Accessoires · Rear Delt Fly
+description : Musculation · Pull · Force · 45' · Box
+description : 
 description : Rear Delt Fly — 3 × 10 — charge RPE 8 — repos 1:15
 description :   schéma hypertrophie
 description : 
-description : Durée estimée 17'
+description : Durée estimée 5'
 notes : ∅
-== musculation · 2028-02-10 · cooldown (3)
+== musculation · 2028-02-10 · cooldown (6)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : dorsaux à la barre ou au mur 45 s · biceps au mur 30 s / bras · ouverture thoracique 45 s, respiration lente.
 notes : ∅
@@ -15240,17 +15646,24 @@ titre : Échauffement
 description : Échauffement (10') — vélo facile, mobilité hanches, Glute Bridges, Good Mornings à vide, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2028-02-11 · strength (1)
-titre : Fessiers & ischios · Force · Bloc principal
+titre : Bloc principal · Romanian Deadlift
 description : Musculation · Fessiers & ischios · Force · 45' · Box
 description : 
 description : Romanian Deadlift — 5 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:30
-description : Hip Thrust — 5 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:30
 description : 
-description : Durée estimée 29'
+description : Durée estimée 14'
 description : Stimulus : RIR 2, dernière série RPE 9. Montée en charge sur Romanian Deadlift : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 notes : RIR 2, dernière série RPE 9. Montée en charge sur Romanian Deadlift : 5 @ 50 % · 3 @ 65 % · 2 @ 75 % avant les séries de travail
 == musculation · 2028-02-11 · strength (2)
-titre : Fessiers & ischios · Force · Accessoires
+titre : Bloc principal · Hip Thrust
+description : Musculation · Fessiers & ischios · Force · 45' · Box
+description : 
+description : Hip Thrust — 5 × 4 — RPE 8 (≈ 85 % du 1RM) — repos 2:30
+description : 
+description : Durée estimée 15'
+notes : ∅
+== musculation · 2028-02-11 · strength (3)
+titre : Accessoires · Back Extension
 description : Musculation · Fessiers & ischios · Force · 45' · Box
 description : 
 description : Back Extension — 5 × 10 — charge poids du corps — repos 1:00
@@ -15258,7 +15671,7 @@ description :   schéma hypertrophie
 description : 
 description : Durée estimée 8'
 notes : ∅
-== musculation · 2028-02-11 · cooldown (3)
+== musculation · 2028-02-11 · cooldown (4)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : ischios debout 45 s / jambe · pigeon 45 s / côté · fléchisseurs de hanche en fente 45 s / côté.
 notes : ∅
@@ -15267,18 +15680,39 @@ titre : Échauffement
 description : Échauffement (5') — rameur ou vélo facile, Dead Bugs, Bird Dogs, planche 20 s.
 notes : ∅
 == musculation · 2028-02-12 · strength (1)
-titre : Tronc · Prise de muscle
+titre : Tronc · Ab Wheel Rollout
 description : Musculation · Tronc · Prise de muscle · 20' · Box
 description : 
 description : Ab Wheel Rollout — 3 × 10 — charge poids du corps — repos 1:00
-description : Pallof Press à l'élastique — 3 × 13 / côté — charge poids du corps — repos 1:00
-description : Back Extension — 3 × 10 — charge poids du corps — repos 1:00
-description : Hanging Leg Raise — 3 × 10 — charge poids du corps — repos 1:00
 description : 
-description : Durée estimée 22'
+description : Durée estimée 5'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
-== musculation · 2028-02-12 · cooldown (2)
+== musculation · 2028-02-12 · strength (2)
+titre : Tronc · Pallof Press à l'élastique
+description : Musculation · Tronc · Prise de muscle · 20' · Box
+description : 
+description : Pallof Press à l'élastique — 3 × 13 / côté — charge poids du corps — repos 1:00
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2028-02-12 · strength (3)
+titre : Tronc · Back Extension
+description : Musculation · Tronc · Prise de muscle · 20' · Box
+description : 
+description : Back Extension — 3 × 10 — charge poids du corps — repos 1:00
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2028-02-12 · strength (4)
+titre : Tronc · Hanging Leg Raise
+description : Musculation · Tronc · Prise de muscle · 20' · Box
+description : 
+description : Hanging Leg Raise — 3 × 10 — charge poids du corps — repos 1:00
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2028-02-12 · cooldown (5)
 titre : Retour au calme
 description : Retour au calme (5') — posture de l'enfant 1' · cobra 45 s · rotation thoracique allongé 45 s / côté, respiration 4-6.
 notes : ∅
@@ -15603,27 +16037,55 @@ titre : Échauffement
 description : Échauffement (10') — rameur ou vélo facile, mobilité épaules et thoracique, Push-Ups, Band Pull-Aparts, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2026-02-09 · strength (1)
-titre : Push · Prise de muscle · Bloc principal
+titre : Bloc principal · Incline DB Press
 description : Musculation · Push · Prise de muscle · 45' · Box
 description : 
 description : Incline DB Press — 4 × 10 — charge RPE 8 — repos 1:30
-description : Strict Press — 3 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
 description : 
-description : Durée estimée 15'
+description : Durée estimée 9'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
 == musculation · 2026-02-09 · strength (2)
-titre : Push · Prise de muscle · Accessoires
+titre : Bloc principal · Strict Press
+description : Musculation · Push · Prise de muscle · 45' · Box
+description : 
+description : Strict Press — 3 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2026-02-09 · strength (3)
+titre : Accessoires · DB Fly
 description : Musculation · Push · Prise de muscle · 45' · Box
 description : 
 description : DB Fly — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2026-02-09 · strength (4)
+titre : Accessoires · Lateral Raise
+description : Musculation · Push · Prise de muscle · 45' · Box
+description : 
 description : Lateral Raise — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-02-09 · strength (5)
+titre : Accessoires · One-Arm Overhead Triceps Extension
+description : Musculation · Push · Prise de muscle · 45' · Box
+description : 
 description : One-Arm Overhead Triceps Extension — 3 × 10 / bras — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2026-02-09 · strength (6)
+titre : Accessoires · Reverse Crunch
+description : Musculation · Push · Prise de muscle · 45' · Box
+description : 
 description : Reverse Crunch — 3 × 10 — charge poids du corps — repos 1:00
 description : 
-description : Durée estimée 22'
+description : Durée estimée 4'
 notes : ∅
-== musculation · 2026-02-09 · cooldown (3)
+== musculation · 2026-02-09 · cooldown (7)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : pectoraux au mur 45 s / bras · épaule en travers 45 s / bras · triceps au-dessus de la tête 30 s / bras, respiration lente.
 notes : ∅
@@ -15632,27 +16094,55 @@ titre : Échauffement
 description : Échauffement (10') — vélo ou rameur facile, mobilité chevilles et hanches, Air Squats, Lunges, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2026-02-10 · strength (1)
-titre : Jambes · Prise de muscle · Bloc principal
+titre : Bloc principal · Goblet Squat
 description : Musculation · Jambes · Prise de muscle · 45' · Box
 description : 
 description : Goblet Squat — 4 × 10 — charge RPE 8 — repos 1:30
-description : DB Romanian Deadlift — 3 × 10 — charge RPE 8 — repos 1:15
-description : DB Lunges — 3 × 10 / jambe — charge RPE 8 — repos 1:15
 description : 
-description : Durée estimée 20'
+description : Durée estimée 8'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
 == musculation · 2026-02-10 · strength (2)
-titre : Jambes · Prise de muscle · Accessoires
+titre : Bloc principal · DB Romanian Deadlift
+description : Musculation · Jambes · Prise de muscle · 45' · Box
+description : 
+description : DB Romanian Deadlift — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2026-02-10 · strength (3)
+titre : Bloc principal · DB Lunges
+description : Musculation · Jambes · Prise de muscle · 45' · Box
+description : 
+description : DB Lunges — 3 × 10 / jambe — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2026-02-10 · strength (4)
+titre : Accessoires · Mollets unilatéraux
 description : Musculation · Jambes · Prise de muscle · 45' · Box
 description : 
 description : Mollets unilatéraux — 3 × 16 / jambe — charge poids du corps — repos 1:15
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2026-02-10 · strength (5)
+titre : Accessoires · DB Hip Thrust
+description : Musculation · Jambes · Prise de muscle · 45' · Box
+description : 
 description : DB Hip Thrust — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2026-02-10 · strength (6)
+titre : Accessoires · Suitcase Carry
+description : Musculation · Jambes · Prise de muscle · 45' · Box
+description : 
 description : Suitcase Carry — 3 × 40 m / côté — charge RPE 7 — repos 30s
 description : 
-description : Durée estimée 18'
+description : Durée estimée 6'
 notes : ∅
-== musculation · 2026-02-10 · cooldown (3)
+== musculation · 2026-02-10 · cooldown (7)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : quadriceps debout 45 s / jambe · adducteurs en grenouille 45 s · fessiers en pigeon 45 s / côté.
 notes : ∅
@@ -15661,27 +16151,55 @@ titre : Échauffement
 description : Échauffement (10') — rameur facile, mobilité épaules, Scap Pull-Ups, Ring Rows, Band Pull-Aparts, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2026-02-12 · strength (1)
-titre : Pull · Prise de muscle · Bloc principal
+titre : Bloc principal · Chin-Ups
 description : Musculation · Pull · Prise de muscle · 45' · Box
 description : 
 description : Chin-Ups — 4 × 10 — charge poids du corps — repos 1:30
-description : Supinated Barbell Row — 4 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
 description : 
-description : Durée estimée 16'
+description : Durée estimée 8'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
 == musculation · 2026-02-12 · strength (2)
-titre : Pull · Prise de muscle · Accessoires
+titre : Accessoires · Bent Over Lateral Raise
 description : Musculation · Pull · Prise de muscle · 45' · Box
 description : 
 description : Bent Over Lateral Raise — 4 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 7'
+notes : ∅
+== musculation · 2026-02-12 · strength (3)
+titre : Bloc principal · Supinated Barbell Row
+description : Musculation · Pull · Prise de muscle · 45' · Box
+description : 
+description : Supinated Barbell Row — 4 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:15
+description : 
+description : Durée estimée 8'
+notes : ∅
+== musculation · 2026-02-12 · strength (4)
+titre : Accessoires · Spider Curl
+description : Musculation · Pull · Prise de muscle · 45' · Box
+description : 
 description : Spider Curl — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2026-02-12 · strength (5)
+titre : Accessoires · DB Shrug
+description : Musculation · Pull · Prise de muscle · 45' · Box
+description : 
 description : DB Shrug — 3 × 10 — charge RPE 8 — repos 1:15
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-02-12 · strength (6)
+titre : Accessoires · Reverse Crunch
+description : Musculation · Pull · Prise de muscle · 45' · Box
+description : 
 description : Reverse Crunch — 3 × 10 — charge poids du corps — repos 1:00
 description : 
-description : Durée estimée 21'
+description : Durée estimée 4'
 notes : ∅
-== musculation · 2026-02-12 · cooldown (3)
+== musculation · 2026-02-12 · cooldown (7)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : dorsaux à la barre ou au mur 45 s · biceps au mur 30 s / bras · ouverture thoracique 45 s, respiration lente.
 notes : ∅
@@ -15690,25 +16208,39 @@ titre : Échauffement
 description : Échauffement (10') — vélo facile, mobilité hanches, Glute Bridges, Good Mornings à vide, puis 2 séries légères du premier exercice.
 notes : ∅
 == musculation · 2026-02-13 · strength (1)
-titre : Fessiers & ischios · Prise de muscle · Bloc principal
+titre : Bloc principal · Good Morning
 description : Musculation · Fessiers & ischios · Prise de muscle · 45' · Box
 description : 
 description : Good Morning — 5 × 10 — charge RPE 8 — repos 1:30
-description : Hip Thrust — 4 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:30
 description : 
-description : Durée estimée 20'
+description : Durée estimée 11'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
 == musculation · 2026-02-13 · strength (2)
-titre : Fessiers & ischios · Prise de muscle · Accessoires
+titre : Bloc principal · Hip Thrust
+description : Musculation · Fessiers & ischios · Prise de muscle · 45' · Box
+description : 
+description : Hip Thrust — 4 × 10 — RPE 8 (≈ 68 % du 1RM) — repos 1:30
+description : 
+description : Durée estimée 9'
+notes : ∅
+== musculation · 2026-02-13 · strength (3)
+titre : Accessoires · Bird Dog tenu
 description : Musculation · Fessiers & ischios · Prise de muscle · 45' · Box
 description : 
 description : Bird Dog tenu — 4 × 11 / côté — charge poids du corps — repos 1:15
+description : 
+description : Durée estimée 9'
+notes : ∅
+== musculation · 2026-02-13 · strength (4)
+titre : Accessoires · DB Sumo Squat
+description : Musculation · Fessiers & ischios · Prise de muscle · 45' · Box
+description : 
 description : DB Sumo Squat — 4 × 10 — charge RPE 8 — repos 1:15
 description : 
-description : Durée estimée 17'
+description : Durée estimée 7'
 notes : ∅
-== musculation · 2026-02-13 · cooldown (3)
+== musculation · 2026-02-13 · cooldown (5)
 titre : Retour au calme
 description : Retour au calme (5') — étirements : ischios debout 45 s / jambe · pigeon 45 s / côté · fléchisseurs de hanche en fente 45 s / côté.
 notes : ∅
@@ -15717,18 +16249,39 @@ titre : Échauffement
 description : Échauffement (5') — rameur ou vélo facile, Dead Bugs, Bird Dogs, planche 20 s.
 notes : ∅
 == musculation · 2026-02-14 · strength (1)
-titre : Tronc · Prise de muscle
+titre : Tronc · Reverse Crunch
 description : Musculation · Tronc · Prise de muscle · 20' · Box
 description : 
 description : Reverse Crunch — 3 × 10 — charge poids du corps — repos 1:00
-description : Side Plank avec rotation — 3 × 11 / côté — charge poids du corps — repos 1:00
-description : Back Extension — 3 × 10 — charge poids du corps — repos 1:00
-description : Hanging Leg Raise — 3 × 10 — charge poids du corps — repos 1:00
 description : 
-description : Durée estimée 20'
+description : Durée estimée 4'
 description : Stimulus : Dernière série à 1-2 reps de l'échec
 notes : Dernière série à 1-2 reps de l'échec
-== musculation · 2026-02-14 · cooldown (2)
+== musculation · 2026-02-14 · strength (2)
+titre : Tronc · Side Plank avec rotation
+description : Musculation · Tronc · Prise de muscle · 20' · Box
+description : 
+description : Side Plank avec rotation — 3 × 11 / côté — charge poids du corps — repos 1:00
+description : 
+description : Durée estimée 6'
+notes : ∅
+== musculation · 2026-02-14 · strength (3)
+titre : Tronc · Back Extension
+description : Musculation · Tronc · Prise de muscle · 20' · Box
+description : 
+description : Back Extension — 3 × 10 — charge poids du corps — repos 1:00
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-02-14 · strength (4)
+titre : Tronc · Hanging Leg Raise
+description : Musculation · Tronc · Prise de muscle · 20' · Box
+description : 
+description : Hanging Leg Raise — 3 × 10 — charge poids du corps — repos 1:00
+description : 
+description : Durée estimée 5'
+notes : ∅
+== musculation · 2026-02-14 · cooldown (5)
 titre : Retour au calme
 description : Retour au calme (5') — posture de l'enfant 1' · cobra 45 s · rotation thoracique allongé 45 s / côté, respiration 4-6.
 notes : ∅

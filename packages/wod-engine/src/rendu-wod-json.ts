@@ -15,10 +15,10 @@
  * c'est à l'app de rendre ces lignes (M5), cette fonction rend le WOD tel que le moteur l'écrit.
  */
 import { render } from './render';
-import { noteExercice, noteStimulus, renderMuscu } from './muscu';
+import { estCarteExercice, noteExercice, noteStimulus, renderMuscu, stimulusSurCarte } from './muscu';
 import { descriptionBlocC, rendreBlocSeance } from './rendu-seance';
 import type { TexteBloc } from './rendu-seance';
-import { textes } from './i18n';
+import { nomExercice, textes } from './i18n';
 import type { Langue } from './i18n';
 import type { GeneratedWod, MuscuWod } from './types';
 
@@ -39,10 +39,15 @@ export function renderFromWodJson(wodJson: unknown, langue: Langue = 'fr'): Text
     const copie: MuscuWod = { ...w, stimulus: { ...w.stimulus, note }, blocks: [{ ...w.blocks[0], exercises }] };
     const T = textes(langue).musculation;
     const titre = T.titre(T.cible[w.target], T.objectif[w.objective]);
-    // carte d'une partie de la séance (#620) : libellé de la partie au titre ; la note du stimulus
-    // reste sur la première carte de musculation, jamais sur les accessoires
+    // carte d'un exercice (#635) : « <partie> · <exercice> » ; carte d'une partie (#620) : libellé de la
+    // partie après le titre. La note du stimulus : voir `stimulusSurCarte`.
     const partie = w.rendu?.partie;
-    if (partie) return { title: `${titre} · ${T.partie[partie]}`, description: renderMuscu(copie, langue), notes: partie === 'accessoires' ? null : note };
+    const notes = stimulusSurCarte(w) ? note : null;
+    if (partie && estCarteExercice(w)) {
+      const e = w.blocks[0].exercises[0];
+      return { title: `${T.partie[partie]} · ${nomExercice(e.id, e.name, langue)}`, description: renderMuscu(copie, langue), notes };
+    }
+    if (partie) return { title: `${titre} · ${T.partie[partie]}`, description: renderMuscu(copie, langue), notes };
     return { title: titre, description: renderMuscu(copie, langue), notes: note };
   }
 

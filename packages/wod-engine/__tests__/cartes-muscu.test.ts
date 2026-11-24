@@ -1,11 +1,11 @@
 /**
- * Musculation de box en plusieurs cartes (#620), PR 1 « affichage » : textes de la spec, rendu des
- * cartes Échauffement / Retour au calme et des cartes de musculation partielles, fonctions de
- * construction. La génération ne change pas (instantanés M0/M2 inchangés) : ici, seulement le rendu.
+ * Musculation de box en plusieurs cartes (#620, #635) : textes de la spec, rendu des cartes
+ * Échauffement / Retour au calme et des cartes d'un exercice, compatibilité des cartes #620,
+ * fonctions de construction (sans tirage).
  */
 import {
   fr, en, banqueVers, generateMuscuWeek, renderFromWodJson, rendreBlocSeance, renderMuscu, exerciseLine,
-  cartesJourMuscu, partiesMuscu, lignesSeanceMuscu, ROLES_PRINCIPAL, MUSCU_WEEK_DAYS, CATALOG_SNAPSHOT, BANK_V1, weekSeed,
+  cartesJourMuscu, partiesMuscu, lignesSeanceMuscu, nomExercice, ROLES_PRINCIPAL, MUSCU_WEEK_DAYS, CATALOG_SNAPSHOT, BANK_V1, weekSeed,
 } from '../src';
 import type { MuscuWod, RenduBlocSeance, MuscuTarget, SessionStructuredBlock } from '../src';
 import { avecJournal } from './instantane/chemins';
@@ -46,7 +46,6 @@ const CIBLES = Object.keys(SPEC) as Array<keyof typeof SPEC>;
 const semaine = (iso_week: number, box = 'box-0') =>
   generateMuscuWeek({ iso_year: 2027, iso_week }, C, BANK_V1, weekSeed(box, 'musculation', 2027, iso_week, 0));
 const SEMAINES = [1, 3, 5].map((w) => semaine(w));
-const FORCE = SEMAINES[2];
 
 /** Une ligne affichée en anglais qui reste française (méthode des instantanés M2). */
 const resteFrancais = (l: string) => ACCENT.test(l) || (isFrench(l) && !strictAllowed(l));
@@ -64,8 +63,8 @@ describe('textes de la spec (#620)', () => {
   });
 
   it('libellés des parties', () => {
-    expect(fr.musculation.partie).toEqual({ principal: 'Bloc principal', accessoires: 'Accessoires' });
-    expect(en.musculation.partie).toEqual({ principal: 'Main block', accessoires: 'Accessories' });
+    expect(fr.musculation.partie).toEqual(LIBELLE.fr);
+    expect(en.musculation.partie).toEqual(LIBELLE.en);
     expect([fr.seance.titreEchauffement, en.seance.titreEchauffement]).toEqual(['Échauffement', 'Warm-up']);
   });
 
@@ -104,7 +103,17 @@ describe('cartes Échauffement et Retour au calme', () => {
   });
 });
 
-describe('cartes de musculation partielles (rendu.partie)', () => {
+/** Ce qui fait une carte : sans lui, la carte doit redonner la séance du jour. */
+const sansCarte = (w: MuscuWod) => ({ ...w, blocks: null, estimate: null, rendu: { ...w.rendu, partie: null, premiere: null }, title: null, description: null, notes: null });
+const LIBELLE = {
+  fr: { principal: 'Bloc principal', accessoires: 'Accessoires', tronc: 'Tronc' },
+  en: { principal: 'Main block', accessoires: 'Accessories', tronc: 'Core' },
+} as const;
+const partieAttendue = (target: MuscuTarget, role: string) =>
+  (target === 'tronc' ? 'tronc' : ROLES_PRINCIPAL.includes(role as never) ? 'principal' : 'accessoires');
+const STIMULUS = /^Stimulus ?:/;
+
+describe('cartes d\'un exercice (#635)', () => {
   const jours = SEMAINES.flatMap((s) => s.days);
 
   it('wod_json sans rendu.partie : rendu inchangé (= texte enregistré)', () => {
@@ -118,94 +127,90 @@ describe('cartes de musculation partielles (rendu.partie)', () => {
     }
   });
 
-  it('Bloc principal et Accessoires : titre, exercices du sous-ensemble dans l\'ordre, durée, stimulus sur la première', () => {
-    for (const d of jours.filter((x) => x.target !== 'tronc')) {
+  it('une séance par exercice, dans l\'ordre ; partie par rôle (Tronc le samedi) ; durées additives ; reste de la séance inchangé', () => {
+    for (const d of jours) {
       const parts = partiesMuscu(d.wod, C);
-      expect(parts.map((p) => p.rendu?.partie)).toEqual(['principal', 'accessoires']);
-      const [p, a] = parts;
       const tous = d.wod.blocks[0].exercises;
-      expect(p.blocks[0].exercises).toEqual(tous.filter((e) => ROLES_PRINCIPAL.includes(e.role)));
-      expect(a.blocks[0].exercises).toEqual(tous.filter((e) => !ROLES_PRINCIPAL.includes(e.role)));
-      expect(p.estimate.seconds + a.estimate.seconds).toBe(d.wod.estimate.seconds);
-      // tout le reste de la séance est inchangé (signature, générateur, stimulus…)
-      const sansCarte = (w: MuscuWod) => ({ ...w, blocks: null, estimate: null, rendu: { ...w.rendu, partie: null }, title: null, description: null, notes: null });
-      expect(sansCarte(p)).toEqual(sansCarte(d.wod));
-      expect(sansCarte(a)).toEqual(sansCarte(d.wod));
+      expect(parts.map((p) => p.blocks)).toEqual(tous.map((e) => [{ kind: 'strength_session', exercises: [e] }]));
+      expect(parts.map((p) => p.rendu?.partie)).toEqual(tous.map((e) => partieAttendue(d.target, e.role)));
+      expect(parts.map((p) => p.rendu?.premiere)).toEqual(tous.map((_, i) => i === 0));
+      expect(parts.reduce((s, p) => s + p.estimate.seconds, 0)).toBe(d.wod.estimate.seconds);
+      for (const p of parts) {
+        expect(p.estimate.minutes).toBe(Math.round(p.estimate.seconds / 60));
+        expect(sansCarte(p)).toEqual(sansCarte(d.wod));
+      }
+    }
+    // les trois parties sont représentées
+    const vues = new Set(jours.flatMap((d) => partiesMuscu(d.wod, C).map((p) => p.rendu!.partie)));
+    expect([...vues].sort()).toEqual(['accessoires', 'principal', 'tronc']);
+  });
 
-      const tp = renderFromWodJson(p, 'fr')!;
-      const ta = renderFromWodJson(a, 'fr')!;
-      expect(tp.title).toBe(`${d.wod.title} · Bloc principal`);
-      expect(ta.title).toBe(`${d.wod.title} · Accessoires`);
-      expect(tp.notes).toBe(d.wod.notes);
-      expect(ta.notes).toBeNull();
-      expect(tp.description).toContain(`Stimulus : ${d.wod.stimulus.note}`);
-      expect(ta.description).not.toContain('Stimulus');
-      for (const [w, t] of [[p, tp], [a, ta]] as const) {
+  it.each(['fr', 'en'] as const)('%s : titre « <partie> · <exercice> », description de l\'exercice seul, stimulus sur la première carte seulement', (langue) => {
+    for (const d of jours) {
+      const entiere = renderFromWodJson(d.wod, langue)!;
+      partiesMuscu(d.wod, C).forEach((p, i) => {
+        const e = p.blocks[0].exercises[0];
+        const t = renderFromWodJson(p, langue)!;
+        expect(t.title).toBe(`${LIBELLE[langue][partieAttendue(d.target, e.role)]} · ${nomExercice(e.id, e.name, langue)}`);
         const lignes = t.description.split('\n');
-        for (const e of tous) expect(lignes.includes(exerciseLine(e))).toBe(w.blocks[0].exercises.includes(e));
-        expect(t.description).toContain(`Durée estimée ${w.estimate.minutes}'`);
-        // colonnes d'éditeur du JSON = celles de la carte
-        expect({ title: w.title, description: w.description, notes: w.notes }).toEqual(t);
-      }
-      // anglais : sans français
-      for (const w of parts) {
-        const t = renderFromWodJson(w, 'en')!;
-        expect(t.title).toMatch(/ · (Main block|Accessories)$/);
-        for (const l of [t.title, ...t.description.split('\n')].filter(Boolean)) expect([l, resteFrancais(l)]).toEqual([l, false]);
-      }
+        // en-tête de la séance gardé, puis la ligne de cet exercice seul
+        expect(lignes[0]).toBe(entiere.description.split('\n')[0]);
+        expect(lignes).toContain(exerciseLine(e, langue));
+        for (const x of d.wod.blocks[0].exercises.filter((y) => y !== e)) expect(lignes).not.toContain(exerciseLine(x, langue));
+        expect(t.notes).toBe(i === 0 ? entiere.notes : null);
+        expect(lignes.filter((l) => STIMULUS.test(l))).toHaveLength(i === 0 ? 1 : 0);
+        if (langue === 'fr') expect({ title: p.title, description: p.description, notes: p.notes }).toEqual(t);
+        else for (const l of [t.title, ...lignes].filter(Boolean)) expect([l, resteFrancais(l)]).toEqual([l, false]);
+      });
     }
   });
 
-  it('Tronc, groupe vide (dont semaine Force) → la séance entière seule, inchangée', () => {
-    for (const s of SEMAINES) {
-      const tronc = s.days.find((d) => d.target === 'tronc')!.wod;
-      expect(partiesMuscu(tronc, C)).toEqual([tronc]);
-      // même avec un polyarticulaire, le Tronc reste une seule carte
-      const compound = s.days.flatMap((d) => d.wod.blocks[0].exercises).find((e) => ROLES_PRINCIPAL.includes(e.role))!;
-      expect(compound).toBeDefined();
-      const mixte: MuscuWod = { ...tronc, blocks: [{ kind: 'strength_session', exercises: [compound, ...tronc.blocks[0].exercises] }] };
-      expect(partiesMuscu(mixte, C)).toEqual([mixte]);
-    }
-    for (const d of FORCE.days.filter((x) => x.target !== 'tronc')) {
-      for (const garder of [(r: string) => ROLES_PRINCIPAL.includes(r as never), (r: string) => !ROLES_PRINCIPAL.includes(r as never)]) {
-        const w: MuscuWod = { ...d.wod, blocks: [{ kind: 'strength_session', exercises: d.wod.blocks[0].exercises.filter((e) => garder(e.role)) }] };
-        expect(w.blocks[0].exercises.length).toBeGreaterThan(0);
-        expect(partiesMuscu(w, C)).toEqual([w]);
+  it('carte #620 (rendu.partie sans premiere, plusieurs exercices ou un seul) : rendu de #620 inchangé', () => {
+    for (const d of jours.filter((x) => x.target !== 'tronc')) {
+      const exs = d.wod.blocks[0].exercises;
+      const principal = exs.filter((e) => ROLES_PRINCIPAL.includes(e.role));
+      const accessoires = exs.filter((e) => !ROLES_PRINCIPAL.includes(e.role));
+      const carte620 = (partie: 'principal' | 'accessoires', exercises: typeof exs): MuscuWod =>
+        ({ ...d.wod, blocks: [{ kind: 'strength_session', exercises }], rendu: { ...d.wod.rendu!, partie } });
+      const cas: Array<[MuscuWod, 'principal' | 'accessoires']> = [
+        [carte620('principal', principal), 'principal'], [carte620('accessoires', accessoires), 'accessoires'],
+        [carte620('principal', principal.slice(0, 1)), 'principal'], [carte620('accessoires', accessoires.slice(0, 1)), 'accessoires'],
+      ];
+      for (const [w, partie] of cas) {
+        if (!w.blocks[0].exercises.length) continue;
+        for (const langue of ['fr', 'en'] as const) {
+          const t = renderFromWodJson(w, langue)!;
+          const entiere = renderFromWodJson(d.wod, langue)!;
+          expect(t.title).toBe(`${entiere.title} · ${LIBELLE[langue][partie]}`);
+          expect(t.notes).toBe(partie === 'accessoires' ? null : entiere.notes);
+          expect(t.description.split('\n').some((l) => STIMULUS.test(l))).toBe(partie !== 'accessoires');
+        }
       }
     }
   });
 });
 
 describe('cartesJourMuscu (construction, sans tirage)', () => {
-  it('Push, Jambes, Pull, Fessiers & ischios : 4 cartes ; Tronc : 3 cartes', () => {
+  it('Échauffement · une carte par exercice · Retour au calme, tous les jours (Tronc compris)', () => {
     for (const s of SEMAINES) for (const d of s.days) {
       const cartes = cartesJourMuscu(d, C);
-      const forme = cartes.map((c) => `${c.block_name}/${c.wod_type}/${c.leaderboard_enabled}`);
-      expect(forme).toEqual(d.target === 'tronc'
-        ? ['warmup/custom/false', 'strength/strength/false', 'cooldown/custom/false']
-        : ['warmup/custom/false', 'strength/strength/false', 'strength/strength/false', 'cooldown/custom/false']);
+      const n = d.wod.blocks[0].exercises.length;
+      expect(cartes).toHaveLength(n + 2);
+      expect(cartes.map((c) => `${c.block_name}/${c.wod_type}/${c.leaderboard_enabled}`))
+        .toEqual(['warmup/custom/false', ...Array(n).fill('strength/strength/false'), 'cooldown/custom/false']);
       expect(cartes[0].description).toBe(SPEC[d.target as keyof typeof SPEC][0]);
       expect(cartes[cartes.length - 1].description).toBe(SPEC[d.target as keyof typeof SPEC][1]);
-      // Tronc : la carte est la séance entière, texte et JSON identiques à aujourd'hui
-      if (d.target === 'tronc') expect(cartes[1]).toMatchObject({ title: d.wod.title, description: d.wod.description, notes: d.wod.notes, wod_json: d.wod });
+      const exos = cartes.slice(1, -1);
+      expect(exos.map((c) => c.wod_json)).toEqual(partiesMuscu(d.wod, C));
+      expect(exos.map((c) => c.notes)).toEqual(exos.map((_, i) => (i === 0 ? d.wod.notes : null)));
       // échauffement et retour au calme : v2 de séance, sans grille ni score
       for (const c of [cartes[0], cartes[cartes.length - 1]]) {
         const j = c.wod_json as SessionStructuredBlock;
         expect(j).toMatchObject({ source: 'generator', discipline: 'session', v: 2, steps: null, finisher: null, gym_reps_rx: {} });
         expect(renderFromWodJson(j, 'fr')).toEqual({ title: c.title, description: c.description, notes: c.notes });
       }
-      for (const c of cartes.filter((x) => x.block_name === 'strength')) {
-        expect((c.wod_json as MuscuWod).blocks).toHaveLength(1);
-        expect((c.wod_json as MuscuWod).blocks[0].kind).toBe('strength_session');
-        expect(renderFromWodJson(c.wod_json, 'fr')).toEqual({ title: c.title, description: c.description, notes: c.notes });
-      }
+      for (const c of exos) expect(renderFromWodJson(c.wod_json, 'fr')).toEqual({ title: c.title, description: c.description, notes: c.notes });
     }
-  });
-
-  it('groupe vide : 3 cartes', () => {
-    const d = FORCE.days[0];
-    const w: MuscuWod = { ...d.wod, blocks: [{ kind: 'strength_session', exercises: d.wod.blocks[0].exercises.filter((e) => ROLES_PRINCIPAL.includes(e.role)) }] };
-    expect(cartesJourMuscu({ target: d.target, wod: w }, C).map((c) => c.block_name)).toEqual(['warmup', 'strength', 'cooldown']);
   });
 
   it('anglais : mêmes cartes, texte sans français', () => {
@@ -217,11 +222,16 @@ describe('cartesJourMuscu (construction, sans tirage)', () => {
     }
   });
 
+  it('séance sans rendu (pas réaffichable) : la séance entière, seule', () => {
+    const { rendu: _r, ...sans } = SEMAINES[0].days[0].wod;
+    expect(partiesMuscu(sans as MuscuWod, C)).toEqual([sans]);
+  });
+
   it('cible hors semaine de box : pas d\'échauffement ni de retour au calme inventés', () => {
     expect(lignesSeanceMuscu('bras' as MuscuTarget, 'echauffement')).toBeNull();
     expect(lignesSeanceMuscu('constructor' as MuscuTarget, 'retourAuCalme')).toBeNull();
     const d = SEMAINES[0].days[0];
-    expect(cartesJourMuscu({ target: 'bras', wod: d.wod }, C).map((c) => c.block_name)).toEqual(['strength', 'strength']);
+    expect(cartesJourMuscu({ target: 'bras', wod: d.wod }, C).map((c) => c.block_name)).toEqual(d.wod.blocks[0].exercises.map(() => 'strength'));
   });
 
   it('aucun appel au RNG', async () => {

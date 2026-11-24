@@ -841,13 +841,15 @@ export interface MuscuWod extends EditorColumns {
   v?: 2;
   /**
    * parties du stimulus (M3) : exercice de la montée en charge, rappel des 1RM ;
-   * `partie` : carte d'une partie de la séance (programmation de box, #620), absente = séance entière
+   * `partie` : carte d'une partie de la séance (programmation de box, #620), absente = séance entière ;
+   * `premiere` : carte d'UN exercice (#635), `true` sur la première carte d'exercice de la journée
+   * (celle qui porte la note du stimulus) ; absente sur les cartes #620 à plusieurs exercices
    */
-  rendu?: { stimulus: { montee: string | null; renseigne1rm: boolean }; partie?: PartieMuscu };
+  rendu?: { stimulus: { montee: string | null; renseigne1rm: boolean }; partie?: PartieMuscu; premiere?: boolean };
 }
 
-/** Partie de la séance portée par une carte du Whiteboard (#620) : polyarticulaires ou accessoires. */
-export type PartieMuscu = 'principal' | 'accessoires';
+/** Partie de la séance portée par une carte du Whiteboard : polyarticulaires, accessoires (#620) ou Tronc du samedi (#635). */
+export type PartieMuscu = 'principal' | 'accessoires' | 'tronc';
 
 export class NoValidWod extends Error {
   readonly reasons: Record<string, number>;

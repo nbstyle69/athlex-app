@@ -160,7 +160,7 @@ export const en: Textes = {
       repos: (t: string) => ` — rest ${t}`,
     },
     titre: (cible: string, objectif: string) => `${cible} · ${objectif}`,
-    partie: { principal: 'Main block', accessoires: 'Accessories' },
+    partie: { principal: 'Main block', accessoires: 'Accessories', tronc: 'Core' },
     entete: (cible: string, objectif: string, m: number, materiel: string) => `Strength · ${cible} · ${objectif} · ${min(m)} · ${materiel}`,
     dureeEstimee: (m: number) => `Estimated duration ${min(m)}`,
     stimulus: (note: string) => `Stimulus: ${note}`,

@@ -1,13 +1,13 @@
 /**
- * Musculation de la programmation de box en plusieurs cartes (#620) — fonctions PURES.
+ * Musculation de la programmation de box en plusieurs cartes (#620, #635) — fonctions PURES.
  *
  * La séance du jour est tirée comme avant (`generateMuscuWeek`) ; ces fonctions ne font que la
  * découper en cartes du Whiteboard, sans aucun appel au RNG :
- *   Échauffement · Bloc principal · Accessoires · Retour au calme (Push, Jambes, Pull, Fessiers & ischios),
- *   Échauffement · Tronc · Retour au calme (samedi).
- * Bloc principal = exercices `main_compound` et `secondary_compound`, Accessoires = les autres
- * (`isolation`, `core`, `calves`), dans l'ordre de la séance. Un groupe vide : une seule carte de
- * musculation, la séance entière. Échauffement et retour au calme sont choisis par la cible du jour.
+ *   Échauffement · une carte par exercice, dans l'ordre de la séance · Retour au calme (tous les jours).
+ * Partie d'une carte d'exercice : « Bloc principal » (`main_compound`, `secondary_compound`),
+ * « Accessoires » (`isolation`, `core`, `calves`), « Tronc » pour tous les exercices du samedi.
+ * La note du stimulus est sur la première carte d'exercice. Échauffement et retour au calme sont
+ * choisis par la cible du jour.
  *
  * Le texte de chaque carte est celui que `renderFromWodJson` redonne de son `wod_json` : l'app le
  * réaffiche dans la langue de l'athlète, une app plus ancienne retombe sur le texte enregistré.
@@ -21,7 +21,7 @@ import type { RenduBlocSeance } from './rendu-seance';
 import { renderFromWodJson } from './rendu-wod-json';
 import type { Catalog, MuscuExercise, MuscuSlotRole, MuscuTarget, MuscuWod, PartieMuscu, SessionStructuredBlock } from './types';
 
-/** Rôles du Bloc principal ; tous les autres vont aux Accessoires. */
+/** Rôles du Bloc principal ; tous les autres vont aux Accessoires (hors Tronc). */
 export const ROLES_PRINCIPAL: readonly MuscuSlotRole[] = ['main_compound', 'secondary_compound'];
 
 /** Cibles de la semaine Musculation de box qui ont un échauffement et un retour au calme. */
@@ -52,28 +52,30 @@ function secondes(catalog: Catalog, exercises: MuscuExercise[]): number {
   }));
 }
 
+/** Partie d'un exercice : Tronc le samedi, sinon Bloc principal ou Accessoires selon son rôle. */
+export function partieExercice(target: MuscuTarget, e: MuscuExercise): PartieMuscu {
+  if (target === 'tronc') return 'tronc';
+  return ROLES_PRINCIPAL.includes(e.role) ? 'principal' : 'accessoires';
+}
+
 /**
- * Parties de la séance : `[principal, accessoires]`, chacune avec sa durée estimée et `rendu.partie`.
- * Tronc, groupe vide ou séance sans `rendu` (pas réaffichable) : `[wod]`, la séance entière, inchangée.
+ * Une séance par exercice, dans l'ordre : chacune avec sa durée estimée, `rendu.partie` et
+ * `rendu.premiere` (vrai sur la première). Séance sans `rendu` (pas réaffichable) : `[wod]`, inchangée.
  */
 export function partiesMuscu(wod: MuscuWod, catalog: Catalog): MuscuWod[] {
-  const exs = wod.blocks[0].exercises;
-  const principal = exs.filter((e) => ROLES_PRINCIPAL.includes(e.role));
-  const accessoires = exs.filter((e) => !ROLES_PRINCIPAL.includes(e.role));
-  if (wod.target === 'tronc' || !wod.rendu || !principal.length || !accessoires.length) return [wod];
-  const partie = (p: PartieMuscu, exercises: MuscuExercise[]): MuscuWod => {
-    const seconds = secondes(catalog, exercises);
+  if (!wod.rendu) return [wod];
+  return wod.blocks[0].exercises.map((e, i): MuscuWod => {
+    const seconds = secondes(catalog, [e]);
     const w: MuscuWod = {
       ...wod,
-      blocks: [{ kind: 'strength_session', exercises }],
+      blocks: [{ kind: 'strength_session', exercises: [e] }],
       estimate: { minutes: Math.round(seconds / 60), seconds },
-      rendu: { ...wod.rendu!, partie: p },
+      rendu: { ...wod.rendu!, partie: partieExercice(wod.target, e), premiere: i === 0 },
     };
     // colonnes d'éditeur du JSON : celles de la carte, pas de la séance entière
     const t = renderFromWodJson(w, 'fr')!;
     return { ...w, title: t.title, description: t.description, notes: t.notes };
-  };
-  return [partie('principal', principal), partie('accessoires', accessoires)];
+  });
 }
 
 function blocSeance(kind: 'warmup' | 'cooldown', target: MuscuTarget, rendu: RenduBlocSeance): SessionStructuredBlock {
@@ -93,8 +95,8 @@ function carteSeance(kind: 'warmup' | 'cooldown', target: MuscuTarget, langue: L
 }
 
 /**
- * Cartes d'une journée Musculation, dans l'ordre : Échauffement, Bloc principal, Accessoires (ou la
- * séance entière), Retour au calme. Une carte de musculation = une `strength_session`.
+ * Cartes d'une journée Musculation, dans l'ordre : Échauffement, une carte par exercice, Retour au
+ * calme. Une carte d'exercice = une `strength_session` d'un exercice.
  */
 export function cartesJourMuscu(day: { target: MuscuTarget; wod: MuscuWod }, catalog: Catalog, langue: Langue = 'fr'): CarteMuscu[] {
   const muscu = partiesMuscu(day.wod, catalog).map((w): CarteMuscu => {
