@@ -1283,6 +1283,8 @@
     "pastDueBody": "Your last payment failed, so bookings are suspended. Update your payment method or contact your gym to restore access.",
     "noActivePlanTitle": "No active plan",
     "noActivePlanBody": "You don't have an active plan at this box. Contact your box to activate your membership.",
+    "noCreditsLeftTitle": "No sessions left",
+    "noCreditsLeftBody": "Your class pack is used up or expired at this box. Choose a plan to keep booking.",
     "notMemberTitle": "Can't book",
     "notMemberBody": "You're no longer a member of this box. Join it again or contact it.",
     "boxMismatchTitle": "Can't book",

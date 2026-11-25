@@ -1,7 +1,7 @@
 import i18n from '../i18n';
 import fs from 'fs';
 import path from 'path';
-import { refusalCode, tournamentRefusal, boxClosedRefusal, memberActionRefusal, reservationRefusal } from '../utils/refusals';
+import { refusalCode, tournamentRefusal, boxClosedRefusal, memberActionRefusal, reservationRefusal, errorMessage } from '../utils/refusals';
 
 // Messages tels que la base les renvoie (déclencheur d'inscription, 20270125 ;
 // refus d'entrée d'une box, 20270127).
@@ -134,6 +134,7 @@ describe('BOMembersScreen : les refus de bannir et de réactiver sont traduits',
 // Refus d'une réservation (migrations 20270121, 20270133 et 20270134), tels que PostgREST les renvoie.
 const PAST_DUE = "MEMBERSHIP_PAST_DUE: abonnement impayé au-delà du délai de la box — réservations et liste d'attente suspendues. Régularise ton paiement ou contacte ta box.";
 const NO_PLAN = 'NO_ACTIVE_PLAN: aucune formule active dans cette box — rapproche-toi de ta box pour activer ton abonnement.';
+const NO_CREDITS = 'NO_CREDITS_LEFT: aucun crédit disponible pour cette box';
 const erreur = (message: string, code = '23514') => ({ code, message });
 const RLS = erreur('new row violates row-level security policy for table "class_reservations"', '42501');
 const MISMATCH = erreur("RESERVATION_BOX_MISMATCH: la box de la réservation n'est pas celle du créneau.");
@@ -141,12 +142,14 @@ const MISMATCH = erreur("RESERVATION_BOX_MISMATCH: la box de la réservation n'e
 describe.each([
   ['fr', {
     noPlan: { code: 'NO_ACTIVE_PLAN', title: 'Pas de formule active', body: "Tu n'as pas de formule active dans cette box. Rapproche-toi de ta box pour activer ton abonnement." },
+    noCredits: { code: 'NO_CREDITS_LEFT', title: 'Carnet épuisé', body: 'Ton carnet de séances est épuisé ou expiré dans cette box. Choisis une formule pour continuer à réserver.' },
     pastDue: { code: 'MEMBERSHIP_PAST_DUE', title: 'Abonnement impayé', body: 'Ton dernier prélèvement a échoué : les réservations sont suspendues. Mets ton moyen de paiement à jour ou contacte ta box pour rétablir ton accès.' },
     notMember: { code: 'NOT_MEMBER', title: 'Réservation impossible', body: 'Tu ne fais plus partie de cette box. Rejoins-la à nouveau ou contacte-la.' },
     mismatch: { code: 'RESERVATION_BOX_MISMATCH', title: 'Réservation impossible', body: "Ce cours n'appartient pas à ta box. Actualise l'écran et réessaie." },
   }],
   ['en', {
     noPlan: { code: 'NO_ACTIVE_PLAN', title: 'No active plan', body: "You don't have an active plan at this box. Contact your box to activate your membership." },
+    noCredits: { code: 'NO_CREDITS_LEFT', title: 'No sessions left', body: 'Your class pack is used up or expired at this box. Choose a plan to keep booking.' },
     pastDue: { code: 'MEMBERSHIP_PAST_DUE', title: 'Unpaid membership', body: 'Your last payment failed, so bookings are suspended. Update your payment method or contact your gym to restore access.' },
     notMember: { code: 'NOT_MEMBER', title: "Can't book", body: "You're no longer a member of this box. Join it again or contact it." },
     mismatch: { code: 'RESERVATION_BOX_MISMATCH', title: "Can't book", body: "This class doesn't belong to your box. Refresh and try again." },
@@ -156,6 +159,10 @@ describe.each([
 
   it('sans formule active', () => {
     expect(reservationRefusal(erreur(NO_PLAN))).toEqual(attendu.noPlan);
+  });
+  it('carnet épuisé ou expiré (NO_CREDITS_LEFT), réservation et texte du corps', async () => {
+    expect(reservationRefusal(erreur(NO_CREDITS))).toEqual(attendu.noCredits);
+    expect(await errorMessage(erreur(NO_CREDITS))).toBe(attendu.noCredits.body);
   });
   it('impayé : message inchangé', () => {
     expect(reservationRefusal(erreur(PAST_DUE))).toEqual(attendu.pastDue);
@@ -170,7 +177,6 @@ describe.each([
     expect(reservationRefusal(MISMATCH)).toEqual(attendu.mismatch);
   });
   it('autre refus ou message sans code : null, l’écran garde son chemin d’erreur', () => {
-    expect(reservationRefusal(erreur('NO_CREDITS_LEFT: aucun crédit disponible pour cette box'))).toBeNull();
     expect(reservationRefusal(erreur('duplicate key value violates unique constraint', '23505'))).toBeNull();
     expect(reservationRefusal(erreur('permission denied for table class_reservations', '42502'))).toBeNull();
     expect(reservationRefusal(undefined)).toBeNull();
@@ -180,8 +186,8 @@ describe.each([
 describe('ReservationScreen : le refus d’une réservation passe par reservationRefusal', () => {
   const src = fs.readFileSync(path.join(__dirname, '../screens/reservation/ReservationScreen.tsx'), 'utf8');
   const insert = src.slice(src.indexOf('const insertReservation'), src.indexOf('if (wantsWaiting) {', src.indexOf('const insertReservation')));
-  it('réservation et liste d’attente partagent ce chemin, qui affiche le refus traduit', () => {
-    expect(insert).toMatch(/const refusal = reservationRefusal\(error\);\s*if \(refusal\?\.code === 'NO_ACTIVE_PLAN'\) dialog\.show\(refusal\.title, refusal\.body, noPlanButtons\(planActivationUrl\(planStatus, currentBox\.slug\)\), \{ icon: CreditCard \}\);\s*else if \(refusal\) dialog\.show\(refusal\.title, refusal\.body\);/);
+  it('réservation et liste d’attente partagent ce chemin, qui affiche le refus traduit ; NO_ACTIVE_PLAN et NO_CREDITS_LEFT ont les boutons de formule', () => {
+    expect(insert).toMatch(/const refusal = reservationRefusal\(error\);\s*if \(refusal && \['NO_ACTIVE_PLAN', 'NO_CREDITS_LEFT'\]\.includes\(refusal\.code\)\) dialog\.show\(refusal\.title, refusal\.body, noPlanButtons\(planActivationUrl\(planStatus, currentBox\.slug\)\), \{ icon: CreditCard \}\);\s*else if \(refusal\) dialog\.show\(refusal\.title, refusal\.body\);/);
     expect(src.match(/from\('class_reservations'\)\.insert\(/g)).toHaveLength(1);
     expect(src).toMatch(/\{ text: t\('reservation\.joinWaitlist'\), onPress: insertReservation \}/);
   });
