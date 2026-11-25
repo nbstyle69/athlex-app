@@ -628,7 +628,9 @@ describe('R10 : garde-fous', () => {
     // formule (usePlanStatuses) et boutons du refus NO_ACTIVE_PLAN ; le reste de la logique est inchangé.
     // Relevées de nouveau (PR erreurs et corrections) : messages d'erreur par errorMessage(), libellé du type
     // de cours (classTitleLabel) et pluriel du refus de limite hebdomadaire ; aucune règle modifiée.
-    ]).toEqual(['4d3a4ff83b6353b2', '5479c602315099b6', '3d0c0e51770f9357', 'db89b14584f7f8cc']);
+    // Première empreinte relevée de nouveau (#639) : NO_CREDITS_LEFT ouvre la même fenêtre que NO_ACTIVE_PLAN
+    // (boutons de formule) ; la règle de réservation, elle, est celle de la base et ne change pas.
+    ]).toEqual(['d6180603fe4204ec', '5479c602315099b6', '3d0c0e51770f9357', 'db89b14584f7f8cc']);
   });
 
   it('filtre de visibilité et fenêtre d’inscription inchangés dans le rendu', () => {
