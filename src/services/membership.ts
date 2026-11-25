@@ -222,22 +222,26 @@ async function callSite<T>(path: string, init: { method: 'GET' | 'POST'; body?: 
   if (res.ok && json) return { ok: true, data: json };
   if (res.status === 401) return fail('auth');
   const code = typeof json?.code === 'string' ? json.code : undefined;
-  if (res.status === 404 && path === '/api/membership/overview') return fail('none');
+  // Chemin sans la query (`?box_id=`) : le 404 se reconnaît pareil, et Sentry ne reçoit pas l'id de la box.
+  const route = path.split('?')[0];
+  if (res.status === 404 && route === '/api/membership/overview') return fail('none');
   if (code) return fail('refused', code);
-  captureError(new Error(`membership ${path} ${res.status}`), { service: 'membership', action: path });
+  captureError(new Error(`membership ${route} ${res.status}`), { service: 'membership', action: route });
   return fail('server');
 }
 
-export function getMembershipOverview(): Promise<MembershipResult<MembershipOverview>> {
-  return callSite<MembershipOverview>('/api/membership/overview', { method: 'GET' });
+/** `boxId` : l'adhésion de cette box (la box active) ; sans elle, le site choisit (AthleX-Manager#470). */
+export function getMembershipOverview(boxId?: string): Promise<MembershipResult<MembershipOverview>> {
+  const query = boxId ? `?box_id=${encodeURIComponent(boxId)}` : '';
+  return callSite<MembershipOverview>(`/api/membership/overview${query}`, { method: 'GET' });
 }
 
 export function changeMembershipPlan(newPlanId: string): Promise<MembershipResult<PlanChangeResult>> {
   return callSite<PlanChangeResult>('/api/change-membership-plan', { method: 'POST', body: { new_plan_id: newPlanId } });
 }
 
-export function cancelMembershipPlanChange(): Promise<MembershipResult<{ ok: true; mode: 'online' | 'counter' }>> {
-  return callSite('/api/change-membership-plan/cancel', { method: 'POST' });
+export function cancelMembershipPlanChange(boxId?: string): Promise<MembershipResult<{ ok: true; mode: 'online' | 'counter' }>> {
+  return callSite('/api/change-membership-plan/cancel', { method: 'POST', ...(boxId ? { body: { box_id: boxId } } : {}) });
 }
 
 /**

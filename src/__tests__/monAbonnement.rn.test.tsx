@@ -28,6 +28,9 @@ jest.mock('@react-navigation/native', () => {
 });
 jest.mock('react-native-safe-area-context', () => ({ useSafeAreaInsets: () => ({ top: 0, bottom: 34, left: 0, right: 0 }) }));
 jest.mock('../navigation/tabBarLayout', () => ({ useTabBarScrollSpace: () => 122 }));
+// Box active (useAuth) : aucune par défaut, l'écran appelle alors le site sans box, comme avant #645.
+let mockBox: { id: string; name: string; slug: string | null } | null = null;
+jest.mock('../context/AuthContext', () => ({ useAuth: () => ({ currentBox: mockBox }) }));
 jest.mock('../context/ThemeContext', () => ({ useTheme: () => ({ theme: mockTheme }) }));
 const mockRpc = jest.fn();
 jest.mock('../lib/supabase', () => ({ supabase: { auth: { getSession: () => mockSession() }, rpc: (...a: unknown[]) => mockRpc(...a) } }));
@@ -75,6 +78,7 @@ afterEach(async () => {
   jest.useRealTimers();
   fetchMock.mockReset();
   mockFocus = null;
+  mockBox = null;
 });
 
 async function settle() {
@@ -740,7 +744,9 @@ describe('Profil : « Gérer mon abonnement »', () => {
   it('l\'app ne vend rien : aucun lien Stripe ni portail dans l\'écran', () => {
     const screen = fs.readFileSync(path.join(__dirname, '../screens/profile/MyMembershipScreen.tsx'), 'utf8');
     expect(screen).not.toMatch(/stripe|payment-portal|unpaid_invoice_url/i);
-    expect(screen.match(/Linking\.openURL\(([^)]*)\)/g)).toEqual(['Linking.openURL(`${WEB_URL}/compte`)']);
+    // #645 : plus le bouton d'activation de la box active sans formule, lien /box/ de planActivationUrl (catégorie C).
+    expect(screen.match(/Linking\.openURL\(([^)]*)\)/g)).toEqual(['Linking.openURL(`${WEB_URL}/compte`)', 'Linking.openURL(url)']);
+    expect(screen).toMatch(/const url = planActivationUrl\(planStatus, currentBox\?\.slug\);/);
   });
 });
 
@@ -759,3 +765,131 @@ describe('textes', () => {
   });
 });
 
+
+// ── Box active (#645, AthleX-Manager#470) ────────────────────────────────────
+
+describe('Mon abonnement : box active', () => {
+  const BOX_A = { id: 'b1', name: 'Box A', slug: 'box-a' };
+  const BOX_B = { id: 'b/2', name: 'Box B', slug: 'box-b' };
+  const SANS_FORMULE: MembershipOverview = {
+    ...BASE, box: { id: 'b/2', name: 'Box B' }, plan: null, price_cents: null, next_billing_at: null, payment_method: null,
+    // Présent dans la réponse, jamais affiché sans formule (décision A).
+    scheduled_change: { plan: { id: 'p-3', name: '3 séances / semaine' }, at: '2026-11-01T12:00:00Z' },
+  };
+  const overviewUrl = (id: string) => `${WEB_URL}/api/membership/overview?box_id=${encodeURIComponent(id)}`;
+  const planStatus = (paysOnline: boolean) => ({ is_staff: false, has_plan: false, suspended: false, credits_left: 0, pays_online: paysOnline });
+  function rpcSansFormule(paysOnline: boolean) {
+    mockRpc.mockImplementation((fn: string) => Promise.resolve({ data: fn === 'my_box_plan_status' ? [planStatus(paysOnline)] : [], error: null }));
+  }
+
+  it('service : box_id dans la query de l\'overview (encodé) et dans le corps de l\'annulation', async () => {
+    fetchMock.mockImplementation(() => reply(200, BASE));
+    await getMembershipOverview('b/2');
+    expect(fetchMock.mock.calls[0][0]).toBe(`${WEB_URL}/api/membership/overview?box_id=b%2F2`);
+    fetchMock.mockImplementation(() => reply(200, { ok: true, mode: 'online' }));
+    await cancelMembershipPlanChange('b1');
+    const [url, init] = fetchMock.mock.calls[1];
+    expect(url).toBe(`${WEB_URL}/api/change-membership-plan/cancel`);
+    expect(JSON.parse(init.body)).toEqual({ box_id: 'b1' });
+    expect(init.headers['Content-Type']).toBe('application/json');
+  });
+
+  it('service : 404 de l\'overview avec box_id → « none »', async () => {
+    fetchMock.mockImplementation(() => reply(404, { error: "Tu n'as pas d'adhésion active." }));
+    expect(await getMembershipOverview('b1')).toEqual({ ok: false, kind: 'none', message: "Tu n'as pas d'adhésion active." });
+  });
+
+  it('écran : la box active part à l\'overview et à l\'annulation', async () => {
+    mockBox = BOX_A;
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const o = { ...BASE, scheduled_change: { plan: { id: 'p-3', name: '3 séances / semaine' }, at: '2026-11-01T12:00:00Z' } };
+    const root = await showOverview(o);
+    expect(fetchMock.mock.calls[0][0]).toBe(overviewUrl('b1'));
+    await press(root, 'membership-cancel');
+    const btns = alert.mock.calls[0][2] as { onPress?: () => Promise<void> }[];
+    fetchMock.mockImplementationOnce(() => reply(200, { ok: true, mode: 'online' }));
+    await act(async () => { await btns[1].onPress!(); });
+    await settle();
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ box_id: 'b1' });
+    expect(fetchMock.mock.calls[2][0]).toBe(overviewUrl('b1'));
+  });
+
+  it('écran : rechargé au changement de box, l\'adhésion de la précédente disparaît, puis revient', async () => {
+    mockBox = BOX_A;
+    const root = await showOverview(BASE);
+    expect(texts(root)).toContain('Mensuel illimité');
+    rpcSansFormule(true);
+    mockBox = BOX_B;
+    fetchMock.mockImplementation(() => reply(200, SANS_FORMULE));
+    await act(async () => { renderer!.update(overviewScreen()); });
+    await settle();
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([overviewUrl('b1'), overviewUrl('b/2')]);
+    expect(texts(root)).toContain('Box B');
+    expect(texts(root)).not.toContain('Mensuel illimité');
+    mockBox = BOX_A;
+    fetchMock.mockImplementation(() => reply(200, BASE));
+    await act(async () => { renderer!.update(overviewScreen()); });
+    await settle();
+    expect(fetchMock.mock.calls[2][0]).toBe(overviewUrl('b1'));
+    expect(texts(root)).toContain('Mensuel illimité');
+    expect(has(root, 'membership-no-plan-in-box')).toBe(false);
+  });
+
+  it('écran : la réponse tardive d\'une box quittée n\'écrase pas la box active', async () => {
+    mockBox = BOX_A;
+    let lateA: (v: unknown) => void = () => {};
+    fetchMock.mockImplementationOnce(() => new Promise((r) => { lateA = r; }));
+    const root = await mount(overviewScreen());
+    rpcSansFormule(false);
+    mockBox = BOX_B;
+    fetchMock.mockImplementationOnce(() => reply(200, SANS_FORMULE));
+    await act(async () => { renderer!.update(overviewScreen()); });
+    await settle();
+    await act(async () => { lateA({ ok: true, status: 200, json: () => Promise.resolve(BASE) }); });
+    await settle();
+    expect(has(root, 'membership-no-plan-in-box')).toBe(true);
+    expect(texts(root)).not.toContain('Mensuel illimité');
+  });
+
+  it.each([['fr', 'Aucune formule active dans cette box'], ['en', 'No active plan at this box']] as const)(
+    'sans formule (%s), box qui vend en ligne : nom, carte, bouton d\'activation ; ni changement, ni programmé, ni paiement',
+    async (lng, phrase) => {
+      await i18n.changeLanguage(lng);
+      const open = jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+      mockBox = BOX_B;
+      rpcSansFormule(true);
+      const root = await showOverview(SANS_FORMULE);
+      expect(texts(root)).toEqual(expect.arrayContaining(['Box B', phrase]));
+      expect(flat(byId(root, 'membership-box')).textAlign).toBe('center');
+      expect(mockRpc).toHaveBeenCalledWith('my_box_plan_status', { p_box_id: 'b/2' });
+      expect(byId(root, 'membership-activate').props.label).toBe(i18n.t('plan.activateCta'));
+      for (const id of ['membership-plan-card', 'membership-change', 'membership-no-plans', 'membership-scheduled', 'membership-pending', 'membership-cancel', 'membership-billing', 'membership-manage-site']) {
+        expect([id, has(root, id)]).toEqual([id, false]);
+      }
+      expect(texts(root).join(' ')).not.toMatch(/Changer de formule|Change plan|Paiement et résiliation/);
+      await press(root, 'membership-activate');
+      expect(open).toHaveBeenCalledWith(`${WEB_URL}/box/box-b`);
+    },
+  );
+
+  it('sans formule, box qui ne vend pas en ligne : la carte seule, aucun bouton', async () => {
+    mockBox = BOX_B;
+    rpcSansFormule(false);
+    const root = await showOverview(SANS_FORMULE);
+    expect(texts(root)).toContain('Aucune formule active dans cette box');
+    expect(has(root, 'membership-activate')).toBe(false);
+    expect(has(root, 'membership-change')).toBe(false);
+    expect(has(root, 'membership-billing')).toBe(false);
+  });
+
+  it('box active avec formule : écran inchangé, aucune lecture de la formule de box', async () => {
+    mockBox = BOX_A;
+    const root = await showOverview(BASE);
+    expect(texts(root)).toEqual(expect.arrayContaining([
+      'AthleX Fitness', 'Mensuel illimité', '49 € / mois', 'Changer de formule', 'Paiement et résiliation',
+    ]));
+    expect(has(root, 'membership-no-plan-in-box')).toBe(false);
+    expect(has(root, 'membership-activate')).toBe(false);
+    expect(mockRpc.mock.calls.map((c) => c[0])).toEqual(['get_my_membership_billing']);
+  });
+});

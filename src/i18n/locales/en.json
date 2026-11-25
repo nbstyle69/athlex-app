@@ -3238,6 +3238,7 @@
     "title": "My membership",
     "currentPlan": "Current plan",
     "noPlan": "No plan",
+    "noActivePlanInBox": "No active plan at this box",
     "status": {
       "active": "Active",
       "pastDue": "Unpaid",

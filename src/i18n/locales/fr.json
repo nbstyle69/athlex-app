@@ -3238,6 +3238,7 @@
     "title": "Mon abonnement",
     "currentPlan": "Formule en cours",
     "noPlan": "Sans formule",
+    "noActivePlanInBox": "Aucune formule active dans cette box",
     "status": {
       "active": "Actif",
       "pastDue": "Impayé",
