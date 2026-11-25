@@ -1130,6 +1130,7 @@ export type Database = {
           stripe_product_id: string | null
           title: string
           updated_at: string
+          visibility: string
           weeks_count: number
         }
         Insert: {
@@ -1150,6 +1151,7 @@ export type Database = {
           stripe_product_id?: string | null
           title: string
           updated_at?: string
+          visibility?: string
           weeks_count?: number
         }
         Update: {
@@ -1170,6 +1172,7 @@ export type Database = {
           stripe_product_id?: string | null
           title?: string
           updated_at?: string
+          visibility?: string
           weeks_count?: number
         }
         Relationships: [
@@ -1196,6 +1199,87 @@ export type Database = {
           },
         ]
       }
+      box_programming_invitations: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          invited_box_id: string
+          invited_by: string | null
+          message: string | null
+          pricing: string
+          programming_id: string
+          publisher_box_id: string
+          responded_at: string | null
+          status: string
+          subscription_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_box_id: string
+          invited_by?: string | null
+          message?: string | null
+          pricing: string
+          programming_id: string
+          publisher_box_id: string
+          responded_at?: string | null
+          status?: string
+          subscription_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          invited_box_id?: string
+          invited_by?: string | null
+          message?: string | null
+          pricing?: string
+          programming_id?: string
+          publisher_box_id?: string
+          responded_at?: string | null
+          status?: string
+          subscription_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "box_programming_invitations_invited_box_id_fkey"
+            columns: ["invited_box_id"]
+            isOneToOne: false
+            referencedRelation: "boxes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "box_programming_invitations_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "box_programming_invitations_programming_id_fkey"
+            columns: ["programming_id"]
+            isOneToOne: false
+            referencedRelation: "box_programming"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "box_programming_invitations_publisher_box_id_fkey"
+            columns: ["publisher_box_id"]
+            isOneToOne: false
+            referencedRelation: "boxes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "box_programming_invitations_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "box_programming_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       box_programming_subscriptions: {
         Row: {
           auto_apply_weekly: boolean
@@ -1203,7 +1287,9 @@ export type Database = {
           created_by: string | null
           current_period_end: string | null
           id: string
+          invitation_id: string | null
           programming_id: string
+          revoked_by_publisher_at: string | null
           status: string
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
@@ -1216,7 +1302,9 @@ export type Database = {
           created_by?: string | null
           current_period_end?: string | null
           id?: string
+          invitation_id?: string | null
           programming_id: string
+          revoked_by_publisher_at?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -1229,7 +1317,9 @@ export type Database = {
           created_by?: string | null
           current_period_end?: string | null
           id?: string
+          invitation_id?: string | null
           programming_id?: string
+          revoked_by_publisher_at?: string | null
           status?: string
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
@@ -1249,6 +1339,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "public_leaderboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "box_programming_subscriptions_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "box_programming_invitations"
             referencedColumns: ["id"]
           },
           {

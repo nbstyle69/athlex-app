@@ -240,8 +240,8 @@ BEGIN
   IF v_sqlstate IS DISTINCT FROM '42501' THEN
     RAISE EXCEPTION 'C2 : un non-gérant n''est pas refusé en 42501 (obtenu : %)', coalesce(v_sqlstate, 'aucune erreur');
   END IF;
-  IF md5(pg_get_functiondef('public.list_programming_catalog(uuid)'::regprocedure)) <> '06329551f541f43204806c3bfeffc4da' THEN
-    RAISE EXCEPTION 'C2 : la définition de list_programming_catalog n''est plus celle de 20270128 (md5 %)',
+  IF md5(pg_get_functiondef('public.list_programming_catalog(uuid)'::regprocedure)) <> 'c15f6e946d0f8b87cac9ae6432c6be4f' THEN
+    RAISE EXCEPTION 'C2 : la définition de list_programming_catalog n''est plus celle de 20270167 (md5 %)',
       md5(pg_get_functiondef('public.list_programming_catalog(uuid)'::regprocedure));
   END IF;
 END $t$;
