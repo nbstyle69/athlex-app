@@ -43,6 +43,8 @@ const PLANCHER_TABLES = 100;
 const TABLES_ECRITURE_SERVEUR = new Map([
   ['box_member_alerts', 'alertes au gérant — écrites par le déclencheur de 20270133, '
     + 'résolues par resoudre_alerte_membre()'],
+  ['box_programming_invitations', 'invitations box → box (#461) — écrites par les seules fonctions '
+    + '*_programming_invitation de 20270167'],
 ]);
 
 /**
