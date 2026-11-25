@@ -2,7 +2,23 @@
 -- Invitation box → box à une offre de programmation (base seulement)
 -- (nbstyle69/AthleX-Manager#461, PR 1)
 --
--- Appliquée en prod : NON.
+-- Appliquée en prod : OUI, le 25/11/2026 à 14:58, heure de Paris lue par la
+-- base, avec PGCLIENTENCODING=UTF8 (commit 45f3527f, sha256 du fichier
+-- b76fdd53…9433). Dump des schémas public et internal avec droits
+-- db-dumps/2026-11-25/athlex-prod-public-internal-20261125T135728Z.dump,
+-- sha256 bd6a0a150d8c2c064a6fa2144356e7c0aa77c45c317d1bb8d2c47af86bd1785f,
+-- aller-retour vérifié ; 141 TABLE DATA, 486 ACL, 348 POLICY. Précontrôle en
+-- lecture seule : garde 396574b2…, catalogue 06329551…, policy e0101c97…
+-- (ceux de la prod attendus), 20270166 présente, rien de 20270167. Après :
+-- garde 344a90c4…, catalogue c15f6e94…, policy 51250a15… (ceux du rejeu) ;
+-- box_programming (5 lignes) et box_programming_subscriptions (2 lignes)
+-- identiques sur leurs colonnes d'origine (24617817… et 10fa386a…), toutes
+-- en visibility 'catalogue', invitation_id et revoked_by_publisher_at vides ;
+-- job pg_cron programming-invitations-expire posé ; EXECUTE des neuf fonctions
+-- à authenticated seulement ; audit des droits 48/48 (master) et 49/49
+-- (branche) ; test réel annulé sur des box jetables (envoi, acceptation
+-- « Offerte », lecture invitée oui / tierce non, retrait au lundi suivant),
+-- aucune trace.
 -- Pas de BEGIN/COMMIT dans ce fichier : il se joue en UNE transaction :
 --   PGCLIENTENCODING=UTF8 psql "$PROD_DB_URL" -X -1 -v ON_ERROR_STOP=1 -f <ce fichier>
 -- Retour arrière : supabase/retours/20270167000000_programming_invitations.sql,
