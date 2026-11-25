@@ -61,6 +61,7 @@ export function memberWriteRefusal(result: { data: unknown; error: RefusalError 
 const RESERVATION_REFUSALS: Record<string, string> = {
   MEMBERSHIP_PAST_DUE: 'reservation.pastDue',
   NO_ACTIVE_PLAN: 'reservation.noActivePlan',
+  NO_CREDITS_LEFT: 'reservation.noCreditsLeft',
   RESERVATION_BOX_MISMATCH: 'reservation.boxMismatch',
 };
 

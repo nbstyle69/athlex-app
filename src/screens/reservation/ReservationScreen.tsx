@@ -304,7 +304,7 @@ export default function ReservationScreen() {
         }).select('status').single();
         if (error) {
           const refusal = reservationRefusal(error);
-          if (refusal?.code === 'NO_ACTIVE_PLAN') dialog.show(refusal.title, refusal.body, noPlanButtons(planActivationUrl(planStatus, currentBox.slug)), { icon: CreditCard });
+          if (refusal && ['NO_ACTIVE_PLAN', 'NO_CREDITS_LEFT'].includes(refusal.code)) dialog.show(refusal.title, refusal.body, noPlanButtons(planActivationUrl(planStatus, currentBox.slug)), { icon: CreditCard });
           else if (refusal) dialog.show(refusal.title, refusal.body);
           else Alert.alert(t('common.error'), await errorMessage(error));
         }
