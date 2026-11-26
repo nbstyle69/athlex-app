@@ -227,7 +227,7 @@ const SOURCE_AUTORISEE: Entree[] = [
   { fichier: 'lib/urls.ts', extrait: 'export const OWNER_ONBOARDING_URL', raison: 'definition', pourquoi: 'adresse, appelée par inscription et attente-box' },
   { fichier: 'lib/urls.ts', extrait: 'export const PRICING_URL', raison: 'definition', pourquoi: 'adresse, appelée par paywall et abonnement' },
   { fichier: 'lib/athlexProPrice.ts', extrait: 'export const ATHLEX_PRO_PRICE_EUR', raison: 'definition', pourquoi: 'constante unique du 79 € et du 749 €' },
-  { fichier: 'services/membership.ts', extrait: 'export function planActivationUrl', raison: 'definition', pourquoi: 'adresse /box/, appelée par les quatre emplacements C' },
+  { fichier: 'services/membership.ts', extrait: 'export function planActivationUrl', raison: 'definition', pourquoi: 'adresse /box/, appelée par les cinq emplacements C' },
   { fichier: 'services/membership.ts', extrait: '/box/${encodeURIComponent(slug)}', raison: 'definition', pourquoi: 'corps de planActivationUrl' },
   { fichier: 'services/membership.ts', extrait: 'export function monthlyPrice', raison: 'definition', pourquoi: 'format des prix de formule, appelé par les emplacements D' },
   { fichier: 'utils/programmingPrice.ts', extrait: 'export function programmingPrice', raison: 'definition', pourquoi: 'format du prix d\'une programmation, appelé par la Marketplace' },
@@ -248,11 +248,13 @@ const SOURCE_AUTORISEE: Entree[] = [
   { fichier: 'screens/auth/RegisterScreen.tsx', extrait: 'Linking.openURL(OWNER_ONBOARDING_URL)', raison: 'android', ecran: 'inscription', pourquoi: ANDROID },
   { fichier: 'screens/onboarding/WaitingScreen.tsx', extrait: 'Linking.openURL(OWNER_ONBOARDING_URL)', raison: 'android', ecran: 'attente-box', pourquoi: ANDROID },
 
-  // C — activer son abonnement de salle (lien /box/), gardé sur iOS : quatre emplacements, nommés un par un.
+  // C — activer son abonnement de salle (lien /box/), gardé sur iOS : cinq emplacements, nommés un par un.
   { fichier: 'components/PlanToActivateNotice.tsx', extrait: 'planActivationUrl(status, box.slug)', raison: 'service-physique', pourquoi: PHYSIQUE_ABONNEMENT_SALLE },
   { fichier: 'screens/reservation/ReservationScreen.tsx', extrait: 'noPlanButtons(planActivationUrl(', raison: 'service-physique', pourquoi: PHYSIQUE_ABONNEMENT_SALLE },
   { fichier: 'screens/onboarding/BoxWelcomeScreen.tsx', extrait: 'planActivationUrl(status, joinedBox.slug)', raison: 'service-physique', pourquoi: PHYSIQUE_ABONNEMENT_SALLE },
   { fichier: 'screens/profile/ProfileScreen.tsx', extrait: 'planActivationUrl(planStatuses[e.box.id]', raison: 'service-physique', pourquoi: PHYSIQUE_ABONNEMENT_SALLE },
+  // Mon abonnement, box active sans formule (#645) : même bouton « Activer mon abonnement » que le Profil, même lien /box/.
+  { fichier: 'screens/profile/MyMembershipScreen.tsx', extrait: 'planActivationUrl(planStatus, currentBox?.slug)', raison: 'service-physique', pourquoi: PHYSIQUE_ABONNEMENT_SALLE },
 
   // D — prix des formules de box.
   { fichier: 'screens/profile/MyMembershipScreen.tsx', extrait: 'testID="membership-price"', raison: 'service-physique', pourquoi: PHYSIQUE_PRIX_FORMULE },

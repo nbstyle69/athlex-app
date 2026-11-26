@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -10,13 +10,15 @@ import { useTranslation } from 'react-i18next';
 import { AxButton, AxCard, AxScreenHeader, AxStatusDot } from '../../components/ax';
 import type { AxStatusTone } from '../../components/ax';
 import GlassBackground from '../../components/glass/GlassBackground';
+import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { usePlanStatuses } from '../../hooks/usePlanStatuses';
 import { formatDate } from '../../i18n/locale';
 import { WEB_URL } from '../../lib/urls';
 import type { HomeStackParamList } from '../../navigation';
 import { useTabBarScrollSpace } from '../../navigation/tabBarLayout';
 import {
-  cancelMembershipPlanChange, counterAccess, getMembershipOverview, getMyMemberships, monthlyPrice, paymentMethodLabel,
+  cancelMembershipPlanChange, counterAccess, getMembershipOverview, getMyMemberships, monthlyPrice, paymentMethodLabel, planActivationUrl,
   type CounterAccess, type MembershipErrorKind, type MembershipOverview, type MyMembership,
 } from '../../services/membership';
 import { axRadius, axSpacing, axTypography } from '../../theme/axTokens';
@@ -133,16 +135,28 @@ export default function MyMembershipScreen({ navigation }: OverviewProps) {
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  // L'adhésion de la box active, comme Booking ; sans box active, le site choisit (comme avant #645).
+  const { currentBox } = useAuth();
+  const boxId = currentBox?.id;
+  // Box active sans formule : l'état de la formule ne sert qu'au bouton d'activation, lu dans ce cas seulement.
+  // Appelé avant le useFocusEffect de l'écran (le faux useFocusEffect des tests garde le dernier enregistré).
+  const noPlanInBox = !!boxId && overview?.box.id === boxId && overview.plan === null;
+  const planStatus = usePlanStatuses(noPlanInBox ? [boxId] : [])[boxId ?? ''];
+  const request = useRef(0);
 
   const load = useCallback(async () => {
+    const n = ++request.current;
     setLoading(true);
     setError(null);
-    const [r, rows] = await Promise.all([getMembershipOverview(), getMyMemberships()]);
+    // Autre box : l'adhésion de la précédente ne reste pas affichée pendant le chargement.
+    if (boxId) setOverview(o => (o?.box.id === boxId ? o : null));
+    const [r, rows] = await Promise.all([getMembershipOverview(boxId), getMyMemberships()]);
+    if (n !== request.current) return; // réponse d'une box quittée entre-temps
     setBilling(rows);
     if (r.ok) setOverview(r.data);
     else { setOverview(null); setError({ kind: r.kind, message: r.message }); }
     setLoading(false);
-  }, []);
+  }, [boxId]);
 
   // Rechargé au retour de l'écran de choix : le changement programmé ou la demande s'affiche.
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -160,7 +174,7 @@ export default function MyMembershipScreen({ navigation }: OverviewProps) {
           onPress: async () => {
             setCancelling(true);
             setCancelError(null);
-            const r = await cancelMembershipPlanChange();
+            const r = await cancelMembershipPlanChange(boxId);
             setCancelling(false);
             if (r.ok) load();
             else setCancelError(r.message);
@@ -184,6 +198,18 @@ export default function MyMembershipScreen({ navigation }: OverviewProps) {
           </View>
         )}
       </View>
+    );
+  } else if (noPlanInBox) {
+    // Décision A (#645) : ni changement de formule, ni encart programmé, ni section paiement.
+    const url = planActivationUrl(planStatus, currentBox?.slug);
+    body = (
+      <>
+        {!!overview.box.name && <Text testID="membership-box" style={[axTypography.caption, styles.centered, { color: c.textMuted }]}>{overview.box.name}</Text>}
+        <AxCard testID="membership-no-plan-in-box">
+          <Text style={[axTypography.bodySmall, styles.centered, { color: c.textMuted }]}>{t('membership.noActivePlanInBox')}</Text>
+        </AxCard>
+        {url && <AxButton testID="membership-activate" icon={ExternalLink} label={t('plan.activateCta')} onPress={() => Linking.openURL(url)} fullWidth />}
+      </>
     );
   } else {
     const o = overview;
